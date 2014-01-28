@@ -19,6 +19,9 @@ def page_not_found(e):
 @app.route("/")
 def index():
     return render_template('index.html')
+@app.route("/demo")
+def sample():
+    return render_template('sample.html')
 
 
 # launch

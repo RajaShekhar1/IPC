@@ -2,19 +2,34 @@
 <html lang="en">
   <head>
     {% block head %}
-    <title>SuperApp{% block title %}{% endblock %}</title>
+
+    <title>5Star Enrollment{% block title %}{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="keywords" content="">
-    <meta name="author" content="">
+    <meta name="description" content="Application Enrollment for 5Star Life Insurance Company">
+    <meta name="keywords" content="Electronic Enrollment 5Star Life Insurance">
+    <meta name="author" content="Thumbprint Software LLC">
     <meta charset="utf-8">
 
-    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="http://getbootstrap.com/examples/jumbotron-narrow/jumbotron-narrow.css" rel="stylesheet">
+
     <link rel="shortcut icon" href="{{ url_for('static', filename='ico/favicon.ico') }}">
     {% endblock %}
   </head>
   <body>
     {% block navbar %}
+    <div class="header">
+      <ul class="nav nav-pills pull-right">
+        <li class="active"><a href="#">Home</a></li>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+      <h3 class="text-muted">
+	<a  href="/"><img src="http://www.5starima.com/images/5StarEmailLogo.png" /></a>
+	Enrollment Demo</h3>
+    </div>    
+
+    <!-- 14-Jan-28  this was the original default div block on setup - keep temporarily for reference
     <div class="navbar navbar-static-top navbar-default">
       <div class="container">
         <button class="navbar-toggle">
@@ -22,7 +37,7 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="/">SuperApp</a>
+        <a class="navbar-brand" href="/">TakeAnApp</a>
         <div class="nav-collapse">
           {% block navbar_right %}
           <ul class="nav navbar-nav pull-right">
@@ -33,10 +48,15 @@
             {% endif %}
           </ul>
           {% endblock %}
-        </div><!--/.nav-collapse -->
+        </div>
       </div>
     </div>
+    -------------/.navbar -->
+
+
     {% endblock %}
+
+
     <div class="container page">
         <div class="content">
           {% block content %}
@@ -45,13 +65,13 @@
         <hr>
         {% block footer %}
         <footer class="footer">
-            <p>&copy; SuperApp</p>
+            <p>&copy; 2014 Thumbprint Software LLC</p>
         </footer>
         {% endblock %}
-    </div>
+    </div> <!-- /container page -->
     {% block js_footer %}
-      <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-      <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+      <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+      <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     {% endblock %}
   </body>
 </html>
