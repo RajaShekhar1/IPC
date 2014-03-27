@@ -20,7 +20,7 @@
     {% block navbar %}
     <div class="header">
       <ul class="nav nav-pills pull-right">
-        <li class="active"><a href="#">Home</a></li>
+        <li class="active"><a href="{{ url_for ('sample') }}">Home</a></li>
         <li><a href="#">About</a></li>
         <li><a href="#">Contact</a></li>
       </ul>
@@ -53,13 +53,23 @@
     </div>
     -------------/.navbar -->
 
-
     {% endblock %}
-
 
     <div class="container page">
         <div class="content">
-          {% block content %}
+
+	  <!-- display any Flashed messages just inside top of content area -->
+	  {% with messages = get_flashed_messages() %}
+	  {% if messages %}
+	  {% for message in messages %}
+	  <div class="alert alert-warning">{{ message }}</div>
+	  {% endfor %}
+	  {% endif %}
+	  {% endwith %}
+
+    
+          <!-- now for inherited stuff...  -->
+	  {% block content %}
           {% endblock %}
         </div>
         <hr>
