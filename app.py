@@ -1,7 +1,7 @@
-import os
+import os, re, json
 from flask import Flask, render_template, send_from_directory, url_for, flash, redirect
 from flask_wtf import Form
-from forms import LoginForm, UserEmailForm
+from forms import LoginForm, UserEmailForm, UserDirectForm
 from docu_embed import signing_sample
 from docu_console import console_sample
 from docu_email import emailing_sample
@@ -36,7 +36,7 @@ def sample():
                            directSignURL = signing_sample('JoeBob Johnson', url_for('index')),
                            recipName = 'JoeBob Johnson')
 
-@app.route ("/email_confirmed.html")
+@app.route ("/email_confirmed_test.html")
 def confirmEmail():
     return render_template('email_confirmed.html',
                            who = 'Johnny Worker',
@@ -53,11 +53,21 @@ def sendApp():
          
         if emailing_sample(form.full_name.data, form.email_addr.data, form.email_comments.data):
             flash(form.full_name.data + " (" + form.email_addr.data + " ) "
-                  "will receive a link to the application via email.  The signed application will queue in your agent applications inbox requiring your signature prior to processing.") 
+                  "will receive a link to the application via email.  The signed application will queue in your agent applications inbox requiring your signature prior to processing.")  
 
             return redirect('/demo')
     return render_template('emailSendRequest.html', 
                            form = form)
+
+
+@app.route('/launch-direct', methods = ['GET', 'POST'])
+def launchDirect():
+    form = UserDirectForm()
+    if form.validate_on_submit():
+        return redirect ( signing_sample(form.full_name.data, url_for('index')))
+    return render_template('inPersonRequest.html', 
+                           form = form)
+
 
 @app.route("/inbox")
 def inbox():

@@ -1,5 +1,5 @@
 # DocuSign API Walkthrough 08 (PYTHON) - Embedded Signing
-import sys, httplib2, json;
+import sys, httplib2, json, bleach;
 from flask import url_for
 
 
@@ -18,6 +18,7 @@ authenticateStr = "<DocuSignCredentials>" \
                     "<Password>" + password + "</Password>" \
                     "<IntegratorKey>" + integratorKey + "</IntegratorKey>" \
                     "</DocuSignCredentials>";
+
 
 def emailing_sample(recipName, emailTo, emailComments):
 
@@ -53,11 +54,11 @@ def emailing_sample(recipName, emailTo, emailComments):
     # STEP 2 - Create an Envelope with a Recipient and Send...
     #
  
-    #construct the body of the request in JSON format  
+    # construct the body of the request in JSON format  
     requestBody = "{\"accountId\": \"" + accountId + "\"," + \
         "\"status\": \"sent\"," + \
         "\"emailSubject\": \"signature needed: FPP for " +  recipientName + " (XYZ Company)" + "\"," + \
-        "\"emailBlurb\": \"" + emailComments +"\"," + \
+        "\"emailBlurb\": \"" + bleach.clean(emailComments, strip=True).replace("\"","'") +"\"," + \
         "\"templateId\": \"" + templateId + "\"," + \
         "\"templateRoles\": [{ " + \
         "\"email\": \"" + recipEmail + "\"," + \
@@ -76,7 +77,7 @@ def emailing_sample(recipName, emailTo, emailComments):
     status = response.get('status');
     
     if (status != '201'): 
-        print("Error calling webservice, status is: %s" % status); sys.exit();
+        print("Error calling webservice, response is: %s" % response); sys.exit();
     
     data = json.loads(content);
     envId = data.get('envelopeId');
