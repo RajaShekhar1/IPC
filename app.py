@@ -33,7 +33,7 @@ def index():
 @app.route("/demo")
 def sample():
     return render_template('sample.html',
-                           directSignURL = url_for ('launch-direct'),
+                           directSignURL = url_for ('launchDirect'),
                            recipName = 'JoeBob Johnson')
 
 @app.route ("/email_confirmed_test.html")
