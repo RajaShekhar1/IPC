@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, send_from_directory, url_for, flash, redirect
 from flask_wtf import Form
-from forms import LoginForm
+from forms import LoginForm, UserEmailForm
 from docu_embed import signing_sample
 from docu_console import console_sample
 from docu_email import emailing_sample
@@ -44,6 +44,21 @@ def confirmEmail():
                            success = emailing_sample("Johnny Employee","employee@thumbprintcpm.com"))
 
 
+@app.route('/send-app', methods = ['GET', 'POST'])
+def sendApp():
+    form = UserEmailForm()
+    if form.validate_on_submit():
+        # print("name: %s\nemail: %s\n" % (form.full_name, form.email_addr))
+        # print("s_name: [%s]\n s_email: [%s]\n" % (str(form.full_name), str(form.email_addr)))
+         
+        if emailing_sample(form.full_name.data, form.email_addr.data, form.email_comments.data):
+            flash(form.full_name.data + " (" + form.email_addr.data + " ) "
+                  "will receive a link to the application via email.  The signed application will queue in your agent applications inbox requiring your signature prior to processing.") 
+
+            return redirect('/demo')
+    return render_template('emailSendRequest.html', 
+                           form = form)
+
 @app.route("/inbox")
 def inbox():
     return redirect( console_sample())
@@ -58,6 +73,7 @@ def login():
                            title = 'Sign In',
                            form = form,
                            providers = app.config['OPENID_PROVIDERS'])
+
 
 
 @app.route("/test/")

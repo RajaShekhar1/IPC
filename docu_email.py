@@ -19,7 +19,7 @@ authenticateStr = "<DocuSignCredentials>" \
                     "<IntegratorKey>" + integratorKey + "</IntegratorKey>" \
                     "</DocuSignCredentials>";
 
-def emailing_sample(recipName, emailTo):
+def emailing_sample(recipName, emailTo, emailComments):
 
     if ((recipName != "") and (recipName != None)):
         recipientName = recipName;
@@ -57,7 +57,7 @@ def emailing_sample(recipName, emailTo):
     requestBody = "{\"accountId\": \"" + accountId + "\"," + \
         "\"status\": \"sent\"," + \
         "\"emailSubject\": \"signature needed: FPP for " +  recipientName + " (XYZ Company)" + "\"," + \
-        "\"emailBlurb\": \"This comes from 5Star Take an App Demo, other instructions will replace this statement...\"," + \
+        "\"emailBlurb\": \"" + emailComments +"\"," + \
         "\"templateId\": \"" + templateId + "\"," + \
         "\"templateRoles\": [{ " + \
         "\"email\": \"" + recipEmail + "\"," + \
@@ -82,6 +82,6 @@ def emailing_sample(recipName, emailTo):
     envId = data.get('envelopeId');
  
     #--- display results
-    print ("Signature request sent!  EnvelopeId is: %s\n" % envId)
+    print("Signature request sent!  EnvelopeId is: %s\n" % envId)
 
     return 1;

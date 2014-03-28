@@ -5,7 +5,7 @@
 
   <div class="jumbotron">
     <h1>Take-An-App Demo</h1>
-    <p class="lead">Scenarios below are prototype demos of integrating 5Star Applications and Docusign through a web interface.  Each demo link has it's own scenario to illustrate a specific use-case.  Since this is for demo purposes, only a sampling of user data is actually entered into the live application, but the signing end-user experience should be complete.</p>
+    <p class="lead">Scenarios below are preliminary demos of 5Star Applications and Docusign integrated through a web interface.  Each demo link below has it's own scenario to illustrate a specific use-case.  Since this is for demo purposes, only a sampling of user data is actually entered into the live application (the end user workflow will have an intermediate data-entry step), but the applicant and agent nd-user signing experience is consistent with the production system.</p>
   </div>
   
   <div class="row marketing">
@@ -15,7 +15,7 @@
     
     <h4>Remote - Agent initiates email</h4>
     <p>Enroll by sending email invitation to employee - since email validated, employee's email access is itself validation and thus will not need a DL or Employee #.  Agent doesn't sign until later.</p>
-    <p><a class="btn btn-lg btn-info" href="{{ url_for('confirmEmail')}}" role="button">Initiate email enrollment...</a></p>
+    <p><a class="btn btn-lg btn-info" href="{{ url_for('sendApp')}}" role="button">Initiate email enrollment...</a></p>
 
 
     
