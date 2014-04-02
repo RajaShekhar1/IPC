@@ -19,10 +19,16 @@ authenticateStr = "<DocuSignCredentials>" \
                     "<IntegratorKey>" + integratorKey + "</IntegratorKey>" \
                     "</DocuSignCredentials>";
 
-def signing_sample(recipName, returnURL):
+def signing_sample(recipName, employer, emailTo, returnURL):
 
     if ((recipName != "") and (recipName != None)):
         recipientName = recipName;
+
+    
+    label2 = "employeeEmail"
+    value2 = emailTo
+    label1 = "Employer"
+    value1 = employer or ""    
     
     #
     # STEP 1 - Login
@@ -60,6 +66,12 @@ def signing_sample(recipName, returnURL):
         "\"templateRoles\": [{" + \
         "\"email\": \"" + recipEmail + "\"," + \
         "\"name\": \"" + recipientName + "\"," + \
+        "\"tabs\": {\"textTabs\": [" + \
+        "{\"tabLabel\": \"" + label1 + "\"" + \
+        ", \"value\": \"" + value1 + "\"}" + \
+        ", {\"tabLabel\": \"" + label2 + "\"" + \
+        ", \"value\": \"" + value2 + "\"}" + \
+        "]}, " + \
         "\"roleName\": \"" +  templateRoleName + "\"," + \
         "\"clientUserId\": \"" + templateClientID + "\" }] }";
  

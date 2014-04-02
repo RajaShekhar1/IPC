@@ -6,30 +6,32 @@
 {% block content %}
 
 
-<h2>Email an Application for Signature</h2>
-<form action="" method="post" name="UserEmailForm">
+<div class="row marketing">
+  <h2>Email an Application for Signature</h2>
+  <form action="" method="post" name="UserEmailForm">
     {{form.hidden_tag()}}
     <p>Employee Full Name:<br>
-        {% for error in form.errors.full_name %}
-	<div class="alert alert-danger">{{ error }}</div>
-        {% endfor %}
-	{{form.full_name(size=80)}}<br>
+      {% for error in form.errors.full_name %}
+      <div class="alert alert-danger">{{ error }}</div>
+      {% endfor %}
+      {{form.full_name(size=50)}}<br>
     </p>
     <p>Employer:<br>
-        {% for error in form.errors.employer %}
-	<div class="alert alert-danger">{{ error }}</div>
-        {% endfor %}
-	{{form.employer(size=80)}}<br>
+      {% for error in form.errors.employer %}
+      <div class="alert alert-danger">{{ error }}</div>
+      {% endfor %}
+      {{form.employer(size=50)}}<br>
     </p>
     <p>email address:<br>
-        {% for error in form.errors.email_addr %}
-	<div class="alert alert-danger">{{ error }}</div>
-        {% endfor %}
-	{{form.email_addr(size=80)}}<br>
+      {% for error in form.errors.email_addr %}
+      <div class="alert alert-danger">{{ error }}</div>
+      {% endfor %}
+      {{form.email_addr(size=50)}}<br>
     </p>
     <p>optional email comments:<br>
-        {{form.email_comments(cols="100", rows="6")|safe}}<br>
+      {{form.email_comments(cols="80", rows="6")|safe}}<br>
     </p>  
     <p><input type="submit" class="btn btn-lg btn-info" role="button" value="Send the app!"></p>
-</form>
+  </form>
+</div>
 {% endblock %}

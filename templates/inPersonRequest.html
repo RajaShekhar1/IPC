@@ -11,10 +11,10 @@
     {{form.hidden_tag()}}
     <div class="well"><h4>Employee Identification<h4>
     <p>Please enter either valid Driver's License number or Employee Number<br>
-        {% for error in form.errors.full_name %}
+        {% for error in form.errors.idNum %}
 	<div class="alert alert-danger">{{ error }}</div>
         {% endfor %}
-	{{form.idNum(size=50)}}<br>
+	{{form.idNum(size=30)}}<br>
 	{{form.idType()}}
     </p>
     </div>
@@ -22,19 +22,19 @@
         {% for error in form.errors.full_name %}
 	<div class="alert alert-danger">{{ error }}</div>
         {% endfor %}
-	{{form.full_name(size=80)}}<br>
+	{{form.full_name(size=50)}}<br>
     </p>
     <p>Employer:<br>
         {% for error in form.errors.employer %}
 	<div class="alert alert-danger">{{ error }}</div>
         {% endfor %}
-	{{form.employer(size=80)}}<br>
+	{{form.employer(size=50)}}<br>
     </p>
     <p>email address:<br>
         {% for error in form.errors.email_addr %}
 	<div class="alert alert-danger">{{ error }}</div>
         {% endfor %}
-	{{form.email_addr(size=80)}}<br>
+	{{form.email_addr(size=50)}}<br>
     </p>
     <p><input type="submit" class="btn btn-lg btn-success" role="button" value="Submit and sign the application"></p>
 </form>

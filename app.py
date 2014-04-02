@@ -51,7 +51,7 @@ def sendApp():
         # print("name: %s\nemail: %s\n" % (form.full_name, form.email_addr))
         # print("s_name: [%s]\n s_email: [%s]\n" % (str(form.full_name), str(form.email_addr)))
          
-        if emailing_sample(form.full_name.data, form.email_addr.data, form.email_comments.data):
+        if emailing_sample(form.full_name.data, form.employer.data, form.email_addr.data, form.email_comments.data):
             flash(form.full_name.data + " (" + form.email_addr.data + " ) "
                   "will receive a link to the application via email.  The signed application will queue in your agent applications inbox requiring your signature prior to processing.")  
 
@@ -64,7 +64,7 @@ def sendApp():
 def launchDirect():
     form = UserDirectForm()
     if form.validate_on_submit():
-        return redirect ( signing_sample(form.full_name.data, url_for('index')))
+        return redirect ( signing_sample(form.full_name.data, form.employer.data, form.email_addr.data, url_for('index')))
     return render_template('inPersonRequest.html', 
                            form = form)
 
