@@ -79,7 +79,7 @@ def emailing_sample(recipName, employer, emailTo, emailComments):
         # construct the body of the request in JSON format  
         requestBody = "{\"accountId\": \"" + accountId + "\"," + \
                       "\"status\": \"sent\"," + \
-                      "\"emailSubject\": \"signature needed: FPP for " +  recipientName + " (XYZ Company)" + "\"," + \
+                      "\"emailSubject\": \"signature needed: FPP for " +  recipientName + " (" + employer + ")" + "\"," + \
                       "\"emailBlurb\": \"" + bleach.clean(emailComments, strip=True).replace("\"","'") +"\"," + \
                       "\"templateId\": \"" + templateId + "\"," + \
                       "\"templateRoles\": [{ " + \

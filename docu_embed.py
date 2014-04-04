@@ -60,7 +60,7 @@ def signing_sample(recipName, employer, emailTo, returnURL):
     #construct the body of the request in JSON format  
     requestBody = "{\"accountId\": \"" + accountId + "\"," + \
         "\"status\": \"sent\"," + \
-        "\"emailSubject\": \"signature needed: FPP for " +  recipientName + " (XYZ Company)" + "\"," + \
+        "\"emailSubject\": \"signature needed: FPP for " +  recipientName + " (" + employer + ")" + "\"," + \
         "\"emailBlurb\": \"This comes from 5Star Take an App Demo, other instructions will replace this statement...\"," + \
         "\"templateId\": \"" + templateId + "\"," + \
         "\"templateRoles\": [{" + \
