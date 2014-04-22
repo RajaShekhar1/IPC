@@ -85,6 +85,14 @@ def login():
                            providers = app.config['OPENID_PROVIDERS'])
 
 
+@app.route("/rate_recommendations", methods=['POST'])
+def rates():
+    # validate required params
+    for required_param in ['gender, age_band', 'marital_status', 'include_spouse', 'num_children']:
+        if required_param not in request.form:
+            abort(400)
+    
+
 
 @app.route("/test/")
 def testpage():
