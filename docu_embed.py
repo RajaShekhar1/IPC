@@ -61,7 +61,10 @@ def signing_sample(recipName, employer, emailTo, returnURL):
     requestBody = "{\"accountId\": \"" + accountId + "\"," + \
         "\"status\": \"sent\"," + \
         "\"emailSubject\": \"signature needed: FPP for " +  recipientName + " (" + employer + ")" + "\"," + \
-        "\"emailBlurb\": \"This comes from 5Star Take an App Demo, other instructions will replace this statement...\"," + \
+        "\"documentFields\": [" + \
+        "{\"name\": \"" + "driver\'s license" + "\"" + \
+        ", \"value\": \"" + "123456" + "\"}" + \
+        "], " + \
         "\"templateId\": \"" + templateId + "\"," + \
         "\"templateRoles\": [{" + \
         "\"email\": \"" + recipEmail + "\"," + \

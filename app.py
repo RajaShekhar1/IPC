@@ -87,8 +87,9 @@ def login():
 
 
 @app.route("/test/")
+#  14-Apr-22 WSD modified to new test file
 def testpage():
-    return render_template('test.html')
+    return render_template('main-wizard.html') 
 
 
 # launch
