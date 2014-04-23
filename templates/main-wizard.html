@@ -1,56 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>5Star Enrollment</title>
+{% extends "base.html" %}
+{% block title %} - Employee Application {% endblock %}
+
+{% block head %}
+ {{ super() }}
+    <!-- page-specific header data -->
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <!-- basic styles -->
-    
-    <link href="static/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="static/css/font-awesome.min.css" />
-    
-    <!--[if IE 7]>
-	<link rel="stylesheet" href="static/css/font-awesome-ie7.min.css" />
-	<![endif]-->
-    
-    <!-- page specific plugin styles -->
-    
-    <!--  <link rel="stylesheet" href="static/css/select2.css" />  -->
-    
-    <!-- fonts -->
-    
-    <link rel="stylesheet" href="static/css/ace-fonts.css" />
-    
     <!-- ace styles -->
-    
-    <link rel="stylesheet" href="static/css/ace.min.css" />
-    <!-- <link rel="stylesheet" href="static/css/ace-skins.min.css" /> -->
+    <link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='js/ace-extra.min.css') }}" rel="stylesheet">
     
     <!--[if lte IE 8]>
 	<link rel="stylesheet" href="static/css/ace-ie.min.css" />
 	<![endif]-->
     
-    <!-- inline styles related to this page -->
     
-    <!-- ace settings handler -->
-    
-    <script src="static/js/ace-extra.min.js"></script>
-    
-    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    
-    <!--[if lt IE 9]>
-	<script src="static/js/html5shiv.js"></script>
-	<script src="static/js/respond.min.js"></script>
-	<![endif]-->
-  </head>
+{% endblock %}
 
-  <body>
-		
+{% block content %}
 
       <div class="page-content">
-	
+ 	
 	<div class="row">
 	  <div class="col-xs-12">
 	    <!-- PAGE CONTENT BEGINS -->
@@ -459,42 +431,49 @@
 	</div><!-- /.row -->
       </div><!-- /.page-content -->
 
-<!-- basic scripts -->
+      {% endblock %}
 
-<!--[if !IE]> -->
+      <!-- basic scripts -->
 
-<script type="text/javascript">
-  window.jQuery || document.write("<script src='static/js/jquery-2.0.3.min.js'>"+"<"+"/script>");
-  </script>
+      {% block js_footer %}
+      {{ super() }}
 
-  <!-- <![endif]-->
+      <!-- page-specific footer scripts -->
+    
+      <!--[if !IE]> 
 
-  <!--[if IE]>
-      <script type="text/javascript">
-	window.jQuery || document.write("<script src='static/js/jquery-1.10.2.min.js'>"+"<"+"/script>");
-	</script>
-	<![endif]-->
+	  <script type="text/javascript">
+	    window.jQuery || document.write("<script src='static/js/jquery-2.0.3.min.js'>"+"<"+"/script>");
+	    </script>
+	    <![endif]-->
+      
+      <!--[if IE]>
+	  <script type="text/javascript">
+	    window.jQuery || document.write("<script src='static/js/jquery-1.10.2.min.js'>"+"<"+"/script>");
+	    </script>
+	    <![endif]-->
 
-  <script type="text/javascript">
-    if("ontouchend" in document) document.write("<script src='static/js/jquery.mobile.custom.min.js'>"+"<"+"/script>");
-    </script>
-    <script src="static/js/bootstrap.min.js"></script>
-    <script src="static/js/typeahead-bs2.min.js"></script>
+    <script src="{{ url_for('static', filename='js/jquery.mobile.custom.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/typeahead-bs2.min.js') }}"></script>
+      
+
 
     <!-- page specific plugin scripts -->
 
-    <script src="static/js/fuelux/fuelux.wizard.min.js"></script>
-    <script src="static/js/jquery.validate.min.js"></script>
-    <script src="static/js/additional-methods.min.js"></script>
-    <script src="static/js/bootbox.min.js"></script>
-    <script src="static/js/jquery.maskedinput.min.js"></script>
-    <script src="static/js/select2.min.js"></script>
+    <script src="{{ url_for('static', filename='js/fuelux/fuelux.wizard.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.validate.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/additional-methods.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootbox.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.maskedinput.min.js') }}"></script>
 
+    <!-- <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+	 -->
+   
     <!-- ace scripts -->
 
-    <script src="static/js/ace-elements.min.js"></script>
-    <script src="static/js/ace.min.js"></script>
-
+    <script src="{{ url_for('static', filename='js/ace-elements.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ace.min.js') }}"></script>
+    
     <!-- inline scripts related to this page -->
 
     <script type="text/javascript">
@@ -520,7 +499,7 @@
                         inpss.setAttribute('disabled' , 'disabled');
                         inpss.value="";
                         
-      }});
+      } });
 
 
       $('[data-rel=tooltip]').tooltip();
@@ -639,5 +618,5 @@
 	
 	})
       </script>
-</body>
-</html>
+      
+      {% endblock %}
