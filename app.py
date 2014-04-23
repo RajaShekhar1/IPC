@@ -1,5 +1,14 @@
 import os, re, json
-from flask import Flask, render_template, send_from_directory, url_for, flash, redirect
+from flask import (
+    Flask, 
+    render_template, 
+    send_from_directory, 
+    url_for, 
+    flash, 
+    redirect, 
+    request, 
+    abort
+)
 from flask_wtf import Form
 from forms import LoginForm, UserEmailForm, UserDirectForm
 from docu_embed import signing_sample
@@ -92,6 +101,7 @@ def rates():
         if required_param not in request.form:
             abort(400)
     
+    request.form.get("")
 
 
 @app.route("/test/")
