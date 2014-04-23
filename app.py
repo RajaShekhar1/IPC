@@ -7,7 +7,8 @@ from flask import (
     flash, 
     redirect, 
     request, 
-    abort
+    abort,
+    jsonify,
 )
 from flask_wtf import Form
 from forms import LoginForm, UserEmailForm, UserDirectForm
@@ -94,23 +95,34 @@ def login():
                            providers = app.config['OPENID_PROVIDERS'])
 
 
-@app.route("/rate_recommendations", methods=['POST'])
-def rates():
-    # validate required params
-    for required_param in ['gender, age_band', 'marital_status', 'include_spouse', 'num_children']:
-        if required_param not in request.form:
-            abort(400)
-    
-    request.form.get("")
-
-
-@app.route("/test/")
+@app.route("/test")
 #  14-Apr-22 WSD modified to new test file
 def testpage():
-    return render_template('main-wizard.html') 
+    return render_template('main-wizard.html')
 
+
+@app.route("/get_rates", methods=['POST'])
+def rates():
+    # validate required params
+    #for required_param in ['gender, age_band', 'marital_status', 'include_spouse', 'num_children']:
+    #    if required_param not in request.form:
+    #        abort(400)
+
+    response = {
+        'rates': [
+            {'weekly': 6.00, 'coverage': 20000},
+            {'weekly': 8.00, 'coverage': 50000},
+            {'weekly': 10.00, 'coverage': 80000},
+            {'weekly': 12.00, 'coverage': 100000},
+        ]
+    }
+    
+    return jsonify(**response)
+    
 
 # launch
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
+

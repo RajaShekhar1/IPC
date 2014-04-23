@@ -10,13 +10,11 @@
     <!-- ace styles -->
     <link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='js/ace-extra.min.css') }}" rel="stylesheet">
     
     <!--[if lte IE 8]>
 	<link rel="stylesheet" href="static/css/ace-ie.min.css" />
 	<![endif]-->
-    
-    
+  
 {% endblock %}
 
 {% block content %}
@@ -76,7 +74,7 @@
 			  	
 			  <div class="step-pane active" id="step1">
 			  <h4 class="lighter block green">Initial information required to select a benefit plan</h4>
-
+              
 			  <div class="form-group">
 			      <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="eeLName">Employee </label>
 
@@ -123,28 +121,28 @@
 			    <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="qtyChildren">How many children will be included? </label>
 			    <div class="col-xs-12 col-sm-10">
 			      <select id="qtyChildren" name="qtyChildren" class="select1" placeholder="none">
-				<option value="0">none</option>
-				<option value="1">1</option>
-				<option value="2">2</option>
-				<option value="3">3</option>
-				<option value="4">4</option>
-				<option value="5">5</option>
-				<option value="6">6</option>
-				<option value="7">7</option>
-				<option value="8">8</option>
-				<option value="9">9</option>
-				<option value="10">10</option>
-				<option value="11">11</option>
-				<option value="12">12</option>
+                    <option value="0">none</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
 			      </select>
 			    </div>
 			  </div>			 
 
-
+        <button type="button" class="btn primary show-rates">Show Rates</button>
 			  <!-- *** Button goes here to initially calc the Ajax table and "reveal" table, 
 			       but dynamically updated thereafter on DOB or checkbox changes  *** -->
 			  
-			  <div class="center">
+			  <div class="center recommended-coverage-table" style="display: none;">
 			    <h3 class="blue lighter">Select benefits via Good / Better / Best </h3>
 			  </div>
 			  <!-- *** Ajax-populated table goes here *** -->
@@ -475,50 +473,51 @@
     <script src="{{ url_for('static', filename='js/ace.min.js') }}"></script>
     
     <!-- inline scripts related to this page -->
-
+    <script src="{{url_for('static', filename='js/5Star/enrollment.js')}}"></script>
     <script type="text/javascript">
       jQuery(function($) {
-      
-
-      $(document).on('change', 'input:radio[id^="eeOwner-"]', function() {
-                var other = $('#eeOtherOwner');
-                var inp = $('#eeOtherOwnerName').get(0);
-                var inpss = $('#eeOtherOwnerSSN').get(0);
-		if(other.hasClass('hide')) {
-                        $('#eeOtherOwner').fadeIn("medium");
-			$('#eeOtherOwner').removeClass('hide')
-                        inp.removeAttribute('disabled');
-                        inp.placeholder="Full Name";
-                        inpss.removeAttribute('disabled');
-			}
-		else {
-			$('#eeOtherOwner').addClass('hide')
-                        inp.setAttribute('disabled' , 'disabled');
-                        inp.placeholder="employee is policy owner";
-                        inp.value="";
-                        inpss.setAttribute('disabled' , 'disabled');
-                        inpss.value="";
-                        
-      } });
-
+        
+        // rate calculations, recommendations code
+        init_rate_form();
+  
+        $(document).on('change', 'input:radio[id^="eeOwner-"]', function() {
+          var other = $('#eeOtherOwner');
+          var inp = $('#eeOtherOwnerName').get(0);
+          var inpss = $('#eeOtherOwnerSSN').get(0);
+          
+          if(other.hasClass('hide')) {
+                  $('#eeOtherOwner').fadeIn("medium");
+                  $('#eeOtherOwner').removeClass('hide')
+                  inp.removeAttribute('disabled');
+                  inp.placeholder="Full Name";
+                  inpss.removeAttribute('disabled');
+          } else {
+            $('#eeOtherOwner').addClass('hide');
+            inp.setAttribute('disabled' , 'disabled');
+            inp.placeholder="employee is policy owner";
+            inp.value="";
+            inpss.setAttribute('disabled' , 'disabled');
+            inpss.value="";
+          } 
+      });
 
       $('[data-rel=tooltip]').tooltip();
       
       var $validation = true;
       $('#fuelux-wizard').ace_wizard().on('change' , function(e, info){
-      if(info.step == 2 && $validation) {
-      if(!$('#validation-form').valid()) return false;
-      }
+        if(info.step == 2 && $validation) {
+          if(!$('#validation-form').valid()) return false;
+        }
       }).on('finished', function(e) {
-      bootbox.dialog({
-      message: "Thank you! Your information was successfully saved!", 
-      buttons: {
-      "success" : {
-      "label" : "OK",
-      "className" : "btn-sm btn-primary"
-      }
-      }
-      });
+        bootbox.dialog({
+        message: "Thank you! Your information was successfully saved!", 
+        buttons: {
+        "success" : {
+        "label" : "OK",
+        "className" : "btn-sm btn-primary"
+        }
+        }
+        });
       }).on('stepclick', function(e){
       //return false;//prevent clicking on steps
       });
