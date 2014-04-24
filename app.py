@@ -18,9 +18,9 @@ from docu_email import emailing_sample
 
 from model.RateTable import (
     get_age_from_birthday,
-    get_weekly_rates_by_coverage,
-    get_coverages_by_weekly_rate,
-    get_child_rates,
+    get_weekly_premiums_by_coverage,
+    get_coverages_by_weekly_premium,
+    get_weekly_child_premiums,
 )
 
 # initialization
@@ -121,29 +121,30 @@ def rates():
     
     emp_age = get_age_from_birthday(employee_birthdate)
     sp_age = get_age_from_birthday(spouse_birthdate) if spouse_birthdate else None
-    
+    print("%s %s"%(emp_age, sp_age))
     employee_rates = {
-        'weekly_coverages': get_coverages_by_weekly_rate(emp_age),
-        'weekly_rates': get_weekly_rates_by_coverage(emp_age),
+        'weekly_bypremium': get_coverages_by_weekly_premium(emp_age),
+        'weekly_byface': get_weekly_premiums_by_coverage(emp_age),
     }
     spouse_rates = {}
     if sp_age:
         spouse_rates = {
-            'weekly_coverages': get_coverages_by_weekly_rate(sp_age),
-            'weekly_rates': get_weekly_rates_by_coverage(sp_age),
+            'weekly_bypremium': get_coverages_by_weekly_premium(sp_age),
+            'weekly_byface': get_weekly_premiums_by_coverage(sp_age),
         }
-
+    
     children_rates = {}
     if num_children > 0:
         children_rates = {
-            get_child_rates()
+            "weekly_premiums":get_weekly_child_premiums()
         }
     response = {
         'employee_rates': employee_rates,
         'spouse_rates': spouse_rates,
         'children_rates': children_rates,
     }
-    
+    import pprint
+    pprint.pprint(response)
     return jsonify(**response)
     
 
