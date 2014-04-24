@@ -11,6 +11,10 @@
     <link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
     
+    <style>
+    body {font-family: sans-serif;}
+    </style>
+    
     <!--[if lte IE 8]>
 	<link rel="stylesheet" href="static/css/ace-ie.min.css" />
 	<![endif]-->
@@ -120,7 +124,7 @@
 			  <div class="form-group">
 			    <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="qtyChildren">How many children will be included? </label>
 			    <div class="col-xs-12 col-sm-10">
-			      <select id="qtyChildren" name="qtyChildren" class="select1" placeholder="none">
+			      <select id="qtyChildren" name="qtyChildren" class="select1">
                     <option value="0">none</option>
                     <option value="1">1</option>
                     <option value="2">2</option>
@@ -145,7 +149,159 @@
 			  <div class="center recommended-coverage-table" style="display: none;">
 			    <h3 class="blue lighter">Select benefits via Good / Better / Best </h3>
 			  </div>
-			  <!-- *** Ajax-populated table goes here *** -->
+            
+        <script type="text/html" id="recommended-table-names">
+          <div class="col-xs-4 col-sm-3 pricing-span-header">
+            <div class="widget-box transparent">
+              <div class="widget-header">
+                <h5 class="widget-title bigger lighter"></h5>
+              </div>
+  
+              <div class="widget-body">
+                <div class="widget-main no-padding">
+                  <ul data-content="names" class="list-unstyled list-striped pricing-table-header">
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </script>
+        <script type="text/html" id="recommended-table-column">
+          <div class="pricing-span">
+            <div class="widget-box pricing-box-small widget-color-blue">
+              <div class="widget-header">
+                <h5 class="widget-title bigger lighter">Best</h5>
+              </div>
+
+              <div class="widget-body">
+                <div class="widget-main no-padding">
+                  <ul class="list-unstyled list-striped pricing-table">
+                    <li> 200 GB </li>
+                    <li> Unlimited </li>
+                    <li> 1000 </li>
+                    <li> 200 </li>
+                    <li> $25 </li>
+                  <div class="price">
+                    <span class="label label-lg label-inverse arrowed-in arrowed-in-right">
+                      $15
+                      <small>/month</small>
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <a href="#" class="btn btn-block btn-sm btn-primary">
+                    <span>Buy</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </script>
+          <script type="text/html" id="recommended-coverage-template">
+			        <div class="row">
+								
+
+								<div class="col-xs-8 col-sm-9 pricing-span-body">
+									<div class="pricing-span">
+										<div class="widget-box pricing-box-small widget-color-red3">
+											<div class="widget-header">
+												<h5 class="widget-title bigger lighter">Good</h5>
+											</div>
+
+											<div class="widget-body">
+												<div class="widget-main no-padding">
+													<ul class="list-unstyled list-striped pricing-table">
+														<li> 10 GB </li>
+														<li> 200 GB </li>
+														<li> 100 </li>
+														<li> 10 </li>
+														<li> $10 </li>
+
+													<div class="price">
+														<span class="label label-lg label-inverse arrowed-in arrowed-in-right">
+															$5
+															<small>/month</small>
+														</span>
+													</div>
+												</div>
+
+												<div>
+													<a href="#" class="btn btn-block btn-sm btn-danger">
+														<span>Buy</span>
+													</a>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<div class="pricing-span">
+										<div class="widget-box pricing-box-small widget-color-blue">
+											<div class="widget-header">
+												<h5 class="widget-title bigger lighter">Better</h5>
+											</div>
+
+											<div class="widget-body">
+												<div class="widget-main no-padding">
+													<ul class="list-unstyled list-striped pricing-table">
+														<li> 50 GB </li>
+														<li> 1 TB </li>
+														<li> 1000 </li>
+														<li> 100 </li>
+														<li> $25 </li>
+													<div class="price">
+														<span class="label label-lg label-inverse arrowed-in arrowed-in-right">
+															$10
+															<small>/month</small>
+														</span>
+													</div>
+												</div>
+
+												<div>
+													<a href="#" class="btn btn-block btn-sm btn-warning">
+														<span>Buy</span>
+													</a>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									
+
+									<div class="pricing-span">
+										<div class="widget-box pricing-box-small widget-color-grey">
+											<div class="widget-header">
+												<h5 class="widget-title bigger lighter">Custom</h5>
+											</div>
+
+											<div class="widget-body">
+												<div class="widget-main no-padding">
+													<ul class="list-unstyled list-striped pricing-table">
+														<li> <select></select> </li>
+														<li> Unlimited </li>
+														<li> Unlimited </li>
+														<li> Unlimited </li>
+														<li> $100 </li>
+													<div class="price">
+														<span class="label label-lg label-inverse arrowed-in arrowed-in-right">
+															$30
+															<small>/month</small>
+														</span>
+													</div>
+												</div>
+
+												<div>
+													<a href="#" class="btn btn-block btn-sm btn-grey">
+														<span>Buy</span>
+													</a>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>  
+            </script>
+            
 			</div>
 
 			  <!-- ------------------------------ STEP 2 ------------------------------ -->
@@ -473,6 +629,7 @@
     <script src="{{ url_for('static', filename='js/ace.min.js') }}"></script>
     
     <!-- inline scripts related to this page -->
+    <script src="{{url_for('static', filename='js/handlebars-v1.3.0.js')}}"></script>
     <script src="{{url_for('static', filename='js/5Star/enrollment.js')}}"></script>
     <script type="text/javascript">
       jQuery(function($) {

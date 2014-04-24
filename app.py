@@ -16,6 +16,13 @@ from docu_embed import signing_sample
 from docu_console import console_sample
 from docu_email import emailing_sample
 
+from model.RateTable import (
+    get_age_from_birthday,
+    get_weekly_rates_by_coverage,
+    get_coverages_by_weekly_rate,
+    get_child_rates,
+)
+
 # initialization
 app = Flask(__name__)
 app.config.from_object('config')
@@ -107,14 +114,34 @@ def rates():
     #for required_param in ['gender, age_band', 'marital_status', 'include_spouse', 'num_children']:
     #    if required_param not in request.form:
     #        abort(400)
+    
+    employee_birthdate = request.form['employee_birthdate']
+    spouse_birthdate = request.form.get('spouse_birthdate', None)
+    num_children = int(request.form.get('num_children', 0))
+    
+    emp_age = get_age_from_birthday(employee_birthdate)
+    sp_age = get_age_from_birthday(spouse_birthdate) if spouse_birthdate else None
+    
+    employee_rates = {
+        'weekly_coverages': get_coverages_by_weekly_rate(emp_age),
+        'weekly_rates': get_weekly_rates_by_coverage(emp_age),
+    }
+    spouse_rates = {}
+    if sp_age:
+        spouse_rates = {
+            'weekly_coverages': get_coverages_by_weekly_rate(sp_age),
+            'weekly_rates': get_weekly_rates_by_coverage(sp_age),
+        }
 
+    children_rates = {}
+    if num_children > 0:
+        children_rates = {
+            get_child_rates()
+        }
     response = {
-        'rates': [
-            {'weekly': 6.00, 'coverage': 20000},
-            {'weekly': 8.00, 'coverage': 50000},
-            {'weekly': 10.00, 'coverage': 80000},
-            {'weekly': 12.00, 'coverage': 100000},
-        ]
+        'employee_rates': employee_rates,
+        'spouse_rates': spouse_rates,
+        'children_rates': children_rates,
     }
     
     return jsonify(**response)
