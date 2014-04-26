@@ -136,15 +136,6 @@ function show_rate_comparison_table(data) {
     item.append(children_select);
     custom_col.append(item);
     
-    /*
-    for (var i = 0; i < data.rates.length; i++) {
-        var rate = data.rates[i];
-        
-        // do something with the data
-        var rate_div = $("<div></div>").addClass("rate").html("$"+rate.weekly+"/wk for $"+rate.coverage+" in coverage");
-        rate_table_ctn.append(rate_div);
-    }
-    */
     reveal_table()
 }
 
