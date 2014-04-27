@@ -1,6 +1,139 @@
 
 
 function init_rate_form() {
+    var ui = new BenefitsUI();
+    ko.applyBindings(ui);
+}
+
+// Root model of the Benefits wizard User Interface
+function BenefitsUI(product) {
+    var self = this;
+    
+    self.insurance_product = product;
+    
+    self.employee = ko.observable(new Beneficiary({}));
+    
+    // Marital and Spouse info
+    var MS_MARRIED = 'Married',
+        MS_UNMARRIED = 'Unmarried';
+    self.marital_statuses = [MS_MARRIED, MS_UNMARRIED];
+    self.employee.marital_status = ko.observable(null);
+    
+    self.should_show_spouse = ko.computed(function() {
+       return self.employee.marital_status() == MS_MARRIED; 
+    });
+    self.spouse = ko.observable(new Beneficiary({}));
+    self.show_spouse_name = ko.computed(function() {
+        return (self.spouse().is_valid()) ? self.spouse().name() : "";
+    });
+    
+    // Children
+    self.should_include_children = ko.observable(false);
+    self.children = ko.observableArray([
+        // Start with two blank child entries
+        new Beneficiary({}),
+        new Beneficiary({})
+    ]);
+    self.show_children_names = ko.computed(function() {
+        if (self.should_include_children()) {
+            var valid_children = self.get_valid_children();
+            var firstnames = $.map(valid_children, function(child) {
+                return child.first();
+            });
+            return firstnames.join(", ") + " (Each)";
+        } else {
+            return "";
+        } 
+    });
+    self.get_valid_children = function() {
+        var children = [];
+        $.each(self.children(), function() {
+            if (this.is_valid()) {
+                children.push(this);
+            } 
+        });
+        return children;
+    };
+    
+    self.add_child = function() {
+        self.children.push(new Beneficiary({}));  
+    };
+    self.rendered_child = function(element) {
+        $(element).hide().slideDown(400);
+    };
+    self.removing_child = function(element) {
+        $(element).slideUp(function() {$(element).remove();});
+    };
+    
+    // Recommended and selected benefits
+    self.is_recommended_table_visible = ko.observable(false);
+    self.show_recommendations_table = function() {
+        self.is_recommended_table_visible(true);
+    };
+}
+
+function Product(product_type) {
+    var self = this;
+    
+    self.product_type = product_type;
+}
+
+function Beneficiary(options) {
+    var self = this;
+    
+    self.first = ko.observable(options.first || "");
+    self.last = ko.observable(options.last || "");
+    self.birthdate = ko.observable(options.birthdate || null);
+    
+    self.is_valid = function() {
+        return (
+            $.trim(self.first()) != "" &&
+            $.trim(self.last()) != "" &&
+            $.trim(self.birthdate()) != ""
+        );  
+    };
+    
+    self.name = ko.computed(function() {
+        // Only show if valid
+        if (self.is_valid()) {
+            return self.first(); 
+        } else {
+            return "";
+        }
+    });
+    
+    self.benefit_selection = ko.observable(null);
+}
+
+function Benefit(face_value, weekly_premium) {
+    var self = this;
+    
+    self.weekly_premium = weekly_premium;
+    self.face_value = face_value
+}
+
+ko.bindingHandlers.slideDownIf = {
+    init: function(element, value_accessor) {
+        var val = ko.unwrap(value_accessor());
+        $(element).toggle(val);
+    },
+    update: function(element, value_accessor) {
+        // value should be a boolean
+        var val = ko.unwrap(value_accessor());
+        if (val) {
+            $(element).slideDown(400);
+        } else {
+            $(element).slideUp(400);
+        }
+    }
+};
+
+
+
+
+
+
+function _init_rate_form() {
     // Bind event handlers
     get_rate_button().on("click", handle_button_click);
     
@@ -215,6 +348,144 @@ function rate_table_showing() {
     return get_rate_table().is(":visible");
 }
 
+
+function init_validation() {
+    $(document).on('change', 'input:radio[id^="eeOwner-"]', function () {
+        var other = $('#eeOtherOwner');
+        var inp = $('#eeOtherOwnerName').get(0);
+        var inpss = $('#eeOtherOwnerSSN').get(0);
+
+        if (other.hasClass('hide')) {
+            other.fadeIn("medium");
+            other.removeClass('hide');
+            inp.removeAttribute('disabled');
+            inp.placeholder = "Full Name";
+            inpss.removeAttribute('disabled');
+        } else {
+            $('#eeOtherOwner').addClass('hide');
+            inp.setAttribute('disabled', 'disabled');
+            inp.placeholder = "employee is policy owner";
+            inp.value = "";
+            inpss.setAttribute('disabled', 'disabled');
+            inpss.value = "";
+        }
+    });
+
+    $('[data-rel=tooltip]').tooltip();
+
+    var $validation = true;
+    $('#fuelux-wizard').ace_wizard().on('change', function (e, info) {
+        if (info.step == 2 && $validation) {
+            if (!$('#step2-form').valid()) return false;
+        }
+    }).on('finished', function (e) {
+        bootbox.dialog({
+            message: "Thank you! Your information was successfully saved!",
+            buttons: {
+                "success": {
+                    "label": "OK",
+                    "className": "btn-sm btn-primary"
+                }
+            }
+        });
+    }).on('stepclick', function (e) {
+        //return false;//prevent clicking on steps
+    });
+
+
+    //documentation : http://docs.jquery.com/Plugins/Validation/validate
+
+
+    $.mask.definitions['~'] = '[+-]';
+    $('#phone').mask('(999) 999-9999');
+    $('#eeDOB').mask('99/99/1999');
+    $('.input-mask-date').mask('99/99/9999');
+    $('.input-mask-ssn').mask('999-99-9999');
+    $('.input-mask-zip').mask('99999');
+
+
+    jQuery.validator.addMethod("phone", function (value, element) {
+        return this.optional(element) || /^\(\d{3}\) \d{3}\-\d{4}( x\d{1,6})?$/.test(value);
+    }, "Enter a valid phone number.");
+
+    $('#step2-form').validate({
+        errorElement: 'div',
+        errorClass: 'help-block',
+        focusInvalid: false,
+        rules: {
+            email: {
+                required: true,
+                email: true
+            },
+            eeFName: {
+                required: true
+            },
+            eeLName: {
+                required: true
+            },
+            phone: {
+                required: true,
+                phone: 'required'
+            },
+            comment: {
+                required: true
+            },
+            state: {
+                required: true
+            },
+            gender: 'required',
+            agree: 'required'
+        },
+
+        messages: {
+            email: {
+                required: "Please provide a valid email.",
+                email: "Please provide a valid email."
+            },
+            subscription: "Please choose at least one option",
+            gender: "Please choose gender",
+            agree: "Please confirm your agreement"
+        },
+
+        
+
+        highlight: function (e) {
+            $(e).closest('.form-group').removeClass('has-info').addClass('has-error');
+        },
+
+        success: function (e) {
+            $(e).closest('.form-group').removeClass('has-error').addClass('has-info');
+            $(e).remove();
+        },
+
+        errorPlacement: function (error, element) {
+            if (element.is(':checkbox') || element.is(':radio')) {
+                var controls = element.closest('div[class*="col-"]');
+                if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
+                else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
+            }
+            else if (element.is('.select2')) {
+                error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
+            }
+            else if (element.is('.chosen-select')) {
+                error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
+            }
+            else error.insertAfter(element.parent());
+        },
+
+        submitHandler: function (form) {
+        },
+        
+        invalidHandler: function (event, validator) { 
+            // display error alert on form submit   
+            $('.alert-danger', $('.login-form')).show();
+        }
+        
+    });
+	
+}
+
+
 function handle_remote_error() {
     console.error("Server-side error");    
 }
@@ -229,5 +500,6 @@ function ajax_post(url, data, on_success, on_error) {
         method: "POST"
     });
 }
+
 
 

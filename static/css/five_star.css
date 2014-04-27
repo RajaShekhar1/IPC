@@ -1,4 +1,10 @@
 
-.pricing-table-header li, .pricing-table li {
+
+.pricing-span-header li, .pricing-table li {
     height: 60px;
+}
+
+.pricing-span-header li {
+    padding: 20px 10px;
+    font-size: 14px;
 }
