@@ -5,7 +5,7 @@ function init_rate_form() {
     var benefits_ui = new BenefitsUI(new FPPTIProduct());
     
     // Allow other JS functions to access the ui object
-    window.benefits_ui = benefits_ui
+    window.benefits_ui = benefits_ui;
     
     ko.applyBindings(benefits_ui);
 }
@@ -102,7 +102,8 @@ function BenefitsUI(product) {
     // Recommended and selected benefits
     self.is_recommended_table_visible = ko.observable(false);
     self.can_display_rates_table = ko.computed(function() {
-        return false;
+        // TODO: validation
+        return true;
     });
     self.show_recommendations_table = function() {
         if (!self.can_display_rates_table()) {
@@ -633,7 +634,7 @@ function init_validation() {
     
     $('[data-rel=tooltip]').tooltip();
 
-    var validation_debug = false;
+    var validation_debug = true;
     $('#fuelux-wizard').ace_wizard().on('change', function (e, info) {
         if (validation_debug) {
             return true;
@@ -677,7 +678,7 @@ function init_validation() {
         return this.optional(element) || /^\(\d{3}\) \d{3}\-\d{4}( x\d{1,6})?$/.test(value);
     }, "Enter a valid phone number.");
     
-    
+    /*
     $('#step1-form').validate({
         errorElement: 'div',
         errorClass: 'help-block',
@@ -687,7 +688,7 @@ function init_validation() {
             }
         }
     });
-    
+    */
     
     $('#step2-form').validate({
         errorElement: 'div',
