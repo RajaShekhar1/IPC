@@ -2,18 +2,6 @@
 {% extends "base.html" %}
 {% block title %} - Login{% endblock %}
 
-{% block head %}
- {{ super() }}
-<!-- page-specific header data -->
-    
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-<!-- ace styles -->
-<link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
-<link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
-
-{% endblock %}
-
 
 {% block content %}
 
@@ -218,6 +206,20 @@
 	</div><!-- /.signup-box -->
       </div><!-- /.position-relative -->
 
+      <div class="navbar-fixed-top align-right">
+	<br />
+	&nbsp;
+	<a id="btn-login-dark" href="#">Dark</a>
+	&nbsp;
+	<span class="blue">/</span>
+	&nbsp;
+	<a id="btn-login-blur" href="#">Blur</a>
+	&nbsp;
+	<span class="blue">/</span>
+	&nbsp;
+	<a id="btn-login-light" href="#">Light</a>
+	&nbsp; &nbsp; &nbsp;
+      </div>
     </div>
   </div><!-- /.col -->
 </div><!-- /.row -->
@@ -229,17 +231,35 @@
 
 <!-- page-specific footer scripts -->
 
-  <!-- inline scripts related to this page -->
-  <script type="text/javascript">
-    jQuery(function($) {
-			 $(document).on('click', '.toolbar a[data-target]', function(e) {
-				e.preventDefault();
-				var target = $(this).data('target');
-				$('.widget-box.visible').removeClass('visible');//hide others
-				$(target).addClass('visible');//show target
-			 });
-			});
-      
+<!-- basic scripts -->
+
+<!--[if !IE]> -->
+<script type="text/javascript">
+  window.jQuery || document.write("<script src='../assets/js/jquery.min.js'>"+"<"+"/script>");
   </script>
+
+  <!-- <![endif]-->
+
+  <!--[if IE]>
+      <script type="text/javascript">
+	window.jQuery || document.write("<script src='../assets/js/jquery1x.min.js'>"+"<"+"/script>");
+	</script>
+	<![endif]-->
+  <script type="text/javascript">
+    if('ontouchstart' in document.documentElement) document.write("<script src='../assets/js/jquery.mobile.custom.min.js'>"+"<"+"/script>");
+    </script>
+
+    <!-- inline scripts related to this page -->
+    <script type="text/javascript">
+      jQuery(function($) {
+      $(document).on('click', '.toolbar a[data-target]', function(e) {
+      e.preventDefault();
+      var target = $(this).data('target');
+      $('.widget-box.visible').removeClass('visible');//hide others
+      $(target).addClass('visible');//show target
+      });
+      });
+      
+    </script>
     
 {% endblock %}
