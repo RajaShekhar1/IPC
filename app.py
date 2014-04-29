@@ -119,52 +119,14 @@ def rates():
     spouse_birthdate = request.form.get('spouse_birthdate', None)
     num_children = int(request.form.get('num_children', 0))
     
-    emp_age = get_age_from_birthday(employee_birthdate)
-    sp_age = get_age_from_birthday(spouse_birthdate) if spouse_birthdate else None
+    employee_age = get_age_from_birthday(employee_birthdate)
+    spouse_age = get_age_from_birthday(spouse_birthdate) if spouse_birthdate else None
     
-    good_recommendation = {
-        'employee': 50000,
-        'spouse': 50000,
-        'children':10000,
-    }
-    better_recommendation = {
-        'employee': 100000,
-        'spouse': 100000,
-        'children': 10000,
-    }
-    best_recommendation = {
-        'employee': 150000,
-        'spouse': 150000,
-        'children': 20000,
-    }
-    
-    employee_rates = {}
-    if emp_age:
-        employee_rates = {
-            'weekly_bypremium': product.get_coverages_by_weekly_premium(emp_age),
-            'weekly_byface': product.get_weekly_premiums_by_coverage(emp_age),
-        }
-    spouse_rates = {}
-    if sp_age:
-        spouse_rates = {
-            'weekly_bypremium': product.get_coverages_by_weekly_premium(sp_age),
-            'weekly_byface': product.get_weekly_premiums_by_coverage(sp_age),
-        }
-    
-    children_rates = {}
-    if num_children > 0:
-        children_rates = {
-            "weekly_byface": product.get_weekly_child_premiums(),
-        }
     response = {
-        'employee_rates': employee_rates,
-        'spouse_rates': spouse_rates,
-        'children_rates': children_rates,
-        'recommendations': {
-            'good':good_recommendation,
-            'better':better_recommendation,
-            'best': best_recommendation,
-        }
+        'employee_rates': product.get_employee_rates(employee_age),
+        'spouse_rates': product.get_spouse_rates(spouse_age),
+        'children_rates': product.get_children_rates(num_children),
+        'recommendations': product.get_recommended_coverages(employee_age, spouse_age, num_children),
     }
     
     import pprint

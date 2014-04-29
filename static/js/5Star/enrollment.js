@@ -411,7 +411,7 @@ function NullBenefitOption() {
     self.face_value = 0;
     
     self.format_weekly_premium = function() {
-        return "- no benefit -";
+        return "";
     };
     self.format_face_value = function() {
         return "- no benefit -";

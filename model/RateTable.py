@@ -58,17 +58,90 @@ def build_bypremium_table(csv_path):
 
     return table, weekly_premium_options
 
-
-class Product(object):
-    pass
-
-
-class FFPTerminalIllnessProduct(Product):
-    # Recommended rates - Good, Better, Best
-    def get_recommended_rates(self, gender, age_band, marital_status, include_spouse, num_children):
+def build_recommendation_table(csv_path):
+    lines = [l for l in csv.DictReader(open(csv_path, 'rU'))]
+    
+    EMP_COLUMNS = dict(good='emp1_cov', better='emp2_cov', best='emp3_cov')
+    SPOUSE_COLUMNS = dict(good='sp1_cov', better='sp2_cov', best='sp3_cov')
+    CHILDREN_COLUMNS = dict(good='ch1_cov', better='ch2_cov', best='ch3_cov')
+    
+    table = {}
+    for line in lines:
+        age = int(line['age'])
+        table[age] = {
+            'good': {
+                'employee': line.get(EMP_COLUMNS['good']),
+                'spouse': line.get(SPOUSE_COLUMNS['good']),
+                'children': line.get(CHILDREN_COLUMNS['good']),
+            },
+            'better': {
+                'employee': line.get(EMP_COLUMNS['better']),
+                'spouse': line.get(SPOUSE_COLUMNS['better']),
+                'children': line.get(CHILDREN_COLUMNS['better']),
+            },
+            'best': {
+                'employee': line.get(EMP_COLUMNS['best']),
+                'spouse': line.get(SPOUSE_COLUMNS['best']),
+                'children': line.get(CHILDREN_COLUMNS['best']),
+            },
+        }
         
-        pass
+    return table
 
+
+class FFPTerminalIllnessProduct(object):
+    
+    def get_employee_rates(self, emp_age):
+        if emp_age:
+            return {
+                'weekly_bypremium': self.get_coverages_by_weekly_premium(emp_age),
+                'weekly_byface': self.get_weekly_premiums_by_coverage(emp_age),
+            }
+        else:
+            return {}
+    
+    def get_spouse_rates(self, spouse_age):
+        if spouse_age:
+            spouse_rates = {
+                'weekly_bypremium': self.get_coverages_by_weekly_premium(spouse_age),
+                'weekly_byface': self.get_weekly_premiums_by_coverage(spouse_age),
+            }
+        else:
+            return {}
+        
+    def get_children_rates(self, num_children):
+        if num_children > 0:
+            return {
+                "weekly_byface": self.get_weekly_child_premiums(),
+            }
+        else:
+            return {}
+    
+    # Recommended rates - Good, Better, Best
+    def get_recommended_coverages(self, employee_age, spouse_age, num_children):
+        # Just uses employee_age for now
+        return self.recommendation_lookup.get(employee_age, self.get_default_recommendation())
+        
+    def get_default_recommendation(self):
+        # In case the lookup table is incomplete
+        return {
+            'good': {
+                'employee': 50000,
+                'spouse': 50000,
+                'children': None,
+            },
+            'better': {
+                'employee': 100000,
+                'spouse': 100000,
+                'children': 10000,
+            },
+            'best': {
+                'employee': 150000,
+                'spouse': 150000,
+                'children': 20000,
+            },
+        }
+    
     def get_weekly_premiums_by_coverage(self, age):
         premiums = []
         for coverage in self.weekly_coverage_options:
@@ -102,7 +175,7 @@ class FFPTerminalIllnessProduct(Product):
     weekly_by_premium_lookup, weekly_premium_options = build_bypremium_table("model/rates/FPPTI-bypremium.csv")
     weekly_by_coverage_lookup, weekly_coverage_options = build_byface_table("model/rates/FPPTI-byface.csv")
 
-
+    recommendation_lookup = build_recommendation_table("model/rates/FPPTI_suggested_rates.csv")
 
 
 
