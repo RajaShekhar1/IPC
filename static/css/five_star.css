@@ -8,3 +8,29 @@
     padding: 20px 10px;
     font-size: 14px;
 }
+.pricing-span .customize select {
+    width: 100%;
+    font-size: 85%;
+}
+
+.pricing-box-small-no-hover:hover {
+    /* Need to simulate the look without the hover effect*/
+    margin-left: -2px;
+    box-shadow: none;
+    -webkit-transform: none;
+    -ms-transform: none;
+    transform: none;
+    z-index: 10;
+}
+
+.widget-header>:first-child {
+    line-height: 24px;
+}
+
+.monthly_summary {
+    text-align: center;
+    margin: 2em;
+    font-size: 16pt;
+    line-height: 200%;
+    font-style: oblique;
+}

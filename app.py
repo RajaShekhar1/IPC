@@ -1,26 +1,24 @@
-import os, re, json
+import os
+from logging import getLogger
 from flask import (
-    Flask, 
-    render_template, 
-    send_from_directory, 
-    url_for, 
-    flash, 
-    redirect, 
-    request, 
-    abort,
+    Flask,
+    render_template,
+    send_from_directory,
+    url_for,
+    flash,
+    redirect,
+    request,
     jsonify,
 )
-from flask_wtf import Form
+
 from forms import LoginForm, UserEmailForm, UserDirectForm
 from docu_embed import signing_sample
 from docu_console import console_sample
 from docu_email import emailing_sample
 
 from model.RateTable import (
+    get_product,
     get_age_from_birthday,
-    get_weekly_premiums_by_coverage,
-    get_coverages_by_weekly_premium,
-    get_weekly_child_premiums,
 )
 
 # initialization
@@ -115,36 +113,63 @@ def rates():
     #    if required_param not in request.form:
     #        abort(400)
     
+    product_type = request.form['product_type']
+    product = get_product(product_type)
     employee_birthdate = request.form['employee_birthdate']
     spouse_birthdate = request.form.get('spouse_birthdate', None)
     num_children = int(request.form.get('num_children', 0))
     
     emp_age = get_age_from_birthday(employee_birthdate)
     sp_age = get_age_from_birthday(spouse_birthdate) if spouse_birthdate else None
-    print("%s %s"%(emp_age, sp_age))
-    employee_rates = {
-        'weekly_bypremium': get_coverages_by_weekly_premium(emp_age),
-        'weekly_byface': get_weekly_premiums_by_coverage(emp_age),
+    
+    good_recommendation = {
+        'employee': 50000,
+        'spouse': 50000,
+        'children':10000,
     }
+    better_recommendation = {
+        'employee': 100000,
+        'spouse': 100000,
+        'children': 10000,
+    }
+    best_recommendation = {
+        'employee': 150000,
+        'spouse': 150000,
+        'children': 20000,
+    }
+    
+    employee_rates = {}
+    if emp_age:
+        employee_rates = {
+            'weekly_bypremium': product.get_coverages_by_weekly_premium(emp_age),
+            'weekly_byface': product.get_weekly_premiums_by_coverage(emp_age),
+        }
     spouse_rates = {}
     if sp_age:
         spouse_rates = {
-            'weekly_bypremium': get_coverages_by_weekly_premium(sp_age),
-            'weekly_byface': get_weekly_premiums_by_coverage(sp_age),
+            'weekly_bypremium': product.get_coverages_by_weekly_premium(sp_age),
+            'weekly_byface': product.get_weekly_premiums_by_coverage(sp_age),
         }
     
     children_rates = {}
     if num_children > 0:
         children_rates = {
-            "weekly_premiums":get_weekly_child_premiums()
+            "weekly_byface": product.get_weekly_child_premiums(),
         }
     response = {
         'employee_rates': employee_rates,
         'spouse_rates': spouse_rates,
         'children_rates': children_rates,
+        'recommendations': {
+            'good':good_recommendation,
+            'better':better_recommendation,
+            'best': best_recommendation,
+        }
     }
+    
     import pprint
-    pprint.pprint(response)
+    app.logger.debug(pprint.pformat(response))
+    
     return jsonify(**response)
     
 

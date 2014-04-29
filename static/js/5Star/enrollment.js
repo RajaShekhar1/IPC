@@ -1,8 +1,13 @@
 
 
 function init_rate_form() {
-    var ui = new BenefitsUI();
-    ko.applyBindings(ui);
+    
+    var benefits_ui = new BenefitsUI(new FPPTIProduct());
+    
+    // Allow other JS functions to access the ui object
+    window.benefits_ui = benefits_ui
+    
+    ko.applyBindings(benefits_ui);
 }
 
 // Root model of the Benefits wizard User Interface
@@ -11,20 +16,23 @@ function BenefitsUI(product) {
     
     self.insurance_product = product;
     
+    // Employee 
     self.employee = ko.observable(new Beneficiary({}));
-    
-    // Marital and Spouse info
     var MS_MARRIED = 'Married',
         MS_UNMARRIED = 'Unmarried';
     self.marital_statuses = [MS_MARRIED, MS_UNMARRIED];
-    self.employee.marital_status = ko.observable(null);
-    
+    self.employee_marital_status = ko.observable(null);
     self.should_show_spouse = ko.computed(function() {
-       return self.employee.marital_status() == MS_MARRIED; 
+       return self.employee_marital_status() == MS_MARRIED; 
     });
+    
+    // Spouse info
     self.spouse = ko.observable(new Beneficiary({}));
     self.show_spouse_name = ko.computed(function() {
         return (self.spouse().is_valid()) ? self.spouse().name() : "";
+    });
+    self.should_include_spouse_in_plan = ko.computed(function() {
+        return self.should_show_spouse() && self.spouse().is_valid();
     });
     
     // Children
@@ -34,13 +42,18 @@ function BenefitsUI(product) {
         new Beneficiary({}),
         new Beneficiary({})
     ]);
+    
     self.show_children_names = ko.computed(function() {
         if (self.should_include_children()) {
             var valid_children = self.get_valid_children();
             var firstnames = $.map(valid_children, function(child) {
                 return child.first();
             });
-            return firstnames.join(", ") + " (Each)";
+            var names = firstnames.join(", ");
+            if (valid_children.length > 1) {
+                names += " (Each)";
+            }
+            return names;
         } else {
             return "";
         } 
@@ -56,7 +69,10 @@ function BenefitsUI(product) {
     };
     
     self.add_child = function() {
-        self.children.push(new Beneficiary({}));  
+        var child_beneficiary = new Beneficiary({});
+        self.children.push(child_beneficiary);
+        // Re-apply jquery date masks
+        $('.input-mask-date').mask('99/99/9999')
     };
     self.rendered_child = function(element) {
         $(element).hide().slideDown(400);
@@ -64,18 +80,224 @@ function BenefitsUI(product) {
     self.removing_child = function(element) {
         $(element).slideUp(function() {$(element).remove();});
     };
+    self.has_valid_children = ko.computed(function() {
+        return  self.get_valid_children().length > 0;
+    });
+    self.should_include_children_in_plan = ko.computed(function() {
+        return self.should_include_children() && self.has_valid_children();  
+    });
+    
+    // Store the actual benefits for children here, rather 
+    //  than on each child since the benefits are the same
+    self.child_benefits = ko.observable(new Beneficiary({}));
+    self.get_children_options = ko.computed(function() {
+        if (!self.should_include_children_in_plan()) {
+            return [];
+        }
+        
+        // return the benefit options of the any child
+        return self.child_benefits().all_options();
+    });
     
     // Recommended and selected benefits
     self.is_recommended_table_visible = ko.observable(false);
+    self.can_display_rates_table = ko.computed(function() {
+        return false;
+    });
     self.show_recommendations_table = function() {
+        if (!self.can_display_rates_table()) {
+            return;
+        }
         self.is_recommended_table_visible(true);
+        self.refresh_rate_table();
     };
+    
+    self.update_rate_table = function() {
+        if (!self.is_recommended_table_visible()) {
+            return;
+        }
+        self.refresh_rate_table();
+    };
+    
+    self.refresh_rate_table = function() {
+        ajax_post(
+            "/get_rates", 
+            self.build_rate_parameters(), 
+            self.show_updated_rates, 
+            handle_remote_error
+        );
+    };
+    
+    self.select_recommended_benefit = function(recommendations) {
+        
+        self.selected_recommendation(recommendations);
+        
+        // Reset custom options
+        self.employee().selected_custom_option(null);
+        self.spouse().selected_custom_option(null);
+        self.child_benefits().selected_custom_option(null);
+        
+        // Use the recommended options for the selected plan
+        var new_plan = self.get_new_plan_from_recommendations(recommendations);
+        self.selected_plan(new_plan);
+    };
+    
+    self.get_new_plan_from_recommendations = function(recommendations){
+        var benefits_package = new BenefitsPackage(self, recommendations.name());
+        benefits_package.employee_recommendation(recommendations.employee_recommendation());
+        benefits_package.spouse_recommendation(recommendations.spouse_recommendation());
+        benefits_package.children_recommendation(recommendations.children_recommendation());
+        return benefits_package;
+    };
+    
+    self.build_rate_parameters = function() {
+        return {
+            product_type: self.insurance_product.product_type,
+            employee_first: self.employee().first(),
+            employee_last: self.employee().last(),
+            employee_birthdate: self.employee().birthdate(),
+            spouse_first: self.spouse().first(),
+            spouse_last: self.spouse().last(),
+            spouse_birthdate: self.spouse().birthdate(),
+            num_children: self.children().length
+        };
+    };
+    
+    self.recommendations = {
+        good: new BenefitsPackage(self, 'Good'),
+        better: new BenefitsPackage(self, 'Better'),
+        best: new BenefitsPackage(self, 'Best')
+    };
+    
+    self.selected_plan = ko.observable(new NullBenefitsPackage());
+    self.selected_recommendation = ko.observable(null);
+    
+    // When a custom setting is selected
+    self.apply_selected_customization = function() {
+        var new_plan;
+        if (self.selected_recommendation()) {
+            // Apply this first
+            new_plan = self.get_new_plan_from_recommendations(self.selected_recommendation());
+        } else {
+            new_plan = new BenefitsPackage(self, "Custom");
+        }
+        
+        if (self.employee().is_valid()) {
+            var benefit = self.employee().selected_custom_option();
+            if (benefit) {
+                new_plan.name("Custom");
+                new_plan.employee_recommendation(new Recommendation(benefit));
+            }
+        }
+        
+        if (self.should_include_spouse_in_plan()) {
+            benefit = self.spouse().selected_custom_option();
+            if (benefit) {
+                new_plan.name("Custom");
+                new_plan.spouse_recommendation(new Recommendation(benefit));
+            }
+        }
+        
+        if (self.should_include_children_in_plan()) {
+            benefit = self.child_benefits().selected_custom_option();
+            if (benefit) {
+                new_plan.name("Custom");
+                new_plan.children_recommendation(new Recommendation(benefit));
+            }
+        }
+
+        // set the new plan
+        self.selected_plan(new_plan);        
+    };
+    
+    // Update rates when certain values change
+    var watch_data_values = [
+        self.employee().birthdate,
+        self.spouse().birthdate,
+        self.children,
+        self.should_include_spouse_in_plan,
+        self.should_include_children_in_plan
+    ];
+    $.each(watch_data_values, function() {
+        this.subscribe(self.update_rate_table);
+    });
+    
+    
+    self.show_updated_rates = function(data) {
+        self.parse_benefit_options(self.employee(), data.employee_rates);
+        self.parse_benefit_options(self.spouse(), data.spouse_rates);
+        // Reset child rates
+        self.child_benefits(new Beneficiary({}));
+        self.parse_benefit_options(self.child_benefits(), data.children_rates);
+        
+        if (data.recommendations) {
+            self.recommendations.good.set_recommendations(data.recommendations['good']);
+            self.recommendations.better.set_recommendations(data.recommendations['better']);
+            self.recommendations.best.set_recommendations(data.recommendations['best']);
+        }
+        
+        // Update selection with new data
+        if (self.selected_plan().is_valid()) {
+            self.apply_selected_customization();
+        }
+        
+        // Or, force reselection of plan
+        //self.selected_plan(new NullBenefitsPackage());
+    };
+    
+    self.parse_benefit_options = function(beneficiary, rates) {
+        if (rates.weekly_byface) {
+            beneficiary.benefit_options.by_coverage($.map(rates.weekly_byface, function(rate) {
+                return new BenefitOption({
+                    is_by_face: true,
+                    face_value: rate.coverage,
+                    weekly_premium: rate.premium
+                });
+            }));
+        }
+        
+        if (rates.weekly_bypremium) {
+            beneficiary.benefit_options.by_premium($.map(rates.weekly_bypremium, function(rate) {
+                return new BenefitOption({
+                    is_by_face: false,
+                    face_value: rate.coverage,
+                    weekly_premium: rate.premium
+                });
+            }));
+        }
+    };
+    
+    self.formatted_monthly_premium = ko.computed(function() {
+        return self.selected_plan().formatted_monthly_premium();
+    });
+    
+    self.lose_input_focus = function(data, event) {
+        var element = $(event.target);
+        element.blur();
+    };
+    
+    self.is_form_valid = function() {
+        return (self.selected_plan().is_valid()); 
+    }
 }
 
-function Product(product_type) {
+
+function FPPTIProduct() {
     var self = this;
     
-    self.product_type = product_type;
+    self.product_type = "FPPTI";
+    
+    self.is_valid_employee_age = function(age) {
+        return (age >= 18 && age <= 70);
+    };
+    
+    self.is_valid_spouse_age = function(age) {
+        return (age >= 18 && age <= 70);
+    };
+    
+    self.is_valid_child_age = function(age) {
+        return (age >= 0 && age <= 23);
+    }
 }
 
 function Beneficiary(options) {
@@ -85,13 +307,13 @@ function Beneficiary(options) {
     self.last = ko.observable(options.last || "");
     self.birthdate = ko.observable(options.birthdate || null);
     
-    self.is_valid = function() {
+    self.is_valid = ko.computed(function() {
         return (
             $.trim(self.first()) != "" &&
             $.trim(self.last()) != "" &&
             $.trim(self.birthdate()) != ""
         );  
-    };
+    });
     
     self.name = ko.computed(function() {
         // Only show if valid
@@ -102,15 +324,237 @@ function Beneficiary(options) {
         }
     });
     
-    self.benefit_selection = ko.observable(null);
+    self.get_age = function() {
+        var bd = moment(self.birthdate, "MM/DD/YYYY");
+        if (bd.isValid()) {
+            return moment().diff(birthdate, "years");  
+        } else {
+            return null;
+        }
+    };
+    
+    self.benefit_options = {
+        by_coverage: ko.observableArray([]),
+        by_premium: ko.observableArray([])
+    };
+    self.all_options = ko.computed(function() {
+        var options = [new NullBenefitOption()];
+        // Extends an array with another array
+        $.merge(options, self.benefit_options.by_premium());
+        $.merge(options, self.benefit_options.by_coverage());
+        return options;
+    });
+    
+    self.find_recommended_coverage_benefit = function(desired_face_value) {
+        var employee_benefit = new BenefitOption({});
+        $.each(self.benefit_options.by_coverage(), function() {
+            if (this.face_value == desired_face_value) {
+                employee_benefit = this;
+                return false;
+            } 
+        });
+        return employee_benefit;
+    };
+    
+    self.update_selected_option = function(data, event) {
+        var selected_option = $(event.target).find(":selected")[0];
+        var benefit = selected_option['data-item'];
+        
+        if (benefit) {
+            self.selected_custom_option(benefit);
+        }
+    };
+    
+    // We need to attach the benefit to each option element for later use 
+    //  this is required due to the optionsValue binding
+    self.attach_benefit = function(option, item) {
+        option['data-item'] = item;
+    };
+    
+    self.selected_custom_option = ko.observable(new NullBenefitOption());
 }
 
-function Benefit(face_value, weekly_premium) {
+function BenefitOption(options) {
     var self = this;
     
-    self.weekly_premium = weekly_premium;
-    self.face_value = face_value
+    self.is_by_face = options.is_by_face;
+    self.weekly_premium = options.weekly_premium;
+    self.face_value = options.face_value;
+    
+    self.format_weekly_premium = function() {
+        return format_premium_value(self.weekly_premium) + " weekly";
+    };
+    self.format_face_value = function() {
+        return format_face_value(self.face_value);
+    };
+    self.format_face_option = function() {
+        return self.format_face_value() + " face amount";
+    };
+    self.format_for_dropdown = function() {
+        if (self.is_by_face) {
+            return self.format_face_option();
+        } else {
+            return self.format_weekly_premium();
+        }
+    }
 }
+BenefitOption.display_benefit_option = function(item) {
+    return item.format_for_dropdown();
+};
+
+function NullBenefitOption() {
+    var self = this;
+    
+    self.is_by_face = true;
+    self.weekly_premium = 0;
+    self.face_value = 0;
+    
+    self.format_weekly_premium = function() {
+        return "- no benefit -";
+    };
+    self.format_face_value = function() {
+        return "- no benefit -";
+    };
+    self.format_for_dropdown = function() {
+        return "- no benefit -";  
+    };
+}
+
+
+function BenefitsPackage(root, name) {
+    var self = this;
+    self.root = root;
+    self.name = ko.observable(name);
+    
+    self.employee_recommendation = ko.observable(new NullRecommendation());
+    self.spouse_recommendation = ko.observable(new NullRecommendation());
+    self.children_recommendation = ko.observable(new NullRecommendation());
+    
+    self.set_recommendations = function(recommendations) {
+        if ('employee' in recommendations && self.root.employee().is_valid()) {
+            var benefit = self.root.employee().find_recommended_coverage_benefit(recommendations.employee);
+            self.employee_recommendation(new Recommendation(benefit, recommendations.employee));
+        } else {
+            self.employee_recommendation(new NullRecommendation());
+        }
+        
+        if ('spouse' in recommendations && self.root.should_include_spouse_in_plan()) {
+            var benefit = self.root.spouse().find_recommended_coverage_benefit(recommendations.spouse);
+            self.spouse_recommendation(new Recommendation(benefit, recommendations.spouse));
+        } else {
+            self.spouse_recommendation(new NullRecommendation());
+        }
+        
+        if ('children' in recommendations && self.root.should_include_children_in_plan()) {
+            var benefit = self.root.child_benefits().find_recommended_coverage_benefit(recommendations.children);
+            self.children_recommendation(new ChildrenRecommendation(benefit, recommendations.children));
+        } else {
+            self.children_recommendation(new NullRecommendation());
+        }
+    };
+    
+    
+    self.get_package_benefits = function() {
+        var benefits = [
+            self.employee_recommendation().recommended_benefit,
+            self.spouse_recommendation().recommended_benefit
+        ];
+        if (self.children_recommendation().recommended_benefit) {
+            for (var i = 0; i < self.root.get_valid_children().length; i++) {
+                benefits.push(self.children_recommendation().recommended_benefit);
+            }
+        }
+        return benefits;
+    };
+    
+    self.get_total_weekly_premium = ko.computed(function() {
+        var benefits = self.get_package_benefits();
+        
+        // Sum the benefit weekly premiums
+        var total = 0.0;
+        $.each(benefits, function() {
+            if (this.weekly_premium != null) {
+                total += this.weekly_premium;
+            }
+        });
+        return total;
+    });
+    
+    
+    self.formatted_total = function() {
+        if (self.get_total_weekly_premium() > 0.0) {
+            return format_premium_value(self.get_total_weekly_premium());
+        } else {
+            return "";
+        }
+    };
+    
+    self.get_total_monthly_premium = ko.computed(function() {
+        var benefits = self.get_package_benefits();
+        var total = 0.0;
+        $.each(benefits, function() {
+            if (this.weekly_premium != null) {
+                total += self.get_monthly_premium(this.weekly_premium);    
+            } 
+        });
+        return total;
+    });
+    self.get_monthly_premium = function(weekly_premium) {
+        return Math.round((weekly_premium*100 * 52) / 12)/100.0;
+    };
+    self.formatted_monthly_premium = ko.computed(function() {
+        return format_premium_value(self.get_total_monthly_premium());   
+    });
+    self.is_valid = function() {return true};
+}
+function NullBenefitsPackage() {
+    var self = this;
+    
+    self.employee_recommendation = ko.observable(new NullRecommendation());
+    self.spouse_recommendation = ko.observable(new NullRecommendation());
+    self.children_recommendation = ko.observable(new NullRecommendation());
+    self.get_total_weekly_premium = function() { return null;};
+    self.formatted_total = function() { return "";};
+    self.get_total_monthly_premium = function(){return 0;};
+    self.formatted_monthly_premium = function() { return "";};
+    self.is_valid = function () {return false};
+}
+
+function Recommendation(recommended_benefit) {
+    var self = this;
+    self.recommended_benefit = recommended_benefit;
+    
+    self.is_valid = function() {
+        return true;
+    };
+    
+    self.format_weekly_premium = function() {
+        return self.recommended_benefit.format_weekly_premium()
+    };
+    self.format_face_value = function() {
+        return self.recommended_benefit.format_face_value();
+    };
+}
+function ChildrenRecommendation(recommended_benefit, recommended_amount) {
+    var self = this;
+    self.recommended_benefit = recommended_benefit;
+    self.format_weekly_premium = function() {
+        return self.recommended_benefit.format_weekly_premium() + " (each)";
+    };
+    self.is_valid = function() {
+        return true;
+    };
+    self.format_face_value = function() {
+        return self.recommended_benefit.format_face_value();
+    };
+}
+
+function NullRecommendation() {
+    var self = this;
+    self.is_valid = function() {return false;}
+    self.recommended_benefit = {weekly_premium: null};
+}
+
 
 ko.bindingHandlers.slideDownIf = {
     init: function(element, value_accessor) {
@@ -129,148 +573,6 @@ ko.bindingHandlers.slideDownIf = {
 };
 
 
-
-
-
-
-function _init_rate_form() {
-    // Bind event handlers
-    get_rate_button().on("click", handle_button_click);
-    
-    var watch_elements = [
-        $("#eeDOB"),
-        $("#spDOB"),
-        $("#qtyChildren"),
-        $("#eeFName"),
-        $("#spFName")
-    ];
-    $.each(watch_elements, function() {
-        this.on('change', update_rates_if_showing)
-    });
-}
-
-function get_rate_button() {
-    return $("button.show-rates");
-}
-
-function handle_button_click() {
-    //get_rate_button().hide();
-    
-    update_rates();
-}
-
-function update_rates_if_showing() {
-    if (!rate_table_showing()) {
-        return;
-    }
-    update_rates();
-}
-
-function update_rates() {
-    var employee_info = get_employee_info();
-    ajax_post("/get_rates", employee_info, show_rate_comparison_table, handle_remote_error);
-}
-
-
-function get_employee_info() {
-    return {
-        employee_first: get_employee_first(),
-        employee_last: $("#eeLName").val(),
-        employee_birthdate: get_employee_birthday(),
-        spouse_first: get_spouse_first(),
-        spouse_last: $("#spLName").val(),
-        spouse_birthdate: $("#spDOB").val(),
-        num_children: get_num_children()
-    };
-}
-
-function get_employee_first() {
-    return $("#eeFName").val();
-}
-function get_employee_birthday() {
-    return $("#eeDOB").val();
-}
-function get_spouse_first() {
-    return $("#spFName").val();
-}
-function get_num_children() {
-    return $("#qtyChildren").val();
-}
-
-function show_rate_comparison_table(data) {
-    var rate_table_ctn = get_rate_table();
-    var name_ctn = get_rate_table_row_names();
-    
-    var show_spouse = ('weekly_byface' in data.spouse_rates && data.spouse_rates.weekly_byface); 
-    var show_children = get_num_children() > 0;
-    
-    // Names
-    var spacer = "&nbsp;";
-    name_ctn.html("");
-    name_ctn.append("<li>"+(get_employee_first()|| spacer)+"</li>");
-    name_ctn.append("<li>"+(get_spouse_first()|| spacer)+"</li>");
-    var children_label = (get_num_children() > 0)? "Children" : spacer;
-    name_ctn.append("<li class='children'>"+(children_label || "&nbsp")+"</li>");
-    
-    // 50, 100, 150 for good, better, best
-    clear_table(rate_table_ctn);
-    
-    $.each([data.employee_rates, data.spouse_rates], function() {
-        var premium_data = this;
-        
-        $.each([["good", 50000],["better", 100000], ["best",150000]], function() {
-            var rate_type = this[0];
-            var coverage = this[1];
-            var col = rate_table_ctn.find("."+rate_type+" .pricing-table");
-            if (!('weekly_byface' in premium_data && premium_data['weekly_byface'].length > 0)) {
-                col.append("<li></li>");
-                return true;
-            }
-            
-            var premium = get_coverage_premium(premium_data.weekly_byface, coverage);
-            
-            var coverage_fmt = format_face_value(coverage);
-            var premium_fmt = format_premium_value(premium);
-            
-            col.append("<li><strong>"+coverage_fmt+"</strong><br>"+premium_fmt+"</li>");
-        });
-    });
-    
-    // children
-    if (show_children) {
-        var premium_data = data.children_rates.weekly_premiums;
-        $.each([["good", premium_data[0]],["better", premium_data[1]], ["best",premium_data[1]]], function() {
-            var rate_type = this[0];
-            var data = this[1];
-            var premium = data.premium;
-            var coverage = data.coverage;
-            var coverage_fmt = format_face_value(coverage);
-            var premium_fmt = format_premium_value(premium);
-            var col = rate_table_ctn.find("."+rate_type+" .pricing-table");
-            col.append("<li><strong>"+coverage_fmt+"</strong><br>"+premium_fmt+"</li>");
-        });
-    }
-    
-    
-    
-    // Custom rates
-    var custom_col = rate_table_ctn.find(".custom .pricing-table");
-    var item = $("<li></li>");
-    item.append(build_rate_select(data.employee_rates));
-    custom_col.append(item);
-    
-    var spouse_select = (show_spouse)? build_rate_select(data.spouse_rates) : spacer;
-    var item = $("<li></li>");
-    item.append(spouse_select);
-    custom_col.append(item);
-    
-    var children_select = (show_children) ? build_children_select(data.children_rates.weekly_premiums): spacer;
-    var item = $("<li></li>");
-    item.append(children_select);
-    custom_col.append(item);
-    
-    reveal_table()
-}
 
 function format_face_value(val) {
     if (val == null) {
@@ -291,61 +593,19 @@ function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-function clear_table(rate_table_ctn) {
-    rate_table_ctn.find(".pricing-table").html("");
+function handle_remote_error() {
+    alert("Sorry, an error occurred communicating with the server.");    
 }
 
-function build_rate_select(data) {
-    var sel = $("<select></select>");
-    $.each(data.weekly_bypremium, function() {
-        var opt = $("<option></option>").text(format_premium_value(this.premium) + "/week");
-        sel.append(opt);
+function ajax_post(url, data, on_success, on_error) {
+    $.ajax(url, {
+        data: data,
+        error: on_error,
+        success: on_success,
+        // expected return data type
+        dataType: "json",
+        method: "POST"
     });
-    $.each(data.weekly_byface, function() {
-        var opt = $("<option></option>").text(format_face_value(this.coverage));
-        sel.append(opt);
-    });
-    
-    return sel;
-}
-
-function build_children_select(rates) {
-    var sel = $("<select></select>");
-    $.each(rates, function() {
-        var opt = $("<option></option>").text(format_premium_value(this.premium) + "/week for "+
-            format_face_value(this.coverage));
-        sel.append(opt);
-    });
-    return sel;
-}
-
-function get_coverage_premium(data, coverage) {
-    var premium = null;
-    $.each(data, function() {
-        if (this.coverage == coverage) {
-            premium = this.premium;
-            return false;
-        } 
-    });
-    return premium;
-}
-
-
-function get_rate_table() {
-    return $(".recommended-coverage-table");
-}
-function get_rate_table_row_names() {
-    return get_rate_table().find("ul.compare-row-names");
-}
-
-function reveal_table() {
-    if (!rate_table_showing()) {
-        get_rate_table().slideDown();    
-    }
-}
-
-function rate_table_showing() {
-    return get_rate_table().is(":visible");
 }
 
 
@@ -370,14 +630,26 @@ function init_validation() {
             inpss.value = "";
         }
     });
-
+    
     $('[data-rel=tooltip]').tooltip();
 
-    var $validation = true;
+    var validation_debug = false;
     $('#fuelux-wizard').ace_wizard().on('change', function (e, info) {
-        if (info.step == 2 && $validation) {
+        if (validation_debug) {
+            return true;
+        }
+        
+        if (info.step == 1) {
+            if (!window.benefits_ui.is_form_valid()) {
+                return false;
+            } 
+        }
+        if (info.step == 2) {
             if (!$('#step2-form').valid()) return false;
         }
+        
+        return true;
+        
     }).on('finished', function (e) {
         bootbox.dialog({
             message: "Thank you! Your information was successfully saved!",
@@ -389,25 +661,34 @@ function init_validation() {
             }
         });
     }).on('stepclick', function (e) {
-        //return false;//prevent clicking on steps
+        return true; //return false;//prevent clicking on steps
     });
 
 
     //documentation : http://docs.jquery.com/Plugins/Validation/validate
-
-
     $.mask.definitions['~'] = '[+-]';
     $('#phone').mask('(999) 999-9999');
     $('#eeDOB').mask('99/99/1999');
     $('.input-mask-date').mask('99/99/9999');
     $('.input-mask-ssn').mask('999-99-9999');
     $('.input-mask-zip').mask('99999');
-
-
+    
     jQuery.validator.addMethod("phone", function (value, element) {
         return this.optional(element) || /^\(\d{3}\) \d{3}\-\d{4}( x\d{1,6})?$/.test(value);
     }, "Enter a valid phone number.");
-
+    
+    
+    $('#step1-form').validate({
+        errorElement: 'div',
+        errorClass: 'help-block',
+        rules: {
+            eeBenefitDOB: {
+                required: true
+            }
+        }
+    });
+    
+    
     $('#step2-form').validate({
         errorElement: 'div',
         errorClass: 'help-block',
@@ -446,9 +727,7 @@ function init_validation() {
             gender: "Please choose gender",
             agree: "Please confirm your agreement"
         },
-
         
-
         highlight: function (e) {
             $(e).closest('.form-group').removeClass('has-info').addClass('has-error');
         },
@@ -457,7 +736,7 @@ function init_validation() {
             $(e).closest('.form-group').removeClass('has-error').addClass('has-info');
             $(e).remove();
         },
-
+        
         errorPlacement: function (error, element) {
             if (element.is(':checkbox') || element.is(':radio')) {
                 var controls = element.closest('div[class*="col-"]');
@@ -483,22 +762,6 @@ function init_validation() {
         
     });
 	
-}
-
-
-function handle_remote_error() {
-    console.error("Server-side error");    
-}
-
-function ajax_post(url, data, on_success, on_error) {
-    $.ajax(url, {
-        data: data,
-        error: on_error,
-        success: on_success,
-        // expected return data type
-        dataType: "json",
-        method: "POST"
-    });
 }
 
 
