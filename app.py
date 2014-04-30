@@ -9,13 +9,17 @@ from flask import (
     redirect,
     request,
     jsonify,
+    abort,
 )
+from ConfigParser import ConfigParser
 
 from forms import LoginForm, UserEmailForm, UserDirectForm
 from docu_embed import signing_sample
 from docu_console import console_sample
 from docu_email import emailing_sample
 
+from model.Database import Database
+from model.Enrollment import EnrollmentEmail
 from model.RateTable import (
     get_product,
     get_age_from_birthday,
@@ -25,6 +29,20 @@ from model.RateTable import (
 app = Flask(__name__)
 app.config.from_object('config')
 
+
+# Read in config file globally
+config = ConfigParser(defaults={})
+try:
+    config.readfp(open('config.ini'))
+except Exception as e:
+    app.logger.critical("No config.ini found")
+    raise e
+    
+if 'email' not in config.sections():
+    raise Exception("No email section in config file")
+    
+if 'database' not in config.sections():
+    raise Exception("No database section in config file")
 
 """ the init used to be this
 app.config.update(
@@ -113,12 +131,13 @@ def rates():
     #    if required_param not in request.form:
     #        abort(400)
     
-    product_type = request.form['product_type']
-    product = get_product(product_type)
+    # Pull parameters from the request
     employee_birthdate = request.form['employee_birthdate']
     spouse_birthdate = request.form.get('spouse_birthdate', None)
     num_children = int(request.form.get('num_children', 0))
+    product_type = request.form['product_type']
     
+    product = get_product(product_type)
     employee_age = get_age_from_birthday(employee_birthdate)
     spouse_age = get_age_from_birthday(spouse_birthdate) if spouse_birthdate else None
     
@@ -129,10 +148,36 @@ def rates():
         'recommendations': product.get_recommended_coverages(employee_age, spouse_age, num_children),
     }
     
-    import pprint
-    app.logger.debug(pprint.pformat(response))
+    #import pprint
+    #app.logger.debug(pprint.pformat(response))
     
     return jsonify(**response)
+    
+
+@app.route("/send_enrollment_example", methods=['GET','POST'])
+def send_enrollment_email():
+    
+    enrollment_id = request.args['enrollment_id']
+    
+    db = Database(config.get('database', 'connection_string'))
+    enrollment = db.retrieve_enrollment(enrollment_id)
+    if not enrollment:
+        abort(400, "Invalid Enrollment ID")
+    
+    email_config = dict(
+        smtp_server=config.get('email', 'smtp_server'), 
+        smtp_port=config.get('email', 'smtp_port'), 
+        smtp_user=config.get('email', 'smtp_user'), 
+        smtp_password=config.get('email', 'smtp_password'), 
+        from_address=config.get('email', 'from_address'),
+    )
+    
+    EnrollmentEmail(**email_config).send_enrollment_request(enrollment)
+
+@app.route("/enrollment_request", methods=['GET'])
+def handle_email_link():
+    token = request.args['token']
+    db = Database()
     
 
 # launch
