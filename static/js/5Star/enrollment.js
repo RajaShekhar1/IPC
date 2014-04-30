@@ -307,6 +307,8 @@ function Beneficiary(options) {
     self.first = ko.observable(options.first || "");
     self.last = ko.observable(options.last || "");
     self.birthdate = ko.observable(options.birthdate || null);
+    self.ssn = ko.observable(options.ssn || "");
+    self.gender = ko.observable(options.gender || "");
     
     self.is_valid = ko.computed(function() {
         return (
@@ -631,6 +633,29 @@ function init_validation() {
             inpss.value = "";
         }
     });
+
+    $(document).on('change', 'input:radio[id^="spOwner-"]', function () {
+        var other = $('#spOtherOwner');
+        var inp = $('#spOtherOwnerName').get(0);
+        var inpss = $('#spOtherOwnerSSN').get(0);
+
+        if (other.hasClass('hide')) {
+            other.fadeIn("medium");
+            other.removeClass('hide');
+            inp.removeAttribute('disabled');
+            inp.placeholder = "Full Name";
+            inpss.removeAttribute('disabled');
+        } else {
+            $('#spOtherOwner').addClass('hide');
+            inp.setAttribute('disabled', 'disabled');
+            inp.placeholder = "spouse is policy owner";
+            inp.value = "";
+            inpss.setAttribute('disabled', 'disabled');
+            inpss.value = "";
+        }
+    });
+    
+    
     
     $('[data-rel=tooltip]').tooltip();
 

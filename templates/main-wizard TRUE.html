@@ -79,74 +79,6 @@
 		  <form class="form-horizontal" id="step1-form">
         
 		    <div class="step-pane active" id="step1">
-		      
-		      <div class="form-group">
-			<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Select state for this enrollment</label>
-			<div class="col-xs-12 col-sm-9">
-			  
-
-			  <!-- **Zach:  can you put these State options into a js variable or something so we don't have to clutter the source here or load multiple times? 
-			       This is perhaps the 3rd time I'm using this.
-			       -->
-			  <select id="enrollmentState" class="select1" placeholder="Select State...">
-			    <option value="">&nbsp;</option>
-			    <option value="AL">Alabama</option>
-			    <option value="AK">Alaska</option>
-			    <option value="AZ">Arizona</option>
-			    <option value="AR">Arkansas</option>
-			    <option value="CA">California</option>
-			    <option value="CO">Colorado</option>
-			    <option value="CT">Connecticut</option>
-			    <option value="DE">Delaware</option>
-			    <option value="FL">Florida</option>
-			    <option value="GA">Georgia</option>
-			    <option value="HI">Hawaii</option>
-			    <option value="ID">Idaho</option>
-			    <option value="IL">Illinois</option>
-			    <option value="IN">Indiana</option>
-			    <option value="IA">Iowa</option>
-			    <option value="KS">Kansas</option>
-			    <option value="KY">Kentucky</option>
-			    <option value="LA">Louisiana</option>
-			    <option value="ME">Maine</option>
-			    <option value="MD">Maryland</option>
-			    <option value="MA">Massachusetts</option>
-			    <option value="MI">Michigan</option>
-			    <option value="MN">Minnesota</option>
-			    <option value="MS">Mississippi</option>
-			    <option value="MO">Missouri</option>
-			    <option value="MT">Montana</option>
-			    <option value="NE">Nebraska</option>
-			    <option value="NV">Nevada</option>
-			    <option value="NH">New Hampshire</option>
-			    <option value="NJ">New Jersey</option>
-			    <option value="NM">New Mexico</option>
-			    <option value="NY">New York</option>
-			    <option value="NC">North Carolina</option>
-			    <option value="ND">North Dakota</option>
-			    <option value="OH">Ohio</option>
-			    <option value="OK">Oklahoma</option>
-			    <option value="OR">Oregon</option>
-			    <option value="PA">Pennsylvania</option>
-			    <option value="RI">Rhode Island</option>
-			    <option value="SC">South Carolina</option>
-			    <option value="SD">South Dakota</option>
-			    <option value="TN">Tennessee</option>
-			    <option value="TX">Texas</option>
-			    <option value="UT">Utah</option>
-			    <option value="VT">Vermont</option>
-			    <option value="VA">Virginia</option>
-			    <option value="WA">Washington</option>
-			    <option value="WV">West Virginia</option>
-			    <option value="WI">Wisconsin</option>
-			    <option value="WY">Wyoming</option>
-			  </select>
-
-	      </div
-
-		 <div class="space-2"></div>
-
-		 
           
             <h4 class="lighter block green">Initial information required to select a benefit plan</h4>
                   
@@ -944,100 +876,24 @@
 	<h3 class="green">Confirmation</h3>
 
 	  Please review your Summary of Coverage below, and click "I agree..." below to be taken to application for signing.
-	  <div class="space-10"></div>
+	  <div class="space-20"></div>
 
 	  <div id="CoverageSummary">
-	    <h4 class="green">Summary of Benefits</h4>
-	    
-	    <!-- **Zach:  can you help with following table?  If too involved, then perhaps through in a starting point?
-	    <!-- *** Want a striped table here to display persons and coverage selections.
-		 Headers:  Name, Age, Coverage, Weekly Premium, Effective Monthly
-		 body rows for each person represented on step1, including those who selected "no benefit"
-		 body row for children can be "bundled" as in Step 1 if needed for coding simplicity, but prefer separate rows per child
-		 finally, want a "totals" row with label "Total" in column 3, and then Weekly and Monthly columns totalled respectively
-	      -->
-	    
-	    <div class="space-10"></div>
+
+	    <!-- *** Coverage Summary table goes here -->
 	    
 	    <div id="inPersonSignerToken" data-bind="visible: true">
 	      <h4 class="green">Employee Identification</h4>
 	  
 	      <div class="row form-group">
-		<label class="control-label col-xs-12 col-sm-12">
+		<label class="control-label col-xs-12 col-sm-5 no-padding-right" for="ConfirmationToken">
                   Please enter either a valid Driver's License number or Employee Number
 		</label>
-		<div class="col-xs-12 col-sm-4">
+		<div class="col-xs-12 col-sm-5">
                   <input type="text" id="ConfirmationToken" />
 		</div>
+	      </div>
 		
-		<div class="col-xs-12 col-sm-8">
-		  <label class="blue">
-		    <input name="confirmTokenType" value="1" type="radio" class="inline ace" id="confToken-eenum" checked="" />
-		    <span class="lbl"> Employee # &nbsp;&nbsp;&nbsp;</span>
-		  </label>
-		  
-		  <label class="blue">
-		    <input name="confirmTokenType" value="2" type="radio" class="inline ace" id="confToken-dlnum"/>
-		    <span class="lbl"> DL #</span>
-		  </label>
-
-		  <select id="dlState" name="dlState" class="select1" placeholder="DL# state...">
-		    <option value="">&nbsp;</option>
-		    <option value="AL">Alabama</option>
-		    <option value="AK">Alaska</option>
-		    <option value="AZ">Arizona</option>
-		    <option value="AR">Arkansas</option>
-		    <option value="CA">California</option>
-		    <option value="CO">Colorado</option>
-		    <option value="CT">Connecticut</option>
-		    <option value="DE">Delaware</option>
-		    <option value="FL">Florida</option>
-		    <option value="GA">Georgia</option>
-		    <option value="HI">Hawaii</option>
-		    <option value="ID">Idaho</option>
-		    <option value="IL">Illinois</option>
-		    <option value="IN">Indiana</option>
-		    <option value="IA">Iowa</option>
-		    <option value="KS">Kansas</option>
-		    <option value="KY">Kentucky</option>
-		    <option value="LA">Louisiana</option>
-		    <option value="ME">Maine</option>
-		    <option value="MD">Maryland</option>
-		    <option value="MA">Massachusetts</option>
-		    <option value="MI">Michigan</option>
-		    <option value="MN">Minnesota</option>
-		    <option value="MS">Mississippi</option>
-		    <option value="MO">Missouri</option>
-		    <option value="MT">Montana</option>
-		    <option value="NE">Nebraska</option>
-		    <option value="NV">Nevada</option>
-		    <option value="NH">New Hampshire</option>
-		    <option value="NJ">New Jersey</option>
-		    <option value="NM">New Mexico</option>
-		    <option value="NY">New York</option>
-		    <option value="NC">North Carolina</option>
-		    <option value="ND">North Dakota</option>
-		    <option value="OH">Ohio</option>
-		    <option value="OK">Oklahoma</option>
-		    <option value="OR">Oregon</option>
-		    <option value="PA">Pennsylvania</option>
-		    <option value="RI">Rhode Island</option>
-		    <option value="SC">South Carolina</option>
-		    <option value="SD">South Dakota</option>
-		    <option value="TN">Tennessee</option>
-		    <option value="TX">Texas</option>
-		    <option value="UT">Utah</option>
-		    <option value="VT">Vermont</option>
-		    <option value="VA">Virginia</option>
-		    <option value="WA">Washington</option>
-		    <option value="WV">West Virginia</option>
-		    <option value="WI">Wisconsin</option>
-		    <option value="WY">Wyoming</option>
-		  </select>
-
-		</div><!-- /input fields -->
-		
-	      </div><!-- /.form-group -->		
 	    </div><!-- /inPersonSignerToken -->
 	    
 	  </div><!-- /CoverageSummary -->
@@ -1046,20 +902,8 @@
 
 	  <div class="well">
 	    <i class="icon-warning-sign bigger-120 orange"></i>
-	    Note:  on the next page, you must answer the <span class="bigger-110 orange">yes/no questions</span> in the <span class="green bigger-120">Statement of Health</span> section on the application for <span class="orange bigger-120">each</span> person applying for insurance in order to affix a signature.
+	    Note:  on the next page, you must answer the <span class="bigger-110 orange">yes/no questions</span> in the <span class="green bigger-120">Statement of Health</span> section on the application for <span class="orange">each</span> person applying for insurance in order to affix a signature.
 	  </div>
-
-	  <div class="space-2"></div>
-
-	  <div id="disclaimerNotice">
-	    <div class="form-group">
-	      <label class="control-label col-xs-12 col-sm-12 no-padding-right">
-                <input type="checkbox" id="disclaimerNoticeCheck"> I acknowledge the related <a href="#modal-disclaimer" data-toggle="modal">Accelerated Benefit Disclosure</a>
-	      </label>
-	    </div>
-	  </div>
-	    
-	  
       </div><!-- /Step5 -->
 		</div><!-- /Wizard step container -->
 
@@ -1081,31 +925,7 @@
 	</div>
       </div>
 
-      <!-- ------------------------------ Modal Disclaimer ------------------------------ -->
 
-      <div id="modal-disclaimer" class="modal">
-	<div class="modal-dialog">
-	  <div class="modal-content">
-	    <div class="modal-header">
-	      <h3 class="lighter block blue center">Accelerated Benefit for a Terminal Condition<br>Disclosure Facts</h3>
-	    </div>
-
-	    <div class="modal-body">
-	      <!-- **Zach: don't send time researching, but do you know if a decent way to pull content from anther webpage into a modal popup?
-		The content in this case is in an online pdf, such as
-		http://5starima.com/applications/accelerated_benefit_disclosure/FPP-TI%20ABDisclosure%20Form%20R508%20(Generic).pdf
-		In fact, there are 5 different links depending on the state of enrollment :-(
-		-->
-	      I'd like to display a PDF from the web in this modal?  (same as opening a new window, but keep it in the modal)
-	    </div>
-
-	    <div class="modal-footer">
-	      <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
-	    </div>
-	  </div>									
-	</div>									
-      </div>									
- 
       <!-- PAGE CONTENT ENDS -->
     </div><!-- /.col -->
   </div><!-- /.row -->
