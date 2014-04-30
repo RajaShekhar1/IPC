@@ -232,13 +232,28 @@
   <!-- inline scripts related to this page -->
   <script type="text/javascript">
     jQuery(function($) {
-			 $(document).on('click', '.toolbar a[data-target]', function(e) {
-				e.preventDefault();
-				var target = $(this).data('target');
-				$('.widget-box.visible').removeClass('visible');//hide others
-				$(target).addClass('visible');//show target
-			 });
-			});
+        
+        // Hide these when the page loads
+        $("#forgot-box").hide();
+        $("#signup-box").hide();
+        
+        $(".forgot-password-link").on('click', function() {
+             $("#forgot-box").show();
+             $("#signup-box").hide();
+        });
+        $(".user-signup-link").on('click', function() {
+             $("#forgot-box").hide();
+             $("#signup-box").show();
+        });
+        
+        
+        $(document).on('click', '.toolbar a[data-target]', function(e) {
+            e.preventDefault();
+            var target = $(this).data('target');
+            $('.widget-box.visible').removeClass('visible');//hide others
+            $(target).addClass('visible');//show target
+        });
+    });
       
   </script>
     
