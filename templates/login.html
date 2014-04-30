@@ -11,6 +11,8 @@
 <!-- ace styles -->
 <link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/five_star_ace_overlay.css') }}" rel="stylesheet">
+
 
 {% endblock %}
 
@@ -96,7 +98,7 @@
 
 	      <div class="space-6"></div>
 	      <p>
-		Enter your email and to receive instructions
+		Enter your email to receive reset instructions
 	      </p>
 
 	      <form>
@@ -111,7 +113,7 @@
 		  <div class="clearfix">
 		    <button type="button" class="width-35 pull-right btn btn-sm btn-danger">
 		      <i class="icon-lightbulb-o"></i>
-		      <span class="bigger-110">Send Me!</span>
+		      <span class="bigger-110">Reset login!</span>
 		    </button>
 		  </div>
 		</fieldset>
@@ -131,7 +133,6 @@
 	  <div class="widget-body">
 	    <div class="widget-main">
 	      <h4 class="header green lighter bigger">
-		<i class="icon-star-half-empty green"></i>
 		New User Registration
 	      </h4>
 
@@ -163,7 +164,7 @@
 
 		  <label class="block clearfix">
 		    <span class="block input-icon input-icon-right">
-		      <input type="text" class="form-control" placeholder="First and Last Name" />
+		      <input type="text" class="form-control" placeholder="First and Last Name for signing applications" />
 		      <i class="icon-user"></i>
 		    </span>
 		  </label>
@@ -171,14 +172,14 @@
 		  <label class="block clearfix">
 		    <span class="block input-icon input-icon-right">
 		      <input type="text" class="form-control" placeholder="Agency Name" />
-		      <i class="icon-group"></i>
+		      <i class="icon-home"></i>
 		    </span>
 		  </label>
 
 		  <label class="block clearfix">
 		    <span class="block input-icon input-icon-right">
-		      <input type="text" class="form-control" placeholder="5Star Agent Code" />
-		      <i class="icon-thumbs-up"></i>
+		      <input type="text" class="form-control" placeholder="5Star Agent Code to use on applications" />
+		      <i class="icon-star"></i>
 		    </span>
 		  </label>
 
@@ -229,8 +230,6 @@
 
 <!-- page-specific footer scripts -->
 
-<script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-      
   <!-- inline scripts related to this page -->
   <script type="text/javascript">
     jQuery(function($) {
@@ -241,20 +240,20 @@
         
         $(".forgot-password-link").on('click', function() {
              $("#forgot-box").show();
-             $("#signup-box").hide();
+             $("#login-box").hide();
         });
         $(".user-signup-link").on('click', function() {
-             $("#forgot-box").hide();
+             $("#login-box").hide();
              $("#signup-box").show();
         });
-        
-        
-        $(document).on('click', '.toolbar a[data-target]', function(e) {
-            e.preventDefault();
-            var target = $(this).data('target');
-            $('.widget-box.visible').removeClass('visible');//hide others
-            $(target).addClass('visible');//show target
+        $(".back-to-login-link").on('click', function() {
+             $("#forgot-box").hide();
+             $("#signup-box").hide();
+             $("#login-box").show();
+             
         });
+        
+        
     });
       
   </script>
