@@ -349,14 +349,14 @@ function Beneficiary(options) {
     });
     
     self.find_recommended_coverage_benefit = function(desired_face_value) {
-        var employee_benefit = new BenefitOption({});
+        var benefit = new BenefitOption({});
         $.each(self.benefit_options.by_coverage(), function() {
             if (this.face_value == desired_face_value) {
-                employee_benefit = this;
+                benefit = this;
                 return false;
             } 
         });
-        return employee_benefit;
+        return benefit;
     };
     
     self.update_selected_option = function(data, event) {
@@ -434,34 +434,45 @@ function BenefitsPackage(root, name) {
     self.children_recommendation = ko.observable(new NullRecommendation());
     
     self.set_recommendations = function(recommendations) {
-        if ('employee' in recommendations && self.root.employee().is_valid()) {
-            var benefit = self.root.employee().find_recommended_coverage_benefit(recommendations.employee);
-            self.employee_recommendation(new Recommendation(benefit, recommendations.employee));
+        
+        if (root.employee().is_valid()) {
+            self.employee_recommendation(self.build_recommendation(self.root.employee(), recommendations['employee']));
         } else {
             self.employee_recommendation(new NullRecommendation());
         }
         
-        if ('spouse' in recommendations && self.root.should_include_spouse_in_plan()) {
-            var benefit = self.root.spouse().find_recommended_coverage_benefit(recommendations.spouse);
-            self.spouse_recommendation(new Recommendation(benefit, recommendations.spouse));
+        if (root.should_include_spouse_in_plan()) {
+            self.spouse_recommendation(self.build_recommendation(self.root.spouse(), recommendations['spouse']));
         } else {
             self.spouse_recommendation(new NullRecommendation());
         }
         
-        if ('children' in recommendations && self.root.should_include_children_in_plan()) {
-            var benefit = self.root.child_benefits().find_recommended_coverage_benefit(recommendations.children);
-            self.children_recommendation(new ChildrenRecommendation(benefit, recommendations.children));
+        if (root.should_include_children_in_plan()) {
+            self.children_recommendation(self.build_recommendation(self.root.child_benefits(), recommendations['children']));
         } else {
             self.children_recommendation(new NullRecommendation());
         }
     };
     
+    self.build_recommendation = function(beneficiary, recommended_val) {
+        var benefit = self.get_recommended_benefit(beneficiary, recommended_val);
+        return new Recommendation(benefit);
+    };
+    
+    self.get_recommended_benefit = function(beneficiary, recommended_val) {
+        if (recommended_val == null || recommended_val == "") {
+            return new NullBenefitOption();
+        } else {
+            return beneficiary.find_recommended_coverage_benefit(recommended_val);
+        }
+    };
     
     self.get_package_benefits = function() {
         var benefits = [
             self.employee_recommendation().recommended_benefit,
             self.spouse_recommendation().recommended_benefit
         ];
+        // For each child, push our child benefit recommendation
         if (self.children_recommendation().recommended_benefit) {
             for (var i = 0; i < self.root.get_valid_children().length; i++) {
                 benefits.push(self.children_recommendation().recommended_benefit);
@@ -483,7 +494,6 @@ function BenefitsPackage(root, name) {
         return total;
     });
     
-    
     self.formatted_total = function() {
         if (self.get_total_weekly_premium() > 0.0) {
             return format_premium_value(self.get_total_weekly_premium());
@@ -492,6 +502,9 @@ function BenefitsPackage(root, name) {
         }
     };
     
+    self.get_monthly_premium = function(weekly_premium) {
+        return Math.round((weekly_premium*100 * 52) / 12)/100.0;
+    };
     self.get_total_monthly_premium = ko.computed(function() {
         var benefits = self.get_package_benefits();
         var total = 0.0;
@@ -502,9 +515,6 @@ function BenefitsPackage(root, name) {
         });
         return total;
     });
-    self.get_monthly_premium = function(weekly_premium) {
-        return Math.round((weekly_premium*100 * 52) / 12)/100.0;
-    };
     self.formatted_monthly_premium = ko.computed(function() {
         return format_premium_value(self.get_total_monthly_premium());   
     });
@@ -538,7 +548,7 @@ function Recommendation(recommended_benefit) {
         return self.recommended_benefit.format_face_value();
     };
 }
-function ChildrenRecommendation(recommended_benefit, recommended_amount) {
+function ChildrenRecommendation(recommended_benefit) {
     var self = this;
     self.recommended_benefit = recommended_benefit;
     self.format_weekly_premium = function() {
@@ -554,8 +564,8 @@ function ChildrenRecommendation(recommended_benefit, recommended_amount) {
 
 function NullRecommendation() {
     var self = this;
-    self.is_valid = function() {return false;}
-    self.recommended_benefit = {weekly_premium: null};
+    self.is_valid = function() {return false;};
+    
 }
 
 

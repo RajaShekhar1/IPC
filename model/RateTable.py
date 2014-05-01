@@ -102,7 +102,7 @@ class FFPTerminalIllnessProduct(object):
     
     def get_spouse_rates(self, spouse_age):
         if spouse_age:
-            spouse_rates = {
+            return {
                 'weekly_bypremium': self.get_coverages_by_weekly_premium(spouse_age),
                 'weekly_byface': self.get_weekly_premiums_by_coverage(spouse_age),
             }
