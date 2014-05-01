@@ -916,12 +916,8 @@ function init_validation() {
                 required: true,
                 email: true
             },
-            eeFName: {
-                required: true
-            },
-            eeLName: {
-                required: true
-            },
+            eeFName: {required: true},
+            eeLName: {required: true},
             phone: {
                 required: true,
                 phone: 'required'
@@ -941,7 +937,6 @@ function init_validation() {
                 required: "Please provide a valid email.",
                 email: "Please provide a valid email."
             },
-            subscription: "Please choose at least one option",
             gender: "Please choose gender",
             agree: "Please confirm your agreement"
         },
