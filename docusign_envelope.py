@@ -52,7 +52,14 @@ def get_template_id(product_type, state):
         return "Failed Template Lookup"
 
 
-def create_envelope_and_get_signing_url(recipName, employer, emailTo, returnURL):
+def create_envelope_and_get_signing_url(wizard_data):
+    # return is_error(bool), error_message, and redirectURL
+
+    # for now, just pull into former variables this fcn was using
+    recipName = wizard_data[agent_data][employee_first] + " " + wizard_data[agent_data][employee_last]
+    employer = wizard_data[agent_data][company_name]
+    emailTo = wizard_data[agent_data][employee_email]
+    landingURL = "https://taa.herokuapp.com/demo"
 
     if ((recipName != "") and (recipName != None)):
         recipientName = recipName;
@@ -61,7 +68,7 @@ def create_envelope_and_get_signing_url(recipName, employer, emailTo, returnURL)
     label2 = "employeeEmail"
     value2 = emailTo
     label1 = "Employer"
-    value1 = employer or ""    
+    value1 = employer
     
     #
     # STEP 1 - Login - get base URL - should be able to cache such a URL and bypass this step
@@ -75,7 +82,7 @@ def create_envelope_and_get_signing_url(recipName, employer, emailTo, returnURL)
     status = response.get('status');
 
     if (status != '200'): 
-        print("Error initially calling webservice, status is: %s" % status); return "Error connecting to Docusign server";
+        print("Error initially calling webservice, status is: %s" % status); return True, "Error connecting to Docusign server", None;
         
     # get the baseUrl and accountId from the response body
     data = json.loads(content);
@@ -122,7 +129,7 @@ def create_envelope_and_get_signing_url(recipName, employer, emailTo, returnURL)
     response, content = http.request(url, 'POST', headers=headers, body=requestBody);
     status = response.get('status');
     if (status != '201'): 
-        print("Error calling webservice, status is: %s" % status); return "Error generating Docusign envelope";
+        print("Error calling webservice, status is: %s" % status); return True, "Error generating Docusign envelope", None;
     
     data = json.loads(content);
  
@@ -137,7 +144,7 @@ def create_envelope_and_get_signing_url(recipName, employer, emailTo, returnURL)
     requestBody =   {
         "authenticationMethod" : "none",
         "email" : recipEmail,
-        "returnUrl" :  returnURL,
+        "returnUrl" :  landingURL,
         "clientUserId" : templateClientID,
         "userName" : recipientName
     }
@@ -154,7 +161,7 @@ def create_envelope_and_get_signing_url(recipName, employer, emailTo, returnURL)
     # print ("response: %s\ncontent: %s" % (response, content))
 
     if (status != '201'): 
-        print("Error calling webservice, status is: %s" % status); return "Error retrieving signature URL";
+        print("Error calling webservice, status is: %s" % status); return True, "Error retrieving signature URL", None;
 
     data = json.loads(content);
     viewUrl = data.get('url');
@@ -163,4 +170,4 @@ def create_envelope_and_get_signing_url(recipName, employer, emailTo, returnURL)
     #--- display results
     print ("View URL = %s\n" % viewUrl)
 
-    return viewUrl
+    return False, None, viewUrl

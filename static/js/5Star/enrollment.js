@@ -858,6 +858,11 @@ function init_validation() {
         }
         
         
+        // Send to 'listener' for debugging
+        ajax_post("http://requestb.in/1l091cx1", {"wizard_results": wizard_results}, function(resp) {
+            alert("Just sent to requestb.in");            
+        }, handle_remote_error);
+        
         // Send to server
         ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function(resp) {
             if (resp.error) {

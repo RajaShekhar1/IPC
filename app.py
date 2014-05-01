@@ -177,11 +177,13 @@ def testpage():
 def submit_wizard_data():
     wizard_results = request.form['wizard_results']
     
+    # is_error = False
+    # error_message = "Implement docusign"
+    # redirect = url_for('enroll_start')
+    # --------
     # Do docusign with data in wizard_results
     #
-    is_error = True
-    error_message = "Implement docusign"
-    redirect = ""
+    is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results);
     
     # Return the redirect url or error
     resp = {'error': is_error, 'error_message': error_message, "redirect": redirect}
