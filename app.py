@@ -15,6 +15,7 @@ from ConfigParser import ConfigParser
 
 from forms import LoginForm, UserEmailForm, UserDirectForm
 from docu_embed import signing_sample
+from docusign_envelope import create_envelope_and_get_signing_url
 from docu_console import console_sample
 from docu_email import emailing_sample
 
@@ -138,6 +139,14 @@ def launchDirect():
     return render_template('inPersonRequest.html', 
                            form = form)
 
+
+@app.route('/in-person-signing', methods = ['GET', 'POST'])
+def inPersonSign():
+    form = UserDirectForm()
+    if form.validate_on_submit():
+        return redirect ( create_envelope_and_get_signing_url(form.full_name.data, form.employer.data, form.email_addr.data, url_for('index')))
+    return render_template('inPersonRequest.html', 
+                           form = form)
 
 @app.route("/inbox")
 def inbox():
