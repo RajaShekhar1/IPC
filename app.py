@@ -131,6 +131,7 @@ def sendApp():
 
 @app.route('/launch-direct', methods = ['GET', 'POST'])
 def launchDirect():
+    
     form = UserDirectForm()
     if form.validate_on_submit():
         return redirect ( signing_sample(form.full_name.data, form.employer.data, form.email_addr.data, url_for('index')))

@@ -10,12 +10,12 @@ function init_rate_form(data) {
         product = new FPPTIProduct();
     }
     
-    var benefits_ui = new WizardUI(new FPPTIProduct(), data);
+    var ui = new WizardUI(new FPPTIProduct(), data);
     
     // Allow other JS functions to access the ui object
-    window.benefits_ui = benefits_ui;
+    window.ui = ui;
     
-    ko.applyBindings(benefits_ui);
+    ko.applyBindings(ui);
 }
 
 // Root model of the Benefits wizard User Interface
@@ -34,6 +34,7 @@ function WizardUI(product, defaults) {
     self.policy_owner = ko.observable("self");
     self.other_owner_name = ko.observable("");
     self.other_owner_ssn = ko.observable("");
+    
     
     self.employee_beneficiary = ko.observable("spouse");
     self.spouse_beneficiary = ko.observable("employee");
@@ -54,6 +55,7 @@ function WizardUI(product, defaults) {
         last: self.defaults.employee_last || "",
         email: self.defaults.employee_email || ""
     }));
+    
     var MS_MARRIED = 'Married',
         MS_UNMARRIED = 'Unmarried';
     self.marital_statuses = [MS_MARRIED, MS_UNMARRIED];
@@ -440,6 +442,19 @@ function Beneficiary(options) {
             get_monthly_premium_from_weekly(self.selected_coverage().weekly_premium)
         );
     });
+    
+    self.serialize_data = function() {
+        var data = {};
+        
+        data.first = self.first();
+        data.last = self.last();
+        data.email = self.email();
+        data.age = self.get_age();
+        data.ssn = self.ssn();
+        data.gender = self.gender();
+        
+        return data;
+    }
 }
 
 function BenefitOption(options) {
@@ -472,6 +487,13 @@ function BenefitOption(options) {
     self.is_valid = function() {
         return true;
     };
+    
+    self.serialize_data = function() {
+        return {
+            weekly_premium: self.weekly_premium,
+            face_value: self.face_value
+        }
+    }
 }
 BenefitOption.display_benefit_option = function(item) {
     return item.format_for_dropdown();
@@ -783,7 +805,7 @@ function init_validation() {
         }
         
         if (info.step == 1) {
-            if (!window.benefits_ui.is_form_valid()) {
+            if (!window.ui.is_form_valid()) {
                 return false;
             } 
         }
@@ -796,12 +818,48 @@ function init_validation() {
     }).on('finished', function (e) {
         
         // Pull out all the data we need for docusign 
-        var data = {wizard_results: {
+        var wizard_results = {
+            agent_data: window.ui.defaults,
             
-        }};
+            employee: window.ui.employee().serialize_data(),
+            spouse: window.ui.spouse().serialize_data(),
+            
+            employee_beneficiary:  window.ui.employee_beneficiary(),
+            spouse_beneficiary:  window.ui.spouse_beneficiary(),
+            employee_beneficiary_name:  window.ui.employee_beneficiary_name(),
+            employee_beneficiary_relationship:  window.ui.employee_beneficiary_relationship(),
+            employee_beneficiary_ssn:  window.ui.employee_beneficiary_ssn(),
+            employee_beneficiary_dob:  window.ui.employee_beneficiary_dob(),
+            
+            spouse_beneficiary_name:  window.ui.spouse_beneficiary_name(),
+            spouse_beneficiary_relationship:  window.ui.spouse_beneficiary_relationship(),
+            spouse_beneficiary_ssn:  window.ui.spouse_beneficiary_ssn(),
+            spouse_beneficiary_dob:  window.ui.spouse_beneficiary_dob()
+        };
+        
+        // Children
+        wizard_results['children'] = [];
+        wizard_results['child_coverages'] = [];
+        $.each(window.ui.get_valid_children(), function() {
+            var child = this;
+            wizard_results['children'].push(this.serialize_data());
+            var coverage = window.ui.selected_plan().children_recommendation().recommended_benefit;
+            wizard_results['child_coverages'].push(coverage.serialize_data());
+        });
+        
+        // Benefits
+        var emp_benefit = window.ui.selected_plan().employee_recommendation().recommended_benefit;
+        if (emp_benefit.is_valid()) {
+            wizard_results['employee_coverage'] = emp_benefit.serialize_data();
+        }
+        var sp_benefit = window.ui.selected_plan().spouse_recommendation().recommended_benefit;
+        if (sp_benefit.is_valid()) {
+            wizard_results['spouse_coverage'] = sp_benefit.serialize_data();
+        }
+        
         
         // Send to server
-        ajax_post("/submit-wizard-data", data, function(resp) {
+        ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function(resp) {
             if (resp.error) {
                 alert("There was a problem: "+resp.error);
             } else {
