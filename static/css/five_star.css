@@ -33,3 +33,23 @@
     font-size: 13pt;
     font-style: oblique;
 }
+
+.header-color-good {
+  border-color: #D1E2D0;
+  background: #D1E2D0;
+  
+}
+
+.header-color-better {
+  color: #855D10;
+  border-color: #FCAE17;
+  background: #FCAE17;
+  
+}
+
+.header-color-best {
+  border-color: #5290CD;
+  background: #5290CD; 
+  
+}
+
