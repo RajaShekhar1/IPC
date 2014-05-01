@@ -33,7 +33,7 @@ def get_template_id(product_type, state):
             "IL" : "TBD",
             "TX" : "65D80628-EA67-45C9-B50D-35932CA28814",
             "VA" : "TBD"
-            }
+            },
         "FPPCI": {
             "CO" : "TBD",
             "CT" : "TBD",
@@ -95,7 +95,7 @@ def create_envelope_and_get_signing_url(recipName, employer, emailTo, returnURL)
         "emailSubject": "signature needed: FPP for " +  recipientName + " (" + employer + ")",
         "documentFields": [
             {"name": "driver's license",
-             "value": "123456"}]
+             "value": "123456"}],
         "templateId": get_template_id("FPPTI", "TX"),
         "templateRoles": [
             {"email" : recipEmail,
