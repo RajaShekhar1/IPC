@@ -63,6 +63,15 @@ def page_not_found(e):
 def index():
     return render_template('index.html')
 
+@app.route("/home")
+def home():
+    return render_template('home.html')
+
+@app.route("/enroll")
+def enroll_start():
+    return render_template('setup-enrollment.html')
+
+
 @app.route("/demo")
 def sample():
     return render_template('sample.html',
