@@ -31,7 +31,7 @@ function BenefitsUI(product) {
     self.show_spouse_name = ko.computed(function() {
         return (self.spouse().is_valid()) ? self.spouse().name() : "";
     });
-    self.should_include_spouse_in_plan = ko.computed(function() {
+    self.should_include_spouse_in_table = ko.computed(function() {
         return self.should_show_spouse() && self.spouse().is_valid();
     });
     
@@ -83,7 +83,7 @@ function BenefitsUI(product) {
     self.has_valid_children = ko.computed(function() {
         return  self.get_valid_children().length > 0;
     });
-    self.should_include_children_in_plan = ko.computed(function() {
+    self.should_include_children_in_table = ko.computed(function() {
         return self.should_include_children() && self.has_valid_children();  
     });
     
@@ -91,7 +91,7 @@ function BenefitsUI(product) {
     //  than on each child since the benefits are the same
     self.child_benefits = ko.observable(new Beneficiary({}));
     self.get_children_options = ko.computed(function() {
-        if (!self.should_include_children_in_plan()) {
+        if (!self.should_include_children_in_table()) {
             return [];
         }
         
@@ -191,7 +191,7 @@ function BenefitsUI(product) {
             }
         }
         
-        if (self.should_include_spouse_in_plan()) {
+        if (self.should_include_spouse_in_table()) {
             benefit = self.spouse().selected_custom_option();
             if (benefit) {
                 new_plan.name("Custom");
@@ -199,7 +199,7 @@ function BenefitsUI(product) {
             }
         }
         
-        if (self.should_include_children_in_plan()) {
+        if (self.should_include_children_in_table()) {
             benefit = self.child_benefits().selected_custom_option();
             if (benefit) {
                 new_plan.name("Custom");
@@ -216,8 +216,8 @@ function BenefitsUI(product) {
         self.employee().birthdate,
         self.spouse().birthdate,
         self.children,
-        self.should_include_spouse_in_plan,
-        self.should_include_children_in_plan
+        self.should_include_spouse_in_table,
+        self.should_include_children_in_table
     ];
     $.each(watch_data_values, function() {
         this.subscribe(self.update_rate_table);
@@ -279,7 +279,18 @@ function BenefitsUI(product) {
     
     self.is_form_valid = function() {
         return (self.selected_plan().is_valid()); 
-    }
+    };
+    
+    
+    // accessors for selected plan
+    self.did_select_employee_coverage = ko.computed(function() {
+        var rec = self.selected_plan().employee_recommendation();
+        return (rec.is_valid() && rec.recommended_benefit.is_valid());
+    });
+    self.did_select_spouse_coverage = ko.computed(function() {
+        var rec = self.selected_plan().employee_recommendation();
+        return (rec.is_valid() && rec.recommended_benefit.is_valid());
+    });
 }
 
 
@@ -399,7 +410,10 @@ function BenefitOption(options) {
         } else {
             return self.format_weekly_premium();
         }
-    }
+    };
+    self.is_valid = function() {
+        return true;
+    };
 }
 BenefitOption.display_benefit_option = function(item) {
     return item.format_for_dropdown();
@@ -411,6 +425,10 @@ function NullBenefitOption() {
     self.is_by_face = true;
     self.weekly_premium = 0;
     self.face_value = 0;
+    
+    self.is_valid = function() {
+        return false;
+    };
     
     self.format_weekly_premium = function() {
         return "";
@@ -441,13 +459,13 @@ function BenefitsPackage(root, name) {
             self.employee_recommendation(new NullRecommendation());
         }
         
-        if (root.should_include_spouse_in_plan()) {
+        if (root.should_include_spouse_in_table()) {
             self.spouse_recommendation(self.build_recommendation(self.root.spouse(), recommendations['spouse']));
         } else {
             self.spouse_recommendation(new NullRecommendation());
         }
         
-        if (root.should_include_children_in_plan()) {
+        if (root.should_include_children_in_table()) {
             self.children_recommendation(self.build_recommendation(self.root.child_benefits(), recommendations['children']));
         } else {
             self.children_recommendation(new NullRecommendation());

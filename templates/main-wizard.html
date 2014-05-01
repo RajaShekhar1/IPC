@@ -383,7 +383,7 @@
                                 <!--/ko-->
                               </li>
                               <li>
-                                <!--ko if: should_include_spouse_in_plan-->
+                                <!--ko if: should_include_spouse_in_table-->
                                 <select data-bind="
                                   options: spouse().all_options,
                                   optionsCaption: '',
@@ -395,7 +395,7 @@
                                 <!--/ko-->
                               </li>
                               <li>
-                                <!--ko if: should_include_children_in_plan-->
+                                <!--ko if: should_include_children_in_table-->
                                 <select data-bind="
                                   options: get_children_options,
                                   optionsCaption: '',
@@ -509,7 +509,7 @@
 	      Employee SSN
 	    </label>
 	    <div class="col-xs-12 col-sm-5">
-	      <input type="text" id="eessn" class="col-xs-12 col-sm-5 input-mask-ssn"/>
+	      <input type="text" id="eessn" class="col-xs-12 col-sm-5 input-mask-ssn" data-bind="value: employee().ssn" />
 	    </div>
 	  </div>
 	  
@@ -702,7 +702,7 @@
                 <input type="text" id="spLName2" data-bind="value: spouse().last" placeholder="Last Name" />
               </div>
 
-	      <label class="control-label col-xs-1 col-sm-1 no-padding-right" for="spssn">
+	      <label class="control-label col-xs-1 col-sm-1 no-padding-right" for="spssn" data-bind="value: spouse().ssn">
 		SSN
 	      </label>
 	      <div class="col-xs-11 col-sm-3">
@@ -830,12 +830,11 @@
       <form class="form-horizontal" id="step4-form">
 	
 	<div class="step-pane" id="step4">
-	  <!-- **Zach: the visibility of this div should depend on whether employee indeed elected coverage from Step 1 -->
-	  <div id="eeBeneficiaryBlock" data-bind="visible: true">
+	  <div id="eeBeneficiaryBlock" data-bind="visible: did_select_employee_coverage">
 	    <h3 class="lighter block green">Employee Beneficiary</h3>
 
 	    <!-- **Zach: the visibility of this div isn't actully on whether to include spouse, but whether a valid spouse exists from Step 1 even if no-coverage selected -->
-	    <div class="form-group" id="eeHasSpouseAsBeneficiaryOption" data-bind="visible: should_include_spouse_in_plan">
+	    <div class="form-group" id="eeHasSpouseAsBeneficiaryOption" data-bind="visible: should_include_spouse_in_table">
 	      <label class="control-label col-xs-12 col-sm-5 no-padding-right">Beneficiary of Employee Coverage is </label>
 
 	      <div class="col-xs-12 col-sm-7">
@@ -853,13 +852,12 @@
 	      <!-- **Zach: wasn't sure syntax for visible being whether above radio selection is "Spouse" -->
 	      <div class="col-sm-offset-5 text-warning bigger-120 col-xs-12" id="spouseBeneficiaryLine" data-bind="visible: $('#eeBeneSpouse').get(0).value=='1'">
 		<span data-bind="text: spouse().first"></span> <span data-bind="text: spouse().last"></span>, spouse, <span data-bind="text: spouse().birthdate"></span>, ss=
-		<!-- **Zach: tried to add an ssn attribute, but I'm sure I didn't "set" the value elsewhere, just want to display here the input from step 3 -->
-	      	<span data-bind="text: spouse().ssn"></span>	    
+		    <span data-bind="text: spouse().ssn"></span>	    
               </div>
 	    </div>
 
 	    <!-- **Zach: likewise, didn't know how syntax to say above radio selection is "Someone else" -->
-	    <div id="eeBeneficiaryOther" data-bind="visible: !should_include_spouse_in_plan() || $('#eeBeneSpouse').get(0).value != '1'">
+	    <div id="eeBeneficiaryOther" data-bind="visible: !should_include_spouse_in_table() || $('#eeBeneSpouse').get(0).value != '1'">
 	      <div class="row form-group">
 		<label class="control-label col-xs-12 col-sm-2 no-padding-right" for="eeBeneOtherName">
                   Beneficiary 
@@ -895,7 +893,7 @@
 	  </div><!-- eeBeneficiaryBlock -->
 
 	  <!-- **Zach: the visibility of this div should depend on whether spouse indeed elected coverage from Step 1  -->
-	  <div id="spBeneficiaryBlock" data-bind="visible: should_include_spouse_in_plan">
+	  <div id="spBeneficiaryBlock" data-bind="visible: should_include_spouse_in_table">
 	    <h3 class="lighter block green">Spouse Beneficiary</h3>
 	    <div class="form-group">
 	      <label class="control-label col-xs-12 col-sm-5 no-padding-right">Beneficiary of Spouse Coverage is </label>
@@ -918,7 +916,7 @@
 	      	<span data-bind="text: employee().ssn"></span>	    
               </div>
 
-	      <div id="spBeneficiaryOther" data-bind="visible: should_include_spouse_in_plan() && $('#spBeneSpouse').get(0).value != '1'">
+	      <div id="spBeneficiaryOther" data-bind="visible: should_include_spouse_in_table() && $('#spBeneSpouse').get(0).value != '1'">
 		<!--  2014-04-30 WSD  should have something analog to above option for #eeBeneficiaryOther once that's working -->
 	      </div>
 	    </div>
