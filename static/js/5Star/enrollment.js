@@ -1,23 +1,61 @@
 
 
-function init_rate_form() {
+function init_rate_form(data) {
     
-    var benefits_ui = new BenefitsUI(new FPPTIProduct());
+    var product;
+    if (data.product_id == "FPPTI") {
+        product = new FPPTIProduct();
+    } else {
+        // default product?
+        product = new FPPTIProduct();
+    }
+    
+    var ui = new WizardUI(new FPPTIProduct(), data);
     
     // Allow other JS functions to access the ui object
-    window.benefits_ui = benefits_ui;
+    window.ui = ui;
     
-    ko.applyBindings(benefits_ui);
+    ko.applyBindings(ui);
 }
 
 // Root model of the Benefits wizard User Interface
-function BenefitsUI(product) {
+function WizardUI(product, defaults) {
     var self = this;
     
+    self.defaults = defaults;
     self.insurance_product = product;
     
+    // Data used on steps 2-5
+    self.is_in_person_application = ko.observable(('is_in_person' in defaults)?defaults.is_in_person : true);
+    self.was_state_provided = ("state" in defaults);
+    self.state = ko.observable(defaults.state || "");
+    self.company_name = ko.observable(defaults.company_name || "(Unknown Company)");
+    
+    self.policy_owner = ko.observable("self");
+    self.other_owner_name = ko.observable("");
+    self.other_owner_ssn = ko.observable("");
+    
+    
+    self.employee_beneficiary = ko.observable("spouse");
+    self.spouse_beneficiary = ko.observable("employee");
+    self.employee_beneficiary_name = ko.observable("");
+    self.employee_beneficiary_relationship = ko.observable("");
+    self.employee_beneficiary_ssn = ko.observable("");
+    self.employee_beneficiary_dob = ko.observable("");
+    
+    self.spouse_beneficiary_name = ko.observable("");
+    self.spouse_beneficiary_relationship = ko.observable("");
+    self.spouse_beneficiary_ssn = ko.observable("");
+    self.spouse_beneficiary_dob = ko.observable("");
+    
+    
     // Employee 
-    self.employee = ko.observable(new Beneficiary({}));
+    self.employee = ko.observable(new Beneficiary({
+        first: self.defaults.employee_first || "",
+        last: self.defaults.employee_last || "",
+        email: self.defaults.employee_email || ""
+    }));
+    
     var MS_MARRIED = 'Married',
         MS_UNMARRIED = 'Unmarried';
     self.marital_statuses = [MS_MARRIED, MS_UNMARRIED];
@@ -58,7 +96,7 @@ function BenefitsUI(product) {
             return "";
         } 
     });
-    self.get_valid_children = function() {
+    self.get_valid_children = ko.computed(function() {
         var children = [];
         $.each(self.children(), function() {
             if (this.is_valid()) {
@@ -66,7 +104,7 @@ function BenefitsUI(product) {
             } 
         });
         return children;
-    };
+    });
     
     self.add_child = function() {
         var child_beneficiary = new Beneficiary({});
@@ -288,7 +326,11 @@ function BenefitsUI(product) {
         return (rec.is_valid() && rec.recommended_benefit.is_valid());
     });
     self.did_select_spouse_coverage = ko.computed(function() {
-        var rec = self.selected_plan().employee_recommendation();
+        var rec = self.selected_plan().spouse_recommendation();
+        return (rec.is_valid() && rec.recommended_benefit.is_valid());
+    });
+    self.did_select_children_coverage = ko.computed(function() {
+        var rec = self.selected_plan().children_recommendation();
         return (rec.is_valid() && rec.recommended_benefit.is_valid());
     });
 }
@@ -317,6 +359,7 @@ function Beneficiary(options) {
     
     self.first = ko.observable(options.first || "");
     self.last = ko.observable(options.last || "");
+    self.email = ko.observable(options.email || "");
     self.birthdate = ko.observable(options.birthdate || null);
     self.ssn = ko.observable(options.ssn || "");
     self.gender = ko.observable(options.gender || "");
@@ -338,14 +381,14 @@ function Beneficiary(options) {
         }
     });
     
-    self.get_age = function() {
-        var bd = moment(self.birthdate, "MM/DD/YYYY");
+    self.get_age = ko.computed(function() {
+        var bd = moment(self.birthdate(), "MM/DD/YYYY");
         if (bd.isValid()) {
-            return moment().diff(birthdate, "years");  
+            return moment().diff(bd, "years");  
         } else {
-            return null;
+            return "";
         }
-    };
+    });
     
     self.benefit_options = {
         by_coverage: ko.observableArray([]),
@@ -386,6 +429,32 @@ function Beneficiary(options) {
     };
     
     self.selected_custom_option = ko.observable(new NullBenefitOption());
+    
+    self.selected_coverage = ko.observable(new NullBenefitOption());
+    self.display_selected_coverage = ko.computed(function() {
+        return self.selected_coverage().format_face_value();
+    });
+    self.display_weekly_premium = ko.computed(function() {
+        return self.selected_coverage().format_weekly_premium();
+    });
+    self.display_monthly_premium = ko.computed(function() {
+        return format_premium_value(
+            get_monthly_premium_from_weekly(self.selected_coverage().weekly_premium)
+        );
+    });
+    
+    self.serialize_data = function() {
+        var data = {};
+        
+        data.first = self.first();
+        data.last = self.last();
+        data.email = self.email();
+        data.age = self.get_age();
+        data.ssn = self.ssn();
+        data.gender = self.gender();
+        
+        return data;
+    }
 }
 
 function BenefitOption(options) {
@@ -396,7 +465,11 @@ function BenefitOption(options) {
     self.face_value = options.face_value;
     
     self.format_weekly_premium = function() {
-        return format_premium_value(self.weekly_premium) + " weekly";
+        return format_premium_value(self.weekly_premium);
+    };
+    
+    self.format_weekly_premium_option = function() {
+        return self.format_weekly_premium() + " weekly";
     };
     self.format_face_value = function() {
         return format_face_value(self.face_value);
@@ -408,12 +481,19 @@ function BenefitOption(options) {
         if (self.is_by_face) {
             return self.format_face_option();
         } else {
-            return self.format_weekly_premium();
+            return self.format_weekly_premium_option();
         }
     };
     self.is_valid = function() {
         return true;
     };
+    
+    self.serialize_data = function() {
+        return {
+            weekly_premium: self.weekly_premium,
+            face_value: self.face_value
+        }
+    }
 }
 BenefitOption.display_benefit_option = function(item) {
     return item.format_for_dropdown();
@@ -430,9 +510,13 @@ function NullBenefitOption() {
         return false;
     };
     
-    self.format_weekly_premium = function() {
+    self.format_weekly_premium_option = function() {
         return "";
     };
+    self.format_weekly_premium = function() {
+        
+    };
+    
     self.format_face_value = function() {
         return "- no benefit -";
     };
@@ -512,16 +596,16 @@ function BenefitsPackage(root, name) {
         return total;
     });
     
-    self.formatted_total = function() {
+    self.formatted_total_weekly_premium = ko.computed(function() {
         if (self.get_total_weekly_premium() > 0.0) {
             return format_premium_value(self.get_total_weekly_premium());
         } else {
             return "";
         }
-    };
+    });
     
     self.get_monthly_premium = function(weekly_premium) {
-        return Math.round((weekly_premium*100 * 52) / 12)/100.0;
+        return get_monthly_premium_from_weekly(weekly_premium);
     };
     self.get_total_monthly_premium = ko.computed(function() {
         var benefits = self.get_package_benefits();
@@ -537,6 +621,29 @@ function BenefitsPackage(root, name) {
         return format_premium_value(self.get_total_monthly_premium());   
     });
     self.is_valid = function() {return true};
+    
+    self.get_all_people = ko.computed(function() {
+        var employee = root.employee();
+        employee.selected_coverage(self.employee_recommendation().recommended_benefit);
+        
+        var people = [employee];
+        
+        if (root.should_include_spouse_in_table()) {
+            var spouse = root.spouse();
+            spouse.selected_coverage(self.spouse_recommendation().recommended_benefit);
+            people.push(spouse);
+        }
+        
+        if (root.should_include_children_in_table()) {
+            $.each(root.get_valid_children(), function () {
+                var child = this;
+                child.selected_coverage(self.children_recommendation().recommended_benefit);
+                people.push(child);
+            });
+        }
+        return people;
+    });
+    
 }
 function NullBenefitsPackage() {
     var self = this;
@@ -545,10 +652,11 @@ function NullBenefitsPackage() {
     self.spouse_recommendation = ko.observable(new NullRecommendation());
     self.children_recommendation = ko.observable(new NullRecommendation());
     self.get_total_weekly_premium = function() { return null;};
-    self.formatted_total = function() { return "";};
+    self.formatted_total_weekly_premium = function() { return "";};
     self.get_total_monthly_premium = function(){return 0;};
     self.formatted_monthly_premium = function() { return "";};
     self.is_valid = function () {return false};
+    self.get_all_people = function() {return [];}
 }
 
 function Recommendation(recommended_benefit) {
@@ -559,8 +667,8 @@ function Recommendation(recommended_benefit) {
         return true;
     };
     
-    self.format_weekly_premium = function() {
-        return self.recommended_benefit.format_weekly_premium()
+    self.format_weekly_premium_option = function() {
+        return self.recommended_benefit.format_weekly_premium_option()
     };
     self.format_face_value = function() {
         return self.recommended_benefit.format_face_value();
@@ -569,8 +677,8 @@ function Recommendation(recommended_benefit) {
 function ChildrenRecommendation(recommended_benefit) {
     var self = this;
     self.recommended_benefit = recommended_benefit;
-    self.format_weekly_premium = function() {
-        return self.recommended_benefit.format_weekly_premium() + " (each)";
+    self.format_weekly_premium_option = function() {
+        return self.recommended_benefit.format_weekly_premium_option() + " (each)";
     };
     self.is_valid = function() {
         return true;
@@ -582,6 +690,7 @@ function ChildrenRecommendation(recommended_benefit) {
 
 function NullRecommendation() {
     var self = this;
+    self.recommended_benefit = new NullBenefitOption();
     self.is_valid = function() {return false;};
     
 }
@@ -603,7 +712,9 @@ ko.bindingHandlers.slideDownIf = {
     }
 };
 
-
+function get_monthly_premium_from_weekly(weekly_premium) {
+    return Math.round((weekly_premium*100 * 52) / 12)/100.0;
+}
 
 function format_face_value(val) {
     if (val == null) {
@@ -628,15 +739,21 @@ function handle_remote_error() {
     alert("Sorry, an error occurred communicating with the server.");    
 }
 
-function ajax_post(url, data, on_success, on_error) {
-    $.ajax(url, {
+function ajax_post(url, data, on_success, on_error, is_json) {
+    var options = {
         data: data,
         error: on_error,
         success: on_success,
         // expected return data type
         dataType: "json",
         method: "POST"
-    });
+    };
+    if (is_json === true) {
+        options.contentType = "application/json; charset=utf-8";
+        options.processData = false;
+        options.data = JSON.stringify(data);
+    }
+    $.ajax(url, options);
 }
 
 
@@ -694,7 +811,7 @@ function init_validation() {
         }
         
         if (info.step == 1) {
-            if (!window.benefits_ui.is_form_valid()) {
+            if (!window.ui.is_form_valid()) {
                 return false;
             } 
         }
@@ -705,6 +822,64 @@ function init_validation() {
         return true;
         
     }).on('finished', function (e) {
+        
+        // Pull out all the data we need for docusign 
+        var wizard_results = {
+            agent_data: window.ui.defaults,
+            
+            employee: window.ui.employee().serialize_data(),
+            spouse: window.ui.spouse().serialize_data(),
+            
+            employee_beneficiary:  window.ui.employee_beneficiary(),
+            spouse_beneficiary:  window.ui.spouse_beneficiary(),
+            employee_beneficiary_name:  window.ui.employee_beneficiary_name(),
+            employee_beneficiary_relationship:  window.ui.employee_beneficiary_relationship(),
+            employee_beneficiary_ssn:  window.ui.employee_beneficiary_ssn(),
+            employee_beneficiary_dob:  window.ui.employee_beneficiary_dob(),
+            
+            spouse_beneficiary_name:  window.ui.spouse_beneficiary_name(),
+            spouse_beneficiary_relationship:  window.ui.spouse_beneficiary_relationship(),
+            spouse_beneficiary_ssn:  window.ui.spouse_beneficiary_ssn(),
+            spouse_beneficiary_dob:  window.ui.spouse_beneficiary_dob()
+        };
+        
+        // Children
+        wizard_results['children'] = [];
+        wizard_results['child_coverages'] = [];
+        $.each(window.ui.get_valid_children(), function() {
+            var child = this;
+            wizard_results['children'].push(this.serialize_data());
+            var coverage = window.ui.selected_plan().children_recommendation().recommended_benefit;
+            wizard_results['child_coverages'].push(coverage.serialize_data());
+        });
+        
+        // Benefits
+        var emp_benefit = window.ui.selected_plan().employee_recommendation().recommended_benefit;
+        if (emp_benefit.is_valid()) {
+            wizard_results['employee_coverage'] = emp_benefit.serialize_data();
+        }
+        var sp_benefit = window.ui.selected_plan().spouse_recommendation().recommended_benefit;
+        if (sp_benefit.is_valid()) {
+            wizard_results['spouse_coverage'] = sp_benefit.serialize_data();
+        }
+        
+        
+        // Send to 'listener' for debugging
+        ajax_post("http://requestb.in/1l091cx1", {"wizard_results": wizard_results}, function(resp) {
+            alert("Just sent to requestb.in");            
+        }, handle_remote_error, true);
+        
+        // Send to server
+        ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function(resp) {
+            if (resp.error) {
+                alert("There was a problem: "+resp.error);
+            } else {
+                // Docusign redirect
+                // location = resp.redirect 
+            }
+            
+        }, handle_remote_error, true);
+        
         bootbox.dialog({
             message: "Thank you! Your information was successfully saved!",
             buttons: {
@@ -752,12 +927,8 @@ function init_validation() {
                 required: true,
                 email: true
             },
-            eeFName: {
-                required: true
-            },
-            eeLName: {
-                required: true
-            },
+            eeFName: {required: true},
+            eeLName: {required: true},
             phone: {
                 required: true,
                 phone: 'required'
@@ -777,7 +948,6 @@ function init_validation() {
                 required: "Please provide a valid email.",
                 email: "Please provide a valid email."
             },
-            subscription: "Please choose at least one option",
             gender: "Please choose gender",
             agree: "Please confirm your agreement"
         },

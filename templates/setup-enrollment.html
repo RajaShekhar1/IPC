@@ -25,11 +25,11 @@
     <h3>Launch an Enrollment</h3>
     <p>Enter the information below for the case setup, the enrollee data, and proceed with either enrolling in-person or via email.</p>
 
-    <form class="form-horizontal">
+    <form class="form-horizontal" action="{{ url_for('in_person_enrollment') }}" method="POST">
       <div class="form-group">
 	<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Select state for this enrollment</label>
 	<div class="col-xs-12 col-sm-9">
-	  <select id="enrollmentState" class="select1">
+	  <select id="enrollmentState" name="enrollmentState" class="select1">
 	    <option value="">&nbsp;</option>
 	    <option value="XX">None - Employee will select</option>
 	    <option value="AL">Alabama</option>
@@ -99,7 +99,7 @@
       <div class="form-group">
 	<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Product to enroll</label>
 	<div class="col-xs-12 col-sm-9">
-	  <select id="enrollmentState" class="select1">
+	  <select id="productID" name="productID" class="select1">
 	    <option value="">&nbsp;</option>
 	    <option value="FPPTI">Family Protection Plan - Term to 100</option>
 	    <option value="FPPCI" disabled="">Family Protection Plan - with Critical Illness (coming soon)</option>
@@ -130,21 +130,21 @@
 
       <div class="space-2"></div>
       
-    </form>
+    
     
     <div class="space-2"></div>
     
     <div class="row">
       <div class="col-xs-6 col-sm-6">
-	<p class="center"><a class="btn btn-lg btn-info" href="{{ url_for('home') }}" role="button">
-	    <i class="icon icon-user align-top bigger-110"></i>Enroll in-person</a></p>
+	    <p class="center"><button type="submit" class="btn btn-lg btn-info" id="in-person-enrollment-btn">
+	    <i class="icon icon-user align-top bigger-110"></i>Enroll in-person</button></p>
       </div>
       <div class="col-xs-6 col-sm-6">
-	<p class="center"><a class="btn btn-lg btn-success" href="{{ url_for('home') }}" role="button">
+	    <p class="center"><button type="button" class="btn btn-lg btn-success" id="email-enrollment-btn">
 	    <i class="icon icon-envelope align-top bigger-110"></i>Enroll via email</a></p>
       </div>
     </div>
-
+    </form>
 
   </div><!-- /.col-xs12 -->
 </div><!-- /.row -->
@@ -183,10 +183,15 @@
 <script type="text/javascript">
   jQuery(function($) {
   
-  // set nav
-  $('#nav_enroll').addClass('active');
-  $('#nav_home').removeClass('active');
+      // set nav
+      $('#nav_enroll').addClass('active');
+      $('#nav_home').removeClass('active');
   
+      
+      $("#email-enrollment-btn").on("click", function() {
+          alert("email: {{ url_for('email_enrollment') }}"); 
+      });
+      
   })
 </script>
 

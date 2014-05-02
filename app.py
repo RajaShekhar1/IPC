@@ -1,4 +1,5 @@
 import os
+import json
 from logging import getLogger
 from flask import (
     Flask,
@@ -25,6 +26,7 @@ from model.RateTable import (
     get_product,
     get_age_from_birthday,
 )
+from model.States import get_states
 
 # initialization
 app = Flask(__name__)
@@ -72,7 +74,33 @@ def home():
 def enroll_start():
     return render_template('setup-enrollment.html')
 
+@app.route("/in-person-enrollment", methods=['POST'])
+def in_person_enrollment():
+    state = request.form['enrollmentState']
+    company_name = request.form['companyName']
+    product_id = request.form['productID']
+    employee_first = request.form['eeFName']
+    employee_last = request.form['eeLName']
+    employee_email = request.form['email']
+    
+    wizard_data = {
+        'state': state if state != 'XX' else None,
+        'company_name': company_name,
+        'product_id':product_id,
+        'employee_first':employee_first,
+        'employee_last':employee_last,
+        'employee_email':employee_email,
+    }
+    
+    return render_template('main-wizard.html', 
+                wizard_data=wizard_data,
+                states=get_states(),
+           )
 
+@app.route("/email-enrollment", methods=['POST'])
+def email_enrollment():
+    return None
+    
 @app.route("/demo")
 def sample():
     return render_template('sample.html',
@@ -105,6 +133,7 @@ def sendApp():
 
 @app.route('/launch-direct', methods = ['GET', 'POST'])
 def launchDirect():
+    
     form = UserDirectForm()
     if form.validate_on_submit():
         return redirect ( signing_sample(form.full_name.data, form.employer.data, form.email_addr.data, url_for('index')))
@@ -139,8 +168,31 @@ def login():
 @app.route("/test")
 #  14-Apr-22 WSD modified to new test file
 def testpage():
-    return render_template('main-wizard.html')
+    return render_template(
+        'main-wizard.html',
+        wizard_data={}, 
+        states=get_states(),
+    )
 
+@app.route("/submit-wizard-data", methods=['POST'])
+def submit_wizard_data():
+    
+    data = json.loads(request.data)
+    
+    wizard_results = data['wizard_results']
+    
+    # is_error = False
+    # error_message = "Implement docusign"
+    # redirect = url_for('enroll_start')
+    # --------
+    # Do docusign with data in wizard_results
+    #
+    is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results);
+    
+    # Return the redirect url or error
+    resp = {'error': is_error, 'error_message': error_message, "redirect": redirect}
+    return jsonify(**resp)
+    
 
 @app.route("/get_rates", methods=['POST'])
 def rates():
