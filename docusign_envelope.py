@@ -1,5 +1,8 @@
 # DocuSign API Walkthrough 08 (PYTHON) - Embedded Signing
 import sys, httplib2, json;
+
+from flask import url_for
+
  
 # I really want to read this from a config file...
 authEmail = "docrequest@5starima.com"
@@ -59,7 +62,7 @@ def create_envelope_and_get_signing_url(wizard_data):
     recipName = wizard_data["agent_data"]["employee_first"] + " " + wizard_data["agent_data"]["employee_last"]
     employer = wizard_data["agent_data"]["company_name"]
     emailTo = wizard_data["agent_data"]["employee_email"]
-    landingURL = "https://taa.herokuapp.com/enroll"
+    landingURL = "https://taa.herokuapp.com"
     
     #
     #if len(wizard_data["children"])>1
