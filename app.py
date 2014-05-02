@@ -175,7 +175,7 @@ def testpage():
 
 @app.route("/submit-wizard-data", methods=['POST'])
 def submit_wizard_data():
-    wizard_results = request.form['wizard_results']
+    wizard_results = request.json['wizard_results']
     
     # is_error = False
     # error_message = "Implement docusign"

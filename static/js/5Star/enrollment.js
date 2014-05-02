@@ -739,15 +739,21 @@ function handle_remote_error() {
     alert("Sorry, an error occurred communicating with the server.");    
 }
 
-function ajax_post(url, data, on_success, on_error) {
-    $.ajax(url, {
+function ajax_post(url, data, on_success, on_error, is_json) {
+    var options = {
         data: data,
         error: on_error,
         success: on_success,
         // expected return data type
         dataType: "json",
         method: "POST"
-    });
+    };
+    if (is_json === true) {
+        options.contentType = "application/json; charset=utf-8";
+        options.processData = false;
+        options.data = JSON.stringify(data);
+    }
+    $.ajax(url, options);
 }
 
 
@@ -861,7 +867,7 @@ function init_validation() {
         // Send to 'listener' for debugging
         ajax_post("http://requestb.in/1l091cx1", {"wizard_results": wizard_results}, function(resp) {
             alert("Just sent to requestb.in");            
-        }, handle_remote_error);
+        }, handle_remote_error, true);
         
         // Send to server
         ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function(resp) {
@@ -872,7 +878,7 @@ function init_validation() {
                 // location = resp.redirect 
             }
             
-        }, handle_remote_error);
+        }, handle_remote_error, true);
         
         bootbox.dialog({
             message: "Thank you! Your information was successfully saved!",
