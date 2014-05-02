@@ -111,6 +111,8 @@ function WizardUI(product, defaults) {
         self.children.push(child_beneficiary);
         // Re-apply jquery date masks
         $('.input-mask-date').mask('99/99/9999')
+        $('.input-mask-ssn').mask('999-99-9999')
+
     };
     self.rendered_child = function(element) {
         $(element).hide().slideDown(400);
@@ -875,7 +877,7 @@ function init_validation() {
                 alert("There was a problem: "+resp.error);
             } else {
                 // Docusign redirect
-                // location = resp.redirect 
+                location = resp.redirect 
             }
             
         }, handle_remote_error, true);

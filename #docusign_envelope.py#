@@ -60,6 +60,12 @@ def create_envelope_and_get_signing_url(wizard_data):
     employer = wizard_data["agent_data"]["company_name"]
     emailTo = wizard_data["agent_data"]["employee_email"]
     landingURL = "https://taa.herokuapp.com/demo"
+    if len(wizard_data["children"])>1
+    child1_name = wizard_data["children"][1]["employee_email"]
+
+    if wizard_results["employee_coverage"]["face_value"]:
+        
+        
 
     if ((recipName != "") and (recipName != None)):
         recipientName = recipName;
