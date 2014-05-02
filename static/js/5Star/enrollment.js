@@ -83,6 +83,9 @@ function WizardUI(product, defaults) {
     
     self.show_children_names = ko.computed(function() {
         if (self.should_include_children()) {
+            // TODO: Put this in a better spot
+            $('.input-mask-ssn').mask('999-99-9999');
+            
             var valid_children = self.get_valid_children();
             var firstnames = $.map(valid_children, function(child) {
                 return child.first();
@@ -110,7 +113,7 @@ function WizardUI(product, defaults) {
         var child_beneficiary = new Beneficiary({});
         self.children.push(child_beneficiary);
         // Re-apply jquery date masks
-        $('.input-mask-date').mask('99/99/9999')
+        $('.input-mask-date').mask('99/99/9999');
     };
     self.rendered_child = function(element) {
         $(element).hide().slideDown(400);
