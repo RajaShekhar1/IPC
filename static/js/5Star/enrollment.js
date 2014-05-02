@@ -113,7 +113,7 @@ function WizardUI(product, defaults) {
         var child_beneficiary = new Beneficiary({});
         self.children.push(child_beneficiary);
         // Re-apply jquery date masks
-        $('.input-mask-date').mask('99/99/9999');
+        $('.input-mask-date').mask('99/99/9999')
     };
     self.rendered_child = function(element) {
         $(element).hide().slideDown(400);
