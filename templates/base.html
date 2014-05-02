@@ -20,9 +20,9 @@
     {% block navbar %}
     <div class="header">
       <ul class="nav nav-pills pull-right">
-        <li class="active" id="nav_home"><a data-target="#" data-toggle="pill" href="{{ url_for ('home') }}">Home</a></li>
-        <li id="nav_enroll"><a  data-target="#" data-toggle="pill" href="{{ url_for ('enroll_start') }}">Enroll</a></li>
-        <li id="nav_agentsign"><a data-target="#" data-toggle="pill" href="#" data-toggle="pill">Sign</a></li>
+        <li class="active" id="nav_home"><a href="{{ url_for ('home') }}">Home</a></li>
+        <li id="nav_enroll"><a  href="{{ url_for ('enroll_start') }}">Enroll</a></li>
+        <li id="nav_agentsign"><a href="{{ url_for ('inbox') }}" data-toggle="pill">Sign</a></li>
       </ul>
 
       <h2 class="text-muted">

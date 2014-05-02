@@ -868,23 +868,33 @@ function init_validation() {
         
         
         // Send to 'listener' for debugging
-        ajax_post("http://requestb.in/1l091cx1", {"wizard_results": wizard_results}, function(resp) {
+        /*
+	  ajax_post("http://requestb.in/1l091cx1", {"wizard_results": wizard_results}, function(resp) {
             alert("Just sent to requestb.in");            
         }, handle_remote_error, true);
-        
+        */
+
         // Send to server
         ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function(resp) {
             if (resp.error) {
-                alert("There was a problem: "+resp.error);
+		bootbox.dialog({
+		    message: "There was a problem generating the application form (" + resp.error + ").  Please contact the enrollment system administrator.",
+		    buttons: {
+			"success": {
+			    "label": "OK",
+			    "className": "btn-sm btn-primary"
+			}
+		    }
+		});
             } else {
                 // Docusign redirect
-                // location = resp.redirect 
+                location = resp.redirect 
             }
             
         }, handle_remote_error, true);
         
         bootbox.dialog({
-            message: "Thank you! Your information was successfully saved!",
+            message: "Please review and sign the application form.",
             buttons: {
                 "success": {
                     "label": "OK",

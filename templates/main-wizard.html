@@ -79,68 +79,88 @@
 		  <form class="form-horizontal" id="step1-form">
         
 		    <div class="step-pane active" id="step1">
+
+		      <div class="grey" data-bind="visible: was_state_provided">
+			<p>Enrollment state is <span data-bind="text: state"></span></p>
+			</div>
 		      
-		      <div class="form-group">
+		      <div class="form-group" data-bind="visible: !was_state_provided">
 			<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Select state for this enrollment</label>
 			<div class="col-xs-12 col-sm-9">
-			  
-
-			  <!-- **Zach:  can you put these State options into a js variable or something so we don't have to clutter the source here or load multiple times? 
-			       This is perhaps the 3rd time I'm using this.
-			       -->
 			  <select id="enrollmentState" class="select1" placeholder="Select State..." 
-                      data-bind="value: state, disable: was_state_provided"
-                  >
+				  data-bind="value: state, disable: was_state_provided"
+				  >
 			    <option value="">&nbsp;</option>
 			    {% for state in states %}
-                  <option value="{{state['code']}}">{{state["name"]}}</option>
-                {% endfor %}
+			    <option value="{{state['code']}}">{{state["name"]}}</option>
+			    {% endfor %}
 			  </select>
 
-	        </div>
+			</div>
+		      </div>
 		 
-		    <div class="space-2"></div>
+  	    <div class="space-2"></div>
             
             <h4 class="lighter block green">Initial information required to select a benefit plan</h4>
                   
-            <div class="row form-group">
-              <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="eeBenefitFName">
-                Employee 
-              </label>
-              
-              <div class="col-xs-12 col-sm-10">
-                <input type="text" id="eeBenefitFName" name="eeBenefitFName" 
-                       data-bind="value: employee().first" placeholder="First Name" />
-                <input type="text" id="eeBenefitLName" name="eeBenefitLName" 
-                       data-bind="value: employee().last" placeholder="Last Name" />
-              </div>
-            </div>
-    
-            <div class="col-sm-offset-1 row form-group">
-              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeDOB">
-                Date of Birth
-                <!-- <br><small class="text-success">DD/MM/YYYY</small> -->
-              </label>
-              
-              <div class="col-xs-12 col-sm-9">
-                <input class="col-xs-12 col-sm-4 input-mask-date" name="eeBenefitDOB" 
-                       data-bind="value: employee().birthdate" type="text" id="eeDOB" placeholder="DD/MM/YYYY" />
-              </div>
-            </div>
+            <div class="col-xs-12">
+	      <div class="row form-group">
+		<label class="control-label col-xs-12 col-sm-2 no-padding-right" for="eeBenefitFName">
+		  Employee 
+		</label>
+		  
+		<div class="col-xs-12 col-sm-10">
+		  <input type="text" id="eeBenefitFName" name="eeBenefitFName" 
+			 data-bind="value: employee().first" placeholder="First Name" />
+		  <input type="text" id="eeBenefitLName" name="eeBenefitLName" 
+			 data-bind="value: employee().last" placeholder="Last Name" />
+		  
+		</div>
+	      </div>
+		
+	      <div class="col-sm-offset-1">
+                <div class="form-group">
+		  <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeDOB">
+		    Date of Birth
+		  </label>
+		  
+		  <div class="col-xs-12 col-sm-8">
+		    <input class="col-xs-12 col-sm-4 input-mask-date" name="eeBenefitDOB" 
+			   data-bind="value: employee().birthdate" type="text" id="eeDOB" placeholder="DD/MM/YYYY" />
+		  </div>
+		</div>
+	      </div>
+	    </div>
             
-            <div class="row form-group">
-              <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="eeMaritalStatus">
-                Marital Status
-              </label>
-              
-              <div class="col-xs-12 col-sm-9">
-                <select data-bind="
-                    options: marital_statuses, 
-                    optionsCaption: '(Select)',
-                    value: employee_marital_status
-                    " id="eeMaritalStatus" ></select>
-              </div>
-            </div>
+	    <!-- <div class="col-sm-offset-1"> -->
+              <div class="col-xs-12">
+		<div class="row">
+		  <div class="col-xs-6 col-sm-7">
+		    <div class="form-group">
+		      <label class="control-label col-xs-12 col-sm-5 no-padding-right" for="eeMaritalStatus">
+			Marital Status
+		      </label>
+		      
+		      <div class="col-xs-12 col-sm-7">
+			<select data-bind="
+					   options: marital_statuses, 
+					   optionsCaption: '(Select)',
+					   value: employee_marital_status
+					   " id="eeMaritalStatus" ></select>
+		      </div>
+		    </div>
+		  </div>
+
+		  <div class="col-xs-6 col-sm-3">
+		    <div class="form-group">
+		      <label class="control-label col-xs-11 col-sm-11 no-padding-right">
+			<input type="checkbox" data-bind="checked: should_include_children"> Include Children
+		      </label>
+		    </div>
+		  </div>
+		</div>
+	      </div>
+	   <!--  </div> -->
             
             <div data-bind="slideDownIf: should_show_spouse">
               <div class="form-group">
@@ -157,9 +177,7 @@
               <div class="col-sm-offset-1">
                 <div class="form-group">
                   <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="spDOB">
-                    Date of Birth<!-- <br>
-                    <small class="text-success">DD/MM/YYYY</small>
-                    -->
+                    Date of Birth
                   </label>
                   <div class="col-xs-12 col-sm-9">
                     <input class="col-xs-12 col-sm-4 input-mask-date" type="text" id="spDOB" data-bind="value: spouse().birthdate" placeholder="DD/MM/YYYY" />
@@ -167,15 +185,6 @@
                 </div>
               </div>
             </div>
-            
-            <div class="form-group">
-              <label class="control-label col-xs-12 col-sm-2 no-padding-right">
-                <input type="checkbox" data-bind="checked: should_include_children"> Include Children
-              </label>
-              <div class="col-xs-12 col-sm-10">
-                
-              </div>
-            </div>			
             
             <div class="form-group" data-bind="slideDownIf: should_include_children">
               <ul class="list-unstyled" data-bind="foreach: {data: children, afterAdd: rendered_child, beforeRemove: removing_child}">
@@ -392,7 +401,7 @@
 	    </div>
           
   
-        </div>
+        <!-- /div -->
       </div>
       </form>
         
@@ -758,8 +767,7 @@
 		</label>
 	      </div>
 
-	      <!-- **Zach: wasn't sure syntax for visible being whether above radio selection is "Spouse" -->
-	      <div class="col-sm-offset-5 text-warning bigger-120 col-xs-12" id="spouseBeneficiaryLine" data-bind="visible: employee_beneficiary() == 'spouse'">
+	      <div class="col-sm-offset-5 text-primary bigger-110 col-xs-12" id="spouseBeneficiaryLine" data-bind="visible: employee_beneficiary() == 'spouse'">
 		<span data-bind="text: spouse().first"></span> <span data-bind="text: spouse().last"></span>, spouse, <span data-bind="text: spouse().birthdate"></span>, ss=
 		    <span data-bind="text: spouse().ssn"></span>	    
               </div>
@@ -768,38 +776,48 @@
 	    <!-- **Zach: likewise, didn't know how syntax to say above radio selection is "Someone else" -->
 	    <div id="eeBeneficiaryOther" data-bind="visible: !should_include_spouse_in_table() || employee_beneficiary() == 'other'">
 	      <div class="row form-group">
-            <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="eeBeneOtherName">
-                      Beneficiary 
-            </label>
-            <div class="col-xs-12 col-sm-5">
-                      <input type="text" id="eeBeneOtherName" placeholder="Full Name" data-bind="value: employee_beneficiary_name" />
-            </div>
-            
-            <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="eeBeneOtherRelation">
-              Relationship
-            </label>
-            <div class="col-xs-12 col-sm-3">
-                      <input type="text" id="eeBeneOtherRelation" placeholder="Relationship" data-bind="value: employee_beneficiary_relationship" />
-            </div>
+		<div class="col-sm-6">
+		  <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherName">
+                    Beneficiary 
+		  </label>
+		  <div class="col-xs-12 col-sm-9">
+                    <input type="text" id="eeBeneOtherName" placeholder="Full Name" data-bind="value: employee_beneficiary_name" />
+		  </div>
+		</div>
+
+		
+		<div class="col-sm-6">
+		  <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherRelation">
+		    Relationship
+		  </label>
+		  <div class="col-xs-12 col-sm-9">
+                    <input type="text" id="eeBeneOtherRelation" placeholder="Relationship" data-bind="value: employee_beneficiary_relationship" />
+		  </div>
+		</div>
 	      </div>
 	      
 	      <div class="row form-group">
-            <label class="control-label col-xs-1 col-sm-2 no-padding-right" for="eeBeneOtherSSN">
-              SSN
-            </label>
-            <div class="col-xs-11 col-sm-5">
-              <input type="text" id="eeBeneOtherSSN" class="col-xs-11 col-sm-6 input-mask-ssn" data-bind="value: employee_beneficiary_ssn" />
-            </div>
-            <label class="control-label col-xs-1 col-sm-1 no-padding-right" for="eeBeneOtherDOB">
-              DOB
-            </label>
-            <div class="col-xs-12 col-sm-4">
-                      <input class="col-xs-12 col-sm-4 input-mask-date" name="eeBeneOtherDOB" data-bind="value: employee_beneficiary_dob"
-                 type="text" id="eeBeneOtherDOB" placeholder="DD/MM/YYYY" />
-            </div>	      
-	      </div>	  
-	    </div><!-- .eeBeneficiaryOther -->
-	  </div><!-- eeBeneficiaryBlock -->
+		<div class="col-sm-6">
+		  <label class="control-label col-xs-2 col-sm-3 no-padding-right" for="eeBeneOtherSSN">
+		    SSN
+		  </label>
+		  <div class="col-xs-10 col-sm-9">
+		    <input type="text" id="eeBeneOtherSSN" class="col-xs-10 col-sm-9 input-mask-ssn" data-bind="value: employee_beneficiary_ssn" />
+		  </div>
+		</div>
+
+		<div class="col-sm-6">
+		  <label class="control-label col-xs-2 col-sm-3 no-padding-right" for="eeBeneOtherDOB">
+		    DOB
+		  </label>
+		  <div class="col-xs-10 col-sm-9">
+                    <input class="col-xs-10 col-sm-9 input-mask-date" name="eeBeneOtherDOB" data-bind="value: employee_beneficiary_dob"
+			   type="text" id="eeBeneOtherDOB" placeholder="DD/MM/YYYY" />
+		  </div>	      
+		</div>
+	      </div>
+	    </div><!-- /eeBeneficiaryOther -->
+	  </div><!-- /eeBeneficiaryBlock -->
 
 	  <!-- **Zach: the visibility of this div should depend on whether spouse indeed elected coverage from Step 1  -->
 	  <div id="spBeneficiaryBlock" data-bind="visible: did_select_spouse_coverage">
@@ -819,17 +837,57 @@
 		</label>
 	      </div>
 
-	      <div class="col-sm-offset-5 text-warning bigger-120 col-xs-12" id="spouseBeneficiaryLine" data-bind="visible: spouse_beneficiary() == 'employee'">
+	      <div class="col-sm-offset-5 text-primary bigger-110 col-xs-12" id="spouseBeneficiaryLine" data-bind="visible: spouse_beneficiary() == 'employee'">
 		<span data-bind="text: employee().first"></span> <span data-bind="text: employee().last"></span>, spouse, <span data-bind="text: employee().birthdate"></span>, ss=
 		<!-- **Zach: same SSN display need as above, but for employee -->
 	      	<span data-bind="text: employee().ssn"></span>	    
               </div>
-
-	      <div id="spBeneficiaryOther" data-bind="visible: should_include_spouse_in_table() && spouse_beneficiary() == 'other'">
-		<!--  2014-04-30 WSD  should have something analog to above option for #eeBeneficiaryOther once that's working -->
-	      </div>
 	    </div>
-	  </div>
+	    
+	    <div id="spBeneficiaryOther" data-bind="visible: did_select_spouse_coverage && spouse_beneficiary() == 'other'">
+	      <div class="row form-group">
+		<div class="col-sm-6">
+		  <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherName">
+                    Beneficiary 
+		  </label>
+		  <div class="col-xs-12 col-sm-9">
+                    <input type="text" id="spBeneOtherName" placeholder="Full Name" data-bind="value: spouse_beneficiary_name" />
+		  </div>
+		</div>
+
+		
+		<div class="col-sm-6">
+		  <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherRelation">
+		    Relationship
+		  </label>
+		  <div class="col-xs-12 col-sm-9">
+                    <input type="text" id="spBeneOtherRelation" placeholder="Relationship" data-bind="value: spouse_beneficiary_relationship" />
+		  </div>
+		</div>
+	      </div>
+	      
+	      <div class="row form-group">
+		<div class="col-sm-6">
+		  <label class="control-label col-xs-2 col-sm-3 no-padding-right" for="spBeneOtherSSN">
+		    SSN
+		  </label>
+		  <div class="col-xs-10 col-sm-9">
+		    <input type="text" id="spBeneOtherSSN" class="col-xs-10 col-sm-9 input-mask-ssn" data-bind="value: spouse_beneficiary_ssn" />
+		  </div>
+		</div>
+
+		<div class="col-sm-6">
+		  <label class="control-label col-xs-2 col-sm-3 no-padding-right" for="spBeneOtherDOB">
+		    DOB
+		  </label>
+		  <div class="col-xs-10 col-sm-9">
+                    <input class="col-xs-10 col-sm-9 input-mask-date" name="spBeneOtherDOB" data-bind="value: spouse_beneficiary_dob"
+			   type="text" id="spBeneOtherDOB" placeholder="DD/MM/YYYY" />
+		  </div>	      
+		</div>
+	      </div>
+	    </div><!-- /spBeneficiaryOther -->
+	  </div><!-- /spBeneficiaryBlock -->
 
 
 	  <!-- **Zach: the visibility of div is whether any valid child coverage was elected from step 1  -->
@@ -854,19 +912,11 @@
 	  <div class="space-10"></div>
 
 	  <div id="CoverageSummary">
-	    <h4 class="green">Summary of Benefits</h4>
+	    <h4 class="green center">Summary of Benefits</h4>
 	    
-	    <!-- **Zach:  can you help with following table?  If too involved, then perhaps through in a starting point?
-	    <!-- *** Want a striped table here to display persons and coverage selections.
-		 Headers:  Name, Age, Coverage, Weekly Premium, Effective Monthly
-		 
-		 body rows for each person represented on step1, including those who selected "no benefit"
-		 body row for children can be "bundled" as in Step 1 if needed for coding simplicity, but prefer separate rows per child
-		 finally, want a "totals" row with label "Total" in column 3, and then Weekly and Monthly columns totalled respectively
-	      -->
-          <table class="confirm-table" data-bind="with: selected_plan">
+	  <table class="center confirm-table table table-striped table-hover" data-bind="with: selected_plan">
               <thead>
-                <tr><th>Name</th> <th>Age</th> <th>Coverage</th> <th>Weekly Premium</th><th>Effective Monthly</th></tr>
+                <tr><th class="center">Name</th> <th class="center">Age</th> <th class="center">Coverage</th> <th class="center">Weekly Premium</th><th class="center">Effective Monthly</th></tr>
               </thead>
               <tbody>
                 <!--ko foreach: get_all_people -->
@@ -879,9 +929,11 @@
                     
                 </tr>
                 <!--/ko-->
-                <tr><td></td><td></td><td><strong>Total</strong></td>
-                    <td data-bind="text: formatted_total_weekly_premium()"></td>
-                    <td data-bind="text: formatted_monthly_premium()"></td>
+                
+		<tr class="success">
+		  <td></td><td></td><td><span class="text-primary bigger-110">Total</span></td>
+                  <td data-bind="text: formatted_total_weekly_premium()"></td>
+                  <span class="text-primary bigger-110"><td data-bind="text: formatted_monthly_premium()"></td></span>
                 </tr>
               </tbody>
           </table>
@@ -928,7 +980,7 @@
 
 	  <div class="well">
 	    <i class="icon-warning-sign bigger-120 orange"></i>
-	    Note:  on the next page, you must answer the <span class="bigger-110 orange">yes/no questions</span> in the <span class="green bigger-120">Statement of Health</span> section on the application for <span class="orange bigger-120">each</span> person applying for insurance in order to affix a signature.
+	    Note:  on the next page, you must answer the <span class="bigger-110 orange">yes/no questions</span> in the <span class="green bigger-120">Statement of Health</span> section on the application for <span class="orange bigger-110">each</span> person applying for insurance in order to affix a signature.
 	  </div>
 
 	  <div class="space-2"></div>
