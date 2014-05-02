@@ -2,8 +2,8 @@
 DEBUG = True
 
 # Put server name here for formatting external links
-SERVER_NAME = 'localhost:5000'
-#SERVER_NAME = 'taa.herokuapp.com'
+#SERVER_NAME = 'localhost:5000'
+SERVER_NAME = 'taa.herokuapp.com'
 
 # Flask-WTF forms extension config
 CSRF_ENABLED = True

@@ -27,6 +27,8 @@ function WizardUI(product, defaults) {
     
     // Data used on steps 2-5
     self.is_in_person_application = ko.observable('is_in_person' in defaults && defaults.is_in_person);
+    self.identityToken = ko.observable("");
+    self.identityType = ko.observable("");
     
     self.was_state_provided = ("state" in defaults && defaults.state !== null && defaults.state != "XX");
     self.state = ko.observable(defaults.state || "");
@@ -830,6 +832,9 @@ function init_validation() {
         // Pull out all the data we need for docusign 
         var wizard_results = {
             agent_data: window.ui.defaults,
+            
+	    identityToken: window.ui.identityToken(),
+	    identityType: window.ui.identityType(),
             
             employee: window.ui.employee().serialize_data(),
             spouse: window.ui.spouse().serialize_data(),

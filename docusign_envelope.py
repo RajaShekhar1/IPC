@@ -62,7 +62,8 @@ def create_envelope_and_get_signing_url(wizard_data):
     recipName = wizard_data["agent_data"]["employee_first"] + " " + wizard_data["agent_data"]["employee_last"]
     employer = wizard_data["agent_data"]["company_name"]
     emailTo = wizard_data["agent_data"]["employee_email"]
-    landingURL = "https://taa.herokuapp.com"
+    landingURL = "https://taa.herokuapp.com/enroll"
+    idTokenStr = wizard_data["identityType"] + ": " + wizard_data["identityToken"]
     
     #
     #if len(wizard_data["children"])>1
@@ -75,12 +76,18 @@ def create_envelope_and_get_signing_url(wizard_data):
     if ((recipName != "") and (recipName != None)):
         recipientName = recipName;
 
-    
-    label2 = "employeeEmail"
-    value2 = emailTo
-    label1 = "Employer"
-    value1 = employer
-    
+    if wizard_data["employee_coverage"]:
+        if wizard_data["employee_coverage"]["face_value"]:
+            employeeCoverage = wizard_data["employee_coverage"]["face_value"]
+        else:
+            employeeCoverage = " "
+    else:
+        employeeCoverage = " "
+   
+      
+                          
+
+
     #
     # STEP 1 - Login - get base URL - should be able to cache such a URL and bypass this step
     #          (or at least move to a routine to "initialize" on startup or for session)
@@ -121,10 +128,20 @@ def create_envelope_and_get_signing_url(wizard_data):
              "name" :recipientName,
              "tabs" : {
                  "textTabs": [
-                     {"tabLabel" : label1,
-                      "value" : value1},
-                     {"tabLabel" : label2,
-                      "value" : value2} 
+                     {"tabLabel" : "identityToken",
+                      "value" : idTokenStr},
+                     {"tabLabel" : "eeFName",
+                      "value" : wizard_data["employee"]["first"]},
+                     {"tabLabel" : "eeLName",
+                      "value" : wizard_data["employee"]["last"]},
+                     {"tabLabel" : "eeDOB",
+                      "value" : wizard_data["employee"]["last"]},
+                     {"tabLabel" : "eeCoverage",
+                      "value" : employeeCoverage},
+                     {"tabLabel" : "Employer",
+                      "value" : wizard_data["agent_data"]["company_name"]},
+                     {"tabLabel" : "employeeEmail",
+                      "value" : wizard_data["employee"]["email"] } 
                      ]} ,
              "roleName" :  templateRoleName,
              "clientUserId": templateClientID 

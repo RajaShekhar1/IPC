@@ -950,17 +950,17 @@
                   Please enter either a valid Driver's License number or Employee Number
 		</label>
 		<div class="col-xs-12 col-sm-4">
-                  <input type="text" id="ConfirmationToken" />
+                  <input type="text" id="ConfirmationToken" data-bind="value: identityToken"/>
 		</div>
 		
 		<div class="col-xs-12 col-sm-8">
 		  <label class="blue">
-		    <input name="confirmTokenType" value="1" type="radio" class="inline ace" id="confToken-eenum" checked="" />
+		    <input name="confirmTokenType" value="1" type="radio" class="inline ace" id="confToken-eenum" checked="" data-bind="value: identityType"/>
 		    <span class="lbl"> Employee # &nbsp;&nbsp;&nbsp;</span>
 		  </label>
 		  
 		  <label class="blue">
-		    <input name="confirmTokenType" value="2" type="radio" class="inline ace" id="confToken-dlnum"/>
+		    <input name="confirmTokenType" value="2" type="radio" class="inline ace" id="confToken-dlnum" data-bind="value: identityType"/>
 		    <span class="lbl"> DL #</span>
 		  </label>
 
