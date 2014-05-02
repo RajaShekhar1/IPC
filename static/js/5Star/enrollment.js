@@ -26,8 +26,9 @@ function WizardUI(product, defaults) {
     self.insurance_product = product;
     
     // Data used on steps 2-5
-    self.is_in_person_application = ko.observable(('is_in_person' in defaults)?defaults.is_in_person : true);
-    self.was_state_provided = ("state" in defaults);
+    self.is_in_person_application = ko.observable('is_in_person' in defaults && defaults.is_in_person);
+    
+    self.was_state_provided = ("state" in defaults && defaults.state !== null && defaults.state != "XX");
     self.state = ko.observable(defaults.state || "");
     self.company_name = ko.observable(defaults.company_name || "(Unknown Company)");
     
