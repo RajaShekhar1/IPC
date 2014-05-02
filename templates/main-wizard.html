@@ -84,17 +84,36 @@
 			<p>Enrollment state is <span data-bind="text: state"></span></p>
 			</div>
 		      
+<<<<<<< HEAD
 		      <div class="form-group" data-bind="visible: !was_state_provided">
 			<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Select state for this enrollment</label>
 			<div class="col-xs-12 col-sm-9">
 			  <select id="enrollmentState" class="select1" placeholder="Select State..." 
 				  data-bind="value: state, disable: was_state_provided"
 				  >
+=======
+		      <div class="form-group">
+			
+			<div class="col-xs-12 col-sm-12">
+			  
+              <!--ko if: was_state_provided-->
+                <label class="control-label col-xs-12 col-sm-3 no-padding-righ">
+                    Enrollment State: <strong data-bind="text: state"></strong>
+                </label> 
+                
+              <!--/ko-->
+              <!--ko if: !was_state_provided-->
+                <label class="" for="enrollmentState">Select state for this enrollment</label>
+                <select id="enrollmentState" class="select1" placeholder="Select State..." 
+                      data-bind="value: state"
+                  >
+>>>>>>> FETCH_HEAD
 			    <option value="">&nbsp;</option>
 			    {% for state in states %}
 			    <option value="{{state['code']}}">{{state["name"]}}</option>
 			    {% endfor %}
 			  </select>
+<<<<<<< HEAD
 
 			</div>
 		      </div>
@@ -102,6 +121,14 @@
   	    <div class="space-2"></div>
             
             <h4 class="lighter block green">Initial information required to select a benefit plan</h4>
+=======
+              <!--/ko-->
+			  
+	        </div>
+		 
+		    <div class="space-2"></div>
+            <h4 class="lighter block green col-xs-12 no-padding-right">Initial information required to select a benefit plan</h4>
+>>>>>>> FETCH_HEAD
                   
             <div class="col-xs-12">
 	      <div class="row form-group">
@@ -482,12 +509,12 @@
 
 	    <div class="col-xs-12 col-sm-9">
 	      <label class="blue">
-		<input name="eeGender" value="male" type="radio" class="inline ace" data-bind="value: employee().gender" />
+		<input name="eeGender" value="male" type="radio" class="inline ace" data-bind="checked: employee().gender" />
 		<span class="lbl"> Male &nbsp;&nbsp;&nbsp; </span>
 	      </label>
 	      
 	      <label class="blue">
-		<input name="eeGender" value="female" type="radio" class="inline ace" data-bind="value: employee().gender" />
+		<input name="eeGender" value="female" type="radio" class="inline ace" data-bind="checked: employee().gender" />
 		<span class="lbl"> Female</span>
 	      </label>
 	    </div>
@@ -634,12 +661,12 @@
 
 	    <div class="col-xs-12 col-sm-10">
 	      <label class="blue">
-		<input name="spGender" value="1" type="radio" class="inline ace" />
+		<input name="spGender" value="male" type="radio" class="inline ace" data-bind="checked: spouse().gender" />
 		<span class="lbl"> Male &nbsp;&nbsp;&nbsp; </span>
 	      </label>
 	      
 	      <label class="blue">
-		<input name="spGender" value="2" type="radio" class="inline ace" />
+		<input name="spGender" value="female" type="radio" class="inline ace" data-bind="checked: spouse().gender"  />
 		<span class="lbl"> Female</span>
 	      </label>
 	    </div>
@@ -773,7 +800,6 @@
               </div>
 	    </div>
 
-	    <!-- **Zach: likewise, didn't know how syntax to say above radio selection is "Someone else" -->
 	    <div id="eeBeneficiaryOther" data-bind="visible: !should_include_spouse_in_table() || employee_beneficiary() == 'other'">
 	      <div class="row form-group">
 		<div class="col-sm-6">
@@ -855,6 +881,7 @@
 		  </div>
 		</div>
 
+<<<<<<< HEAD
 		
 		<div class="col-sm-6">
 		  <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherRelation">
@@ -864,6 +891,44 @@
                     <input type="text" id="spBeneOtherRelation" placeholder="Relationship" data-bind="value: spouse_beneficiary_relationship" />
 		  </div>
 		</div>
+=======
+	      <div id="spBeneficiaryOther" data-bind="visible: should_include_spouse_in_table() && spouse_beneficiary() == 'other'">
+		    
+              <div class="row form-group">
+                <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="spBeneOtherName">
+                          Beneficiary 
+                </label>
+                <div class="col-xs-12 col-sm-5">
+                          <input type="text" id="spBeneOtherName" placeholder="Full Name" data-bind="value: spouse_beneficiary_name" />
+                </div>
+                
+                <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="spBeneOtherRelation">
+                  Relationship
+                </label>
+                <div class="col-xs-12 col-sm-3">
+                          <input type="text" id="spBeneOtherRelation" placeholder="Relationship" data-bind="value: spouse_beneficiary_relationship" />
+                </div>
+              </div>
+              
+              <div class="row form-group">
+                <label class="control-label col-xs-1 col-sm-2 no-padding-right" for="spBeneOtherSSN">
+                  SSN
+                </label>
+                <div class="col-xs-11 col-sm-5">
+                  <input type="text" id="spBeneOtherSSN" class="col-xs-11 col-sm-6 input-mask-ssn" data-bind="value: spouse_beneficiary_ssn" />
+                </div>
+                <label class="control-label col-xs-1 col-sm-1 no-padding-right" for="spBeneOtherDOB">
+                  DOB
+                </label>
+                <div class="col-xs-12 col-sm-4">
+                          <input class="col-xs-12 col-sm-4 input-mask-date" name="eeBeneOtherDOB" data-bind="value: spouse_beneficiary_dob"
+                     type="text" id="spBeneOtherDOB" placeholder="DD/MM/YYYY" />
+                </div>	      
+              </div>
+              
+              
+              
+>>>>>>> FETCH_HEAD
 	      </div>
 	      
 	      <div class="row form-group">
@@ -889,8 +954,7 @@
 	    </div><!-- /spBeneficiaryOther -->
 	  </div><!-- /spBeneficiaryBlock -->
 
-
-	  <!-- **Zach: the visibility of div is whether any valid child coverage was elected from step 1  -->
+      
 	  <div id="onlyChildCoverageBeneficiaryStmt" data-bind="visible: did_select_children_coverage">
 	    <h3 class="lighter block green">Child Beneficiary</h3>
 	    <span class="text-primary bigger-110 center">
@@ -914,6 +978,7 @@
 	  <div id="CoverageSummary">
 	    <h4 class="green center">Summary of Benefits</h4>
 	    
+<<<<<<< HEAD
 	  <table class="center confirm-table table table-striped table-hover" data-bind="with: selected_plan">
               <thead>
                 <tr><th class="center">Name</th> <th class="center">Age</th> <th class="center">Coverage</th> <th class="center">Weekly Premium</th><th class="center">Effective Monthly</th></tr>
@@ -937,39 +1002,66 @@
                 </tr>
               </tbody>
           </table>
+=======
+	      <div class="row">
+            <div class="col-xs-12 col-sm-9 col-lg-6">
+                <table class="col-xs-12 col-sm-6 confirm-table table table-striped table-bordered" data-bind="with: selected_plan">
+                  <thead>
+                    <tr><th>Name</th> <th>Age</th> <th>Coverage</th> <th>Weekly Premium</th><th>Effective Monthly</th></tr>
+                  </thead>
+                  <tbody>
+                    <!--ko foreach: get_all_people -->
+                    <tr>
+                        <td data-bind="text: name"></td>
+                        <td data-bind="text:get_age"></td>
+                        <td data-bind="text:display_selected_coverage"></td>
+                        <td data-bind="text:display_weekly_premium"></td>
+                        <td data-bind="text:display_monthly_premium"></td>
+                        
+                    </tr>
+                    <!--/ko-->
+                    <tr><td></td><td></td><td><strong>Total</strong></td>
+                        <td data-bind="text: formatted_total_weekly_premium()"></td>
+                        <td data-bind="text: formatted_monthly_premium()"></td>
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+          </div>
+>>>>>>> FETCH_HEAD
 	    
 	    <div class="space-10"></div>
 	    
-	    <div id="inPersonSignerToken" data-bind="visible: function() {!is_in_person_application()}">
+	    <div id="inPersonSignerToken" data-bind="visible: is_in_person_application() === false">
 	      <h4 class="green">Employee Identification</h4>
 	  
 	      <div class="row form-group">
-		<label class="control-label col-xs-12 col-sm-12">
-                  Please enter either a valid Driver's License number or Employee Number
-		</label>
-		<div class="col-xs-12 col-sm-4">
-                  <input type="text" id="ConfirmationToken" />
-		</div>
-		
-		<div class="col-xs-12 col-sm-8">
-		  <label class="blue">
-		    <input name="confirmTokenType" value="1" type="radio" class="inline ace" id="confToken-eenum" checked="" />
-		    <span class="lbl"> Employee # &nbsp;&nbsp;&nbsp;</span>
-		  </label>
-		  
-		  <label class="blue">
-		    <input name="confirmTokenType" value="2" type="radio" class="inline ace" id="confToken-dlnum"/>
-		    <span class="lbl"> DL #</span>
-		  </label>
-
-		  <select id="dlState" name="dlState" class="select1" placeholder="DL# state...">
-		    <option value="">&nbsp;</option>
-		    {% for state in states %}
-              <option value="{{state['code']}}">{{state["name"]}}</option>
-            {% endfor %}
-		  </select>
-
-		</div><!-- /input fields -->
+            <label class="control-label col-xs-12 col-sm-12">
+                      Please enter either a valid Driver's License number or Employee Number
+            </label>
+            <div class="col-xs-12 col-sm-4">
+                      <input type="text" id="ConfirmationToken" />
+            </div>
+            
+            <div class="col-xs-12 col-sm-8">
+              <label class="blue">
+                <input name="confirmTokenType" value="1" type="radio" class="inline ace" id="confToken-eenum" checked="" />
+                <span class="lbl"> Employee # &nbsp;&nbsp;&nbsp;</span>
+              </label>
+              
+              <label class="blue">
+                <input name="confirmTokenType" value="2" type="radio" class="inline ace" id="confToken-dlnum"/>
+                <span class="lbl"> DL #</span>
+              </label>
+    
+              <select id="dlState" name="dlState" class="select1" placeholder="DL# state...">
+                <option value="">&nbsp;</option>
+                {% for state in states %}
+                  <option value="{{state['code']}}">{{state["name"]}}</option>
+                {% endfor %}
+              </select>
+    
+            </div><!-- /input fields -->
 		
 	      </div><!-- /.form-group -->		
 	    </div><!-- /inPersonSignerToken -->
