@@ -25,7 +25,7 @@
     <h3>Launch an Enrollment</h3>
     <p>Enter the information below for the case setup, the enrollee data, and proceed with either enrolling in-person or via email.</p>
 
-    <form class="enrollment-form form-horizontal" action="{{ url_for('in_person_enrollment') }}" method="POST">
+    <form class="form-horizontal" action="{{ url_for('in_person_enrollment') }}" method="POST">
       <div class="form-group">
 	<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Select state for this enrollment</label>
 	<div class="col-xs-12 col-sm-9">
@@ -181,31 +181,17 @@
 <script src="{{url_for('static', filename='js/handlebars-v1.3.0.js')}}"></script>  -->
 
 <script type="text/javascript">
-    jQuery(function($) {
+  jQuery(function($) {
   
-        // set nav
-        $('#nav_enroll').addClass('active');
-        $('#nav_home').removeClass('active');
-        
-        var email_btn = $("#email-enrollment-btn");
-        email_btn.on("click", function() {
-            email_btn.prop('disabled', true);
-            $.ajax("{{url_for('email_enrollment')}}", {
-                data: $(".enrollment-form").serialize(),
-                error: function() {
-                    alert("There was a problem sending the email.");
-                    email_btn.prop('disabled', false);
-                },
-                success: function() {
-                    alert("The enrollment email has been sent to '"+$('#email').val()+"'");
-                    email_btn.prop('disabled', false);
-                },
-                // expected return data type
-                dataType: "json",
-                method: "POST"
-            });
-        });
-        
+      // set nav
+      $('#nav_enroll').addClass('active');
+      $('#nav_home').removeClass('active');
+  
+      
+      $("#email-enrollment-btn").on("click", function() {
+          alert("email: {{ url_for('email_enrollment') }}"); 
+      });
+      
   })
 </script>
 

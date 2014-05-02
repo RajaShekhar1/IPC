@@ -1,9 +1,6 @@
 # runtime environment config
 DEBUG = True
 
-# Put server name here for formatting external links
-SERVER_NAME = 'localhost:5000'
-
 # Flask-WTF forms extension config
 CSRF_ENABLED = True
 SECRET_KEY = 'really-tricky-secret-key'
