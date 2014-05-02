@@ -484,12 +484,12 @@
 
 	    <div class="col-xs-12 col-sm-9">
 	      <label class="blue">
-		<input name="eeGender" value="male" type="radio" class="inline ace" data-bind="value: employee().gender" />
+		<input name="eeGender" value="male" type="radio" class="inline ace" data-bind="checked: employee().gender" />
 		<span class="lbl"> Male &nbsp;&nbsp;&nbsp; </span>
 	      </label>
 	      
 	      <label class="blue">
-		<input name="eeGender" value="female" type="radio" class="inline ace" data-bind="value: employee().gender" />
+		<input name="eeGender" value="female" type="radio" class="inline ace" data-bind="checked: employee().gender" />
 		<span class="lbl"> Female</span>
 	      </label>
 	    </div>
@@ -636,12 +636,12 @@
 
 	    <div class="col-xs-12 col-sm-10">
 	      <label class="blue">
-		<input name="spGender" value="1" type="radio" class="inline ace" />
+		<input name="spGender" value="male" type="radio" class="inline ace" data-bind="checked: spouse().gender" />
 		<span class="lbl"> Male &nbsp;&nbsp;&nbsp; </span>
 	      </label>
 	      
 	      <label class="blue">
-		<input name="spGender" value="2" type="radio" class="inline ace" />
+		<input name="spGender" value="female" type="radio" class="inline ace" data-bind="checked: spouse().gender"  />
 		<span class="lbl"> Female</span>
 	      </label>
 	    </div>
@@ -935,14 +935,14 @@
 		<tr class="success">
 		  <td></td><td></td><td><span class="text-primary bigger-110">Total</span></td>
                   <td data-bind="text: formatted_total_weekly_premium()"></td>
-                  <span class="text-primary bigger-110"><td data-bind="text: formatted_monthly_premium()"></td></span>
+                  <td><span class="text-primary bigger-110" data-bind="text: formatted_monthly_premium()"></span></td>
                 </tr>
               </tbody>
           </table>
 	    
 	    <div class="space-10"></div>
 	    
-	    <div id="inPersonSignerToken" data-bind="visible: function() {!is_in_person_application()}">
+	    <div id="inPersonSignerToken" data-bind="visible: is_in_person_application() === false">
 	      <h4 class="green">Employee Identification</h4>
 	  
 	      <div class="row form-group">
@@ -955,12 +955,12 @@
 		
 		<div class="col-xs-12 col-sm-8">
 		  <label class="blue">
-		    <input name="confirmTokenType" value="1" type="radio" class="inline ace" id="confToken-eenum" checked="" data-bind="value: identityType"/>
+		    <input name="confirmTokenType" value="1" type="radio" class="inline ace" id="confToken-eenum" checked="" data-bind="checked: identityType"/>
 		    <span class="lbl"> Employee # &nbsp;&nbsp;&nbsp;</span>
 		  </label>
 		  
 		  <label class="blue">
-		    <input name="confirmTokenType" value="2" type="radio" class="inline ace" id="confToken-dlnum" data-bind="value: identityType"/>
+		    <input name="confirmTokenType" value="2" type="radio" class="inline ace" id="confToken-dlnum" data-bind="checked: identityType"/>
 		    <span class="lbl"> DL #</span>
 		  </label>
 
