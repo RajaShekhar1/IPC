@@ -11,7 +11,7 @@ from sqlalchemy import (
     Date,
 )
 
-from model.Enrollment import Enrollment
+from model.Enrollment import Enrollment, EnrollmentRequest, Case
 
 metadata = MetaData()
 agents = Table('agents', metadata, 
@@ -33,8 +33,10 @@ cases = Table('cases', metadata,
     Column('case_id', Integer, primary_key=True),
     Column('company_name', String, nullable=False),
     Column('situs_state', String(2), nullable=False),
-    Column('agent_id', Integer, ForeignKey('agents.agent_id'), nullable=False)
+    Column('product_id', Integer, ForeignKey('products.product_id'), nullable=False),
+    Column('agent_id', Integer, ForeignKey('agents.agent_id')),
 )
+
 enrollments = Table('enrollments', metadata,
     Column('enrollment_id', Integer, primary_key=True),
     Column('case_id', Integer, ForeignKey('cases.case_id'), nullable=False),
@@ -59,6 +61,9 @@ class Database(object):
         self.engine = create_engine(self.connection_string)
         metadata.bind = self.engine
         
+        # In general, it doesn't hurt to call this each time for now to simplify dev setup
+        self.init_structure()
+        
     def init_structure(self):
         """ 
         call this once to set up the database structure
@@ -67,28 +72,84 @@ class Database(object):
         """
         metadata.create_all()
         
-    def retrieve_enrollment(self, id):
+    def get_product(self, product_id):
+        return products.select().where(products.c.product_id == product_id).execute().first()
+    
+    def get_product_by_code(self, product_code):
+        return products.select().where(products.c.code == product_code).execute().first()
+        
+    def create_product(self, product_code, name):
+        products.insert(values=dict(
+            code=product_code,
+            name=name,
+        )).execute()
+        return self.get_product_by_code(product_code)
+        
+    def save_case(self, case):
+        result = cases.insert(values=dict(
+            company_name=case.company_name,
+            situs_state=case.situs_state,
+            product_id=case.product.product_id,
+        )).execute()
+        case.case_id = result.inserted_primary_key[0]
+        
+    def save_enrollment(self, enrollment):
+        result = enrollments.insert(values=dict(
+            case_id=enrollment.case.case_id,
+            employee_first=enrollment.employee_first,
+            employee_last=enrollment.employee_last,
+            employee_email=enrollment.employee_email,
+        )).execute()
+        enrollment.enrollment_id = result.inserted_primary_key[0]
+    
+    def get_enrollment_request_by_token(self, token):
+        enrollment_row = enrollment_requests.select().where(enrollment_requests.c.token == token
+                ).execute().first()
+        if not enrollment_row:
+            return None
+        
+        enrollment = self.get_enrollment(enrollment_row.enrollment_id)
+        
+        enrollment_request = EnrollmentRequest(
+                enrollment_row.id, 
+                enrollment, 
+                enrollment_row.expiration, 
+                enrollment_row.token
+        )
+        return enrollment_request
+    
+    def get_enrollment(self, id):
         row = enrollments.select().where(enrollments.c.enrollment_id == id).execute().first()
-        if row:
-            case = cases.select().where(cases.c.case_id == row.case_id).execute().first()
-            return Enrollment(self, case=case, 
-                              employee_first=row.employee_first, 
-                              employee_last=row.employee_last, 
-                              employee_email=row.employee_email
-            )
-        
-    def store_product(self, product):
-        products.insert().execute(values=dict(
-            code = product.code,
-            name = product.name,
-        ))
-        
-    def retrieve_product_by_code(self, product_code):
-        row = products.select().where(products.c.code == product_code).execute().first()
         if not row:
             return None
-        else:
-            return Product(code=product_code, name=row.name)
+            
+        case = self.get_case(row.case_id)
+        
+        return Enrollment(self, case=case, 
+                          employee_first=row.employee_first, 
+                          employee_last=row.employee_last, 
+                          employee_email=row.employee_email
+        )
+        
+    def get_case(self, case_id):
+        case_row = cases.select().where(cases.c.case_id == case_id).execute().first()
+        if not case_row:
+            return None
+        
+        return Case(case_row.case_id, 
+                    case_row.company_name, 
+                    case_row.situs_state, 
+                    self.get_product(case_row.product_id)
+        )
+        
+    def save_enrollment_request(self, enrollment_req):
+        result = enrollment_requests.insert(values=dict(
+            enrollment_id=enrollment_req.enrollment.enrollment_id,
+            token=enrollment_req.token,
+            expiration=enrollment_req.expiration_date,
+        )).execute()
+        enrollment_req.enrollment_request_id = result.inserted_primary_key[0]
+    
         
     def execute_sql(self, statement, params=()):
         return self.engine.execute(statement, params)
