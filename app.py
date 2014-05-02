@@ -1,4 +1,5 @@
 import os
+import json
 from logging import getLogger
 from flask import (
     Flask,
@@ -175,7 +176,10 @@ def testpage():
 
 @app.route("/submit-wizard-data", methods=['POST'])
 def submit_wizard_data():
-    wizard_results = request.json['wizard_results']
+    
+    data = json.loads(request.data)
+    
+    wizard_results = data['wizard_results']
     
     # is_error = False
     # error_message = "Implement docusign"
