@@ -21,7 +21,7 @@ from docu_console import console_sample
 from docu_email import emailing_sample
 
 from model.Database import Database
-from model.Enrollment import EnrollmentEmail
+from model.Enrollment import EnrollmentEmail, Case, Enrollment
 from model.RateTable import (
     get_product,
     get_age_from_birthday,
@@ -52,6 +52,9 @@ app.config.update(
     DEBUG = True,
 )
 """
+
+def get_database():
+    return Database(config.get('database', 'connection_string'))
 
 # controllers
 @app.route('/favicon.ico')
@@ -90,6 +93,7 @@ def in_person_enrollment():
         'employee_first':employee_first,
         'employee_last':employee_last,
         'employee_email':employee_email,
+        'is_in_person':True,
     }
     
     return render_template('main-wizard.html', 
@@ -99,7 +103,85 @@ def in_person_enrollment():
 
 @app.route("/email-enrollment", methods=['POST'])
 def email_enrollment():
-    return None
+    enrollment_state = request.form['enrollmentState']
+    company_name = request.form['companyName']
+    product_code = request.form['productID']
+    employee_first = request.form['eeFName']
+    employee_last = request.form['eeLName']
+    employee_email = request.form['email']
+
+    db = get_database()
+    
+    product = db.get_product_by_code(product_code)
+    if not product:
+        # for now, just create it to simplify dev setup
+        product = db.create_product(product_code, name="Family Protection Plan - Term to 100")
+    
+    # May not want to create a case for each time this is called 
+    case = Case(
+        id=None,
+        company_name=company_name,
+        situs_state=enrollment_state,
+        product=product,
+    )
+    db.save_case(case)
+    
+    enrollment = Enrollment(
+        id=None,
+        case=case,
+        employee_first=employee_first,
+        employee_last=employee_last,
+        employee_email=employee_email,
+    )
+    db.save_enrollment(enrollment)
+
+    enrollment_request = enrollment.generate_enrollment_request()
+    db.save_enrollment_request(enrollment_request)
+    
+    email_config = dict(
+        smtp_server=config.get('email', 'smtp_server'),
+        smtp_port=config.get('email', 'smtp_port'),
+        smtp_user=config.get('email', 'smtp_username'),
+        smtp_password=config.get('email', 'smtp_password'),
+        from_address=config.get('email', 'from_address'),
+    )
+    
+    EnrollmentEmail(**email_config).send_enrollment_request(enrollment_request)
+    
+    return jsonify(**dict(success=True))
+
+@app.route("/enrollment_request", methods=['GET'])
+def email_link_handler():
+    """
+    Handles someone clicking the link in the enrollment request email
+    """
+    
+    token = request.args['token']
+    db = get_database()
+    
+    enrollment_request = db.get_enrollment_request_by_token(token)
+    
+    # TODO
+    #if enrollment_request.is_expired():
+    #    return render_template('token_expired.html')
+    
+    enrollment = enrollment_request.enrollment
+    case = enrollment.case
+    
+    wizard_data = {
+        'state': case.situs_state,
+        'company_name': case.company_name,
+        'product_id': case.product.code,
+        'employee_first': enrollment.employee_first,
+        'employee_last': enrollment.employee_last,
+        'employee_email': enrollment.employee_email,
+        'is_in_person':False,
+    }
+
+    return render_template('main-wizard.html',
+                           wizard_data=wizard_data,
+                           states=get_states(),
+    )
     
 @app.route("/demo")
 def sample():
@@ -220,30 +302,8 @@ def rates():
     return jsonify(**response)
     
 
-@app.route("/send_enrollment_example", methods=['GET','POST'])
-def send_enrollment_email():
-    
-    enrollment_id = request.args['enrollment_id']
-    
-    db = Database(config.get('database', 'connection_string'))
-    enrollment = db.retrieve_enrollment(enrollment_id)
-    if not enrollment:
-        abort(400, "Invalid Enrollment ID")
-    
-    email_config = dict(
-        smtp_server=config.get('email', 'smtp_server'), 
-        smtp_port=config.get('email', 'smtp_port'), 
-        smtp_user=config.get('email', 'smtp_user'), 
-        smtp_password=config.get('email', 'smtp_password'), 
-        from_address=config.get('email', 'from_address'),
-    )
-    
-    EnrollmentEmail(**email_config).send_enrollment_request(enrollment)
 
-@app.route("/enrollment_request", methods=['GET'])
-def handle_email_link():
-    token = request.args['token']
-    db = Database()
+
     
 
 # launch

@@ -35,7 +35,7 @@
 }
 
 
-.confirm-table td {
+.confirm-table td, .confirm-table th {
     text-align: center;
 }
 
