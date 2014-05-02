@@ -56,9 +56,9 @@ def create_envelope_and_get_signing_url(wizard_data):
     # return is_error(bool), error_message, and redirectURL
 
     # for now, just pull into former variables this fcn was using
-    recipName = wizard_data[agent_data][employee_first] + " " + wizard_data[agent_data][employee_last]
-    employer = wizard_data[agent_data][company_name]
-    emailTo = wizard_data[agent_data][employee_email]
+    recipName = wizard_data["agent_data"]["employee_first"] + " " + wizard_data["agent_data"]["employee_last"]
+    employer = wizard_data["agent_data"]["company_name"]
+    emailTo = wizard_data["agent_data"]["employee_email"]
     landingURL = "https://taa.herokuapp.com/demo"
 
     if ((recipName != "") and (recipName != None)):
