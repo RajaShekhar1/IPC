@@ -900,12 +900,9 @@ function init_validation() {
         }, handle_remote_error, true);
         
         bootbox.dialog({
-            message: "Please review and sign the application form.",
-            buttons: {
-                "success": {
-                    "label": "OK",
-                    "className": "btn-sm btn-primary"
-                }
+            //just showing action in the interim while getting routed to the Docusign page... the DS page should redirect probably before there's time to read this
+	    message: "Generating application form for signature...",
+            buttons: { }
             }
         });
     }).on('stepclick', function (e) {
