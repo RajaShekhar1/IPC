@@ -339,6 +339,10 @@ function WizardUI(product, defaults) {
         var rec = self.selected_plan().children_recommendation();
         return (rec.is_valid() && rec.recommended_benefit.is_valid());
     });
+    
+    self.show_health_modal = function() {
+        $("#health_modal").modal('show');
+    };
 }
 
 
@@ -630,6 +634,7 @@ function BenefitsPackage(root, name) {
     
     self.get_all_people = ko.computed(function() {
         var employee = root.employee();
+        // Make sure selected coverage is set on each of the person objects
         employee.selected_coverage(self.employee_recommendation().recommended_benefit);
         
         var people = [employee];
@@ -650,6 +655,29 @@ function BenefitsPackage(root, name) {
         return people;
     });
     
+    self.get_all_people_labels = ko.computed(function() {
+        var labels = ["Employee"];
+        if (root.should_include_spouse_in_table()) {
+            labels.push("Spouse");
+        }
+        if (root.should_include_children_in_table()) {
+            $.each(root.get_valid_children(), function () {
+                var child = this;
+                labels.push(child.name());
+            });
+        }
+        return labels;
+    });
+    
+    self.get_people_with_labels = ko.computed(function() {
+        var people = self.get_all_people();
+        var labels = self.get_all_people_labels();
+        
+        return $.map(people, function(p, i) {
+            return {person: p, label: labels[i]};
+        });
+    });
+    
 }
 function NullBenefitsPackage() {
     var self = this;
@@ -663,6 +691,7 @@ function NullBenefitsPackage() {
     self.formatted_monthly_premium = function() { return "";};
     self.is_valid = function () {return false};
     self.get_all_people = function() {return [];}
+    self.get_all_people_labels = function() {return [];}
 }
 
 function Recommendation(recommended_benefit) {
@@ -821,8 +850,8 @@ function init_validation() {
                 return false;
             } 
         }
-        if (info.step == 2) {
-            if (!$('#step2-form').valid()) return false;
+        if (info.step == 3) {
+            if (!$('#step3-form').valid()) return false;
         }
         
         return true;
@@ -937,7 +966,7 @@ function init_validation() {
     });
     */
     
-    $('#step2-form').validate({
+    $('#step3-form').validate({
         errorElement: 'div',
         errorClass: 'help-block',
         focusInvalid: false,

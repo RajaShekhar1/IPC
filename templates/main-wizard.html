@@ -49,21 +49,26 @@
 		    
 		    <li data-target="#step2">
 		      <span class="step">2</span>
-		      <span class="title">Employee Info</span>
+		      <span class="title">Health Questions</span>
 		    </li>
-		    
-		    <li data-target="#step3">
+        
+        <li data-target="#step3">
 		      <span class="step">3</span>
-		      <span class="title">Spouse/Children Info</span>
+		      <span class="title">Employee Info</span>
 		    </li>
 		    
 		    <li data-target="#step4">
 		      <span class="step">4</span>
-		      <span class="title">Beneficiaries</span>
+		      <span class="title">Spouse/Children Info</span>
 		    </li>
 		    
 		    <li data-target="#step5">
 		      <span class="step">5</span>
+		      <span class="title">Beneficiaries</span>
+		    </li>
+		    
+		    <li data-target="#step6">
+		      <span class="step">6</span>
 		      <span class="title">Confirmation</span>
 		    </li>
 		  </ul>
@@ -435,11 +440,95 @@
       <script type="text/html" id="blank_template">
       </script>
       
+        <!-- ------------------------------ New step 2 ------------------------------ -->
+      <form class="form-horizontal" id="questions-form">
         
-      <!-- ------------------------------ STEP 2 ------------------------------ -->
-      <form class="form-horizontal" id="step2-form">
+        <div class="step-pane" id="step2">  
+          
+          <div class="hidden-xs" data-bind="with: selected_plan">
+            <div class="row">
+                <div class="col-sm-4">
+                </div>
+                <div class="col-sm-8">
+                    <div class="row" data-bind="foreach: get_all_people_labels">
+                        <div class="col-sm-2" class="text-center" data-bind="text: $data">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+          <table class="table table-striped">
+          {% for question in wizard_data.health_questions: %}
+            
+            <tr><td>
+              <div class="row">
+                <div class="col-xs-12 col-sm-4">
+                    {{question}}
+                </div>
+                <div class="col-xs-12 col-sm-8">
+                    
+                  <div class="row" data-bind="foreach: {data: get_all_people(), as: 'person'}">
+                    <div class="col-sm-2 btn-group no-padding-right" data-toggle="buttons">
+                      <label class="btn btn-default btn-sm" data-bind="click: $root.show_health_modal">
+                        <input type="radio" data-bind="
+                        attr: {name: 'yn_{{loop.index0}}_'+person.name()}
+                        "> Yes
+                      </label>
+                      <label class="btn btn-default btn-sm">
+                        <input type="radio" data-bind="attr: {name: 'yn_{{loop.index0}}_'+person.name()}"> No
+                      </label>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+            </td></tr>
+            
+          {% endfor %}
+          </table>
+          </div>
+            
+          <div class="visible-xs" data-bind="with: selected_plan">
+              
+            <table class="table table-striped">
+              
+              {% for question in wizard_data.health_questions: %}
+                <tr><td>
+                <div class="row">
+                    <div class="col-xs-12 col-sm-6">
+                        {{question}}
+                    </div>
+                    <div class="col-xs-12 col-sm-6" data-bind="foreach: get_all_people_labels">
+                        <div class="person-answer-small row">
+                          <div class="col-xs-3 col-xs-offset-2" data-bind="text: $data"></div>
+                          <div class="col-xs-7 btn-group" data-toggle="buttons">
+                            <label class="btn btn-default btn-lg" data-bind="click: $root.show_health_modal">
+                              <input type="radio" data-bind="
+                              attr: {name: 'yn_{{loop.index0}}_'+$data}
+                              "> Yes
+                            </label>
+                            <label class="btn btn-default btn-lg">
+                              <input type="radio" data-bind="attr: {name: 'yn_{{loop.index0}}_'+$data}"> No
+                            </label>
+                          </div>
+                        </div>
+                    </div>
+                </div>
+                </td></tr>
+              {% endfor %}
+            </table>
+          </div>
+        </div>
       
-	<div class="step-pane" id="step2">
+      </form>
+      
+      
+      
+          
+      <!-- ------------------------------ STEP 3 ------------------------------ -->
+      <form class="form-horizontal" id="step3-form">
+      
+	<div class="step-pane" id="step3">
 	  <h3 class="lighter block green">Employee information</h3>
 	  
 	  <div class="form-group">
@@ -605,11 +694,11 @@
 	</div>
       </form>
       
-      <!-- ------------------------------ STEP 3 ------------------------------ -->
+      <!-- ------------------------------ STEP 4 ------------------------------ -->
 
-      <form class="form-horizontal" id="step3-form">
+      <form class="form-horizontal" id="step4-form">
       
-	<div class="step-pane" id="step3">
+	<div class="step-pane" id="step4">
 	  <div id="SpouseInfoBlock"  data-bind="visible: should_show_spouse">
 	    <h3 class="lighter block green">Spouse information</h3>
 
@@ -745,11 +834,11 @@
 	</div><!-- step3 -->
       </form>
       
-      <!-- ------------------------------ STEP 4 ------------------------------ -->
+      <!-- ------------------------------ STEP 6 ------------------------------ -->
 
-      <form class="form-horizontal" id="step4-form">
+      <form class="form-horizontal" id="step6-form">
 	
-	<div class="step-pane" id="step4">
+	<div class="step-pane" id="step6">
 	  <div id="eeBeneficiaryBlock" data-bind="visible: did_select_employee_coverage">
 	    <h3 class="lighter block green">Employee Beneficiary</h3>
 
@@ -1048,6 +1137,25 @@
   </div><!-- /.row -->
 </div><!-- /.page-content -->
 
+        
+<div id="health_modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Modal title</h4>
+      </div>
+      <div class="modal-body">
+        <p>You cannot get insurance if you answer yes.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-warning" data-dismiss="modal">Exit Site</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>
+    
 {% endblock %}
 
       <!-- basic scripts -->
@@ -1108,3 +1216,4 @@
       </script>
       
       {% endblock %}
+

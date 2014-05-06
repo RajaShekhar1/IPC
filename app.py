@@ -22,10 +22,7 @@ from docu_email import emailing_sample
 
 from model.Database import Database
 from model.Enrollment import EnrollmentEmail, Case, Enrollment
-from model.RateTable import (
-    get_product,
-    get_age_from_birthday,
-)
+from model.Product import get_age_from_birthday, get_product_by_code
 from model.States import get_states
 
 # initialization
@@ -81,25 +78,29 @@ def enroll_start():
 def in_person_enrollment():
     state = request.form['enrollmentState']
     company_name = request.form['companyName']
-    product_id = request.form['productID']
+    product_code = request.form['productID']
     employee_first = request.form['eeFName']
     employee_last = request.form['eeLName']
     employee_email = request.form['email']
     
+    product = get_product_by_code(product_code)
+    
     wizard_data = {
         'state': state if state != 'XX' else None,
         'company_name': company_name,
-        'product_id':product_id,
+        'product_id':product_code,
         'employee_first':employee_first,
         'employee_last':employee_last,
         'employee_email':employee_email,
         'is_in_person':True,
+        'health_questions':product.get_health_questions(),
     }
     
-    return render_template('main-wizard.html', 
-                wizard_data=wizard_data,
-                states=get_states(),
-           )
+    return render_template(
+        'main-wizard.html', 
+        wizard_data=wizard_data,
+        states=get_states()
+    )
 
 @app.route("/email-enrollment", methods=['POST'])
 def email_enrollment():
@@ -112,10 +113,7 @@ def email_enrollment():
 
     db = get_database()
     
-    product = db.get_product_by_code(product_code)
-    if not product:
-        # for now, just create it to simplify dev setup
-        product = db.create_product(product_code, name="Family Protection Plan - Term to 100")
+    product = get_product_by_code(product_code)
     
     # May not want to create a case for each time this is called 
     case = Case(
@@ -167,6 +165,7 @@ def email_link_handler():
     
     enrollment = enrollment_request.enrollment
     case = enrollment.case
+    product = case.product
     
     wizard_data = {
         'state': case.situs_state,
@@ -176,6 +175,7 @@ def email_link_handler():
         'employee_last': enrollment.employee_last,
         'employee_email': enrollment.employee_email,
         'is_in_person':False,
+        'health_questions': product.get_health_questions(),
     }
 
     return render_template('main-wizard.html',
@@ -274,18 +274,14 @@ def submit_wizard_data():
 
 @app.route("/get_rates", methods=['POST'])
 def rates():
-    # validate required params
-    #for required_param in ['gender, age_band', 'marital_status', 'include_spouse', 'num_children']:
-    #    if required_param not in request.form:
-    #        abort(400)
     
     # Pull parameters from the request
     employee_birthdate = request.form['employee_birthdate']
     spouse_birthdate = request.form.get('spouse_birthdate', None)
     num_children = int(request.form.get('num_children', 0))
-    product_type = request.form['product_type']
+    product_code = request.form['product_type']
     
-    product = get_product(product_type)
+    product = get_product_by_code(product_code)
     employee_age = get_age_from_birthday(employee_birthdate)
     spouse_age = get_age_from_birthday(spouse_birthdate) if spouse_birthdate else None
     
@@ -295,9 +291,6 @@ def rates():
         'children_rates': product.get_children_rates(num_children),
         'recommendations': product.get_recommended_coverages(employee_age, spouse_age, num_children),
     }
-    
-    #import pprint
-    #app.logger.debug(pprint.pformat(response))
     
     return jsonify(**response)
     

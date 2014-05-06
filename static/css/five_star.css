@@ -58,3 +58,13 @@
   
 }
 
+#questions-form .odd, #questions-form .even {
+    padding: .25em 0;
+}
+#questions-form .odd {
+    background-color: #eee;
+}
+#questions-form .person-answer-small {
+    margin-top: .5em;
+    margin-left: 1em;
+}
