@@ -942,12 +942,12 @@
 	    
 	    <div class="space-10"></div>
 	    
-	    <div id="inPersonSignerToken" data-bind="visible: is_in_person_application() === false">
+	    <div id="inPersonSignerToken" data-bind="visible: is_in_person_application() == true">
 	      <h4 class="green">Employee Identification</h4>
 	  
 	      <div class="row form-group">
-		<label class="control-label col-xs-12 col-sm-12">
-                  Please enter either a valid Driver's License number or Employee Number
+		<label class="control-label col-xs-12">
+                  As identity confirmation, please enter either your Date of Hire, your Employee Number, or your current Driver's License number.
 		</label>
 		<div class="col-xs-12 col-sm-4">
                   <input type="text" id="ConfirmationToken" data-bind="value: identityToken"/>

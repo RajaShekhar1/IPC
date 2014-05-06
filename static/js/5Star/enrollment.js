@@ -903,7 +903,6 @@ function init_validation() {
             //just showing action in the interim while getting routed to the Docusign page... the DS page should redirect probably before there's time to read this
 	    message: "Generating application form for signature...",
             buttons: { }
-            }
         });
     }).on('stepclick', function (e) {
         return true; //return false;//prevent clicking on steps
