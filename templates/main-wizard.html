@@ -168,8 +168,8 @@
                 </label>
                 
                 <div class="col-xs-12 col-sm-10">
-                  <input type="text" id="spFName" data-bind="value: spouse().first" placeholder="First Name" />
-                  <input type="text" id="spLName" data-bind="value: spouse().last" placeholder="Last Name" />
+                  <input type="text" id="spFName" name="spFName" data-bind="value: spouse().first" placeholder="First Name" />
+                  <input type="text" id="spLName" name="spLName" data-bind="value: spouse().last" placeholder="Last Name" />
                 </div>
               </div>
               
@@ -179,7 +179,7 @@
                     Date of Birth
                   </label>
                   <div class="col-xs-12 col-sm-9">
-                    <input class="col-xs-12 col-sm-4 input-mask-date" type="text" id="spDOB" data-bind="value: spouse().birthdate" placeholder="DD/MM/YYYY" />
+                    <input class="col-xs-12 col-sm-4 input-mask-date" type="text" id="spDOB" name="spDOB" data-bind="value: spouse().birthdate" placeholder="DD/MM/YYYY" />
                   </div>
                 </div>
               </div>
@@ -400,7 +400,9 @@
 	      </div>
 	    </div>
 	    -->
-          
+        <div id="benefit_required" class="error pull-right" data-bind="visible: is_selection_error_visible">
+            You must select a benefit option before advancing.
+        </div>
   
         <!-- /div -->
       </div>

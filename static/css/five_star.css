@@ -1,4 +1,9 @@
 
+.error {
+    color: red;
+    border-color: red!important;
+    outline-color: red;
+}
 
 .pricing-span-header li, .pricing-table li {
     height: 60px;

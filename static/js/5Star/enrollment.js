@@ -51,7 +51,6 @@ function WizardUI(product, defaults) {
     self.spouse_beneficiary_ssn = ko.observable("");
     self.spouse_beneficiary_dob = ko.observable("");
     
-    
     // Employee 
     self.employee = ko.observable(new Beneficiary({
         first: self.defaults.employee_first || "",
@@ -63,11 +62,12 @@ function WizardUI(product, defaults) {
     
     // Spouse info
     self.spouse = ko.observable(new Beneficiary({}));
-    self.show_spouse_name = ko.computed(function() {
-        return (self.spouse().is_valid()) ? self.spouse().name() : "";
-    });
+    
     self.should_include_spouse_in_table = ko.computed(function() {
         return self.should_show_spouse() && self.spouse().is_valid();
+    });
+    self.show_spouse_name = ko.computed(function() {
+        return (self.should_include_spouse_in_table()) ? self.spouse().name() : "";
     });
     
     // Children
@@ -138,16 +138,42 @@ function WizardUI(product, defaults) {
     });
     
     // Recommended and selected benefits
-    self.is_recommended_table_visible = ko.observable(false);
+    self.is_show_rates_clicked = ko.observable(false);
     self.can_display_rates_table = ko.computed(function() {
-        // TODO: validation
-        return true;
+        // TODO: some of the age constants or other requirements will be determined by the product
+        
+        // All employee info
+        var valid = self.employee().is_valid();
+        var emp_age = self.employee().get_age();
+        valid &= (emp_age >= 18 && emp_age <= 70);
+        
+        if (self.should_show_spouse() && (self.spouse().any_valid_field())) {
+            valid &= self.spouse().is_valid();
+            var sp_age = self.spouse().get_age();
+            valid &= sp_age >= 18 && sp_age <= 70;
+        }
+        
+        // Trigger jquery validation manually 
+        if (self.is_show_rates_clicked()) {
+            self.validator.form();
+        }
+        
+        return valid;
+    });
+    
+    self.is_recommended_table_visible = ko.computed(function() {
+        return (self.is_show_rates_clicked() && self.can_display_rates_table());
     });
     self.show_recommendations_table = function() {
+        // Trigger validation manually
+        if (!self.validator.form()) {
+            return;
+        }
+        
         if (!self.can_display_rates_table()) {
             return;
         }
-        self.is_recommended_table_visible(true);
+        self.is_show_rates_clicked(true);
         self.refresh_rate_table();
     };
     
@@ -315,9 +341,12 @@ function WizardUI(product, defaults) {
         element.blur();
     };
     
-    self.is_form_valid = function() {
-        return (self.selected_plan().is_valid()); 
-    };
+    self.is_form_valid = ko.computed(function() {
+        return (
+            self.selected_plan().is_valid() &&
+            self.selected_plan().has_at_least_one_benefit_selected()
+            ); 
+    });
     
     
     // accessors for selected plan
@@ -337,6 +366,59 @@ function WizardUI(product, defaults) {
     self.show_health_modal = function() {
         $("#health_modal").modal('show');
     };
+    
+    
+    // jquery form validator
+    $.validator.addMethod("minAge", function(val, element, params) {
+        var age = age_for_date(val);
+        return (age != "" && age >= params);
+    }, "Must be at least {0} years old for this product");
+    $.validator.addMethod("maxAge", function(val, element, params) {
+        var age = age_for_date(val);
+        return (age != "" && age <= params);
+    }, "Must be no more than {0} years old for this product");
+    
+    self.validator = $("#step1-form").validate({
+        rules: {
+            eeBenefitFName: "required",
+            eeBenefitLName: "required",
+            eeBenefitDOB: {
+                required: true,
+                date: true,
+                minAge: 18,
+                maxAge: 70
+            },
+            spFName: {
+                required: true,
+                depends: self.spouse().any_valid_field()
+            },
+            spLName: {
+                required: true,
+                depends: self.spouse().any_valid_field()
+            },
+            spDOB: {
+                required: true,
+                date: true,
+                minAge: 18,
+                maxAge: 70,
+                depends: self.spouse().any_valid_field()
+            }
+        
+        }
+    });
+    //$.validator.addClassRules("child_age", 
+    //    {required: true, depends: function(element) {
+    //      $(element).closest("")... 
+    // } });
+    
+    self.attempted_advance_step = ko.observable(false);
+    self.is_selection_error_visible = ko.computed(function() {
+        return self.attempted_advance_step() && !self.is_form_valid(); 
+    });
+    self.show_no_selection_error = function() {
+        self.attempted_advance_step(true);
+    }
+    
 }
 
 
@@ -376,6 +458,14 @@ function Beneficiary(options) {
         );  
     });
     
+    self.any_valid_field = ko.computed(function() {
+        return (
+            $.trim(self.first()) != "" ||
+            $.trim(self.last()) != "" ||
+            $.trim(self.birthdate()) != ""
+            ); 
+    });
+    
     self.name = ko.computed(function() {
         // Only show if valid
         if (self.is_valid()) {
@@ -386,12 +476,7 @@ function Beneficiary(options) {
     });
     
     self.get_age = ko.computed(function() {
-        var bd = moment(self.birthdate(), "MM/DD/YYYY");
-        if (bd.isValid()) {
-            return moment().diff(bd, "years");  
-        } else {
-            return "";
-        }
+        return age_for_date(self.birthdate());
     });
     
     self.benefit_options = {
@@ -458,6 +543,15 @@ function Beneficiary(options) {
         data.gender = self.gender();
         
         return data;
+    }
+}
+
+function age_for_date(date) {
+    var bd = moment(date, "MM/DD/YYYY");
+    if (bd.isValid()) {
+        return moment().diff(bd, "years");  
+    } else {
+        return "";
     }
 }
 
@@ -672,6 +766,17 @@ function BenefitsPackage(root, name) {
         });
     });
     
+    self.has_at_least_one_benefit_selected = function() {
+        var any_benefits = false;
+        $.each(self.get_package_benefits(), function() {
+            if (this.is_valid()) {
+                any_benefits = true;
+                return false;
+            }
+        });
+        return any_benefits;
+    };
+    
 }
 function NullBenefitsPackage() {
     var self = this;
@@ -684,8 +789,9 @@ function NullBenefitsPackage() {
     self.get_total_monthly_premium = function(){return 0;};
     self.formatted_monthly_premium = function() { return "";};
     self.is_valid = function () {return false};
-    self.get_all_people = function() {return [];}
-    self.get_all_people_labels = function() {return [];}
+    self.get_all_people = function() {return [];};
+    self.get_all_people_labels = function() {return [];};
+    self.has_at_least_one_benefit_selected = function() {return false;};
 }
 
 function Recommendation(recommended_benefit) {
@@ -833,7 +939,7 @@ function init_validation() {
     
     $('[data-rel=tooltip]').tooltip();
 
-    var validation_debug = true;
+    var validation_debug = false;
     $('#fuelux-wizard').ace_wizard().on('change', function (e, info) {
         if (validation_debug) {
             return true;
@@ -841,8 +947,10 @@ function init_validation() {
         
         if (info.step == 1) {
             if (!window.ui.is_form_valid()) {
+                window.ui.show_no_selection_error();
                 return false;
             } 
+            return true;
         }
         if (info.step == 3) {
             if (!$('#step3-form').valid()) return false;
