@@ -949,41 +949,50 @@
 		<label class="control-label col-xs-12">
                   As identity confirmation, please enter either your Date of Hire, your Employee Number, or your current Driver's License number.
 		</label>
-		<div class="col-xs-12 col-sm-4">
-                  <input type="text" id="ConfirmationToken" data-bind="value: identityToken"/>
-		</div>
 		
-		<div class="col-xs-12 col-sm-8">
-		  <label class="blue">
-		    <input name="confirmTokenType" value="1" type="radio" class="inline ace" id="confToken-eenum" checked="" data-bind="checked: identityType"/>
-		    <span class="lbl"> Employee # &nbsp;&nbsp;&nbsp;</span>
-		  </label>
+		<div class="hidden-xs col-sm-12">
+		  <div class="col-sm-1">
+		  </div>
 		  
-		  <label class="blue">
-		    <input name="confirmTokenType" value="2" type="radio" class="inline ace" id="confToken-dlnum" data-bind="checked: identityType"/>
-		    <span class="lbl"> DL #</span>
-		  </label>
-
-		  <select id="dlState" name="dlState" class="select1" placeholder="DL# state...">
+		  <label class="" for="tokenType">My</label>
+		  <select id="tokenType" class="select1" placeholder="Select one..." 
+			  data-bind="value: tokenType">
 		    <option value="">&nbsp;</option>
-		    {% for state in states %}
-              <option value="{{state['code']}}">{{state["name"]}}</option>
-            {% endfor %}
+		    <option value="DOH">"Date of Hire"</option>
+		    <option value="EmpNum">"Employee #"</option>
+		    <option value="DLNum">"Driver's License #"</option>
 		  </select>
+		  <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>		  
+                  <input type="text" id="ConfirmationToken" data-bind="value: identityToken"/>
+		</div> <!-- /.hidden-xs -->
 
-		</div><!-- /input fields -->
+		<div class="col-xs-12 hidden-sm hidden-md hidden-lg">
+		  <div class="col-xs-1">
+		  </div>
+		  <div class="col-xs-11">
+		    <label class="" for="tokenType">My</label>
+		    <select id="tokenType" class="select1" placeholder="Select one..." 
+			    data-bind="value: tokenType">
+		      <option value="">&nbsp;</option>
+		      <option value="DOH">"Date of Hire"</option>
+		      <option value="EmpNum">"Employee #"</option>
+		      <option value="DLNum">"Driver's License #"</option>
+		    </select>
+		  </div>
+		</div>
+		<div class="col-xs-12  hidden-sm hidden-md hidden-lg">
+		  <div class="col-xs-1">
+		  </div>		 
+		  <div class="col-xs-11">
+		    <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>		  
+                    <input type="text" id="ConfirmationToken" data-bind="value: identityToken"/>
+		  </div>		 
+		</div> <!-- /.hidden-sm -->
 		
-	      </div><!-- /.form-group -->		
-	    </div><!-- /inPersonSignerToken -->
+	      </div> <!-- /.form-group -->		
+	    </div> <!-- /inPersonSignerToken -->
 	    
-	  </div><!-- /CoverageSummary -->
-
-	  <div class="space-2"></div>
-
-	  <div class="well">
-	    <i class="icon-warning-sign bigger-120 orange"></i>
-	    Note:  on the next page, you must answer the <span class="bigger-110 orange">yes/no questions</span> in the <span class="green bigger-120">Statement of Health</span> section on the application for <span class="orange bigger-110">each</span> person applying for insurance in order to affix a signature.
-	  </div>
+	  </div> <!-- /CoverageSummary -->
 
 	  <div class="space-2"></div>
 
@@ -1027,13 +1036,7 @@
 	    </div>
 
 	    <div class="modal-body">
-	      <!-- **Zach: don't send time researching, but do you know if a decent way to pull content from anther webpage into a modal popup?
-		The content in this case is in an online pdf, such as
-		http://5starima.com/applications/accelerated_benefit_disclosure/FPP-TI%20ABDisclosure%20Form%20R508%20(Generic).pdf
-		In fact, there are 5 different links depending on the state of enrollment :-(
-		-->
-	      I'd like to display a PDF from the web in this modal?  (same as opening a new window, but keep it in the modal)
-	    
+	      <iframe src="http://localhost:5000/static/pdfs/FPPTI_disclosure_generic.pdf" style="zoom:1.0" width="100%" height="500" frameborder="0"></iframe>	      
 	    </div>
 
 	    <div class="modal-footer">

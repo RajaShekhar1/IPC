@@ -231,9 +231,11 @@ def inPersonSign():
     return render_template('inPersonRequest.html', 
                            form = form)
 
-@app.route("/inbox")
+@app.route("/inbox", methods =['GET'])
 def inbox():
-    return redirect( console_sample())
+#    return redirect( console_sample())
+    return render_template('agent-inbox.html',
+                           inboxURL = console_sample())
 
 @app.route('/login', methods = ['GET', 'POST'])
 def login():

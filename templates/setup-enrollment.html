@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% set active_page = 'nav_enroll' -%}
 {% block title %} - Home{% endblock %}
 
 {% block head %}
@@ -183,10 +184,6 @@
 <script type="text/javascript">
     jQuery(function($) {
   
-        // set nav
-        $('#nav_enroll').addClass('active');
-        $('#nav_home').removeClass('active');
-        
         var email_btn = $("#email-enrollment-btn");
         email_btn.on("click", function() {
             email_btn.prop('disabled', true);
