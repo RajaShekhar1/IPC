@@ -18,11 +18,14 @@
   </head>
   <body>
     {% block navbar %}
+    
+    {% set active_page = active_page|default('nav_home') -%}
+
     <div class="header">
       <ul class="nav nav-pills pull-right">
-        <li class="active" id="nav_home"><a href="{{ url_for ('home') }}">Home</a></li>
-        <li id="nav_enroll"><a  href="{{ url_for ('enroll_start') }}">Enroll</a></li>
-        <li id="nav_agentsign"><a href="{{ url_for ('inbox') }}" data-toggle="pill">Sign</a></li>
+	<li {% if active_page == 'nav_home' %} class="active"{% endif %} id="nav_home"><a href="{{ url_for ('home') }}">Home</a></li>
+        <li {% if active_page == 'nav_enroll' %} class="active"{% endif %} id="nav_enroll"><a  href="{{ url_for ('enroll_start') }}">Enroll</a></li>
+        <li {% if active_page == 'nav_agentsign' %} class="active"{% endif %}id="nav_agentsign"><a href="{{ url_for ('inbox') }}">Sign</a></li>
       </ul>
 
       <h2 class="text-muted">
@@ -30,6 +33,7 @@
       </h2>
     </div>    
 
+    
     <!-- 14-Jan-28  this was the original default div block on setup - keep temporarily for reference
     <div class="navbar navbar-static-top navbar-default">
       <div class="container">

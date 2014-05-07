@@ -82,8 +82,15 @@ def create_envelope_and_get_signing_url(wizard_data):
         else:
             employeeCoverage = " "
     else:
-        employeeCoverage = " "
+        employeeCoverage = " ";
    
+    if wizard_data["spouse_coverage"]:
+        if wizard_data["spouse_coverage"]["face_value"]:
+            spouseCoverage = wizard_data["spouse_coverage"]["face_value"]
+        else:
+            spouseCoverage = " "
+    else:
+        spouseCoverage = " ";
       
                           
 
@@ -135,9 +142,17 @@ def create_envelope_and_get_signing_url(wizard_data):
                      {"tabLabel" : "eeLName",
                       "value" : wizard_data["employee"]["last"]},
                      {"tabLabel" : "eeDOB",
-                      "value" : wizard_data["employee"]["last"]},
+                      "value" : wizard_data["employee"]["age"]},
                      {"tabLabel" : "eeCoverage",
                       "value" : employeeCoverage},
+                     {"tabLabel" : "spFName",
+                      "value" : wizard_data["spouse"]["first"]},
+                     {"tabLabel" : "spLName",
+                      "value" : wizard_data["spouse"]["last"]},
+                     {"tabLabel" : "spDOB",
+                      "value" : wizard_data["spouse"]["age"]},
+                     {"tabLabel" : "spCoverage",
+                      "value" : spouseCoverage},
                      {"tabLabel" : "Employer",
                       "value" : wizard_data["agent_data"]["company_name"]},
                      {"tabLabel" : "employeeEmail",

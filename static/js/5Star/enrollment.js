@@ -59,13 +59,7 @@ function WizardUI(product, defaults) {
         email: self.defaults.employee_email || ""
     }));
     
-    var MS_MARRIED = 'Married',
-        MS_UNMARRIED = 'Unmarried';
-    self.marital_statuses = [MS_MARRIED, MS_UNMARRIED];
-    self.employee_marital_status = ko.observable(null);
-    self.should_show_spouse = ko.computed(function() {
-       return self.employee_marital_status() == MS_MARRIED; 
-    });
+    self.should_show_spouse = ko.observable(false);
     
     // Spouse info
     self.spouse = ko.observable(new Beneficiary({}));
@@ -929,13 +923,9 @@ function init_validation() {
         }, handle_remote_error, true);
         
         bootbox.dialog({
-            message: "Please review and sign the application form.",
-            buttons: {
-                "success": {
-                    "label": "OK",
-                    "className": "btn-sm btn-primary"
-                }
-            }
+            //just showing action in the interim while getting routed to the Docusign page... the DS page should redirect probably before there's time to read this
+	    message: "Generating application form for signature...",
+            buttons: { }
         });
     }).on('stepclick', function (e) {
         return true; //return false;//prevent clicking on steps
