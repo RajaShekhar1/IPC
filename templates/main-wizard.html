@@ -170,29 +170,9 @@
 	      </div>
 	       
 	    </div>
-            
-	    <div class="col-xs-12">  <!-- 2014-05-06 get rid of this row once spouse "logic" working with checkbox  -->
-	      <div class="row">
-		<div class="col-xs-12 col-sm-5">
-		  <div class="form-group">
-		    <label class="control-label col-xs-12 col-sm-5 no-padding-right" for="eeMaritalStatus">
-		      Marital Status
-		    </label>
-		    
-		    <div class="col-xs-12 col-sm-7">
-		      <select data-bind="
-					 options: marital_statuses, 
-					 optionsCaption: '(Select)',
-					 value: employee_marital_status
-					 " id="eeMaritalStatus" ></select>
-		    </div>
-		  </div>
-		</div>
-	      </div>
-	    </div><!-- /eeMaritalStatus row -->
 
 	    
-            <div data-bind="slideDownIf: should_show_spouse">
+            <div class="form-group" data-bind="slideDownIf: should_show_spouse">
               <div class="form-group">
                 <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="spFName">
                   Spouse 
@@ -986,9 +966,9 @@
 		  <select id="tokenType" class="select1" placeholder="Select one..." 
 			  data-bind="value: identityType">
 		    <option value="">Select one...</option>
-		    <option value="DOH">Date of Hire</option>
-		    <option value="EmpNum">Employee #</option>
-		    <option value="DLNum">Driver's License #</option>
+		    <option value="Date of Hire">"Date of Hire"</option>
+		    <option value="Employee Num">"Employee #"</option>
+		    <option value="Driver's License Num">"Driver's License #"</option>
 		  </select>
 		  <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>		  
                   <input type="text" id="ConfirmationToken" data-bind="value: identityToken"/>
@@ -1001,7 +981,7 @@
 		    <label class="" for="tokenType">My</label>
 		    <select id="tokenType" class="select1" placeholder="Select one..." 
 			    data-bind="value: tokenType">
-		      <option value="">&nbsp;</option>
+		      <option value="">Select one...</option>
 		      <option value="Date of Hire">"Date of Hire"</option>
 		      <option value="Employee Num">"Employee #"</option>
 		      <option value="Driver's License Num">"Driver's License #"</option>

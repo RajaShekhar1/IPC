@@ -59,13 +59,7 @@ function WizardUI(product, defaults) {
         email: self.defaults.employee_email || ""
     }));
     
-    var MS_MARRIED = 'Married',
-        MS_UNMARRIED = 'Unmarried';
-    self.marital_statuses = [MS_MARRIED, MS_UNMARRIED];
-    self.employee_marital_status = ko.observable(null);
-    self.should_show_spouse = ko.computed(function() {
-       return self.employee_marital_status() == MS_MARRIED; 
-    });
+    self.should_show_spouse = ko.observable(false);
     
     // Spouse info
     self.spouse = ko.observable(new Beneficiary({}));
