@@ -193,8 +193,8 @@
                       Child <span data-bind="text: $index() + 1"></span>:
                     </label>
                     <div class="col-xs-12 col-sm-10">
-                      <input type="text" data-bind="value: first, attr: {id: 'child-first-'+$index()}" placeholder="First Name" />
-                      <input type="text" data-bind="value: last" placeholder="Last Name" />
+                      <input type="text" class="child_name" data-bind="value: first, attr: {id: 'child-first-'+$index()}" placeholder="First Name" />
+                      <input type="text" class="child_name" data-bind="value: last" placeholder="Last Name" />
                     </div>
                   </div>
                   
@@ -203,7 +203,7 @@
                       Date of Birth
                     </label>
                     <div class="col-xs-12 col-sm-9">
-                      <input class="col-xs-12 col-sm-4 input-mask-date" data-bind="
+                      <input class="col-xs-12 col-sm-4 input-mask-date child_birthdate" data-bind="
                         value: birthdate, 
                         event: {change: $root.update_rate_table},
                         attr: {id: 'child-dob-'+$index()}

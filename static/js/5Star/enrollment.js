@@ -64,7 +64,7 @@ function WizardUI(product, defaults) {
     self.spouse = ko.observable(new Beneficiary({}));
     
     self.should_include_spouse_in_table = ko.computed(function() {
-        return self.should_show_spouse() && self.spouse().is_valid();
+        return self.should_show_spouse() && self.spouse().is_valid() && self.is_spouse_age_valid();
     });
     self.show_spouse_name = ko.computed(function() {
         return (self.should_include_spouse_in_table()) ? self.spouse().name() : "";
@@ -99,7 +99,7 @@ function WizardUI(product, defaults) {
     self.get_valid_children = ko.computed(function() {
         var children = [];
         $.each(self.children(), function() {
-            if (this.is_valid()) {
+            if (this.is_valid() && self.insurance_product.is_valid_child_age(this.get_age())) {
                 children.push(this);
             } 
         });
@@ -122,7 +122,7 @@ function WizardUI(product, defaults) {
         return  self.get_valid_children().length > 0;
     });
     self.should_include_children_in_table = ko.computed(function() {
-        return self.should_include_children() && self.has_valid_children();  
+        return self.should_include_children() && self.has_valid_children() && self.are_children_ages_valid();  
     });
     
     // Store the actual benefits for children here, rather 
@@ -139,19 +139,36 @@ function WizardUI(product, defaults) {
     
     // Recommended and selected benefits
     self.is_show_rates_clicked = ko.observable(false);
+    
+    self.is_employee_age_valid = ko.computed(function() {
+        return self.insurance_product.is_valid_employee_age(self.employee().get_age()) ;
+    });
+    self.is_spouse_age_valid = ko.computed(function() {
+        return self.insurance_product.is_valid_spouse_age(self.spouse().get_age()) ;
+    });
+    
+    self.are_children_ages_valid = ko.computed(function() {
+        var all_valid = true;
+        $.each(self.children(), function() {
+            if (!self.insurance_product.is_valid_child_age(this.get_age())) {
+                all_valid = false;
+                return false;
+            }
+        });
+        return all_valid;
+    });
     self.can_display_rates_table = ko.computed(function() {
         // TODO: some of the age constants or other requirements will be determined by the product
         
         // All employee info
         var valid = self.employee().is_valid();
-        var emp_age = self.employee().get_age();
-        valid &= (emp_age >= 18 && emp_age <= 70);
+        valid &= self.is_employee_age_valid();
         
-        if (self.should_show_spouse() && (self.spouse().any_valid_field())) {
-            valid &= self.spouse().is_valid();
-            var sp_age = self.spouse().get_age();
-            valid &= sp_age >= 18 && sp_age <= 70;
-        }
+       // if (self.should_show_spouse() && self.spouse().birthdate() != "") {
+       //     valid &= self.spouse().is_valid();
+       //     var sp_age = self.spouse().get_age();
+       //     valid &= sp_age >= 18 && sp_age <= 70;
+       // }
         
         // Trigger jquery validation manually 
         if (self.is_show_rates_clicked()) {
@@ -160,6 +177,7 @@ function WizardUI(product, defaults) {
         
         return valid;
     });
+    
     
     self.is_recommended_table_visible = ko.computed(function() {
         return (self.is_show_rates_clicked() && self.can_display_rates_table());
@@ -371,13 +389,16 @@ function WizardUI(product, defaults) {
     // jquery form validator
     $.validator.addMethod("minAge", function(val, element, params) {
         var age = age_for_date(val);
-        return (age != "" && age >= params);
+        return (age !== "" && age >= params);
     }, "Must be at least {0} years old for this product");
     $.validator.addMethod("maxAge", function(val, element, params) {
         var age = age_for_date(val);
-        return (age != "" && age <= params);
+        return (age !== "" && age <= params);
     }, "Must be no more than {0} years old for this product");
     
+    function any_valid_spouse_field() {
+        return self.spouse().any_valid_field();
+    }
     self.validator = $("#step1-form").validate({
         rules: {
             eeBenefitFName: "required",
@@ -385,31 +406,66 @@ function WizardUI(product, defaults) {
             eeBenefitDOB: {
                 required: true,
                 date: true,
-                minAge: 18,
-                maxAge: 70
+                minAge: self.insurance_product.min_emp_age(),
+                maxAge: self.insurance_product.max_emp_age()
             },
             spFName: {
-                required: true,
-                depends: self.spouse().any_valid_field()
+                required: {
+                    depends: any_valid_spouse_field
+                }
             },
             spLName: {
-                required: true,
-                depends: self.spouse().any_valid_field()
+                required: { depends: any_valid_spouse_field }
             },
             spDOB: {
-                required: true,
-                date: true,
-                minAge: 18,
-                maxAge: 70,
-                depends: self.spouse().any_valid_field()
-            }
-        
+                required: {depends: any_valid_spouse_field},
+                date: {depends: any_valid_spouse_field},
+                minAge: {
+                    param: self.insurance_product.min_sp_age(),
+                    depends: any_valid_spouse_field
+                },
+                maxAge: {
+                    param: self.insurance_product.max_sp_age(),
+                    depends: any_valid_spouse_field
+                }
+            },
+            debug: true
         }
     });
-    //$.validator.addClassRules("child_age", 
-    //    {required: true, depends: function(element) {
-    //      $(element).closest("")... 
-    // } });
+    
+    function is_child_field_required(element) {
+        var child = ko.dataFor(element);
+        if (!child) {
+            return false;
+        }
+        return child.any_valid_field();
+    }
+    
+    $.validator.addClassRules("child_birthdate", 
+        {
+            required: {
+                depends: is_child_field_required
+            }, 
+            date: {
+                depends: is_child_field_required
+            },
+            minAge: {
+                param: self.insurance_product.min_child_age(),
+                depends: is_child_field_required
+            },
+            maxAge: {
+                param: self.insurance_product.max_child_age(),
+                depends: is_child_field_required
+            }
+        }
+    );
+    
+    $.validator.addClassRules("child_name",  {
+            required: {
+                depends: is_child_field_required
+            }
+        }
+    );
     
     self.attempted_advance_step = ko.observable(false);
     self.is_selection_error_visible = ko.computed(function() {
@@ -427,17 +483,25 @@ function FPPTIProduct() {
     
     self.product_type = "FPPTI";
     
+    self.min_emp_age = function() {return 18};
+    self.max_emp_age = function() {return 70};
+    self.min_sp_age = function() {return 18};
+    self.max_sp_age = function() {return 70};
+    self.min_child_age = function() {return 0};
+    self.max_child_age = function() {return 23};
+    
     self.is_valid_employee_age = function(age) {
-        return (age >= 18 && age <= 70);
+        return (age >= self.min_emp_age() && age <= self.max_emp_age());
     };
     
     self.is_valid_spouse_age = function(age) {
-        return (age >= 18 && age <= 70);
+        return (age >= self.min_sp_age() && age <= self.max_sp_age());
     };
     
     self.is_valid_child_age = function(age) {
-        return (age >= 0 && age <= 23);
+        return (age >= self.min_child_age() && age <= self.max_child_age());
     }
+    
 }
 
 function Beneficiary(options) {
@@ -549,8 +613,15 @@ function Beneficiary(options) {
 function age_for_date(date) {
     var bd = moment(date, "MM/DD/YYYY");
     if (bd.isValid()) {
-        return moment().diff(bd, "years");  
+        if (bd.isAfter(moment())) {
+            // Avoid returning -0 for future dates less than one
+            return -1;
+        } else {
+            // Valid age
+            return moment().diff(bd, "years");
+        }
     } else {
+        // Invalid age
         return "";
     }
 }
