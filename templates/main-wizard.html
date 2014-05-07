@@ -446,6 +446,7 @@
         <div class="step-pane" id="step2">  
           
           <div class="hidden-xs" data-bind="with: selected_plan">
+            
             <div class="row">
                 <div class="col-sm-4">
                 </div>
@@ -457,35 +458,35 @@
                 </div>
             </div>
             
-          <table class="table table-striped">
-          {% for question in wizard_data.health_questions: %}
-            
-            <tr><td>
-              <div class="row">
-                <div class="col-xs-12 col-sm-4">
-                    {{question}}
-                </div>
-                <div class="col-xs-12 col-sm-8">
-                    
-                  <div class="row" data-bind="foreach: {data: get_all_people(), as: 'person'}">
-                    <div class="col-sm-2 btn-group no-padding-right" data-toggle="buttons">
-                      <label class="btn btn-default btn-sm" data-bind="click: $root.show_health_modal">
-                        <input type="radio" data-bind="
-                        attr: {name: 'yn_{{loop.index0}}_'+person.name()}
-                        "> Yes
-                      </label>
-                      <label class="btn btn-default btn-sm">
-                        <input type="radio" data-bind="attr: {name: 'yn_{{loop.index0}}_'+person.name()}"> No
-                      </label>
-                    </div>
+            <table class="table table-striped">
+            {% for question in wizard_data.health_questions: %}
+              
+              <tr><td>
+                <div class="row">
+                  <div class="col-xs-12 col-sm-4">
+                      {{question}}
                   </div>
-                  
+                  <div class="col-xs-12 col-sm-8">
+                      
+                    <div class="row" data-bind="foreach: {data: get_all_people(), as: 'person'}">
+                      <div class="col-sm-2 btn-group no-padding-right" data-toggle="buttons">
+                        <label class="btn btn-default btn-sm" data-bind="click: $root.show_health_modal">
+                          <input type="radio" data-bind="
+                          attr: {name: 'yn_{{loop.index0}}_'+person.name()}
+                          "> Yes
+                        </label>
+                        <label class="btn btn-default btn-sm">
+                          <input type="radio" data-bind="attr: {name: 'yn_{{loop.index0}}_'+person.name()}"> No
+                        </label>
+                      </div>
+                    </div>
+                    
+                  </div>
                 </div>
-              </div>
-            </td></tr>
-            
-          {% endfor %}
-          </table>
+              </td></tr>
+              
+            {% endfor %}
+            </table>
           </div>
             
           <div class="visible-xs" data-bind="with: selected_plan">
@@ -713,7 +714,7 @@
               </div>
 
 	      <label class="control-label col-xs-1 col-sm-1 no-padding-right" for="spssn">
-		SSN
+		        SSN
 	      </label>
 	      <div class="col-xs-11 col-sm-3">
 		<input type="text" id="spssn" class="col-xs-11 col-sm-6 input-mask-ssn" data-bind="value: spouse().ssn" />

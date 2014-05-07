@@ -656,9 +656,9 @@ function BenefitsPackage(root, name) {
     });
     
     self.get_all_people_labels = ko.computed(function() {
-        var labels = ["Employee"];
+        var labels = [root.employee().name()];
         if (root.should_include_spouse_in_table()) {
-            labels.push("Spouse");
+            labels.push(root.spouse().name());
         }
         if (root.should_include_children_in_table()) {
             $.each(root.get_valid_children(), function () {
