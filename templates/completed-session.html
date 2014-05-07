@@ -35,24 +35,44 @@
 
 {% block content %}
 
+{% set success =   ds_event == "signing_complete" %}
+{% set just_viewing  =  ds_event == "viewing_complete" %}
+{% set declined =  ds_event == "cancel" or ds_event == "decline" %}
+{% set timeout  =  ds_event == "session_timeout" %}
+{% set invalid  =  ds_event == "ttl_expired" %}
+{% set fax_pending  =  ds_event == "fax_pending" %}
+
+
 <div class="row">
   <div class="col-xs-12">
     <div class="well">
       <h3 class="center text-primary">
       {{name}}, 
-      {% if ds_event != "canceled" %}thank you for choosing 5Star Life Insurance!<br><br>{% endif %}
-      {% if ds_event == "success" %}
+      {% if not declined %}thank you for choosing 5Star Life Insurance!<br><br>{% endif %}
+      {% if success %}
       Your application has been submitted.
       
-      {% elif ds_event == "canceled" and session_type == "email" %}
-      your application was cancelled and not submitted. If you wish to retry your application, please revisit the email sent to you and click the 'Begin Enrollment' link again. 
-      {% elif ds_event == "canceled" and session_type != "email" %}
-      your application was cancelled and not submitted. If you wish to retry your application, please confirm with your enrollment professional.
+      {% elif fax_pending %}
+      Your application information has been entered, and you have elected to sign via fax signature.  Please note that <emphasis>your application will not be submitted</emphasis> until you complete this fax signature step.  Thank you.
       
-      {% else %}
+      {% elif declined %}
+      you have canceled / declined your application and it was not submitted. 
+      
+      {% elif timeout %}
+      We're sorry for the inconvenience but your session has timed out.
+      
+      {% elif invalid %}
+      We're sorry but your enrollment link has expired.  Please contact your insurance agent or enrollment professional for assistance.
+      
+      {% elif not just_viewing %}
       Uh oh.  It looks like there was an error ('{{ds_event}}') with your application;  it was not submitted.  Please contact your insurance agent or enrollment professional if you need assistance.
       
       {% endif %}
+
+      {% if (declined or timeout) and session_type == "email" %}&nbsp;If you wish to retry your application, please revisit the email sent to you and click the 'Begin Enrollment' link again. 
+      {% elif (declined or timeout) and session_type != "email" %}&nbsp;If you wish to retry your application, please confirm with your enrollment professional. 
+      {% endif %}
+      
       
       </h3>
     </div>
@@ -60,7 +80,7 @@
     {% if session_type != "inperson" %}
     <div class="space-2"></div>
     <p class="center bigger-120">
-      Please close this browser window to ensure privacy of your application information.  Thank you.
+      We strongly recommend closing this browser window to ensure privacy of your application information.  Thank you.
     </p>
     {% endif %}
     
