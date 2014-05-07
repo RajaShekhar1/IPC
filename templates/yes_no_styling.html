@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% set active_page = 'nav_enroll' -%}
+{% block title %} - Home{% endblock %}
+
+{% block head %}
+ {{ super() }}
+<!-- page-specific header data -->
+    
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+<!-- ace styles -->
+<link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/five_star_ace_overlay.css') }}" rel="stylesheet">
+
+<!-- custom css -->
+<link href="{{ url_for('static', filename='css/five_star.css') }}" rel="stylesheet">
+
+
+{% endblock %}
+
+{% block content %}
+
+{% set health_questions = [
+            "Has any Applicant been hospitalized in the past 90 days?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?",
+            "Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?",
+            "Has any Applicant ever applied for and been rejected for life insurance?",
+        ]%}
+
+{% set people = ["Employee", "Spouse", "Child1", "Child2"] %}
+
+
+<h3 class="lighter block green">Other Insurance</h3>
+
+<div class="row form-group">
+  <div class="col-xs-12 col-sm-9">
+    <span class="bigger-120">Does anyone on herein this application have any existing life insurance or annuity contracts?</span><br>
+    If yes, and you live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV please complete and sign the Notice: Replacement of Life Insurance and Annuity. The Notice must be <span class="text-warning bigger-120">presented</span> and <span class="text-warning bigger-120">read</span> to you by your agent at the time he/she takes your application.
+  </div>
+  <div class="col-xs-12 col-sm-3 btn-group no-padding-right" data-toggle="buttons">              
+    <label class="btn btn-warning  btn-round btn-sm" id="yes-1" >
+      <input type="radio" >
+      <div class="bigger-120"> 
+	<i class="icon glyphicon glyphicon-flag"></i>&nbsp;Yes
+      </div>
+    </label>
+    <label class="btn btn-default  btn-round btn-sm" id="no-1" >
+      <input type="radio" >
+      &nbsp;No
+    </label>
+  </div>
+</div>
+
+<div class="row form-group">
+  <div class="col-xs-12 col-sm-9">
+    <span class="bigger-120">Does anyone on herein this application have any existing life insurance or annuity contracts?</span><br>
+    <span class="text-danger bigger-120">STOP:  since you are enrolling remotely via email but your response requires a Notice: Replacement of Life Insurance and Annuity to be presented and read to you by your agent, you will not be permitted to continue with this online application. </span>
+  </div>
+  <div class="col-xs-12 col-sm-3 btn-group no-padding-right" data-toggle="buttons">              
+    <label class="btn btn-danger  btn-round btn-sm" id="yes-1" >
+      <input type="radio" >
+      <div class="bigger-120"> 
+	<i class="icon glyphicon glyphicon-remove"></i>&nbsp;Yes
+      </div>
+    </label>
+    <label class="btn btn-default  btn-round btn-sm" id="no-1" >
+      <input type="radio" >
+      &nbsp;No
+    </label>
+  </div>
+</div>
+
+<div class="row form-group">
+  <div class="col-xs-12 col-sm-9">
+    <span class="bigger-120">Will the coverage applied for replace any existing life insurance or annuities?</span><br>
+    If yes, and you do not live in the above listed states, please complete and sign the applicable state-specific Notice: Replacement of Life Insurance and Annuity, obtainable from your agent or enrollment professional.
+  </div>
+  <div class="col-xs-12 col-sm-3 btn-group no-padding-right" data-toggle="buttons">
+    <label class="btn btn-default  btn-round btn-sm" id="yes-1" >
+      <input type="radio" >
+      &nbsp;Yes
+    </label>
+    
+    <label class="btn btn-success  btn-round btn-sm" id="no-1" >
+      <input type="radio" >
+      <div class="bigger-120"> 
+	<i class="icon glyphicon glyphicon-ok"></i>&nbsp;No
+      </div>
+    </label>
+  </div>
+</div>
+
+
+<div class="space-2"></div>
+<div class="space-2"></div>
+
+<h3 class="lighter block green">Please answer each question below regarding your Statement of Health</h3>
+
+<form class="form-horizontal" id="questions-form">
+  
+  <div class="row">
+    <div class="col-sm-4">
+    </div>
+    <div class="col-sm-8">
+      <div class="row">
+	{% for person in people %}
+        <div class="col-sm-2" class="text-center">
+	  {{person}}
+	</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+      
+
+  <table class="table table-striped">
+    {% for question in health_questions: %}
+    
+    <tr><td>
+        <div class="row">
+          <div class="col-xs-12 col-sm-4">
+            {{question}}
+          </div>
+          <div class="col-xs-12 col-sm-8">
+            
+            <div class="row" >
+              <div class="col-sm-2 btn-group no-padding-right" data-toggle="buttons">
+                <label class="btn btn-default btn-sm" id="yes-1" >
+                  <input type="radio" > Yes
+                </label>
+                <label class="btn btn-default btn-sm" id="no-1">
+                  <input type="radio" > No
+                </label>
+	      </div>
+	      <div class="col-sm-2 btn-group no-padding-right" data-toggle="buttons">
+                <label class="btn btn-white btn-default btn-round btn-xs" id="yes-1" >
+                  <input type="radio" > Yes
+                </label>
+                <label class="btn btn-white btn-default btn-round btn-xs" id="no-1">
+                  <input type="radio" > No
+                </label>
+	      </div>
+	      <!-- 'no' example -->
+	      <div class="col-sm-2 btn-group no-padding-right" data-toggle="buttons">
+                <label class="btn btn-default btn-round btn-sm" id="yes-1" >
+                  <input type="radio" >
+		  Yes
+                </label>
+                <label class="bigger-120 btn btn-success btn-round btn-sm" id="no-1" >
+                  <input type="radio" >
+		  <div class="bigger-120">
+		    <i class="icon glyphicon glyphicon-ok"></i>&nbsp;No
+                  </div>
+		</label>
+              </div>
+	      <!-- 'yes' example -->
+	      <div class="col-sm-2 btn-group no-padding-right" data-toggle="buttons">
+                <label class="btn btn-danger btn-round btn-sm" id="yes-1" >
+                  <input type="radio" >
+		  <div class="bigger-120">
+		    <i class="icon glyphicon glyphicon-remove"></i>&nbsp;Yes
+		  </div>
+		</label>
+	        <label class="btn btn-default btn-round btn-sm" id="no-1" >
+                  <input type="radio" >
+		  No
+                </label>
+              </div>
+	      
+	    
+	    </div>
+          </div>
+          
+        </div>
+    </td></tr>
+    
+    {% endfor %}
+  </table>
+</form>
+
+{% endblock %}
+
+<!-- basic scripts -->
+
+{% block js_footer %}
+{{ super() }}
+
+<!-- page-specific footer scripts -->
+
+<script src="{{ url_for('static', filename='js/jquery.mobile.custom.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/typeahead-bs2.min.js') }}"></script>
+      
+<!-- page specific plugin scripts -->
+
+
+<!-- ace scripts -->
+
+<script src="{{ url_for('static', filename='js/ace-elements.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ace.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ace-extra.min.js') }}"></script>  -->
+
+<!-- inline scripts related to this page ->
+
+var Alert   = function (el) {
+    $(el).on('click', dismiss, this.close)
+  }
+
+  $(document).on('click.bs.button.data-api', '[data-toggle^=button]', function (e) {
+    var $btn = $(e.target)
+    if (!$btn.hasClass('btn')) $btn = $btn.closest('.btn')
+    $btn.button('toggle')
+    e.preventDefault()
+  })
+-->
+
+{% endblock %}

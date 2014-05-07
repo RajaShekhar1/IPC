@@ -251,11 +251,10 @@ def login():
 
 @app.route("/test")
 #  14-Apr-22 WSD modified to new test file
+#  14-May- 7 WSD change to yes_no test page
 def testpage():
     return render_template(
-        'main-wizard.html',
-        wizard_data={}, 
-        states=get_states(),
+        'yes_no_styling.html'
     )
 
 @app.route("/submit-wizard-data", methods=['POST'])
