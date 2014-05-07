@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% set active_page = 'nav_enroll' -%}
+
 {% block title %} - Employee Application {% endblock %}
 
 {% block head %}
@@ -21,6 +23,20 @@
     <![endif]-->
 
 {% endblock %}
+
+{% block navbar %}
+{% if wizard_data.is_in_person %}
+ {{ super() }}
+{% else %}
+<!-- replace with non-navigable header -->
+<div class="header">
+  <h2 class="text-muted">
+    <img src="/static/img/5Star_logo_TAA.png"/>Application Enrollment
+  </h2>
+</div>    
+{% endif %}
+{% endblock %}
+
 
 {% block content %}
 
@@ -155,7 +171,6 @@
 	       
 	    </div>
             
-	    
             <div data-bind="slideDownIf: should_show_spouse">
               <div class="form-group">
                 <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="spFName">
@@ -396,9 +411,7 @@
 	    </div>
 	    -->
           
-  
-        <!-- /div -->
-      </div>
+        </div>
       </form>
         
       <script type="text/html" id="recommendations_template">
@@ -950,8 +963,8 @@
 		  
 		  <label class="" for="tokenType">My</label>
 		  <select id="tokenType" class="select1" placeholder="Select one..." 
-			  data-bind="value: tokenType">
-		    <option value="">&nbsp;</option>
+			  data-bind="value: identityType">
+		    <option value="">Select one...</option>
 		    <option value="DOH">Date of Hire</option>
 		    <option value="EmpNum">Employee #</option>
 		    <option value="DLNum">Driver's License #</option>
@@ -968,9 +981,9 @@
 		    <select id="tokenType" class="select1" placeholder="Select one..." 
 			    data-bind="value: tokenType">
 		      <option value="">&nbsp;</option>
-		      <option value="DOH">"Date of Hire"</option>
-		      <option value="EmpNum">"Employee #"</option>
-		      <option value="DLNum">"Driver's License #"</option>
+		      <option value="Date of Hire">"Date of Hire"</option>
+		      <option value="Employee Num">"Employee #"</option>
+		      <option value="Driver's License Num">"Driver's License #"</option>
 		    </select>
 		  </div>
 		</div>

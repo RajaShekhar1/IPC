@@ -148,6 +148,9 @@ def email_enrollment():
     
     EnrollmentEmail(**email_config).send_enrollment_request(enrollment_request)
     
+    flash(employee_first + " " + employee_last + " (" + employee_email + " ) "
+          "will receive a link to the application via email.  The signed application will queue in your agent applications inbox requiring your signature prior to processing.")  
+    
     return jsonify(**dict(success=True))
 
 @app.route("/enrollment_request", methods=['GET'])
@@ -183,6 +186,22 @@ def email_link_handler():
                            states=get_states(),
     )
     
+@app.route("/application_completed", methods=['GET'])
+def ds_landing_page():
+    """
+    Handles simple responses to completing the enrollment page
+    """
+
+    session_type = request.args['type']
+    name = request.args['name']
+    ds_event = request.args['event']
+
+    return render_template('completed-session.html',
+                           session_type=session_type,
+                           name=name,
+                           ds_event=ds_event)
+
+
 @app.route("/demo")
 def sample():
     return render_template('sample.html',

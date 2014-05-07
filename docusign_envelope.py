@@ -62,7 +62,14 @@ def create_envelope_and_get_signing_url(wizard_data):
     recipName = wizard_data["agent_data"]["employee_first"] + " " + wizard_data["agent_data"]["employee_last"]
     employer = wizard_data["agent_data"]["company_name"]
     emailTo = wizard_data["agent_data"]["employee_email"]
-    landingURL = "https://taa.herokuapp.com/enroll"
+    
+    if wizard_data["agent_data"]["is_in_person"]:
+        sessionType = "inperson"
+    else:
+        sessionType = "email"
+
+    landingURL = url_for ('ds_landing_page') + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
+                # note: DS supplied the last parm of 'event' in the callback
     idTokenStr = wizard_data["identityType"] + ": " + wizard_data["identityToken"]
     
     #

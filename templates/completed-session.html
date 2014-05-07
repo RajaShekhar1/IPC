@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% set active_page = 'nav_enroll' -%}
+{% block title %} - Completed{% endblock %}
+
+{% block head %}
+ {{ super() }}
+<!-- page-specific header data -->
+    
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+<!-- ace styles -->
+<link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/five_star_ace_overlay.css') }}" rel="stylesheet">
+
+<!-- custom css -->
+<link href="{{ url_for('static', filename='css/five_star.css') }}" rel="stylesheet">
+
+
+{% endblock %}
+
+{% block navbar %}
+{% if session_type == "inperson" %}
+ {{ super() }}
+{% else %}
+<!-- replace with non-navigable header -->
+<div class="header">
+  <h2 class="text-muted">
+    <img src="/static/img/5Star_logo_TAA.png"/>Application Enrollment
+  </h2>
+</div>    
+{% endif %}
+{% endblock %}
+
+
+{% block content %}
+
+{% set success =   ds_event == "signing_complete" %}
+{% set just_viewing  =  ds_event == "viewing_complete" %}
+{% set declined =  ds_event == "cancel" or ds_event == "decline" %}
+{% set timeout  =  ds_event == "session_timeout" %}
+{% set invalid  =  ds_event == "ttl_expired" %}
+{% set fax_pending  =  ds_event == "fax_pending" %}
+
+
+<div class="row">
+  <div class="col-xs-12">
+    <div class="well">
+      <h3 class="center text-primary">
+      {{name}}, 
+      {% if not declined %}thank you for choosing 5Star Life Insurance!<br><br>{% endif %}
+      {% if success %}
+      Your application has been submitted.
+      
+      {% elif fax_pending %}
+      Your application information has been entered, and you have elected to sign via fax signature.  Please note that <emphasis>your application will not be submitted</emphasis> until you complete this fax signature step.  Thank you.
+      
+      {% elif declined %}
+      you have canceled / declined your application and it was not submitted. 
+      
+      {% elif timeout %}
+      We're sorry for the inconvenience but your session has timed out.
+      
+      {% elif invalid %}
+      We're sorry but your enrollment link has expired.  Please contact your insurance agent or enrollment professional for assistance.
+      
+      {% elif not just_viewing %}
+      Uh oh.  It looks like there was an error ('{{ds_event}}') with your application;  it was not submitted.  Please contact your insurance agent or enrollment professional if you need assistance.
+      
+      {% endif %}
+
+      {% if (declined or timeout) and session_type == "email" %}&nbsp;If you wish to retry your application, please revisit the email sent to you and click the 'Begin Enrollment' link again. 
+      {% elif (declined or timeout) and session_type != "email" %}&nbsp;If you wish to retry your application, please confirm with your enrollment professional. 
+      {% endif %}
+      
+      
+      </h3>
+    </div>
+
+    {% if session_type != "inperson" %}
+    <div class="space-2"></div>
+    <p class="center bigger-120">
+      We strongly recommend closing this browser window to ensure privacy of your application information.  Thank you.
+    </p>
+    {% endif %}
+    
+    
+    {% if session_type == "inperson" %}
+    <div class="space-2"></div>
+    <h4 class="center">
+      {% if ds_event == "signing_complete" %}
+      Enroller, you can go to your inbox to sign {{name}}'s application, or wait until later and instead enroll the next applicant now.
+      {% else %}
+      Enroller, you can return to Home page, or enroll the next applicant now.
+      {% endif %}
+    </h4>
+    <div class="space-2"></div>
+    <div class="space-2"></div>
+    
+    
+    <div class="col-xs-12">
+      <div class="col-xs-12 col-sm-4">
+	<div class="center">
+	  <button type="submit" class="btn btn-lg btn-info" id="home-btn">
+	    <i class="icon icon-home align-top bigger-110"></i>Back to Home</button>
+	</div>
+      </div>
+      <div class="col-xs-12 hidden-sm hidden-md hidden-lg">
+	<div class="space-2"></div>
+      </div>
+      <div class="col-xs-12 col-sm-4">
+	{% if ds_event == "signing_complete" %}
+	<div class="center">
+	  <button type="submit" class="btn btn-lg btn-warn" id="sign-btn">
+	    <i class="icon icon-pencil align-top bigger-110"></i>Sign now via inbox</button>
+	</div>
+ 	{% endif %}
+      </div>
+      <div class="col-xs-12 hidden-sm hidden-md hidden-lg">
+	<div class="space-2"></div>
+      </div>
+      <div class="col-xs-12 col-sm-4">
+	<div class="center">
+	  <button type="submit" class="btn btn-lg btn-success" id="enroll-btn">
+	    <i class="icon icon-share align-top bigger-110"></i>Enroll next applicant</button>
+	</div>
+      </div>
+    </div>
+    {% endif %}
+ 
+
+  </div><!-- /.col-xs12 -->
+</div><!-- /.row -->
+
+
+
+{% endblock %}
+
+<!-- basic scripts -->
+
+{% block js_footer %}
+{{ super() }}
+
+<!-- page-specific footer scripts -->
+
+
+<!-- ace scripts ->
+
+<script src="{{ url_for('static', filename='js/ace-elements.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ace.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ace-extra.min.js') }}"></script>  -->
+
+<!-- inline scripts related to this page ->
+<script src="{{url_for('static', filename='js/handlebars-v1.3.0.js')}}"></script>  -->
+
+<script type="text/javascript">
+    jQuery(function($) {
+  
+        var email_btn = $("#email-enrollment-btn");
+        var email_btn = $("#email-enrollment-btn");
+        var email_btn = $("#email-enrollment-btn");
+
+        email_btn.on("click", function() {
+            email_btn.prop('disabled', true);
+            $.ajax("{{url_for('email_enrollment')}}", {
+                data: $(".enrollment-form").serialize(),
+                error: function() {
+                    alert("There was a problem sending the email.");
+                    email_btn.prop('disabled', false);
+                },
+                success: function() {
+                    alert("The enrollment email has been sent to '"+$('#email').val()+"'");
+                    email_btn.prop('disabled', false);
+                },
+                // expected return data type
+                dataType: "json",
+                method: "POST"
+            });
+        });
+        
+  })
+</script>
+
+{% endblock %}
