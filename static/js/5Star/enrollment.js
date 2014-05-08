@@ -1237,7 +1237,14 @@ function init_validation() {
         }
         if (info.step == 2) {
             // validate questions
-            return are_health_questions_valid();
+            var is_valid =  are_health_questions_valid();
+            if (!is_valid) {
+                $("#health_questions_error").html("Please answer all questions above so that no red X buttons appear. No question may remain unanswered.");
+                return false;
+            } else {
+                $("#health_questions_error").html("");
+                return true;
+            }
         }
         if (info.step == 3) {
             if (!$('#step3-form').valid()) return false;
