@@ -1,8 +1,6 @@
 
 .error {
-    color: red;
-    border-color: red!important;
-    outline-color: red;
+    color: #D16E6C;
 }
 
 .pricing-span-header li, .pricing-table li {

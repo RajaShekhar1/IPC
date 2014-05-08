@@ -359,14 +359,6 @@ function WizardUI(product, defaults) {
         element.blur();
     };
     
-    self.is_form_valid = ko.computed(function() {
-        return (
-            self.selected_plan().is_valid() &&
-            self.selected_plan().has_at_least_one_benefit_selected()
-            ); 
-    });
-    
-    
     // accessors for selected plan
     self.did_select_employee_coverage = ko.computed(function() {
         var rec = self.selected_plan().employee_recommendation();
@@ -397,9 +389,16 @@ function WizardUI(product, defaults) {
     }, "Must be no more than {0} years old for this product");
     
     function any_valid_spouse_field() {
-        return self.spouse().any_valid_field();
+        return self.should_show_spouse();
+        //return self.spouse().any_valid_field();
     }
     self.validator = $("#step1-form").validate({
+        highlight: wizard_validate_highlight,
+        success: wizard_validate_success,
+        errorPlacement: wizard_error_placement,
+        errorElement: 'div',
+        errorClass: 'help-block',
+        //focusInvalid: false,
         rules: {
             eeBenefitFName: "required",
             eeBenefitLName: "required",
@@ -433,11 +432,25 @@ function WizardUI(product, defaults) {
         }
     });
     
+    
+    function is_child_name_required(element) {
+        return true;
+    }
     function is_child_field_required(element) {
+        if ($(element).attr("id") === "child-first-0" || 
+            $(element).attr("id") === "child-last-0" || 
+            $(element).attr("id") === "child-dob-0"
+            ) {
+            // Treat the first child as always required if
+            // the children checkbox is checked
+            return self.should_include_children();
+        }
+        
         var child = ko.dataFor(element);
         if (!child) {
             return false;
         }
+        
         return child.any_valid_field();
     }
     
@@ -460,12 +473,26 @@ function WizardUI(product, defaults) {
         }
     );
     
-    $.validator.addClassRules("child_name",  {
+    $.validator.addClassRules("child_first",  {
             required: {
-                depends: is_child_field_required
+                depends: is_child_name_required
             }
         }
     );
+    $.validator.addClassRules("child_last",  {
+            required: {
+                depends: is_child_name_required
+            }
+        }
+    );
+    
+    self.is_form_valid = ko.computed(function() {
+        
+        return (
+            self.selected_plan().is_valid() &&
+            self.selected_plan().has_at_least_one_benefit_selected()
+            ); 
+    });
     
     self.attempted_advance_step = ko.observable(false);
     self.is_selection_error_visible = ko.computed(function() {
@@ -513,6 +540,8 @@ function Beneficiary(options) {
     self.birthdate = ko.observable(options.birthdate || null);
     self.ssn = ko.observable(options.ssn || "");
     self.gender = ko.observable(options.gender || "");
+    
+    self.health_questions = {};
     
     self.is_valid = ko.computed(function() {
         return (
@@ -832,9 +861,11 @@ function BenefitsPackage(root, name) {
         var people = self.get_all_people();
         var labels = self.get_all_people_labels();
         
-        return $.map(people, function(p, i) {
-            return {person: p, label: labels[i]};
-        });
+        var out = [];
+        for (var i = 0; i < people.length; i++) {
+            out.push({person: people[i], label: labels[i]});
+        }
+        return out;
     });
     
     self.has_at_least_one_benefit_selected = function() {
@@ -862,6 +893,7 @@ function NullBenefitsPackage() {
     self.is_valid = function () {return false};
     self.get_all_people = function() {return [];};
     self.get_all_people_labels = function() {return [];};
+    self.get_people_with_labels = function() {return [];};
     self.has_at_least_one_benefit_selected = function() {return false;};
 }
 
@@ -917,6 +949,182 @@ ko.bindingHandlers.slideDownIf = {
         }
     }
 };
+
+
+function QuestionButton(element, val, highlight_func, unhighlight_func) {
+    var self = this;
+    
+    self.elements = [$(element)];
+    self.val = val;
+    
+    self.highlight = function() {
+        $.each(self.elements, function() {
+            highlight_func(this); 
+        });
+        //highlight_func(self.element);
+    };
+    self.unhighlight = function() {
+        $.each(self.elements, function() {
+            unhighlight_func(this); 
+        });
+        //unhighlight_func(self.element);
+    };
+}
+function QuestionButtonGroup(id) {
+    var self = this;
+    self.id = id;
+    self.buttons = [];
+    self.selected_btn = null;
+    
+    self.get_val = function() {
+        if (self.selected_btn == null) {
+            return false;
+        } else {
+            return self.selected_btn.val;
+        }
+    };
+    
+    self.add_button = function(element, val, high_func, unhigh_func) {
+        var btn = null;
+        $.each(self.buttons, function() {
+            if (this.val == val) {
+                btn = this;
+            } 
+        });
+        if (btn) {
+            btn.elements.push(element);
+        } else {
+            self.buttons.push(new QuestionButton(element, val, high_func, unhigh_func));
+        }
+    };
+    self.click_button = function(val) {
+        //if (self.selected_btn && self.selected_btn.val == val) {
+        //    return;
+        //}
+        
+        var btn = null;
+        $.each(self.buttons, function() {
+            if (this.val == val) {
+                btn = this;
+            }
+            this.unhighlight();
+        });
+        
+        btn.highlight();
+        self.selected_btn = btn;
+    };
+}
+var questions = [];
+var general_questions_by_id = {};
+ko.bindingHandlers.flagBtn = {
+    init: function(element, value_accessor) {
+        var val = ko.unwrap(value_accessor());
+        
+        var btn_group, group_lookup;
+        if (val.beneficiary) {
+            group_lookup = val.beneficiary.health_questions;
+        } else {
+            group_lookup = general_questions_by_id;
+        }
+        if (val.id in group_lookup) {
+            btn_group = group_lookup[val.id];
+        } else {
+            btn_group = new QuestionButtonGroup(val.id);
+            group_lookup[val.id] = btn_group;
+        }
+        
+        btn_group.add_button(element, val.val, function(el) {
+            if (val.highlight == "flag") {
+                $(el
+                ).prepend('<i class="icon glyphicon glyphicon-flag"></i>'
+                ).addClass("btn btn-warning"
+                );
+            } else if (val.highlight == "checkmark") {
+                $(el
+                ).prepend('<i class="icon glyphicon glyphicon-ok"></i>'
+                ).addClass("btn-success"
+                );
+            } else if (val.highlight == "stop") {
+                $(el
+                ).prepend('<i class="icon glyphicon glyphicon-remove"></i>'
+                ).addClass("btn-danger"
+                );
+            }
+            $(el).css({"font-size":"120%"});
+        }, function(el) {
+            $(el).removeClass("btn-success btn-warning btn-danger"
+            ).addClass("btn-default"
+            ).css({"font-size":"100%"}
+            );
+            $(el).find(".glyphicon").remove();
+        });
+        
+        $(element).on("click", function() {
+            btn_group.click_button(val.val);
+            if (val.onclick) {
+                val.onclick();
+            }
+        })
+    }
+};
+
+function handle_existing_insurance_modal() {
+    $("#health_modal").modal('show');
+}
+function handle_existing_insurance_modal_remote() {
+    $("#health_modal").modal('show');
+    $("#remote_warning_text").show();
+}
+function reset_existing_insurance_remote() {
+    $("#remote_warning_text").hide();
+}
+function handle_question_yes() {
+    $("#health_modal").modal('show');
+}
+
+function are_health_questions_valid() {
+    // Will need much better code here in general
+    //  should be able to highlight buttons that were missed or something
+    
+    var el;
+    // this one can be yes or no
+    if (ui.is_in_person_application() && general_questions_by_id['existing_insurance'].get_val() === null) {
+        //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
+        return false;
+    }
+    if (!ui.is_in_person_application() && general_questions_by_id['existing_insurance_remote'].get_val() != "No") {
+        //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
+        return false;
+    }
+    if (general_questions_by_id['replace_insurance'].get_val() != "No") {
+        //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
+        return false;
+    }
+    var valid = true;
+    $.each(window.ui.employee().health_questions, function() {
+        if (this.get_val() != "No") {
+            valid = false;
+            return false;
+        }
+    });
+    $.each(window.ui.spouse().health_questions, function() {
+        if (this.get_val() != "No") {
+            valid = false;
+            return false;
+        }
+    });
+    $.each(window.ui.get_valid_children(), function() {
+        $.each(this.health_questions, function() {
+            if (this.get_val() != "No") {
+                valid = false;
+                return false;
+            }
+        });
+    });
+        
+    return valid;
+}
+
 
 function get_monthly_premium_from_weekly(weekly_premium) {
     return Math.round((weekly_premium*100 * 52) / 12)/100.0;
@@ -1017,11 +1225,19 @@ function init_validation() {
         }
         
         if (info.step == 1) {
+            // trigger jquery validation
+            var is_valid = window.ui.validator.form();
+                
             if (!window.ui.is_form_valid()) {
+                
                 window.ui.show_no_selection_error();
                 return false;
             } 
-            return true;
+            return is_valid;
+        }
+        if (info.step == 2) {
+            // validate questions
+            return are_health_questions_valid();
         }
         if (info.step == 3) {
             if (!$('#step3-form').valid()) return false;
@@ -1035,8 +1251,8 @@ function init_validation() {
         var wizard_results = {
             agent_data: window.ui.defaults,
             
-	    identityToken: window.ui.identityToken(),
-	    identityType: window.ui.identityType(),
+	        identityToken: window.ui.identityToken(),
+	        identityType: window.ui.identityType(),
             
             employee: window.ui.employee().serialize_data(),
             spouse: window.ui.spouse().serialize_data(),
@@ -1067,7 +1283,7 @@ function init_validation() {
         // Benefits
         var emp_benefit = window.ui.selected_plan().employee_recommendation().recommended_benefit;
         if (emp_benefit.is_valid()) {
-            wizard_results['employee_coverage'] = emp_benefit.serialize_data();
+                wizard_results['employee_coverage'] = emp_benefit.serialize_data();
         }
         var sp_benefit = window.ui.selected_plan().spouse_recommendation().recommended_benefit;
         if (sp_benefit.is_valid()) {
@@ -1169,29 +1385,9 @@ function init_validation() {
             agree: "Please confirm your agreement"
         },
         
-        highlight: function (e) {
-            $(e).closest('.form-group').removeClass('has-info').addClass('has-error');
-        },
-
-        success: function (e) {
-            $(e).closest('.form-group').removeClass('has-error').addClass('has-info');
-            $(e).remove();
-        },
-        
-        errorPlacement: function (error, element) {
-            if (element.is(':checkbox') || element.is(':radio')) {
-                var controls = element.closest('div[class*="col-"]');
-                if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
-                else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
-            }
-            else if (element.is('.select2')) {
-                error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
-            }
-            else if (element.is('.chosen-select')) {
-                error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
-            }
-            else error.insertAfter(element.parent());
-        },
+        highlight: wizard_validate_highlight,
+        success: wizard_validate_success,
+        errorPlacement: wizard_error_placement,
 
         submitHandler: function (form) {
         },
@@ -1202,7 +1398,34 @@ function init_validation() {
         }
         
     });
+    
 	
+}
+
+    
+function wizard_validate_highlight(e) {
+    $(e).closest('.form-group').removeClass('has-info').addClass('has-error');
+}
+
+function wizard_validate_success(e) {
+    $(e).closest('.form-group').removeClass('has-error').addClass('has-info');
+    $(e).remove();
+}
+
+function wizard_error_placement(error, element) {
+    if (element.is(':checkbox') || element.is(':radio')) {
+        var controls = element.closest('div[class*="col-"]');
+        if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
+        else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
+    }
+    else if (element.is('.select2')) {
+        error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
+    }
+    else if (element.is('.chosen-select')) {
+        error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
+    } 
+    else error.insertAfter(element);
+    //else error.insertAfter(element.parent());
 }
 
 
