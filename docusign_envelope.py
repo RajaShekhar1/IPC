@@ -271,7 +271,7 @@ def create_envelope_and_get_signing_url(wizard_data):
  
     # construct the body of the request in JSON format  
     requestBody =   {
-        "authenticationMethod" : "password",
+        "authenticationMethod" : "none",
         "email" : recipEmail,
         "returnUrl" :  landingURL,
         "clientUserId" : templateClientID,
