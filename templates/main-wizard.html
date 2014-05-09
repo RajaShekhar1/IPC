@@ -178,9 +178,8 @@
 	    </div>
 	       
 	    </div>
-            
-            <div data-bind="slideDownIf: should_show_spouse">
-              <div class="">
+            <div class="form-group" data-bind="slideDownIf: should_show_spouse">
+              <div class="form-group">
                 <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="spFName">
                   Spouse 
                 </label>
@@ -1193,12 +1192,12 @@
 		  </div>
 		  
 		  <label class="" for="tokenType">My</label>
-		  <select id="tokenType" name="tokenType" class="select1"
-			  data-bind="value: tokenType">
-		    <option value="">&nbsp;</option>
-		    <option value="DOH">Date of Hire</option>
-		    <option value="EmpNum">Employee #</option>
-		    <option value="DLNum">Driver's License #</option>
+		  <select id="tokenType" class="select1" placeholder="Select one..." 
+			  data-bind="value: identityType">
+		    <option value="">Select one...</option>
+		    <option value="Date of Hire">"Date of Hire"</option>
+		    <option value="Employee Num">"Employee #"</option>
+		    <option value="Driver's License Num">"Driver's License #"</option>
 		  </select>
 		  <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>		  
                   <input type="text" id="ConfirmationToken" name="ConfirmationToken" data-bind="value: identityToken"/>
@@ -1211,7 +1210,7 @@
 		    <label class="" for="tokenType">My</label>
 		    <select id="tokenType" name="tokenType" class="select1"
 			    data-bind="value: tokenType">
-		      <option value="">&nbsp;</option>
+		      <option value="">Select one...</option>
 		      <option value="Date of Hire">"Date of Hire"</option>
 		      <option value="Employee Num">"Employee #"</option>
 		      <option value="Driver's License Num">"Driver's License #"</option>

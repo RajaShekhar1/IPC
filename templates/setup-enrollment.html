@@ -190,12 +190,35 @@
             $.ajax("{{url_for('email_enrollment')}}", {
                 data: $(".enrollment-form").serialize(),
                 error: function() {
-                    alert("There was a problem sending the email.");
+                    bootbox.dialog({
+		        message: "There was a problem in sending the email.  Please check the email address, or contact the Enrollment System administrator if you have further problems.",
+		        buttons: {
+		            "success": {
+		                "label": "OK",
+		                "className": "btn-sm btn-primary"
+		            }
+		        }
+		    });
+    
+                    <!-- alert("There was a problem sending the email."); -->
                     email_btn.prop('disabled', false);
                 },
                 success: function() {
                     <!-- alert("The enrollment email has been sent to '"+$('#email').val()+"'"); -->
-                    email_btn.prop('disabled', false);
+                    bootbox.dialog({
+		        message: $('#eeFName').val() + " " + $('#eeLName').val() + " (" + $('#email').val() + ") will receive a link to the application via email.  The signed application will queue in your agent applications inbox requiring your signature prior to processing.",
+		        buttons: {
+		            "success": {
+		                "label": "OK",
+		                "className": "btn-sm btn-primary"
+		            }
+		        }
+		    });
+		    
+		    email_btn.prop('disabled', false);
+		    $('#email').val("")
+		    $('#eeFName').val("")
+		    $('#eeLName').val("")
                 },
                 // expected return data type
                 dataType: "json",

@@ -146,9 +146,6 @@ def email_enrollment():
     
     EnrollmentEmail(**email_config).send_enrollment_request(enrollment_request)
     
-    flash(employee_first + " " + employee_last + " (" + employee_email + " ) "
-          "will receive a link to the application via email.  The signed application will queue in your agent applications inbox requiring your signature prior to processing.")  
-    
     return jsonify(**dict(success=True))
 
 @app.route("/enrollment_request", methods=['GET'])
