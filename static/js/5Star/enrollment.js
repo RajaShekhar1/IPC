@@ -24,6 +24,9 @@ function WizardUI(product, defaults) {
     
     self.defaults = defaults;
     self.insurance_product = product;
+
+    self.disclaimer_notice_confirmed = ko.observable(false);
+    
     
     // Data used on steps 2-5
     self.is_in_person_application = ko.observable('is_in_person' in defaults && defaults.is_in_person);
@@ -51,7 +54,6 @@ function WizardUI(product, defaults) {
     self.spouse_beneficiary_ssn = ko.observable("");
     self.spouse_beneficiary_dob = ko.observable("");
     
-    
     // Employee 
     self.employee = ko.observable(new Beneficiary({
         first: self.defaults.employee_first || "",
@@ -63,11 +65,12 @@ function WizardUI(product, defaults) {
     
     // Spouse info
     self.spouse = ko.observable(new Beneficiary({}));
-    self.show_spouse_name = ko.computed(function() {
-        return (self.spouse().is_valid()) ? self.spouse().name() : "";
-    });
+    
     self.should_include_spouse_in_table = ko.computed(function() {
-        return self.should_show_spouse() && self.spouse().is_valid();
+        return self.should_show_spouse() && self.spouse().is_valid() && self.is_spouse_age_valid();
+    });
+    self.show_spouse_name = ko.computed(function() {
+        return (self.should_include_spouse_in_table()) ? self.spouse().name() : "";
     });
     
     // Children
@@ -99,7 +102,7 @@ function WizardUI(product, defaults) {
     self.get_valid_children = ko.computed(function() {
         var children = [];
         $.each(self.children(), function() {
-            if (this.is_valid()) {
+            if (this.is_valid() && self.insurance_product.is_valid_child_age(this.get_age())) {
                 children.push(this);
             } 
         });
@@ -122,7 +125,7 @@ function WizardUI(product, defaults) {
         return  self.get_valid_children().length > 0;
     });
     self.should_include_children_in_table = ko.computed(function() {
-        return self.should_include_children() && self.has_valid_children();  
+        return self.should_include_children() && self.has_valid_children() && self.are_children_ages_valid();  
     });
     
     // Store the actual benefits for children here, rather 
@@ -138,16 +141,60 @@ function WizardUI(product, defaults) {
     });
     
     // Recommended and selected benefits
-    self.is_recommended_table_visible = ko.observable(false);
+    self.is_show_rates_clicked = ko.observable(false);
+    
+    self.is_employee_age_valid = ko.computed(function() {
+        return self.insurance_product.is_valid_employee_age(self.employee().get_age()) ;
+    });
+    self.is_spouse_age_valid = ko.computed(function() {
+        return self.insurance_product.is_valid_spouse_age(self.spouse().get_age()) ;
+    });
+    
+    self.are_children_ages_valid = ko.computed(function() {
+        var all_valid = true;
+        $.each(self.children(), function() {
+            if (!self.insurance_product.is_valid_child_age(this.get_age())) {
+                all_valid = false;
+                return false;
+            }
+        });
+        return all_valid;
+    });
     self.can_display_rates_table = ko.computed(function() {
-        // TODO: validation
-        return true;
+        // TODO: some of the age constants or other requirements will be determined by the product
+        
+        // All employee info
+        var valid = self.employee().is_valid();
+        valid &= self.is_employee_age_valid();
+        
+       // if (self.should_show_spouse() && self.spouse().birthdate() != "") {
+       //     valid &= self.spouse().is_valid();
+       //     var sp_age = self.spouse().get_age();
+       //     valid &= sp_age >= 18 && sp_age <= 70;
+       // }
+        
+        // Trigger jquery validation manually 
+        if (self.is_show_rates_clicked()) {
+            self.validator.form();
+        }
+        
+        return valid;
+    });
+    
+    
+    self.is_recommended_table_visible = ko.computed(function() {
+        return (self.is_show_rates_clicked() && self.can_display_rates_table());
     });
     self.show_recommendations_table = function() {
+        // Trigger validation manually
+        if (!self.validator.form()) {
+            return;
+        }
+        
         if (!self.can_display_rates_table()) {
             return;
         }
-        self.is_recommended_table_visible(true);
+        self.is_show_rates_clicked(true);
         self.refresh_rate_table();
     };
     
@@ -315,11 +362,6 @@ function WizardUI(product, defaults) {
         element.blur();
     };
     
-    self.is_form_valid = function() {
-        return (self.selected_plan().is_valid()); 
-    };
-    
-    
     // accessors for selected plan
     self.did_select_employee_coverage = ko.computed(function() {
         var rec = self.selected_plan().employee_recommendation();
@@ -333,6 +375,136 @@ function WizardUI(product, defaults) {
         var rec = self.selected_plan().children_recommendation();
         return (rec.is_valid() && rec.recommended_benefit.is_valid());
     });
+    
+    self.show_health_modal = function() {
+        $("#health_modal").modal('show');
+    };
+    
+    
+    // jquery form validator
+    $.validator.addMethod("minAge", function(val, element, params) {
+        var age = age_for_date(val);
+        return (age !== "" && age >= params);
+    }, "Must be at least {0} years old for this product");
+    $.validator.addMethod("maxAge", function(val, element, params) {
+        var age = age_for_date(val);
+        return (age !== "" && age <= params);
+    }, "Must be no more than {0} years old for this product");
+    
+    function any_valid_spouse_field() {
+        return self.should_show_spouse();
+        //return self.spouse().any_valid_field();
+    }
+    self.validator = $("#step1-form").validate({
+        highlight: wizard_validate_highlight,
+        success: wizard_validate_success,
+        errorPlacement: wizard_error_placement,
+        errorElement: 'div',
+        errorClass: 'help-block',
+        //focusInvalid: false,
+        rules: {
+            eeBenefitFName: "required",
+            eeBenefitLName: "required",
+            eeBenefitDOB: {
+                required: true,
+                date: true,
+                minAge: self.insurance_product.min_emp_age(),
+                maxAge: self.insurance_product.max_emp_age()
+            },
+            spFName: {
+                required: {
+                    depends: any_valid_spouse_field
+                }
+            },
+            spLName: {
+                required: { depends: any_valid_spouse_field }
+            },
+            spDOB: {
+                required: {depends: any_valid_spouse_field},
+                date: {depends: any_valid_spouse_field},
+                minAge: {
+                    param: self.insurance_product.min_sp_age(),
+                    depends: any_valid_spouse_field
+                },
+                maxAge: {
+                    param: self.insurance_product.max_sp_age(),
+                    depends: any_valid_spouse_field
+                }
+            },
+            debug: true
+        }
+    });
+    
+    
+    function is_child_name_required(element) {
+        return true;
+    }
+    function is_child_field_required(element) {
+        if ($(element).attr("id") === "child-first-0" || 
+            $(element).attr("id") === "child-last-0" || 
+            $(element).attr("id") === "child-dob-0"
+            ) {
+            // Treat the first child as always required if
+            // the children checkbox is checked
+            return self.should_include_children();
+        }
+        
+        var child = ko.dataFor(element);
+        if (!child) {
+            return false;
+        }
+        
+        return child.any_valid_field();
+    }
+    
+    $.validator.addClassRules("child_birthdate", 
+        {
+            required: {
+                depends: is_child_field_required
+            }, 
+            date: {
+                depends: is_child_field_required
+            },
+            minAge: {
+                param: self.insurance_product.min_child_age(),
+                depends: is_child_field_required
+            },
+            maxAge: {
+                param: self.insurance_product.max_child_age(),
+                depends: is_child_field_required
+            }
+        }
+    );
+    
+    $.validator.addClassRules("child_first",  {
+            required: {
+                depends: is_child_name_required
+            }
+        }
+    );
+    $.validator.addClassRules("child_last",  {
+            required: {
+                depends: is_child_name_required
+            }
+        }
+    );
+    
+    self.is_form_valid = ko.computed(function() {
+        
+        return (
+            self.selected_plan().is_valid() &&
+            self.selected_plan().has_at_least_one_benefit_selected()
+            ); 
+    });
+    
+    self.attempted_advance_step = ko.observable(false);
+    self.is_selection_error_visible = ko.computed(function() {
+        return self.attempted_advance_step() && !self.is_form_valid(); 
+    });
+    self.show_no_selection_error = function() {
+        self.attempted_advance_step(true);
+    }
+    
 }
 
 
@@ -341,17 +513,25 @@ function FPPTIProduct() {
     
     self.product_type = "FPPTI";
     
+    self.min_emp_age = function() {return 18};
+    self.max_emp_age = function() {return 70};
+    self.min_sp_age = function() {return 18};
+    self.max_sp_age = function() {return 70};
+    self.min_child_age = function() {return 0};
+    self.max_child_age = function() {return 23};
+    
     self.is_valid_employee_age = function(age) {
-        return (age >= 18 && age <= 70);
+        return (age >= self.min_emp_age() && age <= self.max_emp_age());
     };
     
     self.is_valid_spouse_age = function(age) {
-        return (age >= 18 && age <= 70);
+        return (age >= self.min_sp_age() && age <= self.max_sp_age());
     };
     
     self.is_valid_child_age = function(age) {
-        return (age >= 0 && age <= 23);
+        return (age >= self.min_child_age() && age <= self.max_child_age());
     }
+    
 }
 
 function Beneficiary(options) {
@@ -364,12 +544,22 @@ function Beneficiary(options) {
     self.ssn = ko.observable(options.ssn || "");
     self.gender = ko.observable(options.gender || "");
     
+    self.health_questions = {};
+    
     self.is_valid = ko.computed(function() {
         return (
             $.trim(self.first()) != "" &&
             $.trim(self.last()) != "" &&
             $.trim(self.birthdate()) != ""
         );  
+    });
+    
+    self.any_valid_field = ko.computed(function() {
+        return (
+            $.trim(self.first()) != "" ||
+            $.trim(self.last()) != "" ||
+            $.trim(self.birthdate()) != ""
+            ); 
     });
     
     self.name = ko.computed(function() {
@@ -382,12 +572,7 @@ function Beneficiary(options) {
     });
     
     self.get_age = ko.computed(function() {
-        var bd = moment(self.birthdate(), "MM/DD/YYYY");
-        if (bd.isValid()) {
-            return moment().diff(bd, "years");  
-        } else {
-            return "";
-        }
+        return age_for_date(self.birthdate());
     });
     
     self.benefit_options = {
@@ -454,6 +639,22 @@ function Beneficiary(options) {
         data.gender = self.gender();
         
         return data;
+    }
+}
+
+function age_for_date(date) {
+    var bd = moment(date, "MM/DD/YYYY");
+    if (bd.isValid()) {
+        if (bd.isAfter(moment())) {
+            // Avoid returning -0 for future dates less than one
+            return -1;
+        } else {
+            // Valid age
+            return moment().diff(bd, "years");
+        }
+    } else {
+        // Invalid age
+        return "";
     }
 }
 
@@ -624,6 +825,7 @@ function BenefitsPackage(root, name) {
     
     self.get_all_people = ko.computed(function() {
         var employee = root.employee();
+        // Make sure selected coverage is set on each of the person objects
         employee.selected_coverage(self.employee_recommendation().recommended_benefit);
         
         var people = [employee];
@@ -644,6 +846,42 @@ function BenefitsPackage(root, name) {
         return people;
     });
     
+    self.get_all_people_labels = ko.computed(function() {
+        var labels = [root.employee().name()];
+        if (root.should_include_spouse_in_table()) {
+            labels.push(root.spouse().name());
+        }
+        if (root.should_include_children_in_table()) {
+            $.each(root.get_valid_children(), function () {
+                var child = this;
+                labels.push(child.name());
+            });
+        }
+        return labels;
+    });
+    
+    self.get_people_with_labels = ko.computed(function() {
+        var people = self.get_all_people();
+        var labels = self.get_all_people_labels();
+        
+        var out = [];
+        for (var i = 0; i < people.length; i++) {
+            out.push({person: people[i], label: labels[i]});
+        }
+        return out;
+    });
+    
+    self.has_at_least_one_benefit_selected = function() {
+        var any_benefits = false;
+        $.each(self.get_package_benefits(), function() {
+            if (this.is_valid()) {
+                any_benefits = true;
+                return false;
+            }
+        });
+        return any_benefits;
+    };
+    
 }
 function NullBenefitsPackage() {
     var self = this;
@@ -656,7 +894,10 @@ function NullBenefitsPackage() {
     self.get_total_monthly_premium = function(){return 0;};
     self.formatted_monthly_premium = function() { return "";};
     self.is_valid = function () {return false};
-    self.get_all_people = function() {return [];}
+    self.get_all_people = function() {return [];};
+    self.get_all_people_labels = function() {return [];};
+    self.get_people_with_labels = function() {return [];};
+    self.has_at_least_one_benefit_selected = function() {return false;};
 }
 
 function Recommendation(recommended_benefit) {
@@ -711,6 +952,229 @@ ko.bindingHandlers.slideDownIf = {
         }
     }
 };
+
+
+function QuestionButton(element, val, highlight_func, unhighlight_func) {
+    var self = this;
+    
+    self.elements = [$(element)];
+    self.val = val;
+    
+    self.highlight = function() {
+        $.each(self.elements, function() {
+            highlight_func(this); 
+        });
+        //highlight_func(self.element);
+    };
+    self.unhighlight = function() {
+        $.each(self.elements, function() {
+            unhighlight_func(this); 
+        });
+        //unhighlight_func(self.element);
+    };
+}
+function QuestionButtonGroup(id) {
+    var self = this;
+    self.id = id;
+    self.buttons = [];
+    self.selected_btn = null;
+    
+    self.get_val = function() {
+        if (self.selected_btn == null) {
+            return false;
+        } else {
+            return self.selected_btn.val;
+        }
+    };
+    
+    self.add_button = function(element, val, high_func, unhigh_func) {
+        var btn = null;
+        $.each(self.buttons, function() {
+            if (this.val == val) {
+                btn = this;
+            } 
+        });
+        if (btn) {
+            btn.elements.push(element);
+        } else {
+            self.buttons.push(new QuestionButton(element, val, high_func, unhigh_func));
+        }
+    };
+    self.click_button = function(val) {
+        //if (self.selected_btn && self.selected_btn.val == val) {
+        //    return;
+        //}
+        
+        var btn = null;
+        $.each(self.buttons, function() {
+            if (this.val == val) {
+                btn = this;
+            }
+            this.unhighlight();
+        });
+        
+        btn.highlight();
+        self.selected_btn = btn;
+    };
+}
+var questions = [];
+var general_questions_by_id = {};
+ko.bindingHandlers.flagBtn = {
+    init: function(element, value_accessor) {
+        var val = ko.unwrap(value_accessor());
+        
+        var btn_group, group_lookup;
+        if (val.beneficiary) {
+            group_lookup = val.beneficiary.health_questions;
+        } else {
+            group_lookup = general_questions_by_id;
+        }
+        if (val.id in group_lookup) {
+            btn_group = group_lookup[val.id];
+        } else {
+            btn_group = new QuestionButtonGroup(val.id);
+            group_lookup[val.id] = btn_group;
+        }
+        
+        btn_group.add_button(element, val.val, function(el) {
+            if (val.highlight == "flag") {
+                $(el
+                ).prepend('<i class="icon glyphicon glyphicon-flag"></i>'
+                ).addClass("btn btn-warning"
+                );
+            } else if (val.highlight == "checkmark") {
+                $(el
+                ).prepend('<i class="icon glyphicon glyphicon-ok"></i>'
+                ).addClass("btn-success"
+                );
+            } else if (val.highlight == "stop") {
+                $(el
+                ).prepend('<i class="icon glyphicon glyphicon-remove"></i>'
+                ).addClass("btn-danger"
+                );
+            }
+            $(el).css({"font-size":"120%"});
+        }, function(el) {
+            $(el).removeClass("btn-success btn-warning btn-danger"
+            ).addClass("btn-default"
+            ).css({"font-size":"100%"}
+            );
+            $(el).find(".glyphicon").remove();
+        });
+        
+        $(element).on("click", function() {
+            btn_group.click_button(val.val);
+            if (val.onclick) {
+                val.onclick();
+            }
+        })
+    }
+};
+
+function handle_existing_insurance_modal() {
+    $("#modal_text_existing_warning_title").show();
+    $("#modal_text_replacement_warning_title").hide();
+    $("#modal_text_soh_warning_title").hide();
+
+    $("#modal_text_existing_warning").show();
+    $("#modal_text_existing_warning_remote").hide();
+    $("#modal_text_replacement_warning").hide();
+    $("#modal_text_soh_warning").hide();
+ 
+    $("#health_modal").modal('show');
+    $("#existing_warning_text").show();
+}
+function handle_existing_insurance_modal_remote() {
+    $("#modal_text_existing_warning_title").show();
+    $("#modal_text_replacement_warning_title").hide();
+    $("#modal_text_soh_warning_title").hide();
+
+    $("#modal_text_existing_warning").hide();
+    $("#modal_text_existing_warning_remote").show();
+    $("#modal_text_replacement_warning").hide();
+    $("#modal_text_soh_warning").hide();
+ 
+    $("#health_modal").modal('show');
+    $("#existing_warning_text_remote").show();
+} 
+
+function reset_existing_insurance_warning() {
+    $("#existing_warning_text_remote").hide();
+    $("#existing_warning_text").hide();
+}
+
+function handle_replacement_insurance_modal() {
+    $("#modal_text_existing_warning_title").hide();
+    $("#modal_text_replacement_warning_title").show();
+    $("#modal_text_soh_warning_title").hide();
+
+    $("#modal_text_existing_warning").hide();
+    $("#modal_text_existing_warning_remote").hide();
+    $("#modal_text_replacement_warning").show();
+    $("#modal_text_soh_warning").hide();
+ 
+    $("#health_modal").modal('show');
+    $("#replacement_warning_text").show();
+}
+function reset_replacement_insurance_warning() {
+    $("#replacement_warning_text").hide();
+}
+function handle_question_yes() {
+    $("#modal_text_existing_warning_title").hide();
+    $("#modal_text_replacement_warning_title").hide();
+    $("#modal_text_soh_warning_title").show();
+
+    $("#modal_text_existing_warning").hide();
+    $("#modal_text_existing_warning_remote").hide();
+    $("#modal_text_replacement_warning").hide();
+    $("#modal_text_soh_warning").show();
+ 
+    $("#health_modal").modal('show');
+}
+
+function are_health_questions_valid() {
+    // Will need much better code here in general
+    //  should be able to highlight buttons that were missed or something
+    
+    var el;
+    // this one can be yes or no
+    if (ui.is_in_person_application() && general_questions_by_id['existing_insurance'].get_val() === null) {
+        //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
+        return false;
+    }
+    if (!ui.is_in_person_application() && general_questions_by_id['existing_insurance_remote'].get_val() != "No") {
+        //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
+        return false;
+    }
+    if (general_questions_by_id['replace_insurance'].get_val() != "No") {
+        //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
+        return false;
+    }
+    var valid = true;
+    $.each(window.ui.employee().health_questions, function() {
+        if (this.get_val() != "No") {
+            valid = false;
+            return false;
+        }
+    });
+    $.each(window.ui.spouse().health_questions, function() {
+        if (this.get_val() != "No") {
+            valid = false;
+            return false;
+        }
+    });
+    $.each(window.ui.get_valid_children(), function() {
+        $.each(this.health_questions, function() {
+            if (this.get_val() != "No") {
+                valid = false;
+                return false;
+            }
+        });
+    });
+        
+    return valid;
+}
+
 
 function get_monthly_premium_from_weekly(weekly_premium) {
     return Math.round((weekly_premium*100 * 52) / 12)/100.0;
@@ -804,31 +1268,75 @@ function init_validation() {
     
     $('[data-rel=tooltip]').tooltip();
 
-    var validation_debug = true;
+    var validation_debug = false;
     $('#fuelux-wizard').ace_wizard().on('change', function (e, info) {
         if (validation_debug) {
             return true;
         }
         
         if (info.step == 1) {
+            // trigger jquery validation
+            var is_valid = window.ui.validator.form();
+                
             if (!window.ui.is_form_valid()) {
+                
+                window.ui.show_no_selection_error();
                 return false;
             } 
+            return is_valid;
         }
         if (info.step == 2) {
-            if (!$('#step2-form').valid()) return false;
+            // validate questions
+            var is_valid =  are_health_questions_valid();
+            if (!is_valid) {
+                $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");
+                return false;
+            } else {
+                $("#health_questions_error").html("");
+                return true;
+            }
+        }
+        if (info.step == 3) {
+            if (!$('#step3-form').valid()) return false;
+        }
+        if (info.step == 4) {
+            if (!$('#step4-form').valid()) return false;
+        }
+        if (info.step == 5) {
+	    var skip_for_now = true;
+	    if (skip_for_now) return true;
+            if (!$('#step5-form').valid()) return false;
+        }
+        if (info.step == 6) {
+            if (!$('#step6-form').valid()) return false;
         }
         
         return true;
         
     }).on('finished', function (e) {
         
+	if (!$('#step6-form').valid()) return false;
+
+	//jQuery validator rule should be handling this, but it's not, so force a popup here
+	if (!$("#confirmDisclaimer").is(':checked')) {
+	    bootbox.dialog({
+		    message: "Please confirm that you have received the disclaimer notice.",
+		    buttons: {
+			"danger": {
+			    "label": "OK",
+			    "className": "btn-warning"
+			}
+		    }
+		});
+	    return false;
+	}
+
         // Pull out all the data we need for docusign 
         var wizard_results = {
             agent_data: window.ui.defaults,
             
-	    identityToken: window.ui.identityToken(),
-	    identityType: window.ui.identityType(),
+	        identityToken: window.ui.identityToken(),
+	        identityType: window.ui.identityType(),
             
             employee: window.ui.employee().serialize_data(),
             spouse: window.ui.spouse().serialize_data(),
@@ -859,7 +1367,7 @@ function init_validation() {
         // Benefits
         var emp_benefit = window.ui.selected_plan().employee_recommendation().recommended_benefit;
         if (emp_benefit.is_valid()) {
-            wizard_results['employee_coverage'] = emp_benefit.serialize_data();
+                wizard_results['employee_coverage'] = emp_benefit.serialize_data();
         }
         var sp_benefit = window.ui.selected_plan().spouse_recommendation().recommended_benefit;
         if (sp_benefit.is_valid()) {
@@ -896,7 +1404,12 @@ function init_validation() {
         bootbox.dialog({
             //just showing action in the interim while getting routed to the Docusign page... the DS page should redirect probably before there's time to read this
 	    message: "Generating application form for signature...",
-            buttons: { }
+	    buttons: {
+		"success": {
+		    "label": "Close",
+		    "className": "btn-sm btn-primary"
+		}
+	    }
         });
     }).on('stepclick', function (e) {
         return true; //return false;//prevent clicking on steps
@@ -927,7 +1440,7 @@ function init_validation() {
     });
     */
     
-    $('#step2-form').validate({
+    $('#step3-form').validate({
         errorElement: 'div',
         errorClass: 'help-block',
         focusInvalid: false,
@@ -936,65 +1449,177 @@ function init_validation() {
                 required: true,
                 email: true
             },
-            eeFName: {required: true},
-            eeLName: {required: true},
-            phone: {
-                required: true,
-                phone: 'required'
-            },
-            comment: {
-                required: true
-            },
-            state: {
-                required: true
-            },
-            gender: 'required',
-            agree: 'required'
+            eeFName2: {required: true},
+            eeLName2: {required: true},
+            eeGender: {required: true},
+            eessn: {required: true},
+            eeStreet1: {required: true},
+            eeCity: {required: true},
+            eeState: {required: true},
+            eeZip: {required: true},
+            eeOwner: {required: true},
+            eeOtherOwnerName: {
+		required: true,
+		depends: "#eeOwner-other:checked"
+	    },
+	    eeOtherOwnerSSN: {
+		required: true,
+		depends: "#eeOwner-other:checked"
+	    }
         },
 
         messages: {
             email: {
-                required: "Please provide a valid email.",
+                required: "required",
                 email: "Please provide a valid email."
             },
-            gender: "Please choose gender",
-            agree: "Please confirm your agreement"
+            eeFName2: "required",
+	    eeLName2: "required",
+	    eeGender: "Please choose gender",
+	    eessn: "required",
+	    eeStreet1: "required",
+	    eeCity: "required",
+            eeState: "required",
+            eeZip: "required",
+            eeOwner: "Please confirm policy owner",
+	    eeOtherOwnerName: "required",
+            eeOtherOwnerSSN: "required"
         },
         
-        highlight: function (e) {
-            $(e).closest('.form-group').removeClass('has-info').addClass('has-error');
-        },
-
-        success: function (e) {
-            $(e).closest('.form-group').removeClass('has-error').addClass('has-info');
-            $(e).remove();
-        },
-        
-        errorPlacement: function (error, element) {
-            if (element.is(':checkbox') || element.is(':radio')) {
-                var controls = element.closest('div[class*="col-"]');
-                if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
-                else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
-            }
-            else if (element.is('.select2')) {
-                error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
-            }
-            else if (element.is('.chosen-select')) {
-                error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
-            }
-            else error.insertAfter(element.parent());
-        },
-
-        submitHandler: function (form) {
-        },
-        
-        invalidHandler: function (event, validator) { 
-            // display error alert on form submit   
-            $('.alert-danger', $('.login-form')).show();
-        }
-        
+        highlight: wizard_validate_highlight,
+        success: wizard_validate_success,
+        errorPlacement: wizard_error_placement        
     });
+
+    $('#step4-form').validate({
+        errorElement: 'div',
+        errorClass: 'help-block',
+        focusInvalid: false,
+        rules: {
+            spFName2: {required: true},
+            spLName2: {required: true},
+            spGender: {required: true},
+            spssn: {required: true},
+            spOwner: {required: true},
+            spOtherOwnerName: {
+		required: true,
+		depends: "#spOwner-other:checked"
+	    }
+	    
+        },
+
+        messages: {
+            spFName2: "required",
+	    spLName2: "required",
+	    spGender: "Please choose gender",
+	    spssn: "required",
+	    spOwner: "Please confirm policy owner",
+	    spOtherOwnerName: "required"
+        },
+        
+        highlight: wizard_validate_highlight,
+        success: wizard_validate_success,
+        errorPlacement: wizard_error_placement
+    });
+
+    $('#step5-form').validate({
+        errorElement: 'div',
+        errorClass: 'help-block',
+        focusInvalid: false,
+        rules: {
+            eeBeneOtherName: {
+		required: true,
+		//*** some problem here with syntax, I think
+		depends: function(element) {
+		    return (!ui.should_include_spouse_in_table || $("#eeBeneSpouse:!checked"))
+		    }
+	    },
+            eeBeneOtherRelation: {
+		required: true,
+		depends: "#spBeneSpouse:!checked"
+	    },
+            spBeneOtherName: {
+		required: true,
+		depends: "#spBeneSpouse:!checked"
+	    },
+            spBeneOtherRelation: {
+		required: true,
+		depends: "#spBeneSpouse:!checked"
+	    }
+
+	    
+        },
+
+        messages: {
+            eeBeneOtherName: "required",
+	    eeBeneOtherRelation: "required",
+            spBeneficiary: "required",
+	    spBeneOtherName: "required",
+	    spBeneOtherRelation: "required"
+	},
+        
+        highlight: wizard_validate_highlight,
+        success: wizard_validate_success,
+        errorPlacement: wizard_error_placement	
+    });
+
+    $('#step6-form').validate({
+        errorElement: 'div',
+        errorClass: 'help-block',
+        focusInvalid: false,
+        rules: {
+            confirmDisclaimer: {required: true},
+	    tokenType: {required: true},
+	    /* required: function(element) {
+		    if (ui.is_in_person_application()) {
+			return true;
+		    } else {
+			return false;
+		    }
+		}
+	    },
+	    */
+	    ConfirmationToken: {required: true}	    
+        },
+
+        messages: {
+            confirmDisclaimer: "please acknowledge that you have received the notice",
+	    tokenType: "required",
+            ConfirmationToken: "required"
+	},
+        
+        highlight: wizard_validate_highlight,
+        success: wizard_validate_success,
+        errorPlacement: wizard_error_placement	
+    });
+    
 	
+}
+
+    
+function wizard_validate_highlight(e) {
+    $(e).closest('.form-group').removeClass('has-info').addClass('has-error');
+}
+
+function wizard_validate_success(e) {
+    $(e).closest('.form-group').removeClass('has-error').addClass('has-info');
+    $(e).remove();
+}
+
+function wizard_error_placement(error, element) {
+    if (element.is(':checkbox') || element.is(':radio')) {
+        var controls = element.closest('div[class*="col-"]');
+        if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
+        else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
+    }
+    else if (element.is('.select2')) {
+        error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
+    }
+    else if (element.is('.chosen-select')) {
+        error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
+    } 
+    else error.insertAfter(element);
+    //else error.insertAfter(element.parent());
 }
 
 
