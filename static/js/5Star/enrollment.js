@@ -24,6 +24,9 @@ function WizardUI(product, defaults) {
     
     self.defaults = defaults;
     self.insurance_product = product;
+
+    self.disclaimer_notice_confirmed = ko.observable(false);
+    
     
     // Data used on steps 2-5
     self.is_in_person_application = ko.observable('is_in_person' in defaults && defaults.is_in_person);
@@ -1069,16 +1072,63 @@ ko.bindingHandlers.flagBtn = {
 };
 
 function handle_existing_insurance_modal() {
+    $("#modal_text_existing_warning_title").show();
+    $("#modal_text_replacement_warning_title").hide();
+    $("#modal_text_soh_warning_title").hide();
+
+    $("#modal_text_existing_warning").show();
+    $("#modal_text_existing_warning_remote").hide();
+    $("#modal_text_replacement_warning").hide();
+    $("#modal_text_soh_warning").hide();
+ 
     $("#health_modal").modal('show');
+    $("#existing_warning_text").show();
 }
 function handle_existing_insurance_modal_remote() {
+    $("#modal_text_existing_warning_title").show();
+    $("#modal_text_replacement_warning_title").hide();
+    $("#modal_text_soh_warning_title").hide();
+
+    $("#modal_text_existing_warning").hide();
+    $("#modal_text_existing_warning_remote").show();
+    $("#modal_text_replacement_warning").hide();
+    $("#modal_text_soh_warning").hide();
+ 
     $("#health_modal").modal('show');
-    $("#remote_warning_text").show();
+    $("#existing_warning_text_remote").show();
+} 
+
+function reset_existing_insurance_warning() {
+    $("#existing_warning_text_remote").hide();
+    $("#existing_warning_text").hide();
 }
-function reset_existing_insurance_remote() {
-    $("#remote_warning_text").hide();
+
+function handle_replacement_insurance_modal() {
+    $("#modal_text_existing_warning_title").hide();
+    $("#modal_text_replacement_warning_title").show();
+    $("#modal_text_soh_warning_title").hide();
+
+    $("#modal_text_existing_warning").hide();
+    $("#modal_text_existing_warning_remote").hide();
+    $("#modal_text_replacement_warning").show();
+    $("#modal_text_soh_warning").hide();
+ 
+    $("#health_modal").modal('show');
+    $("#replacement_warning_text").show();
+}
+function reset_replacement_insurance_warning() {
+    $("#replacement_warning_text").hide();
 }
 function handle_question_yes() {
+    $("#modal_text_existing_warning_title").hide();
+    $("#modal_text_replacement_warning_title").hide();
+    $("#modal_text_soh_warning_title").show();
+
+    $("#modal_text_existing_warning").hide();
+    $("#modal_text_existing_warning_remote").hide();
+    $("#modal_text_replacement_warning").hide();
+    $("#modal_text_soh_warning").show();
+ 
     $("#health_modal").modal('show');
 }
 
@@ -1237,7 +1287,7 @@ function init_validation() {
         }
         if (info.step == 2) {
             // validate questions
-            var is_valid =  true || are_health_questions_valid();
+            var is_valid =  are_health_questions_valid();
             if (!is_valid) {
                 $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");
                 return false;
@@ -1252,11 +1302,35 @@ function init_validation() {
         if (info.step == 4) {
             if (!$('#step4-form').valid()) return false;
         }
+        if (info.step == 5) {
+	    var skip_for_now = true;
+	    if (skip_for_now) return true;
+            if (!$('#step5-form').valid()) return false;
+        }
+        if (info.step == 6) {
+            if (!$('#step6-form').valid()) return false;
+        }
         
         return true;
         
     }).on('finished', function (e) {
         
+	if (!$('#step6-form').valid()) return false;
+
+	//jQuery validator rule should be handling this, but it's not, so force a popup here
+	if (!$("#confirmDisclaimer").is(':checked')) {
+	    bootbox.dialog({
+		    message: "Please confirm that you have received the disclaimer notice.",
+		    buttons: {
+			"danger": {
+			    "label": "OK",
+			    "className": "btn-warning"
+			}
+		    }
+		});
+	    return false;
+	}
+
         // Pull out all the data we need for docusign 
         var wizard_results = {
             agent_data: window.ui.defaults,
@@ -1330,7 +1404,12 @@ function init_validation() {
         bootbox.dialog({
             //just showing action in the interim while getting routed to the Docusign page... the DS page should redirect probably before there's time to read this
 	    message: "Generating application form for signature...",
-            buttons: { }
+	    buttons: {
+		"success": {
+		    "label": "Close",
+		    "className": "btn-sm btn-primary"
+		}
+	    }
         });
     }).on('stepclick', function (e) {
         return true; //return false;//prevent clicking on steps
@@ -1409,16 +1488,7 @@ function init_validation() {
         
         highlight: wizard_validate_highlight,
         success: wizard_validate_success,
-        errorPlacement: wizard_error_placement,
-
-        submitHandler: function (form) {
-        },
-        
-        invalidHandler: function (event, validator) { 
-            // display error alert on form submit   
-            $('.alert-danger', $('.login-form')).show();
-        }
-        
+        errorPlacement: wizard_error_placement        
     });
 
     $('#step4-form').validate({
@@ -1449,16 +1519,78 @@ function init_validation() {
         
         highlight: wizard_validate_highlight,
         success: wizard_validate_success,
-        errorPlacement: wizard_error_placement,
+        errorPlacement: wizard_error_placement
+    });
 
-        submitHandler: function (form) {
+    $('#step5-form').validate({
+        errorElement: 'div',
+        errorClass: 'help-block',
+        focusInvalid: false,
+        rules: {
+            eeBeneOtherName: {
+		required: true,
+		//*** some problem here with syntax, I think
+		depends: function(element) {
+		    return (!ui.should_include_spouse_in_table || $("#eeBeneSpouse:!checked"))
+		    }
+	    },
+            eeBeneOtherRelation: {
+		required: true,
+		depends: "#spBeneSpouse:!checked"
+	    },
+            spBeneOtherName: {
+		required: true,
+		depends: "#spBeneSpouse:!checked"
+	    },
+            spBeneOtherRelation: {
+		required: true,
+		depends: "#spBeneSpouse:!checked"
+	    }
+
+	    
         },
+
+        messages: {
+            eeBeneOtherName: "required",
+	    eeBeneOtherRelation: "required",
+            spBeneficiary: "required",
+	    spBeneOtherName: "required",
+	    spBeneOtherRelation: "required"
+	},
         
-        invalidHandler: function (event, validator) { 
-            // display error alert on form submit   
-            $('.alert-danger', $('.login-form')).show();
-        }
+        highlight: wizard_validate_highlight,
+        success: wizard_validate_success,
+        errorPlacement: wizard_error_placement	
+    });
+
+    $('#step6-form').validate({
+        errorElement: 'div',
+        errorClass: 'help-block',
+        focusInvalid: false,
+        rules: {
+            confirmDisclaimer: {required: true},
+	    tokenType: {required: true},
+	    /* required: function(element) {
+		    if (ui.is_in_person_application()) {
+			return true;
+		    } else {
+			return false;
+		    }
+		}
+	    },
+	    */
+	    ConfirmationToken: {required: true}	    
+        },
+
+        messages: {
+            confirmDisclaimer: "please acknowledge that you have received the notice",
+	    tokenType: "required",
+            ConfirmationToken: "required"
+	},
         
+        highlight: wizard_validate_highlight,
+        success: wizard_validate_success,
+        errorPlacement: wizard_error_placement	
     });
     
 	

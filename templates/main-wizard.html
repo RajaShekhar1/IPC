@@ -455,7 +455,7 @@
           <div class="row form-group"  data-bind="visible: is_in_person_application() == true">
             <div class="col-xs-12 col-sm-9">
               <span class="bigger-120">Does anyone on herein this application have any existing life insurance or annuity contracts?</span><br>
-              If yes, and you live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV please complete and sign the Notice: Replacement of Life Insurance and Annuity. The Notice must be <span class="text-warning bigger-120">presented</span> and <span class="text-warning bigger-120">read</span> to you by your agent at the time he/she takes your application.
+              <span id="existing_warning_text" style="display: none;" class=" bigger-120">If yes, and you live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV please complete and sign the Notice: Replacement of Life Insurance and Annuity. The Notice must be <span class="text-warning bigger-120">presented</span> and <span class="text-warning bigger-120">read</span> to you by your agent at the time he/she takes your application.</span>
             </div>
             <div class="col-xs-12 col-sm-3 btn-group no-padding-right"> 
               
@@ -470,7 +470,8 @@
               <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                 id: 'existing_insurance', 
                 val: 'No', 
-                highlight: 'checkmark'
+                highlight: 'checkmark',
+                onclick: window.reset_existing_insurance_warning
                 }">
                 No
               </button>
@@ -481,7 +482,7 @@
           <div class="row form-group" data-bind="visible: is_in_person_application() == false">
             <div class="col-xs-12 col-sm-9">
               <span class="bigger-120">Does anyone on herein this application have any existing life insurance or annuity contracts?</span><br>
-              <span id="remote_warning_text" style="display: none;" class="text-danger bigger-120">STOP:  since you are enrolling remotely via email but your response requires a Notice: Replacement of Life Insurance and Annuity to be presented and read to you by your agent, you will not be permitted to continue with this online application. </span>
+              <span id="existing_warning_text_remote" style="display: none;" class="text-danger bigger-120"><br>STOP:  since you are enrolling remotely via email but your response requires a Notice: Replacement of Life Insurance and Annuity to be presented and read to you by your agent, you will not be permitted to continue with this online application. </span>
             </div>
             <div class="col-xs-12 col-sm-3 btn-group no-padding-right" data-toggle="buttons">              
               <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
@@ -496,7 +497,7 @@
                 id: 'existing_insurance_remote', 
                 val: 'No', 
                 highlight: 'checkmark',
-                onclick: window.reset_existing_insurance_remote
+                onclick: window.reset_existing_insurance_warning
                 }">
                 No
               </button>
@@ -506,21 +507,22 @@
           <div class="row form-group">
             <div class="col-xs-12 col-sm-9">
               <span class="bigger-120">Will the coverage applied for replace any existing life insurance or annuities?</span><br>
-              If yes, and you do not live in the above listed states, please complete and sign the applicable state-specific Notice: Replacement of Life Insurance and Annuity, obtainable from your agent or enrollment professional.
+              <span id="replacement_warning_text" style="display: none;" class="bigger-120"><br>If yes, and you do not live in the above listed states, you will need to complete and sign the applicable state-specific Notice: Replacement of Life Insurance and Annuity, obtainable from your agent or enrollment professional.<br><br> <span class="text-danger bigger-130">You cannot proceed with this online enrollment, and must enroll via paper forms with your agent or enrollment professional.</span></span>
             </div>
             <div class="col-xs-12 col-sm-3 btn-group no-padding-right" data-toggle="buttons">
               <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                 id: 'replace_insurance', 
                 val: 'Yes', 
                 highlight: 'stop',
-                onclick: window.handle_existing_insurance_modal
+                onclick: window.handle_replacement_insurance_modal
                 }">
                 Yes
               </button>
               <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                 id: 'replace_insurance', 
                 val: 'No', 
-                highlight: 'checkmark'
+                highlight: 'checkmark',
+                onclick: window.reset_replacement_insurance_warning
                 }">
                 No
               </button>
@@ -992,7 +994,6 @@
               </div>
 	    </div>
 
-	    <!-- **Zach: likewise, didn't know how syntax to say above radio selection is "Someone else" -->
 	    <div id="eeBeneficiaryOther" data-bind="visible: !should_include_spouse_in_table() || employee_beneficiary() == 'other'">
 	      <div class="row form-group">
 		<div class="col-sm-6">
@@ -1000,7 +1001,7 @@
                     Beneficiary 
 		  </label>
 		  <div class="col-xs-12 col-sm-9">
-                    <input type="text" id="eeBeneOtherName" placeholder="Full Name" data-bind="value: employee_beneficiary_name" />
+                    <input type="text" id="eeBeneOtherName" name="eeBeneOtherName" placeholder="Full Name" data-bind="value: employee_beneficiary_name" />
 		  </div>
 		</div>
 
@@ -1010,7 +1011,7 @@
 		    Relationship
 		  </label>
 		  <div class="col-xs-12 col-sm-9">
-                    <input type="text" id="eeBeneOtherRelation" placeholder="Relationship" data-bind="value: employee_beneficiary_relationship" />
+                    <input type="text" id="eeBeneOtherRelation" name="eeBeneOtherRelation" placeholder="Relationship" data-bind="value: employee_beneficiary_relationship" />
 		  </div>
 		</div>
 	      </div>
@@ -1070,7 +1071,7 @@
                     Beneficiary 
 		  </label>
 		  <div class="col-xs-12 col-sm-9">
-                    <input type="text" id="spBeneOtherName" placeholder="Full Name" data-bind="value: spouse_beneficiary_name" />
+                    <input type="text" id="spBeneOtherName" name="spBeneOtherName" placeholder="Full Name" data-bind="value: spouse_beneficiary_name" />
 		  </div>
 		</div>
 
@@ -1080,7 +1081,7 @@
 		    Relationship
 		  </label>
 		  <div class="col-xs-12 col-sm-9">
-                    <input type="text" id="spBeneOtherRelation" placeholder="Relationship" data-bind="value: spouse_beneficiary_relationship" />
+                    <input type="text" id="spBeneOtherRelation" name="spBeneOtherRelation" placeholder="Relationship" data-bind="value: spouse_beneficiary_relationship" />
 		  </div>
 		</div>
 	      </div>
@@ -1165,17 +1166,19 @@
 	    <div id="inPersonSignerToken" data-bind="visible: is_in_person_application() == true">
 	      <h4 class="green">Employee Identification</h4>
 	  
+	      <div class="row">
+		<div class="col-xs-12">
+                  <p>As identity confirmation, please enter either your Date of Hire, your Employee Number, or your current Driver's License number.</p>
+		</div>	      
+	      </div>
+	      
 	      <div class="row form-group">
-		<label class="control-label col-xs-12">
-                  As identity confirmation, please enter either your Date of Hire, your Employee Number, or your current Driver's License number.
-		</label>
-		
 		<div class="hidden-xs col-sm-12">
 		  <div class="col-sm-1">
 		  </div>
 		  
 		  <label class="" for="tokenType">My</label>
-		  <select id="tokenType" class="select1"
+		  <select id="tokenType" name="tokenType" class="select1"
 			  data-bind="value: tokenType">
 		    <option value="">&nbsp;</option>
 		    <option value="DOH">Date of Hire</option>
@@ -1183,7 +1186,7 @@
 		    <option value="DLNum">Driver's License #</option>
 		  </select>
 		  <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>		  
-                  <input type="text" id="ConfirmationToken" data-bind="value: identityToken"/>
+                  <input type="text" id="ConfirmationToken" name="ConfirmationToken" data-bind="value: identityToken"/>
 		</div> <!-- /.hidden-xs -->
 
 		<div class="col-xs-12 hidden-sm hidden-md hidden-lg">
@@ -1191,7 +1194,7 @@
 		  </div>
 		  <div class="col-xs-11">
 		    <label class="" for="tokenType">My</label>
-		    <select id="tokenType" class="select1"
+		    <select id="tokenType" name="tokenType" class="select1"
 			    data-bind="value: tokenType">
 		      <option value="">&nbsp;</option>
 		      <option value="DOH">"Date of Hire"</option>
@@ -1205,7 +1208,7 @@
 		  </div>		 
 		  <div class="col-xs-11">
 		    <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>		  
-                    <input type="text" id="ConfirmationToken" data-bind="value: identityToken"/>
+                    <input type="text" id="ConfirmationToken" name="ConfirmationToken" data-bind="value: identityToken"/>
 		  </div>		 
 		</div> <!-- /.hidden-sm -->
 		
@@ -1219,7 +1222,7 @@
 	  <div id="disclaimerNotice">
 	    <div class="form-group">
 	      <label class="control-label col-xs-12 col-sm-12 no-padding-right">
-                <input type="checkbox" id="disclaimerNoticeCheck"> I acknowledge the related <a href="#modal-disclaimer" data-toggle="modal">Accelerated Benefit Disclosure</a>
+                <input type="checkbox" id="confirmDisclaimer" name="confirmDisclaimer" data-bind="checked: disclaimer_notice_confirmed" /> I acknowledge the related <a href="#modal-disclaimer" data-toggle="modal">Accelerated Benefit Disclosure</a>
 	      </label>
 	    </div>
 	  </div>
@@ -1277,14 +1280,36 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title">Modal title</h4>
+        <h4 class="modal-title">
+	  
+	  <span id="modal_text_existing_warning_title" style="display: none;">
+	    Existing Insurance Notice</span>
+	  <span id="modal_text_replacement_title" style="display: none;">
+	    Replacing Insurance Notice</span>
+	  <span id="modal_text_replacement_title" style="display: none;">
+	    Statement of Health Response</span>
+		
+	</h4>
       </div>
       <div class="modal-body">
-        <p>You cannot get insurance if you answer yes.</p>
+	<p>
+	 
+	  <span id="modal_text_existing_warning" style="display: none;" class="bigger-120">If yes, and you live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV please complete and sign the Notice: Replacement of Life Insurance and Annuity. The Notice must be <span class="text-danger bigger-130">presented</span> and <span class="text-danger bigger-130">read</span> to you by your agent at the time he/she takes your application. </span>
+
+	  <span id="modal_text_exiting_warning_remote" style="display: none;" class="bigger-120">STOP:  since you are enrolling remotely via email but your response requires the <span class="oblique">Notice: Replacement of Life Insurance and Annuity</span> to be presented and read to you by your agent, you will not be permitted to continue with this online application. </span>
+
+	  <span id="modal_text_replacement_warning" style="display: none;" class="bigger-120">If yes, and you do not live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV, you must complete and sign the applicable state-specific Notice: Replacement of Life Insurance and Annuity, obtainable from your agent or enrollment professional.<br> <span class="text-danger bigger-130">You cannot proceed with this online enrollment, and must enroll via paper forms with your agent or enrollment professional.</span></span>
+
+	  <span id="modal_text_soh_warning" style="display: none;" class="bigger-120">A "yes" response to this question disqualifies this person from obtaining coverage.  You may proceed with this application after remove that individual from the coverage selection (in Step 1) before proceeding.</span>
+
+	  
+	</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	<!-- *** need to route to a proper landing page
         <button type="button" class="btn btn-warning" data-dismiss="modal">Exit Site</button>
+	-->
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
