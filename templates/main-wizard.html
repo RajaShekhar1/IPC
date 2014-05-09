@@ -49,7 +49,7 @@
 		    
 		    <li data-target="#step2">
 		      <span class="step">2</span>
-		      <span class="title">Health Questions</span>
+		      <span class="title">Qualification</span>
 		    </li>
         
         <li data-target="#step3">
@@ -674,7 +674,7 @@
 	      Employee SSN
 	    </label>
 	    <div class="col-xs-12 col-sm-5">
-	      <input type="text" id="eessn" class="col-xs-12 col-sm-5 input-mask-ssn" 
+	      <input type="text" id="eessn" name="eessn" class="col-xs-12 col-sm-5 input-mask-ssn" 
                  data-bind="value: employee().ssn" />
 	    </div>
 	  </div>
@@ -708,7 +708,7 @@
 	  </div>
         
 	  <div class="form-group">
-	    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeStreet1">Street 2</label>
+	    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeStreet2">Street 2</label>
 	    <div class="col-xs-12 col-sm-9">
 	      <div class="clearfix">
 		<input type="text" id="eeStreet2" name="eeStreet2" class="col-xs-12 col-sm-9" />
@@ -795,7 +795,7 @@
 	    <div class="form-group">
   	      <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerSSN">Owners's SSN </label>
 	      <div class="col-xs-12 col-sm-9">
-		<input type="text" id="eeOtherOwnerSSN" class="col-xs-12 col-sm-4 input-mask-ssn" 
+		<input type="text" id="eeOtherOwnerSSN" name="eeOtherOwnerSSN" class="col-xs-12 col-sm-4 input-mask-ssn" 
             data-bind="value: other_owner_name" />
 	      </div>
 	    </div>
@@ -809,7 +809,18 @@
 
       <form class="form-horizontal" id="step4-form">
       
+	  
 	<div class="step-pane" id="step4">
+	  
+	  <!-- visible expression not working just yet - wrong syntax? 
+	  <div id="noSpouseNoChildrenBlock"  data-bind="visible: !(should_show_spouse || should_include_children)"> 
+	    <h4>
+	      This step does not apply - no spouse or children have been selected for coverage.
+	      <h4>
+	  </div>
+	  -->
+	  
+	  
 	  <div id="SpouseInfoBlock"  data-bind="visible: should_show_spouse">
 	    <h3 class="lighter block green">Spouse information</h3>
 
@@ -827,7 +838,7 @@
 		        SSN
 	      </label>
 	      <div class="col-xs-11 col-sm-3">
-		<input type="text" id="spssn" class="col-xs-11 col-sm-6 input-mask-ssn" data-bind="value: spouse().ssn" />
+		<input type="text" id="spssn" name="spssn" class="col-xs-11 col-sm-6 input-mask-ssn" data-bind="value: spouse().ssn" />
 	      </div>
 	    </div>
 	  
@@ -872,6 +883,8 @@
 		<input type="text" id="spOtherOwnerName" name="spOtherOwnerName" class="col-xs-12 col-sm-4" placeholder="Full Name" />
 	      </div>
 	    </div>
+	    
+	    <!-- SSN not presently required for spouse Other Owner
 	    <div class="space-2"></div>
 	    <div class="form-group">
   	      <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spOtherOwnerSSN">Owners's SSN </label>
@@ -879,6 +892,8 @@
 		<input type="text" id="spOtherOwnerSSN" class="col-xs-12 col-sm-4 input-mask-ssn"/>
 	      </div>
 	    </div>
+	    -->
+
 	  </div>
 	  	  
 	  </div><!-- .SpouseInfoBlock -->
@@ -891,11 +906,10 @@
                   <label class="control-label col-xs-12 col-sm-2 no-padding-right" data-bind="attr: {for: 'child-first-'+$index()}">
                     Child <span data-bind="text: $index() + 1"></span>:
                   </label>
-                  <div class="col-xs-12 col-sm-6">
-                    
-                    <input type="text" data-bind="value: first, attr: {id: 'child-first-'+$index()}" placeholder="First Name" />
+                  <div class="col-xs-12 col-sm-5"> 
+		    <input type="text" data-bind="value: first, attr: {id: 'child-first-'+$index()}" placeholder="First Name" />
                   </div>
-                  <div class="col-xs-12 col-sm-6"> 
+                  <div class="col-xs-12 col-sm-5"> 
                     <input type="text" data-bind="value: last" placeholder="Last Name" />
                   </div>
                 </div>
@@ -948,11 +962,11 @@
 	</div><!-- step3 -->
       </form>
       
-      <!-- ------------------------------ STEP 6 ------------------------------ -->
+      <!-- ------------------------------ STEP 5 ------------------------------ -->
 
-      <form class="form-horizontal" id="step6-form">
+      <form class="form-horizontal" id="step5-form">
 	
-	<div class="step-pane" id="step6">
+	<div class="step-pane" id="step5">
 	  <div id="eeBeneficiaryBlock" data-bind="visible: did_select_employee_coverage">
 	    <h3 class="lighter block green">Employee Beneficiary</h3>
 
@@ -1108,9 +1122,9 @@
 	</div>
       </form>
 
-      <!-- ------------------------------ STEP 5 ------------------------------ -->
+      <!-- ------------------------------ STEP 6 ------------------------------ -->
 
-      <div class="step-pane" id="step5">
+      <div class="step-pane" id="step6">
 	<h3 class="green">Confirmation</h3>
 
 	  Please review your Summary of Coverage below, and click "I agree..." below to be taken to application for signing.
@@ -1143,8 +1157,11 @@
               </tbody>
           </table>
 	    
-	    <div class="space-10"></div>
-	    
+	  <div class="space-10"></div>
+
+	  <form class="form-horizontal" id="step6-form">
+
+	  
 	    <div id="inPersonSignerToken" data-bind="visible: is_in_person_application() == true">
 	      <h4 class="green">Employee Identification</h4>
 	  
@@ -1194,7 +1211,7 @@
 		
 	      </div> <!-- /.form-group -->		
 	    </div> <!-- /inPersonSignerToken -->
-	    
+	  </form> <!-- /step6 form -->
 	  </div> <!-- /CoverageSummary -->
 
 	  <div class="space-2"></div>
@@ -1208,7 +1225,7 @@
 	  </div>
 	    
 	  
-      </div><!-- /Step5 -->
+      </div><!-- /Step6 -->
 		</div><!-- /Wizard step container -->
 
 		<hr />

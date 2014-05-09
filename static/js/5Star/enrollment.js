@@ -1237,9 +1237,9 @@ function init_validation() {
         }
         if (info.step == 2) {
             // validate questions
-            var is_valid =  are_health_questions_valid();
+            var is_valid =  true || are_health_questions_valid();
             if (!is_valid) {
-                $("#health_questions_error").html("Please answer all questions above so that no red X buttons appear. No question may remain unanswered.");
+                $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");
                 return false;
             } else {
                 $("#health_questions_error").html("");
@@ -1248,6 +1248,9 @@ function init_validation() {
         }
         if (info.step == 3) {
             if (!$('#step3-form').valid()) return false;
+        }
+        if (info.step == 4) {
+            if (!$('#step4-form').valid()) return false;
         }
         
         return true;
@@ -1367,29 +1370,81 @@ function init_validation() {
                 required: true,
                 email: true
             },
-            eeFName: {required: true},
-            eeLName: {required: true},
-            phone: {
-                required: true,
-                phone: 'required'
-            },
-            comment: {
-                required: true
-            },
-            state: {
-                required: true
-            },
-            gender: 'required',
-            agree: 'required'
+            eeFName2: {required: true},
+            eeLName2: {required: true},
+            eeGender: {required: true},
+            eessn: {required: true},
+            eeStreet1: {required: true},
+            eeCity: {required: true},
+            eeState: {required: true},
+            eeZip: {required: true},
+            eeOwner: {required: true},
+            eeOtherOwnerName: {
+		required: true,
+		depends: "#eeOwner-other:checked"
+	    },
+	    eeOtherOwnerSSN: {
+		required: true,
+		depends: "#eeOwner-other:checked"
+	    }
         },
 
         messages: {
             email: {
-                required: "Please provide a valid email.",
+                required: "required",
                 email: "Please provide a valid email."
             },
-            gender: "Please choose gender",
-            agree: "Please confirm your agreement"
+            eeFName2: "required",
+	    eeLName2: "required",
+	    eeGender: "Please choose gender",
+	    eessn: "required",
+	    eeStreet1: "required",
+	    eeCity: "required",
+            eeState: "required",
+            eeZip: "required",
+            eeOwner: "Please confirm policy owner",
+	    eeOtherOwnerName: "required",
+            eeOtherOwnerSSN: "required"
+        },
+        
+        highlight: wizard_validate_highlight,
+        success: wizard_validate_success,
+        errorPlacement: wizard_error_placement,
+
+        submitHandler: function (form) {
+        },
+        
+        invalidHandler: function (event, validator) { 
+            // display error alert on form submit   
+            $('.alert-danger', $('.login-form')).show();
+        }
+        
+    });
+
+    $('#step4-form').validate({
+        errorElement: 'div',
+        errorClass: 'help-block',
+        focusInvalid: false,
+        rules: {
+            spFName2: {required: true},
+            spLName2: {required: true},
+            spGender: {required: true},
+            spssn: {required: true},
+            spOwner: {required: true},
+            spOtherOwnerName: {
+		required: true,
+		depends: "#spOwner-other:checked"
+	    }
+	    
+        },
+
+        messages: {
+            spFName2: "required",
+	    spLName2: "required",
+	    spGender: "Please choose gender",
+	    spssn: "required",
+	    spOwner: "Please confirm policy owner",
+	    spOtherOwnerName: "required"
         },
         
         highlight: wizard_validate_highlight,
