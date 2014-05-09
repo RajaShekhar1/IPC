@@ -68,15 +68,21 @@ def create_envelope_and_get_signing_url(wizard_data):
     else:
         sessionType = "email"
 
+    if wizard_data["identityType"]:
+        idType = wizard_data["identityType"]
+    else:
+        idType = "email"
+    
+    if wizard_data["identityToken"]:
+        idToken = wizard_data["identityToken"]
+    else:
+        idToken = emailTo
+
     landingURL = url_for ('ds_landing_page') + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
                 # note: DS supplied the last parm of 'event' in the callback
-    idTokenStr = wizard_data["identityType"] + ": " + wizard_data["identityToken"]
+    idTokenStr = "Authentication via " + idType + ": " + idToken
     
-    #
-    #if len(wizard_data["children"])>1
-    #    child1_name = wizard_data["children"][1]["employee_email"]
-    #    
-    #if wizard_results["employee_coverage"]["face_value"]:
+     #if wizard_results["employee_coverage"]["face_value"]:
     #
         
 
@@ -85,20 +91,113 @@ def create_envelope_and_get_signing_url(wizard_data):
 
     if wizard_data["employee_coverage"]:
         if wizard_data["employee_coverage"]["face_value"]:
-            employeeCoverage = wizard_data["employee_coverage"]["face_value"]
+            employeeCoverage = format(wizard_data["employee_coverage"]["face_value"], ",.0f")
+            eePremium = format(round((wizard_data["employee_coverage"]["weekly_premium"]*100 * 52) / 12)/100.0, ",.2f")
         else:
             employeeCoverage = " "
+            eePremium = " "
     else:
-        employeeCoverage = " ";
-   
+        employeeCoverage = " "
+        eePremium = " "
+
+    
+  
     if wizard_data["spouse_coverage"]:
         if wizard_data["spouse_coverage"]["face_value"]:
-            spouseCoverage = wizard_data["spouse_coverage"]["face_value"]
+            spouseCoverage = format(wizard_data["spouse_coverage"]["face_value"], ",.0f")
+            spPremium = format(round((wizard_data["spouse_coverage"]["weekly_premium"]*100 * 52) / 12)/100.0, ",.2f")
         else:
             spouseCoverage = " "
+            spousePremium = " "
     else:
-        spouseCoverage = " ";
+        spouseCoverage = " "
+        spousePremium = " "
       
+   
+    childTabsList = []
+
+    if wizard_data["children"]:
+        childTabsList += [
+            {"tabLabel" : "child1FName",
+             "value" : wizard_data["children"][0]["first"]},
+            {"tabLabel" : "child1LName",
+             "value" : wizard_data["children"][0]["last"]},
+            {"tabLabel" : "child1DOB",
+             "value" : wizard_data["children"][0]["birthdate"]},
+            {"tabLabel" : "child1SSN",
+             "value" : wizard_data["children"][0]["ssn"]},
+            {"tabLabel" : "child1Coverage",
+             "value" : format(wizard_data["child_coverages"][0]["face_value"], ",.0f")},
+            {"tabLabel" : "child1Premium",
+             "value" : format(wizard_data["child_coverages"][0]["weekly_premium"]*52/12, ",.2f")},
+        ]
+    
+    if wizard_data["children"] and len(wizard_data["children"])>1:
+        childTabsList += [
+            {"tabLabel" : "child2FName",
+             "value" : wizard_data["children"][1]["first"]},
+            {"tabLabel" : "child2LName",
+             "value" : wizard_data["children"][1]["last"]},
+            {"tabLabel" : "child2DOB",
+             "value" : wizard_data["children"][1]["birthdate"]},
+            {"tabLabel" : "child2SSN",
+             "value" : wizard_data["children"][1]["ssn"]},
+            {"tabLabel" : "child2Coverage",
+             "value" : format(wizard_data["child_coverages"][1]["face_value"], ",.0f")},
+            {"tabLabel" : "child2Premium",
+             "value" : format(wizard_data["child_coverages"][1]["weekly_premium"]*52/12, ",.2f")},
+        ]
+     
+    if wizard_data["children"] and len(wizard_data["children"])>2:
+        childTabsList += [
+            {"tabLabel" : "child3FullName",
+             "value" : wizard_data["children"][2]["first"] + " " + wizard_data["children"][2]["last"]},
+            {"tabLabel" : "child3DOB",
+             "value" : wizard_data["children"][2]["birthdate"]},
+            {"tabLabel" : "child3SSN",
+             "value" : wizard_data["children"][2]["ssn"]},
+            {"tabLabel" : "child3Coverage",
+             "value" : format(wizard_data["child_coverages"][2]["face_value"], ",.0f")},
+            {"tabLabel" : "child3Premium",
+             "value" : format(wizard_data["child_coverages"][2]["weekly_premium"]*52/12, ",.2f")},
+        ]
+
+    eeTabsList = [
+        {"tabLabel" : "identityToken",
+         "value" : idTokenStr},
+        {"tabLabel" : "eeFName",
+         "value" : wizard_data["employee"]["first"]},
+        {"tabLabel" : "eeLName",
+         "value" : wizard_data["employee"]["last"]},
+        {"tabLabel" : "eeDOB",
+         "value" : wizard_data["employee"]["birthdate"]},
+        {"tabLabel" : "eeSSN",
+         "value" : wizard_data["employee"]["ssn"]},
+        {"tabLabel" : "eeCoverage",
+         "value" : employeeCoverage},
+        {"tabLabel" : "eePremium",
+         "value" : eePremium if employeeCoverage !="" else ""} ,
+        {"tabLabel" : "Employer",
+         "value" : wizard_data["agent_data"]["company_name"]},
+        {"tabLabel" : "employeeEmail",
+         "value" : wizard_data["employee"]["email"] } 
+    ]
+
+    spouseTabsList = [
+        {"tabLabel" : "spFName",
+         "value" : wizard_data["spouse"]["first"]},
+        {"tabLabel" : "spLName",
+         "value" : wizard_data["spouse"]["last"]},
+        {"tabLabel" : "spDOB",
+         "value" : wizard_data["spouse"]["birthdate"]},
+        {"tabLabel" : "spSSN",
+         "value" : wizard_data["spouse"]["ssn"]},
+        {"tabLabel" : "spCoverage",
+         "value" : spouseCoverage},
+        {"tabLabel" : "spPremium",
+         "value" : spPremium if spouseCoverage !="" else ""}
+    ]
+    
                           
 
 
@@ -141,30 +240,8 @@ def create_envelope_and_get_signing_url(wizard_data):
             {"email" : recipEmail,
              "name" :recipientName,
              "tabs" : {
-                 "textTabs": [
-                     {"tabLabel" : "identityToken",
-                      "value" : idTokenStr},
-                     {"tabLabel" : "eeFName",
-                      "value" : wizard_data["employee"]["first"]},
-                     {"tabLabel" : "eeLName",
-                      "value" : wizard_data["employee"]["last"]},
-                     {"tabLabel" : "eeDOB",
-                      "value" : wizard_data["employee"]["age"]},
-                     {"tabLabel" : "eeCoverage",
-                      "value" : employeeCoverage},
-                     {"tabLabel" : "spFName",
-                      "value" : wizard_data["spouse"]["first"]},
-                     {"tabLabel" : "spLName",
-                      "value" : wizard_data["spouse"]["last"]},
-                     {"tabLabel" : "spDOB",
-                      "value" : wizard_data["spouse"]["age"]},
-                     {"tabLabel" : "spCoverage",
-                      "value" : spouseCoverage},
-                     {"tabLabel" : "Employer",
-                      "value" : wizard_data["agent_data"]["company_name"]},
-                     {"tabLabel" : "employeeEmail",
-                      "value" : wizard_data["employee"]["email"] } 
-                     ]} ,
+                 "textTabs": eeTabsList + spouseTabsList + childTabsList
+             },
              "roleName" :  templateRoleName,
              "clientUserId": templateClientID 
              }]
@@ -177,7 +254,8 @@ def create_envelope_and_get_signing_url(wizard_data):
     url = baseUrl + "/envelopes";
     headers = {'X-DocuSign-Authentication': authenticateStr, 'Accept': 'application/json', 'Content-Length': str(len(requestBodyStr))};
     http = httplib2.Http();
-    response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr);
+    # response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr);
+    response, content = http.request("http://requestb.in/1h0hvno1", 'POST', headers=headers, body=requestBodyStr);
     status = response.get('status');
     if (status != '201'): 
         print("Error calling webservice, status is: %s" % status); return True, "Error generating Docusign envelope", None;
@@ -193,7 +271,7 @@ def create_envelope_and_get_signing_url(wizard_data):
  
     # construct the body of the request in JSON format  
     requestBody =   {
-        "authenticationMethod" : "none",
+        "authenticationMethod" : "password",
         "email" : recipEmail,
         "returnUrl" :  landingURL,
         "clientUserId" : templateClientID,

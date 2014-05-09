@@ -450,6 +450,7 @@ function Beneficiary(options) {
         data.last = self.last();
         data.email = self.email();
         data.age = self.get_age();
+        data.birthdate = self.birthdate();
         data.ssn = self.ssn();
         data.gender = self.gender();
         
@@ -864,7 +865,9 @@ function init_validation() {
         var sp_benefit = window.ui.selected_plan().spouse_recommendation().recommended_benefit;
         if (sp_benefit.is_valid()) {
             wizard_results['spouse_coverage'] = sp_benefit.serialize_data();
-        }
+        } else {
+	    wizard_results['spouse_coverage'] = ""
+	}
         
         
         // Send to 'listener' for debugging
