@@ -254,8 +254,8 @@ def create_envelope_and_get_signing_url(wizard_data):
     url = baseUrl + "/envelopes";
     headers = {'X-DocuSign-Authentication': authenticateStr, 'Accept': 'application/json', 'Content-Length': str(len(requestBodyStr))};
     http = httplib2.Http();
-    # response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr);
-    response, content = http.request("http://requestb.in/1h0hvno1", 'POST', headers=headers, body=requestBodyStr);
+    response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr);
+    # response, content = http.request("http://requestb.in/op1jvrop", 'POST', headers=headers, body=requestBodyStr);
     status = response.get('status');
     if (status != '201'): 
         print("Error calling webservice, status is: %s" % status); return True, "Error generating Docusign envelope", None;
