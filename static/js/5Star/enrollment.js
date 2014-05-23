@@ -41,6 +41,9 @@ function WizardUI(product, defaults) {
     self.other_owner_name = ko.observable("");
     self.other_owner_ssn = ko.observable("");
     
+    self.spouse_policy_owner = ko.observable("self");
+    self.spouse_other_owner_name = ko.observable("");
+    
     
     self.employee_beneficiary = ko.observable("spouse");
     self.spouse_beneficiary = ko.observable("employee");
@@ -1269,7 +1272,7 @@ function init_validation() {
     
     $('[data-rel=tooltip]').tooltip();
 
-    var validation_debug = false;
+    var validation_debug = true;
     $('#fuelux-wizard').ace_wizard().on('change', function (e, info) {
         if (validation_debug) {
             return true;
@@ -1288,7 +1291,7 @@ function init_validation() {
         }
         if (info.step == 2) {
             // validate questions
-            var is_valid =  are_health_questions_valid();
+            var is_valid =  true || are_health_questions_valid();
             if (!is_valid) {
                 $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");
                 return false;
@@ -1341,6 +1344,12 @@ function init_validation() {
             
             employee: window.ui.employee().serialize_data(),
             spouse: window.ui.spouse().serialize_data(),
+            
+	    employee_owner:  window.ui.policy_owner(),
+ 	    employee_other_owner_name:  window.ui.other_owner_name(),
+ 	    employee_other_owner_ssn:  window.ui.other_owner_ssn(),
+	    spouse_owner:  window.ui.spouse_policy_owner(),
+ 	    spouse_other_owner_name:  window.ui.spouse_other_owner_name(),
             
             employee_beneficiary:  window.ui.employee_beneficiary(),
             spouse_beneficiary:  window.ui.spouse_beneficiary(),
@@ -1430,18 +1439,6 @@ function init_validation() {
     jQuery.validator.addMethod("phone", function (value, element) {
         return this.optional(element) || /^\(\d{3}\) \d{3}\-\d{4}( x\d{1,6})?$/.test(value);
     }, "Enter a valid phone number.");
-    
-    /*
-    $('#step1-form').validate({
-        errorElement: 'div',
-        errorClass: 'help-block',
-        rules: {
-            eeBenefitDOB: {
-                required: true
-            }
-        }
-    });
-    */
     
     $('#step3-form').validate({
         errorElement: 'div',

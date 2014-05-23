@@ -812,7 +812,7 @@
   	      <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerSSN">Owners's SSN </label>
 	      <div class="col-xs-12 col-sm-9">
 		<input type="text" id="eeOtherOwnerSSN" name="eeOtherOwnerSSN" class="col-xs-12 col-sm-4 input-mask-ssn" 
-            data-bind="value: other_owner_name" />
+            data-bind="value: other_owner_ssn" />
 	      </div>
 	    </div>
 	  </div>
@@ -881,12 +881,12 @@
 	    
 	    <div class="col-xs-12 col-sm-10">
 	      <label class="blue">
-		<input name="spOwner" value="1" type="radio" class="inline ace" id="spOwner-self" checked="" />
+		<input name="spOwner" value="self" type="radio" class="inline ace" id="spOwner-self" checked="" data-bind="checked: spouse_policy_owner" />
 		<span class="lbl"> Self (Spouse) &nbsp;&nbsp;&nbsp;</span>
 	      </label>
 	      
 	      <label class="blue">
-		<input name="spOwner" value="2" type="radio" class="inline ace" id="spOwner-other"/>
+		<input name="spOwner" value="other" type="radio" class="inline ace" id="spOwner-other" data-bind="checked: spouse_policy_owner" />
 		<span class="lbl"> Other</span>
 	      </label>
 	    </div>
@@ -896,7 +896,7 @@
 	    <div class="form-group">
 	      <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spOtherOwnerName">Other owner of spouse policy</label>
 	      <div class="col-xs-12 col-sm-9">
-		<input type="text" id="spOtherOwnerName" name="spOtherOwnerName" class="col-xs-12 col-sm-4" placeholder="Full Name" />
+		<input type="text" id="spOtherOwnerName" name="spOtherOwnerName" class="col-xs-12 col-sm-4" placeholder="Full Name" data-bind="value: spouse_other_owner_name"/>
 	      </div>
 	    </div>
 	    
@@ -949,13 +949,13 @@
 
 		  <div class="col-xs-12 col-sm-10">
 		    <label class="blue">
-		      <input value="1" type="radio" class="inline ace" data-bind="value: gender, 
+		      <input value="male" type="radio" class="inline ace" data-bind="value: gender, 
 										  attr: {id: 'child-gender-'+$index()}" />
 		      <span class="lbl"> Male &nbsp;&nbsp;&nbsp; </span>
 		    </label>
 		    
 		    <label class="blue">
-		      <input value="2" type="radio" class="inline ace" data-bind="value: gender, 
+		      <input value="female" type="radio" class="inline ace" data-bind="value: gender, 
 										  attr: {id: 'child-gender-'+$index()}" />
 		      <span class="lbl"> Female</span>
 		    </label>
