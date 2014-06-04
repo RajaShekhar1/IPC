@@ -249,17 +249,29 @@ def create_envelope_and_get_signing_url(wizard_data):
     ]
     # add in beneficiaries if appropriate
     if employeeCoverage != " ":
-        eeTabsList += [
-            {"tabLabel" : "eeBeneFullName",
-             "value" : wizard_data["spouse"]["last"]+", "+wizard_data["spouse"]["first"] if wizard_data["employee_beneficiary"] == "spouse" else  wizard_data["employee_beneficiary_name"]},
-            {"tabLabel" : "eeBeneRelationship",
-             "value" : "spouse" if wizard_data["employee_beneficiary"] == "spouse" else  wizard_data["employee_beneficiary_relationship"]},
-            {"tabLabel" : "eeBeneDOB",
-             "value" : wizard_data["spouse"]["birthdate"] if wizard_data["employee_beneficiary"] == "spouse" else  wizard_data["employee_beneficiary_dob"]},
-            {"tabLabel" : "eeBeneSSN",
-             "value" : wizard_data["spouse"]["ssn"] if wizard_data["employee_beneficiary"] == "spouse" else  wizard_data["employee_beneficiary_ssn"]} 
-        ]
-    
+        if wizard_data["employee_beneficiary"] == "spouse":
+            eeTabsList += [
+                {"tabLabel" : "eeBeneFullName",
+                 "value" : wizard_data["spouse"]["first"] + " " + wizard_data["spouse"]["last"]},
+                {"tabLabel" : "eeBeneRelationship",
+                 "value" : "spouse"},
+                {"tabLabel" : "eeBeneDOB",
+                 "value" : wizard_data["spouse"]["birthdate"]},
+                {"tabLabel" : "eeBeneSSN",
+                 "value" : wizard_data["spouse"]["ssn"]} 
+            ]
+        else:
+            eeTabsList += [
+                {"tabLabel" : "eeBeneFullName",
+                 "value" : wizard_data["employee_beneficiary_name"]},
+                {"tabLabel" : "eeBeneRelationship",
+                 "value" : wizard_data["employee_beneficiary_relationship"]},
+                {"tabLabel" : "eeBeneDOB",
+                 "value" : wizard_data["employee_beneficiary_dob"]},
+                {"tabLabel" : "eeBeneSSN",
+                 "value" : wizard_data["employee_beneficiary_ssn"]} 
+            ]
+
     spouseTabsList = []
     if spouseCoverage != " ":
         spouseTabsList += [
@@ -276,17 +288,30 @@ def create_envelope_and_get_signing_url(wizard_data):
             {"tabLabel" : "spCoverage",
              "value" : spouseCoverage},
             {"tabLabel" : "spPremium",
-             "value" : spPremium if spouseCoverage !="" else ""},
-
-            {"tabLabel" : "spBeneFullName",
-             "value" : wizard_data["employee"]["last"]+", "+wizard_data["employee"]["first"] if wizard_data["spouse_beneficiary"] == "employee" else  wizard_data["spouse_beneficiary_name"]},
-            {"tabLabel" : "spBeneRelationship",
-             "value" : "spouse" if wizard_data["spouse_beneficiary"] == "employee" else  wizard_data["spouse_beneficiary_relationship"]},
-            {"tabLabel" : "spBeneDOB",
-             "value" : wizard_data["employee"]["birthdate"] if wizard_data["spouse_beneficiary"] == "employee" else  wizard_data["spouse_beneficiary_dob"]},
-            {"tabLabel" : "spBeneSSN",
-             "value" : wizard_data["employee"]["ssn"] if wizard_data["spouse_beneficiary"] == "employee" else  wizard_data["spouse_beneficiary_ssn"]} 
+             "value" : spPremium if spouseCoverage !="" else ""}
         ]
+        if wizard_data["spouse_beneficiary"] == "employee":
+            spouseTabsList += [
+                {"tabLabel" : "spBeneFullName",
+                 "value" : wizard_data["employee"]["first"] + " " + wizard_data["employee"]["last"]},
+                {"tabLabel" : "spBeneRelationship",
+                 "value" : "spouse"},
+                {"tabLabel" : "spBeneDOB",
+                 "value" : wizard_data["employee"]["birthdate"]},
+                {"tabLabel" : "spBeneSSN",
+                 "value" : wizard_data["employee"]["ssn"]} 
+            ]
+        else:
+            spouseTabsList += [
+                {"tabLabel" : "spBeneFullName",
+                 "value" : wizard_data["spouse_beneficiary_name"]},
+                {"tabLabel" : "spBeneRelationship",
+                 "value" : wizard_data["spouse_beneficiary_relationship"]},
+                {"tabLabel" : "spBeneDOB",
+                 "value" : wizard_data["spouse_beneficiary_dob"]},
+                {"tabLabel" : "spBeneSSN",
+                 "value" : wizard_data["spouse_beneficiary_ssn"]} 
+            ]
 
 
     generalRadiosList = []

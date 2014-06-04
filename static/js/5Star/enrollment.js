@@ -125,6 +125,10 @@ function WizardUI(product, defaults) {
     self.add_child = function() {
         var child_beneficiary = new Beneficiary({last: self.defaults.employee_last || ""});
         self.children.push(child_beneficiary);
+	// hide Add button if now at max children
+	if (self.children().length > 3) {
+	    $("#addChildBtn").hide();
+	}
         // Re-apply jquery date masks
         $('.input-mask-date').mask('99/99/9999')
     };
@@ -388,7 +392,11 @@ function WizardUI(product, defaults) {
         var rec = self.selected_plan().children_recommendation();
         return (rec.is_valid() && rec.recommended_benefit.is_valid());
     });
-    
+
+    function spouse_coverage_was_selected() {
+        return self.did_select_spouse_coverage();
+    }
+        
     self.show_health_modal = function() {
         $("#health_modal").modal('show');
     };
@@ -1286,7 +1294,7 @@ function init_validation() {
     
     $('[data-rel=tooltip]').tooltip();
 
-    var validation_debug = true;
+    var validation_debug = false;
     $('#fuelux-wizard').ace_wizard().on('change', function (e, info) {
         if (validation_debug) {
             return true;
@@ -1321,7 +1329,7 @@ function init_validation() {
             if (!$('#step4-form').valid()) return false;
         }
         if (info.step == 5) {
-	    var skip_for_now = true;
+	    var skip_for_now = false;
 	    if (skip_for_now) return true;
             if (!$('#step5-form').valid()) return false;
         }
@@ -1528,8 +1536,7 @@ function init_validation() {
             spOtherOwnerName: {
 		required: true,
 		depends: "#spOwner-other:checked"
-	    }
-	    
+	    }	    
         },
 
         messages: {
@@ -1553,22 +1560,27 @@ function init_validation() {
         rules: {
             eeBeneOtherName: {
 		required: true,
-		//*** some problem here with syntax, I think
 		depends: function(element) {
-		    return (!ui.should_include_spouse_in_table || $("#eeBeneSpouse:!checked"))
+		    return (!window.ui.did_select_spouse_coverage() || $("#eeBeneOther:checked"))
 		    }
 	    },
             eeBeneOtherRelation: {
 		required: true,
-		depends: "#spBeneSpouse:!checked"
+		depends: function(element) {
+		    return (!window.ui.did_select_spouse_coverage() || $("#eeBeneOther:checked"))
+		    }
 	    },
             spBeneOtherName: {
 		required: true,
-		depends: "#spBeneSpouse:!checked"
+		depends: function(element) {
+		    return (window.ui.did_select_spouse_coverage() && $("#spBeneOther:checked"))
+		    }
 	    },
             spBeneOtherRelation: {
 		required: true,
-		depends: "#spBeneSpouse:!checked"
+		depends: function(element) {
+		    return (window.ui.did_select_spouse_coverage() && $("#spBeneOther:checked"))
+		    }
 	    }
 
 	    
@@ -1577,8 +1589,7 @@ function init_validation() {
         messages: {
             eeBeneOtherName: "required",
 	    eeBeneOtherRelation: "required",
-            spBeneficiary: "required",
-	    spBeneOtherName: "required",
+            spBeneOtherName: "required",
 	    spBeneOtherRelation: "required"
 	},
         

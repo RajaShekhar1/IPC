@@ -238,7 +238,7 @@
                 </li>
               </ul>
               
-              <div class="row">
+              <div class="row" id="addChildBtn" >
                 <div class="col-xs-12 col-sm-offset-1 col-sm-2">
                   <button class="btn btn-default btn-sm" type="button" data-bind="click: add_child">
                     Add Child
@@ -828,16 +828,13 @@
 	  
 	<div class="step-pane" id="step4">
 	  
-	  <!-- visible expression not working just yet - wrong syntax? 
-	  <div id="noSpouseNoChildrenBlock"  data-bind="visible: !(should_show_spouse || should_include_children)"> 
-	    <h4>
-	      This step does not apply - no spouse or children have been selected for coverage.
-	      <h4>
+	  <div id="noSpouseNoChildrenBlock"  data-bind="visible: !did_select_spouse_coverage() && !did_select_children_coverage()"> 
+	    <h4 class="green center">
+	      This step does not apply - no spouse or children have been selected for coverage in this application.
+	      </h4>
 	  </div>
-	  -->
-	  
-	  
-	  <div id="SpouseInfoBlock"  data-bind="visible: should_show_spouse">
+	  	  
+	  <div id="SpouseInfoBlock"  data-bind="visible: did_select_spouse_coverage()">
 	    <h3 class="lighter block green">Spouse information</h3>
 
 	    <div class="row form-group">
@@ -849,13 +846,16 @@
                 <input type="text" id="spFName2" data-bind="value: spouse().first" placeholder="First Name" />
                 <input type="text" id="spLName2" data-bind="value: spouse().last" placeholder="Last Name" />
               </div>
+	    </div>
 
-	      <label class="control-label col-xs-1 col-sm-1 no-padding-right" for="spssn">
-		        SSN
+	    <div class="row form-group">
+              <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="spssn">
+		SSN
 	      </label>
-	      <div class="col-xs-11 col-sm-3">
-		<input type="text" id="spssn" name="spssn" class="col-xs-11 col-sm-6 input-mask-ssn" data-bind="value: spouse().ssn" />
+	      <div class="col-xs-12 col-sm-9">
+		<input type="text" id="spssn" name="spssn" class="col-xs-12 col-sm-5 input-mask-ssn" data-bind="value: spouse().ssn" />
 	      </div>
+	     
 	    </div>
 	  
 	  <div class="form-group">
@@ -914,7 +914,7 @@
 	  	  
 	  </div><!-- .SpouseInfoBlock -->
 
-	   <div id="ChildrenInfoBlock"  data-bind="visible: should_include_children">
+	   <div id="ChildrenInfoBlock"  data-bind="visible: did_select_children_coverage()">
 	     <h3 class="lighter block green">Children information</h3>
 	     <ul class="list-unstyled" data-bind="foreach: {data: get_valid_children}">
               <li>
@@ -922,10 +922,8 @@
                   <label class="control-label col-xs-12 col-sm-2 no-padding-right" data-bind="attr: {for: 'child-first-'+$index()}">
                     Child <span data-bind="text: $index() + 1"></span>:
                   </label>
-                  <div class="col-xs-12 col-sm-5"> 
+                  <div class="col-xs-12 col-sm-6"> 
 		    <input type="text" data-bind="value: first, attr: {id: 'child-first-'+$index()}" placeholder="First Name" />
-                  </div>
-                  <div class="col-xs-12 col-sm-5"> 
                     <input type="text" data-bind="value: last" placeholder="Last Name" />
                   </div>
                 </div>
@@ -938,8 +936,7 @@
                     <input type="text" class="col-xs-12 col-sm-5 input-mask-ssn" data-bind="value: ssn, 
 										attr: {id: 'child-ssn-'+$index()}
 										" />
-                  </div>
-		  
+                  </div>		  
                 </div>
 
 		<div class="form-group">
@@ -983,10 +980,10 @@
       <form class="form-horizontal" id="step5-form">
 	
 	<div class="step-pane" id="step5">
-	  <div id="eeBeneficiaryBlock" data-bind="visible: did_select_employee_coverage">
+	  <div id="eeBeneficiaryBlock" data-bind="visible: did_select_employee_coverage()">
 	    <h3 class="lighter block green">Employee Beneficiary</h3>
 
-	    <div class="form-group" id="eeHasSpouseAsBeneficiaryOption" data-bind="visible: should_include_spouse_in_table">
+	    <div class="form-group" id="eeHasSpouseAsBeneficiaryOption" data-bind="visible: did_select_spouse_coverage()">
 	      <label class="control-label col-xs-12 col-sm-5 no-padding-right">Beneficiary of Employee Coverage is </label>
 
 	      <div class="col-xs-12 col-sm-7">
@@ -1001,15 +998,9 @@
 		</label>
 	      </div>
 	      
-	      <!-- think we'll omit whole display line now, just include first name above...
-	      <div class="col-sm-offset-5 text-primary bigger-110 col-xs-12" id="spouseBeneficiaryLine" data-bind="visible: employee_beneficiary() == 'spouse'">
-		<span data-bind="text: spouse().first"></span> <span data-bind="text: spouse().last"></span>, spouse, <span data-bind="text: spouse().birthdate"></span>, ss=
-		    <span data-bind="text: spouse().ssn"></span>	    
-              </div>
-	      -->
 	    </div>
 
-	    <div id="eeBeneficiaryOther" data-bind="visible: !should_include_spouse_in_table() || employee_beneficiary() == 'other'">
+	    <div id="eeBeneficiaryOther" data-bind="visible: !did_select_spouse_coverage() || employee_beneficiary() == 'other'">
 	      <div class="row form-group">
 		<div class="col-sm-6">
 		  <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherName">
@@ -1054,7 +1045,7 @@
 	    </div><!-- /eeBeneficiaryOther -->
 	  </div><!-- /eeBeneficiaryBlock -->
 
-	  <div id="spBeneficiaryBlock" data-bind="visible: did_select_spouse_coverage">
+	  <div id="spBeneficiaryBlock" data-bind="visible: did_select_spouse_coverage()">
 	    <h3 class="lighter block green">Spouse Beneficiary</h3>
 	    <div class="form-group">
 	      <label class="control-label col-xs-12 col-sm-5 no-padding-right">Beneficiary of Spouse Coverage is </label>
@@ -1079,7 +1070,7 @@
 	      -->
 	    </div>
 	    
-	    <div id="spBeneficiaryOther" data-bind="visible: did_select_spouse_coverage && spouse_beneficiary() == 'other'">
+	    <div id="spBeneficiaryOther" data-bind="visible: did_select_spouse_coverage() && spouse_beneficiary() == 'other'">
 	      <div class="row form-group">
 		<div class="col-sm-6">
 		  <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherName">
@@ -1126,7 +1117,7 @@
 
 
 	  <!-- **Zach: the visibility of div is whether any valid child coverage was elected from step 1  -->
-	  <div id="onlyChildCoverageBeneficiaryStmt" data-bind="visible: did_select_children_coverage">
+	  <div id="onlyChildCoverageBeneficiaryStmt" data-bind="visible: did_select_children_coverage()">
 	    <h3 class="lighter block green">Child Beneficiary</h3>
 	    <span class="text-primary bigger-110 center">
 	      <i class="icon-info-sign"></i>
