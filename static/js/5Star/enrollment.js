@@ -33,10 +33,18 @@ function WizardUI(product, defaults) {
     self.identityToken = ko.observable("");
     self.identityType = ko.observable("");
     
+    self.addr1 = ko.observable("");
+    self.addr2 = ko.observable("");
+    self.city = ko.observable("");
     self.was_state_provided = ("state" in defaults && defaults.state !== null && defaults.state != "XX");
     self.state = ko.observable(defaults.state || "");
+    self.zip = ko.observable("");
+    self.phone = ko.observable("");
     self.company_name = ko.observable(defaults.company_name || "(Unknown Company)");
     
+    self.existing_insurance = "no";
+    self.replacing_insurance = "no";
+
     self.policy_owner = ko.observable("self");
     self.other_owner_name = ko.observable("");
     self.other_owner_ssn = ko.observable("");
@@ -67,7 +75,9 @@ function WizardUI(product, defaults) {
     self.should_show_spouse = ko.observable(false);
     
     // Spouse info
-    self.spouse = ko.observable(new Beneficiary({}));
+    self.spouse = ko.observable(new Beneficiary({
+	last: self.defaults.employee_last || ""
+    }));
     
     self.should_include_spouse_in_table = ko.computed(function() {
         return self.should_show_spouse() && self.spouse().is_valid() && self.is_spouse_age_valid();
@@ -80,8 +90,8 @@ function WizardUI(product, defaults) {
     self.should_include_children = ko.observable(false);
     self.children = ko.observableArray([
         // Start with two blank child entries
-        new Beneficiary({}),
-        new Beneficiary({})
+        new Beneficiary({last: self.defaults.employee_last || ""}),
+        new Beneficiary({last: self.defaults.employee_last || ""})
     ]);
     
     self.show_children_names = ko.computed(function() {
@@ -113,7 +123,7 @@ function WizardUI(product, defaults) {
     });
     
     self.add_child = function() {
-        var child_beneficiary = new Beneficiary({});
+        var child_beneficiary = new Beneficiary({last: self.defaults.employee_last || ""});
         self.children.push(child_beneficiary);
         // Re-apply jquery date masks
         $('.input-mask-date').mask('99/99/9999')
@@ -1339,12 +1349,22 @@ function init_validation() {
         var wizard_results = {
             agent_data: window.ui.defaults,
             
-	        identityToken: window.ui.identityToken(),
-	        identityType: window.ui.identityType(),
+	    identityToken: window.ui.identityToken(),
+	    identityType: window.ui.identityType(),
             
             employee: window.ui.employee().serialize_data(),
             spouse: window.ui.spouse().serialize_data(),
             
+	    employee_addr1:  window.ui.addr1(),
+ 	    employee_addr2:  window.ui.addr2(),
+ 	    employee_city:  window.ui.city(),
+ 	    employee_state:  window.ui.state(),
+ 	    employee_zip:  window.ui.zip(),
+ 	    employee_phone:  window.ui.phone(),
+
+	 //   existing:  window.ui.existing_insurance(),
+	 //   replacing:  window.ui.existing_replacing(),
+ 	    
 	    employee_owner:  window.ui.policy_owner(),
  	    employee_other_owner_name:  window.ui.other_owner_name(),
  	    employee_other_owner_ssn:  window.ui.other_owner_ssn(),

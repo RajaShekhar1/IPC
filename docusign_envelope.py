@@ -48,7 +48,7 @@ def get_template_id(product_type, state):
             "VA" : "TBD"
         }
     }
-    
+
     templateID = templates_by_product_and_state.get(product_type).get(state)
     if templateID:
         return templateID
@@ -56,10 +56,78 @@ def get_template_id(product_type, state):
         return "Failed Template Lookup"
 
 
+#  14-May-23 WSD for now, by the time we get here the radios are wholesale "no" answers, so just fill without logic 
+def generate_SOHRadios(prefix):
+    radioList = []
+    for i in range(7):
+        radioList.append(
+            {"groupName": prefix + "SOH" + str(i+1),
+             "radios": [{"selected" : "True",
+                         "value" : "no"}]}
+            )
+    return radioList
+
+def generate_BeneficiaryTabs(prefix):
+    
+    beneTabs = []
+    for i in range(7):
+        radioList.append(
+            {"groupName": prefix + "SOH" + str(i+1),
+             "radios": [{"selected" : "True",
+                         "value" : "no"}]}
+            )
+    return radioList
+
+
+def generate_ChildGenderRadio(child_index, wizard_data):
+    return {"groupName": "child" + str(child_index + 1) + "Gender",
+            "radios": [
+                {"selected" : "True" if wizard_data["children"][child_index]["gender"] == "male" else "False",
+                 "value" : "male"},
+                {"selected" : "True" if wizard_data["children"][child_index]["gender"] == "female" else "False",
+                 "value" : "female"}
+            ]}
+
+def generate_ChildGenderAbbrevTab(child_index, wizard_data):
+    if wizard_data["children"][child_index]["gender"] == "male": 
+        genderAbbrev = "M"
+    elif wizard_data["children"][child_index]["gender"] == "female":
+        genderAbbrev = "F"
+    else:
+        genderAbbrev = ""
+
+    return {"tabLabel" : "child" + str(child_index + 1) + "GenderAbbrev",
+            "value" : genderAbbrev}
+
+
+def generate_ChildTabsEntry (child_index, wizard_data):
+    childStr = "child" + str(child_index +1)
+    tabsList = [
+        # FullName is only used for child >2, otherwise FName and LName on child <=2
+        #  assuming for now the Docusign API will ignore those tabs not used in the template
+        {"tabLabel" : childStr + "FullName",
+         "value" : wizard_data["children"][child_index]["first"] + " " + wizard_data["children"][child_index]["last"]},
+        {"tabLabel" : childStr + "FName",
+         "value" : wizard_data["children"][child_index]["first"]},
+        {"tabLabel" : childStr + "LName",
+         "value" : wizard_data["children"][child_index]["last"]},
+        {"tabLabel" : childStr + "DOB",
+         "value" : wizard_data["children"][child_index]["birthdate"]},
+        {"tabLabel" : childStr + "SSN",
+         "value" : wizard_data["children"][child_index]["ssn"]},
+        {"tabLabel" : childStr + "Coverage",
+         "value" : format(wizard_data["child_coverages"][child_index]["face_value"], ",.0f")},
+        {"tabLabel" : childStr + "Premium",
+         "value" : format(wizard_data["child_coverages"][child_index]["weekly_premium"]*52/12, ",.2f")},
+    ]
+    return tabsList
+    
+
+    
 def create_envelope_and_get_signing_url(wizard_data):
     # return is_error(bool), error_message, and redirectURL
 
-    # for now, just pull into former variables this fcn was using
+    # for now, just pull into former variables we've been using
     recipName = wizard_data["agent_data"]["employee_first"] + " " + wizard_data["agent_data"]["employee_last"]
     employer = wizard_data["agent_data"]["company_name"]
     emailTo = wizard_data["agent_data"]["employee_email"]
@@ -83,9 +151,11 @@ def create_envelope_and_get_signing_url(wizard_data):
                 # note: DS supplied the last parm of 'event' in the callback
     idTokenStr = "Authentication via " + idType + ": " + idToken
     
-     #if wizard_results["employee_coverage"]["face_value"]:
+    #if wizard_results["employee_coverage"]["face_value"]:
     #
         
+
+    SOH_RadiosList = []
 
     if ((recipName != "") and (recipName != None)):
         recipientName = recipName;
@@ -94,6 +164,7 @@ def create_envelope_and_get_signing_url(wizard_data):
         if wizard_data["employee_coverage"]["face_value"]:
             employeeCoverage = format(wizard_data["employee_coverage"]["face_value"], ",.0f")
             eePremium = format(round((wizard_data["employee_coverage"]["weekly_premium"]*100 * 52) / 12)/100.0, ",.2f")
+            SOH_RadiosList += generate_SOHRadios("ee")
         else:
             employeeCoverage = " "
             eePremium = " "
@@ -106,6 +177,7 @@ def create_envelope_and_get_signing_url(wizard_data):
         if wizard_data["spouse_coverage"]["face_value"]:
             spouseCoverage = format(wizard_data["spouse_coverage"]["face_value"], ",.0f")
             spPremium = format(round((wizard_data["spouse_coverage"]["weekly_premium"]*100 * 52) / 12)/100.0, ",.2f")
+            SOH_RadiosList += generate_SOHRadios("sp")
         else:
             spouseCoverage = " "
             spousePremium = " "
@@ -114,141 +186,28 @@ def create_envelope_and_get_signing_url(wizard_data):
         spousePremium = " "
       
 
-    #  14-May-23 WSD for now, by the time we get here the radios are wholesale "no" answers, so just fill without logic 
-    eeSOHRadios = [
-        {"groupName": "eeSOH1",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]},
-        {"groupName": "eeSOH2",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]},
-        {"groupName": "eeSOH3",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]},
-        {"groupName": "eeSOH4",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]},
-        {"groupName": "eeSOH5",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]},
-        {"groupName": "eeSOH6",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]},
-        {"groupName": "eeSOH7",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]},
-        {"groupName": "eeSOH8",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]}
-        ]
-
-
-    child1SOHRadios = [
-        {"groupName": "c1SOH1",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]},
-        {"groupName": "c1SOH2",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]},
-        {"groupName": "c1SOH3",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]},
-        {"groupName": "c1SOH4",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]},
-        {"groupName": "c1SOH5",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]},
-        {"groupName": "c1SOH6",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]},
-        {"groupName": "c1SOH7",
-         "radios": [{"selected" : "True",
-                     "value" : "no"}]}
-        ]
-
-   
     childTabsList = []
     childRadiosList = []
 
     if wizard_data["children"]:
-        childTabsList += [
-            {"tabLabel" : "child1FName",
-             "value" : wizard_data["children"][0]["first"]},
-            {"tabLabel" : "child1LName",
-             "value" : wizard_data["children"][0]["last"]},
-            {"tabLabel" : "child1DOB",
-             "value" : wizard_data["children"][0]["birthdate"]},
-            {"tabLabel" : "child1SSN",
-             "value" : wizard_data["children"][0]["ssn"]},
-            {"tabLabel" : "child1Coverage",
-             "value" : format(wizard_data["child_coverages"][0]["face_value"], ",.0f")},
-            {"tabLabel" : "child1Premium",
-             "value" : format(wizard_data["child_coverages"][0]["weekly_premium"]*52/12, ",.2f")},
-        ]
-
-        childRadiosList += [
-            {"groupName": "child1Gender",
-             "radios": [
-                 {"selected" : "True" if wizard_data["children"][0]["gender"] == "male" else "False",
-                  "value" : "male"},
-                 {"selected" : "True" if wizard_data["children"][0]["gender"] == "female" else "False",
-                  "value" : "female"}
-            ]}
-        ]
-        childRadiosList += child1SOHRadios
+        childTabsList += generate_ChildTabsEntry(0, wizard_data)
+        childRadiosList.append(generate_ChildGenderRadio(0, wizard_data))
+        childRadiosList += generate_SOHRadios("c1")
         
     if wizard_data["children"] and len(wizard_data["children"])>1:
-        childTabsList += [
-            {"tabLabel" : "child2FName",
-             "value" : wizard_data["children"][1]["first"]},
-            {"tabLabel" : "child2LName",
-             "value" : wizard_data["children"][1]["last"]},
-            {"tabLabel" : "child2DOB",
-             "value" : wizard_data["children"][1]["birthdate"]},
-            {"tabLabel" : "child2SSN",
-             "value" : wizard_data["children"][1]["ssn"]},
-            {"tabLabel" : "child2Coverage",
-             "value" : format(wizard_data["child_coverages"][1]["face_value"], ",.0f")},
-            {"tabLabel" : "child2Premium",
-             "value" : format(wizard_data["child_coverages"][1]["weekly_premium"]*52/12, ",.2f")},
-        ]
-        childRadiosList += [
-            {"groupName": "child2Gender",
-             "radios": [
-                 {"selected" : "True" if wizard_data["children"][1]["gender"] == "male" else "False",
-                  "value" : "male"},
-                 {"selected" : "True" if wizard_data["children"][1]["gender"] == "female" else "False",
-                  "value" : "female"}
-             ]}
-        ]
-        # *** Need other child2 Radios, etc.
-
-
+        childTabsList += generate_ChildTabsEntry(1, wizard_data)
+        childRadiosList.append(generate_ChildGenderRadio(1, wizard_data))
+        childRadiosList += generate_SOHRadios("c2")
      
     if wizard_data["children"] and len(wizard_data["children"])>2:
-        if wizard_data["children"][2]["gender"] == "male": 
-            child3Gender = "M"
-        elif wizard_data["children"][2]["gender"] == "female":
-            child3Gender = "F"
-        else:
-            child3Gender = ""
-        
+        childTabsList += generate_ChildTabsEntry(2, wizard_data)
+        childTabsList.append(generate_ChildGenderAbbrevTab(2, wizard_data))
+        childRadiosList += generate_SOHRadios("c3")
 
-        childTabsList += [
-            {"tabLabel" : "child3FullName",
-             "value" : wizard_data["children"][2]["first"] + " " + wizard_data["children"][2]["last"]},
-            {"tabLabel" : "child3DOB",
-             "value" : wizard_data["children"][2]["birthdate"]},
-            {"tabLabel" : "child3SSN",
-             "value" : wizard_data["children"][2]["ssn"]},
-            {"tabLabel" : "child3GenderAbbrev",
-             "value" : child3Gender},
-            {"tabLabel" : "child3Coverage",
-             "value" : format(wizard_data["child_coverages"][2]["face_value"], ",.0f")},
-            {"tabLabel" : "child3Premium",
-             "value" : format(wizard_data["child_coverages"][2]["weekly_premium"]*52/12, ",.2f")},
-        ]
+    if wizard_data["children"] and len(wizard_data["children"])>3:
+        childTabsList += generate_ChildTabsEntry(3, wizard_data)
+        childTabsList.append(generate_ChildGenderAbbrevTab(3, wizard_data))
+        childRadiosList += generate_SOHRadios("c4")
 
     eeTabsList = [
         {"tabLabel" : "identityToken",
@@ -273,8 +232,20 @@ def create_envelope_and_get_signing_url(wizard_data):
          "value" : wizard_data["employee_other_owner_name"] if wizard_data["employee_owner"] == "other" else  ""} ,
         {"tabLabel" : "eeOtherOwnerSSN",
          "value" : wizard_data["employee_other_owner_ssn"] if wizard_data["employee_owner"] == "other" else  ""} ,
-        {"tabLabel" : "employeeEmail",
-         "value" : wizard_data["employee"]["email"] } 
+        {"tabLabel" : "eeStreet1",
+         "value" : wizard_data["employee_addr1"]},
+        {"tabLabel" : "eeStreet2",
+         "value" : wizard_data["employee_addr2"]},
+        {"tabLabel" : "eeCity",
+         "value" : wizard_data["employee_city"]},
+        {"tabLabel" : "eeState",
+         "value" : wizard_data["employee_state"]},
+        {"tabLabel" : "eeZip",
+         "value" : wizard_data["employee_zip"]},
+        {"tabLabel" : "eePhone",
+         "value" : wizard_data["employee_phone"]},
+        {"tabLabel" : "email",
+         "value" : wizard_data["employee"]["email"]}
     ]
     
     spouseTabsList = []
@@ -295,37 +266,37 @@ def create_envelope_and_get_signing_url(wizard_data):
             {"tabLabel" : "spPremium",
              "value" : spPremium if spouseCoverage !="" else ""}
         ]
-    
-         
-    generalRadios = [
-        {"groupName": "eeGender",
-         "radios": [
-             {"selected" : "True" if wizard_data["employee"]["gender"] == "male" else "False",
-              "value" : "male"},
-             {"selected" : "True" if wizard_data["employee"]["gender"] == "female" else "False",
-              "value" : "female"}
-             ]},
-        {"groupName": "spGender",
-         "radios": [
-             {"selected" : "True" if wizard_data["spouse"] and wizard_data["spouse"]["gender"] == "male" else "False",
-              "value" : "male"},
-             {"selected" : "True" if wizard_data["spouse"] and wizard_data["spouse"]["gender"] == "female" else "False",
-              "value" : "female"}
-             ]},
-        {"groupName": "eeOwner",
-         "radios": [
-             {"selected" : "True" if wizard_data["employee_owner"] == "self" else "False",
-              "value" : "self"},
-             {"selected" : "True" if wizard_data["employee_owner"] == "other" else "False",
-              "value" : "other"}
-             ]},
-        {"groupName": "spOwner",
-         "radios": [
-             {"selected" : "True",
-              "value" : wizard_data["spouse_owner"]}
-             ]}        
-        ]
 
+
+    generalRadiosList = []
+    # Note: UI screens out any "yes" replacement - so all applications are "no" to replacement
+    generalRadiosList.append({"groupName": "existingIns",
+                              "radios": [
+                                  {"selected" : "True",
+                                   "value" : "no"}
+                              ]})
+    generalRadiosList.append({"groupName": "replace",
+                              "radios": [
+                                  {"selected" : "True",
+                                   "value" : "no"}
+                              ]})
+    
+    for (prefix_short, prefix_long) in {("ee", "employee"), ("sp", "spouse")}:
+        generalRadiosList.append({"groupName": prefix_short + "Gender",
+                              "radios": [
+                                  {"selected" : "True" if wizard_data[prefix_long] and wizard_data[prefix_long]["gender"] == "male" else "False",
+                                   "value" : "male"},
+                                  {"selected" : "True" if wizard_data[prefix_long] and wizard_data[prefix_long]["gender"] == "female" else "False",
+                                   "value" : "female"}
+                              ]})
+        generalRadiosList.append({"groupName": prefix_short + "Owner",
+                              "radios": [
+                                  {"selected" : "True" if wizard_data[prefix_long + "_owner"] == "self" else "False",
+                                   "value" : "self"},
+                                  {"selected" : "True" if wizard_data[prefix_long + "_owner"] == "other" else "False",
+                                   "value" : "other"}
+                              ]})
+         
 
 
     #
@@ -365,8 +336,7 @@ def create_envelope_and_get_signing_url(wizard_data):
              "name" :recipientName,
              "tabs" : {
                  "textTabs": eeTabsList + spouseTabsList + childTabsList,
-#                 "textTabs": eeTabsList + eeTabsSOHList,
-                 "radioGroupTabs": generalRadios + eeSOHRadios + childRadiosList 
+                 "radioGroupTabs": generalRadiosList + SOH_RadiosList + childRadiosList 
              },
              "roleName" :  templateRoleName,
              "clientUserId": templateClientID 
@@ -381,7 +351,7 @@ def create_envelope_and_get_signing_url(wizard_data):
     headers = {'X-DocuSign-Authentication': authenticateStr, 'Accept': 'application/json', 'Content-Length': str(len(requestBodyStr))};
     http = httplib2.Http();
     response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr);
-    #response, content = http.request("http://requestb.in/oyzpj2oz", 'POST', headers=headers, body=requestBodyStr);
+    #response, content = http.request("http://requestb.in/usjdq1us", 'POST', headers=headers, body=requestBodyStr);
     status = response.get('status');
     if (status != '201'): 
         print("Error calling webservice, status is: %s" % status); return True, "Error generating Docusign envelope", None;

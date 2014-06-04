@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 from logging import getLogger
 from flask import (
     Flask,
@@ -29,7 +30,6 @@ from model.States import get_states
 app = Flask(__name__)
 app.config.from_object('config')
 
-
 # Read in config file globally
 config = ConfigParser(defaults={})
 try:
@@ -44,11 +44,6 @@ if 'email' not in config.sections():
 if 'database' not in config.sections():
     raise Exception("No database section in config file")
 
-""" the init used to be this
-app.config.update(
-    DEBUG = True,
-)
-"""
 
 def get_database():
     return Database(config.get('database', 'connection_string'))
@@ -279,6 +274,11 @@ def submit_wizard_data():
     data = json.loads(request.data)
     
     wizard_results = data['wizard_results']
+    print "--------------------"
+    print wizard_results
+    print "--------------------"
+    sys.stdout.flush()
+    
     
     # Do docusign with data in wizard_results
     #
