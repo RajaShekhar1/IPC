@@ -244,9 +244,21 @@ def create_envelope_and_get_signing_url(wizard_data):
          "value" : wizard_data["employee_zip"]},
         {"tabLabel" : "eePhone",
          "value" : wizard_data["employee_phone"]},
-        {"tabLabel" : "email",
+        {"tabLabel" : "eeEmail",
          "value" : wizard_data["employee"]["email"]}
     ]
+    # add in beneficiaries if appropriate
+    if employeeCoverage != " ":
+        eeTabsList += [
+            {"tabLabel" : "eeBeneFullName",
+             "value" : wizard_data["spouse"]["last"]+", "+wizard_data["spouse"]["first"] if wizard_data["employee_beneficiary"] == "spouse" else  wizard_data["employee_beneficiary_name"]},
+            {"tabLabel" : "eeBeneRelationship",
+             "value" : "spouse" if wizard_data["employee_beneficiary"] == "spouse" else  wizard_data["employee_beneficiary_relationship"]},
+            {"tabLabel" : "eeBeneDOB",
+             "value" : wizard_data["spouse"]["birthdate"] if wizard_data["employee_beneficiary"] == "spouse" else  wizard_data["employee_beneficiary_dob"]},
+            {"tabLabel" : "eeBeneSSN",
+             "value" : wizard_data["spouse"]["ssn"] if wizard_data["employee_beneficiary"] == "spouse" else  wizard_data["employee_beneficiary_ssn"]} 
+        ]
     
     spouseTabsList = []
     if spouseCoverage != " ":
@@ -264,7 +276,16 @@ def create_envelope_and_get_signing_url(wizard_data):
             {"tabLabel" : "spCoverage",
              "value" : spouseCoverage},
             {"tabLabel" : "spPremium",
-             "value" : spPremium if spouseCoverage !="" else ""}
+             "value" : spPremium if spouseCoverage !="" else ""},
+
+            {"tabLabel" : "spBeneFullName",
+             "value" : wizard_data["employee"]["last"]+", "+wizard_data["employee"]["first"] if wizard_data["spouse_beneficiary"] == "employee" else  wizard_data["spouse_beneficiary_name"]},
+            {"tabLabel" : "spBeneRelationship",
+             "value" : "spouse" if wizard_data["spouse_beneficiary"] == "employee" else  wizard_data["spouse_beneficiary_relationship"]},
+            {"tabLabel" : "spBeneDOB",
+             "value" : wizard_data["employee"]["birthdate"] if wizard_data["spouse_beneficiary"] == "employee" else  wizard_data["spouse_beneficiary_dob"]},
+            {"tabLabel" : "spBeneSSN",
+             "value" : wizard_data["employee"]["ssn"] if wizard_data["spouse_beneficiary"] == "employee" else  wizard_data["spouse_beneficiary_ssn"]} 
         ]
 
 
@@ -273,7 +294,7 @@ def create_envelope_and_get_signing_url(wizard_data):
     generalRadiosList.append({"groupName": "existingIns",
                               "radios": [
                                   {"selected" : "True",
-                                   "value" : "no"}
+                                   "value" : wizard_data["existing_insurance"]}
                               ]})
     generalRadiosList.append({"groupName": "replace",
                               "radios": [

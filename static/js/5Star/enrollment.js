@@ -1097,6 +1097,9 @@ function handle_existing_insurance_modal() {
  
     $("#health_modal").modal('show');
     $("#existing_warning_text").show();
+    
+    window.ui.existing_insurance = "yes";
+
 }
 function handle_existing_insurance_modal_remote() {
     $("#modal_text_existing_warning_title").show();
@@ -1113,6 +1116,7 @@ function handle_existing_insurance_modal_remote() {
 } 
 
 function reset_existing_insurance_warning() {
+    window.ui.existing_insurance = "no";
     $("#existing_warning_text_remote").hide();
     $("#existing_warning_text").hide();
 }
@@ -1362,8 +1366,8 @@ function init_validation() {
  	    employee_zip:  window.ui.zip(),
  	    employee_phone:  window.ui.phone(),
 
-	 //   existing:  window.ui.existing_insurance(),
-	 //   replacing:  window.ui.existing_replacing(),
+	    existing_insurance:  window.ui.existing_insurance,
+	    replacing_insurance:  window.ui.replacing_insurance,
  	    
 	    employee_owner:  window.ui.policy_owner(),
  	    employee_other_owner_name:  window.ui.other_owner_name(),
