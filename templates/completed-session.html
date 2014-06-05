@@ -101,8 +101,10 @@
     <div class="col-xs-12">
       <div class="col-xs-12 col-sm-4">
 	<div class="center">
+	  <a href="{{ url_for('home') }}">
 	  <button type="submit" class="btn btn-lg btn-info" id="home-btn">
 	    <i class="icon icon-home align-top bigger-110"></i>Back to Home</button>
+	  </a>
 	</div>
       </div>
       <div class="col-xs-12 hidden-sm hidden-md hidden-lg">
@@ -111,8 +113,10 @@
       <div class="col-xs-12 col-sm-4">
 	{% if ds_event == "signing_complete" %}
 	<div class="center">
+	  <a href="{{ url_for('inbox') }}">
 	  <button type="submit" class="btn btn-lg btn-warn" id="sign-btn">
 	    <i class="icon icon-pencil align-top bigger-110"></i>Sign now via inbox</button>
+	  </a>
 	</div>
  	{% endif %}
       </div>
@@ -121,8 +125,10 @@
       </div>
       <div class="col-xs-12 col-sm-4">
 	<div class="center">
+	  <a href="{{ url_for('enroll_start') }}">
 	  <button type="submit" class="btn btn-lg btn-success" id="enroll-btn">
 	    <i class="icon icon-share align-top bigger-110"></i>Enroll next applicant</button>
+	  </a>
 	</div>
       </div>
     </div>
