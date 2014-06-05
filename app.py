@@ -111,7 +111,8 @@ def email_enrollment():
 
     db = get_database()
     
-    product = get_product_by_code(product_code)
+    # product = get_product_by_code(product_code)
+    product = db.get_product_by_code(product_code)
     
     print "---- have a product  ----------------"
     sys.stdout.flush()
@@ -169,8 +170,10 @@ def email_link_handler():
     
     enrollment = enrollment_request.enrollment
     case = enrollment.case
-    product = case.product
-    
+    # 2014-06-05 product.get_health_questions() blowing up below - not yet handled in DB?
+    # product = case.product
+    product = get_product_by_code(case.product.code)
+
     wizard_data = {
         'state': case.situs_state,
         'company_name': case.company_name,

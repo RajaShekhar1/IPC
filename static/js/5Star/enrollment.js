@@ -266,12 +266,6 @@ function WizardUI(product, defaults) {
         };
     };
     
-    self.recommendations = {
-        good: new BenefitsPackage(self, 'Good'),
-        better: new BenefitsPackage(self, 'Better'),
-        best: new BenefitsPackage(self, 'Best')
-    };
-    
     self.selected_plan = ko.observable(new NullBenefitsPackage());
     self.selected_recommendation = ko.observable(null);
     
@@ -395,6 +389,12 @@ function WizardUI(product, defaults) {
 
     self.show_health_modal = function() {
         $("#health_modal").modal('show');
+    };
+    
+    self.recommendations = {
+        good: new BenefitsPackage(self, 'Good'),
+        better: new BenefitsPackage(self, 'Better'),
+        best: new BenefitsPackage(self, 'Best')
     };
     
     
@@ -864,12 +864,12 @@ function BenefitsPackage(root, name) {
         return people;
     });
     
-/*    self.get_all_covered_people = ko.computed(function() {
+    self.get_all_covered_people = ko.computed(function() {
         var people = [];
         
         if (root.did_select_employee_coverage()) {
             var employee = root.employee();
-            employee.selected_coverage(self.emplopyee_recommendation().recommended_benefit);
+            employee.selected_coverage(self.employee_recommendation().recommended_benefit);
             people.push(employee);
         }
         
@@ -888,7 +888,7 @@ function BenefitsPackage(root, name) {
         }
         return people;
     });
-*/    
+    
     self.get_all_people_labels = ko.computed(function() {
         var labels = [root.employee().name()];
         if (root.should_include_spouse_in_table()) {
@@ -903,7 +903,7 @@ function BenefitsPackage(root, name) {
         return labels;
     });
   
-/*    self.get_all_covered_people_labels = ko.computed(function() {
+    self.get_all_covered_people_labels = ko.computed(function() {
         var labels = [];
         if (root.did_select_employee_coverage()) {
             labels.push(root.employee().name());
@@ -919,7 +919,7 @@ function BenefitsPackage(root, name) {
         }
         return labels;
     });
-*/
+
     self.get_people_with_labels = ko.computed(function() {
         var people = self.get_all_people();
         var labels = self.get_all_people_labels();
@@ -955,7 +955,9 @@ function NullBenefitsPackage() {
     self.formatted_monthly_premium = function() { return "";};
     self.is_valid = function () {return false};
     self.get_all_people = function() {return [];};
+    self.get_all_covered_people = function() {return [];};
     self.get_all_people_labels = function() {return [];};
+    self.get_all_covered_people_labels = function() {return [];};
     self.get_people_with_labels = function() {return [];};
     self.has_at_least_one_benefit_selected = function() {return false;};
 }
