@@ -393,10 +393,6 @@ function WizardUI(product, defaults) {
         return (rec.is_valid() && rec.recommended_benefit.is_valid());
     });
 
-    function spouse_coverage_was_selected() {
-        return self.did_select_spouse_coverage();
-    }
-        
     self.show_health_modal = function() {
         $("#health_modal").modal('show');
     };
@@ -868,6 +864,31 @@ function BenefitsPackage(root, name) {
         return people;
     });
     
+/*    self.get_all_covered_people = ko.computed(function() {
+        var people = [];
+        
+        if (root.did_select_employee_coverage()) {
+            var employee = root.employee();
+            employee.selected_coverage(self.emplopyee_recommendation().recommended_benefit);
+            people.push(employee);
+        }
+        
+        if (root.did_select_spouse_coverage()) {
+            var spouse = root.spouse();
+            spouse.selected_coverage(self.spouse_recommendation().recommended_benefit);
+            people.push(spouse);
+        }
+        
+        if (root.did_select_children_coverage()) {
+            $.each(root.get_valid_children(), function () {
+                var child = this;
+                child.selected_coverage(self.children_recommendation().recommended_benefit);
+                people.push(child);
+            });
+        }
+        return people;
+    });
+*/    
     self.get_all_people_labels = ko.computed(function() {
         var labels = [root.employee().name()];
         if (root.should_include_spouse_in_table()) {
@@ -881,7 +902,24 @@ function BenefitsPackage(root, name) {
         }
         return labels;
     });
-    
+  
+/*    self.get_all_covered_people_labels = ko.computed(function() {
+        var labels = [];
+        if (root.did_select_employee_coverage()) {
+            labels.push(root.employee().name());
+        }
+        if (root.did_select_spouse_coverage()) {
+            labels.push(root.spouse().name());
+        }
+        if (root.did_select_children_coverage()) {
+            $.each(root.get_valid_children(), function () {
+                var child = this;
+                labels.push(child.name());
+            });
+        }
+        return labels;
+    });
+*/
     self.get_people_with_labels = ko.computed(function() {
         var people = self.get_all_people();
         var labels = self.get_all_people_labels();
@@ -1323,15 +1361,15 @@ function init_validation() {
             }
         }
         if (info.step == 3) {
-            if (!$('#step3-form').valid()) return false;
+            if (false && !$('#step3-form').valid()) return false;
         }
         if (info.step == 4) {
             if (!$('#step4-form').valid()) return false;
         }
         if (info.step == 5) {
-	    var skip_for_now = false;
+	    var skip_for_now = true;
 	    if (skip_for_now) return true;
-            if (!$('#step5-form').valid()) return false;
+	    if (!$('#step5-form').valid()) return false;
         }
         if (info.step == 6) {
             if (!$('#step6-form').valid()) return false;
@@ -1561,25 +1599,25 @@ function init_validation() {
             eeBeneOtherName: {
 		required: true,
 		depends: function(element) {
-		    return (!window.ui.did_select_spouse_coverage() || $("#eeBeneOther:checked"))
+		    return (!window.ui.did_select_spouse_coverage() || $("#eeBeneOther").is(':checked'))
 		    }
 	    },
             eeBeneOtherRelation: {
 		required: true,
 		depends: function(element) {
-		    return (!window.ui.did_select_spouse_coverage() || $("#eeBeneOther:checked"))
+		    return (!window.ui.did_select_spouse_coverage() || $("#eeBeneOther").is(':checked'))
 		    }
 	    },
             spBeneOtherName: {
 		required: true,
 		depends: function(element) {
-		    return (window.ui.did_select_spouse_coverage() && $("#spBeneOther:checked"))
+		    return (window.ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
 		    }
 	    },
             spBeneOtherRelation: {
 		required: true,
 		depends: function(element) {
-		    return (window.ui.did_select_spouse_coverage() && $("#spBeneOther:checked"))
+		    return (window.ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
 		    }
 	    }
 
