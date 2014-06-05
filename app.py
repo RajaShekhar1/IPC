@@ -106,9 +106,15 @@ def email_enrollment():
     employee_last = request.form['eeLName']
     employee_email = request.form['email']
 
+    print "---- in email ----------------"
+    sys.stdout.flush()
+
     db = get_database()
     
     product = get_product_by_code(product_code)
+    
+    print "---- have a product  ----------------"
+    sys.stdout.flush()
     
     # May not want to create a case for each time this is called 
     case = Case(
@@ -138,6 +144,9 @@ def email_enrollment():
         smtp_password=config.get('email', 'smtp_password'),
         from_address=config.get('email', 'from_address'),
     )
+
+    print "---- just before calling EnrollmentEmail  ----------------"
+    sys.stdout.flush()
     
     EnrollmentEmail(**email_config).send_enrollment_request(enrollment_request)
     

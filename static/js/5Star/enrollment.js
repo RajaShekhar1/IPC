@@ -1351,7 +1351,7 @@ function init_validation() {
         }
         if (info.step == 2) {
             // validate questions
-            var is_valid =  true || are_health_questions_valid();
+            var is_valid =  are_health_questions_valid();
             if (!is_valid) {
                 $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");
                 return false;
@@ -1361,7 +1361,7 @@ function init_validation() {
             }
         }
         if (info.step == 3) {
-            if (false && !$('#step3-form').valid()) return false;
+            if (!$('#step3-form').valid()) return false;
         }
         if (info.step == 4) {
             if (!$('#step4-form').valid()) return false;
