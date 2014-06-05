@@ -147,10 +147,11 @@ def create_envelope_and_get_signing_url(wizard_data):
     else:
         idToken = emailTo
 
-    landingURL = url_for ('ds_landing_page') + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
+    # landingURL = url_for ('ds_landing_page') + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
+    landingURL = "https://taa.heroku.com/application_completed" + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
                 # note: DS supplied the last parm of 'event' in the callback
     idTokenStr = "Authentication via " + idType + ": " + idToken
-    
+
     #if wizard_results["employee_coverage"]["face_value"]:
     #
         
@@ -413,7 +414,7 @@ def create_envelope_and_get_signing_url(wizard_data):
  
     # construct the body of the request in JSON format  
     requestBody =   {
-        "authenticationMethod" : "none",
+        "authenticationMethod" : "email",
         "email" : recipEmail,
         "returnUrl" :  landingURL,
         "clientUserId" : templateClientID,
