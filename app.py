@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 from logging import getLogger
 from flask import (
     Flask,
@@ -29,7 +30,6 @@ from model.States import get_states
 app = Flask(__name__)
 app.config.from_object('config')
 
-
 # Read in config file globally
 config = ConfigParser(defaults={})
 try:
@@ -44,11 +44,6 @@ if 'email' not in config.sections():
 if 'database' not in config.sections():
     raise Exception("No database section in config file")
 
-""" the init used to be this
-app.config.update(
-    DEBUG = True,
-)
-"""
 
 def get_database():
     return Database(config.get('database', 'connection_string'))
@@ -111,9 +106,16 @@ def email_enrollment():
     employee_last = request.form['eeLName']
     employee_email = request.form['email']
 
+    print "---- in email ----------------"
+    sys.stdout.flush()
+
     db = get_database()
     
-    product = get_product_by_code(product_code)
+    # product = get_product_by_code(product_code)
+    product = db.get_product_by_code(product_code)
+    
+    print "---- have a product  ----------------"
+    sys.stdout.flush()
     
     # May not want to create a case for each time this is called 
     case = Case(
@@ -143,6 +145,9 @@ def email_enrollment():
         smtp_password=config.get('email', 'smtp_password'),
         from_address=config.get('email', 'from_address'),
     )
+
+    print "---- just before calling EnrollmentEmail  ----------------"
+    sys.stdout.flush()
     
     EnrollmentEmail(**email_config).send_enrollment_request(enrollment_request)
     
@@ -165,8 +170,10 @@ def email_link_handler():
     
     enrollment = enrollment_request.enrollment
     case = enrollment.case
-    product = case.product
-    
+    # 2014-06-05 product.get_health_questions() blowing up below - not yet handled in DB?
+    # product = case.product
+    product = get_product_by_code(case.product.code)
+
     wizard_data = {
         'state': case.situs_state,
         'company_name': case.company_name,
@@ -279,6 +286,11 @@ def submit_wizard_data():
     data = json.loads(request.data)
     
     wizard_results = data['wizard_results']
+    print "--------------------"
+    print wizard_results
+    print "--------------------"
+    sys.stdout.flush()
+    
     
     # Do docusign with data in wizard_results
     #

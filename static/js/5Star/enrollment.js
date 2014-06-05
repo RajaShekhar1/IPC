@@ -33,13 +33,24 @@ function WizardUI(product, defaults) {
     self.identityToken = ko.observable("");
     self.identityType = ko.observable("");
     
+    self.addr1 = ko.observable("");
+    self.addr2 = ko.observable("");
+    self.city = ko.observable("");
     self.was_state_provided = ("state" in defaults && defaults.state !== null && defaults.state != "XX");
     self.state = ko.observable(defaults.state || "");
+    self.zip = ko.observable("");
+    self.phone = ko.observable("");
     self.company_name = ko.observable(defaults.company_name || "(Unknown Company)");
     
+    self.existing_insurance = "no";
+    self.replacing_insurance = "no";
+
     self.policy_owner = ko.observable("self");
     self.other_owner_name = ko.observable("");
     self.other_owner_ssn = ko.observable("");
+    
+    self.spouse_policy_owner = ko.observable("self");
+    self.spouse_other_owner_name = ko.observable("");
     
     
     self.employee_beneficiary = ko.observable("spouse");
@@ -64,7 +75,9 @@ function WizardUI(product, defaults) {
     self.should_show_spouse = ko.observable(false);
     
     // Spouse info
-    self.spouse = ko.observable(new Beneficiary({}));
+    self.spouse = ko.observable(new Beneficiary({
+	last: self.defaults.employee_last || ""
+    }));
     
     self.should_include_spouse_in_table = ko.computed(function() {
         return self.should_show_spouse() && self.spouse().is_valid() && self.is_spouse_age_valid();
@@ -77,8 +90,8 @@ function WizardUI(product, defaults) {
     self.should_include_children = ko.observable(false);
     self.children = ko.observableArray([
         // Start with two blank child entries
-        new Beneficiary({}),
-        new Beneficiary({})
+        new Beneficiary({last: self.defaults.employee_last || ""}),
+        new Beneficiary({last: self.defaults.employee_last || ""})
     ]);
     
     self.show_children_names = ko.computed(function() {
@@ -110,8 +123,12 @@ function WizardUI(product, defaults) {
     });
     
     self.add_child = function() {
-        var child_beneficiary = new Beneficiary({});
+        var child_beneficiary = new Beneficiary({last: self.defaults.employee_last || ""});
         self.children.push(child_beneficiary);
+	// hide Add button if now at max children
+	if (self.children().length > 3) {
+	    $("#addChildBtn").hide();
+	}
         // Re-apply jquery date masks
         $('.input-mask-date').mask('99/99/9999')
     };
@@ -249,12 +266,6 @@ function WizardUI(product, defaults) {
         };
     };
     
-    self.recommendations = {
-        good: new BenefitsPackage(self, 'Good'),
-        better: new BenefitsPackage(self, 'Better'),
-        best: new BenefitsPackage(self, 'Best')
-    };
-    
     self.selected_plan = ko.observable(new NullBenefitsPackage());
     self.selected_recommendation = ko.observable(null);
     
@@ -375,9 +386,15 @@ function WizardUI(product, defaults) {
         var rec = self.selected_plan().children_recommendation();
         return (rec.is_valid() && rec.recommended_benefit.is_valid());
     });
-    
+
     self.show_health_modal = function() {
         $("#health_modal").modal('show');
+    };
+    
+    self.recommendations = {
+        good: new BenefitsPackage(self, 'Good'),
+        better: new BenefitsPackage(self, 'Better'),
+        best: new BenefitsPackage(self, 'Best')
     };
     
     
@@ -847,6 +864,31 @@ function BenefitsPackage(root, name) {
         return people;
     });
     
+    self.get_all_covered_people = ko.computed(function() {
+        var people = [];
+        
+        if (root.did_select_employee_coverage()) {
+            var employee = root.employee();
+            employee.selected_coverage(self.employee_recommendation().recommended_benefit);
+            people.push(employee);
+        }
+        
+        if (root.did_select_spouse_coverage()) {
+            var spouse = root.spouse();
+            spouse.selected_coverage(self.spouse_recommendation().recommended_benefit);
+            people.push(spouse);
+        }
+        
+        if (root.did_select_children_coverage()) {
+            $.each(root.get_valid_children(), function () {
+                var child = this;
+                child.selected_coverage(self.children_recommendation().recommended_benefit);
+                people.push(child);
+            });
+        }
+        return people;
+    });
+    
     self.get_all_people_labels = ko.computed(function() {
         var labels = [root.employee().name()];
         if (root.should_include_spouse_in_table()) {
@@ -860,7 +902,24 @@ function BenefitsPackage(root, name) {
         }
         return labels;
     });
-    
+  
+    self.get_all_covered_people_labels = ko.computed(function() {
+        var labels = [];
+        if (root.did_select_employee_coverage()) {
+            labels.push(root.employee().name());
+        }
+        if (root.did_select_spouse_coverage()) {
+            labels.push(root.spouse().name());
+        }
+        if (root.did_select_children_coverage()) {
+            $.each(root.get_valid_children(), function () {
+                var child = this;
+                labels.push(child.name());
+            });
+        }
+        return labels;
+    });
+
     self.get_people_with_labels = ko.computed(function() {
         var people = self.get_all_people();
         var labels = self.get_all_people_labels();
@@ -896,7 +955,9 @@ function NullBenefitsPackage() {
     self.formatted_monthly_premium = function() { return "";};
     self.is_valid = function () {return false};
     self.get_all_people = function() {return [];};
+    self.get_all_covered_people = function() {return [];};
     self.get_all_people_labels = function() {return [];};
+    self.get_all_covered_people_labels = function() {return [];};
     self.get_people_with_labels = function() {return [];};
     self.has_at_least_one_benefit_selected = function() {return false;};
 }
@@ -1084,6 +1145,9 @@ function handle_existing_insurance_modal() {
  
     $("#health_modal").modal('show');
     $("#existing_warning_text").show();
+    
+    window.ui.existing_insurance = "yes";
+
 }
 function handle_existing_insurance_modal_remote() {
     $("#modal_text_existing_warning_title").show();
@@ -1100,6 +1164,7 @@ function handle_existing_insurance_modal_remote() {
 } 
 
 function reset_existing_insurance_warning() {
+    window.ui.existing_insurance = "no";
     $("#existing_warning_text_remote").hide();
     $("#existing_warning_text").hide();
 }
@@ -1306,7 +1371,7 @@ function init_validation() {
         if (info.step == 5) {
 	    var skip_for_now = true;
 	    if (skip_for_now) return true;
-            if (!$('#step5-form').valid()) return false;
+	    if (!$('#step5-form').valid()) return false;
         }
         if (info.step == 6) {
             if (!$('#step6-form').valid()) return false;
@@ -1336,11 +1401,27 @@ function init_validation() {
         var wizard_results = {
             agent_data: window.ui.defaults,
             
-	        identityToken: window.ui.identityToken(),
-	        identityType: window.ui.identityType(),
+	    identityToken: window.ui.identityToken(),
+	    identityType: window.ui.identityType(),
             
             employee: window.ui.employee().serialize_data(),
             spouse: window.ui.spouse().serialize_data(),
+            
+	    employee_addr1:  window.ui.addr1(),
+ 	    employee_addr2:  window.ui.addr2(),
+ 	    employee_city:  window.ui.city(),
+ 	    employee_state:  window.ui.state(),
+ 	    employee_zip:  window.ui.zip(),
+ 	    employee_phone:  window.ui.phone(),
+
+	    existing_insurance:  window.ui.existing_insurance,
+	    replacing_insurance:  window.ui.replacing_insurance,
+ 	    
+	    employee_owner:  window.ui.policy_owner(),
+ 	    employee_other_owner_name:  window.ui.other_owner_name(),
+ 	    employee_other_owner_ssn:  window.ui.other_owner_ssn(),
+	    spouse_owner:  window.ui.spouse_policy_owner(),
+ 	    spouse_other_owner_name:  window.ui.spouse_other_owner_name(),
             
             employee_beneficiary:  window.ui.employee_beneficiary(),
             spouse_beneficiary:  window.ui.spouse_beneficiary(),
@@ -1431,18 +1512,6 @@ function init_validation() {
         return this.optional(element) || /^\(\d{3}\) \d{3}\-\d{4}( x\d{1,6})?$/.test(value);
     }, "Enter a valid phone number.");
     
-    /*
-    $('#step1-form').validate({
-        errorElement: 'div',
-        errorClass: 'help-block',
-        rules: {
-            eeBenefitDOB: {
-                required: true
-            }
-        }
-    });
-    */
-    
     $('#step3-form').validate({
         errorElement: 'div',
         errorClass: 'help-block',
@@ -1507,8 +1576,7 @@ function init_validation() {
             spOtherOwnerName: {
 		required: true,
 		depends: "#spOwner-other:checked"
-	    }
-	    
+	    }	    
         },
 
         messages: {
@@ -1532,22 +1600,27 @@ function init_validation() {
         rules: {
             eeBeneOtherName: {
 		required: true,
-		//*** some problem here with syntax, I think
 		depends: function(element) {
-		    return (!ui.should_include_spouse_in_table || $("#eeBeneSpouse:!checked"))
+		    return (!window.ui.did_select_spouse_coverage() || $("#eeBeneOther").is(':checked'))
 		    }
 	    },
             eeBeneOtherRelation: {
 		required: true,
-		depends: "#spBeneSpouse:!checked"
+		depends: function(element) {
+		    return (!window.ui.did_select_spouse_coverage() || $("#eeBeneOther").is(':checked'))
+		    }
 	    },
             spBeneOtherName: {
 		required: true,
-		depends: "#spBeneSpouse:!checked"
+		depends: function(element) {
+		    return (window.ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
+		    }
 	    },
             spBeneOtherRelation: {
 		required: true,
-		depends: "#spBeneSpouse:!checked"
+		depends: function(element) {
+		    return (window.ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
+		    }
 	    }
 
 	    
@@ -1556,8 +1629,7 @@ function init_validation() {
         messages: {
             eeBeneOtherName: "required",
 	    eeBeneOtherRelation: "required",
-            spBeneficiary: "required",
-	    spBeneOtherName: "required",
+            spBeneOtherName: "required",
 	    spBeneOtherRelation: "required"
 	},
         

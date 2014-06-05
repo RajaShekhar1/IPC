@@ -43,6 +43,7 @@ class Product(object):
     def __init__(self, code, name, rate_table, recommendations):
         self.code = code
         self.name = name
+        self.id = None
 
         # Rate table data
         self.rate_table = rate_table
