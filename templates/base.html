@@ -28,36 +28,14 @@
         <li {% if active_page == 'nav_agentsign' %} class="active"{% endif %}id="nav_agentsign"><a href="{{ url_for ('inbox') }}">Sign</a></li>
       </ul>
 
-      <h2 class="text-muted">
-	<a  href="/"><img src="/static/img/5Star_logo_TAA.png"/></a>Online Enrollment
-      </h2>
+      <h3 class="text-muted">
+	  <a  href="/"><img src="/static/img/5Star_logo_TAA.png"/></a>
+	    &nbsp;&nbsp;&nbsp;&nbsp;Online Enrollment
+      </h3>
+      
     </div>    
 
     
-    <!-- 14-Jan-28  this was the original default div block on setup - keep temporarily for reference
-    <div class="navbar navbar-static-top navbar-default">
-      <div class="container">
-        <button class="navbar-toggle">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="/">TakeAnApp</a>
-        <div class="nav-collapse">
-          {% block navbar_right %}
-          <ul class="nav navbar-nav pull-right">
-            {% if not session.logged_in %}
-              <li><a href="#">Login or Signup</a></li>
-            {% else %}
-              <li><a href="#">Logout</a></li>
-            {% endif %}
-          </ul>
-          {% endblock %}
-        </div>
-      </div>
-    </div>
-    -------------/.navbar -->
-
     {% endblock %}
 
     <div class="container page">

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% set active_page = 'nav_enroll' -%}
+{% block title %} - Completed{% endblock %}
+
+{% block head %}
+ {{ super() }}
+<!-- page-specific header data -->
+    
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+<!-- ace styles -->
+<link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/five_star_ace_overlay.css') }}" rel="stylesheet">
+
+<!-- custom css -->
+<link href="{{ url_for('static', filename='css/five_star.css') }}" rel="stylesheet">
+
+
+{% endblock %}
+
+{% block navbar %}
+<!-- replace with non-navigable header -->
+<div class="header">
+  <h2 class="text-muted">
+    <img src="/static/img/5Star_logo_TAA.png"/>Application Enrollment
+  </h2>
+</div>    
+{% endblock %}
+
+
+{% block content %}
+
+{% set success =   ds_event == "signing_complete" %}
+{% set just_viewing  =  ds_event == "viewing_complete" %}
+{% set declined =  ds_event == "cancel" or ds_event == "decline" %}
+{% set timeout  =  ds_event == "session_timeout" %}
+{% set invalid  =  ds_event == "ttl_expired" %}
+{% set fax_pending  =  ds_event == "fax_pending" %}
+
+
+<div class="row">
+  <div class="col-xs-12">
+    <div class="well">
+      <h3 class="center text-primary">
+      {{user.name}}, thank you for registering for our online enrollment system.  Your registration will be reviewed by an administrator to confirm your agent code and appointment with 5Star Life Insurance.  
+<br><br>We'll then activate your account and send you an email to confirm your login.  Stay tuned!<br><br>
+            
+      </h3>
+    </div>
+
+    <div class="space-2"></div>
+    <div class="space-2"></div>
+    
+ 
+
+  </div><!-- /.col-xs12 -->
+</div><!-- /.row -->
+
+
+
+{% endblock %}
+
+<!-- basic scripts -->
+
+{% block js_footer %}
+{{ super() }}
+
+<!-- page-specific footer scripts -->
+
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Register Account{% endblock %}
+{% block head %}
+ {{ super() }}
+<!-- page-specific header data -->
+    
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+<!-- ace styles -->
+<link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/five_star_ace_overlay.css') }}" rel="stylesheet">
+
+
+{% endblock %}
+
+{% block navbar %}
+<!-- replace with non-navigable header -->
+<div class="header">
+  <h3 class="text-muted">
+    <img src="/static/img/5Star_logo_TAA.png"/>&nbsp;&nbsp;&nbsp;Online Enrollment
+  </h3>
+</div>
+{% endblock %}
+
+
+{% block content %}
+
+
+<div class="row">
+  <div class="col-sm-10 col-sm-offset-1">
+    <div class="login-container">
+
+      <div class="position-relative">
+
+	<div class="signup-box widget-box no-border">
+	  <div class="widget-body">
+	    <div class="widget-main">
+	      <h4 class="header green lighter bigger">
+		Agent/Enroller Registration
+	      </h4>
+
+	      <div class="space-6"></div>
+	      <p> Please enter your details: </p>
+
+	      
+            <form class="registration-form form-horizontal sp-form" action="/taa_register" role="form" method="post">
+              {{ form.hidden_tag() }}
+              
+	      <!-- <form> -->
+		<fieldset>
+		  <label class="block clearfix">
+		    <span class="block input-icon input-icon-right">
+		      {{ form.email(class='form-control', placeholder='Email (will be userid)', required='false', type='email') }}
+		      <i class="icon-envelope"></i>
+		    </span>
+		  </label>
+
+		  <label class="block clearfix">
+		    <span class="block input-icon input-icon-right">
+		      {{ form.password(class='form-control', placeholder='Password', required='false', type='password') }}
+		      <i class="icon-lock"></i>
+		    </span>
+		  </label>
+
+		  <label class="block clearfix">
+		    <span class="block input-icon input-icon-right">
+		      {{ form.repassword(class='form-control', placeholder='Repeat password', required='false', type='password') }}
+		      <i class="icon-retweet"></i>
+		    </span>
+		  </label>
+
+		  <label class="block clearfix">
+		    <span class="block input-icon input-icon-right">
+		      <input type="text" class="form-control" placeholder="Full name for signing applications" />
+		      <i class="icon-user"></i>
+		    </span>
+		  </label>
+
+		  <label class="block clearfix">
+		    <span class="block input-icon input-icon-right">
+		      <input type="text" class="form-control" placeholder="Agency Name" />
+		      <i class="icon-home"></i>
+		    </span>
+		  </label>
+
+		  <label class="block clearfix">
+		    <span class="block input-icon input-icon-right">
+		      <input type="text" class="form-control" placeholder="5Star Agent Code to use on applications" />
+		      <i class="icon-star"></i>
+		    </span>
+		  </label>
+
+		  <label class="block">
+		    <input type="checkbox" class="ace" />
+		    <span class="lbl">
+		      I accept the
+		      <a href="#">User Agreement</a>
+		    </span>
+		  </label>
+
+		  <div class="space-24"></div>
+
+		  <div class="clearfix">
+		    <button type="reset" class="width-30 pull-left btn btn-sm">
+		      <i class="icon-refresh"></i>
+		      <span class="bigger-110">Reset</span>
+		    </button>
+
+		    <button type="button" class="width-65 pull-right btn btn-sm btn-success">
+		      <span class="bigger-110">Register</span>
+
+		      <i class="icon-arrow-right icon-on-right"></i>
+		    </button>
+		  </div>
+		</fieldset>
+	      <!--  </form>  -->
+	    </div>
+	  </div><!-- /.widget-body -->
+	</div><!-- /.signup-box -->
+      </div><!-- /.position-relative -->
+
+    </div>
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+
+
+  <div class="container custom-container">
+    <div class="va-wrapper">
+      <div class="view registration-view container">
+        <div class="box row">
+          <div class="col-sm-12">
+            <div class="header">
+              <span>Create an Account</span>
+            </div>
+	    <!-- 
+            <form class="registration-form form-horizontal sp-form" role="form" method="post">
+              {{ form.hidden_tag() }}
+              {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                  <div class="alert alert-danger">
+                    {% for message in messages %}
+                      {{ message }}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              {% endwith %}
+		  -->
+              {% if config['STORMPATH_ENABLE_GIVEN_NAME'] %}
+                <div class="form-group group-first-name" form-group>
+                  <label class="col-sm-4">First Name</label>
+                  <div class="col-sm-8">
+                    {% if config['STORMPATH_REQUIRE_GIVEN_NAME'] %}
+                      {{ form.given_name(class='form-control', placeholder='First Name', required='false') }}
+                    {% else %}
+                      {{ form.given_name(class='form-control', placeholder='First Name') }}
+                    {% endif %}
+                  </div>
+                </div>
+              {% endif %}
+              {% if config['STORMPATH_ENABLE_SURNAME'] %}
+                <div class="form-group group-last-name" form-group>
+                  <label class="col-sm-4">Last Name</label>
+                  <div class="col-sm-8">
+                    {% if config['STORMPATH_REQUIRE_SURNAME'] %}
+                      {{ form.surname(class='form-control', placeholder='Last Name', required='false') }}
+                    {% else %}
+                      {{ form.surname(class='form-control', placeholder='Last Name') }}
+                    {% endif %}
+                  </div>
+                </div>
+              {% endif %}
+
+              <button class="btn btn-register btn-sp-green" type="submit">Create Account</button>
+            </form>
+          </div>
+        </div>
+        <a class="to-login" href="{{ url_for('stormpath.login') }}">Back to Log In</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}
