@@ -31,19 +31,12 @@
 
 {% block content %}
 
-{% set success =   ds_event == "signing_complete" %}
-{% set just_viewing  =  ds_event == "viewing_complete" %}
-{% set declined =  ds_event == "cancel" or ds_event == "decline" %}
-{% set timeout  =  ds_event == "session_timeout" %}
-{% set invalid  =  ds_event == "ttl_expired" %}
-{% set fax_pending  =  ds_event == "fax_pending" %}
-
 
 <div class="row">
   <div class="col-xs-12">
     <div class="well">
       <h3 class="center text-primary">
-      {{user.name}}, thank you for registering for our online enrollment system.  Your registration will be reviewed by an administrator to confirm your agent code and appointment with 5Star Life Insurance.  
+      {{name}}, thank you for registering for our online enrollment system.  Your registration will be reviewed by an administrator to confirm your agent code and appointment with 5Star Life Insurance.  
 <br><br>We'll then activate your account and send you an email to confirm your login.  Stay tuned!<br><br>
             
       </h3>

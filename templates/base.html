@@ -19,13 +19,16 @@
   <body>
     {% block navbar %}
     
+    <!--
     {% set active_page = active_page|default('nav_home') -%}
+    -->
 
     <div class="header">
       <ul class="nav nav-pills pull-right">
-	<li {% if active_page == 'nav_home' %} class="active"{% endif %} id="nav_home"><a href="{{ url_for ('home') }}">Home</a></li>
-        <li {% if active_page == 'nav_enroll' %} class="active"{% endif %} id="nav_enroll"><a  href="{{ url_for ('enroll_start') }}">Enroll</a></li>
-        <li {% if active_page == 'nav_agentsign' %} class="active"{% endif %}id="nav_agentsign"><a href="{{ url_for ('inbox') }}">Sign</a></li>
+	<li class={% if active_page == 'nav_home' %}"active"{% else %}"inactive"{% endif %} id="nav_home"><a href="{{ url_for ('home') }}">Home</a></li>
+        <li class={% if active_page == 'nav_enroll' %}"active"{% else %}"inactive"{% endif %} id="nav_enroll"><a  href="{{ url_for ('enroll_start') }}">Enroll</a></li>
+        <li class={% if active_page == 'nav_agentsign' %}"active"{% else %}"inactive"{% endif %} id="nav_agentsign"><a href="{{ url_for ('inbox') }}">Sign</a></li>
+        <li id="nav_logout"><a href="{{ url_for ('taa_logout') }}">Logout</a></li>
       </ul>
 
       <h3 class="text-muted">

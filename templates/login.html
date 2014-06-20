@@ -1,5 +1,6 @@
 <!-- extend from base layout -->
 {% extends "base.html" %}
+{% set active_page = "NULL" -%}
 {% block title %} - Login{% endblock %}
 
 {% block head %}
@@ -16,6 +17,15 @@
 
 {% endblock %}
 
+{% block navbar %}
+<!-- replace with non-navigable header -->
+<div class="header">
+  <h3 class="text-muted">
+    <a  href="/"><img src="/static/img/5Star_logo_TAA.png"/></a>
+	    &nbsp;&nbsp;&nbsp;&nbsp;Online Enrollment
+  </h3>
+</div>
+{% endblock %}
 
 {% block content %}
 
@@ -34,18 +44,19 @@
 
 	      <div class="space-6"></div>
 
-	      <form>
+	      <form role="form" method="post">
+		{{ form.hidden_tag() }}
 		<fieldset>
 		  <label class="block clearfix">
 		    <span class="block input-icon input-icon-right">
-		      <input type="text" class="form-control" placeholder="Username (email)" />
+		      {{ form.login(autofocus='true', class='form-control', placeholder='Username (email)', required='true') }}
 		      <i class="icon-envelope"></i>
 		    </span>
 		  </label>
 
 		  <label class="block clearfix">
 		    <span class="block input-icon input-icon-right">
-		      <input type="password" class="form-control" placeholder="Password" />
+		      {{ form.password(class='form-control', placeholder='Password', required='true') }}
 		      <i class="icon-lock"></i>
 		    </span>
 		  </label>
@@ -53,12 +64,13 @@
 		  <div class="space"></div>
 
 		  <div class="clearfix">
+		    <!-- 
 		    <label class="inline">
 		      <input type="checkbox" class="ace" />
 		      <span class="lbl"> Remember Me</span>
 		    </label>
-
-		    <button type="button" class="width-35 pull-right btn btn-sm btn-primary">
+		    -->
+		    <button type="submit" class="width-35 pull-right btn btn-sm btn-primary">
 		      <i class="icon-key"></i>
 		      <span class="bigger-110">Login</span>
 		    </button>
@@ -71,16 +83,18 @@
 	    </div><!-- /.widget-main -->
 
 	    <div class="toolbar clearfix">
+	      <!-- PLACEHOLDER for when ready to expose UI for FORGOT-PASSWORD
 	      <div>
 		<a href="#" data-target="#forgot-box" class="forgot-password-link">
 		  <i class="icon-arrow-left"></i>
 		  I forgot my password
 		</a>
 	      </div>
+	      -->
 
 	      <div>
-		<a href="#" data-target="#signup-box" class="user-signup-link">
-		  I want to register
+		<a href="{{ url_for('register_taa') }}" class="user-signup-link">
+		  I need to register
 		  <i class="icon-arrow-right"></i>
 		</a>
 	      </div>
@@ -88,135 +102,6 @@
 	  </div><!-- /.widget-body -->
 	</div><!-- /.login-box -->
 
-	<div id="forgot-box" class="forgot-box widget-box no-border">
-	  <div class="widget-body">
-	    <div class="widget-main">
-	      <h4 class="header red lighter bigger">
-		<i class="icon-key"></i>
-		Retrieve Password
-	      </h4>
-
-	      <div class="space-6"></div>
-	      <p>
-		Enter your email to receive reset instructions
-	      </p>
-
-	      <form>
-		<fieldset>
-		  <label class="block clearfix">
-		    <span class="block input-icon input-icon-right">
-		      <input type="email" class="form-control" placeholder="Email" />
-		      <i class="icon-envelope"></i>
-		    </span>
-		  </label>
-
-		  <div class="clearfix">
-		    <button type="button" class="width-35 pull-right btn btn-sm btn-danger">
-		      <i class="icon-lightbulb-o"></i>
-		      <span class="bigger-110">Reset login!</span>
-		    </button>
-		  </div>
-		</fieldset>
-	      </form>
-	    </div><!-- /.widget-main -->
-
-	    <div class="toolbar center">
-	      <a href="#" data-target="#login-box" class="back-to-login-link">
-		Back to login
-		<i class="icon-arrow-right"></i>
-	      </a>
-	    </div>
-	  </div><!-- /.widget-body -->
-	</div><!-- /.forgot-box -->
-
-	<div id="signup-box" class="signup-box widget-box no-border">
-	  <div class="widget-body">
-	    <div class="widget-main">
-	      <h4 class="header green lighter bigger">
-		New User Registration
-	      </h4>
-
-	      <div class="space-6"></div>
-	      <p> Enter your details to begin: </p>
-
-	      <form>
-		<fieldset>
-		  <label class="block clearfix">
-		    <span class="block input-icon input-icon-right">
-		      <input type="email" class="form-control" placeholder="Email (will be userid)" />
-		      <i class="icon-envelope"></i>
-		    </span>
-		  </label>
-
-		  <label class="block clearfix">
-		    <span class="block input-icon input-icon-right">
-		      <input type="password" class="form-control" placeholder="Password" />
-		      <i class="icon-lock"></i>
-		    </span>
-		  </label>
-
-		  <label class="block clearfix">
-		    <span class="block input-icon input-icon-right">
-		      <input type="password" class="form-control" placeholder="Repeat password" />
-		      <i class="icon-retweet"></i>
-		    </span>
-		  </label>
-
-		  <label class="block clearfix">
-		    <span class="block input-icon input-icon-right">
-		      <input type="text" class="form-control" placeholder="Full name for signing applications" />
-		      <i class="icon-user"></i>
-		    </span>
-		  </label>
-
-		  <label class="block clearfix">
-		    <span class="block input-icon input-icon-right">
-		      <input type="text" class="form-control" placeholder="Agency Name" />
-		      <i class="icon-home"></i>
-		    </span>
-		  </label>
-
-		  <label class="block clearfix">
-		    <span class="block input-icon input-icon-right">
-		      <input type="text" class="form-control" placeholder="5Star Agent Code to use on applications" />
-		      <i class="icon-star"></i>
-		    </span>
-		  </label>
-
-		  <label class="block">
-		    <input type="checkbox" class="ace" />
-		    <span class="lbl">
-		      I accept the
-		      <a href="#">User Agreement</a>
-		    </span>
-		  </label>
-
-		  <div class="space-24"></div>
-
-		  <div class="clearfix">
-		    <button type="reset" class="width-30 pull-left btn btn-sm">
-		      <i class="icon-refresh"></i>
-		      <span class="bigger-110">Reset</span>
-		    </button>
-
-		    <button type="button" class="width-65 pull-right btn btn-sm btn-success">
-		      <span class="bigger-110">Register</span>
-
-		      <i class="icon-arrow-right icon-on-right"></i>
-		    </button>
-		  </div>
-		</fieldset>
-	      </form>
-	    </div>
-
-	    <div class="toolbar center">
-	      <a href="#" data-target="#login-box" class="back-to-login-link">
-		<i class="icon-arrow-left"></i>
-		Back to login
-	      </a>
-	    </div>
-	  </div><!-- /.widget-body -->
-	</div><!-- /.signup-box -->
       </div><!-- /.position-relative -->
 
     </div>
@@ -230,32 +115,5 @@
 
 <!-- page-specific footer scripts -->
 
-  <!-- inline scripts related to this page -->
-  <script type="text/javascript">
-    jQuery(function($) {
-        
-        // Hide these when the page loads
-        $("#forgot-box").hide();
-        $("#signup-box").hide();
-        
-        $(".forgot-password-link").on('click', function() {
-             $("#forgot-box").show();
-             $("#login-box").hide();
-        });
-        $(".user-signup-link").on('click', function() {
-             $("#login-box").hide();
-             $("#signup-box").show();
-        });
-        $(".back-to-login-link").on('click', function() {
-             $("#forgot-box").hide();
-             $("#signup-box").hide();
-             $("#login-box").show();
-             
-        });
-        
-        
-    });
-      
-  </script>
   
 {% endblock %}

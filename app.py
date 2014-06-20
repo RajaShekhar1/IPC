@@ -8,6 +8,7 @@ from flask import (
     send_from_directory,
     url_for,
     flash,
+    session,
     redirect,
     request,
     jsonify,
@@ -23,19 +24,26 @@ from docu_console import console_sample
 from docu_email import emailing_sample
 
 from model.Database import Database
-from model.Enrollment import EnrollmentEmail, Case, Enrollment
+from model.Enrollment import EnrollmentEmail, Case, Enrollment, AgentActivationEmail
 from model.Product import get_age_from_birthday, get_product_by_code
 from model.States import get_states
-from model.Registration import TAA_RegistrationForm
+from model.Registration import (
+    TAA_RegistrationForm,
+    TAA_LoginForm,
+    TAA_UserForm,
+)
 from flask.ext.stormpath import (
     StormpathError,
     StormpathManager,
     User,
     login_required,
+    groups_required,
     login_user,
     logout_user,
     user,
 )
+from json import dumps
+from stormpath.client import Client
 
 
 
@@ -77,10 +85,20 @@ app.config['STORMPATH_API_KEY_SECRET'] = 'wiZWfjnQu3qBSAYIbQskIn8CKJf/q0A8KxSdMN
 app.config['STORMPATH_APPLICATION'] = 'TAA'
 
 app.config['STORMPATH_COOKIE_DURATION'] = timedelta(minutes=10)
-app.config['STORMPATH_LOGIN_URL'] = '/start'
+app.config['STORMPATH_LOGIN_URL'] = '/login'
 app.config['STORMPATH_LOGIN_TEMPLATE'] = 'login.html'
 app.config['STORMPATH_ENABLE_REGISTRATION'] = False
+app.config['STORMPATH_ENABLE_LOGIN'] = False
 stormpath_manager = StormpathManager(app)
+
+"""
+stormpathClient = Client(
+    id = app.config['STORMPATH_API_KEY_ID'],
+    secret = app.config['STORMPATH_API_KEY_SECRET'],
+)
+
+stormpathApp = stormpathClient.applications.search('TAA')[0]
+"""
 
 
 """--------------------------------------------------------------
@@ -97,12 +115,21 @@ def page_not_found(e):
 
 @app.route("/")
 def index():
-    return render_template('index.html')
+
+    if user and not user.is_anonymous():
+        return redirect(url_for('home'))
+        #return render_template('index.html')
+        
+    return redirect(url_for('login'))
 
 @app.route("/home")
 @login_required
 def home():
     return render_template('home.html')
+
+@app.route("/robots.txt")
+def robots():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'robots.txt')
 
 
 """--------------------------------------------------------------
@@ -310,75 +337,7 @@ def ds_landing_page():
 Login & Registration from Stormpath
 """
 
-#@app.route("/taa_register", methods=['GET', 'POST'])
-def register_original():
-    """
-    Register a new user with Stormpath.
-
-    This view will render a registration template, and attempt to create a new
-    user account with Stormpath.
-
-    The fields that are asked for, the URL this view is bound to, and the
-    template that is used to render this page can all be controlled via
-    Flask-Stormpath settings.
-    """
-    form = TAA_RegistrationForm()
-
-    # If we received a POST request with valid information, we'll continue
-    # processing.
-    if form.validate_on_submit():
-        fail = False
-
-        # Iterate through all fields, grabbing the necessary form data and
-        # flashing error messages if required.
-        data = form.data
-        for field in data.keys():
-            if app.config['STORMPATH_ENABLE_%s' % field.upper()]:
-                if app.config['STORMPATH_REQUIRE_%s' % field.upper()] and not data[field]:
-                    fail = True
-
-                    # Manually override the terms for first / last name to make
-                    # errors more user friendly.
-                    if field == 'given_name':
-                        field = 'first name'
-
-                    elif field == 'surname':
-                        field = 'last name'
-
-                    flash('%s is required.' % field.replace('_', ' ').title())
-
-        # If there are no missing fields (per our settings), continue.
-        if not fail:
-
-            # Attempt to create the user's account on Stormpath.
-            try:
-
-                # Since Stormpath requires both the given_name and surname
-                # fields be set, we'll just set the both to 'Anonymous' if
-                # the user has # explicitly said they don't want to collect
-                # those fields.
-                data['given_name'] = data['given_name'] or 'Anonymous'
-                data['surname'] = data['given_name'] or 'Anonymous'
-
-                # Create the user account on Stormpath.  If this fails, an
-                # exception will be raised.
-                account = User.create(**data)
-
-                # If we're able to successfully create the user's account,
-                # we'll log the user in (creating a secure session using
-                # Flask-Login), then redirect the user to the
-                # STORMPATH_REDIRECT_URL setting.
-                login_user(account, remember=True)
-
-                return redirect(app.config['STORMPATH_REDIRECT_URL'])
-            except StormpathError, err:
-                flash(err.user_message)
-
-    return render_template(app.config['STORMPATH_REGISTRATION_TEMPLATE'],
-                           form = form,
-    )
-
-@app.route("/taa_register", methods=['GET', 'POST'])
+@app.route("/user_register", methods=['GET', 'POST'])
 def register_taa():
     """
     Register a new user with Stormpath, adding TAA customizations.
@@ -386,56 +345,21 @@ def register_taa():
     https://github.com/stormpath/stormpath-flask/blob/master/flask_stormpath/views.py#L21
 
     """
-    print "---- Before form stuff ---"
     form = TAA_RegistrationForm()
 
     data = form.data
-    for field in data.keys():
-        if data[field]:
-            val = data[field]
-        else:
-            val = "Null"
-        if field:
-            print 'field ' + field +' is upper=' + field.upper() + ', title=' + field.title() + ', and data=' + val
-            sys.stdout.flush()
-    print "------ DONE ------"
-    sys.stdout.flush()
-
-    # If we received a POST request with valid information, we'll continue
-    # processing.
+    
     if form.validate_on_submit():
-        print "****** I never see this ******"
-        sys.stdout.flush()
-        
         fail = False
 
         # Iterate through all fields, grabbing the necessary form data and
         # flashing error messages if required.
-        print "--------- <<Inside Validate>> -----------"
-        sys.stdout.flush()
-            
-    
+        
         data = form.data
-        for field in data.keys():
-            print 'field ' + field + ' is upper=' + field.upper() + ', title=' + field.title() + ', and data=' + data[field]
-            sys.stdout.flush()
-    
-       
-            """
-            if app.config['STORMPATH_ENABLE_%s' % field.upper()]:
-                if app.config['STORMPATH_REQUIRE_%s' % field.upper()] and not data[field]:
-                    fail = True
-
-                    # Manually override the terms for first / last name to make
-                    # errors more user friendly.
-                    if field == 'given_name':
-                        field = 'first name'
-
-                    elif field == 'surname':
-                        field = 'last name'
-
-                    flash('%s is required.' % field.replace('_', ' ').title())
-            """
+        
+        if data['password'] != data['repassword']:
+            fail = True
+            flash("Passwords don't match.")
 
         # If there are no missing fields (per our settings), continue.
         if not fail:
@@ -443,60 +367,207 @@ def register_taa():
             # Attempt to create the user's account on Stormpath.
             try:
 
-                # Since Stormpath requires both the given_name and surname
-                # fields be set, we'll just set the both to 'Anonymous' if
-                # the user has # explicitly said they don't want to collect
-                # those fields.
-                data['custom_data'] = data['given_name'] or 'Anonymous'
-                data['surname'] = data['given_name'] or 'Anonymous'
-
                 # Create the user account on Stormpath.  If this fails, an
                 # exception will be raised.
-                account = User.create(**data)
+                account = User.create(
+                    email = data['email'],
+                    password = data['password'],
+                    given_name = data['given_name'] or 'Anonymous',
+                    middle_name = data.get('middle_name'),
+                    surname = data['surname'] or 'Anonymous',
+                    custom_data = {
+                        'signing_name': data['signing_name'],
+                        'agent_code': data['agent_code'],
+                        'agency': data['agency'],
+                        'activated': False,
+                    },
+                )
+
 
                 # If we're able to successfully create the user's account,
                 # we'll log the user in (creating a secure session using
                 # Flask-Login), then redirect the user to the
                 # STORMPATH_REDIRECT_URL setting.
-                login_user(account, remember=True)
+                #login_user(account, remember=True)
 
-                return redirect(app.config['STORMPATH_REDIRECT_URL'])
+                session['registered_name'] = data['given_name']
+
+                return redirect(url_for('confirmRegistration'))
             except StormpathError, err:
                 flash(err.user_message)
 
-    return render_template('register-orig.html', 
+    return render_template('register.html', 
                            form = form
             )
 
 @app.route("/registration_confirmed")
 def confirmRegistration():
-    return render_template('registration_complete.html')
-app.config['STORMPATH_REDIRECT_URL'] = '/registration_confirmed'
+    return render_template('registration_complete.html',
+                           name = session['registered_name'])
+#app.config['STORMPATH_REDIRECT_URL'] = '/registration_confirmed'
 
 
-@app.route('/login2', methods = ['GET', 'POST'])
+@app.route('/login', methods = ['GET', 'POST'])
 def login():
-    form = LoginForm()
+    """
+    Log in an existing Stormpath user.
+    """
+    form = TAA_LoginForm()
+
+    # If we received a POST request with valid information, we'll continue
+    # processing.
     if form.validate_on_submit():
-        flash('Login requested for OpenID="' + form.openid.data + '", remember_me=' + str(form.remember_me.data))
-        return redirect('/demo')
-    return render_template('login.html', 
-                           title = 'Sign In',
+        try:
+            # Try to fetch the user's account from Stormpath.  If this
+            # fails, an exception will be raised.
+            account = User.from_login(form.login.data, form.password.data)
+
+            # If we're able to successfully retrieve the user's account,
+            # we'll log the user in (creating a secure session using
+            # Flask-Login), then redirect the user to the ?next=<url>
+            # query parameter, or just the HOME page
+
+            print "LOGIN: %s %s, (%s  %s)" % (account.given_name, account.surname, account.email, account.custom_data['activated'])
+            is_admin =  account.email=="admin@5starenroll.com"
+            
+            if account.custom_data['activated'] or is_admin:
+                login_user(account, remember=True) 
+                if is_admin:
+                    return redirect(url_for('admin'))
+                else:
+                    return redirect(request.args.get('next') or url_for('home'))
+            else:
+                flash(account.given_name + ", your account (" + account.email + ") has not yet been activated.  Please wait for an email confirmation from the Enrollment Administrator.  If you submitted your registration more than 24 hours ago, feel free to contact admin@5StarEnroll.com with any questions.  Thank you.")
+                return redirect(url_for('login'))
+
+        except StormpathError, err:
+            flash(err.user_message)
+
+    return render_template('login.html',
                            form = form,
-                           providers = app.config['OPENID_PROVIDERS'])
+    )
+
+@app.route("/exit")
+def taa_logout():
+    """ Not sure how to hook into Stormpath /login URL in base.html template, so this is here just to be a handle for that
+    """
+    try:
+        print "LOGOUT: ", user.email
+    except:
+        print "LOGOUT: <error on accessing user object>"
+            
+    return redirect('logout')
+    
+"""
+--------------------------------------------------------------
+ADMIN pages
+"""
+
+#  14-Jun-17 WSD 
+@login_required
+@groups_required(['admins'])
+@app.route('/admin', methods = ['GET', 'POST'])
+def admin():
+    accounts = []
+    for acc in stormpath_manager.application.accounts:
+        accounts.append(
+            {'fname': acc.given_name,
+             'lname': acc.surname,
+             'email': acc.email,
+             'agency': acc.custom_data['agency'],
+             'agent_code': acc.custom_data['agent_code'],
+             'signing_name': acc.custom_data['signing_name'],
+             'status': "Activated" if acc.custom_data['activated'] else "Not Activated"
+         })
+        #print dumps(dict(acc.custom_data), indent=2, sort_keys=True)
+        
+    #show the un-activated accounts first
+    accounts = sorted(accounts, reverse=True, key=(lambda x: x['status']))
+    return render_template('admin.html', accounts=accounts)
+
+
+@login_required
+@groups_required(['admins'])
+@app.route('/edituser', methods = ['GET', 'POST'])
+def updateUser():
+
+    user_email = request.args['user']
+    form = TAA_UserForm()
+    
+    # initially pre-populate the form with account values
+    if request.method == 'GET':
+        accounts = stormpath_manager.application.accounts.query(email=user_email)
+        if not accounts:
+            flash('Failed to find user ' + user_email)
+            return redirect(url_for('admin'))
+        else:
+            account = accounts[0]
+            
+            form.fname.data = account.given_name
+            form.lname.data = account.surname
+            form.email.data = account.email
+            form.agency.data = account.custom_data['agency']
+            form.agent_code.data = account.custom_data['agent_code']
+            form.signing_name.data = account.custom_data['signing_name']
+            form.status.data = "Activated" if account.custom_data['activated'] else "Not Activated"
+            form.activated.data = account.custom_data['activated']
+     
+    if form.validate_on_submit():
+        try:
+            accounts = stormpath_manager.application.accounts.query(email=user_email)
+            if not accounts:
+                flash('Failed to find user ' + user_email)
+            else:        
+                account = accounts[0]
+                data = form.data
+                
+                # edit some custom data fields
+                account.given_name = data['fname']
+                account.surname = data['lname']
+                account.email = data['email']
+                
+                account.custom_data['agency'] = data['agency']
+                account.custom_data['agent_code'] = data['agent_code']
+                account.custom_data['signing_name'] = data['signing_name']
+                account.custom_data['activated'] = data['activated']
+                
+                # save your changes
+                account.save()
+                flash('User ' + user_email + ' updated successfully!')
+
+                # if we've just activated a user, then send a notice
+                if data['activated'] and data['send_notice']:                    
+                    email_config = dict(
+                        smtp_server=config.get('email', 'smtp_server'),
+                        smtp_port=config.get('email', 'smtp_port'),
+                        smtp_user=config.get('email', 'smtp_username'),
+                        smtp_password=config.get('email', 'smtp_password'),
+                        from_address=config.get('email', 'from_address'),
+                    )
+                    
+                    try:
+                        AgentActivationEmail(**email_config).send_activation_notice(data['email'], data['fname'], url_for('home'))
+                        flash('Activation email sent.')
+                    except:
+                        flash('>> Problem sending activation email <<')
+                    
+
+
+            return redirect(url_for('admin'))
+        except StormpathError, err:
+            flash(err.user_message)
+
+    return render_template('update-user.html',
+                           form = form,
+    )
 
 
 """--------------------------------------------------------------
 DEMO and testing pages
 """
-@app.route("/demo")
-def sample():
-    return render_template('sample.html',
-                           directSignURL = url_for ('launchDirect'),
-                           recipName = 'JoeBob Johnson')
 
 
-@app.route('/send-app', methods = ['GET', 'POST'])
+"""@app.route('/send-app', methods = ['GET', 'POST'])
 def sendApp():
     form = UserEmailForm()
     if form.validate_on_submit():
@@ -510,25 +581,7 @@ def sendApp():
             return redirect('/demo')
     return render_template('emailSendRequest.html', 
                            form = form)
-
-
-@app.route('/launch-direct', methods = ['GET', 'POST'])
-def launchDirect():
-    
-    form = UserDirectForm()
-    if form.validate_on_submit():
-        return redirect ( signing_sample(form.full_name.data, form.employer.data, form.email_addr.data, url_for('index')))
-    return render_template('inPersonRequest.html', 
-                           form = form)
-
-
-@app.route('/in-person-signing', methods = ['GET', 'POST'])
-def inPersonSign():
-    form = UserDirectForm()
-    if form.validate_on_submit():
-        return redirect ( create_envelope_and_get_signing_url(form.full_name.data, form.employer.data, form.email_addr.data, url_for('index')))
-    return render_template('inPersonRequest.html', 
-                           form = form)
+"""
 
 @app.route("/test")
 #  14-Apr-22 WSD modified to new test file

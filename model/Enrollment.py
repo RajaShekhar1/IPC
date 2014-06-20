@@ -7,6 +7,7 @@ from email.mime.text import MIMEText
 from flask import url_for, render_template
 from dateutil.relativedelta import relativedelta
 from mailer import Mailer, Message
+from flask.ext.stormpath import user
 
 class Case(object):
     def __init__(self, id, company_name, situs_state, product):
@@ -93,4 +94,44 @@ class EnrollmentEmail(object):
         connection.sendmail(self.smtp_user, to_user, msg.as_string())
         connection.close()
         
+        
+
+class AgentActivationEmail(object):
+    """
+    This perhaps should go elsewhere, but wanted to send a near-identical email as EnrollmentEmail above.  Probably should abstract the functions, but we can do that in Phase N+1
+    """
+    def __init__(self, smtp_server, smtp_port, smtp_user, smtp_password, from_address):
+        self.smtp_server = smtp_server
+        self.smtp_port = smtp_port
+        self.smtp_user = smtp_user
+        self.smtp_password = smtp_password
+        self.from_address = from_address
+        
+    def send_activation_notice(self, to_email, agent_name, url):
+        
+        to_user = to_email
+        
+        msg = MIMEMultipart()
+        msg['From'] = self.from_address
+        msg['To'] = to_user
+        msg['Subject'] = "Activation Notice for 5Star Online Enrollment"
+        body = render_template(
+            "activation_email.html",
+            agent_name=agent_name,
+            landing_url=url
+        )
+        
+        print "url is ", url
+
+        msg.attach(MIMEText(body, 'html'))
+        
+        connection = smtplib.SMTP("smtp.gmail.com", 587)
+        connection.ehlo()
+        if self.smtp_user and self.smtp_password:
+            connection.starttls()
+            connection.ehlo()
+            connection.login(self.smtp_user, self.smtp_password)
+        
+        connection.sendmail(self.smtp_user, to_user, msg.as_string())
+        connection.close()
         

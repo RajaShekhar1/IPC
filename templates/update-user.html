@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% set active_page = "NULL" -%}
+{% block title %} - Admin Console{% endblock %}
+
+{% block head %}
+ {{ super() }}
+<!-- page-specific header data -->
+    
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+<!-- ace styles -->
+<link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/five_star_ace_overlay.css') }}" rel="stylesheet">
+
+<!-- custom css -->
+<link href="{{ url_for('static', filename='css/five_star.css') }}" rel="stylesheet">
+
+
+{% endblock %}
+
+{% block content %}
+  <div class="container custom-container">
+    <div class="va-wrapper">
+      <div class="view registration-view container">
+        <div class="box row">
+          <div class="col-sm-12">
+            <div class="header">
+              <span>Update an Account</span>
+            </div>
+
+	    <!-- <form> -->
+            <form class="form-horizontal sp-form" role="form" method="post">
+	      {{ form.hidden_tag() }}
+              
+	      <fieldset>
+		<label class="col-sm-3">First Name</label>
+		<div class="col-sm-9">
+ 		  {{ form.fname(class='form-control', required='true') }}
+		</div>
+		
+		<label class="col-sm-3">Last Name</label>
+		<div class="col-sm-9">
+ 		  {{ form.lname(class='form-control', required='true') }}
+		</div>
+		
+		<label class="col-sm-3">Email</label>
+		<div class="col-sm-9">
+ 		  {{ form.email(class='form-control', required='true') }}
+		</div>
+		
+		<label class="col-sm-3">Agency</label>
+		<div class="col-sm-9">
+ 		  {{ form.agency(class='form-control', required='true') }}
+		</div>
+		
+		<label class="col-sm-3">5Star Agent Code</label>
+		<div class="col-sm-9">
+ 		  {{ form.agent_code(class='form-control', required='true') }}
+		</div>
+		
+		<label class="col-sm-3">Signing Name</label>
+		<div class="col-sm-9">
+ 		  {{ form.signing_name(class='form-control', required='true') }}
+		</div>
+		
+		<br>
+		<span class="col-sm-3"></span>
+		<div class="col-sm-4 bigger-140 center">
+		  {{form.activated}} 
+		  {% if form.activated.data %}
+		  <span class="label bigger-140 label-success">Activated!
+		  {% else %}
+		    <span class="label bigger-140 label-danger">Activated?
+		  {% endif %}
+		  </span>
+		</div>
+		<div class="col-sm-5 bigger-140 center">
+		  {{form.send_notice}}
+		  <span class="text-danger">Send activation email?</span>
+		</div>
+	      </fieldset>
+	      
+	      <br><br>
+	      	      
+
+	      <div class="clearfix">
+		<a href="{{url_for('admin')}}" class=" pull-left btn btn-warning">
+		  <span class="bigger-110">Cancel</span>
+		</a>
+		<button type="submit" class="pull-right btn btn-info">
+		  <span class="bigger-110">Update</span>
+		</button>
+	      </div>
+	      
+	      
+            </form><!--  </form>  -->
+	    
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
