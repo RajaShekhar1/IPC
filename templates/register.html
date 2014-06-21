@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Register Account{% endblock %}
+{% block head %}
+ {{ super() }}
+<!-- page-specific header data -->
+    
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+<!-- ace styles -->
+<link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/five_star_ace_overlay.css') }}" rel="stylesheet">
+
+
+{% endblock %}
+
+{% block navbar %}
+<!-- replace with non-navigable header -->
+<div class="header">
+  <h3 class="text-muted">
+    <a  href="/"><img src="/static/img/5Star_logo_TAA.png"/></a>
+	    &nbsp;&nbsp;&nbsp;&nbsp;Enrollment
+  </h3>
+</div>
+{% endblock %}
+
+
+{% block content %}
+
+
+<div class="row">
+  <div class="col-sm-10 col-sm-offset-1">
+    <div class="login-container">
+
+      <div class="position-relative">
+
+	<div class="signup-box widget-box no-border">
+	  <div class="widget-body">
+	    <div class="widget-main">
+	      <h4 class="header green lighter bigger">
+		Agent/Enroller Registration
+	      </h4>
+
+	      <div class="space-6"></div>
+	      <p> Please enter your details: </p>
+	      
+	      
+	      <!-- <form> -->
+              <form class="registration-form form-horizontal sp-form" action="/user_register" role="form" method="post">
+		{{ form.hidden_tag() }}
+              
+		<fieldset>
+		  <label class="block clearfix">
+		    <span class="block input-icon input-icon-right">
+		      {{ form.given_name(class='form-control', placeholder='First Name', required='true') }}
+		      <i class="icon-user"></i>
+		    </span>
+		  </label>
+		  
+		  <label class="block clearfix">
+		    <span class="block input-icon input-icon-right">
+		      {{ form.surname(class='form-control', placeholder='Last Name', required='true') }}
+		      <i class="icon-user"></i>
+		    </span>
+		  </label>
+		  
+		  <label class="block clearfix">
+		    <span class="block input-icon input-icon-right">
+		      {{ form.email(class='form-control', placeholder='Email (will be userid)', required='false', type='email') }}
+		      <i class="icon-envelope"></i>
+		    </span>
+		  </label>
+
+		  <label class="block clearfix">
+		    <span class="block input-icon input-icon-right">
+		      {{ form.password(class='form-control', placeholder='Password', required='false', type='password') }}
+		      <i class="icon-lock"></i>
+		    </span>
+		  </label>
+
+		  <label class="block clearfix">
+		    <span class="block input-icon input-icon-right">
+		      {{ form.repassword(class='form-control', placeholder='Repeat password', required='false', type='password') }}
+		      <i class="icon-retweet"></i>
+		    </span>
+		  </label>
+
+		  <label class="block clearfix">
+		    <span class="block input-icon input-icon-right">
+		      {{ form.signing_name(class='form-control', placeholder='Full name for signing applications', required='true') }}
+		      <i class="icon-user"></i>
+		    </span>
+		  </label>
+
+		  <label class="block clearfix">
+		    <span class="block input-icon input-icon-right">
+		      {{ form.agency(class='form-control', placeholder='Agency Name', required='true') }}
+		      <i class="icon-home"></i>
+		    </span>
+		  </label>
+
+		  <label class="block clearfix">
+		    <span class="block input-icon input-icon-right">
+		      {{ form.agent_code(class='form-control', placeholder='5Star Agent Code to use on applications', required='true') }}
+		      <i class="icon-star"></i>
+		    </span>
+		  </label>
+
+
+		  <label class="block">
+		    <input type="checkbox" class="ace" />
+		    <span class="lbl">
+		      I accept the
+		      <a href="#">User Agreement</a>
+		    </span>
+		  </label>
+
+		  <div class="space-24"></div>
+
+		  <div class="clearfix">
+		    <button type="reset" class="width-30 pull-left btn btn-sm">
+		      <i class="icon-refresh"></i>
+		      <span class="bigger-110">Reset</span>
+		    </button>
+
+		    <button type="submit" class="width-65 pull-right btn btn-sm btn-success">
+		      <span class="bigger-110">Register</span>
+		      
+		      <i class="icon-arrow-right icon-on-right"></i>
+		    </button>
+		  </div>
+		</fieldset>
+	      </form>
+	      
+	      <!--  </form>  -->
+	    </div>
+	    <div class="toolbar center">
+	      <a href="{{ url_for('login') }}" class="back-to-login-link">
+		<i class="icon-arrow-left"></i>
+		Back to login
+	      </a>
+	    </div>
+	    
+	  </div><!-- /.widget-body -->
+	</div><!-- /.signup-box -->
+      </div><!-- /.position-relative -->
+      
+    </div>
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+
+{% endblock %}

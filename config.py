@@ -5,6 +5,7 @@ DEBUG = True
 #SERVER_NAME = 'localhost:5000'
 lSERVER_NAME = 'taa.herokuapp.com'
 
+
 # Flask-WTF forms extension config
 CSRF_ENABLED = True
 SECRET_KEY = 'really-tricky-secret-key'
