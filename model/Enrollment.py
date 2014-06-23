@@ -8,6 +8,7 @@ from flask import url_for, render_template
 from dateutil.relativedelta import relativedelta
 from mailer import Mailer, Message
 from flask.ext.stormpath import user
+    
 
 class Case(object):
     def __init__(self, id, company_name, situs_state, product):
