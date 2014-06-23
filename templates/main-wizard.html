@@ -556,7 +556,7 @@
                 <div class="col-sm-4">
                 </div>
                 <div class="col-sm-8">
-                    <div class="row" data-bind="foreach: get_all_people_labels">
+                    <div class="row" data-bind="foreach: get_all_covered_people_labels">
                         <div class="col-sm-3" class="text-center" data-bind="text: $data">
                         </div>
                     </div>
@@ -573,7 +573,7 @@
                   </div>
                   <div class="col-xs-12 col-sm-8">
                       
-                    <div class="row" data-bind="foreach: {data: get_all_people(), as: 'person'}">
+                    <div class="row" data-bind="foreach: {data: get_all_covered_people(), as: 'person'}">
                       <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
                         <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                           id: 'question_{{loop.index0}}', 

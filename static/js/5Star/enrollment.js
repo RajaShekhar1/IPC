@@ -902,7 +902,7 @@ function BenefitsPackage(root, name) {
         }
         return labels;
     });
-  
+    
     self.get_all_covered_people_labels = ko.computed(function() {
         var labels = [];
         if (root.did_select_employee_coverage()) {
@@ -1115,11 +1115,11 @@ ko.bindingHandlers.flagBtn = {
                 ).addClass("btn-danger"
                 );
             }
-            $(el).css({"font-size":"120%"});
+            //$(el).css({"font-size":"120%"});
         }, function(el) {
             $(el).removeClass("btn-success btn-warning btn-danger"
             ).addClass("btn-default"
-            ).css({"font-size":"100%"}
+            //).css({"font-size":"100%"}
             );
             $(el).find(".glyphicon").remove();
         });
@@ -1129,7 +1129,19 @@ ko.bindingHandlers.flagBtn = {
             if (val.onclick) {
                 val.onclick();
             }
-        })
+        });
+        
+        // Initial value, if they are revisiting this page
+        if (btn_group.selected_btn && btn_group.selected_btn.val == val.val) {
+            btn_group.click_button(val.val);
+            if (val.onclick) {
+                val.onclick();
+            }
+        }
+        
+    }, 
+    update: function(element, value_accessor) {
+        
     }
 };
 
@@ -1217,27 +1229,22 @@ function are_health_questions_valid() {
         return false;
     }
     var valid = true;
-    $.each(window.ui.employee().health_questions, function() {
-        if (this.get_val() != "No") {
-            valid = false;
-            return false;
-        }
-    });
-    $.each(window.ui.spouse().health_questions, function() {
-        if (this.get_val() != "No") {
-            valid = false;
-            return false;
-        }
-    });
-    $.each(window.ui.get_valid_children(), function() {
-        $.each(this.health_questions, function() {
+    
+    $.each(window.ui.selected_plan().get_all_covered_people(), function() {
+        var covered_person = this;
+        $.each(covered_person.health_questions, function() {
             if (this.get_val() != "No") {
                 valid = false;
+                // break
                 return false;
             }
         });
+        if (!valid) {
+            // break
+            return false;
+        }
     });
-        
+    
     return valid;
 }
 
@@ -1369,7 +1376,7 @@ function init_validation() {
             if (!$('#step4-form').valid()) return false;
         }
         if (info.step == 5) {
-	    var skip_for_now = true;
+	    var skip_for_now = false;
 	    if (skip_for_now) return true;
 	    if (!$('#step5-form').valid()) return false;
         }
@@ -1599,31 +1606,33 @@ function init_validation() {
         focusInvalid: false,
         rules: {
             eeBeneOtherName: {
-		required: true,
-		depends: function(element) {
-		    return (!window.ui.did_select_spouse_coverage() || $("#eeBeneOther").is(':checked'))
-		    }
-	    },
+                required: {
+                    depends: function(element) {
+                        return (!window.ui.did_select_spouse_coverage() || $("#eeBeneOther").is(':checked'))
+                    }   
+                }
+            },
             eeBeneOtherRelation: {
-		required: true,
-		depends: function(element) {
-		    return (!window.ui.did_select_spouse_coverage() || $("#eeBeneOther").is(':checked'))
-		    }
-	    },
+                required: {
+                    depends: function(element) {
+                        return (!window.ui.did_select_spouse_coverage() || $("#eeBeneOther").is(':checked'))
+                    }
+                }
+            },
             spBeneOtherName: {
-		required: true,
-		depends: function(element) {
-		    return (window.ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
-		    }
-	    },
+                required: {
+                    depends: function(element) {
+                        return (window.ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
+                    }   
+                }
+            },
             spBeneOtherRelation: {
-		required: true,
-		depends: function(element) {
-		    return (window.ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
-		    }
-	    }
-
-	    
+                required: {
+                    depends: function(element) {
+                        return (window.ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
+                    }
+                }
+            }
         },
 
         messages: {
