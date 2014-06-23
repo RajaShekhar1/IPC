@@ -21,21 +21,24 @@
 
 {% block content %}
 
+{% set compliance_has_approved_remote_enrollment = False %}
+
 <div class="row">
   <div class="col-xs-12">
     <h3>Launch an Enrollment</h3>
-    <p>Enter the information below for the case setup, the enrollee data, and proceed with either enrolling in-person or via email.</p>
+    <p>Enter the information below for the case setup, the enrollee data, and proceed with enrollment interview.</p>
 
     <form class="enrollment-form form-horizontal" action="{{ url_for('in_person_enrollment') }}" method="POST">
+      <div class="clearfix"></div>
       <div class="form-group">
 	<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Product to enroll</label>
-	<div class="col-xs-9 col-sm-9">
+	<div class="col-xs-12 col-sm-9">
 	  <select id="productID" name="productID" class="select1">
 	    <option value="">&nbsp;</option>
 	    <option value="FPPTI">Family Protection Plan - Term to 100</option>
 	    <option value="FPPCI" disabled="">Family Protection Plan - with Critical Illness (coming soon)</option>
 	    <option value="CIEMP" disabled="">Group Critical Illness (coming soon)</option>
-	    <option value="FPPGI" disabled="">Family Protection Plan - Guarantee Issue (coming soon)</option>
+	    <option value="FPPGI" disabled="">Voluntary Group Life (coming soon)</option>
 	  </select>
 	</div>
       </div>
@@ -43,11 +46,13 @@
       <div class="space-2"></div>
 
       <div class="form-group">
-	<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Select state for this enrollment</label>
+	<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Location of this enrollment</label>
 	<div class="col-xs-12 col-sm-9">
 	  <select id="enrollmentState" name="enrollmentState" class="select1">
 	    <option value="">&nbsp;</option>
+	    {% if compliance_has_approved_remote_enrollment %}
 	    <option value="XX">None - Employee will select</option>
+	    {% endif %}
 	    <option value="AL">Alabama</option>
 	    <option value="AK">Alaska</option>
 	    <option value="AZ">Arizona</option>
@@ -135,17 +140,28 @@
     
     <div class="space-2"></div>
     
+{% set compliance_has_approved_remote_enrollment = False %}
+    {% if compliance_has_approved_remote_enrollment %}
     <div class="row">
       <div class="col-xs-12 col-sm-6">
-	    <p class="center"><button type="submit" class="btn btn-lg btn-info" id="in-person-enrollment-btn">
+	<p class="center"><button type="submit" class="btn btn-lg btn-info" id="in-person-enrollment-btn">
 	    <i class="icon icon-user align-top bigger-110"></i>Enroll in-person</button></p>
       </div>
       <div class="col-xs-12 col-sm-6">
-	    <p class="center"><button type="button" class="btn btn-lg btn-success" id="email-enrollment-btn">
+	<p class="center"><button type="button" class="btn btn-lg btn-success" id="email-enrollment-btn">
 	    <i class="icon icon-envelope align-top bigger-110"></i>Enroll via email</a></p>
       </div>
     </div>
-    </form>
+   {% else %}
+    <div class="row">
+      <div class="col-xs-12">
+	    <p class="center"><button type="submit" class="btn btn-lg btn-info" id="in-person-enrollment-btn">
+	    <i class="icon icon-user align-top bigger-110"></i>Proceed to enrollment interview</button></p>
+      </div>
+    </div>
+    {% endif %}
+    
+</form>
 
   </div><!-- /.col-xs12 -->
 </div><!-- /.row -->
@@ -181,6 +197,8 @@
 <!-- inline scripts related to this page ->
 <script src="{{url_for('static', filename='js/handlebars-v1.3.0.js')}}"></script>  -->
 
+{% set compliance_has_approved_remote_enrollment = False %}
+{% if compliance_has_approved_remote_enrollment %}
 <script type="text/javascript">
     jQuery(function($) {
   
@@ -228,5 +246,6 @@
         
   })
 </script>
+{% endif %}
 
 {% endblock %}

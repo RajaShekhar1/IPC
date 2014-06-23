@@ -24,7 +24,12 @@ from docu_console import console_sample
 from docu_email import emailing_sample
 
 from model.Database import Database
-from model.Enrollment import EnrollmentEmail, Case, Enrollment, AgentActivationEmail
+from model.Enrollment import (
+    EnrollmentEmail, 
+    Case, 
+    Enrollment, 
+    AgentActivationEmail, 
+)
 from model.Product import get_age_from_birthday, get_product_by_code
 from model.States import get_states
 from model.Registration import (
@@ -464,9 +469,8 @@ ADMIN pages
 """
 
 #  14-Jun-17 WSD 
-@login_required
-@groups_required(['admins'])
 @app.route('/admin', methods = ['GET', 'POST'])
+@groups_required(['admins'])
 def admin():
     accounts = []
     for acc in stormpath_manager.application.accounts:
@@ -486,9 +490,8 @@ def admin():
     return render_template('admin.html', accounts=accounts)
 
 
-@login_required
-@groups_required(['admins'])
 @app.route('/edituser', methods = ['GET', 'POST'])
+@groups_required(['admins'])
 def updateUser():
 
     user_email = request.args['user']
