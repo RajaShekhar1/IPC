@@ -1026,13 +1026,11 @@ function QuestionButton(element, val, highlight_func, unhighlight_func) {
         $.each(self.elements, function() {
             highlight_func(this); 
         });
-        //highlight_func(self.element);
     };
     self.unhighlight = function() {
         $.each(self.elements, function() {
             unhighlight_func(this); 
         });
-        //unhighlight_func(self.element);
     };
 }
 function QuestionButtonGroup(id) {
@@ -1063,10 +1061,6 @@ function QuestionButtonGroup(id) {
         }
     };
     self.click_button = function(val) {
-        //if (self.selected_btn && self.selected_btn.val == val) {
-        //    return;
-        //}
-        
         var btn = null;
         $.each(self.buttons, function() {
             if (this.val == val) {
@@ -1115,11 +1109,10 @@ ko.bindingHandlers.flagBtn = {
                 ).addClass("btn-danger"
                 );
             }
-            //$(el).css({"font-size":"120%"});
+            
         }, function(el) {
             $(el).removeClass("btn-success btn-warning btn-danger"
             ).addClass("btn-default"
-            //).css({"font-size":"100%"}
             );
             $(el).find(".glyphicon").remove();
         });
@@ -1134,9 +1127,6 @@ ko.bindingHandlers.flagBtn = {
         // Initial value, if they are revisiting this page
         if (btn_group.selected_btn && btn_group.selected_btn.val == val.val) {
             btn_group.click_button(val.val);
-            if (val.onclick) {
-                val.onclick();
-            }
         }
         
     }, 
