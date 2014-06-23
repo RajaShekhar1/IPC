@@ -3,7 +3,7 @@ DEBUG = True
 
 # Put server name here for formatting external links
 #SERVER_NAME = 'localhost:5000'
-lSERVER_NAME = 'taa.herokuapp.com'
+lSERVER_NAME = '5starenroll.com'
 
 
 # Flask-WTF forms extension config
