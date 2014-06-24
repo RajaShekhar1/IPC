@@ -28,7 +28,8 @@ from model.Enrollment import (
     EnrollmentEmail, 
     Case, 
     Enrollment, 
-    AgentActivationEmail, 
+    AgentActivationEmail,
+    NotifyAdminEmail,
 )
 from model.Product import get_age_from_birthday, get_product_by_code
 from model.States import get_states
@@ -387,6 +388,12 @@ def register_taa():
                         'activated': False,
                     },
                 )
+
+                # If successfully created account, the notify admin of registration
+                try:
+                    NotifyAdminEmail().send_registration_notice(data['given_name'] + " " +  data['surname'])
+                except:
+                    print " -- Problem sending registration notice to admin --"
 
 
                 # If we're able to successfully create the user's account,

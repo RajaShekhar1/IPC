@@ -8,7 +8,7 @@ from flask import url_for, render_template
 from dateutil.relativedelta import relativedelta
 from mailer import Mailer, Message
 from flask.ext.stormpath import user
-    
+
 
 class Case(object):
     def __init__(self, id, company_name, situs_state, product):
@@ -124,6 +124,40 @@ class AgentActivationEmail(object):
         
         print "url is ", url
 
+        msg.attach(MIMEText(body, 'html'))
+        
+        connection = smtplib.SMTP("smtp.gmail.com", 587)
+        connection.ehlo()
+        if self.smtp_user and self.smtp_password:
+            connection.starttls()
+            connection.ehlo()
+            connection.login(self.smtp_user, self.smtp_password)
+        
+        connection.sendmail(self.smtp_user, to_user, msg.as_string())
+        connection.close()
+
+
+class NotifyAdminEmail(object):
+    """
+    This perhaps should go elsewhere
+    """
+    def __init__(self):
+        self.smtp_user = "enrollment@5starlifemail.com"
+        self.smtp_password = "enrollment55"
+        
+    def send_registration_notice(self, agent_name):
+        
+        to_user = "admin@5starenroll.com"
+        
+        msg = MIMEMultipart()
+        msg['From'] = "enrollment@5StarEnroll.com"
+        msg['To'] = "admin@5StarEnroll.com"
+        msg['Subject'] = "Activation Request from " + agent_name
+        body = render_template(
+            "notify_admin_email.html",
+            agent_name=agent_name
+        )
+        
         msg.attach(MIMEText(body, 'html'))
         
         connection = smtplib.SMTP("smtp.gmail.com", 587)
