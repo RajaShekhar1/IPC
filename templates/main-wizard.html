@@ -29,11 +29,9 @@
  {{ super() }}
 {% else %}
 <!-- replace with non-navigable header -->
-<div class="header">
-  <h2 class="text-muted">
-    <img src="/static/img/5Star_logo_TAA.png"/>Application Enrollment
-  </h2>
-</div>    
+     {% set header_title = 'Application Enrollment' %}
+     {% set nonav_logo = logopath %}
+     {% include "nonav-navbar.html" %}
 {% endif %}
 {% endblock %}
 
@@ -1187,9 +1185,9 @@
 		  <select id="tokenType" class="select1" placeholder="Select one..." 
 			  data-bind="value: identityType">
 		    <option value="">Select one...</option>
-		    <option value="Date of Hire">"Date of Hire"</option>
-		    <option value="Employee Num">"Employee #"</option>
-		    <option value="Driver's License Num">"Driver's License #"</option>
+		    <option value="Date of Hire">Date of Hire</option>
+		    <option value="Employee Num">Employee #</option>
+		    <option value="Driver's License Num">Driver's License #</option>
 		  </select>
 		  <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>		  
                   <input type="text" id="ConfirmationToken" name="ConfirmationToken" data-bind="value: identityToken"/>

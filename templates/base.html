@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+  {% set logopath = "/static/img/5Star_logo_TAA.png" %}
   <head>
     {% block head %}
 
@@ -17,23 +18,47 @@
     {% endblock %}
   </head>
   <body>
-    {% block navbar %}
-    
-    <!--
-    {% set active_page = active_page|default('nav_home') -%}
-    -->
 
+
+    {% block navbar%}
     <div class="header">
+      {% if include_navmenu|default(True) %}
       <ul class="nav nav-pills pull-right">
 	<li class={% if active_page == 'nav_home' %}"active"{% else %}"inactive"{% endif %} id="nav_home"><a href="{{ url_for ('home') }}">Home</a></li>
         <li class={% if active_page == 'nav_enroll' %}"active"{% else %}"inactive"{% endif %} id="nav_enroll"><a  href="{{ url_for ('enroll_start') }}">Enroll</a></li>
         <li class={% if active_page == 'nav_agentsign' %}"active"{% else %}"inactive"{% endif %} id="nav_agentsign"><a href="{{ url_for ('inbox') }}">Sign</a></li>
         <li id="nav_logout"><a href="{{ url_for ('taa_logout') }}">Logout</a></li>
       </ul>
+      {% endif %}
+      <table>
+	<tr>
+	  <td valign="center">
+	    {% if link_logo|default(True) %}
+	    <a  href="/"><img src={{ logopath }}/></a>
+	    {% else %}
+	    <img src="/static/img/5Star_logo_TAA.png"/>
+	    {% endif %}
+	  </td>
+	  <td valign="center">
+	    <h3 class="text-muted">{{ header_title|default('Enrollment') }}
+	      {% if 'headername' in session.keys() %}
+	      <br>
+	      <span class="smaller-60 lighter">
+		{{session['headername']}}
+	      </span>
+	      {% endif %}
+	    </h3>
+	  </td>
+	</tr>
+      </table>
+      <!--
       <h3 class="text-muted">
 	  <a  href="/"><img src="/static/img/5Star_logo_TAA.png"/></a>
 	    &nbsp;&nbsp;&nbsp;&nbsp;Enrollment
+	  <br>
+	  {{user.given_name}}
       </h3>
+      -->
     </div>    
 
     

@@ -19,18 +19,17 @@
 
 {% endblock %}
 
+
 {% block navbar %}
-{% if session_type == "inperson" %}
- {{ super() }}
-{% else %}
-<!-- replace with non-navigable header -->
-<div class="header">
-  <h2 class="text-muted">
-    <img src="/static/img/5Star_logo_TAA.png"/>Application Enrollment
-  </h2>
-</div>    
-{% endif %}
+ {% if session_type != "inperson" %}
+     {% set header_title = 'Application Enrollment' %}
+     {% set nonav_logo = logopath %}
+     {% include "nonav-navbar.html" %}
+ {% else %}
+     {{super()}}
+ {% endif %}
 {% endblock %}
+
 
 
 {% block content %}

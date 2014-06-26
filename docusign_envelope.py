@@ -2,30 +2,15 @@
 import sys, httplib2, json;
 
 from flask import url_for
-
- 
-# I really want to read this from a config file...
-authEmail = "docrequest@5starima.com"
-authUserName = "e35944e2-e4b1-4e3c-8a69-af9d0ed58b54"  #demo login
-password = "1Opb8JZ1JVQwLHpzqylTlspVIUg="  # was "5st1rd2m4";
-integratorKey = "STAR-0baef057-d5b4-46bd-831f-e8e66f271aa7";
-
-# these should be selected 
-templateRoleName = "Employee"  # same role name that exists on the template in the console
-templateClientID = "123456";   # to add an embedded recipient you must set their clientUserId property in addition to
-				# the recipient name and email.  Whatever you set the clientUserId to you must use the same
-				# value when requesting the signing URL
-
-#these should be passed in by the calling function
-recipientName = "Ernie Employee";
-recipEmail = "employee@thumbprintcpm.com";
- 
-
-authenticateStr = "<DocuSignCredentials>" \
-                    "<Username>" + authUserName + "</Username>" \
-                    "<Password>" + password + "</Password>" \
-                    "<IntegratorKey>" + integratorKey + "</IntegratorKey>" \
-                    "</DocuSignCredentials>";
+from flask.ext.stormpath import user
+from model.DocuSign_config import (
+    dsAPIAuthenticateString, 
+    dsAgentAuthenticateString, 
+    baseUrl, 
+    apiAccountID, 
+    templateClientID,
+    sessionUserApprovedForDocusign
+)
 
 def get_template_id(product_type, state):
     templates_by_product_and_state = {
@@ -160,6 +145,9 @@ def create_envelope_and_get_signing_url(wizard_data):
 
     if ((recipName != "") and (recipName != None)):
         recipientName = recipName;
+    else:
+        recipientName = "Applicant";
+        
 
     if wizard_data["employee_coverage"]:
         if wizard_data["employee_coverage"]["face_value"]:
@@ -213,6 +201,10 @@ def create_envelope_and_get_signing_url(wizard_data):
     eeTabsList = [
         {"tabLabel" : "identityToken",
          "value" : idTokenStr},
+        {"tabLabel" : "agentCode",
+         "value" : user.custom_data["agent_code"]},
+        {"tabLabel" : "agentSignName",
+         "value" : user.custom_data["signing_name"]},
         {"tabLabel" : "eeFName",
          "value" : wizard_data["employee"]["first"]},
         {"tabLabel" : "eeLName",
@@ -347,31 +339,16 @@ def create_envelope_and_get_signing_url(wizard_data):
 
 
     #
-    # STEP 1 - Login - get base URL - should be able to cache such a URL and bypass this step
-    #          (or at least move to a routine to "initialize" on startup or for session)
+    # Create envelope with an embedded recipient, try to do so via Docusign SOBO, but fallback if otherwise
     #
-    url = 'https://demo.docusign.net/restapi/v2/login_information';   
-    headers = {'X-DocuSign-Authentication': authenticateStr, 'Accept': 'application/json'};
-    http = httplib2.Http();
-    response, content = http.request(url, 'GET', headers=headers);
-    
-    status = response.get('status');
-
-    if (status != '200'): 
-        print("Error initially calling webservice, status is: %s" % status); 
-        return True, "Error connecting to Docusign server", None;
-        
-    # get the baseUrl and accountId from the response body
-    data = json.loads(content);
-    loginInfo = data.get('loginAccounts');
-    D = loginInfo[0];
-    baseUrl = D['baseUrl'];
-    accountId = D['accountId'];
-        
-    #
-    # STEP 2 - Create envelope with an embedded recipient
-    #
+    # *******************************
+    authenticateStr = dsAPIAuthenticateString() if sessionUserApprovedForDocusign() else dsAPIAuthenticateString()
  
+    accountId = apiAccountID
+        
+    templateRoleName = "Employee"  # same role name that exists on the template in the console
+    templateAgentRoleName = "Agent"
+
     #construct the body of the request in JSON format  
     requestBody ={
         "accountID" : accountId,
@@ -379,7 +356,7 @@ def create_envelope_and_get_signing_url(wizard_data):
         "emailSubject": "signature needed: FPP for " +  recipientName + " (" + employer + ")",
         "templateId": get_template_id("FPPTI", "TX"),
         "templateRoles": [
-            {"email" : recipEmail,
+            {"email" : emailTo,
              "name" :recipientName,
              "tabs" : {
                  "textTabs": eeTabsList + spouseTabsList + childTabsList,
@@ -387,7 +364,13 @@ def create_envelope_and_get_signing_url(wizard_data):
              },
              "roleName" :  templateRoleName,
              "clientUserId": templateClientID 
-             }]
+             },
+            {"email" : user.email,
+             "name" : user.custom_data["signing_name"],
+             "roleName" :  templateAgentRoleName
+             #"clientUserId": templateClientID 
+             } 
+        ]
     };
 
     requestBodyStr = json.dumps(requestBody);
@@ -402,7 +385,7 @@ def create_envelope_and_get_signing_url(wizard_data):
     #response, content = http.request("http://requestb.in/12d5p8w1", 'POST', headers=headers, body=requestBodyStr);
     status = response.get('status');
     if (status != '201'): 
-        print("Error calling webservice, status is: %s" % status); return True, "Error generating Docusign envelope", None;
+        print("Error generating Docusign envelope, status is: %s" % status); return True, "Error generating Docusign envelope", None;
     
     data = json.loads(content);
  
@@ -410,13 +393,13 @@ def create_envelope_and_get_signing_url(wizard_data):
     uri = data.get('uri');
      
     #
-    # STEP 3 - Get the Embedded Send View
+    # Get the Embedded Send View
     #
  
     # construct the body of the request in JSON format  
     requestBody =   {
         "authenticationMethod" : "email",
-        "email" : recipEmail,
+        "email" : emailTo,
         "returnUrl" :  landingURL,
         "clientUserId" : templateClientID,
         "userName" : recipientName
@@ -424,9 +407,9 @@ def create_envelope_and_get_signing_url(wizard_data):
     
     requestBodyStr = json.dumps(requestBody);
     
-    # append uri + "/views/recipient" to baseUrl and use in the request
+    # append uri + "/views/recipient" to baseUrl and use in the request, don't need OnBehalfOf for this so just use API auth
     url = baseUrl + uri + "/views/recipient";
-    headers = {'X-DocuSign-Authentication': authenticateStr, 'Accept': 'application/json', 'Content-Length': str(len(requestBodyStr))};
+    headers = {'X-DocuSign-Authentication': dsAPIAuthenticateString(), 'Accept': 'application/json', 'Content-Length': str(len(requestBodyStr))};
     http = httplib2.Http();
     response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr);
     status = response.get('status');
@@ -434,7 +417,7 @@ def create_envelope_and_get_signing_url(wizard_data):
     # print ("response: %s\ncontent: %s" % (response, content))
 
     if (status != '201'): 
-        print("Error calling webservice, status is: %s" % status); return True, "Error retrieving signature URL", None;
+        print("Error retrieving signature URL, status is: %s" % status); return True, "Error retrieving signature URL", None;
 
     data = json.loads(content);
     viewUrl = data.get('url');

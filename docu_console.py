@@ -1,21 +1,13 @@
-# DocuSign API Walkthrough 08 (PYTHON) - Embedded Signing
 import sys, httplib2, json;
+from model.DocuSign_config import dsAgentAuthenticateString, dsAPIAuthenticateString, baseUrl, apiAccountID
  
-#enter your info:
-agentEmail = "5staragent@thumbprintcpm.com";
-password = "5st1rd2m4";
-integratorKey = "STAR-0baef057-d5b4-46bd-831f-e8e66f271aa7";
-templateId = "65D80628-EA67-45C9-B50D-35932CA28814"  # was "A429E3E3-446A-46F1-9DD0-D417CCEBE1C1";
 
-authenticateStr = "<DocuSignCredentials>" \
-                    "<Username>" + agentEmail + "</Username>" \
-                    "<Password>" + password + "</Password>" \
-                    "<IntegratorKey>" + integratorKey + "</IntegratorKey>" \
-                    "</DocuSignCredentials>";
+def console_url():
 
+    authenticateStr = dsAgentAuthenticateString()
+    agentAuthStr =  dsAgentAuthenticateString()
 
-def console_sample():
-
+    """
     # STEP 1 - Login
     #
     url = 'https://demo.docusign.net/restapi/v2/login_information';   
@@ -25,8 +17,9 @@ def console_sample():
  
     status = response.get('status');
     if (status != '200'): 
-        print("Error calling webservice, status is: %s" % status); sys.exit();
- 
+        print("Error initially calling webservice, status is: %s" % status); 
+        return True, "Error connecting to Docusign server", None;
+
     # get the baseUrl and accountId from the response body
     data = json.loads(content);
     loginInfo = data.get('loginAccounts');
@@ -35,28 +28,34 @@ def console_sample():
     accountId = D['accountId'];
  
     #--- display results
-    print ("baseUrl = %s\naccountId = %s" % (baseUrl, accountId));
- 
+    #print ("baseUrl = %s\naccountId = %s" % (baseUrl, accountId));
+    """
+
     #
     # STEP 2 - Get Console View
     #
  
     #construct the body of the request in JSON format.  In this case all we need is the accountId  
+
+    accountId = apiAccountID
     requestBody = "{\"accountId\": \"" + accountId + "\"}";
  
     # append "/views/console" to the baseUrl and use in the request
     url = baseUrl + "/views/console";
-    headers = {'X-DocuSign-Authentication': authenticateStr, 'Accept': 'application/json', 'Content-Length': str(len(requestBody))};
+    print url
+    headers = {'X-DocuSign-Authentication': agentAuthStr, 'Accept': 'application/json', 'Content-Length': str(len(requestBody))};
     http = httplib2.Http();
     response, content = http.request(url, 'POST', headers=headers, body=requestBody);
+    # When troubleshooting, send instead to requestb.in (or similar listener) to capture/examing the JSON trace.  Past that trace into SOAPUI to explore the response if needed.
+    #response, content = http.request("http://requestb.in/u8jcp3u8", 'POST', headers=headers, body=requestBody);
     status = response.get('status');
     if (status != '201'): 
-        print("Error calling webservice, status is: %s" % status); sys.exit();
+        print("Error calling webservice, status is: %s" % status); return True, "Error retrieving inbox URL", None;
     data = json.loads(content);
     viewUrl = data.get('url');
  
     #--- display results
-    print ("View URL = %s\n" % viewUrl)
+    #print ("View URL = %s\n" % viewUrl)
 
     return viewUrl
 
