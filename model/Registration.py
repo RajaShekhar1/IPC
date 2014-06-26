@@ -36,6 +36,7 @@ class TAA_UserForm(Form):
     email = StringField('Email')
     signing_name = StringField('Signature Name')
     agent_code = StringField('Agent Code')
+    ds_apikey = StringField('Docusign key')
     agency = StringField('Agency Name')
     status = StringField('Status')
     activated = BooleanField('activated')

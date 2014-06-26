@@ -1348,7 +1348,7 @@ function init_validation() {
             } 
             return is_valid;
         }
-        if (info.step == 2) {
+        if (info.step == 2 && info.direction == 'next') {
             // validate questions
             var is_valid =  are_health_questions_valid();
             if (!is_valid) {
@@ -1359,18 +1359,18 @@ function init_validation() {
                 return true;
             }
         }
-        if (info.step == 3) {
+        if (info.step == 3 && info.direction == 'next') {
             if (!$('#step3-form').valid()) return false;
         }
-        if (info.step == 4) {
+        if (info.step == 4 && info.direction == 'next') {
             if (!$('#step4-form').valid()) return false;
         }
-        if (info.step == 5) {
+        if (info.step == 5 && info.direction == 'next') {
 	    var skip_for_now = false;
 	    if (skip_for_now) return true;
 	    if (!$('#step5-form').valid()) return false;
         }
-        if (info.step == 6) {
+        if (info.step == 6 && info.direction == 'next') {
             if (!$('#step6-form').valid()) return false;
         }
         

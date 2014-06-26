@@ -51,7 +51,7 @@
 		
 		<label class="col-sm-3">Agency</label>
 		<div class="col-sm-9">
- 		  {{ form.agency(class='form-control', required='true') }}
+ 		  {{ form.agency(class='form-control') }}
 		</div>
 		
 		<label class="col-sm-3">5Star Agent Code</label>
@@ -62,6 +62,11 @@
 		<label class="col-sm-3">Signing Name</label>
 		<div class="col-sm-9">
  		  {{ form.signing_name(class='form-control', required='true') }}
+		</div>
+		
+		<label class="col-sm-3">Docusign key</label>
+		<div class="col-sm-9">
+ 		  {{ form.ds_apikey(class='form-control') }}
 		</div>
 		
 		<br>

@@ -18,9 +18,11 @@ from ConfigParser import ConfigParser
 
 from datetime import timedelta
 from forms import LoginForm, UserEmailForm, UserDirectForm
+from model.DocuSign_config import sessionUserApprovedForDocusign
+
 from docu_embed import signing_sample
 from docusign_envelope import create_envelope_and_get_signing_url
-from docu_console import console_sample
+from docu_console import console_url
 from docu_email import emailing_sample
 
 from model.Database import Database
@@ -90,7 +92,7 @@ app.config['STORMPATH_API_KEY_ID'] = '5GPLR2SQXVPDJEXKXYE287ZYS'
 app.config['STORMPATH_API_KEY_SECRET'] = 'wiZWfjnQu3qBSAYIbQskIn8CKJf/q0A8KxSdMN2NZn8'
 app.config['STORMPATH_APPLICATION'] = 'TAA'
 
-app.config['STORMPATH_COOKIE_DURATION'] = timedelta(minutes=10)
+app.config['STORMPATH_COOKIE_DURATION'] = timedelta(minutes=15)
 app.config['STORMPATH_LOGIN_URL'] = '/login'
 app.config['STORMPATH_LOGIN_TEMPLATE'] = 'login.html'
 app.config['STORMPATH_ENABLE_REGISTRATION'] = False
@@ -131,6 +133,8 @@ def index():
 @app.route("/home")
 @login_required
 def home():
+    print session.keys()
+    print session
     return render_template('home.html')
 
 @app.route("/robots.txt")
@@ -291,9 +295,14 @@ AGENT pages
 @app.route("/inbox", methods =['GET'])
 @login_required
 def inbox():
-#    return redirect( console_sample())
-    return render_template('agent-inbox.html',
-                           inboxURL = console_sample())
+#    return redirect( console_url())
+    if sessionUserApprovedForDocusign():
+        return render_template('agent-inbox.html',
+                               inboxURL = console_url())
+    else:
+        flash("You are not yet authorized for signing applications.  Please see your Regional Director for assistance.")
+        return redirect(url_for("home"))
+
 
 
 """--------------------------------------------------------------
@@ -385,6 +394,7 @@ def register_taa():
                         'signing_name': data['signing_name'],
                         'agent_code': data['agent_code'],
                         'agency': data['agency'],
+                        'ds_apikey': "",                        
                         'activated': False,
                     },
                 )
@@ -444,6 +454,13 @@ def login():
             
             if account.custom_data['activated'] or is_admin:
                 login_user(account, remember=True) 
+                session['username'] = user.given_name + " " + user.surname
+                agencyStr = user.custom_data['agency']
+                if agencyStr.strip() != "": 
+                    session['headername'] = session['username'] + ", " + user.custom_data['agency']
+                else:
+                    session['headername'] = session['username']
+
                 if is_admin:
                     return redirect(url_for('admin'))
                 else:
@@ -463,6 +480,10 @@ def login():
 def taa_logout():
     """ Not sure how to hook into Stormpath /login URL in base.html template, so this is here just to be a handle for that
     """
+    
+    session.pop('username', None)
+    session.pop('headername', None)
+
     try:
         print "LOGOUT: ", user.email
     except:
@@ -513,15 +534,18 @@ def updateUser():
         else:
             account = accounts[0]
             
+            custom_data = account.custom_data
+            keyset = custom_data.keys()
             form.fname.data = account.given_name
             form.lname.data = account.surname
             form.email.data = account.email
-            form.agency.data = account.custom_data['agency']
-            form.agent_code.data = account.custom_data['agent_code']
-            form.signing_name.data = account.custom_data['signing_name']
-            form.status.data = "Activated" if account.custom_data['activated'] else "Not Activated"
-            form.activated.data = account.custom_data['activated']
-     
+            form.agency.data = custom_data['agency'] if 'agency' in keyset else ""
+            form.agent_code.data = custom_data['agent_code'] if 'agent_code' in keyset else ""
+            form.ds_apikey.data = custom_data['ds_apikey'] if 'ds_apikey' in keyset else ""
+            form.signing_name.data = custom_data['signing_name'] if 'signing_name' in keyset else ""
+            form.activated.data = custom_data['activated'] if 'activated' in keyset else False
+            #form.status.data = "Activated" if custom_data['activated'] else "Not Activated"
+            
     if form.validate_on_submit():
         try:
             accounts = stormpath_manager.application.accounts.query(email=user_email)
@@ -539,6 +563,7 @@ def updateUser():
                 account.custom_data['agency'] = data['agency']
                 account.custom_data['agent_code'] = data['agent_code']
                 account.custom_data['signing_name'] = data['signing_name']
+                account.custom_data['ds_apikey'] = data['ds_apikey']
                 account.custom_data['activated'] = data['activated']
                 
                 # save your changes
