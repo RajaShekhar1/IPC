@@ -17,7 +17,6 @@ from flask import (
 from ConfigParser import ConfigParser
 
 from datetime import timedelta
-from forms import LoginForm, UserEmailForm, UserDirectForm
 from model.DocuSign_config import sessionUserApprovedForDocusign
 
 from docu_embed import signing_sample
@@ -32,6 +31,7 @@ from model.Enrollment import (
     Enrollment, 
     AgentActivationEmail,
     NotifyAdminEmail,
+    EnrollmentSetupForm,
 )
 from model.Product import get_age_from_birthday, get_product_by_code
 from model.States import get_states
@@ -98,6 +98,11 @@ app.config['STORMPATH_LOGIN_TEMPLATE'] = 'login.html'
 app.config['STORMPATH_ENABLE_REGISTRATION'] = False
 app.config['STORMPATH_ENABLE_LOGIN'] = False
 stormpath_manager = StormpathManager(app)
+
+#
+# 2014-06-26 hack to circumvent a Stormpath-Flask bug
+app.login_manager.login_view = 'login'
+
 
 """
 stormpathClient = Client(
@@ -171,7 +176,14 @@ def rates():
 @app.route("/enroll")
 @login_required
 def enroll_start():
-    return render_template('setup-enrollment.html')
+    form=EnrollmentSetupForm()
+
+    if 'active_case' in session.keys() and session['active_case'] != None:
+        form.companyName.data = session['active_case']['company_name']
+        form.enrollmentState.data = session['active_case']['situs_state']
+        form.productID.data = session['active_case']['product_code']
+        
+    return render_template('setup-enrollment.html', form=form)
 
 @app.route("/in-person-enrollment", methods=['POST'])
 @login_required
@@ -184,6 +196,13 @@ def in_person_enrollment():
     employee_email = request.form['email']
     
     product = get_product_by_code(product_code)
+    
+    # refresh active_case
+    session['active_case'] = {
+        'company_name': company_name,
+        'situs_state': state,
+        'product_code': product_code
+    }
     
     wizard_data = {
         'state': state if state != 'XX' else None,
@@ -601,22 +620,6 @@ def updateUser():
 DEMO and testing pages
 """
 
-
-"""@app.route('/send-app', methods = ['GET', 'POST'])
-def sendApp():
-    form = UserEmailForm()
-    if form.validate_on_submit():
-        # print("name: %s\nemail: %s\n" % (form.full_name, form.email_addr))
-        # print("s_name: [%s]\n s_email: [%s]\n" % (str(form.full_name), str(form.email_addr)))
-         
-        if emailing_sample(form.full_name.data, form.employer.data, form.email_addr.data, form.email_comments.data):
-            flash(form.full_name.data + " (" + form.email_addr.data + " ) "
-                  "will receive a link to the application via email.  The signed application will queue in your agent applications inbox requiring your signature prior to processing.")  
-
-            return redirect('/demo')
-    return render_template('emailSendRequest.html', 
-                           form = form)
-"""
 
 @app.route("/test")
 #  14-Apr-22 WSD modified to new test file
