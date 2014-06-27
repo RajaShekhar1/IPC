@@ -342,7 +342,8 @@ def create_envelope_and_get_signing_url(wizard_data):
     # Create envelope with an embedded recipient, try to do so via Docusign SOBO, but fallback if otherwise
     #
     # *******************************
-    authenticateStr = dsAPIAuthenticateString() if sessionUserApprovedForDocusign() else dsAPIAuthenticateString()
+    #authenticateStr = dsAgentAuthenticateString() if sessionUserApprovedForDocusign() else dsAPIAuthenticateString()
+    authenticateStr = dsAPIAuthenticateString()
  
     accountId = apiAccountID
         
@@ -380,6 +381,9 @@ def create_envelope_and_get_signing_url(wizard_data):
     url = baseUrl + "/envelopes";
     headers = {'X-DocuSign-Authentication': authenticateStr, 'Accept': 'application/json', 'Content-Length': str(len(requestBodyStr))};
     http = httplib2.Http();
+    print "url=",url
+    print "headers=",headers
+    print requestBodyStr
     response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr);
     # When troubleshooting, send instead to requestb.in (or similar listener) to capture/examing the JSON trace.  Past that trace into SOAPUI to explore the response if needed.
     #response, content = http.request("http://requestb.in/12d5p8w1", 'POST', headers=headers, body=requestBodyStr);

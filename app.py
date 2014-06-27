@@ -40,6 +40,15 @@ from model.Registration import (
     TAA_LoginForm,
     TAA_UserForm,
 )
+
+from config import (
+    stormpath_SECRET_KEY,
+    stormpath_API_KEY_FILE,
+    stormpath_APPLICATION,
+    stormpath_API_KEY_ID,
+    stormpath_API_KEY_SECRET,
+    stormpath_TIMEOUT_MINS,
+)
 from flask.ext.stormpath import (
     StormpathError,
     StormpathManager,
@@ -84,24 +93,26 @@ def get_database():
 #app.config['SECRET_KEY'] = config.get('stormpath', 'SECRET_KEY')
 #app.config['STORMPATH_API_KEY_ID'] = config.get('stormpath', 'STORMPATH_API_KEY_ID')
 #app.config['STORMPATH_API_KEY_SECRET'] = config.get('stormpath', 'STORMPATH_API_KEY_SECRET')
-##app.config['STORMPATH_API_KEY_FILE'] = config.get('stormpath', 'STORMPATH_API_KEY_FILE')
+#app.config['STORMPATH_API_KEY_FILE'] = config.get('stormpath', 'STORMPATH_API_KEY_FILE')
 #app.config['STORMPATH_APPLICATION'] = config.get('stormpath', 'STORMPATH_APPLICATION')
 
-app.config['SECRET_KEY'] = 'george5starboat'
-app.config['STORMPATH_API_KEY_ID'] = '5GPLR2SQXVPDJEXKXYE287ZYS'
-app.config['STORMPATH_API_KEY_SECRET'] = 'wiZWfjnQu3qBSAYIbQskIn8CKJf/q0A8KxSdMN2NZn8'
-app.config['STORMPATH_APPLICATION'] = 'TAA'
+#app.config['SECRET_KEY'] = 'george5starboat'
+#app.config['STORMPATH_API_KEY_ID'] = '5GPLR2SQXVPDJEXKXYE287ZYS'
+#app.config['STORMPATH_API_KEY_SECRET'] = 'wiZWfjnQu3qBSAYIbQskIn8CKJf/q0A8KxSdMN2NZn8'
+#app.config['STORMPATH_APPLICATION'] = 'TAA'
 
-app.config['STORMPATH_COOKIE_DURATION'] = timedelta(minutes=15)
-app.config['STORMPATH_LOGIN_URL'] = '/login'
-app.config['STORMPATH_LOGIN_TEMPLATE'] = 'login.html'
+app.config['SECRET_KEY'] = stormpath_SECRET_KEY
+app.config['STORMPATH_API_KEY_ID'] = stormpath_API_KEY_ID
+app.config['STORMPATH_API_KEY_SECRET'] = stormpath_API_KEY_SECRET
+app.config['STORMPATH_APPLICATION'] = stormpath_APPLICATION
+
+app.config['STORMPATH_COOKIE_DURATION'] = timedelta(minutes=stormpath_TIMEOUT_MINS)
+#app.config['STORMPATH_LOGIN_URL'] = '/login'
+#app.config['STORMPATH_LOGIN_TEMPLATE'] = 'login.html'
 app.config['STORMPATH_ENABLE_REGISTRATION'] = False
 app.config['STORMPATH_ENABLE_LOGIN'] = False
 stormpath_manager = StormpathManager(app)
-
-#
-# 2014-06-26 hack to circumvent a Stormpath-Flask bug
-app.login_manager.login_view = 'login'
+stormpath_manager.login_view = 'login'
 
 
 """
@@ -474,12 +485,11 @@ def login():
             if account.custom_data['activated'] or is_admin:
                 login_user(account, remember=True) 
                 session['username'] = user.given_name + " " + user.surname
-                agencyStr = user.custom_data['agency']
-                if agencyStr.strip() != "": 
-                    session['headername'] = session['username'] + ", " + user.custom_data['agency']
-                else:
-                    session['headername'] = session['username']
+                session['headername'] = session['username']
 
+                if user.custom_data['agency'].strip() != "": 
+                    session['headername'] += ", " + user.custom_data['agency']
+                
                 if is_admin:
                     return redirect(url_for('admin'))
                 else:
