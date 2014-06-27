@@ -4,30 +4,32 @@ from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 
 from model.RateTable import (
-    load_once,
     build_FPPTI_rate_table,
     build_FPPCI_rate_table,
+    
 )
 
-from model.Recommendations import build_recommendation_table, Recommendations
+from model.Recommendations import (
+    FPPTI_recommendations,
+    FPPCI_recommendations, 
+    Recommendations,
+)
 
 
 def get_product_by_code(product_code):
-    
-    recommendations = Recommendations(build_recommendation_table("model/rates/FPPTI_suggested_rates.csv"))
     
     products_by_code = {
         "FPPTI": Product(
             "FPPTI",
             "Family Protection Plan - Term to 100", 
-            load_once(lambda: build_FPPTI_rate_table()), 
-            recommendations
+            build_FPPTI_rate_table(),
+            Recommendations(FPPTI_recommendations)
         ),
         "FPPCI":Product(
             "FPPCI",
             "FPPCI Name",
-            load_once(lambda: build_FPPCI_rate_table()),
-            recommendations,
+            build_FPPCI_rate_table(),
+            Recommendations(FPPCI_recommendations),
         ),
     }
     
@@ -101,26 +103,6 @@ class Product(object):
             spouse_age=spouse_age,
             num_children=num_children,
         )
-    
-    
-    
-    
-class FFPTIProduct(Product):
-    def load_table_data(self):
-        def premium_table_loader():
-            return build_bypremium_table("model/rates/FPPTI-bypremium.csv")
-        
-        def by_face_loader():
-            return load_age_lookup_table("model/rates/FPPTI-byface.csv")
-        
-        def recommendation_loader():
-            return build_recommendation_table("model/rates/FPPTI_suggested_rates.csv")
-        
-        
-        self.weekly_by_premium_lookup, self.weekly_premium_options = load_once(premium_table_loader)
-        self.weekly_by_coverage_lookup, self.weekly_coverage_options = load_once(by_face_loader)
-        self.recommendation_lookup = load_once(recommendation_loader)
-        
 
 
 # Utility age computation

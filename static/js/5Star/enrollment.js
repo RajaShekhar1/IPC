@@ -5,12 +5,14 @@ function init_rate_form(data) {
     var product;
     if (data.product_id == "FPPTI") {
         product = new FPPTIProduct();
+    } else if (data.product_id == "FPPCI") {
+        product = new FPPCIProduct();
     } else {
         // default product?
         product = new FPPTIProduct();
     }
     
-    var ui = new WizardUI(new FPPTIProduct(), data);
+    var ui = new WizardUI(product, data);
     
     // Allow other JS functions to access the ui object
     window.ui = ui;
@@ -524,32 +526,46 @@ function WizardUI(product, defaults) {
     
 }
 
+function Product() {
+}
+Product.prototype = {
+    
+    // Override if necessary
+    
+    min_emp_age: function() {return 18},
+    max_emp_age: function() {return 70},
+    
+    min_sp_age: function() {return 18},
+    max_sp_age: function() {return 70},
+    
+    min_child_age: function() {return 0},
+    max_child_age: function() {return 23},
+    
+    is_valid_employee_age: function(age) {
+        return (age >= this.min_emp_age() && age <= this.max_emp_age());
+    }, 
+    
+    is_valid_spouse_age: function(age) {
+        return (age >= this.min_sp_age() && age <= this.max_sp_age());
+    },
+    
+    is_valid_child_age: function(age) {
+        return (age >= this.min_child_age() && age <= this.max_child_age());
+    }  
+};
 
 function FPPTIProduct() {
-    var self = this;
-    
-    self.product_type = "FPPTI";
-    
-    self.min_emp_age = function() {return 18};
-    self.max_emp_age = function() {return 70};
-    self.min_sp_age = function() {return 18};
-    self.max_sp_age = function() {return 70};
-    self.min_child_age = function() {return 0};
-    self.max_child_age = function() {return 23};
-    
-    self.is_valid_employee_age = function(age) {
-        return (age >= self.min_emp_age() && age <= self.max_emp_age());
-    };
-    
-    self.is_valid_spouse_age = function(age) {
-        return (age >= self.min_sp_age() && age <= self.max_sp_age());
-    };
-    
-    self.is_valid_child_age = function(age) {
-        return (age >= self.min_child_age() && age <= self.max_child_age());
-    }
-    
+    this.product_type = "FPPTI";
 }
+// Inherit from product
+FPPTIProduct.prototype = Product.prototype;
+
+function FPPCIProduct() {
+    this.product_type = "FPPCI";
+}
+// Inherit from product
+FPPCIProduct.prototype = Product.prototype;
+
 
 function Beneficiary(options) {
     var self = this;
