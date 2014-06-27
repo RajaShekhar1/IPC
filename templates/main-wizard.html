@@ -452,8 +452,8 @@
       </script>  
       
       <script type="text/html" id="recommendation_template">
-        <strong data-bind="text: format_face_value()"></strong>
-        <div data-bind="text: format_weekly_premium_option()"></div>
+        <strong data-bind="html: format_face_value()"></strong>
+        <div data-bind="html: format_weekly_premium_option()"></div>
       </script>
         
       <script type="text/html" id="blank_template">
@@ -1147,7 +1147,7 @@
                 <tr>
                     <td data-bind="text: name"></td>
                     <td data-bind="text:get_age"></td>
-                    <td data-bind="text:display_selected_coverage"></td>
+                    <td data-bind="html:display_selected_coverage"></td>
                     <td data-bind="text:display_weekly_premium"></td>
                     <td data-bind="text:display_monthly_premium"></td>
                     
