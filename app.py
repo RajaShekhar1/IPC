@@ -99,6 +99,11 @@ app.config['STORMPATH_ENABLE_REGISTRATION'] = False
 app.config['STORMPATH_ENABLE_LOGIN'] = False
 stormpath_manager = StormpathManager(app)
 
+#
+# 2014-06-26 hack to circumvent a Stormpath-Flask bug
+app.login_manager.login_view = 'login'
+
+
 """
 stormpathClient = Client(
     id = app.config['STORMPATH_API_KEY_ID'],
