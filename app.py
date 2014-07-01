@@ -151,8 +151,6 @@ def index():
 @app.route("/home")
 @login_required
 def home():
-    print session.keys()
-    print session
     return render_template('home.html')
 
 @app.route("/robots.txt")
@@ -487,7 +485,7 @@ def login():
             # Flask-Login), then redirect the user to the ?next=<url>
             # query parameter, or just the HOME page
 
-            print "LOGIN: %s %s, (%s  %s)" % (account.given_name, account.surname, account.email, account.custom_data['activated'])
+            print "LOGIN: %s %s, (%s  activated=%s)" % (account.given_name, account.surname, account.email, account.custom_data['activated'])
             is_admin =  account.email=="admin@5starenroll.com"
             
             if account.custom_data['activated'] or is_admin:
