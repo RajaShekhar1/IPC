@@ -32,6 +32,8 @@ from model.Enrollment import (
     AgentActivationEmail,
     NotifyAdminEmail,
     EnrollmentSetupForm,
+    get_enrollment_setup_form_for_product,
+    get_product_states,
 )
 from model.Product import get_age_from_birthday, get_product_by_code
 from model.States import get_states
@@ -187,14 +189,20 @@ def rates():
 @app.route("/enroll")
 @login_required
 def enroll_start():
-    form=EnrollmentSetupForm()
-
-    if 'active_case' in session.keys() and session['active_case'] != None:
+    
+    if session.get('active_case'):
+        product_code = session['active_case']['product_code']
+        
+        form = get_enrollment_setup_form_for_product(product_code)()
         form.companyName.data = session['active_case']['company_name']
         form.enrollmentState.data = session['active_case']['situs_state']
-        form.productID.data = session['active_case']['product_code']
+        form.productID.data = product_code
+    else:
+        form = get_enrollment_setup_form_for_product(None)()
         
-    return render_template('setup-enrollment.html', form=form)
+    return render_template('setup-enrollment.html', 
+                           form=form, 
+                           product_states=get_product_states())
 
 @app.route("/in-person-enrollment", methods=['POST'])
 @login_required

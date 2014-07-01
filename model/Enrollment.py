@@ -179,7 +179,6 @@ class NotifyAdminEmail(object):
 
 #
 # SelectWithDisable and SelectFieldWithDisable from http://stackoverflow.com/questions/8463421/how-to-render-my-select-field-with-wtforms
-#  although I added a bogus X parm in for loop in middle of __call__ method below to accommodate the coerce value in tuple
 #
 class SelectWithDisable(object):
     """
@@ -200,7 +199,7 @@ class SelectWithDisable(object):
         if self.multiple:
             kwargs['multiple'] = 'multiple'
         html = [u'<select %s>' % html_params(name=field.name, **kwargs)]
-        for val, label, selected, disabled, x in field.iter_choices():
+        for val, label, selected, disabled in field.iter_choices():
             html.append(self.render_option(val, label, selected, disabled))
         html.append(u'</select>')
         return HTMLString(u''.join(html))
@@ -219,141 +218,169 @@ class SelectFieldWithDisable(SelectField):
     widget = SelectWithDisable()
 
     def iter_choices(self):
-        for value, label, selected, disabled in self.choices:
-            yield (value, label, selected, disabled, self.coerce(value) == self.data)
+        for value, label, disabled in self.choices:
+            yield (value, label, self.coerce(value) == self.data, disabled)
 
 
 #
 # each set of option values for respective Products is a tuple of 
-# value, name, selected (True/False), disabled (True/False)) 
+# value, name, disabled (True/False)) 
 #
-#[('1', 'VEHICLES', False, True), ('2', 'Cars', False, False), ('3', 'Motorcycles', False, False)]
+#[('1', 'VEHICLES',  True), ('2', 'Cars',  False), ('3', 'Motorcycles',  False)]
 #
 FPPTI_states = [
-    ("", ' ', False, False),
-    ('AL', 'Alabama', False, False),
-    ('AK', 'Alaska', False, False),
-    ('AZ', 'Arizona', False, False),
-    ('AR', 'Arkansas', False, False),
-    ('CA', 'California', False, False),
-    ('CO', 'Colorado', False, True),
-    ('CT', 'Connecticut', False, True),
-    ('DE', 'Delaware', False, False),
-    ('FL', 'Florida', False, True),
-    ('GA', 'Georgia', False, False),
-    ('HI', 'Hawaii', False, False),
-    ('ID', 'Idaho', False, False),
-    ('IL', 'Illinois', False, True),
-    ('IN', 'Indiana', False, True),
-    ('IA', 'Iowa', False, False),
-    ('KS', 'Kansas', False, False),
-    ('KY', 'Kentucky', False, False),
-    ('LA', 'Louisiana', False, False),
-    ('ME', 'Maine', False, True),
-    ('MD', 'Maryland', False, True),
-    ('MA', 'Massachusetts', False, True),
-    ('MI', 'Michigan', False, False),
-    ('MN', 'Minnesota', False, True),
-    ('MS', 'Mississippi', False, False),
-    ('MO', 'Missouri', False, True),
-    ('MT', 'Montana', False, False),
-    ('NE', 'Nebraska', False, False),
-    ('NV', 'Nevada', False, False),
-    ('NH', 'New Hampshire', False, True),
-    ('NJ', 'New Jersey', False, True),
-    ('NM', 'New Mexico', False, False),
-    ('NY', 'New York', False, True),
-    ('NC', 'North Carolina', False, True),
-    ('ND', 'North Dakota', False, True),
-    ('OH', 'Ohio', False, True),
-    ('OK', 'Oklahoma', False, False),
-    ('OR', 'Oregon', False, False),
-    ('PA', 'Pennsylvania', False, True),
-    ('RI', 'Rhode Island', False, False),
-    ('SC', 'South Carolina', False, False),
-    ('SD', 'South Dakota', False, False),
-    ('TN', 'Tennessee', False, False),
-    ('TX', 'Texas', False, False),
-    ('UT', 'Utah', False, False),
-    ('VT', 'Vermont', False, False),
-    ('VA', 'Virginia', False, False),
-    ('WA', 'Washington', False, False),
-    ('WV', 'West Virginia', False, False),
-    ('WI', 'Wisconsin', False, False),
-    ('WY', 'Wyoming', False, False)
+    ("", ' ', False),
+    ('AL', 'Alabama', False),
+    ('AK', 'Alaska', False),
+    ('AZ', 'Arizona', False),
+    ('AR', 'Arkansas',  False),
+    ('CA', 'California',  False),
+    ('CO', 'Colorado',  True),
+    ('CT', 'Connecticut',  True),
+    ('DE', 'Delaware',  False),
+    ('FL', 'Florida',  True),
+    ('GA', 'Georgia',  False),
+    ('HI', 'Hawaii',  False),
+    ('ID', 'Idaho',  False),
+    ('IL', 'Illinois',  True),
+    ('IN', 'Indiana',  True),
+    ('IA', 'Iowa',  False),
+    ('KS', 'Kansas',  False),
+    ('KY', 'Kentucky',  False),
+    ('LA', 'Louisiana',  False),
+    ('ME', 'Maine',  True),
+    ('MD', 'Maryland',  True),
+    ('MA', 'Massachusetts',  True),
+    ('MI', 'Michigan',  False),
+    ('MN', 'Minnesota',  True),
+    ('MS', 'Mississippi',  False),
+    ('MO', 'Missouri',  True),
+    ('MT', 'Montana',  False),
+    ('NE', 'Nebraska',  False),
+    ('NV', 'Nevada',  False),
+    ('NH', 'New Hampshire',  True),
+    ('NJ', 'New Jersey',  True),
+    ('NM', 'New Mexico',  False),
+    ('NY', 'New York',  True),
+    ('NC', 'North Carolina',  True),
+    ('ND', 'North Dakota',  True),
+    ('OH', 'Ohio',  True),
+    ('OK', 'Oklahoma',  False),
+    ('OR', 'Oregon',  False),
+    ('PA', 'Pennsylvania',  True),
+    ('RI', 'Rhode Island',  False),
+    ('SC', 'South Carolina',  False),
+    ('SD', 'South Dakota',  False),
+    ('TN', 'Tennessee',  False),
+    ('TX', 'Texas',  False),
+    ('UT', 'Utah',  False),
+    ('VT', 'Vermont',  False),
+    ('VA', 'Virginia',  False),
+    ('WA', 'Washington',  False),
+    ('WV', 'West Virginia',  False),
+    ('WI', 'Wisconsin',  False),
+    ('WY', 'Wyoming',  False)
 ]
 
 FPPCI_states = [
-    ("", ' ', False, False),
-    ('AL', 'Alabama', False, False),
-    ('AK', 'Alaska', False, False),
-    ('AZ', 'Arizona', False, False),
-    ('AR', 'Arkansas', False, False),
-    ('CA', 'California', False, False),
-    ('CO', 'Colorado', False, False),
-    ('CT', 'Connecticut', False, False),
-    ('DE', 'Delaware', False, False),
-    ('FL', 'Florida', False, False),
-    ('GA', 'Georgia', False, False),
-    ('HI', 'Hawaii', False, False),
-    ('ID', 'Idaho', False, False),
-    ('IL', 'Illinois', False, False),
-    ('IN', 'Indiana', False, False),
-    ('IA', 'Iowa', False, False),
-    ('KS', 'Kansas', False, False),
-    ('KY', 'Kentucky', False, False),
-    ('LA', 'Louisiana', False, False),
-    ('ME', 'Maine', False, False),
-    ('MD', 'Maryland', False, False),
-    ('MA', 'Massachusetts', False, False),
-    ('MI', 'Michigan', False, False),
-    ('MN', 'Minnesota', False, False),
-    ('MS', 'Mississippi', False, False),
-    ('MO', 'Missouri', False, False),
-    ('MT', 'Montana', False, False),
-    ('NE', 'Nebraska', False, False),
-    ('NV', 'Nevada', False, False),
-    ('NH', 'New Hampshire', False, False),
-    ('NJ', 'New Jersey', False, False),
-    ('NM', 'New Mexico', False, False),
-    ('NY', 'New York', False, False),
-    ('NC', 'North Carolina', False, False),
-    ('ND', 'North Dakota', False, False),
-    ('OH', 'Ohio', False, False),
-    ('OK', 'Oklahoma', False, False),
-    ('OR', 'Oregon', False, False),
-    ('PA', 'Pennsylvania', False, False),
-    ('RI', 'Rhode Island', False, False),
-    ('SC', 'South Carolina', False, False),
-    ('SD', 'South Dakota', False, False),
-    ('TN', 'Tennessee', False, False),
-    ('TX', 'Texas', False, False),
-    ('UT', 'Utah', False, False),
-    ('VT', 'Vermont', False, False),
-    ('VA', 'Virginia', False, False),
-    ('WA', 'Washington', False, False),
-    ('WV', 'West Virginia', False, False),
-    ('WI', 'Wisconsin', False, False),
-    ('WY', 'Wyoming', False, False)
+    ("", ' ',  False),
+    ('AL', 'Alabama',  False),
+    ('AK', 'Alaska',  False),
+    ('AZ', 'Arizona',  False),
+    ('AR', 'Arkansas',  False),
+    ('CA', 'California',  False),
+    ('CO', 'Colorado',  False),
+    ('CT', 'Connecticut',  False),
+    ('DE', 'Delaware',  False),
+    ('FL', 'Florida',  False),
+    ('GA', 'Georgia',  False),
+    ('HI', 'Hawaii',  False),
+    ('ID', 'Idaho',  False),
+    ('IL', 'Illinois',  False),
+    ('IN', 'Indiana',  False),
+    ('IA', 'Iowa',  False),
+    ('KS', 'Kansas',  False),
+    ('KY', 'Kentucky',  False),
+    ('LA', 'Louisiana',  False),
+    ('ME', 'Maine',  False),
+    ('MD', 'Maryland',  False),
+    ('MA', 'Massachusetts',  False),
+    ('MI', 'Michigan',  False),
+    ('MN', 'Minnesota',  False),
+    ('MS', 'Mississippi',  False),
+    ('MO', 'Missouri',  False),
+    ('MT', 'Montana',  False),
+    ('NE', 'Nebraska',  False),
+    ('NV', 'Nevada',  False),
+    ('NH', 'New Hampshire',  False),
+    ('NJ', 'New Jersey',  False),
+    ('NM', 'New Mexico',  False),
+    ('NY', 'New York',  False),
+    ('NC', 'North Carolina',  False),
+    ('ND', 'North Dakota',  False),
+    ('OH', 'Ohio',  False),
+    ('OK', 'Oklahoma',  False),
+    ('OR', 'Oregon',  False),
+    ('PA', 'Pennsylvania',  False),
+    ('RI', 'Rhode Island',  False),
+    ('SC', 'South Carolina',  False),
+    ('SD', 'South Dakota',  False),
+    ('TN', 'Tennessee',  False),
+    ('TX', 'Texas',  False),
+    ('UT', 'Utah',  False),
+    ('VT', 'Vermont',  False),
+    ('VA', 'Virginia',  False),
+    ('WA', 'Washington',  False),
+    ('WV', 'West Virginia',  False),
+    ('WI', 'Wisconsin',  False),
+    ('WY', 'Wyoming',  False)
 ]
     
 
     
 
 
-product_choices = [(""," ", False, True),
-                   ("FPPTI","Family Protection Plan - Term to 100", False, False),
-                   ("FPPCI","Family Protection Plan - with Critical Illness", False, False),
-                   ("CIEMP","Group Critical Illness (coming soon)", False, True),
-                   ("VGL", "Voluntary Group Life (coming soon)", False, True)
+product_choices = [(""," ",  True),
+                   ("FPPTI","Family Protection Plan - Term to 100",  False),
+                   ("FPPCI","Family Protection Plan - with Critical Illness",  False),
+                   ("CIEMP","Group Critical Illness (coming soon)",  True),
+                   ("VGL", "Voluntary Group Life (coming soon)",  True)
                ]
 
 class EnrollmentSetupForm(Form):
     productID = SelectFieldWithDisable(choices = product_choices)
-    enrollmentState = SelectFieldWithDisable(choices = FPPTI_states)
-    fppciState = SelectFieldWithDisable(choices = FPPCI_states)
+    
+    # Include the state drop-down dynamically since it depends on the product
+    
     companyName = StringField('Company Name', validators=[InputRequired()])
     eeFName = StringField('Employee First Name', validators=[InputRequired()])
     eeLName = StringField('Employee Last Name', validators=[InputRequired()])
     email = StringField('Employee email', validators=[Email()])
 
+
+def get_enrollment_setup_form_for_product(productID=None):
+    """
+    Create the setup form based on the product code (some states have no )
+    Returns a WTF form class, so you can still instantiate it like normal
+    """
+    
+    # Define a new form that inherits all the fields from the base form
+    class EnrollmentSetupFormDynamic(EnrollmentSetupForm):
+        pass
+
+    product_states = get_product_states().get(productID, FPPTI_states)
+    
+    # Add the state drop-down
+    EnrollmentSetupFormDynamic.enrollmentState = SelectFieldWithDisable(choices=product_states)
+    
+    return EnrollmentSetupFormDynamic
+    
+def get_product_states():
+    """Return the mapping of product codes to enabled states (statecode, state name, is_disabled) """
+    
+    return {
+        'FPPTI':FPPTI_states,
+        'FPPCI':FPPCI_states,
+    }
+    
+     

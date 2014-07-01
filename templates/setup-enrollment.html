@@ -29,22 +29,21 @@
     <p>Enter the information below for the case setup, the enrollee data, and proceed with enrollment interview.</p>
 
     <form class="enrollment-form form-horizontal" action="{{ url_for('in_person_enrollment') }}" method="POST">
-      {{ form.hidden_tag() }}
       <div class="clearfix"></div>
       <div class="form-group">
-	<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Product to enroll</label>
-	<div class="col-xs-12 col-sm-9">
-	  {{ form.productID(required='true') }}
-	</div>
+        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Product to enroll</label>
+        <div class="col-xs-12 col-sm-9">
+          {{ form.productID(required='true') }}
+        </div>
       </div>
 
       <div class="space-2"></div>
 
       <div class="form-group">
-	<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Location of this enrollment</label>
-	<div class="col-xs-12 col-sm-9">
-	  {{ form.enrollmentState(required='true') }}
-	</div>
+	    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Location of this enrollment</label>
+	    <div class="col-xs-12 col-sm-9">
+	    {{ form.enrollmentState(required='true') }}
+	    </div>
       </div>
 
       <div class="space-2"></div>
@@ -137,11 +136,45 @@
 <!-- inline scripts related to this page ->
 <script src="{{url_for('static', filename='js/handlebars-v1.3.0.js')}}"></script>  -->
 
+<script>
+    jQuery(function($) {
+        // Change enabled states when the product is changed
+        var product_states = {{ product_states | tojson | safe }};
+        var product_select = $("#productID");
+        product_select.on("change", function () {
+            var state_select = $("#enrollmentState");
+    
+            // Invalidate the select value
+            state_select.val(null);
+    
+            // Remove current options
+            state_select.find("option").remove();
+    
+            // Add the correct options to the select
+            var current_product = $(this).val();
+            $.each(product_states[current_product], function () {
+                var statecode = this[0];
+                var statename = this[1];
+                var is_disabled = this[2];
+    
+                var option = $("<option></option>"
+                ).attr("value", statecode
+                ).prop("disabled", is_disabled
+                ).text(statename
+                );
+                state_select.append(option);
+            });
+        });
+    });
+</script>
+    
 {% set compliance_has_approved_remote_enrollment = False %}
 {% if compliance_has_approved_remote_enrollment %}
 <script type="text/javascript">
     jQuery(function($) {
   
+        
+        
         var email_btn = $("#email-enrollment-btn");
         email_btn.on("click", function() {
             email_btn.prop('disabled', true);
@@ -149,14 +182,14 @@
                 data: $(".enrollment-form").serialize(),
                 error: function() {
                     bootbox.dialog({
-		        message: "There was a problem in sending the email.  Please check the email address, or contact the Enrollment System administrator if you have further problems.",
-		        buttons: {
-		            "success": {
-		                "label": "OK",
-		                "className": "btn-sm btn-primary"
-		            }
-		        }
-		    });
+                        message: "There was a problem in sending the email.  Please check the email address, or contact the Enrollment System administrator if you have further problems.",
+                        buttons: {
+                            "success": {
+                                "label": "OK",
+                                "className": "btn-sm btn-primary"
+                            }
+                        }
+                    });
     
                     <!-- alert("There was a problem sending the email."); -->
                     email_btn.prop('disabled', false);
@@ -164,26 +197,25 @@
                 success: function() {
                     <!-- alert("The enrollment email has been sent to '"+$('#email').val()+"'"); -->
                     bootbox.dialog({
-		        message: $('#eeFName').val() + " " + $('#eeLName').val() + " (" + $('#email').val() + ") will receive a link to the application via email.  The signed application will queue in your agent applications inbox requiring your signature prior to processing.",
-		        buttons: {
-		            "success": {
-		                "label": "OK",
-		                "className": "btn-sm btn-primary"
-		            }
-		        }
-		    });
+                        message: $('#eeFName').val() + " " + $('#eeLName').val() + " (" + $('#email').val() + ") will receive a link to the application via email.  The signed application will queue in your agent applications inbox requiring your signature prior to processing.",
+                        buttons: {
+                            "success": {
+                                "label": "OK",
+                                "className": "btn-sm btn-primary"
+                            }
+                        }
+                    });
 		    
-		    email_btn.prop('disabled', false);
-		    $('#email').val("")
-		    $('#eeFName').val("")
-		    $('#eeLName').val("")
-                },
-                // expected return data type
-                dataType: "json",
-                method: "POST"
-            });
-        });
-        
+                    email_btn.prop('disabled', false);
+                    $('#email').val("")
+                    $('#eeFName').val("")
+                    $('#eeLName').val("")
+                        },
+                        // expected return data type
+                        dataType: "json",
+                        method: "POST"
+                    });
+                });
   })
 </script>
 {% endif %}
