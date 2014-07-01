@@ -774,7 +774,7 @@ function CIBenefitOption(wrapped_option) {
         var ci_value = Math.round(self.face_value * .3);
         var ci_value_formatted = format_face_value(ci_value);
         
-        return face_value_formatted + "<small> ("+ci_value_formatted+" CI)</small>";
+        return face_value_formatted + "<br><small>("+ci_value_formatted+" CI)</small>";
     };
     self.format_for_dropdown = wrapped_option.format_for_dropdown;
     self.is_valid = wrapped_option.is_valid;
@@ -1462,6 +1462,7 @@ function init_validation() {
         // Pull out all the data we need for docusign 
         var wizard_results = {
             agent_data: window.ui.defaults,
+	    product_type: window.ui.insurance_product.product_type,
             
 	    identityToken: window.ui.identityToken(),
 	    identityType: window.ui.identityType(),

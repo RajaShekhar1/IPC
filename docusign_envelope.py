@@ -9,36 +9,9 @@ from model.DocuSign_config import (
     baseUrl, 
     apiAccountID, 
     templateClientID,
-    sessionUserApprovedForDocusign
+    sessionUserApprovedForDocusign,
+    get_template_id
 )
-
-def get_template_id(product_type, state):
-    templates_by_product_and_state = {
-        "FPPTI": {
-            "CO" : "TBD",
-            "CT" : "TBD",
-            "DC" : "TBD",
-            "FL" : "TBD",
-            "IL" : "TBD",
-            "TX" : "65D80628-EA67-45C9-B50D-35932CA28814",
-            "VA" : "65D80628-EA67-45C9-B50D-35932CA28814"
-            },
-        "FPPCI": {
-            "CO" : "TBD",
-            "CT" : "TBD",
-            "DC" : "TBD",
-            "FL" : "TBD",
-            "IL" : "TBD",
-            "TX" : "65D80628-EA67-45C9-B50D-35932CA28814",
-            "VA" : "TBD"
-        }
-    }
-
-    templateID = templates_by_product_and_state.get(product_type).get(state)
-    if templateID:
-        return templateID
-    else:
-        return "Failed Template Lookup"
 
 
 #  14-May-23 WSD for now, by the time we get here the radios are wholesale "no" answers, so just fill without logic 
@@ -111,6 +84,10 @@ def generate_ChildTabsEntry (child_index, wizard_data):
     
 def create_envelope_and_get_signing_url(wizard_data):
     # return is_error(bool), error_message, and redirectURL
+
+    # FPPTI or FPPCI
+    productType = wizard_data["product_type"]
+
 
     # for now, just pull into former variables we've been using
     recipName = wizard_data["agent_data"]["employee_first"] + " " + wizard_data["agent_data"]["employee_last"]
@@ -309,6 +286,12 @@ def create_envelope_and_get_signing_url(wizard_data):
 
     generalRadiosList = []
     # Note: UI screens out any "yes" replacement - so all applications are "no" to replacement
+    generalRadiosList.append({"groupName": "productType",
+                              "radios": [
+                                  {"selected" : "True",
+                                   # FPPTI or FPPCI
+                                   "value" : productType}
+                              ]})
     generalRadiosList.append({"groupName": "existingIns",
                               "radios": [
                                   {"selected" : "True",
@@ -355,7 +338,7 @@ def create_envelope_and_get_signing_url(wizard_data):
         "accountID" : accountId,
         "status" : "sent",
         "emailSubject": "signature needed: FPP for " +  recipientName + " (" + employer + ")",
-        "templateId": get_template_id("FPPTI", "TX"),
+        "templateId": get_template_id(productType, "TX"),
         "templateRoles": [
             {"email" : emailTo,
              "name" :recipientName,
