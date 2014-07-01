@@ -33,7 +33,7 @@
       <div class="form-group">
         <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Product to enroll</label>
         <div class="col-xs-12 col-sm-9">
-          {{ form.productID(required='true') }}
+          {{ form.productID() }}
         </div>
       </div>
 
@@ -42,7 +42,7 @@
       <div class="form-group">
 	    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Location of this enrollment</label>
 	    <div class="col-xs-12 col-sm-9">
-	    {{ form.enrollmentState(required='true') }}
+	    {{ form.enrollmentState() }}
 	    </div>
       </div>
 
@@ -51,7 +51,7 @@
       <div class="form-group">
 	<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="companyName">Company Name</label>
 	<div class="col-xs-12 col-sm-9">
-	  {{ form.companyName(placeholder='Company', required='true') }}
+	  {{ form.companyName(placeholder='Company') }}
 	</div>
       </div>
       <div class="space-2"></div>
@@ -59,8 +59,8 @@
       <div class="row form-group">
         <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeFName">Employee Name</label>        
         <div class="col-xs-12 col-sm-9">
-	  {{ form.eeFName(placeholder='First Name', required='true') }}
-	  {{ form.eeLName(placeholder='Last Name', required='true') }}
+	  {{ form.eeFName(placeholder='First Name') }}
+	  {{ form.eeLName(placeholder='Last Name') }}
 	</div>
       </div>
 
@@ -69,7 +69,7 @@
       <div class="row form-group">
 	<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="email">Employee Email Address:</label>
 	<div class="col-xs-12 col-sm-9">
-	    {{ form.email(required='true')}}
+	    {{ form.email(type="email")}}
 	</div>
       </div>
 
@@ -143,9 +143,7 @@
         var product_select = $("#productID");
         product_select.on("change", function () {
             var state_select = $("#enrollmentState");
-    
-            // Invalidate the select value
-            state_select.val(null);
+            var current_state = state_select.val();
     
             // Remove current options
             state_select.find("option").remove();
@@ -164,7 +162,45 @@
                 );
                 state_select.append(option);
             });
+            
+            // If the selected value is no longer enabled, set the value to what it was before
+            var is_disabled = state_select.find("option[value="+current_state+"]").prop("disabled");
+            if (!is_disabled) {
+                state_select.val(current_state);
+            }
+            
         });
+    
+        // Validation
+        $("form").validate({
+            errorElement: 'div',
+            errorClass: 'help-block',
+            focusInvalid: false,
+            rules: {
+                productID: {required: true},
+                enrollmentState: {required: true},
+                companyName: {required: true},
+                eeLName: {required: true},
+                eeFName: {required: true},
+                email: {
+                    required: true,
+                    email: true
+                }
+            },
+            messages: {
+                    
+            },
+            highlight: function(e) {
+                $(e).closest('.form-group').removeClass('has-info').addClass('has-error');
+            },
+            
+            success: function(e) {
+                $(e).closest('.form-group').removeClass('has-error').addClass('has-info');
+                $(e).remove();
+            }
+            //errorPlacement: wizard_error_placement	
+        });
+    
     });
 </script>
     

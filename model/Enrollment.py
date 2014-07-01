@@ -356,7 +356,7 @@ class EnrollmentSetupForm(Form):
     eeFName = StringField('Employee First Name', validators=[InputRequired()])
     eeLName = StringField('Employee Last Name', validators=[InputRequired()])
     email = StringField('Employee email', validators=[Email()])
-
+    
 
 def get_enrollment_setup_form_for_product(productID=None):
     """
