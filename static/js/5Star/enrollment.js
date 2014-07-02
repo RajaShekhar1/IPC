@@ -28,6 +28,9 @@ function init_rate_form(data) {
         product = new FPPTIProduct();
     } else if (data.product_id == "FPPCI") {
         product = new FPPCIProduct();
+        
+        // styling differences
+        $(".recommended-coverage-table").addClass("ci-recommendations");
     } else {
         // default product?
         product = new FPPTIProduct();
@@ -39,6 +42,7 @@ function init_rate_form(data) {
     window.ui = ui;
     
     ko.applyBindings(ui);
+    
 }
 
 // Root model of the Benefits wizard User Interface
@@ -543,8 +547,7 @@ function WizardUI(product, defaults) {
     });
     self.show_no_selection_error = function() {
         self.attempted_advance_step(true);
-    }
-    
+    }; 
 }
 
 function Product() {
