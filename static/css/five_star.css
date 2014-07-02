@@ -7,6 +7,11 @@
     height: 60px;
 }
 
+.ci-recommendations .pricing-span-header li, 
+.ci-recommendations .pricing-table li {
+    height: 80px;
+}
+
 .pricing-span-header li {
     padding: 20px 10px;
     font-size: 14px;
@@ -26,7 +31,10 @@
     z-index: 10;
 }
 
-.widget-header>:first-child {
+.recommended-coverage-table .widget-header {
+    min-height: 43px;
+}
+.recommended-coverage-table .widget-header>:first-child {
     line-height: 24px;
 }
 

@@ -269,8 +269,12 @@
                         <div class="widget-main no-padding">
                           <ul class="list-unstyled list-striped js">
                             <li data-bind="text: employee().name()"></li>
-                            <li data-bind="text: show_spouse_name()"></li>
-                            <li data-bind="text: show_children_names()"></li>
+                            <!--ko if: should_include_spouse_in_table-->
+                              <li data-bind="text: show_spouse_name()"></li>
+                            <!--/ko-->
+                            <!--ko if: should_include_children_in_table-->
+                              <li data-bind="text: show_children_names()"></li>
+                            <!--/ko-->
                           </ul>
                         </div>
                       </div>
@@ -364,10 +368,10 @@
                                   event: {change: apply_selected_customization}
                                   ">
                                 </select>
-                                <!--/ko-->
+                              <!--/ko-->
                               </li>
+                              <!--ko if: should_include_spouse_in_table-->
                               <li>
-                                <!--ko if: should_include_spouse_in_table-->
                                 <select data-bind="
                                   options: spouse().all_options,
                                   optionsCaption: '',
@@ -376,10 +380,10 @@
                                   event: {change: apply_selected_customization}
                                   ">
                                 </select>
-                                <!--/ko-->
                               </li>
+                              <!--/ko-->
+                              <!--ko if: should_include_children_in_table-->
                               <li>
-                                <!--ko if: should_include_children_in_table-->
                                 <select data-bind="
                                   options: get_children_options,
                                   optionsCaption: '',
@@ -388,9 +392,8 @@
                                   event: {change: apply_selected_customization}
                                   ">
                                 </select>
-                                <!--/ko-->
-                                
                               </li>
+                              <!--/ko-->
                               
                             </ul>
                           </div>
@@ -436,12 +439,15 @@
           <li data-bind="template: {name: employee_recommendation().is_valid() ? 'recommendation_template' : 'blank_template', 
                                     data: employee_recommendation}"> 
           </li>
-          <li data-bind="template: {name: spouse_recommendation().is_valid() ? 'recommendation_template' : 'blank_template', 
-                                    data: spouse_recommendation}"> 
-          </li>
-          <li data-bind="template: {name: children_recommendation().is_valid() ? 'recommendation_template' : 'blank_template', 
-                                    data: children_recommendation}"> 
-          </li>
+          <!--ko if: $root.should_include_spouse_in_table-->
+            <li data-bind="template: {name: spouse_recommendation().is_valid() ? 'recommendation_template' : 'blank_template', 
+                            data: spouse_recommendation}"></li>
+          <!--/ko-->
+          <!--ko if: $root.should_include_children_in_table-->
+            <li data-bind="template: {name: children_recommendation().is_valid()? 'recommendation_template': 'blank_template', 
+                            data: children_recommendation}"></li>
+          <!--/ko-->
+            
         </ul>
         <div class="price" data-bind="visible: get_total_weekly_premium() > 0.0">
           <span class="label label-lg label-inverse arrowed-in arrowed-in-right">
