@@ -2,6 +2,8 @@
 {% set active_page = 'nav_enroll' -%}
 {% block title %} - Home{% endblock %}
 
+{% set compliance_has_approved_remote_enrollment = False %}
+
 {% block head %}
  {{ super() }}
 <!-- page-specific header data -->
@@ -124,17 +126,11 @@
 
 <script src="{{ url_for('static', filename='js/jquery.validate.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/additional-methods.min.js') }}"></script>
+{% if compliance_has_approved_remote_enrollment %}
 <script src="{{ url_for('static', filename='js/bootbox.min.js') }}"></script>
+{% endif %}
 <script src="{{ url_for('static', filename='js/jquery.maskedinput.min.js') }}"></script>
 
-<!-- ace scripts ->
-
-<script src="{{ url_for('static', filename='js/ace-elements.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/ace.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/ace-extra.min.js') }}"></script>  -->
-
-<!-- inline scripts related to this page ->
-<script src="{{url_for('static', filename='js/handlebars-v1.3.0.js')}}"></script>  -->
 
 <script>
     jQuery(function($) {
@@ -204,7 +200,6 @@
     });
 </script>
     
-{% set compliance_has_approved_remote_enrollment = False %}
 {% if compliance_has_approved_remote_enrollment %}
 <script type="text/javascript">
     jQuery(function($) {

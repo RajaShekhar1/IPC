@@ -59,9 +59,9 @@ FPPCI_generic_states = ["TX", "OK", "AL"]
 
 def get_template_id(product_type, state):
     if useDemoAccount:
-        get_template_id_DEMO(product_type, state)
+        return  get_template_id_DEMO(product_type, state)
     else:
-        get_template_id_PRODUCTION(product_type, state)
+        return get_template_id_PRODUCTION(product_type, state)
     
 def get_template_id_PRODUCTION(product_type, state):
     """
@@ -105,6 +105,14 @@ def get_template_id_DEMO(product_type, state):
     """
     version with Demo account template IDs
     """
+
+    #
+    # bypass lookup while building out templates in production
+    #  -- just return generic template ID regardless
+    return "65D80628-EA67-45C9-B50D-35932CA28814"
+ 
+
+
     templates_by_product_and_state = {
         "FPPTI": {
             "DC" : "TBD",
@@ -124,4 +132,6 @@ def get_template_id_DEMO(product_type, state):
     elif product_type == "FPPCI" and state in FPPCI_generic_states:
         return "65D80628-EA67-45C9-B50D-35932CA28814"
     else:
+        # print error to console
+        print "Failed lookup for product_type", product_type, " and state", state
         return "Failed product lookup"

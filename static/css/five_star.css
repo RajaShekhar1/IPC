@@ -7,6 +7,10 @@
     height: 60px;
 }
 
+.ci-recommendations .pricing-span-header li, .pricing-table li {
+    height: 100px;
+}
+
 .pricing-span-header li {
     padding: 20px 10px;
     font-size: 14px;

@@ -1498,6 +1498,10 @@ function init_validation() {
             spouse_beneficiary_ssn:  window.ui.spouse_beneficiary_ssn(),
             spouse_beneficiary_dob:  window.ui.spouse_beneficiary_dob()
         };
+
+	if (!window.ui.should_include_spouse_in_table()) {
+	    wizard_results['employee_beneficiary'] = "other";
+	}
         
         // Children
         wizard_results['children'] = [];
@@ -1513,7 +1517,9 @@ function init_validation() {
         var emp_benefit = window.ui.selected_plan().employee_recommendation().recommended_benefit;
         if (emp_benefit.is_valid()) {
                 wizard_results['employee_coverage'] = emp_benefit.serialize_data();
-        }
+        } else {
+	    wizard_results['employee_coverage'] = ""
+	}
         var sp_benefit = window.ui.selected_plan().spouse_recommendation().recommended_benefit;
         if (sp_benefit.is_valid()) {
             wizard_results['spouse_coverage'] = sp_benefit.serialize_data();
@@ -1550,7 +1556,7 @@ function init_validation() {
         
         bootbox.dialog({
             //just showing action in the interim while getting routed to the Docusign page... the DS page should redirect probably before there's time to read this
-	    message: "Generating application form for signature...",
+	    message: "Generating application form for signature, please wait...",
 	    buttons: {
 		"success": {
 		    "label": "Close",
@@ -1594,12 +1600,18 @@ function init_validation() {
             eeZip: {required: true},
             eeOwner: {required: true},
             eeOtherOwnerName: {
-		required: true,
-		depends: "#eeOwner-other:checked"
+		required:  {
+                    depends: function(element) {
+                        return ($("#eeOwner-other").is(':checked'))
+                    }
+		}
 	    },
 	    eeOtherOwnerSSN: {
-		required: true,
-		depends: "#eeOwner-other:checked"
+		required:  {
+                    depends: function(element) {
+                        return ($("#eeOwner-other").is(':checked'))
+                    }
+		}
 	    }
         },
 
@@ -1637,9 +1649,12 @@ function init_validation() {
             spssn: {required: true},
             spOwner: {required: true},
             spOtherOwnerName: {
-		required: true,
-		depends: "#spOwner-other:checked"
-	    }	    
+		required:  {
+                    depends: function(element) {
+                        return ($("#spOwner-other").is(':checked'))
+                    }
+		}
+	    }
         },
 
         messages: {

@@ -87,7 +87,7 @@ def create_envelope_and_get_signing_url(wizard_data):
 
     # FPPTI or FPPCI
     productType = wizard_data["product_type"]
-
+    enrollmentState = wizard_data["agent_data"]["state"]
 
     # for now, just pull into former variables we've been using
     recipName = wizard_data["agent_data"]["employee_first"] + " " + wizard_data["agent_data"]["employee_last"]
@@ -132,10 +132,10 @@ def create_envelope_and_get_signing_url(wizard_data):
             eePremium = format(round((wizard_data["employee_coverage"]["weekly_premium"]*100 * 52) / 12)/100.0, ",.2f")
             SOH_RadiosList += generate_SOHRadios("ee")
         else:
-            employeeCoverage = " "
+            employeeCoverage = "NONE"
             eePremium = " "
     else:
-        employeeCoverage = " "
+        employeeCoverage = "NONE "
         eePremium = " "
 
     
@@ -321,11 +321,40 @@ def create_envelope_and_get_signing_url(wizard_data):
          
 
 
-    #
-    # Create envelope with an embedded recipient, try to do so via Docusign SOBO, but fallback if otherwise
-    #
     # *******************************
-    #authenticateStr = dsAgentAuthenticateString() if sessionUserApprovedForDocusign() else dsAPIAuthenticateString()
+    # Create envelope with an embedded recipient
+    # NOTE:  this could be done via SOBO , in which case we'd need to follow the general procedure below.  However, 
+    #        this seems to add more complexity and the benefit isn't clear what the Agent can do as a "sender" that he can't already (since we merely want him to be a signer).  Having him be able to access "sent" items before signed seems useless since the form is blank until after the employee signs and commits, so there's no data in there to resend.  
+    #        Further, by the admin account being the sender, we have faster access into what envelopes are out/pending, etc.  So, for now we'll still avoiding SOBO on creating the envelopes (still need, elsewhere, for access to console for signing).
+    # Nonetheless, here's the general notes on the process:
+    """
+    1. turn on "Sending" permission 
+    
+    POST to:
+    https://{{environment}}.docusign.net/restapi/v2/accounts/{{AccountID}}/users/
+    {
+    "newUsers":[{
+        "email": "exactemail@address.com",
+        "userName":"Exact Name Match",
+        "userSettings": [
+            {
+                "name": "canSendEnvelope",
+                "value": "false"
+            },
+            {
+                "name": "enableSequentialSigningAPI",
+                "value": "false"
+            }
+          ]
+    }]
+
+
+    2. use SOBO authentication
+       authenticateStr = dsAgentAuthenticateString() if sessionUserApprovedForDocusign() else dsAPIAuthenticateString()
+
+    3. turn off "Sending" permissions (reverse the above)
+    """
+    # *******************************
     authenticateStr = dsAPIAuthenticateString()
  
     accountId = apiAccountID
@@ -338,7 +367,7 @@ def create_envelope_and_get_signing_url(wizard_data):
         "accountID" : accountId,
         "status" : "sent",
         "emailSubject": "signature needed: FPP for " +  recipientName + " (" + employer + ")",
-        "templateId": get_template_id(productType, "TX"),
+        "templateId": get_template_id(productType, enrollmentState),
         "templateRoles": [
             {"email" : emailTo,
              "name" :recipientName,
@@ -364,20 +393,22 @@ def create_envelope_and_get_signing_url(wizard_data):
     url = baseUrl + "/envelopes";
     headers = {'X-DocuSign-Authentication': authenticateStr, 'Accept': 'application/json', 'Content-Length': str(len(requestBodyStr))};
     http = httplib2.Http();
-    print "url=",url
-    print "headers=",headers
-    print requestBodyStr
-    #response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr);
+    response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr);
     # When troubleshooting, send instead to requestb.in (or similar listener) to capture/examing the JSON trace.  Past that trace into SOAPUI to explore the response if needed.
-    response, content = http.request("http://requestb.in/1efjkje1", 'POST', headers=headers, body=requestBodyStr);
+    #response, content = http.request("http://requestb.in/1efjkje1", 'POST', headers=headers, body=requestBodyStr);
     status = response.get('status');
     if (status != '201'): 
+        print "url=",url
+        print "headers=",headers
+        print requestBodyStr
         print("Error generating Docusign envelope, status is: %s" % status); return True, "Error generating Docusign envelope", None;
     
     data = json.loads(content);
  
     # store the uri for next request
     uri = data.get('uri');
+    # write to log in case we need for short-term retrieval
+    print ("Envelope for %s by %s: %s\n" % (recipientName, user.custom_data["signing_name"], uri))
      
     #
     # Get the Embedded Send View
@@ -404,13 +435,13 @@ def create_envelope_and_get_signing_url(wizard_data):
     # print ("response: %s\ncontent: %s" % (response, content))
 
     if (status != '201'): 
+        print "url=",url
+        print "headers=",headers
+        print requestBodyStr
         print("Error retrieving signature URL, status is: %s" % status); return True, "Error retrieving signature URL", None;
 
     data = json.loads(content);
     viewUrl = data.get('url');
  
-
-    #--- display results
-    print ("View URL = %s\n" % viewUrl)
-
+    
     return False, None, viewUrl

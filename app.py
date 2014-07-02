@@ -225,6 +225,7 @@ def in_person_enrollment():
         'state': state if state != 'XX' else None,
         'company_name': company_name,
         'product_id':product_code,
+        'product_name': product.name,
         'employee_first':employee_first,
         'employee_last':employee_last,
         'employee_email':employee_email,
@@ -495,6 +496,12 @@ def login():
 
                 if user.custom_data['agency'].strip() != "": 
                     session['headername'] += ", " + user.custom_data['agency']
+
+                session['active_case'] = {
+                    'company_name': "",
+                    'situs_state': "",
+                    'product_code': ""
+                }
                 
                 if is_admin:
                     return redirect(url_for('admin'))

@@ -21,13 +21,13 @@ def get_product_by_code(product_code):
     products_by_code = {
         "FPPTI": Product(
             "FPPTI",
-            "Family Protection Plan - Term to 100", 
+            "Family Protection Plan - Terminal Illness", 
             build_FPPTI_rate_table(),
             Recommendations(FPPTI_recommendations)
         ),
         "FPPCI":Product(
             "FPPCI",
-            "FPPCI Name",
+            "Family Protection Plan - Critical Illness",
             build_FPPCI_rate_table(),
             Recommendations(FPPCI_recommendations),
         ),
