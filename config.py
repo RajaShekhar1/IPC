@@ -4,8 +4,8 @@ from datetime import timedelta
 DEBUG = True
 
 # Put server name here for formatting external links
-SERVER_NAME = 'localhost:5000'
-#lSERVER_NAME = 'taa.herokuapp.com'
+#SERVER_NAME = 'localhost:5000'
+SERVER_NAME = '5starenroll.com'
 
 
 # Flask-WTF forms extension config
@@ -27,4 +27,4 @@ stormpath_API_KEY_FILE = '.stormpath/apiKey.properties'
 stormpath_APPLICATION = 'TAA'
 stormpath_API_KEY_ID = '5GPLR2SQXVPDJEXKXYE287ZYS'
 stormpath_API_KEY_SECRET = 'wiZWfjnQu3qBSAYIbQskIn8CKJf/q0A8KxSdMN2NZn8'
-stormpath_TIMEOUT_MINS = 15
+stormpath_TIMEOUT_MINS = 30
