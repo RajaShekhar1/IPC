@@ -9,8 +9,8 @@ useDemoAccount = True
 
 #Docusign credential info
 #authEmail = "docrequest@5starima.com"  #don't need if we use the api username
-apiUserName = "e35944e2-e4b1-4e3c-8a69-af9d0ed58b54" if useDemoAccount else "8dd0f65d-ae78-4026-8d32-81f63818bf16"
-apiPassword = "1Opb8JZ1JVQwLHpzqylTlspVIUg=" if useDemoAccount else "edJSzv7Rqc2XNFI3GqM/IrZ9SvM="
+apiUserName = "e8e7df3d-09be-47d6-922b-387956638a6c" if useDemoAccount else "8dd0f65d-ae78-4026-8d32-81f63818bf16"
+apiPassword = "wQtqOMu0AjSE6sGUXoqgK5Iq/Zw=" if useDemoAccount else "edJSzv7Rqc2XNFI3GqM/IrZ9SvM="
 apiAccountID = "599b0608-269f-4598-a1c9-da3b67281cb7" if useDemoAccount else "8271282c-7a4e-4e00-a2e9-878924c316d5"
 dsServer = "demo.docusign.net" if useDemoAccount else "na2.docusign.net"
 
