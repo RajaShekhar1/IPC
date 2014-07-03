@@ -312,8 +312,8 @@ def create_envelope_and_get_signing_url(wizard_data):
                                    "value" : "female"}
                               ]})
         # only include Owner checkbox if coverage was selected
-        if (prefix_short == "ee" and employeeCoverage != eeCoverageNullToken)
-           or (prefix_short == "sp" and spouseCoverage != " "):
+        if ((prefix_short == "ee" and employeeCoverage != eeCoverageNullToken) or 
+            (prefix_short == "sp" and spouseCoverage != " ")):
             generalRadiosList.append({"groupName": prefix_short + "Owner",
                                       "radios": [
                                           {"selected" : "True" if wizard_data[prefix_long + "_owner"] == "self" else "False",
