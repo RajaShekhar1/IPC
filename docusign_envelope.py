@@ -110,14 +110,11 @@ def create_envelope_and_get_signing_url(wizard_data):
         idToken = emailTo
 
     # note: DS supplies the last parm of 'event' in the callback
-    callbackURL = url_for ('ds_landing_page') + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
-    #callbackURL = "https://taa.heroku.com/application_completed" + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
+    #callbackURL = "https://5starenroll.com/application_completed" + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
+    callbackURL = "http://5starenroll.com/application_completed" + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
     idTokenStr = "Authentication via " + idType + ": " + idToken
-    
-    #if wizard_results["employee_coverage"]["face_value"]:
-    #
-        
 
+    
     SOH_RadiosList = []
 
     if ((recipName != "") and (recipName != None)):
@@ -322,6 +319,19 @@ def create_envelope_and_get_signing_url(wizard_data):
                                            "value" : "other"}
                                       ]})
          
+    agentRadiosList = []
+    # identical to whatever EE said
+    agentRadiosList.append({"groupName": "existingInsAgent",
+                              "radios": [
+                                  {"selected" : "True",
+                                   "value" : wizard_data["existing_insurance"]}
+                              ]})
+    agentRadiosList.append({"groupName": "replaceAgent",
+                              "radios": [
+                                  {"selected" : "True",
+                                   "value" : "no"}
+                              ]})
+    
 
 
     # *******************************
@@ -369,7 +379,7 @@ def create_envelope_and_get_signing_url(wizard_data):
     requestBody ={
         "accountID" : accountId,
         "status" : "sent",
-        "emailSubject": "signature needed: FPP for " +  recipientName + " (" + employer + ")",
+        "emailSubject": "signature needed: " + productType + " for " +  recipientName + " (" + employer + ")",
         "templateId": get_template_id(productType, enrollmentState),
         "templateRoles": [
             {"email" : emailTo,
@@ -383,6 +393,9 @@ def create_envelope_and_get_signing_url(wizard_data):
              },
             {"email" : user.email,
              "name" : user.custom_data["signing_name"],
+             "tabs" : {
+                 "radioGroupTabs": agentRadiosList
+             },
              "roleName" :  templateAgentRoleName
              #"clientUserId": templateClientID 
              } 
