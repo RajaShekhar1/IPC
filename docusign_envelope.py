@@ -109,9 +109,9 @@ def create_envelope_and_get_signing_url(wizard_data):
     else:
         idToken = emailTo
 
-    # landingURL = url_for ('ds_landing_page') + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
-    landingURL = "https://taa.heroku.com/application_completed" + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
-                # note: DS supplied the last parm of 'event' in the callback
+    # note: DS supplies the last parm of 'event' in the callback
+    callbackURL = url_for ('ds_landing_page') + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
+    #callbackURL = "https://taa.heroku.com/application_completed" + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
     idTokenStr = "Authentication via " + idType + ": " + idToken
 
     #if wizard_results["employee_coverage"]["face_value"]:
@@ -125,17 +125,17 @@ def create_envelope_and_get_signing_url(wizard_data):
     else:
         recipientName = "Applicant";
         
-
+    eeCoverageNullToken = "NONE"
     if wizard_data["employee_coverage"]:
         if wizard_data["employee_coverage"]["face_value"]:
             employeeCoverage = format(wizard_data["employee_coverage"]["face_value"], ",.0f")
             eePremium = format(round((wizard_data["employee_coverage"]["weekly_premium"]*100 * 52) / 12)/100.0, ",.2f")
             SOH_RadiosList += generate_SOHRadios("ee")
         else:
-            employeeCoverage = "NONE"
+            employeeCoverage = eeCoverageNullToken
             eePremium = " "
     else:
-        employeeCoverage = "NONE "
+        employeeCoverage = eeCoverageNullToken
         eePremium = " "
 
     
@@ -193,7 +193,7 @@ def create_envelope_and_get_signing_url(wizard_data):
         {"tabLabel" : "eeCoverage",
          "value" : employeeCoverage},
         {"tabLabel" : "eePremium",
-         "value" : eePremium if employeeCoverage !="" else ""} ,
+         "value" : eePremium if employeeCoverage !=eeCoverageNullToken else ""} ,
         {"tabLabel" : "Employer",
          "value" : wizard_data["agent_data"]["company_name"]},
         {"tabLabel" : "eeOtherOwnerName",
@@ -218,7 +218,7 @@ def create_envelope_and_get_signing_url(wizard_data):
          "value" : wizard_data["employee"]["email"]}
     ]
     # add in beneficiaries if appropriate
-    if employeeCoverage != " ":
+    if employeeCoverage != eeCoverageNullToken:
         if wizard_data["employee_beneficiary"] == "spouse":
             eeTabsList += [
                 {"tabLabel" : "eeBeneFullName",
@@ -258,7 +258,7 @@ def create_envelope_and_get_signing_url(wizard_data):
             {"tabLabel" : "spCoverage",
              "value" : spouseCoverage},
             {"tabLabel" : "spPremium",
-             "value" : spPremium if spouseCoverage !="" else ""}
+             "value" : spPremium}
         ]
         if wizard_data["spouse_beneficiary"] == "employee":
             spouseTabsList += [
@@ -311,13 +311,16 @@ def create_envelope_and_get_signing_url(wizard_data):
                                   {"selected" : "True" if wizard_data[prefix_long] and wizard_data[prefix_long]["gender"] == "female" else "False",
                                    "value" : "female"}
                               ]})
-        generalRadiosList.append({"groupName": prefix_short + "Owner",
-                              "radios": [
-                                  {"selected" : "True" if wizard_data[prefix_long + "_owner"] == "self" else "False",
-                                   "value" : "self"},
-                                  {"selected" : "True" if wizard_data[prefix_long + "_owner"] == "other" else "False",
-                                   "value" : "other"}
-                              ]})
+        # only include Owner checkbox if coverage was selected
+        if (prefix_short == "ee" and employeeCoverage != eeCoverageNullToken)
+           or (prefix_short == "sp" and spouseCoverage != " "):
+            generalRadiosList.append({"groupName": prefix_short + "Owner",
+                                      "radios": [
+                                          {"selected" : "True" if wizard_data[prefix_long + "_owner"] == "self" else "False",
+                                           "value" : "self"},
+                                          {"selected" : "True" if wizard_data[prefix_long + "_owner"] == "other" else "False",
+                                           "value" : "other"}
+                                      ]})
          
 
 
@@ -418,7 +421,7 @@ def create_envelope_and_get_signing_url(wizard_data):
     requestBody =   {
         "authenticationMethod" : "email",
         "email" : emailTo,
-        "returnUrl" :  landingURL,
+        "returnUrl" :  callbackURL,
         "clientUserId" : templateClientID,
         "userName" : recipientName
     }
