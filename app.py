@@ -381,10 +381,11 @@ def submit_wizard_data():
     data = json.loads(request.data)
     
     wizard_results = data['wizard_results']
-    print "--------------------"
-    print wizard_results
-    print "--------------------"
-    sys.stdout.flush()
+    # When DEBUG...
+    #print "--------------------"
+    #print wizard_results
+    #print "--------------------"
+    #sys.stdout.flush()
     
     
     # Do docusign with data in wizard_results
