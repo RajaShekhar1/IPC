@@ -424,7 +424,7 @@ def create_envelope_and_get_signing_url(wizard_data):
     # store the uri for next request
     uri = data.get('uri');
     # write to log in case we need for short-term retrieval
-    print ("Envelope for %s by %s: %s\n" % (recipientName, user.custom_data["signing_name"], uri))
+    print ("Envelope for %s (%s) by %s: %s\n" % (recipientName, emailTo, user.custom_data["signing_name"], uri))
      
     #
     # Get the Embedded Send View
