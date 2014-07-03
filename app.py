@@ -230,7 +230,7 @@ def in_person_enrollment():
         'employee_last':employee_last,
         'employee_email':employee_email,
         'is_in_person':True,
-        'health_questions':product.get_health_questions(),
+        'health_questions':product.get_health_questions(state),
     }
     
     return render_template(
@@ -323,6 +323,35 @@ def email_link_handler():
                            wizard_data=wizard_data,
                            states=get_states(),
     )
+
+
+@app.route("/FPPTI_disclosure.pdf")
+def FPPTI_disclosure_generic():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_generic.pdf')
+@app.route("/FPPTI_disclosure_TX.pdf")
+def FPPTI_disclosure_TX():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_TX.pdf')
+@app.route("/FPPTI_disclosure_KS.pdf")
+def FPPTI_disclosure_KS():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_KS.pdf')
+@app.route("/FPPTI_disclosure_OR.pdf")
+def FPPTI_disclosure_OR():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_OR.pdf')
+@app.route("/FPPTI_disclosure_VA.pdf")
+def FPPTI_disclosure_VA():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_VA.pdf')
+@app.route("/FPPCI_disclosure.pdf")
+def FPPCI_disclosure_generic():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPCI_disclosure_generic.pdf')
+@app.route("/FPPCI_disclosure_KS.pdf")
+def FPPCI_disclosure_KS():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPCI_disclosure_KS.pdf')
+@app.route("/FPPCI_disclosure_OR.pdf")
+def FPPCI_disclosure_OR():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPCI_disclosure_OR.pdf')
+@app.route("/FPPCI_disclosure_VA.pdf")
+def FPPCI_disclosure_VA():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPCI_disclosure_VA.pdf')
 
     
 """--------------------------------------------------------------

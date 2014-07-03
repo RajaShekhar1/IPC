@@ -1451,7 +1451,7 @@ function init_validation() {
 	//jQuery validator rule should be handling this, but it's not, so force a popup here
 	if (!$("#confirmDisclaimer").is(':checked')) {
 	    bootbox.dialog({
-		    message: "Please confirm that you have received the disclaimer notice.",
+		    message: "Please confirm that you have received the disclosure notice.",
 		    buttons: {
 			"danger": {
 			    "label": "OK",

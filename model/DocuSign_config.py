@@ -1,4 +1,8 @@
 from flask.ext.stormpath import user
+from model.Product import (
+    FPPTI_generic_states,
+    FPPCI_generic_states,
+)
 
 
 useDemoAccount = True 
@@ -6,7 +10,7 @@ useDemoAccount = True
 #Docusign credential info
 #authEmail = "docrequest@5starima.com"  #don't need if we use the api username
 apiUserName = "e35944e2-e4b1-4e3c-8a69-af9d0ed58b54" if useDemoAccount else "8dd0f65d-ae78-4026-8d32-81f63818bf16"
-apiPassword = "1Opb8JZ1JVQwLHpzqylTlspVIUg=" if useDemoAccount else "d4c55st1r"
+apiPassword = "1Opb8JZ1JVQwLHpzqylTlspVIUg=" if useDemoAccount else "edJSzv7Rqc2XNFI3GqM/IrZ9SvM="
 apiAccountID = "599b0608-269f-4598-a1c9-da3b67281cb7" if useDemoAccount else "8271282c-7a4e-4e00-a2e9-878924c316d5"
 dsServer = "demo.docusign.net" if useDemoAccount else "na2.docusign.net"
 
@@ -49,13 +53,6 @@ def sessionUserApprovedForDocusign():
     """
     return ('ds_apikey' in user.custom_data.keys()) and (user.custom_data['ds_apikey'] != None) and (user.custom_data['ds_apikey'] != "")
     
-
-#
-# Docusign templates
-#
-
-FPPTI_generic_states = ["TX", "OK", "AL"]
-FPPCI_generic_states = ["TX", "OK", "AL"]
 
 def get_template_id(product_type, state):
     if useDemoAccount:
@@ -109,18 +106,18 @@ def get_template_id_DEMO(product_type, state):
     #
     # bypass lookup while building out templates in production
     #  -- just return generic template ID regardless
-    return "65D80628-EA67-45C9-B50D-35932CA28814"
+    # return "65D80628-EA67-45C9-B50D-35932CA28814"
  
 
 
     templates_by_product_and_state = {
         "FPPTI": {
-            "DC" : "TBD",
-            "NY" : "TBD"            
+            "CO" : "6E7CE55F-19F6-4EA5-815D-4E723F527FB7",
+            "IL" : "CB70C876-7310-43A3-8B4B-3FB62D712748"            
             },
         "FPPCI": {
-            "DC" : "TBD",
-            "NY" : "TBD"            
+            "CO" : "6E7CE55F-19F6-4EA5-815D-4E723F527FB7",
+            "IL" : "CB70C876-7310-43A3-8B4B-3FB62D712748"            
         }
     }
 

@@ -556,9 +556,9 @@
           <div class="hidden-xs hidden-sm" data-bind="with: selected_plan">
             
             <div class="row">
-                <div class="col-sm-4">
+                <div class="col-sm-6">
                 </div>
-                <div class="col-sm-8">
+                <div class="col-sm-6">
                     <div class="row" data-bind="foreach: get_all_covered_people_labels">
                         <div class="col-sm-3" class="text-center" data-bind="text: $data">
                         </div>
@@ -571,10 +571,10 @@
               
               <tr><td>
                 <div class="row">
-                  <div class="col-xs-12 col-sm-4">
+                  <div class="col-xs-12 col-sm-6">
                       {{question}}
                   </div>
-                  <div class="col-xs-12 col-sm-8">
+                  <div class="col-xs-12 col-sm-6">
                       
                     <div class="row" data-bind="foreach: {data: get_all_covered_people(), as: 'person'}">
                       <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
@@ -1268,7 +1268,32 @@
 	    </div>
 
 	    <div class="modal-body">
-	      <iframe src="http://taa.herokuapp.com/static/pdfs/FPPTI_disclosure_generic.pdf" style="zoom:1.0" width="100%" height="500" frameborder="0"></iframe>	      
+	      <iframe src="{% if wizard_data['product_id']=='FPPTI' %}
+	       {% if wizard_data['state']=='TX' %}
+	         {{ url_for ('FPPTI_disclosure_TX') }}
+	       {% elif wizard_data['state']=='KS' %}
+	         {{ url_for ('FPPTI_disclosure_KS') }}
+	       {% elif wizard_data['state']=='VA' %}
+	         {{ url_for ('FPPTI_disclosure_VA') }}	    
+	       {% elif wizard_data['state']=='OR' %}
+	         {{ url_for ('FPPTI_disclosure_OR') }}
+	       {% else %}
+	         {{ url_for ('FPPTI_disclosure_generic') }}
+	       {% endif %}
+	    {% elif wizard_data['product_id']=='FPPCI'%}
+	       {% if wizard_data['state']=='KS' %}
+	         {{ url_for ('FPPCI_disclosure_KS') }}
+	       {% elif wizard_data['state']=='VA' %}
+	         {{ url_for ('FPPCI_disclosure_VA') }}	    
+	       {% elif wizard_data['state']=='OR' %}
+	         {{ url_for ('FPPCI_disclosure_OR') }}
+	       {% else %}
+	         {{ url_for ('FPPCI_disclosure_generic') }}
+	       {% endif %}
+	    {% else %}
+	       {{ url_for ('FPPTI_disclosure_generic') }}
+	    {% endif %}"
+                       style="zoom:1.0" width="100%" height="500" frameborder="0"></iframe>	      
 	    </div>
 
 	    <div class="modal-footer">
