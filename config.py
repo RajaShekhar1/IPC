@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 # runtime environment config
 DEBUG = True
 
@@ -16,3 +18,13 @@ OPENID_PROVIDERS = [
     { 'name': 'AOL', 'url': 'http://openid.aol.com/<username>' },
     { 'name': 'Flickr', 'url': 'http://www.flickr.com/<username>' },
     { 'name': 'MyOpenID', 'url': 'https://www.myopenid.com' }]
+
+#
+#  Stormpath credentials
+#
+stormpath_SECRET_KEY = 'george5starboat'
+stormpath_API_KEY_FILE = '.stormpath/apiKey.properties'
+stormpath_APPLICATION = 'TAA'
+stormpath_API_KEY_ID = '5GPLR2SQXVPDJEXKXYE287ZYS'
+stormpath_API_KEY_SECRET = 'wiZWfjnQu3qBSAYIbQskIn8CKJf/q0A8KxSdMN2NZn8'
+stormpath_TIMEOUT_MINS = 15

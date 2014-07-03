@@ -47,7 +47,7 @@ class RateTable(object):
 
 def load_age_lookup_table(csv_path):
     lines = [l for l in csv.reader(open(csv_path, 'rU'))]
-
+    
     headers = [int(x) for x in lines[0][1:]]
     data_rows = lines[1:]
     ages = [int(r[0]) for r in data_rows]
@@ -61,22 +61,13 @@ def load_age_lookup_table(csv_path):
     return table, headers
 
 
-def load_once(table_loader):
-    """
-    Caches the rate tables so they load only once
-    """
-    if table_loader not in _rate_table_cache:
-        _rate_table_cache[table_loader] = table_loader()
-
-    return _rate_table_cache[table_loader]
-
-_rate_table_cache = {}
-
-
+FPPTI_weekly_by_premium_lookup, all_weekly_premium_options = load_age_lookup_table("model/rates/FPPTI-bypremium.csv")
+FPPTI_weekly_by_coverage_lookup, all_weekly_coverage_options = load_age_lookup_table("model/rates/FPPTI-byface.csv")
+FPPCI_weekly_by_premium_lookup, all_weekly_premium_options = load_age_lookup_table("model/rates/FPPCI-bypremium.csv")
+FPPCI_weekly_by_coverage_lookup, all_weekly_coverage_options = load_age_lookup_table("model/rates/FPPCI-byface.csv")
+    
 def build_FPPTI_rate_table():
-    weekly_by_premium_lookup, all_weekly_premium_options = load_age_lookup_table("model/rates/FPPTI-bypremium.csv")
-    weekly_by_coverage_lookup, all_weekly_coverage_options = load_age_lookup_table("model/rates/FPPTI-byface.csv")
-
+    
     child_premiums = [
         {'premium': 1.15, 'coverage': 10000},
         {'premium': 2.30, 'coverage': 20000},
@@ -85,15 +76,13 @@ def build_FPPTI_rate_table():
     return RateTable(
         all_weekly_premium_options=all_weekly_premium_options,
         all_weekly_coverage_options=all_weekly_coverage_options,
-        weekly_by_premium_lookup=weekly_by_premium_lookup,
-        weekly_by_coverage_lookup=weekly_by_coverage_lookup,
+        weekly_by_premium_lookup=FPPTI_weekly_by_premium_lookup,
+        weekly_by_coverage_lookup=FPPTI_weekly_by_coverage_lookup,
         child_premiums = child_premiums,
     )
 
 def build_FPPCI_rate_table():
-    weekly_by_premium_lookup, all_weekly_premium_options = load_age_lookup_table("model/rates/FPPTI-bypremium.csv")
-    weekly_by_coverage_lookup, all_weekly_coverage_options = load_age_lookup_table("model/rates/FPPTI-byface.csv")
-
+    
     child_premiums = [
         {'premium': 1.15, 'coverage': 10000},
         {'premium': 2.30, 'coverage': 20000},
@@ -102,8 +91,8 @@ def build_FPPCI_rate_table():
     return RateTable(
         all_weekly_premium_options=all_weekly_premium_options,
         all_weekly_coverage_options=all_weekly_coverage_options,
-        weekly_by_premium_lookup=weekly_by_premium_lookup,
-        weekly_by_coverage_lookup=weekly_by_coverage_lookup,
+        weekly_by_premium_lookup=FPPCI_weekly_by_premium_lookup,
+        weekly_by_coverage_lookup=FPPCI_weekly_by_coverage_lookup,
         child_premiums = child_premiums,
     )
 

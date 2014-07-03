@@ -32,6 +32,8 @@ from model.Enrollment import (
     AgentActivationEmail,
     NotifyAdminEmail,
     EnrollmentSetupForm,
+    get_enrollment_setup_form_for_product,
+    get_product_states,
 )
 from model.Product import get_age_from_birthday, get_product_by_code
 from model.States import get_states
@@ -39,6 +41,15 @@ from model.Registration import (
     TAA_RegistrationForm,
     TAA_LoginForm,
     TAA_UserForm,
+)
+
+from config import (
+    stormpath_SECRET_KEY,
+    stormpath_API_KEY_FILE,
+    stormpath_APPLICATION,
+    stormpath_API_KEY_ID,
+    stormpath_API_KEY_SECRET,
+    stormpath_TIMEOUT_MINS,
 )
 from flask.ext.stormpath import (
     StormpathError,
@@ -84,24 +95,26 @@ def get_database():
 #app.config['SECRET_KEY'] = config.get('stormpath', 'SECRET_KEY')
 #app.config['STORMPATH_API_KEY_ID'] = config.get('stormpath', 'STORMPATH_API_KEY_ID')
 #app.config['STORMPATH_API_KEY_SECRET'] = config.get('stormpath', 'STORMPATH_API_KEY_SECRET')
-##app.config['STORMPATH_API_KEY_FILE'] = config.get('stormpath', 'STORMPATH_API_KEY_FILE')
+#app.config['STORMPATH_API_KEY_FILE'] = config.get('stormpath', 'STORMPATH_API_KEY_FILE')
 #app.config['STORMPATH_APPLICATION'] = config.get('stormpath', 'STORMPATH_APPLICATION')
 
-app.config['SECRET_KEY'] = 'george5starboat'
-app.config['STORMPATH_API_KEY_ID'] = '5GPLR2SQXVPDJEXKXYE287ZYS'
-app.config['STORMPATH_API_KEY_SECRET'] = 'wiZWfjnQu3qBSAYIbQskIn8CKJf/q0A8KxSdMN2NZn8'
-app.config['STORMPATH_APPLICATION'] = 'TAA'
+#app.config['SECRET_KEY'] = 'george5starboat'
+#app.config['STORMPATH_API_KEY_ID'] = '5GPLR2SQXVPDJEXKXYE287ZYS'
+#app.config['STORMPATH_API_KEY_SECRET'] = 'wiZWfjnQu3qBSAYIbQskIn8CKJf/q0A8KxSdMN2NZn8'
+#app.config['STORMPATH_APPLICATION'] = 'TAA'
 
-app.config['STORMPATH_COOKIE_DURATION'] = timedelta(minutes=15)
-app.config['STORMPATH_LOGIN_URL'] = '/login'
-app.config['STORMPATH_LOGIN_TEMPLATE'] = 'login.html'
+app.config['SECRET_KEY'] = stormpath_SECRET_KEY
+app.config['STORMPATH_API_KEY_ID'] = stormpath_API_KEY_ID
+app.config['STORMPATH_API_KEY_SECRET'] = stormpath_API_KEY_SECRET
+app.config['STORMPATH_APPLICATION'] = stormpath_APPLICATION
+
+app.config['STORMPATH_COOKIE_DURATION'] = timedelta(minutes=stormpath_TIMEOUT_MINS)
+#app.config['STORMPATH_LOGIN_URL'] = '/login'
+#app.config['STORMPATH_LOGIN_TEMPLATE'] = 'login.html'
 app.config['STORMPATH_ENABLE_REGISTRATION'] = False
 app.config['STORMPATH_ENABLE_LOGIN'] = False
 stormpath_manager = StormpathManager(app)
-
-#
-# 2014-06-26 hack to circumvent a Stormpath-Flask bug
-app.login_manager.login_view = 'login'
+stormpath_manager.login_view = 'login'
 
 
 """
@@ -138,8 +151,6 @@ def index():
 @app.route("/home")
 @login_required
 def home():
-    print session.keys()
-    print session
     return render_template('home.html')
 
 @app.route("/robots.txt")
@@ -176,14 +187,20 @@ def rates():
 @app.route("/enroll")
 @login_required
 def enroll_start():
-    form=EnrollmentSetupForm()
-
-    if 'active_case' in session.keys() and session['active_case'] != None:
+    
+    if session.get('active_case'):
+        product_code = session['active_case']['product_code']
+        
+        form = get_enrollment_setup_form_for_product(product_code)()
         form.companyName.data = session['active_case']['company_name']
         form.enrollmentState.data = session['active_case']['situs_state']
-        form.productID.data = session['active_case']['product_code']
+        form.productID.data = product_code
+    else:
+        form = get_enrollment_setup_form_for_product(None)()
         
-    return render_template('setup-enrollment.html', form=form)
+    return render_template('setup-enrollment.html', 
+                           form=form, 
+                           product_states=get_product_states())
 
 @app.route("/in-person-enrollment", methods=['POST'])
 @login_required
@@ -208,11 +225,12 @@ def in_person_enrollment():
         'state': state if state != 'XX' else None,
         'company_name': company_name,
         'product_id':product_code,
+        'product_name': product.name,
         'employee_first':employee_first,
         'employee_last':employee_last,
         'employee_email':employee_email,
         'is_in_person':True,
-        'health_questions':product.get_health_questions(),
+        'health_questions':product.get_health_questions(state),
     }
     
     return render_template(
@@ -305,6 +323,35 @@ def email_link_handler():
                            wizard_data=wizard_data,
                            states=get_states(),
     )
+
+
+@app.route("/FPPTI_disclosure.pdf")
+def FPPTI_disclosure_generic():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_generic.pdf')
+@app.route("/FPPTI_disclosure_TX.pdf")
+def FPPTI_disclosure_TX():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_TX.pdf')
+@app.route("/FPPTI_disclosure_KS.pdf")
+def FPPTI_disclosure_KS():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_KS.pdf')
+@app.route("/FPPTI_disclosure_OR.pdf")
+def FPPTI_disclosure_OR():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_OR.pdf')
+@app.route("/FPPTI_disclosure_VA.pdf")
+def FPPTI_disclosure_VA():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_VA.pdf')
+@app.route("/FPPCI_disclosure.pdf")
+def FPPCI_disclosure_generic():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPCI_disclosure_generic.pdf')
+@app.route("/FPPCI_disclosure_KS.pdf")
+def FPPCI_disclosure_KS():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPCI_disclosure_KS.pdf')
+@app.route("/FPPCI_disclosure_OR.pdf")
+def FPPCI_disclosure_OR():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPCI_disclosure_OR.pdf')
+@app.route("/FPPCI_disclosure_VA.pdf")
+def FPPCI_disclosure_VA():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPCI_disclosure_VA.pdf')
 
     
 """--------------------------------------------------------------
@@ -468,18 +515,23 @@ def login():
             # Flask-Login), then redirect the user to the ?next=<url>
             # query parameter, or just the HOME page
 
-            print "LOGIN: %s %s, (%s  %s)" % (account.given_name, account.surname, account.email, account.custom_data['activated'])
+            print "LOGIN: %s %s, (%s  activated=%s)" % (account.given_name, account.surname, account.email, account.custom_data['activated'])
             is_admin =  account.email=="admin@5starenroll.com"
             
             if account.custom_data['activated'] or is_admin:
                 login_user(account, remember=True) 
                 session['username'] = user.given_name + " " + user.surname
-                agencyStr = user.custom_data['agency']
-                if agencyStr.strip() != "": 
-                    session['headername'] = session['username'] + ", " + user.custom_data['agency']
-                else:
-                    session['headername'] = session['username']
+                session['headername'] = session['username']
 
+                if user.custom_data['agency'].strip() != "": 
+                    session['headername'] += ", " + user.custom_data['agency']
+
+                session['active_case'] = {
+                    'company_name': "",
+                    'situs_state': "",
+                    'product_code': ""
+                }
+                
                 if is_admin:
                     return redirect(url_for('admin'))
                 else:

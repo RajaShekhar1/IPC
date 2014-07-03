@@ -58,4 +58,5 @@ def build_recommendation_table(csv_path):
         
     return table
 
-    
+FPPTI_recommendations = build_recommendation_table("model/rates/FPPTI_suggested_rates.csv")
+FPPCI_recommendations = build_recommendation_table("model/rates/FPPCI_suggested_rates.csv")

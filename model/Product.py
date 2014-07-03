@@ -4,30 +4,68 @@ from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 
 from model.RateTable import (
-    load_once,
     build_FPPTI_rate_table,
     build_FPPCI_rate_table,
+    
 )
 
-from model.Recommendations import build_recommendation_table, Recommendations
+from model.Recommendations import (
+    FPPTI_recommendations,
+    FPPCI_recommendations, 
+    Recommendations,
+)
+
+#
+# generic state lists used here and also in Docusign.config
+#
+FPPTI_generic_states = ["AL", "AK", "AZ", "AR", "CA", "DE", "GA", "HI", "ID", "IA", "KS", "KY", "LA", "MI", "MS", "MT", "NE", "NV", "NM", "OK", "OR", "RI", "SC", "SD", "TN", "TX", "UT", "VI", "WV", "WY"]
+FPPCI_generic_states = ["AL", "AK", "AZ", "AR", "CA", "DE", "GA", "HI", "ID", "IN", "IA", "KS", "KY", "LA", "MI", "MS", "MT", "NE", "NV", "NM", "OK", "OR", "PR", "RI", "SC", "SD", "TN", "TX", "UT", "VI", "WV", "WY"]
+
+FPP_health_questions_by_form = {
+        "Generic": [
+            "Has any Applicant been hospitalized in the past 90 days?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?",
+            "Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?",
+            "Has any Applicant ever applied for and been rejected for life insurance?",
+        ],
+        "WS-UST App R409-CO": [
+            "Has any Applicant been hospitalized in the past 90 days?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?",
+            "Have you had or been told by a member of the medical profession that you have AIDS or HIV infection?",
+            "Has any Applicant ever applied for and been rejected for life insurance?"
+        ],
+        "WS-UST App R409-IL": [
+            "Has any Applicant been hospitalized in the past 90 days? ",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?",
+            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?",
+            "Has any Applicant been diagnosed, tested, or treated by a physician for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?",
+            "Has any Applicant ever applied for and been rejected for life insurance?"
+        ]
+}
 
 
 def get_product_by_code(product_code):
     
-    recommendations = Recommendations(build_recommendation_table("model/rates/FPPTI_suggested_rates.csv"))
-    
     products_by_code = {
         "FPPTI": Product(
             "FPPTI",
-            "Family Protection Plan - Term to 100", 
-            load_once(lambda: build_FPPTI_rate_table()), 
-            recommendations
+            "Family Protection Plan - Terminal Illness", 
+            build_FPPTI_rate_table(),
+            Recommendations(FPPTI_recommendations)
         ),
         "FPPCI":Product(
             "FPPCI",
-            "FPPCI Name",
-            load_once(lambda: build_FPPCI_rate_table()),
-            recommendations,
+            "Family Protection Plan - Critical Illness",
+            build_FPPCI_rate_table(),
+            Recommendations(FPPCI_recommendations),
         ),
     }
     
@@ -48,18 +86,54 @@ class Product(object):
         # Rate table data
         self.rate_table = rate_table
         self.recommendations = recommendations
-    
-    def get_health_questions(self):
+
+    def form_for_state(self,state):
+        form_dict = {
+            #
+            # comment out any forms not yet in Production
+            #
+            "FPPTI": {
+                "CO": "WS-UST App R409-CO",
+                #"CT": "WS-UST App R409-CT",
+                #"DC": "WS-UST App R409-DC",
+                #"FL": "WS-UST App R409-FL",
+                "IL": "WS-UST App R409-IL",
+                #"ME": "WS-UST App R409-ME",
+                #"MD": "WS-UST App R409-MD",
+                #"MA": "WS-UST App R409-MA",
+                #"MN": "WS-UST App R409-MN",
+                #"MO": "WS-UST App R409-MO",
+                #"NH": "WS-UST App R409-NH",
+                #"NC": "WS-UST App R409-NC",
+                #"ND": "WS-UST App R409-ND",
+                #"OH": "WS-UST App R409-OH",
+                #"PA": "WS-UST App R409-PA",
+                #"VA": "WS-UST App R409-VA",
+                #"WI": "WS-UST App R409-WI",
+                "Generic":  "Generic"
+            },
+            "FPPCI": {
+                "CO": "WS-UST App R409-CO",
+                "IL": "WS-UST App R409-IL",
+                "Generic":  "Generic"
+            }
+        }
+
+        if (self.code == "FPPTI" and state in FPPTI_generic_states) or (self.code == "FPPCI" and state in FPPCI_generic_states):
+            form_name = "Generic"
+        else:
+            form_name = form_dict.get(self.code).get(state)
         
-        return [
-            "Has any Applicant been hospitalized in the past 90 days?",
-            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?",
-            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?",
-            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?",
-            "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?",
-            "Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?",
-            "Has any Applicant ever applied for and been rejected for life insurance?",
-        ]
+        if form_name:
+            return form_name
+        else:
+            # print error to console, but use "generic" in lieu of failing
+            print "**Failed form lookup for state", state, " on product", self.code
+            return "Generic"
+        
+    
+    def get_health_questions(self, state):
+        return FPP_health_questions_by_form.get(self.form_for_state(state))
         
     def get_employee_rates(self, emp_age):
         if emp_age:
@@ -101,26 +175,6 @@ class Product(object):
             spouse_age=spouse_age,
             num_children=num_children,
         )
-    
-    
-    
-    
-class FFPTIProduct(Product):
-    def load_table_data(self):
-        def premium_table_loader():
-            return build_bypremium_table("model/rates/FPPTI-bypremium.csv")
-        
-        def by_face_loader():
-            return load_age_lookup_table("model/rates/FPPTI-byface.csv")
-        
-        def recommendation_loader():
-            return build_recommendation_table("model/rates/FPPTI_suggested_rates.csv")
-        
-        
-        self.weekly_by_premium_lookup, self.weekly_premium_options = load_once(premium_table_loader)
-        self.weekly_by_coverage_lookup, self.weekly_coverage_options = load_once(by_face_loader)
-        self.recommendation_lookup = load_once(recommendation_loader)
-        
 
 
 # Utility age computation

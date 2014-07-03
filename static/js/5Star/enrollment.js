@@ -1,21 +1,48 @@
 
 
+
+// IE8 and below polyfill for object.create
+if (typeof Object.create != 'function') {
+    (function () {
+        var F = function () {};
+        Object.create = function (o) {
+            if (arguments.length > 1) { 
+              throw Error('Second argument not supported');
+            }
+            if (o === null) { 
+              throw Error('Cannot set a null [[Prototype]]');
+            }
+            if (typeof o != 'object') { 
+              throw TypeError('Argument must be an object');
+            }
+            F.prototype = o;
+            return new F();
+        };
+    })();
+}
+
 function init_rate_form(data) {
     
     var product;
     if (data.product_id == "FPPTI") {
         product = new FPPTIProduct();
+    } else if (data.product_id == "FPPCI") {
+        product = new FPPCIProduct();
+        
+        // styling differences
+        $(".recommended-coverage-table").addClass("ci-recommendations");
     } else {
         // default product?
         product = new FPPTIProduct();
     }
     
-    var ui = new WizardUI(new FPPTIProduct(), data);
+    var ui = new WizardUI(product, data);
     
     // Allow other JS functions to access the ui object
     window.ui = ui;
     
     ko.applyBindings(ui);
+    
 }
 
 // Root model of the Benefits wizard User Interface
@@ -345,7 +372,7 @@ function WizardUI(product, defaults) {
     self.parse_benefit_options = function(beneficiary, rates) {
         if (rates.weekly_byface) {
             beneficiary.benefit_options.by_coverage($.map(rates.weekly_byface, function(rate) {
-                return new BenefitOption({
+                return self.insurance_product.get_new_benefit_option({
                     is_by_face: true,
                     face_value: rate.coverage,
                     weekly_premium: rate.premium
@@ -355,7 +382,7 @@ function WizardUI(product, defaults) {
         
         if (rates.weekly_bypremium) {
             beneficiary.benefit_options.by_premium($.map(rates.weekly_bypremium, function(rate) {
-                return new BenefitOption({
+                return self.insurance_product.get_new_benefit_option({
                     is_by_face: false,
                     face_value: rate.coverage,
                     weekly_premium: rate.premium
@@ -520,36 +547,56 @@ function WizardUI(product, defaults) {
     });
     self.show_no_selection_error = function() {
         self.attempted_advance_step(true);
-    }
-    
+    }; 
 }
 
+function Product() {
+}
+Product.prototype = {
+    
+    // Override if necessary
+    
+    min_emp_age: function() {return 18},
+    max_emp_age: function() {return 70},
+    
+    min_sp_age: function() {return 18},
+    max_sp_age: function() {return 70},
+    
+    min_child_age: function() {return 0},
+    max_child_age: function() {return 23},
+    
+    is_valid_employee_age: function(age) {
+        return (age >= this.min_emp_age() && age <= this.max_emp_age());
+    }, 
+    
+    is_valid_spouse_age: function(age) {
+        return (age >= this.min_sp_age() && age <= this.max_sp_age());
+    },
+    
+    is_valid_child_age: function(age) {
+        return (age >= this.min_child_age() && age <= this.max_child_age());
+    },
+
+    // Allow the details of the benefit's face value, display to be based on the product
+    get_new_benefit_option: function(options) {
+        return new BenefitOption(options);
+    }
+};
 
 function FPPTIProduct() {
-    var self = this;
-    
-    self.product_type = "FPPTI";
-    
-    self.min_emp_age = function() {return 18};
-    self.max_emp_age = function() {return 70};
-    self.min_sp_age = function() {return 18};
-    self.max_sp_age = function() {return 70};
-    self.min_child_age = function() {return 0};
-    self.max_child_age = function() {return 23};
-    
-    self.is_valid_employee_age = function(age) {
-        return (age >= self.min_emp_age() && age <= self.max_emp_age());
-    };
-    
-    self.is_valid_spouse_age = function(age) {
-        return (age >= self.min_sp_age() && age <= self.max_sp_age());
-    };
-    
-    self.is_valid_child_age = function(age) {
-        return (age >= self.min_child_age() && age <= self.max_child_age());
-    }
-    
+    this.product_type = "FPPTI";
 }
+// Inherit from product
+FPPTIProduct.prototype = Object.create(Product.prototype);
+
+function FPPCIProduct() {
+    this.product_type = "FPPCI";
+}
+// Inherit from product
+FPPCIProduct.prototype = Object.create(Product.prototype);
+FPPCIProduct.prototype.get_new_benefit_option = function(options) {
+    return new CIBenefitOption(new BenefitOption(options));
+};
 
 function Beneficiary(options) {
     var self = this;
@@ -605,7 +652,7 @@ function Beneficiary(options) {
     });
     
     self.find_recommended_coverage_benefit = function(desired_face_value) {
-        var benefit = new BenefitOption({});
+        var benefit = new NullBenefitOption({});
         $.each(self.benefit_options.by_coverage(), function() {
             if (this.face_value == desired_face_value) {
                 benefit = this;
@@ -717,6 +764,26 @@ function BenefitOption(options) {
 BenefitOption.display_benefit_option = function(item) {
     return item.format_for_dropdown();
 };
+
+function CIBenefitOption(wrapped_option) {
+    var self = this;
+    self.is_by_face = wrapped_option.is_by_face;
+    self.weekly_premium = wrapped_option.weekly_premium;
+    self.face_value = wrapped_option.face_value;
+    self.format_weekly_premium = wrapped_option.format_weekly_premium;
+    self.format_weekly_premium_option = wrapped_option.format_weekly_premium_option;
+    self.format_face_value = function() {
+        var face_value_formatted = format_face_value(self.face_value);
+        var ci_value = Math.round(self.face_value * .3);
+        var ci_value_formatted = format_face_value(ci_value);
+        
+        return face_value_formatted + "<br><small>("+ci_value_formatted+" CI)</small>";
+    };
+    self.format_for_dropdown = wrapped_option.format_for_dropdown;
+    self.is_valid = wrapped_option.is_valid;
+    self.serialize_data = wrapped_option.serialize_data;
+};
+
 
 function NullBenefitOption() {
     var self = this;
@@ -980,11 +1047,12 @@ function Recommendation(recommended_benefit) {
 function ChildrenRecommendation(recommended_benefit) {
     var self = this;
     self.recommended_benefit = recommended_benefit;
-    self.format_weekly_premium_option = function() {
-        return self.recommended_benefit.format_weekly_premium_option() + " (each)";
-    };
+    
     self.is_valid = function() {
         return true;
+    };
+    self.format_weekly_premium_option = function() {
+        return self.recommended_benefit.format_weekly_premium_option() + " (each)";
     };
     self.format_face_value = function() {
         return self.recommended_benefit.format_face_value();
@@ -1383,7 +1451,7 @@ function init_validation() {
 	//jQuery validator rule should be handling this, but it's not, so force a popup here
 	if (!$("#confirmDisclaimer").is(':checked')) {
 	    bootbox.dialog({
-		    message: "Please confirm that you have received the disclaimer notice.",
+		    message: "Please confirm that you have received the disclosure notice.",
 		    buttons: {
 			"danger": {
 			    "label": "OK",
@@ -1397,6 +1465,7 @@ function init_validation() {
         // Pull out all the data we need for docusign 
         var wizard_results = {
             agent_data: window.ui.defaults,
+	    product_type: window.ui.insurance_product.product_type,
             
 	    identityToken: window.ui.identityToken(),
 	    identityType: window.ui.identityType(),
@@ -1432,6 +1501,10 @@ function init_validation() {
             spouse_beneficiary_ssn:  window.ui.spouse_beneficiary_ssn(),
             spouse_beneficiary_dob:  window.ui.spouse_beneficiary_dob()
         };
+
+	if (!window.ui.should_include_spouse_in_table()) {
+	    wizard_results['employee_beneficiary'] = "other";
+	}
         
         // Children
         wizard_results['children'] = [];
@@ -1447,7 +1520,9 @@ function init_validation() {
         var emp_benefit = window.ui.selected_plan().employee_recommendation().recommended_benefit;
         if (emp_benefit.is_valid()) {
                 wizard_results['employee_coverage'] = emp_benefit.serialize_data();
-        }
+        } else {
+	    wizard_results['employee_coverage'] = ""
+	}
         var sp_benefit = window.ui.selected_plan().spouse_recommendation().recommended_benefit;
         if (sp_benefit.is_valid()) {
             wizard_results['spouse_coverage'] = sp_benefit.serialize_data();
@@ -1484,7 +1559,7 @@ function init_validation() {
         
         bootbox.dialog({
             //just showing action in the interim while getting routed to the Docusign page... the DS page should redirect probably before there's time to read this
-	    message: "Generating application form for signature...",
+	    message: "Generating application form for signature, please wait...",
 	    buttons: {
 		"success": {
 		    "label": "Close",
@@ -1528,12 +1603,18 @@ function init_validation() {
             eeZip: {required: true},
             eeOwner: {required: true},
             eeOtherOwnerName: {
-		required: true,
-		depends: "#eeOwner-other:checked"
+		required:  {
+                    depends: function(element) {
+                        return ($("#eeOwner-other").is(':checked'))
+                    }
+		}
 	    },
 	    eeOtherOwnerSSN: {
-		required: true,
-		depends: "#eeOwner-other:checked"
+		required:  {
+                    depends: function(element) {
+                        return ($("#eeOwner-other").is(':checked'))
+                    }
+		}
 	    }
         },
 
@@ -1571,9 +1652,12 @@ function init_validation() {
             spssn: {required: true},
             spOwner: {required: true},
             spOtherOwnerName: {
-		required: true,
-		depends: "#spOwner-other:checked"
-	    }	    
+		required:  {
+                    depends: function(element) {
+                        return ($("#spOwner-other").is(':checked'))
+                    }
+		}
+	    }
         },
 
         messages: {
@@ -1695,6 +1779,4 @@ function wizard_error_placement(error, element) {
     else error.insertAfter(element);
     //else error.insertAfter(element.parent());
 }
-
-
 
