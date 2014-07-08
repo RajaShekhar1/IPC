@@ -157,6 +157,10 @@ def home():
 def robots():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'robots.txt')
 
+@app.route("/ping_check.txt")
+def pingcheck():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'healthcheck.txt')
+
 
 """--------------------------------------------------------------
 ENROLLMENT pages and handling
