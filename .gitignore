@@ -8,3 +8,5 @@ venv
 .idea/inspectionProfiles/profiles_settings.xml
 
 TAA.iml
+
+TAA2.db
