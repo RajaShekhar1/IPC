@@ -85,6 +85,8 @@ def generate_ChildTabsEntry (child_index, wizard_data):
 def create_envelope_and_get_signing_url(wizard_data):
     # return is_error(bool), error_message, and redirectURL
 
+    fallbackEmailIfNoneEntered = "enrollment@5StarEnroll.com"
+
     # FPPTI or FPPCI
     productType = wizard_data["product_type"]
     enrollmentState = wizard_data["agent_data"]["state"]
@@ -94,6 +96,9 @@ def create_envelope_and_get_signing_url(wizard_data):
     employer = wizard_data["agent_data"]["company_name"]
     emailTo = wizard_data["agent_data"]["employee_email"]
     
+    if emailTo == "" or emailTo == None:
+        emailTo = fallbackEmailIfNoneEntered
+
     if wizard_data["agent_data"]["is_in_person"]:
         sessionType = "inperson"
     else:
@@ -239,6 +244,18 @@ def create_envelope_and_get_signing_url(wizard_data):
                  "value" : wizard_data["employee_beneficiary_ssn"]} 
             ]
 
+    if wizard_data["spouse_owner"] == "other":
+        spouseOtherOwnerName = wizard_data["spouse_other_owner_name"]
+        spouseOtherOwnerSSN = wizard_data["spouse_other_owner_ssn"]
+    elif wizard_data["spouse_owner"] == "employee":
+        spouseOtherOwnerName = wizard_data["employee"]["first"] + " " + wizard_data["employee"]["last"]
+        spouseOtherOwnerSSN = wizard_data["employee"]["ssn"]
+    else:
+        spouseOtherOwnerName = ""
+        spouseOtherOwnerSSN = ""
+        
+
+
     spouseTabsList = []
     if spouseCoverage != " ":
         spouseTabsList += [
@@ -251,7 +268,9 @@ def create_envelope_and_get_signing_url(wizard_data):
             {"tabLabel" : "spSSN",
              "value" : wizard_data["spouse"]["ssn"]},
             {"tabLabel" : "spOtherOwnerName",
-             "value" : wizard_data["spouse_other_owner_name"] if wizard_data["spouse_owner"] == "other" else  ""} ,
+             "value" : spouseOtherOwnerName},
+            {"tabLabel" : "spOtherOwnerSSN",
+             "value" : spouseOtherOwnerSSN},
             {"tabLabel" : "spCoverage",
              "value" : spouseCoverage},
             {"tabLabel" : "spPremium",
@@ -315,7 +334,7 @@ def create_envelope_and_get_signing_url(wizard_data):
                                       "radios": [
                                           {"selected" : "True" if wizard_data[prefix_long + "_owner"] == "self" else "False",
                                            "value" : "self"},
-                                          {"selected" : "True" if wizard_data[prefix_long + "_owner"] == "other" else "False",
+                                          {"selected" : "True" if ((wizard_data[prefix_long + "_owner"] == "other") or (wizard_data[prefix_long + "_owner"] == "employee")) else "False",
                                            "value" : "other"}
                                       ]})
          
@@ -411,7 +430,7 @@ def create_envelope_and_get_signing_url(wizard_data):
     http = httplib2.Http();
     response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr);
     # When troubleshooting, send instead to requestb.in (or similar listener) to capture/examing the JSON trace.  Past that trace into SOAPUI to explore the response if needed.
-    #response, content = http.request("http://requestb.in/1efjkje1", 'POST', headers=headers, body=requestBodyStr);
+    #response, content = http.request("http://requestb.in/1mars8q1", 'POST', headers=headers, body=requestBodyStr);
     status = response.get('status');
     if (status != '201'): 
         print "url=",url
