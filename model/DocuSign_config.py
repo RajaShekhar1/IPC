@@ -112,11 +112,11 @@ def get_template_id_DEMO(product_type, state):
 
     templates_by_product_and_state = {
         "FPPTI": {
-            "CO" : "6E7CE55F-19F6-4EA5-815D-4E723F527FB7",
+            "CO" : "9972B68F-3D5F-4450-820A-D826DEC38117",
             "IL" : "CB70C876-7310-43A3-8B4B-3FB62D712748"            
             },
         "FPPCI": {
-            "CO" : "6E7CE55F-19F6-4EA5-815D-4E723F527FB7",
+            "CO" : "9972B68F-3D5F-4450-820A-D826DEC38117",
             "IL" : "CB70C876-7310-43A3-8B4B-3FB62D712748"            
         }
     }

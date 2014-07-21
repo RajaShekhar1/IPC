@@ -76,8 +76,9 @@ function WizardUI(product, defaults) {
     self.other_owner_name = ko.observable("");
     self.other_owner_ssn = ko.observable("");
     
-    self.spouse_policy_owner = ko.observable("self");
+    self.spouse_policy_owner = ko.observable("employee");
     self.spouse_other_owner_name = ko.observable("");
+    self.spouse_other_owner_ssn = ko.observable("");
     
     
     self.employee_beneficiary = ko.observable("spouse");
@@ -1379,7 +1380,7 @@ function init_validation() {
         var inp = $('#spOtherOwnerName').get(0);
         var inpss = $('#spOtherOwnerSSN').get(0);
 
-        if (other.hasClass('hide')) {
+        if (other.hasClass('hide') && $('#spOwner-other').prop('checked')) {
             other.fadeIn("medium");
             other.removeClass('hide');
             inp.removeAttribute('disabled');
@@ -1388,7 +1389,7 @@ function init_validation() {
         } else {
             $('#spOtherOwner').addClass('hide');
             inp.setAttribute('disabled', 'disabled');
-            inp.placeholder = "spouse is policy owner";
+            inp.placeholder = "employee/spouse is policy owner";
             inp.value = "";
             inpss.setAttribute('disabled', 'disabled');
             inpss.value = "";
@@ -1488,7 +1489,8 @@ function init_validation() {
  	    employee_other_owner_ssn:  window.ui.other_owner_ssn(),
 	    spouse_owner:  window.ui.spouse_policy_owner(),
  	    spouse_other_owner_name:  window.ui.spouse_other_owner_name(),
-            
+            spouse_other_owner_ssn:  window.ui.spouse_other_owner_ssn(),
+	    
             employee_beneficiary:  window.ui.employee_beneficiary(),
             spouse_beneficiary:  window.ui.spouse_beneficiary(),
             employee_beneficiary_name:  window.ui.employee_beneficiary_name(),
@@ -1589,10 +1591,7 @@ function init_validation() {
         errorClass: 'help-block',
         focusInvalid: false,
         rules: {
-            email: {
-                required: true,
-                email: true
-            },
+            email: {email: true},
             eeFName2: {required: true},
             eeLName2: {required: true},
             eeGender: {required: true},
@@ -1620,7 +1619,6 @@ function init_validation() {
 
         messages: {
             email: {
-                required: "required",
                 email: "Please provide a valid email."
             },
             eeFName2: "required",
@@ -1649,9 +1647,22 @@ function init_validation() {
             spFName2: {required: true},
             spLName2: {required: true},
             spGender: {required: true},
-            spssn: {required: true},
-            spOwner: {required: true},
+            spssn: {
+		required:  {
+                    depends: function(element) {
+                        return ($("#spOwner-self").is(':checked'))
+                    }
+		}
+	    },
+	    spOwner: {required: true},
             spOtherOwnerName: {
+		required:  {
+                    depends: function(element) {
+                        return ($("#spOwner-other").is(':checked'))
+                    }
+		}
+	    },
+	    spOtherOwnerSSN: {
 		required:  {
                     depends: function(element) {
                         return ($("#spOwner-other").is(':checked'))
@@ -1664,9 +1675,10 @@ function init_validation() {
             spFName2: "required",
 	    spLName2: "required",
 	    spGender: "Please choose gender",
-	    spssn: "required",
+	    spssn: "spouse SSN required if owner of policy",
 	    spOwner: "Please confirm policy owner",
-	    spOtherOwnerName: "required"
+	    spOtherOwnerName: "required",
+            spOtherOwnerSSN: "required"
         },
         
         highlight: wizard_validate_highlight,
