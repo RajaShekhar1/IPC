@@ -14,6 +14,8 @@ from flask import (
     jsonify,
     abort,
 )
+from flask_sslify import SSLify
+
 from ConfigParser import ConfigParser
 
 from datetime import timedelta
@@ -68,6 +70,7 @@ from stormpath.client import Client
 
 # initialization
 app = Flask(__name__)
+sslify = SSLify(app)
 app.config.from_object('config')
 
 # Read in config file globally
