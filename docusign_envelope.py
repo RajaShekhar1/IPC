@@ -1,5 +1,7 @@
 # DocuSign API Walkthrough 08 (PYTHON) - Embedded Signing
 import sys, httplib2, json;
+import random
+from string import ascii_letters
 
 from flask import url_for
 from flask.ext.stormpath import user
@@ -82,10 +84,15 @@ def generate_ChildTabsEntry (child_index, wizard_data):
     
 
     
+def random_email_id(name='', token_length=8):
+    chars = "ABCDEF0123456789"
+    name = filter(lambda x: x in ascii_letters + ".",name)
+    if name != '':
+        name = name + "_"
+    return name + ''.join([random.choice(chars) for i in range(token_length)])
+
 def create_envelope_and_get_signing_url(wizard_data):
     # return is_error(bool), error_message, and redirectURL
-
-    fallbackEmailIfNoneEntered = "enrollment@5StarEnroll.com"
 
     # FPPTI or FPPCI
     productType = wizard_data["product_type"]
@@ -97,7 +104,8 @@ def create_envelope_and_get_signing_url(wizard_data):
     emailTo = wizard_data["agent_data"]["employee_email"]
     
     if emailTo == "" or emailTo == None:
-        emailTo = fallbackEmailIfNoneEntered
+        # fallback email if none was entered - just need a unique address
+        emailTo = random_email_id(wizard_data["agent_data"]["employee_first"] + "." + wizard_data["agent_data"]["employee_last"]) + "@5StarEnroll.com"
 
     if wizard_data["agent_data"]["is_in_person"]:
         sessionType = "inperson"
