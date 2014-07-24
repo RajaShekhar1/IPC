@@ -5,7 +5,7 @@ from model.Product import (
 )
 
 
-useDemoAccount = True 
+useDemoAccount = False 
 
 #Docusign credential info
 #authEmail = "docrequest@5starima.com"  #don't need if we use the api username
@@ -68,22 +68,25 @@ def get_template_id_PRODUCTION(product_type, state):
     # PRODUCTION template IDs
     templates_by_product_and_state = {
         "FPPTI": {
-            "CO" : "TBD",
-            "CT" : "TBD",
-            "DC" : "TBD",
-            "FL" : "TBD",
-            "IL" : "TBD",
-            "TX" : "65D80628-EA67-45C9-B50D-35932CA28814",
-            "VA" : "65D80628-EA67-45C9-B50D-35932CA28814"
-            },
+            "CO" : "2BBEB0C7-E0E0-4F9E-AFC7-B04CB4CEC46B",
+            "FL" : "5D738949-D4A0-4CD0-AB55-D79D4D9219A3",
+            "IL" : "3409B833-80A2-4F88-9252-E384223FD515",
+            "OH" : "7F1691BD-300A-4955-906C-6824A7ADA050",
+            "MO" : "1C8525BE-E913-422B-8332-36B13E0B187A",
+            "PA" : "57D4EF42-FA9D-49B0-8A2C-5F6AE5F16C9E",
+            "TX" : "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
+            "VA" : "0AE3D3E9-60C0-4198-82C7-41D1201BF2FE",
+            "WI" : "AB16F882-1ED1-4CD6-847E-6BFCCB2ADF98",
+        },
         "FPPCI": {
-            "CO" : "TBD",
-            "CT" : "TBD",
-            "DC" : "TBD",
-            "FL" : "TBD",
-            "IL" : "TBD",
-            "TX" : "65D80628-EA67-45C9-B50D-35932CA28814",
-            "VA" : "TBD"
+            "CO" : "2BBEB0C7-E0E0-4F9E-AFC7-B04CB4CEC46B",
+            "IL" : "3409B833-80A2-4F88-9252-E384223FD515",
+            "FL" : "5D738949-D4A0-4CD0-AB55-D79D4D9219A3",
+            "OH" : "7F1691BD-300A-4955-906C-6824A7ADA050",
+            "MO" : "1C8525BE-E913-422B-8332-36B13E0B187A",
+            "TX" : "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
+            "VA" : "0AE3D3E9-60C0-4198-82C7-41D1201BF2FE",
+            "WI" : "AB16F882-1ED1-4CD6-847E-6BFCCB2ADF98",
         }
     }
 
@@ -91,9 +94,9 @@ def get_template_id_PRODUCTION(product_type, state):
     if templateID:
         return templateID
     elif product == "FPPTI" and state in FPPTI_generic_states:
-        return "65D80628-EA67-45C9-B50D-35932CA28814"
+        return "F5711F73-7D4A-44F2-8D31-2E505B8915F8"
     elif product == "FPPCI" and state in FPPCI_generic_states:
-        return "65D80628-EA67-45C9-B50D-35932CA28814"
+        return "F5711F73-7D4A-44F2-8D31-2E505B8915F8"
     else:
         return "Failed product lookup"
 
