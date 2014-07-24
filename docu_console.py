@@ -1,5 +1,11 @@
 import sys, httplib2, json;
-from model.DocuSign_config import dsAgentAuthenticateString, dsAPIAuthenticateString, baseUrl, apiAccountID
+from model.DocuSign_config import (
+    dsAgentAuthenticateString, 
+    dsAPIAuthenticateString, 
+    dsServer,
+    baseUrl, 
+    apiAccountID
+    )
  
 
 def console_url():
@@ -53,9 +59,12 @@ def console_url():
         print("Error calling webservice, status is: %s" % status); return True, "Error retrieving inbox URL", None;
     data = json.loads(content);
     viewUrl = data.get('url');
- 
+
+    # counting on the prior get request to handle the login, now just go directly to hardwired ManageEnvelopes screen
+    # a bit kludgey, but should work
+    #viewUrl = "https://" + dsServer + "/MEMBER/ManageEnvelopes.aspx?loaddash=1&action=redirect&report=ForMyAttention"
+
     #--- display results
     #print ("View URL = %s\n" % viewUrl)
 
     return viewUrl
-
