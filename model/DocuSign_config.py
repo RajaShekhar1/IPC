@@ -93,9 +93,9 @@ def get_template_id_PRODUCTION(product_type, state):
     templateID = templates_by_product_and_state.get(product_type).get(state)
     if templateID:
         return templateID
-    elif product == "FPPTI" and state in FPPTI_generic_states:
+    elif product_type == "FPPTI" and state in FPPTI_generic_states:
         return "F5711F73-7D4A-44F2-8D31-2E505B8915F8"
-    elif product == "FPPCI" and state in FPPCI_generic_states:
+    elif product_type == "FPPCI" and state in FPPCI_generic_states:
         return "F5711F73-7D4A-44F2-8D31-2E505B8915F8"
     else:
         return "Failed product lookup"
