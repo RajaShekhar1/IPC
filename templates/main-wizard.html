@@ -105,7 +105,9 @@
         
 		    <div class="step-pane active" id="step1">
 
-		      <!--ko if: !was_state_provided-->
+		      <!-- logic for choosing state here only makes sense later for self-enroll, and states are not general states as for address, but function of product_type
+
+		      <!==ko if: !was_state_provided==>
 		      <div class="form-group">
 			<label class="" for="enrollmentState">Select state for this enrollment</label>
 			<select id="enrollmentState" class="select1"
@@ -118,8 +120,8 @@
 			</select>
 		      </div>
 		      <div class="space-2"></div>
-		      
-<!--/ko-->
+		      <!==/ko==>
+		      -->
 				 
   	    <h4 class="lighter block green">Initial information required to select a benefit plan</h4>
                   
