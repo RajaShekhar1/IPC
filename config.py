@@ -2,8 +2,8 @@
 DEBUG = True
 
 # Put server name here for formatting external links
-SERVER_NAME = 'localhost:5000'
-#SERVER_NAME = '5starenroll.com'
+#SERVER_NAME = 'localhost:5000'
+SERVER_NAME = '5starenroll.com'
 
 
 # Flask-WTF forms extension config
