@@ -10,5 +10,5 @@ bleach==1.4
 python-dateutil==2.2
 sqlalchemy==0.9.4
 mailer==0.7
-Flask-Stormpath==0.2.4
+Flask-Stormpath==0.2.7
 Flask-SSLify==0.1.4
