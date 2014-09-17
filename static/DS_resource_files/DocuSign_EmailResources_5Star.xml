@@ -4554,7 +4554,7 @@ DocuSign. The fastest way to get a signature.®
 			<td colspan="10">				
 				<p>[[UserName]],</p>
 				<p>5Star Life Insurance Company's online enrollment employs DocuSign, the global standard for digital transaction management.  In order to complete your account on 5Star's enrollment system, this email establishes your password/security settings in the DocuSign system (for your convenience, we recommend you use the same password as in your 5Star Enrollment System registration). Please click the button below to finish your account activation.</p>
-				<p>Note that, upon activation, you will be logged into the DocuSign system merely as confirmation. However, thereafter please proceed to 5Star Life's online enrollment main page at http://5StarEnroll.com.</p>
+				<p>Note that, upon activation, you will be logged into the DocuSign system merely as confirmation. However, thereafter please proceed to 5Star Life's online enrollment main page at https://5StarEnroll.com.</p>
 				<p>Thank you for choosing 5Star Life Insurance!</p>	
 			</td>
 		</tr>
@@ -4605,7 +4605,7 @@ DocuSign. The fastest way to get a signature.®
 	<data name="UserAccountActivation_PlainTextBody">[[UserName]],
 5Star Life Insurance Company's online enrollment employs DocuSign, the global standard for digital transaction management.  In order to complete your account on 5Star's enrollment system, this email establishes your password/security settings in the DocuSign system (for your convenience, we recommend you use the same password as in your 5Star Enrollment System registration). Please click the button below to finish your account activation.
 
-Note that, upon activation, you will be logged into the DocuSign system merely as confirmation. However, thereafter please proceed to 5Star Life's online enrollment main page at http://5StarEnroll.com
+Note that, upon activation, you will be logged into the DocuSign system merely as confirmation. However, thereafter please proceed to 5Star Life's online enrollment main page at https://5StarEnroll.com
 
 Thank you for choosing 5Star Life Insurance!
 [[QuickURL]]
