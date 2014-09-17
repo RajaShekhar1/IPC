@@ -116,6 +116,7 @@ app.config['STORMPATH_COOKIE_DURATION'] = timedelta(minutes=stormpath_TIMEOUT_MI
 #app.config['STORMPATH_LOGIN_TEMPLATE'] = 'login.html'
 app.config['STORMPATH_ENABLE_REGISTRATION'] = False
 app.config['STORMPATH_ENABLE_LOGIN'] = False
+app.config['STORMPATH_ENABLE_FORGOT_PASSWORD'] = True
 stormpath_manager = StormpathManager(app)
 stormpath_manager.login_view = 'login'
 
