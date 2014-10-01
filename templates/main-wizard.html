@@ -53,7 +53,7 @@
 	      
 	      <!--ko if: was_state_provided-->
 	      <div class="grey smaller-80 pull-right" data-bind="visible: was_state_provided">
-		<p>enrollment in <span data-bind="text: state"></span>&nbsp;&nbsp;</p>
+		<p>enrollment in <span data-bind="text: enrollCity"></span>, <span data-bind="text: enrollState"></span>&nbsp;&nbsp;</p>
 	      </div>
 	      <!--/ko-->
 	    </div>
@@ -1218,9 +1218,7 @@
 		  </div>
 		</div>
 		<div class="col-xs-12  hidden-sm hidden-md hidden-lg">
-		  <div class="col-xs-1">
-		  </div>		 
-		  <div class="col-xs-11">
+		  <div class="col-xs-12">
 		    <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>		  
                     <input type="text" id="ConfirmationToken" name="ConfirmationToken" data-bind="value: identityToken"/>
 		  </div>		 
@@ -1228,13 +1226,24 @@
 		
 	      </div> <!-- /.form-group -->		
 	    </div> <!-- /inPersonSignerToken -->
+	    
+	    <div class="space-2"></div>
+	    <div class="col-xs-12">
+	      <label class="control-label col-xs-12 col-sm-5 col-md-4 col-lg-3 no-padding-right" for="enrollCity">I am making this application from</label>
+	      <div class="col-xs-12 col-sm-7 col-md-8 col-lg-9">
+		<input type="text" id="enrollCity" name="enrollCity" placeholder="City" data-bind="value: enrollCity"/>,&nbsp<span data-bind="text: enrollState">
+	      </div>
+	    </div> <!-- /signing Location -->
+
 	  </form> <!-- /step6 form -->
 	  </div> <!-- /CoverageSummary -->
 
-	  <div class="space-2"></div>
+	  <br>
+	  <br>
 
 	  <div id="disclaimerNotice">
 	    <div class="form-group">
+	      <br>
 	      <label class="control-label col-xs-12 col-sm-12 no-padding-right">
                 <input type="checkbox" id="confirmDisclaimer" name="confirmDisclaimer" data-bind="checked: disclaimer_notice_confirmed" /> I acknowledge the related <a href="#modal-disclaimer" data-toggle="modal">Accelerated Benefit Disclosure</a>
 	      </label>

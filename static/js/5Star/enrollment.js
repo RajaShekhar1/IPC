@@ -63,6 +63,8 @@ function WizardUI(product, defaults) {
     self.addr1 = ko.observable("");
     self.addr2 = ko.observable("");
     self.city = ko.observable("");
+    self.enrollCity = ko.observable(defaults.enroll_city || "");
+    self.enrollState = defaults.state;
     self.was_state_provided = ("state" in defaults && defaults.state !== null && defaults.state != "XX");
     self.state = ko.observable(defaults.state || "");
     self.zip = ko.observable("");
@@ -1466,7 +1468,9 @@ function init_validation() {
         // Pull out all the data we need for docusign 
         var wizard_results = {
             agent_data: window.ui.defaults,
-	    product_type: window.ui.insurance_product.product_type,
+	    enrollCity:  window.ui.enrollCity(),
+	    enrollState:  window.ui.enrollState,
+ 	    product_type: window.ui.insurance_product.product_type,
             
 	    identityToken: window.ui.identityToken(),
 	    identityType: window.ui.identityType(),
@@ -1739,6 +1743,7 @@ function init_validation() {
         focusInvalid: false,
         rules: {
             confirmDisclaimer: {required: true},
+	    enrollCity: {required: true},
 	    tokenType: {required: true},
 	    /* required: function(element) {
 		    if (ui.is_in_person_application()) {
@@ -1754,6 +1759,7 @@ function init_validation() {
 
         messages: {
             confirmDisclaimer: "please acknowledge that you have received the notice",
+	    enrollCity: "required",
 	    tokenType: "required",
             ConfirmationToken: "required"
 	},
