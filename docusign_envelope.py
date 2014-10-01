@@ -97,7 +97,7 @@ def create_envelope_and_get_signing_url(wizard_data):
     # FPPTI or FPPCI
     productType = wizard_data["product_type"]
     enrollmentState = wizard_data["agent_data"]["state"]
-
+    
     # for now, just pull into former variables we've been using
     recipName = wizard_data["agent_data"]["employee_first"] + " " + wizard_data["agent_data"]["employee_last"]
     employer = wizard_data["agent_data"]["company_name"]
@@ -186,6 +186,8 @@ def create_envelope_and_get_signing_url(wizard_data):
         childRadiosList += generate_SOHRadios("c4")
 
     eeTabsList = [
+        {"tabLabel" : "eeEnrollCityState",
+         "value" : wizard_data["enrollCity"] + ", " + wizard_data["enrollState"]},
         {"tabLabel" : "identityToken",
          "value" : idTokenStr},
         {"tabLabel" : "agentCode",

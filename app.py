@@ -201,6 +201,7 @@ def enroll_start():
         
         form = get_enrollment_setup_form_for_product(product_code)()
         form.companyName.data = session['active_case']['company_name']
+        form.enrollmentCity.data = session['active_case']['situs_city']        
         form.enrollmentState.data = session['active_case']['situs_state']
         form.productID.data = product_code
     else:
@@ -214,6 +215,7 @@ def enroll_start():
 @login_required
 def in_person_enrollment():
     state = request.form['enrollmentState']
+    enroll_city = request.form['enrollmentCity']
     company_name = request.form['companyName']
     product_code = request.form['productID']
     employee_first = request.form['eeFName']
@@ -226,11 +228,13 @@ def in_person_enrollment():
     session['active_case'] = {
         'company_name': company_name,
         'situs_state': state,
+        'situs_city': enroll_city,
         'product_code': product_code
     }
     
     wizard_data = {
         'state': state if state != 'XX' else None,
+        'enroll_city': enroll_city,
         'company_name': company_name,
         'product_id':product_code,
         'product_name': product.name,
@@ -251,6 +255,7 @@ def in_person_enrollment():
 @login_required
 def email_enrollment():
     enrollment_state = request.form['enrollmentState']
+    enrollment_city = request.form['enrollmentCity']
     company_name = request.form['companyName']
     product_code = request.form['productID']
     employee_first = request.form['eeFName']
@@ -266,6 +271,7 @@ def email_enrollment():
     case = Case(
         id=None,
         company_name=company_name,
+        situs_city=enrollment_city,
         situs_state=enrollment_state,
         product=product,
     )
@@ -318,6 +324,7 @@ def email_link_handler():
 
     wizard_data = {
         'state': case.situs_state,
+        'enrollment_city': case.situs_city,
         'company_name': case.company_name,
         'product_id': case.product.code,
         'employee_first': enrollment.employee_first,
@@ -537,6 +544,7 @@ def login():
 
                 session['active_case'] = {
                     'company_name': "",
+                    'situs_city': "",
                     'situs_state': "",
                     'product_code': ""
                 }
