@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  {% set logopath = "/static/img/5Star_logo_TAA.png" %}
+  <head>
+    {% block head %}
+
+    <title>5Star Enrollment{% block title %}{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Application Enrollment for 5Star Life Insurance Company">
+    <meta name="keywords" content="Electronic Enrollment 5Star Life Insurance">
+    <meta name="author" content="Thumbprint Software LLC">
+    <meta charset="utf-8">
+
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="stylesheet">
+    
+    <link rel="shortcut icon" href="{{ url_for('static', filename='ico/favicon.ico') }}">
+    {% endblock %}
+  </head>
+  <body>
+
+
+    {% block navbar%}
+    <div class="header">
+      {% if include_navmenu|default(True) %}
+      <ul class="nav nav-pills pull-right">
+	<li class={% if active_page == 'nav_home' %}"active"{% else %}"inactive"{% endif %} id="nav_home"><a href="{{ url_for ('home') }}">Home</a></li>
+        <li class={% if active_page == 'nav_enroll' %}"active"{% else %}"inactive"{% endif %} id="nav_enroll"><a  href="{{ url_for ('enroll_start') }}">Enroll</a></li>
+        <li class={% if active_page == 'nav_agentsign' %}"active"{% else %}"inactive"{% endif %} id="nav_agentsign"><a href="{{ url_for ('inbox') }}">Sign</a></li>
+        <li id="nav_logout"><a href="{{ url_for ('taa_logout') }}">Logout</a></li>
+      </ul>
+      {% endif %}
+      <table>
+	<tr>
+	  <td valign="center">
+	    {% if link_logo|default(True) %}
+	    <a  href="/"><img src={{ logopath }}/></a>
+	    {% else %}
+	    <img src="/static/img/5Star_logo_TAA.png"/>
+	    {% endif %}
+	  </td>
+	  <td valign="center">
+	    <h3 class="text-muted">{{ header_title|default('Enrollment') }}
+	      {% if 'headername' in session.keys() %}
+	      <br>
+	      <span class="blue smaller-60 lighter">
+		{{session['headername']}}
+	      </span>
+	      {% endif %}
+	    </h3>
+	  </td>
+	</tr>
+      </table>
+      <!--
+      <h3 class="text-muted">
+	  <a  href="/"><img src="/static/img/5Star_logo_TAA.png"/></a>
+	    &nbsp;&nbsp;&nbsp;&nbsp;Enrollment
+	  <br>
+	  {{user.given_name}}
+      </h3>
+      -->
+    </div>    
+
+    
+    {% endblock %}
+
+    <div class="container page">
+        <div class="content">
+
+	  <!-- display any Flashed messages just inside top of content area -->
+	  {% with messages = get_flashed_messages() %}
+	  {% if messages %}
+	  {% for message in messages %}
+	  <div class="alert alert-warning">
+	    <button type="button" class="close" data-dismiss="alert">
+	      <i class="ace-icon fa fa-times"></i>
+	    </button>{{ message }}</div>
+	  {% endfor %}
+	  {% endif %}
+	  {% endwith %}
+
+    
+          <!-- now for inherited stuff...  -->
+	  {% block content %}
+          {% endblock %}
+        </div>
+        <hr>
+        {% block footer %}
+        <footer class="footer">
+            <p>&copy; 2014 5Star Life Insurance Company, an AFBA related enterprise</p>
+        </footer>
+        {% endblock %}
+    </div> <!-- /container page -->
+    
+    {% block js_footer %}
+      <!--[if !IE]> 
+        <script type="text/javascript">
+	      window.jQuery || document.write("<script src='static/js/jquery-2.1.1.min.js'>"+"<"+"/script>");
+	    </script>
+	  <![endif]-->
+      <!--[if IE]>
+	    <script type="text/javascript">
+	      window.jQuery || document.write("<script src='static/js/jquery-1.11.1.min.js'>"+"<"+"/script>");
+	    </script>
+	  <![endif]-->
+      <script src="{{ url_for('static', filename='js/jquery-2.1.1.min.js') }}"></script>
+      <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+      <script src="{{ url_for('static', filename='js/ace-extra.min.js') }}"></script>
+      <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+          
+      
+    {% endblock %}
+  </body>
+</html>

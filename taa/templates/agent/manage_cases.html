@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% set active_page = 'nav_agent_manage_cases' -%}
+{% block title %} - Agent Manage Cases{% endblock %}
+
+{% block head %}
+ {{ super() }}
+    
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+<!-- ace styles -->
+<link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/five_star_ace_overlay.css') }}" rel="stylesheet">
+
+<!-- datatables-bootstrap -->
+<link href="{{ url_for('static', filename='css/dataTables.bootstrap.css') }}" rel="stylesheet">
+
+{% endblock %}
+
+{% block content %}
+
+<h3>Manage Cases</h3>
+
+<a class="btn btn-primary" href="{{ url_for("manage_case") }}">Setup New Case</a>
+
+<h4>Case Inventory</h4>
+<hr>
+
+<table id="cases_table">
+    <thead>
+        <tr>
+            <th>Company</th>
+            <th>State</th>
+            <th>Product</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for case in agent_cases %}
+            <tr>
+                <td>{{ case['company'] }}</td>
+                <td>{{ case['state'] }}</td>
+                <td>{{ case['product'] }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+    
+{% block js_footer %}
+{{ super() }}
+<script src="{{ url_for("static", filename='js/jquery.dataTables.min.js') }}"
+<script src="{{ url_for("static", filename='js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ url_for("static", filename='js/dataTables.bootstrap.js') }}"></script>
+{% endblock %}
+    
+<script>
+    $(function() {
+       
+        $("#cases_table").dataTable();
+        
+    });
+</script>
+{% endblock %}
