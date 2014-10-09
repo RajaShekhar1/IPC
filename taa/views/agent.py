@@ -26,11 +26,22 @@ def inbox():
 @login_required
 def manage_cases():
     vars = {
-        'agent_cases': [dict(company="XYZ, Inc.", state="IN", product="ABC Insurance Product")],
+        'agent_cases': [
+            dict(id=1, company="XYZ, Inc.", state="IN", product="ABC Insurance Product"),
+            dict(id=2, company="DelMar SD Inc.", state="IN", product="ABC Insurance Product"),
+            dict(id=3, company="Blah Blah Inc.", state="WI", product="ABC Insurance Product"),
+            dict(id=4, company="Orange Computers", state="MN", product="ABC Insurance Product"),
+            dict(id=5, company="Red Bull, Inc.", state="NM", product="ABC Insurance Product"),
+            dict(id=6, company="Monsters, Inc.", state="AZ", product="ABC Insurance Product"),
+            
+                        ],
     }
     return render_template('agent/manage_cases.html', **vars)
 
-@app.route("/manage_case")
+@app.route("/manage_case", defaults={'case_id':None})
+@app.route("/manage_case/<case_id>")
 @login_required
-def manage_case():
+def manage_case(case_id):
+    
     return render_template('agent/manage_case.html')
+

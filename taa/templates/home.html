@@ -2,20 +2,6 @@
 {% set active_page = 'nav_home' -%}
 {% block title %} - Home{% endblock %}
 
-{% block head %}
- {{ super() }}
-<!-- page-specific header data -->
-    
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-<!-- ace styles -->
-<link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
-<link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
-<link href="{{ url_for('static', filename='css/five_star_ace_overlay.css') }}" rel="stylesheet">
-
-
-{% endblock %}
-
 {% block content %}
 
 <div class="row">
@@ -55,7 +41,5 @@
     </div><!-- /.row -->
   </div><!-- /.col-xs-12 -->
 </div><!-- /.row -->
-
-
 
 {% endblock %}

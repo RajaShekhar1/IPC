@@ -3,25 +3,8 @@
 
 {% block title %} - Employee Application {% endblock %}
 
-{% block head %}
- {{ super() }}
-<!-- page-specific header data -->
-    
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-<!-- ace styles -->
-<link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
-<link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
-<link href="{{ url_for('static', filename='css/five_star_ace_overlay.css') }}" rel="stylesheet">
-
-<!-- custom css -->
-<link href="{{ url_for('static', filename='css/five_star.css') }}" rel="stylesheet">
-
-
-<!--[if lte IE 8]>
-    <link rel="stylesheet" href="static/css/ace-ie.min.css" />
-    <![endif]-->
-
+{% block page_css %}
+    <link href="{{ url_for('static', filename='css/five_star.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% block navbar %}
@@ -1356,62 +1339,29 @@
     
 {% endblock %}
 
-      <!-- basic scripts -->
-
-      {% block js_footer %}
-      {{ super() }}
-
-      <!-- page-specific footer scripts -->
-    
-      <!--[if !IE]> 
-
-	  <script type="text/javascript">
-	    window.jQuery || document.write("<script src='static/js/jquery-2.0.3.min.js'>"+"<"+"/script>");
-	    </script>
-	    <![endif]-->
-      
-      <!--[if IE]>
-	  <script type="text/javascript">
-	    window.jQuery || document.write("<script src='static/js/jquery-1.10.2.min.js'>"+"<"+"/script>");
-	    </script>
-	    <![endif]-->
-
-    <script src="{{ url_for('static', filename='js/jquery.mobile.custom.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/typeahead-bs2.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/knockout-3.1.0.debug.js') }}"></script>
-      
-
-
-    <!-- page specific plugin scripts -->
-
+{% block js_ace_plugins %}
     <script src="{{ url_for('static', filename='js/fuelux/fuelux.wizard.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.validate.js') }}"></script>
     <script src="{{ url_for('static', filename='js/additional-methods.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootbox.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.maskedinput.min.js') }}"></script>
+{% endblock %}
 
-    <!-- <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
-	 -->
-   
-    <!-- ace scripts -->
-
-    <script src="{{ url_for('static', filename='js/ace-elements.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/ace.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/ace-extra.min.js') }}"></script>
+{% block page_js %}
+    <script src="{{ url_for('static', filename='js/jquery.mobile.custom.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/typeahead-bs2.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/knockout-3.1.0.debug.js') }}"></script>
     
-    <!-- inline scripts related to this page -->
-    <script src="{{url_for('static', filename='js/handlebars-v1.3.0.js')}}"></script>
     <script src="{{url_for('static', filename='js/5Star/enrollment.js')}}"></script>
     <script type="text/javascript">
       jQuery(function($) {
     
         // rate calculations, recommendations code
-        init_rate_form({{wizard_data|tojson|safe}});
+        init_rate_form({{ wizard_data|tojson|safe }});
         
         init_validation();
 	
 	    });
       </script>
-      
-      {% endblock %}
+{% endblock %}
 

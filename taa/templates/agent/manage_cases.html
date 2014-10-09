@@ -5,23 +5,13 @@
 {% block head %}
  {{ super() }}
     
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-<!-- ace styles -->
-<link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
-<link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
-<link href="{{ url_for('static', filename='css/five_star_ace_overlay.css') }}" rel="stylesheet">
-
-<!-- datatables-bootstrap -->
-<link href="{{ url_for('static', filename='css/dataTables.bootstrap.css') }}" rel="stylesheet">
-
 {% endblock %}
 
 {% block content %}
 
 <h3>Manage Cases</h3>
 
-<a class="btn btn-primary" href="{{ url_for("manage_case") }}">Setup New Case</a>
+<a class="btn btn-primary" href="{{ url_for("manage_case", case_id=None) }}">Setup New Case</a>
 
 <h4>Case Inventory</h4>
 <hr>
@@ -37,9 +27,9 @@
     <tbody>
         {% for case in agent_cases %}
             <tr>
-                <td>{{ case['company'] }}</td>
-                <td>{{ case['state'] }}</td>
-                <td>{{ case['product'] }}</td>
+                <td><a href="{{ url_for("manage_case", case_id=case.id) }}">{{ case.company }}</a></td>
+                <td>{{ case.state }}</td>
+                <td>{{ case.product }}</td>
             </tr>
         {% endfor %}
     </tbody>
