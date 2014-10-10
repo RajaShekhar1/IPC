@@ -134,39 +134,10 @@
 
 <script>
     jQuery(function($) {
+        
         // Change enabled states when the product is changed
-        var product_states = {{ product_states | tojson | safe }};
-        var product_select = $("#productID");
-        product_select.on("change", function () {
-            var state_select = $("#enrollmentState");
-            var current_state = state_select.val();
-    
-            // Remove current options
-            state_select.find("option").remove();
-    
-            // Add the correct options to the select
-            var current_product = $(this).val();
-            $.each(product_states[current_product], function () {
-                var statecode = this[0];
-                var statename = this[1];
-                var is_disabled = this[2];
-    
-                var option = $("<option></option>"
-                ).attr("value", statecode
-                ).prop("disabled", is_disabled
-                ).text(statename
-                );
-                state_select.append(option);
-            });
-            
-            // If the selected value is no longer enabled, set the value to what it was before
-            var is_disabled = state_select.find("option[value="+current_state+"]").prop("disabled");
-            if (!is_disabled) {
-                state_select.val(current_state);
-            }
-            
-        });
-    
+        product_state_select.init("#enrollmentState","#productID", {{ product_states | tojson | safe }});
+        
         // Validation
         $("form").validate({
             errorElement: 'div',

@@ -15,38 +15,47 @@
 
 <h4>Case Inventory</h4>
 <hr>
+<div class="row">
+    <div class="col-xs-12">
+        <div class="table-header">
+            Managed Cases
+        </div>
+        <div class="table-responsive">
+            <table id="cases_table" class="table table-striped table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>State</th>
+                        <th>Product</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for case in agent_cases %}
+                        <tr>
+                            <td><a href="{{ url_for("manage_case", case_id=case.id) }}">{{ case.company }}</a></td>
+                            <td>{{ case.state }}</td>
+                            <td>{{ case.product }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
-<table id="cases_table">
-    <thead>
-        <tr>
-            <th>Company</th>
-            <th>State</th>
-            <th>Product</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for case in agent_cases %}
-            <tr>
-                <td><a href="{{ url_for("manage_case", case_id=case.id) }}">{{ case.company }}</a></td>
-                <td>{{ case.state }}</td>
-                <td>{{ case.product }}</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
-    
-{% block js_footer %}
-{{ super() }}
-<script src="{{ url_for("static", filename='js/jquery.dataTables.min.js') }}"
-<script src="{{ url_for("static", filename='js/jquery.dataTables.min.js') }}"></script>
-<script src="{{ url_for("static", filename='js/dataTables.bootstrap.js') }}"></script>
+
 {% endblock %}
     
+{% block js_ace_plugins %}
+<script src="{{ url_for("static", filename='js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ url_for("static", filename='js/jquery.dataTables.bootstrap.js') }}"></script>
+{% endblock %}
+    
+{% block page_js %}
 <script>
     $(function() {
        
         $("#cases_table").dataTable();
-        
     });
 </script>
 {% endblock %}

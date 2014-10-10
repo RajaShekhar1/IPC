@@ -338,7 +338,13 @@ FPPCI_states = [
     ('WY', 'Wyoming',  False)
 ]
     
-
+def get_all_states():
+    return [
+        dict(
+            shortname=s[0],
+            name=s[1]
+        ) for s in FPPTI_states
+    ]
     
 
 
@@ -386,3 +392,9 @@ def get_product_states():
     }
     
      
+def get_product_choices():
+    return [dict(
+        short_name=p[0],
+        name=p[1],
+        disabled=p[2],
+    ) for p in product_choices]

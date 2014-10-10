@@ -9,6 +9,7 @@ from taa import app
 
 from taa.docu_console import console_url
 from taa.model.DocuSign_config import sessionUserApprovedForDocusign
+from taa.model.Enrollment import get_product_states, get_product_choices, get_all_states
 
 @app.route("/inbox", methods =['GET'])
 @login_required
@@ -20,7 +21,6 @@ def inbox():
     else:
         flash("You are not yet authorized for signing applications.  Please see your Regional Director for assistance.")
         return redirect(url_for("home"))
-
 
 @app.route("/manage_cases")
 @login_required
@@ -42,6 +42,10 @@ def manage_cases():
 @app.route("/manage_case/<case_id>")
 @login_required
 def manage_case(case_id):
+    vars = {}
+    vars['product_choices'] = get_product_choices()
+    vars['product_states'] = get_product_states()
+    vars['all_states'] = get_all_states()
     
-    return render_template('agent/manage_case.html')
+    return render_template('agent/case.html', **vars)
 
