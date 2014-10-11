@@ -41,9 +41,10 @@
 
       <div class="space-2"></div>
 
-      <div class="form-group">
+      <div class="row form-group">
 	    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Location of this enrollment</label>
 	    <div class="col-xs-12 col-sm-9">
+	    {{ form.enrollmentCity(placeholder='City') }}  
 	    {{ form.enrollmentState() }}
 	    </div>
       </div>
@@ -145,6 +146,7 @@
             focusInvalid: false,
             rules: {
                 productID: {required: true},
+                enrollmentCity: {required: true},
                 enrollmentState: {required: true},
                 companyName: {required: true},
                 eeLName: {required: true},

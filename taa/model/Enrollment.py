@@ -352,7 +352,7 @@ class EnrollmentSetupForm(Form):
     productID = SelectFieldWithDisable(choices = product_choices)
     
     # Include the state drop-down dynamically since it depends on the product
-    
+    enrollmentCity = StringField('Enrollment City', validators=[InputRequired()])
     companyName = StringField('Company Name', validators=[InputRequired()])
     eeFName = StringField('Employee First Name', validators=[InputRequired()])
     eeLName = StringField('Employee Last Name', validators=[InputRequired()])

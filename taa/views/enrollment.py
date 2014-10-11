@@ -49,6 +49,7 @@ def enroll_start():
         
         form = get_enrollment_setup_form_for_product(product_code)()
         form.companyName.data = session['active_case']['company_name']
+        form.enrollmentCity.data = session['active_case']['situs_city']
         form.enrollmentState.data = session['active_case']['situs_state']
         form.productID.data = product_code
     else:
@@ -62,6 +63,7 @@ def enroll_start():
 @login_required
 def in_person_enrollment():
     state = request.form['enrollmentState']
+    enroll_city = request.form['enrollmentCity']
     company_name = request.form['companyName']
     product_code = request.form['productID']
     employee_first = request.form['eeFName']
@@ -74,11 +76,13 @@ def in_person_enrollment():
     session['active_case'] = {
         'company_name': company_name,
         'situs_state': state,
+        'situs_city': enroll_city,
         'product_code': product_code
     }
     
     wizard_data = {
         'state': state if state != 'XX' else None,
+        'enroll_city': enroll_city,
         'company_name': company_name,
         'product_id':product_code,
         'product_name': product.name,
@@ -137,94 +141,97 @@ def ds_landing_page():
  
 
 
-# @app.route("/email-enrollment", methods=['POST'])
-# @login_required
-# def email_enrollment():
-#     enrollment_state = request.form['enrollmentState']
-#     company_name = request.form['companyName']
-#     product_code = request.form['productID']
-#     employee_first = request.form['eeFName']
-#     employee_last = request.form['eeLName']
-#     employee_email = request.form['email']
-# 
-#     db = get_database()
-#     
-#     # product = get_product_by_code(product_code)
-#     product = db.get_product_by_code(product_code)
-#     
-#     # May not want to create a case for each time this is called 
-#     case = Case(
-#         id=None,
-#         company_name=company_name,
-#         situs_state=enrollment_state,
-#         product=product,
-#     )
-#     db.save_case(case)
-#     
-#     enrollment = Enrollment(
-#         id=None,
-#         case=case,
-#         employee_first=employee_first,
-#         employee_last=employee_last,
-#         employee_email=employee_email,
-#     )
-#     db.save_enrollment(enrollment)
-# 
-#     enrollment_request = enrollment.generate_enrollment_request()
-#     db.save_enrollment_request(enrollment_request)
-#     
-#     email_config = dict(
-#         smtp_server=config.get('email', 'smtp_server'),
-#         smtp_port=config.get('email', 'smtp_port'),
-#         smtp_user=config.get('email', 'smtp_username'),
-#         smtp_password=config.get('email', 'smtp_password'),
-#         from_address=config.get('email', 'from_address'),
-#     )
-# 
-#     EnrollmentEmail(**email_config).send_enrollment_request(enrollment_request)
-#     
-#     return jsonify(**dict(success=True))
-# 
-# @app.route("/enrollment_request", methods=['GET'])
-# def email_link_handler():
-#     """
-#     Handles someone clicking the link in the enrollment request email
-#     """
-#     
-#     token = request.args['token']
-#     db = get_database()
-#     
-#     enrollment_request = db.get_enrollment_request_by_token(token)
-#     
-#     # TODO
-#     #if enrollment_request.is_expired():
-#     #    return render_template('token_expired.html')
-#     
-#     enrollment = enrollment_request.enrollment
-#     case = enrollment.case
-#     # 2014-06-05 product.get_health_questions() blowing up below - not yet handled in DB?
-#     # product = case.product
-#     product = get_product_by_code(case.product.code)
-# 
-#     wizard_data = {
-#         'state': case.situs_state,
-#         'company_name': case.company_name,
-#         'product_id': case.product.code,
-#         'employee_first': enrollment.employee_first,
-#         'employee_last': enrollment.employee_last,
-#         'employee_email': enrollment.employee_email,
-#         'is_in_person':False,
-#         'health_questions': product.get_health_questions(),
-#     }
-# 
-#     return render_template('main-wizard.html',
-#                            wizard_data=wizard_data,
-#                            states=get_states(),
-#     )
-#
-#
-#def get_database():
-#    return Database(config.get('database', 'connection_string'))
+@app.route("/email-enrollment", methods=['POST'])
+@login_required
+def email_enrollment():
+    enrollment_state = request.form['enrollmentState']
+    enrollment_city = request.form['enrollmentCity']
+    company_name = request.form['companyName']
+    product_code = request.form['productID']
+    employee_first = request.form['eeFName']
+    employee_last = request.form['eeLName']
+    employee_email = request.form['email']
+
+    db = get_database()
+    
+    # product = get_product_by_code(product_code)
+    product = db.get_product_by_code(product_code)
+    
+    # May not want to create a case for each time this is called 
+    case = Case(
+        id=None,
+        company_name=company_name,
+        situs_city=enrollment_city,
+        situs_state=enrollment_state,
+        product=product,
+    )
+    db.save_case(case)
+    
+    enrollment = Enrollment(
+        id=None,
+        case=case,
+        employee_first=employee_first,
+        employee_last=employee_last,
+        employee_email=employee_email,
+    )
+    db.save_enrollment(enrollment)
+
+    enrollment_request = enrollment.generate_enrollment_request()
+    db.save_enrollment_request(enrollment_request)
+    
+    email_config = dict(
+        smtp_server=config.get('email', 'smtp_server'),
+        smtp_port=config.get('email', 'smtp_port'),
+        smtp_user=config.get('email', 'smtp_username'),
+        smtp_password=config.get('email', 'smtp_password'),
+        from_address=config.get('email', 'from_address'),
+    )
+
+    EnrollmentEmail(**email_config).send_enrollment_request(enrollment_request)
+    
+    return jsonify(**dict(success=True))
+
+@app.route("/enrollment_request", methods=['GET'])
+def email_link_handler():
+    """
+    Handles someone clicking the link in the enrollment request email
+    """
+    
+    token = request.args['token']
+    db = get_database()
+    
+    enrollment_request = db.get_enrollment_request_by_token(token)
+    
+    # TODO
+    #if enrollment_request.is_expired():
+    #    return render_template('token_expired.html')
+    
+    enrollment = enrollment_request.enrollment
+    case = enrollment.case
+    # 2014-06-05 product.get_health_questions() blowing up below - not yet handled in DB?
+    # product = case.product
+    product = get_product_by_code(case.product.code)
+
+    wizard_data = {
+        'state': case.situs_state,
+        'enrollment_city': case.situs_city,
+        'company_name': case.company_name,
+        'product_id': case.product.code,
+        'employee_first': enrollment.employee_first,
+        'employee_last': enrollment.employee_last,
+        'employee_email': enrollment.employee_email,
+        'is_in_person':False,
+        'health_questions': product.get_health_questions(),
+    }
+
+    return render_template('main-wizard.html',
+                           wizard_data=wizard_data,
+                           states=get_states(),
+    )
+
+
+def get_database():
+   return Database(config.get('database', 'connection_string'))
 
 
 @app.route("/FPPTI_disclosure.pdf")

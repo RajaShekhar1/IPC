@@ -129,6 +129,7 @@ def login():
                 session['active_case'] = {
                     'company_name': "",
                     'situs_state': "",
+                    'situs_city': "",
                     'product_code': ""
                 }
                 
