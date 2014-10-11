@@ -4,8 +4,7 @@ venv
 .DS_Store
 .idea/*
 config_production.py
-
-
+taa/uploads
 TAA.iml
 
 TAA2.db

@@ -13,15 +13,8 @@ from wtforms.validators import InputRequired, Email
 from wtforms.widgets import html_params, HTMLString
 from jinja2 import escape
 
+from taa.model.Case import Case
 
-class Case(object):
-    def __init__(self, id, company_name, situs_state, product):
-        self.case_id = id
-        self.company_name = company_name
-        self.situs_state = situs_state
-        self.product = product
-        
-        
 class Enrollment(object):
     def __init__(self, id, case, employee_first, employee_last, employee_email):
         self.enrollment_id = id

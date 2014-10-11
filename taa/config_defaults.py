@@ -26,6 +26,8 @@ EMAIL_SMTP_USERNAME = "taa_mandrill"
 EMAIL_SMTP_PASSWORD = "tP3JZX1TlF_pxJDU4vx3Pw"
 EMAIL_FROM_ADDRESS = "enrollment@5StarEnroll.com"
 
-
 # Database
 SQLALCHEMY_DATABASE_URI = "sqlite:///TAA.db"
+
+# File uploads
+UPLOAD_FOLDER = "taa/uploads"
