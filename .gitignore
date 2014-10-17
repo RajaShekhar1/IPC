@@ -5,6 +5,6 @@ venv
 .idea/*
 config_production.py
 taa/uploads
+taa/frontend/static/generated_assets
 TAA.iml
 
-TAA2.db
