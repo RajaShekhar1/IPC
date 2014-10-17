@@ -137,3 +137,6 @@ class DBService(object):
         self._isinstance(model)
         db.session.delete(model)
         db.session.commit()
+
+    def query(self):
+        return self.__model__.query

@@ -9,7 +9,7 @@ and set up a virtual environment for python:
 
     sudo apt-get update
     sudo apt-get upgrade
-    sudo apt-get install python-dev python-pip postgresql-server-dev-9.3 nginx php5-fpm phppgadmin php5-pgsql
+    sudo apt-get install python-dev python-pip postgresql-server-dev-9.3 nginx php5-fpm phppgadmin php5-pgsql git
     sudo pip install virtualenv
     cd <root folder, i.e. /vagrant>
     virtualenv ~/env

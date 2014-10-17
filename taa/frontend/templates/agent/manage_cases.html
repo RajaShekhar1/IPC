@@ -1,6 +1,11 @@
 {% extends "base.html" %}
-{% set active_page = 'nav_manage_cases' -%}
+{% set active_page = 'nav_agent_manage_cases' -%}
 {% block title %} - Agent Manage Cases{% endblock %}
+
+{% block head %}
+ {{ super() }}
+    
+{% endblock %}
 
 {% block content %}
 
@@ -9,55 +14,62 @@
 <a class="btn btn-primary" data-bind="click: show_new_case_form, visible: !is_case_form_visible()">Setup New Case</a>
 
 <div class="row" data-bind="visible: is_case_form_visible">
-    <div class="col-sm-6">
-        <form id="new_case" class="form-horizontal"> 
-            <div class="widget-box">
-                <div class="widget-header">
-                    <h3>Setup New Case</h3>
+    <div class="col-xs-12 col-md-6">
+        <form id="new-case-form" class="form-horizontal" data-bind="submit: create_case" method="POST" action="{{ url_for("cases.create_case") }}">
+                
+        <div class="widget-box">
+            <div class="widget-header">
+                <h3>Basic Setup</h3>
+            </div>
+            <div class="widget-body">
+                <div class="widget-main">  
+                    
+                    <div class="form-group">
+                        <label class="col-md-3 control-label" for="company_name">Company Name</label>
+                        <div class="col-md-9">
+                            <input type="text" class="form-control" id="company_name" name="company_name" placeholder="Company Name">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-md-3 control-label" for="case_product">Product</label>
+                        <div class="col-md-9">
+                            <select id="case_product" name="case_product" class="form-control" size="5" multiple="true">
+                                {% for product in product_choices %}
+                                    <option value="{{product['short_name']}}" 
+                                    {%- if product["disabled"] -%}
+                                    disabled="1"
+                                    {%- endif -%}
+                                    >{{product["name"]}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                
+                    <div class="form-group">
+                        <label class="col-md-3 control-label" for="case_state">State</label>
+                        <div class="col-md-9">
+                            <select id="case_state" name="case_state" class="form-control">
+                                <option></option>
+                                {% for state in all_states %}
+                                    <option value="{{state['short_name']}}">{{state["name"]}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                            
                 </div>
-                <div class="widget-body">
-                    <div class="widget-main clearfix">  
-                        
-                        <div class="form-group">
-                            <label class="col-md-3 control-label" for="company_name">Company Name</label>
-                            <div class="col-md-9">
-                                <input type="text" data-bind="value: new_case.company_name" class="form-control" id="company_name" name="company_name" placeholder="Company Name">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="col-md-3 control-label" for="case_product">Products</label>
-                            <div class="col-md-9">
-                                <select data-bind="options: product_choices, optionsText: 'name', selectedOptions: new_case.products" class="form-control" size="5" multiple="true">
-                                    
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="col-md-3 control-label" for="case_state">State</label>
-                            <div class="col-md-9">
-                                <select data-bind="value: new_case.situs_state" class="form-control">
-                                    <option></option>
-                                    {% for state in all_states %}
-                                        <option value="{{state['shortname']}}">{{state["name"]}}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>  
-                    </div>
-                    <div class="widget-toolbox clearfix padding-8">
-                        <button type="submit" data-bind="click: create_case" class="btn-primary btn-sm pull-right">Save</button>
-                    </div>
+                <div class="widget-toolbox clearfix padding-8">
+                    <button type="submit" class="btn-primary btn-sm pull-right">Save</button>
                 </div>
             </div>
+        </div>
             
-        </form>
+        </form> 
     </div>
 </div>
 
     
- 
 <h4>Case Inventory</h4>
 <hr>
 <div class="row">
@@ -65,13 +77,11 @@
         <div class="table-header">
             Managed Cases
         </div>
-        <!--ko if: managed_cases().length == 0 -->
+        {% if not agent_cases %}
             <div class="row">
                 <h4 class="text-center lighter">You have not created any cases yet.</h4>
             </div>
-        <!--/ko-->
-        <!--ko if: managed_cases().length > 0 -->
-        
+        {% else %}
             <div class="table-responsive">
                 <table id="cases_table" class="table table-striped table-bordered table-hover">
                     <thead>
@@ -81,189 +91,75 @@
                             <th>Product</th>
                         </tr>
                     </thead>
-                    <tbody data-bind="foreach: managed_cases">
-                        <tr>
-                            <td><a data-bind="click: $parent.view_case, text: company_name"></a></td>
-                            <td><div data-bind="text: situs_state"></div></td>
-                            <td><div data-bind="text: product_names()"></div></td>
-                        </tr>
+                    <tbody>
+                        {% for case in agent_cases %}
+                            <tr>
+                                <td><a href="{{ url_for("manage_case", case_id=case.id) }}">{{ case.company_name }}</a></td>
+                                <td>{{ case.situs_state }}</td>
+                                <td>{{ case.get_product_names() }}</td>
+                            </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
-        <!--/ko-->
+        {% endif %}
         
     </div>
 </div>
-
-
 {% endblock %}
-    
+
 {% block page_js %}
 <script>
-    
-$(function() {
-    
-    window.managed_cases_table = $("#cases_table");
-    
-    //managed_cases_table.dataTable();
-    
-    
-    function Case(attrs) {
-        var self = this;
-        
-        attrs = attrs || {};
-        
-        self.company_name = ko.observable(attrs.company_name || "");
-        self.products = ko.observableArray($.map(attrs.products || [], function(p) {return new Product(p)}));
-        self.situs_state = ko.observable(attrs.situs_state || "");
-        
-        self.product_names = ko.computed(function() {
-            return $.map(self.products(), function(p) {return p.name;}).join(", ");
-        });
-        
-        self.get_data = function() {
-            return {
-                company_name: self.company_name(),
-                products: $.map(self.products(), function(p) {return p.code}),
-                situs_state: self.situs_state()
-            }
-        }
-    }
-    
-    function Product(attrs) {
-        var self = this;
-        
-        self.name = attrs.name || "";
-        self.code = attrs.code || "";
-    }    
-    
-    function ManageCasePage(product_states) {
-        var self = this;
-        
-        self.is_case_form_visible = ko.observable(false);
-        
-        self.product_choices = ko.observableArray([]);
-        
-        self.managed_cases = ko.observableArray([]);
-        self.new_case = new Case();
-        
-        self.show_new_case_form = function() {
-            self.is_case_form_visible(true);
-        };
-        
-        self.create_case = function() {
+    $(function() {
+        function ManageCasePage() {
+            var self = this;
+            self.is_case_form_visible = ko.observable(false);
             
-            var data = self.new_case.get_data();
+            self.show_new_case_form = function() {
+                self.is_case_form_visible(true);
+            };
             
-            self.reset_new_case_form();
-            
-            $.ajax("{{ url_for("cases.create_case") }}", {
-                type: 'POST',
-                processData: false,
-                contentType:'application/json',
-                data: JSON.stringify(data),
-                dataType:'json',
-                success: function(results) {
-                    var created_case = new Case(results.data);
-                    self.managed_cases.push(created_case);
-                    
-                },
-                error: function(xhr) {
-                    console.log(xhr.responseJSON.errors)
-                }
-            });
-        };
-        
-        self.view_case = function(case_obj) {
-            console.log(case_obj);
-        };
-        
-        self.reset_new_case_form = function() {
-            self.is_case_form_visible(false);
-            self.new_case = new Case();
-        };
-        
-        self.display_errors = function(errors) {
-            
-        };
-    
-        
-        //self.new_case.products.subscribe(function() {
-        //    self.update_states_for_product(); 
-        //});
-        
-        $.getJSON("/products", function(resp) {
-            var mappedProducts = $.map(resp.data, function(item) { return new Product(item) });
-            self.product_choices(mappedProducts);
-        });
-        $.getJSON("/cases", function(resp) {
-            var mappedCases = $.map(resp.data, function(item) {return new Case(item) });
-            self.managed_cases(mappedCases);
-            managed_cases_table.dataTable();//.DataTable().draw();
-        });
-        
-        self.sammy_app = $.sammy(function() {
-            this.get('#/', function(context) {
-                console.log("index");
-            });
-        });
-        
-    }   
-    
-    function CaseSetupForm() {
-        
-    }
-    /*
-    ko.bindingHandlers.limit_states_by_products = {
-        init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-            // This will be called when the binding is first applied to an element
-            // Set up any initial state, event handlers, etc. here
-            
-        },
-        update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-            // This will be called once when the binding is first applied to an element,
-            // and again whenever any observables/computeds that are accessed change
-            // Update the DOM element based on the supplied values here.
-            var products = valueAccessor().products;
-            var product_states = valueAccessor().product_states;
-            
-            update_states_for_product($(element), products, product_states);
-        },
-        update_states_for_product: function(state_select, current_products, product_states) {
-            var current_state = $(state_select).val();
-            
-            if (!current_products.length) return;
-            
-            // Remove current options
-            state_select.find("option").remove();
-            
-            
-            var option = $("<option></option>"
-                ).attr("value", statecode
-                ).prop("disabled", is_disabled
-                ).text(statename
-                );
-            state_select.append(option);
-            
-            // If the selected value is no longer enabled, set the value to what it was before
-            if (current_state) {
-                var is_disabled = state_select.find("option[value="+current_state+"]").prop("disabled");
-                if (!is_disabled) {
-                    state_select.val(current_state);
-                }
-            }
+            self.create_case = function() {
+                var data = {
+                    company_name: $("#company_name").val(),
+                    situs_state: $("#case_state").val(),
+                    products: $("#case_product").val()
+                };
                 
+                self.reset_new_case_form();
+                
+                $.ajax("{{ url_for("cases.create_case") }}", {
+                    type: 'POST',
+                    processData: false,
+                    contentType:'application/json',
+                    data: JSON.stringify(data),
+                    dataType:'json',
+                    success: function(results) {
+                        //var created_case = new Case(results.data);
+                        //self.managed_cases.push(created_case);
+                        window.location.href = "{{ url_for("manage_case", case_id="") }}"+results.data.id;
+                    },
+                    error: function(xhr) {
+                        console.log(xhr.responseJSON.errors)
+                    }
+                });
+            };
+            
+            self.reset_new_case_form = function() {
+                self.is_case_form_visible(false);
+            };
         }
-    };
-    */
-    
-    //product_state_select.init("#case_state","#case_product", );
-    
-    var form = new ManageCasePage({{ product_states | tojson | safe }});
-    window.form = form;
-    
-    ko.applyBindings(form); 
-    form.sammy_app.run("#/");
-});
+        
+        $("#cases_table").dataTable();
+        
+        // Change enabled states when the product is changed
+        product_state_select.init("#case_state","#case_product", {{ product_states | tojson | safe }});
+        
+        
+        var form = new ManageCasePage({{ product_states | tojson | safe }});
+        window.form = form;
+        
+        ko.applyBindings(form); 
+    });
 </script>
 {% endblock %}

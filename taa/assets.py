@@ -38,7 +38,7 @@ js_vendor = Bundle(
     'js/bootstrap.min.js',
     
     # js ace plugins for wizard and such go here
-    'js/jquery.dataTables.js',
+    'js/jquery.dataTables.min.js',
     'js/jquery.dataTables.bootstrap.js',
     
     # The rest of ace template libs

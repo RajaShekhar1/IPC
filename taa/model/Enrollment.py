@@ -297,7 +297,7 @@ def get_all_states():
     
 
 
-product_choices = [(""," ",  True),
+product_choices = [#(""," ",  True),
                    ("FPPTI","Family Protection Plan - Term to 100",  False),
                    ("FPPCI","Family Protection Plan - with Critical Illness",  False),
                    ("CIEMP","Group Critical Illness (coming soon)",  True),

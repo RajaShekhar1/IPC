@@ -21,7 +21,7 @@ class Case(CaseSerializer, db.Model):
     company_name = db.Column(db.String, nullable=False)
     situs_state = db.Column(db.String(2), nullable=False)
     situs_city = db.Column(db.String)
-    agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'))
+    agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=False)
     active = db.Column(db.Boolean, default=True)
     
     products = db.relationship('Product', secondary=case_products,
@@ -36,6 +36,8 @@ class Case(CaseSerializer, db.Model):
         )
     
     
+    def get_product_names(self):
+        return ','.join(p.name for p in self.products)
 
 ENROLLMENT_TYPES = ['annual_with_start', 'specific']
 
@@ -49,12 +51,19 @@ class CaseEnrollmentPeriod(JsonSerializable, db.Model):
     end_date = db.Column(db.DateTime)
     
     case = db.relationship("Case", backref=db.backref("enrollment_periods"))
+
+
+class CensusRecordSerializer(JsonSerializable):
+    pass
+    #__json_modifiers__ = {
+    #    'products': lambda products, _: [p for p in products]
+    #}
     
-    
-class CaseCensus(db.Model):
+class CaseCensus(CensusRecordSerializer, db.Model):
     __tablename__ = 'case_census'
 
     id = db.Column(db.Integer, primary_key=True)
+    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=False)
     upload_date = db.Column(db.DateTime)
     employee_ssn = db.Column(db.String(9))
     employee_first = db.Column(db.String(256))
@@ -65,7 +74,7 @@ class CaseCensus(db.Model):
     employee_street_address2 = db.Column(db.String(256))
     employee_city = db.Column(db.String(256))
     employee_state = db.Column(db.String(2))
-    employee_zip = db.Column(db.String(9))
+    employee_zip = db.Column(db.String(5))
 
     employee_email = db.Column(db.String(256))
 
@@ -74,3 +83,5 @@ class CaseCensus(db.Model):
     spouse_last = db.Column(db.String(256))
     spouse_address = db.Column(db.String(512))
     spouse_birthdate = db.Column(db.Date)
+    spouse_email = db.Column(db.String(256))
+    

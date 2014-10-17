@@ -1,8 +1,20 @@
+import datetime
 
+from flask import request
 from flask.json import JSONEncoder as FlaskJSONEncoder
 from wtforms.fields import SelectField
 from wtforms.widgets import html_params, HTMLString
 from jinja2 import escape
+
+
+
+def get_posted_data():
+    """
+    Allows for either JSON or form-encoded requests
+    """
+    form_data = request.form or request.get_json()
+    return {k: form_data[k] for k in form_data}
+    
 
 # https://github.com/mattupstate/overholt
 class JSONEncoder(FlaskJSONEncoder):
@@ -12,6 +24,10 @@ class JSONEncoder(FlaskJSONEncoder):
     def default(self, obj):
         if isinstance(obj, JsonSerializable):
             return obj.to_json()
+        # Flask doesn't handle plain dates (it does have datetimes though)
+        if isinstance(obj, datetime.date):
+            return obj.isoformat()
+        
         return super(JSONEncoder, self).default(obj)
 
 # https://github.com/mattupstate/overholt    

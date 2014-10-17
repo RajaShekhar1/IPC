@@ -1,11 +1,18 @@
 
-from taa.core import DBService, db
+from flask_stormpath import current_user
 
+from taa.core import DBService, db
 from models import Agent
 
 class AgentService(DBService):
     
     __model__ = Agent
+    
+    def get_logged_in_agent(self):
+        if not current_user:
+            return
+        
+        return self.get_agent_from_user(current_user)
     
     def ensure_agent_in_database(self, user):
         if not self.is_user_agent(user):
@@ -30,7 +37,13 @@ class AgentService(DBService):
         return self.ensure_agent_in_database(user)
     
     def is_user_agent(self, user):
-        return 'agents' in [g.name for g in user.groups]
+        return 'agents' in self.get_user_groupnames(user)
+    
+    def is_user_admin(self, user):
+        return 'admins' in self.get_user_groupnames(user)
+    
+    def get_user_groupnames(self, user):
+        return {g.name for g in user.groups}
     
     def get_agent_from_stormpath_account(self, stormpath_account_url):
         pass
