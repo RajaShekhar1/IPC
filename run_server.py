@@ -10,4 +10,4 @@ if __name__ == "__main__":
     #config_file = sys.argv[1]
     
     #app = create_app(config_file)
-    app.run()
+    app.run(host='0.0.0.0')

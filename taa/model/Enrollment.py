@@ -6,14 +6,13 @@ from email.mime.text import MIMEText
 
 from flask import url_for, render_template
 from dateutil.relativedelta import relativedelta
-
 from flask.ext.wtf import Form
 from wtforms.fields import StringField, SelectField
 from wtforms.validators import InputRequired, Email
-from wtforms.widgets import html_params, HTMLString
-from jinja2 import escape
 
-from taa.model.Case import Case
+
+
+from taa.helpers import SelectFieldWithDisable
 
 class Enrollment(object):
     def __init__(self, id, case, employee_first, employee_last, employee_email):
@@ -168,49 +167,6 @@ class NotifyAdminEmail(object):
         connection.close()
         
 
-#
-# SelectWithDisable and SelectFieldWithDisable from http://stackoverflow.com/questions/8463421/how-to-render-my-select-field-with-wtforms
-#
-class SelectWithDisable(object):
-    """
-    Renders a select field.
-
-    If `multiple` is True, then the `size` property should be specified on
-    rendering to make the field useful.
-
-    The field must provide an `iter_choices()` method which the widget will
-    call on rendering; this method must yield tuples of 
-    `(value, label, selected, disabled)`.
-    """
-    def __init__(self, multiple=False):
-        self.multiple = multiple
-
-    def __call__(self, field, **kwargs):
-        kwargs.setdefault('id', field.id)
-        if self.multiple:
-            kwargs['multiple'] = 'multiple'
-        html = [u'<select %s>' % html_params(name=field.name, **kwargs)]
-        for val, label, selected, disabled in field.iter_choices():
-            html.append(self.render_option(val, label, selected, disabled))
-        html.append(u'</select>')
-        return HTMLString(u''.join(html))
-
-    @classmethod
-    def render_option(cls, value, label, selected, disabled):
-        options = {'value': value}
-        if selected:
-            options['selected'] = u'selected'
-        if disabled:
-            options['disabled'] = u'disabled'
-        return HTMLString(u'<option %s>%s</option>' % (html_params(**options), escape(unicode(label))))
-
-
-class SelectFieldWithDisable(SelectField):
-    widget = SelectWithDisable()
-
-    def iter_choices(self):
-        for value, label, disabled in self.choices:
-            yield (value, label, self.coerce(value) == self.data, disabled)
 
 
 #

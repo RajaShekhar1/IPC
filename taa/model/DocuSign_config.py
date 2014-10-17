@@ -1,5 +1,5 @@
 from flask.ext.stormpath import user
-from taa.model.Product import (
+from taa.model.ProductData import (
     FPPTI_generic_states,
     FPPCI_generic_states,
 )

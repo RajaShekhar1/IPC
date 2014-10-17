@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set active_page = 'nav_home' -%}
+{% block title %} - Home{% endblock %}
+
+{% block content %}
+
+<div class="row">
+  <div class="col-xs-12">
+    <div class="row">
+      <div class="col-sm-6">
+	<div class="widget-box">
+	  <div class="widget-header widget-header-flat">
+	    <h4 class="widget-title">Enroll Applicants</h4>
+	  </div>
+	  
+	  <div class="widget-body">
+	    <div class="widget-main">
+	      <p class="lead">Enter case information, employee name and email, and then continue to in-person enrollment interview.  Completed application will be presented at end for <em>applicant</em> signature.</p>
+	      <p><i class="icon-info-sign bigger-120 blue"></i>  All submitted applications will also need electronic signature of enrolling agent, completed via the other section of this page.</p>
+	      <p class="center"><a class="btn btn-lg btn-info" href="{{ url_for('enroll_start') }}" role="button">Enroll an application</a></p>
+	    </div>
+	  </div>
+	</div>
+      </div><!-- /.col-sm6 Enroll Applicants half -->
+
+      <div class="col-sm-6">
+	<div class="widget-box">
+	  <div class="widget-header widget-header-flat">
+	    <h4 class="widget-title">Agent - Sign Applications</h4>
+	  </div>
+	  
+	  <div class="widget-body">
+	    <div class="widget-main">
+	      <p class="lead">All applications require signature by agent.  Completed interviews will be routed to your "signing inbox" <span class="smaller-80">(powered by Docusign; in their <i>Manage</i> area)</span> for finalizing any pending applications with your confirmation and signature.</p>
+	      <p><i class="icon-warning-sign bigger-120 orange"></i>  Applications will not be not submitted for processing until your signature is complete on the document.</p>
+	      <p class="center"><a class="btn btn-lg btn-warning" href="{{ url_for('inbox') }}" role="button">Access agent signing inbox</a></p>
+	    </div>
+	  </div>
+	</div>
+      </div><!-- /.col-sm6 Sign Applications half -->
+    </div><!-- /.row -->
+  </div><!-- /.col-xs-12 -->
+</div><!-- /.row -->
+
+{% endblock %}
