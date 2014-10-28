@@ -354,7 +354,8 @@ def valid_email(email):
     return True, None
 
 def valid_birthdate(date):
-    
+    if not date:
+        return False, "Invalid date: {}".format(date)
     d = parse(date)
     if d >= datetime.today():
         return False, 'Invalid birthdate: future date \'{}\''.format(date)
@@ -362,7 +363,7 @@ def valid_birthdate(date):
     return True, None
 
 def valid_name(name):
-    name = name.strip()
+    name = name.strip() if name else ''
     if not name:
         return False, "Invalid Name: '{}'".format(name)
     return True, None
