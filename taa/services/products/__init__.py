@@ -19,15 +19,10 @@ class ProductService(DBService):
         return product
     
     def get_all_states(self):
-        return [
-            dict(
-                shortname=s[0],
-                name=s[1]
-            ) for s in FPPTI_states
-        ]
+        return _all_states
     
     def get_all_statecodes(self):
-        return [s['shortname'] for s in self.get_all_states()]
+        return _all_statecodes
     
     def get_product_states(self):
         """Return the mapping of product codes to enabled states (statecode, state name, is_disabled) """
@@ -148,3 +143,12 @@ FPPCI_states = [
     ('WI', 'Wisconsin', False),
     ('WY', 'Wyoming', False)
 ]
+
+_all_states = [
+    dict(
+        shortname=s[0],
+        name=s[1]
+    ) for s in FPPTI_states
+]
+
+_all_statecodes = [s['shortname'] for s in _all_states]

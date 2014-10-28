@@ -43,25 +43,26 @@ def route(bp, *args, **kwargs):
         def wrapper(*args, **kwargs):
             
             # Call the wrapped function
-            rv = f(*args, **kwargs)
+            ret_val = f(*args, **kwargs)
             
-            if isinstance(rv, Response) and rv.status_code == 302 and rv.location.startswith('/login'):
+            if isinstance(ret_val, Response) and ret_val.status_code == 302 and ret_val.location.startswith('/login'):
                 # Return a notice that we are not logged in
                 return jsonify(dict(
                     data={}, 
                     errors=[{'msg':'You are not logged in.'}], 
-                    redirect=rv.location)
+                    redirect=ret_val.location)
                 )
 
-            if isinstance(rv, tuple):
+            if isinstance(ret_val, tuple):
                 # pull out the response if a status code is given explicitly 
-                rv = rv[0]
-                sc = rv[1]
+                data = ret_val[0]
+                sc = ret_val[1]
             else:
+                data = ret_val
                 sc = 200
 
             # Serialize the response object into json data
-            return jsonify(dict(data=rv)), sc
+            return jsonify(dict(data=data)), sc
         
         return f
     

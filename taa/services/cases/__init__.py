@@ -1,3 +1,6 @@
+from dateutil.parser import parse
+from datetime import datetime
+import re
 
 from flask import abort
 from flask_stormpath import current_user
@@ -39,9 +42,20 @@ class CaseService(DBService):
         
         abort(401)
         
-    def get_agent_cases(self, agent):
+    def get_agent_cases(self, agent, only_enrolling=False):
         # TODO: account for sub-agents
-        return self.find(agent_id=agent.id).all()
+        all_cases = self.find(agent_id=agent.id).all()
+        if only_enrolling:
+            return [case for case in all_cases if self.is_enrolling(case)]
+        
+        return all_cases
+    
+    def is_enrolling(self, case):
+        
+        return case.active and any(
+            period.currently_active()
+            for period in case.enrollment_periods
+        )
     
     def agent_can_view_case(self, agent, case):
         # TODO: account for sub-agents
@@ -117,8 +131,8 @@ class CaseService(DBService):
         
         return False
     
-    def merge_census_data(self, case, records):
-        return self.census_records.merge_census_data(case, records)
+    def merge_census_data(self, case, records, replace_matching):
+        return self.census_records.merge_census_data(case, records, replace_matching)
         
     def replace_census_data(self, case, records):
         return self.census_records.replace_census_data(case, records)
@@ -126,6 +140,8 @@ class CaseService(DBService):
     def update_census_record(self, record, data):
         return self.census_records.update(record, **data)
     
+    def delete_census_record(self, record):
+        return self.census_records.delete(record)
     
 class CaseEnrollmentPeriodsService(DBService):
     __model__ = CaseEnrollmentPeriod
@@ -155,8 +171,6 @@ class CaseEnrollmentPeriodsService(DBService):
     def valid_annual_date(self, d):
         if not d:
             return None
-        from dateutil.parser import parse
-        from datetime import datetime
         
         return parse(d + '/%s'%datetime.now().year)
                 
@@ -207,18 +221,59 @@ class CensusRecordService(DBService):
         CSV_FIELD_MAPPING['CH{}_LAST'.format(num)] = 'child{}_last'.format(num)
         CSV_FIELD_MAPPING['CH{}_BIRTHDATE'.format(num)] = 'child{}_birthdate'.format(num)
         
-    def merge_census_data(self, case, records):
-        # TODO: Implement
-        return []
+    def merge_census_data(self, case, records, replace_matching):
+        existing = self.find(case_id=case.id).all()
+        existing_by_ssn = {r.employee_ssn: r for r in existing}
 
+        # Extra copy for now
+        records = [r for r in records]
+        
+        parsed_records = [self.parse_census_record(case, r) for r in records]
+        if any(errors for errors, r in parsed_records):
+            all_errors = []
+            error_records = []
+            for i, (errors, record) in enumerate(parsed_records):
+                if errors:
+                    all_errors.append(errors)
+                    error_records.append(records[i])
+            
+            return all_errors, error_records
+
+        added = []
+        for errors, record in parsed_records:
+            if record['employee_ssn'] in existing_by_ssn:
+                if replace_matching:
+                    self.update(existing_by_ssn[record['employee_ssn']], **record)
+                else:
+                    continue
+            else:
+                added.append(self.add_record(**record))
+        
+        db.session.commit()
+        # return just added records
+        return [], added
+    
     def replace_census_data(self, case, records):
         # Delete records for this case
         self.find(case_id=case.id).delete()
+
+        # Extra copy for now
+        records = [r for r in records]
+
+        parsed_records = [self.parse_census_record(case, record) for record in records]
         
-        records = [self.add_record(**self.parse_census_record(case, record)) for record in records]
-        
-        db.session.commit()
-        return records
+        if not any(errors for errors, record in parsed_records):
+            records = [self.add_record(**record) for errors, record in parsed_records]
+            db.session.commit()
+            return [], records
+        else:
+            all_errors = []
+            error_records = []
+            for i, (errors, record) in enumerate(parsed_records):
+                if errors:
+                    all_errors.append(errors)
+                    error_records.append(records[i])
+            return all_errors, records
         
     def add_record(self, **data):
         # Create and add to the session, but don't commit or flush for speed
@@ -239,6 +294,97 @@ class CensusRecordService(DBService):
                     record_field_name, conv = conv
                     data[record_field_name] = conv(record[field]) if conv(record[field]) else None
         
-        # TODO: verification of data present (SSN, email, names, birthdates)
+        # verification of required data present (SSN, email, names, birth date)
+        employee_required = {
+            'employee_ssn':valid_ssn, 
+            'employee_email':valid_email, 
+            'employee_first':valid_name, 
+            'employee_last':valid_name, 
+            'employee_birthdate':valid_birthdate,
+        }
+        valid_if_present = {
+            'employee_gender': valid_gender,
+            'spouse_gender': valid_gender,
+            'employee_state': valid_state,
+            'employee_zip': valid_zip,
+            'spouse_state': valid_state,
+            'spouse_zip': valid_zip,
+            'spouse_ssn': valid_ssn,
+            'spouse_email': valid_email,
+            'spouse_birthdate': valid_birthdate,
+        }
+        for x in range(1, 6+1):
+            valid_if_present['child{}_birthdate'.format(x)] = valid_birthdate
         
-        return data
+        errors = []
+        for field_name, validator in employee_required.items():
+            if not field_name in data:
+                errors.append(dict(message='Employee data required: {}'.format(field_name), field_name=field_name))
+                continue 
+            
+            is_valid, error_msg = validator(data[field_name])
+            if not is_valid:
+                errors.append(dict(message='Invalid employee data: {}'.format(error_msg), field_name=field_name))
+        
+        for field_name, validator in valid_if_present.items():
+            if not data.get(field_name):
+                continue
+            
+            is_valid, error_msg = validator(data[field_name])
+            if not is_valid:
+                errors.append(dict(message='Invalid data: {}'.format(error_msg), field_name=field_name))
+        
+        return errors, data
+
+ssn_pattern = re.compile('^\d{9}$')
+def valid_ssn(ssn):
+    ssn = ssn.strip().replace('-', '')
+    
+    
+    if not ssn_pattern.match(ssn):
+        return False, "Invalid SSN: '{}'".format(ssn)
+    
+    return True, None
+
+def valid_email(email):
+    
+    if '@' not in email and len(email) < 3:
+        return False, 'Invalid email: \'{}\''.format(email)
+    
+    return True, None
+
+def valid_birthdate(date):
+    
+    d = parse(date)
+    if d >= datetime.today():
+        return False, 'Invalid birthdate: future date \'{}\''.format(date)
+    
+    return True, None
+
+def valid_name(name):
+    name = name.strip()
+    if not name:
+        return False, "Invalid Name: '{}'".format(name)
+    return True, None
+
+
+def valid_state(state):
+    from taa.services.products import ProductService
+    ps = ProductService()
+    if not state or not len(state) == 2 or not state in ps.get_all_statecodes():
+        return False, "Invalid US State: '{}'. Must be two-letter abbreviation.".format(state)
+    
+    return True, None
+
+zip_pattern = re.compile('^\d{3,5}$')
+def valid_zip(zip):
+    if not zip_pattern.match(zip):
+        return False, "Invalid ZIP code: '{}'".format(zip)
+    
+    return True, None
+
+def valid_gender(gender):
+    if gender not in ['Male', 'Female', '']:
+        return False, "Gender must be 'Male' or 'Female', not '{}'".format(gender)
+    
+    return True, None

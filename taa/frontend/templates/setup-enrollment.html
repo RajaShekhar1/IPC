@@ -220,12 +220,7 @@
         $(".employee-select-panel").on('click', "button.enroll-employee", function() {
             var record_id = $(this).attr('data-id');
             
-            var form = document.createElement('form');
-            $("<input>", {name: "record_id", value: record_id}).appendTo(form);
-            form.method = "POST"; 
-            form.action = "{{ url_for('in_person_enrollment') }}";
-            form.submit();
-            
+            submit_to_url("{{ url_for('in_person_enrollment') }}", {record_id: record_id});
         });
         
         // Validation

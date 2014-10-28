@@ -50,7 +50,7 @@ def rates():
 def enroll_start():
     case = None
     census_records = None
-    if session.get('active_case_id'):
+    if False: #session.get('active_case_id'):
         case = case_service.get_if_allowed(session['active_case_id'])
         
         product_code = case.products[0].code if case.products else ""
@@ -65,13 +65,14 @@ def enroll_start():
         form = get_enrollment_setup_form_for_product(None)()
     
     agent = agent_service.get_logged_in_agent()
-            
+    
+    census_table = render_template('setup-enrollment-census-select.html', case=case, census_records=census_records) if case and census_records else None            
     return render_template('setup-enrollment.html', 
                            form=form, 
                            product_states=get_product_states(),
-                           agent_cases=case_service.get_agent_cases(agent),
+                           agent_cases=case_service.get_agent_cases(agent, only_enrolling=True),
                            active_case=case,
-                           census_table=render_template('setup-enrollment-census-select.html', case=case, census_records=census_records) if case and census_records else None
+                           census_table=census_table
     )
 
 @app.route("/select-case", methods=['GET', 'POST'])
@@ -283,34 +284,30 @@ def email_link_handler():
     )
 
 
-def get_database():
-   return Database(config.get('database', 'connection_string'))
-
-
 @app.route("/FPPTI_disclosure.pdf")
 def FPPTI_disclosure_generic():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_generic.pdf')
+    return send_from_directory(os.path.join(app.root_path, 'frontend', 'static'), 'pdfs/FPPTI_disclosure_generic.pdf')
 @app.route("/FPPTI_disclosure_TX.pdf")
 def FPPTI_disclosure_TX():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_TX.pdf')
+    return send_from_directory(os.path.join(app.root_path, 'frontend', 'static'), 'pdfs/FPPTI_disclosure_TX.pdf')
 @app.route("/FPPTI_disclosure_KS.pdf")
 def FPPTI_disclosure_KS():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_KS.pdf')
+    return send_from_directory(os.path.join(app.root_path, 'frontend', 'static'), 'pdfs/FPPTI_disclosure_KS.pdf')
 @app.route("/FPPTI_disclosure_OR.pdf")
 def FPPTI_disclosure_OR():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_OR.pdf')
+    return send_from_directory(os.path.join(app.root_path, 'frontend', 'static'), 'pdfs/FPPTI_disclosure_OR.pdf')
 @app.route("/FPPTI_disclosure_VA.pdf")
 def FPPTI_disclosure_VA():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPTI_disclosure_VA.pdf')
+    return send_from_directory(os.path.join(app.root_path, 'frontend', 'static'), 'pdfs/FPPTI_disclosure_VA.pdf')
 @app.route("/FPPCI_disclosure.pdf")
 def FPPCI_disclosure_generic():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPCI_disclosure_generic.pdf')
+    return send_from_directory(os.path.join(app.root_path, 'frontend', 'static'), 'pdfs/FPPCI_disclosure_generic.pdf')
 @app.route("/FPPCI_disclosure_KS.pdf")
 def FPPCI_disclosure_KS():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPCI_disclosure_KS.pdf')
+    return send_from_directory(os.path.join(app.root_path, 'frontend', 'static'), 'pdfs/FPPCI_disclosure_KS.pdf')
 @app.route("/FPPCI_disclosure_OR.pdf")
 def FPPCI_disclosure_OR():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPCI_disclosure_OR.pdf')
+    return send_from_directory(os.path.join(app.root_path, 'frontend', 'static'), 'pdfs/FPPCI_disclosure_OR.pdf')
 @app.route("/FPPCI_disclosure_VA.pdf")
 def FPPCI_disclosure_VA():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'pdfs/FPPCI_disclosure_VA.pdf')
+    return send_from_directory(os.path.join(app.root_path, 'frontend', 'static'), 'pdfs/FPPCI_disclosure_VA.pdf')

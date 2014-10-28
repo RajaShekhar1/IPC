@@ -142,15 +142,20 @@ def create_census_records(case_id):
     if file_obj and has_csv_extension(file_obj.filename):
         csv_reader = csv.DictReader(file_obj.stream, restkey="extra")
     
-        if data['upload_type'] == "merge":
-            case_service.merge_census_data(case, csv_reader)
+        if data['upload_type'] == "merge-skip":
+            errors, records = case_service.merge_census_data(case, csv_reader, replace_matching=False)
+        elif data['upload_type'] == "merge-replace":
+            errors, records = case_service.merge_census_data(case, csv_reader, replace_matching=True)
         else:
-            case_service.replace_census_data(case, csv_reader)
+            errors, records = case_service.replace_census_data(case, csv_reader)
+    else:
+        return dict(errors=[[dict(message='Invalid file format. Filename must end with .csv, and follow the specification exactly. See sample upload file.')]], records=[])
     
-    return dict(errors=[])
-  
+    return dict(errors=errors, records=records)
+    
 def has_csv_extension(filename):
     return '.' in filename and filename.lower().rsplit('.', 1)[1] == 'csv'
+
 
 
 @route(bp, "/<case_id>/census_records/<census_record_id>", methods=["PUT"])

@@ -1,3 +1,4 @@
+from datetime import datetime
 
 from taa import db
 from taa.helpers import JsonSerializable
@@ -73,6 +74,9 @@ class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
         data['enrollment_period_type'] = 'open'
         data['open_period_start_date'] = self.start_date if self.start_date else ''
         return data
+    
+    def currently_active(self):
+        return not self.start_date or datetime.now() > self.start_date
 
 class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
     __mapper_args__ = {'polymorphic_identity': 'annual_periods'}
@@ -86,6 +90,10 @@ class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
             'period_end_date': self.end_date.strftime('%m/%d') if self.end_date else '',
         })
         return data
+
+    def currently_active(self):
+        return (self.start_date and self.end_date and  
+               datetime.now() >= self.start_date and datetime.now() < self.end_date)
 
 class CensusRecordSerializer(JsonSerializable):
     __json_hidden__ = ['census_records']

@@ -29,3 +29,14 @@ function send_json_data(method, url, data, on_success, on_error) {
         }
     });
 }
+
+function submit_to_url(url, data) {
+    var form = document.createElement('form');
+    for (k in data) {
+        $("<input>", {name: k, value: data[k]}).appendTo(form);
+    }
+    
+    form.method = "POST"; 
+    form.action = url;
+    form.submit();
+}

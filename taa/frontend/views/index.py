@@ -33,9 +33,9 @@ def home():
 
 @app.route("/robots.txt")
 def robots():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'robots.txt')
+    return send_from_directory(os.path.join(app.root_path, 'frontend', 'static'), 'robots.txt')
 
 @app.route("/ping_check.txt")
 def pingcheck():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'healthcheck.txt')
+    return send_from_directory(os.path.join(app.root_path, 'frontend', 'static'), 'healthcheck.txt')
 
