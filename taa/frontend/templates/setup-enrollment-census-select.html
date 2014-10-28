@@ -1,0 +1,38 @@
+<div class="widget-box">
+    <div class="widget-header">
+        <h3>Select from Case Census</h3>
+    </div>
+    <div class="widget-body">
+        <div class="widget-main">  
+            {% if not census_records %}
+                <h4 class="text-center lighter">No Census Data Uploaded</h4>
+            {% else %}
+                <table id="census-records-table" class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>First</th>
+                            <th>Last</th>
+                            <th>Email</th>
+                            <th>Completed Enrollment</th>
+                            <th>Elected Coverage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in census_records %}
+                        <tr>
+                            <td class="text-center"><button class="btn btn-primary btn-sm enroll-employee" data-id="{{ record.id }}">Enroll</button></td>
+                            <td>{{ record.employee_first }}</td>
+                            <td>{{ record.employee_last }}</td>
+                            <td>{{ record.employee_email }}</td>
+                            
+                            <td>{{ record.completed_enrollment }}</td>
+                            <td>{{ record.elected_coverage }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </div>
+    </div>
+</div>

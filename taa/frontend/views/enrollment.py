@@ -5,7 +5,7 @@ ENROLLMENT pages and handling, DOCUSIGN interaction
 import os
 import json
 
-from flask import request, render_template, jsonify, session, send_from_directory
+from flask import request, render_template, jsonify, session, send_from_directory, url_for
 from flask.ext.stormpath import login_required
 
 from taa import app
@@ -16,7 +16,12 @@ from taa.model.Enrollment import (
     get_product_states,
 )
 from taa.services.docusign.docusign_envelope import create_envelope_and_get_signing_url
-#from taa.model.Database import Database
+from taa.services.cases import CaseService
+from taa.services.agents import AgentService
+
+case_service = CaseService()
+agent_service = AgentService()
+
 
 @app.route("/get_rates", methods=['POST'])
 def rates():
@@ -43,33 +48,78 @@ def rates():
 @app.route("/enroll")
 @login_required
 def enroll_start():
-    
-    if session.get('active_case'):
-        product_code = session['active_case']['product_code']
+    case = None
+    census_records = None
+    if session.get('active_case_id'):
+        case = case_service.get_if_allowed(session['active_case_id'])
+        
+        product_code = case.products[0].code if case.products else ""
         
         form = get_enrollment_setup_form_for_product(product_code)()
-        form.companyName.data = session['active_case']['company_name']
-        form.enrollmentCity.data = session['active_case']['situs_city']
-        form.enrollmentState.data = session['active_case']['situs_state']
+        form.companyName.data = case.company_name
+        form.enrollmentCity.data = case.situs_city
+        form.enrollmentState.data = case.situs_state
         form.productID.data = product_code
+        census_records = [r.to_json() for r in case_service.get_census_records(case)]
     else:
         form = get_enrollment_setup_form_for_product(None)()
-        
+    
+    agent = agent_service.get_logged_in_agent()
+            
     return render_template('setup-enrollment.html', 
                            form=form, 
-                           product_states=get_product_states())
+                           product_states=get_product_states(),
+                           agent_cases=case_service.get_agent_cases(agent),
+                           active_case=case,
+                           census_table=render_template('setup-enrollment-census-select.html', case=case, census_records=census_records) if case and census_records else None
+    )
 
+@app.route("/select-case", methods=['GET', 'POST'])
+@login_required
+def select_case():
+    case_id = request.form['case_id']
+    case = case_service.get_if_allowed(case_id)
+    
+    # Save so we can come back here afterwards
+    session['active_case_id'] = case_id
+    census_records = [r.to_json() for r in case_service.get_census_records(case)]
+    return jsonify(dict(
+        table=render_template('setup-enrollment-census-select.html', case=case, census_records=census_records)
+    ))
+
+# Wizard
 @app.route("/in-person-enrollment", methods=['POST'])
 @login_required
 def in_person_enrollment():
-    state = request.form['enrollmentState']
-    enroll_city = request.form['enrollmentCity']
-    company_name = request.form['companyName']
-    product_code = request.form['productID']
-    employee_first = request.form['eeFName']
-    employee_last = request.form['eeLName']
-    employee_email = request.form['email']
     
+    if request.form.get('record_id'):
+        record_id = int(request.form['record_id'])
+        record = case_service.get_census_record(None, record_id)
+        
+        # Set a flag that we are currently enrolling from this case
+        session['active_case_id'] = record.case_id
+        
+        state = record.case.situs_state
+        enroll_city = record.case.situs_city
+        company_name = record.case.company_name
+        product_code = record.case.products[0].code if record.case.products else None
+        employee_data = record.get_employee_data()
+        spouse_data = record.get_spouse_data()
+        children_data = record.get_children_data()
+    else:   
+        state = request.form['enrollmentState']
+        enroll_city = request.form['enrollmentCity']
+        company_name = request.form['companyName']
+        product_code = request.form['productID']
+        employee_data = dict(
+            first=request.form['eeFName'],
+            last=request.form['eeLName'],
+            email=request.form['email'],
+            state=state,
+        )
+        spouse_data = None
+        children_data = []
+        
     product = get_product_by_code(product_code)
     
     # refresh active_case
@@ -86,9 +136,9 @@ def in_person_enrollment():
         'company_name': company_name,
         'product_id':product_code,
         'product_name': product.name,
-        'employee_first':employee_first,
-        'employee_last':employee_last,
-        'employee_email':employee_email,
+        'employee_data':employee_data,
+        'spouse_data':spouse_data,
+        'children_data':children_data,
         'is_in_person':True,
         'health_questions':product.get_health_questions(state),
     }
@@ -112,13 +162,16 @@ def submit_wizard_data():
     #print "--------------------"
     #sys.stdout.flush()
     
+    # TODO: Save enrollment information prior to DocuSign hand-off 
     
     # Do docusign with data in wizard_results
     #
-    is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results);
-    
+    #is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results);
+    #
     # Return the redirect url or error
-    resp = {'error': is_error, 'error_message': error_message, "redirect": redirect}
+    #resp = {'error': is_error, 'error_message': error_message, "redirect": redirect}
+    
+    resp = {'error': False, 'error_message': '', 'redirect': url_for("enroll_start")}
     return jsonify(**resp)
     
 

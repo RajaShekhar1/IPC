@@ -1,45 +1,85 @@
 {% extends "base.html" %}
 {% set active_page = 'nav_enroll' -%}
-{% block title %} - Home{% endblock %}
-
 {% set compliance_has_approved_remote_enrollment = False %}
 
-{% block head %}
- {{ super() }}
-<!-- page-specific header data -->
-    
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-<!-- ace styles -->
-<link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
-<link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
-<link href="{{ url_for('static', filename='css/five_star_ace_overlay.css') }}" rel="stylesheet">
-
-<!-- custom css -->
-<link href="{{ url_for('static', filename='css/five_star.css') }}" rel="stylesheet">
-
-
-{% endblock %}
-
+{% block title %} - Launch Enrollment{% endblock %}
 {% block content %}
 
-{% set compliance_has_approved_remote_enrollment = False %}
+    
+<h3 class="header lighter">Launch an Enrollment</h3>
 
-<div class="row">
+<div class="row method-select-form">
+    <div class="col-md-4 col-md-offset-2 text-center">
+        <button class="btn btn-info btn-lg enroll-from-case"><i class="glyphicon glyphicon-briefcase align-top bigger-110"></i> Enroll from Case</button>
+    </div>
+    <div class="col-md-4 text-center">
+        <button class="btn btn-info btn-lg enroll-ad-hoc"><i class="icon icon-user align-top bigger-110"></i> Enroll Ad-Hoc</button>
+    </div>
+</div>
+
+<div class="row case-form" style="display: none">
+    <div class="case-select-panel col-xs-12">
+        {% if not agent_cases %}
+            <div class="row">
+                <h4 class="text-center lighter">You have not created any cases yet.</h4>
+            </div>
+        {% else %}
+            <div class="table-responsive">
+                <table id="cases_table" class="table table-striped table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Company</th>
+                            <th>State</th>
+                            <th>Product</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for case in agent_cases %}
+                            <tr>
+                                <td class="text-center"><button class="btn btn-sm btn-primary enroll-case" data-id="{{ case.id }}">Enroll From Case</button></td>
+                                <td>{{ case.company_name }}</td>
+                                <td>{{ case.situs_state }}</td>
+                                <td>{{ case.get_product_names() }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+    <div class="loading-panel col-xs-12 text-center bigger-200" style="display: none;">
+        <i class="icon-spinner icon-spin bigger-100"></i> Loading case ...
+    </div>
+    <div class="col-xs-12">
+        <div class="employee-select-panel" style="{% if not census_table %}display: none;{% endif %}">
+            <div class="table-wrap">
+                {% if census_table %}
+                    {{ census_table | safe }}
+                {% endif %}
+            </div>
+            <div class="text-center">
+                <button type="button" class="not-in-list-btn btn btn-warning">Not In Census</button>
+            </div>
+        </div>
+        
+        
+    </div>
+</div>
+
+<div class="row ad-hoc-form" style="display: none">
   <div class="col-xs-12">
-    <h3>Launch an Enrollment</h3>
+    <h3>Ad-Hoc Enrollment</h3>
     <p>Enter the information below for the case setup, the enrollee data, and proceed with enrollment interview.</p>
-
+    
     <form class="enrollment-form form-horizontal" action="{{ url_for('in_person_enrollment') }}" method="POST">
-      <div class="clearfix"></div>
+      
       <div class="form-group">
         <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Product to enroll</label>
         <div class="col-xs-12 col-sm-9">
           {{ form.productID() }}
         </div>
       </div>
-
-      <div class="space-2"></div>
 
       <div class="row form-group">
 	    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Location of this enrollment</label>
@@ -48,39 +88,28 @@
 	    {{ form.enrollmentState() }}
 	    </div>
       </div>
-
-      <div class="space-2"></div>
 	
       <div class="form-group">
-	<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="companyName">Company Name</label>
-	<div class="col-xs-12 col-sm-9">
-	  {{ form.companyName(placeholder='Company') }}
-	</div>
+        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="companyName">Company Name</label>
+        <div class="col-xs-12 col-sm-9">
+            {{ form.companyName(placeholder='Company') }}
+        </div>
       </div>
-      <div class="space-2"></div>
-	
+	  
       <div class="row form-group">
         <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeFName">Employee Name</label>        
         <div class="col-xs-12 col-sm-9">
-	  {{ form.eeFName(placeholder='First Name') }}
-	  {{ form.eeLName(placeholder='Last Name') }}
-	</div>
+          {{ form.eeFName(placeholder='First Name') }}
+          {{ form.eeLName(placeholder='Last Name') }}
+        </div>
       </div>
-
-      <div class="space-2"></div>
-
-      <div class="row form-group">
-	<label class="control-label col-xs-12 col-sm-3 no-padding-right" for="email">Employee Email Address:</label>
-	<div class="col-xs-12 col-sm-9">
-	    {{ form.email(type="email")}}
-	</div>
-      </div>
-
-      <div class="space-2"></div>
       
-    
-    
-    <div class="space-2"></div>
+      <div class="row form-group">
+        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="email">Employee Email Address:</label>
+        <div class="col-xs-12 col-sm-9">
+            {{ form.email(type="email")}}
+        </div>
+      </div>
     
 {% set compliance_has_approved_remote_enrollment = False %}
     {% if compliance_has_approved_remote_enrollment %}
@@ -139,8 +168,68 @@
         // Change enabled states when the product is changed
         product_state_select.init("#enrollmentState","#productID", {{ product_states | tojson | safe }});
         
+        $("#cases_table").dataTable({
+            "aoColumnDefs":[
+                {"bSortable": false, "aTargets":[0]},
+            ],
+            "aaSorting": [[ 1, "asc" ]]
+        });
+        
+        
+        $('button.enroll-from-case').on('click', function() {
+            $('.method-select-form').hide();
+            $('.case-form').show();
+            $('.ad-hoc-form').hide();
+            
+            $("button.enroll-case").on('click', function() {
+                $(".loading-panel").show();
+                $(".case-select-panel").hide();
+                
+                var case_id = $(this).attr("data-id");
+                send_form_data("POST", "{{ url_for("select_case") }}",
+                    {case_id: case_id}, function(data) {
+                        $(".loading-panel").hide();
+                        var employee_panel = $(".employee-select-panel");
+                        employee_panel.show().find(".table-wrap").html(data.table);
+                        init_employee_table(employee_panel.find("table"));
+                        
+                    }, function() {
+                        alert("Sorry, there was a problem selecting this case.");
+                    }
+                );
+            });
+            
+        });
+        
+        
+        
+        
+        $(".not-in-list-btn").on('click', function() {
+            $('.method-select-form').hide();
+            $('.case-form').hide();
+            $('.ad-hoc-form').show();
+        });
+        
+        $('button.enroll-ad-hoc').on('click', function() {
+            $('.method-select-form').hide();
+            $('.case-form').hide();
+            $('.ad-hoc-form').show();
+            
+        });
+        
+        $(".employee-select-panel").on('click', "button.enroll-employee", function() {
+            var record_id = $(this).attr('data-id');
+            
+            var form = document.createElement('form');
+            $("<input>", {name: "record_id", value: record_id}).appendTo(form);
+            form.method = "POST"; 
+            form.action = "{{ url_for('in_person_enrollment') }}";
+            form.submit();
+            
+        });
+        
         // Validation
-        $("form").validate({
+        $(".ad-hoc-form form").validate({
             errorElement: 'div',
             errorClass: 'help-block',
             focusInvalid: false,
@@ -156,7 +245,7 @@
                 }
             },
             messages: {
-                    
+                  
             },
             highlight: function(e) {
                 $(e).closest('.form-group').removeClass('has-info').addClass('has-error');
@@ -168,16 +257,75 @@
             }
             //errorPlacement: wizard_error_placement	
         });
+        
+        
+        // Setup if there is an active case
+        {% if active_case and census_table %}
+            $('.method-select-form').hide();
+            $('.case-form').show();
+            $('.ad-hoc-form').hide();
+            $(".case-select-panel").hide();
+            init_employee_table($(".employee-select-panel table"));
+        {% endif %}
     
     });
+        
+    // Custom alphabet search 
+    var _alphabet_search_letter;     
+    
+    $.fn.dataTableExt.afnFiltering.push(
+        function( oSettings, aData, iDataIndex ) {
+            if (!_alphabet_search_letter) {
+                return true;
+            }
+            var last_name_col = 2;
+            return (aData[last_name_col].charAt(0) === _alphabet_search_letter);
+        }
+    );
+
+    function init_employee_table(table_element) {
+        
+        var table = table_element.dataTable({
+            iDisplayLength: 25,
+            "aoColumnDefs":[
+                {"bSortable": false, "aTargets":[0]}
+            ],
+            "aaSorting": [[ 2, "asc" ]]
+        });
+        
+        
+        var alphabet = $('<div class="alphabet"/>').append('Last Name: ');
+        $('<span class="clear active"/>')
+            .data('letter', '')
+            .html('Reset')
+            .appendTo(alphabet);
+        
+        for (var i = 0; i < 26; i++) {
+            var letter = String.fromCharCode(65 + i);
+            
+            $('<span/>')
+                .data('letter', letter)
+                .html(letter)
+                .appendTo(alphabet);
+        }
+         
+        alphabet.insertBefore( table );
+        
+        alphabet.on('click', 'span', function() {
+            alphabet.find('.active').removeClass('active');
+            $(this).addClass('active');
+            
+            _alphabet_search_letter = $(this).data('letter');
+            table.fnDraw();
+        });
+    }
+
 </script>
     
 {% if compliance_has_approved_remote_enrollment %}
 <script type="text/javascript">
     jQuery(function($) {
   
-        
-        
         var email_btn = $("#email-enrollment-btn");
         email_btn.on("click", function() {
             email_btn.prop('disabled', true);

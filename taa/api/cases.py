@@ -9,16 +9,24 @@ from taa.core import TAAFormError
 from taa.helpers import get_posted_data
 from taa.api import route
 from taa.services.cases import CaseService
-from taa.services.cases.forms import NewCaseForm, UpdateCaseForm, CensusRecordForm
+from taa.services.cases.forms import (
+    NewCaseForm, 
+    UpdateCaseForm, 
+    CensusRecordForm,
+    NewCaseEnrollmentPeriodForm,
+)
 from taa.services.agents import AgentService
+from taa.services.products import ProductService
 
 bp = Blueprint("cases", __name__, url_prefix='/cases')
 
 case_service = CaseService()
 agent_service = AgentService()
+product_service = ProductService()
 
 api_groups = ['agents', 'admins']
 
+# Case management endpoints
 
 @route(bp, "/")
 @groups_required(api_groups, all=False)
@@ -43,7 +51,6 @@ def get_case(case_id):
 def create_case():
     data = get_posted_data()
     
-    # Get agent 
     agent = agent_service.get_logged_in_agent()
     if not agent:
         abort(401)
@@ -64,10 +71,26 @@ def create_case():
 def update_case(case_id):
     
     case = case_service.get_if_allowed(case_id)
+    data = get_posted_data()
+    # Todo: perhaps accept agent_id in form data for admin usage
+    agent = agent_service.get_logged_in_agent()
+    if not agent:
+        abort(401)
+
+    # Remap some naming differences
+    data['agent_id'] = agent.id
+    if 'case_product' in data:
+        data['products'] = [product_service.get_product_by_code_or_400(data['case_product'])]
+    
+    if 'active' not in data:
+        # Deactivate?
+        data['active'] = False
     
     form = UpdateCaseForm()
+    form.agent_id.data = agent.id
+    form.products.data = [p.code for p in data['products']]
     if form.validate_on_submit():
-        return case_service.update(case, **get_posted_data())
+        return case_service.update(case, **data)
     
     raise TAAFormError(form.errors)
 
@@ -76,7 +99,34 @@ def update_case(case_id):
 def delete_case(case_id):
     case_service.delete(case_service.get_if_allowed(case_id))
     return None, 204
+
+
+
+# Enrollment Periods
+@route(bp, "/<case_id>/enrollment_periods", methods=['GET'])
+@groups_required(api_groups, all=False)
+def get_case_enrollment_periods(case_id):
+    return case_service.get_enrollment_periods(case_service.get_if_allowed(case_id))
+
+@route(bp, "/<case_id>/enrollment_periods", methods=['PUT'])
+@groups_required(api_groups, all=False)
+def update_case_enrollment_periods(case_id):
+    """
+    When posting to case_enrollment_periods, we check the type of the added period.
+    If it is not the same as the current enrollment period type, we change the type and remove
+    all existing enrollment periods to ensure all of a case's enrollment periods are of the same type.
+    """
+    case = case_service.get_if_allowed(case_id)
     
+    form = NewCaseEnrollmentPeriodForm()
+    if form.validate_on_submit():
+        return case_service.update_enrollment_periods(case, **form.data)
+    
+    raise TAAFormError(form.errors)
+    
+
+# Census Records
+
 @route(bp, "/<case_id>/census_records", methods=["GET"])
 @groups_required(api_groups, all=False)
 def census_records(case_id):
@@ -101,7 +151,6 @@ def create_census_records(case_id):
   
 def has_csv_extension(filename):
     return '.' in filename and filename.lower().rsplit('.', 1)[1] == 'csv'
-
 
 
 @route(bp, "/<case_id>/census_records/<census_record_id>", methods=["PUT"])

@@ -706,7 +706,7 @@
 	    <label class="clearfix control-label col-xs-12 col-sm-3 no-padding-right" for="eeStreet1">Street 1</label>
 	    <div class="col-xs-12 col-sm-9">
 	      <div class="clearfix">
-		    <input type="text" id="eeStreet1" name="eeStreet1" class="col-xs-12 col-sm-9" data-bind="value: addr1"/>
+		    <input type="text" id="eeStreet1" name="eeStreet1" class="col-xs-12 col-sm-9" data-bind="value: employee().address1"/>
 	      </div>
 	    </div>
 	  </div>
@@ -715,7 +715,7 @@
 	    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeStreet2">Street 2</label>
 	    <div class="col-xs-12 col-sm-9">
 	      <div class="clearfix">
-		<input type="text" id="eeStreet2" name="eeStreet2" class="col-xs-12 col-sm-9" data-bind="value: addr2" />
+		<input type="text" id="eeStreet2" name="eeStreet2" class="col-xs-12 col-sm-9" data-bind="value: employee().address2" />
 	      </div>
 	    </div>
 	  </div>
@@ -725,17 +725,17 @@
 	  <div class="form-group">
 	    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeCity">City, ST Zip</label>
 	    <div class="col-xs-12 col-sm-9">
-	      <input type="text" id="eeCity" name="eeCity" placeholder="City" data-bind="value: city"/>
+	      <input type="text" id="eeCity" name="eeCity" placeholder="City" data-bind="value: employee().city"/>
 	      
 	      <select id="eeState" name="eeState" class="select1"
-                  data-bind="value: state">
+                  data-bind="value: employee().state">
 		    <option value="">&nbsp;</option>
 		    {% for state in states: %}
                 <option value="{{state['code']}}">{{state['name']}}</option>
             {% endfor %}
 	      </select>
 	        
-	        <input type="text" id="eeZip" name="eeZip" class="input-mask-zip" placeholder="zip" data-bind="value: zip"/>
+	        <input type="text" id="eeZip" name="eeZip" class="input-mask-zip" placeholder="zip" data-bind="value: employee().zip"/>
 	    </div>
 	  </div>
 	  
@@ -764,7 +764,7 @@
               <i class="icon-phone"></i>
             </span>
 
-		    <input type="tel" id="phone" name="phone" data-bind="value: phone"/>
+		    <input type="tel" id="phone" name="phone" data-bind="value: employee().phone"/>
 	      </div>
 	    </div>
 	  </div>
@@ -1348,18 +1348,7 @@
     
 {% endblock %}
 
-{% block js_ace_plugins %}
-    <script src="{{ url_for('static', filename='js/fuelux/fuelux.wizard.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery.validate.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/additional-methods.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootbox.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery.maskedinput.min.js') }}"></script>
-{% endblock %}
-
 {% block page_js %}
-    <script src="{{ url_for('static', filename='js/jquery.mobile.custom.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/typeahead-bs2.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/knockout-3.1.0.debug.js') }}"></script>
     
     <script src="{{url_for('static', filename='js/5Star/enrollment.js')}}"></script>
     <script type="text/javascript">

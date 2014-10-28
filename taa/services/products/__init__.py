@@ -1,3 +1,4 @@
+from flask import abort
 
 from taa.core import DBService, db
 
@@ -9,6 +10,13 @@ class ProductService(DBService):
     
     def get_products_by_codes(self, codes):
         return Product.query.filter(Product.code.in_(codes)).all()
+    
+    def get_product_by_code_or_400(self, code):
+        product = Product.query.filter(Product.code == code).first()
+        if not product:
+            abort(400)
+        
+        return product
     
     def get_all_states(self):
         return [

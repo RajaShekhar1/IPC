@@ -1,10 +1,9 @@
 {% extends "base.html" %}
+{% from "form_macros.html" import render_field_with_errors %}
 {% set active_page = 'nav_agent_manage_case' -%}
 {% block title %} - Agent Manage Case{% endblock %}
 
 {% block content %}
-    
-    
     <h1 class="header lighter">Edit Census Record</h1>
     
     <form class="form-horizontal" id="edit-record-form" action="{{ url_for("cases.update_census_record", case_id=case.id, census_record_id=census_record.id) }}">
@@ -13,10 +12,14 @@
                 <h3>Employee:</h3>
                 {{ render_field_with_errors(form.employee_first) }}
                 {{ render_field_with_errors(form.employee_last) }}
-                {{ render_field_with_errors(form.employee_ssn, length=9) }}
-                {{ render_field_with_errors(form.employee_email) }}
+                {{ render_field_with_errors(form.employee_gender) }}
                 
-                {{ render_field_with_errors(form.employee_street_address1) }}
+                {{ render_field_with_errors(form.employee_ssn, length=9) }}
+                {{ render_field_with_errors(form.employee_birthdate) }}
+                {{ render_field_with_errors(form.employee_email) }}
+                {{ render_field_with_errors(form.employee_phone) }}
+                
+                {{ render_field_with_errors(form.employee_street_address) }}
                 {{ render_field_with_errors(form.employee_street_address2) }}
                 {{ render_field_with_errors(form.employee_city) }}
                 {{ render_field_with_errors(form.employee_state) }}
@@ -25,21 +28,29 @@
                 <h3>Spouse:</h3>
                 {{ render_field_with_errors(form.spouse_first) }}
                 {{ render_field_with_errors(form.spouse_last) }}
+                {{ render_field_with_errors(form.spouse_gender) }}
+                
                 {{ render_field_with_errors(form.spouse_ssn, length=9) }}
+                {{ render_field_with_errors(form.spouse_birthdate) }}
                 {{ render_field_with_errors(form.spouse_email) }}
+                {{ render_field_with_errors(form.spouse_phone) }}
+                
+                {{ render_field_with_errors(form.spouse_street_address) }}
+                {{ render_field_with_errors(form.spouse_street_address2) }}
+                {{ render_field_with_errors(form.spouse_city) }}
+                {{ render_field_with_errors(form.spouse_state) }}
+                {{ render_field_with_errors(form.spouse_zip) }}
+                
+                {# <h3>Children:</h3>
+                 #}
                 
                 <div class="pull-right clearfix">
                     <buton type="button" class="btn btn-sm" id="go-back">Cancel</buton>
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                 </div>
             </div>
-        </div>        
-        
-        
-        
+        </div>
     </form>
-    
-    
 {% endblock %}
 
 {% block page_js %}
@@ -76,19 +87,3 @@
     });
     </script>
 {% endblock %}
-
-{% macro render_field_with_errors(field) %}
-    <div class="form-group">
-        <div class="col-md-3 control-label">{{ field.label }}</div>
-        <div class="col-md-9">
-            {{ field(**kwargs)|safe }}
-            {% if field.errors %}
-              <ul class="errors">
-              {% for error in field.errors %}
-                <li>{{ error }}</li>
-              {% endfor %}
-              </ul>
-            {% endif %}
-        </div>
-  </div>
-{% endmacro %}

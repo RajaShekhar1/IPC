@@ -79,3 +79,31 @@
     margin-top: .5em;
     margin-left: 1em;
 }
+
+.widget-box.enrollment-periods .collapse-panel {
+    padding-left: 3em;
+}
+
+/* Rolodex styling */
+div.alphabet {
+    display: table;
+    width: 100%;
+    margin-bottom: 1em;
+}
+ 
+div.alphabet span {
+    display: table-cell;
+    color: #3174c7;
+    cursor: pointer;
+    text-align: center;
+    width: 3.5%;
+    font-size: 150%;
+}
+ 
+div.alphabet span:hover {
+    text-decoration: underline;
+}
+ 
+div.alphabet span.active {
+    color: black;
+}

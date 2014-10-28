@@ -31,12 +31,12 @@ def generate_BeneficiaryTabs(prefix):
     
     beneTabs = []
     for i in range(7):
-        radioList.append(
+        beneTabs.append(
             {"groupName": prefix + "SOH" + str(i+1),
              "radios": [{"selected" : "True",
                          "value" : "no"}]}
             )
-    return radioList
+    return beneTabs
 
 
 def generate_ChildGenderRadio(child_index, wizard_data):
@@ -93,19 +93,19 @@ def random_email_id(name='', token_length=8):
 
 def create_envelope_and_get_signing_url(wizard_data):
     # return is_error(bool), error_message, and redirectURL
-
+    
     # FPPTI or FPPCI
     productType = wizard_data["product_type"]
     enrollmentState = wizard_data["agent_data"]["state"]
     
     # for now, just pull into former variables we've been using
-    recipName = wizard_data["agent_data"]["employee_first"] + " " + wizard_data["agent_data"]["employee_last"]
+    recipName = wizard_data["agent_data"]["employee"]["first"] + " " + wizard_data["agent_data"]["employee"]["last"]
     employer = wizard_data["agent_data"]["company_name"]
-    emailTo = wizard_data["agent_data"]["employee_email"]
+    emailTo = wizard_data["agent_data"]["employee"]["email"]
     
     if emailTo == "" or emailTo == None:
         # fallback email if none was entered - just need a unique address
-        emailTo = random_email_id(wizard_data["agent_data"]["employee_first"] + "." + wizard_data["agent_data"]["employee_last"]) + "@5StarEnroll.com"
+        emailTo = random_email_id(wizard_data["agent_data"]["employee"]["first"] + "." + wizard_data["agent_data"]["employee"]["last"]) + "@5StarEnroll.com"
 
     if wizard_data["agent_data"]["is_in_person"]:
         sessionType = "inperson"
@@ -131,9 +131,9 @@ def create_envelope_and_get_signing_url(wizard_data):
     SOH_RadiosList = []
 
     if ((recipName != "") and (recipName != None)):
-        recipientName = recipName;
+        recipientName = recipName
     else:
-        recipientName = "Applicant";
+        recipientName = "Applicant"
         
     eeCoverageNullToken = "NONE"
     if wizard_data["employee_coverage"]:
@@ -156,10 +156,10 @@ def create_envelope_and_get_signing_url(wizard_data):
             SOH_RadiosList += generate_SOHRadios("sp")
         else:
             spouseCoverage = " "
-            spousePremium = " "
+            spPremium = " "
     else:
         spouseCoverage = " "
-        spousePremium = " "
+        spPremium = " "
       
 
     childTabsList = []
@@ -215,17 +215,17 @@ def create_envelope_and_get_signing_url(wizard_data):
         {"tabLabel" : "eeOtherOwnerSSN",
          "value" : wizard_data["employee_other_owner_ssn"] if wizard_data["employee_owner"] == "other" else  ""} ,
         {"tabLabel" : "eeStreet1",
-         "value" : wizard_data["employee_addr1"]},
+         "value" : wizard_data["employee"]["address1"]},
         {"tabLabel" : "eeStreet2",
-         "value" : wizard_data["employee_addr2"]},
+         "value" : wizard_data["employee"]["address2"]},
         {"tabLabel" : "eeCity",
-         "value" : wizard_data["employee_city"]},
+         "value" : wizard_data["employee"]["city"]},
         {"tabLabel" : "eeState",
-         "value" : wizard_data["employee_state"]},
+         "value" : wizard_data["employee"]["state"]},
         {"tabLabel" : "eeZip",
-         "value" : wizard_data["employee_zip"]},
+         "value" : wizard_data["employee"]["zip"]},
         {"tabLabel" : "eePhone",
-         "value" : wizard_data["employee_phone"]},
+         "value" : wizard_data["employee"]["phone"]},
         {"tabLabel" : "eeEmail",
          "value" : wizard_data["employee"]["email"]}
     ]
@@ -429,29 +429,29 @@ def create_envelope_and_get_signing_url(wizard_data):
              #"clientUserId": templateClientID 
              } 
         ]
-    };
+    }
 
-    requestBodyStr = json.dumps(requestBody);
+    requestBodyStr = json.dumps(requestBody)
     
     
     # append "/envelopes" to baseURL and use in the request
-    url = baseUrl + "/envelopes";
-    headers = {'X-DocuSign-Authentication': authenticateStr, 'Accept': 'application/json', 'Content-Length': str(len(requestBodyStr))};
-    http = httplib2.Http();
-    response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr);
+    url = baseUrl + "/envelopes"
+    headers = {'X-DocuSign-Authentication': authenticateStr, 'Accept': 'application/json', 'Content-Length': str(len(requestBodyStr))}
+    http = httplib2.Http()
+    response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr)
     # When troubleshooting, send instead to requestb.in (or similar listener) to capture/examing the JSON trace.  Past that trace into SOAPUI to explore the response if needed.
     #response, content = http.request("http://requestb.in/1mars8q1", 'POST', headers=headers, body=requestBodyStr);
-    status = response.get('status');
+    status = response.get('status')
     if (status != '201'): 
         print "url=",url
         print "headers=",headers
         print requestBodyStr
-        print("Error generating Docusign envelope, status is: %s" % status); return True, "Error generating Docusign envelope", None;
+        print("Error generating Docusign envelope, status is: %s" % status); return True, "Error generating Docusign envelope", None
     
-    data = json.loads(content);
+    data = json.loads(content)
  
     # store the uri for next request
-    uri = data.get('uri');
+    uri = data.get('uri')
     # write to log in case we need for short-term retrieval
     print ("Envelope for %s (%s) by %s: %s\n" % (recipientName, emailTo, user.custom_data["signing_name"], uri))
      
@@ -468,14 +468,14 @@ def create_envelope_and_get_signing_url(wizard_data):
         "userName" : recipientName
     }
     
-    requestBodyStr = json.dumps(requestBody);
+    requestBodyStr = json.dumps(requestBody)
     
     # append uri + "/views/recipient" to baseUrl and use in the request, don't need OnBehalfOf for this so just use API auth
-    url = baseUrl + uri + "/views/recipient";
-    headers = {'X-DocuSign-Authentication': dsAPIAuthenticateString(), 'Accept': 'application/json', 'Content-Length': str(len(requestBodyStr))};
-    http = httplib2.Http();
-    response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr);
-    status = response.get('status');
+    url = baseUrl + uri + "/views/recipient"
+    headers = {'X-DocuSign-Authentication': dsAPIAuthenticateString(), 'Accept': 'application/json', 'Content-Length': str(len(requestBodyStr))}
+    http = httplib2.Http()
+    response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr)
+    status = response.get('status')
     
     # print ("response: %s\ncontent: %s" % (response, content))
 
@@ -483,10 +483,10 @@ def create_envelope_and_get_signing_url(wizard_data):
         print "url=",url
         print "headers=",headers
         print requestBodyStr
-        print("Error retrieving signature URL, status is: %s" % status); return True, "Error retrieving signature URL", None;
+        print("Error retrieving signature URL, status is: %s" % status); return True, "Error retrieving signature URL", None
 
-    data = json.loads(content);
-    viewUrl = data.get('url');
+    data = json.loads(content)
+    viewUrl = data.get('url')
  
     
     return False, None, viewUrl

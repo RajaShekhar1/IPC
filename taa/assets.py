@@ -20,6 +20,8 @@ css_all = Bundle(
                  "css/ace.min.css",
                  # Put any ace CSS plugins here
                  
+                 'css/jquery.rcrumbs.min.css',
+                 
                  #css_taa_less,
                  css_taa, 
                  output="generated_assets/taa.min.css"
@@ -40,16 +42,24 @@ js_vendor = Bundle(
     # js ace plugins for wizard and such go here
     'js/jquery.dataTables.min.js',
     'js/jquery.dataTables.bootstrap.js',
+    'js/jquery.maskedinput.min.js',
+    'js/jquery.validate.min.js',
+    'js/fuelux/fuelux.wizard.min.js',
+    'js/jquery.rcrumbs.min.js',
     
     # The rest of ace template libs
     'js/ace-elements.min.js',
     'js/ace.min.js',
+    'js/additional-methods.js',
     
     # 3rd party libs
     'js/moment.min.js',
-    # TODO: detect debug and swap out production script
-    Bundle('js/knockout-3.2.0.debug.js'),
-    'js/sammy-latest.min.js',
+    
+    'js/bootbox.min.js',
+    'js/jquery.mobile.custom.min.js',
+    'js/typeahead-bs2.min.js',
+    Bundle('js/knockout-3.2.0.js'),
+    #'js/sammy-latest.min.js',
 )
 
 # application js bundle

@@ -11,7 +11,11 @@ from taa import app
 from taa.api.cases import census_records, create_census_records
 from taa.services.docusign.docu_console import console_url
 from taa.services.cases import CaseService
-from taa.services.cases.forms import CensusRecordForm
+from taa.services.cases.forms import (
+    CensusRecordForm, 
+    NewCaseEnrollmentPeriodForm,
+    UpdateCaseForm
+)
 from taa.services.agents import AgentService
 from taa.model.DocuSign_config import sessionUserApprovedForDocusign
 from taa.model.Enrollment import get_product_states, get_product_choices, get_all_states
@@ -29,7 +33,7 @@ def inbox():
         flash("You are not yet authorized for signing applications.  Please see your Regional Director for assistance.")
         return redirect(url_for("home"))
 
-@app.route("/manage_cases")
+@app.route("/manage-cases")
 @groups_required(["agents", "admins"], all=False)
 @login_required
 def manage_cases():
@@ -42,7 +46,7 @@ def manage_cases():
     return render_template('agent/manage_cases.html', **vars)
 
 
-@app.route("/manage_case/<case_id>")
+@app.route("/manage-case/<case_id>")
 @groups_required(["agents", "admins"], all=False)
 def manage_case(case_id):
     
@@ -53,6 +57,21 @@ def manage_case(case_id):
     vars['product_choices'] = get_product_choices()
     vars['product_states'] = get_product_states()
     vars['all_states'] = get_all_states()
+
+    case_setup_form = UpdateCaseForm(obj=case)
+    vars['case_setup_form'] = case_setup_form
+    if not case.products:
+        vars['case_product'] = None
+    else:
+        vars['case_product'] = case.products[0]
+    if not case.situs_state:
+        vars['case_state'] = None
+    else:
+        vars['case_state'] = case.situs_state
+
+    
+    enrollment_periods = NewCaseEnrollmentPeriodForm(**case_service.get_case_enrollment_period_data(case))
+    vars['enrollment_period_form'] = enrollment_periods 
     
     vars['census_records'] = [
         dict(
@@ -68,7 +87,6 @@ def manage_case(case_id):
     ]
     
     return render_template('agent/case.html', **vars)
-
 
 
 @app.route("/manage_case/<case_id>/census_upload", methods=['POST'])

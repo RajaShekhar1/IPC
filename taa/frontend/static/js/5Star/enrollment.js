@@ -33,6 +33,7 @@ function init_rate_form(data) {
         $(".recommended-coverage-table").addClass("ci-recommendations");
     } else {
         // default product?
+        alert("Invalid product code '"+data.product_id+"'");
         product = new FPPTIProduct();
     }
     
@@ -60,15 +61,10 @@ function WizardUI(product, defaults) {
     self.identityToken = ko.observable("");
     self.identityType = ko.observable("");
     
-    self.addr1 = ko.observable("");
-    self.addr2 = ko.observable("");
-    self.city = ko.observable("");
     self.enrollCity = ko.observable(defaults.enroll_city || "");
     self.enrollState = defaults.state;
     self.was_state_provided = ("state" in defaults && defaults.state !== null && defaults.state != "XX");
-    self.state = ko.observable(defaults.state || "");
-    self.zip = ko.observable("");
-    self.phone = ko.observable("");
+    
     self.company_name = ko.observable(defaults.company_name || "(Unknown Company)");
     
     self.existing_insurance = "no";
@@ -96,18 +92,22 @@ function WizardUI(product, defaults) {
     self.spouse_beneficiary_dob = ko.observable("");
     
     // Employee 
-    self.employee = ko.observable(new Beneficiary({
-        first: self.defaults.employee_first || "",
-        last: self.defaults.employee_last || "",
-        email: self.defaults.employee_email || ""
-    }));
-    
-    self.should_show_spouse = ko.observable(false);
+    self.employee = ko.observable(new Beneficiary(self.defaults.employee_data || {}));
     
     // Spouse info
-    self.spouse = ko.observable(new Beneficiary({
-	last: self.defaults.employee_last || ""
-    }));
+    var spouse_data = self.defaults.spouse_data || {last: self.defaults.employee_last} || {};
+    
+    self.should_show_spouse = ko.observable((
+            spouse_data.first !== undefined && 
+            spouse_data.last !== undefined && 
+            spouse_data.birthdate !== undefined
+    ));
+    
+    self.spouse = ko.observable(new Beneficiary(spouse_data));
+    
+    self.is_spouse_age_valid = ko.computed(function() {
+        return self.insurance_product.is_valid_spouse_age(self.spouse().get_age()) ;
+    });
     
     self.should_include_spouse_in_table = ko.computed(function() {
         return self.should_show_spouse() && self.spouse().is_valid() && self.is_spouse_age_valid();
@@ -117,12 +117,30 @@ function WizardUI(product, defaults) {
     });
     
     // Children
-    self.should_include_children = ko.observable(false);
-    self.children = ko.observableArray([
-        // Start with two blank child entries
-        new Beneficiary({last: self.defaults.employee_last || ""}),
-        new Beneficiary({last: self.defaults.employee_last || ""})
-    ]);
+    self.should_include_children = ko.observable(
+        self.defaults.children_data.length > 0
+    );
+    if (self.defaults.children_data.length == 0) {
+        self.children = ko.observableArray([
+            // Start with two blank child entries
+            new Beneficiary({last: self.defaults.employee_last || ""}),
+            new Beneficiary({last: self.defaults.employee_last || ""})
+        ]);
+    } else {
+        self.children = ko.observableArray($.map(self.defaults.children_data, function(child_data) {
+            return new Beneficiary(child_data);
+        }));
+    }
+    
+    self.get_valid_children = ko.computed(function() {
+        var children = [];
+        $.each(self.children(), function() {
+            if (this.is_valid() && self.insurance_product.is_valid_child_age(this.get_age())) {
+                children.push(this);
+            } 
+        });
+        return children;
+    });
     
     self.show_children_names = ko.computed(function() {
         if (self.should_include_children()) {
@@ -142,15 +160,7 @@ function WizardUI(product, defaults) {
             return "";
         } 
     });
-    self.get_valid_children = ko.computed(function() {
-        var children = [];
-        $.each(self.children(), function() {
-            if (this.is_valid() && self.insurance_product.is_valid_child_age(this.get_age())) {
-                children.push(this);
-            } 
-        });
-        return children;
-    });
+    
     
     self.add_child = function() {
         var child_beneficiary = new Beneficiary({last: self.defaults.employee_last || ""});
@@ -171,6 +181,18 @@ function WizardUI(product, defaults) {
     self.has_valid_children = ko.computed(function() {
         return  self.get_valid_children().length > 0;
     });
+    
+    self.are_children_ages_valid = ko.computed(function() {
+        var all_valid = true;
+        $.each(self.children(), function() {
+            if (!self.insurance_product.is_valid_child_age(this.get_age())) {
+                all_valid = false;
+                return false;
+            }
+        });
+        return all_valid;
+    });
+    
     self.should_include_children_in_table = ko.computed(function() {
         return self.should_include_children() && self.has_valid_children() && self.are_children_ages_valid();  
     });
@@ -193,20 +215,8 @@ function WizardUI(product, defaults) {
     self.is_employee_age_valid = ko.computed(function() {
         return self.insurance_product.is_valid_employee_age(self.employee().get_age()) ;
     });
-    self.is_spouse_age_valid = ko.computed(function() {
-        return self.insurance_product.is_valid_spouse_age(self.spouse().get_age()) ;
-    });
     
-    self.are_children_ages_valid = ko.computed(function() {
-        var all_valid = true;
-        $.each(self.children(), function() {
-            if (!self.insurance_product.is_valid_child_age(this.get_age())) {
-                all_valid = false;
-                return false;
-            }
-        });
-        return all_valid;
-    });
+    
     self.can_display_rates_table = ko.computed(function() {
         // TODO: some of the age constants or other requirements will be determined by the product
         
@@ -607,9 +617,16 @@ function Beneficiary(options) {
     self.first = ko.observable(options.first || "");
     self.last = ko.observable(options.last || "");
     self.email = ko.observable(options.email || "");
+    self.phone = ko.observable(options.phone || "");
     self.birthdate = ko.observable(options.birthdate || null);
     self.ssn = ko.observable(options.ssn || "");
     self.gender = ko.observable(options.gender || "");
+    
+    self.address1 = ko.observable(options.street_address || "");
+    self.address2 = ko.observable(options.street_address2 || "");
+    self.city = ko.observable(options.city || "");
+    self.state = ko.observable(options.state || "");
+    self.zip = ko.observable(options.zip || "");
     
     self.health_questions = {};
     
@@ -705,6 +722,12 @@ function Beneficiary(options) {
         data.birthdate = self.birthdate();
         data.ssn = self.ssn();
         data.gender = self.gender();
+        data.phone = self.phone();
+        data.address1 = self.address1();
+        data.address2 = self.address2();
+        data.city = self.city();
+        data.state = self.state(); 
+        data.zip = self.zip();
         
         return data;
     }
@@ -785,7 +808,7 @@ function CIBenefitOption(wrapped_option) {
     self.format_for_dropdown = wrapped_option.format_for_dropdown;
     self.is_valid = wrapped_option.is_valid;
     self.serialize_data = wrapped_option.serialize_data;
-};
+}
 
 
 function NullBenefitOption() {
@@ -812,6 +835,9 @@ function NullBenefitOption() {
     self.format_for_dropdown = function() {
         return "- no benefit -";  
     };
+    self.serialize_data = function() {
+        return {}
+    }
 }
 
 
@@ -1464,49 +1490,42 @@ function init_validation() {
 		});
 	    return false;
 	}
-
-        // Pull out all the data we need for docusign 
-        var wizard_results = {
-            agent_data: window.ui.defaults,
-	    enrollCity:  window.ui.enrollCity(),
-	    enrollState:  window.ui.enrollState,
- 	    product_type: window.ui.insurance_product.product_type,
+    
+    // Pull out all the data we need for docusign 
+    var wizard_results = {
+        agent_data: window.ui.defaults,
+        enrollCity:  window.ui.enrollCity(),
+        enrollState:  window.ui.enrollState,
+        product_type: window.ui.insurance_product.product_type,
             
-	    identityToken: window.ui.identityToken(),
-	    identityType: window.ui.identityType(),
+        identityToken: window.ui.identityToken(),
+        identityType: window.ui.identityType(),
             
-            employee: window.ui.employee().serialize_data(),
-            spouse: window.ui.spouse().serialize_data(),
-            
-	    employee_addr1:  window.ui.addr1(),
- 	    employee_addr2:  window.ui.addr2(),
- 	    employee_city:  window.ui.city(),
- 	    employee_state:  window.ui.state(),
- 	    employee_zip:  window.ui.zip(),
- 	    employee_phone:  window.ui.phone(),
-
-	    existing_insurance:  window.ui.existing_insurance,
-	    replacing_insurance:  window.ui.replacing_insurance,
- 	    
-	    employee_owner:  window.ui.policy_owner(),
- 	    employee_other_owner_name:  window.ui.other_owner_name(),
- 	    employee_other_owner_ssn:  window.ui.other_owner_ssn(),
-	    spouse_owner:  window.ui.spouse_policy_owner(),
- 	    spouse_other_owner_name:  window.ui.spouse_other_owner_name(),
-            spouse_other_owner_ssn:  window.ui.spouse_other_owner_ssn(),
-	    
-            employee_beneficiary:  window.ui.employee_beneficiary(),
-            spouse_beneficiary:  window.ui.spouse_beneficiary(),
-            employee_beneficiary_name:  window.ui.employee_beneficiary_name(),
-            employee_beneficiary_relationship:  window.ui.employee_beneficiary_relationship(),
-            employee_beneficiary_ssn:  window.ui.employee_beneficiary_ssn(),
-            employee_beneficiary_dob:  window.ui.employee_beneficiary_dob(),
-            
-            spouse_beneficiary_name:  window.ui.spouse_beneficiary_name(),
-            spouse_beneficiary_relationship:  window.ui.spouse_beneficiary_relationship(),
-            spouse_beneficiary_ssn:  window.ui.spouse_beneficiary_ssn(),
-            spouse_beneficiary_dob:  window.ui.spouse_beneficiary_dob()
-        };
+        employee: window.ui.employee().serialize_data(),
+        spouse: window.ui.spouse().serialize_data(),
+        
+        existing_insurance:  window.ui.existing_insurance,
+        replacing_insurance:  window.ui.replacing_insurance,
+        
+        employee_owner:  window.ui.policy_owner(),
+        employee_other_owner_name:  window.ui.other_owner_name(),
+        employee_other_owner_ssn:  window.ui.other_owner_ssn(),
+        spouse_owner:  window.ui.spouse_policy_owner(),
+        spouse_other_owner_name:  window.ui.spouse_other_owner_name(),
+        spouse_other_owner_ssn:  window.ui.spouse_other_owner_ssn(),
+    
+        employee_beneficiary:  window.ui.employee_beneficiary(),
+        spouse_beneficiary:  window.ui.spouse_beneficiary(),
+        employee_beneficiary_name:  window.ui.employee_beneficiary_name(),
+        employee_beneficiary_relationship:  window.ui.employee_beneficiary_relationship(),
+        employee_beneficiary_ssn:  window.ui.employee_beneficiary_ssn(),
+        employee_beneficiary_dob:  window.ui.employee_beneficiary_dob(),
+        
+        spouse_beneficiary_name:  window.ui.spouse_beneficiary_name(),
+        spouse_beneficiary_relationship:  window.ui.spouse_beneficiary_relationship(),
+        spouse_beneficiary_ssn:  window.ui.spouse_beneficiary_ssn(),
+        spouse_beneficiary_dob:  window.ui.spouse_beneficiary_dob()
+    };
 
 	if (!window.ui.should_include_spouse_in_table()) {
 	    wizard_results['employee_beneficiary'] = "other";
@@ -1545,34 +1564,35 @@ function init_validation() {
         */
 
         // Send to server
-        ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function(resp) {
+        ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function (resp) {
             if (resp.error) {
-		bootbox.dialog({
-		    message: "There was a problem generating the application form (" + resp.error + ").  Please contact the enrollment system administrator.",
-		    buttons: {
-			"success": {
-			    "label": "OK",
-			    "className": "btn-sm btn-primary"
-			}
-		    }
-		});
+                bootbox.dialog({
+                    message: "There was a problem generating the application form (" + resp.error + ").  Please contact the enrollment system administrator.",
+                    buttons: {
+                        "success": {
+                            "label": "OK",
+                            "className": "btn-sm btn-primary"
+                        }
+                    }
+                });
             } else {
                 // Docusign redirect
-                location = resp.redirect 
+                location = resp.redirect
             }
-            
+
         }, handle_remote_error, true);
         
         bootbox.dialog({
             //just showing action in the interim while getting routed to the Docusign page... the DS page should redirect probably before there's time to read this
-	    message: "Generating application form for signature, please wait...",
-	    buttons: {
-		"success": {
-		    "label": "Close",
-		    "className": "btn-sm btn-primary"
-		}
-	    }
+            message: "Generating application form for signature, please wait...",
+            buttons: {
+                "success": {
+                    "label": "Close",
+                    "className": "btn-sm btn-primary"
+                }
+            }
         });
+        
     }).on('stepclick', function (e) {
         return true; //return false;//prevent clicking on steps
     });
@@ -1589,7 +1609,7 @@ function init_validation() {
     jQuery.validator.addMethod("phone", function (value, element) {
         return this.optional(element) || /^\(\d{3}\) \d{3}\-\d{4}( x\d{1,6})?$/.test(value);
     }, "Enter a valid phone number.");
-    
+
     $('#step3-form').validate({
         errorElement: 'div',
         errorClass: 'help-block',
@@ -1606,19 +1626,19 @@ function init_validation() {
             eeZip: {required: true},
             eeOwner: {required: true},
             eeOtherOwnerName: {
-		required:  {
-                    depends: function(element) {
+                required: {
+                    depends: function (element) {
                         return ($("#eeOwner-other").is(':checked'))
                     }
-		}
-	    },
-	    eeOtherOwnerSSN: {
-		required:  {
-                    depends: function(element) {
+                }
+            },
+            eeOtherOwnerSSN: {
+                required: {
+                    depends: function (element) {
                         return ($("#eeOwner-other").is(':checked'))
                     }
-		}
-	    }
+                }
+            }
         },
 
         messages: {
@@ -1626,21 +1646,21 @@ function init_validation() {
                 email: "Please provide a valid email."
             },
             eeFName2: "required",
-	    eeLName2: "required",
-	    eeGender: "Please choose gender",
-	    eessn: "required",
-	    eeStreet1: "required",
-	    eeCity: "required",
+            eeLName2: "required",
+            eeGender: "Please choose gender",
+            eessn: "required",
+            eeStreet1: "required",
+            eeCity: "required",
             eeState: "required",
             eeZip: "required",
             eeOwner: "Please confirm policy owner",
-	    eeOtherOwnerName: "required",
+            eeOtherOwnerName: "required",
             eeOtherOwnerSSN: "required"
         },
-        
+
         highlight: wizard_validate_highlight,
         success: wizard_validate_success,
-        errorPlacement: wizard_error_placement        
+        errorPlacement: wizard_error_placement
     });
 
     $('#step4-form').validate({
@@ -1652,39 +1672,39 @@ function init_validation() {
             spLName2: {required: true},
             spGender: {required: true},
             spssn: {
-		required:  {
-                    depends: function(element) {
+                required: {
+                    depends: function (element) {
                         return ($("#spOwner-self").is(':checked'))
                     }
-		}
-	    },
-	    spOwner: {required: true},
+                }
+            },
+            spOwner: {required: true},
             spOtherOwnerName: {
-		required:  {
-                    depends: function(element) {
+                required: {
+                    depends: function (element) {
                         return ($("#spOwner-other").is(':checked'))
                     }
-		}
-	    },
-	    spOtherOwnerSSN: {
-		required:  {
-                    depends: function(element) {
+                }
+            },
+            spOtherOwnerSSN: {
+                required: {
+                    depends: function (element) {
                         return ($("#spOwner-other").is(':checked'))
                     }
-		}
-	    }
+                }
+            }
         },
 
         messages: {
             spFName2: "required",
-	    spLName2: "required",
-	    spGender: "Please choose gender",
-	    spssn: "spouse SSN required if owner of policy",
-	    spOwner: "Please confirm policy owner",
-	    spOtherOwnerName: "required",
+            spLName2: "required",
+            spGender: "Please choose gender",
+            spssn: "spouse SSN required if owner of policy",
+            spOwner: "Please confirm policy owner",
+            spOtherOwnerName: "required",
             spOtherOwnerSSN: "required"
         },
-        
+
         highlight: wizard_validate_highlight,
         success: wizard_validate_success,
         errorPlacement: wizard_error_placement

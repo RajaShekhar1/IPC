@@ -111,11 +111,12 @@
 {% block page_js %}
 <script>
     $(function() {
-        function ManageCasePage() {
+        function ManageCasesPage() {
             var self = this;
             self.is_case_form_visible = ko.observable(false);
             
             self.show_new_case_form = function() {
+                // Toggle
                 self.is_case_form_visible(true);
             };
             
@@ -156,7 +157,7 @@
         product_state_select.init("#case_state","#case_product", {{ product_states | tojson | safe }});
         
         
-        var form = new ManageCasePage({{ product_states | tojson | safe }});
+        var form = new ManageCasesPage({{ product_states | tojson | safe }});
         window.form = form;
         
         ko.applyBindings(form); 
