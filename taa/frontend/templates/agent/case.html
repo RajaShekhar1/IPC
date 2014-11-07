@@ -144,7 +144,10 @@
             <div class="widget-box">
                 <div class="widget-header">
                     <h3>Case Census</h3>
-                    <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal">Upload Census</button>
+                    <button type="button" id="upload-btn" class="btn btn-success pull-right bigger-125" data-toggle="modal" data-target="#census-upload-modal" >
+                        <i class="icon icon-upload"></i>
+                            Upload Census
+                    </button>
                 </div>
                 <div class="widget-body">
                     <div class="widget-main">  
@@ -191,7 +194,7 @@
     </div>
     
     {# Upload census data modal #}
-    <form id="census-record-form" method="POST" enctype="multipart/form-data" action="{{ url_for("upload_census_record", case_id=case.id) }}">
+    <form id="census-record-form" method="POST" enctype="multipart/form-data">
     <div id="census-upload-modal" class="modal fade">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -201,65 +204,131 @@
                     <h4 class="modal-title">Upload Census Data</h4>
                 </div>
                 <div class="modal-body">
-                    <div class="row">
-                        <div class="col-xs-12 ">
-                            <h4>
-                                Select Census CSV File: 
-                            </h4>
-                            <p class="offset-by-twelve">Download an <a href="{{ url_for("sample_upload_csv") }}">example census data file</a> for formatting reference.</p>
-                            <input type="file" id="csv-file-input" name="csv-file">
+                    <div class="form-panel modal-panel">
+                        <div class="row">
+                            <div class="col-xs-12 ">
+                                <h4>
+                                    Select Census CSV File: 
+                                </h4>
+                                <p class="offset-by-twelve">Download an <a href="{{ url_for("sample_upload_csv") }}">example census data file</a> for formatting reference.</p>
+                                <input type="file" id="csv-file-input" name="csv-file" accept="text/*,.csv">
+                            </div>
+                        </div>
+                        
+                        <br>
+                        
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <div class="form-group">
+                                    <label>
+                                        <input type="radio" class="ace" name="upload_type" value="merge-skip" checked="1">
+                                        <span class="lbl"> Add New Records</span>
+                                    </label>
+                                    <div class="row">
+                                        <p class="col-xs-10 col-xs-offset-1">
+                                            This option adds new records to any existing employee records without updating any existing data.
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>
+                                        <input type="radio" class="ace" name="upload_type" value="merge-replace">
+                                        <span class="lbl"> Add With Update</span>
+                                    </label>
+                                    <div class="row">
+                                        <p class="col-xs-10 col-xs-offset-1">
+                                            This option adds new records to any existing employee records and also updates existing records whose SSN match the uploaded data.
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>
+                                        <input type="radio" class="ace" name="upload_type" value="replace">
+                                        <span class="lbl"> Replace Existing Census</span>
+                                    </label>
+                                    <div class="row">
+                                        <p class="col-xs-10 col-xs-offset-1">
+                                            This option first removes all existing employee records in this case, then adds the new uploaded data.
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                            </div>
                         </div>
                     </div>
-                    
-                    <br>
-                    
-                    <div class="row">
-                        <div class="col-xs-12">
-                            <div class="form-group">
-                                <label>
-                                    <input type="radio" class="ace" name="upload_type" value="merge-skip" checked="1">
-                                    <span class="lbl"> Add New Records</span>
-                                </label>
-                                <div class="row">
-                                    <p class="col-xs-10 col-xs-offset-1">
-                                        This option adds new records to any existing employee records without updating any existing data.
-                                    </p>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>
-                                    <input type="radio" class="ace" name="upload_type" value="merge-replace">
-                                    <span class="lbl"> Add With Update</span>
-                                </label>
-                                <div class="row">
-                                    <p class="col-xs-10 col-xs-offset-1">
-                                        This option adds new records to any existing employee records and also updates existing records whose SSN match the uploaded data.
-                                    </p>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>
-                                    <input type="radio" class="ace" name="upload_type" value="replace">
-                                    <span class="lbl"> Replace Existing Census</span>
-                                </label>
-                                <div class="row">
-                                    <p class="col-xs-10 col-xs-offset-1">
-                                        This option first removes all existing employee records in this case, then adds the new uploaded data.
-                                    </p>
-                                </div>
-                            </div>
-                            
-                            
+                    <div class="loading-panel modal-panel" style="display: none;">
+                        <div class="text-center">
+                            <h4>Uploading and processing...</h4>
+                            <i class="icon-spinner icon-spin grey bigger-200"></i>  
                         </div>
                     </div>
-                    
+                    <div class="success-panel modal-panel" style="display: none;">
+                        <h3 class="header lighter green">File Processed Successfully</h3>
+                        <!--ko if: num_data_records() > 0 -->
+                            <h4><span data-bind="text: num_data_records"></span> 
+                                record<span data-bind="visible: num_data_records() > 1">s</span> 
+                                added or updated.</h4>
+                        <!--/ko-->
+                        <!--ko if: num_data_records() == 0 -->
+                            <h4>No new data was added to the census.</h4>
+                        <!--/ko-->
+                    </div>
+                    <div class="error-panel modal-panel" style="display: none;">
+                        <h3 class="header lighter red">Bad or Missing Data</h3>
+                        
+                        <div class="row">
+                            <div class="col-md-12" style="width: 100%; overflow: auto;">
+                                <!--ko foreach: {data: error_records, as: 'error_record'}-->
+                                    <div data-bind="if: error_record.message && error_record.records.length == 0">
+                                        <div class="error" data-bind="text: error_record.message"></div>
+                                    </div>
+                                    
+                                    <table data-bind="if: error_record.records.length > 0" class="table table-bordered table-responsive upload-error-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Record #</th>
+                                                <!--ko foreach: error_record.headers-->
+                                                    <th data-bind="text: $data"></th>
+                                                <!--/ko-->
+                                            </tr>
+                                        </thead>
+                                        <tbody data-bind="foreach: {data: error_record.records, as: 'data_record'}">
+                                            <tr>
+                                                <td data-bind="text: error_record.line_number"></td>
+                                            <!--ko foreach: {data: error_record.headers, as: 'header'} -->
+                                                <td data-bind="css: {error: error_record.field_name == header}, attr: {title: error_record.message}" 
+                                                    data-toggle="tooltip">
+                                                    <div data-bind="text: data_record[header]"></div>
+                                                </td>
+                                            <!--/ko-->
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                <!--/ko-->
+                            </div>
+                        </div>
+                    </div>
                 </div>
                     
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <div class="form-buttons buttons-panel">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                    <div class="processing-buttons buttons-panel" style="display: none;">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                    <div class="error-buttons buttons-panel" style="display: none;">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary back-btn">
+                            <i class="glyphicon glyphicon-chevron-left"></i> Back</button>
+                    </div>
+                    <div class="success-buttons buttons-panel" style="display: none;">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
+                    </div>
+                    
                 </div>
             </div>
             <!-- /.modal-content -->
@@ -325,9 +394,105 @@
         });
         
         $("#census-record-form").on("submit", function() {
-            console.log("here");
-            return true;
+            
+            var form = this;
+            var file_select = $(this).find("input[type=file]").get(0);
+            var files = file_select.files;
+            var form_data = new FormData();
+            if (files.length !== 1) {
+                alert("Please select a file");
+                return false;
+            } 
+            
+            // Add the file upload to the request.
+            form_data.append('csv-file', files[0], files[0].name);
+            form_data.append('upload_type', $("input[name=upload_type]:checked").val());    
+            
+            send_file_data("POST", "{{ url_for("cases.post_census_records", case_id=case.id) }}", 
+                form_data, function(resp) {
+                    census_errors_panel.error_records(resp.data.errors);
+                    census_errors_panel.num_data_records(resp.data.records.length);
+                    show_success_panel();
+                    // Update the datatable
+                    var table = $("#census-records-table");
+                    table.dataTable().fnClearTable();
+                    var new_rows = [];
+                    $.each(resp.data.records, function() {
+                       var record = this;
+                       new_rows.push([
+                           '<a href="/manage_case/{{case.id}}/census/'+record.id+'"><span class="glyphicon glyphicon-edit"></span></a>',
+                           record.ssn,
+                            record.first,
+                            record.last,
+                            record.email,
+                            record.sp_first,
+                            record.sp_last,
+                            record.completed_enrollment,
+                            record.elected_coverage
+                       ]);
+                    });
+                    table.dataTable().fnAddData(new_rows);
+                }, function(xhr) {
+                    if (xhr.status >= 400 && xhr.status < 500) {
+                        show_error_panel();
+                        var data = $.parseJSON(xhr.responseText).data;
+                        census_errors_panel.error_records(data.errors);
+                        
+                        // Show error tooltips
+                        $('.upload-error-table td.error').tooltip({placement: "auto left"});
+                    } else {
+                        alert("Sorry, there was a problem communicating with the server.");
+                        reset_upload_modal();
+                    }
+                }, false);
+            
+            show_loading_panel();
+            
+            return false;
         });
+        function show_loading_panel() {
+            $(".form-panel").hide("slide");
+            $(".loading-panel").show("slide");
+            $(".processing-buttons").show("fade");
+            $(".form-buttons").hide("fade");
+        }
+        function show_error_panel() {
+            $(".loading-panel").hide("slide");
+            $(".error-panel").show("slide");
+            $(".error-buttons").show("fade");
+            $(".processing-buttons").hide("fade");
+        }
+        function show_success_panel() {
+            $(".loading-panel").hide("slide");
+            $(".success-panel").show("slide");
+            $(".success-buttons").show("fade");
+            $(".processing-buttons").hide("fade");
+        }
+        function show_form_panel() {
+            $(".modal-panel").hide("slide");
+            $(".buttons-panel").hide("slide");
+            $(".form-panel").show("slide");
+            $(".form-buttons").show("slide");
+        }
+        
+        function reset_upload_modal() {
+            $(".modal-panel").hide();
+            $(".buttons-panel").hide();
+            $(".form-panel").show();
+            $(".form-buttons").show();
+        }
+        $("#upload-btn").on("click", reset_upload_modal);
+        $(".back-btn").on("click", show_form_panel);
+        
+        var CensusErrorsPanel = function() {
+            var self = this;
+            
+            self.error_records = ko.observableArray([]);
+            self.num_data_records = ko.observable(0);
+        };
+        window.census_errors_panel = new CensusErrorsPanel();
+        ko.applyBindings(census_errors_panel, $("#census-upload-modal")[0]);
+        
         
         $(".input-mask-month-day").mask("99/99");
        

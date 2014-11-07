@@ -164,7 +164,7 @@ def submit_wizard_data():
     #sys.stdout.flush()
     
     # TODO: Save enrollment information prior to DocuSign hand-off 
-    
+        
     # Do docusign with data in wizard_results
     #
     #is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results);

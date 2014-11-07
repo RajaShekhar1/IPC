@@ -32,12 +32,14 @@ api_groups = ['agents', 'admins']
 @groups_required(api_groups, all=False)
 def get_cases():
     
+    name_filter = request.args.get("by_name")
+    
     agent = agent_service.get_logged_in_agent()
     if agent:
-        return case_service.get_agent_cases(agent)
+        return case_service.search_cases(by_agent=agent.id, by_name=name_filter)
     
     if agent_service.is_user_admin(user):
-        return case_service.all()
+        return case_service.search_cases(by_name=name_filter)
     
     abort(401)
 
@@ -134,24 +136,32 @@ def census_records(case_id):
 
 @route(bp, "/<case_id>/census_records", methods=["POST"])
 @groups_required(api_groups, all=False)
-def create_census_records(case_id):
+def post_census_records(case_id):
     case = case_service.get_if_allowed(case_id)
     data = get_posted_data()
     
     file_obj = request.files['csv-file']
-    if file_obj and has_csv_extension(file_obj.filename):
-        csv_reader = csv.DictReader(file_obj.stream, restkey="extra")
+    if not (file_obj and has_csv_extension(file_obj.filename)):
+        return dict(
+            errors=[dict(
+                message='Invalid file format. Filename must end with .csv, and follow the specification exactly. See sample upload file.',
+                records=[]
+            )]
+        )
     
-        if data['upload_type'] == "merge-skip":
-            errors, records = case_service.merge_census_data(case, csv_reader, replace_matching=False)
-        elif data['upload_type'] == "merge-replace":
-            errors, records = case_service.merge_census_data(case, csv_reader, replace_matching=True)
-        else:
-            errors, records = case_service.replace_census_data(case, csv_reader)
+    # Process the CSV Data
+    if data['upload_type'] == "merge-skip":
+        errors, records = case_service.merge_census_data(case, file_obj.stream, replace_matching=False)
+    elif data['upload_type'] == "merge-replace":
+        errors, records = case_service.merge_census_data(case, file_obj.stream, replace_matching=True)
     else:
-        return dict(errors=[[dict(message='Invalid file format. Filename must end with .csv, and follow the specification exactly. See sample upload file.')]], records=[])
+        errors, records = case_service.replace_census_data(case, file_obj.stream)
     
-    return dict(errors=errors, records=records)
+    # Return at most 20 errors at a time
+    status = 400 if errors else 200
+    return dict(errors=errors[:20], records=[
+        case_service.census_records.get_record_dict(record) for record in records
+    ]), status
     
 def has_csv_extension(filename):
     return '.' in filename and filename.lower().rsplit('.', 1)[1] == 'csv'

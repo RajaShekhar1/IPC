@@ -1,35 +1,48 @@
 
-function send_form_data(method, url, form_data, on_success, on_error) {
-    $.ajax(url, {
-        type: method,
-        data: form_data,//JSON.stringify(data),
-        dataType: 'json',
-        success: function(results) {
-            on_success(results);   
-        },
-        error: function(xhr) {
-            on_error(xhr);
-            //console.log(xhr.responseJSON.errors)
-        }
-    });
-}
-function send_json_data(method, url, data, on_success, on_error) {
-    $.ajax(url, {
-        type: method,
-        processData: false,
-        contentType:'application/json',
-        data: JSON.stringify(data),
-        dataType: 'json',
-        success: function(results) {
-            on_success(results);   
-        },
-        error: function(xhr) {
-            on_error(xhr);
-            //console.log(xhr.responseJSON.errors)
-        }
-    });
+// form_data is 
+function send_form_data(method, url, data, on_success, on_error) {
+    submit_data(method, url, form_data, true, on_success, on_error);
 }
 
+// <data> is a FormData object that contains a file upload
+function send_file_data(method, url, data, on_success, on_error) {
+    submit_data(method, url, data, false, on_success, on_error, false);
+}
+
+// <data> is a plain javascript object 
+function send_json_data(method, url, data, on_success, on_error) {
+    submit_data(method, url, JSON.stringify(data), false, on_success, on_error, 'application/json');
+}
+
+// The shortcut functions above use this method to wrap the jquery ajax call in slightly different ways
+function submit_data(method, url, data, should_process_data, on_success, on_error, contentType) {
+    
+    var options = {
+        url: url,
+        type: method,
+        data: data,
+        // return data type expected is always json for this app
+        dataType: 'json',
+        success: function(results) {
+            on_success(results);   
+        },
+        error: function(xhr) {
+            on_error(xhr);
+        }
+    };
+    
+    if (!should_process_data) {
+        options.processData = false;
+    } 
+    
+    if (contentType !== undefined) {
+        options.contentType = contentType;
+    } 
+    
+    $.ajax(options);
+}
+
+// Forces the page to submit a post as if a form were submitted, without needing a form on the page 
 function submit_to_url(url, data) {
     var form = document.createElement('form');
     for (k in data) {

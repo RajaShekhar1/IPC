@@ -1,6 +1,7 @@
 from dateutil.parser import parse
 from datetime import datetime
 import re
+import csv
 
 from flask import abort
 from flask_stormpath import current_user
@@ -42,14 +43,26 @@ class CaseService(DBService):
         
         abort(401)
         
-    def get_agent_cases(self, agent, only_enrolling=False):
+    def search_cases(self, by_agent=None, by_name=None, only_enrolling=False):
         # TODO: account for sub-agents
-        all_cases = self.find(agent_id=agent.id).all()
-        if only_enrolling:
-            return [case for case in all_cases if self.is_enrolling(case)]
+        query = self.query()
+        if by_name:
+            query = query.filter(Case.company_name.ilike(by_name))
         
-        return all_cases
-    
+        if by_agent:
+            query = query.filter(Case.agent_id == by_agent)
+        
+        results = query.all()
+        
+        if only_enrolling:
+            results = [case for case in results if self.is_enrolling(case)]
+            
+        return results
+        
+    def get_agent_cases(self, agent, **kwargs):
+        # TODO: account for sub-agents
+        return self.search_cases(by_agent=agent.id, **kwargs)
+        
     def is_enrolling(self, case):
         
         return case.active and any(
@@ -181,211 +194,439 @@ class CaseEnrollmentPeriodsService(DBService):
         self.query().filter(CaseEnrollmentPeriod.case == case).delete()
         
     
-
 class CensusRecordService(DBService):
     __model__ = CaseCensus
 
-    #CSV_FIELD_FORMAT = ["EMP_SSN", "EMP_FIRST", "EMP_LAST", "EMP_BIRTHDATE", "EMP_EMAIL",
-    #                    "SP_SSN", "SP_FIRST", "SP_LAST", "SP_BIRTHDATE", ]
-    CSV_FIELD_MAPPING = {
-        'EMP_SSN': ('employee_ssn', lambda x: x.replace('-', '')),
-        'EMP_FIRST':'employee_first',
-        'EMP_LAST': 'employee_last',
-        'EMP_GENDER': 'employee_gender',
-        'EMP_BIRTHDATE': 'employee_birthdate',
-        'EMP_EMAIL': 'employee_email',
-        'EMP_PHONE': 'employee_phone',
-        'EMP_ADDRESS1': 'employee_street_address',
-        'EMP_ADDRESS2': 'employee_street_address2',
-        'EMP_CITY': 'employee_city',
-        'EMP_STATE': 'employee_state',
-        'EMP_ZIP': ('employee_zip', lambda x: x.replace('-', '')[:5]),
+    def get_record_dict(self, census_record):
+        """
+        Returns a dictionary suitable for displaying by the UI
+        """
+        return dict(
+            id=census_record.id,
+            ssn=self.format_ssn(census_record.employee_ssn),
+            first=census_record.employee_first,
+            last=census_record.employee_last,
+            email=census_record.employee_email,
+            sp_first=census_record.spouse_first,
+            sp_last=census_record.spouse_last,
+            completed_enrollment="---",
+            elected_coverage="---",
+        )
+    
+    def format_ssn(self, ssn):
+        if not len(ssn) == 9:
+            return ssn
+
+        return "{}-{}-{}".format(ssn[:3], ssn[3:5], ssn[5:])
         
-        'SP_SSN': ('spouse_ssn', lambda x: x.replace('-', '')),
-        'SP_FIRST': 'spouse_first',
-        'SP_GENDER': 'spouse_gender',
-        'SP_LAST': 'spouse_last',
-        'SP_BIRTHDATE': 'spouse_birthdate',
-        'SP_EMAIL': 'spouse_email',
-        'SP_PHONE': 'spouse_phone',
-        'SP_ADDRESS1': 'spouse_street_address',
-        'SP_ADDRESS2': 'spouse_street_address2',
-        'SP_CITY': 'spouse_city',
-        'SP_STATE': 'spouse_state',
-        'SP_ZIP': ('spouse_zip', lambda x: x.replace('-', '')[:5]),
+    def merge_census_data(self, case, file_stream, replace_matching):
+        """
+        Updates existing records and adds new. Matches based on SSN, and depending on
+         :replace_matching, will do replace matches or skip over them.
+        """
         
-    }
-    # Add children defs
-    for num in range(1, 6+1):
-        CSV_FIELD_MAPPING['CH{}_FIRST'.format(num)] = 'child{}_first'.format(num)
-        CSV_FIELD_MAPPING['CH{}_LAST'.format(num)] = 'child{}_last'.format(num)
-        CSV_FIELD_MAPPING['CH{}_BIRTHDATE'.format(num)] = 'child{}_birthdate'.format(num)
         
-    def merge_census_data(self, case, records, replace_matching):
+        parser = CensusRecordParser()
+        parser.process_file(file_stream)
+        
+        # Do the merge
         existing = self.find(case_id=case.id).all()
         existing_by_ssn = {r.employee_ssn: r for r in existing}
-
-        # Extra copy for now
-        records = [r for r in records]
-        
-        parsed_records = [self.parse_census_record(case, r) for r in records]
-        if any(errors for errors, r in parsed_records):
-            all_errors = []
-            error_records = []
-            for i, (errors, record) in enumerate(parsed_records):
-                if errors:
-                    all_errors.append(errors)
-                    error_records.append(records[i])
-            
-            return all_errors, error_records
-
         added = []
-        for errors, record in parsed_records:
-            if record['employee_ssn'] in existing_by_ssn:
+        updated = []
+        for record in parser.get_valid_data():
+            if record['EMP_SSN'] in existing_by_ssn:
                 if replace_matching:
-                    self.update(existing_by_ssn[record['employee_ssn']], **record)
+                    # Update Existing
+                    self.update(existing_by_ssn[record['EMP_SSN']], **parser.get_db_dict(record))
+                    updated.append(record)
                 else:
+                    # Skip matching
                     continue
             else:
-                added.append(self.add_record(**record))
+                # Add new
+                added.append(self.add_record(case, **parser.get_db_dict(record)))
         
         db.session.commit()
-        # return just added records
-        return [], added
+        
+        return parser.errors, added + updated
     
-    def replace_census_data(self, case, records):
+    def replace_census_data(self, case, file_stream):
         # Delete records for this case
         self.find(case_id=case.id).delete()
-
-        # Extra copy for now
-        records = [r for r in records]
-
-        parsed_records = [self.parse_census_record(case, record) for record in records]
         
-        if not any(errors for errors, record in parsed_records):
-            records = [self.add_record(**record) for errors, record in parsed_records]
-            db.session.commit()
-            return [], records
-        else:
-            all_errors = []
-            error_records = []
-            for i, (errors, record) in enumerate(parsed_records):
-                if errors:
-                    all_errors.append(errors)
-                    error_records.append(records[i])
-            return all_errors, records
+        parser = CensusRecordParser()
+        parser.process_file(file_stream)
         
-    def add_record(self, **data):
-        # Create and add to the session, but don't commit or flush for speed
+        # Add new records    
+        valid_records = [self.add_record(case, **parser.get_db_dict(record)) for record in parser.get_valid_data()]
+        db.session.commit()
+        
+        return parser.errors, valid_records
+        
+    def add_record(self, case, **data):
+        """ 
+        Create and add to the session, but don't commit or flush the session for speed
+        """
+        data['case_id'] = case.id
         record = self.new(**data)
         db.session.add(record)
         return record
-        
-    def parse_census_record(self, case, record):
-        
-        data = {'case_id': case.id}
-        
-        for field in record:
-            if field in self.CSV_FIELD_MAPPING:
-                conv = self.CSV_FIELD_MAPPING[field]
-                if isinstance(conv, str):
-                    data[conv] = record[field] if record[field] else None
-                else:
-                    record_field_name, conv = conv
-                    data[record_field_name] = conv(record[field]) if conv(record[field]) else None
-        
-        # verification of required data present (SSN, email, names, birth date)
-        employee_required = {
-            'employee_ssn':valid_ssn, 
-            'employee_email':valid_email, 
-            'employee_first':valid_name, 
-            'employee_last':valid_name, 
-            'employee_birthdate':valid_birthdate,
-        }
-        valid_if_present = {
-            'employee_gender': valid_gender,
-            'spouse_gender': valid_gender,
-            'employee_state': valid_state,
-            'employee_zip': valid_zip,
-            'spouse_state': valid_state,
-            'spouse_zip': valid_zip,
-            'spouse_ssn': valid_ssn,
-            'spouse_email': valid_email,
-            'spouse_birthdate': valid_birthdate,
-        }
-        for x in range(1, 6+1):
-            valid_if_present['child{}_birthdate'.format(x)] = valid_birthdate
-        
-        errors = []
-        for field_name, validator in employee_required.items():
-            if not field_name in data:
-                errors.append(dict(message='Employee data required: {}'.format(field_name), field_name=field_name))
-                continue 
-            
-            is_valid, error_msg = validator(data[field_name])
+
+
+
+class CensusRecordField(object):
+    """
+    Defines a column for the uploaded CSV census data
+    """
+    def __init__(self, csv_column_name, database_name, preprocessor, validators):
+        self.csv_column_name = csv_column_name
+        self.database_name = database_name
+        self.preprocessor = preprocessor or (lambda x: x)
+        self.validators = validators or []
+    
+    def validate(self, parser, record):
+        all_valid = True
+        for validator in self.validators:
+            is_valid, error_message = validator(self, record)
             if not is_valid:
-                errors.append(dict(message='Invalid employee data: {}'.format(error_msg), field_name=field_name))
-        
-        for field_name, validator in valid_if_present.items():
-            if not data.get(field_name):
-                continue
+                parser.error_record_field(error_message,  
+                                          self.csv_column_name,
+                                          parser.get_line_number(),
+                                          record)
+                all_valid = False
             
-            is_valid, error_msg = validator(data[field_name])
-            if not is_valid:
-                errors.append(dict(message='Invalid data: {}'.format(error_msg), field_name=field_name))
+        return all_valid
+    
+    def get_column_from_record(self, record):
+        return record.get(self.csv_column_name, u'')
         
-        return errors, data
+    def preprocess(self, data):
+        return self.preprocessor(data)
+        
+    def add_validator(self, validator):
+        self.validators.append(validator)
+
+##
+# Validators
+##
+
+def required_validator(field, record):
+    data = field.get_column_from_record(record)
+    if not data:
+        return False, "Required Data Missing"
+    
+    return True, None
 
 ssn_pattern = re.compile('^\d{9}$')
-def valid_ssn(ssn):
-    ssn = ssn.strip().replace('-', '')
-    
-    
-    if not ssn_pattern.match(ssn):
-        return False, "Invalid SSN: '{}'".format(ssn)
-    
-    return True, None
-
-def valid_email(email):
-    
-    if '@' not in email and len(email) < 3:
-        return False, 'Invalid email: \'{}\''.format(email)
+def ssn_validator(field, record):
+    ssn = field.get_column_from_record(record)
+    if not ssn:
+        # Allow blank unless combined with required validator
+        return True, None
+    elif not ssn_pattern.match(ssn):
+        return False, "Invalid SSN"
     
     return True, None
 
-def valid_birthdate(date):
+def gender_validator(field, record):
+    gender = field.get_column_from_record(record)
+    if not gender:
+        # Allow blank unless combined with required validator
+        return True, None,
+    
+    if gender not in ['male', 'female', 'm', 'f']:
+        return False, "Gender must be 'Male' or 'Female'"
+    
+    return True, None
+
+def birthdate_validator(field, record):
+    date = field.get_column_from_record(record)
     if not date:
-        return False, "Invalid date: {}".format(date)
+        # Allow blank unless combined with required validator
+        return True, None
+    
     d = parse(date)
     if d >= datetime.today():
-        return False, 'Invalid birthdate: future date \'{}\''.format(date)
+        return False, 'Invalid birth date: future date'
     
     return True, None
 
-def valid_name(name):
-    name = name.strip() if name else ''
-    if not name:
-        return False, "Invalid Name: '{}'".format(name)
-    return True, None
-
-
-def valid_state(state):
-    from taa.services.products import ProductService
-    ps = ProductService()
-    if not state or not len(state) == 2 or not state in ps.get_all_statecodes():
-        return False, "Invalid US State: '{}'. Must be two-letter abbreviation.".format(state)
+def email_validator(field, record):
+    email = field.get_column_from_record(record)
+    if not email:
+        # Allow blank unless combined with required validator
+        return True, None
     
+    if '@' not in email and len(email) < 3:
+        return False, 'Invalid email'
+
     return True, None
 
 zip_pattern = re.compile('^\d{3,5}$')
-def valid_zip(zip):
-    if not zip_pattern.match(zip):
-        return False, "Invalid ZIP code: '{}'".format(zip)
+def zip_validator(field, record):
+    zip = field.get_column_from_record(record)
+    if not zip:
+        # Allow blank unless combined with required validator
+        return True, None
     
+    if not zip_pattern.match(zip):
+        return False, "Invalid ZIP code"
+
     return True, None
 
-def valid_gender(gender):
-    if gender not in ['Male', 'Female', '']:
-        return False, "Gender must be 'Male' or 'Female', not '{}'".format(gender)
+
+def state_validator(field, record):
+    state = field.get_column_from_record(record)
+    from taa.services.products import ProductService
     
+    ps = ProductService()
+    if not state or not len(state) == 2 or not state in ps.get_all_statecodes():
+        return False, "Invalid US State. Must be two-letter abbreviation."
+
     return True, None
+
+class RequiredIfAnyInGroupValidator(object):
+    def __init__(self, group_fields):
+        self.group_fields = group_fields
+        
+    def __call__(self, field, record):
+        # If any of the given fields have a value, require this field
+        if any(group_field.get_column_from_record(record) for group_field in self.group_fields):
+            return required_validator(field, record)
+        
+        return True, None
+
+##
+# Data preprocessors
+##
+def preprocess_string(data):
+    if data is None:
+        return u''
+    return unicode(data).strip()
+
+def preprocess_zip(data):
+    if data is None:
+        return u''
+    
+    # Just want first five characters
+    return unicode(data).strip().replace('-', '')[:5]
+
+def preprocess_gender(data):
+    data = data.lower()
+    if data == 'f':
+        return 'female'
+    elif data == 'm':
+        return 'male'
+    
+    return data
+
+def preprocess_numbers(data):
+    if data is None:
+        return ''
+    return "".join(c for c in unicode(data) if c.isdigit()) 
+    
+
+class CensusRecordParser(object):
+    
+    # Construct the fields and wire up the correct validation
+    employee_first = CensusRecordField("EMP_FIRST", "employee_first", preprocess_string, [required_validator])
+    employee_last = CensusRecordField("EMP_LAST", "employee_last", preprocess_string, [required_validator])
+    employee_ssn = CensusRecordField("EMP_SSN", "employee_ssn", preprocess_numbers,
+                                     [required_validator, ssn_validator])
+    employee_gender = CensusRecordField("EMP_GENDER", "employee_gender", preprocess_gender,
+                                        [required_validator, gender_validator])
+    employee_birthdate = CensusRecordField("EMP_BIRTHDATE", "employee_birthdate", preprocess_string,
+                                           [required_validator, birthdate_validator])
+    employee_email = CensusRecordField("EMP_EMAIL", "employee_email", preprocess_string,
+                                       [required_validator, email_validator])
+    employee_phone = CensusRecordField("EMP_PHONE", "employee_phone", preprocess_string, [])
+    employee_address1 = CensusRecordField("EMP_ADDRESS1", "employee_street_address", preprocess_string, [])
+    employee_address2 = CensusRecordField("EMP_ADDRESS2", "employee_street_address2", preprocess_string, [])
+    employee_city = CensusRecordField("EMP_CITY", "employee_city", preprocess_string, [])
+    employee_state = CensusRecordField("EMP_STATE", "employee_state", preprocess_string, [state_validator])
+    employee_zip = CensusRecordField("EMP_ZIP", "employee_zip", preprocess_zip, [zip_validator])
+
+    spouse_first = CensusRecordField("SP_FIRST", "spouse_first", preprocess_string, [])
+    spouse_last = CensusRecordField("SP_LAST", "spouse_last", preprocess_string, [])
+    spouse_ssn = CensusRecordField("SP_SSN", "spouse_ssn", preprocess_numbers, [ssn_validator])
+    spouse_gender = CensusRecordField("SP_GENDER", "spouse_gender", preprocess_gender, [gender_validator])
+    spouse_birthdate = CensusRecordField("SP_BIRTHDATE", "spouse_birthdate", preprocess_string, [birthdate_validator])
+    spouse_email = CensusRecordField("SP_EMAIL", "spouse_email", preprocess_string, [email_validator])
+    spouse_phone = CensusRecordField("SP_PHONE", "spouse_phone", preprocess_string, [])
+    spouse_address1 = CensusRecordField("SP_ADDRESS1", "spouse_street_address", preprocess_string, [])
+    spouse_address2 = CensusRecordField("SP_ADDRESS2", "spouse_street_address2", preprocess_string, [])
+    spouse_city = CensusRecordField("SP_CITY", "spouse_city", preprocess_string, [])
+    spouse_state = CensusRecordField("SP_STATE", "spouse_state", preprocess_string, [state_validator])
+    spouse_zip = CensusRecordField("SP_ZIP", "spouse_zip", preprocess_zip, [zip_validator])
+
+    # Add group validation requirement. If any field in the group is given, all must be present
+    spouse_fields = [spouse_first, spouse_last, spouse_ssn]
+    validator = RequiredIfAnyInGroupValidator(spouse_fields)
+    for field in spouse_fields:
+        field.add_validator(validator)
+
+    all_possible_fields = [
+        employee_first,
+        employee_last,
+        employee_ssn,
+        employee_gender,
+        employee_birthdate,
+        employee_email,
+        employee_phone,
+        employee_address1,
+        employee_address2,
+        employee_city,
+        employee_state,
+        employee_zip,
+
+        spouse_first,
+        spouse_last,
+        spouse_ssn,
+        spouse_birthdate,
+        spouse_gender,
+        spouse_email,
+        spouse_phone,
+        spouse_address1,
+        spouse_address2,
+        spouse_city,
+        spouse_state,
+        spouse_zip,
+    ]
+
+    MAX_CHILDREN = 6
+    for num in range(1, MAX_CHILDREN + 1):
+        child_first = CensusRecordField("CH{}_FIRST".format(num), "child{}_first".format(num), preprocess_string, [])
+        child_last = CensusRecordField("CH{}_LAST".format(num), "child{}_last".format(num), preprocess_string, [])
+        child_birthdate = CensusRecordField("CH{}_BIRTHDATE".format(num), "child{}_birthdate".format(num), preprocess_string,
+                                            [birthdate_validator])
+
+        child_group = [child_first, child_last, child_birthdate]
+        validator = RequiredIfAnyInGroupValidator(child_group)
+        for field in child_group:
+            field.add_validator(validator)
+        all_possible_fields += child_group
+
+
+    def __init__(self):
+        self.errors = []
+        self.valid_data = []
+        self.line_number = 0
+        
+    def _process_file_stream(self, file_stream):
+        
+        reader = csv.DictReader(file_stream, restkey="extra")
+        
+        try:
+            headers = reader.fieldnames
+            records = [r for r in reader]
+        except csv.Error as e:
+            self.error_message(message="Invalid CSV file format. First problem found on line {}. Detailed error: {}".format(
+                reader.line_num, e))
+            headers = records = []
+        
+        return headers, records
+    
+    def process_file(self, file_stream):
+        headers, records = self._process_file_stream(file_stream)
+        self.validate_header_row(headers, records)
+        
+        if self.errors:
+            return
+        
+        preprocessed_records = (self.preprocess_record(record) for record in records)
+        
+        self.line_number = 0
+        self.valid_data = []
+        for record in preprocessed_records:
+            self.line_number += 1
+            if self.validate_record(headers, record):
+                self.valid_data.append(record)
+        
+    def validate_record(self, headers, record):
+        is_valid = True
+        
+        for field in self.all_possible_fields:
+            is_valid &= field.validate(self, record)
+        
+        #is_valid &= self.validate_employee_data(headers, record)
+        #is_valid &= self.validate_optional_data(headers, record)
+        return is_valid
+    
+    def get_line_number(self):
+        return self.line_number
+    
+    def get_valid_data(self):
+        if self.errors:
+            # Right now, it is all or nothing, so return empty list if any errors occurred
+            return []
+        
+        return self.valid_data
+    
+    def validate_header_row(self, headers, records):
+        if len(records) <= 1:
+            self.error_message(
+                "The uploaded CSV file did not appear to have a valid header row. Please see the sample data file for formatting examples."
+            )
+        
+        missing_headers = self._get_missing_headers(headers)
+        if missing_headers:
+            missing_msg = ', '.join(missing_headers)
+            self.error_message("The following required columns are missing from the uploaded file: {}".format(missing_msg))
+    
+    
+    def get_error_headers(self, field_name):
+        headers = ['EMP_FIRST', 'EMP_LAST']
+        if field_name not in headers:
+            headers.append(field_name)
+        return headers
+    
+    def _get_missing_headers(self, headers):
+        required_headers = [
+            'EMP_SSN',
+            'EMP_FIRST',
+            'EMP_LAST',
+            'EMP_GENDER',
+            'EMP_BIRTHDATE',
+            'EMP_EMAIL',
+        ]
+        return {h for h in required_headers if h not in headers}
+    
+    def error_message(self, message):
+        self.errors.append(dict(
+            message=message,
+            records=[],
+        ))
+    
+    def error_record_field(self, message, field_name, line_number, data):
+        self.errors.append(dict(
+            message=message,
+            records=[data],
+            line_number=line_number,
+            headers=self.get_error_headers(field_name),
+            field_name=field_name,
+        ))
+    
+    def preprocess_record(self, record):
+        data = {}
+        
+        for column in record:
+            field = self.get_field_from_csv_column(column)
+            if not field:
+                continue
+            
+            data[column] = field.preprocess(record[column])
+        
+        return data
+    
+    fields_by_column_name = {field.csv_column_name: field for field in all_possible_fields}
+    def get_field_from_csv_column(self, column):
+        return self.fields_by_column_name.get(column)
+    
+    def get_db_dict(self, record):
+        return {
+            self.get_field_from_csv_column(csv_col_name).database_name: data
+            for csv_col_name, data in record.items()
+        }
+        
+            

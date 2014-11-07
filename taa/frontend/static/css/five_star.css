@@ -107,3 +107,8 @@ div.alphabet span:hover {
 div.alphabet span.active {
     color: black;
 }
+
+.upload-error-table td.error {
+    background-color: #D16E6C;
+    color: white;
+}

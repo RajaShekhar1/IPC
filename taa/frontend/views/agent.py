@@ -8,7 +8,7 @@ from flask import render_template, redirect, url_for, flash, send_file
 from flask_stormpath import login_required, groups_required
 
 from taa import app
-from taa.api.cases import census_records, create_census_records
+from taa.api.cases import census_records, post_census_records
 from taa.services.docusign.docu_console import console_url
 from taa.services.cases import CaseService
 from taa.services.cases.forms import (
@@ -74,33 +74,19 @@ def manage_case(case_id):
     vars['enrollment_period_form'] = enrollment_periods 
     
     vars['census_records'] = [
-        dict(
-            id=record.id,
-            ssn=format_ssn(record.employee_ssn),
-            first=record.employee_first,
-            last=record.employee_last,
-            email=record.employee_email,
-            sp_first=record.spouse_first,
-            sp_last=record.spouse_last,
-            completed_enrollment="---",
-            elected_coverage="---",
-        ) for record in census_records(case_id)
+        case_service.census_records.get_record_dict(record) for record in census_records(case_id)
     ]
     
     return render_template('agent/case.html', **vars)
 
-def format_ssn(ssn):
-    if not len(ssn) == 9:
-        return ssn
-    
-    return "{}-{}-{}".format(ssn[:3], ssn[3:5], ssn[5:])
+
 
 @app.route("/manage_case/<case_id>/census_upload", methods=['POST'])
 @groups_required(["agents", "admins"], all=False)
 def upload_census_record(case_id):
     case = case_service.get_if_allowed(case_id)
     
-    result = create_census_records(case_id)
+    result = post_census_records(case_id)
     if result['errors']:
         return render_template('agent/upload_errors.html', errors=result['errors'], records=result['records'],
                                case=case)

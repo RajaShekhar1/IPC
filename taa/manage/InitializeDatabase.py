@@ -28,5 +28,3 @@ class InitializeDatabaseCommand(Command):
                 product_service.create(**product)
                 print("Product '{}' created successfully".format(product['code']))
         
-        print("")
-        
