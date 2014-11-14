@@ -1,21 +1,23 @@
 
 // form_data is 
 function send_form_data(method, url, data, on_success, on_error) {
-    submit_data(method, url, form_data, true, on_success, on_error);
+    return submit_data(method, url, data, true, on_success, on_error);
 }
 
 // <data> is a FormData object that contains a file upload
 function send_file_data(method, url, data, on_success, on_error) {
-    submit_data(method, url, data, false, on_success, on_error, false);
+    return submit_data(method, url, data, false, on_success, on_error, false);
 }
 
 // <data> is a plain javascript object 
 function send_json_data(method, url, data, on_success, on_error) {
-    submit_data(method, url, JSON.stringify(data), false, on_success, on_error, 'application/json');
+    return submit_data(method, url, JSON.stringify(data), false, on_success, on_error, 'application/json');
 }
 
 // The shortcut functions above use this method to wrap the jquery ajax call in slightly different ways
 function submit_data(method, url, data, should_process_data, on_success, on_error, contentType) {
+    on_success = on_success || function() {};
+    on_error = on_error || function() {};
     
     var options = {
         url: url,
@@ -39,7 +41,7 @@ function submit_data(method, url, data, should_process_data, on_success, on_erro
         options.contentType = contentType;
     } 
     
-    $.ajax(options);
+    return $.ajax(options);
 }
 
 // Forces the page to submit a post as if a form were submitted, without needing a form on the page 

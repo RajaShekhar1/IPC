@@ -6,6 +6,7 @@ import csv
 from flask import abort
 from flask_stormpath import current_user
 from sqlalchemy.orm import joinedload
+import sqlalchemy as sa
 
 from taa.core import DBService
 from taa.core import db
@@ -74,10 +75,6 @@ class CaseService(DBService):
         # TODO: account for sub-agents
         return case.agent_id == agent.id
     
-    def get_census_records(self, case):
-        return self.census_records.find(case_id=case.id).all()
-
-    
     # Enrollment Periods
     
     def get_enrollment_periods(self, case):
@@ -104,7 +101,42 @@ class CaseService(DBService):
         
         
     # Census records
-    
+
+    def get_census_records(self, case, offset=None, num_records=None,
+                           search_text=None, text_columns=None, 
+                           sorting=None, sort_desc=False):
+
+        query = self.census_records.find(case_id=case.id)
+
+        if sorting:
+            sort_col = getattr(CaseCensus, sorting)
+            if sort_desc:
+                sort_col = sa.desc(sort_col)
+            query = query.order_by(sort_col)
+            
+        if search_text and text_columns:
+            query = self._filter_record_text(query, search_text, text_columns)
+
+        if offset > 0:
+            query = query.offset(offset)
+        if num_records > 0:
+            query = query.limit(num_records)
+
+        return query.all()
+
+    def count_census_records(self, case, search_text=None, text_columns=None):
+        query = self.census_records.find(case_id=case.id)
+        if search_text and text_columns:
+            query = self._filter_record_text(query, search_text, text_columns)
+
+        return query.count()
+
+    def _filter_record_text(self, query, search_text, text_columns):
+        filters = []
+        for col in text_columns:
+            filters.append(getattr(CaseCensus, col).ilike(search_text + "%"))
+        return query.filter(sa.or_(*filters))
+
     def get_census_record(self, case, census_record_id):
         
         q = self.census_records.query(
@@ -239,7 +271,7 @@ class CensusRecordService(DBService):
                 if replace_matching:
                     # Update Existing
                     self.update(existing_by_ssn[record['EMP_SSN']], **parser.get_db_dict(record))
-                    updated.append(record)
+                    updated.append(existing_by_ssn[record['EMP_SSN']])
                 else:
                     # Skip matching
                     continue

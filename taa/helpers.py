@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from flask import request
 from flask.json import JSONEncoder as FlaskJSONEncoder
@@ -29,6 +30,9 @@ class JSONEncoder(FlaskJSONEncoder):
             return obj.isoformat()
         
         return super(JSONEncoder, self).default(obj)
+
+def json_encode(val):
+    return json.dumps(val, cls=JSONEncoder)
 
 # https://github.com/mattupstate/overholt    
 class JsonSerializable(object):

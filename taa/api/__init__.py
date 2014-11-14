@@ -52,7 +52,10 @@ def route(bp, *args, **kwargs):
                     errors=[{'msg':'You are not logged in.'}], 
                     redirect=ret_val.location)
                 )
-
+            # Specially formatted data
+            elif isinstance(ret_val, str):
+                return Response(ret_val), 200
+            
             if isinstance(ret_val, tuple):
                 # pull out the response if a status code is given explicitly 
                 data = ret_val[0]

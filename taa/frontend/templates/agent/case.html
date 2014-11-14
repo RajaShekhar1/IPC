@@ -1,138 +1,129 @@
 {% extends "base.html" %}
 {% from "form_macros.html" import render_field_with_errors %}
-{% from "form_macros.html" import render_checkbox %}
+{% from "form_macros.html" import render_switch %}
 {% set active_page = 'nav_agent_manage_case' -%}
 {% block title %} - Agent Manage Case{% endblock %}
 
 {% block content %}
     
-    
-    <h1 class="header lighter">Case Settings</h1>
-    
     <div class="row">
-        <div class="col-xs-12 col-md-6">
+        <div class="col-md-12">
             <form class="form-horizontal case_setup">
                     
             <div class="widget-box">
                 <div class="widget-header">
-                    <h3>Basic Setup</h3>
+                    <div class="row">
+                        <h3 class="col-xs-6">{{ case.company_name }}</h3>
+                        
+                        <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
+                            <label>
+                                <span data-bind="text: switch_label">Case is Active</span> 
+                                {{ case_setup_form.active(class_="ace ace-switch ace-switch-6")|safe }}
+                                <span class="lbl"></span>    
+                            </label>
+                        </h3>
+                    </div>
+                  
                 </div>
                 <div class="widget-body">
                     <div class="widget-main">  
-                        
-                        {{ render_field_with_errors(case_setup_form.company_name) }}
-                        
-                        {# {{ render_field_with_errors(case_setup_form.products) }}  #}
-                        {# Use the single-select product form for now #}
-                        <div class="form-group">
-                            <label class="col-md-3 control-label" for="case_product">Product</label>
-                            <div class="col-md-9">
-                                <select id="case_product" name="case_product" class="form-control">
-                                    <option></option>
-                                    {% for product in product_choices %}
-                                        <option value="{{product['short_name']}}" 
-                                        {%- if product["disabled"] -%}
-                                        disabled="1"
-                                        {%- endif -%}
-                                        {%- if case_product and case_product.code == product.short_name -%}
-                                        selected="1"
-                                        {%- endif -%}
-                                        >{{product["name"]}}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                    
-                        {# Situs state 
-                        <div class="form-group">
-                            <label class="col-md-3 control-label" for="case_state">State</label>
-                            <div class="col-md-9">
-                                <select id="case_state" name="situs_state" class="form-control">
-                                    <option></option>
-                                    {% for state in all_states %}
-                                        <option value="{{state.shortname}}" 
-                                            {%- if case_state == state.shortname -%}
-                                            selected="1"
-                                            {%- endif -%}
-                                            >{{state["name"]}}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        #}
-                        {{ render_field_with_errors(case_setup_form.situs_city) }}
-                        {{ render_field_with_errors(case_setup_form.situs_state, id="case_state") }}
-                        
-                        {{ render_checkbox(case_setup_form.active) }}
+                        <div class="row">
+                            <div class="col-md-5 col-xs-12">
+                                <h3 class="header lighter blue">Settings</h3>
+                                {{ render_field_with_errors(case_setup_form.company_name) }}
                                 
-                    </div>
-                    <div class="widget-toolbox clearfix padding-8">
-                        <button type="submit" class="btn-primary btn-sm pull-right">Save</button>
-                    </div>
-                </div>
-            </div>
-                
-            </form> 
-        </div>
-    
-        <div class="col-xs-12 col-md-6">
-            <form class="form-horizontal period_setup">
-            <div class="widget-box enrollment-periods">
-                <div class="widget-header">
-                    <h3>Enrollment Periods</h3>
-                </div>
-                <div class="widget-body">
-                    <div class="widget-main"> 
-                        <div id="accordian">
-                        {% for value, label, selected in enrollment_period_form.enrollment_period_type.iter_choices() %}
-                            <div class="panel">
-                            <div class="form-group panel-heading">
-                                <label data-toggle="collapse" data-parent="#accordian" data-target="#collapse-{{ value }}">
-                                    <input type="radio" class="ace" name="enrollment_period_type" value="{{ value }}" {% if selected %}checked="1"{% endif %}> 
-                                    <span class="lbl">{{ label }}</span>
-                                </label>
-                            </div>
-                            <div id="collapse-{{ value }}" class="form-group collapse collapse-panel {% if selected %}in{% endif %}" >
-                            
-                                {% if value == "open" %}
-                                    {{ enrollment_period_form.open_period_start_date.label }}
-                                    {{ enrollment_period_form.open_period_start_date(class_="input-mask-date", placeholder="MM/DD/YYYY") }}
-                                {% else %}
-                                    
-                                    {% for date_form in enrollment_period_form.annual_period_dates %}
-                                        <div class="form-group row">
-                                            {% for field in date_form %}
-                                                {% if field.type != "CSRFTokenField" %}
-                                                    <div class="col-md-6">
-                                                    {{ field.label }}
-                                                    {{ field(class_="input-mask-month-day", placeholder="MM/DD") }}
-                                                    </div>
-                                                {% endif %}
+                                {# {{ render_field_with_errors(case_setup_form.products) }}  #}
+                                {# Use the single-select product form for now #}
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label" for="case_product">Product</label>
+                                    <div class="col-md-9">
+                                        <select id="case_product" name="case_product" class="form-control">
+                                            <option></option>
+                                            {% for product in product_choices %}
+                                                <option value="{{product['short_name']}}" 
+                                                {%- if product["disabled"] -%}
+                                                disabled="1"
+                                                {%- endif -%}
+                                                {%- if case_product and case_product.code == product.short_name -%}
+                                                selected="1"
+                                                {%- endif -%}
+                                                >{{product["name"]}}</option>
                                             {% endfor %}
-                                        </div>
-                                        
-                                    {% endfor %}
-                                {% endif %}
+                                        </select>
+                                    </div>
+                                </div>
+                            
+                                {# Situs state 
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label" for="case_state">State</label>
+                                    <div class="col-md-9">
+                                        <select id="case_state" name="situs_state" class="form-control">
+                                            <option></option>
+                                            {% for state in all_states %}
+                                                <option value="{{state.shortname}}" 
+                                                    {%- if case_state == state.shortname -%}
+                                                    selected="1"
+                                                    {%- endif -%}
+                                                    >{{state["name"]}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                #}
+                                {{ render_field_with_errors(case_setup_form.situs_city) }}
+                                {{ render_field_with_errors(case_setup_form.situs_state, id="case_state") }}
                                 
                             </div>
+                            <div class="col-md-5 col-md-offset-1 col-xs-12">
+                                <h3 class="header lighter blue">Enrollment Periods</h3>
+                                <div id="accordian">
+                                {% for value, label, selected in enrollment_period_form.enrollment_period_type.iter_choices() %}
+                                    <div class="panel">
+                                    <div class="form-group panel-heading">
+                                        <label data-toggle="collapse" data-parent="#accordian" data-target="#collapse-{{ value }}">
+                                            <input type="radio" class="ace" name="enrollment_period_type" value="{{ value }}" {% if selected %}checked="1"{% endif %}> 
+                                            <span class="lbl">{{ label }}</span>
+                                        </label>
+                                    </div>
+                                    <div id="collapse-{{ value }}" class="form-group collapse collapse-panel {% if selected %}in{% endif %}" >
+                                    
+                                        {% if value == "open" %}
+                                            {{ enrollment_period_form.open_period_start_date.label }}
+                                            {{ enrollment_period_form.open_period_start_date(class_="input-mask-date", placeholder="MM/DD/YYYY") }}
+                                        {% else %}
+                                            
+                                            {% for date_form in enrollment_period_form.annual_period_dates %}
+                                                <div class="form-group row">
+                                                    {% for field in date_form %}
+                                                        {% if field.type != "CSRFTokenField" %}
+                                                            <div class="col-md-6">
+                                                            {{ field.label }}
+                                                            {{ field(class_="input-mask-month-day", placeholder="MM/DD") }}
+                                                            </div>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                                
+                                            {% endfor %}
+                                        {% endif %}
+                                        
+                                    </div>
+                                    </div>
+                                {% endfor %}
+                                </div>
                             </div>
-                        {% endfor %}
                         </div>
-                        
                     </div>
                     <div class="widget-toolbox clearfix padding-8">
                         <button type="submit" class="btn-primary btn-sm pull-right">Save</button>
                     </div>
-                    
                 </div>
             </div>
-            </form> 
                 
+            </form> 
+            
+            
         </div>
-    
-        
-    
-    
     </div>
     
     <br>
@@ -144,10 +135,15 @@
             <div class="widget-box">
                 <div class="widget-header">
                     <h3>Case Census</h3>
-                    <button type="button" id="upload-btn" class="btn btn-success pull-right bigger-125" data-toggle="modal" data-target="#census-upload-modal" >
+                    <button type="button" id="export-btn" class="btn btn-default pull-right">
+                        <i class="icon icon-download-alt"></i>
+                            Download Census
+                    </button>
+                    <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal" >
                         <i class="icon icon-upload"></i>
                             Upload Census
                     </button>
+                    
                 </div>
                 <div class="widget-body">
                     <div class="widget-main">  
@@ -164,11 +160,13 @@
                                         <th>Email</th>
                                         <th>Spouse First</th>
                                         <th>Spouse Last</th>
-                                        <th>Enrollment Status</th>
-                                        <th>Elected Coverage</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {# 
+                                    Don't load this on the page anymore, 
+                                    we load from the server at run time for page speed
+                                    
                                     {% for record in census_records %}
                                     <tr>
                                         <td class="text-center"><a href="{{ url_for("edit_census_record", case_id=case.id, census_record_id=record.id) }}"><span class="glyphicon glyphicon-edit"></span></a></td>
@@ -181,11 +179,15 @@
                                         
                                         <td>{{ record.completed_enrollment }}</td>
                                         <td>{{ record.elected_coverage }}</td>
+                                         
+                                    
                                     </tr>
                                     {% endfor %}
+                                      #}
                                 </tbody>
                             </table>
                         {% endif %}
+                        <div id="census-table-loading" class="text-center bigger-125"></div>
                     </div>
                 </div>
             </div>
@@ -342,43 +344,77 @@
     <script src="{{ url_for("static", filename="js/5Star/product_state_select.js") }}"></script>
     <script>
     $(function() {
-        $("#census-records-table").dataTable({
-            "aoColumnDefs":[
-                {"bSortable": false, "aTargets":[0]},
-              
-                { "sWidth": "50px", "aTargets": [7] },
-                { "sWidth": "50px", "aTargets": [8] },
-            ],
-            "aaSorting": [[ 3, "asc" ]],
-            "iDisplayLength": 25
-        });
+        
+        function refresh_census_table() {
+            // show loading message under the table
+            var loading = $("#census-table-loading");
+            var table = $("#census-records-table");
+            
+            loading.html("<span class='icon-spinner icon-spin grey bigger-200'></span> Loading data...");
+            if ($.fn.DataTable.fnIsDataTable(table.get(0))) {
+                table.dataTable().fnClearTable();
+            }
+            $.get("{{ url_for("cases.census_records", case_id=case.id) }}", {}, function(resp) {
+                
+                loading.html("");
+                if ($.fn.DataTable.fnIsDataTable(table.get(0))) {
+                    table.dataTable().fnAddData(resp.data);
+                } else {
+                    table.dataTable({
+                        "aaData": resp.data,
+                        "aoColumnDefs":[
+                            {"bSortable": false, "aTargets":[0], "mData":function(source) {
+                                return "<a href='/manage_case/{{case.id}}/census/"+source.id+"'><span class='glyphicon glyphicon-edit'></span></a>";
+                            }},
+                            {"aTargets":[1], "mData": "employee_ssn"},
+                            {"aTargets":[2], "mData": "employee_first"},
+                            {"aTargets":[3], "mData": "employee_last"},
+                            {"aTargets":[4], "mData": "employee_email"},
+                            {"aTargets":[5], "mData": "spouse_first"},
+                            {"aTargets":[6], "mData": "spouse_last"},
+                            //{"aTargets":[7], "mData": "enrollment_status"},
+                            //{"aTargets":[8], "mData": "elected_coverage"},
+                            
+                            //{ "sWidth": "50px", "aTargets": [7] },
+                            //{ "sWidth": "50px", "aTargets": [8] },
+                        ],
+                        "aaSorting": [[ 3, "asc" ]],
+                        "iDisplayLength": 25,
+                        //"bServerSide": true,
+                        //"sAjaxSource": "{{ url_for('cases.census_records_datatable', case_id=case.id) }}"
+                    });
+                }
+            });
+        }
+        
+        // Load data now
+        refresh_census_table();
+        
         
         // Change enabled states when the product is changed
         product_state_select.init("#case_state","#case_product", {{ product_states | tojson | safe }});
         
         $("form.case_setup").on('submit', function() {
             var form_data = $(this).serialize();
-            send_form_data("PUT", "{{ url_for("cases.update_case", case_id=case.id) }}",
-                form_data, function() {
-                    alert("Saved");
-                }, function() {
-                    alert("There was a problem saving the data.");
-                }
+            var case_request = send_form_data(
+                "PUT", 
+                "{{ url_for("cases.update_case", case_id=case.id) }}",
+                form_data
             );
             
-            return false; 
-        });
-        
-        $("form.period_setup").on('submit', function() {
-            var form_data = $(this).serialize();
-            
-            send_form_data("PUT", "{{ url_for("cases.update_case_enrollment_periods", case_id=case.id) }}",
-                form_data, function() {
-                    alert("Saved");
-                }, function() {
-                    alert("There was a problem saving the data.");
-                }
+            //var period_form_data = $("form.period_setup").serialize();
+            var periods_request = send_form_data(
+                "PUT", 
+                "{{ url_for("cases.update_case_enrollment_periods", case_id=case.id) }}",
+                form_data
             );
+            var on_success = function(case_xhr, periods_xhr) {
+                alert("Saved");
+            };
+            var on_failure = function(case_xhr, periods_xhr) {
+                alert("There was a problem saving the data.");
+            };
+            $.when(case_request, periods_request).then(on_success, on_failure);
             
             return false; 
         });
@@ -414,9 +450,10 @@
                     census_errors_panel.num_data_records(resp.data.records.length);
                     show_success_panel();
                     // Update the datatable
-                    var table = $("#census-records-table");
-                    table.dataTable().fnClearTable();
+                    refresh_census_table();
+                    /*
                     var new_rows = [];
+                     
                     $.each(resp.data.records, function() {
                        var record = this;
                        new_rows.push([
@@ -432,6 +469,7 @@
                        ]);
                     });
                     table.dataTable().fnAddData(new_rows);
+                    */
                 }, function(xhr) {
                     if (xhr.status >= 400 && xhr.status < 500) {
                         show_error_panel();
@@ -501,6 +539,10 @@
                 e.preventDefault();
                 e.stopPropagation();
             }
+        });
+        
+        $("#export-btn").on("click", function() {
+            alert("Not Available in this version"); 
         });
         
     });

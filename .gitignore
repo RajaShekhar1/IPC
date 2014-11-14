@@ -9,3 +9,4 @@ taa/frontend/static/generated_assets
 TAA.iml
 taa/frontend/static/ace-v1.3.1
 .vagrant
+env_mac

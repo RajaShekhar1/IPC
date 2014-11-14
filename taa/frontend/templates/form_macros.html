@@ -24,3 +24,11 @@
         </div>
     </div>
 {% endmacro %}
+
+{% macro render_switch(field) %}
+    
+    {{field.label}}
+    {{ field(class_="ace ace-switch ace-switch-6", **kwargs)|safe }}
+    <span class="lbl"></span>
+
+{% endmacro %}

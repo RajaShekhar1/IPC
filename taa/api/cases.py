@@ -1,12 +1,11 @@
-import os
-import csv
+import re
 
-from flask import Blueprint, request, abort, redirect, url_for
+from flask import Blueprint, request, abort, jsonify, redirect, url_for
 from flask_stormpath import user, groups_required
 
 from taa import app
 from taa.core import TAAFormError
-from taa.helpers import get_posted_data
+from taa.helpers import get_posted_data, json_encode
 from taa.api import route
 from taa.services.cases import CaseService
 from taa.services.cases.forms import (
@@ -134,6 +133,51 @@ def update_case_enrollment_periods(case_id):
 def census_records(case_id):
     return case_service.get_census_records(case_service.get_if_allowed(case_id))
 
+@route(bp, "/<case_id>/census_records_datatable", methods=["GET"])
+@groups_required(api_groups, all=False)
+def census_records_datatable(case_id):
+    """
+    Do server-side sorting and searching for the census record datatable for
+    large data sets.
+    """
+    case = case_service.get_if_allowed(case_id)
+    
+    offset = int(request.args.get('iDisplayStart', 0))
+    num_records = int(request.args.get('iDisplayLength', 25))
+    sEcho = int(request.args['sEcho'])
+    sSearch = request.args.get('sSearch', '')
+    sort_col = request.args.get('iSortCol_0')
+    sort_desc = request.args.get("sSortDir_0") == "desc"
+    if sort_col:
+        col_name = request.args.get('mDataProp_{0}'.format(sort_col), "employee_last")
+        sorting = col_name
+    else:
+        sorting = None
+    
+    columns = ['employee_ssn', 'employee_first', 'employee_last', 'employee_email',
+               'spouse_first', 'spouse_last']
+    
+    data = case_service.get_census_records(case, offset=offset, num_records=num_records,
+                                           search_text=sSearch, text_columns=columns,
+                                           sorting=sorting, sort_desc=sort_desc,
+                                           )
+    
+    def add_computed_columns(record):
+        data = record.to_json()
+        data['enrollment_status'] = ""
+        data['elected_coverage'] = False
+        return data
+    
+    total_record_count = case_service.count_census_records(case)
+    total_filtered_count = case_service.count_census_records(case, search_text=sSearch, text_columns=columns)
+    result = dict(
+        aaData=[add_computed_columns(record) for record in data],
+        iTotalRecords=total_record_count,
+        sEcho=sEcho,
+        iTotalDisplayRecords=total_filtered_count,
+    )
+    return json_encode(result)
+    
 @route(bp, "/<case_id>/census_records", methods=["POST"])
 @groups_required(api_groups, all=False)
 def post_census_records(case_id):

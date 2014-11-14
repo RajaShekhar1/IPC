@@ -112,3 +112,14 @@ div.alphabet span.active {
     background-color: #D16E6C;
     color: white;
 }
+
+/* Case activate switch */
+.active-switch {
+    font-size: 110%;
+    color: #888;
+    text-shadow: 3px;
+}
+/* Change BG color of simple ace switch*/
+input[type=checkbox].ace.ace-switch.ace-switch-6:checked+.lbl::before {
+    background-color: green;
+}
