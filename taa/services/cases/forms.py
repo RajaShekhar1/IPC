@@ -23,7 +23,7 @@ class _CommonCaseFormMixin(object):
     def __init__(self, *args, **kwargs):
         super(_CommonCaseFormMixin, self).__init__(*args, **kwargs)
 
-        self.products.choices = [(p.code, p.name) for p in products_service.all()]
+        self.products.choices = [(p.code, p.name) for p in products_service.get_base_products()]
         self.situs_state.choices = [(s['shortname'], s['name']) for s in products_service.get_all_states()]
     
     def validate_situs_state(self, field):

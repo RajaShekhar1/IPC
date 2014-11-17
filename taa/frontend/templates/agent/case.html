@@ -74,7 +74,7 @@
                                 {{ render_field_with_errors(case_setup_form.situs_state, id="case_state") }}
                                 
                             </div>
-                            <div class="col-md-5 col-md-offset-1 col-xs-12">
+                            <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
                                 <h3 class="header lighter blue">Enrollment Periods</h3>
                                 <div id="accordian">
                                 {% for value, label, selected in enrollment_period_form.enrollment_period_type.iter_choices() %}
@@ -135,10 +135,10 @@
             <div class="widget-box">
                 <div class="widget-header">
                     <h3>Case Census</h3>
-                    <button type="button" id="export-btn" class="btn btn-default pull-right">
+                    <a href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
                         <i class="icon icon-download-alt"></i>
                             Download Census
-                    </button>
+                    </a>
                     <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal" >
                         <i class="icon icon-upload"></i>
                             Upload Census
@@ -148,7 +148,21 @@
                 <div class="widget-body">
                     <div class="widget-main">  
                         {% if not census_records %}
-                            <h4 class="text-center lighter">No Census Data Uploaded</h4>
+                            <h4 class="no-census-header text-center lighter">No Census Data Uploaded</h4>
+                            <table id="census-records-table" class="table table-bordered table-hover" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>SSN</th>
+                                        <th>First</th>
+                                        <th>Last</th>
+                                        <th>Email</th>
+                                        <th>Spouse First</th>
+                                        <th>Spouse Last</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
                         {% else %}
                             <table id="census-records-table" class="table table-bordered table-hover">
                                 <thead>
@@ -166,24 +180,7 @@
                                     {# 
                                     Don't load this on the page anymore, 
                                     we load from the server at run time for page speed
-                                    
-                                    {% for record in census_records %}
-                                    <tr>
-                                        <td class="text-center"><a href="{{ url_for("edit_census_record", case_id=case.id, census_record_id=record.id) }}"><span class="glyphicon glyphicon-edit"></span></a></td>
-                                        <td>{{ record.ssn }}</td>
-                                        <td>{{ record.first }}</td>
-                                        <td>{{ record.last }}</td>
-                                        <td>{{ record.email }}</td>
-                                        <td>{{ record.sp_first }}</td>
-                                        <td>{{ record.sp_last }}</td>
-                                        
-                                        <td>{{ record.completed_enrollment }}</td>
-                                        <td>{{ record.elected_coverage }}</td>
-                                         
-                                    
-                                    </tr>
-                                    {% endfor %}
-                                      #}
+                                    #}
                                 </tbody>
                             </table>
                         {% endif %}
@@ -359,7 +356,9 @@
                 loading.html("");
                 if ($.fn.DataTable.fnIsDataTable(table.get(0))) {
                     table.dataTable().fnAddData(resp.data);
-                } else {
+                } else if (resp.data.length > 0){
+                    table.show();
+                    $(".no-census-header").hide();
                     table.dataTable({
                         "aaData": resp.data,
                         "aoColumnDefs":[
@@ -379,9 +378,7 @@
                             //{ "sWidth": "50px", "aTargets": [8] },
                         ],
                         "aaSorting": [[ 3, "asc" ]],
-                        "iDisplayLength": 25,
-                        //"bServerSide": true,
-                        //"sAjaxSource": "{{ url_for('cases.census_records_datatable', case_id=case.id) }}"
+                        "iDisplayLength": 25
                     });
                 }
             });
@@ -541,9 +538,7 @@
             }
         });
         
-        $("#export-btn").on("click", function() {
-            alert("Not Available in this version"); 
-        });
+        
         
     });
     </script>

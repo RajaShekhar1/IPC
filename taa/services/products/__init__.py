@@ -2,12 +2,36 @@ from flask import abort
 
 from taa.core import DBService, db
 
-from models import Product
+from models import Product, CustomGuaranteeIssueProduct
 
 class ProductService(DBService):
     
-    __model__ = Product    
+    __model__ = Product
+
+    BASE_PRODUCT_TYPE = u'base'
+    GI_PRODUCT_TYPE = u'GI'
     
+    def search(self, by_name=None, by_code=None, by_type=None):
+        q = Product.query
+        if by_name:
+            q = q.filter(Product.name == by_name)
+        if by_code:
+            q = q.filter(Product.code == by_code)
+        if by_type:
+            q = q.filter(Product.product_type == by_type)
+        
+        return q.all()
+        
+    def get_base_products(self):
+        return Product.query.filter(Product.product_type == self.BASE_PRODUCT_TYPE).all()
+    
+    def get_custom_products(self):
+        return CustomGuaranteeIssueProduct.query.all()
+    
+    def create_custom_product(self, product_name):
+        product = CustomGuaranteeIssueProduct(name=product_name, code='')
+        return self.save(product)
+        
     def get_products_by_codes(self, codes):
         return Product.query.filter(Product.code.in_(codes)).all()
     
@@ -31,7 +55,8 @@ class ProductService(DBService):
             'FPPTI': FPPTI_states,
             'FPPCI': FPPCI_states,
         }
-
+    
+    
 FPPTI_states = [
     ("", ' ', False),
     ('AL', 'Alabama', False),

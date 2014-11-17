@@ -2,7 +2,6 @@
 AGENT pages and DOCUSIGN inbox
 """
 import os
-import csv
 
 from flask import render_template, redirect, url_for, flash, send_file
 from flask_stormpath import login_required, groups_required
@@ -79,20 +78,6 @@ def manage_case(case_id):
     
     return render_template('agent/case.html', **vars)
 
-
-
-@app.route("/manage_case/<case_id>/census_upload", methods=['POST'])
-@groups_required(["agents", "admins"], all=False)
-def upload_census_record(case_id):
-    case = case_service.get_if_allowed(case_id)
-    
-    result = post_census_records(case_id)
-    if result['errors']:
-        return render_template('agent/upload_errors.html', errors=result['errors'], records=result['records'],
-                               case=case)
-    
-    return redirect(url_for('manage_case', case_id=case_id))
-    
     
 @app.route("/manage_case/<case_id>/census/<census_record_id>")
 @groups_required(["agents", "admins"], all=False)

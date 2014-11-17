@@ -1,11 +1,11 @@
-import re
+from datetime import datetime
 
-from flask import Blueprint, request, abort, jsonify, redirect, url_for
+from flask import Blueprint, request, abort, make_response, jsonify, redirect, url_for
 from flask_stormpath import user, groups_required
 
 from taa import app
 from taa.core import TAAFormError
-from taa.helpers import get_posted_data, json_encode
+from taa.helpers import get_posted_data
 from taa.api import route
 from taa.services.cases import CaseService
 from taa.services.cases.forms import (
@@ -37,6 +37,7 @@ def get_cases():
     if agent:
         return case_service.search_cases(by_agent=agent.id, by_name=name_filter)
     
+    # Return all cases for admin
     if agent_service.is_user_admin(user):
         return case_service.search_cases(by_name=name_filter)
     
@@ -131,52 +132,19 @@ def update_case_enrollment_periods(case_id):
 @route(bp, "/<case_id>/census_records", methods=["GET"])
 @groups_required(api_groups, all=False)
 def census_records(case_id):
-    return case_service.get_census_records(case_service.get_if_allowed(case_id))
+    data = case_service.get_census_records(case_service.get_if_allowed(case_id))
+    
+    if request.args.get('format') == "csv":
+        body = case_service.export_census_records(data)
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        headers = {
+            "Content-Type": "text/csv",
+            "Content-Disposition": "attachment; filename=case_export_{0}.csv".format(date_str) 
+        }
+        return make_response(body, 200, headers)
+        
+    return data
 
-@route(bp, "/<case_id>/census_records_datatable", methods=["GET"])
-@groups_required(api_groups, all=False)
-def census_records_datatable(case_id):
-    """
-    Do server-side sorting and searching for the census record datatable for
-    large data sets.
-    """
-    case = case_service.get_if_allowed(case_id)
-    
-    offset = int(request.args.get('iDisplayStart', 0))
-    num_records = int(request.args.get('iDisplayLength', 25))
-    sEcho = int(request.args['sEcho'])
-    sSearch = request.args.get('sSearch', '')
-    sort_col = request.args.get('iSortCol_0')
-    sort_desc = request.args.get("sSortDir_0") == "desc"
-    if sort_col:
-        col_name = request.args.get('mDataProp_{0}'.format(sort_col), "employee_last")
-        sorting = col_name
-    else:
-        sorting = None
-    
-    columns = ['employee_ssn', 'employee_first', 'employee_last', 'employee_email',
-               'spouse_first', 'spouse_last']
-    
-    data = case_service.get_census_records(case, offset=offset, num_records=num_records,
-                                           search_text=sSearch, text_columns=columns,
-                                           sorting=sorting, sort_desc=sort_desc,
-                                           )
-    
-    def add_computed_columns(record):
-        data = record.to_json()
-        data['enrollment_status'] = ""
-        data['elected_coverage'] = False
-        return data
-    
-    total_record_count = case_service.count_census_records(case)
-    total_filtered_count = case_service.count_census_records(case, search_text=sSearch, text_columns=columns)
-    result = dict(
-        aaData=[add_computed_columns(record) for record in data],
-        iTotalRecords=total_record_count,
-        sEcho=sEcho,
-        iTotalDisplayRecords=total_filtered_count,
-    )
-    return json_encode(result)
     
 @route(bp, "/<case_id>/census_records", methods=["POST"])
 @groups_required(api_groups, all=False)
@@ -202,10 +170,9 @@ def post_census_records(case_id):
         errors, records = case_service.replace_census_data(case, file_obj.stream)
     
     # Return at most 20 errors at a time
+    # returns all added or changed records
     status = 400 if errors else 200
-    return dict(errors=errors[:20], records=[
-        case_service.census_records.get_record_dict(record) for record in records
-    ]), status
+    return dict(errors=errors[:20], records=records), status
     
 def has_csv_extension(filename):
     return '.' in filename and filename.lower().rsplit('.', 1)[1] == 'csv'

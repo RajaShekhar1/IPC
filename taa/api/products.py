@@ -3,19 +3,55 @@ from flask_stormpath import user, groups_required
 
 from taa.core import TAAFormError
 from taa.api import route
+from taa.helpers import get_posted_data
 from taa.services.products import ProductService
-from taa.services.cases.forms import NewCaseForm, UpdateCaseForm
+from taa.services.products.forms import NewProductForm, EditProductForm
 
 bp = Blueprint("products", __name__, url_prefix='/products')
+read_product_api_groups = ['agents', 'home_office', 'admins']
+write_product_groups = ['home_office', 'admins']
 
 product_service = ProductService()
 
 @route(bp, "/", methods=['GET'])
-@groups_required(['agents', 'admins'], all=False)
+@groups_required(read_product_api_groups, all=False)
 def get_products():
-    return product_service.all()
+    # TODO: Limit products returned if agent to base products and assigned products
+    search_params = dict(
+        by_name=request.args.get('by_name'),
+        by_type=request.args.get('by_type'),
+        by_code=request.args.get('by_code'),
+    )
+    return product_service.search(**search_params)
 
 @route(bp, "/<product_id>")
-@groups_required(['agents', 'admins'], all=False)
+@groups_required(read_product_api_groups, all=False)
 def get_product(product_id):
     return product_service.get_or_404(product_id)
+
+@route(bp, "/", methods=['POST'])
+@groups_required(write_product_groups, all=False)
+def create_product():
+    data = get_posted_data()
+    form = NewProductForm(form_data=data)
+    if form.validate_on_submit():
+        return product_service.create_custom_product(**data)
+    
+    raise TAAFormError(form.errors)
+ 
+@route(bp, "/<product_id>", methods=["PUT"])
+@groups_required(write_product_groups, all=False)
+def update_product(product_id):
+    product = product_service.get(product_id)
+    
+    form = EditProductForm()
+    if form.validate_on_submit():
+        return product_service.update(product, **get_posted_data())
+    
+    raise TAAFormError(form.errors)
+
+@route(bp, "/<product_id>", methods=["DELETE"])
+@groups_required(write_product_groups, all=False)
+def delete_product(product_id):
+    product_service.delete(product_service.get_if_allowed(product_id))
+    return None, 204

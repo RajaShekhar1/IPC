@@ -66,8 +66,8 @@ def enroll_start():
     
     agent = agent_service.get_logged_in_agent()
     
-    census_table = render_template('setup-enrollment-census-select.html', case=case, census_records=census_records) if case and census_records else None            
-    return render_template('setup-enrollment.html', 
+    census_table = render_template('enrollment/setup-enrollment-census-select.html', case=case, census_records=census_records) if case and census_records else None            
+    return render_template('enrollment/setup-enrollment.html', 
                            form=form, 
                            product_states=get_product_states(),
                            agent_cases=case_service.get_agent_cases(agent, only_enrolling=True),
@@ -85,7 +85,7 @@ def select_case():
     session['active_case_id'] = case_id
     census_records = [r.to_json() for r in case_service.get_census_records(case)]
     return jsonify(dict(
-        table=render_template('setup-enrollment-census-select.html', case=case, census_records=census_records)
+        table=render_template('enrollment/setup-enrollment-census-select.html', case=case, census_records=census_records)
     ))
 
 # Wizard
@@ -125,7 +125,7 @@ def in_person_enrollment():
     
     # refresh active_case
     session['active_case'] = {
-        'company_name': company_name,
+        'product_name': company_name,
         'situs_state': state,
         'situs_city': enroll_city,
         'product_code': product_code
@@ -134,7 +134,7 @@ def in_person_enrollment():
     wizard_data = {
         'state': state if state != 'XX' else None,
         'enroll_city': enroll_city,
-        'company_name': company_name,
+        'product_name': company_name,
         'product_id':product_code,
         'product_name': product.name,
         'employee_data':employee_data,
@@ -145,7 +145,7 @@ def in_person_enrollment():
     }
     
     return render_template(
-        'main-wizard.html', 
+        'enrollment/main-wizard.html', 
         wizard_data=wizard_data,
         states=get_states()
     )
@@ -186,7 +186,7 @@ def ds_landing_page():
     name = request.args['name']
     ds_event = request.args['event']
 
-    return render_template('completed-session.html',
+    return render_template('enrollment/completed-session.html',
                            session_type=session_type,
                            name=name,
                            ds_event=ds_event)
@@ -269,7 +269,7 @@ def email_link_handler():
     wizard_data = {
         'state': case.situs_state,
         'enrollment_city': case.situs_city,
-        'company_name': case.company_name,
+        'product_name': case.company_name,
         'product_id': case.product.code,
         'employee_first': enrollment.employee_first,
         'employee_last': enrollment.employee_last,
@@ -278,7 +278,7 @@ def email_link_handler():
         'health_questions': product.get_health_questions(),
     }
 
-    return render_template('main-wizard.html',
+    return render_template('enrollment/main-wizard.html',
                            wizard_data=wizard_data,
                            states=get_states(),
     )

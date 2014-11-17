@@ -73,28 +73,18 @@ def register_taa():
                 except:
                     print " -- Problem sending registration notice to admin --"
 
-
-                # If we're able to successfully create the user's account,
-                # we'll log the user in (creating a secure session using
-                # Flask-Login), then redirect the user to the
-                # STORMPATH_REDIRECT_URL setting.
-                #login_user(account, remember=True)
-
                 session['registered_name'] = data['given_name']
 
                 return redirect(url_for('confirmRegistration'))
             except StormpathError, err:
                 flash(err.user_message)
 
-    return render_template('register.html', 
-                           form = form
-            )
+    return render_template('user_account/register.html', form=form)
 
 @app.route("/registration_confirmed")
 def confirmRegistration():
-    return render_template('registration_complete.html',
+    return render_template('user_account/registration_complete.html',
                            name = session['registered_name'])
-#app.config['STORMPATH_REDIRECT_URL'] = '/registration_confirmed'
 
 
 @app.route('/login', methods = ['GET', 'POST'])
@@ -118,9 +108,12 @@ def login():
             # query parameter, or just the HOME page
 
             print "LOGIN: %s %s, (%s  activated=%s)" % (account.given_name, account.surname, account.email, account.custom_data.get('activated'))
-            is_admin = 'admins' in [g.name for g in account.groups]
-            print "Is ADMIN: %s, GROUPS: %s"%(is_admin, [g.name for g in account.groups])
-            if account.custom_data.get('activated') or is_admin:
+            account_groups = [g.name for g in account.groups]
+            is_agent = 'agents' in account_groups
+            is_home_office = 'home_office' in account_groups
+            is_admin = 'admins' in account_groups
+            print "Is ADMIN: %s, GROUPS: %s"%(is_admin, account_groups)
+            if is_admin or is_home_office or (is_agent and account.custom_data.get('activated')):
                 login_user(account, remember=True) 
                 session['username'] = user.given_name + " " + user.surname
                 session['headername'] = session['username']
@@ -129,18 +122,22 @@ def login():
                     session['headername'] += ", " + user.custom_data['agency']
                 
                 session['active_case'] = {
-                    'company_name': "",
+                    'product_name': "",
                     'situs_state': "",
                     'situs_city': "",
                     'product_code': ""
                 }
                 
-                AgentService().ensure_agent_in_database(user)
+                if is_agent:
+                    AgentService().ensure_agent_in_database(user)
                 
                 if is_admin:
-                    return redirect(url_for('admin'))
-                else:
+                    return redirect(request.args.get('next') or url_for('admin'))
+                elif is_agent:
                     return redirect(request.args.get('next') or url_for('home'))
+                else:
+                    # Home office
+                    return redirect(request.args.get('next') or url_for('home_office_dashboard'))
             else:
                 flash(account.given_name + ", your account (" + account.email + ") has not yet been activated.  Please wait for an email confirmation from the Enrollment Administrator.  If you submitted your registration more than 24 hours ago, feel free to contact admin@5StarEnroll.com with any questions.  Thank you.")
                 return redirect(url_for('login'))
@@ -148,7 +145,7 @@ def login():
         except StormpathError, err:
             flash(err.user_message)
 
-    return render_template('login.html',
+    return render_template('user_account/login.html',
                            form = form,
     )
 

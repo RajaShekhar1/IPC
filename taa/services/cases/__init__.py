@@ -2,6 +2,7 @@ from dateutil.parser import parse
 from datetime import datetime
 import re
 import csv
+import StringIO
 
 from flask import abort
 from flask_stormpath import current_user
@@ -124,6 +125,11 @@ class CaseService(DBService):
 
         return query.all()
 
+    def export_census_records(self, records):
+        stream = StringIO.StringIO()
+        self.census_records.export_csv(stream, records)
+        return stream.getvalue()
+
     def count_census_records(self, case, search_text=None, text_columns=None):
         query = self.census_records.find(case_id=case.id)
         if search_text and text_columns:
@@ -244,6 +250,25 @@ class CensusRecordService(DBService):
             completed_enrollment="---",
             elected_coverage="---",
         )
+    
+    def export_csv(self, file, census_records):
+        writer = csv.writer(file)
+        
+        # Write the header row
+        writer.writerow( [field.csv_column_name
+               for field in CensusRecordParser.all_possible_fields
+        ])
+        
+        # Write all the data
+        for record in census_records:
+            row = [getattr(record, field.database_name)
+                   for field in CensusRecordParser.all_possible_fields
+            ]
+            writer.writerow(row)
+            
+        # Todo: include data about enrollment options?    
+        
+        return writer
     
     def format_ssn(self, ssn):
         if not len(ssn) == 9:

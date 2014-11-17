@@ -48,10 +48,48 @@ function submit_data(method, url, data, should_process_data, on_success, on_erro
 function submit_to_url(url, data) {
     var form = document.createElement('form');
     for (k in data) {
-        $("<input>", {name: k, value: data[k]}).appendTo(form);
+        if (data.hasOwnProperty(k)) {
+            $("<input>", {name: k, value: data[k]}).appendTo(form);
+        }
     }
     
     form.method = "POST"; 
     form.action = url;
     form.submit();
+}
+
+
+// Errors
+function show_all_errors(all_errors) {
+    if (all_errors.length == 0) {
+        return;
+    }
+        
+    $(".submit-message").addClass("error").html("Please fix the indicated problems and resubmit.").show();
+    $.each(all_errors, function(field_name, errors) {
+        show_errors(field_name, errors);
+        return false;
+    });
+    focus_first_error(all_errors);
+}
+
+function show_errors(field_name, field_error_messages) {
+    get_field(field_name).after(
+        $("<div>").addClass("error").html(field_error_messages.join("<br>"))
+    );
+}
+
+function get_field(field_name) {
+    return $("textarea[name="+field_name+"], select[name="+field_name+"], input[name="+field_name+"]");
+}
+
+function focus_first_error(errors) {
+    $.each(errors, function(field_name, errors) {
+        get_field(field_name).focus();
+    })
+}
+
+function hide_all_errors() {
+    $(".error").hide();
+    $(".submit-message").removeClass("error").hide();
 }

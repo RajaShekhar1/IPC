@@ -100,7 +100,7 @@ def create_envelope_and_get_signing_url(wizard_data):
     
     # for now, just pull into former variables we've been using
     recipName = wizard_data["agent_data"]["employee"]["first"] + " " + wizard_data["agent_data"]["employee"]["last"]
-    employer = wizard_data["agent_data"]["company_name"]
+    employer = wizard_data["agent_data"]["product_name"]
     emailTo = wizard_data["agent_data"]["employee"]["email"]
     
     if emailTo == "" or emailTo == None:
@@ -207,7 +207,7 @@ def create_envelope_and_get_signing_url(wizard_data):
         {"tabLabel" : "eePremium",
          "value" : eePremium if employeeCoverage !=eeCoverageNullToken else ""} ,
         {"tabLabel" : "Employer",
-         "value" : wizard_data["agent_data"]["company_name"]},
+         "value" : wizard_data["agent_data"]["product_name"]},
         {"tabLabel" : "eeOtherOwnerName",
          "value" : wizard_data["employee_other_owner_name"] if wizard_data["employee_owner"] == "other" else  ""} ,
         {"tabLabel" : "eeOtherOwnerName2",

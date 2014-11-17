@@ -1,0 +1,171 @@
+{% extends "home_office/home_office_base.html" %}
+{% set active_page = 'nav_customproducts' -%}
+{% block title %} - Manage Products{% endblock %}
+
+{% block content %}
+    <h1 class="header lighter">Custom Products</h1>
+    
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="table-header clearfix">
+                
+                <div class="pull-right">
+                    <a class="btn btn-info" data-toggle="modal" data-target="#new-modal">
+                        <i class="icon icon-plus"></i>    
+                        Create New Custom Product
+                    </a>
+                </div>
+            </div>
+            {% if not custom_products %}
+                <div class="row">
+                    <h4 class="text-center lighter">There are no custom products.</h4>
+                </div>
+            {% else %}
+                <div class="table-responsive">
+                    <table id="table-list" class="table table-striped table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>GI Amount</th>
+                                <th>Number of Agents</th>
+                            </tr>
+                        </thead>
+                        <tbody> 
+                        {% for product in custom_products %}
+                            <tr>
+                                <td><a href="{{ url_for("manage_custom_product", product_id=product.id) }}">{{ product.name }}</a></td>
+                                <td>{{ product.type }}</td>
+                                <td>{{ product.formatted_gi_amount }}</td>
+                                <td>{{ product.number_of_agents }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+            
+        </div>
+    </div>
+        
+    <form class="new-form form-horizontal" data-bind="submit: create_product">
+    <div id="new-modal" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span
+                        aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title">Create Custom Product</h4>
+                </div>
+                <div class="modal-body">
+                    
+                    <div class="form-group">
+                        <label class="col-md-3 control-label" for="product_name">Product Name</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" id="product_name" name="name" placeholder="Name"
+                                minlength="1" required data-bind="textInput: product_name">
+                        </div>
+                        <div class="col-md-1">
+                            <div class="icon-spinner text-warning bigger-125" data-bind="visible: product_name.is_checking"></div>
+                            <div class="icon icon-check-sign green bigger-125" data-bind="visible: product_name.is_unique() && !product_name.is_checking()"></div>
+                        </div>
+                    </div>
+                    <div class="row"> 
+                        <div class="col-md-8 col-md-offset-3">
+                            <div class="error" data-bind="visible: product_name.has_been_checked, text: get_form_error"></div>
+                        </div>
+                    </div>
+                </div>
+                    
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" data-bind="click: create_product" class="btn btn-primary">Create Product</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+        
+    </form>
+    
+    
+    
+{% endblock %}
+
+
+{% block page_js %}
+<script>
+$(function() {
+    var new_form = $('.new-form');
+    new_form.validate({
+        messages: {name: "Product name is required"}
+    });
+    
+    function ManageProductsPage() {
+        var self = this;
+        
+        self.product_name = ko.observable(null).extend({ rateLimit: 500 });
+        self.product_name.has_been_checked = ko.observable(false);
+        self.product_name.is_checking = ko.observable(false);
+        self.product_name.is_unique = ko.observable(null);
+        
+        self.check_name_uniqueness = function(value) {
+            // Reset tracking vars
+            self.product_name.is_checking(true);
+            self.product_name.has_been_checked(false);
+            
+            $.get("{{ url_for("products.get_products") }}", {by_name: value}, function(result) {
+                self.product_name.is_unique(result.data.length == 0);
+                self.product_name.is_checking(false);
+                self.product_name.has_been_checked(true);
+            }, "json");
+        };
+        
+        self.product_name.subscribe(self.check_name_uniqueness);
+        
+        self.get_form_error = ko.computed(function() {
+            if ($.trim(self.product_name()) == "") {
+                return "Product name is required.";
+            } else if (!self.product_name.is_unique()) {
+                return "The name '"+self.product_name()+"' is already used."
+            }
+            return "";
+        });
+        
+        self.create_product = function() {
+            // validate UI
+            new_form.valid();
+            
+            var errors = self.get_form_error();
+            if (errors) {
+                return false;
+            }
+            var data = {
+                product_name: $("#product_name").val()
+            };
+            
+            $.ajax("{{ url_for("products.create_product") }}", {
+                type: 'POST',
+                processData: false,
+                contentType:'application/json',
+                data: JSON.stringify(data),
+                dataType:'json',
+                success: function(results) {
+                    window.location.href = "{{ url_for("manage_custom_product", product_id="") }}"+results.data.id;
+                },
+                error: function(xhr) {
+                    console.log(xhr.responseJSON.errors)
+                }
+            });
+        };
+    }
+    
+    $("#table-list").dataTable();
+    
+    var form = new ManageProductsPage();
+    window.form = form;
+    ko.applyBindings(form); 
+});
+</script>
+{% endblock %}

@@ -123,3 +123,14 @@ div.alphabet span.active {
 input[type=checkbox].ace.ace-switch.ace-switch-6:checked+.lbl::before {
     background-color: green;
 }
+
+.criteria-select {
+    padding: .25em;
+}
+.criteria-select select {
+    margin: 0 1em 0 .5em; 
+}
+
+.enrollment-section .collapse-panel {
+    padding-left: 3em;
+}

@@ -50,53 +50,59 @@
   </head>
   <body>
 
+{# Agent menu #}
+{% if not nav_menu %}
+    {% set nav_menu = [
+        dict(nav_name='nav_home', url_name='home', display='Home'),
+        dict(nav_name='nav_manage_cases', url_name='manage_cases', display='Manage Cases'),
+        dict(nav_name='nav_enroll', url_name='enroll_start', display='Enroll'),
+        dict(nav_name='nav_agentsign', url_name='inbox', display='Sign'),
+    ] %}
+{% endif %}
 
-    {% block navbar%}
+{% block navbar %}
     <div class="header">
-      {% if include_navmenu|default(True) %}
-      <ul class="nav nav-pills pull-right">
-	    <li class={% if active_page == 'nav_home' %}"active"{% else %}"inactive"{% endif %} id="nav_home">
-          <a href="{{ url_for ('home') }}">Home</a>
-        </li>
-        <li class={% if active_page == 'nav_manage_cases' %}"active"{% else %}"inactive"{% endif %}>
-          <a  href="{{ url_for ('manage_cases') }}">Manage Cases</a>
-        </li>
-        <li class={% if active_page == 'nav_enroll' %}"active"{% else %}"inactive"{% endif %} id="nav_enroll">
-          <a  href="{{ url_for ('enroll_start') }}">Enroll</a>
-        </li>
-        <li class={% if active_page == 'nav_agentsign' %}"active"{% else %}"inactive"{% endif %} id="nav_agentsign">
-          <a href="{{ url_for ('inbox') }}">Sign</a>
-        </li>
-        <li id="nav_logout">
-            <a href="{{ url_for ('taa_logout') }}">Logout</a>
-        </li>
-      </ul>
-      {% endif %}
-      <table>
-	<tr>
-	  <td valign="center">
-	    {% if link_logo|default(True) %}
-	    <a  href="/"><img src={{ logopath }}/></a>
-	    {% else %}
-	    <img src="/static/img/5Star_logo_TAA.png"/>
-	    {% endif %}
-	  </td>
-	  <td valign="center">
-	    <h3 class="text-muted">{{ header_title|default('Enrollment') }}
-	      {% if 'headername' in session.keys() %}
-	      <br>
-	      <span class="blue smaller-60 lighter">
-		{{session['headername']}}
-	      </span>
-	      {% endif %}
-	    </h3>
-	  </td>
-	</tr>
-      </table>
+        {% if include_navmenu |default(True) %}
+            <ul class="nav nav-pills pull-right">
+                {% for menu_item in nav_menu %}
+                    <li class=
+                            {%- if active_page == menu_item.nav_name -%}
+                                "active"
+                            {%- else -%}
+                                "inactive"
+                            {%- endif -%}
+                    >
+                        <a href="{{ url_for(menu_item.url_name) }}">{{ menu_item.display }}</a>
+                    </li>
+                {% endfor %}
+                <li id="nav_logout">
+                    <a href="{{ url_for('taa_logout') }}">Logout</a>
+                </li>
+            </ul>
+        {% endif %}
+        <table>
+        <tr>
+        <td valign="center">
+        {% if link_logo|default(True) %}
+        <a  href="/"><img src={{ logopath }}/></a>
+        {% else %}
+        <img src="/static/img/5Star_logo_TAA.png"/>
+        {% endif %}
+        </td>
+        <td valign="center">
+        <h3 class="text-muted">{{ header_title|default('Enrollment') }}
+          {% if 'headername' in session.keys() %}
+          <br>
+          <span class="blue smaller-60 lighter">
+        {{session['headername']}}
+          </span>
+        {% endif %}
+        </h3>
+        </td>
+        </tr>
+        </table>
     </div>    
-
-    
-    {% endblock %}
+{% endblock %}
 
     <div class="container page">
         <div class="content">

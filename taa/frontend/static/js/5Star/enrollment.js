@@ -65,7 +65,7 @@ function WizardUI(product, defaults) {
     self.enrollState = defaults.state;
     self.was_state_provided = ("state" in defaults && defaults.state !== null && defaults.state != "XX");
     
-    self.company_name = ko.observable(defaults.company_name || "(Unknown Company)");
+    self.product_name = ko.observable(defaults.product_name || "(Unknown Company)");
     
     self.existing_insurance = "no";
     self.replacing_insurance = "no";
