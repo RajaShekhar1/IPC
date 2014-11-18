@@ -67,7 +67,7 @@ class EnrollmentEmail(object):
         msg = MIMEMultipart()
         msg['From'] = self.from_address
         msg['To'] = to_user
-        msg['Subject'] = "Enrollment Request:  {employee_first} {employee_last} ({product_name}) - {product_name}".format(
+        msg['Subject'] = "Enrollment Request:  {employee_first} {employee_last} ({company_name}) - {product_name}".format(
             employee_first=enrollment_request.enrollment.employee_first,
             employee_last=enrollment_request.enrollment.employee_last,
             company_name=enrollment_request.enrollment.case.company_name,

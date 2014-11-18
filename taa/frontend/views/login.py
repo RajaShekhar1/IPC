@@ -122,7 +122,7 @@ def login():
                     session['headername'] += ", " + user.custom_data['agency']
                 
                 session['active_case'] = {
-                    'product_name': "",
+                    'company_name': "",
                     'situs_state': "",
                     'situs_city': "",
                     'product_code': ""

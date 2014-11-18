@@ -125,7 +125,7 @@ def in_person_enrollment():
     
     # refresh active_case
     session['active_case'] = {
-        'product_name': company_name,
+        'company_name': company_name,
         'situs_state': state,
         'situs_city': enroll_city,
         'product_code': product_code
@@ -134,7 +134,7 @@ def in_person_enrollment():
     wizard_data = {
         'state': state if state != 'XX' else None,
         'enroll_city': enroll_city,
-        'product_name': company_name,
+        'company_name': company_name,
         'product_id':product_code,
         'product_name': product.name,
         'employee_data':employee_data,
@@ -269,7 +269,7 @@ def email_link_handler():
     wizard_data = {
         'state': case.situs_state,
         'enrollment_city': case.situs_city,
-        'product_name': case.company_name,
+        'company_name': case.company_name,
         'product_id': case.product.code,
         'employee_first': enrollment.employee_first,
         'employee_last': enrollment.employee_last,

@@ -9,7 +9,7 @@ and set up a virtual environment for python:
 
     sudo apt-get update
     sudo apt-get upgrade
-    sudo apt-get install python-dev python-pip postgresql-server-dev-9.3 nginx php5-fpm phppgadmin php5-pgsql git
+    sudo apt-get install python-dev python-pip postgresql-9.3 postgresql-client-9.3 postgresql-server-dev-9.3 nginx php5-fpm phppgadmin php5-pgsql git
     sudo pip install virtualenv
     cd <root folder, i.e. /vagrant>
     virtualenv ~/env
@@ -19,7 +19,7 @@ and set up a virtual environment for python:
 Then create the database:
 
     sudo -u postgres createdb -T template0 -E utf-8 taa
-    adduser taa
+    sudo adduser taa
     <type password that matches config file (DATABASE_URI)>
     sudo -u postgres psql template1
     CREATE USER taa WITH PASSWORD '<DB PASSWORD>';

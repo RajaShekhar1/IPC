@@ -56,7 +56,7 @@ def upgrade():
     )
     op.create_table('cases',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('product_name', sa.String(), nullable=False),
+    sa.Column('company_name', sa.String(), nullable=False),
     sa.Column('situs_state', sa.String(length=2), nullable=False),
     sa.Column('situs_city', sa.String(), nullable=True),
     sa.Column('agent_id', sa.Integer(), nullable=True),
