@@ -51,7 +51,9 @@ var case_management = (function() {
                 // Initialize DataTable
                 table_settings.aaData = resp.data;
                 table.dataTable(table_settings);
-                init_callback(table);
+                if (init_callback !== undefined) {
+                    init_callback(table);
+                }
             }
         });
     }
