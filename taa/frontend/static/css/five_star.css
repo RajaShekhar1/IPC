@@ -134,3 +134,8 @@ input[type=checkbox].ace.ace-switch.ace-switch-6:checked+.lbl::before {
 .enrollment-section .collapse-panel {
     padding-left: 3em;
 }
+
+/* Difficulty getting ace-switch to look padding with a label */
+input[type=checkbox].ace.ace-switch+.lbl.padding-16::before {
+    margin-right: 8px;
+}

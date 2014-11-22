@@ -2,12 +2,14 @@
 AGENT pages and DOCUSIGN inbox
 """
 import os
+import json
 
 from flask import render_template, redirect, url_for, flash, send_file
 from flask_stormpath import login_required, groups_required
 
 from taa import app
-from taa.api.cases import census_records, post_census_records
+from taa.helpers import JSONEncoder
+from taa.api.cases import census_records
 from taa.services.docusign.docu_console import console_url
 from taa.services.cases import CaseService
 from taa.services.cases.forms import (
@@ -16,11 +18,13 @@ from taa.services.cases.forms import (
     UpdateCaseForm
 )
 from taa.services.agents import AgentService
-from taa.model.DocuSign_config import sessionUserApprovedForDocusign
+from taa.services.products import ProductService
+from taa.services.docusign.DocuSign_config import sessionUserApprovedForDocusign
 from taa.model.Enrollment import get_product_states, get_product_choices, get_all_states
 
 case_service = CaseService()
 agent_service = AgentService()
+product_service = ProductService()
 
 @app.route("/inbox", methods =['GET'])
 @login_required
@@ -53,10 +57,12 @@ def manage_case(case_id):
     
     vars = {'case':case}
     
-    vars['product_choices'] = get_product_choices()
+    # TODO: limit to agent product choices
+    agent = agent_service.get_logged_in_agent()
+    vars['product_choices'] = [p for p in product_service.get_products_for_agent(agent)]
     vars['product_states'] = get_product_states()
     vars['all_states'] = get_all_states()
-
+    
     case_setup_form = UpdateCaseForm(obj=case)
     vars['case_setup_form'] = case_setup_form
     if not case.products:

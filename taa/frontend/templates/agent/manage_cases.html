@@ -68,7 +68,9 @@
                     <label class="col-md-3 control-label" for="company_name">Company Name</label>
                     <div class="col-md-8">
                         <input type="text" class="form-control" id="company_name" name="company_name" placeholder="Company Name"
-                            minlength="1" required data-bind="textInput: company_name">
+                            minlength="1" required data-bind="textInput: company_name, uniqueNameValidation: {
+                                remoteMethod: check_unique_name, uniqueObservable: company_name
+                            }">
                     </div>
                     <div class="col-md-1">
                         <div class="icon-spinner text-warning bigger-125" data-bind="visible: company_name.is_checking"></div>
@@ -110,23 +112,15 @@
             var self = this;
             
             self.company_name = ko.observable(null).extend({ rateLimit: 500 });
-            self.company_name.has_been_checked = ko.observable(false);
-            self.company_name.is_checking = ko.observable(false);
-            self.company_name.is_unique = ko.observable(null);
             
-            self.check_name_uniqueness = function(value) {
-                // Reset tracking vars
-                self.company_name.is_checking(true);
-                self.company_name.has_been_checked(false);
+            self.check_unique_name = function(current_value, callback) {
                 
-                $.get("{{ url_for("cases.get_cases") }}", {by_name: value}, function(result) {
-                    self.company_name.is_unique(result.data.length == 0);
-                    self.company_name.is_checking(false);
-                    self.company_name.has_been_checked(true);
+                $.get("{{ url_for("cases.get_cases") }}", {by_name: current_value}, function(result) {
+                    var is_unique = (result.data.length == 0);
+                    callback(is_unique);
                 }, "json");
-            };
             
-            self.company_name.subscribe(self.check_name_uniqueness);
+            };
             
             self.get_form_error = ko.computed(function() {
                 if ($.trim(self.company_name()) == "") {

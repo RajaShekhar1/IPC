@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_ace_1.3.1.html" %}
 {% from "form_macros.html" import render_field_with_errors %}
 {% from "form_macros.html" import render_switch %}
 {% set active_page = 'nav_agent_manage_case' -%}
@@ -7,19 +7,18 @@
 {% block content %}
     
     <div class="row">
-        <div class="col-md-12">
-            <form class="form-horizontal case_setup">
+        <div class="col-md-12 case-setup-section">
+            <form class="form-horizontal case_setup" data-bind="submit: save_settings">
                     
             <div class="widget-box">
                 <div class="widget-header">
                     <div class="row">
-                        <h3 class="col-xs-6">{{ case.company_name }}</h3>
+                        <h3 class="col-xs-6" data-bind="text: company_name">{{ case.company_name }}</h3>
                         
                         <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
-                            <label>
-                                <span data-bind="text: switch_label">Case is Active</span> 
-                                {{ case_setup_form.active(class_="ace ace-switch ace-switch-6")|safe }}
-                                <span class="lbl"></span>    
+                            <label style="margin-right: 15px;">
+                                {{ case_setup_form.active(class_="ace ace-switch ace-switch-6", **{'data-bind': 'checked: is_active'})|safe }}
+                                <span class="lbl padding-16"  data-bind="text: switch_label">Case is Active</span>    
                             </label>
                         </h3>
                     </div>
@@ -30,28 +29,38 @@
                         <div class="row">
                             <div class="col-md-5 col-xs-12">
                                 <h3 class="header lighter blue">Settings</h3>
-                                {{ render_field_with_errors(case_setup_form.company_name) }}
                                 
-                                {# {{ render_field_with_errors(case_setup_form.products) }}  #}
-                                {# Use the single-select product form for now #}
-                                <div class="form-group">
-                                    <label class="col-md-3 control-label" for="case_product">Product</label>
-                                    <div class="col-md-9">
-                                        <select id="case_product" name="case_product" class="form-control">
-                                            <option></option>
-                                            {% for product in product_choices %}
-                                                <option value="{{product['short_name']}}" 
-                                                {%- if product["disabled"] -%}
-                                                disabled="1"
-                                                {%- endif -%}
-                                                {%- if case_product and case_product.code == product.short_name -%}
-                                                selected="1"
-                                                {%- endif -%}
-                                                >{{product["name"]}}</option>
-                                            {% endfor %}
-                                        </select>
+                                    <div class="form-group">
+                                        <label class="col-md-3 control-label" for="company_name">Company Name</label>
+                                        <div class="col-md-8">
+                                            {{ case_setup_form.company_name(**{
+                                            'data-bind': "textInput: company_name, uniqueNameValidation: {remoteMethod: check_unique_name, uniqueObservable: company_name}",
+                                            'minlength':'1',
+                                            }) 
+                                                }}
+                                            {# <input type="text" class="form-control" id="company_name" name="company_name" placeholder="Company Name"
+                                                minlength="1" required data-bind="textInput: , uniqueNameValidation: {
+                                                    remoteMethod: check_unique_name, uniqueObservable: case_data().company_name
+                                                }">
+                                             #}
+                                            <div class="row"> 
+                                                <div class="col-md-12">
+                                                    <div class="error" data-bind="visible: company_name.has_been_checked, text: get_form_error"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-1">
+                                            <div class="icon-spinner text-warning bigger-125" data-bind="visible: company_name.is_checking"></div>
+                                            <div class="icon icon-check-sign green bigger-125" data-bind="visible: company_name.is_unique() && !company_name.is_checking()"></div>
+                                        </div>
                                     </div>
-                                </div>
+                                    
+                                
+                                {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsValue: "id", optionsText: "name", selectedOptions: products, multiSelect: {
+                                    observed: products, 
+                                    options: {nonSelectedText: "No Products Selected", numberDisplayed: 1}
+                                }'}) }}
+                                
                             
                                 {# Situs state 
                                 <div class="form-group">
@@ -70,8 +79,8 @@
                                     </div>
                                 </div>
                                 #}
-                                {{ render_field_with_errors(case_setup_form.situs_city) }}
-                                {{ render_field_with_errors(case_setup_form.situs_state, id="case_state") }}
+                                {{ render_field_with_errors(case_setup_form.situs_city, **{'data-bind':'value: situs_city'}) }}
+                                {{ render_field_with_errors(case_setup_form.situs_state, id="case_state", **{'data-bind':'value: situs_state'}) }}
                                 
                             </div>
                             <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
@@ -115,7 +124,10 @@
                         </div>
                     </div>
                     <div class="widget-toolbox clearfix padding-8">
-                        <button type="submit" class="btn-primary btn-sm pull-right">Save</button>
+                        <button type="submit" class="btn-primary btn-sm pull-right" data-bind="
+                        {# enable: has_unsaved_data,  #}
+                        css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}
+                        ">Save</button>
                     </div>
                 </div>
             </div>
@@ -134,15 +146,21 @@
         <div class="col-xs-12">
             <div class="widget-box">
                 <div class="widget-header">
-                    <h3>Case Census</h3>
-                    <a href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
-                        <i class="icon icon-download-alt"></i>
-                            Download Census
-                    </a>
-                    <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal" >
-                        <i class="icon icon-upload"></i>
-                            Upload Census
-                    </button>
+                    <div class="row">
+                        <div class="col-md-6"><h4 class="bigger-150">Case Census</h4></div>
+                        <div class="col-md-6">
+                            <a href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
+                                <i class="icon icon-download-alt"></i>
+                                    Download Census
+                            </a>
+                            <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal" >
+                                <i class="icon icon-upload"></i>
+                                    Upload Census
+                            </button>
+                        </div>
+                    </div>
+                    
+                    
                     
                 </div>
                 <div class="widget-body">
@@ -340,81 +358,44 @@
 {% block page_js %}
     <script src="{{ url_for("static", filename="js/5Star/product_state_select.js") }}"></script>
     <script>
-    $(function() {
-        
-        function refresh_census_table() {
-            // show loading message under the table
-            var loading = $("#census-table-loading");
-            var table = $("#census-records-table");
-            
-            loading.html("<span class='icon-spinner icon-spin grey bigger-200'></span> Loading data...");
-            if ($.fn.DataTable.fnIsDataTable(table.get(0))) {
-                table.dataTable().fnClearTable();
-            }
-            $.get("{{ url_for("cases.census_records", case_id=case.id) }}", {}, function(resp) {
-                
-                loading.html("");
-                if ($.fn.DataTable.fnIsDataTable(table.get(0))) {
-                    table.dataTable().fnAddData(resp.data);
-                } else if (resp.data.length > 0){
-                    table.show();
-                    $(".no-census-header").hide();
-                    table.dataTable({
-                        "aaData": resp.data,
-                        "aoColumnDefs":[
-                            {"bSortable": false, "aTargets":[0], "mData":function(source) {
-                                return "<a href='/manage_case/{{case.id}}/census/"+source.id+"'><span class='glyphicon glyphicon-edit'></span></a>";
-                            }},
-                            {"aTargets":[1], "mData": "employee_ssn"},
-                            {"aTargets":[2], "mData": "employee_first"},
-                            {"aTargets":[3], "mData": "employee_last"},
-                            {"aTargets":[4], "mData": "employee_email"},
-                            {"aTargets":[5], "mData": "spouse_first"},
-                            {"aTargets":[6], "mData": "spouse_last"},
-                            //{"aTargets":[7], "mData": "enrollment_status"},
-                            //{"aTargets":[8], "mData": "elected_coverage"},
-                            
-                            //{ "sWidth": "50px", "aTargets": [7] },
-                            //{ "sWidth": "50px", "aTargets": [8] },
-                        ],
-                        "aaSorting": [[ 3, "asc" ]],
-                        "iDisplayLength": 25
-                    });
-                }
-            });
+    
+    function add_case_error(errors, field_name, message) {
+        if (field_name in errors) {
+            errors[field_name].push(message);
+        } else {
+            errors[field_name] = [message];
         }
-        
+    }
+    
+    function get_form_data(form) {
+        // Returns the form data as a javascript object. 
+        var data = $(form).serializeArray();
+        var data_object = {};
+        $.each(data, function() {
+            var key = this.name;
+            var val = this.value;
+            if (key in data_object && data_object.length === undefined) {
+                // Convert multi-selects to a list (key present more than once)
+                data_object[key] = [data_object[key]];
+                data_object[key].push(val);
+            } else if (key in data_object) { 
+                data_object[key].push(val);
+            } else {
+                data_object[key] = val;
+            }
+        });
+        return data_object;
+    }
+    
+    $(function() {
         // Load data now
-        refresh_census_table();
-        
+        case_management.refresh_census_table({{ case.id }}, "{{ url_for("cases.census_records", case_id=case.id) }}", 
+            "#census-records-table", "#census-table-loading");
         
         // Change enabled states when the product is changed
         product_state_select.init("#case_state","#case_product", {{ product_states | tojson | safe }});
         
-        $("form.case_setup").on('submit', function() {
-            var form_data = $(this).serialize();
-            var case_request = send_form_data(
-                "PUT", 
-                "{{ url_for("cases.update_case", case_id=case.id) }}",
-                form_data
-            );
-            
-            //var period_form_data = $("form.period_setup").serialize();
-            var periods_request = send_form_data(
-                "PUT", 
-                "{{ url_for("cases.update_case_enrollment_periods", case_id=case.id) }}",
-                form_data
-            );
-            var on_success = function(case_xhr, periods_xhr) {
-                alert("Saved");
-            };
-            var on_failure = function(case_xhr, periods_xhr) {
-                alert("There was a problem saving the data.");
-            };
-            $.when(case_request, periods_request).then(on_success, on_failure);
-            
-            return false; 
-        });
+        //$("form.case_setup").on('submit', );
         
         $('#csv-file-input').ace_file_input({
             no_file:'No File ...',
@@ -447,26 +428,8 @@
                     census_errors_panel.num_data_records(resp.data.records.length);
                     show_success_panel();
                     // Update the datatable
-                    refresh_census_table();
-                    /*
-                    var new_rows = [];
-                     
-                    $.each(resp.data.records, function() {
-                       var record = this;
-                       new_rows.push([
-                           '<a href="/manage_case/{{case.id}}/census/'+record.id+'"><span class="glyphicon glyphicon-edit"></span></a>',
-                           record.ssn,
-                            record.first,
-                            record.last,
-                            record.email,
-                            record.sp_first,
-                            record.sp_last,
-                            record.completed_enrollment,
-                            record.elected_coverage
-                       ]);
-                    });
-                    table.dataTable().fnAddData(new_rows);
-                    */
+                    case_management.refresh_census_table({{ case.id }},"{{ url_for("cases.census_records", case_id=case.id) }}", 
+                                                         "#census-records-table", "#census-table-loading");
                 }, function(xhr) {
                     if (xhr.status >= 400 && xhr.status < 500) {
                         show_error_panel();
@@ -528,6 +491,160 @@
         window.census_errors_panel = new CensusErrorsPanel();
         ko.applyBindings(census_errors_panel, $("#census-upload-modal")[0]);
         
+        var CaseSettingsPanel = function(case_data, product_choices) {
+            var self = this;
+            
+            self.company_name = ko.observable(case_data.company_name || "").extend({ rateLimit: 1000 });
+            self.product_choices = product_choices;
+            self.products = ko.observableArray($.map(case_data.products, function(p) {return p.id}));
+            self.enrollment_period_type = ko.observable(case_data.enrollment_period_type);
+            self.enrollment_periods = ko.observable(case_data.enrollment_periods);
+            self.situs_city = ko.observable(case_data.situs_city);
+            self.situs_state = ko.observable(case_data.situs_state);
+            self.is_active = ko.observable(case_data.active);
+            
+            // enrollment data
+            //self.open_period_start_date = ko.observable();
+            
+            self.is_data_dirty = ko.observable();
+            self.flash_message = ko.observable("");
+            
+            // subscribe to all changes to detect data changes
+            $.each([self.company_name, self.products, self.enrollment_period_type, 
+                    self.enrollment_periods, self.situs_city, self.situs_state, 
+                    self.is_active], function() {
+                this.subscribe(function() {
+                    self.is_data_dirty(true); 
+                });
+            });
+            
+            self.can_activate_case = ko.computed(function() {
+                 return (
+                     self.enrollment_period_type != null && 
+                     self.enrollment_periods().length > 0 &&
+                     self.products().length > 0 && $.trim(self.company_name) != "" && 
+                     $.trim(self.situs_city) != "" && 
+                     $.trim(self.situs_state) != ""
+                 )
+            });
+            
+            self.is_active.subscribe(function(value) {
+                
+                if (value && !self.can_activate_case()) {
+                    alert("You can't activate this case until xyz are done");
+                    console.log("You can't activate this case until xyz are done");
+                    self.is_active(false);
+                }
+            });
+            
+            
+            self.switch_label = ko.computed(function() {
+                if (self.is_active()) {
+                    return "Case is Active";
+                } else {
+                    return "Case is Not Active";
+                }
+            });
+            
+            self.get_form_error = ko.computed(function() {
+                if ($.trim(self.company_name()) == "") {
+                    return "Company name is required.";
+                } else if (self.company_name.is_unique !== undefined && 
+                           !self.company_name.is_unique()) {
+                    return "The name '"+self.company_name()+"' is already used."
+                }
+                return "";
+            });
+            
+            self.check_unique_name = function(current_value, callback) {
+                $.get("{{ url_for("cases.get_cases") }}", {by_name: current_value}, function(result) {
+                    var is_unique = (result.data.length == 0 || current_value == case_data.company_name);
+                    callback(is_unique);
+                }, "json");
+            
+            };
+            
+            self.validate = function() {
+                
+                hide_all_errors();
+                
+                // unique name error
+                var form_error = self.get_form_error();
+                if (form_error) {
+                    return false;
+                }
+                
+                // all other errors
+                var errors = {}; 
+                if ($.trim(self.company_name()) == "") {
+                    add_case_error(errors, "company_name", "Required");
+                }
+                
+                if (Object.keys(errors).length > 0) {
+                    show_all_errors(errors);
+                    return false;
+                }
+                
+            };
+            
+            self.serialize_case = function() {
+                var products = [];
+                $.each(self.product_choices, function() {
+                     if (self.products.indexOf(this.id) >= 0) {
+                         products.push(this);
+                     }
+                });
+                return {
+                    company_name: self.company_name(),
+                    active: self.is_active(),
+                    products:  products,
+                    enrollment_period_type: self.enrollment_period_type(),
+                    situs_city: self.situs_city(),
+                    situs_state: self.situs_state()
+                }  
+            };
+            
+            self.save_settings = function() {
+                var form_data = get_form_data($(".case-setup-section form")[0]);
+                //form_data.active = self.is_active();
+                
+                self.validate();
+                
+                var case_request = send_json_data(
+                    "PUT", 
+                    "{{ url_for("cases.update_case", case_id=case.id) }}",
+                    self.serialize_case()
+                );
+                
+                //var period_form_data = $("form.period_setup").serialize();
+                var periods_request = send_form_data(
+                    "PUT", 
+                    "{{ url_for("cases.update_case_enrollment_periods", case_id=case.id) }}",
+                    form_data
+                );
+                var on_success = function(case_xhr, periods_xhr) {
+                    self.is_data_dirty(false);
+                    self.flash_message("Data Saved");
+                };
+                var on_failure = function(case_xhr, periods_xhr) {
+                    alert("There was a problem saving the data.");
+                };
+                $.when(case_request, periods_request).then(on_success, on_failure);
+                
+                return false; 
+            };
+            
+            $(window).bind("beforeunload", function() { 
+                return self.has_unsaved_data() ? "You have made changes without saving. Do you you wish to leave this page and lose all changes?" : undefined; 
+            });
+            
+            self.has_unsaved_data = ko.computed(function() {
+                return self.is_data_dirty();  
+            });
+        };
+        window.case_settings = new CaseSettingsPanel({{ case |tojson|safe }}, {{ product_choices |tojson|safe }});
+        
+        ko.applyBindings(window.case_settings, $(".case-setup-section")[0]);
         
         $(".input-mask-month-day").mask("99/99");
        

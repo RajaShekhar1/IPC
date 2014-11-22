@@ -66,12 +66,15 @@ def register_taa():
                         'activated': False,
                     },
                 )
-
-                # If successfully created account, the notify admin of registration
+                
+                # Add to the agents group
+                account.add_group("agents")
+                
+                # If successfully created account, notify admin of registration
                 try:
                     NotifyAdminEmail().send_registration_notice(data['given_name'] + " " + data['surname'])
-                except:
-                    print " -- Problem sending registration notice to admin --"
+                except Exception as e:
+                    print " -- Problem sending registration notice to admin --\n%s"%e
 
                 session['registered_name'] = data['given_name']
 
@@ -118,8 +121,12 @@ def login():
                 session['username'] = user.given_name + " " + user.surname
                 session['headername'] = session['username']
 
-                if user.custom_data.get('agency') and user.custom_data['agency'].strip(): 
+                if is_agent and user.custom_data.get('agency') and user.custom_data['agency'].strip(): 
                     session['headername'] += ", " + user.custom_data['agency']
+                elif is_admin:
+                    session['headername'] += ', Global Administrator'
+                elif is_home_office:
+                    session['headername'] += ', Home Office Administrator' 
                 
                 session['active_case'] = {
                     'company_name': "",

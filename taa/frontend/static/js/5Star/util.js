@@ -59,12 +59,12 @@ function submit_to_url(url, data) {
 }
 
 
-// Errors
+// Error handling / validation
 function show_all_errors(all_errors) {
-    if (all_errors.length == 0) {
+    if (Object.keys(all_errors).length == 0) {
         return;
     }
-        
+    
     $(".submit-message").addClass("error").html("Please fix the indicated problems and resubmit.").show();
     $.each(all_errors, function(field_name, errors) {
         show_errors(field_name, errors);
@@ -80,7 +80,7 @@ function show_errors(field_name, field_error_messages) {
 }
 
 function get_field(field_name) {
-    return $("textarea[name="+field_name+"], select[name="+field_name+"], input[name="+field_name+"]");
+    return $("textarea[name="+field_name+"], select[name="+field_name+"], input[name="+field_name+"], #"+field_name);
 }
 
 function focus_first_error(errors) {
@@ -93,3 +93,48 @@ function hide_all_errors() {
     $(".error").hide();
     $(".submit-message").removeClass("error").hide();
 }
+
+
+// Custom bindings
+ko.bindingHandlers.multiSelect = {
+    init: function(element, valueAccessor, allBindings, viewModel) {
+        // hook into observed value so we get updates
+        valueAccessor().observed();
+        element.multiselect = $(element).multiselect(valueAccessor().options);
+    },
+    update: function(element, valueAccessor, allBindings, viewModel) {
+        console.log("updating multiselect "+element.multiselect);
+        
+        $(element).multiselect('refresh');
+    }
+};
+
+// Works with any ajax validation
+ko.bindingHandlers.uniqueNameValidation = {
+    init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        // This will be called when the binding is first applied to an element
+        // Set up any initial state, event handlers, etc. here
+        
+        var value = valueAccessor();
+        var remoteInvocation = value.remoteMethod;
+        var tracked_observable = value.uniqueObservable;
+        
+        tracked_observable.has_been_checked = ko.observable(false);
+        tracked_observable.is_checking = ko.observable(false);
+        tracked_observable.is_unique = ko.observable(null);
+        
+        // Subscribe to changes
+        tracked_observable.subscribe(function(current_value) {
+            // Reset tracking vars
+            tracked_observable.is_checking(true);
+            tracked_observable.has_been_checked(false);
+            
+            // Check uniqueness on server
+            remoteInvocation(current_value, function(is_unique) {
+                tracked_observable.is_unique(is_unique);
+                tracked_observable.is_checking(false);
+                tracked_observable.has_been_checked(true);
+            });
+        });
+    }
+};

@@ -74,24 +74,21 @@ def update_case(case_id):
     
     case = case_service.get_if_allowed(case_id)
     data = get_posted_data()
+    
+    # Add the agent id from the session
     # Todo: perhaps accept agent_id in form data for admin usage
     agent = agent_service.get_logged_in_agent()
     if not agent:
         abort(401)
-
-    # Remap some naming differences
     data['agent_id'] = agent.id
-    if 'case_product' in data:
-        data['products'] = [product_service.get_product_by_code_or_400(data['case_product'])]
-    
-    if 'active' not in data:
-        # Deactivate?
-        data['active'] = False
     
     form = UpdateCaseForm()
     form.agent_id.data = agent.id
-    form.products.data = [p.code for p in data['products']]
+    form.products.data = [p['id'] for p in data['products']]
     if form.validate_on_submit():
+        del data['products']
+        
+        case_service.update_products(case, [p for p in product_service.get_all(*form.products.data)])
         return case_service.update(case, **data)
     
     raise TAAFormError(form.errors)

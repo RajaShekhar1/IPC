@@ -42,6 +42,10 @@ class ProductService(DBService):
         
         return product
     
+    def get_products_for_agent(self, agent):
+        # TODO: Implement
+        return self.all()
+    
     def get_all_states(self):
         return _all_states
     

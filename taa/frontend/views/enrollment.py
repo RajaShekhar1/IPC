@@ -48,9 +48,11 @@ def rates():
 @app.route("/enroll")
 @login_required
 def enroll_start():
-    case = None
-    census_records = None
-    if False: #session.get('active_case_id'):
+    
+    should_show_next_applicant = bool(request.args.get('next'))
+    
+    
+    if session.get('active_case_id') and should_show_next_applicant:
         case = case_service.get_if_allowed(session['active_case_id'])
         
         product_code = case.products[0].code if case.products else ""
@@ -60,19 +62,18 @@ def enroll_start():
         form.enrollmentCity.data = case.situs_city
         form.enrollmentState.data = case.situs_state
         form.productID.data = product_code
-        census_records = [r.to_json() for r in case_service.get_census_records(case)]
     else:
+        case = None
         form = get_enrollment_setup_form_for_product(None)()
     
     agent = agent_service.get_logged_in_agent()
     
-    census_table = render_template('enrollment/setup-enrollment-census-select.html', case=case, census_records=census_records) if case and census_records else None            
     return render_template('enrollment/setup-enrollment.html', 
                            form=form, 
                            product_states=get_product_states(),
                            agent_cases=case_service.get_agent_cases(agent, only_enrolling=True),
                            active_case=case,
-                           census_table=census_table
+                           should_show_next_applicant=should_show_next_applicant,
     )
 
 @app.route("/select-case", methods=['GET', 'POST'])
@@ -154,25 +155,19 @@ def in_person_enrollment():
 @app.route("/submit-wizard-data", methods=['POST'])
 def submit_wizard_data():
     
-    data = json.loads(request.data)
-    
+    data = request.json
     wizard_results = data['wizard_results']
-    # When DEBUG...
-    #print "--------------------"
-    #print wizard_results
-    #print "--------------------"
-    #sys.stdout.flush()
     
-    # TODO: Save enrollment information prior to DocuSign hand-off 
-        
-    # Do docusign with data in wizard_results
+    # TODO: Save enrollment information prior to Docu-Sign hand-off 
+       
+    # Hand off wizard_results to docusign
     #
     #is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results);
     #
     # Return the redirect url or error
     #resp = {'error': is_error, 'error_message': error_message, "redirect": redirect}
     
-    resp = {'error': False, 'error_message': '', 'redirect': url_for("enroll_start")}
+    resp = {'error': False, 'error_message': '', 'redirect': url_for("ds_landing_page", event="signing_complete", name=wizard_results['employee']['first'], type='inperson')}
     return jsonify(**resp)
     
 

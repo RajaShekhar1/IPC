@@ -61,6 +61,11 @@ class CaseService(DBService):
             
         return results
         
+    def update_products(self, case, products):
+        
+        case.products = products
+        db.session.flush()
+        
     def get_agent_cases(self, agent, **kwargs):
         # TODO: account for sub-agents
         return self.search_cases(by_agent=agent.id, **kwargs)

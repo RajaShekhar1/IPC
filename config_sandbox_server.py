@@ -5,11 +5,10 @@ DEBUG = True
 ASSETS_DEBUG = True
 ASSETS_AUTO_BUILD = True
 
-SECRET_KEY = 'sSYpq8m5vL68/1VKLQwst6II0PjAIP0cYQ31mzdA'
+SECRET_KEY = 'sSYpq8m5vL68/1VKLQwt6II0PjAIP0cYQ31mzdA'
 
 # Flask-WTF forms extension config
 WTF_CSRF_ENABLED = False
-
 
 # Stormpath config
 STORMPATH_APPLICATION = 'TAA-sandbox'

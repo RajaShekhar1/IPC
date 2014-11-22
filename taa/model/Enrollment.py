@@ -4,6 +4,8 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from taa import app
+
 from flask import url_for, render_template
 from dateutil.relativedelta import relativedelta
 from flask.ext.wtf import Form
@@ -137,13 +139,10 @@ class NotifyAdminEmail(object):
     """
     This perhaps should go elsewhere
     """
-    def __init__(self):
-        self.smtp_user = "enrollment@5starlifemail.com"
-        self.smtp_password = "enrollment55"
-        
+    
     def send_registration_notice(self, agent_name):
         
-        to_user = "admin@5starenroll.com"
+        to_user = "zach@zachmason.com" #"admin@5starenroll.com"
         
         msg = MIMEMultipart()
         msg['From'] = "enrollment@5StarEnroll.com"
@@ -156,12 +155,12 @@ class NotifyAdminEmail(object):
         
         msg.attach(MIMEText(body, 'html'))
         
-        connection = smtplib.SMTP("smtp.gmail.com", 587)
+        connection = smtplib.SMTP(app.config['EMAIL_SMTP_SERVER'], app.config['EMAIL_SMTP_PORT'])
         connection.ehlo()
-        if self.smtp_user and self.smtp_password:
-            connection.starttls()
-            connection.ehlo()
-            connection.login(self.smtp_user, self.smtp_password)
+        #if self.smtp_user and self.smtp_password:
+        connection.starttls()
+        connection.ehlo()
+        connection.login(app.config['EMAIL_SMTP_USERNAME'], app.config['EMAIL_SMTP_PASSWORD'])
         
         connection.sendmail(self.smtp_user, to_user, msg.as_string())
         connection.close()

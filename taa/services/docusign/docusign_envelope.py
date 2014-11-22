@@ -1,19 +1,17 @@
 # DocuSign API Walkthrough 08 (PYTHON) - Embedded Signing
-import sys, httplib2, json;
 import random
 from string import ascii_letters
 
-from flask import url_for
 from flask.ext.stormpath import user
-from taa.model.DocuSign_config import (
-    dsAPIAuthenticateString, 
-    dsAgentAuthenticateString, 
+
+from taa.services.docusign.DocuSign_config import (
+    dsAPIAuthenticateString,
     baseUrl, 
     apiAccountID, 
     templateClientID,
-    sessionUserApprovedForDocusign,
     get_template_id
 )
+
 
 
 #  14-May-23 WSD for now, by the time we get here the radios are wholesale "no" answers, so just fill without logic 

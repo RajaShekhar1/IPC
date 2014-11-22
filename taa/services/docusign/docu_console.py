@@ -1,8 +1,5 @@
-import sys, httplib2, json;
-from taa.model.DocuSign_config import (
-    dsAgentAuthenticateString, 
-    dsAPIAuthenticateString, 
-    dsServer,
+from taa.services.docusign.DocuSign_config import (
+    dsAgentAuthenticateString,
     baseUrl, 
     apiAccountID
     )
