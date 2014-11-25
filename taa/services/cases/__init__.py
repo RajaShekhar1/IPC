@@ -1,4 +1,4 @@
-from dateutil.parser import parse
+import dateutil.parser
 from datetime import datetime
 import re
 import csv
@@ -408,9 +408,12 @@ def birthdate_validator(field, record):
         # Allow blank unless combined with required validator
         return True, None
     
-    d = parse(date)
+    d = dateutil.parser.parse(date)
     if d >= datetime.today():
-        return False, 'Invalid birth date: future date'
+        # Seems to be a good solution for now
+        d = datetime(d.year - 100, d.month, d.day)
+        
+    #return False, 'Invalid birth date: future date'
     
     return True, None
 
@@ -576,8 +579,9 @@ class CensusRecordParser(object):
         self.line_number = 0
         
     def _process_file_stream(self, file_stream):
-        
-        reader = csv.DictReader(file_stream, restkey="extra")
+        # To get universal newlines (ie, cross-platform) we use splitlines()
+        bytes = file_stream.getvalue()
+        reader = csv.DictReader(bytes.splitlines(), restkey="extra")
         
         try:
             headers = reader.fieldnames
