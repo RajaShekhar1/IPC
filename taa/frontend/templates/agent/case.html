@@ -38,11 +38,7 @@
                                             'minlength':'1',
                                             }) 
                                                 }}
-                                            {# <input type="text" class="form-control" id="company_name" name="company_name" placeholder="Company Name"
-                                                minlength="1" required data-bind="textInput: , uniqueNameValidation: {
-                                                    remoteMethod: check_unique_name, uniqueObservable: case_data().company_name
-                                                }">
-                                             #}
+                                            
                                             <div class="row"> 
                                                 <div class="col-md-12">
                                                     <div class="error" data-bind="visible: company_name.has_been_checked, text: get_form_error"></div>
@@ -124,6 +120,7 @@
                         </div>
                     </div>
                     <div class="widget-toolbox clearfix padding-8">
+                        <div class="flash-message submit-message" data-bind="flashMessage: flash_message"></div>
                         <button type="submit" class="btn-primary btn-sm pull-right" data-bind="
                         {# enable: has_unsaved_data,  #}
                         css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}
@@ -228,7 +225,7 @@
                                     Select Census CSV File: 
                                 </h4>
                                 <p class="offset-by-twelve">Download an <a href="{{ url_for("sample_upload_csv") }}">example census data file</a> for formatting reference.</p>
-                                <input type="file" id="csv-file-input" name="csv-file" accept="text/*,.csv">
+                                <input type="file" id="csv-file-input" name="csv-file" accept="text/csv,.csv">
                             </div>
                         </div>
                         
@@ -394,8 +391,6 @@
         
         // Change enabled states when the product is changed
         product_state_select.init("#case_state","#case_product", {{ product_states | tojson | safe }});
-        
-        //$("form.case_setup").on('submit', );
         
         $('#csv-file-input').ace_file_input({
             no_file:'No File ...',
@@ -626,8 +621,9 @@
                     self.is_data_dirty(false);
                     self.flash_message("Data Saved");
                 };
-                var on_failure = function(case_xhr, periods_xhr) {
-                    alert("There was a problem saving the data.");
+                var on_failure = function(failed_xhr) {
+                    var errors = failed_xhr.responseJSON.errors || [];
+                    show_all_errors(errors);
                 };
                 $.when(case_request, periods_request).then(on_success, on_failure);
                 

@@ -96,6 +96,13 @@ function hide_all_errors() {
 
 
 // Custom bindings
+
+ko.bindingHandlers.flashMessage = {
+    update: function(element, valueAccessor) {
+        $(element).html(ko.unwrap(valueAccessor())).delay(5000).hide('fade')
+    } 
+};
+
 ko.bindingHandlers.multiSelect = {
     init: function(element, valueAccessor, allBindings, viewModel) {
         // hook into observed value so we get updates
