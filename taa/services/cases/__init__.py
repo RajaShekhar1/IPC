@@ -408,12 +408,10 @@ def birthdate_validator(field, record):
         # Allow blank unless combined with required validator
         return True, None
     
-    d = dateutil.parser.parse(date)
-    if d >= datetime.today():
-        # Seems to be a good solution for now
-        d = datetime(d.year - 100, d.month, d.day)
-        
-    #return False, 'Invalid birth date: future date'
+    if date > datetime.now():
+        # The preprocessor currently keeps this from happening, but I will leave 
+        #  it in here in case that changes
+        return False, "Future date is not allowed for a birthday"
     
     return True, None
 
@@ -470,6 +468,19 @@ def preprocess_string(data):
         return u''
     return unicode(data).strip()
 
+def preprocess_date(data):
+    if data is None:
+        return u''
+
+    d = dateutil.parser.parse(data)
+    if d >= datetime.today():
+        # This can happen when you try to parse 2-digit years (excel issue?)
+        # Solution should be OK, but if someone puts a future date in (like for an expected child?)
+        # it doesn't work, and also won't work for 100+ year-old people. Which can't apply for life insurance, I think.
+        d = datetime(d.year - 100, d.month, d.day)
+    
+    return d
+    
 def preprocess_zip(data):
     if data is None:
         return u''
@@ -501,7 +512,7 @@ class CensusRecordParser(object):
                                      [required_validator, ssn_validator])
     employee_gender = CensusRecordField("EMP_GENDER", "employee_gender", preprocess_gender,
                                         [required_validator, gender_validator])
-    employee_birthdate = CensusRecordField("EMP_BIRTHDATE", "employee_birthdate", preprocess_string,
+    employee_birthdate = CensusRecordField("EMP_BIRTHDATE", "employee_birthdate", preprocess_date,
                                            [required_validator, birthdate_validator])
     employee_email = CensusRecordField("EMP_EMAIL", "employee_email", preprocess_string,
                                        [required_validator, email_validator])
@@ -516,7 +527,7 @@ class CensusRecordParser(object):
     spouse_last = CensusRecordField("SP_LAST", "spouse_last", preprocess_string, [])
     spouse_ssn = CensusRecordField("SP_SSN", "spouse_ssn", preprocess_numbers, [ssn_validator])
     spouse_gender = CensusRecordField("SP_GENDER", "spouse_gender", preprocess_gender, [gender_validator])
-    spouse_birthdate = CensusRecordField("SP_BIRTHDATE", "spouse_birthdate", preprocess_string, [birthdate_validator])
+    spouse_birthdate = CensusRecordField("SP_BIRTHDATE", "spouse_birthdate", preprocess_date, [birthdate_validator])
     spouse_email = CensusRecordField("SP_EMAIL", "spouse_email", preprocess_string, [email_validator])
     spouse_phone = CensusRecordField("SP_PHONE", "spouse_phone", preprocess_string, [])
     spouse_address1 = CensusRecordField("SP_ADDRESS1", "spouse_street_address", preprocess_string, [])
@@ -563,7 +574,7 @@ class CensusRecordParser(object):
     for num in range(1, MAX_CHILDREN + 1):
         child_first = CensusRecordField("CH{}_FIRST".format(num), "child{}_first".format(num), preprocess_string, [])
         child_last = CensusRecordField("CH{}_LAST".format(num), "child{}_last".format(num), preprocess_string, [])
-        child_birthdate = CensusRecordField("CH{}_BIRTHDATE".format(num), "child{}_birthdate".format(num), preprocess_string,
+        child_birthdate = CensusRecordField("CH{}_BIRTHDATE".format(num), "child{}_birthdate".format(num), preprocess_date,
                                             [birthdate_validator])
 
         child_group = [child_first, child_last, child_birthdate]
