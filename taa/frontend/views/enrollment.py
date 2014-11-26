@@ -27,14 +27,16 @@ agent_service = AgentService()
 def rates():
     
     # Pull parameters from the request
-    employee_birthdate = request.form['employee_birthdate']
-    spouse_birthdate = request.form.get('spouse_birthdate', None)
-    num_children = int(request.form.get('num_children', 0))
-    product_code = request.form['product_type']
+    employee = request.json['employee']
+    spouse = request.json.get('spouse')
     
+    employee_age = employee['age']
+    spouse_age = spouse['age'] if spouse else None
+    num_children = int(request.json.get('num_children', 0))
+    product_code = request.json['product_type']
     product = get_product_by_code(product_code)
-    employee_age = get_age_from_birthday(employee_birthdate)
-    spouse_age = get_age_from_birthday(spouse_birthdate) if spouse_birthdate else None
+    #employee_age = get_age_from_birthday(employee_birthdate)
+    #spouse_age = get_age_from_birthday(spouse_birthdate) if spouse_birthdate else None
     
     response = {
         'employee_rates': product.get_employee_rates(employee_age),

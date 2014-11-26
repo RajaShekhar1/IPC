@@ -119,6 +119,14 @@ def get_product_by_code(product_code):
             build_FPPCI_rate_table(),
             Recommendations(FPPCI_recommendations),
         ),
+        # TODO: Get real pricing tables and recommendations
+        "Group CI": ProductData(
+            product_code,
+            "Group Critical Illness",
+            # TODO here
+            build_FPPCI_rate_table(), 
+            Recommendations(FPPCI_recommendations),
+        ),
     }
     
     product = products_by_code.get(product_code)
@@ -173,13 +181,17 @@ class ProductData(object):
                 "VA": "WS-UST App R409-VA",
                 "WI": "WS-UST App R409-WI",
                 "Generic":  "Generic"
-            }
+            },
+            # TODO: Need real data
+            "Group CI": {
+                "IN": "WS-UST App R409-IL",
+            },
         }
 
         if (self.code == "FPPTI" and state in FPPTI_generic_states) or (self.code == "FPPCI" and state in FPPCI_generic_states):
             form_name = "Generic"
         else:
-            form_name = form_dict.get(self.code).get(state)
+            form_name = form_dict.get(self.code).get(state, "Generic")
         
         if form_name:
             return form_name

@@ -20,7 +20,11 @@ class InitializeDatabaseCommand(Command):
             dict(
                 code="FPPCI",
                 name="Family Protection Plan - Critical Illness",
-            )
+            ),
+            dict(
+                code="Group CI",
+                name="Group Critical Illness",
+            ),
         ]
         for product in product_data:
             print("Checking {}".format(product['code']))

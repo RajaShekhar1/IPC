@@ -139,3 +139,7 @@ input[type=checkbox].ace.ace-switch.ace-switch-6:checked+.lbl::before {
 input[type=checkbox].ace.ace-switch+.lbl.padding-16::before {
     margin-right: 8px;
 }
+/* For some reason this is not set like it is in the template, making radio buttons seem off-centered */
+input[type=radio].ace+.lbl::before {
+    font-size: 10px;
+}

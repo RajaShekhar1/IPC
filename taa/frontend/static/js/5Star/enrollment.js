@@ -31,6 +31,12 @@ function init_rate_form(data) {
         
         // styling differences
         $(".recommended-coverage-table").addClass("ci-recommendations");
+    } else if (data.product_id == "Group CI") {
+        product = new GroupCIProduct();
+        
+        // styling differences
+        $(".recommended-coverage-table").addClass("ci-recommendations");
+    
     } else {
         // default product?
         alert("Invalid product code '"+data.product_id+"'");
@@ -92,7 +98,21 @@ function WizardUI(product, defaults) {
     self.spouse_beneficiary_dob = ko.observable("");
     
     // Employee 
-    self.employee = ko.observable(new Beneficiary(self.defaults.employee_data || {}));
+    self.employee = ko.observable(new InsuredApplicant(self.defaults.employee_data || {}));
+    
+    // Extended questions for step 1
+    self.should_show_gender = function() {return product.requires_gender();};
+    self.should_show_height = function() {return product.requires_height();};
+    self.should_show_weight = function() {return product.requires_weight();};
+    self.should_show_smoker = function() {return product.requires_is_smoker();};
+    self.should_show_extended_questions = function() {
+        return (
+            self.should_show_gender() ||
+            self.should_show_height() || 
+            self.should_show_weight() ||
+            self.should_show_smoker()
+        );
+    };
     
     // Spouse info
     var spouse_data = self.defaults.spouse_data || {last: self.defaults.employee_last} || {};
@@ -103,7 +123,7 @@ function WizardUI(product, defaults) {
             spouse_data.birthdate !== undefined
     ));
     
-    self.spouse = ko.observable(new Beneficiary(spouse_data));
+    self.spouse = ko.observable(new InsuredApplicant(spouse_data));
     
     self.is_spouse_age_valid = ko.computed(function() {
         return self.insurance_product.is_valid_spouse_age(self.spouse().get_age()) ;
@@ -123,12 +143,12 @@ function WizardUI(product, defaults) {
     if (self.defaults.children_data.length == 0) {
         self.children = ko.observableArray([
             // Start with two blank child entries
-            new Beneficiary({last: self.defaults.employee_last || ""}),
-            new Beneficiary({last: self.defaults.employee_last || ""})
+            new InsuredApplicant({last: self.defaults.employee_last || ""}),
+            new InsuredApplicant({last: self.defaults.employee_last || ""})
         ]);
     } else {
         self.children = ko.observableArray($.map(self.defaults.children_data, function(child_data) {
-            return new Beneficiary(child_data);
+            return new InsuredApplicant(child_data);
         }));
     }
     
@@ -163,8 +183,8 @@ function WizardUI(product, defaults) {
     
     
     self.add_child = function() {
-        var child_beneficiary = new Beneficiary({last: self.defaults.employee_last || ""});
-        self.children.push(child_beneficiary);
+        var child_insured_applicant = new InsuredApplicant({last: self.defaults.employee_last || ""});
+        self.children.push(child_insured_applicant);
 	// hide Add button if now at max children
 	if (self.children().length > 3) {
 	    $("#addChildBtn").hide();
@@ -199,7 +219,7 @@ function WizardUI(product, defaults) {
     
     // Store the actual benefits for children here, rather 
     //  than on each child since the benefits are the same
-    self.child_benefits = ko.observable(new Beneficiary({}));
+    self.child_benefits = ko.observable(new InsuredApplicant({}));
     self.get_children_options = ko.computed(function() {
         if (!self.should_include_children_in_table()) {
             return [];
@@ -223,12 +243,6 @@ function WizardUI(product, defaults) {
         // All employee info
         var valid = self.employee().is_valid();
         valid &= self.is_employee_age_valid();
-        
-       // if (self.should_show_spouse() && self.spouse().birthdate() != "") {
-       //     valid &= self.spouse().is_valid();
-       //     var sp_age = self.spouse().get_age();
-       //     valid &= sp_age >= 18 && sp_age <= 70;
-       // }
         
         // Trigger jquery validation manually 
         if (self.is_show_rates_clicked()) {
@@ -267,7 +281,8 @@ function WizardUI(product, defaults) {
             "/get_rates", 
             self.build_rate_parameters(), 
             self.show_updated_rates, 
-            handle_remote_error
+            handle_remote_error,
+            true
         );
     };
     
@@ -294,14 +309,11 @@ function WizardUI(product, defaults) {
     };
     
     self.build_rate_parameters = function() {
+        
         return {
             product_type: self.insurance_product.product_type,
-            employee_first: self.employee().first(),
-            employee_last: self.employee().last(),
-            employee_birthdate: self.employee().birthdate(),
-            spouse_first: self.spouse().first(),
-            spouse_last: self.spouse().last(),
-            spouse_birthdate: self.spouse().birthdate(),
+            employee: self.employee().serialize_data(),
+            spouse: self.should_include_spouse_in_table()? self.spouse().serialize_data() : null,
             num_children: self.children().length
         };
     };
@@ -364,7 +376,7 @@ function WizardUI(product, defaults) {
         self.parse_benefit_options(self.employee(), data.employee_rates);
         self.parse_benefit_options(self.spouse(), data.spouse_rates);
         // Reset child rates
-        self.child_benefits(new Beneficiary({}));
+        self.child_benefits(new InsuredApplicant({}));
         self.parse_benefit_options(self.child_benefits(), data.children_rates);
         
         if (data.recommendations) {
@@ -382,9 +394,9 @@ function WizardUI(product, defaults) {
         //self.selected_plan(new NullBenefitsPackage());
     };
     
-    self.parse_benefit_options = function(beneficiary, rates) {
+    self.parse_benefit_options = function(applicant, rates) {
         if (rates.weekly_byface) {
-            beneficiary.benefit_options.by_coverage($.map(rates.weekly_byface, function(rate) {
+            applicant.benefit_options.by_coverage($.map(rates.weekly_byface, function(rate) {
                 return self.insurance_product.get_new_benefit_option({
                     is_by_face: true,
                     face_value: rate.coverage,
@@ -394,7 +406,7 @@ function WizardUI(product, defaults) {
         }
         
         if (rates.weekly_bypremium) {
-            beneficiary.benefit_options.by_premium($.map(rates.weekly_bypremium, function(rate) {
+            applicant.benefit_options.by_premium($.map(rates.weekly_bypremium, function(rate) {
                 return self.insurance_product.get_new_benefit_option({
                     is_by_face: false,
                     face_value: rate.coverage,
@@ -563,6 +575,8 @@ function WizardUI(product, defaults) {
     }; 
 }
 
+// Model for different insurance products
+// Product is abstract base class
 function Product() {
 }
 Product.prototype = {
@@ -593,7 +607,13 @@ Product.prototype = {
     // Allow the details of the benefit's face value, display to be based on the product
     get_new_benefit_option: function(options) {
         return new BenefitOption(options);
-    }
+    },
+    
+    requires_gender: function() {return false;},
+    requires_height: function() {return false;},
+    requires_weight: function() {return false;},
+    requires_is_smoker: function() {return false;}
+    
 };
 
 function FPPTIProduct() {
@@ -611,8 +631,26 @@ FPPCIProduct.prototype.get_new_benefit_option = function(options) {
     return new CIBenefitOption(new BenefitOption(options));
 };
 
-function Beneficiary(options) {
+function GroupCIProduct() {
+    this.product_type = "Group CI";
+}
+GroupCIProduct.prototype = Object.create(Product.prototype);
+GroupCIProduct.prototype.get_new_benefit_option = function(options) {
+    return new CIBenefitOption(new BenefitOption(options));
+};
+GroupCIProduct.prototype.requires_gender = function() {return true;};
+GroupCIProduct.prototype.requires_height = function() {return true;};
+GroupCIProduct.prototype.requires_weight = function() {return true;};
+GroupCIProduct.prototype.requires_is_smoker = function() {return true;};
+
+
+// Main ViewModel for all applicants
+var _applicant_count = 0;
+function InsuredApplicant(options) {
     var self = this;
+    
+    // a basic internal id we can use in loops to distinguish applicants 
+    self._id = _applicant_count++;
     
     self.first = ko.observable(options.first || "");
     self.last = ko.observable(options.last || "");
@@ -621,6 +659,15 @@ function Beneficiary(options) {
     self.birthdate = ko.observable(options.birthdate || null);
     self.ssn = ko.observable(options.ssn || "");
     self.gender = ko.observable(options.gender || "");
+    
+    // Extended questions
+    self.height_feet_part = ko.observable(options.height ? (parseInt(options.height / 12)) : null);
+    self.height_inches_part = ko.observable(options.height? options.height % 12 : null);
+    self.height = ko.computed(function() {
+        return (12 * parseInt(self.height_feet_part())) + parseInt(self.height_inches_part());
+    });
+    self.weight = ko.observable(options.weight || null);
+    self.is_smoker = ko.observable(options.is_smoker || null);
     
     self.address1 = ko.observable(options.street_address || "");
     self.address2 = ko.observable(options.street_address2 || "");
@@ -719,6 +766,9 @@ function Beneficiary(options) {
         data.last = self.last();
         data.email = self.email();
         data.age = self.get_age();
+        data.weight = self.weight();
+        data.height = self.height();
+        data.is_smoker = self.is_smoker();
         data.birthdate = self.birthdate();
         data.ssn = self.ssn();
         data.gender = self.gender();
@@ -871,16 +921,16 @@ function BenefitsPackage(root, name) {
         }
     };
     
-    self.build_recommendation = function(beneficiary, recommended_val) {
-        var benefit = self.get_recommended_benefit(beneficiary, recommended_val);
+    self.build_recommendation = function(applicant, recommended_val) {
+        var benefit = self.get_recommended_benefit(applicant, recommended_val);
         return new Recommendation(benefit);
     };
     
-    self.get_recommended_benefit = function(beneficiary, recommended_val) {
+    self.get_recommended_benefit = function(applicant, recommended_val) {
         if (recommended_val == null || recommended_val == "") {
             return new NullBenefitOption();
         } else {
-            return beneficiary.find_recommended_coverage_benefit(recommended_val);
+            return applicant.find_recommended_coverage_benefit(recommended_val);
         }
     };
     
@@ -1177,8 +1227,8 @@ ko.bindingHandlers.flagBtn = {
         var val = ko.unwrap(value_accessor());
         
         var btn_group, group_lookup;
-        if (val.beneficiary) {
-            group_lookup = val.beneficiary.health_questions;
+        if (val.applicant) {
+            group_lookup = val.applicant.health_questions;
         } else {
             group_lookup = general_questions_by_id;
         }
