@@ -598,8 +598,17 @@ class CensusRecordParser(object):
             headers = reader.fieldnames
             records = [r for r in reader]
         except csv.Error as e:
-            self.error_message(message="Invalid CSV file format. First problem found on line {}. Detailed error: {}".format(
-                reader.line_num, e))
+            self.error_message(
+                message="""
+                There was a problem in the file or file format that prevented us from 
+accepting it. Please ensure you are sending a valid CSV file, compare your 
+file with the provided sample CSV, or otherwise double-check the data you 
+are sending. If you continue to have problems, please contact your 5Star 
+representative for assistance.""",
+                #message="Invalid CSV file format. First problem found on line {}. Detailed error: {}".format(
+                #reader.line_num, e)
+            )
+            # TODO: log the actual exception
             headers = records = []
         
         return headers, records
