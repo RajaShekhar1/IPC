@@ -95,6 +95,15 @@ function hide_all_errors() {
 }
 
 
+// Common formatting, etc
+
+// http://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+
+
 // Custom bindings
 
 ko.bindingHandlers.flashMessage = {
@@ -103,16 +112,53 @@ ko.bindingHandlers.flashMessage = {
     } 
 };
 
+
+// Reveal a panel by sliding down when the observable is true; slide back up if false.
+ko.bindingHandlers.slideDownIf = {
+    init: function(element, value_accessor) {
+        var val = ko.unwrap(value_accessor());
+        // Initially hide or show without animation
+        $(element).toggle(val);
+    },
+    update: function(element, value_accessor) {
+        // value should be a boolean
+        var val = ko.unwrap(value_accessor());
+        if (val) {
+            $(element).slideDown(400);
+        } else {
+            $(element).slideUp(400);
+        }
+    }
+};
+
+
+// Wrap the ace multiselect plugin 
 ko.bindingHandlers.multiSelect = {
     init: function(element, valueAccessor, allBindings, viewModel) {
+        // Expects the value to have initial plugin options using the 'options' key, 
+        //  and an observableArray passed in as the 'observed' key
+        
         // hook into observed value so we get updates
         valueAccessor().observed();
-        element.multiselect = $(element).multiselect(valueAccessor().options);
+        $(element).multiselect(valueAccessor().options);
     },
     update: function(element, valueAccessor, allBindings, viewModel) {
-        console.log("updating multiselect "+element.multiselect);
-        
         $(element).multiselect('refresh');
+    }
+};
+
+// Wrap the dual-listbox plugin
+ko.bindingHandlers.dualListbox = {
+    init: function(element, valueAccessor) {
+        // Expects the value to have initial plugin options using the 'options' key, 
+        //  and an observableArray passed in as the 'observed' key
+        
+        // hook into observed value so we get updates
+        valueAccessor().observed();
+        $(element).bootstrapDualListbox(valueAccessor().options);
+    },
+    update: function(element, valueAccessor) {
+        $(element).bootstrapDualListbox("refresh");
     }
 };
 

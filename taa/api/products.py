@@ -43,10 +43,16 @@ def create_product():
 @groups_required(write_product_groups, all=False)
 def update_product(product_id):
     product = product_service.get(product_id)
-    
+    data = get_posted_data()
     form = EditProductForm()
     if form.validate_on_submit():
-        return product_service.update(product, **get_posted_data())
+        product_service.update_product_agents(product, **data)
+        product_service.update_product_criteria(product, **data)
+        product_service.update_product_bypassed_questions(product, **data)
+        del data['agents']
+        del data['gi_criteria']
+        del data['bypassed_questions']
+        return product_service.update(product, **data)
     
     raise TAAFormError(form.errors)
 

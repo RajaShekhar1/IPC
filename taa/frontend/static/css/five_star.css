@@ -143,3 +143,19 @@ input[type=checkbox].ace.ace-switch+.lbl.padding-16::before {
 input[type=radio].ace+.lbl::before {
     font-size: 10px;
 }
+
+
+/* Large custom switches for the SOH on/off switches  */
+
+.soh_options input[type=checkbox].ace.ace-switch.ace-switch-3+.lbl::before, .soh_options input[type=checkbox].ace.ace-switch.ace-switch-5+.lbl::before {
+    width: 80px;
+}
+.soh_options input[type=checkbox].ace.ace-switch.ace-switch-3:checked+.lbl::after, .soh_options input[type=checkbox].ace.ace-switch.ace-switch-5:checked+.lbl::after {
+    left: 58px;
+}
+.soh_options input[type=checkbox].ace.ace-switch.ace-switch-3+.lbl::before, .soh_options input[type=checkbox].ace.ace-switch.ace-switch-5+.lbl::before {
+    text-indent: -55px;
+}
+.soh_options input[type=checkbox].ace.ace-switch.ace-switch-3:checked+.lbl::before, .soh_options input[type=checkbox].ace.ace-switch.ace-switch-5+.lbl::before {
+    text-indent: 3px;
+}

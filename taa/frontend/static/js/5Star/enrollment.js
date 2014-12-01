@@ -1145,24 +1145,6 @@ function NullRecommendation() {
     
 }
 
-
-ko.bindingHandlers.slideDownIf = {
-    init: function(element, value_accessor) {
-        var val = ko.unwrap(value_accessor());
-        $(element).toggle(val);
-    },
-    update: function(element, value_accessor) {
-        // value should be a boolean
-        var val = ko.unwrap(value_accessor());
-        if (val) {
-            $(element).slideDown(400);
-        } else {
-            $(element).slideUp(400);
-        }
-    }
-};
-
-
 function QuestionButton(element, val, highlight_func, unhighlight_func) {
     var self = this;
     
@@ -1404,10 +1386,7 @@ function format_premium_value(val) {
     return "$"+numberWithCommas(val.toFixed(2));
 }
 
-// http://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript
-function numberWithCommas(x) {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
+
 
 function handle_remote_error() {
     alert("Sorry, an error occurred communicating with the server.");    

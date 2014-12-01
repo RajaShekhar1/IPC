@@ -2,7 +2,12 @@ from flask import abort
 
 from taa.core import DBService, db
 
-from models import Product, CustomGuaranteeIssueProduct
+from models import (
+    Product, 
+    CustomGuaranteeIssueProduct, 
+    GuaranteeIssueCriteria, 
+    BypassedStatementOfHealthQuestion,
+)
 
 class ProductService(DBService):
     
@@ -59,6 +64,56 @@ class ProductService(DBService):
             'FPPTI': FPPTI_states,
             'FPPCI': FPPCI_states,
         }
+    
+    
+    def get_soh_labels(self):
+        return [
+            "Hospital 90 days",
+            "Heart",
+            "Cancer",
+            "Respiratory",
+            "Liver",
+            "HIV/AIDS",
+            "Ever been rejected",
+        ]
+    
+    
+    def update_product_agents(self, product, agents, **kwargs):
+        from taa.services.agents import AgentService
+        agent_service = AgentService()
+        agents = agent_service.get_all(*[a['id'] for a in agents])
+        product.agents = agents
+        db.session.flush()
+        
+    def update_product_criteria(self, product, gi_criteria, **kwargs):
+        
+        # Remove existing criteria
+        product.gi_criteria = []
+        
+        # Add the new criteria
+        criteria_service = ProductCriteriaService()
+        product.gi_criteria = [criteria_service.create(**criterion) for criterion in gi_criteria]
+        db.session.flush()
+        
+    
+    def update_product_bypassed_questions(self, product, bypassed_questions, **kwargs):
+        # Remove existing questions
+        product.bypassed_questions = []
+        
+        # Add the new questions
+        soh_question_service = ProductSOHQuestionService()
+        product.bypassed_questions = [soh_question_service.create(**dict(
+            question_type_label=question,
+            product_id=product.id,
+        )) 
+                                      for question in bypassed_questions]
+        db.session.flush()
+    
+class ProductCriteriaService(DBService):
+    __model__ = GuaranteeIssueCriteria
+    
+class ProductSOHQuestionService(DBService):
+    __model__ = BypassedStatementOfHealthQuestion
     
     
 FPPTI_states = [

@@ -609,6 +609,8 @@ representative for assistance.""",
                 #reader.line_num, e)
             )
             # TODO: log the actual exception
+            line_number = reader.line_num
+            
             headers = records = []
         
         return headers, records

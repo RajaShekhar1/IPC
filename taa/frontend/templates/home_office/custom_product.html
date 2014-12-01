@@ -7,7 +7,7 @@
     
     <div class="row">
         <div class="col-md-12">
-            <form class="form-horizontal product-setup">
+            <form class="form-horizontal product-setup" data-bind="submit: save_settings">
                     
                 <div class="widget-box">
                     <div class="widget-header">
@@ -20,88 +20,152 @@
                             <div class="row">
                                 <div class="col-md-12 col-xs-12">
                                     <h4 class="header lighter">Settings</h4>
-                                    {{ render_field_with_errors(product_form.name) }}
-                                    {{ render_field_with_errors(product_form.base_product_id) }}   
-                                    {{ render_field_with_errors(product_form.guarantee_issue_amount) }}  
-                                    <br>
-                                    <h4 class="header lighter">Additional Criteria</h4>
+                                    
                                     <div class="form-group">
-                                        <div class="col-md-3 control-label"><label>Height</label></div>
-                                        <div class="col-md-9">
-                                            <div class="criteria-select">
-                                                    Greater Than: 
-                                                    {{ product_form.criteria_height_min() | safe }} 
-                                                    Less Than: 
-                                                    {{ product_form.criteria_height_max() | safe }} 
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <div class="col-md-3 control-label"><label>Weight</label></div>
-                                        <div class="col-md-9">
-                                            <div class="criteria-select">
-                                                    Greater Than: 
-                                                    {{ product_form.criteria_weight_min() | safe }} 
-                                                    Less Than: 
-                                                    {{ product_form.criteria_weight_max() | safe }} 
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <div class="col-md-3 control-label"><label>Height</label></div>
-                                        <div class="col-md-9">
-                                            <div class="criteria-select">
-                                                    Greater Than: 
-                                                    {{ product_form.criteria_age_min() | safe }} 
-                                                    Less Than: 
-                                                    {{ product_form.criteria_age_max() | safe }} 
-                                            </div>
+                                        <div class="col-md-2 control-label"><label>Name</label></div>
+                                        <div class="col-md-6">
+                                            <input class="form-control" data-bind='value: custom_product().name'>
                                         </div>
                                     </div>
                                     
-                                    <h4 class="header lighter">When GI and criteria met</h4>
-                                    <div class="form-group">            
-                                        <div class="col-md-9 col-md-offset-3">
-                                            <label class="control-label">
-                                                
-                                            </label>
+                                    <div class="form-group">
+                                        <div class="col-md-2 control-label"><label>Base Product</label></div>
+                                        <div class="col-md-6">
+                                            <select class="form-control" data-bind='value: custom_product().base_product_id, 
+                                                options: base_product_options,
+                                                optionsValue: "id",
+                                                optionsText: "name",
+                                                optionsCaption: ""'>
+                                            </select>
                                         </div>
                                     </div>
-                                    <div class="form-group">
-                                        <div class="col-md-3 control-label"><label>Height</label></div>
-                                        <div class="col-md-9">
-                                            <div class="criteria-select">
-                                                    Greater Than: 
-                                                    {{ product_form.criteria_age_min() | safe }} 
-                                                    Less Than: 
-                                                    {{ product_form.criteria_age_max() | safe }} 
+                                    
+                                    <h4 class="header lighter">Guarantee Issue Criteria</h4>
+                                    
+                                    <table class="table table-striped table-bordered table-responsive">
+                                        <thead>
+                                            <tr>
+                                                <th>Applicant</th>
+                                                <th>Criteria</th>
+                                                <th>Guaranteed Issue Amount</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody data-bind="foreach: custom_product().gi_criteria">
+                                            <tr>
+                                                <td data-bind="text: applicant_type()"></td>
+                                                <td data-bind="html: display_criteria"></td>
+                                                <td data-bind="text: guarantee_issue_amount()"></td>
+                                                <td><a class="btn" 
+                                                       data-bind="click: $parent.custom_product().remove_criterion">remove</a></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    
+                                    <button class="btn btn-default" 
+                                            data-bind="visible: !should_show_criteria_form(), click: show_criteria_form">Add Criteria</button>
+                                    <div style="display: none;" data-bind="slideDownIf: should_show_criteria_form, with: new_criterion">
+                                        
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label" for="applicant_type">Applicant</label>
+                                            <div class="col-md-9">
+                                                <select id="applicant_type" data-bind="value: applicant_type, options: $parent.applicant_options"></select>
                                             </div>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label">Guarantee Issue Amount</label>
+                                            <div class="col-md-9">
+                                                <select data-bind="value: guarantee_issue_amount, options: $parent.issue_amount_options"></select>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <div class="col-md-3 control-label"><label>Height</label></div>
+                                            <div class="col-md-9">
+                                                <div class="criteria-select">
+                                                        Greater Than: 
+                                                        {{ product_form.criteria_height_min(**{'data-bind':'value: height_min'}) | safe }} 
+                                                        Less Than: 
+                                                        {{ product_form.criteria_height_max(**{'data-bind':'value: height_max'}) | safe }} 
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-md-3 control-label"><label>Weight</label></div>
+                                            <div class="col-md-9">
+                                                <div class="criteria-select">
+                                                        Greater Than: 
+                                                        {{ product_form.criteria_weight_min(**{'data-bind':'value: weight_min'}) | safe }} 
+                                                        Less Than: 
+                                                        {{ product_form.criteria_weight_max(**{'data-bind':'value: weight_max'}) | safe }} 
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-md-3 control-label"><label>Age</label></div>
+                                            <div class="col-md-9">
+                                                <div class="criteria-select">
+                                                        Greater Than: 
+                                                        {{ product_form.criteria_age_min(**{'data-bind':'value: age_min'}) | safe }} 
+                                                        Less Than: 
+                                                        {{ product_form.criteria_age_max(**{'data-bind':'value: age_max'}) | safe }} 
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <button class="btn btn-default" data-bind="click: $root.add_new_criteria">Save Criteria</button>
+                                    </div>
+                                    
+                                    <h4 class="header lighter">When GI and criteria met</h4>
+                                    <div class="form-group">       
+                                        <div class="col-md-9 col-md-offset-1">
+                                            <label class="block">
+                                                <input data-bind="checked: custom_product().statement_of_health_bypass_type" 
+                                                       type="radio" id="soh_skip_all" name="soh_skip_type" value="all" class="ace">
+                                                <span class="lbl">
+                                                    bypass all statement of health questions
+                                                </span>
+                                            </label>
+                                            <label class="block">
+                                                <input data-bind="checked: custom_product().statement_of_health_bypass_type" 
+                                                       type="radio" id="soh_skip_selected" name="soh_skip_type" value="selected" class="ace">
+                                                <span class="lbl">
+                                                    bypass selected statement of health questions
+                                                </span>
+                                            </label>
+                                            <div class="soh_options" data-bind="visible: custom_product().statement_of_health_bypass_type() == 'selected'">
+                                                <!--ko foreach: soh_options -->
+                                                    <div class="row">
+                                                        <label class="col-md-offset-1">
+                                                            <input type="checkbox" 
+                                                                   class="ace ace-switch ace-switch-3 padding-10" 
+                                                                data-bind="value: $data, checked: $root.custom_product().bypassed_questions"
+                                                                >
+                                                            <span class="lbl" 
+                                                                data-lbl="&nbsp;Ignored&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Required"></span>
+                                                            <span data-bind="text: $data" style="line-height: 23px; vertical-align: top;"></span>
+                                                        </label>
+                                                    </div>
+                                                <!--/ko-->
+                                            </div>
+                                            
                                         </div>
                                     </div>
                                     
                                     <h4 class="header lighter">Assign to Agents</h4>
                                     <div class="row">
-                                        <div class="col-md-4 col-md-offset-1">
-                                            <label class="block" for="available-agents">Available Agents:</label>
-                                            <select class="form-control" id='available-agents' size="10" style="min-height: 8em;">
-                                            </select>
-                                        </div>
-                                        <div class="col-md-1">
-                                            <br>
-                                            <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-arrow-right"></span></button>
-                                            <br><br>
-                                            <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-arrow-left"></span></button>
-                                            
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="block" for="assigned-agents">Assigned Agents:</label>
-                                            <select class="form-control" id="assigned-agents" size="10" style="min-height: 8em;">
+                                        <div class="col-sm-10 col-md-offset-1">
+                                            <select data-bind="options: available_agents, 
+                                                        optionsText: 'name',
+                                                        selectedOptions: custom_product().agents" 
+                                                    multiple="multiple" class="form-control" id="assigned-agents" 
+                                                    size="10" style="min-height: 8em;">
                                                 
                                             </select>
                                         </div>
                                     </div>
                                    
-                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -127,32 +191,240 @@
 {% block page_js %}
 <script>
 $(function() {
-    $("form.product-setup").on('submit', function() {
-        var form_data = $(this).serialize();
-        var settings_request = send_form_data(
-            "PUT", 
-            "{{ url_for("products.update_product", product_id=product.id) }}",
-            form_data
-        );
-        
-        
-        var on_success = function(case_xhr, periods_xhr) {
-            alert("Saved");
+    
+    var Agent = function(agent) {
+        var self = this;
+        self.id = agent.id;
+        self.name = agent.first + " " + agent.last;
+    };
+    
+    var GICriterionViewModel = function(criterion) {
+        var self = this;
+        var defaults = {
+            applicant_type: null,
+            product_id: null,
+            guarantee_issue_amount: null,
+            height_min: null,
+            height_max: null,
+            weight_min: null,
+            weight_max: null,
+            age_min: null,
+            age_max: null
         };
-        var on_failure = function(case_xhr, periods_xhr) {
-            var resp = case_xhr.responseJSON;
-            if (resp.errors) {
-                show_all_errors(resp.errors);
-            } else {
-                alert("There was a problem saving the data.");
+        var settings = $.extend({}, defaults, criterion);
+        
+        self.applicant_type = ko.observable(settings.applicant_type);
+        self.product_id = ko.observable(settings.product_id);
+        self.guarantee_issue_amount = ko.observable(settings.guarantee_issue_amount);
+        self.height_min = ko.observable(settings.height_min);
+        self.height_max = ko.observable(settings.height_max);
+        self.weight_min = ko.observable(settings.weight_min);
+        self.weight_max = ko.observable(settings.weight_max);
+        self.age_min = ko.observable(settings.age_min);
+        self.age_max = ko.observable(settings.age_max);
+        
+        self.na_or_val = function(val) {
+            return (val === "-1" || val === null) ? "(N/A)" : val;
+        };
+        
+        self.display_criteria = ko.computed(function() {
+            var criteria_descs = [];
+            if (parseInt(self.age_min()) > 0 || parseInt(self.age_max()) > 0) {
+                criteria_descs.push(("Age between "+self.na_or_val(self.age_min())+" and " +
+                    self.na_or_val(self.age_max())
+                ));
             }
-        };
-        $.when(settings_request//, agents_request
-        ).then(on_success, on_failure);
+            if (parseInt(self.height_min()) > 0 || parseInt(self.height_max()) > 0) {
+                criteria_descs.push(("Height between "+self.na_or_val(self.height_min())+" and " +
+                    self.na_or_val(self.height_max())
+                ));
+            }
+            if (parseInt(self.weight_min()) > 0 || parseInt(self.weight_max()) > 0) {
+                criteria_descs.push(("Weight between "+self.na_or_val(self.weight_min())+" and " +
+                    self.na_or_val(self.weight_max())
+                ));
+            }
+            
+            return criteria_descs.join("<br>");
+        });
         
-        hide_all_errors();
-        return false; 
+        self.serialize = function() {
+            return {
+                applicant_type: self.applicant_type(),
+                product_id: self.product_id(),
+                guarantee_issue_amount: self.serialize_limit(self.guarantee_issue_amount()),
+                height_min: self.serialize_limit(self.height_min()),
+                height_max: self.serialize_limit(self.height_max()),
+                weight_min: self.serialize_limit(self.weight_min()),
+                weight_max: self.serialize_limit(self.weight_max()),
+                age_min: self.serialize_limit(self.age_min()),
+                age_max: self.serialize_limit(self.age_max())
+            };
+        };
+        
+        self.serialize_limit = function(val) {
+            if (val == "-1" || val === null) {
+                return null;
+            } else {
+                // Strip any commas for large numbers
+                val = (val + "").replace(/,/, "");
+                return parseInt(val);
+            }
+        }
+    };
+    
+    var CustomProductViewModel = function(custom_product, available_agents, soh_options) {
+        var self = this;
+        
+        self.id = ko.observable(custom_product.id);
+        self.name = ko.observable(custom_product.name);
+        self.base_product_id = ko.observable(custom_product.base_product_id);
+        self.gi_criteria = ko.observableArray($.map(custom_product.gi_criteria, function(c) {
+            return new GICriterionViewModel(c); 
+        }));
+        
+        self.statement_of_health_bypass_type = ko.observable(custom_product.statement_of_health_bypass_type);
+        
+        // select bypassed_questions from soh_options
+        var selected_questions = [];
+        $.each(custom_product.bypassed_soh_questions, function() {
+            if (soh_options.indexOf(this.question_type_label) >= 0) {
+                selected_questions.push(this.question_type_label);
+            }
+        });
+        
+        self.bypassed_questions = ko.observableArray(selected_questions);
+        
+        // Select from available agents
+        var available_by_id = {};
+        $.each(available_agents, function() {
+            available_by_id[this.id] = this; 
+        });
+        var assigned_agents = [];
+        $.each(custom_product.agents, function() {
+            var agent = this;
+            if (agent.id in available_by_id) {
+                assigned_agents.push(available_by_id[agent.id]);
+            }
+        });
+        self.agents = ko.observableArray(assigned_agents);
+        
+        self.remove_criterion = function(c) {
+            self.gi_criteria.remove(c);
+        };
+        
+        self.serialize = function() {
+            return {
+                id: self.id(),
+                name: self.name(),
+                base_product_id: self.base_product_id(),
+                gi_criteria: $.map(self.gi_criteria(), function(c) {return c.serialize()}),
+                statement_of_health_bypass_type: self.statement_of_health_bypass_type(),
+                bypassed_questions: self.bypassed_questions(),
+                agents: self.agents()
+            }
+        }
+    };
+    
+    var BaseProductViewModel = function(base_product) {
+        var self = this;
+        self.id = base_product.id;
+        self.name = base_product.name;
+    };
+    
+    var CustomProductEditor = function(custom_product, base_product_options, available_agents, soh_options) {
+        var self = this;
+        
+        self.available_agents = $.map(available_agents, function(a){return new Agent(a)}) || [];
+        self.soh_options = soh_options || [];
+        
+        self.custom_product = ko.observable(new CustomProductViewModel(custom_product, self.available_agents, self.soh_options));
+        
+        
+        self.base_product_options = $.map(base_product_options || [], function(bp) {return new BaseProductViewModel(bp)});
+        self.issue_amount_options = [];
+        // Populate issue amount options
+        for (var i = 1000; i <= 50000; i += 1000) {
+            var amount = numberWithCommas(i);
+            self.issue_amount_options.push(amount);
+        }
+        
+        self.should_show_criteria_form = ko.observable(false);
+        self.show_criteria_form = function() {
+            self.new_criterion(new GICriterionViewModel({product_id: self.custom_product().id()}));
+            self.should_show_criteria_form(true);  
+        };
+        self.add_new_criteria = function() {
+            self.custom_product().gi_criteria.push(self.new_criterion());
+            
+            // keep it sorted by applicant, mins
+            self.sort_criteria();
+            
+            self.new_criterion(null);
+            self.should_show_criteria_form(false);  
+        };
+        
+        self.sort_criteria = function() {
+            self.custom_product().gi_criteria.sort(function(x, y){
+                if (x.applicant_type() === y.applicant_type()) {
+                    return 0;
+                } else {
+                    
+                    var applicant_ordering = {"Employee":1, "Spouse": 2, "Child": 3};
+                    var xo = applicant_ordering[x.applicant_type()];
+                    var yo = applicant_ordering[y.applicant_type()];
+                    
+                    return xo - yo; 
+                }
+            });
+        };
+        
+        self.new_criterion = ko.observable(null);
+        
+        self.applicant_options = ["Employee", "Spouse", "Child"];
+        
+        self.save_settings = function() {
+            var form_data = self.custom_product().serialize();
+            
+            // TODO: client-side validation
+            
+            var settings_request = send_json_data(
+                "PUT", 
+                "{{ url_for("products.update_product", product_id=product.id) }}",
+                form_data
+            );
+            
+            var on_success = function(case_xhr, periods_xhr) {
+                alert("Saved");
+            };
+            var on_failure = function(case_xhr, periods_xhr) {
+                var resp = case_xhr.responseJSON;
+                if (resp.errors) {
+                    show_all_errors(resp.errors);
+                } else {
+                    alert("There was a problem saving the data.");
+                }
+            };
+            $.when(settings_request//, agents_request
+                ).then(on_success, on_failure);
+            
+            hide_all_errors();
+            return false; 
+        };
+        
+    };
+    
+    window.ui = new CustomProductEditor({{ product |tojson|safe }}, {{ base_product_options |tojson|safe }}, {{ available_agents |tojson|safe }}, {{ statement_of_health_options |tojson|safe }})
+    ko.applyBindings(window.ui, document.body);
+    // Multi-list demo
+    $('#assigned-agents').bootstrapDualListbox({
+        infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',
+        showFilterInputs: true,
+        moveOnSelect: false,
+        nonSelectedListLabel: 'Available Agents:',
+        selectedListLabel: 'Product Visible to Agents:'
     });
+    
 });
 </script>
 {% endblock %}

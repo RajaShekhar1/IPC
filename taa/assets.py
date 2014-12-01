@@ -36,6 +36,7 @@ css_ace_1_3_1 = Bundle(
     
     # Put any 3rd party CSS plugins here (chosen, ui.jqgrid, etc)
     "ace-v1.3.1/css/bootstrap-multiselect.min.css",
+    "ace-v1.3.1/css/bootstrap-duallistbox.min.css",
     
     # Main ace files 
     "ace-v1.3.1/css/ace.min.css",
@@ -93,6 +94,7 @@ js_vendor_1_3_1 = Bundle(
     'ace-v1.3.1/js/jquery.dataTables.bootstrap.min.js',
     'ace-v1.3.1/js/jquery.maskedinput.min.js',
     'ace-v1.3.1/js/jquery.validate.min.js',
+    'ace-v1.3.1/js/jquery.bootstrap-duallistbox.min.js',
     'ace-v1.3.1/js/fuelux/fuelux.wizard.min.js',
     'ace-v1.3.1/js/jquery.mobile.custom.min.js',
     'ace-v1.3.1/js/typeahead.jquery.min.js',
