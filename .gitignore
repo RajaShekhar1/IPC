@@ -6,6 +6,7 @@ venv
 config_production.py
 taa/uploads
 taa/frontend/static/generated_assets
+taa/frontend/static/ace-v1.2/
 TAA.iml
 .vagrant
 env_mac
