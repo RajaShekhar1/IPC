@@ -27,7 +27,6 @@ css_all = Bundle(
     output="generated_assets/taa.min.css"
 )
 
-
 css_ace_1_3_1 = Bundle(
     # Ace dependencies
     "ace-v1.3.1/css/bootstrap.min.css",

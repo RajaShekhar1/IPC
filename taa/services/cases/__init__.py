@@ -287,7 +287,6 @@ class CensusRecordService(DBService):
          :replace_matching, will do replace matches or skip over them.
         """
         
-        
         parser = CensusRecordParser()
         parser.process_file(file_stream)
         
@@ -314,13 +313,19 @@ class CensusRecordService(DBService):
         return parser.errors, added + updated
     
     def replace_census_data(self, case, file_stream):
-        # Delete records for this case
-        self.find(case_id=case.id).delete()
-        
+        # Process the upload before deleting the current data
         parser = CensusRecordParser()
         parser.process_file(file_stream)
         
-        # Add new records    
+        # Bail out if any errors
+        if parser.errors:
+            valid_records = []
+            return parser.errors, valid_records
+        
+        # Delete existing records for this case
+        self.find(case_id=case.id).delete()
+        
+        # Add all uploaded records    
         valid_records = [self.add_record(case, **parser.get_db_dict(record)) for record in parser.get_valid_data()]
         db.session.commit()
         
@@ -328,7 +333,7 @@ class CensusRecordService(DBService):
         
     def add_record(self, case, **data):
         """ 
-        Create and add to the session, but don't commit or flush the session for speed
+        Create and add to the DB session, but don't commit or flush the session for speed
         """
         data['case_id'] = case.id
         record = self.new(**data)
@@ -587,6 +592,7 @@ class CensusRecordParser(object):
     def __init__(self):
         self.errors = []
         self.valid_data = []
+        self.used_ssns = set()
         self.line_number = 0
         
     def _process_file_stream(self, file_stream):
@@ -624,18 +630,34 @@ representative for assistance.""",
         
         preprocessed_records = (self.preprocess_record(record) for record in records)
         
+        # Reset internal counters
         self.line_number = 0
         self.valid_data = []
+        self.used_ssns = set()
         for record in preprocessed_records:
             self.line_number += 1
             if self.validate_record(headers, record):
                 self.valid_data.append(record)
-        
+
+                
     def validate_record(self, headers, record):
         is_valid = True
         
         for field in self.all_possible_fields:
             is_valid &= field.validate(self, record)
+
+        # Do not allow duplicate employee SSNs in a single upload
+        ssn = record.get(self.employee_ssn.csv_column_name)
+        if ssn and ssn in self.used_ssns:
+            is_valid = False
+            self.error_record_field(
+                "Duplicate SSN in census file", 
+                self.employee_ssn.csv_column_name,
+                self.line_number, 
+                record
+            )
+        elif ssn:
+            self.used_ssns.add(ssn)
         
         #is_valid &= self.validate_employee_data(headers, record)
         #is_valid &= self.validate_optional_data(headers, record)
