@@ -85,9 +85,9 @@
                                             <div class="col-md-9">
                                                 <div class="criteria-select">
                                                         Greater Than: 
-                                                        {{ product_form.criteria_height_min(**{'data-bind':'value: height_min'}) | safe }} 
+                                                        <height-select params="value: height_min"></height-select>
                                                         Less Than: 
-                                                        {{ product_form.criteria_height_max(**{'data-bind':'value: height_max'}) | safe }} 
+                                                        <height-select params="value: height_max"></height-select>
                                                 </div>
                                             </div>
                                         </div>

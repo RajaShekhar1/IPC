@@ -226,25 +226,7 @@
         <div class="form-group">
             <!--ko if: $root.should_show_height() -->
             <div class="col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-                <label class="">
-                    Height:
-                    <select id="eeBenefitHeightFeet" name="eeBenefitHeightFeet"
-                            data-bind="value: height_feet_part">
-                        <option></option>
-                        <option>4</option>
-                        <option>5</option>
-                        <option>6</option>
-                    </select> Feet
-                </label>
-                <label class="">
-                    <select id="eeBenefitHeightInches" name="eeBenefitHeightInches"
-                            data-bind="value: height_inches_part">
-                        <option></option>
-                        {% for i in range(12) %}
-                            <option>{{ i }}</option>
-                        {% endfor %}
-                    </select> Inches
-                </label>
+                <height-select params="value: height"></height-select>
             </div>
             <!--/ko-->
             <!--ko if: $root.should_show_weight() -->

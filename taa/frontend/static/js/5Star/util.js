@@ -191,3 +191,77 @@ ko.bindingHandlers.uniqueNameValidation = {
         });
     }
 };
+
+
+// Components
+
+// Height select
+ko.components.register('height-select', {
+    viewModel: function(params) {
+        var self = this;
+        
+        // Data: value is an observable that can be null or an int (inches)
+        self.height = params.value;
+        
+        self.height_feet_part = ko.observable(get_feet_part(self.height()));
+        self.height_inches_part = ko.observable(get_inches_part(self.height()));
+        
+        // Update the observed value when one of the selectors changes
+        self.update_height = function() {
+            var feet = parseInt(self.height_feet_part());
+            var inches = parseInt(self.height_inches_part());
+            if (feet === null || inches === null) {
+                self.height(null);
+            } else {
+                self.height((12 * feet) + inches);
+            }
+        };
+        
+        self.height_feet_part.subscribe(self.update_height);
+        self.height_inches_part.subscribe(self.update_height);
+    },
+    template:
+        '\
+        <label>\
+            <select data-bind="value: height_feet_part">\
+                <option></option>\
+                <option>4</option>\
+                <option>5</option>\
+                <option>6</option>\
+            </select> Feet\
+        </label>\
+        <label>\
+            <select data-bind="value: height_inches_part">\
+                <option></option>\
+                <option>1</option>\
+                <option>2</option>\
+                <option>3</option>\
+                <option>4</option>\
+                <option>5</option>\
+                <option>6</option>\
+                <option>7</option>\
+                <option>8</option>\
+                <option>9</option>\
+                <option>10</option>\
+                <option>11</option>\
+            </select> Inches\
+        </label>'
+});
+
+function get_feet_part(val) {
+    if (val === null || val === undefined) {
+        return null;
+    } else {
+        return parseInt(val) / 12;
+    }
+}
+function get_inches_part(val) {
+    if (val === null || val === undefined) {
+        return null;
+    } else {
+        return parseInt(val) % 12;
+    }
+}
+
+
+
