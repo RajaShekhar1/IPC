@@ -44,7 +44,7 @@ class CensusRecordForm(Form):
     
     employee_first = StringField('Employee First', [validators.InputRequired()])
     employee_last = StringField('Employee Last', [validators.InputRequired()])
-    employee_gender = SelectField('Employee Gender', [validators.optional()], choices=[('', ''), ('Male','Male'), ('Female','Female')])
+    employee_gender = SelectField('Employee Gender', [validators.optional()], choices=[('', ''), ('male','Male'), ('female','Female')])
     employee_ssn = StringField('Employee SSN', [validators.InputRequired()])
     employee_birthdate = StringField('Employee Birthdate', [validators.InputRequired()])
     employee_email = StringField('Employee Email', [validators.InputRequired()])
@@ -57,7 +57,7 @@ class CensusRecordForm(Form):
     
     spouse_first = StringField('Spouse First')
     spouse_last = StringField('Spouse Last')
-    spouse_gender = SelectField('Spouse Gender', [validators.optional()], choices=[('', ''), ('Male','Male'), ('Female','Female')])
+    spouse_gender = SelectField('Spouse Gender', [validators.optional()], choices=[('', ''), ('male','Male'), ('female','Female')])
     spouse_ssn = StringField('Spouse SSN')
     spouse_birthdate = StringField("Spouse Birthdate")
     spouse_email = StringField('Spouse Email')
