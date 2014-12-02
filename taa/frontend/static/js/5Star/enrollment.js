@@ -661,12 +661,7 @@ function InsuredApplicant(options) {
     self.gender = ko.observable(options.gender || "");
     
     // Extended questions
-    //self.height_feet_part = ko.observable(options.height ? (parseInt(options.height / 12)) : null);
-    //self.height_inches_part = ko.observable(options.height? options.height % 12 : null);
     self.height = ko.observable(options.height ? options.height : null);
-    //self.height = ko.computed(function() {
-    //    return (12 * parseInt(self.height_feet_part())) + parseInt(self.height_inches_part());
-    //});
     self.weight = ko.observable(options.weight || null);
     self.is_smoker = ko.observable(options.is_smoker || null);
     
