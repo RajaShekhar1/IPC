@@ -287,12 +287,16 @@ class CensusRecordService(DBService):
          :replace_matching, will do replace matches or skip over them.
         """
         
-        parser = CensusRecordParser()
-        parser.process_file(file_stream)
-        
-        # Do the merge
+        # Get existing census data indexed by SSN for matching
         existing = self.find(case_id=case.id).all()
         existing_by_ssn = {r.employee_ssn: r for r in existing}
+        
+        # Parse the uploaded file and validate it. If we are in add-only mode, pass in the existing SSN dict.
+        parser = CensusRecordParser()
+        parser.process_file(file_stream, 
+                            error_if_matching=(existing_by_ssn if not replace_matching else None))
+        
+        # Do the merge
         added = []
         updated = []
         for record in parser.get_valid_data():
@@ -302,15 +306,18 @@ class CensusRecordService(DBService):
                     self.update(existing_by_ssn[record['EMP_SSN']], **parser.get_db_dict(record))
                     updated.append(existing_by_ssn[record['EMP_SSN']])
                 else:
-                    # Skip matching
+                    # We are in "Add-only" mode, an error will have been added already for this record
                     continue
             else:
-                # Add new
+                # Add new census record
                 added.append(self.add_record(case, **parser.get_db_dict(record)))
         
-        db.session.commit()
+        # Only commit the changes if we had no errors
+        if not parser.errors:
+            db.session.commit()
         
-        return parser.errors, added + updated
+        valid_records = added + updated
+        return parser.errors, valid_records
     
     def replace_census_data(self, case, file_stream):
         # Process the upload before deleting the current data
@@ -621,10 +628,11 @@ representative for assistance.""",
         
         return headers, records
     
-    def process_file(self, file_stream):
+    def process_file(self, file_stream, error_if_matching=None):
         headers, records = self._process_file_stream(file_stream)
         self.validate_header_row(headers, records)
         
+        # Don't do any more processing if missing important headers
         if self.errors:
             return
         
@@ -634,6 +642,7 @@ representative for assistance.""",
         self.line_number = 0
         self.valid_data = []
         self.used_ssns = set()
+        self.error_if_matching = error_if_matching or {}
         for record in preprocessed_records:
             self.line_number += 1
             if self.validate_record(headers, record):
@@ -659,8 +668,16 @@ representative for assistance.""",
         elif ssn:
             self.used_ssns.add(ssn)
         
-        #is_valid &= self.validate_employee_data(headers, record)
-        #is_valid &= self.validate_optional_data(headers, record)
+        # Some modes require us to throw an error if an existing record exists in the 
+        #   database (matched on SSN). Check that here.
+        if self.error_if_matching and ssn in self.error_if_matching:
+            self.error_record_field(
+                "A census record exists that matches this SSN. This is not allowed when uploading in 'Add New Records' mode.",
+                self.employee_ssn.csv_column_name,
+                self.line_number,
+                record
+            )
+        
         return is_valid
     
     def get_line_number(self):
