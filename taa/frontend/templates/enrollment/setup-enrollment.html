@@ -52,7 +52,7 @@
         <i class="icon-spinner icon-spin bigger-100"></i> Loading case ...
     </div>
     <div class="col-xs-12">
-        <div class="employee-select-panel" style="{% if not should_show_next_applicant %}display: none;{% endif %}">
+        <div class="employee-select-panel" style="display: none;">
             <div class="table-wrap">
                 <div class="widget-box">
                     <div class="widget-header">
@@ -67,6 +67,7 @@
                                         <th></th>
                                         <th>First</th>
                                         <th>Last</th>
+                                        <th>Birthdate</th>
                                         <th>Email</th>
                                         {# <th>Completed Enrollment</th>
                                         <th>Elected Coverage</th>
@@ -89,7 +90,6 @@
                                  #}
                                 </tbody>
                             </table>
-                            <div id="census-table-loading" class="text-center bigger-125"></div>
                         </div>
                     </div>
                 </div>
@@ -218,25 +218,11 @@
             $('.ad-hoc-form').hide();
             
             $("button.enroll-case").on('click', function() {
-                $(".loading-panel").show();
-                $(".case-select-panel").hide();
-                
                 var case_id = $(this).attr("data-id");
-                send_form_data("POST", "{{ url_for("select_case") }}",
-                    {case_id: case_id}, function(data) {
-                        $(".loading-panel").hide();
-                        var employee_panel = $(".employee-select-panel");
-                        employee_panel.show().find(".table-wrap").html(data.table);
-                        init_employee_table(employee_panel.find("table"));
-                        
-                    }, function() {
-                        alert("Sorry, there was a problem selecting this case.");
-                    }
-                );
+                load_census_table(case_id, "/cases/"+case_id+"/census_records");
             });
             
         });
-        
         
         $(".not-in-list-btn").on('click', function() {
             $('.method-select-form').hide();
@@ -287,14 +273,17 @@
             //errorPlacement: wizard_error_placement	
         });
         
-        // Setup if there we are showing the next applicant for the active case
-        {% if active_case and should_show_next_applicant %}
+        function load_census_table(case_id, url) {
+            
+            $(".loading-panel").show();
+            
             $('.method-select-form').hide();
             $('.case-form').show();
             $('.ad-hoc-form').hide();
-            $(".case-select-panel").hide();
-            case_management.refresh_census_table({{ active_case.id }}, "{{ url_for("cases.census_records", case_id=active_case.id) }}", 
-                "#census-records-table", "#census-table-loading", {
+            $(".case-select-panel").hide();            
+            
+            case_management.refresh_census_table(case_id, url, 
+                "#census-records-table", ".loading-panel", {
                 "aoColumnDefs":[
                     // Show enroll button in first column
                     {"aTargets":[0], "bSortable": false, "mData":function(source) {
@@ -302,12 +291,24 @@
                     }},
                     {"aTargets":[1], "mData":"employee_first"},
                     {"aTargets":[2], "mData":"employee_last"},
-                    {"aTargets":[3], "mData":"employee_email"}
+                    {"aTargets":[3], "mData": "employee_birthdate", "mData": function(source) {
+                        var d = moment(source.employee_birthdate, "YYYY-MM-DD");
+                        return d.format("MM/DD/YYYY");
+                    }},
+                    {"aTargets":[4], "mData":"employee_email"}
                 ],
                 "aaSorting": [[ 2, "asc" ]]
             }, function() {
+                    $(".employee-select-panel").show();
+                    
                     init_alphabet_search($("#census-records-table").dataTable());
-                });
+            });
+        }
+    
+        // Setup if there we are showing the next applicant for the active case
+        {% if active_case and should_show_next_applicant %}
+            $("#census-records-table").hide();
+            load_census_table({{ active_case.id }}, "{{ url_for("cases.census_records", case_id=active_case.id) }}");
             
         {% endif %}
     

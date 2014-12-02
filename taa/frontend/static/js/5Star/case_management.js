@@ -14,19 +14,22 @@ var case_management = (function() {
                  "aTargets":[0], "mData":function(source) {
                     return "<a href='/manage_case/"+case_id+"/census/"+source.id+"'><span class='glyphicon glyphicon-edit'></span></a>";
                 }},
-                {"aTargets":[1], "mData": "employee_ssn"},
-                {"aTargets":[2], "mData": "employee_first"},
-                {"aTargets":[3], "mData": "employee_last"},
+                {"aTargets":[1], "mData": "employee_first"},
+                {"aTargets":[2], "mData": "employee_last"},
+                {"aTargets":[3], "mData": "employee_birthdate", "mData": function(source) {
+                    var d = moment(source.employee_birthdate, "YYYY-MM-DD");
+                    return d.format("MM/DD/YYYY");
+                }},
                 {"aTargets":[4], "mData": "employee_email"},
-                {"aTargets":[5], "mData": "spouse_first"},
-                {"aTargets":[6], "mData": "spouse_last"},
+                //{"aTargets":[5], "mData": "spouse_first"},
+                //{"aTargets":[6], "mData": "spouse_last"},
                 //{"aTargets":[7], "mData": "enrollment_status"},
                 //{"aTargets":[8], "mData": "elected_coverage"},
                 
                 //{ "sWidth": "50px", "aTargets": [7] },
                 //{ "sWidth": "50px", "aTargets": [8] },
             ],
-            "aaSorting": [[ 3, "asc" ]],
+            "aaSorting": [[ 2, "asc" ]],
             "iDisplayLength": 25
         };
         var table_settings = $.extend({}, table_defaults, table_options || {});
