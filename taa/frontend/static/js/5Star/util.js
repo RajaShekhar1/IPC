@@ -195,6 +195,47 @@ ko.bindingHandlers.uniqueNameValidation = {
 
 // Components
 
+// Flash message
+// params should have an observable string named 'message' and an observable bool 'is_error'
+ko.components.register('flash-message', {
+    viewModel: function(params) {
+        var self = this;
+        
+        self.message = params.message;
+        self._is_error = params.is_error;
+        
+        self.is_error = ko.computed(function() {
+            return self._is_error();
+        });
+        self.is_success = ko.computed(function() {
+            return !self._is_error();
+        });
+        
+        self.dismiss = function() {
+            self.message("");
+        }
+    }, 
+    template: 
+        '<div class="alert alert-block" \
+            data-bind="visible: message() !== null && message() !== \'\', \
+            css: {\'alert-success\': is_success(), \'alert-danger\': is_error()}">\
+            <button type="button" class="close" data-bind="click: dismiss">\
+                <i class="ace-icon fa fa-times"></i>\
+            </button>\
+            \
+            <p>\
+                <strong data-bind="visible: is_success">\
+                    <i class="ace-icon fa fa-check"></i>\
+                </strong>\
+                \
+                <strong data-bind="visible: is_error">\
+                    <i class="ace-icon fa fa-exclamation-triangle"></i>\
+                </strong>\
+                <span data-bind="html: message"></span>\
+            </p>\
+        </div>'
+});
+
 // Height select
 ko.components.register('height-select', {
     viewModel: function(params) {
