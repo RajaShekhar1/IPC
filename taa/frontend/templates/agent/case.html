@@ -515,8 +515,12 @@
             
             // Validates month / day formatted as MM/DD
             self.is_valid_month_day = function(val) {
-                return moment(val, "MM/DD").isValid(); 
+                return self.get_month_day(val).isValid(); 
             };
+            self.get_month_day = function(val) {
+                return moment(val, "MM/DD");
+            };
+            
             // Validates actual date formatted MM/DD/YYYY 
             self.is_valid_date = function(val) {
                 return moment(val, ["YYYY-MM-DD","MM/DD/YYYY"]).isValid();
@@ -586,18 +590,74 @@
                 });
             } 
             
+            // utility method for algorithm below
+            function get_annual_periods_after_period(period) {
+                var periods = self.annual_enrollment_periods();
+                return _.filter(periods, function(p) {return periods.indexOf(p) > periods.indexOf(period)})
+            }
+            function compute_next_quarter_start(m) {
+                return m.add(3, "months");
+            }
+            function compute_period_end(start, months) {
+                return start.add(months, "months").subtract(1, "day");
+            }
+            function compute_quarterly_dates(period, val) {
+                if (val && period.is_valid_month_day(val) && period.end_date() == "") {
+                    // Auto fill with end of next month approx. alg
+                    // Initial period is two months after start
+                    var computed_date = compute_period_end(period.get_month_day(val), 2); 
+                    period.end_date(computed_date.format("MM/DD"));
+                    
+                    // Loop through remaining periods and fill in any that are blank
+                    var remaining_periods = get_annual_periods_after_period(period);
+                    var previous_period = period;
+                    $.each(remaining_periods, function() {
+                        var rp = this;
+                        if (!rp.is_valid()) {
+                            // Fill in this period
+                            var previous_start = previous_period.get_month_day(previous_period.start_date());
+                            var computed_start = compute_next_quarter_start(previous_start);
+                            rp.start_date(computed_start.format("MM/DD"));
+                            // one month after start
+                            var computed_finish = compute_period_end(computed_start, 1);
+                            rp.end_date(computed_finish.format("MM/DD"));
+                        } else {
+                            // break - don't continue checking any more periods
+                            return false;
+                        }
+                        previous_period = rp;
+                    });
+                }
+            }
+            // observe the annual period start dates for auto-filling algorithm
+            var first_period = self.annual_enrollment_periods()[0];
+            first_period.start_date.extend({ notify: 'always' });
+            first_period.start_date.subscribe(function(val) {
+                compute_quarterly_dates(first_period, val);
+            });
+            //_.each(self.annual_enrollment_periods(), function(period) {
+            //    period.start_date.subscribe(function(val) {
+            //        
+            //    });
+            //});
+            
             
             // enrollment data
             self.has_census_data = ko.observable(false);
             
             self.is_data_dirty = ko.observable();
             
-            self.flash_messages = new FlashMessages();;
+            self.flash_messages = new FlashMessages();
             
             // subscribe to all changes to detect data changes
-            $.each([self.company_name, self.products, self.enrollment_period_type, 
+            var fields = [self.company_name, self.products, self.enrollment_period_type, 
                     self.enrollment_periods, self.situs_city, self.situs_state, 
-                    self.is_active], function() {
+                    self.is_active];
+            _.each(self.enrollment_periods(), function(p) {
+                fields.push(p.start_date);
+                fields.push(p.end_date);
+            });
+            $.each(fields, function() {
                 this.subscribe(function() {
                     self.is_data_dirty(true); 
                 });
