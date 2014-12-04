@@ -96,7 +96,7 @@ def update_case(case_id):
 @route(bp, "/<case_id>", methods=["DELETE"])
 @groups_required(api_groups, all=False)
 def delete_case(case_id):
-    case_service.delete(case_service.get_if_allowed(case_id))
+    case_service.delete_case(case_service.get_if_allowed(case_id))
     return None, 204
 
 

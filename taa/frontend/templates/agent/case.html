@@ -113,9 +113,18 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-sm-offset-1 col-sm-3">
+                                <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="
+                            click: delete_case
+                            ">Delete Case</button>
+                            </div>
+                            
+                        </div>
                     </div>
                     <div class="widget-toolbox clearfix padding-8">
-                        <button type="submit" class="btn btn-primary btn-sm pull-right" data-bind="
+                        
+                        <button type="submit" class="btn btn-primary btn-md pull-right" data-bind="
                         {# enable: has_unsaved_data,  #}
                         css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}
                         ">Save</button>
@@ -768,7 +777,7 @@
                 } else {
                     var period = self.get_open_enrollment_period();
                     if (period.is_valid()) {
-                        return [period];
+                        return [period.serialize()];
                     }
                     return [];
                 }
@@ -813,6 +822,19 @@
                 $.when(case_request, periods_request).then(on_success, on_failure);
                 
                 return false; 
+            };
+            
+            self.delete_case = function() {
+                if (confirm("Are you sure you want to delete this case? This cannot be undone.")) {
+                    var request = send_json_data("DELETE", "{{ url_for("cases.delete_case", case_id=case.id) }}", {});
+                    $.when(request).then(function() {
+                        alert("Case deleted successfully");
+                        self.is_data_dirty(false);
+                        window.location.href = "{{ url_for("manage_cases") }}";
+                    }, function() {
+                        alert("There was a problem removing this case.");
+                    })
+                }
             };
             
             $(window).bind("beforeunload", function() { 

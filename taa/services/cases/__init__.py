@@ -109,8 +109,11 @@ class CaseService(DBService):
         self.enrollment_periods.remove_all_for_case(case)
         
         # Add the new enrollment period
-        return self.enrollment_periods.add_for_case(case, periods)
+        added = self.enrollment_periods.add_for_case(case, periods)
         
+        db.session.commit()
+
+        return added
         
     # Census records
 
@@ -204,6 +207,16 @@ class CaseService(DBService):
     
     def delete_census_record(self, record):
         return self.census_records.delete(record)
+
+
+    def delete_case(self, case):
+
+        # remove all census records and enrollment_periods first
+        self.census_records.remove_all_for_case(case)
+        self.enrollment_periods.remove_all_for_case(case)
+        
+        return self.delete(case)
+        
     
 class CaseEnrollmentPeriodsService(DBService):
     __model__ = CaseEnrollmentPeriod
@@ -216,7 +229,7 @@ class CaseEnrollmentPeriodsService(DBService):
             return self.validate_annual_enrollment_period(case, data)
         
     def validate_open_enrollment_period(self, case, data):
-        errors = []
+        errors = {}
         
         if len(data) == 0:
             periods = []
@@ -228,7 +241,7 @@ class CaseEnrollmentPeriodsService(DBService):
         for period in data:
             # Need a valid start date
             if not period.get('start_date'):
-                errors.append(dict(error='Invalid date', field='open_enrollment_start_date'))
+                errors['open_enrollment_start_date'] = ['Invalid date']
             else:
                 dateutil.parser.parse(period['start_date'])
             
@@ -374,7 +387,7 @@ class CensusRecordService(DBService):
             return parser.errors, valid_records
         
         # Delete existing records for this case
-        self.find(case_id=case.id).delete()
+        self.remove_all_for_case(case)
         
         # Add all uploaded records    
         valid_records = [self.add_record(case, **parser.get_db_dict(record)) for record in parser.get_valid_data()]
@@ -391,7 +404,8 @@ class CensusRecordService(DBService):
         db.session.add(record)
         return record
 
-
+    def remove_all_for_case(self, case):
+        self.find(case_id=case.id).delete()
 
 class CensusRecordField(object):
     """
