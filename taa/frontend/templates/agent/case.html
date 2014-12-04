@@ -5,7 +5,7 @@
 {% block title %} - Agent Manage Case{% endblock %}
 
 {% block content %}
-    <flash-message params="message: flash_message, is_error: flash_is_error"></flash-message>
+    <flash-messages params="messages: flash_messages"></flash-messages>
     
     <div class="row main-container">
         <div class="col-md-12 case-setup-section">
@@ -64,68 +64,58 @@
                             </div>
                             <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
                                 <h3 class="header lighter blue">Enrollment Periods</h3>
-                                {# 
-                                <div id="accordian">
-                                    <div class="panel">
-                                        <div class="form-group panel-heading">
-                                            <label data-toggle="collapse" data-parent="#accordian" data-target="#collapse-open-with-start">
-                                                <input data-bind="checked: is_open_enrollment" type="radio" class="ace" name="enrollment_period_type" value="open_with_start"> 
-                                                <span class="lbl">Open Enrollment</span>
+                                
+                                <div>
+                                    <div class="panel form-group">
+                                        <div class="panel-heading">
+                                            <label>
+                                                <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="open"> 
+                                                <span class="lbl padding-8">Open Enrollment</span>
                                             </label>
                                         </div>
-                                        <div id="collapse-open-with-start" class="form-group collapse collapse-panel" 
-                                            data-bind="css: {'in': is_open_enrollment()}">
+                                        <div class="panel-body" 
+                                            data-bind="slideDownIf: is_open_enrollment">
                                             <label>
                                                 Start Date: 
-                                            </label>
-                                            <input type="date" placeholder="MM/DD/YYYY"  
-                                            {{ enrollment_period_form.open_period_start_date(class_="input-mask-date", placeholder="MM/DD/YYYY") }}
+                                                <input data-bind="value: get_open_enrollment_period().start_date" type="date" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
                                             
+                                            </label>
                                             
                                         </div>
                                     </div>
-                                #} 
-                                    
-                                {% for value, label, selected in enrollment_period_form.enrollment_period_type.iter_choices() %}
-                                    <div class="panel">
-                                    <div class="form-group panel-heading">
-                                        <label data-toggle="collapse" data-parent="#accordian" data-target="#collapse-{{ value }}">
-                                            <input type="radio" class="ace" name="enrollment_period_type" value="{{ value }}" {% if selected %}checked="1"{% endif %}> 
-                                            <span class="lbl">{{ label }}</span>
-                                        </label>
-                                    </div>
-                                    <div id="collapse-{{ value }}" class="form-group collapse collapse-panel {% if selected %}in{% endif %}" >
-                                    
-                                        {% if value == "open" %}
-                                            {{ enrollment_period_form.open_period_start_date.label }}
-                                            {{ enrollment_period_form.open_period_start_date(class_="input-mask-date", placeholder="MM/DD/YYYY") }}
-                                        {% else %}
-                                            
-                                            {% for date_form in enrollment_period_form.annual_period_dates %}
-                                                <div class="form-group row">
-                                                    {% for field in date_form %}
-                                                        {% if field.type != "CSRFTokenField" %}
-                                                            <div class="col-md-6">
-                                                            {{ field.label }}
-                                                            {{ field(class_="input-mask-month-day", placeholder="MM/DD") }}
-                                                            </div>
-                                                        {% endif %}
-                                                    {% endfor %}
+                                    <div class="panel form-group">
+                                        <div class="panel-heading">
+                                            <label>
+                                                <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="annual"> 
+                                                <span class="lbl padding-8">Annual Periods</span>
+                                            </label>
+                                        </div>
+                                        <div class="panel-body"
+                                             data-bind="slideDownIf: is_annual_enrollment()">
+                                            <!--ko foreach: annual_enrollment_periods-->
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label class="">
+                                                            Start Date:
+                                                            <input type="text" data-bind="value: start_date" class="input-mask-month-day" placeholder="MM/DD">
+                                                        </label>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="">
+                                                            End Date:
+                                                            <input type="text" data-bind="value: end_date" class="input-mask-month-day" placeholder="MM/DD">
+                                                        </label>
+                                                    </div>
                                                 </div>
-                                                
-                                            {% endfor %}
-                                        {% endif %}
-                                        
+                                            <!--/ko-->
+                                        </div>
                                     </div>
-                                    </div>
-                                {% endfor %}
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="widget-toolbox clearfix padding-8">
-                        <div class="flash-message submit-message" data-bind="flashMessage: flash_message"></div>
-                        <button type="submit" class="btn-primary btn-sm pull-right" data-bind="
+                        <button type="submit" class="btn btn-primary btn-sm pull-right" data-bind="
                         {# enable: has_unsaved_data,  #}
                         css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}
                         ">Save</button>
@@ -161,9 +151,6 @@
                             </a>
                         </div>
                     </div>
-                    
-                    
-                    
                 </div>
                 <div class="widget-body">
                     <div class="widget-main">  
@@ -490,6 +477,70 @@
         window.census_errors_panel = new CensusErrorsPanel();
         ko.applyBindings(census_errors_panel, $("#census-upload-modal")[0]);
         
+        
+        var CaseEnrollmentPeriod = function(period) {
+            var self = this;
+            var defaults = {
+                period_type: "annual_period",
+                case_id: null,
+                start_date: "",
+                end_date: ""
+            };
+            var settings = $.extend({}, defaults, period);
+            
+            self.period_type = settings.period_type;
+            self.is_annual = ko.computed(function() {return self.period_type == "annual_period"});
+            self.is_open = ko.computed(function() {return !self.is_annual()});
+            
+            self.case_id = settings.case_id;
+            
+            function strip_year(d) {
+                // Strip off the year of the given date
+                var month_day_search = /\d{4}-(\d{2}-\d{2})/;
+                var matches = d.match(month_day_search);
+                if (matches && matches.length > 1) {
+                    return matches[1];
+                }
+                return "";
+            }
+            
+            if (self.is_open()) {
+                // process start date normally
+                self.start_date = ko.observable(settings.start_date);
+                self.end_date = ko.observable(null);
+            } else {
+                self.start_date = ko.observable(strip_year(settings.start_date));
+                self.end_date = ko.observable(strip_year(settings.end_date));
+            }
+            
+            // Validates month / day formatted as MM/DD
+            self.is_valid_month_day = function(val) {
+                return moment(val, "MM/DD").isValid(); 
+            };
+            // Validates actual date formatted MM/DD/YYYY 
+            self.is_valid_date = function(val) {
+                return moment(val, ["YYYY-MM-DD","MM/DD/YYYY"]).isValid();
+            };
+            
+            self.is_valid = ko.computed(function() {
+                if (self.is_open()) {
+                    return self.is_valid_date(self.start_date());
+                } else {
+                    return (self.is_valid_month_day(self.start_date()) && self.is_valid_month_day(self.end_date()));
+                } 
+            });
+            
+            
+            self.serialize = function() {
+                return {
+                    period_type: self.period_type,
+                    case_id: self.case_id,
+                    start_date: self.start_date(),
+                    end_date: self.end_date()
+                }
+            };
+        };
+        
         var CaseSettingsPanel = function(case_data, product_choices) {
             var self = this;
             
@@ -497,19 +548,51 @@
             self.product_choices = product_choices;
             self.products = ko.observableArray($.map(case_data.products, function(p) {return p.id}));
             self.enrollment_period_type = ko.observable(case_data.enrollment_period_type);
-            self.enrollment_periods = ko.observable(case_data.enrollment_periods);
+            self.enrollment_periods = ko.observableArray($.map(case_data.enrollment_periods, function(p) {
+                return new CaseEnrollmentPeriod(p)}
+            ));
             self.situs_city = ko.observable(case_data.situs_city);
             self.situs_state = ko.observable(case_data.situs_state);
             self.is_active = ko.observable(case_data.active);
             
+            self.is_open_enrollment = ko.computed(function() {
+                return self.enrollment_period_type() === "open"; 
+            });
+            self.is_annual_enrollment = ko.computed(function() {
+                return self.enrollment_period_type() === "annual"; 
+            });
+            self.get_open_enrollment_period = ko.computed(function() {
+                return _.find(self.enrollment_periods(), function(p) {return p.is_open()});
+            });
+            
+            self.annual_enrollment_periods = ko.computed(function() {
+                return _.filter(self.enrollment_periods(), function(p) {return p.period_type === "annual_period"});
+            });
+            
+            
+            // Make sure there is at least one open enrollment period
+            if (!self.get_open_enrollment_period()) {
+                self.enrollment_periods.push(new CaseEnrollmentPeriod({case_id: case_data.id, period_type: "open_with_start"}))
+            }
+            // Make at least four annual enrollment periods by default
+            if (self.annual_enrollment_periods().length < 4) {
+                var num_missing = 4 - self.annual_enrollment_periods().length;
+                _.each(_.range(num_missing), function() {
+                    var p = new CaseEnrollmentPeriod({
+                        case_id: case_data.id,
+                        period_type: "annual_period"
+                    });
+                    self.enrollment_periods.push(p); 
+                });
+            } 
+            
+            
             // enrollment data
-            //self.open_period_start_date = ko.observable();
             self.has_census_data = ko.observable(false);
             
             self.is_data_dirty = ko.observable();
             
-            self.flash_message = ko.observable("");
-            self.flash_is_error = ko.observable(false);
+            self.flash_messages = new FlashMessages();;
             
             // subscribe to all changes to detect data changes
             $.each([self.company_name, self.products, self.enrollment_period_type, 
@@ -521,20 +604,31 @@
             });
             
             self.can_activate_case = ko.computed(function() {
-                 return (
-                     self.enrollment_period_type != null && 
+                 var is_valid = (
+                     self.enrollment_period_type() != null && 
                      self.enrollment_periods().length > 0 &&
-                     self.products().length > 0 && $.trim(self.company_name) != "" && 
-                     $.trim(self.situs_city) != "" && 
-                     $.trim(self.situs_state) != ""
-                 )
+                     self.products().length > 0 && 
+                     $.trim(self.company_name()) != "" && 
+                     $.trim(self.situs_city()) != "" && 
+                     $.trim(self.situs_state()) != ""
+                 );
+                
+                if (self.is_open_enrollment() && !self.get_open_enrollment_period().is_valid()) {
+                    is_valid = false;
+                } else if (self.is_annual_enrollment()) {
+                    // Make sure there is at least one valid period date
+                    is_valid &= _.any(self.annual_enrollment_periods(), function(p) {
+                        return p.is_valid();
+                    });
+                }
+                
+                return is_valid;
             });
             
             self.is_active.subscribe(function(value) {
                 
                 if (value && !self.can_activate_case()) {
                     alert("Cannot activate case for enrollment until settings are complete.");
-                    console.log("You can't activate this case until xyz are done");
                     self.is_active(false);
                 }
             });
@@ -562,6 +656,7 @@
                 }, "json");
             
             };
+            
             
             self.validate = function() {
                 
@@ -604,14 +699,35 @@
                 }  
             };
             
+            self.serialize_enrollments = function() {
+                if (self.is_annual_enrollment()) {
+                    // Only send valid periods
+                    return _.invoke(
+                        _.filter(self.annual_enrollment_periods(), function(p) {return p.is_valid()}), 
+                        "serialize");
+                } else {
+                    var period = self.get_open_enrollment_period();
+                    if (period.is_valid()) {
+                        return [period];
+                    }
+                    return [];
+                }
+            };
+            
             self.save_settings = function() {
-                var form_data = get_form_data($(".case-setup-section form")[0]);
-                //form_data.active = self.is_active();
+                
+                self.flash_messages.clear();
                 
                 if (!self.validate()) {
-                    self.flash_message("Please correct any errors below before saving.");
-                    self.flash_is_error(true);
+                    self.flash_messages.flash_error("Please correct any errors below before saving.");
                     return;
+                }
+                
+                // Make sure case can be activated
+                if (self.is_active() && !self.can_activate_case()) {
+                    self.is_active(false);
+                    self.flash_messages.flash_error("The case has been deactivated due to missing settings.");
+                    // Continue saving the case
                 }
                 
                 var case_request = send_json_data(
@@ -620,22 +736,19 @@
                     self.serialize_case()
                 );
                 
-                //var period_form_data = $("form.period_setup").serialize();
-                var periods_request = send_form_data(
+                var periods_request = send_json_data(
                     "PUT", 
                     "{{ url_for("cases.update_case_enrollment_periods", case_id=case.id) }}",
-                    form_data
+                    self.serialize_enrollments()
                 );
                 var on_success = function(case_xhr, periods_xhr) {
                     self.is_data_dirty(false);
-                    self.flash_message("Data Saved");
-                    self.flash_is_error(false);
+                    self.flash_messages.flash_success("Data Saved");
                 };
                 var on_failure = function(failed_xhr) {
                     var errors = failed_xhr.responseJSON.errors || [];
                     show_all_errors(errors);
-                    self.flash_message("Save failed. Please correct any errors below.");
-                    self.flash_is_error(true);
+                    self.flash_messages.flash_error("Save failed. Please correct any errors below.");
                 };
                 $.when(case_request, periods_request).then(on_success, on_failure);
                 
@@ -655,15 +768,6 @@
         ko.applyBindings(window.case_settings, $(".content")[0]);
         
         $(".input-mask-month-day").mask("99/99");
-       
-        $('.panel-heading label').on('click', function(e) {
-            if($(this).parents('.panel').children('.collapse-panel').hasClass('in')){
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        });
-        
-        
         
     });
     </script>

@@ -195,45 +195,69 @@ ko.bindingHandlers.uniqueNameValidation = {
 
 // Components
 
-// Flash message
-// params should have an observable string named 'message' and an observable bool 'is_error'
-ko.components.register('flash-message', {
+// Flash message component
+// params should have a FlashMessages object named "messages". 
+// Use this object to communicate with the flash message components.
+var FlashMessages = function() {
+    var self = this;
+    self.messages = ko.observableArray();
+    
+    self.clear = function() {
+        _.invoke(self.messages(), "dismiss");  
+    };
+    
+    self.flash_error = function(message) {
+        self.messages.push(new FlashMessage({message: message, type: "error"}));
+    };
+    self.flash_success = function(message) {
+        self.messages.push(new FlashMessage({message: message, type: "success"}));  
+    };
+};
+
+var FlashMessage = function(message_obj) {
+    var self = this;
+    self.message = message_obj.message;
+    self.type = message_obj.type;
+    self.is_visible = ko.observable(true);
+    
+    self.is_error = function() {
+        return self.type === "error";
+    };
+    self.is_success = function() {
+        return self.type === "success";  
+    };
+    self.dismiss = function() {
+        self.is_visible(false);
+    }
+};
+
+ko.components.register('flash-messages', {
     viewModel: function(params) {
         var self = this;
-        
-        self.message = params.message;
-        self._is_error = params.is_error;
-        
-        self.is_error = ko.computed(function() {
-            return self._is_error();
-        });
-        self.is_success = ko.computed(function() {
-            return !self._is_error();
-        });
-        
-        self.dismiss = function() {
-            self.message("");
-        }
+        self.flash_messages = params.messages;
     }, 
     template: 
-        '<div class="alert alert-block" \
-            data-bind="visible: message() !== null && message() !== \'\', \
+        '\
+        <!--ko foreach: flash_messages.messages-->\
+        <div class="alert alert-block" \
+            data-bind="visible: is_visible, \
             css: {\'alert-success\': is_success(), \'alert-danger\': is_error()}">\
             <button type="button" class="close" data-bind="click: dismiss">\
                 <i class="ace-icon fa fa-times"></i>\
             </button>\
             \
             <p>\
-                <strong data-bind="visible: is_success">\
+                <strong data-bind="visible: is_success()">\
                     <i class="ace-icon fa fa-check"></i>\
                 </strong>\
                 \
-                <strong data-bind="visible: is_error">\
+                <strong data-bind="visible: is_error()">\
                     <i class="ace-icon fa fa-exclamation-triangle"></i>\
                 </strong>\
                 <span data-bind="html: message"></span>\
             </p>\
-        </div>'
+        </div>\
+        <!--/ko-->'
 });
 
 // Height select

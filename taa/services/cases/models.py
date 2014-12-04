@@ -31,6 +31,8 @@ class Case(CaseSerializer, db.Model):
     active = db.Column(db.Boolean, default=False)
 
     enrollment_period_type = db.Column(db.String(16), nullable=True)
+    OPEN_ENROLLMENT_TYPE = u'open'
+    ANNUAL_ENROLLMENT_TYPE = u'annual'
     
     products = db.relationship('Product', secondary=case_products,
                                backref=db.backref('cases', lazy='dynamic'))
@@ -50,6 +52,12 @@ class Case(CaseSerializer, db.Model):
 
 class PeriodSerializer(JsonSerializable):
     __json_hidden__ = ['case']
+    __json_modifiers__ = {
+        # Use date strings rather than datetime strings
+        'start_date':lambda d,_: d.strftime('%Y-%m-%d') if d else None,
+        'end_date':lambda d,_: d.strftime('%Y-%m-%d') if d else None
+
+    }
 
 class CaseEnrollmentPeriod(PeriodSerializer, db.Model):
     
@@ -68,10 +76,11 @@ class CaseEnrollmentPeriod(PeriodSerializer, db.Model):
     
 
 class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
-    __mapper_args__ = {'polymorphic_identity': 'open_with_start'}
+    PERIOD_TYPE = u'open_with_start'
+    __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
 
     def populate_data_dict(self, data):
-        data['enrollment_period_type'] = 'open'
+        data['enrollment_period_type'] = Case.OPEN_ENROLLMENT_TYPE
         data['open_period_start_date'] = self.start_date if self.start_date else ''
         return data
     
@@ -79,10 +88,11 @@ class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
         return not self.start_date or datetime.now() > self.start_date
 
 class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
-    __mapper_args__ = {'polymorphic_identity': 'annual_periods'}
+    PERIOD_TYPE = u'annual_period'
+    __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
     
     def populate_data_dict(self, data):
-        data['enrollment_period_type'] = 'annual'
+        data['enrollment_period_type'] = Case.ANNUAL_ENROLLMENT_TYPE
         if not 'annual_period_dates' in data:
             data['annual_period_dates'] = []
         data['annual_period_dates'].append({

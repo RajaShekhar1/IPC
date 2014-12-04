@@ -1,5 +1,5 @@
 import dateutil.parser
-from datetime import datetime
+from datetime import datetime, date as datetime_date
 import re
 import csv
 import StringIO
@@ -83,6 +83,9 @@ class CaseService(DBService):
     
     # Enrollment Periods
     
+    def validate_enrollment_periods(self, case, data):
+        return self.enrollment_periods.validate_for_case(case, data)
+    
     def get_enrollment_periods(self, case):
         return self.enrollment_periods.get_all_for_case(case)
         
@@ -94,16 +97,19 @@ class CaseService(DBService):
             
         return data
         
-    def update_enrollment_periods(self, case, **data):
+    def update_enrollment_periods(self, case, periods):
+        # Make sure the case enrollment type is updated to match the type of the uploaded periods
+        for period in periods:
+            if period['period_type'] == CaseOpenEnrollmentPeriod.PERIOD_TYPE and case.enrollment_period_type != Case.OPEN_ENROLLMENT_TYPE:
+                case.enrollment_period_type = Case.OPEN_ENROLLMENT_TYPE
+            elif period['period_type'] == CaseAnnualEnrollmentPeriod.PERIOD_TYPE and case.enrollment_period_type != Case.ANNUAL_ENROLLMENT_TYPE:
+                case.enrollment_period_type = Case.ANNUAL_ENROLLMENT_TYPE
         
-        if case.enrollment_period_type != data['enrollment_period_type']:
-            case.enrollment_period_type = data['enrollment_period_type']
-
         # Remove existing periods
         self.enrollment_periods.remove_all_for_case(case)
-            
+        
         # Add the new enrollment period
-        self.enrollment_periods.add_for_case(case, **data)
+        return self.enrollment_periods.add_for_case(case, periods)
         
         
     # Census records
@@ -202,34 +208,72 @@ class CaseService(DBService):
 class CaseEnrollmentPeriodsService(DBService):
     __model__ = CaseEnrollmentPeriod
     
-    def add_for_case(self, case, **data):
-        if data['enrollment_period_type'] == 'open':
-            periods = [CaseOpenEnrollmentPeriod(start_date=data['open_period_start_date'], case_id=case.id)]
+    def validate_for_case(self, case, data):
+        errors = []
+        if case.enrollment_period_type == Case.OPEN_ENROLLMENT_TYPE:
+            return self.validate_open_enrollment_period(case, data)
         else:
-            valid_periods = [self.parse_annual_period_dates(d) for d in data['annual_period_dates'] 
-                             if d['period_start_date'] and d['period_end_date']
-                            ]
-            
-            periods = [CaseAnnualEnrollmentPeriod(start_date=d[0], end_date=d[1], case_id=case.id) 
-                       for d in valid_periods]
+            return self.validate_annual_enrollment_period(case, data)
         
+    def validate_open_enrollment_period(self, case, data):
+        errors = []
+        
+        if len(data) == 0:
+            periods = []
+        elif len(data) > 1:
+            periods = [data[0]]
+        else:
+            periods = data
+        
+        for period in data:
+            # Need a valid start date
+            if not period.get('start_date'):
+                errors.append(dict(error='Invalid date', field='open_enrollment_start_date'))
+            else:
+                dateutil.parser.parse(period['start_date'])
+            
+        return errors
+    
+    def validate_annual_enrollment_period(self, case, data):
+        errors = []
+        
+        #for period in data:
+        #    if not period.get('start_date'):
+        #        errors.append(dict(error='Invalid date'))
+        return errors
+    
+    def add_for_case(self, case, period_data):
+        periods = []
+        for period in period_data:
+            if period['period_type'] == CaseAnnualEnrollmentPeriod.PERIOD_TYPE:
+                start = self.valid_annual_date(period['start_date'])
+                end = self.valid_annual_date(period['end_date'])
+                periods.append(CaseAnnualEnrollmentPeriod(start_date=start, end_date=end, case_id=case.id))
+            elif period['period_type'] == CaseOpenEnrollmentPeriod.PERIOD_TYPE:
+                start = self.valid_date(period['start_date'])
+                periods.append(CaseOpenEnrollmentPeriod(start_date=start, case_id=case.id))
+            
         for p in periods:
             self.save(p)
         
+        return periods
         
-    def parse_annual_period_dates(self, period):
-        
-        start = self.valid_annual_date(period['period_start_date'])
-        end = self.valid_annual_date(period['period_end_date'])
-        
-        return start, end 
-    
     def valid_annual_date(self, d):
         if not d:
             return None
         
-        return parse(d + '/%s'%datetime.now().year)
-                
+        date = dateutil.parser.parse(d + '/%s'%datetime.now().year)
+        # strip time
+        return datetime_date(date.year, date.month, date.day)
+    
+    def valid_date(self, d):
+        if not d:
+            return None
+        
+        date = dateutil.parser.parse(d)
+        # Strip time
+        return datetime_date(date.year, date.month, date.day)
+    
     def get_all_for_case(self, case):
         return case.enrollment_periods
     

@@ -80,8 +80,8 @@
     margin-left: 1em;
 }
 
-.widget-box.enrollment-periods .collapse-panel {
-    padding-left: 3em;
+.enrollment-section .panel-body {
+    padding: 0 0 0 2.25em;
 }
 
 /* Rolodex styling */

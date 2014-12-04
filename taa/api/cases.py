@@ -116,12 +116,12 @@ def update_case_enrollment_periods(case_id):
     all existing enrollment periods to ensure all of a case's enrollment periods are of the same type.
     """
     case = case_service.get_if_allowed(case_id)
+    periods = request.json
+    errors = case_service.validate_enrollment_periods(case, periods)
+    if not errors:
+        return case_service.update_enrollment_periods(case, periods)
     
-    form = NewCaseEnrollmentPeriodForm()
-    if form.validate_on_submit():
-        return case_service.update_enrollment_periods(case, **form.data)
-    
-    raise TAAFormError(form.errors)
+    raise TAAFormError(errors)
     
 
 # Census Records

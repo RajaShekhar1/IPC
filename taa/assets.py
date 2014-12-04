@@ -79,6 +79,8 @@ js_vendor = Bundle(
     'js/jquery.mobile.custom.min.js',
     'js/typeahead-bs2.min.js',
     Bundle('js/knockout-3.2.0.js'),
+    'js/underscore-min.js',
+    'js/backbone-min.js',
     #'js/sammy-latest.min.js',
 )
 
@@ -110,6 +112,8 @@ js_vendor_1_3_1 = Bundle(
     'js/jquery.rcrumbs.min.js',
     
     Bundle('js/knockout-3.2.0.js'),
+    'js/underscore-min.js',
+    'js/backbone-min.js',
     #'js/sammy-latest.min.js',
 )
 
