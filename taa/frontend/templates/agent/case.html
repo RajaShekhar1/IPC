@@ -825,7 +825,7 @@
             };
             
             self.delete_case = function() {
-                if (confirm("Are you sure you want to delete this case? This cannot be undone.")) {
+                if (confirm("Are you sure you want to the case '"+self.company_name()+"'? This is permanent and cannot be undone!")) {
                     var request = send_json_data("DELETE", "{{ url_for("cases.delete_case", case_id=case.id) }}", {});
                     $.when(request).then(function() {
                         alert("Case deleted successfully");
