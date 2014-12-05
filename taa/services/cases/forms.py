@@ -39,15 +39,22 @@ class UpdateCaseForm(_CommonCaseFormMixin, Form):
     pass
 
 
-
+class SSNField(StringField):
+    def process_formdata(self, valuelist):
+        self.data = ""
+        if valuelist:
+            for char in valuelist[0]:
+                if char.isdigit():
+                    self.data += char
+        
 class CensusRecordForm(Form):
     
     employee_first = StringField('Employee First', [validators.InputRequired()])
     employee_last = StringField('Employee Last', [validators.InputRequired()])
     employee_gender = SelectField('Employee Gender', [validators.optional()], choices=[('', ''), ('male','Male'), ('female','Female')])
-    employee_ssn = StringField('Employee SSN', [validators.InputRequired()])
-    employee_birthdate = StringField('Employee Birthdate', [validators.InputRequired()])
-    employee_email = StringField('Employee Email', [validators.InputRequired()])
+    employee_ssn = SSNField('Employee SSN', [validators.InputRequired()])
+    employee_birthdate = DateField('Employee Birthdate', [validators.InputRequired()])
+    employee_email = StringField('Employee Email', [validators.optional()])
     employee_phone = StringField('Employee Phone')
     employee_street_address = StringField("Employee Street Address")
     employee_street_address2 = StringField("Employee Street Address2")
@@ -58,8 +65,8 @@ class CensusRecordForm(Form):
     spouse_first = StringField('Spouse First')
     spouse_last = StringField('Spouse Last')
     spouse_gender = SelectField('Spouse Gender', [validators.optional()], choices=[('', ''), ('male','Male'), ('female','Female')])
-    spouse_ssn = StringField('Spouse SSN')
-    spouse_birthdate = StringField("Spouse Birthdate")
+    spouse_ssn = SSNField('Spouse SSN')
+    spouse_birthdate = DateField("Spouse Birthdate")
     spouse_email = StringField('Spouse Email')
     spouse_phone = StringField('Spouse Phone')
     spouse_street_address = StringField("Spouse Street Address")
@@ -68,6 +75,14 @@ class CensusRecordForm(Form):
     spouse_state = SelectField("Spouse Statecode", choices=[(s['shortname'], s['name']) for s in get_all_states()])
     spouse_zip = StringField("Spouse Zip", [validators.length(max=5, min=5)])
     
+    
+    
+for x in range(1, 6+1):
+    setattr(CensusRecordForm, 'child{}_first'.format(x), StringField('Child {} First'.format(x)))
+    setattr(CensusRecordForm, 'child{}_last'.format(x), StringField('Child {} Last'.format(x)))
+    setattr(CensusRecordForm, 'child{}_birthdate'.format(x), DateField('Child {} Birthdate'.format(x), [validators.optional()], default=None))
+    
+
 class AnnualPeriodForm(Form):
     period_start_date = StringField('Start')
     period_end_date = StringField('End')

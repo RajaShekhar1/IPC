@@ -90,10 +90,22 @@ def manage_case(case_id):
 def edit_census_record(case_id, census_record_id):
     case = case_service.get_if_allowed(case_id)
     census_record = case_service.get_census_record(case, census_record_id)
+    
+    record_form = CensusRecordForm(obj=census_record)
+    # Get the child entries out
+    child_form_fields = []
+    for x in range(1, 6+1):
+        child_fields = []
+        child_fields.append(getattr(record_form, 'child{}_first'.format(x)))
+        child_fields.append(getattr(record_form, 'child{}_last'.format(x)))
+        child_fields.append(getattr(record_form, 'child{}_birthdate'.format(x)))
+        child_form_fields.append(child_fields)
+    
     vars = dict(
         case=case, 
         census_record=census_record,
-        form=CensusRecordForm(obj=census_record)
+        form=record_form,
+        child_form_fields=child_form_fields,
     )
     return render_template('agent/census_record.html', **vars)
 
