@@ -865,8 +865,11 @@ representative for assistance.""",
         
         for field in self.all_possible_fields:
             if field.csv_column_name not in record:
-                continue
-            record[field.csv_column_name] = field.postprocess(record[field.csv_column_name], record)
+                val = None
+            else:
+                val = record[field.csv_column_name]
+            
+            record[field.csv_column_name] = field.postprocess(val, record)
             
         
     fields_by_column_name = {field.csv_column_name: field for field in all_possible_fields}

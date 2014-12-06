@@ -85,7 +85,7 @@ def manage_case(case_id):
     return render_template('agent/case.html', **vars)
 
     
-@app.route("/manage_case/<case_id>/census/<census_record_id>")
+@app.route("/manage-case/<case_id>/census/<census_record_id>")
 @groups_required(["agents", "admins"], all=False)
 def edit_census_record(case_id, census_record_id):
     case = case_service.get_if_allowed(case_id)

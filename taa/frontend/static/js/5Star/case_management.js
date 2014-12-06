@@ -12,7 +12,7 @@ var case_management = (function() {
             "aoColumnDefs":[
                 {"bSortable": false, 
                  "aTargets":[0], "mData":function(source) {
-                    return "<a href='/manage_case/"+case_id+"/census/"+source.id+"'><span class='glyphicon glyphicon-edit'></span></a>";
+                    return "<a href='/manage-case/"+case_id+"/census/"+source.id+"'><span class='glyphicon glyphicon-edit'></span></a>";
                 }},
                 {"aTargets":[1], "mData": "employee_first"},
                 {"aTargets":[2], "mData": "employee_last"},
