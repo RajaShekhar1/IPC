@@ -1,8 +1,8 @@
 
 {% macro render_field_with_errors(field) %}
     <div class="form-group">
-        <div class="col-md-3 control-label">{{ field.label }}</div>
-        <div class="col-md-9">
+        <div class="col-sm-3 control-label">{{ field.label }}</div>
+        <div class="col-sm-9">
             {{ field(**kwargs)|safe }}
             {% if field.errors %}
               <ul class="errors">
@@ -17,7 +17,7 @@
 
 {% macro render_checkbox(field) %}
     <div class="form-group">            
-        <div class="col-md-9 col-md-offset-3">
+        <div class="col-sm-9 col-sm-offset-3">
             <label class="control-label">
                 {{ field(**kwargs)|safe }} {{field.label}}
             </label>
