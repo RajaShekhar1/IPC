@@ -3,7 +3,21 @@ from taa import db
 from taa.helpers import JsonSerializable
 
 class ProductJsonSerializable(JsonSerializable):
-    __json_hidden__ = ['cases']
+    __json_hidden__ = ['cases', 'customized_products']
+
+    def to_json(self):
+        # Default serialized data
+        data = super(ProductJsonSerializable, self).to_json()
+        
+        # Add in some helper attributes
+        
+        # Base product type 'code'
+        data['base_product_type'] = self.get_base_product_code()
+        
+        data['is_guaranteed_issue'] = self.is_guaranteed_issue()
+        
+        return data
+        
 
 class Product(ProductJsonSerializable, db.Model):
     __tablename__ = 'products'
@@ -19,6 +33,19 @@ class Product(ProductJsonSerializable, db.Model):
         'polymorphic_identity': u'base',
         'with_polymorphic': '*',
     }
+
+    def get_base_product(self):
+        # By default, all products are base products
+        return self
+    
+    def get_base_product_code(self):
+        return self.get_base_product().code
+    
+    def can_enroll(self):
+        return True
+    
+    def is_guaranteed_issue(self):
+        return False
     
 # Relate custom products to agents
 product_agents = db.Table('product_agents', db.metadata,
@@ -27,7 +54,7 @@ product_agents = db.Table('product_agents', db.metadata,
 )
 
 class CustomProductSerializer(ProductJsonSerializable):
-    __json_hidden__ = ['cases']
+    __json_hidden__ = ['cases', 'customized_products','agents', 'base_product']
 
 class CustomGuaranteeIssueProduct(CustomProductSerializer, Product):
     __tablename__ = "products_custom_guaranteed_issue"
@@ -39,8 +66,16 @@ class CustomGuaranteeIssueProduct(CustomProductSerializer, Product):
     __mapper_args__ = {'polymorphic_identity': u'GI',
                        'inherit_condition': id == Product.id}
     
+    base_product = db.relationship('Product', primaryjoin=base_product_id==Product.id, backref='customized_products')
     agents = db.relationship('Agent', secondary=product_agents,
                                backref=db.backref('custom_products', lazy='dynamic'))
+
+    def get_base_product(self):
+        # Use the linked product
+        return self.base_product
+    
+    def is_guaranteed_issue(self):
+        return True
     
 class BypassedSOHSerializer(JsonSerializable):
     __json_hidden__ = ['product']

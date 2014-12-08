@@ -23,26 +23,7 @@ if (typeof Object.create != 'function') {
 
 function init_rate_form(data) {
     
-    var product;
-    if (data.product_id == "FPPTI") {
-        product = new FPPTIProduct();
-    } else if (data.product_id == "FPPCI") {
-        product = new FPPCIProduct();
-        
-        // styling differences
-        $(".recommended-coverage-table").addClass("ci-recommendations");
-    } else if (data.product_id == "Group CI") {
-        product = new GroupCIProduct();
-        
-        // styling differences
-        $(".recommended-coverage-table").addClass("ci-recommendations");
-    
-    } else {
-        // default product?
-        alert("Invalid product code '"+data.product_id+"'");
-        product = new FPPTIProduct();
-    }
-    
+    var product = build_product(data.products, data.health_questions);
     var ui = new WizardUI(product, data);
     
     // Allow other JS functions to access the ui object
@@ -52,13 +33,47 @@ function init_rate_form(data) {
     
 }
 
+function build_product(products, health_questions) {
+    
+    if (products.length == 0) {
+        alert("Error: No products to enroll.");
+        return null;
+    }
+    
+    // use the first product until multi-product 
+    var product_data = products[0];
+    
+    var base_type = product_data.base_product_type;
+    var base_product;
+    if (base_type == "FPPTI") {
+        base_product = new FPPTIProduct(product_data); 
+    } else if (base_type == "FPPCI") {
+        base_product = new FPPCIProduct(product_data);
+    } else if (base_type == "Group CI") {
+        base_product = new GroupCIProduct(product_data);
+    } else {
+        // default product?
+        alert("Invalid product type '"+base_type+"'");
+        base_product = new FPPTIProduct(product_data);
+    }
+    
+    base_product.health_questions = health_questions[product_data.id];
+    
+    // Check if this is a Guaranteed Issue product
+    if (product_data.is_guaranteed_issue) {
+        return new GIProductDecorator(base_product, product_data);
+    } else {
+        return base_product;
+    }
+}
+
 // Root model of the Benefits wizard User Interface
 function WizardUI(product, defaults) {
     var self = this;
     
     self.defaults = defaults;
     self.insurance_product = product;
-
+    
     self.disclaimer_notice_confirmed = ko.observable(false);
     
     
@@ -573,6 +588,12 @@ function WizardUI(product, defaults) {
     self.show_no_selection_error = function() {
         self.attempted_advance_step(true);
     }; 
+    
+    // Statement of Health questions
+    self.health_questions = ko.computed(function() {
+        return self.insurance_product.get_health_questions(self.selected_plan());  
+    });
+    
 }
 
 // Model for different insurance products
@@ -612,7 +633,14 @@ Product.prototype = {
     requires_gender: function() {return false;},
     requires_height: function() {return false;},
     requires_weight: function() {return false;},
-    requires_is_smoker: function() {return false;}
+    requires_is_smoker: function() {return false;},
+    
+    // SOH questions
+    has_critical_illness_coverages: function() {return false;},
+    get_health_questions: function(selected_plan) {
+        // Static list for base products
+        return this.health_questions;
+    }
     
 };
 
@@ -630,6 +658,9 @@ FPPCIProduct.prototype = Object.create(Product.prototype);
 FPPCIProduct.prototype.get_new_benefit_option = function(options) {
     return new CIBenefitOption(new BenefitOption(options));
 };
+FPPCIProduct.prototype.has_critical_illness_coverages = function() {
+    return true;
+};
 
 function GroupCIProduct() {
     this.product_type = "Group CI";
@@ -642,6 +673,52 @@ GroupCIProduct.prototype.requires_gender = function() {return true;};
 GroupCIProduct.prototype.requires_height = function() {return true;};
 GroupCIProduct.prototype.requires_weight = function() {return true;};
 GroupCIProduct.prototype.requires_is_smoker = function() {return true;};
+GroupCIProduct.prototype.has_critical_illness_coverages = function() {
+    return true;
+};
+
+
+// Guaranteed Issue Product decorator
+//  Wraps a base product type
+function GIProductDecorator(product, product_data) {
+    var self = this;
+    
+    self.product = product;
+    self.product_data = product_data;
+    self.product_type = product.product_type;
+    
+    
+    // Delegate to self.product by default for methods inherited from Product
+    _.each(_.methods(Product.prototype), function(method) {
+        self[method] = function() {
+            return self.product[method].apply(self, arguments);   
+        }
+    });
+    
+    // Overrides
+    
+    self.get_health_questions = function(selected_plan) {
+        
+        // If we meet the criteria, 
+        if (selected_plan.employee_recommendation().recommended_benefit.face_value >= 50000) {
+            if (product_data.statement_of_health_bypass_type == 'all') {
+                return [];
+            } else {
+                return self.product.get_health_questions(selected_plan);
+            }
+        } else {
+            return self.product.get_health_questions(selected_plan);
+        }
+    };
+    
+    self.does_one_applicant_meet_criteria = function(selected_plan) {
+        $.each(product_data.gi_criteria, function() {
+            var criteria = this;
+            
+            
+        });
+    }
+}
 
 
 // Main ViewModel for all applicants

@@ -57,10 +57,10 @@ def manage_case(case_id):
     
     vars = {'case':case}
     
-    # TODO: limit to agent product choices
     agent = agent_service.get_logged_in_agent()
     vars['product_choices'] = [p for p in product_service.get_products_for_agent(agent)]
-    vars['product_states'] = get_product_states()
+    
+    #vars['product_states'] = get_product_states()
     vars['all_states'] = get_all_states()
     
     case_setup_form = UpdateCaseForm(obj=case)
@@ -74,7 +74,7 @@ def manage_case(case_id):
     else:
         vars['case_state'] = case.situs_state
 
-    
+        
     enrollment_periods = NewCaseEnrollmentPeriodForm(**case_service.get_case_enrollment_period_data(case))
     vars['enrollment_period_form'] = enrollment_periods 
     

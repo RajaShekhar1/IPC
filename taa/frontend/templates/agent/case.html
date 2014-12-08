@@ -7,7 +7,10 @@
 {% block content %}
     <flash-messages params="messages: flash_messages"></flash-messages>
     
-    <div class="row main-container">
+    <div class="row main-container" 
+        {# Prevent flash of unstyled content #}
+        style="display: none;" data-bind="visible: true"
+        >
         <div class="col-md-12 case-setup-section">
             <form class="form-horizontal case_setup" data-bind="submit: save_settings">
                     
@@ -54,7 +57,7 @@
                                 
                                 {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsValue: "id", optionsText: "name", selectedOptions: products, multiSelect: {
                                     observed: products, 
-                                    options: {nonSelectedText: "No Products Selected", numberDisplayed: 1}
+                                    options: {nonSelectedText: "No Products Selected", numberDisplayed: 3}
                                 }'}) }}
                                 
                                 
@@ -139,10 +142,11 @@
     </div>
     
     <br>
-    <div class="hr"></div>
     <br>
     
-    <div class="row">
+    <div class="row" {# Prevent flash of unstyled content #}
+        style="display: none;" data-bind="visible: true"
+        >
         <div class="col-xs-12">
             <div class="widget-box">
                 <div class="widget-header">
@@ -390,7 +394,8 @@
         });
         
         // Change enabled states when the product is changed
-        product_state_select.init("#case_state","#case_product", {{ product_states | tojson | safe }});
+        {# product_state_select.init("#case_state","#case_product", {{ product_states | tojson | safe }});
+         #}
         
         $('#csv-file-input').ace_file_input({
             no_file:'No File ...',

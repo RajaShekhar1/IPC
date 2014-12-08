@@ -12,18 +12,26 @@ from taa.model.Enrollment import get_all_states
 from taa.services.products import ProductService
 products_service = ProductService()
 
+   
+class ProductMultiSelectField(SelectMultipleField):
+    def validate(self, form, extra_validators=()):
+        """Override the default validation so we don't use choices here"""
+        # TODO: Validate this is a product this user is allowed to enroll
+        
+        return True
+
 class _CommonCaseFormMixin(object):
     company_name = StringField('Company Name', [validators.InputRequired()])
     situs_state = SelectField('State', [validators.Optional(), validators.length(min=2, max=2)])
     situs_city = StringField('City', [validators.Optional()])
-    products = SelectMultipleField('Products', [])
+    products = ProductMultiSelectField('Products', [])
     agent_id = IntegerField('Agent', [validators.DataRequired()])
     active = BooleanField('Active')
     
     def __init__(self, *args, **kwargs):
         super(_CommonCaseFormMixin, self).__init__(*args, **kwargs)
 
-        self.products.choices = [(p.id, p.name) for p in products_service.all()]
+        self.products.choices = []#[(p.id, p.name) for p in products_service.all()]
         self.situs_state.choices = [(s['shortname'], s['name']) for s in products_service.get_all_states()]
     
     def validate_situs_state(self, field):
@@ -31,6 +39,10 @@ class _CommonCaseFormMixin(object):
             raise validators.ValidationError('Invalid State')
         
         # TODO: Validate product-state mismatch
+    
+    def validate_products(self, field):
+        pass
+ 
     
 class NewCaseForm(_CommonCaseFormMixin, Form):
     pass
