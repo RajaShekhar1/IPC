@@ -23,8 +23,11 @@ if (typeof Object.create != 'function') {
 
 function init_rate_form(data) {
     
-    var product = build_product(data.products, data.health_questions);
+    
+    var product = build_product(data.products);
     var ui = new WizardUI(product, data);
+    
+    ui.build_health_questions(data.health_questions);
     
     // Allow other JS functions to access the ui object
     window.ui = ui;
@@ -33,7 +36,7 @@ function init_rate_form(data) {
     
 }
 
-function build_product(products, health_questions) {
+function build_product(products) {
     
     if (products.length == 0) {
         alert("Error: No products to enroll.");
@@ -57,8 +60,6 @@ function build_product(products, health_questions) {
         base_product = new FPPTIProduct(product_data);
     }
     
-    base_product.health_questions = health_questions[product_data.id];
-    
     // Check if this is a Guaranteed Issue product
     if (product_data.is_guaranteed_issue) {
         return new GIProductDecorator(base_product, product_data);
@@ -73,6 +74,7 @@ function WizardUI(product, defaults) {
     
     self.defaults = defaults;
     self.insurance_product = product;
+    self.health_questions = ko.observableArray([]);
     
     self.disclaimer_notice_confirmed = ko.observable(false);
     
@@ -590,9 +592,46 @@ function WizardUI(product, defaults) {
     }; 
     
     // Statement of Health questions
-    self.health_questions = ko.computed(function() {
-        return self.insurance_product.get_health_questions(self.selected_plan());  
+    // A computed observable list of applicants who have selected coverage 
+    self.get_covered_applicants = ko.computed(function() {
+        if (!self.selected_plan()) {
+            return [];
+        } else {
+            return self.selected_plan().get_all_covered_people();
+        }
     });
+    
+    self.do_any_health_questions_need_answering = ko.computed(function() {
+        if (self.health_questions().length == 0) {
+            return false;
+        } 
+        return _.any(self.health_questions(), function(question) {
+            return question.does_any_applicant_need_to_answer();
+        })
+    });
+    
+    // Should be invoked once at startup
+    self.build_health_questions = function(health_question_data_by_product) {
+        var product_data = self.insurance_product.product_data;
+        _.each(health_question_data_by_product, function(product_health_questions, product_id) {
+            if (product_id == product_data.id) {
+                var question_factory;
+                if (product_data.is_guaranteed_issue) {
+                    question_factory = function(question_data) {
+                         return new GIHealthQuestion(question_data, self.selected_plan,
+                             product_data.gi_criteria,
+                             product_data.statement_of_health_bypass_type, product_data.bypassed_soh_questions);
+                    }
+                } else {
+                    question_factory = function(question_data) {
+                        return new StandardHealthQuestion(question_data, self.selected_plan);
+                    }
+                }
+                self.health_questions(_.map(product_health_questions, question_factory));
+            } 
+        });
+        
+    };
     
 }
 
@@ -636,11 +675,7 @@ Product.prototype = {
     requires_is_smoker: function() {return false;},
     
     // SOH questions
-    has_critical_illness_coverages: function() {return false;},
-    get_health_questions: function(selected_plan) {
-        // Static list for base products
-        return this.health_questions;
-    }
+    has_critical_illness_coverages: function() {return false;}
     
 };
 
@@ -696,7 +731,7 @@ function GIProductDecorator(product, product_data) {
     });
     
     // Overrides
-    
+    /*
     self.get_health_questions = function(selected_plan) {
         
         // If we meet the criteria, 
@@ -714,11 +749,204 @@ function GIProductDecorator(product, product_data) {
     self.does_one_applicant_meet_criteria = function(selected_plan) {
         $.each(product_data.gi_criteria, function() {
             var criteria = this;
-            
+            if (self.does_applicant_meet_criteria(applicant, criteria)) {
+                
+            }
             
         });
-    }
+    };
+    
+    self.does_applicant_meet_criteria = function(applicant, criteria) {
+        
+    };
+    */
 }
+
+
+var GlobalSOHQuestion = function(question_text) {
+    var self = this;
+    self.question_text = question_text;
+};
+GlobalSOHQuestion.prototype.get_question_text = function() {
+    return this.question_text;
+};
+
+var StandardHealthQuestion = function(question, selected_plan) {
+    // A viewmodel that keeps track of which applicants need to answer which health questions
+    var self = this;
+    
+    // should be an observableArray of InsuredApplicant objects
+    self.selected_plan = selected_plan;
+    
+    // Simple object with .question_text and .label
+    self.question = question;
+    
+    
+    self.does_any_applicant_need_to_answer = ko.computed(function() {
+        
+        return _.any(self.selected_plan.get_covered_applicants_with_type(), function(data) {
+            return self.does_applicant_need_to_answer(data.type, data.applicant);
+        });  
+    });
+};
+StandardHealthQuestion.prototype.get_question_text = function() {
+    var self = this;
+    return self.question.question_text;  
+};
+StandardHealthQuestion.prototype.does_applicant_need_to_answer = function(applicant_type, applicant) {
+    return true;
+};
+
+
+var GIHealthQuestion = function(question, selected_plan, applicant_criteria, skip_mode, skipped_questions) {
+    var self = this;
+    self.selected_plan = selected_plan;
+    self.question = question;
+    self.applicant_criteria = applicant_criteria;
+    self.skip_mode = skip_mode;
+    self.skipped_questions = skipped_questions;
+    
+    self.does_employee_need_to_answer = ko.computed(function() {
+        if (!self.selected_plan()) return false;
+        if (!self.selected_plan().did_select_employee_coverage()) {
+            return false;
+        } 
+        if (self.has_employee_met_GI_criteria() && self.should_skip_if_GI_criteria_met()) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    self.does_spouse_need_to_answer = ko.computed(function() {
+        if (!self.selected_plan()) return false;
+        if (!self.selected_plan().did_select_spouse_coverage()) {
+            return false;
+        } 
+        if (self.has_spouse_met_GI_criteria() && self.should_skip_if_GI_criteria_met()) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    self.do_children_need_to_answer = ko.computed(function() {
+        if (!self.selected_plan()) return false;
+        if (!self.selected_plan().did_select_children_coverage()) {
+            return false;
+        } 
+        if (self.has_child_met_GI_criteria() && self.should_skip_if_GI_criteria_met()) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    
+    self.has_employee_met_GI_criteria = ko.computed(function() {
+        if (!self.selected_plan().did_select_employee_coverage()) {
+            return false;
+        } 
+        
+        var coverage = self.selected_plan().employee_recommendation().recommended_benefit;
+        var applicant = self.selected_plan().root.employee();
+        var employee_criteria = self.get_criteria("Employee");
+        var result = _.any(employee_criteria, function(criterion) {
+            return self.does_applicant_meet_GI_criteria(applicant, coverage, criterion);
+        });
+        return result;
+    });
+    
+    self.has_spouse_met_GI_criteria = ko.computed(function() {
+        if (!self.selected_plan().did_select_spouse_coverage()) {
+            return false;
+        }
+        var coverage = self.selected_plan().spouse_recommendation().recommended_benefit;
+        var applicant = self.selected_plan().root.spouse();
+        var criteria = self.get_criteria("Spouse");
+        var result = _.any(criteria, function(criterion) {
+            return self.does_applicant_meet_GI_criteria(applicant, coverage, criterion);
+        });
+        return result;
+    });
+    
+    self.has_child_met_GI_criteria = ko.computed(function() {
+        if (!self.selected_plan().did_select_children_coverage()) {
+            return false;
+        }
+        var coverage = self.selected_plan().children_recommendation().recommended_benefit;
+        var children = self.selected_plan().root.children();
+        var criteria = self.get_criteria("Child");
+        var result = _.all(children, function(child_applicant) {
+            return _.any(criteria, function(criterion) {
+                return self.does_applicant_meet_GI_criteria(child_applicant, coverage, criterion);
+            });
+        });
+        
+        return result;
+    });
+    
+    self.does_any_applicant_need_to_answer = ko.computed(function() {
+        return _.any(self.selected_plan().get_covered_applicants_with_type(), function(data) {
+            return self.does_applicant_need_to_answer(data.type, data.applicant);
+        });  
+    });
+    
+    self.get_criteria = function(applicant_type) {
+        return _.filter(self.applicant_criteria, function(c) {return c.applicant_type == applicant_type;});
+    };
+    
+    self.does_applicant_meet_GI_criteria = function(applicant, coverage, criterion) {
+        var does_meet = true;
+        
+        does_meet &= coverage.face_value <= criterion.guarantee_issue_amount;
+        
+        if (criterion.age_max !== null) {
+            does_meet &= applicant.get_age() < criterion.age_max;         
+        }
+        if (criterion.age_min !== null) {
+            does_meet &= applicant.get_age() > criterion.age_min;
+        }
+        if (criterion.height_max !== null) {
+            does_meet &= applicant.height() !== null && applicant.height() < criterion.height_max
+        }
+        if (criterion.height_min !== null) {
+            does_meet &= applicant.height() !== null && applicant.height() > criterion.height_min;
+        }
+        if (criterion.weight_max !== null) {
+            does_meet &= applicant.weight() !== null && applicant.weight() < criterion.weight_max
+        }
+        if (criterion.weight_min !== null) {
+            does_meet &= applicant.weight() !== null && applicant.weight() > criterion.weight_min;
+        }
+        
+        return does_meet;
+    };
+};
+GIHealthQuestion.prototype = Object.create(StandardHealthQuestion.prototype);
+
+GIHealthQuestion.prototype.does_applicant_need_to_answer = function(applicant_type, applicant) {
+    var self = this;
+    if (applicant_type == "Employee") {
+        return self.does_employee_need_to_answer();
+    } else if (applicant_type == "Spouse") {
+        return self.does_spouse_need_to_answer();
+    } else if (applicant_type == "Child") {
+        return self.do_children_need_to_answer();
+    }
+    console.error("Got unknown applicant type '"+applicant_type+"'");
+    return true;
+};
+
+GIHealthQuestion.prototype.should_skip_if_GI_criteria_met = function() {
+    var self = this;
+    if (self.skip_mode == "all") {
+        return true;
+    } else {
+        return false;
+    }
+};
+
 
 
 // Main ViewModel for all applicants
@@ -1060,6 +1288,20 @@ function BenefitsPackage(root, name) {
     });
     self.is_valid = function() {return true};
     
+    
+    self.did_select_employee_coverage = ko.computed(function() {
+        return self.employee_recommendation().recommended_benefit.is_valid(); 
+    });
+    
+    self.did_select_spouse_coverage = ko.computed(function() {
+        return self.spouse_recommendation().recommended_benefit.is_valid(); 
+    });
+    
+    self.did_select_children_coverage = ko.computed(function() {
+        return self.children_recommendation().recommended_benefit.is_valid(); 
+    });
+    
+    
     self.get_all_people = ko.computed(function() {
         var employee = root.employee();
         // Make sure selected coverage is set on each of the person objects
@@ -1138,7 +1380,30 @@ function BenefitsPackage(root, name) {
         }
         return labels;
     });
-
+    
+    self.get_covered_applicants_with_type = ko.computed(function() {
+        var applicants = [];
+        if (root.did_select_employee_coverage()) {
+            applicants.push({applicant: root.employee(), type: "Employee"});
+        }
+        if (root.did_select_spouse_coverage()) {
+            applicants.push({applicant: root.spouse(), type: "Spouse"});
+        }
+        if (root.did_select_children_coverage()) {
+            $.each(root.get_valid_children(), function () {
+                var child = this;
+                applicants.push({applicant: child, type: "Child"});
+            });
+        }
+        return applicants;
+    });
+    
+    self.get_covered_children = ko.computed(function() {
+        return _.map(_.filter(self.get_covered_applicants_with_type(), function(d) {
+                        return d.type == "Child";
+                    }), function(d) { return d.applicant;});
+    });
+    
     self.get_people_with_labels = ko.computed(function() {
         var people = self.get_all_people();
         var labels = self.get_all_people_labels();
@@ -1175,10 +1440,17 @@ function NullBenefitsPackage() {
     self.is_valid = function () {return false};
     self.get_all_people = function() {return [];};
     self.get_all_covered_people = function() {return [];};
+    self.get_covered_applicants_with_type = function() {return [];};
     self.get_all_people_labels = function() {return [];};
     self.get_all_covered_people_labels = function() {return [];};
     self.get_people_with_labels = function() {return [];};
     self.has_at_least_one_benefit_selected = function() {return false;};
+    
+    self.did_select_employee_coverage = function() { return false;};
+    self.did_select_spouse_coverage = function() { return false;};
+    self.did_select_children_coverage = function() { return false; };
+    
+    
 }
 
 function Recommendation(recommended_benefit) {
@@ -1235,11 +1507,12 @@ function QuestionButton(element, val, highlight_func, unhighlight_func) {
         });
     };
 }
-function QuestionButtonGroup(id) {
+function QuestionButtonGroup(question, is_required) {
     var self = this;
-    self.id = id;
+    self.question = question;
     self.buttons = [];
     self.selected_btn = null;
+    self.is_required = is_required;
     
     self.get_val = function() {
         if (self.selected_btn == null) {
@@ -1287,11 +1560,11 @@ ko.bindingHandlers.flagBtn = {
         } else {
             group_lookup = general_questions_by_id;
         }
-        if (val.id in group_lookup) {
-            btn_group = group_lookup[val.id];
+        if (val.question.get_question_text() in group_lookup) {
+            btn_group = group_lookup[val.question.get_question_text()];
         } else {
-            btn_group = new QuestionButtonGroup(val.id);
-            group_lookup[val.id] = btn_group;
+            btn_group = new QuestionButtonGroup(val.question, val.is_required);
+            group_lookup[val.question.get_question_text()] = btn_group;
         }
         
         btn_group.add_button(element, val.val, function(el) {
@@ -1425,7 +1698,7 @@ function are_health_questions_valid() {
     $.each(window.ui.selected_plan().get_all_covered_people(), function() {
         var covered_person = this;
         $.each(covered_person.health_questions, function() {
-            if (this.get_val() != "No") {
+            if (this.is_required() && this.get_val() != "No") {
                 valid = false;
                 // break
                 return false;
@@ -1537,6 +1810,10 @@ function init_validation() {
         }
         
         if (info.step == 1) {
+            
+            // Clear step2 health question error when we attempt to validate step 1
+            $("#health_questions_error").html("");
+            
             // trigger jquery validation
             var is_valid = window.ui.validator.form();
                 
@@ -1548,6 +1825,7 @@ function init_validation() {
             return is_valid;
         }
         if (info.step == 2 && info.direction == 'next') {
+            
             // validate questions
             var is_valid =  are_health_questions_valid();
             if (!is_valid) {

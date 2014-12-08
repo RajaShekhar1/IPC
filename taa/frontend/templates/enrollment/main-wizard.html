@@ -234,7 +234,7 @@
             <!--ko if: $root.should_show_weight() -->
             <div class="col-sm-4">
                 <label class="">
-                    Weight: <input type="number" id="eeBenefitWeight" name="eeBenefitWeight" class="text-right"
+                    Weight: <input type="number" class="text-right"
                                    data-bind="value: weight" style="width: 5em"> Lbs.
                 </label>
             </div>
@@ -528,7 +528,7 @@
                 <div class="col-xs-12 col-sm-3 btn-group no-padding-right">
 
                     <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                        id: 'existing_insurance', 
+                        question: new GlobalSOHQuestion('existing_insurance'), 
                         val: 'Yes', 
                         highlight: 'flag',
                         onclick: window.handle_existing_insurance_modal
@@ -536,7 +536,7 @@
                         Yes
                     </button>
                     <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                        id: 'existing_insurance', 
+                        question: new GlobalSOHQuestion('existing_insurance'), 
                         val: 'No', 
                         highlight: 'checkmark',
                         onclick: window.reset_existing_insurance_warning
@@ -554,7 +554,7 @@
                 </div>
                 <div class="col-xs-12 col-sm-3 btn-group no-padding-right" data-toggle="buttons">
                     <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                        id: 'existing_insurance_remote', 
+                        question: new GlobalSOHQuestion('existing_insurance_remote'), 
                         val: 'Yes', 
                         highlight: 'stop',
                         onclick: window.handle_existing_insurance_modal_remote
@@ -562,7 +562,7 @@
                         Yes
                     </button>
                     <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                        id: 'existing_insurance_remote', 
+                        question: new GlobalSOHQuestion('existing_insurance_remote'), 
                         val: 'No', 
                         highlight: 'checkmark',
                         onclick: window.reset_existing_insurance_warning
@@ -580,7 +580,7 @@
                 </div>
                 <div class="col-xs-12 col-sm-3 btn-group no-padding-right" data-toggle="buttons">
                     <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                        id: 'replace_insurance', 
+                        question: new GlobalSOHQuestion('replace_insurance'), 
                         val: 'Yes', 
                         highlight: 'stop',
                         onclick: window.handle_replacement_insurance_modal
@@ -588,7 +588,7 @@
                         Yes
                     </button>
                     <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                        id: 'replace_insurance', 
+                        question: new GlobalSOHQuestion('replace_insurance'), 
                         val: 'No', 
                         highlight: 'checkmark',
                         onclick: window.reset_replacement_insurance_warning
@@ -600,7 +600,7 @@
 
             <br>
             
-            <div data-bind="visible: health_questions().length > 0">
+            <div data-bind="visible: health_questions().length > 0 && do_any_health_questions_need_answering()">
                 <h3 class="lighter block green">Please answer each question below regarding your Statement of Health</h3>
 
                 <div class="hidden-xs hidden-sm" data-bind="with: selected_plan">
@@ -616,20 +616,21 @@
                         </div>
                     </div>
     
-                    <table class="table table-striped" data-bind="foreach: {data: $root.health_questions, as: 'question'}">
-                        <tr>
+                    <table class="table table-striped" data-bind="foreach: $root.health_questions">
+                        <tr data-bind="visible: does_any_applicant_need_to_answer">
                             <td>
                                 <div class="row">
-                                    <div class="col-xs-12 col-sm-6" data-bind="html: question.question_text">
+                                    <div class="col-xs-12 col-sm-6" data-bind="html: get_question_text()">
                                     </div>
                                     <div class="col-xs-12 col-sm-6">
     
-                                        <div class="row"
-                                             data-bind="foreach: {data: $parent.get_all_covered_people(), as: 'person'}">
+                                        <div class="row">
                                             <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
+                                                <!--ko if: does_employee_need_to_answer-->
                                                 <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      id: 'question_'+$parentContext.$index(), 
-                                                      applicant: person,
+                                                      question: $data, 
+                                                      applicant: $root.employee(),
+                                                      is_required: does_employee_need_to_answer,
                                                       val: 'Yes', 
                                                       highlight: 'stop',
                                                       onclick: window.handle_question_yes
@@ -637,40 +638,91 @@
                                                     Yes
                                                 </button>
                                                 <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      id: 'question_'+$parentContext.$index(), 
-                                                      applicant: person,
+                                                      question: $data, 
+                                                      applicant: $root.employee(),
+                                                      is_required: does_employee_need_to_answer,
                                                       val: 'No', 
                                                       highlight: 'checkmark'
                                                       }">
                                                     No
                                                 </button>
-    
+                                                <!--/ko-->
                                             </div>
+                                            <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
+                                                <!--ko if: does_spouse_need_to_answer -->
+                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                      question: $data, 
+                                                      applicant: $root.spouse(),
+                                                      is_required: does_spouse_need_to_answer,
+                                                      val: 'Yes', 
+                                                      highlight: 'stop',
+                                                      onclick: window.handle_question_yes
+                                                      }">
+                                                    Yes
+                                                </button>
+                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                      question: $data, 
+                                                      applicant: $root.spouse(),
+                                                      is_required: does_spouse_need_to_answer,
+                                                      val: 'No', 
+                                                      highlight: 'checkmark'
+                                                      }">
+                                                    No
+                                                </button>
+                                                <!--/ko-->
+                                            </div>
+                                            <!--ko foreach: $parent.get_covered_children -->
+                                            <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
+                                                <!--ko if: $parent.do_children_need_to_answer-->
+                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                      question: $parentContext.$data, 
+                                                      applicant: $data,
+                                                      is_required: $parent.do_children_need_to_answer,
+                                                      val: 'Yes', 
+                                                      highlight: 'stop',
+                                                      onclick: window.handle_question_yes
+                                                      }">
+                                                    Yes
+                                                </button>
+                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                      question: $parentContext.$data, 
+                                                      applicant: $data,
+                                                      is_required: $parent.do_children_need_to_answer,
+                                                      val: 'No', 
+                                                      highlight: 'checkmark'
+                                                      }">
+                                                    No
+                                                </button>
+                                                <!--/ko-->
+                                            </div>
+                                            <!--/ko-->
                                         </div>
-    
                                     </div>
+                                            
+                                    
                                 </div>
                             </td>
                         </tr>
                     </table>
                 </div>
-    
+                {# 
                 <div class="visible-xs visible-sm" data-bind="with: selected_plan">
     
-                    <table class="table table-striped" data-bind="foreach: {data: $root.health_questions, as: 'question'}">
+                    <table class="table table-striped" data-bind="foreach: $root.health_questions">
                         
                             <tr>
                                 <td>
                                     <div class="row">
-                                        <div class="col-xs-12 col-sm-6" data-bind="html: question.question_text">
+                                        <div class="col-xs-12 col-sm-6" data-bind="html: get_question_text()">
                                         </div>
-                                        <div class="col-xs-12 col-sm-6" data-bind="foreach: $parent.get_people_with_labels">
+                                        <div class="col-xs-12 col-sm-6" data-bind="foreach: $parent.get_covered_applicants_with_type">
                                             <div class="person-answer-small row">
-                                                <div class="col-xs-3 col-xs-offset-2" data-bind="text: $data.label"></div>
-                                                <div class="col-xs-7 btn-group" data-toggle="buttons">
+                                                <div class="col-xs-3 col-xs-offset-2" data-bind="text: $data.applicant.name()"></div>
+                                                <div class="col-xs-7 btn-group" data-toggle="buttons"
+                                                    data-bind="visible: $parent.does_applicant_need_to_answer($data.type, $data.applicant)">
                                                     <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                          id: 'question_'+$parentContext.$index(), 
-                                                          applicant: $data.person,
+                                                          question: $data, 
+                                                          applicant: $data.applicant,
                                                           val: 'Yes', 
                                                           highlight: 'stop',
                                                           onclick: window.handle_question_yes
@@ -679,7 +731,7 @@
                                                     </button>
                                                     <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                                                           id: 'question_'+$parentContext.$index(), 
-                                                          applicant: $data.person,
+                                                          applicant: $data.applicant,
                                                           val: 'No', 
                                                           highlight: 'checkmark'
                                                           }">
@@ -693,9 +745,10 @@
                             </tr>
                     </table>
                 </div>
-                <div id="health_questions_error" class="error has-error pull-right"></div>
+                 #}
+                
             </div>
-            
+            <div id="health_questions_error" class="error has-error pull-right"></div>
         </div>
 
 

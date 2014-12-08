@@ -54,7 +54,7 @@ product_agents = db.Table('product_agents', db.metadata,
 )
 
 class CustomProductSerializer(ProductJsonSerializable):
-    __json_hidden__ = ['cases', 'customized_products','agents', 'base_product']
+    __json_hidden__ = ['cases', 'customized_products', 'base_product']
 
 class CustomGuaranteeIssueProduct(CustomProductSerializer, Product):
     __tablename__ = "products_custom_guaranteed_issue"
