@@ -344,7 +344,7 @@ $(function() {
         self.base_product_options = $.map(base_product_options || [], function(bp) {return new BaseProductViewModel(bp)});
         self.issue_amount_options = [];
         // Populate issue amount options
-        for (var i = 1000; i <= 50000; i += 1000) {
+        for (var i = 1000; i <= 150000; i += 1000) {
             var amount = numberWithCommas(i);
             self.issue_amount_options.push(amount);
         }
