@@ -790,8 +790,10 @@ var StandardHealthQuestion = function(question, selected_plan) {
     });
 };
 StandardHealthQuestion.prototype.get_question_text = function() {
-    var self = this;
-    return self.question.question_text;  
+    return this.question.question_text;  
+};
+StandardHealthQuestion.prototype.get_question_label = function() {
+    return this.question.label;  
 };
 StandardHealthQuestion.prototype.does_applicant_need_to_answer = function(applicant_type, applicant) {
     return true;
@@ -943,7 +945,9 @@ GIHealthQuestion.prototype.should_skip_if_GI_criteria_met = function() {
     if (self.skip_mode == "all") {
         return true;
     } else {
-        return false;
+        return _.find(self.skipped_questions, function(q) {
+            return self.get_question_label() == q.question_type_label
+        });
     }
 };
 
