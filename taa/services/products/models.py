@@ -39,7 +39,7 @@ class Product(ProductJsonSerializable, db.Model):
         return self
     
     def get_base_product_code(self):
-        return self.get_base_product().code
+        return self.get_base_product().code if self.get_base_product() else ''
     
     def can_enroll(self):
         return True
