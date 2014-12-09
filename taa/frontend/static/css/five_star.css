@@ -80,6 +80,15 @@
     margin-left: 1em;
 }
 
+.enroll-buttons .row {
+    margin-top: 2em;
+    margin-bottom: 3em;
+}
+.enroll-buttons button {
+    width: 12em;
+    margin-top: .5em;
+}
+
 .enrollment-section .panel-body {
     padding: 0 0 0 2.25em;
 }
