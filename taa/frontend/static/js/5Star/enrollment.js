@@ -679,14 +679,16 @@ Product.prototype = {
     
 };
 
-function FPPTIProduct() {
+function FPPTIProduct(product_data) {
     this.product_type = "FPPTI";
+    this.product_data = product_data;
 }
 // Inherit from product
 FPPTIProduct.prototype = Object.create(Product.prototype);
 
-function FPPCIProduct() {
+function FPPCIProduct(product_data) {
     this.product_type = "FPPCI";
+    this.product_data = product_data;
 }
 // Inherit from product
 FPPCIProduct.prototype = Object.create(Product.prototype);
@@ -697,8 +699,9 @@ FPPCIProduct.prototype.has_critical_illness_coverages = function() {
     return true;
 };
 
-function GroupCIProduct() {
+function GroupCIProduct(product_data) {
     this.product_type = "Group CI";
+    this.product_data = product_data;
 }
 GroupCIProduct.prototype = Object.create(Product.prototype);
 GroupCIProduct.prototype.get_new_benefit_option = function(options) {
@@ -781,10 +784,20 @@ var StandardHealthQuestion = function(question, selected_plan) {
     // Simple object with .question_text and .label
     self.question = question;
     
+    self.does_employee_need_to_answer = ko.computed(function() {
+        return self.selected_plan().did_select_employee_coverage();
+    });
+    self.does_spouse_need_to_answer = ko.computed(function() {
+        return self.selected_plan().did_select_spouse_coverage();
+    });
+    self.do_children_need_to_answer = ko.computed(function() {
+        return self.selected_plan().did_select_children_coverage();
+    });
+    
     
     self.does_any_applicant_need_to_answer = ko.computed(function() {
         
-        return _.any(self.selected_plan.get_covered_applicants_with_type(), function(data) {
+        return _.any(self.selected_plan().get_covered_applicants_with_type(), function(data) {
             return self.does_applicant_need_to_answer(data.type, data.applicant);
         });  
     });

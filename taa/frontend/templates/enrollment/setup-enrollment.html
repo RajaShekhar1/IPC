@@ -144,7 +144,7 @@
                         <tbody>
                             {% for case in agent_cases %}
                                 <tr>
-                                    <td class="text-center"><button class="btn btn-sm btn-primary enroll-case" data-id="{{ case.id }}">Enroll Case</button></td>
+                                    <td class="text-center"><button class="btn btn-sm btn-primary enroll-case" data-id="{{ case.id }}" data-name="{{ case.company_name }}">Enroll Case</button></td>
                                     <td><a href="{{ url_for("manage_case", case_id=case.id) }}">{{ case.company_name }}</a></td>
                                     <td>{{ case.situs_state }}</td>
                                     <td>{{ case.get_product_names() }}</td>
@@ -161,7 +161,7 @@
 </div>
     
 <div class="enroll-from-case-panel" style="display: none;">
-    <h3 class="header lighter">Enrolling <span data-bind="text: 'company_name'"></span></h3>
+    <h3 class="header lighter">Enrolling <span data-bind="text: current_company_name"></span></h3>
     
     <div class="loading-panel col-xs-12 text-center " style="display: none;">
     </div>
@@ -301,7 +301,8 @@
     jQuery(function($) {
         
         var EnrollmentSetupPage = function() {
-            
+            var self = this;
+            self.current_company_name = ko.observable("{{ company_name }}")
         };
         window.ui = new EnrollmentSetupPage();
         ko.applyBindings(window.ui, $("body").get(0));
@@ -326,6 +327,7 @@
     
         $(".select-case-panel").on('click', "button.enroll-case", function() {
             var case_id = $(this).attr("data-id");
+            ui.current_company_name($(this).attr("data-name"));
             load_census_table(case_id, "/cases/"+case_id+"/census_records");
         });
         
