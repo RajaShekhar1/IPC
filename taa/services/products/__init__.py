@@ -1,4 +1,5 @@
 from flask import abort
+from flask_stormpath import current_user
 
 from taa.core import DBService, db
 
@@ -47,6 +48,51 @@ class ProductService(DBService):
         
         return product
     
+    def get_if_allowed(self, product_id):
+        from taa.services.agents import AgentService
+        
+        product = self.get_or_404(product_id)
+        
+        agent_service = AgentService()
+        if agent_service.is_user_admin(current_user) or agent_service.is_user_home_office(current_user):
+            return product
+        elif agent_service.is_user_agent(current_user):
+            agent = agent_service.get_agent_from_user(current_user)
+            if not self.can_agent_view_product(agent, product):
+                abort(401)
+            
+            return product
+        
+        abort(401)
+    
+    def edit_if_allowed(self, product_id):
+        """Retrieve product for editing"""
+        from taa.services.agents import AgentService
+
+        product = self.get_or_404(product_id)
+        
+        agent_service = AgentService()
+        if agent_service.is_user_admin(current_user) or agent_service.is_user_home_office(current_user):
+            return product
+        elif agent_service.is_user_agent(current_user):
+            agent = agent_service.get_agent_from_user(current_user)
+            if not self.can_agent_edit_product(agent, product):
+                abort(401)
+        
+            return product
+
+        abort(401)
+        
+        
+    def can_agent_view_product(self, agent, product):
+        # Can view base products and any GI they are assigned
+        return not product.is_guaranteed_issue() or (
+            product.is_guaranteed_issue() and product in self.get_products_for_agent(agent)
+        )
+    
+    def can_agent_edit_product(self, agent, product):
+        return False
+        
     def get_products_for_agent(self, agent):
         
         # For now, agents get base products (TODO: exclude for an arbitrary list of agents)
@@ -108,11 +154,12 @@ class ProductService(DBService):
         
         # Add the new questions
         soh_question_service = ProductSOHQuestionService()
-        product.bypassed_questions = [soh_question_service.create(**dict(
-            question_type_label=question,
-            product_id=product.id,
-        )) 
-                                      for question in bypassed_questions]
+        product.bypassed_questions = [
+            soh_question_service.create(**dict(
+                    question_type_label=question,
+                    product_id=product.id,
+                )) 
+            for question in bypassed_questions]
         db.session.flush()
     
     

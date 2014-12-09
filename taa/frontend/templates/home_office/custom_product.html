@@ -168,6 +168,14 @@
                                    
                                 </div>
                             </div>
+                            
+                            <br>
+                            <div class="row">
+                                <div class="col-xs-12">
+                                    <button class="btn btn-danger btn-xs" data-bind="click: delete_product">Delete Product</button>
+                                </div>
+                            </div>
+                            
                         </div>
                         <div class="widget-toolbox clearfix padding-8">
                             <div class="clearfix">
@@ -412,6 +420,25 @@ $(function() {
             return false; 
         };
         
+        self.delete_product = function() {
+            bootbox.confirm("Are you sure you want to delete '"+self.custom_product().name()+"'? This cannot be undone.", function(result) {
+                if (!result) return;
+                
+                $.when(send_json_data(
+                        "DELETE", 
+                        "{{ url_for("products.delete_product", product_id=product.id) }}",
+                        {}
+                    )
+                ).then(function(case_xhr, periods_xhr) {
+                    bootbox.alert("Product was deleted successfully.", function() {
+                        window.location.href = "{{ url_for("manage_custom_products") }}";
+                    });
+                    
+                }, function(case_xhr, periods_xhr) {
+                    bootbox.alert("Sorry, the product could not be deleted.");
+                });
+            })
+        };
     };
     
     window.ui = new CustomProductEditor({{ product |tojson|safe }}, {{ base_product_options |tojson|safe }}, {{ available_agents |tojson|safe }}, {{ statement_of_health_options |tojson|safe }})

@@ -110,6 +110,7 @@
                                                         </label>
                                                     </div>
                                                 </div>
+                                                <div class="error" data-bind="text: error, visible: error() != ''"></div>
                                             <!--/ko-->
                                         </div>
                                     </div>
@@ -508,6 +509,9 @@
             
             self.case_id = settings.case_id;
             
+            // Used for the missing start / end error
+            self.error = ko.observable("");
+            
             function strip_year(d) {
                 // Strip off the year of the given date
                 var month_day_search = /\d{4}-(\d{2}-\d{2})/;
@@ -532,7 +536,7 @@
                 return self.get_month_day(val).isValid(); 
             };
             self.get_month_day = function(val) {
-                return moment(val, "MM/DD");
+                return parse_month_date_input(val);
             };
             
             // Validates actual date formatted MM/DD/YYYY 
@@ -558,6 +562,10 @@
                 }
             };
         };
+        
+        function parse_month_date_input(val) {
+            return moment(val, "MM/DD");
+        }
         
         var CaseSettingsPanel = function(case_data, product_choices) {
             var self = this;
@@ -604,7 +612,7 @@
                 });
             } 
             
-            // utility method for algorithm below
+            // utility methods for algorithm below
             function get_annual_periods_after_period(period) {
                 var periods = self.annual_enrollment_periods();
                 return _.filter(periods, function(p) {return periods.indexOf(p) > periods.indexOf(period)})
@@ -649,11 +657,22 @@
             first_period.start_date.subscribe(function(val) {
                 compute_quarterly_dates(first_period, val);
             });
-            //_.each(self.annual_enrollment_periods(), function(period) {
-            //    period.start_date.subscribe(function(val) {
-            //        
-            //    });
-            //});
+            
+            // Add validation to the month/day inputs
+            _.each(self.annual_enrollment_periods(), function(period) {
+                _.each([period.start_date, period.end_date], function(date_observable){
+                    date_observable.subscribe(function(val) {
+                        if (val == "") return;
+                        
+                        var val_date = parse_month_date_input(val);
+                        if (!val_date.isValid()) {
+                            date_observable("");
+                            bootbox.dialog({title: "Invalid Date", message: "The value '"+val+"' is not a valid start or end date. Provide a month and date formatted as 'MM/DD'.",
+                                buttons: {main: {label: "OK"}}});
+                        }
+                    });
+                });
+            });
             
             
             // enrollment data
@@ -702,7 +721,7 @@
             self.is_active.subscribe(function(value) {
                 
                 if (value && !self.can_activate_case()) {
-                    alert("Cannot activate case for enrollment until settings are complete.");
+                    bootbox.alert("Cannot activate case for enrollment until settings are complete.");
                     self.is_active(false);
                 }
             });
@@ -736,6 +755,9 @@
                 
                 hide_all_errors();
                 
+                // hide missing date errors 
+                _.invoke(self.annual_enrollment_periods(), "error", "");
+                
                 // unique name error
                 var unique_name_error = self.get_form_error();
                 if (unique_name_error !== "") {
@@ -748,12 +770,29 @@
                     add_case_error(errors, "company_name", "Company name is required.");
                 }
                 
+                // an invalid annual period (missing start or end)
+                if (self.is_annual_enrollment() && self.any_annual_period_missing_a_component()) {
+                    var missing_observables = _.filter(self.annual_enrollment_periods(), self.missing_annual_period_predicate);
+                    _.invoke(missing_observables, "error", "Must fill in start and end date");
+                    return false;
+                }
+                
                 if (Object.keys(errors).length > 0) {
                     show_all_errors(errors);
                     return false;
                 } else {
                     return true;
                 }
+            };
+            
+            self.missing_annual_period_predicate = function(period) {
+                var start_date_present = period.start_date() != "";
+                var end_date_present = period.end_date() != "";
+                // XOR - one or the other, but not both the same
+                return (start_date_present ? !end_date_present : end_date_present);
+            };
+            self.any_annual_period_missing_a_component = function() {
+                return _.any(self.annual_enrollment_periods(), self.missing_annual_period_predicate);
             };
             
             self.serialize_case = function() {
@@ -830,16 +869,18 @@
             };
             
             self.delete_case = function() {
-                if (confirm("Are you sure you want to the case '"+self.company_name()+"'? This is permanent and cannot be undone!")) {
+                bootbox.confirm("Are you sure you want to the case '"+self.company_name()+"'? This is permanent and cannot be undone!", function(result) {
+                    if (!result) { return; }
+                    
                     var request = send_json_data("DELETE", "{{ url_for("cases.delete_case", case_id=case.id) }}", {});
                     $.when(request).then(function() {
-                        alert("Case deleted successfully");
+                        bootbox.alert("Case deleted successfully");
                         self.is_data_dirty(false);
                         window.location.href = "{{ url_for("manage_cases") }}";
                     }, function() {
-                        alert("There was a problem removing this case.");
+                        bootbox.alert("There was a problem removing this case.");
                     })
-                }
+                });
             };
             
             $(window).bind("beforeunload", function() { 

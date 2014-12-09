@@ -185,11 +185,11 @@ class CaseService(DBService):
 
     def can_current_user_view_case(self, case):
         from taa.services.agents import AgentService
-
+        
         agent_service = AgentService()
         if agent_service.is_user_admin(current_user):
             return True
-        elif agent_service.is_user_agent(current_user):
+        elif agent_service.is_user_agent(current_user) or agent_service.is_user_home_office(current_user):
             agent = agent_service.get_agent_from_user(current_user)
 
             return self.agent_can_view_case(agent, case)

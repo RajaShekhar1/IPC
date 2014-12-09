@@ -42,7 +42,7 @@ def create_product():
 @route(bp, "/<product_id>", methods=["PUT"])
 @groups_required(write_product_groups, all=False)
 def update_product(product_id):
-    product = product_service.get(product_id)
+    product = product_service.get_if_allowed(product_id)
     data = get_posted_data()
     form = EditProductForm()
     if form.validate_on_submit():
@@ -59,5 +59,5 @@ def update_product(product_id):
 @route(bp, "/<product_id>", methods=["DELETE"])
 @groups_required(write_product_groups, all=False)
 def delete_product(product_id):
-    product_service.delete(product_service.get_if_allowed(product_id))
+    product_service.delete(product_service.edit_if_allowed(product_id))
     return None, 204

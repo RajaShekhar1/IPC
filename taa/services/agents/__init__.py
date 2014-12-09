@@ -42,6 +42,9 @@ class AgentService(DBService):
     def is_user_admin(self, user):
         return 'admins' in self.get_user_groupnames(user)
     
+    def is_user_home_office(self, user):
+        return 'home_office' in self.get_user_groupnames(user)
+    
     def get_user_groupnames(self, user):
         return {g.name for g in user.groups}
     
