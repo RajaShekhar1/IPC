@@ -296,7 +296,9 @@ $(function() {
         // select bypassed_questions from soh_options
         var selected_questions = [];
         $.each(custom_product.bypassed_soh_questions, function() {
-            if (soh_options.indexOf(this.question_type_label) >= 0) {
+            if (soh_options.indexOf(this.question_type_label) >= 0 
+                // prevent the same label from being added multiple times
+                && selected_questions.indexOf(this.question_type_label) == -1) {
                 selected_questions.push(this.question_type_label);
             }
         });

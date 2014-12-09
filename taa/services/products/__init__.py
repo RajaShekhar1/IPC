@@ -150,19 +150,19 @@ class ProductService(DBService):
     
     def update_product_bypassed_questions(self, product, bypassed_questions, **kwargs):
         # Remove existing questions
-        product.bypassed_questions = []
+        soh_question_service = ProductSOHQuestionService()
+        soh_question_service.query().filter_by(product_id=product.id).delete()
+        db.session.flush()
         
         # Add the new questions
-        soh_question_service = ProductSOHQuestionService()
-        product.bypassed_questions = [
+        for question in bypassed_questions:
             soh_question_service.create(**dict(
-                    question_type_label=question,
-                    product_id=product.id,
-                )) 
-            for question in bypassed_questions]
+                question_type_label=question,
+                product_id=product.id,
+            ))
+        
         db.session.flush()
-    
-    
+        db.session.refresh(product)    
     
     
 class ProductCriteriaService(DBService):
