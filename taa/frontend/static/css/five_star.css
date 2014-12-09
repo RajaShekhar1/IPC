@@ -3,6 +3,32 @@
     color: #D16E6C;
 }
 
+.btn-purple {
+    background-color: mediumpurple;
+    color: white;
+}
+
+/* agent index widget boxes */
+@media (min-width: 768px) { 
+    /* make the widget boxes the same size for tablet and larger */
+    .home-index .widget-main {
+        min-height: 20em;
+    }
+}
+@media (min-width: 992px) { 
+    /* make the widget boxes the same size for tablet and larger */
+    .home-index .widget-main {
+        min-height: 17em;
+    }
+}
+
+@media (min-width: 1200px) { 
+    /* make the widget boxes the same size for desktop */
+    .home-index .widget-main {
+        min-height: 16em;
+    }
+}
+
 .pricing-span-header li, .pricing-table li {
     height: 60px;
 }

@@ -32,3 +32,25 @@
     <span class="lbl"></span>
 
 {% endmacro %}
+
+{% macro render_simple_widget(title, body_html, button_text=None, button_classes="btn btn-success", 
+                                button_url=None, toolbox_classes="center") %}
+    <div class="widget-box">
+        <div class="widget-header widget-header-flat">
+            <h4 class="widget-title">{{ title }}</h4>
+        </div>
+
+        <div class="widget-body">
+            <div class="widget-main">
+                {{ body_html | safe}}
+            </div>
+            {% if button_text %}
+            <div class="widget-toolbox clearfix padding-8 {{ toolbox_classes }}">
+                <a class="{{ button_classes }}" href="{{ button_url }}"
+                                         role="button">{{ button_text }}</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% endmacro %}
+

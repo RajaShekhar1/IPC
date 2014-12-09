@@ -1,6 +1,45 @@
 {% extends "home_office/home_office_base.html" %}
+{% set active_page = 'nav_home' -%}
+{% from "form_macros.html" import render_simple_widget %}
 {% block title %} - Dashboard{% endblock %}
 
 {% block content %}
-    <h1 class="header lighter">Dashboard</h1>
+    
+<div class="row home-index">
+    <div class="col-xs-12 ">
+        <div class="row">
+            <div class="col-sm-6">
+                {{ render_simple_widget(
+                        title="Agents", 
+                        body_html='<p class="lead">Confirm agent account info, activation, and permissions.</p>', 
+                        button_text="Manage agents/users", 
+                        button_classes="btn btn-danger btn-lg", 
+                        button_url=url_for("manage_agents")) 
+                }}
+                         
+            </div>
+            <div class="col-sm-6">
+                {{ render_simple_widget(
+                        title="Products", 
+                        body_html='<p class="lead">Define guarantee issue products and determine agent access to products offered.</p>', 
+                        button_text="Manage products", 
+                        button_classes="btn btn-purple btn-lg", 
+                        button_url=url_for("manage_custom_products")) 
+                }}
+                
+            </div>
+        </div>
+        <br>
+        <div class="row">
+            <div class="col-sm-offset-3 col-sm-6">
+                
+                
+                
+            </div>
+        </div>
+        <!-- /.row -->
+    </div>
+    
+</div><!-- /.row --> 
+    
 {% endblock %}

@@ -1,10 +1,12 @@
 import os
 
 from flask import render_template, url_for, send_from_directory, redirect
-from flask.ext.stormpath import login_required, user
+from flask.ext.stormpath import login_required, user, current_user
 
 from taa import app
+from taa.services.agents import AgentService
 
+agent_service = AgentService()
 
 """--------------------------------------------------------------
 HOME and util pages
@@ -21,7 +23,7 @@ def page_not_found(e):
 @app.route("/")
 def index():
 
-    if user and not user.is_anonymous():
+    if current_user:
         return redirect(url_for('home'))
         
     return redirect(url_for('login'))
@@ -29,7 +31,18 @@ def index():
 @app.route("/home")
 @login_required
 def home():
-    return render_template('home.html')
+    
+    if not current_user:
+        return redirect(url_for('login'))
+    
+    if agent_service.is_user_admin(current_user) or agent_service.is_user_home_office(current_user):
+        return render_template('home_office/dashboard.html')
+    elif agent_service.is_user_agent(current_user):
+        return render_template('home.html')
+    else:
+        raise Exception('unknown type for user "%s"'%current_user)
+    
+    
 
 @app.route("/robots.txt")
 def robots():

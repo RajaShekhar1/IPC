@@ -12,7 +12,7 @@ home_office_groups = ["home_office", "admins"]
 product_service = ProductService()
 agent_service = AgentService()
 
-@app.route("/dashboard")
+@app.route("/home-office")
 @groups_required(home_office_groups, all=False)
 def home_office_dashboard():
     return render_template('home_office/dashboard.html')
@@ -47,4 +47,5 @@ def manage_custom_product(product_id):
 @app.route("/manage-agents")
 @groups_required(home_office_groups, all=False)
 def manage_agents():
+    return redirect('admin')
     return render_template('home_office/manage_agents.html')

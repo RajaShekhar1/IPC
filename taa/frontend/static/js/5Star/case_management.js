@@ -35,7 +35,7 @@ var case_management = (function() {
         var table_settings = $.extend({}, table_defaults, table_options || {});
         
         // Show loading
-        loading.html("<span class='icon-spinner icon-spin grey bigger-200'></span> Loading data...");
+        loading.html("<span class='icon-spinner icon-spin grey bigger-200'></span> <span class='bigger-175'> Loading data...</span>");
         
         // Clear table if it exists
         if ($.fn.DataTable.fnIsDataTable(table.get(0))) {

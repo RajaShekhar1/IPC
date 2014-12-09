@@ -16,7 +16,7 @@ from taa.model.Enrollment import AgentActivationEmail
 
 #  14-Jun-17 WSD 
 @app.route('/admin', methods = ['GET', 'POST'])
-@groups_required(['admins'])
+@groups_required(['admins', 'home_office'], all=False)
 def admin():
     accounts = []
     for acc in stormpath_manager.application.accounts:
@@ -37,7 +37,7 @@ def admin():
 
 
 @app.route('/edituser', methods = ['GET', 'POST'])
-@groups_required(['admins'])
+@groups_required(['admins', 'home_office'], all=False)
 def updateUser():
 
     user_email = request.args['user']
