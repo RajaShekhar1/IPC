@@ -406,9 +406,6 @@ function WizardUI(product, defaults) {
         if (self.selected_plan().is_valid()) {
             self.apply_selected_customization();
         }
-        
-        // Or, force reselection of plan
-        //self.selected_plan(new NullBenefitsPackage());
     };
     
     self.parse_benefit_options = function(applicant, rates) {
@@ -794,6 +791,14 @@ var StandardHealthQuestion = function(question, selected_plan) {
         return self.selected_plan().did_select_children_coverage();
     });
     
+    self.show_yes_dialogue_employee = function() {return self.show_yes_dialogue(); };
+    self.show_yes_dialogue_spouse = function() {return self.show_yes_dialogue(); };
+    self.show_yes_dialogue_children = function() {return self.show_yes_dialogue(); };
+    
+    
+    self.show_yes_dialogue = function() {
+        handle_question_yes();  
+    };
     
     self.does_any_applicant_need_to_answer = ko.computed(function() {
         
@@ -904,8 +909,87 @@ var GIHealthQuestion = function(question, selected_plan, applicant_criteria, ski
     self.does_any_applicant_need_to_answer = ko.computed(function() {
         return _.any(self.selected_plan().get_covered_applicants_with_type(), function(data) {
             return self.does_applicant_need_to_answer(data.type, data.applicant);
-        });  
+        });
     });
+    
+    self.show_yes_dialogue_employee = function() {
+          self.show_yes_dialogue('Employee');
+    };
+    
+    self.show_yes_dialogue_spouse = function() {
+          self.show_yes_dialogue('Spouse');
+    };
+    
+    self.show_yes_dialogue_children = function() {
+        self.show_yes_dialogue('Children');
+    };
+    
+    self.show_yes_dialogue = function(applicant_type) {
+        // If the applicant meets the GI, we show the normal 'you must answer no' dialogue since this must be a required question
+        if (!self.should_skip_if_GI_criteria_met() || (
+            (applicant_type == "Employee" && self.has_employee_met_GI_criteria()) ||
+            (applicant_type == "Spouse" && self.has_spouse_met_GI_criteria()) ||
+            (applicant_type == "Children" && self.has_child_met_GI_criteria())
+            )) {
+            
+            handle_question_yes();
+            return;
+        }
+        
+        // Otherwise, show a special dialogue that gives a few options for continuing 
+        var coverage, criteria, applicant;
+        if (applicant_type == 'Employee') {
+            applicant = self.selected_plan().root.employee();
+            coverage = self.selected_plan().employee_recommendation().recommended_benefit;
+            criteria = self.get_criteria("Employee");
+        } else if (applicant_type == 'Spouse') {
+            applicant = self.selected_plan().root.spouse();
+            coverage = self.selected_plan().spouse_recommendation().recommended_benefit;
+            criteria = self.get_criteria("Spouse");
+        } else {
+            applicant = self.selected_plan().root.child_benefits();
+            coverage = self.selected_plan().children_recommendation().recommended_benefit;
+            criteria = self.get_criteria("Child");
+        }
+        
+        
+        var face_amount = coverage.format_face_value();
+        var gi_amount = _.max(_.map(criteria, function(c) {return c.guarantee_issue_amount}));
+        var formatted_gi_amount = format_face_value(gi_amount);
+        
+        var button_options = {
+            reduce: {label: "Reduce the coverage", className: 'btn-success', callback: function() {
+                // 
+                var max_option = _.max(
+                        _.filter(applicant.all_options(), function(o) {
+                            return o.face_value <= gi_amount && o.face_value > 0
+                        }), 
+                        function(o) {return o.face_value}
+                );
+                applicant.selected_custom_option(max_option);
+                self.selected_plan().root.apply_selected_customization();
+                
+            }},
+            remove: {label: "Remove this applicant", className: 'btn-danger', callback: function() {
+                var null_option = _.find(applicant.all_options(), function(o) {
+                    return o.face_value == 0
+                });
+                applicant.selected_custom_option(null_option);
+                self.selected_plan().root.apply_selected_customization();
+            }},
+            ignore: {label: "Ignore and Continue", className: 'btn-default', callback: function() {
+                // Nothing to do in this case
+            }}
+        };
+        
+        bootbox.dialog({
+            //title: "SPECIAL GI YES WINDOW: "+applicant_type, 
+            message: 'A "yes" response to this question prohibits this person from obtaining the selected '+face_amount+' of coverage. You may proceed, however, by reducing your coverage to the guaranteed coverage amount of '+formatted_gi_amount+'.'+ 
+                     '<br><br>Alternatively, you may remove this individual from the coverage selection altogether (in Step 1) before proceeding with the rest of the application.',
+            buttons: button_options
+        });  
+    };
+    
     
     self.get_criteria = function(applicant_type) {
         return _.filter(self.applicant_criteria, function(c) {return c.applicant_type == applicant_type;});
