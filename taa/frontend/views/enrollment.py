@@ -119,7 +119,8 @@ def in_person_enrollment():
         enroll_city = request.form['enrollmentCity']
         company_name = request.form['companyName']
         product_code = request.form['productID']
-        product = get_product_by_code(product_code)
+        product = product_service.get_product_by_code_or_400(product_code)
+        #product = get_product_by_code(product_code)
         products = [product] if product else []
         employee_data = dict(
             first=request.form['eeFName'],
