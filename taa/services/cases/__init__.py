@@ -225,6 +225,9 @@ class CaseService(DBService):
     def update_census_record(self, record, data):
         return self.census_records.update(record, **data)
     
+    def update_census_record_from_enrollment(self, record, data):
+        return self.census_records.update_from_enrollment(record, data)
+    
     def delete_census_record(self, record):
         return self.census_records.delete(record)
 
@@ -427,6 +430,63 @@ class CensusRecordService(DBService):
     def remove_all_for_case(self, case):
         self.find(case_id=case.id).delete()
 
+    def update_from_enrollment(self, record, data):
+        '''
+        data.first = self.first();
+        data.last = self.last();
+        data.email = self.email();
+        data.age = self.get_age();
+        data.weight = self.weight();
+        data.height = self.height();
+        data.is_smoker = self.is_smoker();
+        data.birthdate = self.birthdate();
+        data.ssn = self.ssn();
+        data.gender = self.gender();
+        data.phone = self.phone();
+        data.address1 = self.address1();
+        data.address2 = self.address2();
+        data.city = self.city();
+        data.state = self.state();
+        data.zip = self.zip();
+        '''
+
+        employee = data['employee']
+        spouse = data['spouse']
+        children = data['children']
+        
+        record.employee_ssn = employee['ssn']
+        record.employee_first = employee['first']
+        record.employee_last = employee['last']
+        record.employee_gender = employee['gender']
+        record.employee_birthdate = employee['birthdate']
+        record.employee_email = employee['email']
+        record.employee_phone = employee['phone']
+        record.employee_street_address = employee['address1']
+        record.employee_street_address2 = employee['address2']
+        record.employee_city = employee['city']
+        record.employee_state = employee['state']
+        record.employee_zip = employee['zip']
+
+        record.spouse_ssn = spouse['ssn']
+        record.spouse_first = spouse['first']
+        record.spouse_last = spouse['last']
+        record.spouse_gender = spouse['gender']
+        record.spouse_birthdate = spouse['birthdate']
+        record.spouse_email = spouse['email']
+        record.spouse_phone = spouse['phone']
+        record.spouse_street_address = spouse['address1']
+        record.spouse_street_address2 = spouse['address2']
+        record.spouse_city = spouse['city']
+        record.spouse_state = spouse['state']
+        record.spouse_zip = spouse['zip']
+    
+        for i, child in enumerate(children):
+            setattr(record, 'child{}_first'.format(i), child['first'])
+            setattr(record, 'child{}_last'.format(i), child['last'])
+            setattr(record, 'child{}_birthdate'.format(i), child['birthdate'])
+        
+        db.session.flush()
+        
 class CensusRecordField(object):
     """
     Defines a column for the uploaded CSV census data

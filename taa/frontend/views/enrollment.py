@@ -19,11 +19,12 @@ from taa.services.docusign.docusign_envelope import create_envelope_and_get_sign
 from taa.services.cases import CaseService
 from taa.services.agents import AgentService
 from taa.services.products import ProductService
+from taa.services.enrollments import EnrollmentService
 
 product_service = ProductService()    
 case_service = CaseService()
 agent_service = AgentService()
-
+enrollment_service = EnrollmentService()
 
 @app.route("/get_rates", methods=['POST'])
 def rates():
@@ -54,7 +55,6 @@ def rates():
 def enroll_start():
     
     should_show_next_applicant = bool(request.args.get('next'))
-    
     
     if session.get('active_case_id') and should_show_next_applicant:
         case = case_service.get_if_allowed(session['active_case_id'])
@@ -105,6 +105,7 @@ def in_person_enrollment():
         
         # Set a flag that we are currently enrolling from this case
         session['active_case_id'] = record.case_id
+        session['enrolling_census_record_id'] = record.id
         
         state = record.case.situs_state
         enroll_city = record.case.situs_city
@@ -115,6 +116,7 @@ def in_person_enrollment():
         spouse_data = record.get_spouse_data()
         children_data = record.get_children_data()
     else:   
+        # TODO: Create one-off census record
         state = request.form['enrollmentState']
         enroll_city = request.form['enrollmentCity']
         company_name = request.form['companyName']
@@ -170,7 +172,15 @@ def submit_wizard_data():
     data = request.json
     wizard_results = data['wizard_results']
     
-    # TODO: Save enrollment information prior to Docu-Sign hand-off 
+    # Save enrollment information and updated census data prior to DocuSign hand-off 
+    if session.get('enrolling_census_record_id'):
+        print("session.get('enrolling_census_record_id'): %s"%session.get('enrolling_census_record_id'))
+        census_record = case_service.get_census_record(None, session['enrolling_census_record_id'])
+        print("here")
+    else:
+        census_record = None
+        
+    enrollment_service.save_enrollment_data(wizard_results, census_record)
     
     # Hand off wizard_results to docusign
     #
@@ -178,8 +188,15 @@ def submit_wizard_data():
     #
     # Return the redirect url or error
     #resp = {'error': is_error, 'error_message': error_message, "redirect": redirect}
+    resp = {
+        'error': False, 
+        'error_message': '', 
+        'redirect': url_for("ds_landing_page", 
+                            event="signing_complete", 
+                            name=wizard_results['employee']['first'], 
+                            type='inperson')
+    }
     
-    resp = {'error': False, 'error_message': '', 'redirect': url_for("ds_landing_page", event="signing_complete", name=wizard_results['employee']['first'], type='inperson')}
     return jsonify(**resp)
     
 

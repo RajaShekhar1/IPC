@@ -739,7 +739,9 @@
                 fields.push(p.end_date);
             });
             $.each(fields, function() {
+                var field = this;
                 this.subscribe(function() {
+                    
                     self.is_data_dirty(true); 
                 });
             });
@@ -946,10 +948,15 @@
             self.has_unsaved_data = ko.computed(function() {
                 return self.is_data_dirty();  
             });
+            
         };
-        window.case_settings = new CaseSettingsPanel({{ case |tojson|safe }}, {{ product_choices |tojson|safe }});
         
+        // Initialize settings viewmodel
+        window.case_settings = new CaseSettingsPanel({{ case |tojson|safe }}, {{ product_choices |tojson|safe }});
         ko.applyBindings(window.case_settings, $(".content")[0]);
+        
+        // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change
+        case_settings.is_data_dirty(false);
         
         $(".input-mask-month-day").mask("99/99");
         

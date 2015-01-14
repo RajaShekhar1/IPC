@@ -2027,15 +2027,16 @@ function init_validation() {
         if (emp_benefit.is_valid()) {
                 wizard_results['employee_coverage'] = emp_benefit.serialize_data();
         } else {
-	    wizard_results['employee_coverage'] = ""
-	}
+            wizard_results['employee_coverage'] = ""
+        }
         var sp_benefit = window.ui.selected_plan().spouse_recommendation().recommended_benefit;
         if (sp_benefit.is_valid()) {
             wizard_results['spouse_coverage'] = sp_benefit.serialize_data();
         } else {
-	    wizard_results['spouse_coverage'] = ""
-	}
+            wizard_results['spouse_coverage'] = ""
+        }
         
+        wizard_results['product_data'] = ui.insurance_product.product_data;
         
         // Send to 'listener' for debugging
         /*

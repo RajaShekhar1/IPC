@@ -140,17 +140,19 @@ class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
                datetime.now() >= self.start_date and datetime.now() < self.end_date)
 
 class CensusRecordSerializer(JsonSerializable):
-    __json_hidden__ = ['census_records', 'case']
+    __json_hidden__ = ['census_records', 'case', 'enrollments']
     
     
 class CaseCensus(CensusRecordSerializer, db.Model):
     __tablename__ = 'case_census'
 
     id = db.Column(db.Integer, primary_key=True)
-    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=False)
+    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True)
     case = db.relationship('Case', backref=db.backref('census_records'))
     
-    upload_date = db.Column(db.DateTime, server_default='CURRENT_DATE')
+    upload_date = db.Column(db.DateTime, server_default='NOW')
+    is_uploaded_census = db.Column(db.Boolean, server_default='TRUE')
+    
     employee_ssn = db.Column(db.String(9))
     employee_first = db.Column(db.String(256))
     employee_last = db.Column(db.String(256))
