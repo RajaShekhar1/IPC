@@ -11,9 +11,10 @@ import sqlalchemy as sa
 
 from taa.core import DBService
 from taa.core import db
-
+from taa.services.agents.models import Agent
 from models import Case, CaseCensus, CaseEnrollmentPeriod, \
     CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod
+
 
 class CaseService(DBService):
     
@@ -25,6 +26,7 @@ class CaseService(DBService):
         self.census_records = CensusRecordService()
         self.enrollment_periods = CaseEnrollmentPeriodsService()
 
+    
     def _preprocess_params(self, kwargs):
         kwargs = super(CaseService, self)._preprocess_params(kwargs)
         
@@ -46,13 +48,19 @@ class CaseService(DBService):
         abort(401)
         
     def search_cases(self, by_agent=None, by_name=None, only_enrolling=False):
-        # TODO: account for sub-agents
+        
         query = self.query()
         if by_name:
             query = query.filter(Case.company_name.ilike(by_name))
         
         if by_agent:
-            query = query.filter(Case.agent_id == by_agent)
+            # Right now, an agent can 'see' a given case if he is either the owner or
+            #   a 'partner' agent, which is an explicitly maintained list by the HO admin.
+            query = query.filter(db.or_(
+                Case.agent_id == by_agent,
+                Case.partner_agents.any(Agent.id == by_agent)
+                )
+            )
         
         results = query.all()
         
@@ -67,7 +75,6 @@ class CaseService(DBService):
         db.session.flush()
         
     def get_agent_cases(self, agent, **kwargs):
-        # TODO: account for sub-agents
         return self.search_cases(by_agent=agent.id, **kwargs)
         
     def is_enrolling(self, case):
@@ -78,8 +85,21 @@ class CaseService(DBService):
         )
     
     def agent_can_view_case(self, agent, case):
-        # TODO: account for sub-agents
-        return case.agent_id == agent.id
+        
+        return (
+            case.agent_id == agent.id or 
+            agent in case.partner_agents
+        )
+    
+    def update_partner_agents(self, case, agents):
+        from models import case_partner_agents
+
+        sql = case_partner_agents.delete(case_partner_agents.c.case_id == case.id)
+        db.session.execute(sql)
+        db.session.commit()
+        
+        case.partner_agents = agents
+        db.session.commit()
     
     # Enrollment Periods
     
@@ -187,11 +207,11 @@ class CaseService(DBService):
         from taa.services.agents import AgentService
         
         agent_service = AgentService()
-        if agent_service.is_user_admin(current_user):
+        if agent_service.can_manage_all_cases(current_user):
             return True
-        elif agent_service.is_user_agent(current_user) or agent_service.is_user_home_office(current_user):
+        elif agent_service.is_user_agent(current_user):
             agent = agent_service.get_agent_from_user(current_user)
-
+            
             return self.agent_can_view_case(agent, case)
         
         return False

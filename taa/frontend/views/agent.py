@@ -37,12 +37,17 @@ def inbox():
         return redirect(url_for("home"))
 
 @app.route("/manage-cases")
-@groups_required(["agents", "admins"], all=False)
+@groups_required(["agents", "home_office", "admins"], all=False)
 @login_required
 def manage_cases():
     agent = agent_service.get_logged_in_agent()
-    agent_cases = case_service.get_agent_cases(agent)
-    vars = {'agent_cases':agent_cases, 
+    if agent:
+        user_cases = case_service.get_agent_cases(agent)
+    else:
+        # Admin or home office user
+        user_cases = case_service.all()
+    
+    vars = {'agent_cases':user_cases, 
             'all_states': get_all_states(),
             'product_choices': get_product_choices(),
             'product_states': get_product_states()} 
@@ -50,7 +55,7 @@ def manage_cases():
 
 
 @app.route("/manage-case/<case_id>")
-@groups_required(["agents", "admins"], all=False)
+@groups_required(["agents", "home_office", "admins"], all=False)
 def manage_case(case_id):
     
     case = case_service.get_if_allowed(case_id)
@@ -58,7 +63,14 @@ def manage_case(case_id):
     vars = {'case':case}
     
     agent = agent_service.get_logged_in_agent()
-    vars['product_choices'] = [p for p in product_service.get_products_for_agent(agent)]
+    if agent:
+        products = product_service.get_products_for_agent(agent)
+    else:
+        products = product_service.get_all_enrollable_products()
+        vars['is_admin'] = True
+        vars['active_agents'] = agent_service.get_active_agents()
+        
+    vars['product_choices'] = products
     
     #vars['product_states'] = get_product_states()
     vars['all_states'] = get_all_states()
@@ -86,7 +98,7 @@ def manage_case(case_id):
 
     
 @app.route("/manage-case/<case_id>/census/<census_record_id>")
-@groups_required(["agents", "admins"], all=False)
+@groups_required(["agents", "home_office", "admins"], all=False)
 def edit_census_record(case_id, census_record_id):
     case = case_service.get_if_allowed(case_id)
     census_record = case_service.get_census_record(case, census_record_id)

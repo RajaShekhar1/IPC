@@ -14,6 +14,9 @@ from taa import (
 from taa.model.Registration import TAA_UserForm
 from taa.model.Enrollment import AgentActivationEmail
 
+from taa.services.agents import AgentService
+agent_service = AgentService()
+
 #  14-Jun-17 WSD 
 @app.route('/admin', methods = ['GET', 'POST'])
 @groups_required(['admins', 'home_office'], all=False)
@@ -87,7 +90,16 @@ def updateUser():
                 # save your changes
                 account.save()
                 flash('User ' + user_email + ' updated successfully!')
-
+                
+                # Update in database also
+                agent = agent_service.ensure_agent_in_database(account)
+                agent_service.update(agent, **{
+                    'first': data['fname'],
+                    'last': data['lname'],
+                    'agent_code': data['agent_code'],
+                    'activated': data['activated']
+                })
+                
                 # if we've just activated a user, then send a notice
                 if data['activated'] and data['send_notice']:                    
                     email_config = dict(

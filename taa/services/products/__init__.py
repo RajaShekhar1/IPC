@@ -93,6 +93,13 @@ class ProductService(DBService):
     def can_agent_edit_product(self, agent, product):
         return False
         
+    def get_all_enrollable_products(self):
+        # TODO: Will exclude some products based on a DB flag
+        products = self.get_base_products()
+        # All custom products
+        products += self.get_custom_products()
+        return products
+        
     def get_products_for_agent(self, agent):
         
         # For now, agents get base products (TODO: exclude for an arbitrary list of agents)

@@ -45,8 +45,18 @@ class AgentService(DBService):
     def is_user_home_office(self, user):
         return 'home_office' in self.get_user_groupnames(user)
     
+    def can_manage_all_cases(self, user):
+        return self.is_user_admin(user) or self.is_user_home_office(user)
+    
     def get_user_groupnames(self, user):
         return {g.name for g in user.groups}
     
-    def get_agent_from_stormpath_account(self, stormpath_account_url):
-        pass
+    #def get_agent_from_stormpath_account(self, stormpath_account_url):
+    #    pass
+    
+    def get_active_agents(self):
+        return self.query(
+            ).filter(Agent.activated == True
+            ).order_by(Agent.last, Agent.first
+            ).all()
+    

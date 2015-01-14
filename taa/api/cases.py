@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from flask import Blueprint, request, abort, make_response, jsonify, redirect, url_for
-from flask_stormpath import user, groups_required
+from flask_stormpath import current_user, groups_required
 
 from taa import app
 from taa.core import TAAFormError
@@ -23,7 +23,7 @@ case_service = CaseService()
 agent_service = AgentService()
 product_service = ProductService()
 
-api_groups = ['agents', 'admins']
+api_groups = ['agents', 'home_office', 'admins']
 
 # Case management endpoints
 
@@ -38,7 +38,7 @@ def get_cases():
         return case_service.search_cases(by_agent=agent.id, by_name=name_filter)
     
     # Return all cases for admin
-    if agent_service.is_user_admin(user):
+    if agent_service.can_manage_all_cases(current_user):
         return case_service.search_cases(by_name=name_filter)
     
     abort(401)
@@ -53,16 +53,21 @@ def get_case(case_id):
 def create_case():
     data = get_posted_data()
     
-    agent = agent_service.get_logged_in_agent()
-    if not agent:
+    # Determine the owning agent
+    if agent_service.can_manage_all_cases(current_user):
+        agent = None
+    elif agent_service.is_user_agent(current_user):
+        # The creating agent is the owner by default
+        agent = agent_service.get_logged_in_agent()
+        data['agent_id'] = agent.id
+    else:
+        # We don't have permission to create cases
         abort(401)
-    
-    # Todo: perhaps accept agent_id in form data for admin usage
-    
-    data['agent_id'] = agent.id
+        return 
     
     form = NewCaseForm(form_data=data)
-    form.agent_id.data = agent.id
+    if agent:
+        form.agent_id.data = agent.id
     if form.validate_on_submit():
         return case_service.create(**data)
     
@@ -75,20 +80,36 @@ def update_case(case_id):
     case = case_service.get_if_allowed(case_id)
     data = get_posted_data()
     
-    # Add the agent id from the session
-    # Todo: perhaps accept agent_id in form data for admin usage
-    agent = agent_service.get_logged_in_agent()
-    if not agent:
-        abort(401)
-    data['agent_id'] = agent.id
+    is_admin = agent_service.can_manage_all_cases(current_user)
     
+    if not agent_service.get_logged_in_agent() and not is_admin:
+        abort(401)
+        return
+
     form = UpdateCaseForm()
-    form.agent_id.data = agent.id
+    
+    # allow the owner agent to be updated only if an admin
+    if 'agent_id' in data:
+        if not is_admin:
+            del data['agent_id']
+        else:
+            data['agent_id'] = int(data['agent_id']) if data['agent_id'] and data['agent_id'].isdigit() else None
+            form.agent_id.data = data['agent_id']
+    
+    #
     form.products.data = [p['id'] for p in data['products']]
     if form.validate_on_submit():
-        del data['products']
         
+        # Update products
         case_service.update_products(case, [p for p in product_service.get_all(*form.products.data)])
+        
+        # Update partner agents
+        if is_admin:
+            case_service.update_partner_agents(case, [a for a in agent_service.get_all(*data['partner_agents'])])
+        
+        # Update case table (these keys must be removed for the main case update)
+        del data['products']
+        del data['partner_agents']
         return case_service.update(case, **data)
     
     raise TAAFormError(form.errors)

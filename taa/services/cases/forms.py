@@ -25,7 +25,7 @@ class _CommonCaseFormMixin(object):
     situs_state = SelectField('State', [validators.Optional(), validators.length(min=2, max=2)])
     situs_city = StringField('City', [validators.Optional()])
     products = ProductMultiSelectField('Products', [])
-    agent_id = IntegerField('Agent', [validators.DataRequired()])
+    agent_id = IntegerField('Agent', [validators.Optional()])
     active = BooleanField('Active')
     
     def __init__(self, *args, **kwargs):

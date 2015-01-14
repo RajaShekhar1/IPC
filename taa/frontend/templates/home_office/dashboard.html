@@ -33,7 +33,13 @@
         <div class="row">
             <div class="col-sm-offset-3 col-sm-6">
                 
-                
+                {{ render_simple_widget(
+                        title="Cases", 
+                        body_html='<p class="lead"></p>', 
+                        button_text="Manage cases", 
+                        button_classes="btn btn-success btn-lg", 
+                        button_url=url_for("manage_cases")) 
+                }}
                 
             </div>
         </div>

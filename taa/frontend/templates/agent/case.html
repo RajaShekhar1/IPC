@@ -118,6 +118,28 @@
                             </div>
                         </div>
                         <div class="row">
+                            {% if is_admin %}
+                                <div class="col-md-6">
+                                    <div class="row">
+                                        <div class="form-group">
+                                            <label class="col-md-3 control-label" for="owner_agent">Owner Agent</label>
+                                            <div class="col-md-9">
+                                                <select id="owner_agent" name="agent_id" data-bind="value: owner_agent_id">
+                                                    <option value="">(No Owner)</option>
+                                                    {% for agent in active_agents %}
+                                                        <option value="{{ agent.id }}" 
+                                                            {%-if agent.id == case.agent_id -%}
+                                                            selected="selected"
+                                                            {%- endif -%}
+                                                            >{{ agent.name() }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            {% endif %} 
                             <div class="col-sm-offset-1 col-sm-3">
                                 <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="
                             click: delete_case
@@ -125,6 +147,29 @@
                             </div>
                             
                         </div>
+                        {% if is_admin %}
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <h4 class="header lighter">Partner Agents</h4>
+                                <div class="row">
+                                    <div class="col-sm-10 col-md-offset-1">
+                                        <select data-bind="selectedOptions: partner_agents" 
+                                                multiple="multiple" class="form-control" 
+                                                id="partner-agents" 
+                                                size="10" style="min-height: 8em;">
+                                            {% for agent in active_agents %}
+                                                <option value="{{ agent.id }}" 
+                                                    {%-if agent in case.partner_agents -%}
+                                                    selected="selected"
+                                                    {%- endif -%}
+                                                    >{{ agent.name() }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="widget-toolbox clearfix padding-8">
                         
@@ -580,6 +625,9 @@
             self.situs_city = ko.observable(case_data.situs_city);
             self.situs_state = ko.observable(case_data.situs_state);
             self.is_active = ko.observable(case_data.active);
+            self.owner_agent_id = ko.observable(case_data.agent_id || "");
+            self.partner_agents = ko.observable(
+                (case_data.partner_agents)? _.map(_.pluck(case_data.partner_agents, "id"), function(id) {return id+""}) : []);
             
             self.is_open_enrollment = ko.computed(function() {
                 return self.enrollment_period_type() === "open"; 
@@ -610,7 +658,7 @@
                     });
                     self.enrollment_periods.push(p); 
                 });
-            } 
+            }
             
             // utility methods for algorithm below
             function get_annual_periods_after_period(period) {
@@ -685,7 +733,7 @@
             // subscribe to all changes to detect data changes
             var fields = [self.company_name, self.products, self.enrollment_period_type, 
                     self.enrollment_periods, self.situs_city, self.situs_state, 
-                    self.is_active];
+                    self.is_active, self.owner_agent_id];
             _.each(self.enrollment_periods(), function(p) {
                 fields.push(p.start_date);
                 fields.push(p.end_date);
@@ -703,7 +751,8 @@
                      self.products().length > 0 && 
                      $.trim(self.company_name()) != "" && 
                      $.trim(self.situs_city()) != "" && 
-                     $.trim(self.situs_state()) != ""
+                     $.trim(self.situs_state()) != "" &&
+                     self.owner_agent_id() != ""
                  );
                 
                 if (self.is_open_enrollment() && !self.get_open_enrollment_period().is_valid()) {
@@ -802,13 +851,20 @@
                          products.push(this);
                      }
                 });
+                
+                var partner_agents = _.map(self.partner_agents(), function(id_str) {
+                    return parseInt(id_str)
+                });
+                
                 return {
                     company_name: self.company_name(),
                     active: self.is_active(),
                     products:  products,
+                    partner_agents: partner_agents,
                     enrollment_period_type: self.enrollment_period_type(),
                     situs_city: self.situs_city(),
-                    situs_state: self.situs_state()
+                    situs_state: self.situs_state(),
+                    agent_id: self.owner_agent_id()
                 }  
             };
             
@@ -896,6 +952,14 @@
         ko.applyBindings(window.case_settings, $(".content")[0]);
         
         $(".input-mask-month-day").mask("99/99");
+        
+        $('#partner-agents').bootstrapDualListbox({
+            infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',
+            showFilterInputs: true,
+            moveOnSelect: false,
+            nonSelectedListLabel: 'Available Agents:',
+            selectedListLabel: 'Case Visible to Agents:'
+        });
         
     });
     </script>

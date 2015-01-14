@@ -5,6 +5,7 @@ from taa.helpers import JsonSerializable
 
 class AgentJsonSerializable(JsonSerializable):
     __json_public__ = ['id', 'first', 'last', 'email']
+    __json_hidden__ = ['partner_cases']
 
 class Agent(AgentJsonSerializable, db.Model):
     __tablename__ = 'agents'
@@ -21,3 +22,5 @@ class Agent(AgentJsonSerializable, db.Model):
     
     stormpath_url = db.Column(db.String)
     
+    def name(self):
+        return self.first + " " + self.last

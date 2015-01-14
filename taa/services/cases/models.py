@@ -10,10 +10,16 @@ case_products = db.Table('case_products', db.metadata,
     db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True),
 )
 
+case_partner_agents = db.Table('case_partner_agents', db.metadata, 
+    db.Column('case_id', db.Integer, db.ForeignKey('cases.id'), primary_key=True),
+    db.Column('agent_id', db.Integer, db.ForeignKey('agents.id'), primary_key=True),
+)
+
 class CaseSerializer(JsonSerializable):
     __json_modifiers__ = {
         'products': lambda products, _: [p for p in products],
-        'enrollment_periods': lambda periods, _: [p for p in periods]
+        'enrollment_periods': lambda periods, _: [p for p in periods],
+        'partner_agents': lambda agents, _: [a for a in agents],
     }
     __json_hidden__ = ['census_records']
 
@@ -27,15 +33,24 @@ class Case(CaseSerializer, db.Model):
     company_name = db.Column(db.String, nullable=False)
     situs_state = db.Column(db.String(2), nullable=True)
     situs_city = db.Column(db.String)
-    agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=False)
+    
+    agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
+    owner_agent = db.relationship('Agent', backref='owned_cases')
+    
     active = db.Column(db.Boolean, default=False)
-
+    
+    created_date = db.Column(db.DateTime, server_default=db.func.current_timestamp())
+    
     enrollment_period_type = db.Column(db.String(16), nullable=True)
     OPEN_ENROLLMENT_TYPE = u'open'
     ANNUAL_ENROLLMENT_TYPE = u'annual'
     
+    # This relationship defines what products are explicitly enabled for a given case 
     products = db.relationship('Product', secondary=case_products,
                                backref=db.backref('cases', lazy='dynamic'))
+    
+    partner_agents = db.relationship('Agent', secondary=case_partner_agents,
+                               backref=db.backref('partner_cases', lazy='dynamic'))
     
     def get_template_data(self):
         return dict(
@@ -48,7 +63,26 @@ class Case(CaseSerializer, db.Model):
     
     def get_product_names(self):
         return ','.join(p.name for p in self.products)
+    
+    def format_owner_name(self):
+        if self.owner_agent:
+            return self.owner_agent.name()
+        else:
+            return "(No Owner)"
 
+    def format_location(self):
+        if not self.situs_city and not self.situs_state:
+            return ""
+        elif not self.situs_city:
+            return self.situs_state
+        
+        return "{0}, {1}".format(self.situs_city, self.situs_state)
+        
+    def format_is_active(self):
+        return "Active" if self.active else "Not Active"
+
+    def format_created_date(self):
+        return self.created_date.strftime("%m/%d/%Y")
 
 class PeriodSerializer(JsonSerializable):
     __json_hidden__ = ['case']
