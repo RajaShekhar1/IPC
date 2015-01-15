@@ -21,7 +21,7 @@ class CaseSerializer(JsonSerializable):
         'enrollment_periods': lambda periods, _: [p for p in periods],
         'partner_agents': lambda agents, _: [a for a in agents],
     }
-    __json_hidden__ = ['census_records']
+    __json_hidden__ = ['census_records', 'enrollment_records']
 
 class Case(CaseSerializer, db.Model):
     """
