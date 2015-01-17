@@ -136,11 +136,20 @@ class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
         return data
 
     def currently_active(self):
-        return (self.start_date and self.end_date and  
-               datetime.now() >= self.start_date and datetime.now() < self.end_date)
+        # Need to set the year for the start and end dates to current year
+        current_year = datetime.now().year
+        if not self.start_date or not self.end_date:
+            return False
+        
+        start_date = datetime(current_year, self.start_date.month, self.start_date.day)
+        end_date = datetime(current_year, self.end_date.month, self.end_date.day)
+        return (datetime.now() >= start_date and datetime.now() < end_date)
 
 class CensusRecordSerializer(JsonSerializable):
-    __json_hidden__ = ['census_records', 'case', 'enrollments']
+    __json_hidden__ = ['census_records', 'case']
+    __json_modifiers__ = {
+        'enrollment_applications': lambda apps, _: [a for a in apps]
+    }
     
     
 class CaseCensus(CensusRecordSerializer, db.Model):

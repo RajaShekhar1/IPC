@@ -1,5 +1,6 @@
 import datetime
 import json
+from decimal import Decimal
 
 from flask import request
 from flask.json import JSONEncoder as FlaskJSONEncoder
@@ -28,6 +29,9 @@ class JSONEncoder(FlaskJSONEncoder):
         # Flask doesn't handle plain dates (it does have datetimes though)
         if isinstance(obj, datetime.date):
             return obj.isoformat()
+        
+        if isinstance(obj, Decimal):
+            return str(obj) 
         
         return super(JSONEncoder, self).default(obj)
 

@@ -19,12 +19,12 @@ from taa.services.docusign.docusign_envelope import create_envelope_and_get_sign
 from taa.services.cases import CaseService
 from taa.services.agents import AgentService
 from taa.services.products import ProductService
-from taa.services.enrollments import EnrollmentService
+from taa.services.enrollments import EnrollmentApplicationService
 
 product_service = ProductService()    
 case_service = CaseService()
 agent_service = AgentService()
-enrollment_service = EnrollmentService()
+enrollment_service = EnrollmentApplicationService()
 
 @app.route("/get_rates", methods=['POST'])
 def rates():
@@ -218,7 +218,7 @@ def ds_landing_page():
 
  
 
-
+'''Not in use right now, will have to be re-written when implemented'''
 @app.route("/email-enrollment", methods=['POST'])
 @login_required
 def email_enrollment():

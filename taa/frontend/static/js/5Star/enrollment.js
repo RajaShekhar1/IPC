@@ -1181,6 +1181,12 @@ function InsuredApplicant(options) {
         data.state = self.state(); 
         data.zip = self.zip();
         
+        // Serialize the SOH questions
+        data.soh_questions = {};
+        $.each(self.health_questions, function(question_text, button_group) {
+            data.soh_questions[question_text] = button_group.serialize();
+        });
+        
         return data;
     }
 }
@@ -1623,6 +1629,16 @@ function QuestionButtonGroup(question, is_required) {
         }
     };
     
+    self.serialize = function() {
+        // question: text,
+        // answer: [Yes|No|GI] (GI means it was skipped due to GI)
+        var answer = (self.is_required()) ? self.get_val() : "GI";
+        return {
+            question: self.question.question.question_text,
+            answer: answer
+        }
+    };
+    
     self.add_button = function(element, val, high_func, unhigh_func) {
         var btn = null;
         $.each(self.buttons, function() {
@@ -1974,6 +1990,7 @@ function init_validation() {
     
     // Pull out all the data we need for docusign 
     var wizard_results = {
+        health_questions: $.map(window.ui.health_questions(), function(q) {return q.question}),
         agent_data: window.ui.defaults,
         enrollCity:  window.ui.enrollCity(),
         enrollState:  window.ui.enrollState,

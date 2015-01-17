@@ -139,10 +139,19 @@ class CaseService(DBService):
 
     def get_census_records(self, case, offset=None, num_records=None,
                            search_text=None, text_columns=None, 
-                           sorting=None, sort_desc=False):
-
+                           sorting=None, sort_desc=False, include_enrolled=True):
+    
+        from taa.services.enrollments.models import EnrollmentApplication
+        
         query = self.census_records.find(case_id=case.id)
-
+        
+        
+        # Filter enrollment status. Also load in any enrollment data eagerly.
+        if not include_enrolled:
+            query = query.outerjoin('enrollment_applications'
+                        ).filter(EnrollmentApplication.application_status == EnrollmentApplication.APPLICATION_STATUS_DECLINED)
+            query = query.options(db.contains_eager('enrollment_applications'))
+        
         if sorting:
             sort_col = getattr(CaseCensus, sorting)
             if sort_desc:
@@ -151,7 +160,7 @@ class CaseService(DBService):
             
         if search_text and text_columns:
             query = self._filter_record_text(query, search_text, text_columns)
-
+        
         if offset > 0:
             query = query.offset(offset)
         if num_records > 0:
@@ -324,6 +333,14 @@ class CensusRecordService(DBService):
         """
         Returns a dictionary suitable for displaying by the UI
         """
+        from taa.models import EnrollmentApplication
+        enrollment_status = ""
+        for application in census_record.enrollment_applications:
+            if application.application_status == EnrollmentApplication.APPLICATION_STATUS_ENROLLED:
+                enrollment_status = "Enrolled"
+            else:
+                enrollment_status = "Declined"
+                
         return dict(
             id=census_record.id,
             ssn=self.format_ssn(census_record.employee_ssn),
@@ -332,8 +349,8 @@ class CensusRecordService(DBService):
             email=census_record.employee_email,
             sp_first=census_record.spouse_first,
             sp_last=census_record.spouse_last,
-            completed_enrollment="---",
-            elected_coverage="---",
+            completed_enrollment=enrollment_status != "",
+            elected_coverage=enrollment_status == "Enrolled",
         )
     
     def export_csv(self, file, census_records):

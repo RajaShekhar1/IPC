@@ -397,6 +397,28 @@
                 "aoColumnDefs":[
                     // Show enroll button in first column
                     {"aTargets":[0], "bSortable": false, "mData":function(source) {
+                        
+                        var app_status = "";
+                        _.each(source.enrollment_applications, function(app) {
+                            if (app.application_status == "enrolled") {
+                                app_status = "Enrolled";
+                            } else {
+                                app_status = "Declined";
+                            }
+                        });
+                        
+                        if (app_status !== "") {
+                            var classname = "";
+                            if (app_status == "Enrolled") {
+                                var span = "<span class='enroll-status ace-icon glyphicon glyphicon-ok'></span><span class='enroll-status'>" + app_status + "</span>";
+                            } else {
+                                var span = "<span class='ace-icon glyphicon glyphicon-remove'></span><span class='enroll-status declined'>" + app_status + "</span>";
+                                classname = '';
+                            }
+                            
+                            return span + ' <button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'">Re-enroll</button>';
+                        }
+                        
                         return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'">Enroll</button>';
                     }},
                     {"aTargets":[1], "mData":"employee_first"},
@@ -465,7 +487,7 @@
                 .html(letter)
                 .appendTo(alphabet);
         }
-         
+        
         alphabet.insertBefore( table );
         
         alphabet.on('click', 'span', function() {

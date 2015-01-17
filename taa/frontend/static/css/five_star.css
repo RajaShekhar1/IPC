@@ -194,3 +194,14 @@ input[type=radio].ace+.lbl::before {
 .soh_options input[type=checkbox].ace.ace-switch.ace-switch-3:checked+.lbl::before, .soh_options input[type=checkbox].ace.ace-switch.ace-switch-5+.lbl::before {
     text-indent: 3px;
 }
+
+
+.enroll-status {
+    color: #40c000;
+    padding-right: 8px;
+}
+
+.enroll-status.declined {
+    color: #c04000;
+    padding-right: 8px;
+}

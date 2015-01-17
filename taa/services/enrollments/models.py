@@ -5,18 +5,18 @@ from taa.helpers import JsonSerializable
 
 
 class EnrollmentSerializer(JsonSerializable):
-    __json_hidden__ = ['census_records', 'case']
+    __json_hidden__ = ['census_record', 'case']
 
-class Enrollment(EnrollmentSerializer, db.Model):
-    __tablename__ = 'enrollments'
-
+class EnrollmentApplication(EnrollmentSerializer, db.Model):
+    __tablename__ = 'enrollment_applications'
+    
     id = db.Column(db.Integer, primary_key=True)
     
     case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True)
     case = db.relationship('Case', backref=db.backref('enrollment_records', lazy='dynamic'))
     
     census_record_id = db.Column(db.Integer, db.ForeignKey('case_census.id'), nullable=False)
-    census_record = db.relationship('CaseCensus', backref=db.backref('enrollments', lazy='dynamic'))
+    census_record = db.relationship('CaseCensus', backref=db.backref('enrollment_applications', lazy='joined'))
     
     signature_time = db.Column(db.DateTime, server_default='NOW')
     signature_city = db.Column(db.UnicodeText)
@@ -25,7 +25,9 @@ class Enrollment(EnrollmentSerializer, db.Model):
     identity_token = db.Column(db.UnicodeText)
     identity_token_type = db.Column(db.Unicode(64))
     
-    did_decline_enrollment = db.Column(db.Boolean)
+    APPLICATION_STATUS_ENROLLED = u'enrolled'
+    APPLICATION_STATUS_DECLINED = u'declined'
+    application_status = db.Column(db.Unicode(32))
     
     MODE_WEEKLY = u'weekly'
     MODE_MONTHLY = u'monthly'
@@ -33,7 +35,7 @@ class Enrollment(EnrollmentSerializer, db.Model):
     mode = db.Column(db.Unicode(16))
     
     METHOD_INPERSON = u'in_person'
-    METHOD_SELF_EMAIL = u'self_email'
+    METHOD_SELF_EMAIL = u'self_enroll_email'
     METHOD_PHONE = u'phone'
     method = db.Column(db.Unicode(32)) 
     
@@ -61,15 +63,15 @@ class Enrollment(EnrollmentSerializer, db.Model):
     
     
 
-class EnrollmentCoverageSerializer(JsonSerializable):
+class EnrollmentApplicationCoverageSerializer(JsonSerializable):
     __json_hidden__ = ['enrollment']
     
-class EnrollmentCoverage(EnrollmentCoverageSerializer, db.Model):
+class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer, db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     
-    enrollment_id = db.Column(db.Integer, db.ForeignKey('enrollments.id'), nullable=False)
-    enrollment = db.relationship('Enrollment', backref=db.backref('coverages'))
+    enrollment_application_id = db.Column(db.Integer, db.ForeignKey('enrollment_applications.id'), nullable=False)
+    enrollment = db.relationship('EnrollmentApplication', backref=db.backref('coverages'))
     
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
     product = db.relationship('Product')

@@ -3,21 +3,21 @@ import json
 
 from taa.core import DBService
 from taa.core import db
-from models import Enrollment, EnrollmentCoverage
+from models import EnrollmentApplication, EnrollmentApplicationCoverage
 
 from taa.services.cases import CaseService
 from taa.services.products import ProductService
 case_service = CaseService()
 product_service = ProductService()
 
-class EnrollmentService(DBService):
+class EnrollmentApplicationService(DBService):
     
-    __model__ = Enrollment
+    __model__ = EnrollmentApplication
 
     def __init__(self, *args, **kwargs):
-        super(EnrollmentService, self).__init__(*args, **kwargs)
+        super(EnrollmentApplicationService, self).__init__(*args, **kwargs)
 
-        self.coverages_service = EnrollmentCoverageService()
+        self.coverages_service = EnrollmentApplicationCoverageService()
 
     def save_enrollment_data(self, data, census_record):
         
@@ -42,13 +42,16 @@ class EnrollmentService(DBService):
         else:
             case_id = None
             census_record_id = None
+
+        # TODO: Decline 
+        status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED,
             
         enrollment_data = dict(
             case_id = case_id,
             census_record_id = census_record_id,
-
-            # TODO: Decline 
-
+            
+            application_status=status,
+            
             # TODO: mode, method
 
             # Signing info
@@ -92,27 +95,35 @@ class EnrollmentService(DBService):
         if data['employee_coverage']:
             emp_coverage = self.coverages_service.create_coverage(enrollment, product, 
                                                  data, data['employee'], data['employee_coverage'], 
-                                                 EnrollmentCoverage.APPLICANT_TYPE_EMPLOYEE)
+                                                 EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE)
         if data['spouse_coverage']:
             sp_coverage = self.coverages_service.create_coverage(enrollment, product,
                                                  data, data['spouse'], data['spouse_coverage'],
-                                                 EnrollmentCoverage.APPLICANT_TYPE_SPOUSE)
+                                                 EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
         
-        if data['child_coverages']:
+        if data['child_coverages'] and data['child_coverages'][0]:
             ch_coverage = self.coverages_service.create_coverage(enrollment, product,
                                                 data, data['children'][0], data['child_coverages'][0],
-                                                EnrollmentCoverage.APPLICANT_TYPE_SPOUSE)
+                                                EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
 
         db.session.commit()
         
     
-class EnrollmentCoverageService(DBService):
+class EnrollmentApplicationCoverageService(DBService):
     
-    __model__ = EnrollmentCoverage
+    __model__ = EnrollmentApplicationCoverage
 
     def create_coverage(self, enrollment, product, data, applicant_data, applicant_coverage, applicant_type):
+        
+        # Put the health questions in an ordered array
+        soh_questions = []
+        for health_question in data['health_questions']:
+            val = applicant_data['soh_questions'].get(health_question['question_text'])
+            if val:
+                soh_questions.append({'question':health_question['question_text'], 'answer': val['answer']})
+            
         return self.create(**dict(
-            enrollment_id=enrollment.id,
+            enrollment_application_id=enrollment.id,
             product_id=product.id,
             applicant_type=applicant_type,
 
@@ -125,5 +136,6 @@ class EnrollmentCoverageService(DBService):
             soh_answers=json.dumps(dict(
                 existing_insurance=data['existing_insurance'],
                 replacing_insurance=data['replacing_insurance'],
+                health_questions=soh_questions
             ))
         ))
