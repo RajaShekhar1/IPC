@@ -1,4 +1,4 @@
-{% extends "base_ace_1.3.1.html" %}
+{% extends "base_ace_latest.html" %}
 {% from "form_macros.html" import render_field_with_errors %}
 {% from "form_macros.html" import render_switch %}
 {% set active_page = 'nav_agent_manage_case' -%}
@@ -9,250 +9,311 @@
     
     <div class="row main-container" 
         {# Prevent flash of unstyled content #}
-        style="display: none;" data-bind="visible: true"
-        >
-        <div class="col-md-12 case-setup-section">
-            <form class="form-horizontal case_setup" data-bind="submit: save_settings">
+        style="display: none;" data-bind="visible: true">
+    
+        <h3 class="header header-light blue" data-bind="text: company_name"></h3>
+        
+        
+        <div class="col-sm-12">
+            <div class="tabbable">
+                <ul class="nav nav-tabs" id="case-nav-tabs">
+                    <li class="active">
+                        <a href="#setup">
+                            <i class="green ace-icon fa fa-cog bigger-120"></i>
+                            Case Setup
+                        </a>
+                    </li>
                     
-            <div class="widget-box">
-                <div class="widget-header">
-                    <div class="row">
-                        <h3 class="col-xs-6">Case Setup: <span data-bind="text: company_name"></span></h3>
-                        
-                        <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
-                            <label style="margin-right: 15px;">
-                                {{ case_setup_form.active(class_="ace ace-switch ace-switch-6", **{'data-bind': 'checked: is_active'})|safe }}
-                                <span class="lbl padding-16"  data-bind="text: switch_label">Case is Active</span>    
-                            </label>
-                        </h3>
-                    </div>
-                </div>
-                <div class="widget-body">
-                    <div class="widget-main">  
+                    <li>
+                        <a href="#reports">
+                            <i class="blue ace-icon fa fa-bar-chart-o bigger-120"></i>
+                            Enrollment Reports
+                        </a>
+                    </li>
+                </ul>
+    
+                <div class="tab-content">
+                    <div id="setup" class="tab-pane fade in active">
                         <div class="row">
-                            <div class="col-md-5 col-xs-12">
-                                <h3 class="header lighter blue">Settings</h3>
+                             
+                            <div class="col-md-12 case-setup-section">
+                                   
                                 
-                                    <div class="form-group">
-                                        <label class="col-md-3 control-label" for="company_name">Company Name</label>
-                                        <div class="col-md-8">
-                                            {{ case_setup_form.company_name(**{
-                                            'data-bind': "textInput: company_name, uniqueNameValidation: {remoteMethod: check_unique_name, uniqueObservable: company_name}",
-                                            'minlength':'1',
-                                            }) 
-                                                }}
+                                <form class="form-horizontal case_setup" data-bind="submit: save_settings">
+                                        
+                                <div class="widget-box">
+                                    <div class="widget-header">
+                                        <div class="row">
+                                            <h3 class="col-xs-6">Main Settings</h3>
                                             
-                                            <div class="row"> 
-                                                <div class="col-md-12">
-                                                    <div class="error" data-bind="visible: company_name.has_been_checked, text: get_form_error"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-1">
-                                            <div class="ace-icon fa fa-spinner text-warning bigger-125" data-bind="visible: company_name.is_checking"></div>
-                                            <div class="ace-icon fa fa-check green bigger-125" data-bind="visible: company_name.is_unique() && !company_name.is_checking()"></div>
+                                            <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
+                                                <label style="margin-right: 15px;">
+                                                    {{ case_setup_form.active(class_="ace ace-switch ace-switch-6", **{'data-bind': 'checked: is_active'})|safe }}
+                                                    <span class="lbl padding-16"  data-bind="text: switch_label">Case is Active</span>    
+                                                </label>
+                                            </h3>
                                         </div>
                                     </div>
+                                    <div class="widget-body">
+                                        <div class="widget-main">  
+                                            <div class="row">
+                                                <div class="col-md-5 col-xs-12">
+                                                    <h3 class="header lighter blue">Settings</h3>
+                                                    
+                                                        <div class="form-group">
+                                                            <label class="col-md-3 control-label" for="company_name">Company Name</label>
+                                                            <div class="col-md-8">
+                                                                {{ case_setup_form.company_name(**{
+                                                                'data-bind': "textInput: company_name, uniqueNameValidation: {remoteMethod: check_unique_name, uniqueObservable: company_name}",
+                                                                'minlength':'1',
+                                                                }) 
+                                                                    }}
+                                                                
+                                                                <div class="row"> 
+                                                                    <div class="col-md-12">
+                                                                        <div class="error" data-bind="visible: company_name.has_been_checked, text: get_form_error"></div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <div class="ace-icon fa fa-spinner text-warning bigger-125" data-bind="visible: company_name.is_checking"></div>
+                                                                <div class="ace-icon fa fa-check green bigger-125" data-bind="visible: company_name.is_unique() && !company_name.is_checking()"></div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                    
+                                                    {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsValue: "id", optionsText: "name", selectedOptions: products, multiSelect: {
+                                                        observed: products, 
+                                                        options: {nonSelectedText: "No Products Selected", numberDisplayed: 3}
+                                                    }'}) }}
+                                                    
+                                                    
+                                                    {{ render_field_with_errors(case_setup_form.situs_city, **{'data-bind':'value: situs_city'}) }}
+                                                    {{ render_field_with_errors(case_setup_form.situs_state, id="case_state", **{'data-bind':'value: situs_state'}) }}
+                                                    
+                                                </div>
+                                                <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
+                                                    <h3 class="header lighter blue">Enrollment Periods</h3>
+                                                    
+                                                    <div>
+                                                        <div class="panel form-group">
+                                                            <div class="panel-heading">
+                                                                <label>
+                                                                    <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="open"> 
+                                                                    <span class="lbl padding-8">Open Enrollment</span>
+                                                                </label>
+                                                            </div>
+                                                            <div class="panel-body" 
+                                                                data-bind="slideDownIf: is_open_enrollment">
+                                                                <label>
+                                                                    Start Date: 
+                                                                    <input data-bind="value: get_open_enrollment_period().start_date" type="date" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
+                                                                
+                                                                </label>
+                                                                
+                                                            </div>
+                                                        </div>
+                                                        <div class="panel form-group">
+                                                            <div class="panel-heading">
+                                                                <label>
+                                                                    <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="annual"> 
+                                                                    <span class="lbl padding-8">Annual Periods</span>
+                                                                </label>
+                                                            </div>
+                                                            <div class="panel-body"
+                                                                 data-bind="slideDownIf: is_annual_enrollment()">
+                                                                <!--ko foreach: annual_enrollment_periods-->
+                                                                    <div class="row">
+                                                                        <div class="col-md-6">
+                                                                            <label class="">
+                                                                                Start Date:
+                                                                                <input type="text" data-bind="value: start_date" class="input-mask-month-day" placeholder="MM/DD">
+                                                                            </label>
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <label class="">
+                                                                                End Date:
+                                                                                <input type="text" data-bind="value: end_date" class="input-mask-month-day" placeholder="MM/DD">
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="error" data-bind="text: error, visible: error() != ''"></div>
+                                                                <!--/ko-->
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                {% if is_admin %}
+                                                    <div class="col-md-6">
+                                                        <div class="row">
+                                                            <div class="form-group">
+                                                                <label class="col-md-3 control-label" for="owner_agent">Owner Agent</label>
+                                                                <div class="col-md-9">
+                                                                    <select id="owner_agent" name="agent_id" data-bind="value: owner_agent_id">
+                                                                        <option value="">(No Owner)</option>
+                                                                        {% for agent in active_agents %}
+                                                                            <option value="{{ agent.id }}" 
+                                                                                {%-if agent.id == case.agent_id -%}
+                                                                                selected="selected"
+                                                                                {%- endif -%}
+                                                                                >{{ agent.name() }}</option>
+                                                                        {% endfor %}
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                {% endif %} 
+                                                <div class="col-sm-offset-1 col-sm-3">
+                                                    <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="
+                                                click: delete_case
+                                                ">Delete Case</button>
+                                                </div>
+                                                
+                                            </div>
+                                            {% if is_admin %}
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <h4 class="header lighter">Partner Agents</h4>
+                                                    <div class="row">
+                                                        <div class="col-sm-10 col-md-offset-1">
+                                                            <select data-bind="selectedOptions: partner_agents" 
+                                                                    multiple="multiple" class="form-control" 
+                                                                    id="partner-agents" 
+                                                                    size="10" style="min-height: 8em;">
+                                                                {% for agent in active_agents %}
+                                                                    <option value="{{ agent.id }}" 
+                                                                        {%-if agent in case.partner_agents -%}
+                                                                        selected="selected"
+                                                                        {%- endif -%}
+                                                                        >{{ agent.name() }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="widget-toolbox clearfix padding-8">
+                                            
+                                            <button type="submit" class="btn btn-primary btn-md pull-right" data-bind="
+                                            {# enable: has_unsaved_data,  #}
+                                            css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}
+                                            ">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
                                     
+                                </form> 
+                                <br>
+                                <br>
                                 
-                                {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsValue: "id", optionsText: "name", selectedOptions: products, multiSelect: {
-                                    observed: products, 
-                                    options: {nonSelectedText: "No Products Selected", numberDisplayed: 3}
-                                }'}) }}
-                                
-                                
-                                {{ render_field_with_errors(case_setup_form.situs_city, **{'data-bind':'value: situs_city'}) }}
-                                {{ render_field_with_errors(case_setup_form.situs_state, id="case_state", **{'data-bind':'value: situs_state'}) }}
-                                
-                            </div>
-                            <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
-                                <h3 class="header lighter blue">Enrollment Periods</h3>
-                                
-                                <div>
-                                    <div class="panel form-group">
-                                        <div class="panel-heading">
-                                            <label>
-                                                <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="open"> 
-                                                <span class="lbl padding-8">Open Enrollment</span>
-                                            </label>
-                                        </div>
-                                        <div class="panel-body" 
-                                            data-bind="slideDownIf: is_open_enrollment">
-                                            <label>
-                                                Start Date: 
-                                                <input data-bind="value: get_open_enrollment_period().start_date" type="date" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
-                                            
-                                            </label>
-                                            
-                                        </div>
-                                    </div>
-                                    <div class="panel form-group">
-                                        <div class="panel-heading">
-                                            <label>
-                                                <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="annual"> 
-                                                <span class="lbl padding-8">Annual Periods</span>
-                                            </label>
-                                        </div>
-                                        <div class="panel-body"
-                                             data-bind="slideDownIf: is_annual_enrollment()">
-                                            <!--ko foreach: annual_enrollment_periods-->
+                                <div class="row" {# Prevent flash of unstyled content #}
+                                    style="display: none;" data-bind="visible: true"
+                                    >
+                                    <div class="col-xs-12">
+                                        <div class="widget-box">
+                                            <div class="widget-header">
                                                 <div class="row">
+                                                    <div class="col-md-6"><h4 class="bigger-150">Case Census</h4></div>
                                                     <div class="col-md-6">
-                                                        <label class="">
-                                                            Start Date:
-                                                            <input type="text" data-bind="value: start_date" class="input-mask-month-day" placeholder="MM/DD">
-                                                        </label>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="">
-                                                            End Date:
-                                                            <input type="text" data-bind="value: end_date" class="input-mask-month-day" placeholder="MM/DD">
-                                                        </label>
+                                                        
+                                                        <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal" >
+                                                            <i class="ace-icon fa fa-upload"></i>
+                                                                Upload Census
+                                                        </button>
+                                                        <a data-bind="visible: has_census_data" href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
+                                                            <i class="ace-icon glyphicon glyphicon-download-alt"></i>
+                                                                Download Census
+                                                        </a>
                                                     </div>
                                                 </div>
-                                                <div class="error" data-bind="text: error, visible: error() != ''"></div>
-                                            <!--/ko-->
+                                            </div>
+                                            <div class="widget-body">
+                                                <div class="widget-main">  
+                                                    {% if not census_records %}
+                                                        <h4 class="no-census-header text-center lighter">No Census Data Uploaded</h4>
+                                                        <table id="census-records-table" class="table table-bordered table-hover" style="display: none;">
+                                                    {% else %}
+                                                        <table id="census-records-table" class="table table-bordered table-hover">
+                                                    {% endif %}
+                                                            <thead>
+                                                                <tr>
+                                                                    <th></th>
+                                                                    <th>First</th>
+                                                                    <th>Last</th>
+                                                                    <th>DOB</th>
+                                                                    <th>Email</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {# 
+                                                                Don't load this on the page anymore, 
+                                                                we load from the server at run time for page speed
+                                                                #}
+                                                            </tbody>
+                                                        </table>
+                                                    
+                                                    <div id="census-table-loading" class="text-center bigger-125"></div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
+                                            
                                 </div>
+                                
                             </div>
                         </div>
+                    </div>
+    
+                    <div id="reports" class="tab-pane fade">
                         <div class="row">
-                            {% if is_admin %}
-                                <div class="col-md-6">
-                                    <div class="row">
-                                        <div class="form-group">
-                                            <label class="col-md-3 control-label" for="owner_agent">Owner Agent</label>
-                                            <div class="col-md-9">
-                                                <select id="owner_agent" name="agent_id" data-bind="value: owner_agent_id">
-                                                    <option value="">(No Owner)</option>
-                                                    {% for agent in active_agents %}
-                                                        <option value="{{ agent.id }}" 
-                                                            {%-if agent.id == case.agent_id -%}
-                                                            selected="selected"
-                                                            {%- endif -%}
-                                                            >{{ agent.name() }}</option>
-                                                    {% endfor %}
-                                                </select>
+                            <div class="col-xs-12">
+                                
+                                {# Report #}
+                                <div class="widget-box">
+                                    <div class="widget-header">
+                                        <div class="row">
+                                            <h3 class="col-xs-6">Reports</h3>
+                                        </div>
+                                    </div>
+                                    <div class="widget-body">
+                                        <div class="widget-main">  
+                                            <div class="row">
+                                                <div class="col-xs-12">
+                                                    <case-report params="case: "></case-report>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 
-                            {% endif %} 
-                            <div class="col-sm-offset-1 col-sm-3">
-                                <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="
-                            click: delete_case
-                            ">Delete Case</button>
-                            </div>
-                            
-                        </div>
-                        {% if is_admin %}
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <h4 class="header lighter">Partner Agents</h4>
-                                <div class="row">
-                                    <div class="col-sm-10 col-md-offset-1">
-                                        <select data-bind="selectedOptions: partner_agents" 
-                                                multiple="multiple" class="form-control" 
-                                                id="partner-agents" 
-                                                size="10" style="min-height: 8em;">
-                                            {% for agent in active_agents %}
-                                                <option value="{{ agent.id }}" 
-                                                    {%-if agent in case.partner_agents -%}
-                                                    selected="selected"
-                                                    {%- endif -%}
-                                                    >{{ agent.name() }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                </div>
                             </div>
                         </div>
-                        {% endif %}
-                    </div>
-                    <div class="widget-toolbox clearfix padding-8">
-                        
-                        <button type="submit" class="btn btn-primary btn-md pull-right" data-bind="
-                        {# enable: has_unsaved_data,  #}
-                        css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}
-                        ">Save</button>
-                    </div>
-                </div>
-            </div>
-                
-            </form> 
-            
-            
-        </div>
-    </div>
-    
-    <br>
-    <br>
-    
-    <div class="row" {# Prevent flash of unstyled content #}
-        style="display: none;" data-bind="visible: true"
-        >
-        <div class="col-xs-12">
-            <div class="widget-box">
-                <div class="widget-header">
-                    <div class="row">
-                        <div class="col-md-6"><h4 class="bigger-150">Case Census</h4></div>
-                        <div class="col-md-6">
-                            
-                            <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal" >
-                                <i class="ace-icon fa fa-upload"></i>
-                                    Upload Census
-                            </button>
-                            <a data-bind="visible: has_census_data" href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
-                                <i class="ace-icon glyphicon glyphicon-download-alt"></i>
-                                    Download Census
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="widget-body">
-                    <div class="widget-main">  
-                        {% if not census_records %}
-                            <h4 class="no-census-header text-center lighter">No Census Data Uploaded</h4>
-                            <table id="census-records-table" class="table table-bordered table-hover" style="display: none;">
-                        {% else %}
-                            <table id="census-records-table" class="table table-bordered table-hover">
-                        {% endif %}
-                                <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th>First</th>
-                                        <th>Last</th>
-                                        <th>DOB</th>
-                                        <th>Email</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {# 
-                                    Don't load this on the page anymore, 
-                                    we load from the server at run time for page speed
-                                    #}
-                                </tbody>
-                            </table>
-                        
-                        <div id="census-table-loading" class="text-center bigger-125"></div>
                     </div>
                 </div>
             </div>
         </div>
-                
+        
+        
+        
     </div>
+    
+    
     
 {% endblock %}
 
-{% block footer %}
+{% block modals %}
     {{ super() }}
     
     {# Upload census data modal. This is in the footer so I can bind two KO controllers more easily for now. #}
     <form id="census-record-form" method="POST" enctype="multipart/form-data">
     <div id="census-upload-modal" class="modal fade">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal"><span
@@ -431,13 +492,6 @@
     }
     
     $(function() {
-        // Load census data when page loads
-        case_management.refresh_census_table({{ case.id }}, "{{ url_for("cases.census_records", case_id=case.id) }}", 
-            "#census-records-table", "#census-table-loading", {},
-            function(table) {
-                // This is called if there is data; enable download button
-                window.case_settings.has_census_data(true);
-        });
         
         // Change enabled states when the product is changed
         {# product_state_select.init("#case_state","#case_product", {{ product_states | tojson | safe }});
@@ -614,6 +668,8 @@
         
         var CaseSettingsPanel = function(case_data, product_choices) {
             var self = this;
+            
+            self.reports = new CaseReportsViewModel(case_data);
             
             self.company_name = ko.observable(case_data.company_name || "").extend({ rateLimit: 1000 });
             self.product_choices = product_choices;
@@ -948,6 +1004,50 @@
                 return self.is_data_dirty();  
             });
             
+            
+            // Tabs
+            var setup_tab = $('#case-nav-tabs a[href="#setup"]');
+            var reports_tab = $('#case-nav-tabs a[href="#reports"]');
+            
+            self.sammy_app = Sammy(function() {
+                this.get("#setup", function() {
+                    setup_tab.tab('show');
+                    
+                    // Load census data when page loads
+                    case_management.refresh_census_table({{ case.id }}, "{{ url_for("cases.census_records", case_id=case.id) }}", 
+                        "#census-records-table", "#census-table-loading", {},
+                        function(table) {
+                            // This is called if there is data; enable download button
+                            window.case_settings.has_census_data(true);
+                    });
+                    
+                });  
+                
+                this.get("#reports", function() {
+                    reports_tab.tab('show');
+                    self.reports.load_reports();
+                });
+                
+                this.get('', function () { 
+                    this.app.runRoute('get', '#setup');
+                });
+            }).run();
+            
+        };
+        
+        
+        var CaseReportsViewModel = function() {
+            var self = this;
+            
+            self.load_reports = function() {
+                var url = "{{ url_for("cases.enrollment_report", case_id=case.id) }}";
+                $.get(url).success(function(data) {
+                    console.log(data);
+                }).error(function(e) {
+                    console.error(e); 
+                });
+            }
+            
         };
         
         // Initialize settings viewmodel
@@ -966,6 +1066,9 @@
             nonSelectedListLabel: 'Available Agents:',
             selectedListLabel: 'Case Visible to Agents:'
         });
+        
+        
+        
         
     });
     </script>

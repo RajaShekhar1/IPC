@@ -410,20 +410,20 @@
                         if (app_status !== "") {
                             var classname = "";
                             if (app_status == "Enrolled") {
-                                var span = "<span class='enroll-status ace-icon glyphicon glyphicon-ok'></span><span class='enroll-status'>" + app_status + "</span>";
+                                var span = "<span class='enroll-status ace-icon glyphicon glyphicon-ok'> </span><span class='enroll-status'>" + app_status + "</span>";
                             } else {
-                                var span = "<span class='ace-icon glyphicon glyphicon-remove'></span><span class='enroll-status declined'>" + app_status + "</span>";
+                                var span = "<span class='ace-icon glyphicon glyphicon-remove'></span> <span class='enroll-status declined'>" + app_status + "</span>";
                                 classname = '';
                             }
                             
-                            return span + ' <button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'">Re-enroll</button>';
+                            return span + ' <button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'"><span class="ace-icon glyphicon glyphicon-refresh"> Re-enroll</button>';
                         }
                         
                         return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'">Enroll</button>';
                     }},
                     {"aTargets":[1], "mData":"employee_first"},
                     {"aTargets":[2], "mData":"employee_last"},
-                    {"aTargets":[3], "mData": "employee_birthdate", "mData": function(source) {
+                    {"aTargets":[3], "mData": function(source) {
                         var d = moment(source.employee_birthdate, "YYYY-MM-DD");
                         return d.format("MM/DD/YYYY");
                     }},

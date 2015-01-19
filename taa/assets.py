@@ -27,19 +27,19 @@ css_all = Bundle(
     output="generated_assets/taa.min.css"
 )
 
-css_ace_1_3_1 = Bundle(
+css_ace_latest = Bundle(
     # Ace dependencies
-    "ace-v1.3.1/css/bootstrap.min.css",
-    "ace-v1.3.1/css/font-awesome.min.css",
-    "ace-v1.3.1/css/ace-fonts.min.css",
+    "ace-v1.3.3/css/bootstrap.min.css",
+    "ace-v1.3.3/css/font-awesome.min.css",
+    "ace-v1.3.3/css/ace-fonts.min.css",
     
     # Put any 3rd party CSS plugins here (chosen, ui.jqgrid, etc)
-    "ace-v1.3.1/css/bootstrap-multiselect.min.css",
-    "ace-v1.3.1/css/bootstrap-duallistbox.min.css",
+    "ace-v1.3.3/css/bootstrap-multiselect.min.css",
+    "ace-v1.3.3/css/bootstrap-duallistbox.min.css",
     
     # Main ace files 
-    "ace-v1.3.1/css/ace.min.css",
-    "ace-v1.3.1/css/ace-part2.min.css",
+    "ace-v1.3.3/css/ace.min.css",
+    "ace-v1.3.3/css/ace-part2.min.css",
 
     'css/jquery.rcrumbs.min.css',
 
@@ -81,40 +81,42 @@ js_vendor = Bundle(
     Bundle('js/knockout-3.2.0.js'),
     'js/underscore-min.js',
     'js/backbone-min.js',
-    #'js/sammy-latest.min.js',
+    
 )
 
-js_vendor_1_3_1 = Bundle(
+js_vendor_latest = Bundle(
 
     #Bundle('js/jquery-1.11.1.js', filters='rjsmin'),
     # ace template requires bootstrap first
-    #'ace-v1.3.1/js/bootstrap.min.js',
+    #'ace-v1.3.3/js/bootstrap.min.js',
     
     # js ace plugins for wizard and such go here
-    'ace-v1.3.1/js/jquery.dataTables.min.js',
-    'ace-v1.3.1/js/jquery.dataTables.bootstrap.min.js',
-    'ace-v1.3.1/js/jquery.maskedinput.min.js',
-    'ace-v1.3.1/js/jquery.validate.min.js',
-    'ace-v1.3.1/js/jquery.bootstrap-duallistbox.min.js',
-    'ace-v1.3.1/js/fuelux/fuelux.wizard.min.js',
-    'ace-v1.3.1/js/jquery.mobile.custom.min.js',
-    'ace-v1.3.1/js/typeahead.jquery.min.js',
-    'ace-v1.3.1/js/bootstrap-multiselect.min.js',
+    'ace-v1.3.3/js/dataTables/jquery.dataTables.min.js',
+    'ace-v1.3.3/js/dataTables/jquery.dataTables.bootstrap.min.js',
+    'ace-v1.3.3/js/jquery.maskedinput.min.js',
+    'ace-v1.3.3/js/jquery.validate.min.js',
+    'ace-v1.3.3/js/jquery.bootstrap-duallistbox.min.js',
+    'ace-v1.3.3/js/fuelux/fuelux.wizard.min.js',
+    'ace-v1.3.3/js/jquery.mobile.custom.min.js',
+    'ace-v1.3.3/js/typeahead.jquery.min.js',
+    'ace-v1.3.3/js/bootstrap-multiselect.min.js',
     
     # The rest of ace template libs
-    'ace-v1.3.1/js/ace-elements.min.js',
-    'ace-v1.3.1/js/ace.min.js',
-    'ace-v1.3.1/js/additional-methods.min.js',
+    'ace-v1.3.3/js/ace-elements.min.js',
+    'ace-v1.3.3/js/ace.min.js',
+    'ace-v1.3.3/js/additional-methods.min.js',
     
     # 3rd party libs
     'js/moment.min.js',
     'js/bootbox.min.js',
     'js/jquery.rcrumbs.min.js',
     
-    Bundle('js/knockout-3.2.0.js'),
+    Bundle('js/knockout-3.2.0.js',
+           # filters='rjsmin',
+    ),
     'js/underscore-min.js',
     'js/backbone-min.js',
-    #'js/sammy-latest.min.js',
+    'js/sammy-latest.min.js',
 )
 
 
@@ -133,8 +135,8 @@ def init_app(app):
     webassets.register('css_all', css_all)
     webassets.register('js_main', js_main)
     
-    webassets.register('css_ace_1_3_1', css_ace_1_3_1)
-    webassets.register('js_vendor_1_3_1', js_vendor_1_3_1)
+    webassets.register('css_ace_1_3_1', css_ace_latest)
+    webassets.register('js_vendor_1_3_1', js_vendor_latest)
     webassets.register('taa_app', taa_app)
     
     webassets.manifest = 'cache' #if not app.debug else False

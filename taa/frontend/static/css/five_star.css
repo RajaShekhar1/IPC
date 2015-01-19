@@ -1,4 +1,17 @@
 
+/***********************************************************/
+/* Broken modal backdrop in BS 3.1.1 - temp fix */
+/* */
+body {
+  min-height: 100%;
+}
+
+.modal-backdrop {
+    bottom: 0;
+    position: fixed;
+}
+/***********************************************************/
+
 .error {
     color: #D16E6C;
 }

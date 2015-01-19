@@ -64,10 +64,10 @@ class EnrollmentApplicationService(DBService):
             # Owner
             is_employee_owner = data['employee_owner'] != "other",
             employee_other_owner_name = data['employee_other_owner_name'],
-            employee_other_owner_ssn = data['employee_other_owner_ssn'],
+            employee_other_owner_ssn = self._strip_ssn(data['employee_other_owner_ssn']),
             is_spouse_owner = data['spouse_owner'] != "other",
             spouse_other_owner_name = data['spouse_other_owner_name'],
-            spouse_other_owner_ssn = data['spouse_other_owner_ssn'],
+            spouse_other_owner_ssn = self._strip_ssn(data['spouse_other_owner_ssn']),
             
             # emp beneficiary
             is_employee_beneficiary_spouse = data['employee_beneficiary'] != 'other',
@@ -79,13 +79,15 @@ class EnrollmentApplicationService(DBService):
             # spouse beneficiary
             is_spouse_beneficiary_employee = data['spouse_beneficiary'] != 'other',
             spouse_beneficiary_name = data['spouse_beneficiary_name'],
-            spouse_beneficiary_ssn = data['spouse_beneficiary_ssn'],
+            spouse_beneficiary_ssn = self._strip_ssn(data['spouse_beneficiary_ssn']),
             spouse_beneficiary_relationship = data['spouse_beneficiary_relationship'],
             spouse_beneficiary_birthdate = data['spouse_beneficiary_dob'],
         )
         
         return self.create(**enrollment_data)
         
+    def _strip_ssn(self, ssn):
+        return ssn.replace('-', '').strip() if ssn else ''
     
     def _save_coverages(self, enrollment, data):
         

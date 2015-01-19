@@ -471,7 +471,7 @@ class CensusRecordService(DBService):
         spouse = data['spouse']
         children = data['children']
         
-        record.employee_ssn = employee['ssn']
+        record.employee_ssn = self.strip_ssn(employee['ssn'])
         record.employee_first = employee['first']
         record.employee_last = employee['last']
         record.employee_gender = employee['gender']
@@ -484,7 +484,7 @@ class CensusRecordService(DBService):
         record.employee_state = employee['state']
         record.employee_zip = employee['zip']
 
-        record.spouse_ssn = spouse['ssn']
+        record.spouse_ssn = self.strip_ssn(spouse['ssn'])
         record.spouse_first = spouse['first']
         record.spouse_last = spouse['last']
         record.spouse_gender = spouse['gender']
@@ -503,6 +503,9 @@ class CensusRecordService(DBService):
             setattr(record, 'child{}_birthdate'.format(i), child['birthdate'])
         
         db.session.flush()
+        
+    def strip_ssn(self, ssn):
+        return ssn.strip().replace('-','') if ssn else ''
         
 class CensusRecordField(object):
     """
