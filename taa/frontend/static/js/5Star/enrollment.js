@@ -78,6 +78,8 @@ function WizardUI(product, defaults) {
     
     self.disclaimer_notice_confirmed = ko.observable(false);
     
+    // End of step 1, option to decline coverage for all products and skip to the end
+    self.did_decline = ko.observable(false);
     
     // Data used on steps 2-5
     self.is_in_person_application = ko.observable('is_in_person' in defaults && defaults.is_in_person);
@@ -629,6 +631,22 @@ function WizardUI(product, defaults) {
         });
         
     };
+    
+    
+    // Decline info box
+    self.did_decline.subscribe(function(val) {
+        if (val) {
+            bootbox.dialog({
+            message: "Please note that even after declining enrollment, you may still change your decision and elect to enroll at a later time, provided that your employer's enrollment period is still active.",
+            buttons: {
+                "success": {
+                    "label": "Close",
+                    "className": "btn-sm btn-primary"
+                }
+            }
+        });
+        }
+    });
     
 }
 
@@ -1931,6 +1949,13 @@ function init_validation() {
             // Clear step2 health question error when we attempt to validate step 1
             $("#health_questions_error").html("");
             
+            
+            // Check for "Decline all coverage" and bail out of the wizard if it is checked
+            if (ui.did_decline()) {
+                submit_decline();
+                return false;
+            }
+            
             // trigger jquery validation
             var is_valid = window.ui.validator.form();
                 
@@ -1973,64 +1998,72 @@ function init_validation() {
     }).on('finished', function (e) {
         
 	if (!$('#step6-form').valid()) return false;
-
-	//jQuery validator rule should be handling this, but it's not, so force a popup here
-	if (!$("#confirmDisclaimer").is(':checked')) {
-	    bootbox.dialog({
-		    message: "Please confirm that you have received the disclosure notice.",
-		    buttons: {
-			"danger": {
-			    "label": "OK",
-			    "className": "btn-warning"
-			}
-		    }
-		});
-	    return false;
-	}
     
-    // Pull out all the data we need for docusign 
-    var wizard_results = {
-        health_questions: $.map(window.ui.health_questions(), function(q) {return q.question}),
-        agent_data: window.ui.defaults,
-        enrollCity:  window.ui.enrollCity(),
-        enrollState:  window.ui.enrollState,
-        product_type: window.ui.insurance_product.product_type,
+        //jQuery validator rule should be handling this, but it's not, so force a popup here
+        if (!$("#confirmDisclaimer").is(':checked')) {
+            bootbox.dialog({
+                message: "Please confirm that you have received the disclosure notice.",
+                buttons: {
+                "danger": {
+                    "label": "OK",
+                    "className": "btn-warning"
+                }
+                }
+            });
+            return false;
+        }
         
-        method: (ui.is_in_person_application()) ? 'in_person': 'self_enroll_email',
+        submit_application();
         
-        identityToken: window.ui.identityToken(),
-        identityType: window.ui.identityType(),
+    }).on('stepclick', function (e) {
+        return true; //return false;//prevent clicking on steps
+    });
+
+    function submit_application() {
+        // Pull out all the data we need for docusign 
+        var wizard_results = {
+            health_questions: $.map(window.ui.health_questions(), function(q) {return q.question}),
+            agent_data: window.ui.defaults,
+            enrollCity:  window.ui.enrollCity(),
+            enrollState:  window.ui.enrollState,
+            product_type: window.ui.insurance_product.product_type,
             
-        employee: window.ui.employee().serialize_data(),
-        spouse: window.ui.spouse().serialize_data(),
+            method: (ui.is_in_person_application()) ? 'in_person': 'self_enroll_email',
+            did_decline: ui.did_decline(),
+            
+            identityToken: window.ui.identityToken(),
+            identityType: window.ui.identityType(),
+                
+            employee: window.ui.employee().serialize_data(),
+            spouse: window.ui.spouse().serialize_data(),
+            
+            existing_insurance:  window.ui.existing_insurance,
+            replacing_insurance:  window.ui.replacing_insurance,
+            
+            employee_owner:  window.ui.policy_owner(),
+            employee_other_owner_name:  window.ui.other_owner_name(),
+            employee_other_owner_ssn:  window.ui.other_owner_ssn(),
+            spouse_owner:  window.ui.spouse_policy_owner(),
+            spouse_other_owner_name:  window.ui.spouse_other_owner_name(),
+            spouse_other_owner_ssn:  window.ui.spouse_other_owner_ssn(),
         
-        existing_insurance:  window.ui.existing_insurance,
-        replacing_insurance:  window.ui.replacing_insurance,
-        
-        employee_owner:  window.ui.policy_owner(),
-        employee_other_owner_name:  window.ui.other_owner_name(),
-        employee_other_owner_ssn:  window.ui.other_owner_ssn(),
-        spouse_owner:  window.ui.spouse_policy_owner(),
-        spouse_other_owner_name:  window.ui.spouse_other_owner_name(),
-        spouse_other_owner_ssn:  window.ui.spouse_other_owner_ssn(),
+            employee_beneficiary:  window.ui.employee_beneficiary(),
+            spouse_beneficiary:  window.ui.spouse_beneficiary(),
+            employee_beneficiary_name:  window.ui.employee_beneficiary_name(),
+            employee_beneficiary_relationship:  window.ui.employee_beneficiary_relationship(),
+            employee_beneficiary_ssn:  window.ui.employee_beneficiary_ssn(),
+            employee_beneficiary_dob:  window.ui.employee_beneficiary_dob(),
+            
+            spouse_beneficiary_name:  window.ui.spouse_beneficiary_name(),
+            spouse_beneficiary_relationship:  window.ui.spouse_beneficiary_relationship(),
+            spouse_beneficiary_ssn:  window.ui.spouse_beneficiary_ssn(),
+            spouse_beneficiary_dob:  window.ui.spouse_beneficiary_dob()
+        };
     
-        employee_beneficiary:  window.ui.employee_beneficiary(),
-        spouse_beneficiary:  window.ui.spouse_beneficiary(),
-        employee_beneficiary_name:  window.ui.employee_beneficiary_name(),
-        employee_beneficiary_relationship:  window.ui.employee_beneficiary_relationship(),
-        employee_beneficiary_ssn:  window.ui.employee_beneficiary_ssn(),
-        employee_beneficiary_dob:  window.ui.employee_beneficiary_dob(),
-        
-        spouse_beneficiary_name:  window.ui.spouse_beneficiary_name(),
-        spouse_beneficiary_relationship:  window.ui.spouse_beneficiary_relationship(),
-        spouse_beneficiary_ssn:  window.ui.spouse_beneficiary_ssn(),
-        spouse_beneficiary_dob:  window.ui.spouse_beneficiary_dob()
-    };
-
-	if (!window.ui.should_include_spouse_in_table()) {
-	    wizard_results['employee_beneficiary'] = "other";
-	}
-        
+        if (!window.ui.should_include_spouse_in_table()) {
+            wizard_results['employee_beneficiary'] = "other";
+        }
+            
         // Children
         wizard_results['children'] = [];
         wizard_results['child_coverages'] = [];
@@ -2059,7 +2092,7 @@ function init_validation() {
         
         // Send to 'listener' for debugging
         /*
-	  ajax_post("http://requestb.in/1l091cx1", {"wizard_results": wizard_results}, function(resp) {
+        ajax_post("http://requestb.in/1l091cx1", {"wizard_results": wizard_results}, function(resp) {
             alert("Just sent to requestb.in");            
         }, handle_remote_error, true);
         */
@@ -2093,11 +2126,49 @@ function init_validation() {
                 }
             }
         });
+    }
+    
+    function submit_decline() {
+        // Pull out all the data we need for docusign 
+        var wizard_results = {
+            agent_data: window.ui.defaults,
+            enrollCity:  window.ui.enrollCity(),
+            enrollState:  window.ui.enrollState,
+            product_type: window.ui.insurance_product.product_type,
+            method: (ui.is_in_person_application()) ? 'in_person': 'self_enroll_email',
+            did_decline: ui.did_decline(),    
+            employee: window.ui.employee().serialize_data(),
+            spouse: window.ui.spouse().serialize_data()
+        };
         
-    }).on('stepclick', function (e) {
-        return true; //return false;//prevent clicking on steps
-    });
-
+        // Children
+        wizard_results['children'] = [];
+        $.each(window.ui.get_valid_children(), function() {
+            var child = this;
+            wizard_results['children'].push(this.serialize_data());
+        });
+        
+        wizard_results['product_data'] = ui.insurance_product.product_data;
+        
+        // Send to server
+        ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function (resp) {
+            if (resp.error) {
+                bootbox.dialog({
+                    message: "There was a problem submitting the form (" + resp.error + ").  Please contact the enrollment system administrator.",
+                    buttons: {
+                        "success": {
+                            "label": "OK",
+                            "className": "btn-sm btn-primary"
+                        }
+                    }
+                });
+            } else {
+                // Docusign redirect
+                location = resp.redirect;
+            }
+        }, handle_remote_error, true);
+        
+    }
 
     //documentation : http://docs.jquery.com/Plugins/Validation/validate
     $.mask.definitions['~'] = '[+-]';

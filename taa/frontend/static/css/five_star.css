@@ -70,6 +70,13 @@ body {
     z-index: 10;
 }
 
+.decline-option {
+    margin-top: 2em;
+}
+.decline-option label {
+    font-size: 14pt;
+}
+
 .recommended-coverage-table .widget-header {
     min-height: 43px;
 }
