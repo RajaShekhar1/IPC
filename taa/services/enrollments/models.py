@@ -61,7 +61,14 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     spouse_beneficiary_birthdate = db.Column(db.UnicodeText)
     spouse_beneficiary_ssn = db.Column(db.Unicode(16))
     
-    
+    def get_signature_time_as_int(self):
+        'useful for sorting'
+        
+    def did_enroll(self):
+        return self.application_status == self.APPLICATION_STATUS_ENROLLED
+
+    def did_process(self):
+        return self.application_status != None
 
 class EnrollmentApplicationCoverageSerializer(JsonSerializable):
     __json_hidden__ = ['enrollment']
@@ -80,6 +87,11 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer, db.
     APPLICANT_TYPE_SPOUSE = u'spouse'
     APPLICANT_TYPE_CHILD = u'children'
     applicant_type = db.Column(db.Unicode(32))
+    
+    # Coverage status
+    COVERAGE_STATUS_ENROLLED = u'enrolled'
+    COVERAGE_STATUS_DECLINED = u'declined'
+    coverage_status = db.Column(db.Unicode(32))
     
     # Additional non-census data
     height_inches = db.Column(db.Integer)
@@ -100,6 +112,25 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer, db.
     soh_answers = db.Column(db.UnicodeText)
     
 
+    def get_annualized_premium(self):
+        if self.annual_premium:
+            return self.annual_premium
+            
+        elif self.monthly_premium:
+            return self.monthly_premium * 12
+            
+        elif self.biweekly_premium:
+            return self.biweekly_premium * 26
+            
+        elif self.weekly_premium:
+            return self.weekly_premium * 52
+            
+        else:
+            return 0.0
+
+    def did_enroll(self):
+        return self.coverage_status == self.COVERAGE_STATUS_ENROLLED
+    
     
 # enrollment_requests = Table('enrollment_requests', metadata,
 #     Column('id', Integer, primary_key=True),

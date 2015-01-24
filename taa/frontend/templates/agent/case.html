@@ -14,7 +14,7 @@
         <h3 class="header header-light blue" data-bind="text: company_name"></h3>
         
         
-        <div class="col-sm-12">
+        <div class="col-xs-12">
             <div class="tabbable">
                 <ul class="nav nav-tabs" id="case-nav-tabs">
                     <li class="active">
@@ -278,20 +278,67 @@
                                 <div class="widget-box">
                                     <div class="widget-header">
                                         <div class="row">
-                                            <h3 class="col-xs-6">Reports</h3>
+                                            <h3 class="col-xs-6">Report</h3>
                                         </div>
                                     </div>
                                     <div class="widget-body">
                                         <div class="widget-main">  
                                             <div class="row">
                                                 <div class="col-xs-12">
-                                                    <case-report params="case: "></case-report>
+                                                    <case-report params="settings_viewmodel: $root"></case-report>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 
+                                {# Enrollments #}
+                                <div class="row" {# Prevent flash of unstyled content #}
+                                    style="display: none;" data-bind="visible: true"
+                                    >
+                                    <div class="col-xs-12">
+                                        <div class="widget-box" data-bind="visible: report_viewmodel() && report_viewmodel().any_enrollments">
+                                            <div class="widget-header">
+                                                <div class="row">
+                                                    <div class="col-md-6"><h4 class="bigger-150">Enrollment Records</h4></div>
+                                                    <div class="col-md-6">
+                                                        
+                                                        <a href="{{ url_for('cases.enrollment_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
+                                                            <i class="ace-icon glyphicon glyphicon-download-alt"></i>
+                                                                Download Enrollments
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="widget-body">
+                                                <div class="widget-main">  
+                                                        <table id="enrollment-records-table" class="table table-bordered table-hover">
+                                                    
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>First</th>
+                                                                    <th>Last</th>
+                                                                    <th>DOB</th>
+                                                                    <th>Email</th>
+                                                                    <th>Status</th>
+                                                                    <th>Total Premium</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {# 
+                                                                Don't load this on the page anymore, 
+                                                                we load from the server at run time for page speed
+                                                                #}
+                                                            </tbody>
+                                                        </table>
+                                                    
+                                                    <div id="enrollment-table-loading" class="text-center bigger-125"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                            
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -300,10 +347,68 @@
         </div>
         
         
-        
     </div>
     
-    
+    <script type="text/html" id="case-report-template">
+        <div data-bind="visible: is_loading">
+            <div class="loading">Loading Report...</div>
+        </div>
+        <div data-bind="visible: !is_loading()">
+            
+            <!--ko if: !any_enrollments()-->
+            <h4>No Enrollments Recorded</h4>
+            <!--/ko-->
+            <!--ko if: any_enrollments-->
+            <h4 data-bind="text: company_name"></h4>
+            <h5>Enrollment Period: <span data-bind="text: format_enrollment_dates"></span></h5>
+            <h5>Methods Used: <span data-bind="text: format_enrollment_methods"></span></h5>
+            
+            <table class="table table-bordered center">
+                <thead><tr><th>Total Processed</th><th>Total Taken</th><th>Total Annual Premium</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <span data-bind="text: format_total_percent_processed"></span> 
+                            (<span data-bind="text: format_total_num_processed"></span>)
+                        </td>
+                        <td>
+                            <span data-bind="text: format_total_percent_taken"></span> 
+                            (<span data-bind="text: format_total_num_taken"></span>)
+                        </td>
+                        <td>
+                            <span data-bind="text: format_total_annualized_premium"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Taken</th>
+                        <th>Total Annual Premium</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!--ko foreach: product_data-->
+                    <tr>
+                        <td data-bind="text: name"></td>
+                        <td><span data-bind="text: num_taken"></span>  (<span data-bind="text: percent_taken"></span>%)</td>
+                        <td>$<span data-bind="text: annualized_premium"></span></td>
+                    </tr>
+                    <!--/ko-->
+                </tbody>
+            </table>
+            <!--/ko-->
+            
+            <!--ko if: case_agents-->
+            <div>
+                <strong>Case Agents:</strong> <span data-bind="text: format_case_agents"></span>
+            </div>
+            <!--/ko-->
+        </div>
+    </script>
     
 {% endblock %}
 
@@ -669,8 +774,15 @@
         var CaseSettingsPanel = function(case_data, product_choices) {
             var self = this;
             
-            self.reports = new CaseReportsViewModel(case_data);
-            
+            self.report_data = ko.observable(null);
+            self.report_viewmodel = ko.observable(null);
+            self.report_viewmodel.subscribe(function(val) {
+                if (val) {
+                    // try to load reports and enrollments
+                    val.load_reports();
+                    val.load_enrollments();
+                }
+            });
             self.company_name = ko.observable(case_data.company_name || "").extend({ rateLimit: 1000 });
             self.product_choices = product_choices;
             self.products = ko.observableArray($.map(case_data.products, function(p) {return p.id}));
@@ -1025,30 +1137,140 @@
                 
                 this.get("#reports", function() {
                     reports_tab.tab('show');
-                    self.reports.load_reports();
-                });
-                
-                this.get('', function () { 
-                    this.app.runRoute('get', '#setup');
+                    if (self.report_viewmodel()) {
+                        self.report_viewmodel().load_reports();
+                        self.report_viewmodel().load_enrollments();
+                    }
                 });
             }).run();
             
         };
         
-        
-        var CaseReportsViewModel = function() {
+        var CaseReportsViewModel = function(params) {
             var self = this;
             
+            self.is_loading = ko.observable(true);
+            
+            self.company_name = ko.observable({});
+            
+            self.any_enrollments = ko.observable(false);
+            
+            self.summary_data = ko.observable({});
+            self.product_data = ko.observable([]);
+            self.enrollment_dates = ko.observable({});
+            self.enrollment_methods = ko.observableArray([]);
+            self.case_agents = ko.observableArray([]);
+            
             self.load_reports = function() {
+                self.is_loading(true);
                 var url = "{{ url_for("cases.enrollment_report", case_id=case.id) }}";
-                $.get(url).success(function(data) {
-                    console.log(data);
+                $.get(url).success(function(resp) {
+                    
+                    // Pull out the report data
+                    self.company_name(resp.data.company_name);
+                    self.enrollment_dates(resp.data.enrollment_period);
+                    self.enrollment_methods(resp.data.enrollment_methods);
+                    self.summary_data(resp.data.summary);
+                    self.any_enrollments(self.summary_data().processed_enrollments > 0);
+                    
+                    // Reformat the product data to fit the display better
+                    var pdata = [];
+                    $.each(resp.data.product_report, function() {
+                        var data = this;
+                        pdata.push({
+                            name: data.product_name,
+                            num_taken: data.enrolled_count,
+                            percent_taken: data.enrolled_count / resp.data.summary.total_census * 100,
+                            annualized_premium: data.total_annualized_premium
+                        });
+                    });
+                    
+                    self.product_data(pdata);
+                    
+                    // Case agents
+                    if (resp.data.case_owner) {
+                        self.case_agents.push(resp.data.case_owner.first + " "+resp.data.case_owner.last);
+                    }
+                    _.each(resp.data.case_agents, function(agent) {
+                        self.case_agents.push(agent.first + " "+agent.last);
+                    });
+                    
+                    self.is_loading(false);
                 }).error(function(e) {
                     console.error(e); 
+                    self.is_loading(false);
                 });
-            }
+            };
             
+            self.load_enrollments = function() {
+                case_management.refresh_enrollments_table({{ case.id }}, "{{ url_for("cases.enrollment_records", case_id=case.id) }}", 
+                    "#enrollment-records-table", "#enrollment-table-loading", {},
+                    function(table) {}
+                );
+            };
+            
+            
+            self.format_enrollment_methods = ko.computed(function() {
+                
+                var display_map = {
+                    in_person: 'In Person',
+                    self_enroll_email: 'Self-Enroll by Email'
+                };
+                
+                return _.map(self.enrollment_methods(), function(m) {return display_map[m]}).join(",");
+            });
+            
+            self.format_enrollment_dates = ko.computed(function() {
+                var start = self.enrollment_dates().start;
+                var end = self.enrollment_dates().end;
+                if (moment(end).isValid()) {
+                    return moment(start).format("MM/DD/YYYY") + " - " + moment(end).format("MM/DD/YYYY");
+                } else {
+                    return "Open enrollment starting " + moment(start).format("MM/DD/YYYY");
+                }
+            });
+            
+            self.is_census_report = ko.computed(function() {
+                return self.summary_data().is_census_report;
+            });
+            
+            self.format_total_percent_processed = ko.computed(function() {
+                var percent = self.summary_data().processed_enrollments / self.summary_data().total_census * 100;
+                return percent + "%";
+            });
+            
+            self.format_total_num_processed = ko.computed(function() {
+                return self.summary_data().processed_enrollments;
+            });
+            
+            self.format_total_percent_taken = ko.computed(function() {
+                var percent = self.summary_data().taken_enrollments / self.summary_data().total_census * 100;
+                return percent + "%";
+            });
+            
+            self.format_total_num_taken = ko.computed(function() {
+                 return self.summary_data().taken_enrollments;
+            });
+            
+            self.format_total_annualized_premium = ko.computed(function() {
+                 return '$'+self.summary_data().total_annualized_premium;
+            });
+            
+            self.format_case_agents = ko.computed(function() {
+                 return self.case_agents().join(", "); 
+            });
+            
+            params.settings_viewmodel.report_viewmodel(self);
         };
+        
+        ko.components.register('case-report', {
+            viewModel: {
+                createViewModel: function(params, componentInfo) {
+                    return new CaseReportsViewModel(params);
+                }
+            },
+            template: { element: 'case-report-template' }
+        });
         
         // Initialize settings viewmodel
         window.case_settings = new CaseSettingsPanel({{ case |tojson|safe }}, {{ product_choices |tojson|safe }});
@@ -1067,7 +1289,10 @@
             selectedListLabel: 'Case Visible to Agents:'
         });
         
-        
+        // If we don't have a loctation hash, go to #setup
+        if (window.location.hash == "") {
+            window.location.hash = "setup";
+        }
         
         
     });

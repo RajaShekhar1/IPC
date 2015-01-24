@@ -1995,7 +1995,9 @@ function init_validation() {
         enrollCity:  window.ui.enrollCity(),
         enrollState:  window.ui.enrollState,
         product_type: window.ui.insurance_product.product_type,
-            
+        
+        method: (ui.is_in_person_application()) ? 'in_person': 'self_enroll_email',
+        
         identityToken: window.ui.identityToken(),
         identityType: window.ui.identityType(),
             

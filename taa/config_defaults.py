@@ -32,6 +32,7 @@ EMAIL_FROM_ADDRESS = "enrollment@5StarEnroll.com"
 
 # Database
 SQLALCHEMY_DATABASE_URI = "postgresql://taa:fQj9lJTFbOQUBYo@localhost/taa"
+SQLALCHEMY_ECHO = True
 
 # File uploads
 UPLOAD_FOLDER = "taa/uploads"

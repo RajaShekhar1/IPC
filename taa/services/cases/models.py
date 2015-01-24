@@ -121,6 +121,13 @@ class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
     def currently_active(self):
         return not self.start_date or datetime.now() > self.start_date
 
+    def get_start_date(self):
+        return self.start_date
+    
+    def get_end_date(self):
+        return None
+
+
 class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
     PERIOD_TYPE = u'annual_period'
     __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
@@ -137,14 +144,22 @@ class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
 
     def currently_active(self):
         # Need to set the year for the start and end dates to current year
-        current_year = datetime.now().year
+        
         if not self.start_date or not self.end_date:
             return False
         
-        start_date = datetime(current_year, self.start_date.month, self.start_date.day)
-        end_date = datetime(current_year, self.end_date.month, self.end_date.day)
-        return (datetime.now() >= start_date and datetime.now() < end_date)
+        return (datetime.now() >= self.get_start_date() and datetime.now() < self.get_end_date())
+    
+    def get_start_date(self):
+        current_year = datetime.now().year
+        return datetime(self._current_year(), self.start_date.month, self.start_date.day) if self.start_date else None
 
+    def get_end_date(self):
+        return datetime(self._current_year(), self.end_date.month, self.end_date.day) if self.end_date else None
+    
+    def _current_year(self):
+        return datetime.now().year
+    
 class CensusRecordSerializer(JsonSerializable):
     __json_hidden__ = ['census_records', 'case']
     __json_modifiers__ = {

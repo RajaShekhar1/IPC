@@ -15,7 +15,6 @@ from taa.services.agents.models import Agent
 from models import Case, CaseCensus, CaseEnrollmentPeriod, \
     CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod
 
-
 class CaseService(DBService):
     
     __model__ = Case
@@ -25,7 +24,6 @@ class CaseService(DBService):
         
         self.census_records = CensusRecordService()
         self.enrollment_periods = CaseEnrollmentPeriodsService()
-
     
     def _preprocess_params(self, kwargs):
         kwargs = super(CaseService, self)._preprocess_params(kwargs)
@@ -68,7 +66,11 @@ class CaseService(DBService):
             results = [case for case in results if self.is_enrolling(case)]
             
         return results
-        
+    
+    def get_products_for_case(self, case):
+        # Return the sorted list of products for this case
+        return sorted(case.products, cmp=lambda x, y: cmp(x.name, y.name))
+    
     def update_products(self, case, products):
         
         case.products = products
@@ -81,9 +83,26 @@ class CaseService(DBService):
         
         return case.active and any(
             period.currently_active()
-            for period in case.enrollment_periods
+            for period in self.get_enrollment_periods(case)
         )
     
+    def get_most_recent_enrollment_period(self, case):
+        
+        periods = self.get_enrollment_periods(case) 
+        if not periods:
+            return None
+        
+        if self.is_enrolling(case):
+            # Return the active period
+            return filter(lambda p: p.currently_active(), periods)[0]
+        
+        # Sort by start date descending and return the first one
+        past_periods = filter(lambda p: p.get_start_date() < datetime.now(), periods)
+        if not past_periods:
+            return None
+        past_periods.sort(cmp=lambda x, y: -cmp(x.get_start_date(), y.get_start_date()))
+        return past_periods[0]
+        
     def agent_can_view_case(self, agent, case):
         
         return (
@@ -100,6 +119,12 @@ class CaseService(DBService):
         
         case.partner_agents = agents
         db.session.commit()
+    
+    def get_case_owner(self, case):
+        return case.owner_agent if case.owner_agent else None
+    
+    def get_case_partner_agents(self, case):
+        return [a for a in case.partner_agents if a != case.owner_agent]
     
     # Enrollment Periods
     
@@ -135,6 +160,7 @@ class CaseService(DBService):
 
         return added
         
+        
     # Census records
 
     def get_census_records(self, case, offset=None, num_records=None,
@@ -145,12 +171,19 @@ class CaseService(DBService):
         
         query = self.census_records.find(case_id=case.id)
         
-        
         # Filter enrollment status. Also load in any enrollment data eagerly.
-        if not include_enrolled:
+        if include_enrolled == False:
+            # Since we need to filter on enrollment status, pull in the enrollment applications if it exists. 
             query = query.outerjoin('enrollment_applications'
                         ).filter(EnrollmentApplication.application_status == EnrollmentApplication.APPLICATION_STATUS_DECLINED)
-            query = query.options(db.contains_eager('enrollment_applications'))
+            query = query.options(db.contains_eager('enrollment_applications').subqueryload('coverages').joinedload('product'))
+        else:
+            # Eager load enrollment applications, coverages, and associated products
+            query = query.options(
+                db.joinedload('enrollment_applications'
+                    ).subqueryload('coverages'
+                    ).joinedload('product')
+            )
         
         if sorting:
             sort_col = getattr(CaseCensus, sorting)
@@ -353,25 +386,34 @@ class CensusRecordService(DBService):
             elected_coverage=enrollment_status == "Enrolled",
         )
     
+    def get_full_record_dict(self, census_record):
+        return {field.csv_column_name: getattr(census_record, field.database_name) for field in CensusRecordParser.all_possible_fields}
+    
     def export_csv(self, file, census_records):
         writer = csv.writer(file)
         
         # Write the header row
-        writer.writerow( [field.csv_column_name
-               for field in CensusRecordParser.all_possible_fields
-        ])
+        writer.writerow(self.get_csv_headers())
         
         # Write all the data
         for record in census_records:
-            row = [getattr(record, field.database_name)
-                   for field in CensusRecordParser.all_possible_fields
-            ]
-            writer.writerow(row)
-            
-        # Todo: include data about enrollment options?    
+            writer.writerow(self.get_csv_row_from_db_row(record))
         
         return writer
     
+    def get_csv_headers(self):
+        return [field.csv_column_name
+                for field in CensusRecordParser.all_possible_fields
+        ]
+    
+    def get_csv_row_from_db_row(self, census_record):
+        return [getattr(census_record, field.database_name)
+         for field in CensusRecordParser.all_possible_fields
+        ]
+    
+    def get_csv_row_from_dict(self, census_record):
+        return [census_record[field.csv_column_name] for field in CensusRecordParser.all_possible_fields]
+
     def format_ssn(self, ssn):
         if not len(ssn) == 9:
             return ssn

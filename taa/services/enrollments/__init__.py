@@ -1,5 +1,11 @@
+import csv
+import time
 import datetime
 import json
+from collections import defaultdict
+from decimal import Decimal
+import dateutil.parser
+import StringIO
 
 from taa.core import DBService
 from taa.core import db
@@ -18,6 +24,7 @@ class EnrollmentApplicationService(DBService):
         super(EnrollmentApplicationService, self).__init__(*args, **kwargs)
 
         self.coverages_service = EnrollmentApplicationCoverageService()
+        self.report_service = EnrollmentReportService()
 
     def save_enrollment_data(self, data, census_record):
         
@@ -52,8 +59,9 @@ class EnrollmentApplicationService(DBService):
             
             application_status=status,
             
-            # TODO: mode, method
-
+            method=data['method'],
+            mode=EnrollmentApplication.MODE_WEEKLY,
+            
             # Signing info
             signature_time = datetime.datetime.now(),
             signature_city = data['enrollCity'],
@@ -106,11 +114,224 @@ class EnrollmentApplicationService(DBService):
         if data['child_coverages'] and data['child_coverages'][0]:
             ch_coverage = self.coverages_service.create_coverage(enrollment, product,
                                                 data, data['children'][0], data['child_coverages'][0],
-                                                EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
+                                                EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
 
         db.session.commit()
-        
+
+
+    # Reports
+    def get_enrollment_report(self, case):
+        return self.report_service.get_enrollment_report(case)
     
+    
+    def get_enrollment_records(self, case):
+        """
+        Combine all the census data with enrollment data (exclude census records without enrollments)
+            For multiple enrollments, combine the coverages
+            If a coverage overlaps another, use the latest one.
+        """
+        
+        census_records = CaseService().get_census_records(case)
+        
+        data = []
+        for census_record in census_records:
+            # Export only records with enrollments
+            if not census_record.enrollment_applications:
+                continue
+
+            export_record = dict()
+            
+            self.add_census_data(export_record, census_record)
+            self.add_enrollment_data(export_record, census_record)
+            
+            data.append(export_record)
+            
+        return data
+    
+    def add_census_data(self, export_record, census_record):
+
+        census_row = census_record.to_json()
+        export_record.update(census_row)
+    
+    
+    def add_enrollment_data(self, export_record, census_record):
+        
+        # Get the most recent enrollment for the generic data
+        enrollment = max(census_record.enrollment_applications, key=lambda e: e.signature_time)
+        
+        # Export data from enrollment
+        col_names = [c.field_name for c in enrollment_columns]
+        for col in col_names:
+            export_record[col] = getattr(enrollment, col)
+        
+        # Add Coverage data
+        coverages = []
+        for e in census_record.enrollment_applications:
+            coverages += e.coverages
+
+        employee_coverage = self.find_most_recent_coverage_by_product_for_applicant_type(
+            coverages,
+            EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE
+        )
+        spouse_coverage = self.find_most_recent_coverage_by_product_for_applicant_type(
+            coverages,
+            EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE
+        )
+        children_coverage = self.find_most_recent_coverage_by_product_for_applicant_type(
+            coverages,
+            EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD
+        )
+
+        # Include total annualized premium also
+        total_annual_premium = Decimal('0.00')
+        
+        # Export coverages for at most six products
+        product_list = case_service.get_products_for_case(enrollment.case)
+        for x in range(6):
+            if x < len(product_list):
+                product = product_list[x]
+            else:
+                product = None
+                
+            prefix = 'product_{0}'.format(x + 1)
+            product_data = {'{}_name'.format(prefix): product.name if product else ''}
+            for applicant_abbr, applicant_coverages in [('emp', employee_coverage), ('sp', spouse_coverage), ('ch', children_coverage)]:
+                coverage = applicant_coverages[product].coverage_face_value if applicant_coverages.get(product) else ''
+                premium = applicant_coverages[product].get_annualized_premium() if applicant_coverages.get(product) else ''
+                product_data.update({
+                        '{}_{}_coverage'.format(prefix, applicant_abbr): coverage,
+                        '{}_{}_annual_premium'.format(prefix, applicant_abbr): premium,
+                    })
+            
+                if premium and premium > Decimal('0.00'):
+                    total_annual_premium += premium
+            
+            export_record.update(product_data)
+            
+        export_record['total_annual_premium'] = total_annual_premium
+            
+    def find_most_recent_coverage_by_product_for_applicant_type(self, coverages, applicant_type):
+
+        applicant_coverages = filter_applicant_coverages(coverages, applicant_type)
+        coverages_by_product = group_coverages_by_product(applicant_coverages)
+        
+        # Pull out the most recent for each product
+        return {
+            p: select_most_recent_coverage(coverages) 
+            for p, coverages in coverages_by_product.iteritems()
+        }
+        
+    def export_enrollment_data(self, data):
+        stream = StringIO.StringIO()
+        writer = csv.writer(stream)
+
+        # Write the header row
+        writer.writerow(self.get_csv_headers())
+
+        # Write all the data
+        for record in data:
+            writer.writerow(self.get_csv_row(record))
+
+        return stream.getvalue()
+        
+    def get_csv_headers(self):
+        # Census columns, then enrollment columns
+        headers = [] 
+        headers += CaseService().census_records.get_csv_headers() 
+        headers += [c.column_title for c in enrollment_columns]
+        headers += [c.column_title for c in coverage_columns]
+        return headers
+        
+    def get_csv_row(self, record):
+        
+        row = []
+        
+        # Add census record export
+        row += CaseService().census_records.get_csv_row_from_dict(record)
+        
+        # Add enrollment record export
+        row += [record[c.field_name] for c in enrollment_columns]
+        
+        # Add coverage records
+        row += [record[c.field_name] for c in coverage_columns]
+        
+        return row
+    
+        
+def export_string(self, val):
+    return val.strip()
+
+
+def export_date(self, val):
+    if not val:
+        return ''
+    return dateutil.parser.parse(val).strftime("%F")
+
+def export_ssn(self, val):
+    if not val:
+        return ''
+    elif len(val) == 9:
+        return val[:4]+'-'+val[4:6]+'-'+val[6:]
+        
+    return val
+
+class EnrollmentColumn(object):
+    def __init__(self, field_name, column_title, export_func):
+        self.field_name = field_name
+        self.column_title = column_title
+        self.export_func = export_func
+
+enrollment_columns = [
+    EnrollmentColumn('signature_city', 'Signature City', export_string),
+    EnrollmentColumn('signature_state', 'Signature State', export_string),
+    EnrollmentColumn('signature_time', 'Signature Date', export_date),
+
+    EnrollmentColumn('identity_token', 'Identity Token', export_string),
+    EnrollmentColumn('identity_token_type', 'Token Type', export_string),
+    EnrollmentColumn('application_status', 'Status', export_string),
+    EnrollmentColumn('mode', 'Payment Mode', export_string),
+    EnrollmentColumn('method', 'Enrollment Method', export_string),
+
+    EnrollmentColumn('is_employee_owner', 'Is Employee Owner', export_string),
+    EnrollmentColumn('employee_other_owner_name', 'Other Owner Name', export_string),
+    EnrollmentColumn('employee_other_owner_ssn', 'Other Owner SSN', export_ssn),
+    EnrollmentColumn('spouse_other_owner_name', 'Spouse Other Owner', export_string),
+    EnrollmentColumn('spouse_other_owner_ssn', 'Spouse Other Owner SSN', export_ssn),
+
+    EnrollmentColumn('is_employee_beneficiary_spouse', 'Is Employee Beneficiary Spouse', export_string),
+    EnrollmentColumn('employee_beneficiary_name', 'Employee Beneficiary Name', export_string),
+    EnrollmentColumn('employee_beneficiary_relationship', 'Employee Beneficiary Relationship', export_string),
+    EnrollmentColumn('employee_beneficiary_birthdate', 'Employee Beneficiary Birthdate', export_date),
+    EnrollmentColumn('employee_beneficiary_ssn', 'Employee Beneficiary SSN', export_ssn),
+
+    EnrollmentColumn('is_spouse_beneficiary_employee', 'Is Spouse Beneficiary Employee', export_string),
+    EnrollmentColumn('spouse_beneficiary_name', 'Spouse Beneficiary Name', export_string),
+    EnrollmentColumn('spouse_beneficiary_relationship', 'Spouse Beneficiary Relationship', export_string),
+    EnrollmentColumn('spouse_beneficiary_birthdate', 'Spouse Beneficiary Birthdate', export_date),
+    EnrollmentColumn('spouse_beneficiary_ssn', 'Spouse Beneficiary SSN', export_ssn),
+    
+]
+
+# Include columns for the coverage/premium information for up to six products 
+coverage_columns = []
+for product_num in range(1, 6+1):
+    product_coverage_cols = [
+        EnrollmentColumn('product_{}_name'.format(product_num), 
+                         'Product {} Name'.format(product_num),
+                         export_string)
+    ]
+    for dependent_abbr, dependent_title in [('emp', 'Employee'), ('sp', 'Spouse'), ('ch', 'Child')]:
+        product_coverage_cols += [
+            EnrollmentColumn('product_{}_{}_coverage'.format(product_num, dependent_abbr),
+                             'Product {} {} Coverage'.format(product_num, dependent_abbr),
+                             export_string),
+            EnrollmentColumn('product_{}_{}_annual_premium'.format(product_num, dependent_abbr),
+                             'Product {} {} Annual Premium'.format(product_num, dependent_abbr),
+                             export_string),
+        ]
+    coverage_columns += product_coverage_cols
+
+
 class EnrollmentApplicationCoverageService(DBService):
     
     __model__ = EnrollmentApplicationCoverage
@@ -125,6 +346,7 @@ class EnrollmentApplicationCoverageService(DBService):
                 soh_questions.append({'question':health_question['question_text'], 'answer': val['answer']})
             
         return self.create(**dict(
+            coverage_status=EnrollmentApplicationCoverage.COVERAGE_STATUS_ENROLLED,
             enrollment_application_id=enrollment.id,
             product_id=product.id,
             applicant_type=applicant_type,
@@ -141,3 +363,237 @@ class EnrollmentApplicationCoverageService(DBService):
                 health_questions=soh_questions
             ))
         ))
+    
+    
+def merge_enrollments(census_record):
+    
+    all_coverages = []
+    for enrollment in census_record.enrollment_applications:
+        all_coverages += enrollment.coverages
+    
+    if census_record.enrollment_applications:
+        most_recent_enrollment = max(census_record.enrollment_applications, key=lambda e: e.signature_time)
+    else:
+        most_recent_enrollment = None
+        
+    return {
+        'enrollment': most_recent_enrollment,
+        'coverages': merge_enrollment_application_coverages(all_coverages),
+    }
+    
+class EnrollmentReportService(object):
+    def get_enrollment_report(self, case):
+        
+        report_data = {}
+
+        census_records = CaseService().get_census_records(case)
+        
+        enrollment_applications = [merge_enrollments(census_record) for census_record in census_records]
+        
+        report_data['company_name'] = case.company_name
+        
+        # Enrollment methods used
+        report_data['enrollment_methods'] = self._find_enrollment_methods(enrollment_applications)
+        
+        # Enrollment period (most recent)
+        if case:
+            report_data['enrollment_period'] = self._get_enrollment_period_dates(case)
+        else:
+            report_data['enrollment_period'] = None
+
+        stats = self.get_product_statistics(enrollment_applications)
+        
+        report_data['summary'] = self.build_report_summary(stats, case, enrollment_applications)
+        
+        # Product data
+        report_data['product_report'] = self.build_report_by_product(stats)
+        
+        # Agents on case
+        report_data['case_owner'] = case_service.get_case_owner(case)
+        report_data['case_agents'] = case_service.get_case_partner_agents(case)
+        
+        return report_data
+    
+    def _find_enrollment_methods(self, case_enrollments):
+        return list({e['enrollment'].method for e in case_enrollments 
+                     if e['enrollment'] and self._is_enrollment_finished(e['enrollment'])})
+        
+    def _is_enrollment_finished(self, e):
+        return e.application_status in [
+            EnrollmentApplication.APPLICATION_STATUS_ENROLLED or 
+            EnrollmentApplication.APPLICATION_STATUS_DECLINED
+        ]
+    
+    def _get_enrollment_period_dates(self, case):
+        most_recent = case_service.get_most_recent_enrollment_period(case)
+        if not most_recent:
+            start = None,
+            end = None
+        else:
+            start = most_recent.get_start_date()
+            end = most_recent.get_end_date()
+        
+        return dict(start=start, end=end)
+        
+        
+    def build_report_summary(self, stats, case, merged_enrollment_applications):
+        """
+        Summary data
+          - % (#) processed (Enrolled + Declined) (for uploaded census only)
+          - % (#) taken (status=Enrolled (not Declined or blank)) (for uploaded census only)
+          - total annualized premium
+        """
+        
+        if self._is_uploaded_census(merged_enrollment_applications):
+            return dict(
+                processed_enrollments=self.get_num_processed_enrollments(merged_enrollment_applications),
+                taken_enrollments=self.get_num_taken_enrollments(merged_enrollment_applications),
+                total_census=self.get_num_census_records(merged_enrollment_applications),
+                total_annualized_premium=self.get_total_annualized_premium(merged_enrollment_applications),
+                is_census_report=True,
+            )
+        else:
+            return dict(
+                total_annualized_premium = self.get_total_annualized_premium(merged_enrollment_applications),
+                is_census_report=False,
+            )
+        
+    def _is_uploaded_census(self, merged_enrollment_applications):
+        "If any census record is uploaded, we consider the whole thing a census-enrolled case (Zach's guess)"
+        return any(map(lambda e: e['enrollment'].census_record.is_uploaded_census if e['enrollment'] else False, 
+                       merged_enrollment_applications))
+    
+    def get_num_processed_enrollments(self, merged_enrollment_applications):
+        return sum(1 for enrollment in merged_enrollment_applications
+            if enrollment['enrollment'] and enrollment['enrollment'].did_process())
+        
+    def get_num_taken_enrollments(self, merged_enrollment_applications):
+        return sum(1 for e in merged_enrollment_applications
+                     if e['enrollment'] and e['enrollment'].did_enroll())
+    
+    def get_total_annualized_premium(self, merged_enrollment_applications):
+        
+        total = Decimal('0.00')
+        for e in merged_enrollment_applications:
+            all_coverages = []
+            for product, coverages in e['coverages'].iteritems():
+                all_coverages += coverages
+            
+            total += sum(map(lambda c: c.get_annualized_premium(), all_coverages))
+        
+        return total
+        
+    
+    def get_num_census_records(self, records):
+        return sum(1 for e in records)
+    
+    def build_report_by_product(self, stats):
+        """
+        For each product,
+        product name, (%) of census, $ of annual premium
+        Example:
+        
+        product: count (% of census), total annual premium
+        FPP-TI: 128 (27%), $32,577
+        Critical Illness: 47 (10%), $22,913
+        """
+        
+        product_report_data = {}
+        for product in stats.get_products_used():
+            product_report_data[product.id] = dict(
+                product_name=product.name,
+                enrolled_count=stats.get_taken_count_for_product(product),
+                total_annualized_premium=stats.get_annual_premium_for_product(product),
+            )
+        return product_report_data
+    
+    def get_product_statistics(self, merged_enrollment_applications):
+        stats = ProductStatsAccumulator()
+        for enrollment_application in merged_enrollment_applications:
+            stats.add_coverages_for_enrollment_application(enrollment_application)
+        
+        return stats
+
+
+
+def merge_enrollment_application_coverages(all_coverages):
+    """
+    Each time the application is filled out, one or more coverages are added for this enrollment_application record.
+    
+    We want, for each applicant type (emp, spouse, children), the most recent coverage by product. 
+    
+    So, if an employee signs up twice for the same product, we want only the latest coverage.
+    """
+    
+    merged_coverages_by_product = defaultdict(list)
+    for applicant_type in [
+            EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE, 
+            EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE,
+            EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD]:
+        
+        applicant_coverages = filter_applicant_coverages(all_coverages, applicant_type)
+        coverages_by_product = group_coverages_by_product(applicant_coverages)
+        most_recent_coverage_by_product = {
+            p: select_most_recent_coverage(coverages)
+            for p, coverages in coverages_by_product.iteritems()
+        }
+        for product, coverage in most_recent_coverage_by_product.iteritems():
+            merged_coverages_by_product[product].append(coverage)
+    
+    return merged_coverages_by_product
+
+def select_most_recent_coverage(coverages):
+    if not coverages:
+        return None
+
+    # Return most recently signed coverage out of the groups of coverages
+    return max(coverages, key=lambda c: c.enrollment.signature_time)
+
+def filter_applicant_coverages(coverages, applicant_type):
+    return filter(lambda c: c.applicant_type == applicant_type, coverages)
+
+def group_coverages_by_product(coverages):
+    '''Groups coverages by their product type. 
+        Returns a dictionary with products as keys and a list of coverages as values
+        '''
+
+    product_coverages = defaultdict(list)
+    for coverage in coverages:
+        product_coverages[coverage.product].append(coverage)
+
+    return product_coverages
+
+class ProductStatsAccumulator(object):
+    """
+    Gathers the stats needed for the coverages on an application for display on reports
+    """
+    def __init__(self):
+        self._product_premiums = defaultdict(Decimal)
+        self._product_counts = defaultdict(int)
+    
+    def add_coverages_for_enrollment_application(self, merged_enrollment_application):
+        
+        # Count taken products
+        for product in merged_enrollment_application['coverages']:
+            self._product_counts[product] += 1
+        
+        # Count annualized premiums by product
+        for product, coverages in merged_enrollment_application['coverages'].iteritems():
+            self._product_premiums[product] += sum(coverage.get_annualized_premium() for coverage in coverages)
+        
+        
+    def get_products_used(self):
+        return self._product_counts.keys()
+    
+    def get_taken_count_for_product(self, product):
+        if product not in self._product_counts:
+            return None
+        
+        return self._product_counts[product]
+    
+    def get_annual_premium_for_product(self, product):
+        if product not in self._product_premiums:
+            return None
+        
+        return self._product_premiums[product]
+        

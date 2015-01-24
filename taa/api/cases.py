@@ -143,7 +143,46 @@ def update_case_enrollment_periods(case_id):
         return case_service.update_enrollment_periods(case, periods)
     
     raise TAAFormError(errors)
+
+
+# Enrollment Reports
+@route(bp, "/<case_id>/enrollment_report", methods=['GET'])
+@groups_required(api_groups, all=False)
+def enrollment_report(case_id):
+    from taa.services.enrollments import EnrollmentApplicationService
+    return EnrollmentApplicationService().get_enrollment_report(case_service.get_if_allowed(case_id))
+
+@route(bp, "/<case_id>/enrollment_records", methods=['GET'])
+@groups_required(api_groups, all=False)
+def enrollment_records(case_id):
+    '''
+    Combines the census and enrollment records for export.
     
+    format=json|csv
+    columns=display|all
+    '''
+
+    if request.args.get('columns') == "display":
+        display_columns = [
+            'employee_first',
+            'employee_last',
+            
+        ]
+    
+    from taa.services.enrollments import EnrollmentApplicationService
+    enrollment_service = EnrollmentApplicationService()
+    data = enrollment_service.get_enrollment_records(case_service.get_if_allowed(case_id))
+    
+    if request.args.get('format') == "csv":
+        body = enrollment_service.export_enrollment_data(data)
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        headers = {
+            "Content-Type": "text/csv",
+            "Content-Disposition": "attachment; filename=enrollment_export_{0}.csv".format(date_str)
+        }
+        return make_response(body, 200, headers)
+
+    return data 
 
 # Census Records
 
