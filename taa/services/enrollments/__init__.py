@@ -50,16 +50,23 @@ class EnrollmentApplicationService(DBService):
             case_id = None
             census_record_id = None
 
-        # TODO: Decline 
-        status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED,
-            
+        # Handle decline coverage case
+        if data['did_decline']:
+            return self.create(**dict(
+                case_id=case_id,
+                census_record_id=census_record_id,
+                application_status=EnrollmentApplication.APPLICATION_STATUS_DECLINED,
+                method=data['method'],
+            ))
+        
         enrollment_data = dict(
             case_id = case_id,
             census_record_id = census_record_id,
             
-            application_status=status,
+            application_status=EnrollmentApplication.APPLICATION_STATUS_ENROLLED,
             
             method=data['method'],
+            # TODO: Payment Mode
             mode=EnrollmentApplication.MODE_WEEKLY,
             
             # Signing info
@@ -98,6 +105,8 @@ class EnrollmentApplicationService(DBService):
         return ssn.replace('-', '').strip() if ssn else ''
     
     def _save_coverages(self, enrollment, data):
+        if data['did_decline']:
+            return
         
         product_data = data['product_data']
         product = product_service.get(product_data['id'])

@@ -179,6 +179,7 @@
                                 <thead>
                                     <tr>
                                         <th></th>
+                                        <th>Status</th>
                                         <th>First</th>
                                         <th>Last</th>
                                         <th>Birthdate</th>
@@ -408,32 +409,46 @@
                         });
                         
                         if (app_status !== "") {
-                            var classname = "";
-                            if (app_status == "Enrolled") {
-                                var span = "<span class='enroll-status ace-icon glyphicon glyphicon-ok'> </span><span class='enroll-status'>" + app_status + "</span>";
-                            } else {
-                                var span = "<span class='ace-icon glyphicon glyphicon-remove'></span> <span class='enroll-status declined'>" + app_status + "</span>";
-                                classname = '';
-                            }
-                            
-                            return span + ' <button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'"><span class="ace-icon glyphicon glyphicon-refresh"> Re-enroll</button>';
+                            return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'"><span class="ace-icon glyphicon glyphicon-refresh"> Re-enroll</button>';
                         }
                         
                         return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'">Enroll</button>';
                     }},
-                    {"aTargets":[1], "mData":"employee_first"},
-                    {"aTargets":[2], "mData":"employee_last"},
-                    {"aTargets":[3], "mData": function(source) {
+                    {"aTargets":[1], "mData":function(source) {
+                        var app_status = "";
+                        _.each(source.enrollment_applications, function(app) {
+                            if (app.application_status == "enrolled") {
+                                app_status = "Enrolled";
+                            } else {
+                                app_status = "Declined";
+                            }
+                        });
+                        if (app_status === "") {
+                            return "Not Enrolled";
+                        } else {
+                            if (app_status == "Enrolled") {
+                                return "<span class='enroll-status ace-icon glyphicon glyphicon-ok'> </span><span class='enroll-status'>" + app_status + "</span>";
+                            } else {
+                                return "<span class='ace-icon glyphicon glyphicon-remove'></span> <span class='enroll-status declined'>" + app_status + "</span>";
+                                
+                            }
+                        }
+                    }},
+                    {"aTargets":[2], "mData":"employee_first"},
+                    {"aTargets":[3], "mData":"employee_last"},
+                    {"aTargets":[4], "mData": function(source) {
                         var d = moment(source.employee_birthdate, "YYYY-MM-DD");
                         return d.format("MM/DD/YYYY");
                     }},
-                    {"aTargets":[4], "mData":"employee_email"}
+                    {"aTargets":[5], "mData":"employee_email"}
                 ],
-                "aaSorting": [[ 2, "asc" ]]
+                "aaSorting": [[ 3, "asc" ]]
             }, function() {
                     $(".employee-select-panel").show();
                     
-                    init_alphabet_search($("#census-records-table").dataTable());
+                    var table = $("#census-records-table").dataTable();
+                    init_status_filter(table);
+                    init_alphabet_search(table);
             });
         }
     
@@ -469,6 +484,7 @@
             "aaSorting": [[ 2, "asc" ]]
         });
         
+        init_status_filter(table);
         init_alphabet_search(table);
         
     }
@@ -497,6 +513,28 @@
             _alphabet_search_letter = $(this).data('letter');
             table.fnDraw();
         });
+    }
+
+    // Checkbox filter
+    var _should_show_enrolled = true;
+    $.fn.dataTableExt.afnFiltering.push(
+        function(oSettings, aData, iDataIndex ) {
+            if (_should_show_enrolled) {
+                return true;
+            }
+            
+            return (aData[1] === "Not Enrolled");
+        }
+    );
+    
+    function init_status_filter(table) {
+        var ctn = $('<div class="status-filter">');
+        ctn.html("<label><input type='checkbox' class='' checked='checked'> Show Enrolled</label>");
+        ctn.on('change', 'input', function() {
+            _should_show_enrolled = $(this).prop("checked");
+            table.fnDraw();        
+        });
+        ctn.insertBefore(table);
     }
 
 

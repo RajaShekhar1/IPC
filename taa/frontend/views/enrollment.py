@@ -174,28 +174,44 @@ def submit_wizard_data():
     
     # Save enrollment information and updated census data prior to DocuSign hand-off 
     if session.get('enrolling_census_record_id'):
-        print("session.get('enrolling_census_record_id'): %s"%session.get('enrolling_census_record_id'))
         census_record = case_service.get_census_record(None, session['enrolling_census_record_id'])
         print("here")
     else:
         census_record = None
         
-    enrollment_service.save_enrollment_data(wizard_results, census_record)
+    enrollment_application = enrollment_service.save_enrollment_data(wizard_results, census_record)
     
-    # Hand off wizard_results to docusign
-    #
-    #is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results);
-    #
-    # Return the redirect url or error
-    #resp = {'error': is_error, 'error_message': error_message, "redirect": redirect}
-    resp = {
-        'error': False, 
-        'error_message': '', 
-        'redirect': url_for("ds_landing_page", 
-                            event="signing_complete", 
-                            name=wizard_results['employee']['first'], 
-                            type='inperson')
-    }
+    if enrollment_application.did_enroll():
+        pass
+        # Hand off wizard_results to docusign
+        #
+        #is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results);
+        #
+        # Return the redirect url or error
+        #resp = {'error': is_error, 'error_message': error_message, "redirect": redirect}
+
+        resp = {
+            'error': False,
+            'error_message': '',
+            'redirect': url_for("ds_landing_page",
+                                event="signing_complete",
+                                name=wizard_results['employee']['first'],
+                                type='inperson'
+            )
+        }
+    else:
+        # Declined
+        resp = {
+            'error': False,
+            'error_message': '',
+            'redirect': url_for("ds_landing_page",
+                                event="decline",
+                                name=wizard_results['employee']['first'],
+                                type='inperson'
+            )
+        }
+    
+    
     
     return jsonify(**resp)
     
