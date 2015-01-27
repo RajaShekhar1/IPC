@@ -1136,6 +1136,11 @@
                 return self.is_data_dirty();  
             });
             
+            self.exit_print_mode = function() {
+                if (self.report_viewmodel()) {
+                    self.report_viewmodel().exit_print_preview();
+                }
+            };
             
             // Tabs
             var setup_tab = $('#case-nav-tabs a[href="#setup"]');
@@ -1143,6 +1148,8 @@
             
             self.sammy_app = Sammy(function() {
                 this.get("#setup", function() {
+                    self.exit_print_mode();
+                    
                     setup_tab.tab('show');
                     
                     // Load census data when page loads
@@ -1156,6 +1163,8 @@
                 });  
                 
                 this.get("#reports", function() {
+                    self.exit_print_mode();
+                    
                     reports_tab.tab('show');
                     if (self.report_viewmodel()) {
                         self.report_viewmodel().load_reports();

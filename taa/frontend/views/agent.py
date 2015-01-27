@@ -5,7 +5,7 @@ import os
 import json
 
 from flask import render_template, redirect, url_for, flash, send_file
-from flask_stormpath import login_required, groups_required
+from flask_stormpath import login_required, groups_required, current_user
 
 from taa import app
 from taa.helpers import JSONEncoder
@@ -118,6 +118,7 @@ def edit_census_record(case_id, census_record_id):
         census_record=census_record,
         form=record_form,
         child_form_fields=child_form_fields,
+        is_admin=agent_service.can_manage_all_cases(current_user),
     )
     return render_template('agent/census_record.html', **vars)
 

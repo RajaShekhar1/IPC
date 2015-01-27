@@ -84,25 +84,26 @@
             </ul>
         {% endif %}
         <table>
-        <tr>
-        <td valign="center">
-        {% if link_logo|default(True) %}
-        <a  href="/"><img src={{ logopath }}/></a>
-        {% else %}
-        <img src="/static/img/5Star_logo_TAA.png"/>
-        {% endif %}
-        </td>
-        <td valign="center">
-        <h3 class="text-muted">{{ header_title|default('Enrollment') }}
-          {% if 'headername' in session.keys() %}
-          <br>
-          <span class="blue smaller-60 lighter">
-        {{session['headername']}}
-          </span>
-        {% endif %}
-        </h3>
-        </td>
-        </tr>
+            <tr>
+                <td>
+                    {% if link_logo|default(True) %}
+                        <a href="/"><img src="{{ logopath }}" alt="5Star TAA"></a>
+                    {% else %}
+                        <img src="/static/img/5Star_logo_TAA.png">
+                    {% endif %}
+                </td>
+                <td>
+                    <h3 class="text-muted">
+                        {{ header_title |default('') }}
+                        {% if 'headername' in session.keys() %}
+                            <br>
+                            <span class="blue smaller-60 lighter">
+                                {{session['headername']}}
+                            </span>
+                        {% endif %}
+                    </h3>
+                </td>
+            </tr>
         </table>
     </div>    
 {% endblock %}

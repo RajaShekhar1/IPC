@@ -36,3 +36,4 @@ SQLALCHEMY_ECHO = True
 
 # File uploads
 UPLOAD_FOLDER = "taa/uploads"
+MAX_CONTENT_LENGTH = 16777216

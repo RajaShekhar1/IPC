@@ -236,4 +236,19 @@ input[type=radio].ace+.lbl::before {
     width: 30%;
 }
 
-
+@media print {
+    body {
+        color: #000;
+        background: #fff;
+    }
+    nav, .header ul {
+        display: none;
+    }
+    
+    body, .container {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+   }
+    a:link:after, a:visited:after { content: ""; }
+}

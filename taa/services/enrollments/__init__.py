@@ -39,6 +39,14 @@ class EnrollmentApplicationService(DBService):
         
         return enrollment
         
+    def delete_enrollment_data(self, census_record):
+        for enrollment_application in census_record.enrollment_applications:
+
+            for coverage in enrollment_application.coverages:
+                self.coverages_service.delete(coverage)
+
+            self.delete(enrollment_application)
+        
         
     def _create_enrollment(self, census_record, data):
         
@@ -125,8 +133,8 @@ class EnrollmentApplicationService(DBService):
                                                 data, data['children'][0], data['child_coverages'][0],
                                                 EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
 
-        db.session.commit()
-
+        db.session.flush()
+    
 
     # Reports
     def get_enrollment_report(self, case):

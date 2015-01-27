@@ -12,7 +12,7 @@ from werkzeug.wrappers import Response
 
 from ..core import TAAError, TAAFormError
 from ..helpers import JSONEncoder
-
+from taa.models import db
 
 # def create_app(settings_override=None, register_security_blueprint=False):
 #     """Returns the API application instance"""
@@ -66,9 +66,14 @@ def route(bp, *args, **kwargs):
             else:
                 data = ret_val
                 sc = 200
-
+            
             # Serialize the response object into json data
-            return jsonify(dict(data=data)), sc
+            resp_data = jsonify(dict(data=data))
+            
+            # Commit all changes from the session
+            db.session.commit()
+            
+            return resp_data, sc
         
         return f
     
@@ -76,6 +81,7 @@ def route(bp, *args, **kwargs):
 
 
 def on_api_error(e):
+    db.session.rollback()
     return jsonify(dict(error=e.msg)), 400
 
 

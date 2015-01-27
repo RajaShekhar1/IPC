@@ -55,7 +55,7 @@ class DBService(object):
         """
         self._isinstance(model)
         db.session.add(model)
-        db.session.commit()
+        db.session.flush()
         return model
 
     def all(self):
@@ -123,12 +123,17 @@ class DBService(object):
         :param model: the model to update
         :param **kwargs: update parameters
         """
+        model = self.update_without_save(model, **kwargs)
+        self.save(model)
+        return model
+    
+    def update_without_save(self, model, **kwargs):
         self._isinstance(model)
         for k, v in self._preprocess_params(kwargs).items():
             setattr(model, k, v)
-        self.save(model)
+        
         return model
-
+    
     def delete(self, model):
         """Immediately deletes the specified model instance.
 
@@ -136,7 +141,7 @@ class DBService(object):
         """
         self._isinstance(model)
         db.session.delete(model)
-        db.session.commit()
+        db.session.flush()
 
     def query(self):
         return self.__model__.query

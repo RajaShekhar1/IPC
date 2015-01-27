@@ -76,10 +76,23 @@
             window.location.href = ("{{ url_for("manage_case", case_id=case.id) }}")
         });
         
+        {# Hide the delete button if we are not admin and this has enrollments #}
+        {% if census_record.enrollment_applications and not is_admin %}
+            $("button.delete").hide();
+        {% endif %}
+    
         $("button.delete").on("click", function() {
-            if (!confirm("Please confirm you want to delete this census record")) {
-                return;
-            }
+            {% if census_record.enrollment_applications  %}
+                if (!confirm("WARNING: This census record has enrollments. Deleting the record will remove all enrollment data associated. Do you still want to delete this census record?")) {
+                    return;
+                }
+            {% else %}    
+                if (!confirm("Please confirm you want to delete this census record")) {
+                    return;
+                }
+            {% endif %}
+        
+            
             send_form_data("DELETE", "{{ url_for('cases.delete_census_record', case_id=case.id, census_record_id=census_record.id) }}", 
                 {}, function() {
                 window.location = "{{ url_for('manage_case', case_id=case.id) }}";

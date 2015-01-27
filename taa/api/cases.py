@@ -1,4 +1,5 @@
 from datetime import datetime
+import StringIO
 
 from flask import Blueprint, request, abort, make_response, jsonify, redirect, url_for
 from flask_stormpath import current_user, groups_required
@@ -229,16 +230,22 @@ def post_census_records(case_id):
         )
     
     # Process the CSV Data
+    
+    # Read data into a buffer
+    file_data = StringIO.StringIO()
+    file_obj.save(file_data)
+    
     if data['upload_type'] == "merge-skip":
-        errors, records = case_service.merge_census_data(case, file_obj.stream, replace_matching=False)
+        errors, records = case_service.merge_census_data(case, file_data, replace_matching=False)
     elif data['upload_type'] == "merge-replace":
-        errors, records = case_service.merge_census_data(case, file_obj.stream, replace_matching=True)
+        errors, records = case_service.merge_census_data(case, file_data, replace_matching=True)
     else:
-        errors, records = case_service.replace_census_data(case, file_obj.stream)
+        errors, records = case_service.replace_census_data(case, file_data)
     
     # Return at most 20 errors at a time
     # returns all added or changed records
     status = 400 if errors else 200
+    
     return dict(errors=errors[:20], records=records), status
     
 def has_csv_extension(filename):

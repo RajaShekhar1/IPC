@@ -115,10 +115,10 @@ class CaseService(DBService):
 
         sql = case_partner_agents.delete(case_partner_agents.c.case_id == case.id)
         db.session.execute(sql)
-        db.session.commit()
+        db.session.flush()
         
         case.partner_agents = agents
-        db.session.commit()
+        db.session.flush()
     
     def get_case_owner(self, case):
         return case.owner_agent if case.owner_agent else None
@@ -156,7 +156,7 @@ class CaseService(DBService):
         # Add the new enrollment period
         added = self.enrollment_periods.add_for_case(case, periods)
         
-        db.session.commit()
+        db.session.flush()
 
         return added
         
@@ -276,11 +276,11 @@ class CaseService(DBService):
         record =  self.census_records.add_record(case,  **dict(employee_ssn=ssn, employee_birthdate=birthdate, 
                                                      is_uploaded_census=False))
         
-        db.session.commit()
+        db.session.flush()
         return record
     
-    def merge_census_data(self, case, records, replace_matching):
-        return self.census_records.merge_census_data(case, records, replace_matching)
+    def merge_census_data(self, case, file_data, replace_matching):
+        return self.census_records.merge_census_data(case, file_data, replace_matching)
         
     def replace_census_data(self, case, records):
         return self.census_records.replace_census_data(case, records)
@@ -292,6 +292,19 @@ class CaseService(DBService):
         return self.census_records.update_from_enrollment(record, data)
     
     def delete_census_record(self, record):
+        
+        if record.enrollment_applications:
+            # Can only delete an enrolled record if we have permission
+            from taa.services.agents import AgentService
+    
+            agent_service = AgentService()
+            if not agent_service.can_manage_all_cases(current_user):
+                abort(401, "The current user does not have permission to delete an enrolled census record.")
+
+            from taa.services.enrollments import EnrollmentApplicationService, EnrollmentApplicationCoverageService
+            enrollment_service = EnrollmentApplicationService()
+            enrollment_service.delete_enrollment_data(record)
+            
         return self.census_records.delete(record)
     
     def delete_case(self, case):
@@ -382,6 +395,20 @@ class CaseEnrollmentPeriodsService(DBService):
 class CensusRecordService(DBService):
     __model__ = CaseCensus
 
+    def _preprocess_params(self, kwargs):
+        "Convert the date columns to plain dates, not datetimes, so we don't get spurious UPDATES when merging records"
+        from sqlalchemy.inspection import inspect
+        inspector = inspect(CaseCensus)
+        for c in inspector.columns:
+            if (type(c.type) == db.Date and 
+                    c.name in kwargs and
+                    isinstance(kwargs[c.name], datetime)):
+                
+                kwargs[c.name] = kwargs[c.name].date()
+        
+        return kwargs
+
+
     def get_record_dict(self, census_record):
         """
         Returns a dictionary suitable for displaying by the UI
@@ -440,7 +467,7 @@ class CensusRecordService(DBService):
 
         return "{}-{}-{}".format(ssn[:3], ssn[3:5], ssn[5:])
         
-    def merge_census_data(self, case, file_stream, replace_matching):
+    def merge_census_data(self, case, file_data, replace_matching):
         """
         Updates existing records and adds new. Matches based on SSN, and depending on
          :replace_matching, will do replace matches or skip over them.
@@ -452,7 +479,7 @@ class CensusRecordService(DBService):
         
         # Parse the uploaded file and validate it. If we are in add-only mode, pass in the existing SSN dict.
         parser = CensusRecordParser()
-        parser.process_file(file_stream, 
+        parser.process_file(file_data, 
                             error_if_matching=(existing_by_ssn if not replace_matching else None))
         
         # Do the merge
@@ -462,8 +489,8 @@ class CensusRecordService(DBService):
             if record['EMP_SSN'] in existing_by_ssn:
                 if replace_matching:
                     # Update Existing
-                    self.update(existing_by_ssn[record['EMP_SSN']], **parser.get_db_dict(record))
-                    updated.append(existing_by_ssn[record['EMP_SSN']])
+                    updated_record = self.update_without_save(existing_by_ssn[record['EMP_SSN']], **parser.get_db_dict(record))
+                    updated.append(updated_record)
                 else:
                     # We are in "Add-only" mode, an error will have been added already for this record
                     continue
@@ -473,7 +500,7 @@ class CensusRecordService(DBService):
         
         # Only commit the changes if we had no errors
         if not parser.errors:
-            db.session.commit()
+            db.session.flush()
         
         valid_records = added + updated
         return parser.errors, valid_records
@@ -493,7 +520,7 @@ class CensusRecordService(DBService):
         
         # Add all uploaded records    
         valid_records = [self.add_record_from_upload(case, **parser.get_db_dict(record)) for record in parser.get_valid_data()]
-        db.session.commit()
+        db.session.flush()
         
         return parser.errors, valid_records
         
@@ -882,10 +909,13 @@ class CensusRecordParser(object):
         self.used_ssns = set()
         self.line_number = 0
         
-    def _process_file_stream(self, file_stream):
+    def _process_file_stream(self, file_data):
         # To get universal newlines (ie, cross-platform) we use splitlines()
-        bytes = file_stream.getvalue()
-        reader = csv.DictReader(bytes.splitlines(), restkey="extra")
+        bytes = file_data.getvalue()
+        lines = bytes.splitlines()
+        lines = self._preprocess_header_row(lines)
+        
+        reader = csv.DictReader(lines, restkey="extra")
         
         try:
             headers = reader.fieldnames
@@ -908,8 +938,26 @@ representative for assistance.""",
         
         return headers, records
     
-    def process_file(self, file_stream, error_if_matching=None):
-        headers, records = self._process_file_stream(file_stream)
+    def _preprocess_header_row(self, lines):
+        """ 
+        To get case-insensitive parsing behaviour, we uppercase every column in the first line
+         before passing it off to the DictReader
+        """
+        header = []
+        header_reader = csv.reader([lines[0]])
+        for row in header_reader:
+            header = [col.upper() for col in row]
+        
+        io = StringIO.StringIO()
+        header_writer = csv.writer(io)
+        header_writer.writerow(header)
+        
+        lines[0] = io.getvalue()
+        
+        return lines
+    
+    def process_file(self, file_data, error_if_matching=None):
+        headers, records = self._process_file_stream(file_data)
         self.validate_header_row(headers, records)
         
         # Don't do any more processing if missing important headers
