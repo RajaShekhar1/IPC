@@ -149,21 +149,26 @@ class EnrollmentApplicationService(DBService):
                 continue
 
             export_record = dict()
-            
-            self.add_census_data(export_record, census_record)
-            self.add_enrollment_data(export_record, census_record)
+            export_record.update(self.get_census_data(census_record))
+            export_record.update(self.get_enrollment_data(census_record))
             
             data.append(export_record)
             
         return data
     
-    def add_census_data(self, export_record, census_record):
+    def get_enrollment_status(self, census_record):
+        # Get the flattened enrollment record
+        enrollment_data = self.get_enrollment_data(census_record)
+        return enrollment_data['application_status'] if enrollment_data else None
+        
+    def get_census_data(self, census_record):
+        return census_record.to_json()
+    
+    def get_enrollment_data(self, census_record):
+        enrollment_data = {}
 
-        census_row = census_record.to_json()
-        export_record.update(census_row)
-    
-    
-    def add_enrollment_data(self, export_record, census_record):
+        if not census_record.enrollment_applications:
+            return None
         
         # Get the most recent enrollment for the generic data
         enrollment = max(census_record.enrollment_applications, key=lambda e: e.signature_time)
@@ -171,7 +176,7 @@ class EnrollmentApplicationService(DBService):
         # Export data from enrollment
         col_names = [c.field_name for c in enrollment_columns]
         for col in col_names:
-            export_record[col] = getattr(enrollment, col)
+            enrollment_data[col] = getattr(enrollment, col)
         
         # Add Coverage data
         coverages = []
@@ -215,9 +220,11 @@ class EnrollmentApplicationService(DBService):
                 if premium and premium > Decimal('0.00'):
                     total_annual_premium += premium
             
-            export_record.update(product_data)
+            enrollment_data.update(product_data)
             
-        export_record['total_annual_premium'] = total_annual_premium
+        enrollment_data['total_annual_premium'] = total_annual_premium
+            
+        return enrollment_data
             
     def find_most_recent_coverage_by_product_for_applicant_type(self, coverages, applicant_type):
 
@@ -443,8 +450,7 @@ class EnrollmentReportService(object):
             end = most_recent.get_end_date()
         
         return dict(start=start, end=end)
-        
-        
+    
     def build_report_summary(self, stats, case, merged_enrollment_applications):
         """
         Summary data
@@ -463,6 +469,8 @@ class EnrollmentReportService(object):
             )
         else:
             return dict(
+                processed_enrollments=self.get_num_processed_enrollments(merged_enrollment_applications),
+                total_census=self.get_num_census_records(merged_enrollment_applications),
                 total_annualized_premium = self.get_total_annualized_premium(merged_enrollment_applications),
                 is_census_report=False,
             )

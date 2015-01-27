@@ -165,7 +165,8 @@ class CaseService(DBService):
 
     def get_census_records(self, case, offset=None, num_records=None,
                            search_text=None, text_columns=None, 
-                           sorting=None, sort_desc=False, include_enrolled=True):
+                           sorting=None, sort_desc=False, include_enrolled=True,
+                           filter_ssn=None, filter_birthdate=None):
     
         from taa.services.enrollments.models import EnrollmentApplication
         
@@ -184,6 +185,13 @@ class CaseService(DBService):
                     ).subqueryload('coverages'
                     ).joinedload('product')
             )
+        
+        if filter_ssn:
+            query = query.filter(CaseCensus.employee_ssn == filter_ssn.replace('-', ''))
+            
+        if filter_birthdate:
+            bd = dateutil.parser.parse(filter_birthdate)
+            query = query.filter(CaseCensus.employee_birthdate == bd)
         
         if sorting:
             sort_col = getattr(CaseCensus, sorting)
@@ -258,6 +266,19 @@ class CaseService(DBService):
         
         return False
     
+    def create_ad_hoc_census_record(self, case, **data):
+        if 'ssn' not in data or 'birthdate' not in data:
+            abort(400, "SSN and Birthdate are required to create an ad-hoc census record")
+    
+        ssn = data['ssn'].replace('-', '')
+        birthdate = dateutil.parser.parse(data['birthdate'])
+        
+        record =  self.census_records.add_record(case,  **dict(employee_ssn=ssn, employee_birthdate=birthdate, 
+                                                     is_uploaded_census=False))
+        
+        db.session.commit()
+        return record
+    
     def merge_census_data(self, case, records, replace_matching):
         return self.census_records.merge_census_data(case, records, replace_matching)
         
@@ -272,16 +293,15 @@ class CaseService(DBService):
     
     def delete_census_record(self, record):
         return self.census_records.delete(record)
-
-
+    
     def delete_case(self, case):
-
+    
         # remove all census records and enrollment_periods first
         self.census_records.remove_all_for_case(case)
         self.enrollment_periods.remove_all_for_case(case)
         
         return self.delete(case)
-        
+    
     
 class CaseEnrollmentPeriodsService(DBService):
     __model__ = CaseEnrollmentPeriod
@@ -449,7 +469,7 @@ class CensusRecordService(DBService):
                     continue
             else:
                 # Add new census record
-                added.append(self.add_record(case, **parser.get_db_dict(record)))
+                added.append(self.add_record_from_upload(case, **parser.get_db_dict(record)))
         
         # Only commit the changes if we had no errors
         if not parser.errors:
@@ -472,16 +492,23 @@ class CensusRecordService(DBService):
         self.remove_all_for_case(case)
         
         # Add all uploaded records    
-        valid_records = [self.add_record(case, **parser.get_db_dict(record)) for record in parser.get_valid_data()]
+        valid_records = [self.add_record_from_upload(case, **parser.get_db_dict(record)) for record in parser.get_valid_data()]
         db.session.commit()
         
         return parser.errors, valid_records
+        
+    def add_record_from_upload(self, case, **data):
+        data['is_uploaded_census'] = True
+        return self.add_record(case, **data)
         
     def add_record(self, case, **data):
         """ 
         Create and add to the DB session, but don't commit or flush the session for speed
         """
         data['case_id'] = case.id
+        if 'is_uploaded_census' not in data:
+            data['is_uploaded_census'] = False
+        
         record = self.new(**data)
         db.session.add(record)
         return record

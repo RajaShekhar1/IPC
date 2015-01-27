@@ -1210,14 +1210,14 @@ function InsuredApplicant(options) {
 }
 
 function age_for_date(date) {
-    var bd = moment(date, "MM/DD/YYYY");
+    var bd = parse_date(date, "MM/DD/YYYY");
     if (bd.isValid()) {
-        if (bd.isAfter(moment())) {
+        if (bd.isAfter(now())) {
             // Avoid returning -0 for future dates less than one
             return -1;
         } else {
             // Valid age
-            return moment().diff(bd, "years");
+            return now().diff(bd, "years");
         }
     } else {
         // Invalid age

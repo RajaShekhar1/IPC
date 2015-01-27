@@ -189,7 +189,13 @@ def enrollment_records(case_id):
 @route(bp, "/<case_id>/census_records", methods=["GET"])
 @groups_required(api_groups, all=False)
 def census_records(case_id):
-    data = case_service.get_census_records(case_service.get_if_allowed(case_id))
+    
+    # Extract search parameters
+    args = {}
+    args['filter_ssn'] = request.args.get('filter_ssn')
+    args['filter_birthdate'] = request.args.get('filter_birthdate')
+    
+    data = case_service.get_census_records(case_service.get_if_allowed(case_id), **args)
     
     if request.args.get('format') == "csv":
         body = case_service.export_census_records(data)
@@ -209,7 +215,11 @@ def post_census_records(case_id):
     case = case_service.get_if_allowed(case_id)
     data = get_posted_data()
     
-    file_obj = request.files['csv-file']
+    file_obj = request.files.get('csv-file')
+    if not file_obj:
+        # Attempt to process an ad-hoc post. Currently only SSN and Birthdate required
+        return case_service.create_ad_hoc_census_record(case, ssn=data['ssn'], birthdate=data['birthdate'])
+    
     if not (file_obj and has_csv_extension(file_obj.filename)):
         return dict(
             errors=[dict(

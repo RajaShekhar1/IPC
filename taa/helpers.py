@@ -51,6 +51,7 @@ class JsonSerializable(object):
     __json_public__ = None
     __json_hidden__ = None
     __json_modifiers__ = None
+    __json_add__ = None
     
     def get_field_names(self):
         # Iterate through SQLAlchemy properties
@@ -63,13 +64,17 @@ class JsonSerializable(object):
         public = self.__json_public__ or field_names
         hidden = self.__json_hidden__ or []
         modifiers = self.__json_modifiers__ or dict()
-
+        added = self.__json_add__ or dict()
+        
         rv = dict()
         for key in public:
             rv[key] = getattr(self, key)
         for key, modifier in modifiers.items():
             value = getattr(self, key)
             rv[key] = modifier(value, self)
+        for key, modifier in added.items():
+            rv[key] = modifier(self)
+            
         for key in hidden:
             rv.pop(key, None)
         return rv

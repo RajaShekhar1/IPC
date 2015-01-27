@@ -193,11 +193,11 @@
                     </div>
                 </div>
             </div>
-            <div class="text-center">
-                <button type="button" class="not-in-list-btn btn btn-warning">Enroll employee ad-hoc (not in census)</button>
-            </div>
+            
         </div>
-        
+        <div class="not-in-census-section text-center" style="display: none;">
+            <button type="button" class="not-in-list-btn btn btn-warning">Enroll employee ad-hoc (not in census)</button>
+        </div>
         
     </div>
 </div>
@@ -256,7 +256,7 @@
       </div>
       <div class="col-xs-12 col-sm-6">
 	<p class="center"><button type="button" class="btn btn-lg btn-success" id="email-enrollment-btn">
-	    <i class="icon icon-envelope align-top bigger-110"></i>Enroll via email</a></p>
+	    <i class="icon icon-envelope align-top bigger-110"></i>Enroll via email</button></p>
       </div>
     </div>
    {% else %}
@@ -277,6 +277,122 @@
 
 {% endblock %}
 
+
+{% block modals %}
+    {{ super() }}
+    
+    {# Confirm that an employee is not in the census using SSN and birthdate. #}
+    <div id="add-to-census-modal" class="modal fade" data-bind="with: add_to_census_modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span
+                        aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title">Add To Census</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-panel modal-panel" data-bind="if: add_form_showing">
+                        <form data-bind="submit: find_matches">
+                            <div class="row">
+                                <div class="col-xs-12 ">
+                                    <div class="form-group">
+                                        <label for="add-census-ssn-input">
+                                            Employee SSN: 
+                                        </label>
+                                        <input type="text" id="add-census-ssn-input" name="ssn" data-bind="value: ssn, maskedInput: '999-99-9999'">
+                                        <div data-bind="text: ssn.error" class="error"></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="add-census-birthdate-input">
+                                            Employee Birthdate: 
+                                        </label>
+                                        <input type="date" id="add-census-birthdate-input" name="ssn" data-bind="value: birthdate">
+                                        <div data-bind="text: birthdate.error" class="error"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="loading-panel modal-panel" data-bind="if: is_loading">
+                        <div class="text-center">
+                            <h4 data-bind="text: loading_message"></h4>
+                            <i class="icon-spinner icon-spin grey bigger-200"></i>  
+                        </div>
+                    </div>
+                    
+                    <div class="no-matches-panel modal-panel" data-bind="if: no_matches_found">
+                        <h3 class="header lighter green">No employees with that SSN and Birthdate were found.</h3>
+                        <p>Click 'Add To Census' to add this employee to the census</p>
+                    </div>
+                    <div class="one-match-panel modal-panel" data-bind="if: one_match_found">
+                        <h3 class="header lighter green">We found a matching employee record:</h3>
+                        <strong>
+                            <span data-bind="text: matched_employee().first"></span> 
+                            <span data-bind="text: matched_employee().last"></span>, 
+                            Birthdate: <span data-bind="text: matched_employee().formatted_birthdate()"></span>
+                            
+                        </strong>
+                        <h3>Is this you?</h3>
+                    </div>
+                    <div class="error-panel modal-panel" data-bind="if: multiple_matches_found">
+                        <h3 class="header lighter">
+                            Matched Employees:
+                        </h3>
+                        
+                        <div class="row">
+                            <div class="col-md-12" style="width: 100%; overflow: auto;">
+                                <table class="table table-bordered table-responsive upload-error-table">
+                                    <thead>
+                                        <tr>
+                                            <th>First</th>
+                                            <th>Last</th>
+                                            <th>SSN</th>
+                                            <th>Birthdate</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-bind="foreach: {data: matched_employees, as: 'employee'}">
+                                        <tr>
+                                            <td><input type="radio" name="selected_match" data-bind="checked: $parent.selected_employee, checkedValue: employee.id"></td>
+                                            <td data-bind="text: employee.first"></td>
+                                            <td data-bind="text: employee.last"></td>
+                                            <td data-bind="text: employee.formatted_birthdate()"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="error" data-bind="matched_employees.error"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="success-buttons buttons-panel" data-bind="">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" 
+                                data-bind="click: find_matches, visible: current_panel() == PANEL_FORM">Next</button>
+                        <button type="button" class="btn btn-success" 
+                                data-bind="click: add_to_census, visible: no_matches_found">Add to census</button>
+                        
+                        <button type="button" class="btn btn-success" 
+                                data-bind="click: enroll_from_match, visible: one_match_found">Yes, enroll me</button>
+                        <button type="button" class="btn btn-warning" 
+                                data-bind="click: add_to_census, visible: one_match_found">No, add me</button>
+                    
+                        <button type="button" class="btn btn-success" 
+                                data-bind="click: enroll_from_match, visible: multiple_matches_found">Enroll selected record</button>
+                        <button type="button" class="btn btn-warning" 
+                                data-bind="click: add_to_census, visible: multiple_matches_found">No, add to Census</button>
+                    </div>
+                    
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+{% endblock %}
+
 <!-- basic scripts -->
 
 {% block js_footer %}
@@ -285,16 +401,12 @@
 <!-- page-specific footer scripts -->
 
 <script src="{{ url_for('static', filename='js/jquery.mobile.custom.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/typeahead-bs2.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/knockout-3.1.0.debug.js') }}"></script>
       
 <!-- page specific plugin scripts -->
 
 <script src="{{ url_for('static', filename='js/jquery.validate.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/additional-methods.min.js') }}"></script>
-{% if compliance_has_approved_remote_enrollment %}
 <script src="{{ url_for('static', filename='js/bootbox.min.js') }}"></script>
-{% endif %}
 <script src="{{ url_for('static', filename='js/jquery.maskedinput.min.js') }}"></script>
 
 
@@ -303,9 +415,12 @@
         
         var EnrollmentSetupPage = function() {
             var self = this;
-            self.current_company_name = ko.observable("{{ company_name }}")
+            self.current_company_name = ko.observable("{{ company_name }}");
+            self.selected_case = ko.observable(null);
+            
+            self.add_to_census_modal = new AddToCensusViewModel(self.selected_case);
         };
-        window.ui = new EnrollmentSetupPage();
+        window.ui = new EnrollmentSetupPage({{ active_case.id }});
         ko.applyBindings(window.ui, $("body").get(0));
     
         // Change enabled states when the product is changed
@@ -313,7 +428,7 @@
         
         $("#cases_table").dataTable({
             "aoColumnDefs":[
-                {"bSortable": false, "aTargets":[0]},
+                {"bSortable": false, "aTargets":[0]}
             ],
             "aaSorting": [[ 1, "asc" ]]
         });
@@ -327,22 +442,25 @@
         });
     
         $(".select-case-panel").on('click', "button.enroll-case", function() {
+            
             var case_id = $(this).attr("data-id");
+            ui.selected_case(case_id);
             ui.current_company_name($(this).attr("data-name"));
             load_census_table(case_id, "/cases/"+case_id+"/census_records");
         });
         
         
         $(".not-in-list-btn").on('click', function() {
-            $('.launch-panel').hide();
-            $('.select-case-panel').hide();
-            $('.enroll-from-case-panel').hide();
-            $('.ad-hoc-form').show();
+            
+            $("#add-to-census-modal").modal("show");
+            window.ui.add_to_census_modal.show_modal();
         });
         
         $('button.enroll-ad-hoc').on('click', function() {
+            
             $('.launch-panel').hide();
             $('.select-case-panel').hide();
+            $('.enroll-from-case-panel').hide();
             $('.ad-hoc-form').show();
             
         });
@@ -398,57 +516,34 @@
                 "aoColumnDefs":[
                     // Show enroll button in first column
                     {"aTargets":[0], "bSortable": false, "mData":function(source) {
-                        
-                        var app_status = "";
-                        _.each(source.enrollment_applications, function(app) {
-                            if (app.application_status == "enrolled") {
-                                app_status = "Enrolled";
-                            } else {
-                                app_status = "Declined";
-                            }
-                        });
-                        
-                        if (app_status !== "") {
+                        if (source.enrollment_status !== null) {
                             return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'"><span class="ace-icon glyphicon glyphicon-refresh"> Re-enroll</button>';
                         }
                         
                         return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'">Enroll</button>';
                     }},
                     {"aTargets":[1], "mData":function(source) {
-                        var app_status = "";
-                        _.each(source.enrollment_applications, function(app) {
-                            if (app.application_status == "enrolled") {
-                                app_status = "Enrolled";
-                            } else {
-                                app_status = "Declined";
-                            }
-                        });
-                        if (app_status === "") {
-                            return "Not Enrolled";
-                        } else {
-                            if (app_status == "Enrolled") {
-                                return "<span class='enroll-status ace-icon glyphicon glyphicon-ok'> </span><span class='enroll-status'>" + app_status + "</span>";
-                            } else {
-                                return "<span class='ace-icon glyphicon glyphicon-remove'></span> <span class='enroll-status declined'>" + app_status + "</span>";
-                                
-                            }
-                        }
+                        return format_enrollment_status_html(source.enrollment_status);
                     }},
                     {"aTargets":[2], "mData":"employee_first"},
                     {"aTargets":[3], "mData":"employee_last"},
                     {"aTargets":[4], "mData": function(source) {
-                        var d = moment(source.employee_birthdate, "YYYY-MM-DD");
-                        return d.format("MM/DD/YYYY");
+                        return normalize_date(source.employee_birthdate);
                     }},
                     {"aTargets":[5], "mData":"employee_email"}
                 ],
                 "aaSorting": [[ 3, "asc" ]]
             }, function() {
+                    // Called when first initialized
                     $(".employee-select-panel").show();
+                    $(".not-in-census-section").show();
                     
                     var table = $("#census-records-table").dataTable();
                     init_status_filter(table);
                     init_alphabet_search(table);
+            }, function() {
+                    // Called if no data
+                    $(".not-in-census-section").show();
             });
         }
     
@@ -536,6 +631,175 @@
         });
         ctn.insertBefore(table);
     }
+
+    var EmployeeMatchViewModel = function(data) {
+        var self = this;
+        self.id = data.id;
+        self.first = data.employee_first || "(No First Name)";
+        self.last = data.employee_last || "(No Last Name)";
+        self.ssn = data.employee_ssn;
+        self.birthdate = data.employee_birthdate;
+        
+        self.formatted_birthdate = function() {
+            return moment(self.birthdate, "YYYY-MM-DD").format("MM/DD/YYYY");
+        };
+        
+        self.is_selected = ko.observable(false);
+    };
+    
+    var AddToCensusViewModel = function(selected_case_observable) {
+        var self = this;
+        
+        self.selected_case = selected_case_observable;
+        
+        self.case_id = ko.observable(null);
+        
+        self.matched_employees = ko.observableArray([]);
+        self.matched_employees.error = ko.observable("");
+        self.selected_employee = ko.observable(null);
+        
+        self.matched_employee = ko.computed(function() {
+            if (self.matched_employees().length == 0) {
+                return null;
+            }
+            return self.matched_employees()[0];
+        });
+        
+        self.loading_message = ko.observable("Loading...");
+        
+        self.ssn = ko.observable(null);
+        self.ssn.error = ko.observable("");
+        self.birthdate = ko.observable(null);
+        self.birthdate.error = ko.observable("");
+        
+        // Panel state
+        self.PANEL_FORM = "find_employee";
+        self.PANEL_LOADING = "loading";
+        self.PANEL_NOMATCH = "no_matches";
+        self.PANEL_ONEMATCH = "one_match";
+        self.PANEL_MANYMATCHES = "matches";
+        self.current_panel = ko.observable(self.PANEL_FORM);
+        
+        self.show_modal = function(case_id) {
+            // Initialize the modal
+            self.case_id(case_id);
+            self.current_panel(self.PANEL_FORM);
+            self.ssn("");
+            self.ssn.error("");
+            self.birthdate("");
+            self.birthdate.error("");
+            self.selected_employee(null);
+            
+        };
+        
+        self.is_match_form_showing = ko.computed(function() {
+            return (self.current_panel() == self.PANEL_NOMATCH || 
+                    self.current_panel() == self.PANEL_MANYMATCHES || 
+                    self.current_panel() == self.PANEL_ONEMATCH);
+        });
+        self.add_form_showing = ko.computed(function() {
+            return self.current_panel() == self.PANEL_FORM; 
+        });
+        self.is_loading = ko.computed(function() {
+            return self.current_panel() == self.PANEL_LOADING; 
+        });
+        self.no_matches_found = ko.computed(function() {
+            return self.current_panel() == self.PANEL_NOMATCH; 
+        });
+        self.multiple_matches_found = ko.computed(function() {
+            return self.current_panel() == self.PANEL_MANYMATCHES; 
+        });
+        self.one_match_found = ko.computed(function() {
+             return self.current_panel() == self.PANEL_ONEMATCH; 
+        });
+        self.one_or_more_matches_found = ko.computed(function() {
+            return self.multiple_matches_found() || self.one_match_found(); 
+        });
+        
+        self.find_matches = function() {
+            // Clear errors
+            self.ssn.error("");
+            self.birthdate.error("");
+            
+            if (!self.is_valid_ssn()) {
+                self.ssn.error("A valid SSN is required");
+                return;
+            }
+            if (!self.is_valid_birthdate()) {
+                self.birthdate.error("A valid birthdate is required");
+                return;
+            }
+            
+            // Submit search
+            self.loading_message("Checking census for matches...");
+            self.current_panel(self.PANEL_LOADING);
+            $.get("/cases/" + self.selected_case() + "/census_records", 
+                {filter_ssn: self.ssn(), filter_birthdate: self.birthdate()}
+            ).success(function(resp) {
+                if (resp.data.length > 0) {
+                    // Load matches
+                    self.matched_employees(_.map(resp.data, function(e) {return new EmployeeMatchViewModel(e)}));
+                    
+                    // Display match panel
+                    if (resp.data.length == 1) {
+                        self.current_panel(self.PANEL_ONEMATCH);
+                    } else {
+                        self.current_panel(self.PANEL_MANYMATCHES);
+                    }
+                } else {
+                    // No matches
+                    self.matched_employees([]);
+                    self.current_panel(self.PANEL_NOMATCH);
+                }
+            }).error(function(resp) {
+                console.error(resp);        
+            });
+            
+        };
+        
+        self.is_valid_ssn = function() {
+            var ssn_regex = /^\d\d\d-\d\d-\d\d\d\d$/;
+            return ssn_regex.test(self.ssn());  
+        };
+        
+        self.is_valid_birthdate = function() {
+            return is_valid_date(self.birthdate()) && parse_date(self.birthdate()).isBefore(now());  
+        };
+        
+        self.add_to_census = function() {
+            self.loading_message("Adding employee to census...");
+            self.current_panel(self.PANEL_LOADING);
+            ajax_post("/cases/"+self.selected_case()+"/census_records", 
+                {ssn: self.ssn(), birthdate: self.birthdate()},
+                function(resp) {
+                    // Go to enrollment
+                    self.enroll_from_record(resp.data.id);
+                }, function(resp) {
+                    bootbox.alert("There was a problem adding a record to the census");
+                }
+            );
+        };
+        
+        self.enroll_from_match = function() {
+            if (self.matched_employees().length == 1) {
+                self.enroll_from_record(self.matched_employees()[0].id);
+            } else {
+                // Use the selected record  
+                var id = self.selected_employee();
+                if (id === null) {
+                    self.matched_employees.error("Please select the census record to enroll.");
+                    return;
+                } 
+                self.enroll_from_record(id);
+            }
+        };
+        
+        self.enroll_from_record = function(id) {
+            self.loading_message("Loading Enrollment Application...");
+            self.current_panel(self.PANEL_LOADING);
+            submit_to_url("{{ url_for('in_person_enrollment') }}", {record_id: id});
+        }
+    };
 
 
 </script>

@@ -6,7 +6,7 @@ var case_management = (function() {
     
     var loading_html = "<span class='icon-spinner icon-spin grey bigger-200'></span> <span class='bigger-175'> Loading data...</span>";
     
-    function refresh_census_table(case_id, url, table_selector, loading_selector, table_options, init_callback) {
+    function refresh_census_table(case_id, url, table_selector, loading_selector, table_options, init_callback, no_data_cb) {
         // show loading message under the table
         var loading = $(loading_selector);
         var table = $(table_selector);
@@ -19,10 +19,12 @@ var case_management = (function() {
                 {"aTargets":[1], "mData": "employee_first"},
                 {"aTargets":[2], "mData": "employee_last"},
                 {"aTargets":[3], "mData": function(source) {
-                    var d = moment(source.employee_birthdate, "YYYY-MM-DD");
-                    return d.format("MM/DD/YYYY");
+                    return format_date(parse_date(source.employee_birthdate));
                 }},
-                {"aTargets":[4], "mData": "employee_email"}
+                {"aTargets":[4], "mData": "employee_email"},
+                {"aTargets":[5], "mData": function(source) {
+                    return format_enrollment_status_html(source.enrollment_status);
+                }}
             ],
             "aaSorting": [[ 2, "asc" ]],
             "iDisplayLength": 25
@@ -33,9 +35,8 @@ var case_management = (function() {
         loading.html(loading_html);
         
         // Clear table if it exists
-        if ($.fn.DataTable.fnIsDataTable(table.get(0))) {
-            table.dataTable().fnClearTable();
-        }
+        clear_table(table);
+        
         // Make the remote call
         $.get(url, {}, function(resp) {
             // Clear loading
@@ -52,6 +53,8 @@ var case_management = (function() {
                 if (init_callback !== undefined) {
                     init_callback(table);
                 }
+            } else if (no_data_cb !== undefined) {
+                no_data_cb();
             }
         });
     }
@@ -66,11 +69,10 @@ var case_management = (function() {
                 {"aTargets":[0], "mData": "employee_first"},
                 {"aTargets":[1], "mData": "employee_last"},
                 {"aTargets":[2], "mData": function(source) {
-                    var d = moment(source.employee_birthdate, "YYYY-MM-DD");
-                    return d.format("MM/DD/YYYY");
+                    return format_date(parse_date(source.employee_birthdate, "YYYY-MM-DD"));
                 }},
                 {"aTargets":[3], "mData": "employee_email"},
-                {"aTargets":[4], "mData": "application_status"},
+                {"aTargets":[4], "mData": function(source) {return format_enrollment_status_html(source.enrollment_status)}},
                 {"aTargets":[5], "mData": function(source) {
                     return '$'+source.total_annual_premium;
                 }, "sClass": "text-right"}

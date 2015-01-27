@@ -225,3 +225,15 @@ input[type=radio].ace+.lbl::before {
     color: #c04000;
     padding-right: 8px;
 }
+
+.report-wrap th.w_33 {
+    width: 33%;
+}
+.report-wrap th.w_40 {
+    width: 40%;
+}
+.report-wrap th.w_30 {
+    width: 30%;
+}
+
+

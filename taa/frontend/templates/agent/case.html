@@ -248,6 +248,7 @@
                                                                     <th>Last</th>
                                                                     <th>DOB</th>
                                                                     <th>Email</th>
+                                                                    <th>Status</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
@@ -278,7 +279,13 @@
                                 <div class="widget-box">
                                     <div class="widget-header">
                                         <div class="row">
-                                            <h3 class="col-xs-6">Report</h3>
+                                            <h3 class="col-xs-11">Report 
+                                            </h3>
+                                            <h3 class="col-xs-1">
+                                                <small>
+                                                    <a href="#print"><i class="ace-icon glyphicon glyphicon-print"></i> Print</a>
+                                                </small>
+                                            </h3>
                                         </div>
                                     </div>
                                     <div class="widget-body">
@@ -353,59 +360,72 @@
         <div data-bind="visible: is_loading">
             <div class="loading">Loading Report...</div>
         </div>
-        <div data-bind="visible: !is_loading()">
+        <div class="report-wrap" data-bind="visible: !is_loading()">
             
             <!--ko if: !any_enrollments()-->
-            <h4>No Enrollments Recorded</h4>
+            <h2>No Enrollments Recorded</h2>
             <!--/ko-->
+            
             <!--ko if: any_enrollments-->
-            <h4 data-bind="text: company_name"></h4>
-            <h5>Enrollment Period: <span data-bind="text: format_enrollment_dates"></span></h5>
-            <h5>Methods Used: <span data-bind="text: format_enrollment_methods"></span></h5>
+                <h1 data-bind="text: company_name"></h1>
+                
+                <h4>Period: <small data-bind="text: format_enrollment_dates"></small></h4>
+                <h4>Method(s): <small data-bind="text: format_enrollment_methods"></small></h4>
+                
+                <!--ko if: is_census_report-->
+                <h3 class="light">Summary</h3>
+                <table class="table table-bordered center">
+                    <thead><tr>
+                        <th class="text-center w_33">Total Processed</th>
+                        <th class="text-center w_33">Total Taken</th>
+                        <th class="text-center w_33">Total Annual Premium</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span data-bind="text: format_total_percent_processed"></span> 
+                                (<span data-bind="text: format_total_num_processed"></span>)
+                            </td>
+                            <td>
+                                <span data-bind="text: format_total_percent_taken"></span> 
+                                (<span data-bind="text: format_total_num_taken"></span>)
+                            </td>
+                            <td>
+                                <span data-bind="text: format_total_annualized_premium"></span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <!--/ko-->
+                
+                <!--ko if: !is_census_report()-->
+                <h3 class="light">Total Annual Premium:  <small data-bind="text: format_total_annualized_premium"></small></h3>
+                <!--/ko-->
+                
+                <h3 class="light">By Product</h3>
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th class="text-left w_40">Product</th>
+                            <th class="text-center w_30">Taken</th>
+                            <th class="text-right w_30">Total Annual Premium</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!--ko foreach: product_data-->
+                        <tr>
+                            <td data-bind="text: name"></td>
+                            <td class="text-center"><span data-bind="text: num_taken"></span>  (<span data-bind="text: percent_taken"></span>%)</td>
+                            <td class="text-right">$<span data-bind="text: annualized_premium"></span></td>
+                        </tr>
+                        <!--/ko-->
+                    </tbody>
+                </table>
             
-            <table class="table table-bordered center">
-                <thead><tr><th>Total Processed</th><th>Total Taken</th><th>Total Annual Premium</th></tr></thead>
-                <tbody>
-                    <tr>
-                        <td>
-                            <span data-bind="text: format_total_percent_processed"></span> 
-                            (<span data-bind="text: format_total_num_processed"></span>)
-                        </td>
-                        <td>
-                            <span data-bind="text: format_total_percent_taken"></span> 
-                            (<span data-bind="text: format_total_num_taken"></span>)
-                        </td>
-                        <td>
-                            <span data-bind="text: format_total_annualized_premium"></span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <table class="table table-bordered table-striped">
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>Taken</th>
-                        <th>Total Annual Premium</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!--ko foreach: product_data-->
-                    <tr>
-                        <td data-bind="text: name"></td>
-                        <td><span data-bind="text: num_taken"></span>  (<span data-bind="text: percent_taken"></span>%)</td>
-                        <td>$<span data-bind="text: annualized_premium"></span></td>
-                    </tr>
-                    <!--/ko-->
-                </tbody>
-            </table>
-            <!--/ko-->
-            
-            <!--ko if: case_agents-->
-            <div>
-                <strong>Case Agents:</strong> <span data-bind="text: format_case_agents"></span>
-            </div>
+                <!--ko if: case_agents-->
+                <h4>
+                    Case Agents: <small data-bind="text: format_case_agents"></small>
+                </h4>
+                <!--/ko-->
             <!--/ko-->
         </div>
     </script>
@@ -745,7 +765,7 @@
             
             // Validates actual date formatted MM/DD/YYYY 
             self.is_valid_date = function(val) {
-                return moment(val, ["YYYY-MM-DD","MM/DD/YYYY"]).isValid();
+                return is_valid_date(val);
             };
             
             self.is_valid = ko.computed(function() {
@@ -768,7 +788,7 @@
         };
         
         function parse_month_date_input(val) {
-            return moment(val, "MM/DD");
+            return parse_date(val, "MM/DD");
         }
         
         var CaseSettingsPanel = function(case_data, product_choices) {
@@ -777,7 +797,7 @@
             self.report_data = ko.observable(null);
             self.report_viewmodel = ko.observable(null);
             self.report_viewmodel.subscribe(function(val) {
-                if (val) {
+                if (val && window.location.hash == "#reports") {
                     // try to load reports and enrollments
                     val.load_reports();
                     val.load_enrollments();
@@ -1142,6 +1162,16 @@
                         self.report_viewmodel().load_enrollments();
                     }
                 });
+                
+                this.get("#print", function() {
+                    if (self.report_viewmodel()) {
+                        self.report_viewmodel().enter_print_preview();
+                        window.print();
+                    } else {
+                        // Go to report page
+                        window.location = "#reports";
+                    }
+                });
             }).run();
             
         };
@@ -1202,6 +1232,20 @@
                 });
             };
             
+            
+            self.enter_print_preview = function () {
+            
+                $(".header ul").hide();
+                $(".container.page").hide();
+                $("#print-wrap").html($(".report-wrap").clone()).show();
+            };
+            
+            self.exit_print_preview = function() {
+                $(".header ul").show();
+                $(".container.page").show();
+                $("#print-wrap").hide();
+            };
+            
             self.load_enrollments = function() {
                 case_management.refresh_enrollments_table({{ case.id }}, "{{ url_for("cases.enrollment_records", case_id=case.id) }}", 
                     "#enrollment-records-table", "#enrollment-table-loading", {},
@@ -1223,10 +1267,10 @@
             self.format_enrollment_dates = ko.computed(function() {
                 var start = self.enrollment_dates().start;
                 var end = self.enrollment_dates().end;
-                if (moment(end).isValid()) {
-                    return moment(start).format("MM/DD/YYYY") + " - " + moment(end).format("MM/DD/YYYY");
+                if (is_valid_date(end)) {
+                    return normalize_date(start) + " - " + normalize_date(end);
                 } else {
-                    return "Open enrollment starting " + moment(start).format("MM/DD/YYYY");
+                    return "Open enrollment starting " + normalize_date(start);
                 }
             });
             

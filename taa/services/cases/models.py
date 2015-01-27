@@ -161,12 +161,19 @@ class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
         return datetime.now().year
     
 class CensusRecordSerializer(JsonSerializable):
-    __json_hidden__ = ['census_records', 'case']
+    __json_hidden__ = ['census_records', 'case', 'enrollment_applications']
     __json_modifiers__ = {
-        'enrollment_applications': lambda apps, _: [a for a in apps]
+        #'enrollment_applications': lambda apps, _: [a for a in apps]
+    }
+    __json_add__ = {
+        'enrollment_status': lambda record: record.get_enrollment_status()
     }
     
-    
+    def get_enrollment_status(self):
+        from taa.services.enrollments import EnrollmentApplicationService
+        enrollments = EnrollmentApplicationService()
+        return enrollments.get_enrollment_status(self)
+        
 class CaseCensus(CensusRecordSerializer, db.Model):
     __tablename__ = 'case_census'
 

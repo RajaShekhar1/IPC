@@ -14,6 +14,56 @@ function send_json_data(method, url, data, on_success, on_error) {
     return submit_data(method, url, JSON.stringify(data), false, on_success, on_error, 'application/json');
 }
 
+
+// Misc Formatting
+function format_enrollment_status_text(status) {
+    if (status === "enrolled") {
+        return "Enrolled";
+    } else if (status === "declined") {
+        return "Declined";
+    } else {
+        return "Not Enrolled";
+    }
+}
+
+function format_enrollment_status_html(status) {
+    var status_text = format_enrollment_status_text(status);
+    if (status_text === "Not Enrolled") {
+        return status_text;
+    } else {
+        if (status_text === "Enrolled") {
+            return "<span class='enroll-status ace-icon glyphicon glyphicon-ok'> </span><span class='enroll-status'> Enrolled</span>";
+        } else {
+            return "<span class='ace-icon glyphicon glyphicon-remove error'></span> <span class='enroll-status declined'> Declined</span>";
+        }
+    }
+}
+
+// Date handling
+function parse_date(date_str, format_str) {
+    // Parse a date as a moment object from the given string, according to the format string. 
+    // Defaults format to server-sent date format, and falls back to MM/DD/YYYY otherwise.
+    if (format_str === undefined) {
+        format_str = ["YYYY-MM-DD","MM/DD/YYYY"];
+    }
+    return moment(date_str, format_str);
+}
+function normalize_date(date_str) {
+    return format_date(parse_date(date_str));
+}
+function is_valid_date(date_str, format_str) {
+    // Is the given string valid according to the format string? Defaults format to server-sent date format.
+    var date = parse_date(date_str, format_str);
+    return date.isValid();
+}
+function format_date(moment_date) {
+    // Given a moment object, format it the same across the site
+    return moment_date.format("MM/DD/YYYY");    
+}
+function now() {
+    return moment();
+}
+
 // The shortcut functions above use this method to wrap the jquery ajax call in slightly different ways
 function submit_data(method, url, data, should_process_data, on_success, on_error, contentType) {
     on_success = on_success || function() {};
@@ -112,6 +162,11 @@ ko.bindingHandlers.flashMessage = {
     } 
 };
 
+ko.bindingHandlers.maskedInput = {
+    init: function(element, valueAccessor) {
+        $(element).mask(ko.unwrap(valueAccessor()));
+    }
+};
 
 // Reveal a panel by sliding down when the observable is true; slide back up if false.
 ko.bindingHandlers.slideDownIf = {
