@@ -444,7 +444,7 @@ class EnrollmentReportService(object):
         
     def _is_enrollment_finished(self, e):
         return e.application_status in [
-            EnrollmentApplication.APPLICATION_STATUS_ENROLLED or 
+            EnrollmentApplication.APPLICATION_STATUS_ENROLLED,
             EnrollmentApplication.APPLICATION_STATUS_DECLINED
         ]
     
