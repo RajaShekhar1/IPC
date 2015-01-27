@@ -9,6 +9,7 @@ from flask import request, render_template, jsonify, session, send_from_director
 from flask.ext.stormpath import login_required
 
 from taa import app
+from taa.models import db
 from taa.model.ProductData import get_age_from_birthday, get_product_by_code
 from taa.model.States import get_states
 from taa.model.Enrollment import (
@@ -159,6 +160,9 @@ def in_person_enrollment():
         'health_questions': soh_questions,
     }
     
+    # Commit any changes made (none right now)
+    db.session.commit()
+    
     return render_template(
         'enrollment/main-wizard.html', 
         wizard_data=wizard_data,
@@ -213,7 +217,12 @@ def submit_wizard_data():
     
     
     
-    return jsonify(**resp)
+    data = jsonify(**resp)
+    
+    # need to manually commit all changes since this doesn't go through the API right now
+    db.session.commit()
+    
+    return data
     
 
 @app.route("/application_completed", methods=['GET'])

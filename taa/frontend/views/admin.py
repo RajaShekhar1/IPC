@@ -11,6 +11,7 @@ from taa import (
     app,
     stormpath_manager,
 )
+from taa.models import db
 from taa.model.Registration import TAA_UserForm
 from taa.model.Enrollment import AgentActivationEmail
 
@@ -99,6 +100,7 @@ def updateUser():
                     'agent_code': data['agent_code'],
                     'activated': data['activated']
                 })
+                db.session.commit()
                 
                 # if we've just activated a user, then send a notice
                 if data['activated'] and data['send_notice']:                    
