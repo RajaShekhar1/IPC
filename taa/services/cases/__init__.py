@@ -34,6 +34,7 @@ class CaseService(DBService):
             products_service = ProductService()
             kwargs['products'] = products_service.get_products_by_codes(products)
         
+        
         return kwargs
     
     def get_if_allowed(self, case_id):
@@ -459,7 +460,7 @@ class CensusRecordService(DBService):
         ]
     
     def get_csv_row_from_dict(self, census_record):
-        return [census_record[field.csv_column_name] for field in CensusRecordParser.all_possible_fields]
+        return [census_record[field.database_name] for field in CensusRecordParser.all_possible_fields]
 
     def format_ssn(self, ssn):
         if not len(ssn) == 9:
