@@ -3,7 +3,7 @@
 {% block title %} - Manage Products{% endblock %}
 
 {% block content %}
-    <h1 class="header lighter">Custom Products</h1>
+    <h1 class="header lighter">Manage Products</h1>
     
     <div class="row">
         <div class="col-xs-12">
@@ -16,9 +16,9 @@
                     </a>
                 </div>
             </div>
-            {% if not custom_products %}
+            {% if not products %}
                 <div class="row">
-                    <h4 class="text-center lighter">There are no custom products.</h4>
+                    <h4 class="text-center lighter">There are no products.</h4>
                 </div>
             {% else %}
                 <div class="table-responsive">
@@ -27,17 +27,13 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Type</th>
-                                <th>GI Amount</th>
-                                <th>Number of Agents</th>
                             </tr>
                         </thead>
                         <tbody> 
-                        {% for product in custom_products %}
+                        {% for product in products %}
                             <tr>
                                 <td><a href="{{ url_for("manage_custom_product", product_id=product.id) }}">{{ product.name }}</a></td>
-                                <td>{{ product.type }}</td>
-                                <td>{{ product.formatted_gi_amount }}</td>
-                                <td>{{ product.number_of_agents }}</td>
+                                <td>{{ product.format_type() }}</td>
                             </tr>
                         {% endfor %}
                         </tbody>
@@ -161,7 +157,9 @@ $(function() {
         };
     }
     
-    $("#table-list").dataTable();
+    $("#table-list").dataTable({
+        "order": [[ 1, 'asc' ], [0, 'asc']]
+    });
     
     var form = new ManageProductsPage();
     window.form = form;

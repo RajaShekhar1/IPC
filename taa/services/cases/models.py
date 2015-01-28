@@ -39,7 +39,7 @@ class Case(CaseSerializer, db.Model):
     
     active = db.Column(db.Boolean, default=False)
     
-    created_date = db.Column(db.DateTime, server_default=db.func.current_timestamp())
+    created_date = db.Column(db.DateTime)
     
     enrollment_period_type = db.Column(db.String(16), nullable=True)
     OPEN_ENROLLMENT_TYPE = u'open'

@@ -25,6 +25,7 @@ class Product(ProductJsonSerializable, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String, nullable=False)
     name = db.Column(db.String, nullable=False)
+    visible_to_agents = db.Column(db.Boolean, nullable=False, server_default='True')
     
     product_type = db.Column(db.String(16), nullable=False, default=u'base', server_default=u'base')
     
@@ -46,6 +47,16 @@ class Product(ProductJsonSerializable, db.Model):
     
     def is_guaranteed_issue(self):
         return False
+    
+    def is_base_product(self): 
+        return True
+    
+    def format_type(self):
+        if self.is_guaranteed_issue():
+            return self.base_product.name
+        else:
+            return 'Base Product'
+        
     
 # Relate custom products to agents
 product_agents = db.Table('product_agents', db.metadata,
@@ -76,6 +87,9 @@ class CustomGuaranteeIssueProduct(CustomProductSerializer, Product):
     
     def is_guaranteed_issue(self):
         return True
+
+    def is_base_product(self):
+        return False
     
 class BypassedSOHSerializer(JsonSerializable):
     __json_hidden__ = ['product']

@@ -12,7 +12,7 @@
                 <div class="widget-box">
                     <div class="widget-header">
                         <div class="row">
-                            <h3 class="col-xs-6">Custom Product: {{ product.name }}</h3>
+                            <h3 class="col-xs-6">Product: {{ product.name }}</h3>
                         </div>
                     </div>
                     <div class="widget-body">
@@ -22,159 +22,193 @@
                                     <h4 class="header lighter">Settings</h4>
                                     
                                     <div class="form-group">
-                                        <div class="col-md-2 control-label"><label>Name</label></div>
+                                        <div class="col-md-2 control-label"><label for="product-name">Name</label></div>
                                         <div class="col-md-6">
-                                            <input class="form-control" data-bind='value: custom_product().name'>
+                                            <input id="product-name" class="form-control" data-bind='value: product().name, enable: product.editable'>
                                         </div>
                                     </div>
-                                    
-                                    <div class="form-group">
-                                        <div class="col-md-2 control-label"><label>Base Product</label></div>
-                                        <div class="col-md-6">
-                                            <select class="form-control" data-bind='value: custom_product().base_product_id, 
-                                                options: base_product_options,
-                                                optionsValue: "id",
-                                                optionsText: "name",
-                                                optionsCaption: ""'>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    
-                                    <h4 class="header lighter">Guarantee Issue Criteria</h4>
-                                    
-                                    <table class="table table-striped table-bordered table-responsive">
-                                        <thead>
-                                            <tr>
-                                                <th>Applicant</th>
-                                                <th>Criteria</th>
-                                                <th>Guaranteed Issue Amount</th>
-                                                <th></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody data-bind="foreach: custom_product().gi_criteria">
-                                            <tr>
-                                                <td data-bind="text: applicant_type()"></td>
-                                                <td data-bind="html: display_criteria"></td>
-                                                <td data-bind="text: guarantee_issue_amount()"></td>
-                                                <td><a class="btn" 
-                                                       data-bind="click: $parent.custom_product().remove_criterion">remove</a></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                    
-                                    <button class="btn btn-default" 
-                                            data-bind="visible: !should_show_criteria_form(), click: show_criteria_form">Add Criteria</button>
-                                    <div style="display: none;" data-bind="slideDownIf: should_show_criteria_form, with: new_criterion">
-                                        
+                                
+                                    {% if is_base_product %}
+                                    <!--
                                         <div class="form-group">
-                                            <label class="col-md-3 control-label" for="applicant_type">Applicant</label>
-                                            <div class="col-md-9">
-                                                <select id="applicant_type" data-bind="value: applicant_type, options: $parent.applicant_options"></select>
+                                            
+                                            <div class="col-md-2 control-label"></div>
+                                        
+                                            <div class="col-md-6">
+                                                <label for="product-name">   
+                                                    <input type="checkbox" class="" data-bind='checked: product().visible_to_agents'> 
+                                                    Visible to Agents
+                                                </label>
+                                                
+                                            </div>
+                                        </div>
+                                        -->
+                                    {% endif %}
+                                    
+                                    {% if is_gi_product %}
+                                        <div class="form-group">
+                                            <div class="col-md-2 control-label"><label for="base-product-sel">Base Product</label></div>
+                                            <div class="col-md-6">
+                                                <select id="base-product-sel" class="form-control" data-bind='value: product().base_product_id, 
+                                                    options: base_product_options,
+                                                    optionsValue: "id",
+                                                    optionsText: "name",
+                                                    optionsCaption: ""'>
+                                                </select>
                                             </div>
                                         </div>
                                         
-                                        <div class="form-group">
-                                            <label class="col-md-3 control-label">Guarantee Issue Amount</label>
-                                            <div class="col-md-9">
-                                                <select data-bind="value: guarantee_issue_amount, options: $parent.issue_amount_options"></select>
-                                            </div>
-                                        </div>
+                                        <h4 class="header lighter">Guarantee Issue Criteria</h4>
                                         
-                                        <div class="form-group">
-                                            <div class="col-md-3 control-label"><label>Height</label></div>
-                                            <div class="col-md-9">
-                                                <div class="criteria-select">
-                                                        Greater Than: 
-                                                        <height-select params="value: height_min"></height-select>
-                                                        Less Than: 
-                                                        <height-select params="value: height_max"></height-select>
+                                        <table class="table table-striped table-bordered table-responsive">
+                                            <thead>
+                                                <tr>
+                                                    <th>Applicant</th>
+                                                    <th>Criteria</th>
+                                                    <th>Guaranteed Issue Amount</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody data-bind="foreach: product().gi_criteria">
+                                                <tr>
+                                                    <td data-bind="text: applicant_type()"></td>
+                                                    <td data-bind="html: display_criteria"></td>
+                                                    <td data-bind="text: guarantee_issue_amount()"></td>
+                                                    <td><a class="btn" 
+                                                           data-bind="click: $parent.product().remove_criterion">remove</a></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        
+                                        <button class="btn btn-default" 
+                                                data-bind="visible: !should_show_criteria_form(), click: show_criteria_form">Add Criteria</button>
+                                        <div style="display: none;" data-bind="slideDownIf: should_show_criteria_form, with: new_criterion">
+                                            
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="applicant_type">Applicant</label>
+                                                <div class="col-md-9">
+                                                    <select id="applicant_type" data-bind="value: applicant_type, options: $parent.applicant_options"></select>
                                                 </div>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <div class="col-md-3 control-label"><label>Weight</label></div>
-                                            <div class="col-md-9">
-                                                <div class="criteria-select">
-                                                        Greater Than: 
-                                                        {{ product_form.criteria_weight_min(**{'data-bind':'value: weight_min'}) | safe }} 
-                                                        Less Than: 
-                                                        {{ product_form.criteria_weight_max(**{'data-bind':'value: weight_max'}) | safe }} 
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <div class="col-md-3 control-label"><label>Age</label></div>
-                                            <div class="col-md-9">
-                                                <div class="criteria-select">
-                                                        Greater Than: 
-                                                        {{ product_form.criteria_age_min(**{'data-bind':'value: age_min'}) | safe }} 
-                                                        Less Than: 
-                                                        {{ product_form.criteria_age_max(**{'data-bind':'value: age_max'}) | safe }} 
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <button class="btn btn-default" data-bind="click: $root.add_new_criteria">Save Criteria</button>
-                                    </div>
-                                    
-                                    <h4 class="header lighter">When GI and criteria met</h4>
-                                    <div class="form-group">       
-                                        <div class="col-md-9 col-md-offset-1">
-                                            <label class="block">
-                                                <input data-bind="checked: custom_product().statement_of_health_bypass_type" 
-                                                       type="radio" id="soh_skip_all" name="soh_skip_type" value="all" class="ace">
-                                                <span class="lbl">
-                                                    bypass all statement of health questions
-                                                </span>
-                                            </label>
-                                            <label class="block">
-                                                <input data-bind="checked: custom_product().statement_of_health_bypass_type" 
-                                                       type="radio" id="soh_skip_selected" name="soh_skip_type" value="selected" class="ace">
-                                                <span class="lbl">
-                                                    bypass selected statement of health questions
-                                                </span>
-                                            </label>
-                                            <div class="soh_options" data-bind="visible: custom_product().statement_of_health_bypass_type() == 'selected'">
-                                                <!--ko foreach: soh_options -->
-                                                    <div class="row">
-                                                        <label class="col-md-offset-1">
-                                                            <input type="checkbox" 
-                                                                   class="ace ace-switch ace-switch-3 padding-10" 
-                                                                data-bind="value: $data, checked: $root.custom_product().bypassed_questions"
-                                                                >
-                                                            <span class="lbl" 
-                                                                data-lbl="&nbsp;Ignored&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Required"></span>
-                                                            <span data-bind="text: $data" style="line-height: 23px; vertical-align: top;"></span>
-                                                        </label>
-                                                    </div>
-                                                <!--/ko-->
                                             </div>
                                             
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label">Guarantee Issue Amount</label>
+                                                <div class="col-md-9">
+                                                    <select data-bind="value: guarantee_issue_amount, options: $parent.issue_amount_options"></select>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <div class="col-md-3 control-label"><label>Height</label></div>
+                                                <div class="col-md-9">
+                                                    <div class="criteria-select">
+                                                            Greater Than: 
+                                                            <height-select params="value: height_min"></height-select>
+                                                            Less Than: 
+                                                            <height-select params="value: height_max"></height-select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <div class="col-md-3 control-label"><label>Weight</label></div>
+                                                <div class="col-md-9">
+                                                    <div class="criteria-select">
+                                                            Greater Than: 
+                                                            {{ product_form.criteria_weight_min(**{'data-bind':'value: weight_min'}) | safe }} 
+                                                            Less Than: 
+                                                            {{ product_form.criteria_weight_max(**{'data-bind':'value: weight_max'}) | safe }} 
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <div class="col-md-3 control-label"><label>Age</label></div>
+                                                <div class="col-md-9">
+                                                    <div class="criteria-select">
+                                                            Greater Than: 
+                                                            {{ product_form.criteria_age_min(**{'data-bind':'value: age_min'}) | safe }} 
+                                                            Less Than: 
+                                                            {{ product_form.criteria_age_max(**{'data-bind':'value: age_max'}) | safe }} 
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <button class="btn btn-default" data-bind="click: $root.add_new_criteria">Save Criteria</button>
                                         </div>
-                                    </div>
-                                    
-                                    <h4 class="header lighter">Assign to Agents</h4>
-                                    <div class="row">
-                                        <div class="col-sm-10 col-md-offset-1">
-                                            <select data-bind="options: available_agents, 
-                                                        optionsText: 'name',
-                                                        selectedOptions: custom_product().agents" 
-                                                    multiple="multiple" class="form-control" id="assigned-agents" 
-                                                    size="10" style="min-height: 8em;">
+                                        
+                                        <h4 class="header lighter">When GI and criteria met</h4>
+                                        <div class="form-group">       
+                                            <div class="col-md-9 col-md-offset-1">
+                                                <label class="block">
+                                                    <input data-bind="checked: product().statement_of_health_bypass_type" 
+                                                           type="radio" id="soh_skip_all" name="soh_skip_type" value="all" class="ace">
+                                                    <span class="lbl">
+                                                        bypass all statement of health questions
+                                                    </span>
+                                                </label>
+                                                <label class="block">
+                                                    <input data-bind="checked: product().statement_of_health_bypass_type" 
+                                                           type="radio" id="soh_skip_selected" name="soh_skip_type" value="selected" class="ace">
+                                                    <span class="lbl">
+                                                        bypass selected statement of health questions
+                                                    </span>
+                                                </label>
+                                                <div class="soh_options" data-bind="visible: product().statement_of_health_bypass_type() == 'selected'">
+                                                    <!--ko foreach: soh_options -->
+                                                        <div class="row">
+                                                            <label class="col-md-offset-1">
+                                                                <input type="checkbox" 
+                                                                       class="ace ace-switch ace-switch-3 padding-10" 
+                                                                    data-bind="value: $data, checked: $root.product().bypassed_questions"
+                                                                    >
+                                                                <span class="lbl" 
+                                                                    data-lbl="&nbsp;Ignored&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Required"></span>
+                                                                <span data-bind="text: $data" style="line-height: 23px; vertical-align: top;"></span>
+                                                            </label>
+                                                        </div>
+                                                    <!--/ko-->
+                                                </div>
                                                 
-                                            </select>
+                                            </div>
                                         </div>
-                                    </div>
-                                   
+                                    
+                                        <h4 class="header lighter">Assign to Agents</h4>
+                                        <div class="row">
+                                            <div class="col-sm-10 col-md-offset-1">
+                                                <select data-bind="options: available_agents, 
+                                                            optionsText: 'name',
+                                                            selectedOptions: product().agents" 
+                                                        multiple="multiple" class="form-control" id="assigned-agents" 
+                                                        size="10" style="min-height: 8em;">
+                                                    
+                                                </select>
+                                            </div>
+                                        </div>
+                                    
+                                    {% endif %}   
+                                    {% if is_base_product %}
+                                        <h4 class="header lighter">Restrict from Agents</h4>
+                                        <div class="row">
+                                            <div class="col-sm-10 col-md-offset-1">
+                                                <select data-bind="options: available_agents, 
+                                                            optionsText: 'name',
+                                                            selectedOptions: product().restricted_agents" 
+                                                        multiple="multiple" class="form-control" id="restricted-agents" 
+                                                        size="10" style="min-height: 8em;">
+                                                </select>
+                                            </div>
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             
                             <br>
+                            {% if is_gi_product %}
                             <div class="row">
                                 <div class="col-xs-12">
                                     <button class="btn btn-danger btn-xs" data-bind="click: delete_product">Delete Product</button>
                                 </div>
                             </div>
+                            {% endif %}
                             
                         </div>
                         <div class="widget-toolbox clearfix padding-8">
@@ -336,10 +370,13 @@ $(function() {
         }
     };
     
-    var BaseProductViewModel = function(base_product) {
+    var BaseProductViewModel = function(base_product, available_agents) {
         var self = this;
         self.id = base_product.id;
         self.name = base_product.name;
+        self.is_visible_to_agents = base_product.visible_to_agents;
+        
+        self.restricted_agents = ko.observableArray(base_product.restricted_agents || []);
     };
     
     var CustomProductEditor = function(custom_product, base_product_options, available_agents, soh_options) {
@@ -348,8 +385,8 @@ $(function() {
         self.available_agents = $.map(available_agents, function(a){return new Agent(a)}) || [];
         self.soh_options = soh_options || [];
         
-        self.custom_product = ko.observable(new CustomProductViewModel(custom_product, self.available_agents, self.soh_options));
-        
+        self.product = ko.observable(new CustomProductViewModel(custom_product, self.available_agents, self.soh_options));
+        self.product.editable = true;
         
         self.base_product_options = $.map(base_product_options || [], function(bp) {return new BaseProductViewModel(bp)});
         self.issue_amount_options = [];
@@ -361,11 +398,11 @@ $(function() {
         
         self.should_show_criteria_form = ko.observable(false);
         self.show_criteria_form = function() {
-            self.new_criterion(new GICriterionViewModel({product_id: self.custom_product().id()}));
+            self.new_criterion(new GICriterionViewModel({product_id: self.product().id()}));
             self.should_show_criteria_form(true);  
         };
         self.add_new_criteria = function() {
-            self.custom_product().gi_criteria.push(self.new_criterion());
+            self.product().gi_criteria.push(self.new_criterion());
             
             // keep it sorted by applicant, mins
             self.sort_criteria();
@@ -375,7 +412,7 @@ $(function() {
         };
         
         self.sort_criteria = function() {
-            self.custom_product().gi_criteria.sort(function(x, y){
+            self.product().gi_criteria.sort(function(x, y){
                 if (x.applicant_type() === y.applicant_type()) {
                     return 0;
                 } else {
@@ -394,7 +431,7 @@ $(function() {
         self.applicant_options = ["Employee", "Spouse", "Child"];
         
         self.save_settings = function() {
-            var form_data = self.custom_product().serialize();
+            var form_data = self.product().serialize();
             
             // TODO: client-side validation
             
@@ -423,7 +460,7 @@ $(function() {
         };
         
         self.delete_product = function() {
-            bootbox.confirm("Are you sure you want to delete '"+self.custom_product().name()+"'? This cannot be undone.", function(result) {
+            bootbox.confirm("Are you sure you want to delete '"+self.product().name()+"'? This cannot be undone.", function(result) {
                 if (!result) return;
                 
                 $.when(send_json_data(
@@ -442,8 +479,25 @@ $(function() {
             })
         };
     };
-    
-    window.ui = new CustomProductEditor({{ product |tojson|safe }}, {{ base_product_options |tojson|safe }}, {{ available_agents |tojson|safe }}, {{ statement_of_health_options |tojson|safe }})
+
+    var BaseProductEditor = function(product, available_agents) {
+        var self = this;
+        
+        self.product = ko.observable(new BaseProductViewModel(product, available_agents));
+        self.product.editable = false;
+        
+        self.available_agents = $.map(available_agents, function(a){return new Agent(a)}) || [];
+        
+        self.save_settings = function() {
+            
+        };
+    };
+
+    {% if is_gi_product %}
+        window.ui = new CustomProductEditor({{ product |tojson|safe }}, {{ base_product_options |tojson|safe }}, {{ available_agents |tojson|safe }}, {{ statement_of_health_options |tojson|safe }})
+    {% else %}
+        window.ui = new BaseProductEditor({{ product |tojson|safe }}, {{ available_agents |tojson|safe }});
+    {% endif %}
     ko.applyBindings(window.ui, document.body);
     // Multi-list demo
     $('#assigned-agents').bootstrapDualListbox({
@@ -452,6 +506,14 @@ $(function() {
         moveOnSelect: false,
         nonSelectedListLabel: 'Available Agents:',
         selectedListLabel: 'Product Visible to Agents:'
+    });
+
+    $('#restricted-agents').bootstrapDualListbox({
+        infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',
+        showFilterInputs: true,
+        moveOnSelect: false,
+        nonSelectedListLabel: 'Available Agents:',
+        selectedListLabel: 'Product Not Visible to Agents:'
     });
     
 });

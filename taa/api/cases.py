@@ -70,6 +70,7 @@ def create_case():
     if agent:
         form.agent_id.data = agent.id
     if form.validate_on_submit():
+        data['created_date'] = datetime.now()
         return case_service.create(**data)
     
     raise TAAFormError(form.errors)

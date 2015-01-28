@@ -94,16 +94,20 @@ class ProductService(DBService):
         return False
         
     def get_all_enrollable_products(self):
-        # TODO: Will exclude some products based on a DB flag
-        products = self.get_base_products()
+        
+        products = self.get_enrollable_base_products()
+        
         # All custom products
         products += self.get_custom_products()
         return products
         
+    def get_enrollable_base_products(self):
+        return [p for p in self.get_base_products() if p.visible_to_agents] 
+        
     def get_products_for_agent(self, agent):
         
         # For now, agents get base products (TODO: exclude for an arbitrary list of agents)
-        products = self.get_base_products()
+        products = self.get_enrollable_base_products()
         
         # They also get any custom products added by the HO admin
         products += agent.custom_products

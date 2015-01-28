@@ -4,6 +4,7 @@ from flask_script import Command, prompt, prompt_pass
 from werkzeug.datastructures import MultiDict
 
 from ..services.products import ProductService
+from ..models import db
 
 product_service = ProductService()
 
@@ -14,16 +15,28 @@ class InitializeDatabaseCommand(Command):
         
         product_data = [
             dict(
-                code="FPPTI", 
-                name="Family Protection Plan - Terminal Illness",
+                code=u"FPPTI", 
+                name=u"Family Protection Plan - Terminal Illness",
+                product_type=u"base",
+                visible_to_agents=True,
             ),
             dict(
-                code="FPPCI",
-                name="Family Protection Plan - Critical Illness",
+                code=u"FPPCI",
+                name=u"Family Protection Plan - Critical Illness",
+                product_type=u"base",
+                visible_to_agents=True,
             ),
             dict(
-                code="Group CI",
-                name="Group Critical Illness",
+                code=u"Group CI",
+                name=u"Group Critical Illness",
+                product_type=u"base",
+                visible_to_agents=True,
+            ),
+            dict(
+                code=u"Whitten FPP",
+                name=u"Whitten FPP",
+                product_type=u"base",
+                visible_to_agents=False,
             ),
         ]
         for product in product_data:
@@ -32,3 +45,4 @@ class InitializeDatabaseCommand(Command):
                 product_service.create(**product)
                 print("Product '{}' created successfully".format(product['code']))
         
+        db.session.commit()
