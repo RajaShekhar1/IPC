@@ -564,8 +564,9 @@
             if (!_alphabet_search_letter) {
                 return true;
             }
-            var last_name_col = 2;
-            return (aData[last_name_col].charAt(0) === _alphabet_search_letter);
+            var last_name_col = 3;
+            
+            return (aData[last_name_col] && aData[last_name_col].charAt(0) === _alphabet_search_letter);
         }
     );
 
@@ -593,7 +594,7 @@
         for (var i = 0; i < 26; i++) {
             var letter = String.fromCharCode(65 + i);
             
-            $('<span/>')
+            $('<span class="letter"/>')
                 .data('letter', letter)
                 .html(letter)
                 .appendTo(alphabet);

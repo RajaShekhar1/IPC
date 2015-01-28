@@ -152,15 +152,26 @@ div.alphabet span {
     cursor: pointer;
     text-align: center;
     width: 3.5%;
-    font-size: 150%;
+    font-size: 125%;
+    padding-top: .5em;
 }
  
 div.alphabet span:hover {
     text-decoration: underline;
 }
  
-div.alphabet span.active {
-    color: black;
+div.alphabet span.letter.active {
+    background-color: yellow;
+    font-weight: bold;
+    font-size: 175%;
+    
+}
+
+.status-filter {
+    margin-top: 1em;
+}
+.status-filter label {
+    font-size: 120%;
 }
 
 .upload-error-table td.error {
