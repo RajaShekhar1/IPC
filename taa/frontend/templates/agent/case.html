@@ -370,15 +370,17 @@
                 <h1 data-bind="text: company_name"></h1>
                 
                 <h4>Period: <small data-bind="text: format_enrollment_dates"></small></h4>
+                <h4 data-bind="visible: only_one_product">Product: <small data-bind="text: product_name"></small></h4>
                 <h4>Method(s): <small data-bind="text: format_enrollment_methods"></small></h4>
                 
                 <!--ko if: is_census_report-->
                 <h3 class="light">Summary</h3>
                 <table class="table table-bordered center">
                     <thead><tr>
-                        <th class="text-center w_33">Total Processed</th>
-                        <th class="text-center w_33">Total Taken</th>
-                        <th class="text-center w_33">Total Annual Premium</th></tr></thead>
+                        <th class="text-center w_25">Total Processed</th>
+                        <th class="text-center w_25">Total Taken</th>
+                        <th class="text-center w_25">Total Declined</th>
+                        <th class="text-center w_25">Total Annual Premium</th></tr></thead>
                     <tbody>
                         <tr>
                             <td>
@@ -388,6 +390,10 @@
                             <td>
                                 <span data-bind="text: format_total_percent_taken"></span> 
                                 (<span data-bind="text: format_total_num_taken"></span>)
+                            </td>
+                            <td>
+                                <span data-bind="text: format_total_percent_declined"></span> 
+                                (<span data-bind="text: format_total_num_declined"></span>)
                             </td>
                             <td>
                                 <span data-bind="text: format_total_annualized_premium"></span>
@@ -401,6 +407,7 @@
                 <h3 class="light">Total Annual Premium:  <small data-bind="text: format_total_annualized_premium"></small></h3>
                 <!--/ko-->
                 
+                <!--ko if: !only_one_product() -->
                 <h3 class="light">By Product</h3>
                 <table class="table table-bordered table-striped">
                     <thead>
@@ -420,7 +427,8 @@
                         <!--/ko-->
                     </tbody>
                 </table>
-            
+                <!--/ko-->
+                
                 <!--ko if: case_agents-->
                 <h4>
                     Case Agents: <small data-bind="text: format_case_agents"></small>
@@ -1219,7 +1227,7 @@
                         pdata.push({
                             name: data.product_name,
                             num_taken: data.enrolled_count,
-                            percent_taken: data.enrolled_count / resp.data.summary.total_census * 100,
+                            percent_taken: (data.enrolled_count / resp.data.summary.total_census * 100).toFixed(2),
                             annualized_premium: data.total_annualized_premium
                         });
                     });
@@ -1287,9 +1295,17 @@
                 return self.summary_data().is_census_report;
             });
             
+            self.only_one_product = ko.computed(function() {
+                return self.summary_data().only_one_product; 
+            });
+            
+            self.product_name = ko.computed(function() {
+                return (self.only_one_product())? self.summary_data().product_names[0] : "";
+            });
+            
             self.format_total_percent_processed = ko.computed(function() {
                 var percent = self.summary_data().processed_enrollments / self.summary_data().total_census * 100;
-                return percent + "%";
+                return percent.toFixed(2) + "%";
             });
             
             self.format_total_num_processed = ko.computed(function() {
@@ -1298,11 +1314,20 @@
             
             self.format_total_percent_taken = ko.computed(function() {
                 var percent = self.summary_data().taken_enrollments / self.summary_data().total_census * 100;
-                return percent + "%";
+                return percent.toFixed(2) + "%";
             });
             
             self.format_total_num_taken = ko.computed(function() {
-                 return self.summary_data().taken_enrollments;
+                return self.summary_data().taken_enrollments;
+            });
+            
+            self.format_total_num_declined = ko.computed(function() {
+                return self.summary_data().declined_enrollments;
+            });
+            
+            self.format_total_percent_declined = ko.computed(function() {
+                var percent = self.summary_data().declined_enrollments / self.summary_data().total_census * 100;
+                return percent.toFixed(2) + "%";
             });
             
             self.format_total_annualized_premium = ko.computed(function() {

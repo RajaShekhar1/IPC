@@ -471,9 +471,12 @@ class EnrollmentReportService(object):
             return dict(
                 processed_enrollments=self.get_num_processed_enrollments(merged_enrollment_applications),
                 taken_enrollments=self.get_num_taken_enrollments(merged_enrollment_applications),
+                declined_enrollments=self.get_num_declined_enrollments(merged_enrollment_applications),
                 total_census=self.get_num_census_records(merged_enrollment_applications),
                 total_annualized_premium=self.get_total_annualized_premium(merged_enrollment_applications),
                 is_census_report=True,
+                only_one_product=self.has_only_one_product(case),
+                product_names=self.get_product_names(case),
             )
         else:
             return dict(
@@ -481,7 +484,15 @@ class EnrollmentReportService(object):
                 total_census=self.get_num_census_records(merged_enrollment_applications),
                 total_annualized_premium = self.get_total_annualized_premium(merged_enrollment_applications),
                 is_census_report=False,
+                only_one_product=self.has_only_one_product(case),
+                product_names=self.get_product_names(case),
             )
+        
+    def has_only_one_product(self, case):
+        return len(case.products) == 1
+        
+    def get_product_names(self, case):
+        return [p.name for p in case.products]
         
     def _is_uploaded_census(self, merged_enrollment_applications):
         "If any census record is uploaded, we consider the whole thing a census-enrolled case (Zach's guess)"
@@ -495,6 +506,10 @@ class EnrollmentReportService(object):
     def get_num_taken_enrollments(self, merged_enrollment_applications):
         return sum(1 for e in merged_enrollment_applications
                      if e['enrollment'] and e['enrollment'].did_enroll())
+    
+    def get_num_declined_enrollments(self, merged_enrollment_applications):
+        return sum(1 for e in merged_enrollment_applications
+                    if e['enrollment'] and not e['enrollment'].did_enroll())
     
     def get_total_annualized_premium(self, merged_enrollment_applications):
         
@@ -595,12 +610,17 @@ class ProductStatsAccumulator(object):
     def __init__(self):
         self._product_premiums = defaultdict(Decimal)
         self._product_counts = defaultdict(int)
-    
+        #self._product_declines = defaultdict(int)
+        
     def add_coverages_for_enrollment_application(self, merged_enrollment_application):
         
         # Count taken products
         for product in merged_enrollment_application['coverages']:
             self._product_counts[product] += 1
+        
+        # Count declined products - TODO: when multiproduct is added, individual products may be declined
+        #if merged_enrollment_application['enrollment'] and not merged_enrollment_application['enrollment'].did_enroll():
+        #    self._product_declines[product] += 1
         
         # Count annualized premiums by product
         for product, coverages in merged_enrollment_application['coverages'].iteritems():
