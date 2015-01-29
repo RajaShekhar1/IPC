@@ -44,6 +44,12 @@ def create_product():
 def update_product(product_id):
     product = product_service.get_if_allowed(product_id)
     data = get_posted_data()
+    
+    if product.is_base_product():
+        # Handle a little differently
+        product_service.update_product_restricted_agents(product, **data)
+        return product
+    
     form = EditProductForm()
     if form.validate_on_submit():
         product_service.update_product_agents(product, **data)

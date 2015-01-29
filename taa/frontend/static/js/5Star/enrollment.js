@@ -54,6 +54,8 @@ function build_product(products) {
         base_product = new FPPCIProduct(product_data);
     } else if (base_type == "Group CI") {
         base_product = new GroupCIProduct(product_data);
+    } else if (base_type == "FPP-Gov") {
+        base_product = new FPPGovProduct(product_data);
     } else {
         // default product?
         alert("Invalid product type '"+base_type+"'");
@@ -728,6 +730,24 @@ GroupCIProduct.prototype.requires_weight = function() {return true;};
 GroupCIProduct.prototype.requires_is_smoker = function() {return true;};
 GroupCIProduct.prototype.has_critical_illness_coverages = function() {
     return true;
+};
+
+
+// FPP Gov 
+function FPPGovProduct(product_data) {
+    this.product_type = "FPP-Gov";
+    this.product_data = product_data;
+}
+FPPGovProduct.prototype = Object.create(Product.prototype);
+//FPPGovProduct.prototype.get_new_benefit_option = function(options) {
+//    return new CIBenefitOption(new BenefitOption(options));
+//};
+FPPGovProduct.prototype.requires_gender = function() {return false;};
+FPPGovProduct.prototype.requires_height = function() {return false;};
+FPPGovProduct.prototype.requires_weight = function() {return false;};
+FPPGovProduct.prototype.requires_is_smoker = function() {return false;};
+FPPGovProduct.prototype.has_critical_illness_coverages = function() {
+    return false;
 };
 
 

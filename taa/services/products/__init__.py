@@ -29,10 +29,12 @@ class ProductService(DBService):
         return q.all()
         
     def get_base_products(self):
-        return Product.query.filter(Product.product_type == self.BASE_PRODUCT_TYPE).all()
+        return Product.query.filter(Product.product_type == self.BASE_PRODUCT_TYPE
+            ).options(db.eagerload('restricted_agents')
+            ).all()
     
     def get_custom_products(self):
-        return CustomGuaranteeIssueProduct.query.all()
+        return CustomGuaranteeIssueProduct.query.options(db.eagerload('agents')).all()
     
     def create_custom_product(self, product_name):
         product = CustomGuaranteeIssueProduct(name=product_name, code='')
@@ -85,10 +87,11 @@ class ProductService(DBService):
         
         
     def can_agent_view_product(self, agent, product):
-        # Can view base products and any GI they are assigned
-        return not product.is_guaranteed_issue() or (
-            product.is_guaranteed_issue() and product in self.get_products_for_agent(agent)
-        )
+        """ 
+        Can view base products that do not restrict this particular agent 
+          and any GI products assigned to him.
+        """
+        return product in self.get_products_for_agent(agent)
     
     def can_agent_edit_product(self, agent, product):
         return False
@@ -106,8 +109,8 @@ class ProductService(DBService):
         
     def get_products_for_agent(self, agent):
         
-        # For now, agents get base products (TODO: exclude for an arbitrary list of agents)
-        products = self.get_enrollable_base_products()
+        # Agents get all base products not explicitly restricted 
+        products = [p for p in self.get_enrollable_base_products() if agent not in p.restricted_agents]
         
         # They also get any custom products added by the HO admin
         products += agent.custom_products
@@ -146,6 +149,12 @@ class ProductService(DBService):
         agent_service = AgentService()
         agents = agent_service.get_all(*[a['id'] for a in agents])
         product.agents = agents
+        db.session.flush()
+        
+    def update_product_restricted_agents(self, product, restricted_agents, **kwargs):
+        from taa.services.agents import AgentService
+        agent_service = AgentService()
+        product.restricted_agents = agent_service.get_all(*[a['id'] for a in restricted_agents])
         db.session.flush()
         
     def update_product_criteria(self, product, gi_criteria, **kwargs):

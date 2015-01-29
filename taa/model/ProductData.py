@@ -40,6 +40,14 @@ def get_product_by_code(product_code):
             build_FPPCI_rate_table(), 
             Recommendations(FPPCI_recommendations),
         ),
+        "FPP-Gov": ProductData(
+            product_code,
+            "Family Protection Plan - Gov",
+            # TODO here
+            build_FPPTI_rate_table(),
+            Recommendations(FPPTI_recommendations),
+        ),
+
     }
     
     product = products_by_code.get(product_code)

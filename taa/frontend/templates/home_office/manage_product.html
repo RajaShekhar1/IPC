@@ -29,20 +29,19 @@
                                     </div>
                                 
                                     {% if is_base_product %}
-                                    <!--
+                                    
                                         <div class="form-group">
                                             
                                             <div class="col-md-2 control-label"></div>
                                         
                                             <div class="col-md-6">
                                                 <label for="product-name">   
-                                                    <input type="checkbox" class="" data-bind='checked: product().visible_to_agents'> 
-                                                    Visible to Agents
+                                                    <input type="checkbox" class="" disabled="disabled" data-bind='checked: !product().is_visible_to_agents'> 
+                                                    Only Available as GI Base
                                                 </label>
                                                 
                                             </div>
                                         </div>
-                                        -->
                                     {% endif %}
                                     
                                     {% if is_gi_product %}
@@ -186,6 +185,7 @@
                                     
                                     {% endif %}   
                                     {% if is_base_product %}
+                                        <!--ko if: product().is_visible_to_agents -->
                                         <h4 class="header lighter">Restrict from Agents</h4>
                                         <div class="row">
                                             <div class="col-sm-10 col-md-offset-1">
@@ -197,6 +197,7 @@
                                                 </select>
                                             </div>
                                         </div>
+                                        <!--/ko-->
                                     {% endif %}
                                 </div>
                             </div>
@@ -376,7 +377,26 @@ $(function() {
         self.name = base_product.name;
         self.is_visible_to_agents = base_product.visible_to_agents;
         
-        self.restricted_agents = ko.observableArray(base_product.restricted_agents || []);
+        var available_by_id = {};
+        $.each(available_agents, function() {
+            available_by_id[this.id] = this; 
+        });
+        var restricted_agents = [];
+        $.each(base_product.restricted_agents, function() {
+            var agent = this;
+            if (agent.id in available_by_id) {
+                restricted_agents.push(available_by_id[agent.id]);
+            }
+        });
+        self.restricted_agents = ko.observableArray(restricted_agents);
+        
+        self.serialize = function() {
+            return {
+                id: self.id,
+                name: self.name,
+                restricted_agents: self.restricted_agents()
+            }
+        }
     };
     
     var CustomProductEditor = function(custom_product, base_product_options, available_agents, soh_options) {
@@ -388,7 +408,7 @@ $(function() {
         self.product = ko.observable(new CustomProductViewModel(custom_product, self.available_agents, self.soh_options));
         self.product.editable = true;
         
-        self.base_product_options = $.map(base_product_options || [], function(bp) {return new BaseProductViewModel(bp)});
+        self.base_product_options = $.map(base_product_options || [], function(bp) {return new BaseProductViewModel(bp, self.available_agents)});
         self.issue_amount_options = [];
         // Populate issue amount options
         for (var i = 1000; i <= 150000; i += 1000) {
@@ -446,7 +466,7 @@ $(function() {
             };
             var on_failure = function(case_xhr, periods_xhr) {
                 var resp = case_xhr.responseJSON;
-                if (resp.errors) {
+                if (resp && resp.errors) {
                     show_all_errors(resp.errors);
                 } else {
                     alert("There was a problem saving the data.");
@@ -483,13 +503,36 @@ $(function() {
     var BaseProductEditor = function(product, available_agents) {
         var self = this;
         
-        self.product = ko.observable(new BaseProductViewModel(product, available_agents));
-        self.product.editable = false;
-        
         self.available_agents = $.map(available_agents, function(a){return new Agent(a)}) || [];
         
+        self.product = ko.observable(new BaseProductViewModel(product, self.available_agents));
+        self.product.editable = false;
+        
         self.save_settings = function() {
+            var form_data = self.product().serialize();
             
+            var settings_request = send_json_data(
+                "PUT", 
+                "{{ url_for("products.update_product", product_id=product.id) }}",
+                form_data
+            );
+            
+            var on_success = function(case_xhr, periods_xhr) {
+                alert("Saved");
+            };
+            var on_failure = function(case_xhr, periods_xhr) {
+                var resp = case_xhr.responseJSON;
+                if (resp && resp.errors) {
+                    show_all_errors(resp.errors);
+                } else {
+                    alert("There was a problem saving the data.");
+                }
+            };
+            $.when(settings_request
+                ).then(on_success, on_failure);
+            
+            hide_all_errors();
+            return false; 
         };
     };
 

@@ -17,7 +17,16 @@ class ProductJsonSerializable(JsonSerializable):
         data['is_guaranteed_issue'] = self.is_guaranteed_issue()
         
         return data
-        
+
+
+# Track who can't see products that are normally visible to all
+product_restricted_agents = db.Table('product_restricted_agents', db.metadata,
+                                     db.Column('product_id', db.Integer, db.ForeignKey('products.id'),
+                                               primary_key=True),
+                                     db.Column('agent_id', db.Integer, db.ForeignKey('agents.id'),
+                                               primary_key=True),
+)
+
 
 class Product(ProductJsonSerializable, db.Model):
     __tablename__ = 'products'
@@ -25,10 +34,15 @@ class Product(ProductJsonSerializable, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String, nullable=False)
     name = db.Column(db.String, nullable=False)
+    
+    # Boolean that controls whether on not this can be enrolled by agents
     visible_to_agents = db.Column(db.Boolean, nullable=False, server_default='True')
     
     product_type = db.Column(db.String(16), nullable=False, default=u'base', server_default=u'base')
     
+    restricted_agents = db.relationship('Agent', secondary=product_restricted_agents,
+                             backref=db.backref('restricted_products', lazy='dynamic'))
+
     __mapper_args__ = {
         'polymorphic_on': product_type,
         'polymorphic_identity': u'base',
@@ -58,7 +72,7 @@ class Product(ProductJsonSerializable, db.Model):
             return 'Base Product'
         
     
-# Relate custom products to agents
+# Relate custom products to agents - who can see these products
 product_agents = db.Table('product_agents', db.metadata,
     db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True),
     db.Column('agent_id', db.Integer, db.ForeignKey('agents.id'), primary_key=True),
