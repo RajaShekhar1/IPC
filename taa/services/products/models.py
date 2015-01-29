@@ -67,7 +67,7 @@ class Product(ProductJsonSerializable, db.Model):
     
     def format_type(self):
         if self.is_guaranteed_issue():
-            return self.base_product.name
+            return self.base_product.name if self.base_product else '(Not Selected)'
         else:
             return 'Base Product'
         
