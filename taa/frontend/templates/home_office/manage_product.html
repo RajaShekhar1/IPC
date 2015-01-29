@@ -555,6 +555,9 @@ $(function() {
         self.product = ko.observable(new BaseProductViewModel(product, self.available_agents));
         self.product.editable = false;
         
+        // Communicate with the loading modal component
+        self.loading_modal = ko.observable(null);
+        
         self.save_settings = function() {
             var form_data = self.product().serialize();
             
