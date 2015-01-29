@@ -14,6 +14,14 @@ function send_json_data(method, url, data, on_success, on_error) {
     return submit_data(method, url, JSON.stringify(data), false, on_success, on_error, 'application/json');
 }
 
+function get_loading_html(message) {
+    var text = message || "Loading data...";
+    //return "<span class='icon-spinner icon-spin grey bigger-200'></span> <span class='bigger-175'> "+text+"</span>";
+    return '<div class="text-center">' +
+                "<h4>"+text+"</h4>"+
+                '<i class="icon-spinner icon-spin grey bigger-200"></i>'+  
+            "</div>";
+}
 
 // Misc Formatting
 function format_enrollment_status_text(status) {
@@ -155,6 +163,17 @@ function numberWithCommas(x) {
 
 
 // Custom bindings
+
+// Show or hide a modal based on a boolean observable
+ko.bindingHandlers.modal = {
+    update: function(element, valueAccessor) {
+        if (ko.unwrap(valueAccessor())) {
+            $(element).modal('show');
+        } else {
+            $(element).modal('hide');
+        }
+    }
+};
 
 ko.bindingHandlers.flashMessage = {
     update: function(element, valueAccessor) {
@@ -313,6 +332,65 @@ ko.components.register('flash-messages', {
             </p>\
         </div>\
         <!--/ko-->'
+});
+
+
+// Loading modal component
+// params should have an "options" key that is an observable object
+// with a "message" string and optional "title".
+// if the value of the observable is set to null, it hides the modal
+ko.components.register('loading-modal', {
+    viewModel: function(params) {
+        var self = this;
+        self.options = params.options;
+        
+        self.defaults = {
+            message: "Loading...",
+            title: "Please Wait"
+        };
+        
+        self._current_settings = ko.pureComputed(function() {
+            // Use current options if available, else fall back to defaults
+            return $.extend({}, self.defaults, self.options() || {});
+        });
+        
+        self.message = ko.pureComputed(function() {
+            return self._current_settings().message;
+        });
+        
+        self.title = ko.pureComputed(function() {
+            return self._current_settings().title;
+        });
+        
+        self.is_showing = ko.pureComputed(function() {
+            return self.options() !== null; 
+        });
+    }, 
+    template: '\
+        <div class="modal fade" data-bind="modal: is_showing">\
+            <div class="modal-dialog">\
+                <div class="modal-content">\
+                    <div class="modal-header">\
+                        <button type="button" class="close" data-dismiss="modal"><span\
+                            aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>\
+                        <h4 class="modal-title" data-bind="html: title">Please wait</h4>\
+                    </div>\
+                    <div class="modal-body">\
+                        <div class="form-panel modal-panel">\
+                            <div class="text-center">\
+                                <h4 data-bind="html: message"></h4>\
+                                <i class="icon-spinner icon-spin grey bigger-200"></i>\
+                            </div>\
+                        </div>\
+                    </div>\
+                    <div class="modal-footer">\
+                    </div>\
+                </div>\
+                <!-- /.modal-content -->\
+            </div>\
+            <!-- /.modal-dialog -->\
+        </div>\
+    '
 });
 
 // Height select
