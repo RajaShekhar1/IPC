@@ -16,8 +16,8 @@ from flask.ext.stormpath import (
 )
 
 from taa import app
-from taa.model.Registration import TAA_RegistrationForm, TAA_LoginForm
-from taa.model.Enrollment import NotifyAdminEmail
+from taa.old_model.Registration import TAA_RegistrationForm, TAA_LoginForm
+from taa.old_model.Enrollment import NotifyAdminEmail
 from taa.services.agents import AgentService
 
 @app.route("/user_register", methods=['GET', 'POST'])

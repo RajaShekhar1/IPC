@@ -18,9 +18,9 @@ from taa.services.cases.forms import (
     UpdateCaseForm
 )
 from taa.services.agents import AgentService
-from taa.services.products import ProductService
+from taa.services.products import ProductService, get_all_states
 from taa.services.docusign.DocuSign_config import sessionUserApprovedForDocusign
-from taa.model.Enrollment import get_product_states, get_product_choices, get_all_states
+from taa.old_model.Enrollment import get_product_states, get_product_choices
 
 case_service = CaseService()
 agent_service = AgentService()

@@ -12,8 +12,8 @@ from taa import (
     stormpath_manager,
 )
 from taa.models import db
-from taa.model.Registration import TAA_UserForm
-from taa.model.Enrollment import AgentActivationEmail
+from taa.old_model.Registration import TAA_UserForm
+from taa.old_model.Enrollment import AgentActivationEmail
 
 from taa.services.agents import AgentService
 agent_service = AgentService()

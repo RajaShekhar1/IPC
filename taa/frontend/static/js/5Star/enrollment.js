@@ -298,8 +298,9 @@ function WizardUI(product, defaults) {
     };
     
     self.refresh_rate_table = function() {
+        var product_id = self.insurance_product.product_data.id;
         ajax_post(
-            "/get_rates", 
+            "/products/"+product_id+"/rates", 
             self.build_rate_parameters(), 
             self.show_updated_rates, 
             handle_remote_error,
@@ -332,7 +333,7 @@ function WizardUI(product, defaults) {
     self.build_rate_parameters = function() {
         
         return {
-            product_type: self.insurance_product.product_type,
+            //product_type: self.insurance_product.product_type,
             employee: self.employee().serialize_data(),
             spouse: self.should_include_spouse_in_table()? self.spouse().serialize_data() : null,
             num_children: self.children().length
@@ -383,7 +384,9 @@ function WizardUI(product, defaults) {
     // Update rates when certain values change
     var watch_data_values = [
         self.employee().birthdate,
+        self.employee().is_smoker,
         self.spouse().birthdate,
+        self.spouse().is_smoker,
         self.children,
         self.should_include_spouse_in_table,
         self.should_include_children_in_table
@@ -393,7 +396,8 @@ function WizardUI(product, defaults) {
     });
     
     
-    self.show_updated_rates = function(data) {
+    self.show_updated_rates = function(resp) {
+        var data = resp.data;
         self.parse_benefit_options(self.employee(), data.employee_rates);
         self.parse_benefit_options(self.spouse(), data.spouse_rates);
         // Reset child rates

@@ -8,8 +8,7 @@ from wtforms.fields import (
 from wtforms.widgets import CheckboxInput
 from wtforms import validators
 
-from taa.model.Enrollment import get_all_states
-from taa.services.products import ProductService
+from taa.services.products import ProductService, get_all_states
 products_service = ProductService()
 
    

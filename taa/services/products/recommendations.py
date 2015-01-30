@@ -1,6 +1,25 @@
+
 import csv
 
 
+def get_product_recommendations(product, **demographics):
+    
+    if product.get_base_product_code() == "FPP-TI":
+        rec = Recommendations(FPPTI_recommendations)
+    elif product.get_base_product_code() == "FPP-CI":
+        rec = Recommendations(FPPCI_recommendations)
+    else:
+        # TODO: should this be an error? use TI for now
+        rec = Recommendations(FPPTI_recommendations)
+    
+    return rec.lookup_recommended_coverages(
+        employee_age=demographics['employee_age'],
+        spouse_age=demographics.get('spouse_age'),
+        num_children=demographics.get('num_children')
+    )
+
+
+## Recommended coverages tables
 class Recommendations(object):
     def __init__(self, lookup):
         self.recommendation_lookup = lookup
@@ -58,5 +77,5 @@ def build_recommendation_table(csv_path):
         
     return table
 
-FPPTI_recommendations = build_recommendation_table("taa/model/rates/FPPTI_suggested_rates.csv")
-FPPCI_recommendations = build_recommendation_table("taa/model/rates/FPPCI_suggested_rates.csv")
+FPPTI_recommendations = build_recommendation_table("taa/services/products/data_files/FPPTI_suggested_rates.csv")
+FPPCI_recommendations = build_recommendation_table("taa/services/products/data_files/FPPCI_suggested_rates.csv")

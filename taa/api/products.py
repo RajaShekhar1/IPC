@@ -11,6 +11,9 @@ bp = Blueprint("products", __name__, url_prefix='/products')
 read_product_api_groups = ['agents', 'home_office', 'admins']
 write_product_groups = ['home_office', 'admins']
 
+# TODO: Will need to eventually add a group type for people doing self-enroll 
+read_product_rate_groups = ['agents', 'home_office', 'admins']
+
 product_service = ProductService()
 
 @route(bp, "/", methods=['GET'])
@@ -67,3 +70,35 @@ def update_product(product_id):
 def delete_product(product_id):
     product_service.delete(product_service.edit_if_allowed(product_id))
     return None, 204
+
+
+# Rates and recommendations for a product given key demographic data
+@route(bp, "/<product_id>/rates", methods=['POST'])
+@groups_required(read_product_rate_groups, all=False)
+def get_product_rates(product_id):
+    product = product_service.get_if_allowed(product_id)
+    data = get_posted_data()
+    
+    # Pull parameters from the request
+    employee = data['employee']
+    spouse = data['spouse']
+    num_children = data['num_children']
+    
+    demographics = dict(
+        employee_age=employee['age'],
+        employee_smoker=employee['is_smoker'],
+        spouse_age=spouse['age'] if spouse else None,
+        spouse_smoker=spouse['is_smoker'] if spouse else None,
+        num_children=num_children,
+    )
+    
+    # return rates and recommendations
+    rates = product_service.get_product_rates(product, demographics)
+    
+    recommendations = product_service.get_product_recommendations(product, demographics)
+    return {
+        'employee_rates': rates['employee'],
+        'spouse_rates': rates.get('spouse'),
+        'children_rates': rates.get('children'),
+        'recommendations': recommendations
+    }
