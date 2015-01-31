@@ -74,9 +74,10 @@ def delete_product(product_id):
 
 # Rates and recommendations for a product given key demographic data
 @route(bp, "/<product_id>/rates", methods=['POST'])
-@groups_required(read_product_rate_groups, all=False)
+#@groups_required(read_product_rate_groups, all=False)
 def get_product_rates(product_id):
-    product = product_service.get_if_allowed(product_id)
+    #product = product_service.get_if_allowed(product_id)
+    product = product_service.get(product_id)
     data = get_posted_data()
     
     # Pull parameters from the request

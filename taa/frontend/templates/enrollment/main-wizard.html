@@ -87,7 +87,7 @@
 
     <!-- ------------------------------ STEP 1 ------------------------------ -->
 
-    <form class="form-horizontal" id="step1-form">
+    <form class="" id="step1-form">
 
     <div class="step-pane active" id="step1">
 
@@ -113,12 +113,12 @@
     
     {# Employee Section #}
     <div>
-        <div class="form-group">
-            <label class="control-label no-padding-right col-xs-12 col-sm-2" for="eeBenefitFName">
+        <div class="row">
+            <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="eeBenefitFName">
                 Employee
             </label> 
             
-            <div class="col-xs-12 col-sm-10">
+            <div class="form-group col-xs-12 col-sm-10">
                 <input type="text" style="width: 45%" id="eeBenefitFName" name="eeBenefitFName"
                        data-bind="value: employee().first" placeholder="First Name" >
                 <input type="text" style="width: 45%" id="eeBenefitLName" name="eeBenefitLName"
@@ -126,8 +126,8 @@
             </div>
         </div>
         
-        <div class="form-group">
-            <div class="col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
+        <div class="row">
+            <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
                 <label style="margin-right: 1em;" for="eeDOB">
                     Date of Birth
                 </label>
@@ -139,7 +139,7 @@
             
             <div class="col-xs-12 visible-xs">&nbsp;</div>
             
-            <div class="col-xs-12 col-sm-4">
+            <div class="form-group col-xs-12 col-sm-4">
                 <div class="">
                         <label style="margin-right: 3em;">
                             <input type="checkbox" class="ace" data-bind="checked: should_show_spouse">
@@ -161,12 +161,12 @@
     
     {# Spouse Section #}
     <div data-bind="slideDownIf: should_show_spouse">
-        <div class="form-group">
-            <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="spFName">
+        <div class="row">
+            <label class="col-xs-12 col-sm-2 no-padding-right text-right" for="spFName">
                 Spouse
             </label>
 
-            <div class="col-xs-12 col-sm-10">
+            <div class="form-group col-xs-12 col-sm-10">
                 <input type="text" style="width: 45%" id="spFName" name="spFName"
                        data-bind="value: spouse().first" placeholder="First Name" >
                 <input type="text" style="width: 45%" id="spLName" name="spLName"
@@ -174,9 +174,9 @@
             </div>
         </div>
         
-        <div class="form-group">
+        <div class="row">
             
-            <div class="col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
+            <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
                 <label style="margin-right: 1em;" for="spDOB">
                     Date of Birth
                 </label>
@@ -195,23 +195,25 @@
     <!-- template for extended questions -->
     <script type="text/html" id="extended-questions-template">
         <!--ko if: $root.should_show_extended_questions() -->
-        <div class="form-group">
+        <div class="row">
             <!--ko if: $root.should_show_gender() -->
-            <div class="col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-                <label style="margin-right: 1em;">
-                    <input type="radio" value="male" class="ace"
-                           data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
-                    <span class="lbl"> Male</span>
-                </label>
-                <label>
-                    <input type="radio" value="female" class="ace"
-                           data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
-                    <span class="lbl"> Female</span>
-                </label>
+            <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
+                <div class="">
+                    <label style="margin-right: 1em;">
+                        <input type="radio" value="male" class="ace"
+                               data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
+                        <span class="lbl"> Male</span>
+                    </label>
+                    <label>
+                        <input type="radio" value="female" class="ace"
+                               data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
+                        <span class="lbl"> Female</span>
+                    </label>
+                </div>
             </div>
             <!--/ko-->
             <!--ko if: $root.should_show_smoker() -->
-            <div class="col-xs-12 col-sm-5">
+            <div class="form-group col-xs-12 col-sm-5">
                 <label style="margin-right: 1em;">
                     <input type="radio" value="false" class="ace"
                            data-bind="checked: is_smoker, attr: {name: 'tobacco-'+$data._id}">
@@ -225,17 +227,17 @@
             </div>
             <!--/ko-->
         </div>
-        <div class="form-group">
+        <div class="row">
             <!--ko if: $root.should_show_height() -->
-            <div class="col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-                <height-select params="value: height"></height-select>
+            <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
+                <height-select class="height" params="value: height, name_suffix: $data._id+''"></height-select>
             </div>
             <!--/ko-->
             <!--ko if: $root.should_show_weight() -->
-            <div class="col-sm-4">
+            <div class="form-group col-sm-4">
                 <label class="">
                     Weight: <input type="number" class="text-right"
-                                   data-bind="value: weight" style="width: 5em"> Lbs.
+                                   data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
                 </label>
             </div>
             <!--/ko-->
@@ -247,13 +249,13 @@
     <div data-bind="slideDownIf: should_include_children">
         <!--ko foreach: {data: children, afterAdd: rendered_child, beforeRemove: removing_child} -->
             <div class="">
-                <div class="form-group">
+                <div class="row">
                     <label class="control-label col-xs-12 col-sm-2 no-padding-right"
                         data-bind="attr: {for: 'child-first-'+$index()}">
                         Child <span data-bind="text: $index() + 1"></span>
                     </label>
                     
-                    <div class="col-xs-12 col-sm-10">
+                    <div class="form-group col-xs-12 col-sm-10">
                         <input type="text"  style="width: 45%" class="child_first"
                            data-bind="value: first, attr: {id: 'child-first-'+$index()}"
                            placeholder="First Name"/>
@@ -263,8 +265,8 @@
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <div class="col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
+                <div class="row">
+                    <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
                         <label style="margin-right: 1em;" data-bind="attr: {for: 'child-dob-'+$index()}">
                             Date of Birth
                         </label>
@@ -299,11 +301,21 @@
         </div>
     </div>
 
+    
     <div class="center recommended-coverage-table" data-bind="slideDownIf: is_recommended_table_visible,
             css: {'ci-recommendations': insurance_product.has_critical_illness_coverages}">
-
-        <h3 class="header smaller red">Recommended Coverage</h3>
-
+        
+        <h3 class="header smaller red">Recommended Coverage 
+            
+        </h3>
+        <div class="center">
+            <div data-bind="slideDownIf: is_rate_table_loading">
+                <i class="icon-spinner icon-spin grey bigger-125"></i>   
+                Loading Rates and Recommended Coverages...
+                <br>
+            </div>
+        </div>        
+        
         <div class="row">
             <div class="col-xs-4 col-sm-3 pricing-span-header">
                 <div class="widget-box transparent">

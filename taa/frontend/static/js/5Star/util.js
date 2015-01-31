@@ -205,6 +205,23 @@ ko.bindingHandlers.slideDownIf = {
     }
 };
 
+ko.bindingHandlers.fadeInIf = {
+    init: function(element, value_accessor) {
+        var val = ko.unwrap(value_accessor());
+        // Initially hide or show without animation
+        $(element).toggle(val);
+    },
+    update: function(element, value_accessor) {
+        // value should be a boolean
+        var val = ko.unwrap(value_accessor());
+        if (val) {
+            $(element).fadeIn(400);
+        } else {
+            $(element).fadeOut(400);
+        }
+    } 
+};
+
 
 // Wrap the ace multiselect plugin 
 ko.bindingHandlers.multiSelect = {
@@ -400,6 +417,8 @@ ko.components.register('height-select', {
         
         // Data: value is an observable that can be null or an int (inches)
         self.height = params.value;
+        self.required = params.required || false;
+        self.name_suffix = params.name_suffix || null;
         
         self.height_feet_part = ko.observable(get_feet_part(self.height()));
         self.height_inches_part = ko.observable(get_inches_part(self.height()));
@@ -421,7 +440,8 @@ ko.components.register('height-select', {
     template:
         '\
         <label>\
-            <select data-bind="value: height_feet_part">\
+        Height:\
+            <select data-bind="value: height_feet_part, attr: {name: \'height_feet_\'+name_suffix}">\
                 <option></option>\
                 <option>4</option>\
                 <option>5</option>\
@@ -429,7 +449,7 @@ ko.components.register('height-select', {
             </select> Feet\
         </label>\
         <label>\
-            <select data-bind="value: height_inches_part">\
+            <select data-bind="value: height_inches_part, attr: {name: \'height_inches_\'+name_suffix}">\
                 <option></option>\
                 <option>1</option>\
                 <option>2</option>\

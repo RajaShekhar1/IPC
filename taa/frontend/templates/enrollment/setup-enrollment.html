@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% set active_page = 'nav_enroll' -%}
-{% set compliance_has_approved_remote_enrollment = False %}
 
 {% block title %} - Launch Enrollment{% endblock %}
 {% block content %}
@@ -247,34 +246,19 @@
         </div>
       </div>
     
-{% set compliance_has_approved_remote_enrollment = False %}
-    {% if compliance_has_approved_remote_enrollment %}
-    <div class="row">
-      <div class="col-xs-12 col-sm-6">
-	<p class="center"><button type="submit" class="btn btn-lg btn-info" id="in-person-enrollment-btn">
-	    <i class="icon icon-user align-top bigger-110"></i>Enroll in-person</button></p>
-      </div>
-      <div class="col-xs-12 col-sm-6">
-	<p class="center"><button type="button" class="btn btn-lg btn-success" id="email-enrollment-btn">
-	    <i class="icon icon-envelope align-top bigger-110"></i>Enroll via email</button></p>
-      </div>
-    </div>
-   {% else %}
+    
     <div class="row">
       <div class="col-xs-12">
 	    <p class="center"><button type="submit" class="btn btn-lg btn-info" id="in-person-enrollment-btn">
 	    <i class="icon icon-user align-top bigger-110"></i>Proceed to enrollment</button></p>
       </div>
     </div>
-    {% endif %}
     
 </form>
 
   </div><!-- /.col-xs12 -->
 </div><!-- /.row -->
-
-
-
+    
 {% endblock %}
 
 
@@ -804,54 +788,6 @@
 
 
 </script>
-    
-{% if compliance_has_approved_remote_enrollment %}
-<script type="text/javascript">
-    jQuery(function($) {
-  
-        var email_btn = $("#email-enrollment-btn");
-        email_btn.on("click", function() {
-            email_btn.prop('disabled', true);
-            $.ajax("{{url_for('email_enrollment')}}", {
-                data: $(".enrollment-form").serialize(),
-                error: function() {
-                    bootbox.dialog({
-                        message: "There was a problem in sending the email.  Please check the email address, or contact the Enrollment System administrator if you have further problems.",
-                        buttons: {
-                            "success": {
-                                "label": "OK",
-                                "className": "btn-sm btn-primary"
-                            }
-                        }
-                    });
-    
-                    <!-- alert("There was a problem sending the email."); -->
-                    email_btn.prop('disabled', false);
-                },
-                success: function() {
-                    <!-- alert("The enrollment email has been sent to '"+$('#email').val()+"'"); -->
-                    bootbox.dialog({
-                        message: $('#eeFName').val() + " " + $('#eeLName').val() + " (" + $('#email').val() + ") will receive a link to the application via email.  The signed application will queue in your agent applications inbox requiring your signature prior to processing.",
-                        buttons: {
-                            "success": {
-                                "label": "OK",
-                                "className": "btn-sm btn-primary"
-                            }
-                        }
-                    });
-		    
-                    email_btn.prop('disabled', false);
-                    $('#email').val("")
-                    $('#eeFName').val("")
-                    $('#eeLName').val("")
-                        },
-                        // expected return data type
-                        dataType: "json",
-                        method: "POST"
-                    });
-                });
-  });
-</script>
-{% endif %}
+
 
 {% endblock %}

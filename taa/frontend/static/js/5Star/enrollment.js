@@ -138,20 +138,23 @@ function WizardUI(product, defaults) {
     // Spouse info
     var spouse_data = self.defaults.spouse_data || {last: self.defaults.employee_last} || {};
     
-    self.should_show_spouse = ko.observable((
-            spouse_data.first !== undefined && 
-            spouse_data.last !== undefined && 
-            spouse_data.birthdate !== undefined
-    ));
     
     self.spouse = ko.observable(new InsuredApplicant(spouse_data));
     
-    self.is_spouse_age_valid = ko.computed(function() {
-        return self.insurance_product.is_valid_spouse_age(self.spouse().get_age()) ;
+    var is_initially_showing_spouse = (
+            self.spouse().first !== undefined && 
+            self.spouse().last !== undefined && 
+            self.spouse().birthdate !== undefined
+    );
+    // Corresponds to the 'Married' checkbox
+    self.should_show_spouse = ko.observable(is_initially_showing_spouse);
+    
+    self.is_spouse_valid = ko.computed(function() {
+        return self.insurance_product.is_valid_spouse(self.spouse()) ;
     });
     
     self.should_include_spouse_in_table = ko.computed(function() {
-        return self.should_show_spouse() && self.spouse().is_valid() && self.is_spouse_age_valid();
+        return self.should_show_spouse() && self.spouse().is_valid() && self.is_spouse_valid();
     });
     self.show_spouse_name = ko.computed(function() {
         return (self.should_include_spouse_in_table()) ? self.spouse().name() : "";
@@ -176,7 +179,7 @@ function WizardUI(product, defaults) {
     self.get_valid_children = ko.computed(function() {
         var children = [];
         $.each(self.children(), function() {
-            if (this.is_valid() && self.insurance_product.is_valid_child_age(this.get_age())) {
+            if (this.is_valid() && self.insurance_product.is_valid_child(this)) {
                 children.push(this);
             } 
         });
@@ -226,7 +229,7 @@ function WizardUI(product, defaults) {
     self.are_children_ages_valid = ko.computed(function() {
         var all_valid = true;
         $.each(self.children(), function() {
-            if (!self.insurance_product.is_valid_child_age(this.get_age())) {
+            if (!self.insurance_product.is_valid_child(this)) {
                 all_valid = false;
                 return false;
             }
@@ -250,20 +253,20 @@ function WizardUI(product, defaults) {
         return self.child_benefits().all_options();
     });
     
-    // Recommended and selected benefits
     self.is_show_rates_clicked = ko.observable(false);
     
-    self.is_employee_age_valid = ko.computed(function() {
-        return self.insurance_product.is_valid_employee_age(self.employee().get_age()) ;
+    self.is_rate_table_loading = ko.observable(false);
+    
+    self.is_employee_info_valid = ko.computed(function() {
+        return self.insurance_product.is_valid_employee(self.employee()) ;
     });
     
     
     self.can_display_rates_table = ko.computed(function() {
-        // TODO: some of the age constants or other requirements will be determined by the product
         
         // All employee info
         var valid = self.employee().is_valid();
-        valid &= self.is_employee_age_valid();
+        valid &= self.is_employee_info_valid();
         
         // Trigger jquery validation manually 
         if (self.is_show_rates_clicked()) {
@@ -286,8 +289,11 @@ function WizardUI(product, defaults) {
         if (!self.can_display_rates_table()) {
             return;
         }
-        self.is_show_rates_clicked(true);
+        
         self.refresh_rate_table();
+        
+        self.is_show_rates_clicked(true);
+        
     };
     
     self.update_rate_table = function() {
@@ -298,6 +304,8 @@ function WizardUI(product, defaults) {
     };
     
     self.refresh_rate_table = function() {
+        self.is_rate_table_loading(true);
+        
         var product_id = self.insurance_product.product_data.id;
         ajax_post(
             "/products/"+product_id+"/rates", 
@@ -395,6 +403,14 @@ function WizardUI(product, defaults) {
         this.subscribe(self.update_rate_table);
     });
     
+    self.should_show_spouse.subscribe(function(val) {
+        if (self.should_show_spouse()) {
+            setTimeout(function() {
+                // Force validation
+                self.validator.form();
+            }, 0);
+        }
+    });
     
     self.show_updated_rates = function(resp) {
         var data = resp.data;
@@ -414,6 +430,9 @@ function WizardUI(product, defaults) {
         if (self.selected_plan().is_valid()) {
             self.apply_selected_customization();
         }
+        
+        // Done loading rates
+        self.is_rate_table_loading(false);
     };
     
     self.parse_benefit_options = function(applicant, rates) {
@@ -477,13 +496,19 @@ function WizardUI(product, defaults) {
         var age = age_for_date(val);
         return (age !== "" && age >= params);
     }, "Must be at least {0} years old for this product");
+    
     $.validator.addMethod("maxAge", function(val, element, params) {
         var age = age_for_date(val);
         return (age !== "" && age <= params);
     }, "Must be no more than {0} years old for this product");
     
+    $.validator.addMethod("minWeight", function(val, element, params) {
+        var weight = val;
+        return (age !== "" && age >= params);
+    }, "Must be at least {0} years old for this product");
+    
     function any_valid_spouse_field() {
-        return self.should_show_spouse();
+        return self.should_include_spouse_in_table(); //self.should_show_spouse();
         //return self.spouse().any_valid_field();
     }
     self.validator = $("#step1-form").validate({
@@ -502,6 +527,10 @@ function WizardUI(product, defaults) {
                 minAge: self.insurance_product.min_emp_age(),
                 maxAge: self.insurance_product.max_emp_age()
             },
+            'tobacco-0': {
+                required: true  
+            },
+            'gender-0': "required",
             spFName: {
                 required: {
                     depends: any_valid_spouse_field
@@ -522,7 +551,20 @@ function WizardUI(product, defaults) {
                     depends: any_valid_spouse_field
                 }
             },
+            'tobacco-1': "required",
+            'gender-1': "required",
+            'height_feet_0': "required",
+            'height_inches_0': "required",
+            'height_feet_1': "required",
+            'height_inches_1': "required",
+            'sp_height': "required",
+            weight_0: 'required',
+            weight_1: 'required',
             debug: true
+        },
+        groups: {
+            emp_height: "height_feet_0 height_inches_0",
+            sp_height: "height_feet_1 height_inches_1"
         }
     });
     
@@ -673,15 +715,19 @@ Product.prototype = {
     min_child_age: function() {return 0},
     max_child_age: function() {return 23},
     
-    is_valid_employee_age: function(age) {
+    is_valid_employee: function(employee) {
+        // Only age matters for most products
+        var age = employee.get_age();
         return (age >= this.min_emp_age() && age <= this.max_emp_age());
     }, 
     
-    is_valid_spouse_age: function(age) {
+    is_valid_spouse: function(spouse) {
+        var age = spouse.get_age();
         return (age >= this.min_sp_age() && age <= this.max_sp_age());
     },
     
-    is_valid_child_age: function(age) {
+    is_valid_child: function(child) {
+        var age = child.get_age();
         return (age >= this.min_child_age() && age <= this.max_child_age());
     },
 
@@ -728,6 +774,28 @@ GroupCIProduct.prototype = Object.create(Product.prototype);
 GroupCIProduct.prototype.get_new_benefit_option = function(options) {
     return new CIBenefitOption(new BenefitOption(options));
 };
+GroupCIProduct.prototype.is_valid_employee = function(employee) {
+    // Need to validate age and is_smoker is valid
+    var age = employee.get_age();
+    var valid = (age >= this.min_emp_age() && age <= this.max_emp_age());
+    valid &= employee.is_smoker() != null;
+    valid &= employee.has_valid_weight();
+    valid &= employee.has_valid_height();
+    valid &= employee.has_valid_gender();
+    
+    return valid;
+};
+
+GroupCIProduct.prototype.is_valid_spouse = function(spouse) {
+    var age = spouse.get_age();
+    var valid = (age >= this.min_sp_age() && age <= this.max_sp_age());
+    valid &= spouse.is_smoker() != null;
+    valid &= spouse.has_valid_weight();
+    valid &= spouse.has_valid_height();
+    valid &= spouse.has_valid_gender();
+    return valid;
+};
+
 GroupCIProduct.prototype.requires_gender = function() {return true;};
 GroupCIProduct.prototype.requires_height = function() {return true;};
 GroupCIProduct.prototype.requires_weight = function() {return true;};
@@ -1097,7 +1165,8 @@ var _applicant_count = 0;
 function InsuredApplicant(options) {
     var self = this;
     
-    // a basic internal id we can use in loops to distinguish applicants 
+    // a basic internal id we can use in loops to distinguish applicants and get
+    //  unique names, attributes, etc. for validation and lookup
     self._id = _applicant_count++;
     
     self.first = ko.observable(options.first || "");
@@ -1106,7 +1175,7 @@ function InsuredApplicant(options) {
     self.phone = ko.observable(options.phone || "");
     self.birthdate = ko.observable(options.birthdate || null);
     self.ssn = ko.observable(options.ssn || "");
-    self.gender = ko.observable(options.gender || "");
+    self.gender = ko.observable(options.gender || null);
     
     // Extended questions
     self.height = ko.observable(options.height ? options.height : null);
@@ -1120,6 +1189,16 @@ function InsuredApplicant(options) {
     self.zip = ko.observable(options.zip || "");
     
     self.health_questions = {};
+    
+    self.has_valid_gender = ko.pureComputed(function() {
+        return self.gender() !== null;
+    });
+    self.has_valid_height = ko.pureComputed(function() {
+        return self.height() != null && self.height() != NaN;
+    });
+    self.has_valid_weight = ko.pureComputed(function() {
+        return self.weight() != null;
+    });
     
     self.is_valid = ko.computed(function() {
         return (
@@ -2409,7 +2488,9 @@ function wizard_error_placement(error, element) {
     }
     else if (element.is('.chosen-select')) {
         error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
-    } 
+    } else if (element.closest('.form-group').length > 0) {
+        error.appendTo(element.closest('.form-group'));
+    }
     else error.insertAfter(element);
     //else error.insertAfter(element.parent());
 }
