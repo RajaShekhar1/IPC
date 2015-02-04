@@ -707,17 +707,31 @@ function WizardUI(product, defaults) {
                 var question_factory;
                 if (product_data.is_guaranteed_issue) {
                     question_factory = function (question_data) {
-                        return new GIHealthQuestion(question_data, self.selected_plan,
+                        return new GIHealthQuestion(self.insurance_product, question_data, self.selected_plan,
                             product_data.gi_criteria,
                             product_data.statement_of_health_bypass_type, product_data.bypassed_soh_questions);
                     };
-                //} else if (product_data.code == "Group CI") {
-                //    question_factory = function(question_data) {
-                //        return new GIHealthQuestion(question_data, self.selected_plan, 
-                //        [],
-                //            ""
-                //        );
-                //    }
+                } else if (product_data.code == "Group CI") {
+                    question_factory = function(question_data) {
+                        return new GIHealthQuestion(self.insurance_product, question_data, self.selected_plan, 
+                        //     
+                        [{guarantee_issue_amount: 10000, applicant_type: 'Employee', age_max: null, age_min: null, weight_min: null, weight_max: null, height_min: null, height_max: null}, 
+                         {guarantee_issue_amount: 10000, applicant_type: 'Spouse', age_max: null, age_min: null, weight_min: null, weight_max: null, height_min: null, height_max: null},
+                         {guarantee_issue_amount: 10000, applicant_type: 'Child', age_max: null, age_min: null, weight_min: null, weight_max: null, height_min: null, height_max: null}
+                        ],
+                        // Skip over these questions (all but first two )
+                        "selected",
+                            [
+                                {question_type_label: "5yr Heart"},
+                                {question_type_label: "5yr Hypertension / Cholesterol"},
+                                {question_type_label: "5yr Lung / Colon"},
+                                {question_type_label: "5yr Skin Cancer"},
+                                {question_type_label: "5yr HPV/HSV"},
+                                {question_type_label: "Abnormal Results"},
+                                {question_type_label: "Ever been rejected"}
+                            ]
+                        );
+                    }
                 } else {
                     question_factory = function(question_data) {
                         return new StandardHealthQuestion(question_data, self.selected_plan);
@@ -824,7 +838,7 @@ Product.prototype = {
     
     parse_benefit_options: function(applicant_type, applicant, rates) {
         var self = this;
-        var all_options = [];
+        var all_options = [new NullBenefitOption()];
         
         if (rates.weekly_bypremium) {
             var by_premium_options = $.map(rates.weekly_bypremium, function(rate) {
@@ -839,7 +853,6 @@ Product.prototype = {
         }
         
         if (rates.weekly_byface) {
-            var options = [new NullBenefitOption()];
             var by_face_options = $.map(rates.weekly_byface, function(rate) {
                 return self.get_new_benefit_option({
                     is_by_face: true,
@@ -959,14 +972,16 @@ function GroupCIProduct(product_data) {
             */
             
             // $5,000 to $100,000
-            var valid_rates = [];
+            var valid_options = [new NullBenefitOption()];
+            var rate_choices = [];
             $.each(rates.weekly_byface, function() {
                 var rate = this;
                 if (rate.coverage % 5000 == 0) {
-                    valid_rates.push(rate);
+                    rate_choices.push(rate);
                 }
             });
-            self.all_coverage_options[applicant_type]($.map(valid_rates, convert_rate_to_benefit_option)); 
+            $.merge(valid_options, $.map(rate_choices, convert_rate_to_benefit_option));
+            self.all_coverage_options[applicant_type](valid_options); 
         }
         if (applicant_type == "spouse" && rates.weekly_byface !== undefined) {
             // $5,000 increments up to 50% of employee's current selection, 25k max
@@ -987,11 +1002,14 @@ function GroupCIProduct(product_data) {
             });
             //self.spouse_options_for_demographics($.map(demographic_spouse_rates, convert_rate_to_benefit_option));
             //self.all_spouse_rate_options($.map(all_spouse_rates, convert_rate_to_benefit_option));
-            self.all_coverage_options[applicant_type]($.map(demographic_spouse_rates, convert_rate_to_benefit_option));
+            var sp_options = [new NullBenefitOption()];
+            $.merge(sp_options, $.map(demographic_spouse_rates, convert_rate_to_benefit_option));
+            self.all_coverage_options.spouse(sp_options);
         }
         if (applicant_type == "children" && rates.weekly_byface !== undefined) {
-            self.all_coverage_options[applicant_type]($.map(rates.weekly_byface, convert_rate_to_benefit_option));
-            
+            var ch_options = [new NullBenefitOption()];
+            $.merge(ch_options, $.map(rates.weekly_byface, convert_rate_to_benefit_option));
+            self.all_coverage_options.children(ch_options);
         }
     };
     
@@ -1158,8 +1176,9 @@ StandardHealthQuestion.prototype.does_applicant_need_to_answer = function(applic
 };
 
 
-var GIHealthQuestion = function(question, selected_plan, applicant_criteria, skip_mode, skipped_questions) {
+var GIHealthQuestion = function(product, question, selected_plan, applicant_criteria, skip_mode, skipped_questions) {
     var self = this;
+    self.product = product;
     self.selected_plan = selected_plan;
     self.question = question;
     self.applicant_criteria = applicant_criteria;
@@ -1277,17 +1296,20 @@ var GIHealthQuestion = function(question, selected_plan, applicant_criteria, ski
         }
         
         // Otherwise, show a special dialogue that gives a few options for continuing 
-        var coverage, criteria, applicant;
+        var coverage, criteria, applicant, applicant_coverage_options;
         if (applicant_type == 'Employee') {
             applicant = self.selected_plan().root.employee();
+            applicant_coverage_options = self.product.get_coverage_options_for_applicant('employee');
             coverage = self.selected_plan().employee_recommendation().recommended_benefit;
             criteria = self.get_criteria("Employee");
         } else if (applicant_type == 'Spouse') {
             applicant = self.selected_plan().root.spouse();
+            applicant_coverage_options = self.product.get_coverage_options_for_applicant('spouse');
             coverage = self.selected_plan().spouse_recommendation().recommended_benefit;
             criteria = self.get_criteria("Spouse");
         } else {
             applicant = self.selected_plan().root.child_benefits();
+            applicant_coverage_options = self.product.get_coverage_options_for_applicant('children');
             coverage = self.selected_plan().children_recommendation().recommended_benefit;
             criteria = self.get_criteria("Child");
         }
@@ -1301,7 +1323,7 @@ var GIHealthQuestion = function(question, selected_plan, applicant_criteria, ski
             reduce: {label: "Reduce the coverage", className: 'btn-success', callback: function() {
                 // 
                 var max_option = _.max(
-                        _.filter(applicant.all_options(), function(o) {
+                        _.filter(applicant_coverage_options(), function(o) {
                             return o.face_value <= gi_amount && o.face_value > 0
                         }), 
                         function(o) {return o.face_value}
@@ -1311,9 +1333,10 @@ var GIHealthQuestion = function(question, selected_plan, applicant_criteria, ski
                 
             }},
             remove: {label: "Remove this applicant", className: 'btn-danger', callback: function() {
-                var null_option = _.find(applicant.all_options(), function(o) {
+                var null_option = _.find(applicant_coverage_options(), function(o) {
                     return o.face_value == 0
                 });
+                
                 applicant.selected_custom_option(null_option);
                 self.selected_plan().root.apply_selected_customization();
             }},
@@ -1322,8 +1345,7 @@ var GIHealthQuestion = function(question, selected_plan, applicant_criteria, ski
             }}
         };
         
-        bootbox.dialog({
-            //title: "SPECIAL GI YES WINDOW: "+applicant_type, 
+        bootbox.dialog({ 
             message: 'A "yes" response to this question prohibits this person from obtaining the selected '+face_amount+' of coverage. You may proceed, however, by reducing your coverage to the guaranteed coverage amount of '+formatted_gi_amount+'.'+ 
                      '<br><br>Alternatively, you may remove this individual from the coverage selection altogether (in Step 1) before proceeding with the rest of the application.',
             buttons: button_options
@@ -1462,6 +1484,7 @@ function InsuredApplicant(options) {
         return age_for_date(self.birthdate());
     });
     
+    /*
     self.benefit_options = {
         by_coverage: ko.observableArray([]),
         by_premium: ko.observableArray([])
@@ -1473,7 +1496,7 @@ function InsuredApplicant(options) {
         $.merge(options, self.benefit_options.by_coverage());
         return options;
     });
-    
+    */
     
     /*
     self.update_selected_option = function(data, event) {
