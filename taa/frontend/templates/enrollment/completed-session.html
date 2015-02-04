@@ -136,27 +136,8 @@
 <script type="text/javascript">
     jQuery(function($) {
   
-        var email_btn = $("#email-enrollment-btn");
-
-        email_btn.on("click", function() {
-            email_btn.prop('disabled', true);
-            $.ajax("{{url_for('email_enrollment')}}", {
-                data: $(".enrollment-form").serialize(),
-                error: function() {
-                    alert("There was a problem sending the email.");
-                    email_btn.prop('disabled', false);
-                },
-                success: function() {
-                    alert("The enrollment email has been sent to '"+$('#email').val()+"'");
-                    email_btn.prop('disabled', false);
-                },
-                // expected return data type
-                dataType: "json",
-                method: "POST"
-            });
-        });
         
-  })
+    });
 </script>
 
 {% endblock %}
