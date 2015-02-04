@@ -1226,181 +1226,189 @@
     <form class="form-horizontal" id="step5-form">
 
         <div class="step-pane" id="step5">
-            <div id="eeBeneficiaryBlock" data-bind="visible: did_select_employee_coverage()">
-                <h3 class="lighter block green">Employee Beneficiary</h3>
-
-                <div class="form-group" id="eeHasSpouseAsBeneficiaryOption"
-                     data-bind="visible: should_include_spouse_in_table()">
-                    <label class="control-label col-xs-12 col-sm-5 no-padding-right">Beneficiary of Employee Coverage
-                        is </label>
-
-                    <div class="col-xs-12 col-sm-7">
-                        <label class="blue">
-                            <input name="eeBeneficiary" id="eeBeneSpouse" value="spouse" type="radio" class="inline ace"
-                                   data-bind="checked: employee_beneficiary"/>
-                            <span class="lbl"> Spouse (<span data-bind="text: spouse().first"></span>)&nbsp;&nbsp;&nbsp; </span>
-                        </label>
-
-                        <label class="blue">
-                            <input name="eeBeneficiary" id="eeBeneOther" value="other" type="radio" class="inline ace"
-                                   data-bind="checked: employee_beneficiary"/>
-                            <span class="lbl"> Someone else</span>
-                        </label>
+            
+            <div data-bind="visible: insurance_product.should_show_step_5()">
+                <div id="eeBeneficiaryBlock" data-bind="visible: did_select_employee_coverage()">
+                    <h3 class="lighter block green">Employee Beneficiary</h3>
+    
+                    <div class="form-group" id="eeHasSpouseAsBeneficiaryOption"
+                         data-bind="visible: should_include_spouse_in_table()">
+                        <label class="control-label col-xs-12 col-sm-5 no-padding-right">Beneficiary of Employee Coverage
+                            is </label>
+    
+                        <div class="col-xs-12 col-sm-7">
+                            <label class="blue">
+                                <input name="eeBeneficiary" id="eeBeneSpouse" value="spouse" type="radio" class="inline ace"
+                                       data-bind="checked: employee_beneficiary"/>
+                                <span class="lbl"> Spouse (<span data-bind="text: spouse().first"></span>)&nbsp;&nbsp;&nbsp; </span>
+                            </label>
+    
+                            <label class="blue">
+                                <input name="eeBeneficiary" id="eeBeneOther" value="other" type="radio" class="inline ace"
+                                       data-bind="checked: employee_beneficiary"/>
+                                <span class="lbl"> Someone else</span>
+                            </label>
+                        </div>
+    
                     </div>
-
+    
+                    <div id="eeBeneficiaryOther"
+                         data-bind="visible: !should_include_spouse_in_table() || employee_beneficiary() == 'other'">
+                        <div class="row form-group">
+                            <div class="col-sm-6">
+                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherName">
+                                    Beneficiary
+                                </label>
+    
+                                <div class="col-xs-12 col-sm-9">
+                                    <input type="text" id="eeBeneOtherName" name="eeBeneOtherName" placeholder="Full Name"
+                                           data-bind="value: employee_beneficiary_name"/>
+                                </div>
+                            </div>
+    
+    
+                            <div class="col-sm-6">
+                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherRelation">
+                                    Relationship
+                                </label>
+    
+                                <div class="col-xs-12 col-sm-9">
+                                    <input type="text" id="eeBeneOtherRelation" name="eeBeneOtherRelation"
+                                           placeholder="Relationship" data-bind="value: employee_beneficiary_relationship"/>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="row form-group">
+                            <div class="col-sm-6">
+                                <label class="control-label col-xs-2 col-sm-3 no-padding-right" for="eeBeneOtherSSN">
+                                    SSN
+                                </label>
+    
+                                <div class="col-xs-10 col-sm-9">
+                                    <input type="text" id="eeBeneOtherSSN" class="col-xs-10 col-sm-9 input-mask-ssn"
+                                           data-bind="value: employee_beneficiary_ssn"/>
+                                </div>
+                            </div>
+    
+                            <div class="col-sm-6">
+                                <label class="control-label col-xs-2 col-sm-3 no-padding-right" for="eeBeneOtherDOB">
+                                    DOB
+                                </label>
+    
+                                <div class="col-xs-10 col-sm-9">
+                                    <input class="col-xs-10 col-sm-9 input-mask-date" name="eeBeneOtherDOB"
+                                           data-bind="value: employee_beneficiary_dob"
+                                           type="text" id="eeBeneOtherDOB" placeholder="DD/MM/YYYY"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /eeBeneficiaryOther -->
                 </div>
-
-                <div id="eeBeneficiaryOther"
-                     data-bind="visible: !should_include_spouse_in_table() || employee_beneficiary() == 'other'">
-                    <div class="row form-group">
-                        <div class="col-sm-6">
-                            <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherName">
-                                Beneficiary
+                <!-- /eeBeneficiaryBlock -->
+    
+                <div id="spBeneficiaryBlock" data-bind="visible: did_select_spouse_coverage()">
+                    <h3 class="lighter block green">Spouse Beneficiary</h3>
+    
+                    <div class="form-group">
+                        <label class="control-label col-xs-12 col-sm-5 no-padding-right">Beneficiary of Spouse Coverage
+                            is </label>
+    
+                        <div class="col-xs-12 col-sm-7">
+                            <label class="blue">
+                                <input name="spBeneficiary" id="spBeneSpouse" value="employee" type="radio"
+                                       class="inline ace" checked="" data-bind="checked: spouse_beneficiary"/>
+                                <span class="lbl"> Employee (<span data-bind="text: employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
                             </label>
-
-                            <div class="col-xs-12 col-sm-9">
-                                <input type="text" id="eeBeneOtherName" name="eeBeneOtherName" placeholder="Full Name"
-                                       data-bind="value: employee_beneficiary_name"/>
+    
+                            <label class="blue">
+                                <input name="spBeneficiary" id="spBeneOther" value="other" type="radio" class="inline ace"
+                                       data-bind="checked: spouse_beneficiary"/>
+                                <span class="lbl"> Someone else</span>
+                            </label>
+                        </div>
+    
+                        <!--
+                        <div class="col-sm-offset-5 text-primary bigger-110 col-xs-12" id="spouseBeneficiaryLine" data-bind="visible: spouse_beneficiary() == 'employee'">
+                      <span data-bind="text: employee().first"></span> <span data-bind="text: employee().last"></span>, spouse, <span data-bind="text: employee().birthdate"></span>, ss=
+                      <span data-bind="text: employee().ssn"></span>	    
+                            </div>
+                        -->
+                    </div>
+    
+                    <div id="spBeneficiaryOther"
+                         data-bind="visible: did_select_spouse_coverage() && spouse_beneficiary() == 'other'">
+                        <div class="row form-group">
+                            <div class="col-sm-6">
+                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherName">
+                                    Beneficiary
+                                </label>
+    
+                                <div class="col-xs-12 col-sm-9">
+                                    <input type="text" id="spBeneOtherName" name="spBeneOtherName" placeholder="Full Name"
+                                           data-bind="value: spouse_beneficiary_name"/>
+                                </div>
+                            </div>
+    
+    
+                            <div class="col-sm-6">
+                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherRelation">
+                                    Relationship
+                                </label>
+    
+                                <div class="col-xs-12 col-sm-9">
+                                    <input type="text" id="spBeneOtherRelation" name="spBeneOtherRelation"
+                                           placeholder="Relationship" data-bind="value: spouse_beneficiary_relationship"/>
+                                </div>
                             </div>
                         </div>
-
-
-                        <div class="col-sm-6">
-                            <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherRelation">
-                                Relationship
-                            </label>
-
-                            <div class="col-xs-12 col-sm-9">
-                                <input type="text" id="eeBeneOtherRelation" name="eeBeneOtherRelation"
-                                       placeholder="Relationship" data-bind="value: employee_beneficiary_relationship"/>
+    
+                        <div class="row form-group">
+                            <div class="col-sm-6">
+                                <label class="control-label col-xs-2 col-sm-3 no-padding-right" for="spBeneOtherSSN">
+                                    SSN
+                                </label>
+    
+                                <div class="col-xs-10 col-sm-9">
+                                    <input type="text" id="spBeneOtherSSN" class="col-xs-10 col-sm-9 input-mask-ssn"
+                                           data-bind="value: spouse_beneficiary_ssn"/>
+                                </div>
+                            </div>
+    
+                            <div class="col-sm-6">
+                                <label class="control-label col-xs-2 col-sm-3 no-padding-right" for="spBeneOtherDOB">
+                                    DOB
+                                </label>
+    
+                                <div class="col-xs-10 col-sm-9">
+                                    <input class="col-xs-10 col-sm-9 input-mask-date" name="spBeneOtherDOB"
+                                           data-bind="value: spouse_beneficiary_dob"
+                                           type="text" id="spBeneOtherDOB" placeholder="DD/MM/YYYY"/>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="row form-group">
-                        <div class="col-sm-6">
-                            <label class="control-label col-xs-2 col-sm-3 no-padding-right" for="eeBeneOtherSSN">
-                                SSN
-                            </label>
-
-                            <div class="col-xs-10 col-sm-9">
-                                <input type="text" id="eeBeneOtherSSN" class="col-xs-10 col-sm-9 input-mask-ssn"
-                                       data-bind="value: employee_beneficiary_ssn"/>
-                            </div>
-                        </div>
-
-                        <div class="col-sm-6">
-                            <label class="control-label col-xs-2 col-sm-3 no-padding-right" for="eeBeneOtherDOB">
-                                DOB
-                            </label>
-
-                            <div class="col-xs-10 col-sm-9">
-                                <input class="col-xs-10 col-sm-9 input-mask-date" name="eeBeneOtherDOB"
-                                       data-bind="value: employee_beneficiary_dob"
-                                       type="text" id="eeBeneOtherDOB" placeholder="DD/MM/YYYY"/>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- /spBeneficiaryOther -->
                 </div>
-                <!-- /eeBeneficiaryOther -->
+                <!-- /spBeneficiaryBlock -->
+    
+    
+                <!-- **Zach: the visibility of div is whether any valid child coverage was elected from step 1  -->
+                <div id="onlyChildCoverageBeneficiaryStmt" data-bind="visible: did_select_children_coverage()">
+                    <h3 class="lighter block green">Child Beneficiary</h3>
+                    <span class="text-primary bigger-110 center">
+                      <i class="icon-info-sign"></i>
+                      Beneficiary of Child coverage will be designated as the Employee unless otherwise noted via separate written communication with 5Star's Administrative office.
+                    </span>
+                </div>
             </div>
-            <!-- /eeBeneficiaryBlock -->
-
-            <div id="spBeneficiaryBlock" data-bind="visible: did_select_spouse_coverage()">
-                <h3 class="lighter block green">Spouse Beneficiary</h3>
-
-                <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-5 no-padding-right">Beneficiary of Spouse Coverage
-                        is </label>
-
-                    <div class="col-xs-12 col-sm-7">
-                        <label class="blue">
-                            <input name="spBeneficiary" id="spBeneSpouse" value="employee" type="radio"
-                                   class="inline ace" checked="" data-bind="checked: spouse_beneficiary"/>
-                            <span class="lbl"> Employee (<span data-bind="text: employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
-                        </label>
-
-                        <label class="blue">
-                            <input name="spBeneficiary" id="spBeneOther" value="other" type="radio" class="inline ace"
-                                   data-bind="checked: spouse_beneficiary"/>
-                            <span class="lbl"> Someone else</span>
-                        </label>
-                    </div>
-
-                    <!--
-                    <div class="col-sm-offset-5 text-primary bigger-110 col-xs-12" id="spouseBeneficiaryLine" data-bind="visible: spouse_beneficiary() == 'employee'">
-                  <span data-bind="text: employee().first"></span> <span data-bind="text: employee().last"></span>, spouse, <span data-bind="text: employee().birthdate"></span>, ss=
-                  <span data-bind="text: employee().ssn"></span>	    
-                        </div>
-                    -->
-                </div>
-
-                <div id="spBeneficiaryOther"
-                     data-bind="visible: did_select_spouse_coverage() && spouse_beneficiary() == 'other'">
-                    <div class="row form-group">
-                        <div class="col-sm-6">
-                            <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherName">
-                                Beneficiary
-                            </label>
-
-                            <div class="col-xs-12 col-sm-9">
-                                <input type="text" id="spBeneOtherName" name="spBeneOtherName" placeholder="Full Name"
-                                       data-bind="value: spouse_beneficiary_name"/>
-                            </div>
-                        </div>
-
-
-                        <div class="col-sm-6">
-                            <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherRelation">
-                                Relationship
-                            </label>
-
-                            <div class="col-xs-12 col-sm-9">
-                                <input type="text" id="spBeneOtherRelation" name="spBeneOtherRelation"
-                                       placeholder="Relationship" data-bind="value: spouse_beneficiary_relationship"/>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row form-group">
-                        <div class="col-sm-6">
-                            <label class="control-label col-xs-2 col-sm-3 no-padding-right" for="spBeneOtherSSN">
-                                SSN
-                            </label>
-
-                            <div class="col-xs-10 col-sm-9">
-                                <input type="text" id="spBeneOtherSSN" class="col-xs-10 col-sm-9 input-mask-ssn"
-                                       data-bind="value: spouse_beneficiary_ssn"/>
-                            </div>
-                        </div>
-
-                        <div class="col-sm-6">
-                            <label class="control-label col-xs-2 col-sm-3 no-padding-right" for="spBeneOtherDOB">
-                                DOB
-                            </label>
-
-                            <div class="col-xs-10 col-sm-9">
-                                <input class="col-xs-10 col-sm-9 input-mask-date" name="spBeneOtherDOB"
-                                       data-bind="value: spouse_beneficiary_dob"
-                                       type="text" id="spBeneOtherDOB" placeholder="DD/MM/YYYY"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- /spBeneficiaryOther -->
+            
+            <div data-bind="visible: !insurance_product.should_show_step_5()">
+                <h4 class="green center">
+                    This step does not apply for this product.
+                </h4>
             </div>
-            <!-- /spBeneficiaryBlock -->
-
-
-            <!-- **Zach: the visibility of div is whether any valid child coverage was elected from step 1  -->
-            <div id="onlyChildCoverageBeneficiaryStmt" data-bind="visible: did_select_children_coverage()">
-                <h3 class="lighter block green">Child Beneficiary</h3>
-	    <span class="text-primary bigger-110 center">
-	      <i class="icon-info-sign"></i>
-	      Beneficiary of Child coverage will be designated as the Employee unless otherwise noted via separate written communication with 5Star's Administrative office.
-	    </span>
-            </div>
-
 
         </div>
     </form>

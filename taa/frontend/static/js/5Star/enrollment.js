@@ -865,6 +865,10 @@ Product.prototype = {
         }
         
         self.all_coverage_options[applicant_type](all_options);
+    },
+    
+    should_show_step_5: function() {
+        return true;
     }
     
 };
@@ -1048,7 +1052,7 @@ GroupCIProduct.prototype.requires_is_smoker = function() {return true;};
 GroupCIProduct.prototype.has_critical_illness_coverages = function() {
     return true;
 };
-
+GroupCIProduct.prototype.should_show_step_5 = function() {return false;};
 
 
 // FPP Gov 
