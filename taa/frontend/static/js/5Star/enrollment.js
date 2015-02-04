@@ -2153,15 +2153,19 @@ function are_health_questions_valid() {
     
     var el;
     // this one can be yes or no
-    if (ui.is_in_person_application() && general_questions_by_id['existing_insurance'].get_val() === null) {
+    if (ui.should_show_other_insurance_questions() && 
+        ui.is_in_person_application() && 
+        general_questions_by_id['existing_insurance'].get_val() === null) {
         //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
         return false;
     }
-    if (!ui.is_in_person_application() && general_questions_by_id['existing_insurance_remote'].get_val() != "No") {
+    if (ui.should_show_other_insurance_questions() && 
+        !ui.is_in_person_application() && general_questions_by_id['existing_insurance_remote'].get_val() != "No") {
         //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
         return false;
     }
-    if (general_questions_by_id['replace_insurance'].get_val() != "No") {
+    if (ui.should_show_other_insurance_questions() && 
+        general_questions_by_id['replace_insurance'].get_val() != "No") {
         //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
         return false;
     }
