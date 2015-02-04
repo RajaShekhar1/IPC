@@ -1934,9 +1934,9 @@ function NullBenefitsPackage() {
     self.did_select_employee_coverage = function() { return false;};
     self.did_select_spouse_coverage = function() { return false;};
     self.did_select_children_coverage = function() { return false; };
+    self.get_covered_children = function() { return [];}};
     
-    
-}
+
 
 function Recommendation(recommended_benefit) {
     var self = this;
