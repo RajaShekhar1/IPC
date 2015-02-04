@@ -47,10 +47,11 @@ def enroll_start():
         form = get_enrollment_setup_form_for_product(None)()
     
     agent = agent_service.get_logged_in_agent()
-    
+    agent_products = product_service.get_products_for_agent(agent)
     return render_template('enrollment/setup-enrollment.html', 
                            form=form, 
                            product_states=get_product_states(),
+                           agent_products=agent_products,
                            agent_cases=case_service.get_agent_cases(agent, only_enrolling=True),
                            active_case=case,
                            should_show_next_applicant=should_show_next_applicant,
@@ -101,8 +102,8 @@ def in_person_enrollment():
         state = request.form['enrollmentState']
         enroll_city = request.form['enrollmentCity']
         company_name = request.form['companyName']
-        product_code = request.form['productID']
-        product = product_service.get_product_by_code_or_400(product_code)
+        product_id = request.form['productID']
+        product = product_service.get_if_allowed(product_id)
         
         products = [product] if product else []
         employee_data = dict(

@@ -212,7 +212,11 @@
       <div class="form-group">
         <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Product to enroll</label>
         <div class="col-xs-12 col-sm-9">
-          {{ form.productID() }}
+          <select id="productID">
+              {% for product in agent_products %}
+              <option value="{{ product.id }}">{{ product.name }}</option>
+              {% endfor %}
+          </select>
         </div>
       </div>
 
@@ -408,7 +412,7 @@
         ko.applyBindings(window.ui, $("body").get(0));
     
         // Change enabled states when the product is changed
-        product_state_select.init("#enrollmentState","#productID", {{ product_states | tojson | safe }});
+        //product_state_select.init("#enrollmentState","#productID", {{ product_states | tojson | safe }});
         
         $("#cases_table").dataTable({
             "aoColumnDefs":[

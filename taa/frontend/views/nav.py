@@ -17,7 +17,12 @@ def get_nav_menu():
         dict(nav_name='nav_manage_cases', url_name='manage_cases', display='Manage Cases'),
     ]
     
-    if AgentService().is_user_home_office(current_user):
+    try:
+        is_admin = AgentService().is_user_home_office(current_user)
+    except Exception:
+        return []
+    
+    if is_admin:
         return home_office_menu
     else:
         return agent_menu

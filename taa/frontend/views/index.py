@@ -19,7 +19,7 @@ def favicon():
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html', nav_menu=get_nav_menu()), 404
+    return render_template('404.html', include_navmenu=get_nav_menu()), 404
 
 @app.route("/")
 def index():
