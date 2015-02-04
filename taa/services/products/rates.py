@@ -8,7 +8,7 @@ def get_product_rates_lookup(product):
         return GroupCIRates(product,
                             smoker_rates=build_GroupCI_smoking_rate_table(),
                             nonsmoker_rates=build_GroupCI_nonsmoking_rate_table())
-    elif product.get_base_product_code() == "FPP Gov":
+    elif product.get_base_product_code() == "FPP-Gov":
         return FPPGovRates()
     else:
         tables_by_code = {

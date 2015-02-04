@@ -13,7 +13,7 @@ def get_product_recommendations(product, **demographics):
             rec = Recommendations(GROUP_CI_smoker_recommendations)
         else:
             rec = Recommendations(GROUP_CI_nonsmoker_recommendations)
-    elif product.get_base_product_code() == "FPP GOV":
+    elif product.get_base_product_code() == "FPP-Gov":
         rec = Recommendations(FPPGOV_recommendations)
     else:
         # TODO: should this be an error? use TI for now

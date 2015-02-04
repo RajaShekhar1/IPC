@@ -249,7 +249,7 @@ function WizardUI(product, defaults) {
         }
         
         // return the benefit options of the any child
-        return self.insurance_product.all_coverage_options['children'];
+        return self.insurance_product.get_coverage_options_for_applicant('children');
     });
     
     self.is_show_rates_clicked = ko.observable(false);
@@ -706,11 +706,18 @@ function WizardUI(product, defaults) {
             if (product_id == product_data.id) {
                 var question_factory;
                 if (product_data.is_guaranteed_issue) {
-                    question_factory = function(question_data) {
-                         return new GIHealthQuestion(question_data, self.selected_plan,
-                             product_data.gi_criteria,
-                             product_data.statement_of_health_bypass_type, product_data.bypassed_soh_questions);
-                    }
+                    question_factory = function (question_data) {
+                        return new GIHealthQuestion(question_data, self.selected_plan,
+                            product_data.gi_criteria,
+                            product_data.statement_of_health_bypass_type, product_data.bypassed_soh_questions);
+                    };
+                //} else if (product_data.code == "Group CI") {
+                //    question_factory = function(question_data) {
+                //        return new GIHealthQuestion(question_data, self.selected_plan, 
+                //        [],
+                //            ""
+                //        );
+                //    }
                 } else {
                     question_factory = function(question_data) {
                         return new StandardHealthQuestion(question_data, self.selected_plan);
@@ -722,6 +729,12 @@ function WizardUI(product, defaults) {
         
     };
     
+    
+    self.should_show_other_insurance_questions = ko.computed(function() {
+        return (
+            self.insurance_product.product_data.code != "Group CI"
+        );
+    });
     
     // Decline info box
     self.did_decline.subscribe(function(val) {
@@ -822,7 +835,7 @@ Product.prototype = {
                 });
             });
             // Extends an array with another array
-            $.merge(all_options, by_face_options);
+            $.merge(all_options, by_premium_options);
         }
         
         if (rates.weekly_byface) {
@@ -985,9 +998,9 @@ function GroupCIProduct(product_data) {
     
 }
 GroupCIProduct.prototype = Object.create(Product.prototype);
-GroupCIProduct.prototype.get_new_benefit_option = function(options) {
-    return new CIBenefitOption(new BenefitOption(options));
-};
+//GroupCIProduct.prototype.get_new_benefit_option = function(options) {
+//    return new CIBenefitOption(new BenefitOption(options));
+//};
 GroupCIProduct.prototype.is_valid_employee = function(employee) {
     // Need to validate age and is_smoker is valid
     var age = employee.get_age();
@@ -1026,9 +1039,6 @@ function FPPGovProduct(product_data) {
     this.product_data = product_data;
 }
 FPPGovProduct.prototype = Object.create(Product.prototype);
-//FPPGovProduct.prototype.get_new_benefit_option = function(options) {
-//    return new CIBenefitOption(new BenefitOption(options));
-//};
 FPPGovProduct.prototype.requires_gender = function() {return false;};
 FPPGovProduct.prototype.requires_height = function() {return false;};
 FPPGovProduct.prototype.requires_weight = function() {return false;};
@@ -1047,6 +1057,11 @@ function GIProductDecorator(product, product_data) {
     self.product_data = product_data;
     self.product_type = product.product_type;
     
+    self.all_coverage_options = {
+        employee: ko.observableArray([]),
+        spouse: ko.observableArray([]),
+        children: ko.observableArray([])
+    };
     
     // Delegate to self.product by default for methods inherited from Product
     _.each(_.methods(Product.prototype), function(method) {
