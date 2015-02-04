@@ -87,9 +87,15 @@ def get_product_rates(product_id):
     
     demographics = dict(
         employee_age=employee['age'],
+        employee_height=employee['height'],
+        employee_weight=employee['weight'],
+        employee_gender=employee['gender'],
         employee_smoker=employee['is_smoker'],
         spouse_age=spouse['age'] if spouse else None,
         spouse_smoker=spouse['is_smoker'] if spouse else None,
+        spouse_gender=spouse['gender'] if spouse else None,
+        spouse_height=spouse['height'] if spouse else None,
+        spouse_weight=spouse['weight'] if spouse else None,
         num_children=num_children,
     )
     
@@ -98,6 +104,7 @@ def get_product_rates(product_id):
     
     recommendations = product_service.get_product_recommendations(product, demographics)
     return {
+        'success': True,
         'employee_rates': rates['employee'],
         'spouse_rates': rates.get('spouse'),
         'children_rates': rates.get('children'),

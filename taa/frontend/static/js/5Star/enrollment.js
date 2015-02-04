@@ -297,6 +297,12 @@ function WizardUI(product, defaults) {
     };
     
     self.update_rate_table = function() {
+        // Reset some validation errors
+        $.each(limit_error_lookup, function(k, v) {
+            limit_error_lookup[k](null);
+        });
+        //self.validator.resetForm();
+        
         if (!self.is_recommended_table_visible()) {
             return;
         }
@@ -311,7 +317,7 @@ function WizardUI(product, defaults) {
             "/products/"+product_id+"/rates", 
             self.build_rate_parameters(), 
             self.show_updated_rates, 
-            handle_remote_error,
+            self.handle_update_rates_error,
             true
         );
     };
@@ -393,8 +399,12 @@ function WizardUI(product, defaults) {
     var watch_data_values = [
         self.employee().birthdate,
         self.employee().is_smoker,
+        self.employee().height,
+        self.employee().weight,
         self.spouse().birthdate,
         self.spouse().is_smoker,
+        self.spouse().weight,
+        self.spouse().height,
         self.children,
         self.should_include_spouse_in_table,
         self.should_include_children_in_table
@@ -433,6 +443,22 @@ function WizardUI(product, defaults) {
         
         // Done loading rates
         self.is_rate_table_loading(false);
+    };
+    
+    self.handle_update_rates_error = function(resp) {
+        if (resp.status === 400 && resp.responseJSON && resp.responseJSON.errors) {
+            $.each(resp.responseJSON.errors, function() {
+                var field_name = this.field;
+                var message = this.error;
+                // set error and show with validator
+                limit_error_lookup[field_name](true);
+                self.validator.form();
+                
+            })
+        } else {
+            handle_remote_error();
+        }
+        
     };
     
     self.parse_benefit_options = function(applicant, rates) {
@@ -502,10 +528,28 @@ function WizardUI(product, defaults) {
         return (age !== "" && age <= params);
     }, "Must be no more than {0} years old for this product");
     
-    $.validator.addMethod("minWeight", function(val, element, params) {
-        var weight = val;
-        return (age !== "" && age >= params);
-    }, "Must be at least {0} years old for this product");
+    
+    // Height and Weight limits for Group CI
+    
+    var limit_error_lookup = {
+        employee_height:self.employee().height_error,
+        employee_weight:self.employee().weight_error,
+        spouse_height:self.spouse().height_error,
+        spouse_weight:self.spouse().weight_error
+    };
+    
+    $.validator.addMethod("empHeightLimit", function(val, el, params) {
+        return self.employee().height_error() == null;
+    }, "The height or weight entered is outside the limits for this product.");
+    $.validator.addMethod("empWeightLimit", function(val, el, params) {
+        return self.employee().weight_error() == null;
+    }, "The height or weight entered is outside the limits for this product.");
+    $.validator.addMethod("spHeightLimit", function(val, el, params) {
+        return self.spouse().height_error() == null;
+    }, "The height or weight entered is outside the limits for this product.");
+    $.validator.addMethod("spWeightLimit", function(val, el, params) {
+        return self.spouse().weight_error() == null;
+    }, "The height or weight entered is outside the limits for this product.");
     
     function any_valid_spouse_field() {
         return self.should_include_spouse_in_table(); //self.should_show_spouse();
@@ -553,13 +597,30 @@ function WizardUI(product, defaults) {
             },
             'tobacco-1': "required",
             'gender-1': "required",
-            'height_feet_0': "required",
-            'height_inches_0': "required",
-            'height_feet_1': "required",
-            'height_inches_1': "required",
-            'sp_height': "required",
-            weight_0: 'required',
-            weight_1: 'required',
+            'weight_0': {
+                required: true,
+                empWeightLimit: true
+            },
+            'weight_1': {
+                required: true,
+                spWeightLimit: true
+            },
+            'height_feet_0': {
+                "required":true, 
+                empHeightLimit: true
+            },
+            'height_inches_0': {
+                "required":true, 
+                empHeightLimit: true
+            },
+            'height_feet_1': {
+                "required":true, 
+                spHeightLimit: true
+            },
+            'height_inches_1': {
+                "required":true, 
+                spHeightLimit: true
+            },
             debug: true
         },
         groups: {
@@ -621,6 +682,8 @@ function WizardUI(product, defaults) {
             }
         }
     );
+    
+    
     
     self.is_form_valid = ko.computed(function() {
         
@@ -1182,6 +1245,9 @@ function InsuredApplicant(options) {
     self.weight = ko.observable(options.weight || null);
     self.is_smoker = ko.observable(options.is_smoker || null);
     
+    self.height_error = ko.observable(null);
+    self.weight_error = ko.observable(null);
+    
     self.address1 = ko.observable(options.street_address || "");
     self.address2 = ko.observable(options.street_address2 || "");
     self.city = ko.observable(options.city || "");
@@ -1193,11 +1259,11 @@ function InsuredApplicant(options) {
     self.has_valid_gender = ko.pureComputed(function() {
         return self.gender() !== null;
     });
-    self.has_valid_height = ko.pureComputed(function() {
-        return self.height() != null && self.height() != NaN;
+    self.has_valid_height = ko.computed(function() {
+        return self.height() != null && self.height() > 0 && self.height_error() == null;
     });
-    self.has_valid_weight = ko.pureComputed(function() {
-        return self.weight() != null;
+    self.has_valid_weight = ko.computed(function() {
+        return self.weight() != null && self.weight_error() == null;
     });
     
     self.is_valid = ko.computed(function() {

@@ -8,6 +8,13 @@ def get_product_recommendations(product, **demographics):
         rec = Recommendations(FPPTI_recommendations)
     elif product.get_base_product_code() == "FPP-CI":
         rec = Recommendations(FPPCI_recommendations)
+    elif product.get_base_product_code() == "Group CI":
+        if demographics['employee_smoker']:
+            rec = Recommendations(GROUP_CI_smoker_recommendations)
+        else:
+            rec = Recommendations(GROUP_CI_nonsmoker_recommendations)
+    elif product.get_base_product_code() == "FPP GOV":
+        rec = Recommendations(FPPGOV_recommendations)
     else:
         # TODO: should this be an error? use TI for now
         rec = Recommendations(FPPTI_recommendations)
@@ -47,6 +54,8 @@ class Recommendations(object):
             },
         }
 
+
+
 def build_recommendation_table(csv_path):
     lines = [l for l in csv.DictReader(open(csv_path, 'rU'))]
     
@@ -79,3 +88,6 @@ def build_recommendation_table(csv_path):
 
 FPPTI_recommendations = build_recommendation_table("taa/services/products/data_files/FPPTI_suggested_rates.csv")
 FPPCI_recommendations = build_recommendation_table("taa/services/products/data_files/FPPCI_suggested_rates.csv")
+GROUP_CI_smoker_recommendations = build_recommendation_table("taa/services/products/data_files/CIEMP_smoker_suggested_rates.csv")
+GROUP_CI_nonsmoker_recommendations = build_recommendation_table("taa/services/products/data_files/CIEMP_NONsmoker_suggested_rates.csv")
+FPPGOV_recommendations = build_recommendation_table("taa/services/products/data_files/FPPGOV_suggested_rates.csv")

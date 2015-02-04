@@ -54,9 +54,10 @@ class StatementOfHealthQuestionService(object):
             "WI": "WS-UST App R409-WI",
             "Generic": "Generic"
         },
-        # TODO: Need real data
+        # TODO: Need real state to form mapping
         "Group CI": {
-            "IN": "WS-UST App R409-IL",
+            "IN": "GroupCI",
+            "Generic": "GroupCI",
         },
     }
     
@@ -183,5 +184,34 @@ application_forms = [
         aids_question,
         ever_been_rejected_question
     ]),
+    ApplicationForm('GroupCI', [
+        SOHQuestion('Family Member History', 
+                    "Have 2 or more family members (natural parents, brothers or sisters) both before age 60 been diagnosed with or died from the same condition: of cancer, heart disease, stroke or kidney disease; or, both before age 75, of colorectal cancer, Alzheimer's or Senile Dementia?"
+        ),
+        SOHQuestion('Ever Diagnosed or Treated',
+                    'Has the proposed insured ever been diagnosed or treated for any of the following: Heart Attack, Angioplasty, Coronary Artery Bypass, Stroke, Transient Ischemic Attack, Cancer (excluding non-invasive, non-melanoma Skin Cancer), End-Stage Renal Disease, Liver Cirrhosis, Hepatitis B or C (including Carrier), Multiple Sclerosis, Paralysis, Diabetes (other than during pregnancy), Organ or Bone Marrow Transplant, Alzheimer\'s or Senile Dementia, HIV, AIDS, or AIDS-Related Complex (ARC)?'
+        ),
+        SOHQuestion("5yr Heart",
+                    "In the last 5 (FIVE) years, has the proposed insured been diagnosed with or treated for any heart disease (including angina) or any kidney disease except non-chronic kidney stones or infections?",
+        ),
+        SOHQuestion("5yr Hypertension / Cholesterol",
+                    "In the last 5 (FIVE) years, has the proposed insured been diagnosed with or treated for uncontrolled high blood pressure (hypertension) and/or uncontrolled elevated cholesterol?",
+        ),
+        SOHQuestion("5yr Lung / Colon",
+                    "In the last 5 (FIVE) years, has the proposed insured been diagnosed with or treated for Lung disease requiring hospitalization, colitis, or Crohn's?",
+        ),
+        SOHQuestion("5yr Skin Cancer",
+                    "In the last 5 (FIVE) years, has the proposed insured been diagnosed with or treated for any Skin Cancer or/and Precancerous Lesions/Tumors?"
+        ),
+        SOHQuestion("5yr HPV/HSV",
+                    "In the last 5 (FIVE) years, has the proposed insured been diagnosed with or treated for any Human Papilomavirus (HPV), Herpes Simplex Virus (HSV), chlamydia, or gonorrhea?",
+        ),
+        SOHQuestion("Abnormal Results",
+                    "In the past 2 (TWO) years, has the proposed insured been informed by a member of the medical profession of any abnormal test results or been advised to have any diagnostic tests or procedures which have not yet been completed?"
+        ),
+        SOHQuestion("Ever been rejected",
+                    "Has the proposed insured ever applied for and been rejected for a Critical Illness, Cancer, Heart or Stroke insurance policy?",
+        ),        
+    ])
 ]
 application_forms_by_label = {a.label: a for a in application_forms}

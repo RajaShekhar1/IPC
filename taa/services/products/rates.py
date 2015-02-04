@@ -1,22 +1,21 @@
 import csv
-
+from taa.core import TAAFormError
 
 def get_product_rates_lookup(product):
     
-    tables_by_code = {
-        "FPPTI": build_FPPTI_rate_table(),
-        "FPPCI": build_FPPCI_rate_table(),
-        
-        # TODO: Get real pricing tables and recommendations
-        "FPP-Gov": build_FPPTI_rate_table(),
-    }
     
-    if product.get_base_product_code() != "Group CI":
-        return ProductRates(product, tables_by_code[product.get_base_product_code()])
-    else: 
-        return GroupCIRates(product, 
-                            smoker_rates=build_GroupCI_smoking_rate_table(), 
+    if product.get_base_product_code() == "Group CI":
+        return GroupCIRates(product,
+                            smoker_rates=build_GroupCI_smoking_rate_table(),
                             nonsmoker_rates=build_GroupCI_nonsmoking_rate_table())
+    elif product.get_base_product_code() == "FPP Gov":
+        return FPPGovRates()
+    else:
+        tables_by_code = {
+            "FPPTI": build_FPPTI_rate_table(),
+            "FPPCI": build_FPPCI_rate_table(),
+        }
+        return ProductRates(product, tables_by_code[product.get_base_product_code()])
 
 class ProductRates(object):
     def __init__(self, product, rate_table):
@@ -65,6 +64,22 @@ class GroupCIRates(object):
             children={},
         )
         
+        # First check on weight / height ranges
+        if demographics['employee_gender'].lower() == 'male':
+            emp_limits_table = GroupCI_Male_HeightWeightRangeTable
+        else:
+            emp_limits_table = GroupCI_Female_HeightWeightRangeTable
+
+        limit_errors = []
+        if not emp_limits_table.is_height_weight_in_range(
+                demographics['employee_height'], 
+                demographics['employee_weight']
+                ):
+            limit_errors += [
+                dict(field='employee_height', error='This height/weight combination is outside the range for this product.'),
+                dict(field='employee_weight', error='This height/weight combination is outside the range for this product.')
+            ]
+        
         emp_rates_table = self.smoker_rates if demographics['employee_smoker'] == 'true' else self.nonsmoker_rates
         rates['employee']['weekly_byface'] = emp_rates_table.get_premiums_by_coverage_for_age(demographics['employee_age'])
         #rates['employee']['weekly_bycoverage'] = []
@@ -73,7 +88,27 @@ class GroupCIRates(object):
             sp_rates_table = self.smoker_rates if demographics['spouse_smoker'] == 'true' else self.nonsmoker_rates
             rates['spouse']['weekly_byface'] = sp_rates_table.get_premiums_by_coverage_for_age(demographics['spouse_age'])
             #rates['spouse']['weekly_bycoverage'] = []
+
+            if demographics['spouse_gender'].lower() == 'male':
+                sp_limits_table = GroupCI_Male_HeightWeightRangeTable
+            else:
+                sp_limits_table = GroupCI_Female_HeightWeightRangeTable
+                
+            if not sp_limits_table.is_height_weight_in_range(
+                    demographics['spouse_height'],
+                    demographics['spouse_weight']
+            ):
+                limit_errors += [
+                    dict(field='spouse_height', error='This height/weight combination is outside the range for this product.'),
+                    dict(field='spouse_weight', error='This height/weight combination is outside the range for this product.'),
+                ]
+            
+
         
+        # If any height/weight errors, raise an API exception
+        if limit_errors:
+            raise TAAFormError(errors=limit_errors)
+            
         # TODO: Check these
         rates['children'] = {
             'weekly_byface': [
@@ -82,6 +117,35 @@ class GroupCIRates(object):
             ]
         }
         
+        return rates
+    
+class FPPGovRates(object):
+    def get_all_rates(self, **demographics):
+        rates = dict(
+            employee={},
+            spouse={},
+            children={},
+        )
+        rate_table = CoverageByAgePremiumLookup(
+            FPPGOV_all_weekly_coverage_options,
+            FPPGOV_weekly_by_face
+        )
+        
+        rates['employee']['weekly_byface'] = rate_table.get_premiums_by_coverage_for_age(
+            demographics['employee_age'])
+        
+        if demographics.get('spouse_age'):
+            rates['spouse']['weekly_byface'] = rate_table.get_premiums_by_coverage_for_age(
+                demographics['spouse_age'])
+            
+        # TODO: Check these
+        rates['children'] = {
+            'weekly_byface': [
+                {'premium': 1.15, 'coverage': 10000},
+                {'premium': 2.30, 'coverage': 20000},
+            ]
+        }
+
         return rates
     
 class CoverageByAgePremiumLookup(object):
@@ -100,6 +164,31 @@ class CoverageByAgePremiumLookup(object):
     def get_premium_by_age_and_coverage(self, age, coverage_amount):
         return self.lookup_table.get((age, coverage_amount))
     
+class HeightWeightRangeTable(object):
+    def __init__(self, filename):
+        
+        file_data = open(filename, 'r').read().splitlines()
+        self.data = csv.DictReader(file_data)
+        
+        self.ranges_by_height = {int(r['Inches']): r for r in self.data}
+        import pprint
+        pprint.pprint(self.ranges_by_height)
+    def is_height_weight_in_range(self, height, weight):
+        row = self.ranges_by_height.get(int(height))
+        if not row:
+            return False
+        
+        return (
+            int(row['Min Weight']) <= int(weight) and 
+            int(row['Max Weight']) >= int(weight)
+        )
+    
+    
+GroupCI_Male_HeightWeightRangeTable = HeightWeightRangeTable('taa/services/products/data_files/CIEMP-Male-Height-Weight-ranges.csv')
+GroupCI_Female_HeightWeightRangeTable = HeightWeightRangeTable(
+    'taa/services/products/data_files/CIEMP-Female-Height-Weight-ranges.csv')
+
+
 class RateTable(object):
     def __init__(self, all_weekly_premium_options, all_weekly_coverage_options,
                  weekly_by_premium_lookup, weekly_by_coverage_lookup,
@@ -165,10 +254,13 @@ FPPTI_weekly_by_coverage_lookup, all_weekly_coverage_options = load_age_lookup_t
 FPPCI_weekly_by_premium_lookup, FPPCI_all_weekly_premium_options = load_age_lookup_table("taa/services/products/data_files/FPPCI-bypremium.csv")
 FPPCI_weekly_by_coverage_lookup, FPPCI_all_weekly_coverage_options = load_age_lookup_table("taa/services/products/data_files/FPPCI-byface.csv")
 
+FPPGOV_weekly_by_face, FPPGOV_all_weekly_coverage_options = load_age_lookup_table("taa/services/products/data_files/FPPGOV-byface.csv") 
+
 GROUP_CI_non_smoking_weekly_by_coverage_lookup, GROUP_CI_non_smoking_all_weekly_coverage_options = load_age_lookup_table(
     "taa/services/products/data_files/CIEMP-rates---NonSmoking-Weekly.csv")
 GROUP_CI_smoking_weekly_by_coverage_lookup, GROUP_CI_smoking_all_weekly_coverage_options = load_age_lookup_table(
     "taa/services/products/data_files/CIEMP-rates---Smoking-Weekly.csv")
+
 
 
 def build_FPPTI_rate_table():
@@ -201,13 +293,9 @@ def build_FPPCI_rate_table():
         child_premiums = child_premiums,
     )
 
-def build_GroupCI_smoking_rate_table():
-    # TODO: Check these 
-    child_premiums = [
-        {'premium': 1.15, 'coverage': 10000},
-        {'premium': 2.30, 'coverage': 20000},
-    ]
     
+
+def build_GroupCI_smoking_rate_table():
     return CoverageByAgePremiumLookup(GROUP_CI_smoking_all_weekly_coverage_options, GROUP_CI_smoking_weekly_by_coverage_lookup)
 
 def build_GroupCI_nonsmoking_rate_table():

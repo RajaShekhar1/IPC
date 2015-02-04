@@ -451,6 +451,7 @@ ko.components.register('height-select', {
         <label>\
             <select data-bind="value: height_inches_part, attr: {name: \'height_inches_\'+name_suffix}">\
                 <option></option>\
+                <option>0</option>\
                 <option>1</option>\
                 <option>2</option>\
                 <option>3</option>\
