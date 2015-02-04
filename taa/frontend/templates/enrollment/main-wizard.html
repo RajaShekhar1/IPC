@@ -420,7 +420,7 @@
                                     <li>
                                         <!--ko if: employee().is_valid()-->
                                         <select data-bind="
-                                  options: employee().all_options,
+                                  options: insurance_product.get_coverage_options_for_applicant('employee'),
                                   optionsCaption: '',
                                   optionsText: BenefitOption.display_benefit_option,
                                   value: employee().selected_custom_option,
@@ -432,7 +432,7 @@
                                     <!--ko if: should_include_spouse_in_table-->
                                     <li>
                                         <select data-bind="
-                                  options: spouse().all_options,
+                                  options: insurance_product.get_coverage_options_for_applicant('spouse'),
                                   optionsCaption: '',
                                   optionsText: BenefitOption.display_benefit_option,
                                   value: spouse().selected_custom_option,
@@ -444,7 +444,7 @@
                                     <!--ko if: should_include_children_in_table-->
                                     <li>
                                         <select data-bind="
-                                  options: get_children_options,
+                                  options: insurance_product.get_coverage_options_for_applicant('children'),
                                   optionsCaption: '',
                                   optionsText: BenefitOption.display_benefit_option,
                                   value: child_benefits().selected_custom_option,

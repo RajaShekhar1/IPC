@@ -9,6 +9,8 @@ class StatementOfHealthQuestionService(object):
         if (base_product.code == "FPPTI" and state in FPPTI_generic_states) or (
                 base_product.code == "FPPCI" and state in FPPCI_generic_states):
             return "Generic"
+        elif (base_product.code == "Group CI"):
+            return "GroupCI"
         else:
             form_state_lookup = self.form_dict.get(base_product.code)
             if form_state_lookup:

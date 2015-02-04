@@ -23,7 +23,6 @@ if (typeof Object.create != 'function') {
 
 function init_rate_form(data) {
     
-    
     var product = build_product(data.products);
     var ui = new WizardUI(product, data);
     
@@ -250,7 +249,7 @@ function WizardUI(product, defaults) {
         }
         
         // return the benefit options of the any child
-        return self.child_benefits().all_options();
+        return self.insurance_product.all_coverage_options['children'];
     });
     
     self.is_show_rates_clicked = ko.observable(false);
@@ -367,8 +366,9 @@ function WizardUI(product, defaults) {
             new_plan = new BenefitsPackage(self, "Custom");
         }
         
+        var benefit;
         if (self.employee().is_valid()) {
-            var benefit = self.employee().selected_custom_option();
+            benefit = self.employee().selected_custom_option();
             if (benefit) {
                 new_plan.name("Custom");
                 new_plan.employee_recommendation(new Recommendation(benefit));
@@ -424,11 +424,11 @@ function WizardUI(product, defaults) {
     
     self.show_updated_rates = function(resp) {
         var data = resp.data;
-        self.parse_benefit_options(self.employee(), data.employee_rates);
-        self.parse_benefit_options(self.spouse(), data.spouse_rates);
+        self.insurance_product.parse_benefit_options('employee', self.employee(), data.employee_rates);
+        self.insurance_product.parse_benefit_options('spouse', self.spouse(), data.spouse_rates);
         // Reset child rates
         self.child_benefits(new InsuredApplicant({}));
-        self.parse_benefit_options(self.child_benefits(), data.children_rates);
+        self.insurance_product.parse_benefit_options('children', self.child_benefits(), data.children_rates);
         
         if (data.recommendations) {
             self.recommendations.good.set_recommendations(data.recommendations['good']);
@@ -461,27 +461,6 @@ function WizardUI(product, defaults) {
         
     };
     
-    self.parse_benefit_options = function(applicant, rates) {
-        if (rates.weekly_byface) {
-            applicant.benefit_options.by_coverage($.map(rates.weekly_byface, function(rate) {
-                return self.insurance_product.get_new_benefit_option({
-                    is_by_face: true,
-                    face_value: rate.coverage,
-                    weekly_premium: rate.premium
-                });
-            }));
-        }
-        
-        if (rates.weekly_bypremium) {
-            applicant.benefit_options.by_premium($.map(rates.weekly_bypremium, function(rate) {
-                return self.insurance_product.get_new_benefit_option({
-                    is_by_face: false,
-                    face_value: rate.coverage,
-                    weekly_premium: rate.premium
-                });
-            }));
-        }
-    };
     
     self.formatted_monthly_premium = ko.computed(function() {
         return self.selected_plan().formatted_monthly_premium();
@@ -805,7 +784,62 @@ Product.prototype = {
     requires_is_smoker: function() {return false;},
     
     // SOH questions
-    has_critical_illness_coverages: function() {return false;}
+    has_critical_illness_coverages: function() {return false;},
+    
+    all_coverage_options: {
+        employee: ko.observableArray([]),
+        spouse: ko.observableArray([]),
+        children: ko.observableArray([])
+    },
+    
+    find_recommended_coverage_benefit: function(applicant_type, desired_face_value) {
+        var benefit = new NullBenefitOption({});
+        $.each(this.all_coverage_options[applicant_type](), function() {
+            if (this.face_value == desired_face_value) {
+                benefit = this;
+                return false;
+            } 
+        });
+        return benefit;
+    },
+    
+    
+    get_coverage_options_for_applicant: function(applicant_type) {
+        // returns an observable
+        return this.all_coverage_options[applicant_type];
+    },
+    
+    parse_benefit_options: function(applicant_type, applicant, rates) {
+        var self = this;
+        var all_options = [];
+        
+        if (rates.weekly_bypremium) {
+            var by_premium_options = $.map(rates.weekly_bypremium, function(rate) {
+                return self.get_new_benefit_option({
+                    is_by_face: false,
+                    face_value: rate.coverage,
+                    weekly_premium: rate.premium
+                });
+            });
+            // Extends an array with another array
+            $.merge(all_options, by_face_options);
+        }
+        
+        if (rates.weekly_byface) {
+            var options = [new NullBenefitOption()];
+            var by_face_options = $.map(rates.weekly_byface, function(rate) {
+                return self.get_new_benefit_option({
+                    is_by_face: true,
+                    face_value: rate.coverage,
+                    weekly_premium: rate.premium
+                });
+            });
+            // Extends an array with another array
+            $.merge(all_options, by_face_options);
+        }
+        
+        self.all_coverage_options[applicant_type](all_options);
+    }
     
 };
 
@@ -830,8 +864,125 @@ FPPCIProduct.prototype.has_critical_illness_coverages = function() {
 };
 
 function GroupCIProduct(product_data) {
-    this.product_type = "Group CI";
-    this.product_data = product_data;
+    var self = this;
+    self.product_type = "Group CI";
+    self.product_data = product_data;
+    
+    // Set up the coverage options for Group CI; they can change as options are selected
+    self.employee_current_benefit_subscription = null;
+    
+    self.spouse_options_for_demographics = ko.observableArray([]);
+    self.all_spouse_rate_options = ko.observableArray([]);
+    
+    self.all_coverage_options = {
+        employee: ko.observableArray([]),
+        spouse: ko.observableArray([]),
+        children: ko.observableArray([])
+    };
+    
+    self.update_spouse_coverage_options = function(emp_benefit) {
+        // Triggered whenever the employee's selected coverage changes
+        var valid_options = [];
+        
+        // Limit to 50% of employee's current selection, or 25k max
+        if (!emp_benefit || !emp_benefit.is_valid()) {
+            valid_options = [];
+        } else if (emp_benefit.face_value >= 50000) {
+            valid_options = self.spouse_options_for_demographics();
+        } else {
+            // Cap at 25k or half the employee rate
+            var limit = emp_benefit.face_value / 2.0;
+            
+            $.each(self.spouse_options_for_demographics(), function() {
+                var rate = this;
+                
+                if (rate.face_value <= limit) {
+                    valid_options.push(rate);
+                } else {
+                    if (valid_options.length > 0 && 
+                        valid_options[valid_options.length-1].face_value < limit) {
+                        // Append the exact limit to the rate options
+                        var all_options_by_rate = _.groupBy(self.all_spouse_rate_options(), "face_value");
+                        if (limit in _.keys(all_options_by_rate)) {
+                            valid_options.push(all_options_by_rate[limit]);
+                        }
+                    }
+                    // Break out of the loop, we've hit the limit
+                    return false;
+                }
+            });
+        }
+        self.all_coverage_options.spouse(valid_options);
+    };
+    
+    // overrides the default impl.
+    self.get_coverage_options_for_applicant = function(applicant_type) {
+        // returns an observable
+        return self.all_coverage_options[applicant_type];
+    };
+    
+    function convert_rate_to_benefit_option(rate) {
+        return self.get_new_benefit_option({
+            is_by_face: true,
+            face_value: rate.coverage,
+            weekly_premium: rate.premium
+        });
+    }
+    
+    // overrides the default impl.
+    self.parse_benefit_options = function(applicant_type, applicant, rates) {
+        // need to limit spouse benefit options to half the employee's currently selected option.
+        var self = this;
+        
+        if (applicant_type == "employee") {
+            // Make sure we have a reference to the employee's currently selected option
+            /*
+            if (self.employee_current_benefit_subscription === null) {
+                // Should only happen once, the first time rates are called
+                self.employee_current_benefit_subscription = applicant.selected_coverage.subscribe(
+                    self.update_spouse_coverage_options
+                );
+            }
+            */
+            
+            // $5,000 to $100,000
+            var valid_rates = [];
+            $.each(rates.weekly_byface, function() {
+                var rate = this;
+                if (rate.coverage % 5000 == 0) {
+                    valid_rates.push(rate);
+                }
+            });
+            self.all_coverage_options[applicant_type]($.map(valid_rates, convert_rate_to_benefit_option)); 
+        }
+        if (applicant_type == "spouse" && rates.weekly_byface !== undefined) {
+            // $5,000 increments up to 50% of employee's current selection, 25k max
+            // First, just get rates up to 25k or age limit
+            //  the employee selection limit is handled in the computed function above
+            var demographic_spouse_rates = [];
+            var all_spouse_rates = [];
+            $.each(rates.weekly_byface, function() {
+                var rate = this;
+                if (rate.coverage % 5000 == 0 && rate.coverage <= 25000) {
+                    demographic_spouse_rates.push(rate);
+                } 
+                
+                // Collect all valid half-way points too in a different list
+                if (rate.coverage <= 25000) {
+                    all_spouse_rates.push(rate);
+                }
+            });
+            //self.spouse_options_for_demographics($.map(demographic_spouse_rates, convert_rate_to_benefit_option));
+            //self.all_spouse_rate_options($.map(all_spouse_rates, convert_rate_to_benefit_option));
+            self.all_coverage_options[applicant_type]($.map(demographic_spouse_rates, convert_rate_to_benefit_option));
+        }
+        if (applicant_type == "children" && rates.weekly_byface !== undefined) {
+            self.all_coverage_options[applicant_type]($.map(rates.weekly_byface, convert_rate_to_benefit_option));
+            
+        }
+    };
+    
+    
 }
 GroupCIProduct.prototype = Object.create(Product.prototype);
 GroupCIProduct.prototype.get_new_benefit_option = function(options) {
@@ -866,6 +1017,7 @@ GroupCIProduct.prototype.requires_is_smoker = function() {return true;};
 GroupCIProduct.prototype.has_critical_illness_coverages = function() {
     return true;
 };
+
 
 
 // FPP Gov 
@@ -1307,17 +1459,8 @@ function InsuredApplicant(options) {
         return options;
     });
     
-    self.find_recommended_coverage_benefit = function(desired_face_value) {
-        var benefit = new NullBenefitOption({});
-        $.each(self.benefit_options.by_coverage(), function() {
-            if (this.face_value == desired_face_value) {
-                benefit = this;
-                return false;
-            } 
-        });
-        return benefit;
-    };
     
+    /*
     self.update_selected_option = function(data, event) {
         var selected_option = $(event.target).find(":selected")[0];
         var benefit = selected_option['data-item'];
@@ -1326,12 +1469,13 @@ function InsuredApplicant(options) {
             self.selected_custom_option(benefit);
         }
     };
+    */
     
     // We need to attach the benefit to each option element for later use 
     //  this is required due to the optionsValue binding
-    self.attach_benefit = function(option, item) {
-        option['data-item'] = item;
-    };
+    //self.attach_benefit = function(option, item) {
+    //    option['data-item'] = item;
+    //};
     
     self.selected_custom_option = ko.observable(new NullBenefitOption());
     
@@ -1525,7 +1669,16 @@ function BenefitsPackage(root, name) {
         if (recommended_val == null || recommended_val == "") {
             return new NullBenefitOption();
         } else {
-            return applicant.find_recommended_coverage_benefit(recommended_val);
+            var applicant_type;
+            if (applicant == root.employee()) {
+                applicant_type = "employee";
+            } else if (applicant == root.spouse()) {
+                applicant_type = "spouse";
+            } else {
+                applicant_type = "children";
+            }
+            
+            return root.insurance_product.find_recommended_coverage_benefit(applicant_type, recommended_val);
         }
     };
     

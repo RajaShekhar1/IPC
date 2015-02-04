@@ -109,11 +109,9 @@ class GroupCIRates(object):
         if limit_errors:
             raise TAAFormError(errors=limit_errors)
             
-        # TODO: Check these
         rates['children'] = {
             'weekly_byface': [
-                {'premium': 1.15, 'coverage': 10000},
-                {'premium': 2.30, 'coverage': 20000},
+                {'premium': .75, 'coverage': 10000},
             ]
         }
         
@@ -171,8 +169,7 @@ class HeightWeightRangeTable(object):
         self.data = csv.DictReader(file_data)
         
         self.ranges_by_height = {int(r['Inches']): r for r in self.data}
-        import pprint
-        pprint.pprint(self.ranges_by_height)
+        
     def is_height_weight_in_range(self, height, weight):
         row = self.ranges_by_height.get(int(height))
         if not row:
