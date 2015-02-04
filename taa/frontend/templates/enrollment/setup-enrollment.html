@@ -212,7 +212,7 @@
       <div class="form-group">
         <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Product to enroll</label>
         <div class="col-xs-12 col-sm-9">
-          <select id="productID">
+          <select name="productID">
               {% for product in agent_products %}
               <option value="{{ product.id }}">{{ product.name }}</option>
               {% endfor %}
@@ -401,14 +401,14 @@
 <script>
     jQuery(function($) {
         
-        var EnrollmentSetupPage = function() {
+        var EnrollmentSetupPage = function(current_case) {
             var self = this;
-            self.current_company_name = ko.observable("{{ company_name }}");
-            self.selected_case = ko.observable(null);
+            self.current_company_name = ko.observable((current_case)?current_case.company_name : "");
+            self.selected_case = ko.observable((current_case)? current_case.id : null);
             
             self.add_to_census_modal = new AddToCensusViewModel(self.selected_case);
         };
-        window.ui = new EnrollmentSetupPage({{ active_case.id }});
+        window.ui = new EnrollmentSetupPage({{ active_case | tojson | safe }});
         ko.applyBindings(window.ui, $("body").get(0));
     
         // Change enabled states when the product is changed

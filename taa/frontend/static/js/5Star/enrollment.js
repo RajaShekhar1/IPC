@@ -141,9 +141,9 @@ function WizardUI(product, defaults) {
     self.spouse = ko.observable(new InsuredApplicant(spouse_data));
     
     var is_initially_showing_spouse = (
-            self.spouse().first !== undefined && 
-            self.spouse().last !== undefined && 
-            self.spouse().birthdate !== undefined
+            self.spouse().first() && self.spouse().first() !== "" && 
+            self.spouse().last() && self.spouse().last() !== "" && 
+            self.spouse().birthdate() && self.spouse().birthdate() !== undefined
     );
     // Corresponds to the 'Married' checkbox
     self.should_show_spouse = ko.observable(is_initially_showing_spouse);

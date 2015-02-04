@@ -43,6 +43,10 @@ def enroll_start():
         form.enrollmentState.data = case.situs_state
         form.productID.data = product_code
     else:
+        # Clear session variables
+        session['active_case_id'] = None
+        session['enrolling_census_record_id'] = None
+        
         case = None
         form = get_enrollment_setup_form_for_product(None)()
     
@@ -54,7 +58,7 @@ def enroll_start():
                            agent_products=agent_products,
                            agent_cases=case_service.get_agent_cases(agent, only_enrolling=True),
                            active_case=case,
-                           should_show_next_applicant=should_show_next_applicant,
+                           should_show_next_applicant=should_show_next_applicant and case,
                            nav_menu=get_nav_menu(),
     )
 
@@ -165,9 +169,13 @@ def submit_wizard_data():
     else:
         census_record = None
         
-    enrollment_application = enrollment_service.save_enrollment_data(wizard_results, census_record)
-    
-    if enrollment_application.did_enroll():
+    # TODO: Handle ad-hoc enrollments
+    if census_record:
+        enrollment_application = enrollment_service.save_enrollment_data(wizard_results, census_record)
+    else:
+        enrollment_application = None
+        
+    if not wizard_results.get('did_decline'):
         pass
         # Hand off wizard_results to docusign
         #
