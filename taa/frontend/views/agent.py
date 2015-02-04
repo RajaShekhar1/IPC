@@ -8,6 +8,7 @@ from flask import render_template, redirect, url_for, flash, send_file
 from flask_stormpath import login_required, groups_required, current_user
 
 from taa import app
+from nav import get_nav_menu
 from taa.helpers import JSONEncoder
 from taa.api.cases import census_records
 from taa.services.docusign.docu_console import console_url
@@ -31,7 +32,8 @@ product_service = ProductService()
 def inbox():
     if sessionUserApprovedForDocusign():
         return render_template('agent/agent-inbox.html',
-                               inboxURL = console_url())
+                                inboxURL=console_url(),
+                                nav_menu=get_nav_menu())
     else:
         flash("You are not yet authorized for signing applications.  Please see your Regional Director for assistance.")
         return redirect(url_for("home"))
@@ -50,7 +52,9 @@ def manage_cases():
     vars = {'agent_cases':user_cases, 
             'all_states': get_all_states(),
             'product_choices': get_product_choices(),
-            'product_states': get_product_states()} 
+            'product_states': get_product_states(),
+            'nav_menu':get_nav_menu(),
+    } 
     return render_template('agent/manage_cases.html', **vars)
 
 
@@ -93,7 +97,7 @@ def manage_case(case_id):
     vars['census_records'] = [
         case_service.census_records.get_record_dict(record) for record in census_records(case_id)
     ]
-    
+    vars['nav_menu'] = get_nav_menu()
     return render_template('agent/case.html', **vars)
 
     
@@ -119,6 +123,7 @@ def edit_census_record(case_id, census_record_id):
         form=record_form,
         child_form_fields=child_form_fields,
         is_admin=agent_service.can_manage_all_cases(current_user),
+        nav_menu = get_nav_menu()
     )
     return render_template('agent/census_record.html', **vars)
 

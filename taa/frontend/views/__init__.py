@@ -1,4 +1,5 @@
 
+# Load all the views
 import admin
 import agent
 import enrollment

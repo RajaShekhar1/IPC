@@ -4,6 +4,7 @@ from flask import render_template, url_for, send_from_directory, redirect
 from flask.ext.stormpath import login_required, user, current_user
 
 from taa import app
+from .nav import get_nav_menu
 from taa.services.agents import AgentService
 
 agent_service = AgentService()
@@ -18,7 +19,7 @@ def favicon():
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html'), 404
+    return render_template('404.html', nav_menu=get_nav_menu()), 404
 
 @app.route("/")
 def index():
@@ -36,9 +37,9 @@ def home():
         return redirect(url_for('login'))
     
     if agent_service.is_user_admin(current_user) or agent_service.is_user_home_office(current_user):
-        return render_template('home_office/dashboard.html')
+        return render_template('home_office/dashboard.html', nav_menu=get_nav_menu())
     elif agent_service.is_user_agent(current_user):
-        return render_template('home.html')
+        return render_template('home.html', nav_menu=get_nav_menu())
     else:
         raise Exception('unknown type for user "%s"'%current_user)
     

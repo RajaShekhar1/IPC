@@ -65,19 +65,21 @@ var case_management = (function() {
         var table = $(table_selector);
         var table_defaults = {
             "aoColumnDefs":[
-                
-                {"aTargets":[0], "mData": "employee_first"},
-                {"aTargets":[1], "mData": "employee_last"},
-                {"aTargets":[2], "mData": function(source) {
+                {"aTargets":[0], "mData": function(source) {
+                    return format_date(parse_date(source.signature_time));
+                }},
+                {"aTargets":[1], "mData": "employee_first"},
+                {"aTargets":[2], "mData": "employee_last"},
+                {"aTargets":[3], "mData": function(source) {
                     return format_date(parse_date(source.employee_birthdate, "YYYY-MM-DD"));
                 }},
-                {"aTargets":[3], "mData": "employee_email"},
-                {"aTargets":[4], "mData": function(source) {return format_enrollment_status_html(source.enrollment_status)}},
-                {"aTargets":[5], "mData": function(source) {
+                {"aTargets":[4], "mData": "employee_email"},
+                {"aTargets":[5], "mData": function(source) {return format_enrollment_status_html(source.enrollment_status)}},
+                {"aTargets":[6], "mData": function(source) {
                     return '$'+source.total_annual_premium;
                 }, "sClass": "text-right"}
             ],
-            "aaSorting": [[ 1, "asc" ]],
+            "aaSorting": [[ 2, "asc" ]],
             "iDisplayLength": 25
         };
         var table_settings = $.extend({}, table_defaults, table_options || {});

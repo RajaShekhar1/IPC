@@ -3,6 +3,7 @@ from flask import render_template, redirect, url_for, flash
 from flask_stormpath import login_required, groups_required
 
 from taa import app
+from .nav import get_nav_menu
 from taa.services.products import ProductService
 from taa.services.products.forms import EditProductForm
 from taa.services.agents import AgentService
@@ -15,7 +16,7 @@ agent_service = AgentService()
 @app.route("/home-office")
 @groups_required(home_office_groups, all=False)
 def home_office_dashboard():
-    return render_template('home_office/dashboard.html')
+    return render_template('home_office/dashboard.html', nav_menu=get_nav_menu())
 
 @app.route("/manage-products")
 @groups_required(home_office_groups, all=False)
@@ -23,7 +24,8 @@ def manage_custom_products():
     
     products = product_service.get_base_products() + product_service.get_custom_products()
     return render_template('home_office/manage_products.html', 
-        products = products                       
+        products=products,
+        nav_menu=get_nav_menu()
     )
 
 @app.route("/manage-products/<product_id>")
@@ -46,10 +48,12 @@ def manage_custom_product(product_id):
                            statement_of_health_options=soh_options,
                            is_gi_product=is_gi_product,
                            is_base_product=is_base_product,
+                           nav_menu=get_nav_menu(),
     )
     
 @app.route("/manage-agents")
 @groups_required(home_office_groups, all=False)
 def manage_agents():
     return redirect('admin')
-    return render_template('home_office/manage_agents.html')
+    return render_template('home_office/manage_agents.html', 
+                           nav_menu=get_nav_menu())

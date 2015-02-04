@@ -53,15 +53,6 @@
   </head>
   <body class="no-skin">
 
-{# Agent menu #}
-{% if not nav_menu %}
-    {% set nav_menu = [
-        dict(nav_name='nav_home', url_name='home', display='Home'),
-        dict(nav_name='nav_manage_cases', url_name='manage_cases', display='Manage Cases'),
-        dict(nav_name='nav_enroll', url_name='enroll_start', display='Enroll'),
-        dict(nav_name='nav_agentsign', url_name='inbox', display='Sign'),
-    ] %}
-{% endif %}
 
 {% block navbar %}
     <div class="header">

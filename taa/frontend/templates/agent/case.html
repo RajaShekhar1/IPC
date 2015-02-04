@@ -323,6 +323,7 @@
                                                     
                                                             <thead>
                                                                 <tr>
+                                                                    <th>Date</th>
                                                                     <th>First</th>
                                                                     <th>Last</th>
                                                                     <th>DOB</th>
@@ -369,10 +370,6 @@
             <!--ko if: any_enrollments-->
                 <h1 data-bind="text: company_name"></h1>
                 
-                <h4>Period: <small data-bind="text: format_enrollment_dates"></small></h4>
-                <h4 data-bind="visible: only_one_product">Product: <small data-bind="text: product_name"></small></h4>
-                <h4>Method(s): <small data-bind="text: format_enrollment_methods"></small></h4>
-                
                 <!--ko if: is_census_report-->
                 <h3 class="light">Summary</h3>
                 <table class="table table-bordered center">
@@ -385,15 +382,18 @@
                         <tr>
                             <td>
                                 <span data-bind="text: format_total_percent_processed"></span> 
-                                (<span data-bind="text: format_total_num_processed"></span>)
+                                (<span data-bind="text: format_total_num_processed"></span> of 
+                                 <span data-bind="text: format_total_num_census"></span>)
                             </td>
                             <td>
                                 <span data-bind="text: format_total_percent_taken"></span> 
-                                (<span data-bind="text: format_total_num_taken"></span>)
+                                (<span data-bind="text: format_total_num_taken"></span> of 
+                                 <span data-bind="text: format_total_num_census"></span>)
                             </td>
                             <td>
                                 <span data-bind="text: format_total_percent_declined"></span> 
-                                (<span data-bind="text: format_total_num_declined"></span>)
+                                (<span data-bind="text: format_total_num_declined"></span> of 
+                                 <span data-bind="text: format_total_num_census"></span>)
                             </td>
                             <td>
                                 <span data-bind="text: format_total_annualized_premium"></span>
@@ -402,6 +402,12 @@
                     </tbody>
                 </table>
                 <!--/ko-->
+            
+                <h4>Period: <small data-bind="text: format_enrollment_dates"></small></h4>
+                <h4 data-bind="visible: only_one_product">Product: <small data-bind="text: product_name"></small></h4>
+                <h4>Method(s): <small data-bind="text: format_enrollment_methods"></small></h4>
+                
+                
                 
                 <!--ko if: !is_census_report()-->
                 <h3 class="light">Total Annual Premium:  <small data-bind="text: format_total_annualized_premium"></small></h3>
@@ -1235,13 +1241,14 @@
                     self.product_data(pdata);
                     
                     // Case agents
+                    var case_agents = [];
                     if (resp.data.case_owner) {
-                        self.case_agents.push(resp.data.case_owner.first + " "+resp.data.case_owner.last);
+                        case_agents.push(resp.data.case_owner.first + " "+resp.data.case_owner.last);
                     }
                     _.each(resp.data.case_agents, function(agent) {
-                        self.case_agents.push(agent.first + " "+agent.last);
+                        case_agents.push(agent.first + " "+agent.last);
                     });
-                    
+                    self.case_agents(case_agents);
                     self.is_loading(false);
                 }).error(function(e) {
                     console.error(e); 
@@ -1306,6 +1313,10 @@
             self.format_total_percent_processed = ko.computed(function() {
                 var percent = self.summary_data().processed_enrollments / self.summary_data().total_census * 100;
                 return percent.toFixed(2) + "%";
+            });
+            
+            self.format_total_num_census = ko.pureComputed(function() {
+                return self.summary_data().total_census;
             });
             
             self.format_total_num_processed = ko.computed(function() {

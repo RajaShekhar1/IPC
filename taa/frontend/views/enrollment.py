@@ -9,6 +9,7 @@ from flask import request, render_template, jsonify, session, send_from_director
 from flask.ext.stormpath import login_required
 
 from taa import app
+from nav import get_nav_menu
 from taa.models import db
 from taa.old_model.States import get_states
 from taa.old_model.Enrollment import (
@@ -53,6 +54,7 @@ def enroll_start():
                            agent_cases=case_service.get_agent_cases(agent, only_enrolling=True),
                            active_case=case,
                            should_show_next_applicant=should_show_next_applicant,
+                           nav_menu=get_nav_menu(),
     )
 
 @app.route("/select-case", methods=['GET', 'POST'])
@@ -65,7 +67,11 @@ def select_case():
     session['active_case_id'] = case_id
     census_records = [r.to_json() for r in case_service.get_census_records(case)]
     return jsonify(dict(
-        table=render_template('enrollment/setup-enrollment-census-select.html', case=case, census_records=census_records)
+        table=render_template('enrollment/setup-enrollment-census-select.html', 
+                              case=case, 
+                              census_records=census_records,
+                              nav_menu=get_nav_menu(),
+                              )
     ))
 
 # Wizard
@@ -140,7 +146,8 @@ def in_person_enrollment():
     return render_template(
         'enrollment/main-wizard.html', 
         wizard_data=wizard_data,
-        states=get_states()
+        states=get_states(),
+        nav_menu=get_nav_menu(),
     )
 
 
@@ -212,7 +219,9 @@ def ds_landing_page():
     return render_template('enrollment/completed-session.html',
                            session_type=session_type,
                            name=name,
-                           ds_event=ds_event)
+                           ds_event=ds_event,
+                           nav_menu=get_nav_menu(),
+                           )
 
 
  

@@ -11,6 +11,8 @@ from taa import (
     app,
     stormpath_manager,
 )
+
+from nav import get_nav_menu
 from taa.models import db
 from taa.old_model.Registration import TAA_UserForm
 from taa.old_model.Enrollment import AgentActivationEmail
@@ -37,7 +39,7 @@ def admin():
         
     #show the un-activated accounts first
     accounts = sorted(accounts, reverse=True, key=(lambda x: x['status']))
-    return render_template('admin/admin.html', accounts=accounts)
+    return render_template('admin/admin.html', accounts=accounts, nav_menu=get_nav_menu())
 
 
 @app.route('/edituser', methods = ['GET', 'POST'])
@@ -126,6 +128,7 @@ def updateUser():
 
     return render_template('admin/update-user.html',
                            form = form,
+                           nav_menu=get_nav_menu()
     )
 
 

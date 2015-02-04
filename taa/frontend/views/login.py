@@ -16,6 +16,7 @@ from flask.ext.stormpath import (
 )
 
 from taa import app
+from .nav import get_nav_menu
 from taa.old_model.Registration import TAA_RegistrationForm, TAA_LoginForm
 from taa.old_model.Enrollment import NotifyAdminEmail
 from taa.services.agents import AgentService
@@ -82,12 +83,14 @@ def register_taa():
             except StormpathError, err:
                 flash(err.user_message)
 
-    return render_template('user_account/register.html', form=form)
+    return render_template('user_account/register.html', form=form, nav_menu=get_nav_menu())
 
 @app.route("/registration_confirmed")
 def confirmRegistration():
     return render_template('user_account/registration_complete.html',
-                           name = session['registered_name'])
+                           name = session['registered_name'],
+                           nav_menu=get_nav_menu(),
+                           )
 
 
 @app.route('/login', methods = ['GET', 'POST'])
@@ -154,6 +157,7 @@ def login():
 
     return render_template('user_account/login.html',
                            form = form,
+                           nav_menu=get_nav_menu(),
     )
 
 @app.route("/exit")
