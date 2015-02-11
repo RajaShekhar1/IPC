@@ -82,12 +82,24 @@
                                                         </div>
                                                         
                                                     
+                                                    {# 
                                                     {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsValue: "id", optionsText: "name", selectedOptions: products, multiSelect: {
                                                         observed: products, 
                                                         options: {nonSelectedText: "No Products Selected", numberDisplayed: 3}
                                                     }'}) }}
-                                                    
-                                                    
+                                                    #}
+                                                    <div class="form-group">
+                                                        <label class="col-md-3 control-label" for="productSel">Product: </label>
+                                                        <div class="col-md-9">
+                                                            <select id="productSel" name="products" data-bind="
+                                                                    options: product_choices, 
+                                                                    optionsValue: 'id', 
+                                                                    optionsText: 'name', 
+                                                                    optionsCaption: '(Select Product)',
+                                                                    value: single_product"></select>
+                                                        </div>
+                                                    </div>
+                                                     
                                                     {{ render_field_with_errors(case_setup_form.situs_city, **{'data-bind':'value: situs_city'}) }}
                                                     {{ render_field_with_errors(case_setup_form.situs_state, id="case_state", **{'data-bind':'value: situs_state'}) }}
                                                     
@@ -107,7 +119,7 @@
                                                                 data-bind="slideDownIf: is_open_enrollment">
                                                                 <label>
                                                                     Start Date: 
-                                                                    <input data-bind="value: get_open_enrollment_period().start_date" type="date" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
+                                                                    <input data-bind="value: get_open_enrollment_period().start_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
                                                                 
                                                                 </label>
                                                                 
@@ -760,7 +772,7 @@
             
             if (self.is_open()) {
                 // process start date normally
-                self.start_date = ko.observable(settings.start_date);
+                self.start_date = ko.observable(normalize_date(settings.start_date));
                 self.end_date = ko.observable(null);
             } else {
                 self.start_date = ko.observable(strip_year(settings.start_date));
@@ -787,7 +799,6 @@
                     return (self.is_valid_month_day(self.start_date()) && self.is_valid_month_day(self.end_date()));
                 } 
             });
-            
             
             self.serialize = function() {
                 return {
@@ -818,6 +829,22 @@
             self.company_name = ko.observable(case_data.company_name || "").extend({ rateLimit: 1000 });
             self.product_choices = product_choices;
             self.products = ko.observableArray($.map(case_data.products, function(p) {return p.id}));
+            
+            // Until multi-product is working, make a single-product layer on top of the products array
+            self.single_product = ko.computed({
+                read: function () {
+                    return (self.products().length > 0) ? self.products()[0]: null;
+                },
+                write: function (value) {
+                    if (value !== null && value !== undefined) {
+                        self.products([value]);
+                    } else {
+                        self.products([]);
+                    }
+                },
+                owner: self
+            });
+            
             self.enrollment_period_type = ko.observable(case_data.enrollment_period_type);
             self.enrollment_periods = ko.observableArray($.map(case_data.enrollment_periods, function(p) {
                 return new CaseEnrollmentPeriod(p)}
@@ -1366,6 +1393,7 @@
         // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change
         case_settings.is_data_dirty(false);
         
+        $(".input-mask-date").mask("99/99/9999");
         $(".input-mask-month-day").mask("99/99");
         
         $('#partner-agents').bootstrapDualListbox({
