@@ -39,6 +39,10 @@ class EnrollmentApplicationService(DBService):
         
         return enrollment
         
+    def delete_case_enrollment_data(self, case):
+        for census_record in case.census_records:
+            self.delete_enrollment_data(census_record)
+        
     def delete_enrollment_data(self, census_record):
         for enrollment_application in census_record.enrollment_applications:
 

@@ -309,12 +309,26 @@ class CaseService(DBService):
         return self.census_records.delete(record)
     
     def delete_case(self, case):
-    
+        from taa.services.agents import AgentService
+        from taa.services.enrollments import EnrollmentApplicationService
+        enrollments_service = EnrollmentApplicationService()
+        agent_service = AgentService()
+        
+        # Remove all enrollments if allowed
+        if agent_service.can_manage_all_cases(current_user):
+            enrollments_service.delete_case_enrollment_data(case)
+        
         # remove all census records and enrollment_periods first
         self.census_records.remove_all_for_case(case)
         self.enrollment_periods.remove_all_for_case(case)
         
         return self.delete(case)
+    
+    def does_case_have_enrollments(self, case):
+        
+        from taa.services.enrollments import EnrollmentApplicationService
+
+        return bool(EnrollmentApplicationService().find(case_id=case.id).count())
     
     
 class CaseEnrollmentPeriodsService(DBService):

@@ -1,7 +1,7 @@
 {% extends "base_ace_latest.html" %}
 {% from "form_macros.html" import render_field_with_errors %}
 {% from "form_macros.html" import render_switch %}
-{% set active_page = 'nav_agent_manage_case' -%}
+{% set active_page = "nav_manage_cases" -%}
 {% block title %} - Agent Manage Case{% endblock %}
 
 {% block content %}
@@ -179,11 +179,34 @@
                                                     </div>
                                                     
                                                 {% endif %} 
-                                                <div class="col-sm-offset-1 col-sm-3">
-                                                    <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="
-                                                click: delete_case
-                                                ">Delete Case</button>
-                                                </div>
+                                            
+                                                {% if not case_has_enrollments %}
+                                                    <div class="col-sm-offset-1 col-sm-3">
+                                                        <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="click: delete_case">
+                                                            Delete Case
+                                                        </button>
+                                                    </div>
+                                                {% endif %}
+                                                {% if case_has_enrollments and not is_admin %}
+                                                    <div class="col-sm-offset-1 col-sm-3">
+                                                    <div class="tooltip-wrapper tooltip-error" 
+                                                                data-rel="tooltip" style="display: inline-block;"
+                                                                title="Cannot delete a case with posted enrollments. Instead mark the case as ‘inactive’">
+                                                        <button type="button" disabled="disabled" 
+                                                                class="btn btn-danger btn-xs pull-left tooltip-error">
+                                                            Delete Case
+                                                        </button>
+                                                    </div>
+                                                        
+                                                    </div>
+                                                {% endif %}
+                                                {% if case_has_enrollments and is_admin %}
+                                                    <div class="col-sm-offset-1 col-sm-3">
+                                                        <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="
+                                                    click: delete_case_with_enrollments
+                                                    ">Delete Case</button>
+                                                    </div>
+                                                {% endif %}
                                                 
                                             </div>
                                             {% if is_admin %}
@@ -369,6 +392,47 @@
         
     </div>
     
+    
+    <div data-bind="modal: is_permanent_delete_modal_showing" class="modal fade">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span
+                        aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title">Delete Case and All Enrollment Data</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-panel modal-panel">
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <p>
+                                This case has enrollments that have been processed. 
+                                Deleting the case will permanently remove all associated enrollment and census records; 
+                                they will not be retrievable.  Are you sure you want to permanently remove all enrollment 
+                                and census records?
+                                </p>
+                                <br>
+                                <label>
+                                    Type DELETE in the following box for confirmation:
+                                    <input data-bind="textInput: delete_confirmation_text">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    
+                <div class="modal-footer">
+                    <div class="form-buttons buttons-panel">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button class="btn btn-danger" 
+                                data-bind="enable: is_delete_text_valid, click: remote_delete">PERMANENT DELETE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
     <script type="text/html" id="case-report-template">
         <div data-bind="visible: is_loading">
             <div class="loading">Loading Report...</div>
@@ -458,6 +522,9 @@
 
 {% block modals %}
     {{ super() }}
+    
+    
+    
     
     {# Upload census data modal. This is in the footer so I can bind two KO controllers more easily for now. #}
     <form id="census-record-form" method="POST" enctype="multipart/form-data">
@@ -1156,15 +1223,35 @@
                 bootbox.confirm("Are you sure you want to the case '"+self.company_name()+"'? This is permanent and cannot be undone!", function(result) {
                     if (!result) { return; }
                     
-                    var request = send_json_data("DELETE", "{{ url_for("cases.delete_case", case_id=case.id) }}", {});
-                    $.when(request).then(function() {
-                        bootbox.alert("Case deleted successfully");
-                        self.is_data_dirty(false);
-                        window.location.href = "{{ url_for("manage_cases") }}";
-                    }, function() {
-                        bootbox.alert("There was a problem removing this case.");
-                    })
+                    self.remote_delete();
                 });
+            };
+            
+            self.remote_delete = function() {
+                var request = send_json_data("DELETE", "{{ url_for("cases.delete_case", case_id=case.id) }}", {});
+                $.when(request).then(function() {
+                    bootbox.alert("Case deleted successfully");
+                    // Allow leaving the page (disables the page unload trigger prompt)
+                    self.is_data_dirty(false);
+                    // Go back to main page
+                    window.location.href = "{{ url_for("manage_cases") }}";
+                }, function() {
+                    bootbox.alert("There was a problem removing this case.");
+                });  
+            };
+            
+            self.is_permanent_delete_modal_showing = ko.observable(false);
+            self.delete_confirmation_text = ko.observable("");
+            self.is_delete_text_valid = ko.pureComputed(function() {
+                return self.delete_confirmation_text() == "DELETE";
+            });
+            
+            self.delete_case_with_enrollments = function() {
+                // Show the dialog
+                self.delete_confirmation_text("");
+                // Toggle off, then on since we don't detect modal hide right now
+                self.is_permanent_delete_modal_showing(false);
+                self.is_permanent_delete_modal_showing(true);
             };
             
             $(window).bind("beforeunload", function() { 
@@ -1395,6 +1482,8 @@
         
         $(".input-mask-date").mask("99/99/9999");
         $(".input-mask-month-day").mask("99/99");
+        $('[data-rel=tooltip]').tooltip();
+        
         
         $('#partner-agents').bootstrapDualListbox({
             infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',

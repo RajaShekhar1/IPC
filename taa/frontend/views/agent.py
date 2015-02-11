@@ -45,15 +45,18 @@ def manage_cases():
     agent = agent_service.get_logged_in_agent()
     if agent:
         user_cases = case_service.get_agent_cases(agent)
+        header_title = ''
     else:
         # Admin or home office user
         user_cases = case_service.all()
+        header_title = 'Home Office'
     
     vars = {'agent_cases':user_cases, 
             'all_states': get_all_states(),
             'product_choices': get_product_choices(),
             'product_states': get_product_states(),
             'nav_menu':get_nav_menu(),
+            'header_title':header_title,
     } 
     return render_template('agent/manage_cases.html', **vars)
 
@@ -73,6 +76,7 @@ def manage_case(case_id):
         products = product_service.get_all_enrollable_products()
         vars['is_admin'] = True
         vars['active_agents'] = agent_service.get_active_agents()
+        vars['header_title'] = 'Home Office'
         
     vars['product_choices'] = products
     
@@ -98,6 +102,10 @@ def manage_case(case_id):
         case_service.census_records.get_record_dict(record) for record in census_records(case_id)
     ]
     vars['nav_menu'] = get_nav_menu()
+    
+    # Has active enrollments?
+    vars['case_has_enrollments'] = case_service.does_case_have_enrollments(case)
+    
     return render_template('agent/case.html', **vars)
 
     
@@ -117,12 +125,15 @@ def edit_census_record(case_id, census_record_id):
         child_fields.append(getattr(record_form, 'child{}_birthdate'.format(x)))
         child_form_fields.append(child_fields)
     
+    is_admin = agent_service.can_manage_all_cases(current_user)
+    
     vars = dict(
         case=case, 
         census_record=census_record,
         form=record_form,
         child_form_fields=child_form_fields,
-        is_admin=agent_service.can_manage_all_cases(current_user),
+        is_admin=is_admin,
+        header_title='Home Office' if is_admin else '',
         nav_menu = get_nav_menu()
     )
     return render_template('agent/census_record.html', **vars)
