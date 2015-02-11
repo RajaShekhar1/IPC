@@ -44,7 +44,7 @@
             </div>
             <div class="row">
                 <div class="col-sm-6">
-                    <button disabled="1" class="btn btn-default btn-lg enroll-from-case-email">
+                    <button  disabled="1" class="btn btn-default btn-lg enroll-from-case-email">
                         <i class="glyphicon glyphicon-briefcase align-top bigger-110"></i> 
                         Enroll from Case<br>
                         <i class="icon icon-envelope align-top bigger-110"></i>
@@ -401,6 +401,8 @@
 <script>
     jQuery(function($) {
         
+        $(".enroll-ad-hoc-email").tooltip({content: "This feature coming soon!"});
+    
         var EnrollmentSetupPage = function(current_case) {
             var self = this;
             self.current_company_name = ko.observable((current_case)?current_case.company_name : "");
