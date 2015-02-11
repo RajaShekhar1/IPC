@@ -71,7 +71,7 @@ class CensusRecordForm(Form):
     employee_street_address2 = StringField("Employee Street Address2")
     employee_city = StringField("Employee Street Address")
     employee_state = SelectField("Employee Statecode", choices=[(s['shortname'], s['name']) for s in get_all_states()])
-    employee_zip = StringField("Employee Zip", [validators.length(max=5, min=5)])
+    employee_zip = StringField("Employee Zip", [])
     
     spouse_first = StringField('Spouse First')
     spouse_last = StringField('Spouse Last')
@@ -84,7 +84,7 @@ class CensusRecordForm(Form):
     spouse_street_address2 = StringField("Spouse Street Address2")
     spouse_city = StringField("Spouse Street Address")
     spouse_state = SelectField("Spouse Statecode", choices=[(s['shortname'], s['name']) for s in get_all_states()])
-    spouse_zip = StringField("Spouse Zip", [validators.length(max=5, min=5)])
+    spouse_zip = StringField("Spouse Zip", [])
     
     
     
