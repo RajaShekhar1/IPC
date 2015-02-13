@@ -1373,7 +1373,9 @@
             
                 $(".header ul").hide();
                 $(".container.page").hide();
-                $("#print-wrap").html($("#reports .report-wrap").clone()).show();
+                $("#print-wrap").html($("#reports .report-wrap").clone()
+                ).prepend("<div><a class='btn btn-default hidden-print' href='#reports'>"+
+                    "<span class='glyphicon glyphicon-chevron-left'></span> Back to report</a></div>").show();
             };
             
             self.exit_print_preview = function() {
