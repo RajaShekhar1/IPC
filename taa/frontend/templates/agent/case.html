@@ -1373,7 +1373,7 @@
             
                 $(".header ul").hide();
                 $(".container.page").hide();
-                $("#print-wrap").html($(".report-wrap").clone()).show();
+                $("#print-wrap").html($("#reports .report-wrap").clone()).show();
             };
             
             self.exit_print_preview = function() {

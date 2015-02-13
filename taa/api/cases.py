@@ -13,7 +13,6 @@ from taa.services.cases.forms import (
     NewCaseForm, 
     UpdateCaseForm, 
     CensusRecordForm,
-    NewCaseEnrollmentPeriodForm,
 )
 from taa.services.agents import AgentService
 from taa.services.products import ProductService
@@ -160,20 +159,13 @@ def enrollment_records(case_id):
     '''
     Combines the census and enrollment records for export.
     
-    format=json|csv
-    columns=display|all
+    format=json|csv (json by default)
     '''
 
-    if request.args.get('columns') == "display":
-        display_columns = [
-            'employee_first',
-            'employee_last',
-            
-        ]
-    
     from taa.services.enrollments import EnrollmentApplicationService
     enrollment_service = EnrollmentApplicationService()
-    data = enrollment_service.get_enrollment_records(case_service.get_if_allowed(case_id))
+    
+    data = enrollment_service.get_all_enrollment_records(case_service.get_if_allowed(case_id))
     
     if request.args.get('format') == "csv":
         body = enrollment_service.export_enrollment_data(data)

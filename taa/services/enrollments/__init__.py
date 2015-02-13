@@ -26,13 +26,14 @@ class EnrollmentApplicationService(DBService):
         self.coverages_service = EnrollmentApplicationCoverageService()
         self.report_service = EnrollmentReportService()
 
-    def save_enrollment_data(self, data, census_record):
+    def save_enrollment_data(self, data, census_record, agent):
         
         # Update the census record data with the new data
-        case_service.update_census_record_from_enrollment(census_record, data)
+        if census_record:
+            case_service.update_census_record_from_enrollment(census_record, data)
         
         # Store extra enrollment data on the enrollment
-        enrollment = self._create_enrollment(census_record, data)
+        enrollment = self._create_enrollment(census_record, data, agent)
         
         # Save coverages
         self._save_coverages(enrollment, data)
@@ -52,7 +53,7 @@ class EnrollmentApplicationService(DBService):
             self.delete(enrollment_application)
         
         
-    def _create_enrollment(self, census_record, data):
+    def _create_enrollment(self, census_record, data, agent):
         
         # Link to census record and case, if it exists
         if census_record:
@@ -61,7 +62,17 @@ class EnrollmentApplicationService(DBService):
         else:
             case_id = None
             census_record_id = None
-
+        
+        # Link to agent if given
+        if agent:
+            agent_code = agent.agent_code
+            agent_name = agent.name()
+            agent_id = agent.id
+        else:
+            agent_code = None
+            agent_name = None
+            agent_id = None
+        
         # Handle decline coverage case
         if data['did_decline']:
             return self.create(**dict(
@@ -70,12 +81,38 @@ class EnrollmentApplicationService(DBService):
                 application_status=EnrollmentApplication.APPLICATION_STATUS_DECLINED,
                 method=data['method'],
             ))
-        
+
+        if data['employee_beneficiary'] == "spouse":
+            emp_beneficiary_name = "{} {}".format(data["spouse"]["first"], data["spouse"]["last"]) 
+            emp_beneficiary_ssn =  self._strip_ssn(data["spouse"]["ssn"])
+            emp_beneficiary_relation = "spouse"
+            emp_beneficiary_dob = data["spouse"]["birthdate"]
+        else:
+            emp_beneficiary_name = data['employee_beneficiary_name']
+            emp_beneficiary_ssn = self._strip_ssn(data['employee_beneficiary_ssn'])
+            emp_beneficiary_relation = data['employee_beneficiary_relationship']
+            emp_beneficiary_dob = data['employee_beneficiary_dob']
+            
+        if data['spouse_beneficiary'] == 'employee':
+            sp_beneficiary_name = "{} {}".format(data["employee"]["first"], data["employee"]["last"])
+            sp_beneficiary_ssn = self._strip_ssn(data["employee"]['ssn'])
+            sp_beneficiary_relation = 'spouse'
+            sp_beneficiary_dob = data["employee"]['birthdate']
+        else:
+            sp_beneficiary_name = data['spouse_beneficiary_name']
+            sp_beneficiary_ssn = self._strip_ssn(data['spouse_beneficiary_ssn'])
+            sp_beneficiary_relation = data['spouse_beneficiary_relationship']
+            sp_beneficiary_dob = data['spouse_beneficiary_dob']
+            
         enrollment_data = dict(
             case_id = case_id,
             census_record_id = census_record_id,
             
             application_status=EnrollmentApplication.APPLICATION_STATUS_ENROLLED,
+
+            agent_code=agent_code,
+            agent_name=agent_name,
+            agent_id=agent_id,
             
             method=data['method'],
             # TODO: Payment Mode
@@ -97,18 +134,18 @@ class EnrollmentApplicationService(DBService):
             spouse_other_owner_ssn = self._strip_ssn(data['spouse_other_owner_ssn']),
             
             # emp beneficiary
-            is_employee_beneficiary_spouse = data['employee_beneficiary'] != 'other',
-            employee_beneficiary_name = data['employee_beneficiary_name'],
-            employee_beneficiary_ssn = data['employee_other_owner_ssn'],
-            employee_beneficiary_relationship = data['employee_beneficiary_relationship'],
-            employee_beneficiary_birthdate = data['employee_beneficiary_dob'],
+            is_employee_beneficiary_spouse = data['employee_beneficiary'] == 'spouse',
+            employee_beneficiary_name = emp_beneficiary_name,
+            employee_beneficiary_ssn = emp_beneficiary_ssn,
+            employee_beneficiary_relationship = emp_beneficiary_relation,
+            employee_beneficiary_birthdate = emp_beneficiary_dob,
             
             # spouse beneficiary
-            is_spouse_beneficiary_employee = data['spouse_beneficiary'] != 'other',
-            spouse_beneficiary_name = data['spouse_beneficiary_name'],
-            spouse_beneficiary_ssn = self._strip_ssn(data['spouse_beneficiary_ssn']),
-            spouse_beneficiary_relationship = data['spouse_beneficiary_relationship'],
-            spouse_beneficiary_birthdate = data['spouse_beneficiary_dob'],
+            is_spouse_beneficiary_employee = data['spouse_beneficiary'] == 'employee',
+            spouse_beneficiary_name = sp_beneficiary_name,
+            spouse_beneficiary_ssn = sp_beneficiary_ssn,
+            spouse_beneficiary_relationship = sp_beneficiary_relation,
+            spouse_beneficiary_birthdate = sp_beneficiary_dob,
         )
         
         return self.create(**enrollment_data)
@@ -168,6 +205,31 @@ class EnrollmentApplicationService(DBService):
             
         return data
     
+    def get_all_enrollment_records(self, case):
+        """
+        Does not do any combining data. 
+        Includes census data for each enrollment, so the same employee in the census
+        will show up multiple times, once for each enrollment.
+        """
+
+        census_records = CaseService().get_census_records(case)
+        
+        data = []
+        for census_record in census_records:
+            # Export only records with enrollments
+            if not census_record.enrollment_applications:
+                continue
+
+            for enrollment in census_record.enrollment_applications:
+                
+                export_record = dict()
+                export_record.update(self.get_census_data(census_record))
+                export_record.update(self.get_unmerged_enrollment_data(census_record, enrollment))
+
+                data.append(export_record)
+
+        return data
+        
     def get_enrollment_status(self, census_record):
         # Get the flattened enrollment record
         enrollment_data = self.get_enrollment_data(census_record)
@@ -186,10 +248,9 @@ class EnrollmentApplicationService(DBService):
         enrollment = max(census_record.enrollment_applications, key=lambda e: e.signature_time)
         
         # Export data from enrollment
-        col_names = [c.field_name for c in enrollment_columns]
-        for col in col_names:
-            enrollment_data[col] = getattr(enrollment, col)
-        
+        for col in enrollment_columns:
+            enrollment_data[col.get_field_name()] = col.get_value(enrollment)
+            
         # Add Coverage data
         coverages = []
         for e in census_record.enrollment_applications:
@@ -238,9 +299,76 @@ class EnrollmentApplicationService(DBService):
             
         return enrollment_data
             
-    def find_most_recent_coverage_by_product_for_applicant_type(self, coverages, applicant_type):
+    def get_unmerged_enrollment_data(self, census_record, enrollment):
+        """
+        If we are not merging, we know we are dealing with coverages from a single enrollment
+        :param census_record: 
+        :param enrollment: 
+        :return:
+        """
+        
+        enrollment_data = {}
 
-        applicant_coverages = filter_applicant_coverages(coverages, applicant_type)
+        if not census_record.enrollment_applications or not enrollment:
+            return None
+
+        # Export data from enrollment
+        for col in enrollment_columns:
+            enrollment_data[col.get_field_name()] = col.get_value(enrollment)
+
+        # Add Coverage data
+        coverages = enrollment.coverages
+        
+        employee_coverage = self.find_first_coverage_by_product_for_applicant_type(
+            coverages,
+            EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE
+        )
+        
+        spouse_coverage = self.find_first_coverage_by_product_for_applicant_type(
+            coverages,
+            EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE
+        )
+        children_coverage = self.find_first_coverage_by_product_for_applicant_type(
+            coverages,
+            EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD
+        )
+        
+        # Include total annualized premium also
+        total_annual_premium = Decimal('0.00')
+        
+        # Export coverages for at most six products
+        product_list = case_service.get_products_for_case(enrollment.case)
+        for x in range(6):
+            if x < len(product_list):
+                product = product_list[x]
+            else:
+                product = None
+
+            prefix = 'product_{0}'.format(x + 1)
+            product_data = {'{}_name'.format(prefix): product.name if product else ''}
+            for applicant_abbr, applicant_coverages in [('emp', employee_coverage), ('sp', spouse_coverage),
+                                                        ('ch', children_coverage)]:
+                coverage = applicant_coverages[product].coverage_face_value if applicant_coverages.get(
+                    product) else ''
+                premium = applicant_coverages[product].get_annualized_premium() if applicant_coverages.get(
+                    product) else ''
+                product_data.update({
+                    '{}_{}_coverage'.format(prefix, applicant_abbr): coverage,
+                    '{}_{}_annual_premium'.format(prefix, applicant_abbr): premium,
+                })
+
+                if premium and premium > Decimal('0.00'):
+                    total_annual_premium += premium
+
+            enrollment_data.update(product_data)
+
+        enrollment_data['total_annual_premium'] = total_annual_premium
+
+        return enrollment_data
+    
+    def find_most_recent_coverage_by_product_for_applicant_type(self, all_coverages, applicant_type):
+
+        applicant_coverages = filter_applicant_coverages(all_coverages, applicant_type)
         coverages_by_product = group_coverages_by_product(applicant_coverages)
         
         # Pull out the most recent for each product
@@ -248,7 +376,20 @@ class EnrollmentApplicationService(DBService):
             p: select_most_recent_coverage(coverages) 
             for p, coverages in coverages_by_product.iteritems()
         }
+    
+    def find_first_coverage_by_product_for_applicant_type(self, all_coverages, applicant_type):
         
+        applicant_coverages = filter_applicant_coverages(all_coverages, applicant_type)
+        coverages_by_product = group_coverages_by_product(applicant_coverages)
+
+        # There should be at most one coverage since we should be dealing with 
+        #  coverages from a single enrollment application.
+        return {
+            p: coverages[0]
+            for p, coverages in coverages_by_product.iteritems()
+            if coverages
+        }
+
     def export_enrollment_data(self, data):
         stream = StringIO.StringIO()
         writer = csv.writer(stream)
@@ -278,19 +419,19 @@ class EnrollmentApplicationService(DBService):
         row += CaseService().census_records.get_csv_row_from_dict(record)
         
         # Add enrollment record export
-        row += [record[c.field_name] for c in enrollment_columns]
+        row += [c.get_value(record) for c in enrollment_columns]
         
         # Add coverage records
-        row += [record[c.field_name] for c in coverage_columns]
+        row += [c.get_value(record) for c in coverage_columns]
         
         return row
     
         
-def export_string(self, val):
+def export_string(val):
     return val.strip()
 
 
-def export_date(self, val):
+def export_date(val):
     if not val:
         return ''
     return dateutil.parser.parse(val).strftime("%F")
@@ -304,19 +445,39 @@ def export_ssn(self, val):
     return val
 
 class EnrollmentColumn(object):
-    def __init__(self, field_name, column_title, export_func):
+    def __init__(self, field_name, column_title, export_func, accessor=None):
         self.field_name = field_name
         self.column_title = column_title
         self.export_func = export_func
+        self.accessor = accessor
+    
+    def get_value(self, record):
+        "Pull the value for this column out of the given record"
+        if self.accessor:
+            val = self.accessor(record)
+        else:
+            try:
+                val = getattr(record, self.field_name)
+            except AttributeError:
+                val = record.get(self.field_name)
+                
+        return val
+
+    def get_field_name(self):
+        return self.field_name
 
 enrollment_columns = [
+    EnrollmentColumn('signature_time', 'Timestamp', export_date),
+    EnrollmentColumn('application_status', 'Status', export_string),
+
+    EnrollmentColumn('agent_code', 'Agent Code', export_string),
+    EnrollmentColumn('agent_name', 'Agent Name', export_string),
+    
     EnrollmentColumn('signature_city', 'Signature City', export_string),
     EnrollmentColumn('signature_state', 'Signature State', export_string),
-    EnrollmentColumn('signature_time', 'Signature Date', export_date),
 
     EnrollmentColumn('identity_token', 'Identity Token', export_string),
     EnrollmentColumn('identity_token_type', 'Token Type', export_string),
-    EnrollmentColumn('application_status', 'Status', export_string),
     EnrollmentColumn('mode', 'Payment Mode', export_string),
     EnrollmentColumn('method', 'Enrollment Method', export_string),
 
@@ -416,8 +577,12 @@ class EnrollmentReportService(object):
 
         census_records = CaseService().get_census_records(case)
         
-        enrollment_applications = [merge_enrollments(census_record) for census_record in census_records]
-        
+        merged_enrollment_applications = [merge_enrollments(census_record) for census_record in census_records]
+        enrollment_applications = []
+        for census_record in census_records:
+            enrollment_applications += [dict(enrollment=e, coverages=group_coverages_by_product(e.coverages)) 
+                                        for e in census_record.enrollment_applications]
+         
         report_data['company_name'] = case.company_name
         
         # Enrollment methods used
@@ -431,7 +596,7 @@ class EnrollmentReportService(object):
 
         stats = self.get_product_statistics(enrollment_applications)
         
-        report_data['summary'] = self.build_report_summary(stats, case, enrollment_applications)
+        report_data['summary'] = self.build_report_summary(stats, case, merged_enrollment_applications, enrollment_applications)
         
         # Product data
         report_data['product_report'] = self.build_report_by_product(stats)
@@ -463,7 +628,7 @@ class EnrollmentReportService(object):
         
         return dict(start=start, end=end)
     
-    def build_report_summary(self, stats, case, merged_enrollment_applications):
+    def build_report_summary(self, stats, case, merged_enrollment_applications, unmerged_enrollment_applications):
         """
         Summary data
           - % (#) processed (Enrolled + Declined) (for uploaded census only)
@@ -477,7 +642,7 @@ class EnrollmentReportService(object):
                 taken_enrollments=self.get_num_taken_enrollments(merged_enrollment_applications),
                 declined_enrollments=self.get_num_declined_enrollments(merged_enrollment_applications),
                 total_census=self.get_num_census_records(merged_enrollment_applications),
-                total_annualized_premium=self.get_total_annualized_premium(merged_enrollment_applications),
+                total_annualized_premium=self.get_total_annualized_premium(unmerged_enrollment_applications),
                 is_census_report=True,
                 only_one_product=self.has_only_one_product(case),
                 product_names=self.get_product_names(case),
@@ -486,7 +651,7 @@ class EnrollmentReportService(object):
             return dict(
                 processed_enrollments=self.get_num_processed_enrollments(merged_enrollment_applications),
                 total_census=self.get_num_census_records(merged_enrollment_applications),
-                total_annualized_premium = self.get_total_annualized_premium(merged_enrollment_applications),
+                total_annualized_premium = self.get_total_annualized_premium(unmerged_enrollment_applications),
                 is_census_report=False,
                 only_one_product=self.has_only_one_product(case),
                 product_names=self.get_product_names(case),
@@ -515,10 +680,10 @@ class EnrollmentReportService(object):
         return sum(1 for e in merged_enrollment_applications
                     if e['enrollment'] and not e['enrollment'].did_enroll())
     
-    def get_total_annualized_premium(self, merged_enrollment_applications):
+    def get_total_annualized_premium(self, unmerged_enrollment_applications):
         
         total = Decimal('0.00')
-        for e in merged_enrollment_applications:
+        for e in unmerged_enrollment_applications:
             all_coverages = []
             for product, coverages in e['coverages'].iteritems():
                 all_coverages += coverages

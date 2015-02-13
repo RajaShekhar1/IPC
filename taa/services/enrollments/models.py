@@ -7,7 +7,10 @@ from taa.helpers import JsonSerializable
 class EnrollmentSerializer(JsonSerializable):
     __json_hidden__ = ['census_record', 'case']
 
+
 class EnrollmentApplication(EnrollmentSerializer, db.Model):
+    """Describes an application made for an enrollment"""
+    
     __tablename__ = 'enrollment_applications'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -38,6 +41,11 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     METHOD_SELF_EMAIL = u'self_enroll_email'
     METHOD_PHONE = u'phone'
     method = db.Column(db.Unicode(32)) 
+    
+    # Agent
+    agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
+    agent_code = db.Column(db.Unicode(16))
+    agent_name = db.Column(db.Unicode(256))
     
     # Policy owner
     is_employee_owner = db.Column(db.Boolean)

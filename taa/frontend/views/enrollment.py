@@ -165,16 +165,16 @@ def submit_wizard_data():
     # Save enrollment information and updated census data prior to DocuSign hand-off 
     if session.get('enrolling_census_record_id'):
         census_record = case_service.get_census_record(None, session['enrolling_census_record_id'])
-        print("here")
     else:
         census_record = None
         
-    # TODO: Handle ad-hoc enrollments
-    if census_record:
-        enrollment_application = enrollment_service.save_enrollment_data(wizard_results, census_record)
-    else:
-        enrollment_application = None
+    # Get the agent for this session - for now, it is the logged-in user, but will 
+    # need to be determined differently for self-enroll situations
+    agent = agent_service.get_logged_in_agent()
         
+    # Create and save the enrollment data
+    enrollment_application = enrollment_service.save_enrollment_data(wizard_results, census_record, agent)
+    
     if not wizard_results.get('did_decline'):
         pass
         # Hand off wizard_results to docusign
