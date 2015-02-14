@@ -499,7 +499,6 @@
             $(".select-case-panel").hide();
             $('.enroll-from-case-panel').show();
             $('.ad-hoc-form').hide();
-                        
             
             case_management.refresh_census_table(case_id, url, 
                 "#census-records-table", ".loading-panel", {
@@ -507,7 +506,7 @@
                     // Show enroll button in first column
                     {"aTargets":[0], "bSortable": false, "mData":function(source) {
                         if (source.enrollment_status !== null) {
-                            return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'"><span class="ace-icon glyphicon glyphicon-refresh"> Re-enroll</button>';
+                            return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'"><span class="ace-icon glyphicon glyphicon-plus"> Add Coverage</button>';
                         }
                         
                         return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'">Enroll</button>';

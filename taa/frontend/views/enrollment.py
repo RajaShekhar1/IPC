@@ -102,7 +102,7 @@ def in_person_enrollment():
         spouse_data = record.get_spouse_data()
         children_data = record.get_children_data()
     else:   
-        # TODO: Create one-off census record
+        
         state = request.form['enrollmentState']
         enroll_city = request.form['enrollmentCity']
         company_name = request.form['companyName']
@@ -176,7 +176,7 @@ def submit_wizard_data():
     enrollment_application = enrollment_service.save_enrollment_data(wizard_results, census_record, agent)
     
     if not wizard_results.get('did_decline'):
-        pass
+        
         # Hand off wizard_results to docusign
         #
         #is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results);

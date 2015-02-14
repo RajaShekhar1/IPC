@@ -13,7 +13,7 @@ if (typeof Object.create != 'function') {
               throw Error('Cannot set a null [[Prototype]]');
             }
             if (typeof o != 'object') { 
-              throw TypeError('Argument must be an object');
+              throw new TypeError('Argument must be an object');
             }
             F.prototype = o;
             return new F();
@@ -249,7 +249,7 @@ function WizardUI(product, defaults) {
         }
         
         // return the benefit options of the any child
-        return self.insurance_product.get_coverage_options_for_applicant('children');
+        return self.insurance_product.get_coverage_options_for_applicant('children')();
     });
     
     self.is_show_rates_clicked = ko.observable(false);
@@ -690,6 +690,18 @@ function WizardUI(product, defaults) {
         }
     });
     
+    self.get_all_applicants = ko.computed(function() {
+        var people = [self.employee()];
+        if (self.should_include_spouse_in_table()) {
+            people.push(self.spouse());
+        }
+        _.each(self.get_valid_children(), function(child) {
+            people.push(child);
+        });
+        
+        return people;
+    });
+    
     self.do_any_health_questions_need_answering = ko.computed(function() {
         if (self.health_questions().length == 0) {
             return false;
@@ -765,6 +777,15 @@ function WizardUI(product, defaults) {
         }
     });
     
+    self.can_decline = ko.computed(function() {
+        // Can not decline if any applicant has applied for coverage already
+        
+        return (!_.any(self.get_all_applicants(), function(applicant) {
+            return applicant.get_existing_coverage_amount_for_product(self.insurance_product.product_data.id);
+        }));
+        
+    });
+    
 }
 
 // Model for different insurance products
@@ -834,6 +855,14 @@ Product.prototype = {
     get_coverage_options_for_applicant: function(applicant_type) {
         // returns an observable
         return this.all_coverage_options[applicant_type];
+    },
+    
+    get_maximum_coverage_amount: function(applicant_type) {
+        var options = this.get_coverage_options_for_applicant(applicant_type)();
+        if (options.length > 0) {
+            return _.max(_.pluck(options, "face_value"));  
+        }
+        return 0;
     },
     
     parse_benefit_options: function(applicant_type, applicant, rates) {
@@ -1447,6 +1476,9 @@ function InsuredApplicant(options) {
     self.state = ko.observable(options.state || "");
     self.zip = ko.observable(options.zip || "");
     
+    // From previous application(s)
+    self.existing_coverages = options.existing_coverages || [];
+    
     self.health_questions = {};
     
     self.has_valid_gender = ko.pureComputed(function() {
@@ -1533,6 +1565,20 @@ function InsuredApplicant(options) {
             get_monthly_premium_from_weekly(self.selected_coverage().weekly_premium)
         );
     });
+    
+    self.get_existing_coverage_amount_for_product = function(product_id) {
+        return parseFloat(self.get_existing_coverage_amount_by_product()[product_id]);
+    };
+    
+    self.get_existing_coverage_amount_by_product = function() {
+        return _.reduce(self.existing_coverages, function(by_product_id, coverage) {
+            if (!(coverage.product.id in by_product_id)) {
+                by_product_id[coverage.product.id] = 0.0;
+            }
+            by_product_id[coverage.product.id] += parseFloat(coverage.coverage_face_value);
+            return by_product_id;
+        }, {});
+    };
     
     self.serialize_data = function() {
         var data = {};
@@ -1793,6 +1839,8 @@ function BenefitsPackage(root, name) {
     
     self.get_all_people = ko.computed(function() {
         var employee = root.employee();
+        
+        // TODO: NO NO NO 
         // Make sure selected coverage is set on each of the person objects
         employee.selected_coverage(self.employee_recommendation().recommended_benefit);
         
@@ -1800,6 +1848,7 @@ function BenefitsPackage(root, name) {
         
         if (root.should_include_spouse_in_table()) {
             var spouse = root.spouse();
+            // TODO: NO NO NO 
             spouse.selected_coverage(self.spouse_recommendation().recommended_benefit);
             people.push(spouse);
         }
@@ -1807,6 +1856,7 @@ function BenefitsPackage(root, name) {
         if (root.should_include_children_in_table()) {
             $.each(root.get_valid_children(), function () {
                 var child = this;
+                // TODO: NO NO NO 
                 child.selected_coverage(self.children_recommendation().recommended_benefit);
                 people.push(child);
             });
@@ -1817,6 +1867,10 @@ function BenefitsPackage(root, name) {
     self.get_all_covered_people = ko.computed(function() {
         var people = [];
         
+        // TODO: Remove this code that sets the selected coverage on the applicants 
+        // -> it is a bad side effect of this computed function, causes circular dependencies, etc.
+        // -> could just pass in the selected_plan observable to each applicant so it can create a computed 
+        // -> observable based on that
         if (root.did_select_employee_coverage()) {
             var employee = root.employee();
             employee.selected_coverage(self.employee_recommendation().recommended_benefit);
@@ -1873,15 +1927,16 @@ function BenefitsPackage(root, name) {
     self.get_covered_applicants_with_type = ko.computed(function() {
         var applicants = [];
         if (root.did_select_employee_coverage()) {
-            applicants.push({applicant: root.employee(), type: "Employee"});
+            
+            applicants.push({applicant: root.employee(), type: "Employee", coverage: self.employee_recommendation().recommended_benefit});
         }
         if (root.did_select_spouse_coverage()) {
-            applicants.push({applicant: root.spouse(), type: "Spouse"});
+            applicants.push({applicant: root.spouse(), type: "Spouse", coverage: self.spouse_recommendation().recommended_benefit});
         }
         if (root.did_select_children_coverage()) {
             $.each(root.get_valid_children(), function () {
                 var child = this;
-                applicants.push({applicant: child, type: "Child"});
+                applicants.push({applicant: child, type: "Child", coverage: self.children_recommendation().recommended_benefit});
             });
         }
         return applicants;
@@ -2317,7 +2372,6 @@ function init_validation() {
             // Clear step2 health question error when we attempt to validate step 1
             $("#health_questions_error").html("");
             
-            
             // Check for "Decline all coverage" and bail out of the wizard if it is checked
             if (ui.did_decline()) {
                 submit_decline();
@@ -2332,6 +2386,45 @@ function init_validation() {
                 window.ui.show_no_selection_error();
                 return false;
             } 
+            
+            var current_product_id = ui.insurance_product.product_data.id;
+            var plan = ui.selected_plan();
+            
+            function validate_coverage_amount(applicant, applicant_type, selected_coverage) {
+                var existing_coverage_amount = applicant.get_existing_coverage_amount_for_product(current_product_id);
+                if (!existing_coverage_amount) {
+                    // Short-circuit, there is no existing coverage to check so we are OK
+                    return true;
+                }
+                
+                var applied_coverage_amount = (selected_coverage.is_valid())? selected_coverage.face_value: 0;
+                var max_coverage_amount = ui.insurance_product.get_maximum_coverage_amount(applicant_type);
+                
+                var name = applicant.name();
+                if (existing_coverage_amount && (max_coverage_amount < existing_coverage_amount+applied_coverage_amount)) {
+                    var msg = ("Due to one or more previous applications this enrollment period for "+
+                        format_face_value(existing_coverage_amount)+
+                        " coverage, "+name+" can apply for a maximum of "+
+                        format_face_value(max_coverage_amount - existing_coverage_amount)+" additional coverage.");
+                    
+                    alert(msg);
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            
+            // Check for adding on too much coverage
+            _.each(plan.get_covered_applicants_with_type(), function(val) {
+                var applicant_type = {"Employee":"employee", "Spouse": "spouse", "Child": "children"}[val.type];
+                var can_apply = validate_coverage_amount(val.applicant, applicant_type, val.coverage);
+                if (!can_apply) {
+                    is_valid = false;
+                }
+            });
+            
+            
             return is_valid;
         }
         if (info.step == 2 && info.direction == 'next') {

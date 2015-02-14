@@ -553,6 +553,28 @@ class EnrollmentApplicationCoverageService(DBService):
             ))
         ))
     
+    def get_coverages_for_employee(self, census_record):
+        
+        coverages = self.get_census_record_coverages(census_record)
+        
+        return filter_applicant_coverages(coverages, EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE)
+    
+    def get_coverages_for_spouse(self, census_record):
+        coverages = self.get_census_record_coverages(census_record)
+
+        return filter_applicant_coverages(coverages, EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
+    
+    def get_coverages_for_children(self, census_record):
+        coverages = self.get_census_record_coverages(census_record)
+    
+        return filter_applicant_coverages(coverages, EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
+    
+    def get_census_record_coverages(self, census_record):
+        coverages = []
+        for app in census_record.enrollment_applications:
+            coverages += app.coverages
+    
+        return coverages
     
 def merge_enrollments(census_record):
     

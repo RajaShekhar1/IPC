@@ -237,6 +237,9 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     child6_birthdate = db.Column(db.Date)
     
     def get_employee_data(self):
+        from taa.services.enrollments import EnrollmentApplicationCoverageService
+        employee_coverages = EnrollmentApplicationCoverageService().get_coverages_for_employee(self)
+        
         return dict(
             first=self.employee_first,
             last = self.employee_last,
@@ -251,33 +254,44 @@ class CaseCensus(CensusRecordSerializer, db.Model):
             city=self.employee_city,
             state=self.employee_state,
             zip=self.employee_zip,
+            existing_coverages=employee_coverages,
         )
 
     def get_spouse_data(self):
+        from taa.services.enrollments import EnrollmentApplicationCoverageService
+
+        spouse_coverages = EnrollmentApplicationCoverageService().get_coverages_for_spouse(self)
+
         return dict(
-            first=self.spouse_first,
-            last=self.spouse_last,
-            ssn=self.spouse_ssn,
-            birthdate=self.format_date(self.spouse_birthdate),
-            email=self.spouse_email,
-            phone=self.spouse_phone,
-            gender=self.spouse_gender.lower() if self.spouse_gender else '',
-            street_address=self.spouse_street_address,
-            street_address2=self.spouse_street_address2,
-            city=self.spouse_city,
-            state=self.spouse_state,
-            zip=self.spouse_zip,
-        )
+                first=self.spouse_first,
+                last=self.spouse_last,
+                ssn=self.spouse_ssn,
+                birthdate=self.format_date(self.spouse_birthdate),
+                email=self.spouse_email,
+                phone=self.spouse_phone,
+                gender=self.spouse_gender.lower() if self.spouse_gender else '',
+                street_address=self.spouse_street_address,
+                street_address2=self.spouse_street_address2,
+                city=self.spouse_city,
+                state=self.spouse_state,
+                zip=self.spouse_zip,
+                existing_coverages=spouse_coverages,
+            )
     
     def get_children_data(self):
         children = []
+
+        from taa.services.enrollments import EnrollmentApplicationCoverageService
+        children_coverages = EnrollmentApplicationCoverageService().get_coverages_for_children(self)
         
         for num in range(1, 6+1):
             if self.has_child(num):
+                
                 children.append(dict(
                     first=self.child_first(num),
                     last=self.child_last(num),
                     birthdate=self.format_date(self.child_birthdate(num)),
+                    existing_coverages=children_coverages,
                 ))
         
         return children
