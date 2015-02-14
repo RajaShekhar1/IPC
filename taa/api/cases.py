@@ -211,8 +211,8 @@ def post_census_records(case_id):
     
     file_obj = request.files.get('csv-file')
     if not file_obj:
-        # Attempt to process an ad-hoc post. Currently only SSN and Birthdate required
-        return case_service.create_ad_hoc_census_record(case, ssn=data['ssn'], birthdate=data['birthdate'])
+        # Attempt to process an ad-hoc post. Currently only SSN is required.
+        return case_service.create_ad_hoc_census_record(case, ssn=data['ssn'])
     
     if not (file_obj and has_csv_extension(file_obj.filename)):
         return dict(

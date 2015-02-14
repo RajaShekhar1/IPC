@@ -269,7 +269,7 @@
 {% block modals %}
     {{ super() }}
     
-    {# Confirm that an employee is not in the census using SSN and birthdate. #}
+    {# Confirm that an employee is not in the census using SSN. #}
     <div id="add-to-census-modal" class="modal fade" data-bind="with: add_to_census_modal">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -287,15 +287,9 @@
                                         <label for="add-census-ssn-input">
                                             Employee SSN: 
                                         </label>
-                                        <input type="text" id="add-census-ssn-input" name="ssn" data-bind="value: ssn, maskedInput: '999-99-9999'">
+                                        <input type="text" id="add-census-ssn-input" name="ssn" data-bind="value: ssn, maskedInput: '999-99-9999', valueUpdate: 'afterkeydown'">
                                         <div data-bind="text: ssn.error" class="error"></div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="add-census-birthdate-input">
-                                            Employee Birthdate: 
-                                        </label>
-                                        <input type="date" id="add-census-birthdate-input" name="ssn" data-bind="value: birthdate">
-                                        <div data-bind="text: birthdate.error" class="error"></div>
+                                        <div data-bind="text: ssn"></div>
                                     </div>
                                 </div>
                             </div>
@@ -310,7 +304,7 @@
                     </div>
                     
                     <div class="no-matches-panel modal-panel" data-bind="if: no_matches_found">
-                        <h3 class="header lighter green">No employees with that SSN and Birthdate were found.</h3>
+                        <h3 class="header lighter green">No employee with that SSN was found.</h3>
                         <p>Click 'Add To Census' to add this employee to the census</p>
                     </div>
                     <div class="one-match-panel modal-panel" data-bind="if: one_match_found">
@@ -319,7 +313,6 @@
                             <span data-bind="text: matched_employee().first"></span> 
                             <span data-bind="text: matched_employee().last"></span>, 
                             Birthdate: <span data-bind="text: matched_employee().formatted_birthdate()"></span>
-                            
                         </strong>
                         <h3>Is this you?</h3>
                     </div>
@@ -333,9 +326,9 @@
                                 <table class="table table-bordered table-responsive upload-error-table">
                                     <thead>
                                         <tr>
+                                            <th></th>
                                             <th>First</th>
                                             <th>Last</th>
-                                            <th>SSN</th>
                                             <th>Birthdate</th>
                                         </tr>
                                     </thead>
@@ -659,8 +652,6 @@
         
         self.ssn = ko.observable(null);
         self.ssn.error = ko.observable("");
-        self.birthdate = ko.observable(null);
-        self.birthdate.error = ko.observable("");
         
         // Panel state
         self.PANEL_FORM = "find_employee";
@@ -676,8 +667,7 @@
             self.current_panel(self.PANEL_FORM);
             self.ssn("");
             self.ssn.error("");
-            self.birthdate("");
-            self.birthdate.error("");
+            
             self.selected_employee(null);
             
         };
@@ -709,14 +699,9 @@
         self.find_matches = function() {
             // Clear errors
             self.ssn.error("");
-            self.birthdate.error("");
             
             if (!self.is_valid_ssn()) {
                 self.ssn.error("A valid SSN is required");
-                return;
-            }
-            if (!self.is_valid_birthdate()) {
-                self.birthdate.error("A valid birthdate is required");
                 return;
             }
             
@@ -724,7 +709,7 @@
             self.loading_message("Checking census for matches...");
             self.current_panel(self.PANEL_LOADING);
             $.get("/cases/" + self.selected_case() + "/census_records", 
-                {filter_ssn: self.ssn(), filter_birthdate: self.birthdate()}
+                {filter_ssn: self.ssn()}
             ).success(function(resp) {
                 if (resp.data.length > 0) {
                     // Load matches
@@ -747,20 +732,16 @@
             
         };
         
-        self.is_valid_ssn = function() {
+        self.is_valid_ssn = ko.computed(function() {
             var ssn_regex = /^\d\d\d-\d\d-\d\d\d\d$/;
             return ssn_regex.test(self.ssn());  
-        };
-        
-        self.is_valid_birthdate = function() {
-            return is_valid_date(self.birthdate()) && parse_date(self.birthdate()).isBefore(now());  
-        };
+        });
         
         self.add_to_census = function() {
             self.loading_message("Adding employee to census...");
             self.current_panel(self.PANEL_LOADING);
             ajax_post("/cases/"+self.selected_case()+"/census_records", 
-                {ssn: self.ssn(), birthdate: self.birthdate()},
+                {ssn: self.ssn()},
                 function(resp) {
                     // Go to enrollment
                     self.enroll_from_record(resp.data.id);

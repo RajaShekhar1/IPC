@@ -268,14 +268,12 @@ class CaseService(DBService):
         return False
     
     def create_ad_hoc_census_record(self, case, **data):
-        if 'ssn' not in data or 'birthdate' not in data:
-            abort(400, "SSN and Birthdate are required to create an ad-hoc census record")
+        if 'ssn' not in data:
+            abort(400, "SSN is required to create an ad-hoc census record")
     
         ssn = data['ssn'].replace('-', '')
-        birthdate = dateutil.parser.parse(data['birthdate'])
         
-        record =  self.census_records.add_record(case,  **dict(employee_ssn=ssn, employee_birthdate=birthdate, 
-                                                     is_uploaded_census=False))
+        record =  self.census_records.add_record(case,  **dict(employee_ssn=ssn, is_uploaded_census=False))
         
         db.session.flush()
         return record
