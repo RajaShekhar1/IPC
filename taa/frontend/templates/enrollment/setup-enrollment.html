@@ -533,6 +533,7 @@
         {% if active_case and should_show_next_applicant %}
             $("#census-records-table").hide();
             load_census_table({{ active_case.id }}, "{{ url_for("cases.census_records", case_id=active_case.id) }}");
+        {% else %}
             
         {% endif %}
     
