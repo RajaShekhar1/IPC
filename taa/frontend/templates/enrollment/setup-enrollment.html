@@ -203,50 +203,47 @@
     
 
 <div class="row ad-hoc-form" style="display: none">
-  <div class="col-xs-12">
+  <div class="col-xs-12" data-bind="with: ad_hoc_setup">
     <h3>Ad-Hoc Enrollment</h3>
     <p>Enter the information below for the case setup, the enrollee data, and proceed with enrollment interview.</p>
     
     <form class="enrollment-form form-horizontal" action="{{ url_for('in_person_enrollment') }}" method="POST">
       
       <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Product to enroll</label>
+        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="productID">Product to enroll</label>
         <div class="col-xs-12 col-sm-9">
-          <select name="productID">
-              {% for product in agent_products %}
-              <option value="{{ product.id }}">{{ product.name }}</option>
-              {% endfor %}
-          </select>
+          <limited-product-select params="limiter: state_product_limiter"></limited-product-select>
         </div>
       </div>
 
       <div class="row form-group">
 	    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Location of this enrollment</label>
 	    <div class="col-xs-12 col-sm-9">
-	    {{ form.enrollmentCity(placeholder='City') }}  
-	    {{ form.enrollmentState() }}
+            <input type="text" name="enrollmentCity" placeholder="City">
+            <limited-state-select params="limiter: state_product_limiter"></limited-state-select>
 	    </div>
       </div>
 	
       <div class="form-group">
         <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="companyName">Company Name</label>
         <div class="col-xs-12 col-sm-9">
-            {{ form.companyName(placeholder='Company') }}
+            <input name="companyName" type="text" placeholder="Company", id="companyName">
         </div>
       </div>
 	  
       <div class="row form-group">
         <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeFName">Employee Name</label>        
         <div class="col-xs-12 col-sm-9">
-          {{ form.eeFName(placeholder='First Name') }}
-          {{ form.eeLName(placeholder='Last Name') }}
+          <input id="eeFName" type="text" name="eeFName" placeholder="First Name">
+          <input type="text" name="eeLName" placeholder="Last Name">
+          
         </div>
       </div>
       
       <div class="row form-group">
         <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="email">Employee Email Address:</label>
         <div class="col-xs-12 col-sm-9">
-            {{ form.email(type="email")}}
+            <input type="email" name="email" id="email">
         </div>
       </div>
     
@@ -396,19 +393,42 @@
         
         $(".enroll-ad-hoc-email").tooltip({content: "This feature coming soon!"});
     
+        
+        var AdHocEnrollmentViewModel = function() {
+            var self = this;
+            
+            self.all_states = {{ all_states | tojson | safe }};
+            self.selected_state = ko.observable(null);
+            self.available_products = ko.observableArray({{ agent_products | tojson | safe }});
+            self.selected_products = ko.observableArray([]);
+            
+            // Track enabled states and products
+            self.state_product_limiter = new ProductStatesLimiterViewModel(
+                {{ product_state_mapping |tojson|safe }}, self.selected_state, self.all_states, 
+                self.selected_products, self.available_products
+            );
+        };  
+        
+    
         var EnrollmentSetupPage = function(current_case) {
             var self = this;
             self.current_company_name = ko.observable((current_case)?current_case.company_name : "");
             self.selected_case = ko.observable((current_case)? current_case.id : null);
             
             self.add_to_census_modal = new AddToCensusViewModel(self.selected_case);
+            
+            self.ad_hoc_setup = new AdHocEnrollmentViewModel();
         };
         window.ui = new EnrollmentSetupPage({{ active_case | tojson | safe }});
         ko.applyBindings(window.ui, $("body").get(0));
     
+    
+    
         // Change enabled states when the product is changed
+        {# 
         //product_state_select.init("#enrollmentState","#productID", {{ product_states | tojson | safe }});
-        
+         #}
+    
         $("#cases_table").dataTable({
             "aoColumnDefs":[
                 {"bSortable": false, "aTargets":[0]}

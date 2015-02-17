@@ -91,17 +91,19 @@
                                                     <div class="form-group">
                                                         <label class="col-md-3 control-label" for="productSel">Product: </label>
                                                         <div class="col-md-9">
-                                                            <select id="productSel" name="products" data-bind="
-                                                                    options: product_choices, 
-                                                                    optionsValue: 'id', 
-                                                                    optionsText: 'name', 
-                                                                    optionsCaption: '(Select Product)',
-                                                                    value: single_product"></select>
+                                                            <limited-product-select params="limiter: state_product_limiter"></limited-product-select>
                                                         </div>
                                                     </div>
                                                      
                                                     {{ render_field_with_errors(case_setup_form.situs_city, **{'data-bind':'value: situs_city'}) }}
-                                                    {{ render_field_with_errors(case_setup_form.situs_state, id="case_state", **{'data-bind':'value: situs_state'}) }}
+                                                    {# {{ render_field_with_errors(case_setup_form.situs_state, id="case_state", **{'data-bind':'value: situs_state'}) }}
+                                                     #}
+                                                    <div class="form-group">
+                                                        <label class="col-md-3 control-label" for="productSel">Product: </label>
+                                                        <div class="col-md-9">
+                                                            <limited-state-select params="limiter: state_product_limiter"></limited-state-select>
+                                                        </div>
+                                                    </div>
                                                     
                                                 </div>
                                                 <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
@@ -709,10 +711,6 @@
     
     $(function() {
         
-        // Change enabled states when the product is changed
-        {# product_state_select.init("#case_state","#case_product", {{ product_states | tojson | safe }});
-         #}
-        
         $('#csv-file-input').ace_file_input({
             no_file:'No File ...',
             btn_choose:'Choose File',
@@ -894,7 +892,7 @@
                 }
             });
             self.company_name = ko.observable(case_data.company_name || "").extend({ rateLimit: 1000 });
-            self.product_choices = product_choices;
+            self.product_choices = ko.observableArray(product_choices);
             self.products = ko.observableArray($.map(case_data.products, function(p) {return p.id}));
             
             // Until multi-product is working, make a single-product layer on top of the products array
@@ -912,6 +910,7 @@
                 owner: self
             });
             
+            
             self.enrollment_period_type = ko.observable(case_data.enrollment_period_type);
             self.enrollment_periods = ko.observableArray($.map(case_data.enrollment_periods, function(p) {
                 return new CaseEnrollmentPeriod(p)}
@@ -922,6 +921,14 @@
             self.owner_agent_id = ko.observable(case_data.agent_id || "");
             self.partner_agents = ko.observable(
                 (case_data.partner_agents)? _.map(_.pluck(case_data.partner_agents, "id"), function(id) {return id+""}) : []);
+            
+            
+            // Disable bad combos of states and products
+            self.state_product_limiter = new ProductStatesLimiterViewModel(
+                {{ product_state_mapping |tojson|safe }}, self.situs_state,
+                {{ all_states | tojson | safe }}, 
+                self.products, self.product_choices
+            );
             
             self.is_open_enrollment = ko.computed(function() {
                 return self.enrollment_period_type() === "open"; 
@@ -1047,7 +1054,7 @@
                      self.products().length > 0 && 
                      $.trim(self.company_name()) != "" && 
                      $.trim(self.situs_city()) != "" && 
-                     $.trim(self.situs_state()) != ""
+                     $.trim(self.situs_state().statecode) != ""
                  );
                 
                 if (self.is_open_enrollment() && !self.get_open_enrollment_period().is_valid()) {
@@ -1158,7 +1165,7 @@
                     partner_agents: partner_agents,
                     enrollment_period_type: self.enrollment_period_type(),
                     situs_city: self.situs_city(),
-                    situs_state: self.situs_state(),
+                    situs_state: self.situs_state().statecode,
                     agent_id: self.owner_agent_id()
                 }  
             };

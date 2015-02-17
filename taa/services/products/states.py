@@ -1,129 +1,84 @@
 
+all_states = map(lambda x: dict(statecode=x[0], name=x[1]), [
+    ('AL', 'Alabama'),
+    ('AK', 'Alaska'),
+    ('AZ', 'Arizona'),
+    ('AR', 'Arkansas'),
+    ('CA', 'California'),
+    ('CO', 'Colorado'),
+    ('CT', 'Connecticut'),
+    ('DE', 'Delaware'),
+    ('DC', 'District of Columbia'),
+    ('FL', 'Florida'),
+    ('GA', 'Georgia'),
+    ('HI', 'Hawaii'),
+    ('ID', 'Idaho'),
+    ('IL', 'Illinois'),
+    ('IN', 'Indiana'),
+    ('IA', 'Iowa'),
+    ('KS', 'Kansas'),
+    ('KY', 'Kentucky'),
+    ('LA', 'Louisiana'),
+    ('ME', 'Maine'),
+    ('MD', 'Maryland'),
+    ('MA', 'Massachusetts'),
+    ('MI', 'Michigan'),
+    ('MN', 'Minnesota'),
+    ('MS', 'Mississippi'),
+    ('MO', 'Missouri'),
+    ('MT', 'Montana'),
+    ('NE', 'Nebraska'),
+    ('NV', 'Nevada'),
+    ('NH', 'New Hampshire'),
+    ('NJ', 'New Jersey'),
+    ('NM', 'New Mexico'),
+    ('NY', 'New York'),
+    ('NC', 'North Carolina'),
+    ('ND', 'North Dakota'),
+    ('OH', 'Ohio'),
+    ('OK', 'Oklahoma'),
+    ('OR', 'Oregon'),
+    ('PA', 'Pennsylvania'),
+    ('PR', 'Puerto Rico'),
+    ('RI', 'Rhode Island'),
+    ('SC', 'South Carolina'),
+    ('SD', 'South Dakota'),
+    ('TN', 'Tennessee'),
+    ('TX', 'Texas'),
+    ('UT', 'Utah'),
+    ('VT', 'Vermont'),
+    ('VA', 'Virginia'),
+    ('VI', 'Virgin Islands'),
+    ('WA', 'Washington'),
+    ('WV', 'West Virginia'),
+    ('WI', 'Wisconsin'),
+    ('WY', 'Wyoming'),
+])
 
-FPPTI_states = [
-    ("", ' ', False),
-    ('AL', 'Alabama', False),
-    ('AK', 'Alaska', False),
-    ('AZ', 'Arizona', False),
-    ('AR', 'Arkansas', False),
-    ('CA', 'California', False),
-    ('CO', 'Colorado', False),
-    ('CT', 'Connecticut', True),
-    ('DE', 'Delaware', False),
-    ('DC', 'District of Columbia', True),
-    ('FL', 'Florida', False),
-    ('GA', 'Georgia', False),
-    ('HI', 'Hawaii', False),
-    ('ID', 'Idaho', False),
-    ('IL', 'Illinois', False),
-    ('IN', 'Indiana', True),
-    ('IA', 'Iowa', False),
-    ('KS', 'Kansas', False),
-    ('KY', 'Kentucky', False),
-    ('LA', 'Louisiana', False),
-    ('ME', 'Maine', True),
-    ('MD', 'Maryland', True),
-    ('MA', 'Massachusetts', True),
-    ('MI', 'Michigan', False),
-    ('MN', 'Minnesota', True),
-    ('MS', 'Mississippi', False),
-    ('MO', 'Missouri', False),
-    ('MT', 'Montana', False),
-    ('NE', 'Nebraska', False),
-    ('NV', 'Nevada', False),
-    ('NH', 'New Hampshire', True),
-    ('NJ', 'New Jersey', True),
-    ('NM', 'New Mexico', False),
-    ('NY', 'New York', True),
-    ('NC', 'North Carolina', True),
-    ('ND', 'North Dakota', True),
-    ('OH', 'Ohio', False),
-    ('OK', 'Oklahoma', False),
-    ('OR', 'Oregon', False),
-    ('PA', 'Pennsylvania', False),
-    ('RI', 'Rhode Island', False),
-    ('SC', 'South Carolina', False),
-    ('SD', 'South Dakota', False),
-    ('TN', 'Tennessee', False),
-    ('TX', 'Texas', False),
-    ('UT', 'Utah', False),
-    ('VT', 'Vermont', True),
-    ('VA', 'Virginia', False),
-    ('WA', 'Washington', True),
-    ('WV', 'West Virginia', False),
-    ('WI', 'Wisconsin', False),
-    ('WY', 'Wyoming', False)
-]
+all_statecodes = [s['statecode'] for s in all_states]
 
-FPPCI_states = [
-    ("", ' ', False),
-    ('AL', 'Alabama', False),
-    ('AK', 'Alaska', False),
-    ('AZ', 'Arizona', False),
-    ('AR', 'Arkansas', False),
-    ('CA', 'California', False),
-    ('CO', 'Colorado', False),
-    ('CT', 'Connecticut', True),
-    ('DE', 'Delaware', False),
-    ('DC', 'District of Columbia', True),
-    ('FL', 'Florida', False),
-    ('GA', 'Georgia', False),
-    ('HI', 'Hawaii', False),
-    ('ID', 'Idaho', False),
-    ('IL', 'Illinois', False),
-    ('IN', 'Indiana', False),
-    ('IA', 'Iowa', False),
-    ('KS', 'Kansas', False),
-    ('KY', 'Kentucky', False),
-    ('LA', 'Louisiana', False),
-    ('ME', 'Maine', True),
-    ('MD', 'Maryland', True),
-    ('MA', 'Massachusetts', True),
-    ('MI', 'Michigan', False),
-    ('MN', 'Minnesota', True),
-    ('MS', 'Mississippi', False),
-    ('MO', 'Missouri', False),
-    ('MT', 'Montana', False),
-    ('NE', 'Nebraska', False),
-    ('NV', 'Nevada', False),
-    ('NH', 'New Hampshire', True),
-    ('NJ', 'New Jersey', True),
-    ('NM', 'New Mexico', False),
-    ('NY', 'New York', True),
-    ('NC', 'North Carolina', True),
-    ('ND', 'North Dakota', True),
-    ('OH', 'Ohio', False),
-    ('OK', 'Oklahoma', False),
-    ('OR', 'Oregon', False),
-    ('PA', 'Pennsylvania', True),
-    ('PR', 'Puerto Rico', True),
-    ('RI', 'Rhode Island', False),
-    ('SC', 'South Carolina', False),
-    ('SD', 'South Dakota', False),
-    ('TN', 'Tennessee', False),
-    ('TX', 'Texas', False),
-    ('UT', 'Utah', False),
-    ('VT', 'Vermont', True),
-    ('VA', 'Virginia', False),
-    ('VI', 'Virgin Islands', False),
-    ('WA', 'Washington', False),
-    ('WV', 'West Virginia', False),
-    ('WI', 'Wisconsin', False),
-    ('WY', 'Wyoming', False)
-]
+states_by_statecode = {s['statecode']: s for s in all_states}
 
-FPPTI_generic_states = ["AL", "AK", "AZ", "AR", "CA", "DE", "GA", "HI", "ID", "IA", "KS", "KY", "LA", "MI", "MS", "MT", "NE", "NV", "NM", "OK", "OR", "RI", "SC", "SD", "TN", "TX", "UT", "VI", "WV", "WY"]
-FPPCI_generic_states = ["AL", "AK", "AZ", "AR", "CA", "DE", "GA", "HI", "ID", "IN", "IA", "KS", "KY", "LA", "MI", "MS", "MT", "NE", "NV", "NM", "OK", "OR", "PR", "RI", "SC", "SD", "TN", "TX", "UT", "VI", "WV", "WY"]
+#FPPTI_disabled_statecodes = ['CT', 'DC', 'IN', 'ME', 'MD', 'MA', 'MN', 'NH', 'NJ', 'NY',
+#                             'NC', 'ND', 'PR', 'VT', 'WA']
+#FPPTI_states = [s for s in all_states if s['statecode'] not in FPPTI_disabled_statecodes]
+
+#FPPCI_disabled_statecodes = ['CT', 'DC', 'ME', 'MD', 'MA', 'MN', 'NH', 'NJ', 'NY', 'NC', 
+#                             'ND', 'PA', 'PR', 'VT']
+#FPPCI_states = [s for s in all_states if s['statecode'] not in FPPCI_disabled_statecodes]
+
+#FPPTI_generic_states = ["AL", "AK", "AZ", "AR", "CA", "DE", "GA", "HI", "ID", "IA", "KS", "KY", "LA", "MI", "MS", "MT", "NE", "NV", "NM", "OK", "OR", "RI", "SC", "SD", "TN", "TX", "UT", "VI", "WV", "WY"]
+#FPPCI_generic_states = ["AL", "AK", "AZ", "AR", "CA", "DE", "GA", "HI", "ID", "IN", "IA", "KS", "KY", "LA", "MI", "MS", "MT", "NE", "NV", "NM", "OK", "OR", "PR", "RI", "SC", "SD", "TN", "TX", "UT", "VI", "WV", "WY"]
+
+#GROUPCI_STATES = [
+#    s for s in all_states if s['statecode'] in ['IN']
+#]
+
+#FPPGOV_STATES = [
+#    s for s in all_states if s['statecode'] in ['IN', 'MN']
+#]
 
 
-_all_states = [
-    dict(
-        shortname=s[0],
-        name=s[1]
-    ) for s in FPPTI_states
-]
-
-_all_statecodes = [s['shortname'] for s in _all_states]
 
 def get_all_states():
-    return _all_states
+    return all_states

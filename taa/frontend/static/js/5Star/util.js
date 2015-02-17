@@ -482,5 +482,147 @@ function get_inches_part(val) {
     }
 }
 
+// The following two components work together with the ProductStatesLimiterViewModel below
+//  to ensure that all applications have valid product/state combos.
 
+ko.components.register('limited-state-select', {
+    viewModel: function(params) {
+        self.limiter = params.limiter;
+    },
+    template: '<select name="enrollmentState" id="enrollmentState" data-bind="\
+                value: limiter.selected_state,\
+                options: limiter.available_states,\
+                optionsCaption: \'(Select State)\',\
+                optionsText: \'statecode\',\
+                optionsAfterRender: limiter.disable_state_option_if_invalid\
+            "></select>'
+});
+
+// Used when only one product is selected (no multi-product)
+ko.components.register('limited-product-select', {
+    viewModel: function(params) {
+        self.limiter = params.limiter;
+    },
+    template: '<select name="productID" id="productID" data-bind="\
+                  value: limiter.selected_product, \
+                  options: limiter.available_products,\
+                  optionsText: \'name\', \
+                  optionsCaption: \'(Select Product)\', \
+                  optionsAfterRender: limiter.disable_product_option_if_invalid"> \
+          </select>'
+});
+var ProductStatesLimiterViewModel = function(product_state_mapping, 
+                                             selected_state, available_states, 
+                                             selected_products, available_products) {
+    // product_state_mapping: links a given product_id to a list of valid state codes
+    // selected_state: an observable that can be null, or a two-letter statecode
+    // available_states: the states we can select from
+    // selected_products: an observable array tracking the selected products
+    // available_products: an observable array with the products to choose from
+    var self = this;
+    
+    
+    // Create a mapping of products to states using the state objects in the all_states list
+    //  This is necessary because knockout compares state objects with === comparison
+    var states_for_products = {};
+    _.each(product_state_mapping, function(statecodes, product_id) {
+        states_for_products[product_id] = [];
+        _.each(statecodes, function(statecode) {
+            var matched_state = _.find(available_states, function(s) {
+                return s.statecode == statecode;
+            });
+            if (matched_state) {
+                states_for_products[product_id].push(matched_state);
+            }
+        });
+    });
+    
+    self.product_state_mapping = states_for_products;
+    
+    self.selected_state = selected_state;
+    self.available_states = available_states;
+    
+    self.selected_products = selected_products;
+    self.available_products = available_products;
+    
+    // Until multi-product is working, use a single selected product
+    self.selected_product = ko.computed({
+        read: function() {
+            if (self.selected_products().length > 0) {
+                return self.selected_products()[0];
+            } else {
+                return null;
+            }
+        },
+        write: function(val) {
+            if (val) {
+                self.selected_products([val]);
+            } else {
+                self.selected_products([]);
+            }
+        },
+        owner: self
+    });
+    
+    self.selected_state.subscribe(function(state) {
+        // When the state changes, remove any ineligible products from the selection
+        var valid_products = _.without(self.selected_products(), function(product) {
+            return self.is_valid_product_for_state(product, state);
+        });
+        self.selected_products(valid_products);
+    });
+    
+    self.enabled_states = ko.computed(function() {
+        // Based on product selection, change which states are enabled
+        return _.filter(self.available_states, function(state) {
+            return _.all(self.selected_products(), function(product) {
+                return self.is_valid_product_for_state(product, state);
+            });
+        });
+    });
+    
+    self.enabled_products = ko.computed(function() {
+        // List the products that can be selected given the current selected state
+        if (self.selected_state() == null) {
+            return self.available_products();
+        } else {
+            return _.filter(self.available_products(), function(product) {
+                return self.is_valid_product_for_state(product, self.selected_state());
+            });
+        }
+    });
+    
+    self.is_valid_product_for_state = function(product, state) {
+        return _.contains(self.product_state_mapping[product.id], state);
+    };
+    
+    
+    self.is_state_disabled = function(state) {
+        return !_.contains(self.enabled_states(), state);
+    };
+    self.is_product_disabled = function(product) {
+        return !_.contains(self.enabled_products(), product);
+    };
+    
+    self.disable_product_option_if_invalid = function(option, product) {
+        // skip the caption
+        if (product === undefined) {
+            return;
+        }
+        
+        ko.applyBindingsToNode(option, {disable: ko.computed(function() {
+            return self.is_product_disabled(product);
+        })}, product);
+    };
+    
+    self.disable_state_option_if_invalid = function(option, state) {
+        if (state === undefined) {
+            return;
+        }
+        ko.applyBindingsToNode(option, {disable: ko.computed(function() {
+            return self.is_state_disabled(state);
+        })}, state);
+    };
+    
+};
 

@@ -31,7 +31,7 @@ class _CommonCaseFormMixin(object):
         super(_CommonCaseFormMixin, self).__init__(*args, **kwargs)
 
         self.products.choices = []#[(p.id, p.name) for p in products_service.all()]
-        self.situs_state.choices = [(s['shortname'], s['name']) for s in products_service.get_all_states()]
+        self.situs_state.choices = [(s['statecode'], s['name']) for s in products_service.get_all_states()]
     
     def validate_situs_state(self, field):
         if field.data not in products_service.get_all_statecodes():
@@ -70,7 +70,7 @@ class CensusRecordForm(Form):
     employee_street_address = StringField("Employee Street Address")
     employee_street_address2 = StringField("Employee Street Address2")
     employee_city = StringField("Employee Street Address")
-    employee_state = SelectField("Employee Statecode", choices=[(s['shortname'], s['name']) for s in get_all_states()])
+    employee_state = SelectField("Employee Statecode", choices=[(s['statecode'], s['name']) for s in get_all_states()])
     employee_zip = StringField("Employee Zip", [])
     
     spouse_first = StringField('Spouse First')
@@ -83,7 +83,7 @@ class CensusRecordForm(Form):
     spouse_street_address = StringField("Spouse Street Address")
     spouse_street_address2 = StringField("Spouse Street Address2")
     spouse_city = StringField("Spouse Street Address")
-    spouse_state = SelectField("Spouse Statecode", choices=[(s['shortname'], s['name']) for s in get_all_states()])
+    spouse_state = SelectField("Spouse Statecode", choices=[(s['statecode'], s['name']) for s in get_all_states()])
     spouse_zip = StringField("Spouse Zip", [])
     
     

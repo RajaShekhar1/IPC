@@ -21,7 +21,6 @@ from taa.services.cases.forms import (
 from taa.services.agents import AgentService
 from taa.services.products import ProductService, get_all_states
 from taa.services.docusign.DocuSign_config import sessionUserApprovedForDocusign
-from taa.old_model.Enrollment import get_product_states, get_product_choices
 
 case_service = CaseService()
 agent_service = AgentService()
@@ -53,8 +52,6 @@ def manage_cases():
     
     vars = {'agent_cases':user_cases, 
             'all_states': get_all_states(),
-            'product_choices': get_product_choices(),
-            'product_states': get_product_states(),
             'nav_menu':get_nav_menu(),
             'header_title':header_title,
     } 
@@ -80,8 +77,8 @@ def manage_case(case_id):
         
     vars['product_choices'] = products
     
-    #vars['product_states'] = get_product_states()
     vars['all_states'] = get_all_states()
+    vars['product_state_mapping'] = product_service.get_product_states(products)
     
     case_setup_form = UpdateCaseForm(obj=case)
     vars['case_setup_form'] = case_setup_form

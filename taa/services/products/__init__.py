@@ -10,8 +10,8 @@ from models import (
     BypassedStatementOfHealthQuestion,
 )
 from .statement_of_health import StatementOfHealthQuestionService
-from .states import _all_states, _all_statecodes, FPPTI_states, FPPCI_states, \
-    FPPTI_generic_states, FPPCI_generic_states, get_all_states
+from .states import all_states, all_statecodes, get_all_states
+from .statement_of_health import FPPTI_generic_states, FPPCI_generic_states
 from .rates import get_product_rates_lookup
 from .recommendations import get_product_recommendations
 
@@ -90,6 +90,7 @@ class ProductService(DBService):
 
         abort(401)
         
+    
         
     def can_agent_view_product(self, agent, product):
         """ 
@@ -123,18 +124,34 @@ class ProductService(DBService):
         return products
     
     def get_all_states(self):
-        return _all_states
+        return all_states
     
     def get_all_statecodes(self):
-        return _all_statecodes
+        return all_statecodes
     
-    def get_product_states(self):
-        """Return the mapping of product codes to enabled states (statecode, state name, is_disabled) """
-
-        return {
-            'FPPTI': FPPTI_states,
-            'FPPCI': FPPCI_states,
+    def get_product_states(self, products=None):
+        """Return the mapping of product IDs to statecodes where we can enroll that product"""
+        
+        if not products:
+            products = self.get_all_enrollable_products()
+        
+        # A hard-coded list of statecodes to turn off for a given product, even if we have a form for that state
+        turned_off_statecodes = {
+            'FPPTI': ['CT', 'DC', 'FL', 'IN', 'ME', 'MD', 'MA', 'MN', 'MO', 'NH', 'NJ', 'NY', 'NC', 'ND', 'OH', 'PA', 'VT', 'VA', 'WA', 'WI'],
+            'FPPCI': ['CT', 'DC', 'FL', 'ME', 'MD', 'MA', 'MN', 'MO', 'NH', 'NJ', 'NY', 'NC', 'ND', 'OH', 'PA', 'PR', 'VT', 'VA', 'WI'],
+            'Group CI': [],
+            'FPP-Gov':[],
         }
+        
+        product_states = {}
+        for product in products:
+            states_with_forms = StatementOfHealthQuestionService().get_states_with_forms_for_product(product)
+            exclude_list = turned_off_statecodes.get(product.get_base_product_code(), [])
+            
+            product_states[product.id] = [s['statecode'] for s in states_with_forms 
+                                          if s['statecode'] not in exclude_list]
+            
+        return product_states
     
     
     def get_soh_labels(self):

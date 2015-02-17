@@ -173,7 +173,7 @@
         
         $("#cases_table").dataTable();
         
-        var form = new ManageCasesPage({{ product_states | tojson | safe }});
+        var form = new ManageCasesPage();
         window.form = form;
         
         ko.applyBindings(form); 

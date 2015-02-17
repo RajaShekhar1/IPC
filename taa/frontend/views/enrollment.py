@@ -12,10 +12,7 @@ from taa import app
 from nav import get_nav_menu
 from taa.models import db
 from taa.old_model.States import get_states
-from taa.old_model.Enrollment import (
-    get_enrollment_setup_form_for_product,
-    get_product_states,
-)
+
 from taa.services.cases import CaseService
 from taa.services.agents import AgentService
 from taa.services.products import ProductService
@@ -35,26 +32,22 @@ def enroll_start():
     if session.get('active_case_id') and should_show_next_applicant:
         case = case_service.get_if_allowed(session['active_case_id'])
         
-        product_code = case.products[0].code if case.products else ""
-        
-        form = get_enrollment_setup_form_for_product(product_code)()
-        form.companyName.data = case.company_name
-        form.enrollmentCity.data = case.situs_city
-        form.enrollmentState.data = case.situs_state
-        form.productID.data = product_code
     else:
         # Clear session variables
         session['active_case_id'] = None
         session['enrolling_census_record_id'] = None
         
         case = None
-        form = get_enrollment_setup_form_for_product(None)()
-    
+        
     agent = agent_service.get_logged_in_agent()
     agent_products = product_service.get_products_for_agent(agent)
+    product_states = product_service.get_product_states(agent_products)
+    all_states = product_service.get_all_states()
+    
     return render_template('enrollment/setup-enrollment.html', 
-                           form=form, 
-                           product_states=get_product_states(),
+                           #form=form, 
+                           product_state_mapping=product_states,
+                           all_states=all_states,
                            agent_products=agent_products,
                            agent_cases=case_service.get_agent_cases(agent, only_enrolling=True),
                            active_case=case,
