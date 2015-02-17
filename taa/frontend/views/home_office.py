@@ -40,6 +40,8 @@ def manage_custom_product(product_id):
     is_base_product = product.is_base_product()
     is_gi_product = product.is_guaranteed_issue()
     
+    cases_using_product = product_service.get_cases_using_product(product)
+    
     return render_template('home_office/manage_product.html', 
                            product=product, 
                            product_form=product_form,
@@ -49,6 +51,7 @@ def manage_custom_product(product_id):
                            is_gi_product=is_gi_product,
                            is_base_product=is_base_product,
                            nav_menu=get_nav_menu(),
+                           cases_using_product=cases_using_product,
     )
     
 @app.route("/manage-agents")

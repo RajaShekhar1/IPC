@@ -101,9 +101,9 @@
                                                 <div class="col-md-3 control-label"><label>Height</label></div>
                                                 <div class="col-md-9">
                                                     <div class="criteria-select">
-                                                            Greater Than: 
+                                                            Minimum: 
                                                             <height-select params="value: height_min"></height-select>
-                                                            Less Than: 
+                                                            Maximum: 
                                                             <height-select params="value: height_max"></height-select>
                                                     </div>
                                                 </div>
@@ -112,9 +112,9 @@
                                                 <div class="col-md-3 control-label"><label>Weight</label></div>
                                                 <div class="col-md-9">
                                                     <div class="criteria-select">
-                                                            Greater Than: 
+                                                            Minimum: 
                                                             {{ product_form.criteria_weight_min(**{'data-bind':'value: weight_min'}) | safe }} 
-                                                            Less Than: 
+                                                            Maximum: 
                                                             {{ product_form.criteria_weight_max(**{'data-bind':'value: weight_max'}) | safe }} 
                                                     </div>
                                                 </div>
@@ -123,9 +123,9 @@
                                                 <div class="col-md-3 control-label"><label>Age</label></div>
                                                 <div class="col-md-9">
                                                     <div class="criteria-select">
-                                                            Greater Than: 
+                                                            Minimum: 
                                                             {{ product_form.criteria_age_min(**{'data-bind':'value: age_min'}) | safe }} 
-                                                            Less Than: 
+                                                            Maximum: 
                                                             {{ product_form.criteria_age_max(**{'data-bind':'value: age_max'}) | safe }} 
                                                     </div>
                                                 </div>
@@ -136,32 +136,19 @@
                                         
                                         <h4 class="header lighter">When GI and criteria met</h4>
                                         <div class="form-group">       
-                                            <div class="col-md-9 col-md-offset-1">
-                                                <label class="block">
-                                                    <input data-bind="checked: product().statement_of_health_bypass_type" 
-                                                           type="radio" id="soh_skip_all" name="soh_skip_type" value="all" class="ace">
-                                                    <span class="lbl">
-                                                        bypass all statement of health questions
-                                                    </span>
-                                                </label>
-                                                <label class="block">
-                                                    <input data-bind="checked: product().statement_of_health_bypass_type" 
-                                                           type="radio" id="soh_skip_selected" name="soh_skip_type" value="selected" class="ace">
-                                                    <span class="lbl">
-                                                        bypass selected statement of health questions
-                                                    </span>
-                                                </label>
-                                                <div class="soh_options" data-bind="visible: product().statement_of_health_bypass_type() == 'selected'">
-                                                    <!--ko foreach: soh_options -->
+                                            <div class="col-md-9">
+                                                
+                                                <div class="soh_options">
+                                                    <!--ko foreach: product().soh_category_options -->
                                                         <div class="row">
                                                             <label class="col-md-offset-1">
                                                                 <input type="checkbox" 
                                                                        class="ace ace-switch ace-switch-3 padding-10" 
-                                                                    data-bind="value: $data, checked: $root.product().bypassed_questions"
+                                                                    data-bind="value: label, checked: is_required"
                                                                     >
                                                                 <span class="lbl" 
-                                                                    data-lbl="&nbsp;Ignored&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Required"></span>
-                                                                <span data-bind="text: $data" style="line-height: 23px; vertical-align: top;"></span>
+                                                                    data-lbl="&nbsp;Required&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ignored"></span>
+                                                                <span data-bind="text: label" style="line-height: 23px; vertical-align: top;"></span>
                                                             </label>
                                                         </div>
                                                     <!--/ko-->
@@ -201,6 +188,31 @@
                                     {% endif %}
                                 </div>
                             </div>
+                        
+                            <br>
+                        
+                            {% if cases_using_product %}
+                                <h4 class="header lighter">Cases Using Product</h4>
+                                <table class="table bordered">
+                                <thead><tr>
+                                    <th>Company</th>
+                                    <th>Location</th>
+                                    <th>Owner Agent</th>
+                                    <th>Active</th>
+                                    <th>Created</th>
+                                    
+                                </tr></thead>
+                                {% for case in cases_using_product %}
+                                    <tr>
+                                        <td>{{ case.company_name }}</td>
+                                        <td>{{ case.format_location() }}</td>
+                                        <td>{{ case.format_owner_name() }}</td>
+                                        <td>{{ case.format_is_active() }}</td>
+                                        <td>{{ case.format_created_date() }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </table>
+                            {% endif %}
                             
                             <br>
                             {% if is_gi_product %}
@@ -211,6 +223,10 @@
                             </div>
                             {% endif %}
                             
+                        
+                        
+                        
+                        
                         </div>
                         <div class="widget-toolbox clearfix padding-8">
                             <div class="clearfix">
@@ -328,6 +344,12 @@ $(function() {
         }
     };
     
+    var SOHCategoryOptionViewModel = function(label, is_required) {
+        var self = this;
+        self.label = label;
+        self.is_required = ko.observable(is_required);
+    };
+
     var CustomProductViewModel = function(custom_product, available_agents, soh_options, editor) {
         var self = this;
         self.editor = editor;
@@ -351,19 +373,25 @@ $(function() {
             editor.new_criterion(null);
         });
         
-        self.statement_of_health_bypass_type = ko.observable(custom_product.statement_of_health_bypass_type);
+        // Legacy: used to have a radio bound to this
+        self.statement_of_health_bypass_type = ko.observable("selected");
         
         // select bypassed_questions from soh_options
-        var selected_questions = [];
-        $.each(custom_product.bypassed_soh_questions, function() {
-            if (soh_options.indexOf(this.question_type_label) >= 0 
-                // prevent the same label from being added multiple times
-                && selected_questions.indexOf(this.question_type_label) == -1) {
-                selected_questions.push(this.question_type_label);
-            }
+        var bypassed_labels = _.pluck(custom_product.bypassed_soh_questions, "question_type_label");
+        self.soh_category_options = _.map(soh_options, function(o) {
+            var is_required = !_.contains(bypassed_labels, o);
+            return new SOHCategoryOptionViewModel(o, is_required);
         });
         
-        self.bypassed_questions = ko.observableArray(selected_questions);
+        self.bypassed_questions = ko.computed(function() {
+            return _.map(_.filter(self.soh_category_options,
+                             function(o) {
+                                 return o.is_required() == false;
+                             }), 
+                    function(o) {
+                        return o.label;
+                    });
+        });
         
         // Select from available agents
         var available_by_id = {};
@@ -507,7 +535,8 @@ $(function() {
             self.loading_modal({message: "Saving Product...", title: "Please wait"});
             
             var on_success = function(case_xhr, periods_xhr) {
-                self.loading_modal(null);
+                location.href = "{{ url_for("manage_custom_products") }}";
+                //self.loading_modal(null);
             };
             var on_failure = function(case_xhr, periods_xhr) {
                 var resp = case_xhr.responseJSON;

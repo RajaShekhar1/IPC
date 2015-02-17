@@ -23,16 +23,16 @@ class EditProductForm(Form):
     base_product_id = SelectField('Base Product', [], coerce=int, default=-1)
     guarantee_issue_amount = SelectField('Guarantee Issue Amount', 
                                          choices=[(-1,'')]+[(i, locale.currency(i, grouping=True)) for i in range(1000, 100000+1, 1000)], default=-1, coerce=int)
-    criteria_age_min = SelectField('Greater Than:',
+    criteria_age_min = SelectField('Minimum:',
                                    choices=[(-1, "N/A")] + [(i, "%s" % i) for i in range(111)], default=-1, coerce=int)
-    criteria_age_max = SelectField('Less Than:',
+    criteria_age_max = SelectField('Maximum:',
                                    choices=[(-1, "N/A")] + [(i, "%s" % i) for i in range(111)], default=-1, coerce=int)
-    criteria_height_min = SelectField('Greater Than:',
+    criteria_height_min = SelectField('Minimum:',
                                       choices=[(-1, "N/A")]+[(i, "%s\""%i) for i in range(1, 101)], default=-1, coerce=int)
-    criteria_height_max = SelectField('Less Than:', choices=[(-1, "N/A")]+[(i, "%s\""%i) for i in range(1, 101)], default=-1, coerce=int)
-    criteria_weight_min = SelectField('Greater Than:',
+    criteria_height_max = SelectField('Maximum:', choices=[(-1, "N/A")]+[(i, "%s\""%i) for i in range(1, 101)], default=-1, coerce=int)
+    criteria_weight_min = SelectField('Minimum:',
                                       choices=[(-1, "N/A")] + [(i, "%s Lbs." % i) for i in range(50, 301)], default=-1, coerce=int)
-    criteria_weight_max = SelectField('Less Than:',
+    criteria_weight_max = SelectField('Maximum:',
                                       choices=[(-1, "N/A")] + [(i, "%s Lbs." % i) for i in range(50, 301)], default=-1, coerce=int)
     statement_of_health_bypass_type = StringField(validators=[validators.length(max=32)])
     

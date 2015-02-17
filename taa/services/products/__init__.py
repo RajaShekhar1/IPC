@@ -45,6 +45,13 @@ class ProductService(DBService):
         product = CustomGuaranteeIssueProduct(name=product_name, code='')
         return self.save(product)
         
+    def get_cases_using_product(self, product):
+        from taa.services.cases import CaseService, Case
+        return CaseService().query().filter(
+                Case.products.any(Product.id == product.id)
+            #).filter(Case.active == True
+            ).all()
+        
     def get_products_by_codes(self, codes):
         return Product.query.filter(Product.code.in_(codes)).all()
     
