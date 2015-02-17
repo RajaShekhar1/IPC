@@ -54,28 +54,39 @@
                     <h4 class="modal-title">Create Custom Product</h4>
                 </div>
                 <div class="modal-body">
-                    
-                    <div class="form-group">
-                        <label class="col-md-3 control-label" for="product_name">Product Name</label>
-                        <div class="col-md-8">
-                            <input type="text" class="form-control" id="product_name" name="name" placeholder="Name"
-                                minlength="1" required data-bind="textInput: product_name">
+                    <div class="form-panel"  data-bind="visible: !is_creating()">
+                        <div class="form-group">
+                            <label class="col-md-3 control-label" for="product_name">Product Name</label>
+                            <div class="col-md-8">
+                                <input type="text" class="form-control" id="product_name" name="name" placeholder="Name"
+                                    minlength="1" required data-bind="textInput: product_name">
+                            </div>
+                            <div class="col-md-1">
+                                <div class="ace-icon fa fa-spinner fa-spin grey bigger-150" 
+                                     data-bind="visible: product_name.is_checking"></div>
+                                <div class="ace-icon fa fa-check green bigger-150" 
+                                     data-bind="visible: product_name.is_unique() && !product_name.is_checking()"></div>
+                            </div>
                         </div>
-                        <div class="col-md-1">
-                            <div class="icon-spinner text-warning bigger-125" data-bind="visible: product_name.is_checking"></div>
-                            <div class="icon icon-check-sign green bigger-125" data-bind="visible: product_name.is_unique() && !product_name.is_checking()"></div>
+                        <div class="row"> 
+                            <div class="col-md-8 col-md-offset-3">
+                                <div class="error" data-bind="visible: product_name.has_been_checked, text: get_form_error"></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="row"> 
-                        <div class="col-md-8 col-md-offset-3">
-                            <div class="error" data-bind="visible: product_name.has_been_checked, text: get_form_error"></div>
-                        </div>
+                    <div class="loading-panel" data-bind="visible: is_creating">
+                        Creating new custom product...
                     </div>
                 </div>
                     
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    <button type="button" data-bind="click: create_product" class="btn btn-primary">Create Product</button>
+                    <div class="form-buttons" data-bind="visible: !is_creating()">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="button" data-bind="click: create_product, enable: is_create_button_enabled" class="btn btn-primary">Create Product</button>
+                    </div>
+                    <div class="loading-buttons" data-bind="visible: is_creating">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
                 </div>
             </div>
             <!-- /.modal-content -->
@@ -101,22 +112,39 @@ $(function() {
     function ManageProductsPage() {
         var self = this;
         
-        self.product_name = ko.observable(null).extend({ rateLimit: 500 });
+        self.is_creating = ko.observable(false);
+        
+        // update the value at most once every one second so we can check all at once 
+        self.product_name = ko.observable(null).extend({ rateLimit: 250 });
         self.product_name.has_been_checked = ko.observable(false);
         self.product_name.is_checking = ko.observable(false);
+        self.product_name.is_checking_request = ko.observable(null);
         self.product_name.is_unique = ko.observable(null);
         
         self.check_name_uniqueness = function(value) {
+            // If we have a pending request, cancel it
+            if (self.product_name.is_checking_request()) {
+                self.product_name.is_checking_request().abort();
+                self.product_name.is_checking_request(null);
+            }
+            
             // Reset tracking vars
             self.product_name.is_checking(true);
             self.product_name.has_been_checked(false);
             
-            $.get("{{ url_for("products.get_products") }}", {by_name: value}, function(result) {
-                self.product_name.is_unique(result.data.length == 0);
-                self.product_name.is_checking(false);
-                self.product_name.has_been_checked(true);
-            }, "json");
+            self.product_name.is_checking_request(
+                $.get("{{ url_for("products.get_products") }}", {by_name: value}, function(result) {
+                    self.product_name.is_unique(result.data.length == 0);
+                    self.product_name.is_checking(false);
+                    self.product_name.has_been_checked(true);
+                }, "json")
+            );
         };
+        
+        self.is_create_button_enabled = ko.computed(function() {
+            return (self.product_name() != "" && self.product_name.is_checking() == false && 
+                    self.product_name.is_unique() == true);
+        });
         
         self.product_name.subscribe(self.check_name_uniqueness);
         
@@ -141,6 +169,9 @@ $(function() {
                 product_name: $("#product_name").val()
             };
             
+            // Show loading modal while we are creating the product
+            self.is_creating(true);
+            
             $.ajax("{{ url_for("products.create_product") }}", {
                 type: 'POST',
                 processData: false,
@@ -148,9 +179,11 @@ $(function() {
                 data: JSON.stringify(data),
                 dataType:'json',
                 success: function(results) {
+                    // Go to the product edit page
                     window.location.href = "{{ url_for("manage_custom_product", product_id="") }}"+results.data.id;
                 },
                 error: function(xhr) {
+                    alert("There was a problem creating the new product.");
                     console.log(xhr.responseJSON.errors)
                 }
             });

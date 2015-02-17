@@ -161,18 +161,15 @@ class ProductService(DBService):
         return product_states
     
     
-    def get_soh_labels(self):
-        return [
-            "Hospital 90 days",
-            "Heart",
-            "Cancer",
-            "Respiratory",
-            "Liver",
-            "HIV/AIDS",
-            "Ever been rejected",
-        ]
-    
-    
+    def get_soh_labels(self, products):
+        """
+        Maps product ids to the union of all category label strings found on that product's forms
+         for all the products passed in
+        """
+        soh_service = StatementOfHealthQuestionService()
+        return {p.id: soh_service.get_all_category_labels_for_product(p) 
+                for p in products}
+        
     def update_product_agents(self, product, agents, **kwargs):
         from taa.services.agents import AgentService
         agent_service = AgentService()

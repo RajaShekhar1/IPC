@@ -1178,13 +1178,14 @@ var StandardHealthQuestion = function(question, selected_plan) {
     self.does_spouse_need_to_answer = ko.computed(function() {
         return self.selected_plan().did_select_spouse_coverage();
     });
-    self.do_children_need_to_answer = ko.computed(function() {
+    
+    self.does_child_need_to_answer = function(child) {
         return self.selected_plan().did_select_children_coverage();
-    });
+    };
     
     self.show_yes_dialogue_employee = function() {return self.show_yes_dialogue(); };
     self.show_yes_dialogue_spouse = function() {return self.show_yes_dialogue(); };
-    self.show_yes_dialogue_children = function() {return self.show_yes_dialogue(); };
+    self.show_yes_dialogue_child = function(child) {return self.show_yes_dialogue(); };
     
     
     self.show_yes_dialogue = function() {
@@ -1241,48 +1242,90 @@ var GIHealthQuestion = function(product, question, selected_plan, applicant_crit
         
         return true;
     });
-    
+    /*
     self.do_children_need_to_answer = ko.computed(function() {
         if (!self.selected_plan()) return false;
         if (!self.selected_plan().did_select_children_coverage()) {
             return false;
         } 
+        
         if (self.has_child_met_GI_criteria() && self.should_skip_if_GI_criteria_met()) {
             return false;
         }
         
         return true;
     });
-    
-    
-    self.has_employee_met_GI_criteria = ko.computed(function() {
-        if (!self.selected_plan().did_select_employee_coverage()) {
+    */
+    self.does_child_need_to_answer = function(child_applicant) {
+        if (!self.selected_plan()) return false;
+        if (!self.selected_plan().did_select_children_coverage()) {
             return false;
+        }
+        
+        if (self.has_child_met_GI_criteria(child_applicant) && self.should_skip_if_GI_criteria_met()) {
+            return false;
+        }
+        
+        return true;
+    };
+    
+    self.get_met_gi_criteria_for_employee = ko.computed(function() {
+        if (!self.selected_plan().did_select_employee_coverage()) {
+            return undefined;
         } 
         
         var coverage = self.selected_plan().employee_recommendation().recommended_benefit;
         var applicant = self.selected_plan().root.employee();
         var employee_criteria = self.get_criteria("Employee");
-        var result = _.any(employee_criteria, function(criterion) {
+        return _.find(employee_criteria, function(criterion) {
             return self.does_applicant_meet_GI_criteria(applicant, coverage, criterion);
         });
-        return result;
     });
     
-    self.has_spouse_met_GI_criteria = ko.computed(function() {
+    self.has_employee_met_GI_criteria = ko.computed(function() {
+        return self.get_met_gi_criteria_for_employee() !== undefined;
+    });
+    
+    
+    self.get_met_gi_criteria_for_spouse = ko.computed(function() {
         if (!self.selected_plan().did_select_spouse_coverage()) {
-            return false;
+            return undefined;
         }
         var coverage = self.selected_plan().spouse_recommendation().recommended_benefit;
         var applicant = self.selected_plan().root.spouse();
         var criteria = self.get_criteria("Spouse");
-        var result = _.any(criteria, function(criterion) {
+        return _.find(criteria, function(criterion) {
             return self.does_applicant_meet_GI_criteria(applicant, coverage, criterion);
         });
-        return result;
     });
     
-    self.has_child_met_GI_criteria = ko.computed(function() {
+    self.has_spouse_met_GI_criteria = ko.computed(function() {
+        return self.get_met_gi_criteria_for_spouse() !== undefined;
+    });
+    
+    //self.has_child_met_GI_criteria = ko.computed(function() {
+    //    return self.get_met_gi_criteria_for_child() !== undefined;
+    //});
+    
+    self.get_met_gi_criteria_for_child = function(child_applicant) {
+        if (!self.selected_plan().did_select_children_coverage()) {
+            return undefined;
+        }
+        var criteria = self.get_criteria("Child");
+        var coverage = self.selected_plan().children_recommendation().recommended_benefit;
+        return _.find(criteria, function(criterion) {
+            return self.does_applicant_meet_GI_criteria(child_applicant, coverage, criterion);
+        });
+    };
+    
+    
+    self.has_child_met_GI_criteria = function(child_applicant) {
+        return self.get_met_gi_criteria_for_child(child_applicant) !== undefined;
+    };
+    
+    
+    /*
+    self.get_met_gi_criteria_for_child = ko.computed(function() {
         if (!self.selected_plan().did_select_children_coverage()) {
             return false;
         }
@@ -1290,13 +1333,14 @@ var GIHealthQuestion = function(product, question, selected_plan, applicant_crit
         var children = self.selected_plan().root.children();
         var criteria = self.get_criteria("Child");
         var result = _.all(children, function(child_applicant) {
-            return _.any(criteria, function(criterion) {
+            return _.find(criteria, function(criterion) {
                 return self.does_applicant_meet_GI_criteria(child_applicant, coverage, criterion);
             });
         });
         
         return result;
     });
+    */
     
     self.does_any_applicant_need_to_answer = ko.computed(function() {
         return _.any(self.selected_plan().get_covered_applicants_with_type(), function(data) {
@@ -1305,51 +1349,73 @@ var GIHealthQuestion = function(product, question, selected_plan, applicant_crit
     });
     
     self.show_yes_dialogue_employee = function() {
-          self.show_yes_dialogue('Employee');
+          self.show_yes_dialogue('Employee', self.selected_plan().root.employee());
     };
     
     self.show_yes_dialogue_spouse = function() {
-          self.show_yes_dialogue('Spouse');
+          self.show_yes_dialogue('Spouse', self.selected_plan().root.spouse());
     };
     
-    self.show_yes_dialogue_children = function() {
-        self.show_yes_dialogue('Children');
+    self.show_yes_dialogue_child = function(child) {
+        self.show_yes_dialogue('Children', child);
     };
     
-    self.show_yes_dialogue = function(applicant_type) {
-        // If the applicant meets the GI, we show the normal 'you must answer no' dialogue since this must be a required question
-        if (!self.should_skip_if_GI_criteria_met() || (
-            (applicant_type == "Employee" && self.has_employee_met_GI_criteria()) ||
-            (applicant_type == "Spouse" && self.has_spouse_met_GI_criteria()) ||
-            (applicant_type == "Children" && self.has_child_met_GI_criteria())
-            )) {
-            
+    self.get_best_GI_criteria = function(applicant, coverage, criteria) {
+        // sort by gi amount descending then pick the one, if any, that is strictly less than
+        //  the selected coverage. Returns undefined if there is no qualifying option.
+        var descendingCriteria = _.sortBy(criteria, function(c) {return -c.guarantee_issue_amount;});
+        return _.find(descendingCriteria, function(criterion) {
+            return (
+                self.does_applicant_meet_demographic_GI_criteria(applicant, criterion) &&
+                criterion.guarantee_issue_amount < coverage.face_value
+            );
+        });
+    };
+    
+    self.show_yes_dialogue = function(applicant_type, applicant) {
+        // If we get here, we know the applicant doesn't completely qualify for GI
+        //   with the coverage selected, and has answered 'Yes' to a question.
+        //   We need to determine if the applicant can bypass this question by 
+        //   reducing coverage. 
+        
+        // If this is a required question, we show the normal 'you must answer no' dialogue 
+        if (!self.should_skip_if_GI_criteria_met()) {
             handle_question_yes();
             return;
         }
         
-        // Otherwise, show a special dialogue that gives a few options for continuing 
-        var coverage, criteria, applicant, applicant_coverage_options;
-        if (applicant_type == 'Employee') {
-            applicant = self.selected_plan().root.employee();
-            applicant_coverage_options = self.product.get_coverage_options_for_applicant('employee');
+        // See if there is a GI condition with a lower coverage amount.
+        var criteria = self.get_criteria(applicant_type);
+        var coverage, reduced_gi_criterion, applicant_coverage_options, coverage_applicant;
+        // Does the applicant meet any of the demographic GI criteria?
+        if (applicant_type == "Employee") {
             coverage = self.selected_plan().employee_recommendation().recommended_benefit;
-            criteria = self.get_criteria("Employee");
-        } else if (applicant_type == 'Spouse') {
-            applicant = self.selected_plan().root.spouse();
-            applicant_coverage_options = self.product.get_coverage_options_for_applicant('spouse');
+            reduced_gi_criterion = self.get_best_GI_criteria(applicant, coverage, criteria);
+            applicant_coverage_options = self.product.get_coverage_options_for_applicant('employee');
+            coverage_applicant = applicant;
+        } else if (applicant_type == "Spouse") {
             coverage = self.selected_plan().spouse_recommendation().recommended_benefit;
-            criteria = self.get_criteria("Spouse");
-        } else {
-            applicant = self.selected_plan().root.child_benefits();
-            applicant_coverage_options = self.product.get_coverage_options_for_applicant('children');
+            reduced_gi_criterion = self.get_best_GI_criteria(applicant, coverage, criteria);
+            applicant_coverage_options = self.product.get_coverage_options_for_applicant('spouse');
+            coverage_applicant = applicant;
+        } else if (applicant_type == "Children") {
             coverage = self.selected_plan().children_recommendation().recommended_benefit;
-            criteria = self.get_criteria("Child");
+            reduced_gi_criterion = self.get_best_GI_criteria(applicant, coverage, criteria);
+            applicant_coverage_options = self.product.get_coverage_options_for_applicant('children');
+            // The 'coverage applicant' is a fake applicant representing all child coverage
+            coverage_applicant = self.selected_plan().root.child_benefits();
+        } 
+        
+        // If no option was found, present the normal yes dialogue.
+        if (!reduced_gi_criterion) {
+            handle_question_yes();
+            return;
         }
         
+        // Otherwise, show a special dialogue that gives a reduce benefit option for continuing 
         
         var face_amount = coverage.format_face_value();
-        var gi_amount = _.max(_.map(criteria, function(c) {return c.guarantee_issue_amount}));
+        var gi_amount = reduced_gi_criterion.guarantee_issue_amount;
         var formatted_gi_amount = format_face_value(gi_amount);
         
         var button_options = {
@@ -1361,17 +1427,23 @@ var GIHealthQuestion = function(product, question, selected_plan, applicant_crit
                         }), 
                         function(o) {return o.face_value}
                 );
-                applicant.selected_custom_option(max_option);
+                coverage_applicant.selected_custom_option(max_option);
                 self.selected_plan().root.apply_selected_customization();
                 
             }},
             remove: {label: "Remove this applicant", className: 'btn-danger', callback: function() {
-                var null_option = _.find(applicant_coverage_options(), function(o) {
-                    return o.face_value == 0
-                });
-                
-                applicant.selected_custom_option(null_option);
-                self.selected_plan().root.apply_selected_customization();
+                // If child, we remove only the selected child, not all child coverage
+                if (applicant_type == "Children") {
+                    self.selected_plan().root.children.remove(applicant);
+                    
+                } else {
+                    var null_option = _.find(applicant_coverage_options(), function(o) {
+                        return o.face_value == 0
+                    });
+                    
+                    coverage_applicant.selected_custom_option(null_option);
+                    self.selected_plan().root.apply_selected_customization();
+                }
             }},
             ignore: {label: "Ignore and Continue", className: 'btn-default', callback: function() {
                 // Nothing to do in this case
@@ -1387,31 +1459,46 @@ var GIHealthQuestion = function(product, question, selected_plan, applicant_crit
     
     
     self.get_criteria = function(applicant_type) {
+        if (applicant_type == "Children") {
+            applicant_type = "Child";
+        }
         return _.filter(self.applicant_criteria, function(c) {return c.applicant_type == applicant_type;});
     };
     
     self.does_applicant_meet_GI_criteria = function(applicant, coverage, criterion) {
+        return (
+            self.does_applicant_meet_coverage_GI_criteria(applicant, coverage, criterion) &&
+            self.does_applicant_meet_demographic_GI_criteria(applicant, criterion)
+        );
+    };
+    
+    self.does_applicant_meet_coverage_GI_criteria = function(applicant, coverage, criterion) {
+        return coverage.face_value <= criterion.guarantee_issue_amount;
+    };
+    
+    self.does_applicant_meet_demographic_GI_criteria = function(applicant, criterion) {
+        // Checks all the criteria _except_ for the coverage so we know if the applicant
+        //  can reduce his coverage to meet this criterion
+        
         var does_meet = true;
         
-        does_meet &= coverage.face_value <= criterion.guarantee_issue_amount;
-        
         if (criterion.age_max !== null) {
-            does_meet &= applicant.get_age() < criterion.age_max;         
+            does_meet &= applicant.get_age() <= criterion.age_max;         
         }
         if (criterion.age_min !== null) {
-            does_meet &= applicant.get_age() > criterion.age_min;
+            does_meet &= applicant.get_age() >= criterion.age_min;
         }
         if (criterion.height_max !== null) {
-            does_meet &= applicant.height() !== null && applicant.height() < criterion.height_max
+            does_meet &= applicant.height() !== null && applicant.height() <= criterion.height_max
         }
         if (criterion.height_min !== null) {
-            does_meet &= applicant.height() !== null && applicant.height() > criterion.height_min;
+            does_meet &= applicant.height() !== null && applicant.height() >= criterion.height_min;
         }
         if (criterion.weight_max !== null) {
-            does_meet &= applicant.weight() !== null && applicant.weight() < criterion.weight_max
+            does_meet &= applicant.weight() !== null && applicant.weight() <= criterion.weight_max
         }
         if (criterion.weight_min !== null) {
-            does_meet &= applicant.weight() !== null && applicant.weight() > criterion.weight_min;
+            does_meet &= applicant.weight() !== null && applicant.weight() >= criterion.weight_min;
         }
         
         return does_meet;
@@ -1426,7 +1513,7 @@ GIHealthQuestion.prototype.does_applicant_need_to_answer = function(applicant_ty
     } else if (applicant_type == "Spouse") {
         return self.does_spouse_need_to_answer();
     } else if (applicant_type == "Child") {
-        return self.do_children_need_to_answer();
+        return self.does_child_need_to_answer(applicant);
     }
     console.error("Got unknown applicant type '"+applicant_type+"'");
     return true;
@@ -1437,7 +1524,7 @@ GIHealthQuestion.prototype.should_skip_if_GI_criteria_met = function() {
     if (self.skip_mode == "all") {
         return true;
     } else {
-        return _.find(self.skipped_questions, function(q) {
+        return _.any(self.skipped_questions, function(q) {
             return self.get_question_label() == q.question_type_label
         });
     }

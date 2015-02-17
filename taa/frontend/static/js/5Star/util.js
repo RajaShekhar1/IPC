@@ -564,33 +564,6 @@ var ProductStatesLimiterViewModel = function(product_state_mapping,
         owner: self
     });
     
-    self.selected_state.subscribe(function(state) {
-        // When the state changes, remove any ineligible products from the selection
-        var valid_products = _.without(self.selected_products(), function(product) {
-            return self.is_valid_product_for_state(product, state);
-        });
-        self.selected_products(valid_products);
-    });
-    
-    self.enabled_states = ko.computed(function() {
-        // Based on product selection, change which states are enabled
-        return _.filter(self.available_states, function(state) {
-            return _.all(self.selected_products(), function(product) {
-                return self.is_valid_product_for_state(product, state);
-            });
-        });
-    });
-    
-    self.enabled_products = ko.computed(function() {
-        // List the products that can be selected given the current selected state
-        if (self.selected_state() == null) {
-            return self.available_products();
-        } else {
-            return _.filter(self.available_products(), function(product) {
-                return self.is_valid_product_for_state(product, self.selected_state());
-            });
-        }
-    });
     
     self.is_valid_product_for_state = function(product, state) {
         return _.contains(self.product_state_mapping[product.id], state);
@@ -623,6 +596,35 @@ var ProductStatesLimiterViewModel = function(product_state_mapping,
             return self.is_state_disabled(state);
         })}, state);
     };
+    
+    
+    self.selected_state.subscribe(function(state) {
+        // When the state changes, remove any ineligible products from the selection
+        var valid_products = _.without(self.selected_products(), function(product) {
+            return self.is_valid_product_for_state(product, state);
+        });
+        self.selected_products(valid_products);
+    });
+    
+    self.enabled_states = ko.computed(function() {
+        // Based on product selection, change which states are enabled
+        return _.filter(self.available_states, function(state) {
+            return _.all(self.selected_products(), function(product) {
+                return self.is_valid_product_for_state(product, state);
+            });
+        });
+    });
+    
+    self.enabled_products = ko.computed(function() {
+        // List the products that can be selected given the current selected state
+        if (self.selected_state() == null) {
+            return self.available_products();
+        } else {
+            return _.filter(self.available_products(), function(product) {
+                return self.is_valid_product_for_state(product, self.selected_state());
+            });
+        }
+    });
     
 };
 

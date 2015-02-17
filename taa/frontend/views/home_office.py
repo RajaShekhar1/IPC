@@ -36,7 +36,7 @@ def manage_custom_product(product_id):
     base_product_options = product_service.get_base_products()
     
     available_agents = agent_service.get_active_agents()
-    soh_options = product_service.get_soh_labels()
+    soh_options = product_service.get_soh_labels(base_product_options)
     is_base_product = product.is_base_product()
     is_gi_product = product.is_guaranteed_issue()
     

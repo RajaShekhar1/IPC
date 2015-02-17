@@ -100,7 +100,6 @@ def update_case(case_id):
     #
     form.products.data = [p['id'] for p in data['products']]
     if form.validate_on_submit():
-        
         # Update products
         case_service.update_products(case, [p for p in product_service.get_all(*form.products.data)])
         

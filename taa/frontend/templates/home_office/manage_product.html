@@ -370,6 +370,7 @@ $(function() {
             bootbox.alert("By changing the base product, all criteria will be removed.");
             
             self.gi_criteria([]);
+            
             editor.new_criterion(null);
         });
         
@@ -378,13 +379,20 @@ $(function() {
         
         // select bypassed_questions from soh_options
         var bypassed_labels = _.pluck(custom_product.bypassed_soh_questions, "question_type_label");
-        self.soh_category_options = _.map(soh_options, function(o) {
+        self.soh_category_options = ko.computed(function() {
+            var category_choices = soh_options[self.base_product_id()];
+            return _.map(category_choices, function(o) {
+                var is_required = !_.contains(bypassed_labels, o);
+                return new SOHCategoryOptionViewModel(o, is_required);
+            });
+        });
+        /*self.soh_category_options = _.map(soh_options, function(o) {
             var is_required = !_.contains(bypassed_labels, o);
             return new SOHCategoryOptionViewModel(o, is_required);
         });
-        
+        */
         self.bypassed_questions = ko.computed(function() {
-            return _.map(_.filter(self.soh_category_options,
+            return _.map(_.filter(self.soh_category_options(),
                              function(o) {
                                  return o.is_required() == false;
                              }), 
@@ -453,11 +461,11 @@ $(function() {
         }
     };
     
-    var CustomProductEditor = function(custom_product, base_product_options, available_agents, soh_options) {
+    var CustomProductEditor = function(custom_product, base_product_options, available_agents, soh_options_map) {
         var self = this;
         
         self.available_agents = $.map(available_agents, function(a){return new Agent(a)}) || [];
-        self.soh_options = soh_options || [];
+        self.soh_options = soh_options_map || {};
         
         self.product = ko.observable(new CustomProductViewModel(custom_product, self.available_agents, self.soh_options, self));
         self.product.editable = true;
@@ -616,7 +624,8 @@ $(function() {
     };
 
     {% if is_gi_product %}
-        window.ui = new CustomProductEditor({{ product |tojson|safe }}, {{ base_product_options |tojson|safe }}, {{ available_agents |tojson|safe }}, {{ statement_of_health_options |tojson|safe }})
+        window.ui = new CustomProductEditor({{ product |tojson|safe }}, {{ base_product_options |tojson|safe }}, {{ available_agents |tojson|safe }}, 
+            {{ statement_of_health_options |tojson|safe }});
     {% else %}
         window.ui = new BaseProductEditor({{ product |tojson|safe }}, {{ available_agents |tojson|safe }});
     {% endif %}

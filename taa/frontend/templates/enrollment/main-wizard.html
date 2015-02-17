@@ -707,23 +707,23 @@
                                                 </button>
                                                 <!--/ko-->
                                             </div>
-                                            <!--ko foreach: $parent.get_covered_children -->
+                                            <!--ko foreach: {data: $parent.get_covered_children, as: 'child'} -->
                                             <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
-                                                <!--ko if: $parent.do_children_need_to_answer-->
+                                                <!--ko if: $parent.does_child_need_to_answer(child) -->
                                                 <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                                                       question: $parentContext.$data, 
                                                       applicant: $data,
-                                                      is_required: $parent.do_children_need_to_answer,
+                                                      is_required: function() {return $parent.does_child_need_to_answer(child)},
                                                       val: 'Yes', 
                                                       highlight: 'stop',
-                                                      onclick: $parent.show_yes_dialogue_children
+                                                      onclick: function() {$parent.show_yes_dialogue_child(child)}
                                                       }">
                                                     Yes
                                                 </button>
                                                 <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                                                       question: $parentContext.$data, 
                                                       applicant: $data,
-                                                      is_required: $parent.do_children_need_to_answer,
+                                                      is_required: $parent.does_child_need_to_answer(child),
                                                       val: 'No', 
                                                       highlight: 'checkmark'
                                                       }">
@@ -806,25 +806,26 @@
                                                 </div>
                                             </div>
                                             <!--/ko-->
-                                            <!--ko if: do_children_need_to_answer -->
-                                                <!--ko foreach: $parent.get_covered_children -->
+                                            
+                                            <!--ko foreach: {data: $parent.get_covered_children, as: 'child'} -->
+                                                <!--ko if: $parent.does_child_need_to_answer(child) -->
                                                     <div class="person-answer-small row">
                                                         <div class="col-xs-3 col-xs-offset-2" data-bind="text: name"></div>
                                                         <div class="col-xs-7 btn-group" data-toggle="buttons">
                                                             <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                                                                   question: $parentContext.$data, 
                                                                   applicant: $data,
-                                                                  is_required: $parent.do_children_need_to_answer,
+                                                                  is_required: function() {return $parent.does_child_need_to_answer(child)},
                                                                   val: 'Yes', 
                                                                   highlight: 'stop',
-                                                                  onclick: $parent.show_yes_dialogue_children
+                                                                  onclick: function() {$parent.show_yes_dialogue_child(child)}
                                                                   }">
                                                                 Yes
                                                             </button>
                                                             <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                                                                   question: $parentContext.$data,
                                                                   applicant: $data,
-                                                                  is_required: $parent.do_children_need_to_answer,
+                                                                  is_required: $parent.does_child_need_to_answer(child),
                                                                   val: 'No', 
                                                                   highlight: 'checkmark'
                                                                   }">

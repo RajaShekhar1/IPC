@@ -4,31 +4,42 @@ from .states import all_statecodes, states_by_statecode
 class StatementOfHealthQuestionService(object):
     def form_for_state(self, product, statecode):
 
-        base_product = product.get_base_product()
+        code = product.get_base_product_code()
         
         # Return the first form for this product that supports this state
-        for form in product_forms.get(base_product.code, []):
+        for form in product_forms.get(code, []):
             if statecode in form.statecodes:
                 return form
         
-        raise Exception("No form exists for product '%s' in state '%s'"%(base_product.code, statecode))
+        raise Exception("No form exists for product '%s' in state '%s'"%(code, statecode))
     
     def get_health_questions(self, product, state):
         form = self.form_for_state(product, state)
         return form.questions
     
     def get_states_with_forms_for_product(self, product):
-        
-        base_product = product.get_base_product()
+
+        code = product.get_base_product_code()
         
         enabled_statecodes = set()
-        for form in product_forms.get(base_product.code, []):
+        for form in product_forms.get(code, []):
             for statecode in form.statecodes:
                 enabled_statecodes.add(statecode)
             
         return sorted([states_by_statecode[sc] for sc in enabled_statecodes], key=lambda x: x['statecode'])
 
+    def get_all_forms_used_for_product(self, product):
+        code = product.get_base_product_code()
+        return product_forms.get(code, [])
 
+    def get_all_category_labels_for_product(self, product):
+        category_labels = set()
+        for form in self.get_all_forms_used_for_product(product):
+            for question in form.questions:
+                category_labels.add(question.label)
+        
+        return list(category_labels)
+        
 from taa.helpers import JsonSerializable
 class SOHQuestion(JsonSerializable):
     def __init__(self, label, question):
