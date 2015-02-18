@@ -571,19 +571,10 @@
             $('.enroll-from-case-panel').show();
             $('.ad-hoc-form').hide();
             
-            init_responsive_datatables_breakpoints();
-            
             case_management.refresh_census_table(case_id, url, 
                 "#census-records-table", ".loading-panel", 
                 {
-                    "responsive": {breakpoints: [
-                        { name: 'breakI', width: Infinity },
-                        { name: 'breakII',  width: 1024 },
-                        { name: 'breakIII',  width: 768 },
-                        { name: 'breakIV', width: 600},
-                        { name: 'breakV', width: 560},
-                        { name: 'smallphone',   width: 480 }
-                    ]},
+                    "responsive": {breakpoints: get_responsive_datatables_breakpoints()},
                     "autoWidth": false,
                     "aoColumnDefs":[
                         // Show enroll button in first column

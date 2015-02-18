@@ -8,13 +8,11 @@ var case_management = (function() {
     
     function refresh_census_table(case_id, url, table_selector, loading_selector, table_options, init_callback, no_data_cb) {
         
-        init_responsive_datatables_breakpoints();
-        
         // show loading message under the table
         var loading = $(loading_selector);
         var table = $(table_selector);
         var table_defaults = {
-            "responsive": true,
+            "responsive": {breakpoints: get_responsive_datatables_breakpoints()},
             "autoWidth": false,
             "aoColumnDefs":[
                 {"bSortable": false, 
@@ -69,10 +67,8 @@ var case_management = (function() {
         var loading = $(loading_selector);
         var table = $(table_selector);
         
-        init_responsive_datatables_breakpoints();
-        
         var table_defaults = {
-            "responsive": true,
+            "responsive": {breakpoints: get_responsive_datatables_breakpoints()},
             "autoWidth": false,
             "aoColumnDefs":[
                 {"aTargets":[0], "mData": function(source) {
@@ -96,8 +92,7 @@ var case_management = (function() {
                 },
                 {"aTargets":[6], "mData": function(source) {
                     return '$'+source.total_annual_premium;
-                }//, 
-                    //"sClass": "text-right"
+                }, "sClass": "text-right"
                 }
             ],
             "aaSorting": [[ 2, "asc" ]],
