@@ -273,11 +273,14 @@
                                             </div>
                                             <div class="widget-body">
                                                 <div class="widget-main">  
+                                                    
                                                     {% if not census_records %}
                                                         <h4 class="no-census-header text-center lighter">No Census Data Uploaded</h4>
-                                                        <table id="census-records-table" class="table table-bordered table-hover" style="display: none;">
+                                                        <div class="table-responsive">
+                                                        <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive" style="display: none;">
                                                     {% else %}
-                                                        <table id="census-records-table" class="table table-bordered table-hover">
+                                                        <div class="table-responsive">
+                                                        <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive">
                                                     {% endif %}
                                                             <thead>
                                                                 <tr>
@@ -296,7 +299,7 @@
                                                                 #}
                                                             </tbody>
                                                         </table>
-                                                    
+                                                    </div>
                                                     <div id="census-table-loading" class="text-center bigger-125"></div>
                                                 </div>
                                             </div>
@@ -317,9 +320,9 @@
                                 <div class="widget-box">
                                     <div class="widget-header">
                                         <div class="row">
-                                            <h3 class="col-xs-11">Report 
+                                            <h3 class="col-xs-10">Report 
                                             </h3>
-                                            <h3 class="col-xs-1">
+                                            <h3 class="col-xs-2 text-center">
                                                 <small>
                                                     <a href="#print"><i class="ace-icon glyphicon glyphicon-print"></i> Print</a>
                                                 </small>
@@ -345,8 +348,8 @@
                                         <div class="widget-box" data-bind="visible: report_viewmodel() && report_viewmodel().any_enrollments">
                                             <div class="widget-header">
                                                 <div class="row">
-                                                    <div class="col-md-6"><h4 class="bigger-150">Enrollment Records</h4></div>
-                                                    <div class="col-md-6">
+                                                    <div class="col-xs-6"><h4 class="bigger-150">Enrollment Records</h4></div>
+                                                    <div class="col-xs-6">
                                                         
                                                         <a href="{{ url_for('cases.enrollment_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
                                                             <i class="ace-icon glyphicon glyphicon-download-alt"></i>
@@ -357,27 +360,30 @@
                                             </div>
                                             <div class="widget-body">
                                                 <div class="widget-main">  
-                                                        <table id="enrollment-records-table" class="table table-bordered table-hover">
-                                                    
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>Date</th>
-                                                                    <th>First</th>
-                                                                    <th>Last</th>
-                                                                    <th>DOB</th>
-                                                                    <th>Email</th>
-                                                                    <th>Status</th>
-                                                                    <th>Total Premium</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {# 
-                                                                Don't load this on the page anymore, 
-                                                                we load from the server at run time for page speed
-                                                                #}
-                                                            </tbody>
-                                                        </table>
-                                                    
+                                                        <div style="width: 100%; padding-left: -10px;">
+                                                            <div class="table-responsive">
+                                                                <table id="enrollment-records-table" 
+                                                                       class="table table-bordered table-hover no-wrap dt-responsive">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th class="min-breakII">Date</th>
+                                                                            <th>First</th>
+                                                                            <th>Last</th>
+                                                                            <th class="min-breakII">DOB</th>
+                                                                            <th class="min-breakI">Email</th>
+                                                                            <th class="min-breakV">Status</th>
+                                                                            <th>Total Premium</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {# 
+                                                                        Don't load this on the page anymore, 
+                                                                        we load from the server at run time for page speed
+                                                                        #}
+                                                                    </tbody>
+                                                                </table>
+                                                        </div>
+                                                    </div>
                                                     <div id="enrollment-table-loading" class="text-center bigger-125"></div>
                                                 </div>
                                             </div>
@@ -451,33 +457,35 @@
                 
                 <!--ko if: is_census_report-->
                 <h3 class="light">Summary</h3>
-                <table class="table table-bordered center">
-                    <thead><tr>
-                        <th class="text-center w_25">Total Processed</th>
-                        <th class="text-center w_25">Total Taken</th>
-                        <th class="text-center w_25">Total Declined</th>
-                        <th class="text-center w_25">Total Annual Premium</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                                <span data-bind="text: format_total_percent_processed"></span> 
-                                (<span data-bind="text: format_total_num_processed"></span> of 
-                                 <span data-bind="text: format_total_num_census"></span>)
-                            </td>
-                            <td>
-                                <span data-bind="text: format_total_percent_taken"></span> 
-                                (<span data-bind="text: format_total_num_taken"></span>)
-                            </td>
-                            <td>
-                                <span data-bind="text: format_total_percent_declined"></span> 
-                                (<span data-bind="text: format_total_num_declined"></span>)
-                            </td>
-                            <td>
-                                <span data-bind="text: format_total_annualized_premium"></span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="">
+                    <table class="table table-bordered center no-wrap">
+                        <thead><tr>
+                            <th class="text-center w_25">Total Processed</th>
+                            <th class="text-center w_25">Total Taken</th>
+                            <th class="text-center w_25">Total Declined</th>
+                            <th class="text-center w_25">Total Annual Premium</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <span data-bind="text: format_total_percent_processed"></span> 
+                                    (<span data-bind="text: format_total_num_processed"></span> of 
+                                     <span data-bind="text: format_total_num_census"></span>)
+                                </td>
+                                <td>
+                                    <span data-bind="text: format_total_percent_taken"></span> 
+                                    (<span data-bind="text: format_total_num_taken"></span>)
+                                </td>
+                                <td>
+                                    <span data-bind="text: format_total_percent_declined"></span> 
+                                    (<span data-bind="text: format_total_num_declined"></span>)
+                                </td>
+                                <td>
+                                    <span data-bind="text: format_total_annualized_premium"></span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
                 <!--/ko-->
             
                 <h4>Period: <small data-bind="text: format_enrollment_dates"></small></h4>
@@ -492,24 +500,27 @@
                 
                 <!--ko if: !only_one_product() -->
                 <h3 class="light">By Product</h3>
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th class="text-left w_40">Product</th>
-                            <th class="text-center w_30">Taken</th>
-                            <th class="text-right w_30">Total Annual Premium</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!--ko foreach: product_data-->
-                        <tr>
-                            <td data-bind="text: name"></td>
-                            <td class="text-center"><span data-bind="text: num_taken"></span>  (<span data-bind="text: percent_taken"></span>%)</td>
-                            <td class="text-right">$<span data-bind="text: annualized_premium"></span></td>
-                        </tr>
-                        <!--/ko-->
-                    </tbody>
-                </table>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped no-wrap">
+                        <thead>
+                            <tr>
+                                <th class="text-left w_40">Product</th>
+                                <th class="text-center w_30">Taken</th>
+                                <th class="text-right w_30">Total Annual Premium</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!--ko foreach: product_data-->
+                            <tr>
+                                <td data-bind="text: name"></td>
+                                <td class="text-center"><span data-bind="text: num_taken"></span>  (<span data-bind="text: percent_taken"></span>%)</td>
+                                <td class="text-right">$<span data-bind="text: annualized_premium"></span></td>
+                            </tr>
+                            <!--/ko-->
+                        </tbody>
+                    </table>
+                </div>
                 <!--/ko-->
                 
                 <!--ko if: case_agents-->
@@ -624,8 +635,9 @@
                                     <div data-bind="if: error_record.message && error_record.records.length == 0">
                                         <div class="error" data-bind="text: error_record.message"></div>
                                     </div>
-                                    
-                                    <table data-bind="if: error_record.records.length > 0" class="table table-bordered table-responsive upload-error-table">
+                                    <div class="table-responsive">
+                                    <table data-bind="if: error_record.records.length > 0" 
+                                           class="table table-bordered upload-error-table">
                                         <thead>
                                             <tr>
                                                 <th>Record #</th>
@@ -646,6 +658,7 @@
                                             </tr>
                                         </tbody>
                                     </table>
+                                    </div>
                                 <!--/ko-->
                             </div>
                         </div>

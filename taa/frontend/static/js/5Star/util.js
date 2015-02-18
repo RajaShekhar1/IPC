@@ -72,6 +72,23 @@ function now() {
     return moment();
 }
 
+function init_responsive_datatables_breakpoints() {
+    // We use these standard breakpoints throughout the site for DataTable tables
+    
+    // Usage: add the class 'min-breakV' to a column to hide it below 480, 
+    //         'min-breakIV' to hide it below 560, 
+    //          etc.
+    $.fn.dataTable.Responsive.breakpoints = [
+        { name: 'breakI', width: Infinity },
+        { name: 'breakII',  width: 1024 },
+        { name: 'breakIII',  width: 768 },
+        { name: 'breakIV', width: 600},
+        { name: 'breakV', width: 560},
+        { name: 'smallphone',   width: 480 }
+    ];
+}
+
+
 // The shortcut functions above use this method to wrap the jquery ajax call in slightly different ways
 function submit_data(method, url, data, should_process_data, on_success, on_error, contentType) {
     on_success = on_success || function() {};

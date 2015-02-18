@@ -95,18 +95,19 @@ def in_person_enrollment():
         spouse_data = record.get_spouse_data()
         children_data = record.get_children_data()
     else:   
+        data = request.form
         
-        state = request.form['enrollmentState']
-        enroll_city = request.form['enrollmentCity']
-        company_name = request.form['companyName']
-        product_id = request.form['productID']
+        state = data['enrollmentState']
+        enroll_city = data['enrollmentCity']
+        company_name = data['companyName']
+        product_id = data['productID']
         product = product_service.get_if_allowed(product_id)
         
         products = [product] if product else []
         employee_data = dict(
-            first=request.form['eeFName'],
-            last=request.form['eeLName'],
-            email=request.form['email'],
+            first=data['eeFName'],
+            last=data['eeLName'],
+            email=data['email'],
             state=state,
         )
         spouse_data = None

@@ -7,10 +7,15 @@ var case_management = (function() {
     var loading_html = "<span class='icon-spinner icon-spin grey bigger-200'></span> <span class='bigger-175'> Loading data...</span>";
     
     function refresh_census_table(case_id, url, table_selector, loading_selector, table_options, init_callback, no_data_cb) {
+        
+        init_responsive_datatables_breakpoints();
+        
         // show loading message under the table
         var loading = $(loading_selector);
         var table = $(table_selector);
         var table_defaults = {
+            "responsive": true,
+            "autoWidth": false,
             "aoColumnDefs":[
                 {"bSortable": false, 
                  "aTargets":[0], "mData":function(source) {
@@ -20,11 +25,11 @@ var case_management = (function() {
                 {"aTargets":[2], "mData": "employee_last"},
                 {"aTargets":[3], "mData": function(source) {
                     return format_date(parse_date(source.employee_birthdate));
-                }},
-                {"aTargets":[4], "mData": "employee_email"},
+                }, className: "min-breakIV"},
+                {"aTargets":[4], "mData": "employee_email", className: "min-breakII"},
                 {"aTargets":[5], "mData": function(source) {
                     return format_enrollment_status_html(source.enrollment_status);
-                }}
+                }, className: "min-breakV"}
             ],
             "aaSorting": [[ 2, "asc" ]],
             "iDisplayLength": 25
@@ -49,7 +54,7 @@ var case_management = (function() {
                 $(".no-census-header").hide();
                 // Initialize DataTable
                 table_settings.aaData = resp.data;
-                table.dataTable(table_settings);
+                table.wrap("<div class='dataTables_borderWrap' />").dataTable(table_settings);
                 if (init_callback !== undefined) {
                     init_callback(table);
                 }
@@ -63,21 +68,37 @@ var case_management = (function() {
         // show loading message under the table
         var loading = $(loading_selector);
         var table = $(table_selector);
+        
+        init_responsive_datatables_breakpoints();
+        
         var table_defaults = {
+            "responsive": true,
+            "autoWidth": false,
             "aoColumnDefs":[
                 {"aTargets":[0], "mData": function(source) {
                     return format_date(parse_date(source.signature_time));
-                }},
+                }, 
+                    "className":"min-breakII"
+                },
                 {"aTargets":[1], "mData": "employee_first"},
                 {"aTargets":[2], "mData": "employee_last"},
                 {"aTargets":[3], "mData": function(source) {
                     return format_date(parse_date(source.employee_birthdate, "YYYY-MM-DD"));
-                }},
-                {"aTargets":[4], "mData": "employee_email"},
-                {"aTargets":[5], "mData": function(source) {return format_enrollment_status_html(source.enrollment_status)}},
+                }, 
+                    "className":"min-breakII"
+                },
+                {"aTargets":[4], "mData": "employee_email", 
+                    "className":"min-breakI"},
+                {"aTargets":[5], "mData": function(source) {
+                    return format_enrollment_status_html(source.enrollment_status)
+                }, 
+                    className: "min-breakV"
+                },
                 {"aTargets":[6], "mData": function(source) {
                     return '$'+source.total_annual_premium;
-                }, "sClass": "text-right"}
+                }//, 
+                    //"sClass": "text-right"
+                }
             ],
             "aaSorting": [[ 2, "asc" ]],
             "iDisplayLength": 25
@@ -114,15 +135,17 @@ var case_management = (function() {
     }
     function update_table_data(table, data) {
         table.dataTable().fnAddData(data);
+        table.DataTable().columns.adjust().draw();
     }
     
     function init_data_table(table, table_settings, data, init_callback) {
         table.show();
         table_settings.aaData = data;
-        table.dataTable(table_settings);
+        table.wrap("<div class='dataTables_borderWrap' />").dataTable(table_settings);
         if (init_callback !== undefined) {
             init_callback(table);
         }
+        table.DataTable().columns.adjust().draw();
     }
     
     return {

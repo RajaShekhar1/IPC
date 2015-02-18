@@ -36,6 +36,7 @@ css_ace_latest = Bundle(
     # Put any 3rd party CSS plugins here (chosen, ui.jqgrid, etc)
     "ace-v1.3.3/css/bootstrap-multiselect.min.css",
     "ace-v1.3.3/css/bootstrap-duallistbox.min.css",
+    Bundle('ace-v1.3.3/js/dataTables/dataTables.responsive.css', filters='cssmin'),
     
     # Main ace files 
     "ace-v1.3.3/css/ace.min.css",
@@ -93,6 +94,8 @@ js_vendor_latest = Bundle(
     # js ace plugins for wizard and such go here
     'ace-v1.3.3/js/dataTables/jquery.dataTables.min.js',
     'ace-v1.3.3/js/dataTables/jquery.dataTables.bootstrap.min.js',
+    Bundle('ace-v1.3.3/js/dataTables/dataTables.responsive.js', filters='rjsmin'),
+    
     'ace-v1.3.3/js/jquery.maskedinput.min.js',
     'ace-v1.3.3/js/jquery.validate.min.js',
     'ace-v1.3.3/js/jquery.bootstrap-duallistbox.min.js',

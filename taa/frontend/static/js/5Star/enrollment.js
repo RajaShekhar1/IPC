@@ -135,8 +135,11 @@ function WizardUI(product, defaults) {
     };
     
     // Spouse info
-    var spouse_data = self.defaults.spouse_data || {last: self.defaults.employee_last} || {};
-    
+    var spouse_data = self.defaults.spouse_data || {};
+    // default the last name to employee's last name if not present
+    if (!spouse_data.last) {
+        spouse_data.last = self.employee().last();    
+    }
     
     self.spouse = ko.observable(new InsuredApplicant(spouse_data));
     
@@ -166,11 +169,15 @@ function WizardUI(product, defaults) {
     if (self.defaults.children_data.length == 0) {
         self.children = ko.observableArray([
             // Start with two blank child entries
-            new InsuredApplicant({last: self.defaults.employee_last || ""}),
-            new InsuredApplicant({last: self.defaults.employee_last || ""})
+            new InsuredApplicant({last: self.employee().last() || ""}),
+            new InsuredApplicant({last: self.employee().last() || ""})
         ]);
     } else {
         self.children = ko.observableArray($.map(self.defaults.children_data, function(child_data) {
+            // if child's last name is blank, default it to the employee's last name
+            if (!child_data.last) {
+                child_data.last = self.employee().last();
+            }
             return new InsuredApplicant(child_data);
         }));
     }
@@ -206,7 +213,7 @@ function WizardUI(product, defaults) {
     
     
     self.add_child = function() {
-        var child_insured_applicant = new InsuredApplicant({last: self.defaults.employee_last || ""});
+        var child_insured_applicant = new InsuredApplicant({last: self.employee().last() || ""});
         self.children.push(child_insured_applicant);
 	// hide Add button if now at max children
 	if (self.children().length > 3) {
