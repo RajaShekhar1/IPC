@@ -227,8 +227,10 @@ def ds_landing_page():
                            )
 
 
- 
-
+# TODO: just use this route in the future rather than adding more individual routes for files
+@app.route("/pdfs/<file_name>")
+def serve_pdf(file_name):
+    return send_from_directory(os.path.join(app.root_path, 'frontend', 'static', 'pdfs'), file_name)
 
 @app.route("/FPPTI_disclosure.pdf")
 def FPPTI_disclosure_generic():

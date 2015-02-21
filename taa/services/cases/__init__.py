@@ -268,10 +268,12 @@ class CaseService(DBService):
         return False
     
     def create_ad_hoc_census_record(self, case, **data):
-        if 'ssn' not in data:
-            abort(400, "SSN is required to create an ad-hoc census record")
+        # TODO: move this check up to the specific API that requires it if necessary
+        #  Ad-hoc records that decline are a special case that have no requirements
+        #if 'ssn' not in data:
+        #    abort(400, "SSN is required to create an ad-hoc census record")
     
-        ssn = data['ssn'].replace('-', '')
+        ssn = data.get('ssn', '').replace('-', '')
         
         record =  self.census_records.add_record(case,  **dict(employee_ssn=ssn, is_uploaded_census=False))
         
@@ -545,7 +547,12 @@ class CensusRecordService(DBService):
         """ 
         Create and add to the DB session, but don't commit or flush the session for speed
         """
-        data['case_id'] = case.id
+        if case:
+            data['case_id'] = case.id
+        else:
+            # Ad-hoc record
+            data['case_id'] = None
+            
         if 'is_uploaded_census' not in data:
             data['is_uploaded_census'] = False
         
@@ -558,22 +565,7 @@ class CensusRecordService(DBService):
 
     def update_from_enrollment(self, record, data):
         '''
-        data.first = self.first();
-        data.last = self.last();
-        data.email = self.email();
-        data.age = self.get_age();
-        data.weight = self.weight();
-        data.height = self.height();
-        data.is_smoker = self.is_smoker();
-        data.birthdate = self.birthdate();
-        data.ssn = self.ssn();
-        data.gender = self.gender();
-        data.phone = self.phone();
-        data.address1 = self.address1();
-        data.address2 = self.address2();
-        data.city = self.city();
-        data.state = self.state();
-        data.zip = self.zip();
+        Update the enrollment census with data that was potentially corrected while enrolling
         '''
 
         employee = data['employee']
@@ -605,11 +597,12 @@ class CensusRecordService(DBService):
         record.spouse_city = spouse['city']
         record.spouse_state = spouse['state']
         record.spouse_zip = spouse['zip']
-    
+        
         for i, child in enumerate(children):
-            setattr(record, 'child{}_first'.format(i), child['first'])
-            setattr(record, 'child{}_last'.format(i), child['last'])
-            setattr(record, 'child{}_birthdate'.format(i), child['birthdate'])
+            child_num = i + 1
+            setattr(record, 'child{}_first'.format(child_num), child['first'])
+            setattr(record, 'child{}_last'.format(child_num), child['last'])
+            setattr(record, 'child{}_birthdate'.format(child_num), child['birthdate'])
         
         db.session.flush()
         

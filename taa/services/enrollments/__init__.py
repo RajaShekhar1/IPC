@@ -31,7 +31,9 @@ class EnrollmentApplicationService(DBService):
         # Update the census record data with the new data
         if census_record:
             case_service.update_census_record_from_enrollment(census_record, data)
-        
+        else:
+            census_record = case_service.create_ad_hoc_census_record(case=None, data=data)
+            
         # Store extra enrollment data on the enrollment
         enrollment = self._create_enrollment(census_record, data, agent)
         
