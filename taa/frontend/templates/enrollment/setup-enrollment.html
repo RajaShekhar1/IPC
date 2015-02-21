@@ -5,7 +5,7 @@
 {% block content %}
 
     
-<div class="launch-panel">
+<div class="launch-panel" style="display: none;" data-bind="visible: true;">
     <h3 class="header lighter">Launch an Enrollment</h3>
     
     <div class="row method-select-form enroll-buttons">
@@ -326,7 +326,6 @@
                                         </label>
                                         <input type="text" id="add-census-ssn-input" name="ssn" data-bind="value: ssn, maskedInput: '999-99-9999', valueUpdate: 'afterkeydown'">
                                         <div data-bind="text: ssn.error" class="error"></div>
-                                        <div data-bind="text: ssn"></div>
                                     </div>
                                 </div>
                             </div>

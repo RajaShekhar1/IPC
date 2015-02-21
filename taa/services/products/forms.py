@@ -31,9 +31,9 @@ class EditProductForm(Form):
                                       choices=[(-1, "N/A")]+[(i, "%s\""%i) for i in range(1, 101)], default=-1, coerce=int)
     criteria_height_max = SelectField('Maximum:', choices=[(-1, "N/A")]+[(i, "%s\""%i) for i in range(1, 101)], default=-1, coerce=int)
     criteria_weight_min = SelectField('Minimum:',
-                                      choices=[(-1, "N/A")] + [(i, "%s Lbs." % i) for i in range(50, 301)], default=-1, coerce=int)
+                                      choices=[(-1, "N/A")] + [(i, "%s Lbs." % i) for i in range(50, 351)], default=-1, coerce=int)
     criteria_weight_max = SelectField('Maximum:',
-                                      choices=[(-1, "N/A")] + [(i, "%s Lbs." % i) for i in range(50, 301)], default=-1, coerce=int)
+                                      choices=[(-1, "N/A")] + [(i, "%s Lbs." % i) for i in range(50, 351)], default=-1, coerce=int)
     statement_of_health_bypass_type = StringField(validators=[validators.length(max=32)])
     
     def __init__(self, *args, **kwargs):

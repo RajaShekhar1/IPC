@@ -793,6 +793,28 @@ function WizardUI(product, defaults) {
         
     });
     
+    self.exit_application = function() {
+        bootbox.dialog({
+            message: "Are you sure you want to exit? All data on this application will be discarded.",
+            buttons: {
+                default: {
+                    label: "Cancel",
+                    className: "btn-default",
+                    callback: function () {
+
+                    }
+                },
+                danger: {
+                    label: "Exit application and discard data",
+                    className: "btn-danger",
+                    callback: function () {
+                        window.location.href = "/enroll?next=1";
+                    }
+                }
+            }
+        });
+    };
+    
 }
 
 // Model for different insurance products
@@ -1053,7 +1075,7 @@ function GroupCIProduct(product_data) {
         }
     };
     
-    
+       
 }
 GroupCIProduct.prototype = Object.create(Product.prototype);
 //GroupCIProduct.prototype.get_new_benefit_option = function(options) {
