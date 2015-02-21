@@ -406,25 +406,29 @@ class EnrollmentApplicationService(DBService):
         return stream.getvalue()
         
     def get_csv_headers(self):
-        # Census columns, then enrollment columns
+        # enrollment columns, then Census columns 
         headers = [] 
-        headers += CaseService().census_records.get_csv_headers() 
+        
         headers += [c.column_title for c in enrollment_columns]
         headers += [c.column_title for c in coverage_columns]
+        
+        headers += CaseService().census_records.get_csv_headers()
+        
         return headers
         
     def get_csv_row(self, record):
         
         row = []
         
+        # Add enrollment record export
+        row += [c.get_value(record) for c in enrollment_columns]
+
+        # Add coverage records
+        row += [c.get_value(record) for c in coverage_columns]
+        
         # Add census record export
         row += CaseService().census_records.get_csv_row_from_dict(record)
         
-        # Add enrollment record export
-        row += [c.get_value(record) for c in enrollment_columns]
-        
-        # Add coverage records
-        row += [c.get_value(record) for c in coverage_columns]
         
         return row
     
