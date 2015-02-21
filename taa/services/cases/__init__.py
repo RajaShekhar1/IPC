@@ -568,6 +568,12 @@ class CensusRecordService(DBService):
         Update the enrollment census with data that was potentially corrected while enrolling
         '''
 
+        def convert_smoker_to_y_n(val):
+            if val is None:
+                return '' 
+            return 'Y' if val else 'N'
+                
+        
         employee = data['employee']
         spouse = data['spouse']
         children = data['children']
@@ -584,7 +590,11 @@ class CensusRecordService(DBService):
         record.employee_city = employee['city']
         record.employee_state = employee['state']
         record.employee_zip = employee['zip']
-
+        
+        record.employee_height_inches = employee['height']
+        record.employee_weight_lbs = employee['weight']
+        record.employee_smoker = convert_smoker_to_y_n(employee['is_smoker'] == 'true')
+        
         record.spouse_ssn = self.strip_ssn(spouse['ssn'])
         record.spouse_first = spouse['first']
         record.spouse_last = spouse['last']
@@ -597,7 +607,10 @@ class CensusRecordService(DBService):
         record.spouse_city = spouse['city']
         record.spouse_state = spouse['state']
         record.spouse_zip = spouse['zip']
-        
+        record.spouse_height_inches = spouse['height']
+        record.spouse_weight_lbs = spouse['weight']
+        record.spouse_smoker = convert_smoker_to_y_n(spouse['is_smoker'] == 'true')
+        import pdb; pdb.set_trace()
         for i, child in enumerate(children):
             child_num = i + 1
             setattr(record, 'child{}_first'.format(child_num), child['first'])
@@ -816,6 +829,14 @@ def preprocess_numbers(data, record):
         return ''
     return "".join(c for c in unicode(data) if c.isdigit()) 
     
+def preprocess_y_n(data, record):
+    if data is None or data == "":
+        return ''
+    
+    if str(data).lower() in ['y', 'true', 'yes']:
+        return 'Y'
+    else:
+        return 'N'
 
 class CensusRecordParser(object):
     
@@ -836,7 +857,11 @@ class CensusRecordParser(object):
     employee_city = CensusRecordField("EMP_CITY", "employee_city", preprocess_string, [])
     employee_state = CensusRecordField("EMP_STATE", "employee_state", preprocess_string, [state_validator])
     employee_zip = CensusRecordField("EMP_ZIP", "employee_zip", preprocess_zip, [zip_validator])
-
+    employee_height_inches = CensusRecordField("EMP_HEIGHT_IN", "employee_height_inches", preprocess_string, [])
+    employee_weight_lbs = CensusRecordField("EMP_WEIGHT_LBS", "employee_weight_lbs", preprocess_string, [])
+    employee_smoker = CensusRecordField("EMP_SMOKER_Y_N", "employee_smoker", preprocess_y_n, [])
+    
+    
     spouse_first = CensusRecordField("SP_FIRST", "spouse_first", preprocess_string, [])
     spouse_last = CensusRecordField("SP_LAST", "spouse_last", preprocess_string, [], [postprocess_spouse_last])
     spouse_ssn = CensusRecordField("SP_SSN", "spouse_ssn", preprocess_numbers, [ssn_validator])
@@ -849,6 +874,9 @@ class CensusRecordParser(object):
     spouse_city = CensusRecordField("SP_CITY", "spouse_city", preprocess_string, [])
     spouse_state = CensusRecordField("SP_STATE", "spouse_state", preprocess_string, [state_validator])
     spouse_zip = CensusRecordField("SP_ZIP", "spouse_zip", preprocess_zip, [zip_validator])
+    spouse_height_inches = CensusRecordField("SP_HEIGHT_IN", "spouse_height_inches", preprocess_string, [])
+    spouse_weight_lbs = CensusRecordField("SP_WEIGHT_LBS", "spouse_weight_lbs", preprocess_string, [])
+    spouse_smoker = CensusRecordField("SP_SMOKER_Y_N", "spouse_smoker", preprocess_y_n, [])
     
     # Add group validation requirement. If any field in the group is given, all must be present
     spouse_fields = [spouse_first, spouse_birthdate]
@@ -882,6 +910,9 @@ class CensusRecordParser(object):
         employee_city,
         employee_state,
         employee_zip,
+        employee_height_inches,
+        employee_weight_lbs,
+        employee_smoker,
 
         spouse_first,
         spouse_last,
@@ -895,6 +926,10 @@ class CensusRecordParser(object):
         spouse_city,
         spouse_state,
         spouse_zip,
+        spouse_height_inches,
+        spouse_weight_lbs,
+        spouse_smoker,
+        
     ]
 
     MAX_CHILDREN = 6

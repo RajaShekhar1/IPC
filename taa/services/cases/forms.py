@@ -57,7 +57,8 @@ class SSNField(StringField):
             for char in valuelist[0]:
                 if char.isdigit():
                     self.data += char
-        
+
+
 class CensusRecordForm(Form):
     
     employee_first = StringField('Employee First', [validators.InputRequired()])
@@ -72,7 +73,10 @@ class CensusRecordForm(Form):
     employee_city = StringField("Employee Street Address")
     employee_state = SelectField("Employee Statecode", choices=[(s['statecode'], s['name']) for s in get_all_states()])
     employee_zip = StringField("Employee Zip", [])
-    
+    employee_height_inches = StringField("Employee Height in Inches")
+    employee_weight_lbs = StringField("Employee Weight in lbs")
+    employee_smoker = SelectField("Employee is Smoker", choices=[('', ''), ('N', 'No'), ('Y', 'Yes')])
+
     spouse_first = StringField('Spouse First')
     spouse_last = StringField('Spouse Last')
     spouse_gender = SelectField('Spouse Gender', [validators.optional()], choices=[('', ''), ('male','Male'), ('female','Female')])
@@ -85,9 +89,11 @@ class CensusRecordForm(Form):
     spouse_city = StringField("Spouse Street Address")
     spouse_state = SelectField("Spouse Statecode", choices=[(s['statecode'], s['name']) for s in get_all_states()])
     spouse_zip = StringField("Spouse Zip", [])
-    
-    
-    
+    spouse_height_inches = StringField("Spouse Height in Inches")
+    spouse_weight_lbs = StringField("Spouse Weight in lbs")
+    spouse_smoker = SelectField("Spouse is Smoker", choices=[('', ''), ('N', 'No'), ('Y', 'Yes')])
+
+
 for x in range(1, 6+1):
     setattr(CensusRecordForm, 'child{}_first'.format(x), StringField('Child {} First'.format(x)))
     setattr(CensusRecordForm, 'child{}_last'.format(x), StringField('Child {} Last'.format(x)))

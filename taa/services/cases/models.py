@@ -191,6 +191,9 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     employee_birthdate = db.Column(db.Date)
     employee_email = db.Column(db.String(256))
     employee_phone = db.Column(db.String(32))
+    employee_height_inches = db.Column(db.String(16))
+    employee_weight_lbs = db.Column(db.String(16))
+    employee_smoker = db.Column(db.String(8))
     
     employee_street_address = db.Column(db.String(256))
     employee_street_address2 = db.Column(db.String(256))
@@ -205,6 +208,9 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     spouse_birthdate = db.Column(db.Date)
     spouse_email = db.Column(db.String(256))
     spouse_phone = db.Column(db.String(32))
+    spouse_height_inches = db.Column(db.String(16))
+    spouse_weight_lbs = db.Column(db.String(16))
+    spouse_smoker = db.Column(db.String(8))
     
     spouse_street_address = db.Column(db.String(256))
     spouse_street_address2 = db.Column(db.String(256))
