@@ -730,7 +730,7 @@ function WizardUI(product, defaults) {
                             product_data.gi_criteria,
                             product_data.statement_of_health_bypass_type, product_data.bypassed_soh_questions);
                     };
-                } else if (product_data.code == "Group CI") {
+                } else if (self.insurance_product.product_type == "Group CI") {
                     question_factory = function(question_data) {
                         return new GIHealthQuestion(self.insurance_product, question_data, self.selected_plan, 
                         //     
@@ -765,7 +765,7 @@ function WizardUI(product, defaults) {
     
     self.should_show_other_insurance_questions = ko.computed(function() {
         return (
-            self.insurance_product.product_data.code != "Group CI"
+            self.insurance_product.product_type != "Group CI"
         );
     });
     
@@ -1579,9 +1579,9 @@ function InsuredApplicant(options) {
     self.gender = ko.observable(options.gender || null);
     
     // Extended questions
-    self.height = ko.observable(options.height ? options.height : null);
+    self.height = ko.observable(parseFloat(options.height) ? parseFloat(options.height) : null);
     self.weight = ko.observable(options.weight || null);
-    self.is_smoker = ko.observable(options.is_smoker || null);
+    self.is_smoker = ko.observable((options.is_smoker !== null) ? options.is_smoker : null);
     
     self.height_error = ko.observable(null);
     self.weight_error = ko.observable(null);

@@ -429,7 +429,6 @@ class EnrollmentApplicationService(DBService):
         # Add census record export
         row += CaseService().census_records.get_csv_row_from_dict(record)
         
-        
         return row
     
         

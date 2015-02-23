@@ -593,7 +593,7 @@ class CensusRecordService(DBService):
         
         record.employee_height_inches = employee['height']
         record.employee_weight_lbs = employee['weight']
-        record.employee_smoker = convert_smoker_to_y_n(employee['is_smoker'] == 'true')
+        record.employee_smoker = convert_smoker_to_y_n(employee['is_smoker'])
         
         record.spouse_ssn = self.strip_ssn(spouse['ssn'])
         record.spouse_first = spouse['first']
@@ -609,7 +609,7 @@ class CensusRecordService(DBService):
         record.spouse_zip = spouse['zip']
         record.spouse_height_inches = spouse['height']
         record.spouse_weight_lbs = spouse['weight']
-        record.spouse_smoker = convert_smoker_to_y_n(spouse['is_smoker'] == 'true')
+        record.spouse_smoker = convert_smoker_to_y_n(spouse['is_smoker'])
         import pdb; pdb.set_trace()
         for i, child in enumerate(children):
             child_num = i + 1

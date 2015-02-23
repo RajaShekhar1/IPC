@@ -215,13 +215,13 @@
             <!--ko if: $root.should_show_smoker() -->
             <div class="form-group col-xs-12 col-sm-5">
                 <label style="margin-right: 1em;">
-                    <input type="radio" value="false" class="ace"
-                           data-bind="checked: is_smoker, attr: {name: 'tobacco-'+$data._id}">
+                    <input type="radio" class="ace"
+                           data-bind="checked: is_smoker, checkedValue: false, attr: {name: 'tobacco-'+$data._id}">
                     <span class="lbl"> Non-Smoker</span>
                 </label>
                 <label>
-                    <input type="radio" value="true" class="ace"
-                           data-bind="checked: is_smoker, attr: {name: 'tobacco-'+$data._id}">
+                    <input type="radio" class="ace"
+                           data-bind="checked: is_smoker, checkedValue: true, attr: {name: 'tobacco-'+$data._id}">
                     <span class="lbl"> Smoker</span>
                 </label>
             </div>

@@ -488,14 +488,14 @@ function get_feet_part(val) {
     if (val === null || val === undefined) {
         return null;
     } else {
-        return parseInt(val) / 12;
+        return Math.floor(parseInt(val) / 12);
     }
 }
 function get_inches_part(val) {
     if (val === null || val === undefined) {
         return null;
     } else {
-        return parseInt(val) % 12;
+        return Math.floor(parseInt(val) % 12);
     }
 }
 

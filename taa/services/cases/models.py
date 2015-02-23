@@ -161,7 +161,7 @@ class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
         return datetime.now().year
     
 class CensusRecordSerializer(JsonSerializable):
-    __json_hidden__ = ['census_records', 'case', 'enrollment_applications']
+    __json_hidden__ = ['case', 'enrollment_applications']
     __json_modifiers__ = {
         #'enrollment_applications': lambda apps, _: [a for a in apps]
     }
@@ -242,6 +242,14 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     child6_last = db.Column(db.String(256))
     child6_birthdate = db.Column(db.Date)
     
+    def get_smoker_boolean(self, value):
+        if value == "Y":
+            return True
+        elif value == "N":
+            return False
+        else:
+            return None
+    
     def get_employee_data(self):
         from taa.services.enrollments import EnrollmentApplicationCoverageService
         employee_coverages = EnrollmentApplicationCoverageService().get_coverages_for_employee(self)
@@ -254,7 +262,9 @@ class CaseCensus(CensusRecordSerializer, db.Model):
             email=self.employee_email,
             phone=self.employee_phone,
             gender=self.employee_gender.lower() if self.employee_gender else '',
-            
+            weight=self.employee_weight_lbs,
+            height=self.employee_height_inches,
+            is_smoker=self.get_smoker_boolean(self.employee_smoker),
             street_address=self.employee_street_address,
             street_address2=self.employee_street_address2,
             city=self.employee_city,
@@ -276,6 +286,9 @@ class CaseCensus(CensusRecordSerializer, db.Model):
                 email=self.spouse_email,
                 phone=self.spouse_phone,
                 gender=self.spouse_gender.lower() if self.spouse_gender else '',
+                weight=self.spouse_weight_lbs,
+                height=self.spouse_height_inches,
+                is_smoker=self.get_smoker_boolean(self.spouse_smoker),
                 street_address=self.spouse_street_address,
                 street_address2=self.spouse_street_address2,
                 city=self.spouse_city,
