@@ -263,17 +263,22 @@ product_forms = {
     ],
     'Group CI': [
         
-        ApplicationForm('Group CI Generic', ['IN'], [
-            group_ci_family_member_history_question,
-            group_ci_diagnosed_question,
-            group_ci_heart_question,
-            group_ci_hypertension_question,
-            group_ci_lung_question,
-            group_ci_skin_question,
-            group_ci_hpv_question,
-            group_ci_abnormal_question,
-            group_ci_ever_rejected_question,
-        ], is_generic=True),
+        ApplicationForm(
+            'Group CI Generic', 
+            ["AL", "AZ", "AR", "GA", "IN", "IA", "LA", "MA", "MI", "MS", "NE", "NV", "NM", "OK", "SC", "TX", "UT", "WI"], 
+            [
+                group_ci_family_member_history_question,
+                group_ci_diagnosed_question,
+                group_ci_heart_question,
+                group_ci_hypertension_question,
+                group_ci_lung_question,
+                group_ci_skin_question,
+                group_ci_hpv_question,
+                group_ci_abnormal_question,
+                group_ci_ever_rejected_question,
+            ], 
+            is_generic=True
+        ),
         
         ApplicationForm('Group CI KY', ['KY'], [
             group_ci_family_member_history_question,
@@ -372,3 +377,8 @@ FPPCI_generic_states = []
 for f in product_forms['FPPCI']:
     if f.is_generic:
         FPPCI_generic_states += f.statecodes
+
+GroupCI_generic_states = []
+for f in product_forms['Group CI']:
+    if f.is_generic:
+        GroupCI_generic_states += f.statecodes

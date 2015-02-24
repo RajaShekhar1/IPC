@@ -59,26 +59,6 @@ all_statecodes = [s['statecode'] for s in all_states]
 
 states_by_statecode = {s['statecode']: s for s in all_states}
 
-#FPPTI_disabled_statecodes = ['CT', 'DC', 'IN', 'ME', 'MD', 'MA', 'MN', 'NH', 'NJ', 'NY',
-#                             'NC', 'ND', 'PR', 'VT', 'WA']
-#FPPTI_states = [s for s in all_states if s['statecode'] not in FPPTI_disabled_statecodes]
-
-#FPPCI_disabled_statecodes = ['CT', 'DC', 'ME', 'MD', 'MA', 'MN', 'NH', 'NJ', 'NY', 'NC', 
-#                             'ND', 'PA', 'PR', 'VT']
-#FPPCI_states = [s for s in all_states if s['statecode'] not in FPPCI_disabled_statecodes]
-
-#FPPTI_generic_states = ["AL", "AK", "AZ", "AR", "CA", "DE", "GA", "HI", "ID", "IA", "KS", "KY", "LA", "MI", "MS", "MT", "NE", "NV", "NM", "OK", "OR", "RI", "SC", "SD", "TN", "TX", "UT", "VI", "WV", "WY"]
-#FPPCI_generic_states = ["AL", "AK", "AZ", "AR", "CA", "DE", "GA", "HI", "ID", "IN", "IA", "KS", "KY", "LA", "MI", "MS", "MT", "NE", "NV", "NM", "OK", "OR", "PR", "RI", "SC", "SD", "TN", "TX", "UT", "VI", "WV", "WY"]
-
-#GROUPCI_STATES = [
-#    s for s in all_states if s['statecode'] in ['IN']
-#]
-
-#FPPGOV_STATES = [
-#    s for s in all_states if s['statecode'] in ['IN', 'MN']
-#]
-
-
 
 def get_all_states():
     return all_states

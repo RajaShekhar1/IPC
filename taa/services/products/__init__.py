@@ -11,7 +11,7 @@ from models import (
 )
 from .statement_of_health import StatementOfHealthQuestionService
 from .states import all_states, all_statecodes, get_all_states
-from .statement_of_health import FPPTI_generic_states, FPPCI_generic_states
+from .statement_of_health import FPPTI_generic_states, FPPCI_generic_states, GroupCI_generic_states
 from .rates import get_product_rates_lookup
 from .recommendations import get_product_recommendations
 

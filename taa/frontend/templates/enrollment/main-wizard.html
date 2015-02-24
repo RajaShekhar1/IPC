@@ -309,14 +309,14 @@
             
         </h3>
         <div class="center">
-            <div data-bind="slideDownIf: is_rate_table_loading">
+            <div data-bind="visible: is_rate_table_loading">
                 <i class="icon-spinner icon-spin grey bigger-125"></i>   
                 Loading Rates and Recommended Coverages...
                 <br>
             </div>
         </div>        
         
-        <div class="row">
+        <div class="row" data-bind="visible: !is_rate_table_loading()">
             <div class="col-xs-4 col-sm-3 pricing-span-header">
                 <div class="widget-box transparent">
                     <div class="widget-header">

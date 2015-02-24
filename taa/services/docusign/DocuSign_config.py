@@ -2,6 +2,7 @@ from flask.ext.stormpath import user
 from taa.services.products import (
     FPPTI_generic_states,
     FPPCI_generic_states,
+    GroupCI_generic_states,
 )
 
 
@@ -77,6 +78,7 @@ def get_template_id_PRODUCTION(product_type, state):
             "TX" : "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
             "VA" : "0AE3D3E9-60C0-4198-82C7-41D1201BF2FE",
             "WI" : "AB16F882-1ED1-4CD6-847E-6BFCCB2ADF98",
+            "generic": "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
         },
         "FPPCI": {
             "CO" : "2BBEB0C7-E0E0-4F9E-AFC7-B04CB4CEC46B",
@@ -87,6 +89,10 @@ def get_template_id_PRODUCTION(product_type, state):
             "TX" : "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
             "VA" : "0AE3D3E9-60C0-4198-82C7-41D1201BF2FE",
             "WI" : "AB16F882-1ED1-4CD6-847E-6BFCCB2ADF98",
+            "generic": "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
+        },
+        "GroupCI": {
+            "generic":"B57234AB-5EA5-48D4-984F-D3BF07793B9B",
         }
     }
 
@@ -94,9 +100,11 @@ def get_template_id_PRODUCTION(product_type, state):
     if templateID:
         return templateID
     elif product_type == "FPPTI" and state in FPPTI_generic_states:
-        return "F5711F73-7D4A-44F2-8D31-2E505B8915F8"
+        return templates_by_product_and_state[product_type]['generic']
     elif product_type == "FPPCI" and state in FPPCI_generic_states:
-        return "F5711F73-7D4A-44F2-8D31-2E505B8915F8"
+        return templates_by_product_and_state[product_type]['generic']
+    elif product_type == "GroupCI" and state in GroupCI_generic_states:
+        return templates_by_product_and_state[product_type]['generic']
     else:
         return "Failed product lookup"
 

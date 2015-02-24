@@ -79,7 +79,7 @@ js_vendor = Bundle(
     'js/bootbox.min.js',
     'js/jquery.mobile.custom.min.js',
     'js/typeahead-bs2.min.js',
-    Bundle('js/knockout-3.2.0.js'),
+    Bundle('js/knockout-3.3.0.debug.js'),
     'js/underscore-min.js',
     'js/backbone-min.js',
     
@@ -114,7 +114,7 @@ js_vendor_latest = Bundle(
     'js/bootbox.min.js',
     'js/jquery.rcrumbs.min.js',
     
-    Bundle('js/knockout-3.2.0.js',
+    Bundle('js/knockout-3.3.0.debug.js',
            # filters='rjsmin',
     ),
     'js/underscore-min.js',

@@ -171,8 +171,13 @@ class HeightWeightRangeTable(object):
         self.ranges_by_height = {int(r['Inches']): r for r in self.data}
         
     def is_height_weight_in_range(self, height, weight):
+        if not height:
+            return False
+        
         row = self.ranges_by_height.get(int(height))
         if not row:
+            return False
+        if not weight:
             return False
         
         return (
