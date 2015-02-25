@@ -91,19 +91,19 @@ def get_template_id_PRODUCTION(product_type, state):
             "WI" : "AB16F882-1ED1-4CD6-847E-6BFCCB2ADF98",
             "generic": "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
         },
-        "GroupCI": {
+        "Group CI": {
             "generic":"B57234AB-5EA5-48D4-984F-D3BF07793B9B",
         }
     }
-
-    templateID = templates_by_product_and_state.get(product_type).get(state)
+    
+    templateID = templates_by_product_and_state.get(product_type, {}).get(state)
     if templateID:
         return templateID
     elif product_type == "FPPTI" and state in FPPTI_generic_states:
         return templates_by_product_and_state[product_type]['generic']
     elif product_type == "FPPCI" and state in FPPCI_generic_states:
         return templates_by_product_and_state[product_type]['generic']
-    elif product_type == "GroupCI" and state in GroupCI_generic_states:
+    elif product_type == "Group CI" and state in GroupCI_generic_states:
         return templates_by_product_and_state[product_type]['generic']
     else:
         return "Failed product lookup"
