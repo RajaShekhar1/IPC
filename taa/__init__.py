@@ -7,14 +7,14 @@ from helpers import JSONEncoder
 
 # initialization and config
 #def create_app(config_filename):
-app = Flask(__name__, 
+app = Flask(__name__,
             template_folder='frontend/templates',
             static_folder='frontend/static')
 
 sslify = SSLify(app)
 app.config.from_object('taa.config_defaults')
 #app.config.from_pyfile(config_filename)
-app.config.from_envvar("TAA_CONFIG_FILE", silent=True)
+#app.config.from_envvar("TAA_CONFIG_FILE", silent=True)
 #print(app.config)
 
 # user management config
