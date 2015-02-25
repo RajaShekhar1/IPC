@@ -34,7 +34,7 @@ class InitializeDatabaseCommand(Command):
             ),
             dict(
                 code=u"FPP-Gov",
-                name=u"Whitten FPP",
+                name=u"FPP-Gov",
                 product_type=u"base",
                 visible_to_agents=False,
             ),
