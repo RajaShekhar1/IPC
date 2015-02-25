@@ -6,6 +6,7 @@ from string import ascii_letters
 
 from flask.ext.stormpath import user
 
+from taa import app
 from taa.services.docusign.DocuSign_config import (
     dsAPIAuthenticateString,
     baseUrl, 
@@ -132,7 +133,10 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
 
     # note: DS supplies the last parm of 'event' in the callback
     #callbackURL = "https://5starenroll.com/application_completed" + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
-    callbackURL = "http://5starenroll.com/application_completed" + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
+    is_ssl = app.config.get('IS_SSL', True)
+    hostname = app.config.get('HOSTNAME', '5starenroll.com')
+    scheme = 'https://' if is_ssl else 'http://'
+    callbackURL = "%(scheme)s%(hostname)s/application_completed"%locals() + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
     idTokenStr = "Authentication via " + idType + ": " + idToken
     
     

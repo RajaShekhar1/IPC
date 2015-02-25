@@ -10,6 +10,9 @@ SECRET_KEY = 'sSYpq8m5vL68/1VKLQwt6II0PjAIP0cYQ31mzdA'
 # Flask-WTF forms extension config
 WTF_CSRF_ENABLED = False
 
+IS_SSL = False
+HOSTNAME = "delmarsd.com:9876"
+
 # Stormpath config
 STORMPATH_APPLICATION = 'TAA-sandbox'
 # Live stormpath

@@ -11,6 +11,9 @@ SECRET_KEY = 'sSYpq8m5vL68/1VKLQwst6II0PjAIP0cYQ31mzdA'
 WTF_CSRF_ENABLED = False
 
 
+IS_SSL = False
+HOSTNAME = "taa.local:5000"
+
 # Stormpath config
 STORMPATH_APPLICATION = 'TAA-sandbox'
 # Live stormpath

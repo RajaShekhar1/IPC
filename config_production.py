@@ -2,8 +2,13 @@ from datetime import timedelta
 
 # runtime environment config
 DEBUG = False
+ASSETS_DEBUG = False
+ASSETS_AUTO_BUILD = True
 
 SECRET_KEY = 'sSYpq8m5vL68/1VKLQwst6II0PjAIP0cYQ31mzdA'
+
+IS_SSL = True
+HOSTNAME = "5starenroll.com"
 
 # Put server name here for formatting external links (not necessary - relative links are fine)
 #SERVER_NAME = 'localhost:5000'
@@ -40,4 +45,5 @@ EMAIL_FROM_ADDRESS = "enrollment@5StarEnroll.com"
 
 
 # Database
-DATABASE_CONNECTION_STRING = "sqlite:///TAA2.db"
+# -- the real connection string will be pulled from a heroku environment variable
+DATABASE_CONNECTION_STRING = "sqlite:///fallback.db"
