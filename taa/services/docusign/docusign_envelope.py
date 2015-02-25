@@ -1,5 +1,7 @@
 # DocuSign API Walkthrough 08 (PYTHON) - Embedded Signing
 import random
+import json
+import httplib2
 from string import ascii_letters
 
 from flask.ext.stormpath import user
@@ -60,6 +62,7 @@ def generate_ChildGenderAbbrevTab(child_index, wizard_data):
 
 def generate_ChildTabsEntry (child_index, wizard_data):
     childStr = "child" + str(child_index +1)
+    child_coverage = wizard_data["child_coverages"][child_index]
     tabsList = [
         # FullName is only used for child >2, otherwise FName and LName on child <=2
         #  assuming for now the Docusign API will ignore those tabs not used in the template
@@ -74,9 +77,12 @@ def generate_ChildTabsEntry (child_index, wizard_data):
         {"tabLabel" : childStr + "SSN",
          "value" : wizard_data["children"][child_index]["ssn"]},
         {"tabLabel" : childStr + "Coverage",
-         "value" : format(wizard_data["child_coverages"][child_index]["face_value"], ",.0f")},
+         "value" : format(child_coverage["face_value"], ",.0f") if child_coverage else "" },
         {"tabLabel" : childStr + "Premium",
-         "value" : format(wizard_data["child_coverages"][child_index]["weekly_premium"]*52/12, ",.2f")},
+         "value" : 
+             format(child_coverage["weekly_premium"]*52/12, ",.2f") if child_coverage else ""
+        
+        },
     ]
     return tabsList
     
@@ -89,7 +95,7 @@ def random_email_id(name='', token_length=8):
         name = name + "_"
     return name + ''.join([random.choice(chars) for i in range(token_length)])
 
-def create_envelope_and_get_signing_url(wizard_data):
+def create_envelope_and_get_signing_url(wizard_data, census_record):
     # return is_error(bool), error_message, and redirectURL
     
     # FPPTI or FPPCI
@@ -97,13 +103,17 @@ def create_envelope_and_get_signing_url(wizard_data):
     enrollmentState = wizard_data["agent_data"]["state"]
     
     # for now, just pull into former variables we've been using
-    recipName = wizard_data["agent_data"]["employee"]["first"] + " " + wizard_data["agent_data"]["employee"]["last"]
-    employer = wizard_data["agent_data"]["company_name"]
-    emailTo = wizard_data["agent_data"]["employee"]["email"]
+    recipName = wizard_data["employee"]["first"] + " " + wizard_data["employee"]["last"]
+    if census_record and census_record.case:
+        employer = census_record.case.company_name
+    else:
+        employer = wizard_data['agent_data']["company_name"]
+        
+    emailTo = wizard_data["employee"]["email"]
     
     if emailTo == "" or emailTo == None:
         # fallback email if none was entered - just need a unique address
-        emailTo = random_email_id(wizard_data["agent_data"]["employee"]["first"] + "." + wizard_data["agent_data"]["employee"]["last"]) + "@5StarEnroll.com"
+        emailTo = random_email_id(wizard_data["employee"]["first"] + "." + wizard_data["employee"]["last"]) + "@5StarEnroll.com"
 
     if wizard_data["agent_data"]["is_in_person"]:
         sessionType = "inperson"
@@ -124,7 +134,7 @@ def create_envelope_and_get_signing_url(wizard_data):
     #callbackURL = "https://5starenroll.com/application_completed" + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
     callbackURL = "http://5starenroll.com/application_completed" + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
     idTokenStr = "Authentication via " + idType + ": " + idToken
-
+    
     
     SOH_RadiosList = []
 

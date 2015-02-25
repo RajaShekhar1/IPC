@@ -82,19 +82,21 @@ js_vendor = Bundle(
     Bundle('js/knockout-3.3.0.debug.js'),
     'js/underscore-min.js',
     'js/backbone-min.js',
+    output='generated_assets/js_vendor.min.js',
     
 )
 
 js_vendor_latest = Bundle(
 
     #Bundle('js/jquery-1.11.1.js', filters='rjsmin'),
+    
     # ace template requires bootstrap first
     #'ace-v1.3.3/js/bootstrap.min.js',
     
     # js ace plugins for wizard and such go here
     'ace-v1.3.3/js/dataTables/jquery.dataTables.min.js',
     'ace-v1.3.3/js/dataTables/jquery.dataTables.bootstrap.min.js',
-    Bundle('ace-v1.3.3/js/dataTables/dataTables.responsive.js', filters='rjsmin'),
+    Bundle('ace-v1.3.3/js/dataTables/dataTables.responsive.js', filters='rjsmin', output='generated_assets/datatables.responsive.min.js'),
     
     'ace-v1.3.3/js/jquery.maskedinput.min.js',
     'ace-v1.3.3/js/jquery.validate.min.js',
@@ -115,11 +117,13 @@ js_vendor_latest = Bundle(
     'js/jquery.rcrumbs.min.js',
     
     Bundle('js/knockout-3.3.0.debug.js',
-           # filters='rjsmin',
+            filters='rjsmin',
+            output='generated_assets/knockout.js.min',
     ),
     'js/underscore-min.js',
     'js/backbone-min.js',
     'js/sammy-latest.min.js',
+    output='generated_assets/js_vendor_latest.min.js',
 )
 
 
@@ -138,8 +142,8 @@ def init_app(app):
     webassets.register('css_all', css_all)
     webassets.register('js_main', js_main)
     
-    webassets.register('css_ace_1_3_1', css_ace_latest)
-    webassets.register('js_vendor_1_3_1', js_vendor_latest)
+    webassets.register('css_ace_latest', css_ace_latest)
+    webassets.register('js_vendor_latest', js_vendor_latest)
     webassets.register('taa_app', taa_app)
     
     webassets.manifest = 'cache' #if not app.debug else False

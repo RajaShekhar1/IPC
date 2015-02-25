@@ -3,12 +3,12 @@
 {% block ace_config_header %}
                 
     {# All CSS assets #}
-    {% assets "css_ace_1_3_1" -%}
+    {% assets "css_ace_latest" -%}
         <link rel="stylesheet" href="{{ ASSET_URL }}">
     {% endassets %}
     
     <!--[if lte IE 9]>
-      <link rel="stylesheet" href="{{ url_for('static', filename='ace-v1.3.1/css/ace-ie.min.css') }}" />
+      <link rel="stylesheet" href="{{ url_for('static', filename='ace-v1.3.3/css/ace-ie.min.css') }}" />
     <![endif]-->
     
     {% block page_css -%}
@@ -19,27 +19,27 @@
     <script src="{{ url_for('static', filename='js/ace-extra.min.js') }}"></script>    
     
     <!--[if lt IE 9]>
-    <script src="{{ url_for('static', filename='ace-v1.3.1/js/html5shiv.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='ace-v1.3.1/js/respond.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='ace-v1.3.3/js/html5shiv.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='ace-v1.3.3/js/respond.min.js') }}"></script>
     <![endif]-->
     
     <!--[if !IE]> -->
-  <script src="{{ url_for('static', filename='ace-v1.3.1/js/jquery.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='ace-v1.3.3/js/jquery.min.js') }}"></script>
   <!-- <![endif]-->
   <!--[if lte IE 9]>
-   <script src="{{ url_for('static', filename='ace-v1.3.1/js/jquery1x.min.js') }}"></script>
+   <script src="{{ url_for('static', filename='ace-v1.3.3/js/jquery1x.min.js') }}"></script>
   <![endif]-->
     
-   <script src="{{ url_for('static', filename='ace-v1.3.1/js/bootstrap.min.js') }}"></script>
+   <script src="{{ url_for('static', filename='ace-v1.3.3/js/bootstrap.min.js') }}"></script>
    
   <!--[if lte IE 8]>
-   <script src="{{ url_for('static', filename='ace-v1.3.1/js/excanvas.min.js') }}"></script>
+   <script src="{{ url_for('static', filename='ace-v1.3.3/js/excanvas.min.js') }}"></script>
   <![endif]-->                
 {% endblock %}
 
 {% block js_footer %}
       
-    {% assets "js_vendor_1_3_1" -%}
+    {% assets "js_vendor_latest" -%}
         <script src="{{ ASSET_URL }}"></script>
     {% endassets %}
     {% assets "taa_app" -%}

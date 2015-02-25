@@ -610,7 +610,7 @@ class CensusRecordService(DBService):
         record.spouse_height_inches = spouse['height']
         record.spouse_weight_lbs = spouse['weight']
         record.spouse_smoker = convert_smoker_to_y_n(spouse['is_smoker'])
-        import pdb; pdb.set_trace()
+        
         for i, child in enumerate(children):
             child_num = i + 1
             setattr(record, 'child{}_first'.format(child_num), child['first'])

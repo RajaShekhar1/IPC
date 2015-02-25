@@ -10,3 +10,5 @@ taa/frontend/static/ace-v1.2/
 TAA.iml
 .vagrant
 env_mac
+.webassets*
+taa/frontend/static/.webassets-cache/*

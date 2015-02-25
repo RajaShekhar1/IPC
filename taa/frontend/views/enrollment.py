@@ -17,6 +17,7 @@ from taa.services.cases import CaseService
 from taa.services.agents import AgentService
 from taa.services.products import ProductService
 from taa.services.enrollments import EnrollmentApplicationService
+from taa.services.docusign.docusign_envelope import create_envelope_and_get_signing_url
 
 product_service = ProductService()    
 case_service = CaseService()
@@ -173,20 +174,20 @@ def submit_wizard_data():
         
         # Hand off wizard_results to docusign
         #
-        #is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results);
-        #
+        is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results, census_record);
+        
         # Return the redirect url or error
-        #resp = {'error': is_error, 'error_message': error_message, "redirect": redirect}
-
-        resp = {
-            'error': False,
-            'error_message': '',
-            'redirect': url_for("ds_landing_page",
-                                event="signing_complete",
-                                name=wizard_results['employee']['first'],
-                                type='inperson'
-            )
-        }
+        resp = {'error': is_error, 'error_message': error_message, "redirect": redirect}
+        
+        #resp = {
+        #    'error': False,
+        #    'error_message': '',
+        #    'redirect': url_for("ds_landing_page",
+        #                        event="signing_complete",
+        #                        name=wizard_results['employee']['first'],
+        #                        type='inperson'
+        #    )
+        #}
     else:
         # Declined
         resp = {
