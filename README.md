@@ -1,21 +1,27 @@
 Take-An-App 
 ===========
 
+Running the site locally using a vagrant VM
+---------------------
+
+If you have already setup your environment (see Developer Setup below), 
+
+
 Developer setup
 ---------------------
 
-In an ubuntu 14.04 environment (vagrant recommended), do basic install 
+In an ubuntu 14.04 environment (vagrant recommended), install system dependencies
 and set up a virtual environment for python: 
 
     sudo apt-get update
     sudo apt-get upgrade
     sudo apt-get install python-dev python-pip postgresql-9.3 postgresql-client-9.3 postgresql-server-dev-9.3 nginx php5-fpm phppgadmin php5-pgsql git
+    wget -qO- https://toolbelt.heroku.com/install-ubuntu.sh | sh
     sudo pip install virtualenv
-    cd <root folder, i.e. /vagrant>
     virtualenv ~/env
     source ~/env/bin/activate
-    pip install -r requirements.txt
-
+    cd /vagrant
+    
 Then create the database:
 
     sudo -u postgres createdb -T template0 -E utf-8 taa
@@ -36,3 +42,5 @@ Now populate the initial data needed to run the site:
 To run the site, do the following:
     
     python run_server.py
+
+
