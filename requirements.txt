@@ -18,6 +18,7 @@ argparse==1.2.1
 bleach==1.4
 cssmin==0.2.0
 facebook-sdk==0.4.0
+gunicorn==19.2.1
 html5lib==0.999
 httplib2==0.9
 ipython==2.3.1
