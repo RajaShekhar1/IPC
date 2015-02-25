@@ -21,15 +21,20 @@ and set up a virtual environment for python:
     virtualenv ~/env
     source ~/env/bin/activate
     cd /vagrant
+     
+To allow deploying to heroku directly from the VM, you need to add the SSH key to heroku:
+
+    heroku keys:add
     
-Then create the database:
+Now create the database:
 
     sudo -u postgres createdb -T template0 -E utf-8 taa
     sudo adduser taa
     <type password that matches config file (DATABASE_URI)>
     sudo -u postgres psql template1
     CREATE USER taa WITH PASSWORD '<DB PASSWORD>';
-    
+   
+
 Use [alembic](http://alembic.readthedocs.org/en/latest/) to bring the database schema 
 up to date structurally:
     
