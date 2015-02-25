@@ -547,7 +547,7 @@ class EnrollmentApplicationCoverageService(DBService):
 
             height_inches=applicant_data['height'],
             weight_pounds=applicant_data['weight'],
-            is_smoker=applicant_data['is_smoker'],
+            is_smoker=applicant_data.get('is_smoker'),
 
             coverage_face_value=applicant_coverage['face_value'],
             weekly_premium=applicant_coverage['weekly_premium'],
