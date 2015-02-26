@@ -93,6 +93,7 @@ def get_template_id_PRODUCTION(product_type, state):
             "generic": "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
         },
         "Group CI": {
+            "IL":"533B6385-6BD0-4815-B95B-FBC2FBE33577",
             "generic":"B57234AB-5EA5-48D4-984F-D3BF07793B9B",
         },
     }
