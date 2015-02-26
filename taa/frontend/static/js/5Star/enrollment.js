@@ -825,18 +825,20 @@ function process_health_question_data(root, health_question_data_by_product, pro
             } else if (root.insurance_product.product_type == "Group CI") {
                 question_factory = function (question_data) {
                     return new GIHealthQuestion(root.insurance_product, question_data, root.selected_plan,
-                        //     
-                        [{
-                            guarantee_issue_amount: 10000,
-                            applicant_type: 'Employee',
-                            age_max: null,
-                            age_min: null,
-                            weight_min: null,
-                            weight_max: null,
-                            height_min: null,
-                            height_max: null
-                        },
+                        // Employees must answer if >= 10000 coverage
+                        [
                             {
+                                guarantee_issue_amount: 10000,
+                                applicant_type: 'Employee',
+                                age_max: null,
+                                age_min: null,
+                                weight_min: null,
+                                weight_max: null,
+                                height_min: null,
+                                height_max: null
+                            },
+                            // Spouse always has to answer
+                            /*{
                                 guarantee_issue_amount: 10000,
                                 applicant_type: 'Spouse',
                                 age_max: null,
@@ -845,9 +847,11 @@ function process_health_question_data(root, health_question_data_by_product, pro
                                 weight_max: null,
                                 height_min: null,
                                 height_max: null
-                            },
+                            },*/
+                            
                             {
-                                guarantee_issue_amount: 10000,
+                                // Children never have to answer, make the GI amount big
+                                guarantee_issue_amount: 25000,
                                 applicant_type: 'Child',
                                 age_max: null,
                                 age_min: null,
