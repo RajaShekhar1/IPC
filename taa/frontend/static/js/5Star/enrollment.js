@@ -2635,10 +2635,14 @@ function init_validation() {
                 
                 var name = applicant.name();
                 if (existing_coverage_amount && (max_coverage_amount < existing_coverage_amount+applied_coverage_amount)) {
+                    
+                    var additional_allowed_coverage = max_coverage_amount - existing_coverage_amount;
+                    // Make sure that we don't show a negative number here
+                    additional_allowed_coverage = _.max([0, additional_allowed_coverage]);
                     var msg = ("Due to one or more previous applications this enrollment period for "+
                         format_face_value(existing_coverage_amount)+
                         " coverage, "+name+" can apply for a maximum of "+
-                        format_face_value(max_coverage_amount - existing_coverage_amount)+" additional coverage.");
+                        format_face_value(additional_allowed_coverage)+" additional coverage.");
                     
                     alert(msg);
                     return false;

@@ -38,6 +38,18 @@ def generate_SOHRadios(prefix, soh_questions):
         
     return radioList
 
+def generate_SOH_GI_tabs(prefix, soh_questions):
+    tabs = []
+    for i, soh_question in enumerate(soh_questions):
+        if soh_question['answer'] and soh_question['answer'].upper() == "GI":
+            # GI - skip for now
+            answer = "GI"
+        else:
+            answer = ""
+
+        tabs.append(make_tab("{prefix}SOH{i}gi".format(prefix=prefix, i=i+1), answer))
+
+    return tabs
 
 def generate_ChildGenderRadio(child_index, wizard_data):
     return {"groupName": "child" + str(child_index + 1) + "Gender",
@@ -133,6 +145,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
     idTokenStr = "Authentication via " + idType + ": " + idToken
     
     SOH_RadiosList = []
+    SOH_GI_Tabs = []
     
     if recipName != "" and recipName != None:
         recipientName = recipName
@@ -144,7 +157,8 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
         if wizard_data["employee_coverage"]["face_value"]:
             employeeCoverage = format(wizard_data["employee_coverage"]["face_value"], ",.0f")
             eePremium = format(round((wizard_data["employee_coverage"]["weekly_premium"]*100 * 52) / 12)/100.0, ",.2f")
-            SOH_RadiosList += generate_SOHRadios("ee", wizard_data["employee"]['soh_questions'])
+            SOH_RadiosList += generate_SOHRadios("ee", wizard_data["employee"]["soh_questions"])
+            SOH_GI_Tabs += generate_SOH_GI_tabs("ee", wizard_data["employee"]["soh_questions"])
         else:
             employeeCoverage = eeCoverageNullToken
             eePremium = " "
@@ -158,6 +172,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
             spouseCoverage = format(wizard_data["spouse_coverage"]["face_value"], ",.0f")
             spPremium = format(round((wizard_data["spouse_coverage"]["weekly_premium"]*100 * 52) / 12)/100.0, ",.2f")
             SOH_RadiosList += generate_SOHRadios("sp", wizard_data["spouse"]['soh_questions'])
+            SOH_GI_Tabs += generate_SOH_GI_tabs("sp", wizard_data["spouse"]["soh_questions"])
         else:
             spouseCoverage = " "
             spPremium = " "
@@ -174,42 +189,8 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
         childTabsList += generate_ChildTabsEntry(i, wizard_data)
         childRadiosList.append(generate_ChildGenderRadio(i, wizard_data))
         childRadiosList += generate_SOHRadios("c%s"%(i+1), wizard_data["children"][i]['soh_questions'])
+        SOH_GI_Tabs += generate_SOH_GI_tabs("c%s"%(i+1), wizard_data["children"][i]["soh_questions"])
     
-    def make_tab(name, val):
-        return dict(tabLabel=name, value=val)
-    
-    def make_applicant_tabs(prefix, data):
-        tabs = [
-            make_tab(prefix+'FName', data["first"]),
-            make_tab(prefix+'LName', data["last"]),
-            make_tab(prefix+'DOB', data["birthdate"]),
-            make_tab(prefix+'SSN', data["ssn"]),
-        ]
-        if data.get('height'):
-            height_ft = "%s" % int(data['height'] / 12.0)
-            height_in = "%s" % int(data['height'] % 12.0)
-            
-            tabs += [
-                make_tab(prefix+'HeightFt', height_ft),
-                make_tab(prefix+'HeightIn', height_in),         
-            ] 
-        if data.get('weight'):
-            tabs += [make_tab(prefix+'Weight', data['weight'])]
-        
-        # TODO: is smoker on the form?
-        
-        return tabs
-    
-    def make_contact_tabs(prefix, data):
-        return [
-            make_tab(prefix+'Street1', data['address1']),
-            make_tab(prefix + 'Street2', data['address2']),
-            make_tab(prefix + 'City', data['city']),
-            make_tab(prefix + 'State', data['state']),
-            make_tab(prefix + 'Zip', data['zip']),
-            make_tab(prefix + 'Phone', data['phone']),
-            make_tab(prefix + 'Email', data['email']),
-        ]
     
     eeTabsList = make_applicant_tabs("ee", wizard_data['employee'])
     eeTabsList += [
@@ -324,6 +305,17 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
                                   {"selected" : "True" if wizard_data[prefix_long] and wizard_data[prefix_long]["gender"] == "female" else "False",
                                    "value" : "female"}
                               ]})
+        if wizard_data[prefix_long] and "is_smoker" in wizard_data[prefix_long]:
+            generalRadiosList.append(
+                {"groupName": prefix_short + "Smoking",
+                 "radios": [
+                     {"selected": "True" if wizard_data[prefix_long]["is_smoker"] else "False",
+                      "value": "smoker"},
+                     {"selected": "True" if not wizard_data[prefix_long]["is_smoker"] else "False",
+                      "value": "nonsmoker"}
+                 ]}
+            )
+        
         # only include Owner checkbox if coverage was selected
         if ((prefix_short == "ee" and employeeCoverage != eeCoverageNullToken) or 
             (prefix_short == "sp" and spouseCoverage != " ")):
@@ -391,6 +383,12 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
     templateRoleName = "Employee"  # same role name that exists on the template in the console
     templateAgentRoleName = "Agent"
 
+    # TODO: Enable GI tabs for other products once the forms are ready 
+    if productType == "Group CI":
+        giTabsList = SOH_GI_Tabs
+    else:
+        giTabsList = []
+        
     # construct the body of the request in JSON format  
     requestBody = {
         "accountID" : accountId,
@@ -401,7 +399,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
             {"email" : emailTo,
              "name" :recipientName,
              "tabs" : {
-                 "textTabs": eeTabsList + spouseTabsList + childTabsList,
+                 "textTabs": eeTabsList + spouseTabsList + childTabsList + giTabsList,
                  "radioGroupTabs": generalRadiosList + SOH_RadiosList + childRadiosList 
              },
              "roleName" :  templateRoleName,
@@ -483,6 +481,55 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
     viewUrl = data.get('url')
     
     return False, None, viewUrl
+
+
+def make_tab(name, val):
+    return dict(tabLabel=name, value=val)
+
+
+def make_radio_tab(group_name, selected, val):
+    return {
+        "groupName": group_name,
+        "radios": [
+            {
+                "selected": "True" if selected else "False",
+                "value": val,
+            }
+        ]
+    }
+
+
+def make_applicant_tabs(prefix, data):
+    tabs = [
+        make_tab(prefix + 'FName', data["first"]),
+        make_tab(prefix + 'LName', data["last"]),
+        make_tab(prefix + 'DOB', data["birthdate"]),
+        make_tab(prefix + 'SSN', data["ssn"]),
+    ]
+    if data.get('height'):
+        height_ft = "%s" % int(data['height'] / 12.0)
+        height_in = "%s" % int(data['height'] % 12.0)
+
+        tabs += [
+            make_tab(prefix + 'HeightFt', height_ft),
+            make_tab(prefix + 'HeightIn', height_in),
+        ]
+    if data.get('weight'):
+        tabs += [make_tab(prefix + 'Weight', data['weight'])]
+
+    return tabs
+
+
+def make_contact_tabs(prefix, data):
+    return [
+        make_tab(prefix + 'Street1', data['address1']),
+        make_tab(prefix + 'Street2', data['address2']),
+        make_tab(prefix + 'City', data['city']),
+        make_tab(prefix + 'State', data['state']),
+        make_tab(prefix + 'Zip', data['zip']),
+        make_tab(prefix + 'Phone', data['phone']),
+        make_tab(prefix + 'Email', data['email']),
+    ]
 
 
 def build_callback_url(wizard_data, session_type):
