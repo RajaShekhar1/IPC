@@ -1,3 +1,5 @@
+import httplib2
+import json
 from taa.services.docusign.DocuSign_config import (
     dsAgentAuthenticateString,
     baseUrl, 
@@ -41,21 +43,21 @@ def console_url():
     #construct the body of the request in JSON format.  In this case all we need is the accountId  
 
     accountId = apiAccountID
-    requestBody = "{\"accountId\": \"" + accountId + "\"}";
+    requestBody = "{\"accountId\": \"" + accountId + "\"}"
  
     # append "/views/console" to the baseUrl and use in the request
-    url = baseUrl + "/views/console";
+    url = baseUrl + "/views/console"
     print url
-    headers = {'X-DocuSign-Authentication': agentAuthStr, 'Accept': 'application/json', 'Content-Length': str(len(requestBody))};
-    http = httplib2.Http();
-    response, content = http.request(url, 'POST', headers=headers, body=requestBody);
+    headers = {'X-DocuSign-Authentication': agentAuthStr, 'Accept': 'application/json', 'Content-Length': str(len(requestBody))}
+    http = httplib2.Http()
+    response, content = http.request(url, 'POST', headers=headers, body=requestBody)
     # When troubleshooting, send instead to requestb.in (or similar listener) to capture/examing the JSON trace.  Past that trace into SOAPUI to explore the response if needed.
     #response, content = http.request("http://requestb.in/u8jcp3u8", 'POST', headers=headers, body=requestBody);
-    status = response.get('status');
+    status = response.get('status')
     if (status != '201'): 
-        print("Error calling webservice, status is: %s" % status); return True, "Error retrieving inbox URL", None;
-    data = json.loads(content);
-    viewUrl = data.get('url');
+        print("Error calling webservice, status is: %s" % status); return True, "Error retrieving inbox URL", None
+    data = json.loads(content)
+    viewUrl = data.get('url')
 
     # counting on the prior get request to handle the login, now just go directly to hardwired ManageEnvelopes screen
     # a bit kludgey, but should work
