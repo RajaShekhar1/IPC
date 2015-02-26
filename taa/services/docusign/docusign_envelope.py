@@ -491,7 +491,7 @@ def build_callback_url(wizard_data, session_type):
     scheme = 'https://' if is_ssl else 'http://'
     
     # note: DS supplies the last parm of 'event' in the callback
-    return "%(scheme)s%(hostname)s/application_completed?name={name}&type={session_type}".format(
+    return "{scheme}{hostname}/application_completed?name={name}&type={session_type}".format(
         scheme=scheme,
         hostname=hostname,
         name=wizard_data["employee"]["first"], 
