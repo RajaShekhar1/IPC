@@ -185,7 +185,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
             make_tab(prefix+'DOB', data["birthdate"]),
             make_tab(prefix+'SSN', data["ssn"]),
         ]
-        if 'height' in data:
+        if data.get('height'):
             height_ft = "%s" % int(data['height'] / 12.0)
             height_in = "%s" % int(data['height'] % 12.0)
             
@@ -193,7 +193,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
                 make_tab(prefix+'HeightFt', height_ft),
                 make_tab(prefix+'HeightIn', height_in),         
             ] 
-        if 'weight' in data:
+        if data.get('weight'):
             tabs += [make_tab(prefix+'Weight', data['weight'])]
         
         # TODO: is smoker on the form?
