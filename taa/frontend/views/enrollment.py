@@ -45,15 +45,16 @@ def enroll_start():
     product_states = product_service.get_product_states(agent_products)
     all_states = product_service.get_all_states()
     
-    return render_template('enrollment/setup-enrollment.html', 
-                           #form=form, 
-                           product_state_mapping=product_states,
-                           all_states=all_states,
-                           agent_products=agent_products,
-                           agent_cases=case_service.get_agent_cases(agent, only_enrolling=True),
-                           active_case=case,
-                           should_show_next_applicant=should_show_next_applicant and case,
-                           nav_menu=get_nav_menu(),
+    return render_template(
+        'enrollment/setup-enrollment.html', 
+       #form=form, 
+       product_state_mapping=product_states,
+       all_states=all_states,
+       agent_products=agent_products,
+       agent_cases=case_service.get_agent_cases(agent, only_enrolling=True),
+       active_case=case,
+       should_show_next_applicant=should_show_next_applicant and case,
+       nav_menu=get_nav_menu(),
     )
 
 
@@ -199,11 +200,12 @@ def ds_landing_page():
     """
     Handles simple responses to completing the enrollment page
     """
-
+    
     session_type = request.args['type']
     name = request.args['name']
     ds_event = request.args['event']
-
+    
+    
     return render_template('enrollment/completed-session.html',
                            session_type=session_type,
                            name=name,

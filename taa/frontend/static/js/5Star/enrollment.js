@@ -1077,6 +1077,7 @@ function GroupCIProduct(root, product_data) {
                 }
             });
         }
+        
         self.all_coverage_options.spouse(valid_options);
         
         // Need to make sure the actual coverage set for the spouse is not outside the custom options
@@ -1122,7 +1123,9 @@ function GroupCIProduct(root, product_data) {
     // overrides the default impl.
     self.get_coverage_options_for_applicant = function(applicant_type) {
         // returns an observable
-        return self.all_coverage_options[applicant_type];
+        // use 'this' here to make sure we reference the correct object when 
+        //  decorating with GI
+        return this.all_coverage_options[applicant_type];
     };
     
     function convert_rate_to_benefit_option(rate) {
@@ -1278,8 +1281,8 @@ function GIProductDecorator(product, product_data) {
         children: ko.observableArray([])
     };
     
-    // Delegate to self.product by default for methods inherited from Product
-    _.each(_.methods(Product.prototype), function(method) {
+    // Defined all of product's methods on self and delegate to self.product by default
+    _.each(_.methods(product), function(method) {
         self[method] = function() {
             return self.product[method].apply(self, arguments);   
         }
