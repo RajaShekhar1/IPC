@@ -8,6 +8,7 @@ from taa import app
 
 from flask import url_for, render_template
 from dateutil.relativedelta import relativedelta
+import mandrill
 
 class Enrollment(object):
     def __init__(self, id, case, employee_first, employee_last, employee_email):
@@ -46,23 +47,42 @@ class EnrollmentRequest(object):
         
     def generate_url(self):
         return url_for("email_link_handler", token=self.token, _external=True)
+     
+class EmailGenerator(object):
+    def __init__(self):
+        self.smtp_server = app.config['EMAIL_SMTP_SERVER']
+        self.smtp_port = app.config['EMAIL_SMTP_PORT']
+        self.smtp_user = app.config['EMAIL_SMTP_USERNAME']
+        self.smtp_password = app.config['EMAIL_SMTP_PASSWORD']
+        self.from_address = app.config['EMAIL_FROM_ADDRESS']
+        
+    def send(self, recipient, subject, html):
+        """
+        See https://mandrillapp.com/api/docs/messages.python.html
+        """
+        
+        message = dict(
+            from_email=self.from_address,
+            subject=subject,
+            html=html,
+            to=[dict(email=recipient)],
+        )
+        # SMTP Password is the mandrill API key
+        mandrill_client = mandrill.Mandrill(self.smtp_password)
+        
+        try:
+            result = mandrill_client.messages.send(message=message)
+        except mandrill.Error as e:
+            print "Error sending email: %s - %s" % (e.__class__, e)
+            raise 
+        
         
 class EnrollmentEmail(object):
-    def __init__(self, smtp_server, smtp_port, smtp_user, smtp_password, from_address):
-        self.smtp_server = smtp_server
-        self.smtp_port = smtp_port
-        self.smtp_user = smtp_user
-        self.smtp_password = smtp_password
-        self.from_address = from_address
-        
     def send_enrollment_request(self, enrollment_request):
         
         to_user = enrollment_request.enrollment.employee_email
         
-        msg = MIMEMultipart()
-        msg['From'] = self.from_address
-        msg['To'] = to_user
-        msg['Subject'] = "Enrollment Request:  {employee_first} {employee_last} ({company_name}) - {product_name}".format(
+        subject = "Enrollment Request:  {employee_first} {employee_last} ({company_name}) - {product_name}".format(
             employee_first=enrollment_request.enrollment.employee_first,
             employee_last=enrollment_request.enrollment.employee_last,
             company_name=enrollment_request.enrollment.case.company_name,
@@ -74,58 +94,25 @@ class EnrollmentEmail(object):
             enrollment_url=enrollment_request.generate_url()
         )
         
-        msg.attach(MIMEText(body, 'html'))
+        EmailGenerator().send(to_user, subject, body)
         
-        connection = smtplib.SMTP("smtp.gmail.com", 587)
-        connection.ehlo()
-        if self.smtp_user and self.smtp_password:
-            connection.starttls()
-            connection.ehlo()
-            connection.login(self.smtp_user, self.smtp_password)
-        
-        connection.sendmail(self.smtp_user, to_user, msg.as_string())
-        connection.close()
-        
-        
-
 class AgentActivationEmail(object):
     """
     This perhaps should go elsewhere, but wanted to send a near-identical email as EnrollmentEmail above.  Probably should abstract the functions, but we can do that in Phase N+1
     """
-    def __init__(self, smtp_server, smtp_port, smtp_user, smtp_password, from_address):
-        self.smtp_server = smtp_server
-        self.smtp_port = smtp_port
-        self.smtp_user = smtp_user
-        self.smtp_password = smtp_password
-        self.from_address = from_address
-        
     def send_activation_notice(self, to_email, agent_name, url):
         
-        to_user = to_email
-        
-        msg = MIMEMultipart()
-        msg['From'] = self.from_address
-        msg['To'] = to_user
-        msg['Subject'] = "Activation Notice for 5Star Online Enrollment"
         body = render_template(
             "emails/activation_email.html",
             agent_name=agent_name,
             landing_url=url
         )
-        
-        print "url is ", url
 
-        msg.attach(MIMEText(body, 'html'))
+        print "url is ", url
         
-        connection = smtplib.SMTP("smtp.gmail.com", 587)
-        connection.ehlo()
-        if self.smtp_user and self.smtp_password:
-            connection.starttls()
-            connection.ehlo()
-            connection.login(self.smtp_user, self.smtp_password)
+        subject = "Activation Notice for 5Star Online Enrollment"
         
-        connection.sendmail(self.smtp_user, to_user, msg.as_string())
-        connection.close()
+        EmailGenerator().send(to_email, subject, body)
 
 
 class NotifyAdminEmail(object):
@@ -135,26 +122,12 @@ class NotifyAdminEmail(object):
     
     def send_registration_notice(self, agent_name):
         
-        to_user = "zach@zachmason.com" #"admin@5starenroll.com"
-        
-        msg = MIMEMultipart()
-        msg['From'] = "enrollment@5StarEnroll.com"
-        msg['To'] = "admin@5StarEnroll.com"
-        msg['Subject'] = "Activation Request from " + agent_name
+        recipient = "admin@5StarEnroll.com"
         body = render_template(
             "emails/notify_admin_email.html",
             agent_name=agent_name
         )
         
-        msg.attach(MIMEText(body, 'html'))
-        
-        connection = smtplib.SMTP(app.config['EMAIL_SMTP_SERVER'], app.config['EMAIL_SMTP_PORT'])
-        connection.ehlo()
-        #if self.smtp_user and self.smtp_password:
-        connection.starttls()
-        connection.ehlo()
-        connection.login(app.config['EMAIL_SMTP_USERNAME'], app.config['EMAIL_SMTP_PASSWORD'])
-        
-        connection.sendmail(self.smtp_user, to_user, msg.as_string())
-        connection.close()
-    
+        subject = "Activation Request from " + agent_name
+
+        EmailGenerator().send(recipient, subject, body)

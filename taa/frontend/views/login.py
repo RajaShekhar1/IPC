@@ -72,16 +72,16 @@ def register_taa():
                 account.add_group("agents")
                 
                 # If successfully created account, notify admin of registration
-                try:
-                    NotifyAdminEmail().send_registration_notice(data['given_name'] + " " + data['surname'])
-                except Exception as e:
-                    print " -- Problem sending registration notice to admin --\n%s"%e
+                #try:
+                NotifyAdminEmail().send_registration_notice(data['given_name'] + " " + data['surname'])
+                #except Exception as e:
+                #    print " -- Problem sending registration notice to admin --\n%s"%e
 
                 session['registered_name'] = data['given_name']
 
                 return redirect(url_for('confirmRegistration'))
-            except StormpathError, err:
-                flash(err.user_message)
+            except StormpathError as err:
+                flash(err.message['message'])
 
     return render_template('user_account/register.html', form=form, nav_menu=get_nav_menu())
 

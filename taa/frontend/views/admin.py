@@ -136,26 +136,18 @@ def updateUser():
                 db.session.commit()
                 
                 # if we've just activated a user, then send a notice
-                if data['activated'] and data['send_notice']:                    
-                    email_config = dict(
-                        smtp_server=app.config.get('EMAIL_SMTP_SERVER'),
-                        smtp_port=app.config.get('EMAIL_SMTP_PORT'),
-                        smtp_user=app.config.get('EMAIL_SMTP_USERNAME'),
-                        smtp_password=app.config.get('EMAIL_SMTP_PASSWORD'),
-                        from_address=app.config.get('EMAIL_FROM_ADDRESS'),
-                    )
-                    
+                if data['activated'] and data['send_notice']:  
                     try:
-                        AgentActivationEmail(**email_config).send_activation_notice(data['email'], data['fname'], url_for('home'))
+                        AgentActivationEmail().send_activation_notice(data['email'], data['fname'], url_for('home'))
                         flash('Activation email sent.')
                     except:
                         flash('>> Problem sending activation email <<')
-                    
+                        print('>> Problem sending activation email <<')
 
 
             return redirect(url_for('admin'))
-        except StormpathError, err:
-            flash(err.user_message)
+        except StormpathError as err:
+            flash(err.message['message'])
 
     return render_template('admin/update-user.html',
                            form = form,
