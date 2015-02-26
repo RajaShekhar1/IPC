@@ -3,6 +3,7 @@ from taa.services.products import (
     FPPTI_generic_states,
     FPPCI_generic_states,
     GroupCI_generic_states,
+    FPPGov_generic_states,
 )
 
 
@@ -93,6 +94,9 @@ def get_template_id_PRODUCTION(product_type, state):
         },
         "Group CI": {
             "generic":"B57234AB-5EA5-48D4-984F-D3BF07793B9B",
+        },
+        "FPP-Gov": {
+            "generic": "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
         }
     }
     
@@ -104,6 +108,8 @@ def get_template_id_PRODUCTION(product_type, state):
     elif product_type == "FPPCI" and state in FPPCI_generic_states:
         return templates_by_product_and_state[product_type]['generic']
     elif product_type == "Group CI" and state in GroupCI_generic_states:
+        return templates_by_product_and_state[product_type]['generic']
+    elif product_type == "FPP-Gov" and state in FPPGov_generic_states:
         return templates_by_product_and_state[product_type]['generic']
     else:
         return "Failed product lookup"

@@ -353,14 +353,15 @@ product_forms = {
     ],
     
     'FPP-Gov': [
-        ApplicationForm('FPP-Gov Generic', ['IN'], [
+        ApplicationForm('FPP-Gov Generic', [s for s in all_statecodes if s not in
+                                            ['CO', 'FL', 'IL', 'MO', 'OH', 'PA', 'VA', 'WI']], [
             hospitalized_question,
             heart_question,
             cancer_question,
             respiratory_question,
             liver_question,
             aids_question,
-        ]),
+        ], is_generic=True),
     ],
 
 
@@ -382,3 +383,8 @@ GroupCI_generic_states = []
 for f in product_forms['Group CI']:
     if f.is_generic:
         GroupCI_generic_states += f.statecodes
+        
+FPPGov_generic_states = []
+for f in product_forms['FPP-Gov']:
+    if f.is_generic:
+        FPPGov_generic_states += f.statecodes

@@ -11,7 +11,10 @@ from models import (
 )
 from .statement_of_health import StatementOfHealthQuestionService
 from .states import all_states, all_statecodes, get_all_states
-from .statement_of_health import FPPTI_generic_states, FPPCI_generic_states, GroupCI_generic_states
+from .statement_of_health import (
+    FPPTI_generic_states, FPPCI_generic_states, GroupCI_generic_states,
+    FPPGov_generic_states,
+)
 from .rates import get_product_rates_lookup
 from .recommendations import get_product_recommendations
 
@@ -147,8 +150,9 @@ class ProductService(DBService):
             'FPPTI': ['CT', 'DC', 'FL', 'IN', 'ME', 'MD', 'MA', 'MN', 'MO', 'NH', 'NJ', 'NY', 'NC', 'ND', 'OH', 'PA', 'VT', 'VA', 'WA', 'WI'],
             'FPPCI': ['CT', 'DC', 'FL', 'ME', 'MD', 'MA', 'MN', 'MO', 'NH', 'NJ', 'NY', 'NC', 'ND', 'OH', 'PA', 'PR', 'VT', 'VA', 'WI'],
             'Group CI': [],
-            'FPP-Gov':[],
         }
+        # Keep the same as FPPTI
+        turned_off_statecodes['FPP-Gov'] = turned_off_statecodes['FPPTI']
         
         product_states = {}
         for product in products:
