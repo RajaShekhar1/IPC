@@ -6,6 +6,7 @@ from flask import (
     request,
 )
 from flask.ext.stormpath import groups_required, StormpathError
+from stormpath.client import Client as SPClient
 
 from taa import (
     app,
@@ -20,12 +21,42 @@ from taa.old_model.Enrollment import AgentActivationEmail
 from taa.services.agents import AgentService
 agent_service = AgentService()
 
+
+def search_stormpath_accounts(filter_email=None):
+    """
+    The flask-stormpath extension has some strange caching issues when using the 
+    manager to query. Use the stormpath library directly here.
+    """
+    sp_app = get_stormpath_application()
+    
+    params = {}
+    
+    if filter_email:
+        params['email'] = filter_email
+    
+    if params:
+        return [a for a in sp_app.accounts.search(params)]
+    else:
+        return [a for a in sp_app.accounts]
+    
+def get_stormpath_application():
+    app_name = app.config['STORMPATH_APPLICATION']
+    c = SPClient(id=app.config['STORMPATH_API_KEY_ID'], 
+               secret=app.config['STORMPATH_API_KEY_SECRET'])
+    
+    for sp_app in c.applications:
+        if sp_app.name == app_name:
+            return sp_app
+        
+    raise Exception('The configured stormpath application "%s" could not be found'%app_name)
+    
 #  14-Jun-17 WSD 
 @app.route('/admin', methods = ['GET', 'POST'])
 @groups_required(['admins', 'home_office'], all=False)
 def admin():
     accounts = []
-    for acc in stormpath_manager.application.accounts:
+    
+    for acc in search_stormpath_accounts():
         accounts.append(
             {'fname': acc.given_name,
              'lname': acc.surname,
@@ -51,7 +82,7 @@ def updateUser():
     
     # initially pre-populate the form with account values
     if request.method == 'GET':
-        accounts = stormpath_manager.application.accounts.query(email=user_email)
+        accounts = search_stormpath_accounts(filter_email=user_email)
         if not accounts:
             flash('Failed to find user ' + user_email)
             return redirect(url_for('admin'))
@@ -72,7 +103,7 @@ def updateUser():
             
     if form.validate_on_submit():
         try:
-            accounts = stormpath_manager.application.accounts.query(email=user_email)
+            accounts = search_stormpath_accounts(filter_email=user_email)
             if not accounts:
                 flash('Failed to find user ' + user_email)
             else:        

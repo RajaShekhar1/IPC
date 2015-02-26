@@ -17,8 +17,8 @@ def env_get_int(env_name, default_val=None):
     return int(val) if val is not None else None
 
 # production should have DEBUG=False 
-DEBUG = env_get_bool('DEBUG', False)
-ASSETS_DEBUG = env_get_bool('ASSETS_DEBUG', False)
+DEBUG = env_get_bool('DEBUG', True)
+ASSETS_DEBUG = env_get_bool('ASSETS_DEBUG', True)
 ASSETS_AUTO_BUILD = env_get_bool('ASSETS_AUTO_BUILD', True)
 SECRET_KEY = env_get_text('SECRET_KEY', 'sSYpq8m5vL68/1VKLQwst6II0PjAIP0cYQ31mzdA')
 
@@ -29,7 +29,7 @@ IS_SSL = env_get_bool('IS_SSL', False)
 HOSTNAME = env_get_text('HOSTNAME', "taa.local:5000")
 
 # Stormpath config
-STORMPATH_APPLICATION = env_get_text('STORMPATH_DIRECTORY', 'TAA-sandbox')
+STORMPATH_APPLICATION = env_get_text('STORMPATH_APPLICATION', 'TAA-Sandbox')
 
 # Live stormpath
 STORMPATH_API_KEY_ID = env_get_text('STORMPATH_API_KEY_ID', '5GPLR2SQXVPDJEXKXYE287ZYS')
