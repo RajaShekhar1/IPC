@@ -1851,9 +1851,9 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
         data.zip = self.zip();
         
         // Serialize the SOH questions
-        data.soh_questions = {};
+        data.soh_questions = [];
         _.each(self.health_questions(), function(soh_answer) {
-            data.soh_questions[soh_answer.question.question_text] = soh_answer.serialize();
+            data.soh_questions.push(soh_answer.serialize());
         });
         
         return data;

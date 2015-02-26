@@ -532,13 +532,7 @@ class EnrollmentApplicationCoverageService(DBService):
 
     def create_coverage(self, enrollment, product, data, applicant_data, applicant_coverage, applicant_type):
         
-        # Put the health questions in an ordered array
-        soh_questions = []
-        for health_question in data['health_questions']:
-            val = applicant_data['soh_questions'].get(health_question['question_text'])
-            if val:
-                soh_questions.append({'question':health_question['question_text'], 'answer': val['answer']})
-            
+        
         return self.create(**dict(
             coverage_status=EnrollmentApplicationCoverage.COVERAGE_STATUS_ENROLLED,
             enrollment_application_id=enrollment.id,
@@ -554,7 +548,7 @@ class EnrollmentApplicationCoverageService(DBService):
             soh_answers=json.dumps(dict(
                 existing_insurance=data['existing_insurance'],
                 replacing_insurance=data['replacing_insurance'],
-                health_questions=soh_questions
+                health_questions=applicant_data['soh_questions'],
             ))
         ))
     

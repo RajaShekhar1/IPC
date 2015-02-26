@@ -56,22 +56,6 @@ def enroll_start():
                            nav_menu=get_nav_menu(),
     )
 
-@app.route("/select-case", methods=['GET', 'POST'])
-@login_required
-def select_case():
-    case_id = request.form['case_id']
-    case = case_service.get_if_allowed(case_id)
-    
-    # Save so we can come back here afterwards
-    session['active_case_id'] = case_id
-    census_records = [r.to_json() for r in case_service.get_census_records(case)]
-    return jsonify(dict(
-        table=render_template('enrollment/setup-enrollment-census-select.html', 
-                              case=case, 
-                              census_records=census_records,
-                              nav_menu=get_nav_menu(),
-                              )
-    ))
 
 # Wizard
 @app.route("/in-person-enrollment", methods=['POST'])

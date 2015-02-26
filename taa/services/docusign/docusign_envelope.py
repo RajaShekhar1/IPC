@@ -16,28 +16,27 @@ from taa.services.docusign.DocuSign_config import (
 )
 
 
-
-#  14-May-23 WSD for now, by the time we get here the radios are wholesale "no" answers, so just fill without logic 
-def generate_SOHRadios(prefix):
+ 
+def generate_SOHRadios(prefix, soh_questions):
+    
     radioList = []
-    for i in range(7):
+    for i, soh_question in enumerate(soh_questions):
+        if soh_question['answer'] and soh_question['answer'].upper() == "GI":
+            # GI - skip for now
+            selected = "False"
+            answer = "GI"
+        else:
+            selected = "True"
+            answer = "no"
+        
         radioList.append(
             {"groupName": prefix + "SOH" + str(i+1),
-             "radios": [{"selected" : "True",
-                         "value" : "no"}]}
-            )
+             "radios": [{"selected" : selected,
+                         "value" : answer}]
+            }
+        )
+        
     return radioList
-
-def generate_BeneficiaryTabs(prefix):
-    
-    beneTabs = []
-    for i in range(7):
-        beneTabs.append(
-            {"groupName": prefix + "SOH" + str(i+1),
-             "radios": [{"selected" : "True",
-                         "value" : "no"}]}
-            )
-    return beneTabs
 
 
 def generate_ChildGenderRadio(child_index, wizard_data):
@@ -99,7 +98,7 @@ def random_email_id(name='', token_length=8):
 def create_envelope_and_get_signing_url(wizard_data, census_record):
     # return is_error(bool), error_message, and redirectURL
     
-    # FPPTI or FPPCI
+    # Product code
     productType = wizard_data["product_type"]
     enrollmentState = wizard_data["agent_data"]["state"]
     
@@ -130,29 +129,22 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
         idToken = wizard_data["identityToken"]
     else:
         idToken = emailTo
-
-    # note: DS supplies the last parm of 'event' in the callback
-    #callbackURL = "https://5starenroll.com/application_completed" + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
-    is_ssl = app.config.get('IS_SSL', True)
-    hostname = app.config.get('HOSTNAME', '5starenroll.com')
-    scheme = 'https://' if is_ssl else 'http://'
-    callbackURL = "%(scheme)s%(hostname)s/application_completed"%locals() + "?name=" + wizard_data["employee"]["first"] + "&type=" + sessionType
+    
     idTokenStr = "Authentication via " + idType + ": " + idToken
     
-    
     SOH_RadiosList = []
-
-    if ((recipName != "") and (recipName != None)):
+    
+    if recipName != "" and recipName != None:
         recipientName = recipName
     else:
         recipientName = "Applicant"
-        
+    
     eeCoverageNullToken = "NONE"
     if wizard_data["employee_coverage"]:
         if wizard_data["employee_coverage"]["face_value"]:
             employeeCoverage = format(wizard_data["employee_coverage"]["face_value"], ",.0f")
             eePremium = format(round((wizard_data["employee_coverage"]["weekly_premium"]*100 * 52) / 12)/100.0, ",.2f")
-            SOH_RadiosList += generate_SOHRadios("ee")
+            SOH_RadiosList += generate_SOHRadios("ee", wizard_data["employee"]['soh_questions'])
         else:
             employeeCoverage = eeCoverageNullToken
             eePremium = " "
@@ -165,7 +157,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
         if wizard_data["spouse_coverage"]["face_value"]:
             spouseCoverage = format(wizard_data["spouse_coverage"]["face_value"], ",.0f")
             spPremium = format(round((wizard_data["spouse_coverage"]["weekly_premium"]*100 * 52) / 12)/100.0, ",.2f")
-            SOH_RadiosList += generate_SOHRadios("sp")
+            SOH_RadiosList += generate_SOHRadios("sp", wizard_data["spouse"]['soh_questions'])
         else:
             spouseCoverage = " "
             spPremium = " "
@@ -173,99 +165,95 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
         spouseCoverage = " "
         spPremium = " "
       
-
+    
     childTabsList = []
     childRadiosList = []
-
-    if wizard_data["children"]:
-        childTabsList += generate_ChildTabsEntry(0, wizard_data)
-        childRadiosList.append(generate_ChildGenderRadio(0, wizard_data))
-        childRadiosList += generate_SOHRadios("c1")
+    for i, child in enumerate(wizard_data['children']):
+        if not wizard_data['children'][i] or not wizard_data['child_coverages'][i]:
+            continue
+        childTabsList += generate_ChildTabsEntry(i, wizard_data)
+        childRadiosList.append(generate_ChildGenderRadio(i, wizard_data))
+        childRadiosList += generate_SOHRadios("c%s"%(i+1), wizard_data["children"][i]['soh_questions'])
+    
+    def make_tab(name, val):
+        return dict(tabLabel=name, value=val)
+    
+    def make_applicant_tabs(prefix, data):
+        tabs = [
+            make_tab(prefix+'FName', data["first"]),
+            make_tab(prefix+'LName', data["last"]),
+            make_tab(prefix+'DOB', data["birthdate"]),
+            make_tab(prefix+'SSN', data["ssn"]),
+        ]
+        if 'height' in data:
+            height_ft = "%s" % int(data['height'] / 12.0)
+            height_in = "%s" % int(data['height'] % 12.0)
+            
+            tabs += [
+                make_tab(prefix+'HeightFt', height_ft),
+                make_tab(prefix+'HeightIn', height_in),         
+            ] 
+        if 'weight' in data:
+            tabs += [make_tab(prefix+'Weight', data['weight'])]
         
-    if wizard_data["children"] and len(wizard_data["children"])>1:
-        childTabsList += generate_ChildTabsEntry(1, wizard_data)
-        childRadiosList.append(generate_ChildGenderRadio(1, wizard_data))
-        childRadiosList += generate_SOHRadios("c2")
-     
-    if wizard_data["children"] and len(wizard_data["children"])>2:
-        childTabsList += generate_ChildTabsEntry(2, wizard_data)
-        childTabsList.append(generate_ChildGenderAbbrevTab(2, wizard_data))
-        childRadiosList += generate_SOHRadios("c3")
-
-    if wizard_data["children"] and len(wizard_data["children"])>3:
-        childTabsList += generate_ChildTabsEntry(3, wizard_data)
-        childTabsList.append(generate_ChildGenderAbbrevTab(3, wizard_data))
-        childRadiosList += generate_SOHRadios("c4")
-
-    eeTabsList = [
-        {"tabLabel" : "eeEnrollCityState",
-         "value" : wizard_data["enrollCity"] + ", " + wizard_data["enrollState"]},
-        {"tabLabel" : "identityToken",
-         "value" : idTokenStr},
-        {"tabLabel" : "agentCode",
-         "value" : user.custom_data["agent_code"]},
-        {"tabLabel" : "agentSignName",
-         "value" : user.custom_data["signing_name"]},
-        {"tabLabel" : "eeFName",
-         "value" : wizard_data["employee"]["first"]},
-        {"tabLabel" : "eeLName",
-         "value" : wizard_data["employee"]["last"]},
-        {"tabLabel" : "eeDOB",
-         "value" : wizard_data["employee"]["birthdate"]},
-        {"tabLabel" : "eeSSN",
-         "value" : wizard_data["employee"]["ssn"]},
-        {"tabLabel" : "eeCoverage",
-         "value" : employeeCoverage},
-        {"tabLabel" : "eePremium",
-         "value" : eePremium if employeeCoverage !=eeCoverageNullToken else ""} ,
-        {"tabLabel" : "Employer",
-         "value" : wizard_data["agent_data"]["company_name"]},
-        {"tabLabel" : "eeOtherOwnerName",
-         "value" : wizard_data["employee_other_owner_name"] if wizard_data["employee_owner"] == "other" else  ""} ,
-        {"tabLabel" : "eeOtherOwnerName2",
-         "value" : wizard_data["employee_other_owner_name"] if wizard_data["employee_owner"] == "other" else  ""} ,
-        {"tabLabel" : "eeOtherOwnerSSN",
-         "value" : wizard_data["employee_other_owner_ssn"] if wizard_data["employee_owner"] == "other" else  ""} ,
-        {"tabLabel" : "eeStreet1",
-         "value" : wizard_data["employee"]["address1"]},
-        {"tabLabel" : "eeStreet2",
-         "value" : wizard_data["employee"]["address2"]},
-        {"tabLabel" : "eeCity",
-         "value" : wizard_data["employee"]["city"]},
-        {"tabLabel" : "eeState",
-         "value" : wizard_data["employee"]["state"]},
-        {"tabLabel" : "eeZip",
-         "value" : wizard_data["employee"]["zip"]},
-        {"tabLabel" : "eePhone",
-         "value" : wizard_data["employee"]["phone"]},
-        {"tabLabel" : "eeEmail",
-         "value" : wizard_data["employee"]["email"]}
+        # TODO: is smoker on the form?
+        
+        return tabs
+    
+    def make_contact_tabs(prefix, data):
+        return [
+            make_tab(prefix+'Street1', data['address1']),
+            make_tab(prefix + 'Street2', data['address2']),
+            make_tab(prefix + 'City', data['city']),
+            make_tab(prefix + 'State', data['state']),
+            make_tab(prefix + 'Zip', data['zip']),
+            make_tab(prefix + 'Phone', data['phone']),
+            make_tab(prefix + 'Email', data['email']),
+        ]
+    
+    eeTabsList = make_applicant_tabs("ee", wizard_data['employee'])
+    eeTabsList += [
+        make_tab('eeEnrollCityState', wizard_data["enrollCity"] + ", " + wizard_data["enrollState"]),
+        make_tab('identityToken', idTokenStr),
+        make_tab('agentCode', user.custom_data["agent_code"]),
+        make_tab('agentSignName', user.custom_data["signing_name"]),
+        make_tab('eeCoverage', employeeCoverage),
+        make_tab('eePremium', eePremium if employeeCoverage != eeCoverageNullToken else ""),
+        make_tab('Employer', wizard_data["agent_data"]["company_name"]),
+        make_tab('eeOtherOwnerName', wizard_data["employee_other_owner_name"] if wizard_data["employee_owner"] == "other" else  ""),
+        make_tab('eeOtherOwnerName2', wizard_data["employee_other_owner_name"] if wizard_data["employee_owner"] == "other" else  ""),
+        make_tab('eeOtherOwnerSSN', wizard_data["employee_other_owner_ssn"] if wizard_data["employee_owner"] == "other" else  ""),
     ]
+    
+    eeTabsList += make_contact_tabs('ee', wizard_data["employee"])
+    
+    def make_beneficiary_tabs(prefix, name, relationship, dob, ssn):
+        return [
+            make_tab(prefix+"BeneFullName", name),
+            make_tab(prefix+"BeneRelationship", relationship),
+            make_tab(prefix+"BeneDOB", dob),
+            make_tab(prefix+"BeneSSN", ssn),
+        ]
+    
     # add in beneficiaries if appropriate
     if employeeCoverage != eeCoverageNullToken:
         if wizard_data["employee_beneficiary"] == "spouse":
-            eeTabsList += [
-                {"tabLabel" : "eeBeneFullName",
-                 "value" : wizard_data["spouse"]["first"] + " " + wizard_data["spouse"]["last"]},
-                {"tabLabel" : "eeBeneRelationship",
-                 "value" : "spouse"},
-                {"tabLabel" : "eeBeneDOB",
-                 "value" : wizard_data["spouse"]["birthdate"]},
-                {"tabLabel" : "eeBeneSSN",
-                 "value" : wizard_data["spouse"]["ssn"]} 
-            ]
+            eeTabsList += make_beneficiary_tabs(
+                prefix="ee",
+                name=wizard_data["spouse"]["first"] + " " + wizard_data["spouse"]["last"],
+                relationship="spouse",
+                dob=wizard_data["spouse"]["birthdate"],
+                ssn=wizard_data["spouse"]["ssn"],
+            )
         else:
-            eeTabsList += [
-                {"tabLabel" : "eeBeneFullName",
-                 "value" : wizard_data["employee_beneficiary_name"]},
-                {"tabLabel" : "eeBeneRelationship",
-                 "value" : wizard_data["employee_beneficiary_relationship"]},
-                {"tabLabel" : "eeBeneDOB",
-                 "value" : wizard_data["employee_beneficiary_dob"]},
-                {"tabLabel" : "eeBeneSSN",
-                 "value" : wizard_data["employee_beneficiary_ssn"]} 
-            ]
-
+            eeTabsList += make_beneficiary_tabs(
+                prefix = "ee",
+                name = wizard_data["employee_beneficiary_name"],
+                relationship = wizard_data["employee_beneficiary_relationship"],
+                dob = wizard_data["employee_beneficiary_dob"],
+                ssn = wizard_data["employee_beneficiary_ssn"],
+            )
+    
     if wizard_data["spouse_owner"] == "other":
         spouseOtherOwnerName = wizard_data["spouse_other_owner_name"]
         spouseOtherOwnerSSN = wizard_data["spouse_other_owner_ssn"]
@@ -276,19 +264,11 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
         spouseOtherOwnerName = ""
         spouseOtherOwnerSSN = ""
         
-
-
+    
     spouseTabsList = []
     if spouseCoverage != " ":
+        spouseTabsList += make_applicant_tabs("sp", wizard_data["spouse"])
         spouseTabsList += [
-            {"tabLabel" : "spFName",
-             "value" : wizard_data["spouse"]["first"]},
-            {"tabLabel" : "spLName",
-             "value" : wizard_data["spouse"]["last"]},
-            {"tabLabel" : "spDOB",
-             "value" : wizard_data["spouse"]["birthdate"]},
-            {"tabLabel" : "spSSN",
-             "value" : wizard_data["spouse"]["ssn"]},
             {"tabLabel" : "spOtherOwnerName",
              "value" : spouseOtherOwnerName},
             {"tabLabel" : "spOtherOwnerSSN",
@@ -299,36 +279,31 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
              "value" : spPremium}
         ]
         if wizard_data["spouse_beneficiary"] == "employee":
-            spouseTabsList += [
-                {"tabLabel" : "spBeneFullName",
-                 "value" : wizard_data["employee"]["first"] + " " + wizard_data["employee"]["last"]},
-                {"tabLabel" : "spBeneRelationship",
-                 "value" : "spouse"},
-                {"tabLabel" : "spBeneDOB",
-                 "value" : wizard_data["employee"]["birthdate"]},
-                {"tabLabel" : "spBeneSSN",
-                 "value" : wizard_data["employee"]["ssn"]} 
-            ]
+            spouseTabsList += make_beneficiary_tabs(
+                prefix="sp",
+                name=wizard_data["employee"]["first"] + " " + wizard_data["employee"]["last"],
+                relationship="spouse",
+                dob=wizard_data["employee"]["birthdate"],
+                ssn=wizard_data["employee"]["ssn"],
+            )
         else:
-            spouseTabsList += [
-                {"tabLabel" : "spBeneFullName",
-                 "value" : wizard_data["spouse_beneficiary_name"]},
-                {"tabLabel" : "spBeneRelationship",
-                 "value" : wizard_data["spouse_beneficiary_relationship"]},
-                {"tabLabel" : "spBeneDOB",
-                 "value" : wizard_data["spouse_beneficiary_dob"]},
-                {"tabLabel" : "spBeneSSN",
-                 "value" : wizard_data["spouse_beneficiary_ssn"]} 
-            ]
-
-
+            spouseTabsList += make_beneficiary_tabs(
+                prefix="sp",
+                name=wizard_data["spouse_beneficiary_name"],
+                relationship=wizard_data["spouse_beneficiary_relationship"],
+                dob=wizard_data["spouse_beneficiary_dob"],
+                ssn=wizard_data["spouse_beneficiary_ssn"],
+            )
+    
     generalRadiosList = []
     # Note: UI screens out any "yes" replacement - so all applications are "no" to replacement
+    
     generalRadiosList.append({"groupName": "productType",
                               "radios": [
                                   {"selected" : "True",
                                    # FPPTI or FPPCI
-                                   "value" : productType}
+                                   "value" : "FPPTI" if productType == "FPP-Gov" else productType
+                                  }
                               ]})
     generalRadiosList.append({"groupName": "existingIns",
                               "radios": [
@@ -416,8 +391,8 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
     templateRoleName = "Employee"  # same role name that exists on the template in the console
     templateAgentRoleName = "Agent"
 
-    #construct the body of the request in JSON format  
-    requestBody ={
+    # construct the body of the request in JSON format  
+    requestBody = {
         "accountID" : accountId,
         "status" : "sent",
         "emailSubject": "signature needed: " + productType + " for " +  recipientName + " (" + employer + ")",
@@ -442,15 +417,20 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
              } 
         ]
     }
-
-    requestBodyStr = json.dumps(requestBody)
     
+    # Debug what we send to DocuSign
+    import pprint
+    pprint.pprint(requestBody)
+    
+    # Convert to JSON string
+    requestBodyStr = json.dumps(requestBody)
     
     # append "/envelopes" to baseURL and use in the request
     url = baseUrl + "/envelopes"
     headers = {'X-DocuSign-Authentication': authenticateStr, 'Accept': 'application/json', 'Content-Length': str(len(requestBodyStr))}
     http = httplib2.Http()
     response, content = http.request(url, 'POST', headers=headers, body=requestBodyStr)
+    
     # When troubleshooting, send instead to requestb.in (or similar listener) to capture/examing the JSON trace.  Past that trace into SOAPUI to explore the response if needed.
     #response, content = http.request("http://requestb.in/1mars8q1", 'POST', headers=headers, body=requestBodyStr);
     status = response.get('status')
@@ -461,21 +441,23 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
         print("Error generating Docusign envelope, status is: %s" % status); return True, "Error generating Docusign envelope", None
     
     data = json.loads(content)
- 
+    
     # store the uri for next request
     uri = data.get('uri')
+    
     # write to log in case we need for short-term retrieval
     print ("Envelope for %s (%s) by %s: %s\n" % (recipientName, emailTo, user.custom_data["signing_name"], uri))
-     
+    
+    
     #
     # Get the Embedded Send View
     #
- 
+    
     # construct the body of the request in JSON format  
     requestBody =   {
         "authenticationMethod" : "email",
         "email" : emailTo,
-        "returnUrl" :  callbackURL,
+        "returnUrl" :  build_callback_url(wizard_data, sessionType),
         "clientUserId" : templateClientID,
         "userName" : recipientName
     }
@@ -499,6 +481,19 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
 
     data = json.loads(content)
     viewUrl = data.get('url')
- 
     
     return False, None, viewUrl
+
+
+def build_callback_url(wizard_data, session_type):
+    is_ssl = app.config.get('IS_SSL', True)
+    hostname = app.config.get('HOSTNAME', '5starenroll.com')
+    scheme = 'https://' if is_ssl else 'http://'
+    
+    # note: DS supplies the last parm of 'event' in the callback
+    return "%(scheme)s%(hostname)s/application_completed?name={name}&type={session_type}".format(
+        scheme=scheme,
+        hostname=hostname,
+        name=wizard_data["employee"]["first"], 
+        session_type=session_type,
+    )
