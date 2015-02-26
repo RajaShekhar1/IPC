@@ -95,10 +95,10 @@ def get_template_id_PRODUCTION(product_type, state):
         "Group CI": {
             "generic":"B57234AB-5EA5-48D4-984F-D3BF07793B9B",
         },
-        "FPP-Gov": {
-            "generic": "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
-        }
     }
+    
+    # FPP-Gov uses the FPP-TI product forms
+    templates_by_product_and_state['FPP-Gov'] = templates_by_product_and_state['FPPTI']
     
     templateID = templates_by_product_and_state.get(product_type, {}).get(state)
     if templateID:

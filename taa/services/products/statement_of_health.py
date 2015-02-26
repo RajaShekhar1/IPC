@@ -367,6 +367,8 @@ product_forms = {
 
 }
 
+# FPP-Gov uses FPPTI forms
+product_forms['FPP-Gov'] = product_forms['FPPTI']
 
 # For now, define these legacy variables so docusign code works
 FPPTI_generic_states = []
