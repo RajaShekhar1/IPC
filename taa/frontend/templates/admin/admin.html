@@ -1,0 +1,81 @@
+{% extends "home_office/home_office_base.html" %}
+{% set active_page = "nav_manage_agents" -%}
+{% block title %} - Admin Console{% endblock %}
+
+{% block head %}
+ {{ super() }}
+<!-- page-specific header data -->
+    
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+<!-- ace styles -->
+<link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/five_star_ace_overlay.css') }}" rel="stylesheet">
+
+<!-- custom css -->
+<link href="{{ url_for('static', filename='css/five_star.css') }}" rel="stylesheet">
+
+
+{% endblock %}
+
+{% block content %}
+
+{% set base_url =   url_for('updateUser') + "?user=" %}
+
+<div class="col-xs-12">
+  <div class="table-responsive">
+    <table class="table table-striped table-bordered table-hover">
+      <thead>
+	<tr>
+	  <th>Name</th>
+	  <th>Agency</th>
+	  <th class="hidden-480">Email</th>
+	  <th>Code</th>
+	  <th class="hidden-480">Signature</th>
+	  <th>Status</th>
+	</tr>
+      </thead>
+      
+      <tbody>
+	{% for acc in accounts %}
+	<tr>
+	  <td>	
+	    <a href={{base_url + acc['email']}}>{{ acc['fname'] + " " + acc['lname']}}</a>
+	  </td>
+	  <td>{{acc['agency']}}</td>
+	  <td class="hidden-480">{{acc['email']}}</td>
+	  <td>{{acc['agent_code']}}</td>
+	  <td class="hidden-480">{{acc['signing_name']}}</td>
+	  <td>
+	    <a href={{base_url + acc['email']}}>
+	    {% if acc['status']=='Activated' %}
+	    <span class="label label-success">Activated
+	      {% else %}
+	      <span class="label label-danger arrowed-in">Not Activated
+		{% endif %}
+	      </span>
+	      </a>
+	  </td>
+	</tr>
+	{% else %}
+	<tr>
+	  <td>><em>Really?  No accounts found</em></td>
+	</tr>
+	{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div><!-- /.col-xs12 -->
+
+
+    {% endblock %}
+
+<!-- basic scripts -->
+
+{% block js_footer %}
+{{ super() }}
+
+<!-- page-specific footer scripts -->
+
+{% endblock %}

@@ -1,0 +1,863 @@
+{% extends "base_ace_latest.html" %}
+{% set active_page = 'nav_enroll' -%}
+
+{% block title %} - Launch Enrollment{% endblock %}
+{% block content %}
+
+    
+<div class="launch-panel" style="display: none;" data-bind="visible: true;">
+    <h3 class="header lighter">Launch an Enrollment</h3>
+    
+    <div class="row method-select-form enroll-buttons">
+        <div class="visible-xs visible-sm text-center">
+            <div class="row">
+                <div class="col-sm-6">
+                    <button class="btn btn-info btn-lg enroll-from-case">
+                        <i class="glyphicon glyphicon-briefcase align-top bigger-110"></i> 
+                         Enroll from Case<br>
+                        <i class="icon icon-user align-top bigger-110"></i>in Person
+                    </button>
+                </div>
+                <div class="col-sm-6">
+                    <button class="btn btn-info btn-lg enroll-ad-hoc">
+                        <i class="icon icon-pencil align-top bigger-110"></i> 
+                         Enroll Ad-Hoc<br>
+                        <i class="icon icon-user align-top bigger-110"></i>in Person
+                    </button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="tooltip-wrapper tooltip-warning" 
+                                data-rel="tooltip" style="display: inline-block;"
+                                title="You are not authorized for call-center enrollment.">
+                    
+                        <button disabled="1" class="btn btn-info btn-lg enroll-from-case-phone">
+                            <i class="glyphicon glyphicon-briefcase align-top bigger-110"></i> 
+                             Enroll from Case<br>
+                            <i class="icon icon-phone align-top bigger-110"></i>via Phone
+                        </button>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="tooltip-wrapper tooltip-warning" 
+                                data-rel="tooltip" style="display: inline-block;"
+                                title="You are not authorized for call-center enrollment.">
+                        
+                        <button disabled="1" class="btn btn-info btn-lg enroll-ad-hoc-phone">
+                            <i class="icon icon-pencil align-top bigger-110"></i> 
+                             Enroll Ad-Hoc<br>
+                            <i class="icon icon-phone align-top bigger-110"></i>via Phone
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="tooltip-wrapper tooltip-info" 
+                                data-rel="tooltip" style="display: inline-block;"
+                                title="This feature coming soon!">
+                        <button  disabled="1" class="btn btn-default btn-lg enroll-from-case-email">
+                            <i class="glyphicon glyphicon-briefcase align-top bigger-110"></i> 
+                            Enroll from Case<br>
+                            <i class="icon icon-envelope align-top bigger-110"></i>
+                            via email
+                        </button>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    
+                    <div class="tooltip-wrapper tooltip-info" 
+                                data-rel="tooltip" style="display: inline-block;"
+                                title="This feature coming soon!">
+                        
+                        <button disabled="1" class="btn btn-default btn-lg enroll-ad-hoc-email">
+                            <i class="icon icon-pencil align-top bigger-110"></i> 
+                            Enroll Ad-Hoc<br>
+                            <i class="icon icon-envelope align-top bigger-110"></i>
+                            via email
+                        </button>
+                            
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                
+                
+                
+            </div>
+        </div>
+        <div class="visible-md visible-lg text-center">
+            <div class="row">
+                <div class="col-md-4">
+                    <button class="btn btn-info btn-lg enroll-from-case">
+                        <i class="glyphicon glyphicon-briefcase align-top bigger-110"></i> 
+                         Enroll from Case<br>
+                        <i class="icon icon-user align-top bigger-110"></i>in Person
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <div class="tooltip-wrapper tooltip-warning" 
+                                data-rel="tooltip" style="display: inline-block;"
+                                title="You are not authorized for call-center enrollment.">
+                    
+                        <button disabled="1" class="btn btn-info btn-lg enroll-from-case-phone">
+                            <i class="glyphicon glyphicon-briefcase align-top bigger-110"></i> 
+                             Enroll from Case<br>
+                            <i class="icon icon-phone align-top bigger-110"></i>via Phone
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="tooltip-wrapper tooltip-info" 
+                                data-rel="tooltip" style="display: inline-block;"
+                                title="This feature coming soon!">
+                        <button disabled="1" class="btn btn-default btn-lg enroll-from-case-email">
+                            <i class="glyphicon glyphicon-briefcase align-top bigger-110"></i> 
+                            Enroll from Case<br>
+                            <i class="icon icon-envelope align-top bigger-110"></i>
+                            via email
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <button class="btn btn-info btn-lg enroll-ad-hoc">
+                        <i class="icon icon-pencil align-top bigger-110"></i> 
+                         Enroll Ad-Hoc<br>
+                        <i class="icon icon-user align-top bigger-110"></i>in Person
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <div class="tooltip-wrapper tooltip-warning" 
+                                data-rel="tooltip" style="display: inline-block;"
+                                title="You are not authorized for call-center enrollment.">
+                    
+                        <button disabled="1" class="btn btn-info btn-lg enroll-ad-hoc-phone">
+                            <i class="icon icon-pencil align-top bigger-110"></i> 
+                             Enroll Ad-Hoc<br>
+                            <i class="icon icon-phone align-top bigger-110"></i>via Phone
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="tooltip-wrapper tooltip-info" 
+                                data-rel="tooltip" style="display: inline-block;"
+                                title="This feature coming soon!">
+                        <button disabled="1" class="btn btn-default btn-lg enroll-ad-hoc-email">
+                            <i class="icon icon-pencil align-top bigger-110"></i> 
+                            Enroll Ad-Hoc<br>
+                            <i class="icon icon-envelope align-top bigger-110"></i>
+                            via email
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<div class="select-case-panel" style="display: none">
+    <h3 class="header lighter">Enroll from Case</h3>
+    
+    <div class="row">
+        <div class="case-select-panel col-xs-12">
+            {% if not agent_cases %}
+                <div class="row">
+                    <h4 class="text-center lighter">There are no active cases.</h4>
+                </div>
+            {% else %}
+                <div class="table-responsive">
+                    <table id="cases_table" class="table table-striped table-bordered table-hover no-wrap">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Company</th>
+                                <th>State</th>
+                                <th>Product</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for case in agent_cases %}
+                                <tr>
+                                    <td class="text-center"><button class="btn btn-sm btn-primary enroll-case" data-id="{{ case.id }}" data-name="{{ case.company_name }}">Enroll Case</button></td>
+                                    <td><a href="{{ url_for("manage_case", case_id=case.id) }}">{{ case.company_name }}</a></td>
+                                    <td>{{ case.situs_state }}</td>
+                                    <td>{{ case.get_product_names() }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+        
+    </div>
+    
+</div>
+    
+<div class="enroll-from-case-panel" style="display: none;">
+    <h3 class="header lighter">Enrolling <span data-bind="text: current_company_name"></span></h3>
+    
+    <div class="loading-panel col-xs-12 text-center " style="display: none;">
+    </div>
+    <div class="col-xs-12">
+        <div class="employee-select-panel" style="display: none;">
+            <div class="table-wrap">
+                <div class="widget-box">
+                    <div class="widget-header">
+                        <h3>Select from Case Census</h3>
+                    </div>
+                    <div class="widget-body">
+                        <div class="widget-main">  
+                            <div class="table-responsive">
+                                <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>Status</th>
+                                            <th>First</th>
+                                            <th>Last</th>
+                                            <th>Birthdate</th>
+                                            <th>Email</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        <div class="not-in-census-section text-center" style="display: none;">
+            <button type="button" class="not-in-list-btn btn btn-warning">Enroll employee ad-hoc (not in census)</button>
+        </div>
+        
+    </div>
+</div>
+    
+
+<div class="row ad-hoc-form" style="display: none">
+  <div class="col-xs-12" data-bind="with: ad_hoc_setup">
+    <h3>Ad-Hoc Enrollment</h3>
+    <p>Enter the information below for the case setup, the enrollee data, and proceed with enrollment interview.</p>
+    
+    <form class="enrollment-form form-horizontal" data-bind="submit: submit_ad_hoc">
+      
+      <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="productID">Product to enroll</label>
+        <div class="col-xs-12 col-sm-9">
+          <limited-product-select params="limiter: state_product_limiter"></limited-product-select>
+        </div>
+      </div>
+
+      <div class="row form-group">
+	    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentState">Location of this enrollment</label>
+	    <div class="col-xs-12 col-sm-9">
+            <input type="text" name="enrollmentCity" placeholder="City">
+            <limited-state-select params="limiter: state_product_limiter"></limited-state-select>
+	    </div>
+      </div>
+	
+      <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="companyName">Company Name</label>
+        <div class="col-xs-12 col-sm-9">
+            <input name="companyName" type="text" placeholder="Company", id="companyName">
+        </div>
+      </div>
+	  
+      <div class="row form-group">
+        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeFName">Employee Name</label>        
+        <div class="col-xs-12 col-sm-9">
+          <input id="eeFName" type="text" name="eeFName" placeholder="First Name">
+          <input type="text" name="eeLName" placeholder="Last Name">
+          
+        </div>
+      </div>
+      
+      <div class="row form-group">
+        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="email">Employee Email Address:</label>
+        <div class="col-xs-12 col-sm-9">
+            <input type="email" name="email" id="email">
+        </div>
+      </div>
+    
+    
+    <div class="row">
+      <div class="col-xs-12">
+	    <p class="center"><button type="submit" class="btn btn-lg btn-info" id="in-person-enrollment-btn">
+	    <i class="icon icon-user align-top bigger-110"></i>Proceed to enrollment</button></p>
+      </div>
+    </div>
+    
+</form>
+
+  </div><!-- /.col-xs12 -->
+</div><!-- /.row -->
+    
+{% endblock %}
+
+
+{% block modals %}
+    {{ super() }}
+    
+    {# Confirm that an employee is not in the census using SSN. #}
+    <div id="add-to-census-modal" class="modal fade" data-bind="with: add_to_census_modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span
+                        aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title">Add To Census</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-panel modal-panel" data-bind="if: add_form_showing">
+                        <form data-bind="submit: find_matches">
+                            <div class="row">
+                                <div class="col-xs-12 ">
+                                    <div class="form-group">
+                                        <label for="add-census-ssn-input">
+                                            Employee SSN: 
+                                        </label>
+                                        <input type="text" id="add-census-ssn-input" name="ssn" data-bind="value: ssn, maskedInput: '999-99-9999', valueUpdate: 'afterkeydown'">
+                                        <div data-bind="text: ssn.error" class="error"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="loading-panel modal-panel" data-bind="if: is_loading">
+                        <div class="text-center">
+                            <h4 data-bind="text: loading_message"></h4>
+                            <i class="icon-spinner icon-spin grey bigger-200"></i>  
+                        </div>
+                    </div>
+                    
+                    <div class="no-matches-panel modal-panel" data-bind="if: no_matches_found">
+                        <h3 class="header lighter green">No employee with that SSN was found.</h3>
+                        <p>Click 'Add To Census' to add this employee to the census</p>
+                    </div>
+                    <div class="one-match-panel modal-panel" data-bind="if: one_match_found">
+                        <h3 class="header lighter green">We found a matching employee record:</h3>
+                        <strong>
+                            <span data-bind="text: matched_employee().first"></span> 
+                            <span data-bind="text: matched_employee().last"></span>, 
+                            Birthdate: <span data-bind="text: matched_employee().formatted_birthdate()"></span>
+                        </strong>
+                        <h3>Is this you?</h3>
+                    </div>
+                    <div class="error-panel modal-panel" data-bind="if: multiple_matches_found">
+                        <h3 class="header lighter">
+                            Matched Employees:
+                        </h3>
+                        
+                        <div class="row">
+                            <div class="col-md-12" style="width: 100%; overflow: auto;">
+                                <div class="table-responsive">
+                                <table class="table table-bordered upload-error-table">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>First</th>
+                                            <th>Last</th>
+                                            <th>Birthdate</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-bind="foreach: {data: matched_employees, as: 'employee'}">
+                                        <tr>
+                                            <td><input type="radio" name="selected_match" data-bind="checked: $parent.selected_employee, checkedValue: employee.id"></td>
+                                            <td data-bind="text: employee.first"></td>
+                                            <td data-bind="text: employee.last"></td>
+                                            <td data-bind="text: employee.formatted_birthdate()"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                </div>
+                                <div class="error" data-bind="matched_employees.error"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="success-buttons buttons-panel" data-bind="">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" 
+                                data-bind="click: find_matches, visible: current_panel() == PANEL_FORM">Next</button>
+                        <button type="button" class="btn btn-success" 
+                                data-bind="click: add_to_census, visible: no_matches_found">Add to census</button>
+                        
+                        <button type="button" class="btn btn-success" 
+                                data-bind="click: enroll_from_match, visible: one_match_found">Yes, enroll me</button>
+                        <button type="button" class="btn btn-warning" 
+                                data-bind="click: add_to_census, visible: one_match_found">No, add me</button>
+                    
+                        <button type="button" class="btn btn-success" 
+                                data-bind="click: enroll_from_match, visible: multiple_matches_found">Enroll selected record</button>
+                        <button type="button" class="btn btn-warning" 
+                                data-bind="click: add_to_census, visible: multiple_matches_found">No, add to Census</button>
+                    </div>
+                    
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+{% endblock %}
+
+<!-- basic scripts -->
+
+{% block js_footer %}
+{{ super() }}
+
+<!-- page-specific footer scripts -->
+      
+<!-- page specific plugin scripts -->
+
+
+<script>
+    jQuery(function($) {
+        
+        //$(".enroll-ad-hoc-email").tooltip({container: "body", content: "This feature coming soon!"});
+        $('[data-rel=tooltip]').tooltip();
+        
+        var AdHocEnrollmentViewModel = function() {
+            var self = this;
+            
+            self.all_states = {{ all_states | tojson | safe }};
+            self.selected_state = ko.observable(null);
+            self.available_products = ko.observableArray({{ agent_products | tojson | safe }});
+            self.selected_products = ko.observableArray([]);
+            
+            // Track enabled states and products
+            self.state_product_limiter = new ProductStatesLimiterViewModel(
+                {{ product_state_mapping |tojson|safe }}, self.selected_state, self.all_states, 
+                self.selected_products, self.available_products
+            );
+            
+            self.submit_ad_hoc = function() {
+                // Run normal validation
+                var form = $(".ad-hoc-form form");
+                var validator = form.validate();
+                if(!form.valid()) {
+                    return;
+                }
+                
+                var data_serialized = $(".enrollment-form").serializeArray();
+                var data = _.reduce(data_serialized, function(memo, val) {
+                    memo[val.name] = val.value;
+                   return memo;
+                }, {});
+                data['productID'] = self.selected_products()[0].id;
+                data['enrollmentState'] = self.selected_state().statecode;
+                submit_to_url("{{ url_for('in_person_enrollment') }}", data);
+            };
+            
+            $.validator.addMethod("productCheck", function (value, element) {
+                return self.selected_products().length > 0;
+            }, 'Product is required');
+            
+            $.validator.addMethod("stateCheck", function (value, element) {
+                return self.selected_state();
+            }, 'State is required');
+            
+            // Validation
+            $(".ad-hoc-form form").validate({
+                errorElement: 'div',
+                errorClass: 'help-block',
+                focusInvalid: false,
+                rules: {
+                    productID: {productCheck: true},
+                    enrollmentCity: {required: true},
+                    enrollmentState: {stateCheck: true},
+                    companyName: {required: true},
+                    eeLName: {required: true},
+                    eeFName: {required: true},
+                    email: {
+                        email: true
+                    }
+                },
+                messages: {
+                      
+                },
+                highlight: function(e) {
+                    $(e).closest('.form-group').removeClass('has-info').addClass('has-error');
+                },
+                
+                success: function(e) {
+                    $(e).closest('.form-group').removeClass('has-error').addClass('has-info');
+                    $(e).remove();
+                }
+                //errorPlacement: wizard_error_placement	
+            });
+        };  
+        
+    
+        var EnrollmentSetupPage = function(current_case) {
+            var self = this;
+            self.current_company_name = ko.observable((current_case)?current_case.company_name : "");
+            self.selected_case = ko.observable((current_case)? current_case.id : null);
+            
+            self.add_to_census_modal = new AddToCensusViewModel(self.selected_case);
+            
+            self.ad_hoc_setup = new AdHocEnrollmentViewModel();
+        };
+        window.ui = new EnrollmentSetupPage({{ active_case | tojson | safe }});
+        ko.applyBindings(window.ui, $("body").get(0));
+    
+        
+    
+        $("#cases_table").dataTable({
+            "responsive": true,
+            "aoColumnDefs":[
+                {"bSortable": false, "aTargets":[0]}
+            ],
+            "aaSorting": [[ 1, "asc" ]]
+        });
+        
+        $('button.enroll-from-case').on('click', function() {
+            $('.launch-panel').hide();
+            $('.select-case-panel').show();
+            $('.ad-hoc-form').hide();
+            
+            
+        });
+    
+        $(".select-case-panel").on('click', "button.enroll-case", function() {
+            
+            var case_id = $(this).attr("data-id");
+            ui.selected_case(case_id);
+            ui.current_company_name($(this).attr("data-name"));
+            load_census_table(case_id, "/cases/"+case_id+"/census_records");
+        });
+        
+        
+        $(".not-in-list-btn").on('click', function() {
+            
+            $("#add-to-census-modal").modal("show");
+            window.ui.add_to_census_modal.show_modal();
+        });
+        
+        $('button.enroll-ad-hoc').on('click', function() {
+            
+            $('.launch-panel').hide();
+            $('.select-case-panel').hide();
+            $('.enroll-from-case-panel').hide();
+            $('.ad-hoc-form').show();
+            
+        });
+        
+        $(".employee-select-panel").on('click', "button.enroll-employee", function() {
+            var record_id = $(this).attr('data-id');
+            
+            submit_to_url("{{ url_for('in_person_enrollment') }}", {record_id: record_id});
+        });
+        
+        
+        function load_census_table(case_id, url) {
+            
+            $(".loading-panel").show();
+            
+            $('.launch-panel').hide();
+            $(".select-case-panel").hide();
+            $('.enroll-from-case-panel').show();
+            $('.ad-hoc-form').hide();
+            
+            case_management.refresh_census_table(case_id, url, 
+                "#census-records-table", ".loading-panel", 
+                {
+                    "responsive": {breakpoints: get_responsive_datatables_breakpoints()},
+                    "autoWidth": false,
+                    "aoColumnDefs":[
+                        // Show enroll button in first column
+                        {"aTargets":[0], "bSortable": false, "mData":function(source) {
+                            if (source.enrollment_status !== null) {
+                                return '<button class="btn btn-primary btn-xs enroll-employee" data-id="'+source.id+'"><span class="ace-icon glyphicon glyphicon-plus"></span> Add Coverage</button>';
+                            }
+                            
+                            return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'">Enroll</button>';
+                        }},
+                        {"aTargets":[1], "mData":function(source) {
+                            return format_enrollment_status_html(source.enrollment_status);
+                        }},
+                        {"aTargets":[2], "mData":"employee_first", className: "min-breakIV"},
+                        {"aTargets":[3], "mData":"employee_last"},
+                        {"aTargets":[4], "mData": function(source) {
+                            return normalize_date(source.employee_birthdate);
+                        }},
+                        {"aTargets":[5], "mData":"employee_email", className: "min-breakIII"}
+                    ],
+                    "aaSorting": [[ 3, "asc" ]]
+                }, 
+                function() {
+                    // Called when first initialized
+                    $(".employee-select-panel").show();
+                    $(".not-in-census-section").show();
+                    
+                    var table = $("#census-records-table").dataTable();
+                    
+                    init_status_filter(table);
+                    init_alphabet_search(table);
+                    
+            }, function() {
+                    // Called if no data
+                    $(".not-in-census-section").show();
+            });
+        }
+    
+        // Setup if there we are showing the next applicant for the active case
+        {% if active_case and should_show_next_applicant %}
+            $("#census-records-table").hide();
+            load_census_table({{ active_case.id }}, "{{ url_for("cases.census_records", case_id=active_case.id) }}");
+        {% else %}
+            
+        {% endif %}
+    
+    });
+    
+    // Custom alphabet search 
+    var _alphabet_search_letter;     
+    
+    $.fn.dataTableExt.afnFiltering.push(
+        function( oSettings, aData, iDataIndex ) {
+            if (!_alphabet_search_letter) {
+                return true;
+            }
+            var last_name_col = 3;
+            
+            return (aData[last_name_col] && aData[last_name_col].charAt(0) === _alphabet_search_letter);
+        }
+    );
+
+    function init_employee_table(table_element) {
+        
+        var table = table_element.dataTable({
+            iDisplayLength: 25,
+            "aoColumnDefs":[
+                {"bSortable": false, "aTargets":[0]}
+            ],
+            "aaSorting": [[ 2, "asc" ]]
+        });
+        
+        init_status_filter(table);
+        init_alphabet_search(table);
+        
+    }
+    function init_alphabet_search(table) {
+        var alphabet = $('<div class="alphabet"/>').append('Last Name: ');
+        $('<span class="clear active"/>')
+            .data('letter', '')
+            .html('Reset')
+            .appendTo(alphabet);
+        
+        for (var i = 0; i < 26; i++) {
+            var letter = String.fromCharCode(65 + i);
+            
+            $('<span class="letter"/>')
+                .data('letter', letter)
+                .html(letter)
+                .appendTo(alphabet);
+        }
+        
+        alphabet.insertBefore( table );
+        
+        alphabet.on('click', 'span', function() {
+            alphabet.find('.active').removeClass('active');
+            $(this).addClass('active');
+            
+            _alphabet_search_letter = $(this).data('letter');
+            table.fnDraw();
+        });
+    }
+
+    // Checkbox filter
+    var _should_show_enrolled = true;
+    $.fn.dataTableExt.afnFiltering.push(
+        function(oSettings, aData, iDataIndex ) {
+            if (_should_show_enrolled) {
+                return true;
+            }
+            
+            return (aData[1] === "Not Enrolled");
+        }
+    );
+    
+    function init_status_filter(table) {
+        var ctn = $('<div class="status-filter">');
+        ctn.html("<label><input type='checkbox' class='ace' checked='checked'> <span class='lbl'> Show Enrolled</span></label>");
+        ctn.on('change', 'input', function() {
+            _should_show_enrolled = $(this).prop("checked");
+            table.fnDraw();        
+        });
+        ctn.insertBefore(table);
+    }
+
+    var EmployeeMatchViewModel = function(data) {
+        var self = this;
+        self.id = data.id;
+        self.first = data.employee_first || "(No First Name)";
+        self.last = data.employee_last || "(No Last Name)";
+        self.ssn = data.employee_ssn;
+        self.birthdate = data.employee_birthdate;
+        
+        self.formatted_birthdate = function() {
+            return moment(self.birthdate, "YYYY-MM-DD").format("MM/DD/YYYY");
+        };
+        
+        self.is_selected = ko.observable(false);
+    };
+    
+    var AddToCensusViewModel = function(selected_case_observable) {
+        var self = this;
+        
+        self.selected_case = selected_case_observable;
+        
+        self.case_id = ko.observable(null);
+        
+        self.matched_employees = ko.observableArray([]);
+        self.matched_employees.error = ko.observable("");
+        self.selected_employee = ko.observable(null);
+        
+        self.matched_employee = ko.computed(function() {
+            if (self.matched_employees().length == 0) {
+                return null;
+            }
+            return self.matched_employees()[0];
+        });
+        
+        self.loading_message = ko.observable("Loading...");
+        
+        self.ssn = ko.observable(null);
+        self.ssn.error = ko.observable("");
+        
+        // Panel state
+        self.PANEL_FORM = "find_employee";
+        self.PANEL_LOADING = "loading";
+        self.PANEL_NOMATCH = "no_matches";
+        self.PANEL_ONEMATCH = "one_match";
+        self.PANEL_MANYMATCHES = "matches";
+        self.current_panel = ko.observable(self.PANEL_FORM);
+        
+        self.show_modal = function(case_id) {
+            // Initialize the modal
+            self.case_id(case_id);
+            self.current_panel(self.PANEL_FORM);
+            self.ssn("");
+            self.ssn.error("");
+            
+            self.selected_employee(null);
+            
+        };
+        
+        self.is_match_form_showing = ko.computed(function() {
+            return (self.current_panel() == self.PANEL_NOMATCH || 
+                    self.current_panel() == self.PANEL_MANYMATCHES || 
+                    self.current_panel() == self.PANEL_ONEMATCH);
+        });
+        self.add_form_showing = ko.computed(function() {
+            return self.current_panel() == self.PANEL_FORM; 
+        });
+        self.is_loading = ko.computed(function() {
+            return self.current_panel() == self.PANEL_LOADING; 
+        });
+        self.no_matches_found = ko.computed(function() {
+            return self.current_panel() == self.PANEL_NOMATCH; 
+        });
+        self.multiple_matches_found = ko.computed(function() {
+            return self.current_panel() == self.PANEL_MANYMATCHES; 
+        });
+        self.one_match_found = ko.computed(function() {
+             return self.current_panel() == self.PANEL_ONEMATCH; 
+        });
+        self.one_or_more_matches_found = ko.computed(function() {
+            return self.multiple_matches_found() || self.one_match_found(); 
+        });
+        
+        self.find_matches = function() {
+            // Clear errors
+            self.ssn.error("");
+            
+            if (!self.is_valid_ssn()) {
+                self.ssn.error("A valid SSN is required");
+                return;
+            }
+            
+            // Submit search
+            self.loading_message("Checking census for matches...");
+            self.current_panel(self.PANEL_LOADING);
+            $.get("/cases/" + self.selected_case() + "/census_records", 
+                {filter_ssn: self.ssn()}
+            ).success(function(resp) {
+                if (resp.data.length > 0) {
+                    // Load matches
+                    self.matched_employees(_.map(resp.data, function(e) {return new EmployeeMatchViewModel(e)}));
+                    
+                    // Display match panel
+                    if (resp.data.length == 1) {
+                        self.current_panel(self.PANEL_ONEMATCH);
+                    } else {
+                        self.current_panel(self.PANEL_MANYMATCHES);
+                    }
+                } else {
+                    // No matches
+                    self.matched_employees([]);
+                    self.current_panel(self.PANEL_NOMATCH);
+                }
+            }).error(function(resp) {
+                console.error(resp);        
+            });
+            
+        };
+        
+        self.is_valid_ssn = ko.computed(function() {
+            var ssn_regex = /^\d\d\d-\d\d-\d\d\d\d$/;
+            return ssn_regex.test(self.ssn());  
+        });
+        
+        self.add_to_census = function() {
+            self.loading_message("Adding employee to census...");
+            self.current_panel(self.PANEL_LOADING);
+            ajax_post("/cases/"+self.selected_case()+"/census_records", 
+                {ssn: self.ssn()},
+                function(resp) {
+                    // Go to enrollment
+                    self.enroll_from_record(resp.data.id);
+                }, function(resp) {
+                    bootbox.alert("There was a problem adding a record to the census");
+                }
+            );
+        };
+        
+        self.enroll_from_match = function() {
+            if (self.matched_employees().length == 1) {
+                self.enroll_from_record(self.matched_employees()[0].id);
+            } else {
+                // Use the selected record  
+                var id = self.selected_employee();
+                if (id === null) {
+                    self.matched_employees.error("Please select the census record to enroll.");
+                    return;
+                } 
+                self.enroll_from_record(id);
+            }
+        };
+        
+        self.enroll_from_record = function(id) {
+            self.loading_message("Loading Enrollment Application...");
+            self.current_panel(self.PANEL_LOADING);
+            submit_to_url("{{ url_for('in_person_enrollment') }}", {record_id: id});
+        }
+    };
+
+
+</script>
+
+
+{% endblock %}

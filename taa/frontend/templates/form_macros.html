@@ -1,0 +1,56 @@
+
+{% macro render_field_with_errors(field) %}
+    <div class="form-group">
+        <div class="col-sm-3 control-label">{{ field.label }}</div>
+        <div class="col-sm-9">
+            {{ field(**kwargs)|safe }}
+            {% if field.errors %}
+              <ul class="errors">
+              {% for error in field.errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+              </ul>
+            {% endif %}
+        </div>
+  </div>
+{% endmacro %}
+
+{% macro render_checkbox(field) %}
+    <div class="form-group">            
+        <div class="col-sm-9 col-sm-offset-3">
+            <label class="control-label">
+                {{ field(**kwargs)|safe }} {{field.label}}
+            </label>
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro render_switch(field) %}
+    
+    {{field.label}}
+    {{ field(class_="ace ace-switch ace-switch-6", **kwargs)|safe }}
+    <span class="lbl"></span>
+
+{% endmacro %}
+
+{% macro render_simple_widget(title, body_html, button_text=None, button_classes="btn btn-success", 
+                                button_url=None, toolbox_classes="center") %}
+    <div class="widget-box">
+        <div class="widget-header widget-header-flat">
+            <h4 class="widget-title">{{ title }}</h4>
+        </div>
+
+        <div class="widget-body">
+            <div class="widget-main">
+                {{ body_html | safe}}
+            </div>
+            {% if button_text %}
+            <div class="widget-toolbox clearfix padding-8 {{ toolbox_classes }}">
+                <a class="{{ button_classes }}" href="{{ button_url }}"
+                                         role="button">{{ button_text }}</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% endmacro %}
+

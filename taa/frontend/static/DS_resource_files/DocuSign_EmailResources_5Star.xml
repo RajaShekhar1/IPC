@@ -1,0 +1,4740 @@
+<root>
+<language twoletterisoname="">
+	<data name="AccountActivationFailed_HtmlBody"><html><head>
+<title>Account Activation Failed</title>
+[[StyleSheet]]
+</head>
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SenderName]] at [[SenderCompany]]</p>
+			</td>
+		</tr>
+
+		<tr>
+			<td colspan="10">				
+			<p>[[SenderName]],</p>
+			<p>[[RecipientName]] was unable to pass the security check, and was therefore unable to activate their account.</p>
+			<p>To unlock the activation, go to Manage Users, select the user, and click &amp;quot;Send Activation&amp;quot;. You will have the opportunity to re-enter the same or new code, or send without an access code.</p> 
+			<p>Be sure to communicate the access code to the user.</p>
+			</td>
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="AccountActivationFailed_PlainTextBody">[[SenderName]],
+
+[[RecipientName]] was unable to pass the security check, and was therefore unable to activate their account.
+
+To unlock the activation, go to  Manage Users, select the user, and click 'Send Activation'. You will have the opportunity to re-enter the same or new code, or send without an access code. 
+
+Be sure to communicate the access code to the user.
+
+This message was sent on behalf of [[SupportName]] by the DocuSign Online Signing Service. If you have questions, send email to [[SupportEmail]].</data>
+	<data name="AccountActivationFailed_Subject">[[SubjectInput]]</data>
+	<data name="AccountActivationFailed_Title">Account activation failed</data>
+	<data name="AgentNotification_HtmlBody"><html><head>
+<title>Agent Notification</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SenderName]] at [[SenderCompany]]</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p class="recipientgreeting">Hello [[RecipientName]],</p>
+			<p>[[EmailBlurb]]</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+			[[FormattedRecipientNote]]
+			</td>
+		</tr>	
+	
+		<tr>
+			<td colspan="10">				
+			<p>Please review the documents "[[Subject]]" and provide contact information for the recipients you represent in this transaction.</p>
+			</td>
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View Documents</a></td>
+			<td colspan="3"></td>		
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="AgentNotification_PlainTextBody">[[RecipientName]] ([[RecipientEmail]]),
+[[EmailBlurb]]
+[[RecipientNote]]
+Click the link below to review the documents to be signed by the recipients you represent.
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SenderEmail]].</data>
+	<data name="AgentNotification_Subject">[[SubjectInput]]</data>
+	<data name="AgentNotification_Title">Please review and complete the recipient information for the documents</data>
+	<data name="BCCEmailActivation_HtmlBody"><html><head>
+<title>BCC Email Activation</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of DocuSign</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+			<p>This email message has been sent because you have activated the email BCC archiving feature for your account. Please
+			click on the link below to complete the process.</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">Activate BCC Archiving</a></td>
+			<td colspan="3"></td>		
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access this information by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="BCCEmailActivation_PlainTextBody">This email message has been sent because you have activated the email BCC archiving feature for your account. Please click on the link below to complete the process.
+
+[[QuickURL]]
+</data>
+	<data name="BCCEmailActivation_Subject">DocuSign Account BCC Activation Confirmation</data>
+	<data name="BCCEmailActivation_Title">Blind Carbon Copy Email Activation</data>
+	<data name="CarbonCopyNotification_HtmlBody"><html><head>
+<title>Carbon Copy Notification</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td class="sectionheader">From:</td>
+			<td><img class="senderphoto" height="40" width="40" src="[[SenderThumbnailImage]]" alt="sender image" /></td>
+			<td colspan="8"><div class="sendername">[[SenderName]] ([[SenderEmail]])</div><div>[[SenderCompany]]</div></td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p class="recipientgreeting">Hello [[RecipientName]],</p>
+			<p>[[EmailBlurb]]</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+			[[FormattedRecipientNote]]
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+			<p>[[SenderName]] has added you as a carbon copy recipient of an electronic signature envelope on the DocuSign Service.</p>
+            <p>To view the documents, recipients, and other information, please click &amp;quot;View&amp;quot; below.</p>
+			</td>
+		</tr>		
+
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View Documents</a></td>
+			<td colspan="3"></td>	
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+		
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="CarbonCopyNotification_PlainTextBody">[[RecipientName]],
+    
+[[EmailBlurb]]
+[[RecipientNote]]
+
+[[SenderName]] has added you as a carbon copy recipient of an electronic signature envelope on the DocuSign Service.
+
+To view the documents, recipients, and other information, please click the link below.
+
+[[QuickURL]]
+
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SenderEmail]].</data>
+	<data name="CarbonCopyNotification_Subject">[[SubjectInput]]</data>
+	<data name="CarbonCopyNotification_Title">Carbon Copy</data>
+	<data name="CarbonCopyNotificationDocuSignIt_HtmlBody"><div>
+<style media="screen and (max-width: 500px)">
+#logoimg {
+  width: 75px !important;
+  height: 45px !important;
+}
+h2 {
+  margin: 0 !important;
+  font-size: 18px !important;
+  text-indent: 0px !important;
+}
+h3 {
+  font-size: 16px !important;
+  text-indent: 0px !important;
+}
+p {
+  margin-left: 5px !important;
+}
+#intro {
+  margin-top: 0 !important;
+}
+#biz {
+  display: none !important;
+}
+#button-border {
+  margin: 0 !important;
+}
+#button {
+  margin: 0 !important;
+}
+</style>
+<style media="screen and (max-width: 10px)">
+#logoimg {
+  width: 140px !important;
+  height: 90px !important;
+}
+h2 {
+  margin: 22px 0 0 0 !important;
+  font-size: 22px !important;
+  text-indent: 20px !important;
+}
+h3 {
+  font-size: 18px !important;
+  text-indent: 20px !important;
+}
+p {
+  margin-left: 160px !important;
+}
+#intro {
+  margin-top: 50px !important;
+}
+#biz {
+  display: inline !important;
+}
+#button-border {
+  margin: 50px 0 50px 160px !important;
+  background-color: #555555;
+  padding: 1px;
+}
+#button {
+  width: 160px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  font-family: Verdana;
+  font-weight: normal;
+  color: #555555;
+  border-style: solid;
+  border-color: #FFC423;
+  border-width: 10px;
+}
+</style>
+<table width="100%"><tr><td style="background-color: #F2F0ED; font-family: helvetica; font-size: 14px">
+<img style="width: 140px; height:90px"
+	 id="logoimg"
+	 align="left"
+	 src="[[InkLogoPath]]" />
+<h2 style="color: #1E4CA1; font-size: 22px; margin: 22px 0 0 0; text-indent: 20px">DocuSign</h2>
+<h3 style="font-size: 18px; color: #555555; margin: 2px 0; text-indent: 20px">Carbon Copy</h3>
+<br clear="left"/>
+<p id="intro" style="margin-left: 160px; margin-top: 50px; color: #555555">
+[[RecipientName]] ([[RecipientEmail]]),
+</p>
+<p style="margin-left: 160px; color: #555555; max-width: 360px">
+<strong>[[EmailBlurb]]</strong>
+</p>
+<p style="margin-left: 160px; color: #555555; max-width: 360px">
+<strong>[[RecipientNote]]</strong>
+</p>
+<p style="margin-left: 160px; color: #555555; max-width: 360px">
+[[SenderName]] has added you as a carbon copy recipient of an electronically signed document.<br/><br/>To view the document, recipients and other information, please click the "View" button below.
+</p>
+
+<table id="button-border" style="margin-left: 160px" cellspacing="0" cellpadding="0"><tr><td>
+<a id="button" style="display: block; width: 180px; height: 50px; text-align: center; line-height: 50px; background-color: #FFC423; font-size: 20px; color: black !important; text-decoration: none; border-radius: 6px; margin: 50px 0; box-shadow: 2px 2px 2px #7C6014 !important;"
+		 href="[[QuickURL]]">&amp;nbsp;&amp;nbsp;View&amp;nbsp;&amp;nbsp;</a>
+</td></tr></table>
+
+<p style="margin-left: 160px; color: #555555">
+
+</p>
+<table style="margin: 0 5px; border: 1px solid #D0D0D0; border-radius: 6px; font-family: helvetica; font-size: 12px"
+       id="foot" cellpadding="8" cellspacing="0" width="98%"><tr>
+<td style="font-weight: bold; background-color: #E6E4E2; width: 70px">Learn&amp;nbsp;More:</td>
+<td style="color: #1e4CA1">
+<a style="text-decoration: none; color: #1e4CA1"
+   href="http://www.docusign.com/campaigns/try">Learn More about DocuSign</a>
+<span style="color:555555"> | </span>
+<a style="text-decoration: none; color: #1e4CA1"
+   href="https://www.docusign.com/products/editions">Upgrade</a>
+</td>
+</tr></table>
+<br/>
+&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;<img src="[[DocuSignLogoTagLinePath]]" />
+<p style="margin-left: 5px; font-size: 9px; color: #555555">If you have questions regarding this notification or any enclosed documents requiring your signature, please contact the sender directly. For technical assistance with the signing process, you can email <a style="text-decoration: none; color: #1e4CA1" href="[[SupportURL]]">support</a>.</p>
+<p style="margin-left: 5px; font-size: 9px; color: #555555">This message was sent to you by [[SenderName]] who is using the DocuSign Electronic Signature Service. If you would rather not receive email from this sender you may contact the sender with your request.</p>
+<hr color="#1E4CA1" style="height: 20px" />
+</td></tr></table>
+</div>
+</data>
+	<data name="CarbonCopyNotificationDocuSignIt_PlainTextBody">[[SignerList]] used DocuSign to sign [[Subject]] and would like you to receive a copy.
+
+To view this signed document click the link below.
+
+[[QuickURL]]
+
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.</data>
+	<data name="CarbonCopyNotificationDocuSignIt_Subject">[[SubjectInput]]</data>
+	<data name="CarbonCopyNotificationDocuSignIt_Title">Carbon Copy</data>
+	<data name="CertifiedDeliveryNotification_HtmlBody"><html><head>
+<title>Certified Delivery Notification</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td class="sectionheader">From:</td>
+			<td><img class="senderphoto" height="40" width="40" src="[[SenderThumbnailImage]]" alt="sender image" /></td>
+			<td colspan="8"><div class="sendername">[[SenderName]] ([[SenderEmail]])</div><div>[[SenderCompany]]</div></td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p class="recipientgreeting">Hello [[RecipientName]],</p>
+			<p>[[EmailBlurb]]</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+			[[FormattedRecipientNote]]
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">
+             <p>[[SenderName]] has added you as a certified copy recipient of an electronic signature envelope on the DocuSign Service.</p>
+             <p>To view the documents, recipients, and other information, please click &amp;quot;View&amp;quot; below.</p>
+			</td>
+		</tr>		
+
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View Documents</a></td>
+			<td colspan="3"></td>	
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="CertifiedDeliveryNotification_PlainTextBody">[[RecipientName]],
+[[EmailBlurb]] 
+[[RecipientNote]]
+To review your documents click the link below. 
+[[QuickURL]] 
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started. 
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SenderEmail]].</data>
+	<data name="CertifiedDeliveryNotification_Subject">[[SubjectInput]]</data>
+	<data name="CertifiedDeliveryNotification_Title">Certified Delivery</data>
+	<data name="ChangeEmailConfirm_HtmlBody"><html><head>
+<title>Change Email Confirmation</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of DocuSign</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">				
+			<p>[[UserName]],</p>
+			<p>[[SupportName]] has received your request to change the Email Address that you use with [[ProductName]]. </p>
+			<p>To confirm that you have access to your NEW EMAIL ADDRESS, you must click below:</p>
+			</td>
+		</tr>	
+
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">Confirm Email Address</a></td>
+			<td colspan="3"></td>		
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="ChangeEmailConfirm_PlainTextBody">[[UserName]],
+[[SupportName]] has received your request to change the Email Address that you use with [[ProductName]].
+To confirm that you have access to your NEW EMAIL ADDRESS, you must click the link below:
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SupportName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SupportEmail]].</data>
+	<data name="ChangeEmailConfirm_Subject">Confirm your Email Address Change</data>
+	<data name="ChangeEmailConfirm_Title">Please confirm your email address</data>
+	<data name="ChangeEmailNotice_HtmlBody"><html><head>
+<title>Change Email Notice</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of DocuSign</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p>[[UserName]],</p>
+			<p>[[SupportName]] has received a request to change the Email Address that you use with [[ProductName]]. A confirmation email was sent to the new email address [[NewEmail]]</p>
+			<p>If you DID NOT request to change your email address, you should immediately notify [[SupportName]] at [[SupportEmail]].</p>
+			</td>
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="ChangeEmailNotice_PlainTextBody">[[UserName]],
+[[SupportName]] has received a request to change the Email Address that you use with [[ProductName]].  A confirmation email was sent to the new email address [[NewEmail]]
+If you DID NOT request to change your email address, you should immediately notify [[SupportName]] at [[SupportEmail]].  
+This message was sent on behalf of [[SupportName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SupportEmail]].</data>
+	<data name="ChangeEmailNotice_Subject">Notice of Email Address Change</data>
+	<data name="ChangeEmailNotice_Title">Email address change request</data>
+	<data name="ChangePasswordRequest_HtmlBody"><html><head>
+<title>Change Password Request</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of DocuSign</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+            <p>[[UserName]],</p>
+            <p>[[SupportName]] has received your request to change the password you use with [[ProductName]].</p>
+            <p>To change your password, click below: </p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">Update</a></td>
+			<td colspan="3"></td>		
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access this information by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="ChangePasswordRequest_PlainTextBody">[[UserName]],
+[[SupportName]] has received your request to change the password you use with [[ProductName]].
+To change your password, click the link below 
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SupportName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SupportEmail]].</data>
+	<data name="ChangePasswordRequest_Subject">Changing your Password</data>
+	<data name="ChangePasswordRequest_Title">Password request</data>
+	<data name="ChangeSigner_HtmlBody"><html><head>
+<title>Change Signer</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td class="sectionheader">From:</td>
+			<td><img class="senderphoto" height="40" width="40" src="[[SenderThumbnailImage]]" alt="sender image" /></td>
+			<td colspan="8"><div class="sendername">[[SenderName]] ([[SenderEmail]])</div><div>[[SenderCompany]]</div></td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p>[[SenderName]],</p>
+			<p>[[OriginalRecipientName]] has changed signing responsibility to [[NewRecipientName]]. [[OriginalRecipientName]] will be sent a copy of the document when all parties have completed signing.</p>
+			<p>To review the documents, please click below.</p>
+			</td>
+		</tr>
+
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View Documents</a></td>
+			<td colspan="3"></td>		
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="ChangeSigner_PlainTextBody">[[SenderName]],
+[[OriginalRecipientName]] has changed signing responsibility to [[NewRecipientName]]. [[OriginalRecipientName]] will be sent a copy of the document when all parties have completed signing.
+To review the documents, please click the link below.
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[OriginalRecipientName]] by the DocuSign Online Signing Service.  If you would like to contact the new recipient, you can send email to [[NewRecipientEmail]].</data>
+	<data name="ChangeSigner_Subject">Change in Signers</data>
+	<data name="ChangeSigner_Title">Signer replacement</data>
+	<data name="DocumentMarkupActivation_HtmlBody"><html><head>
+<title>Document Markup Activation</title>
+[[StyleSheet]]
+</head>  
+<body>
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SenderName]] at [[SenderCompany]]</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+			<p>[[RecipientName]] ([[RecipientEmail]]),</p>
+			<p>The documents you recently signed "[[Subject]]" has some recommended changes. Please click below to review the changes.</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View Documents</a></td>
+			<td colspan="3"></td>		
+		</tr>	
+		
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="DocumentMarkupActivation_PlainTextBody">[[RecipientName]] ([[RecipientEmail]]),
+The documents you recently signed "[[Subject]]" has some recommended changes. Please click on the link below to review the changes.
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SenderEmail]].</data>
+	<data name="DocumentMarkupActivation_Subject">Suggested changes to "[[SubjectInput]]"</data>
+	<data name="DocumentMarkupActivation_Title">Please review suggested changes</data>
+	<data name="EnvelopeActivation_HtmlBody"><html><head>
+<title>Envelope Activation</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td class="sectionheader">From:</td>
+			<td><img class="senderphoto" height="40" width="40" src="[[SenderThumbnailImage]]" alt="sender image" /></td>
+			<td colspan="8"><div class="sendername">[[SenderName]] ([[SenderEmail]])</div><div>[[SenderCompany]]</div></td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p class="recipientgreeting">Hello [[RecipientName]],</p>
+			<p>[[EmailBlurb]]</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+			[[FormattedRecipientNote]]
+			</td>
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View Documents</a></td>
+			<td colspan="3"></td>	
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="EnvelopeActivation_PlainTextBody">[[EmailBlurb]]
+To sign your documents click the link below.
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SenderEmail]].</data>
+	<data name="EnvelopeActivation_Subject">[[SubjectInput]]</data>
+	<data name="EnvelopeActivation_Title">Please review and sign your document</data>
+	<data name="EnvelopeActivationDocuSignIt_HtmlBody"><div>
+<style media="screen and (max-width: 500px)">
+#logoimg {
+  width: 75px !important;
+  height: 45px !important;
+}
+h2 {
+  margin: 0 !important;
+  font-size: 18px !important;
+  text-indent: 0px !important;
+}
+h3 {
+  font-size: 16px !important;
+  text-indent: 0px !important;
+}
+p {
+  margin-left: 5px !important;
+}
+#intro {
+  margin-top: 0 !important;
+}
+#biz {
+  display: none !important;
+}
+#button-border {
+  margin: 0 !important;
+}
+#button {
+  margin: 0 !important;
+}
+</style>
+<style media="screen and (max-width: 10px)">
+#logoimg {
+  width: 140px !important;
+  height: 90px !important;
+}
+h2 {
+  margin: 22px 0 0 0 !important;
+  font-size: 22px !important;
+  text-indent: 20px !important;
+}
+h3 {
+  font-size: 18px !important;
+  text-indent: 20px !important;
+}
+p {
+  margin-left: 160px !important;
+}
+#intro {
+  margin-top: 50px !important;
+}
+#biz {
+  display: inline !important;
+}
+#button-border {
+  margin: 50px 0 50px 160px !important;
+  background-color: #555555;
+  padding: 1px;
+}
+#button {
+  width: 160px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  font-family: Verdana;
+  font-weight: normal;
+  color: #555555;
+  border-style: solid;
+  border-color: #FFC423;
+  border-width: 10px;
+}
+</style>
+<table width="100%"><tr><td style="background-color: #F2F0ED; font-family: helvetica; font-size: 14px">
+<img style="width: 140px; height:90px"
+	 id="logoimg"
+	 align="left"
+	 src="[[InkLogoPath]]" />
+<h2 style="color: #1E4CA1; font-size: 22px; margin: 22px 0 0 0; text-indent: 20px">DocuSign</h2>
+<h3 style="font-size: 18px; color: #555555; margin: 2px 0; text-indent: 20px">Please review &amp; sign your document</h3>
+<br clear="left"/>
+<p id="intro" style="margin-left: 160px; margin-top: 50px; color: #555555">
+[[RecipientName]] ([[RecipientEmail]]),
+</p>
+<p style="margin-left: 160px; color: #555555; max-width: 360px">
+<strong>[[EmailBlurb]]</strong>
+</p>
+<p style="margin-left: 160px; color: #555555; max-width: 360px">
+<strong>[[RecipientNote]]</strong>
+</p>
+<p style="margin-left: 160px; color: #555555; max-width: 360px">
+Please review this document that was sent to you by [[SenderName]].
+</p>
+
+<table id="button-border" style="margin-left: 160px" cellspacing="0" cellpadding="0"><tr><td>
+<a id="button" style="display: block; width: 180px; height: 50px; text-align: center; line-height: 50px; background-color: #FFC423; font-size: 20px; color: black !important; text-decoration: none; border-radius: 6px; margin: 50px 0; box-shadow: 2px 2px 2px #7C6014 !important;"
+		 href="[[QuickURL]]">&amp;nbsp;&amp;nbsp;Review&amp;nbsp;&amp;nbsp;</a>
+</td></tr></table>
+
+<p style="margin-left: 160px; color: #555555">
+
+</p>
+<table style="margin: 0 5px; border: 1px solid #D0D0D0; border-radius: 6px; font-family: helvetica; font-size: 12px"
+       id="foot" cellpadding="8" cellspacing="0" width="98%"><tr>
+<td style="font-weight: bold; background-color: #E6E4E2; width: 70px">Learn&amp;nbsp;More:</td>
+<td style="color: #1e4CA1">
+<a style="text-decoration: none; color: #1e4CA1"
+   href="http://www.docusign.com/campaigns/try">Learn More about DocuSign</a>
+<span style="color:555555"> | </span>
+<a style="text-decoration: none; color: #1e4CA1"
+   href="https://www.docusign.com/products/editions">Upgrade</a>
+</td>
+</tr></table>
+<br/>
+&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;<img src="[[DocuSignLogoTagLinePath]]" />
+<p style="margin-left: 5px; font-size: 9px; color: #555555">If you have questions regarding this notification or any enclosed documents requiring your signature, please contact the sender directly. For technical assistance with the signing process, you can email <a style="text-decoration: none; color: #1e4CA1" href="[[SupportURL]]">support</a>.</p>
+<p style="margin-left: 5px; font-size: 9px; color: #555555">This message was sent to you by [[SenderName]] who is using the DocuSign Electronic Signature Service. If you would rather not receive email from this sender you may contact the sender with your request.</p>
+<hr color="#1E4CA1" style="height: 20px" />
+</td></tr></table>
+</div>
+</data>
+	<data name="EnvelopeActivationDocuSignIt_PlainTextBody">Please review &amp; sign your document
+
+Here is your document to sign.
+Thank you for choosing 5Star Life Insurance!
+
+To sign your documents click the link below.
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.</data>
+	<data name="EnvelopeActivationDocuSignIt_Subject">[[SubjectInput]]</data>
+	<data name="EnvelopeActivationDocuSignIt_Title">Please review &amp; sign your document</data>
+	<data name="EnvelopeActivationFailed_HtmlBody"><html><head>
+<title>Envelope Activation Failed</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td class="sectionheader">From:</td>
+			<td><img class="senderphoto" height="40" width="40" src="[[SenderThumbnailImage]]" alt="sender image" /></td>
+			<td colspan="8"><div class="sendername">[[SenderName]] ([[SenderEmail]])</div><div>[[SenderCompany]]</div></td>
+		</tr>
+
+		<tr>
+			<td colspan="10">				
+				<p>[[SenderName]],</p>
+				<p>[[RecipientName]] has been unable to pass the security check (e.g. Access Code or ID Check) for the envelope '[[Subject]]'.</p>
+				<p>To change the security checks and resend emails, click below. (You will NOT be charged for another delivery):</p>
+			</td>
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">Update</a></td>
+			<td colspan="3"></td>		
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access this information by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="EnvelopeActivationFailed_PlainTextBody">[[SenderName]],
+[[RecipientName]] has been unable to pass their security check (e.g. Access Code or ID Check) for the envelope '[[Subject]]'.
+To change the security checks and resend emails, click the link below. (You will NOT be charged for another delivery):
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SupportName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SupportEmail]].</data>
+	<data name="EnvelopeActivationFailed_Subject">Failed Access: [[SubjectInput]]</data>
+	<data name="EnvelopeActivationFailed_Title">Envelope activation failed</data>
+	<data name="EnvelopeActivationFailedDocuSignIt_HtmlBody"><html>
+<head>
+    <title>EnvelopeActivationFailedDocuSignIt</title>
+    <style type="text/css">
+        a.action, a.action:visited
+        {
+            white-space: nowrap;
+            color: #67215f;
+            display: block;
+            text-align: left;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .TableOuter
+        {
+            background-color: #67215f;
+        }
+        .CellStyle
+        {
+            padding-bottom: 80px;
+            font-size: 12px;
+            font-family: Arial, Helvetica, sans-serif;
+            border-left: solid 3px #CCCCCC;
+            border-right: solid 3px #CCCCCC;
+            border-bottom: solid 3px #CCCCCC;
+            background-color: #FFFFFF;
+            -moz-border-radius: 0px 0px 8px 8px;
+            -webkit-border-radius: 0px 0px 8px 8px;
+            border-radius: 0px 0px 8px 8px;
+        }
+        .BottomTextStyle 
+        {
+        	color:#ffffff;
+        }
+    </style>
+</head>
+<body>
+    <table class="TableOuter" cellspacing="0" cellpadding="20" border="0" align="center" width="600">
+        <tr>
+            <td>
+                <table cellspacing="0" cellpadding="0" align="center" border="0" width="580">
+                    <tr><td><img style="vertical-align:bottom;" border="0" src="[[LogoPath]]" /></td></tr>
+                    <tr><td class="CellStyle">
+                            <table cellspacing="0" cellpadding="10" align="center" border="0">
+                                <tr>
+                                    <td style="font-family: Arial, Helvetica, sans-serif;">
+                                        <font style="color: #090909; font-weight: bold; font-size: 18px;">DocuSign - How It Works for eMail</font>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-family: Arial, Helvetica, sans-serif;">
+                                        DocuSign lets you sign and send any kind of emailed document—all in the cloud. <a href="https://www.docusign.com/products/docusignink/hiw-email">learn more</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-family: Arial, Helvetica, sans-serif;">
+                                    Important - [[Error]]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-family: Arial, Helvetica, sans-serif;">
+                                        Please contact <a href="mailto:support@docusign.com">support@docusign.com</a> if you have any questions.
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html></data>
+	<data name="EnvelopeActivationFailedDocuSignIt_PlainTextBody">DocuSign - How It Works for eMail 
+
+DocuSign lets you sign and send any kind of emailed document—all in the cloud.  To learn more https://www.docusign.com/products/docusignink/hiw-email.
+
+Important - [[Error]]</data>
+	<data name="EnvelopeActivationFailedDocuSignIt_Subject">[[SubjectInput]]</data>
+	<data name="EnvelopeActivationFailedDocuSignIt_Title">Signing Creation Failed</data>
+	<data name="EnvelopeActivationWithNoNotarySelected_HtmlBody"><html><head>
+<title>EnvelopeActivationWithNoNotarySelected</title>
+[[StyleSheet]]
+</head>
+<body>  
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td class="sectionheader">From:</td>
+			<td><img class="senderphoto" height="40" width="40" src="[[SenderThumbnailImage]]" alt="sender image" /></td>
+			<td colspan="8"><div class="sendername">[[SenderName]] ([[SenderEmail]])</div><div>[[SenderCompany]]</div></td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p class="recipientgreeting">Hello [[RecipientName]],</p>
+			<p>[[SenderName]] has requested their documents to be signed and notarized.</p></td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">	
+			<p>[[EmailBlurb]]</p>
+			
+			<p>[[FormattedRecipientNote]]</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">			
+			<p>In order to sign and notarize the documents, you must first select a notary public. Please locate a notary public and request that they witness your signing using the "Assign a Notary" link below.</p>
+			</td>
+		</tr>	
+	
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[AssignNotaryURL]]" target="_blank">Assign a Notary</a></td>
+			<td colspan="3"></td>		
+		</tr>		
+
+		<tr>
+			<td colspan="10">				
+			<p>In the meantime, you can review the documents which you will be asked to sign:</p>
+			</td>
+		</tr>
+   
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">Review Documents</a></td>
+			<td colspan="3"></td>	
+		</tr>	  
+	  
+		<tr>
+			<td colspan="10">
+	    	<p>Thank you!</p>	
+	    	<p>[[SenderName]]</p>		
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="EnvelopeActivationWithNoNotarySelected_PlainTextBody">[[EmailTitle]]
+From: [[SenderName]] ([[SenderEmail]])[[SenderCompany]]
+
+Hello [[RecipientName]],
+
+	The sender has requested their documents to be signed and notarized.
+	In order to sign and notarize the documents, you must first select a DocuSign Notary. Please locate a notary and assign them to the envelope by having them register using the "Assign a Notary" link below. 
+
+	[[AssignNotaryURL]]
+
+	If you like, you may click the "Preview Documents" link below prior to the signing session to preview the documents you will be signing with the notary.
+
+	[[PreviewURL]]
+
+	Thank you!	
+	[[SenderName]]			
+
+	Find a Notary [[FindNotaryUrl]]
+	
+Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the "Access Documents" link, and using this security code: [[DocumentCode]]
+
+DocuSign. The fastest way to get a signature.®
+[[EmailSupport]]          
+[[WhiteListText]]</data>
+	<data name="EnvelopeActivationWithNoNotarySelected_Subject">[[SubjectInput]]</data>
+	<data name="EnvelopeActivationWithNoNotarySelected_Title">Please review and sign your document</data>
+	<data name="EnvelopeActivationWithNotarySelected_HtmlBody"><html><head>
+<title>EnvelopeActivationWithNotarySelected</title>
+[[StyleSheet]]
+</head>  
+<body>
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td class="sectionheader">From:</td>
+			<td><img class="senderphoto" height="40" width="40" src="[[SenderThumbnailImage]]" alt="sender image" /></td>
+			<td colspan="8"><div class="sendername">[[SenderName]] ([[SenderEmail]])</div><div>[[SenderCompany]]</div></td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p class="recipientgreeting">Hello [[RecipientName]],</p>
+			<p>[[SenderName]] has requested that you electronically sign documents while witnessed by a notary public.</p></td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">	
+			<p>[[EmailBlurb]]</p>
+			
+			<p>[[FormattedRecipientNote]]</p>
+			</td>
+		</tr>
+
+		<tr>
+			<td colspan="10">				
+			<p>The following notary public will contact you to schedule a convenient time and location to conduct the signing ceremony:</p>
+			
+			<p>
+				[[NotaryName]]<br />
+				[[NotaryEmail]]<br />
+				[[NotaryPhone]]<br />
+				[[NotaryAddress]]
+			</p>
+
+			<p>In the meantime, you can review the documents which you will be asked to sign:</p>
+			</td>
+		</tr>
+   
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">Review Documents</a></td>
+			<td colspan="3"></td>	
+		</tr>	  
+	  
+		<tr>
+			<td colspan="10">
+	    	<p>Thank you!</p>	
+	    	<p>[[SenderName]]</p>		
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="EnvelopeActivationWithNotarySelected_PlainTextBody">[[EmailTitle]]
+From: [[SenderName]] ([[SenderEmail]])[[SenderCompany]]
+
+Hello [[RecipientName]],
+
+	You've been specified to sign and notarize with the following DocuSign Notary:
+
+	[[NotaryName]]
+	[[NotaryEmail]]
+	[[NotaryPhone]]
+	[[NotaryAddress]]
+
+	The notary will be in touch with you shortly to schedule a signing appointment time and location.
+
+	In the meantime, you can click the link below to preview the documents you will be signing during the notary session.
+
+	[[PreviewURL]]
+
+	Thank you!	
+	[[SenderName]]			
+			
+	Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the "Access Documents" link, and using this security code: [[DocumentCode]]
+
+DocuSign. The fastest way to get a signature.®
+[[EmailSupport]]          
+[[WhiteListText]]</data>
+	<data name="EnvelopeActivationWithNotarySelected_Subject">[[SubjectInput]]</data>
+	<data name="EnvelopeActivationWithNotarySelected_Title">Please review and sign your document</data>
+	<data name="EnvelopeCorrected_HtmlBody"><html><head>
+<title>Envelope Corrected</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SenderName]] at [[SenderCompany]]</p>
+			</td>
+		</tr>
+
+		<tr>
+			<td colspan="10">				
+				<p>[[RecipientName]],</p>
+				<p>[[SenderName]] has corrected the envelope '[[Subject]]'. As a result, you can no longer access this envelope.</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td class="footer" colspan="10">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="EnvelopeCorrected_PlainTextBody">[[RecipientName]],    
+[[SenderName]] has corrected the envelope '[[Subject]]'   As a result, you can no longer access this envelope.      
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SenderEmail]].</data>
+	<data name="EnvelopeCorrected_Subject">Corrected: [[SubjectInput]]</data>
+	<data name="EnvelopeCorrected_Title">Envelope Corrected</data>
+	<data name="EnvelopeDeclined_HtmlBody"><html><head>
+<title>Envelope Declined</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td class="sectionheader">From:</td>
+			<td><img class="senderphoto" height="40" width="40" src="[[SenderThumbnailImage]]" alt="sender image" /></td>
+			<td colspan="8"><div class="sendername">[[SenderName]] ([[SenderEmail]])</div><div>[[SenderCompany]]</div></td>
+		</tr>
+
+		<tr>
+			<td colspan="10">				
+				<p>[[RecipientName]],</p>
+				<p>[[DeclinerName]] has declined the envelope '[[Subject]]' (ID:[[EnvelopeID]]). <br/>As a result, the envelope has been marked as declined and cannot be completed.</p>
+				<p>To view the declined document, click the link below:</p>
+			</td>
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View in DocuSign</a></td>
+			<td colspan="3"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="EnvelopeDeclined_PlainTextBody">[[RecipientName]],
+[[DeclinerName]] has declined the envelope '[[Subject]]' (ID:[[EnvelopeID]]).
+As a result, the envelope has been marked as declined and cannot be completed.
+To view the declined document, click the link below:
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SenderEmail]].</data>
+	<data name="EnvelopeDeclined_Subject">Declined: [[SubjectInput]]</data>
+	<data name="EnvelopeDeclined_Title">Envelope Declined</data>
+	<data name="EnvelopePaymentFailedSender_HtmlBody"><html><head>
+<title>Envelope Payment Failed Sender</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of DocuSign</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">				
+				<p>[[SenderName]],</p>
+				<p>[[Information]] has failed for [[RecipientName]] because: [[Error]]</p>
+				<p>Please check your account and resolve this problem directly with [[RecipientName]].</p>
+			</td>
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View Documents</a></td>
+			<td colspan="3"></td>		
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="EnvelopePaymentFailedSender_PlainTextBody">[[SenderName]],
+[[Information]] has failed in envelope [[EnvelopeID]] for [[RecipientName]] because: [[Error]]
+Please check your account and resolve this problem directly with [[RecipientName]].</data>
+	<data name="EnvelopePaymentFailedSender_Subject">Payment Resolution Issue: [[Subject]]</data>
+	<data name="EnvelopePaymentFailedSender_Title">Payment Resolution Issue</data>
+	<data name="EnvelopePaymentFailedSigner_HtmlBody"><html><head>
+<title>Envelope Payment Failed Signer</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SenderName]] at [[SenderCompany]]</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+			<p>[[RecipientName]],</p>
+			<p>[[Information]] has failed.</p>
+			<p>Please contact <a class="LinkStyle" href="mailto:[[SenderEmail]]">[[SenderName]]</a> at [[SenderCompany]] to resolve.</p>
+			</td>
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View Documents</a></td>
+			<td colspan="3"></td>		
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="EnvelopePaymentFailedSigner_PlainTextBody">[[RecipientName]],
+[[Information]] has failed.
+Please contact [[SenderName]] ([[SenderEmail]]) at [[SenderCompany]] to resolve.
+
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service.</data>
+	<data name="EnvelopePaymentFailedSigner_Subject">Payment Resolution Issue: [[Subject]]</data>
+	<data name="EnvelopePaymentFailedSigner_Title">Payment Resolution Issue</data>
+	<data name="EnvelopeVoided_HtmlBody"><html><head>
+<title>Envelope Voided</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td class="sectionheader">From:</td>
+			<td><img class="senderphoto" height="40" width="40" src="[[SenderThumbnailImage]]" alt="sender image" /></td>
+			<td colspan="8"><div class="sendername">[[SenderName]] ([[SenderEmail]])</div><div>[[SenderCompany]]</div></td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">				
+				<p>[[RecipientName]],</p>
+				<p>[[SenderName]] has voided the envelope '[[Subject]]' (ID:[[EnvelopeID]]) for the following reasons:</p>
+				<p><b>[[VoidReason]]</b></p>
+				<p>As a result, the envelope has been marked as voided and can no longer be accessed.</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>		
+	
+		<tr>
+			<td class="footer" colspan="10">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="EnvelopeVoided_PlainTextBody">[[RecipientName]],
+[[SenderName]] has voided the envelope '[[Subject]]' (ID:[[EnvelopeID]]) for the following reasons: 
+[[VoidReason]] 
+As a result, the envelope has been marked as voided and can no longer be accessed.
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SenderEmail]].</data>
+	<data name="EnvelopeVoided_Subject">Voided: [[SubjectInput]]</data>
+	<data name="EnvelopeVoided_Title">Envelope Voided</data>
+	<data name="EnvelopeVoidedDocuSignIt_HtmlBody"><div>
+<style media="screen and (max-width: 500px)">
+#logoimg {
+  width: 75px !important;
+  height: 45px !important;
+}
+h2 {
+  margin: 0 !important;
+  font-size: 18px !important;
+  text-indent: 0px !important;
+}
+h3 {
+  font-size: 16px !important;
+  text-indent: 0px !important;
+}
+p {
+  margin-left: 5px !important;
+}
+#intro {
+  margin-top: 0 !important;
+}
+#biz {
+  display: none !important;
+}
+#button-border {
+  margin: 0 !important;
+}
+#button {
+  margin: 0 !important;
+}
+</style>
+<style media="screen and (max-width: 10px)">
+#logoimg {
+  width: 140px !important;
+  height: 90px !important;
+}
+h2 {
+  margin: 22px 0 0 0 !important;
+  font-size: 22px !important;
+  text-indent: 20px !important;
+}
+h3 {
+  font-size: 18px !important;
+  text-indent: 20px !important;
+}
+p {
+  margin-left: 160px !important;
+}
+#intro {
+  margin-top: 50px !important;
+}
+#biz {
+  display: inline !important;
+}
+#button-border {
+  margin: 50px 0 50px 160px !important;
+  background-color: #555555;
+  padding: 1px;
+}
+#button {
+  width: 160px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  font-family: Verdana;
+  font-weight: normal;
+  color: #555555;
+  border-style: solid;
+  border-color: #FFC423;
+  border-width: 10px;
+}
+</style>
+<table width="100%"><tr><td style="background-color: #F2F0ED; font-family: helvetica; font-size: 14px">
+<img style="width: 140px; height:90px"
+	 id="logoimg"
+	 align="left"
+	 src="[[InkLogoPath]]" />
+<h2 style="color: #1E4CA1; font-size: 22px; margin: 22px 0 0 0; text-indent: 20px">DocuSign</h2>
+<h3 style="font-size: 18px; color: #555555; margin: 2px 0; text-indent: 20px">Envelope Voided</h3>
+<br clear="left"/>
+<p id="intro" style="margin-left: 160px; margin-top: 50px; color: #555555">
+[[RecipientName]] ([[RecipientEmail]]),
+</p>
+<p style="margin-left: 160px; color: #555555; max-width: 360px">
+[[SenderName]] has voided the envelope '[[Subject]]' for the following reason:
+<br/><br/>
+[[VoidReason]]
+<br/><br/>
+As a result, the envelope has been marked as voided and can no longer be accessed.
+<br/><br/>
+</p>
+
+<p style="margin-left: 160px; color: #555555">
+
+</p>
+<table style="margin: 0 5px; border: 1px solid #D0D0D0; border-radius: 6px; font-family: helvetica; font-size: 12px"
+       id="foot" cellpadding="8" cellspacing="0" width="98%"><tr>
+<td style="font-weight: bold; background-color: #E6E4E2; width: 70px">Learn&amp;nbsp;More:</td>
+<td style="color: #1e4CA1">
+<a style="text-decoration: none; color: #1e4CA1"
+   href="http://www.docusign.com/campaigns/try">Learn More about DocuSign</a>
+<span style="color:555555"> | </span>
+<a style="text-decoration: none; color: #1e4CA1"
+   href="https://www.docusign.com/products/editions">Upgrade</a>
+</td>
+</tr></table>
+<br/>
+&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;<img src="[[DocuSignLogoTagLinePath]]" />
+<p style="margin-left: 5px; font-size: 9px; color: #555555">If you have questions regarding this notification or any enclosed documents requiring your signature, please contact the sender directly. For technical assistance with the signing process, you can email <a style="text-decoration: none; color: #1e4CA1" href="[[SupportURL]]">support</a>.</p>
+<p style="margin-left: 5px; font-size: 9px; color: #555555">This message was sent to you by [[SenderName]] who is using the DocuSign Electronic Signature Service. If you would rather not receive email from this sender you may contact the sender with your request.</p>
+<hr color="#1E4CA1" style="height: 20px" />
+</td></tr></table>
+</div>
+</data>
+	<data name="EnvelopeVoidedDocuSignIt_PlainTextBody">[[RecipientName]],
+[[SenderName]] has voided the envelope '[[Subject]]' for the following reason:
+
+[[VoidReason]]
+
+As a result, the envelope has been marked as voided and can no longer be accessed.
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SenderEmail]].</data>
+	<data name="EnvelopeVoidedDocuSignIt_Subject">Voided: [[SubjectInput]]</data>
+	<data name="EnvelopeVoidedDocuSignIt_Title">Envelope Voided</data>
+	<data name="FailedEnvelopeVaulting_HtmlBody"><html><head>
+<title>Failed Envelope Vaulting</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of DocuSign</p>
+			</td>
+		</tr>
+
+		<tr>
+			<td colspan="10">				
+			<p>[[RecipientName]] ([[RecipientEmail]]),</p>
+			<p>The attempt to vault the envelope '[[Subject]]' to eOriginal On Demand has failed due to the following error:</p>
+			<p>[[Error]]</p> 
+			<p>As a result, you cannot access the envelope, [[EnvelopeID]] in eOriginal On Demand.</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="FailedEnvelopeVaulting_PlainTextBody">[[RecipientName]],  
+The attempt to vault the envelope '[[Subject]]' to eOriginal On Demand has failed due to the following error: [[Error]]As a result, you cannot access the envelope, 
+[[EnvelopeID]] in eOriginal On Demand.      
+This message was sent on behalf of [[SupportName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to 
+[[SupportEmail]].</data>
+	<data name="FailedEnvelopeVaulting_Subject">Failed Envelope Vaulting: [[SubjectInput]]</data>
+	<data name="FailedEnvelopeVaulting_Title">Envelope vault failure</data>
+	<data name="FaxReceived_HtmlBody"><html><head>
+<title>Fax Received</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SenderName]] at [[SenderCompany]]</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">				
+			<p>[[UserName]],</p>
+			<p>Your fax has been received and put in envelope [[EnvelopeID]].</p>
+			<p>You have NOT completed your signing since you chose to resume later. To complete your signing, click below:</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button">	<a class="buttonlink" href="[[QuickURL]]" target="_blank">View Documents</a></td>
+			<td colspan="3"></td>		
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="FaxReceived_PlainTextBody">[[UserName]],
+Your fax has been received and put in envelope [[EnvelopeID]].
+You have NOT completed your signing since you chose to resume later. To complete your signing, begin by clicking the link below:
+[[QuickURL]]
+This message was sent on behalf of [[SupportName]] by the DocuSign Online Signing Service. If you have questions, send email to [[SupportEmail]].</data>
+	<data name="FaxReceived_Subject">[[SubjectInput]]</data>
+	<data name="FaxReceived_Title">Fax Received</data>
+	<data name="FaxReceivedWetSign_HtmlBody"><html><head>
+<title>Fax Received Wet Sign</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SenderName]] at [[SenderCompany]]</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">				
+			<p>[[UserName]],</p>
+			<p>Your fax has been received and put in envelope [[EnvelopeID]].</p>
+			<p>Your signing is now complete.</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button">	<a class="buttonlink" href="[[QuickURL]]" target="_blank">View Documents</a></td>
+			<td colspan="3"></td>			
+		</tr>	
+	
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>		
+	
+		<tr>
+			<td class="footer" colspan="10">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="FaxReceivedWetSign_PlainTextBody">[[UserName]],
+Your fax has been received and put in envelope [[EnvelopeID]].
+Your signing is now complete.
+This message was sent on behalf of [[SupportName]] by the DocuSign Online Signing Service. If you have questions, send email to [[SupportEmail]].</data>
+	<data name="FaxReceivedWetSign_Subject">[[SubjectInput]]</data>
+	<data name="FaxReceivedWetSign_Title">Fax Received</data>
+	<data name="ForgottenPassword_HtmlBody"><html><head>
+<title>Forgotten Password</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SenderName]] at [[SenderCompany]]</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">				
+				<p>[[UserName]],</p>
+				<p>[[SupportName]] has received your request to change your password because it has either been misplaced or forgotten. When you originally created your password, you entered the following forgot password questions:</p>
+				<p><strong>[[ForgotPasswordQuestion]]</strong></p>
+				<p>To create a NEW PASSWORD, you must click below and supply the correct answer to the forgot password questions.</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button">	<a class="buttonlink" href="[[QuickURL]]" target="_blank">Answer Question</a></td>
+			<td colspan="3"></td>		
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+	
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="ForgottenPassword_PlainTextBody">[[UserName]],
+[[SupportName]] has received your request to change your password because it has either been misplaced or forgotten. When you originally created your password, you entered the following forgot password questions:
+[[ForgotPasswordQuestion]]
+To create a NEW PASSWORD, you must click the link below and supply the correct answer to the forgot password questions.
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SupportName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SupportEmail]].</data>
+	<data name="ForgottenPassword_Subject">Create a New Password</data>
+	<data name="ForgottenPassword_Title">Password Request</data>
+	<data name="InSessionRecipientEnvelopeSigned_HtmlBody"><html><head>
+<title>InSession Recipient Envelope Signed</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SenderName]] at [[SenderCompany]]</p>
+			</td>
+		</tr>
+
+		<tr>
+			<td colspan="10">				
+			<p><b>[[RecipientName]]</b>,</p>
+			<p>Thank you for signing your documents online today.</p>
+			<p>If you DID NOT electronically view documents from [[SenderName]] today, you should immediately notify us.</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>		
+	
+		<tr>
+			<td class="footer" colspan="10">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="InSessionRecipientEnvelopeSigned_PlainTextBody">[[RecipientName]],
+Thank you for signing your documents online today.
+If you DID NOT electronically sign documents from [[SenderName]] today, you should immediately notify us.  
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service. If you would like to contact the sender, you can send email to [[SenderEmail]].</data>
+	<data name="InSessionRecipientEnvelopeSigned_Subject">Signed: [[SubjectInput]]</data>
+	<data name="InSessionRecipientEnvelopeSigned_Title">Signature Notification</data>
+	<data name="InSessionRecipientEnvelopeViewed_HtmlBody"><html><head>
+<title>InSession Recipient Envelope Viewed</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SenderName]] at [[SenderCompany]]</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+			<p><b>[[RecipientName]]</b>,</p>
+			<p>Thank you for viewing your documents online today.</p>
+			<p>If you DID NOT electronically view documents from [[SenderName]] today, you should immediately notify us.</p>
+			</td>
+		</tr>
+	
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>		
+	
+		<tr>
+			<td class="footer" colspan="10">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="InSessionRecipientEnvelopeViewed_PlainTextBody">[[RecipientName]],
+Thank you for viewing your documents online today.
+If you DID NOT electronically view documents from [[SenderName]] today, you should immediately notify us.  
+This message was sent on behalf of [SenderName]] by the DocuSign Online Signing Service. If you would like to contact the sender, you can send email to [[SenderEmail]].</data>
+	<data name="InSessionRecipientEnvelopeViewed_Subject">Viewed: [[SubjectInput]]</data>
+	<data name="InSessionRecipientEnvelopeViewed_Title">Viewing Notification</data>
+	<data name="InstantAccountActivation_HtmlBody"><html><head>
+<title>Instant Account Activation</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of DocuSign</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+				<p>[[UserName]],</p>
+				<p>Please click the button below to finish your account activation.</p>
+				<p>Thank you for choosing 5Star Life Insurance!</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">Activate</a></td>
+			<td colspan="3"></td>		
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="InstantAccountActivation_PlainTextBody">[[UserName]],
+Please click the button below to finish your account activation.
+Thank you for choosing 5Star Life Insurance!
+[[QuickURL]] 
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+</data>
+	<data name="InstantAccountActivation_Subject">Account Activation</data>
+	<data name="InstantAccountActivation_Title">Account Activation</data>
+	<data name="InstantAccountActivationDocuSignIt_HtmlBody"><div>
+<style media="screen and (max-width: 500px)">
+#logoimg {
+  width: 75px !important;
+  height: 45px !important;
+}
+h2 {
+  margin: 0 !important;
+  font-size: 18px !important;
+  text-indent: 0px !important;
+}
+h3 {
+  font-size: 16px !important;
+  text-indent: 0px !important;
+}
+p {
+  margin-left: 5px !important;
+}
+#intro {
+  margin-top: 0 !important;
+}
+#biz {
+  display: none !important;
+}
+#button-border {
+  margin: 0 !important;
+}
+#button {
+  margin: 0 !important;
+}
+</style>
+<style media="screen and (max-width: 10px)">
+#logoimg {
+  width: 140px !important;
+  height: 90px !important;
+}
+h2 {
+  margin: 22px 0 0 0 !important;
+  font-size: 22px !important;
+  text-indent: 20px !important;
+}
+h3 {
+  font-size: 18px !important;
+  text-indent: 20px !important;
+}
+p {
+  margin-left: 160px !important;
+}
+#intro {
+  margin-top: 50px !important;
+}
+#biz {
+  display: inline !important;
+}
+#button-border {
+  margin: 50px 0 50px 160px !important;
+  background-color: #555555;
+  padding: 1px;
+}
+#button {
+  width: 160px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  font-family: Verdana;
+  font-weight: normal;
+  color: #555555;
+  border-style: solid;
+  border-color: #FFC423;
+  border-width: 10px;
+}
+</style>
+<table width="100%"><tr><td style="background-color: #F2F0ED; font-family: helvetica; font-size: 14px">
+<img style="width: 140px; height:90px"
+	 id="logoimg"
+	 align="left"
+	 src="[[InkLogoPath]]" />
+<h2 style="color: #1E4CA1; font-size: 22px; margin: 22px 0 0 0; text-indent: 20px">Welcome to DocuSign</h2>
+<h3 style="font-size: 18px; color: #555555; margin: 2px 0; text-indent: 20px">Please activate your account</h3>
+<br clear="left"/>
+<p id="intro" style="margin-left: 160px; margin-top: 50px; color: #555555">
+[[UserName]],
+</p>
+<p style="margin-left: 160px; color: #555555; max-width: 360px">
+Your DocuSign account is almost ready. <span style="display:inline" id="biz">DocuSign will forever change the way you
+sign and send documents, with refreshing ease, speed, and security.</span> Please
+click the Activate button to complete registration. <br />
+</p>
+<table id="button-border" style="margin-left: 160px" cellspacing="0" cellpadding="0"><tr><td>
+<a id="button" style="display: block; width: 180px; height: 50px; text-align: center; line-height: 50px; background-color: #FFC423; font-size: 20px; color: black !important; text-decoration: none; border-radius: 6px; margin: 50px 0; box-shadow: 2px 2px 2px #7C6014 !important;"
+		 href="[[QuickURL]]">&amp;nbsp;&amp;nbsp;Activate&amp;nbsp;&amp;nbsp;</a>
+</td></tr></table>
+
+<p style="margin-left: 160px; color: #555555">
+<br />
+Thanks!<br />
+The DocuSign Team<br />
+</p>
+<table style="margin: 0 5px; border: 1px solid #D0D0D0; border-radius: 6px; font-family: helvetica; font-size: 12px"
+       id="foot" cellpadding="8" cellspacing="0" width="98%"><tr>
+<td style="font-weight: bold; background-color: #E6E4E2; width: 70px">Learn&amp;nbsp;More:</td>
+<td style="color: #1e4CA1">
+<a style="text-decoration: none; color: #1e4CA1"
+   href="http://www.docusign.com/campaigns/try">Learn More about DocuSign</a>
+<span style="color:555555"> | </span>
+<a style="text-decoration: none; color: #1e4CA1"
+   href="https://www.docusign.com/products/editions">Upgrade</a>
+</td>
+</tr></table>
+<br/>
+&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;<img src="[[DocuSignLogoTagLinePath]]" />
+<p style="margin-left: 5px; font-size: 9px; color: #555555"></p>
+<p style="margin-left: 5px; font-size: 9px; color: #555555"></p>
+<hr color="#1E4CA1" style="height: 20px" />
+</td></tr></table>
+</div>
+    </data>
+	<data name="InstantAccountActivationDocuSignIt_PlainTextBody">[[UserName]],
+Please click the button below to finish your account activation.
+Thank you for choosing 5Star Life Insurance!
+[[QuickURL]] 
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+</data>
+	<data name="InstantAccountActivationDocuSignIt_Subject">Account Activation</data>
+	<data name="InstantAccountActivationDocuSignIt_Title">Account Activation</data>
+	<data name="InstantAccountActivationPersonal_HtmlBody"><html><head>
+<title>Instant Account Activation Personal</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">				
+				<p>[[UserName]],</p>
+				<p>Thank you for choosing Docusign. You're just one step away from experiencing the benefits of DocuSign's electronic signature solution.</p>
+				<p>Please click the Activate button to verify your email address and complete your account registration process.</p>
+				<p>Best Regards, <br/>The DocuSign Team</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">Activate</a></td>
+			<td colspan="3"></td>		
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="InstantAccountActivationPersonal_PlainTextBody">[[UserName]],
+Thank you for choosing for DocuSign. You're just one step away from experiencing 
+the benefits of DocuSign's electronic signature solution.
+ 
+Please click the Activate link below to verify your email address and complete 
+your account registration process.
+
+[[QuickURL]] 
+
+Best Regards,
+The DocuSign Team
+</data>
+	<data name="InstantAccountActivationPersonal_Subject">Action Required - Activate Your DocuSign Account</data>
+	<data name="InstantAccountActivationPersonal_Title">Action Required - Activate Your DocuSign Account</data>
+	<data name="NotaryRequestForExistingNotary_HtmlBody"><html><head>
+<title>NotaryRequestForExistingNotary</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td class="sectionheader">From:</td>
+			<td><img class="senderphoto" height="40" width="40" src="[[SenderThumbnailImage]]" alt="sender image" /></td>
+			<td colspan="8"><div class="sendername">[[SenderName]] ([[SenderEmail]])</div><div>[[SenderCompany]]</div></td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p class="recipientgreeting">Hello [[RecipientName]],</p>
+			<p>[[SenderName]] has requested you act as notary public for an electronic signature ceremony.</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p>[[EmailBlurb]]</p>
+			
+			<p>[[FormattedRecipientNote]]</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p>To complete this process, please follow these steps:</p>			
+			
+			<p>STEP 1: <a href="[[NotaryLoginURL]]" style="text-decoration:underline;" target="_blank">Sign into your DocuSign account</a> and assure that your commission information is up to date.</p>
+				
+			<p>STEP 2: Contact the signer to set up a time and location to sign:</p>
+
+			<p>
+				[[SignerName]]<br />
+				[[SignerEmail]]<br />
+				[[SignerPhone]]<br />
+				[[SignerAddress]]
+			</p>	
+			
+			<p>STEP 3: When you are with the signer, begin the signing ceremony.</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">Begin Signing</a></td>
+			<td colspan="3"></td>				
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="NotaryRequestForExistingNotary_PlainTextBody">[[EmailTitle]]
+From: [[SenderName]] ([[SenderEmail]])[[SenderCompany]]
+
+Hello [[RecipientName]],
+
+	[[SenderName]] has requested you act as notary for an electronic signature ceremony.
+
+	[[EmailBlurb]]
+
+	[[FormattedRecipientNote]]
+
+
+	To complete this process, please follow these steps:			
+			
+	STEP 1: 
+
+	Sign into your DocuSign account and assure that your commission information is up to date.
+
+	[[NotaryLoginURL]]
+		
+		
+	STEP 2: Contact the signer to set up a time and location to sign:
+
+	[[SignerName]]
+	[[SignerEmail]]
+	[[SignerPhone]]
+	[[SignerAddress]]
+
+
+	STEP 3: When you are with the signer, begin the signing ceremony.
+
+	[[QuickURL]]
+
+
+	Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the "Access Documents" link, and using this security code: [[DocumentCode]]
+
+DocuSign. The fastest way to get a signature.®
+[[EmailSupport]]          
+[[WhiteListText]]</data>
+	<data name="NotaryRequestForExistingNotary_Subject">Notary Service Requested</data>
+	<data name="NotaryRequestForExistingNotary_Title">Notary Service Requested</data>
+	<data name="NotaryRequestForUnregisteredNotary_HtmlBody"><html><head>
+<title>NotaryRequestForUnregisteredNotary</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td class="sectionheader">From:</td>
+			<td><img class="senderphoto" height="40" width="40" src="[[SenderThumbnailImage]]" alt="sender image" /></td>
+			<td colspan="8"><div class="sendername">[[SenderName]] ([[SenderEmail]])</div><div>[[SenderCompany]]</div></td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p class="recipientgreeting">Hello [[RecipientName]],</p>
+			<p>[[SenderName]] has requested you act as notary public for an electronic signature ceremony.</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p>[[EmailBlurb]]</p>
+			
+			<p>[[FormattedRecipientNote]]</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p>To complete this process, please follow these steps:</p>			
+			
+			<p>STEP 1: Register with DocuSign as a notary public.</p>
+			
+			<p>
+				In order to notarize the documents and conduct a signing session with a client, you must be registered with DocuSign as a notary public.
+				If you do not yet have an account, <a href="[[NotaryLoginURL]]" style="text-decoration:underline;" target="_blank">click here to register.</a>
+			</p>
+	
+			<p>STEP 2: Contact Signer to set up a time and location to sign.</p>
+	
+			<p>
+				[[SignerName]]<br />
+				[[SignerEmail]]<br />
+				[[SignerPhone]]<br />
+				[[SignerAddress]]
+			</p>
+		
+			<p>STEP 3: When you are with the signer, begin the signing ceremony.</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">Begin Signing</a></td>
+			<td colspan="3"></td>				
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="NotaryRequestForUnregisteredNotary_PlainTextBody">[[EmailTitle]]
+From: [[SenderName]] ([[SenderEmail]])[[SenderCompany]]
+
+Hello [[RecipientName]],
+
+	[[SenderName]] has requested you act as notary for an electronic signature ceremony.
+
+	[[EmailBlurb]]
+
+	[[FormattedRecipientNote]]
+
+
+	To complete this process, please follow these steps:	
+		
+			
+	STEP 1: Register as a DocuSign E-Notary.
+			
+	In order to notarize the documents and conduct a signing session with a client, you must be a registered
+	DocuSign E-notary. If you do not yet have an account, use the link below to register.
+
+	[[NotaryLoginURL]]
+
+
+	STEP 2: Contact Signer to set up a time and location to sign.
+	
+	[[SignerName]]
+	[[SignerEmail]]
+	[[SignerPhone]]
+	[[SignerAddress]]
+
+
+	STEP 3: When you are with the signer, begin the signing ceremony.
+
+
+	Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the "Access Documents" link, and using this security code: [[DocumentCode]]
+
+DocuSign. The fastest way to get a signature.®
+[[EmailSupport]]          
+[[WhiteListText]]</data>
+	<data name="NotaryRequestForUnregisteredNotary_Subject">Notary Service Requested</data>
+	<data name="NotaryRequestForUnregisteredNotary_Title">Notary Service Requested</data>
+	<data name="OFACFailed_HtmlBody"><html><head>
+<title>OFAC Failed</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of DocuSign</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">				
+			<p>[[AdminUserName]],</p>
+            <p>The following recipient on the envelope '[[subject]]' was found in the OFAC database: [[RecipientName]] [[RecipientEmail]]</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="OFACFailed_PlainTextBody">[[AdminUserName]],  
+The following recipient on the envelope '[[Subject]]' was found in the OFAC database: [[RecipientName]] [[RecipientEmail]]</data>
+	<data name="OFACFailed_Subject">OFAC Match: [[SubjectInput]]</data>
+	<data name="OFACFailed_Title">OFAC Failed</data>
+	<data name="PurgeDocuments_HtmlBody"><html><head>
+<title>Purge Documents</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SenderName]] at [[SenderCompany]]</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+			<p>Documents from the envelope with the subject: "[[Subject]]" (ID:[[EnvelopeID]]) are scheduled to be purged on [[PurgeDate]] at Midnight ET.</p>
+			<br/>
+			<p>To get a copy of the completed documents before they are purged from our system, please click the link below.</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View in DocuSign</a></td>
+			<td colspan="3"></td>		
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="PurgeDocuments_PlainTextBody">Documents from the envelope with the subject: "[[Subject]]" (ID: [[EnvelopeID]]) are scheduled to be purged on [[PurgeDate]] at Midnight ET.
+To get a copy of the completed documents before they are purged from our system, please click the link below.
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SenderEmail]].</data>
+	<data name="PurgeDocuments_Subject">Documents to be removed: [[SubjectInput]]</data>
+	<data name="PurgeDocuments_Title">Document Purge Warning</data>
+	<data name="ReassignSigner_HtmlBody"><html><head>
+<title>Reassign Signer</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td class="sectionheader">From:</td>
+			<td><img class="senderphoto" height="40" width="40" src="[[SenderThumbnailImage]]" alt="sender image" /></td>
+			<td colspan="8"><div class="sendername">[[SenderName]] ([[SenderEmail]])</div><div>[[SenderCompany]]</div></td>
+		</tr>
+
+		<tr>
+			<td colspan="10">				
+				<p>[[NewRecipientName]],</p>
+				<p>[[OriginalRecipientName]] (<a class="LinkStyle" href="mailto:[[OriginalRecipientEmail]]">[[OriginalRecipientEmail]]</a>) received documents to electronically sign from [[SenderName]], but has determined that you should sign the documents in their place. To help transition these documents to you, [[OriginalRecipientName]] writes:</p>
+				<p><strong>[[EmailBlurb]]</strong></p>
+				<p>To sign the documents assigned to you, please click below.</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View Documents</a></td>
+			<td colspan="3"></td>		
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="ReassignSigner_PlainTextBody">[[NewRecipientName]],
+
+[[OriginalRecipientName]] ([[OriginalRecipientEmail]]) received documents to electronically sign from [[SenderName]], but has determined that you should sign the documents in their place.  To help transition these documentsto you, [[OriginalRecipientName]] writes:
+[[EmailBlurb]]
+To sign the documents assigned to you, please click the link below.
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[OriginalRecipientName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SenderEmail]].</data>
+	<data name="ReassignSigner_Subject">[[SubjectInput]]</data>
+	<data name="ReassignSigner_Title">Please sign your document</data>
+	<data name="RecipientAddAccessCode_HtmlBody"><html><head>
+<title>Recipient Add Access Code</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SupportName]]</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+				<p><b>You recently started signing a document that required email validation.</b></p>
+				<p><b>The Email Validation Code for the document called "[[SubjectInput]]" appears below. Please type or copy this code and paste it into your browser to continue your signing process.</b></p>
+				<p align="center"><b>[[RecipientAccessCode]]</b></p>
+				<p>If you have closed the browser session that generated this email validation code, you may continue your signing process by clicking below. Signing will not be complete until you have reviewed the document and you have confirmed your signature.</p>
+				<p>If you DID NOT start signing documents from [[SenderName]] today, you should immediately notify us.</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">Resume</a></td>
+			<td colspan="3"></td>	
+		</tr>	
+		
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>		
+	
+		<tr>
+			<td class="footer" colspan="10">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="RecipientAddAccessCode_PlainTextBody">You recently started signing a document that required email validation.
+The Email Validation Code for your document "[[SubjectInput]]" appears below. Please type or copy this code and paste it into your browser to continue your signing process.
+[[RecipientAccessCode]]
+If you have closed the browser session that generated this email validation code, you may continue your signing process by clicking the link below.
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SenderEmail]].
+If you DID NOT start signing documents from [[SenderName]] today, you should immediately notify us.</data>
+	<data name="RecipientAddAccessCode_Subject">Email Validation: [[SubjectInput]]</data>
+	<data name="RecipientAddAccessCode_Title">Email Validation Code</data>
+	<data name="RecipientEnvelopeComplete_HtmlBody"><html><head>
+<title>Recipient Envelope Complete</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">				
+				<p>[[RecipientName]],</p>
+				<p>All parties have completed the envelope '[[Subject]]'.</p>
+				<p>[[Information]]</p>
+				<p>[[PromoContent]]</p>
+				<p>To view, download or print the completed document click below.</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View in DocuSign</a></td>
+			<td colspan="3"></td>		
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="RecipientEnvelopeComplete_PlainTextBody">[[RecipientName]],
+All parties have signed the envelope '[[Subject]]'.
+[[Information]]
+[[PromoContent]]
+To view, download or print the completed document click the link below.
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SenderEmail]].
+
+If you would like to create a free account, or access your existing account, click the link below.
+[[CreateAccountURL]]</data>
+	<data name="RecipientEnvelopeComplete_Subject">Completed: [[SubjectInput]]</data>
+	<data name="RecipientEnvelopeComplete_Title">Your document has been completed</data>
+	<data name="RecipientEnvelopeCompleteDocuSignIt_HtmlBody"><div>
+<style media="screen and (max-width: 500px)">
+#logoimg {
+  width: 75px !important;
+  height: 45px !important;
+}
+h2 {
+  margin: 0 !important;
+  font-size: 18px !important;
+  text-indent: 0px !important;
+}
+h3 {
+  font-size: 16px !important;
+  text-indent: 0px !important;
+}
+p {
+  margin-left: 5px !important;
+}
+#intro {
+  margin-top: 0 !important;
+}
+#biz {
+  display: none !important;
+}
+#button-border {
+  margin: 0 !important;
+}
+#button {
+  margin: 0 !important;
+}
+</style>
+<style media="screen and (max-width: 10px)">
+#logoimg {
+  width: 140px !important;
+  height: 90px !important;
+}
+h2 {
+  margin: 22px 0 0 0 !important;
+  font-size: 22px !important;
+  text-indent: 20px !important;
+}
+h3 {
+  font-size: 18px !important;
+  text-indent: 20px !important;
+}
+p {
+  margin-left: 160px !important;
+}
+#intro {
+  margin-top: 50px !important;
+}
+#biz {
+  display: inline !important;
+}
+#button-border {
+  margin: 50px 0 50px 160px !important;
+  background-color: #555555;
+  padding: 1px;
+}
+#button {
+  width: 160px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  font-family: Verdana;
+  font-weight: normal;
+  color: #555555;
+  border-style: solid;
+  border-color: #FFC423;
+  border-width: 10px;
+}
+</style>
+<table width="100%"><tr><td style="background-color: #F2F0ED; font-family: helvetica; font-size: 14px">
+<img style="width: 140px; height:90px"
+	 id="logoimg"
+	 align="left"
+	 src="[[InkLogoPath]]" />
+<h2 style="color: #1E4CA1; font-size: 22px; margin: 22px 0 0 0; text-indent: 20px">DocuSign</h2>
+<h3 style="font-size: 18px; color: #555555; margin: 2px 0; text-indent: 20px">Your document has been completed</h3>
+<br clear="left"/>
+<p id="intro" style="margin-left: 160px; margin-top: 50px; color: #555555">
+[[RecipientName]] ([[RecipientEmail]]),
+</p>
+<p style="margin-left: 160px; color: #555555; max-width: 360px">
+All parties have completed signing document "[[Subject]]"<br/><br/>To view, download or print the completed document click the View button below.
+</p>
+
+<table id="button-border" style="margin-left: 160px" cellspacing="0" cellpadding="0"><tr><td>
+<a id="button" style="display: block; width: 180px; height: 50px; text-align: center; line-height: 50px; background-color: #FFC423; font-size: 20px; color: black !important; text-decoration: none; border-radius: 6px; margin: 50px 0; box-shadow: 2px 2px 2px #7C6014 !important;"
+		 href="[[QuickURL]]">&amp;nbsp;&amp;nbsp;View&amp;nbsp;&amp;nbsp;</a>
+</td></tr></table>
+
+<p style="margin-left: 160px; color: #555555">
+
+</p>
+<table style="margin: 0 5px; border: 1px solid #D0D0D0; border-radius: 6px; font-family: helvetica; font-size: 12px"
+       id="foot" cellpadding="8" cellspacing="0" width="98%"><tr>
+<td style="font-weight: bold; background-color: #E6E4E2; width: 70px">Learn&amp;nbsp;More:</td>
+<td style="color: #1e4CA1">
+<a style="text-decoration: none; color: #1e4CA1"
+   href="http://www.docusign.com/campaigns/try">Learn More about DocuSign</a>
+<span style="color:555555"> | </span>
+<a style="text-decoration: none; color: #1e4CA1"
+   href="https://www.docusign.com/products/editions">Upgrade</a>
+</td>
+</tr></table>
+<br/>
+&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;<img src="[[DocuSignLogoTagLinePath]]" />
+<p style="margin-left: 5px; font-size: 9px; color: #555555">If you have questions regarding this notification or any enclosed documents requiring your signature, please contact the sender directly. For technical assistance with the signing process, you can email <a style="text-decoration: none; color: #1e4CA1" href="[[SupportURL]]">support</a>.</p>
+<p style="margin-left: 5px; font-size: 9px; color: #555555">This message was sent to you by [[SenderName]] who is using the DocuSign Electronic Signature Service. If you would rather not receive email from this sender you may contact the sender with your request.</p>
+<hr color="#1E4CA1" style="height: 20px" />
+</td></tr></table>
+</div>
+</data>
+	<data name="RecipientEnvelopeCompleteDocuSignIt_PlainTextBody">Your document is complete.
+
+To view, print or download your document click the link below.
+Thank you for choosing 5Star Life Insurance! 
+
+[[QuickURL]]
+
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.</data>
+	<data name="RecipientEnvelopeCompleteDocuSignIt_Subject">[[SubjectInput]]</data>
+	<data name="RecipientEnvelopeCompleteDocuSignIt_Title">Document Complete</data>
+	<data name="RecipientEnvelopeCompleteInPerson_HtmlBody"><html><head>
+<title>Recipient Envelope Complete In Person</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SenderName]] at [[SenderCompany]]</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+			<p>[[RecipientName]],</p>
+			<p>All parties have completed the envelope '[[Subject]]'.</p>
+			<p>[[Information]]</p>
+			<p>[[PromoContent]]</p>
+			<p>To view, download or print the completed document click below.</p>		
+			</td>
+		</tr>
+	
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View in DocuSign</a></td>
+			<td colspan="3"></td>		
+		</tr>		
+	
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>		
+	
+		<tr>
+			<td class="footer" colspan="10">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="RecipientEnvelopeCompleteInPerson_PlainTextBody">[[RecipientName]],
+All parties have signed the envelope '[[Subject]]'.
+[[Information]]
+[[PromoContent]]
+This message was sent on behalf of [[SenderName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SenderEmail]].
+
+If you would like to create a free account, or access your existing account, click the link below.
+[[CreateAccountURL]]</data>
+	<data name="RecipientEnvelopeCompleteInPerson_Subject">Completed: [[SubjectInput]]</data>
+	<data name="RecipientEnvelopeCompleteInPerson_Title">Your document has been completed</data>
+	<data name="RecipientEnvelopeCompleteInPersonDocuSignIt_HtmlBody"><div>
+<style media="screen and (max-width: 500px)">
+#logoimg {
+  width: 75px !important;
+  height: 45px !important;
+}
+h2 {
+  margin: 0 !important;
+  font-size: 18px !important;
+  text-indent: 0px !important;
+}
+h3 {
+  font-size: 16px !important;
+  text-indent: 0px !important;
+}
+p {
+  margin-left: 5px !important;
+}
+#intro {
+  margin-top: 0 !important;
+}
+#biz {
+  display: none !important;
+}
+#button-border {
+  margin: 0 !important;
+}
+#button {
+  margin: 0 !important;
+}
+</style>
+<style media="screen and (max-width: 10px)">
+#logoimg {
+  width: 140px !important;
+  height: 90px !important;
+}
+h2 {
+  margin: 22px 0 0 0 !important;
+  font-size: 22px !important;
+  text-indent: 20px !important;
+}
+h3 {
+  font-size: 18px !important;
+  text-indent: 20px !important;
+}
+p {
+  margin-left: 160px !important;
+}
+#intro {
+  margin-top: 50px !important;
+}
+#biz {
+  display: inline !important;
+}
+#button-border {
+  margin: 50px 0 50px 160px !important;
+  background-color: #555555;
+  padding: 1px;
+}
+#button {
+  width: 160px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  font-family: Verdana;
+  font-weight: normal;
+  color: #555555;
+  border-style: solid;
+  border-color: #FFC423;
+  border-width: 10px;
+}
+</style>
+<table width="100%"><tr><td style="background-color: #F2F0ED; font-family: helvetica; font-size: 14px">
+<img style="width: 140px; height:90px"
+	 id="logoimg"
+	 align="left"
+	 src="[[InkLogoPath]]" />
+<h2 style="color: #1E4CA1; font-size: 22px; margin: 22px 0 0 0; text-indent: 20px">DocuSign</h2>
+<h3 style="font-size: 18px; color: #555555; margin: 2px 0; text-indent: 20px">Your document has been completed</h3>
+<br clear="left"/>
+<p id="intro" style="margin-left: 160px; margin-top: 50px; color: #555555">
+[[RecipientName]],
+</p>
+<p style="margin-left: 160px; color: #555555; max-width: 360px">
+All parties have completed signing document "[[Subject]]"<br/><br/>To view, download or print the completed document click the View button below.
+</p>
+
+<table id="button-border" style="margin-left: 160px" cellspacing="0" cellpadding="0"><tr><td>
+<a id="button" style="display: block; width: 180px; height: 50px; text-align: center; line-height: 50px; background-color: #FFC423; font-size: 20px; color: black !important; text-decoration: none; border-radius: 6px; margin: 50px 0; box-shadow: 2px 2px 2px #7C6014 !important;"
+		 href="[[QuickURL]]">&amp;nbsp;&amp;nbsp;View&amp;nbsp;&amp;nbsp;</a>
+</td></tr></table>
+
+<p style="margin-left: 160px; color: #555555">
+
+</p>
+<table style="margin: 0 5px; border: 1px solid #D0D0D0; border-radius: 6px; font-family: helvetica; font-size: 12px"
+       id="foot" cellpadding="8" cellspacing="0" width="98%"><tr>
+<td style="font-weight: bold; background-color: #E6E4E2; width: 70px">Learn&amp;nbsp;More:</td>
+<td style="color: #1e4CA1">
+<a style="text-decoration: none; color: #1e4CA1"
+   href="http://www.docusign.com/campaigns/try">Learn More about DocuSign</a>
+<span style="color:555555"> | </span>
+<a style="text-decoration: none; color: #1e4CA1"
+   href="https://www.docusign.com/products/editions">Upgrade</a>
+</td>
+</tr></table>
+<br/>
+&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;<img src="[[DocuSignLogoTagLinePath]]" />
+<p style="margin-left: 5px; font-size: 9px; color: #555555">If you have questions regarding this notification or any enclosed documents requiring your signature, please contact the sender directly. For technical assistance with the signing process, you can email <a style="text-decoration: none; color: #1e4CA1" href="[[SupportURL]]">support</a>.</p>
+<p style="margin-left: 5px; font-size: 9px; color: #555555">This message was sent to you by [[SenderName]] who is using the DocuSign Electronic Signature Service. If you would rather not receive email from this sender you may contact the sender with your request.</p>
+<hr color="#1E4CA1" style="height: 20px" />
+</td></tr></table>
+</div>
+</data>
+	<data name="RecipientEnvelopeCompleteInPersonDocuSignIt_PlainTextBody">Your document is complete.
+
+To view, print or download your document click the link below.
+Thank you for choosing 5Star Life Insurance! 
+
+[[QuickURL]]
+
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.</data>
+	<data name="RecipientEnvelopeCompleteInPersonDocuSignIt_Subject">[[SubjectInput]]</data>
+	<data name="RecipientEnvelopeCompleteInPersonDocuSignIt_Title">Document Complete</data>
+	<data name="RecipientViewed_HtmlBody"><html><head>
+<title>Recipient Viewed</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of DocuSign</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">				
+			<p>At [[RecipientDeliveredDateTime]] Pacific, [[RecipientName]] opened and viewed your documents, [[Subject]].</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View in DocuSign</a></td>
+			<td colspan="3"></td>		
+		</tr>			
+		
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="RecipientViewed_PlainTextBody">At [[RecipientDeliveredDateTime]] Pacific, [[RecipientName]] opened and viewed your
+documents, [[Subject]].
+
+View your documents.
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SupportName]] by the DocuSign Online Signing Service.  If you have any questions, please email [[SupportEmail]].</data>
+	<data name="RecipientViewed_Subject">[[RecipientName]] has viewed [[Subject]]</data>
+	<data name="RecipientViewed_Title">Recipient has Viewed</data>
+	<data name="ReportSubscriptionExtend_HtmlBody"><html><head>
+<title>Report Subscription Extend</title>
+[[StyleSheet]]
+</head>
+<body>
+	<table cellspacing="0" cellpadding="10" class="mainbody">
+		<tr>
+			<td colspan="7" class="header">Extend Your Report Subscription</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>
+		</tr>
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+		</tr>
+		<tr>
+			<td colspan="10">
+				<p class="recipientgreeting">Your scheduled report "[[SubjectInput]]" is attached.</p>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="10">
+				<p><span style="color:#ff0000;">Alert:</span> The schedule for this report will expire soon.<br />
+				<a class="LinkStyle" href="[[QuickURL]]" target="_blank">Extend the Schedule</a></p>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="10" class="bottomborder">
+			</td>
+		</tr>
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		<tr style="display:none;">
+			<td colspan="10" class="footer">
+				<p>[[WhiteListText]]</p>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="10" class="footer">
+				<p>DocuSign. The Global Standard For eSignature.&amp;reg;</p>
+			</td>
+		</tr>
+	</table>
+</body>
+</html></data>
+	<data name="ReportSubscriptionExtend_PlainTextBody">Your scheduled report "[[SubjectInput]]" is attached.
+
+The schedule for this report will expire soon. To extend the schedule, copy the following line and paste it into a browser:
+	[[QuickURL]]</data>
+	<data name="ReportSubscriptionExtend_Subject">DocuSign Report: [[SubjectInput]]</data>
+	<data name="ReportSubscriptionResults_HtmlBody"><html><head>
+<title>Report Subscription Results</title>
+[[StyleSheet]]
+</head>
+<body>
+	<table cellspacing="0" cellpadding="10" class="mainbody">
+		<tr>
+			<td colspan="7" class="header">Your Report Results</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>
+		</tr>
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+		</tr>
+		<tr>
+			<td class="sectionheader">From:</td>
+			<td colspan="9"><div class="sendername">[[SenderName]] ([[SenderEmail]])</div><div>[[SenderCompany]]</div></td>
+		</tr>
+		<tr>
+			<td colspan="10">
+				<p class="recipientgreeting">[[SenderName]] has sent you a copy of a scheduled report.</p>
+				<p>[[EmailBlurb]]</p>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="10" class="bottomborder">
+			</td>
+		</tr>
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		<tr>
+			<td colspan="10" class="footer">
+				<p>[[WhiteListText]] As an alternative, you can unsubscribe immediately by clicking <a class="LinkStyle" href="[[QuickURL]]" target="_blank">Unsubscribe Now</a>.</p>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="10" class="footer">
+				<p>DocuSign. The Global Standard For eSignature.&amp;reg;</p>
+			</td>
+		</tr>
+	</table>
+</body>
+</html></data>
+	<data name="ReportSubscriptionResults_PlainTextBody">[[SenderName]] ([[SenderEmail]]) has sent you a copy of a scheduled report.
+
+[[EmailBlurb]]
+
+Note: To stop receiving this report, copy the following line and paste into a browser (or contact the sender):
+	[[QuickURL]]</data>
+	<data name="ReportSubscriptionResults_Subject">DocuSign Report: [[SubjectInput]]</data>
+	<data name="ResetPasswordRequest_HtmlBody"><html><head>
+<title>Reset Password Request</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of DocuSign</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+			<p>DocuSign has received your password reset request. Click below to create a new password:</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">Reset Password</a></td>
+			<td colspan="3"></td>		
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="ResetPasswordRequest_PlainTextBody">[[UserName]],
+DocuSign has received your password reset request.  Click on the following link to create a new password:
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[AdminUserName]] by the DocuSign Online Signing Service.  If you would like to contact them, you can send email to [[AdminUserEmail]].</data>
+	<data name="ResetPasswordRequest_Subject">Reset Password Requested</data>
+	<data name="ResetPasswordRequest_Title">Reset password request</data>
+	<data name="SenderDeliveryFailed_HtmlBody"><html><head>
+<title>Sender Delivery Failed</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of DocuSign</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+			<p>Delivery Failed to [[RecipientName]] at [[RecipientDeliveryFailedDateTime]] <br/> for [[Subject]]. <br/>Reason: [[RecipientDeliveryFailedReason]]</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View in DocuSign </a></td>
+			<td colspan="3"></td>		
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="SenderDeliveryFailed_PlainTextBody">Delivery Failed to [[RecipientName]] at [[RecipientDeliveryFailedDateTime]] 
+for [[Subject]]. 
+Reason: [[RecipientDeliveryFailedReason]]
+
+View your documents.
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SupportName]] by the DocuSign Online Signing Service.  If you have any questions, please email [[SupportEmail]].</data>
+	<data name="SenderDeliveryFailed_Subject">Delivery Failed for [[RecipientName]]</data>
+	<data name="SenderDeliveryFailed_Title">Recipient Delivery Failed</data>
+	<data name="SenderEnvelopeComplete_HtmlBody"><html><head>
+<title>Sender Envelope Complete</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of DocuSign</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+				<p>[[SenderName]],</p>
+				<p>All parties have completed the envelope '[[Subject]]'.</p>
+				<p>[[Information]]</p>
+				<p>To view, download or print the completed document click below.</p>		
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View Documents</a></td>
+			<td colspan="3"></td>		
+		</tr>	
+		
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="SenderEnvelopeComplete_PlainTextBody">[[SenderName]],
+All parties have signed the envelope '[[Subject]]'
+[[Information]]
+To view, download or print the completed document click the link below.
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SupportName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SupportEmail]].</data>
+	<data name="SenderEnvelopeComplete_Subject">Completed: [[SubjectInput]]</data>
+	<data name="SenderEnvelopeComplete_Title">Your document has been completed</data>
+	<data name="SenderEnvelopeDeclined_HtmlBody"><html><head>
+<title>Sender Envelope Declined</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SupportName]]</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+				<p>[[SenderName]],</p>
+				<p>[[DeclinerName]] has declined the envelope '[[Subject]]' (ID:[[EnvelopeID]]) for the following reasons:</p>
+				<p><strong>[[DeclineReason]]</strong></p>
+				<p>As a result, the envelope has been marked as declined and cannot be completed.</p>
+				<p>To view the declined document, click below:</p>	
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="topborder"></td>
+		</tr>			
+
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View Documents</a></td>
+			<td colspan="3"></td>		
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the &amp;quot;Access Documents&amp;quot; link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="SenderEnvelopeDeclined_PlainTextBody">[[SenderName]],
+[[DeclinerName]] has declined the envelope '[[Subject]]' (ID:[[EnvelopeID]]) for the following reasons:
+[[DeclineReason]]
+As a result, the envelope has been marked as declined and cannot be completed.
+To view the declined document, click the link below:
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+This message was sent on behalf of [[SupportName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[SupportEmail]].</data>
+	<data name="SenderEnvelopeDeclined_Subject">Declined: [[SubjectInput]]</data>
+	<data name="SenderEnvelopeDeclined_Title">Envelope declined</data>
+	<data name="SendViaLink_HtmlBody"><html><head>
+<title>Send Via Link</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td class="sectionheader">From:</td>
+			<td><img class="senderphoto" height="40" width="40" src="[[SenderThumbnailImage]]" alt="sender image" /></td>
+			<td colspan="8"><div class="sendername">[[SenderName]] ([[SenderEmail]])</div><div>[[SenderCompany]]</div></td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">	
+			<p class="recipientgreeting">Hi [[RecipientName]],</p>
+			</td>
+		</tr>
+			
+		<tr>
+			<td colspan="10">				
+			<p>[[SenderName]] has signed the document, <b>[[DocumentNames]]</b>, using DocuSign with the following message:</p>
+            <p><b>[[EmailBlurb]]</b></p>
+            <p>Click <b>View Document</b> to securely view and download your documents.</p>
+			</td>
+		</tr>		
+
+		<tr>
+			<td></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">View Document</a></td>
+			<td colspan="5"></td>		
+		</tr>
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>	
+
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>	
+		
+		<tr>
+			<td colspan="1" class="footer"></td>
+			<td colspan="8" class="footer"><p class="codeboxinstructions">Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the 'Access Document' link, and using this security code:</p></td>
+			<td colspan="1" class="footer"></td>
+		</tr>
+		
+		<tr>
+			<td colspan="2" class="footer"></td>
+			<td colspan="6" class="codebox">[[DocumentCode]]</td>
+			<td colspan="2" class="footer"></td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="SendViaLink_PlainTextBody">[[EmailTitle]]
+From: [[SenderName]] ([[SenderEmail]])[[SenderCompany]]
+
+Hi [[RecipientName]],
+	[[SenderName]] has signed the document, "[[Subject]]", using DocuSign with the following message:
+  [[EmailBlurb]]
+	Please click "View Document" to securely view and download your documents.
+	
+	[[QuickURL]]
+	
+	If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+	
+	Alternately, you can access these documents by visiting [[DocumentValidiationCodeUrl]], clicking the "Access Documents" link, and using this security code: [[DocumentCode]]
+
+DocuSign. The fastest way to get a signature.®
+[[EmailSupport]]          
+[[WhiteListText]]</data>
+	<data name="SendViaLink_Subject">Here is your signed [[SubjectInput]]</data>
+	<data name="SendViaLink_Title">Your Signed Document</data>
+	<data name="UserAccountActivation_HtmlBody"><html><head>
+<title>User Account Activation</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[AccountManagerName]]</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+				<p>[[UserName]],</p>
+				<p>5Star Life Insurance Company's online enrollment employs DocuSign, the global standard for digital transaction management.  In order to complete your account on 5Star's enrollment system, this email establishes your password/security settings in the DocuSign system (for your convenience, we recommend you use the same password as in your 5Star Enrollment System registration). Please click the button below to finish your account activation.</p>
+				<p>Note that, upon activation, you will be logged into the DocuSign system merely as confirmation. However, thereafter please proceed to 5Star Life's online enrollment main page at https://5StarEnroll.com.</p>
+				<p>Thank you for choosing 5Star Life Insurance!</p>	
+			</td>
+		</tr>
+
+		<tr>
+			<td colspan="10" class="topborder"></td>
+		</tr>
+		
+		<tr>
+			<td colspan="3"></td>
+			<td colspan="4" class="button"><a class="buttonlink" href="[[QuickURL]]" target="_blank">Activate</a></td>
+			<td colspan="3"></td>
+		</tr>
+
+		<tr>
+			<td colspan="10" class="bottomborder"></td>
+		</tr>
+
+		<tr>
+			<td colspan="10" class="footer"></td>
+		</tr>
+	
+		<tr>      
+			<td colspan="10" class="footer"></td>
+		</tr>		
+	
+		<tr>
+			<td colspan="10" class="footer">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="UserAccountActivation_PlainTextBody">[[UserName]],
+5Star Life Insurance Company's online enrollment employs DocuSign, the global standard for digital transaction management.  In order to complete your account on 5Star's enrollment system, this email establishes your password/security settings in the DocuSign system (for your convenience, we recommend you use the same password as in your 5Star Enrollment System registration). Please click the button below to finish your account activation.
+
+Note that, upon activation, you will be logged into the DocuSign system merely as confirmation. However, thereafter please proceed to 5Star Life's online enrollment main page at https://5StarEnroll.com
+
+Thank you for choosing 5Star Life Insurance!
+[[QuickURL]]
+If clicking the link does not work, you can highlight and copy the entire line above and paste it into your browser to get started.
+</data>
+	<data name="UserAccountActivation_Subject">Account Activation</data>
+	<data name="UserAccountActivation_Title">Account Activation</data>
+	<data name="VoidedFaxReceived_HtmlBody"><html><head>
+<title>Voided Fax Received</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[SenderName]] at [[SenderCompany]]</p>
+			</td>
+		</tr>
+	
+		<tr>
+			<td colspan="10">				
+			<p>[[UserName]],</p>
+			<p>FaxId [[FaxId]] was received but our records indicate you chose to cancel the fax transmission.</p>
+			<p>The fax was intended for envelope [[EnvelopeID]].</p>
+			<p>If it was not your intention to cancel this fax transaction, please contact our support staff to correct this by doing one of the following:</p>
+			<p>1) Forward this email with a note indicating that you want the contents of the fax incorporated into the envelope (envelope [[EnvelopeID]]).</p>
+			<p>2) Go to http://www.docusign.com/support and choose one of the support options; please indicate the FaxId ([[FaxId]]) and EnvelopeId ([[EnvelopeID]]) when you reach a member of our support team.</p>                                        <p>[[SenderName]],</p>
+			</td>
+		</tr>
+
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>			
+	
+		<tr>
+			<td class="footer" colspan="10">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="VoidedFaxReceived_PlainTextBody">[[UserName]],
+FaxId [[FaxId]] was received but our records indicate you chose to cancel the fax transmission.
+The fax was intended for envelope [[EnvelopeID]].
+1) Forward this email with a note indicating that you want the contents of the fax incorporated into the envelope (envelope [[EnvelopeID]]).
+2) Go to http://www.docusign.com/support and choose one of the support options; please indicate the FaxId ([[FaxId]]) and EnvelopeId ([[EnvelopeID]]) when you reach a member of our support team.</data>
+	<data name="VoidedFaxReceived_Subject">[[SubjectInput]]</data>
+	<data name="VoidedFaxReceived_Title">A Cancelled Fax Was Received From You</data>
+	<data name="WithdrawnConsent_HtmlBody"><html><head>
+<title>Withdrawn Consent</title>
+[[StyleSheet]]
+</head>  
+<body>    
+	<table cellspacing="0" cellpadding="10" class="mainbody"> 	
+		<tr>
+			<td colspan="7" class="header">[[EmailTitle]]</td>
+			<td colspan="3" class="header"><img class="logo" src="[[DocuSignLogoEmailPath]]" alt="Docusign Logo" /></td>		
+		</tr>
+		
+		<tr>
+			<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>			
+		</tr>
+		
+		<tr>
+			<td colspan="10">	
+			<p>Sent on behalf of [[RecipientName]]</p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td colspan="10">				
+				<p>[[SenderName]],</p>
+				<p>[[RecipientName]] has elected to withdraw their consent to sign online with your company using [[ProductName]]. Because of this, you should contact them to determine how they wish to receive documents from you in the future. </p>
+				<p>This message was sent on behalf of [[RecipientName]] by the DocuSign Online Signing Service. If you would like to contact the sender, you can send email to [[RecipientEmail]].</p>
+			</td>
+		</tr>
+		
+		<tr>      
+			<td colspan="10" class="bottomborder"></td>
+		</tr>		
+	
+		<tr>
+			<td class="footer" colspan="10">
+			<p>DocuSign. The fastest way to get a signature.&amp;reg;</p>
+            <p>[[EmailSupport]]</p>          
+            <p>[[WhiteListText]]</p>    
+			</td>
+		</tr>	
+	</table>  
+	
+	<span itemscope="" itemtype="http://schema.org/EmailMessage">
+		<meta itemprop="text" content="Please review and sign your document ..."/>
+		<span itemscope="" itemprop="about" itemtype="http://schema.org/CreativeWork">
+			<span itemscope="" itemprop="action" itemtype="http://schema.org/ViewAction">
+				<meta itemprop="url" content="[[QuickURL]]"/>
+				<meta itemprop="name" content="Review document"/>
+			</span>
+		</span>
+	</span>
+	
+</body>  
+</html></data>
+	<data name="WithdrawnConsent_PlainTextBody">[[SenderName]],
+[[RecipientName]] has elected to withdraw their consent to sign online with your company using [[ProductName]].  Because of this, you should contact them to determine how they wish to receive documents from you in the future. 
+This message was sent on behalf of [[RecipientName]] by the DocuSign Online Signing Service.  If you would like to contact the sender, you can send email to [[RecipientEmail]].</data>
+	<data name="WithdrawnConsent_Subject">Withdrawn Consent to Sign Online</data>
+	<data name="WithdrawnConsent_Title">Signing consent withdrawn</data>
+</language>
+</root>
