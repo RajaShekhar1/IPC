@@ -80,12 +80,12 @@ class GroupCIRates(object):
                 dict(field='employee_weight', error='This height/weight combination is outside the range for this product.')
             ]
         
-        emp_rates_table = self.smoker_rates if demographics['employee_smoker'] == 'true' else self.nonsmoker_rates
+        emp_rates_table = self.smoker_rates if demographics['employee_smoker'] else self.nonsmoker_rates
         rates['employee']['weekly_byface'] = emp_rates_table.get_premiums_by_coverage_for_age(demographics['employee_age'])
         #rates['employee']['weekly_bycoverage'] = []
         
         if demographics.get('spouse_age'):
-            sp_rates_table = self.smoker_rates if demographics['spouse_smoker'] == 'true' else self.nonsmoker_rates
+            sp_rates_table = self.smoker_rates if demographics['spouse_smoker'] else self.nonsmoker_rates
             rates['spouse']['weekly_byface'] = sp_rates_table.get_premiums_by_coverage_for_age(demographics['spouse_age'])
             #rates['spouse']['weekly_bycoverage'] = []
 
