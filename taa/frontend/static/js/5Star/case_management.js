@@ -1,7 +1,5 @@
 
 
-/* testing */
-
 var case_management = (function() {
     
     var loading_html = "<span class='icon-spinner icon-spin grey bigger-200'></span> <span class='bigger-175'> Loading data...</span>";

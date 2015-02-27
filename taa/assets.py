@@ -6,6 +6,14 @@ from flask_assets import Environment, Bundle
 #                       filters="less", output="css/taa.css",
 #                       debug=False)
 
+from taa import app
+
+if app.config['ASSETS_DEBUG']:
+    # Put any debug configurations for JS and CSS here
+    knockout_js = Bundle('js/knockout-3.3.0.debug.js')
+else:
+    knockout_js = Bundle('js/knockout-3.3.0.js', filters='rjsmin')
+
 css_taa = Bundle(
     "css/five_star_ace_overlay.css",
     "css/five_star.css",
@@ -24,7 +32,7 @@ css_all = Bundle(
     
     #css_taa_less,
     css_taa, 
-    output="generated_assets/taa.min.css"
+    output="generated_assets/taa-old.min.css"
 )
 
 css_ace_latest = Bundle(
@@ -56,9 +64,8 @@ js_header = Bundle(
 # (jquery is included directly on the page to allow CDN delivery or IE detection)
 js_vendor = Bundle(
 
-    #Bundle('js/jquery-1.11.1.js', filters='rjsmin'),
     # ace template requires bootstrap first
-    'js/bootstrap.min.js',
+    Bundle('js/bootstrap.js', filters='rjsmin'),
     
     # js ace plugins for wizard and such go here
     'js/jquery.dataTables.min.js',
@@ -79,31 +86,32 @@ js_vendor = Bundle(
     'js/bootbox.min.js',
     'js/jquery.mobile.custom.min.js',
     'js/typeahead-bs2.min.js',
-    Bundle('js/knockout-3.3.0.debug.js'),
+    knockout_js,
     'js/underscore-min.js',
-    'js/backbone-min.js',
-    output='generated_assets/js_vendor.min.js',
+    
+    #output='generated_assets/js_vendor_old.min.js',
     
 )
 
 js_vendor_latest = Bundle(
-
-    #Bundle('js/jquery-1.11.1.js', filters='rjsmin'),
     
     # ace template requires bootstrap first
-    #'ace-v1.3.3/js/bootstrap.min.js',
+    Bundle('ace-v1.3.3/js/bootstrap.js', filters='rjsmin'),
     
     # js ace plugins for wizard and such go here
     'ace-v1.3.3/js/dataTables/jquery.dataTables.min.js',
     'ace-v1.3.3/js/dataTables/jquery.dataTables.bootstrap.min.js',
-    Bundle('ace-v1.3.3/js/dataTables/dataTables.responsive.js', filters='rjsmin', output='generated_assets/datatables.responsive.min.js'),
+    Bundle('ace-v1.3.3/js/dataTables/dataTables.responsive.js', filters='rjsmin', 
+           #output='generated_assets/datatables.responsive.min.js'
+    ),
     
     'ace-v1.3.3/js/jquery.maskedinput.min.js',
     'ace-v1.3.3/js/jquery.validate.min.js',
     'ace-v1.3.3/js/jquery.bootstrap-duallistbox.min.js',
     'ace-v1.3.3/js/fuelux/fuelux.wizard.min.js',
     'ace-v1.3.3/js/jquery.mobile.custom.min.js',
-    'ace-v1.3.3/js/typeahead.jquery.min.js',
+    # This file doesn't seem to be minified
+    Bundle('ace-v1.3.3/js/typeahead.jquery.min.js', filters='rjsmin'),
     'ace-v1.3.3/js/bootstrap-multiselect.min.js',
     
     # The rest of ace template libs
@@ -115,13 +123,9 @@ js_vendor_latest = Bundle(
     'js/moment.min.js',
     'js/bootbox.min.js',
     'js/jquery.rcrumbs.min.js',
-    
-    Bundle('js/knockout-3.3.0.debug.js',
-            filters='rjsmin',
-            output='generated_assets/knockout.js.min',
-    ),
+
+    knockout_js,
     'js/underscore-min.js',
-    'js/backbone-min.js',
     'js/sammy-latest.min.js',
     output='generated_assets/js_vendor_latest.min.js',
 )
@@ -131,10 +135,12 @@ js_vendor_latest = Bundle(
 #js_main = Bundle("coffee/*.coffee", filters="coffeescript", output="js/main.js")
 js_main = Bundle(
     js_vendor,
-    Bundle("js/5Star/*.js", filters="rjsmin", output='generated_assets/taa.min.js'),
-    output='generated_assets/taa.min.js'
+    Bundle("js/5Star/*.js", 
+           filters="rjsmin", 
+           output='generated_assets/app.min.js'),
+    output='generated_assets/all_js_old.min.js'
 )
-taa_app = Bundle("js/5Star/*.js", filters="rjsmin", output='generated_assets/taa.min.js')
+taa_app = Bundle("js/5Star/*.js", filters="rjsmin", output='generated_assets/taa_app.min.js')
 
 
 def init_app(app):
@@ -145,12 +151,12 @@ def init_app(app):
     webassets.register('css_ace_latest', css_ace_latest)
     webassets.register('js_vendor_latest', js_vendor_latest)
     webassets.register('taa_app', taa_app)
-    
+
+    # Webassets debug is defined in the global config and automatically pulled in
+    # These settings control when and how the output files are generated 
     webassets.manifest = 'cache' #if not app.debug else False
     webassets.cache = True # not app.debug
     webassets.auto_build = True
     
-    # Keep this separate for now
-    #webassets.debug = app.debug
     
     return webassets
