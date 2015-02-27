@@ -1,7 +1,13 @@
-from flask import Flask
+
+import sys
+from gzip import GzipFile
+from io import BytesIO
+
+from flask import Flask, current_app, request
 from flask_sslify import SSLify
 from flask_sqlalchemy import SQLAlchemy
 from flask.ext.stormpath import StormpathManager
+from flask.ext.compress import Compress
 
 from helpers import JSONEncoder
 
@@ -11,18 +17,21 @@ app = Flask(__name__,
             template_folder='frontend/templates',
             static_folder='frontend/static')
 
-sslify = SSLify(app)
+# Load the config from environment variables, defaulting to some dev settings
 app.config.from_object('taa.config_defaults')
-#app.config.from_pyfile(config_filename)
-#app.config.from_envvar("TAA_CONFIG_FILE", silent=True)
-#print(app.config)
 
-# user management config
+# Init compression (only active if debug is False)
+Compress(app)
+
+# Init SSL redirect (only if debug is False)
+SSLify(app)
+
+# Init user management config
 stormpath_manager = StormpathManager(app)
 stormpath_manager.login_view = 'login'
 
+# Init database - leave the db variable here so other parts of the app can access the database
 db = SQLAlchemy(app)
-
 
 # Register API blueprints
 from api.cases import bp as cases_api
@@ -38,7 +47,6 @@ from core import TAAFormError, TAAError
 from api import on_api_error, on_api_form_error
 app.errorhandler(TAAError)(on_api_error)
 app.errorhandler(TAAFormError)(on_api_form_error)
-
 
 # Pull in the full DB structure on start
 import models
