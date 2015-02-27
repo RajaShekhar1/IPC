@@ -1586,7 +1586,7 @@
     </div>
 
     <!-- ------------------------------ Modal Disclaimer ------------------------------ -->
-
+    
     <div id="modal-disclaimer" class="modal">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -1595,7 +1595,9 @@
                 </div>
 
                 <div class="modal-body">
-                    <iframe src="{% if wizard_data['product_id']=='FPPTI' %}
+                {% set base_product_code = wizard_data['products'][0].get_base_product_code() %}
+                    <iframe src="{%
+        if base_product_code=='FPPTI' or base_product_code == 'FPP-Gov' %}
 	       {% if wizard_data['state']=='TX' %}
 	         {{ url_for ('FPPTI_disclosure_TX') }}
 	       {% elif wizard_data['state']=='KS' %}
@@ -1607,7 +1609,7 @@
 	       {% else %}
 	         {{ url_for ('FPPTI_disclosure_generic') }}
 	       {% endif %}
-	    {% elif wizard_data['product_id']=='FPPCI' %}
+	    {% elif base_product_code=='FPPCI' %}
 	       {% if wizard_data['state']=='KS' %}
 	         {{ url_for ('FPPCI_disclosure_KS') }}
 	       {% elif wizard_data['state']=='VA' %}
@@ -1617,6 +1619,16 @@
 	       {% else %}
 	         {{ url_for ('FPPCI_disclosure_generic') }}
 	       {% endif %}
+        {% elif base_product_code == 'Group CI' %}
+           {% if wizard_data['state'] == 'KS' %}
+               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-KS.pdf') }}
+           {% elif wizard_data['state'] == 'OR' %}
+               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-OR.pdf') }}
+           {% elif wizard_data['state'] == 'VA' %}
+               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-VA.pdf') }}
+           {% else %}
+               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508 (Generic).pdf') }}
+           {% endif %}
 	    {% else %}
 	       {{ url_for ('FPPTI_disclosure_generic') }}
 	    {% endif %}"
@@ -1686,8 +1698,6 @@
 {% endblock %}
 
 {% block page_js %}
-
-    <script src="{{ url_for('static', filename='js/5Star/enrollment.js') }}"></script>
     <script type="text/javascript">
         jQuery(function ($) {
 
@@ -1695,7 +1705,6 @@
             init_rate_form({{ wizard_data|tojson|safe }});
 
             init_validation();
-
         });
     </script>
 {% endblock %}
