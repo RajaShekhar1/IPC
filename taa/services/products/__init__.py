@@ -149,7 +149,7 @@ class ProductService(DBService):
         turned_off_statecodes = {
             'FPPTI': ['CT', 'DC', 'FL', 'IN', 'ME', 'MD', 'MA', 'MN', 'MO', 'NH', 'NJ', 'NY', 'NC', 'ND', 'OH', 'PA', 'VT', 'VA', 'WA', 'WI'],
             'FPPCI': ['CT', 'DC', 'FL', 'ME', 'MD', 'MA', 'MN', 'MO', 'NH', 'NJ', 'NY', 'NC', 'ND', 'OH', 'PA', 'PR', 'VT', 'VA', 'WI'],
-            'Group CI': [],
+            'Group CI': ["CA", "CO", "DC", "HI", "KS", "KY", "MO", "NE", "NC", "PA", "VA"],
         }
         # Keep the same as FPPTI
         turned_off_statecodes['FPP-Gov'] = turned_off_statecodes['FPPTI']
