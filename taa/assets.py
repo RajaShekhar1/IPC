@@ -151,9 +151,8 @@ def init_app(app):
 
     # Webassets debug is defined in the global config and automatically pulled in
     # These settings control when and how the output files are generated 
-    webassets.manifest = 'cache' #if not app.debug else False
-    webassets.cache = True # not app.debug
-    webassets.auto_build = True
-    
+    webassets.manifest = 'file' #if not app.debug else False
+    #webassets.cache = False # not app.debug
+    webassets.auto_build = app.config['ASSETS_AUTO_BUILD']
     
     return webassets
