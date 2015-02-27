@@ -32,7 +32,7 @@ css_all = Bundle(
     
     #css_taa_less,
     css_taa, 
-    output="generated_assets/taa-old.min.css"
+    output="generated_assets/taa-legacy-%(version)s.min.css"
 )
 
 css_ace_latest = Bundle(
@@ -53,7 +53,7 @@ css_ace_latest = Bundle(
     'css/jquery.rcrumbs.min.css',
 
     css_taa,
-    output="generated_assets/taa.min.css"
+    output="generated_assets/taa-%(version)s.min.css"
 )
 
 js_header = Bundle(
@@ -89,8 +89,6 @@ js_vendor = Bundle(
     knockout_js,
     'js/underscore-min.js',
     
-    #output='generated_assets/js_vendor_old.min.js',
-    
 )
 
 js_vendor_latest = Bundle(
@@ -101,8 +99,7 @@ js_vendor_latest = Bundle(
     # js ace plugins for wizard and such go here
     'ace-v1.3.3/js/dataTables/jquery.dataTables.min.js',
     'ace-v1.3.3/js/dataTables/jquery.dataTables.bootstrap.min.js',
-    Bundle('ace-v1.3.3/js/dataTables/dataTables.responsive.js', filters='rjsmin', 
-           #output='generated_assets/datatables.responsive.min.js'
+    Bundle('ace-v1.3.3/js/dataTables/dataTables.responsive.js', filters='rjsmin'
     ),
     
     'ace-v1.3.3/js/jquery.maskedinput.min.js',
@@ -127,7 +124,7 @@ js_vendor_latest = Bundle(
     knockout_js,
     'js/underscore-min.js',
     'js/sammy-latest.min.js',
-    output='generated_assets/js_vendor_latest.min.js',
+    output='generated_assets/js_vendor_latest-%(version)s.min.js',
 )
 
 
@@ -137,10 +134,10 @@ js_main = Bundle(
     js_vendor,
     Bundle("js/5Star/*.js", 
            filters="rjsmin", 
-           output='generated_assets/app.min.js'),
-    output='generated_assets/all_js_old.min.js'
+           output='generated_assets/app-%(version)s.min.js'),
+    output='generated_assets/all-js-legacy-%(version)s.min.js'
 )
-taa_app = Bundle("js/5Star/*.js", filters="rjsmin", output='generated_assets/taa_app.min.js')
+taa_app = Bundle("js/5Star/*.js", filters="rjsmin", output='generated_assets/taa-app-%(version)s.min.js')
 
 
 def init_app(app):
