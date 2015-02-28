@@ -46,6 +46,11 @@ EMAIL_SMTP_USERNAME = env_get_text('MANDRILL_SMTP_USERNAME', "taa_mandrill")
 EMAIL_SMTP_PASSWORD =  env_get_text('MANDRILL_SMTP_PASSWORD', "-h0QL63ppE05jaU3aWvRjg")
 EMAIL_FROM_ADDRESS = "enrollment@5StarEnroll.com"
 
+# Flask-Mail settings for email error alerts
+for k in os.environ:
+    if k.startswith('MAIL_'):
+        locals()[k] = os.environ.get(k)
+
 # Database
 SQLALCHEMY_DATABASE_URI = env_get_text('DATABASE_URL', "postgresql://taa:fQj9lJTFbOQUBYo@localhost/taa")
 SQLALCHEMY_ECHO = env_get_bool('SQLALCHEMY_ECHO', True)
