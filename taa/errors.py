@@ -34,6 +34,8 @@ def init_exception_emails(app, recipients, sender='error@5starenroll.com'):
             text=msg,
         )
         
+        return "We're sorry, the server has encountered an error."
+        
     # Don't attempt if debug mode is on
     if not app.config.get('Debug', False):
         app.register_error_handler(500, email_exception)
