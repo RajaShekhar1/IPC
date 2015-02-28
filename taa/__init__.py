@@ -8,9 +8,9 @@ from flask_sslify import SSLify
 from flask_sqlalchemy import SQLAlchemy
 from flask.ext.stormpath import StormpathManager
 from flask.ext.compress import Compress
-from flask_errormail import mail_on_500
+from flask.ext.mandrill import Mandrill
 
-from helpers import JSONEncoder
+from .helpers import JSONEncoder
 
 # initialization and config
 #def create_app(config_filename):
@@ -20,6 +20,14 @@ app = Flask(__name__,
 
 # Load the config from environment variables, defaulting to some dev settings
 app.config.from_object('taa.config_defaults')
+
+# Mandrill emailing
+mandrill = Mandrill(app)
+
+# Exception error handling
+#   (Import after the mandrill import line for dependency correctness)
+from .errors import init_exception_emails
+init_exception_emails(app, ['zmason@delmarsd.com'])
 
 # Init compression (only active if debug is False)
 Compress(app)
@@ -60,5 +68,4 @@ import frontend.views
 from assets import init_app as init_assets
 init_assets(app)
 
-mail_on_500(app, ['zmason@delmarsd.com'])
 
