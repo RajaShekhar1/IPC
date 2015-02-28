@@ -25,7 +25,8 @@ app.config.from_object('taa.config_defaults')
 Compress(app)
 
 # Init SSL redirect (only if debug is False)
-SSLify(app)
+if app.config.get('IS_SSL', False):
+    SSLify(app)
 
 # Init user management config
 stormpath_manager = StormpathManager(app)
