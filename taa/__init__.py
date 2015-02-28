@@ -8,6 +8,7 @@ from flask_sslify import SSLify
 from flask_sqlalchemy import SQLAlchemy
 from flask.ext.stormpath import StormpathManager
 from flask.ext.compress import Compress
+from flask_errormail import mail_on_500
 
 from helpers import JSONEncoder
 
@@ -57,3 +58,6 @@ import frontend.views
 # Initialize webassets
 from assets import init_app as init_assets
 init_assets(app)
+
+mail_on_500(app, ['zmason@delmarsd.com'])
+
