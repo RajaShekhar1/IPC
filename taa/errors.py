@@ -29,7 +29,7 @@ def init_exception_emails(app, recipients, sender='error@5starenroll.com'):
         
         mandrill.send_email(
             from_email=sender,
-            subject='5Star Exception ({hostname})'.format(app.config.get('HOSTNAME')),
+            subject='5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
             to=[{'email': e} for e in recipients],
             text=msg,
         )
