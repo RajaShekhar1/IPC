@@ -22,7 +22,7 @@ app = Flask(__name__,
 app.config.from_object('taa.config_defaults')
 
 # Mandrill emailing
-mandrill = Mandrill(app)
+mandrill_flask = Mandrill(app)
 
 # Exception error handling
 #   (Import after the mandrill import line for dependency correctness)
