@@ -50,7 +50,10 @@ def init_exception_emails(app, recipients, sender='error@5starenroll.com'):
             text=msg,
         )
         
-        # Make sure the response still registers as 500 so production logs show the error
+        # Print to stdout so we can track via normal Heroku logs
+        print(msg)
+        
+        # Make sure the response still registers as 500
         resp = Response("We're sorry, the server has encountered an error.")
         resp.status_code = 500
         return resp
