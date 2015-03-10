@@ -1,14 +1,12 @@
 import random
 from datetime import datetime
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
-from taa import app
-
+import mandrill
 from flask import url_for, render_template
 from dateutil.relativedelta import relativedelta
-import mandrill
+
+from taa import mandrill_flask, app
+
 
 class Enrollment(object):
     def __init__(self, id, case, employee_first, employee_last, employee_email):
@@ -49,33 +47,24 @@ class EnrollmentRequest(object):
         return url_for("email_link_handler", token=self.token, _external=True)
      
 class EmailGenerator(object):
-    def __init__(self):
-        self.smtp_server = app.config['EMAIL_SMTP_SERVER']
-        self.smtp_port = app.config['EMAIL_SMTP_PORT']
-        self.smtp_user = app.config['EMAIL_SMTP_USERNAME']
-        self.smtp_password = app.config['EMAIL_SMTP_PASSWORD']
-        self.from_address = app.config['EMAIL_FROM_ADDRESS']
-        
-    def send(self, recipient, subject, html):
+    def send(self, recipient, subject, html, from_address=None):
         """
         See https://mandrillapp.com/api/docs/messages.python.html
         """
-        
-        message = dict(
-            from_email=self.from_address,
-            subject=subject,
-            html=html,
-            to=[dict(email=recipient)],
-        )
-        # SMTP Password is the mandrill API key
-        mandrill_client = mandrill.Mandrill(self.smtp_password)
-        
+        if not from_address:
+            from_address = app.config.get('MANDRILL_DEFAULT_FROM')
         try:
-            result = mandrill_client.messages.send(message=message)
+            result = mandrill_flask.send_email(
+                from_email=from_address,
+                subject=subject,
+                html=html,
+                to=[dict(email=recipient)],
+            )
         except mandrill.Error as e:
             print "Error sending email: %s - %s" % (e.__class__, e)
             raise 
-        
+        except Exception as e:
+            print "Exception sending email: %s - %s"%(e.__class__, e)
         
 class EnrollmentEmail(object):
     def send_enrollment_request(self, enrollment_request):
