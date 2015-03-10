@@ -8,8 +8,9 @@ from flask_sslify import SSLify
 from flask_sqlalchemy import SQLAlchemy
 from flask.ext.stormpath import StormpathManager
 from flask.ext.compress import Compress
+from flask.ext.mandrill import Mandrill
 
-from helpers import JSONEncoder
+from .helpers import JSONEncoder
 
 # initialization and config
 #def create_app(config_filename):
@@ -20,17 +21,26 @@ app = Flask(__name__,
 # Load the config from environment variables, defaulting to some dev settings
 app.config.from_object('taa.config_defaults')
 
+# Mandrill emailing
+mandrill_flask = Mandrill(app)
+
+# Exception error handling
+#   (Import after the mandrill import line for dependency correctness)
+from .errors import init_exception_emails
+init_exception_emails(app, ['zmason@delmarsd.com'])
+
 # Init compression (only active if debug is False)
 Compress(app)
 
-# Init SSL redirect (only if debug is False)
-SSLify(app)
+# Init SSL redirect (only if debug is False AND IS_SSL is true)
+if app.config.get('IS_SSL', False):
+    SSLify(app)
 
 # Init user management config
 stormpath_manager = StormpathManager(app)
 stormpath_manager.login_view = 'login'
 
-# Init database - leave the db variable here so other parts of the app can access the database
+# Init database - export the db variable here so other parts of the app can access the database
 db = SQLAlchemy(app)
 
 # Register API blueprints
@@ -57,3 +67,5 @@ import frontend.views
 # Initialize webassets
 from assets import init_app as init_assets
 init_assets(app)
+
+
