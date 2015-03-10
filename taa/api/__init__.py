@@ -81,11 +81,17 @@ def route(bp, *args, **kwargs):
 
 
 def on_api_error(e):
+    """
+    API Usage error - we return a 400 with an explanation of why the request was bad.
+    """
     db.session.rollback()
     return jsonify(dict(error=e.msg)), 400
 
 
 def on_api_form_error(e):
+    """
+    Form Validation error - we return a 400 with an explanation of why the request was bad.
+    """
     return jsonify(dict(errors=e.errors)), 400
 
 

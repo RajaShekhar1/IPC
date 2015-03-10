@@ -56,5 +56,5 @@ def init_exception_emails(app, recipients, sender='error@5starenroll.com'):
         return resp
         
     # Don't attempt if debug mode is on
-    if not app.config.get('Debug', False):
+    if not app.config.get('DEBUG', False):
         app.register_error_handler(500, email_exception)
