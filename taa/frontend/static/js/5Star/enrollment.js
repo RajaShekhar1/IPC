@@ -1691,6 +1691,26 @@ var _applicant_count = 0;
 function InsuredApplicant(applicant_type, options, selected_plan, product_health_questions) {
     var self = this;
     
+    var defaults = {
+        first: "",
+        last: "",
+        email: "",
+        phone: "",
+        birthdate: null,
+        ssn: "",
+        gender: null,
+        height: null,
+        weight: null,
+        is_smoker: null,
+        address1: "",
+        address2: "",
+        city: "",
+        state: "",
+        zip: "",
+        existing_coverages: []
+    };
+    var applicant_data = $.extend({}, defaults, options);
+    
     self.applicant_type = applicant_type;
     self.selected_plan = selected_plan;
     
@@ -1698,30 +1718,30 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
     //  unique names, attributes, etc. for validation and lookup
     self._id = _applicant_count++;
     
-    self.first = ko.observable(options.first || "");
-    self.last = ko.observable(options.last || "");
-    self.email = ko.observable(options.email || "");
-    self.phone = ko.observable(options.phone || "");
-    self.birthdate = ko.observable(options.birthdate || null);
-    self.ssn = ko.observable(options.ssn || "");
-    self.gender = ko.observable(options.gender || null);
+    self.first = ko.observable(applicant_data.first);
+    self.last = ko.observable(applicant_data.last);
+    self.email = ko.observable(applicant_data.email);
+    self.phone = ko.observable(applicant_data.phone);
+    self.birthdate = ko.observable(applicant_data.birthdate);
+    self.ssn = ko.observable(applicant_data.ssn);
+    self.gender = ko.observable(applicant_data.gender);
     
     // Extended questions
-    self.height = ko.observable(parseFloat(options.height) ? parseFloat(options.height) : null);
-    self.weight = ko.observable(options.weight || null);
-    self.is_smoker = ko.observable((options.is_smoker !== null) ? options.is_smoker : null);
+    self.height = ko.observable(parseFloat(applicant_data.height) ? parseFloat(applicant_data.height) : null);
+    self.weight = ko.observable(applicant_data.weight);
+    self.is_smoker = ko.observable(applicant_data.is_smoker);
     
     self.height_error = ko.observable(null);
     self.weight_error = ko.observable(null);
     
-    self.address1 = ko.observable(options.street_address || "");
-    self.address2 = ko.observable(options.street_address2 || "");
-    self.city = ko.observable(options.city || "");
-    self.state = ko.observable(options.state || "");
-    self.zip = ko.observable(options.zip || "");
+    self.address1 = ko.observable(applicant_data.street_address);
+    self.address2 = ko.observable(applicant_data.street_address2);
+    self.city = ko.observable(applicant_data.city);
+    self.state = ko.observable(applicant_data.state);
+    self.zip = ko.observable(applicant_data.zip);
     
     // From previous application(s)
-    self.existing_coverages = options.existing_coverages || [];
+    self.existing_coverages = applicant_data.existing_coverages || [];
     
     self.health_questions = ko.computed(function() {
         

@@ -32,7 +32,7 @@ init_exception_emails(app, ['zmason@delmarsd.com'])
 # Init compression (only active if debug is False)
 Compress(app)
 
-# Init SSL redirect (only if debug is False)
+# Init SSL redirect (only if debug is False AND IS_SSL is true)
 if app.config.get('IS_SSL', False):
     SSLify(app)
 
@@ -40,7 +40,7 @@ if app.config.get('IS_SSL', False):
 stormpath_manager = StormpathManager(app)
 stormpath_manager.login_view = 'login'
 
-# Init database - leave the db variable here so other parts of the app can access the database
+# Init database - export the db variable here so other parts of the app can access the database
 db = SQLAlchemy(app)
 
 # Register API blueprints
