@@ -523,7 +523,7 @@ def make_applicant_tabs(prefix, data):
 def make_contact_tabs(prefix, data):
     return [
         make_tab(prefix + 'Street1', data['address1']),
-        make_tab(prefix + 'Street2', data['address2']),
+        make_tab(prefix + 'Street2', data['address2'] if 'address2' in data else ''),
         make_tab(prefix + 'City', data['city']),
         make_tab(prefix + 'State', data['state']),
         make_tab(prefix + 'Zip', data['zip']),

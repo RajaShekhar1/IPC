@@ -556,6 +556,10 @@ class CensusRecordService(DBService):
         if 'is_uploaded_census' not in data:
             data['is_uploaded_census'] = False
         
+        # Todo: See if there are any other records that need a final "cleaning" before being saved
+        if 'spouse_birthdate' in data and not data['spouse_birthdate']:
+            data['spouse_birthdate'] = None
+        
         record = self.new(**data)
         db.session.add(record)
         return record
