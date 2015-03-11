@@ -538,11 +538,9 @@ class EnrollmentApplicationCoverageService(DBService):
             enrollment_application_id=enrollment.id,
             product_id=product.id,
             applicant_type=applicant_type,
-
-            height_inches=applicant_data['height'],
-            weight_pounds=applicant_data['weight'],
+            height_inches=applicant_data['height'] if applicant_data['height'] else None,
+            weight_pounds=applicant_data['weight'] if applicant_data['weight'] else None,
             is_smoker=applicant_data.get('is_smoker'),
-
             coverage_face_value=applicant_coverage['face_value'],
             weekly_premium=applicant_coverage['weekly_premium'],
             soh_answers=json.dumps(dict(

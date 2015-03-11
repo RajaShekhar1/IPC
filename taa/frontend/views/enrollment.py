@@ -142,6 +142,8 @@ def submit_wizard_data():
     data = request.json
     wizard_results = data['wizard_results']
     
+    print("[ENROLLMENT SUBMITTED]: %s"%wizard_results) 
+    
     # Save enrollment information and updated census data prior to DocuSign hand-off 
     if session.get('enrolling_census_record_id'):
         census_record = case_service.get_census_record(None, session['enrolling_census_record_id'])
@@ -164,15 +166,6 @@ def submit_wizard_data():
         # Return the redirect url or error
         resp = {'error': is_error, 'error_message': error_message, "redirect": redirect}
         
-        #resp = {
-        #    'error': False,
-        #    'error_message': '',
-        #    'redirect': url_for("ds_landing_page",
-        #                        event="signing_complete",
-        #                        name=wizard_results['employee']['first'],
-        #                        type='inperson'
-        #    )
-        #}
     else:
         # Declined
         resp = {
