@@ -576,11 +576,15 @@ class CensusRecordService(DBService):
             if val is None:
                 return '' 
             return 'Y' if val else 'N'
-                
         
         employee = data['employee']
         spouse = data['spouse']
         children = data['children']
+
+        # Todo: See if there are any other records that need a final "cleaning" before being saved
+        if 'birthdate' in spouse and not spouse['birthdate']:
+            # Ensure date is NULL in DB, not ""
+            data['spouse']['birthdate'] = None
         
         record.employee_ssn = self.strip_ssn(employee['ssn'])
         record.employee_first = employee['first']
