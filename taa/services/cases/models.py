@@ -31,9 +31,10 @@ class Case(CaseSerializer, db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     company_name = db.Column(db.String, nullable=False)
+    group_number = db.Column(db.String, nullable=True)
     situs_state = db.Column(db.String(2), nullable=True)
     situs_city = db.Column(db.String)
-    
+
     agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
     owner_agent = db.relationship('Agent', backref='owned_cases')
     

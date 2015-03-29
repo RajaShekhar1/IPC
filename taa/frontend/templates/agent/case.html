@@ -81,8 +81,14 @@
                                                             </div>
                                                         </div>
                                                         
-                                                    
-                                                    {# 
+                                                    <div class="form-group">
+                                                        <label class="col-md-3 control-label" for="groupNumber">Group Number: </label>
+                                                        <div class="col-md-9">
+                                                            <input id="groupNumber" type="text" data-bind="value: group_number">
+                                                        </div>
+                                                    </div>
+
+                                                    {# Restore multi-product selection when multi-product enrollment is working
                                                     {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsValue: "id", optionsText: "name", selectedOptions: products, multiSelect: {
                                                         observed: products, 
                                                         options: {nonSelectedText: "No Products Selected", numberDisplayed: 3}
@@ -905,6 +911,7 @@
                 }
             });
             self.company_name = ko.observable(case_data.company_name || "").extend({ rateLimit: 1000 });
+            self.group_number = ko.observable(case_data.group_number || "");
             self.product_choices = ko.observableArray(product_choices);
             // Get the list of selected products from the product choices
             var matched_selected_products = _.filter(self.product_choices(), function(p) {
@@ -1056,7 +1063,7 @@
             self.flash_messages = new FlashMessages();
             
             // subscribe to all changes to detect data changes
-            var fields = [self.company_name, self.products, self.enrollment_period_type, 
+            var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
                     self.enrollment_periods, self.situs_city, self.situs_state, 
                     self.is_active, self.owner_agent_id];
             _.each(self.enrollment_periods(), function(p) {
@@ -1178,6 +1185,7 @@
                 
                 return {
                     company_name: self.company_name(),
+                    group_number: self.group_number(),
                     active: self.is_active(),
                     products: self.products(),
                     partner_agents: partner_agents,
@@ -1348,7 +1356,8 @@
             self.is_loading = ko.observable(true);
             
             self.company_name = ko.observable({});
-            
+            self.group_number = ko.observable({});
+
             self.any_enrollments = ko.observable(false);
             
             self.summary_data = ko.observable({});
@@ -1364,6 +1373,7 @@
                     
                     // Pull out the report data
                     self.company_name(resp.data.company_name);
+                    self.group_number(resp.data.group_number);
                     self.enrollment_dates(resp.data.enrollment_period);
                     self.enrollment_methods(resp.data.enrollment_methods);
                     self.summary_data(resp.data.summary);

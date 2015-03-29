@@ -75,7 +75,7 @@ def in_person_enrollment():
         state = record.case.situs_state
         enroll_city = record.case.situs_city
         company_name = record.case.company_name
-        #product_code = record.case.products[0].code if record.case.products else None
+        group_number = record.case.group_number
         products = record.case.products
         employee_data = record.get_employee_data()
         spouse_data = record.get_spouse_data()
@@ -86,6 +86,7 @@ def in_person_enrollment():
         state = data['enrollmentState']
         enroll_city = data['enrollmentCity']
         company_name = data['companyName']
+        group_number = data['groupNumber']
         product_id = data['productID']
         product = product_service.get_if_allowed(product_id)
         
@@ -102,11 +103,11 @@ def in_person_enrollment():
     # refresh active_case
     session['active_case'] = {
         'company_name': company_name,
+        'group_number': group_number,
         'situs_state': state,
         'situs_city': enroll_city,
     }
-    
-    
+
     # Get SOH Questions
     from taa.services.products import StatementOfHealthQuestionService
     soh_questions = {}
@@ -117,6 +118,7 @@ def in_person_enrollment():
         'state': state if state != 'XX' else None,
         'enroll_city': enroll_city,
         'company_name': company_name,
+        'group_number': group_number,
         'products': products,
         'employee_data':employee_data,
         'spouse_data':spouse_data,
