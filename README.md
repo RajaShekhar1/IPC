@@ -21,6 +21,7 @@ and set up a virtual environment for python:
     virtualenv ~/env
     source ~/env/bin/activate
     cd /vagrant
+    pip install -r requirements.txt
      
 To allow deploying to heroku directly from the VM, you need to add the SSH key to heroku:
 
@@ -42,8 +43,8 @@ up to date structurally:
 
 Now populate the initial data needed to run the site:
     
-    python manage.py initialize_db
-    python manage.py sync_agents
+    python manage-taa.py initialize_db
+    python manage-taa.py sync_agents
 
 To run the site, do the following:
     
