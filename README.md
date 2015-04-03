@@ -103,20 +103,20 @@ And change the remote named "heroku" to "production".
 
 Otherwise, add the "production" remote this way:
 
-    git remote add production git@heroku.com:taa.git
+    git remote add heroku-production git@heroku.com:taa.git
     
 And the "staging" remote:
 
-    git remote add staging git@heroku.com:taa-staging.git
+    git remote add heroku-staging git@heroku.com:taa-staging.git
     
 After this, your git config should contain:
 
-    [remote "production"]
+    [remote "heroku-production"]
         url = https://git.heroku.com/taa.git
-        fetch = +refs/heads/*:refs/remotes/production/*
-    [remote "staging"]
+        fetch = +refs/heads/*:refs/remotes/heroku-production/*
+    [remote "heroku-staging"]
         url = git@heroku.com:taa-staging.git 
-        fetch = +refs/heads/*:refs/remotes/staging/*
+        fetch = +refs/heads/*:refs/remotes/heroku-staging/*
 
 
 
