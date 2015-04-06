@@ -211,12 +211,12 @@
                                                 {% endif %}
                                                 
                                             </div>
-                                            {% if is_admin %}
                                             <div class="row">
                                                 <div class="col-sm-12">
                                                     <h4 class="header lighter">Partner Agents</h4>
                                                     <div class="row">
                                                         <div class="col-sm-10 col-md-offset-1">
+                                                        {% if is_admin %}
                                                             <select data-bind="selectedOptions: partner_agents" 
                                                                     multiple="multiple" class="form-control" 
                                                                     id="partner-agents" 
@@ -229,11 +229,29 @@
                                                                         >{{ agent.name() }}</option>
                                                                 {% endfor %}
                                                             </select>
+                                                        {% else %}
+                                                            <div class="text partner_agents">
+                                                                <ul class="partner-agents">
+                                                                    {% if case.owner_agent is not none %}
+                                                                        <li class="owner-agent">
+                                                                            {{ case.owner_agent.name() }}
+                                                                            <span class="text-muted">(<em>owner</em>)</span>
+                                                                        </li>
+                                                                    {% endif -%}
+                                                                    {% for agent in case.partner_agents %}
+                                                                        {% if agent != case.owner_agent %}
+                                                                            <li class="partner-agent">
+                                                                            {{ agent.name() }}
+                                                                            </li>
+                                                                        {% endif %}
+                                                                    {% endfor %}
+                                                                </ul>
+                                                            </div>
+                                                        {% endif %}
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            {% endif %}
                                         </div>
                                         <div class="widget-toolbox clearfix padding-8">
                                             
