@@ -961,10 +961,14 @@ class CensusRecordParser(object):
     def _process_file_stream(self, file_data):
         # To get universal newlines (ie, cross-platform) we use splitlines()
         bytes = file_data.getvalue()
+
+        # Autodetect CSV dialect
+        dialect = csv.Sniffer().sniff(bytes)
+
         lines = bytes.splitlines()
-        lines = self._preprocess_header_row(lines)
+        lines = self._preprocess_header_row(lines, dialect)
         
-        reader = csv.DictReader(lines, restkey="extra")
+        reader = csv.DictReader(lines, restkey="extra", dialect=dialect)
         
         try:
             headers = reader.fieldnames
@@ -985,20 +989,20 @@ representative for assistance.""",
             
             headers = records = []
         
-        return headers, records
+        return headers, records, dialect
     
-    def _preprocess_header_row(self, lines):
+    def _preprocess_header_row(self, lines, dialect):
         """ 
         To get case-insensitive parsing behaviour, we uppercase every column in the first line
          before passing it off to the DictReader
         """
         header = []
-        header_reader = csv.reader([lines[0]])
+        header_reader = csv.reader([lines[0]], dialect)
         for row in header_reader:
             header = [col.upper() for col in row]
         
         io = StringIO.StringIO()
-        header_writer = csv.writer(io)
+        header_writer = csv.writer(io, dialect)
         header_writer.writerow(header)
         
         lines[0] = io.getvalue()
@@ -1006,7 +1010,7 @@ representative for assistance.""",
         return lines
     
     def process_file(self, file_data, error_if_matching=None):
-        headers, records = self._process_file_stream(file_data)
+        headers, records, dialect = self._process_file_stream(file_data)
         self.validate_header_row(headers, records)
         
         # Don't do any more processing if missing important headers
