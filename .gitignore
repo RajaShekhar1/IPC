@@ -13,3 +13,4 @@ TAA.iml
 env_mac
 .webassets*
 taa/frontend/static/.webassets-cache/*
+*.swp

@@ -21,6 +21,7 @@ and set up a virtual environment for python:
     virtualenv ~/env
     source ~/env/bin/activate
     cd /vagrant
+    pip install -r requirements.txt
      
 To allow deploying to heroku directly from the VM, you need to add the SSH key to heroku:
 
@@ -42,8 +43,8 @@ up to date structurally:
 
 Now populate the initial data needed to run the site:
     
-    python manage.py initialize_db
-    python manage.py sync_agents
+    python manage-taa.py initialize_db
+    python manage-taa.py sync_agents
 
 To run the site, do the following:
     
@@ -102,20 +103,20 @@ And change the remote named "heroku" to "production".
 
 Otherwise, add the "production" remote this way:
 
-    git remote add production git@heroku.com:taa.git
+    git remote add heroku-production git@heroku.com:taa.git
     
 And the "staging" remote:
 
-    git remote add staging git@heroku.com:taa-staging.git
+    git remote add heroku-staging git@heroku.com:taa-staging.git
     
 After this, your git config should contain:
 
-    [remote "production"]
+    [remote "heroku-production"]
         url = https://git.heroku.com/taa.git
-        fetch = +refs/heads/*:refs/remotes/production/*
-    [remote "staging"]
+        fetch = +refs/heads/*:refs/remotes/heroku-production/*
+    [remote "heroku-staging"]
         url = git@heroku.com:taa-staging.git 
-        fetch = +refs/heads/*:refs/remotes/staging/*
+        fetch = +refs/heads/*:refs/remotes/heroku-staging/*
 
 
 

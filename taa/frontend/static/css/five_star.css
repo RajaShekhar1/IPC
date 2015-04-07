@@ -252,6 +252,10 @@ input[type=radio].ace+.lbl::before {
     width: 30%;
 }
 
+.partner-agents .owner-agent {
+    font-weight: bold;
+}
+
 @media print {
     body {
         color: #000;
