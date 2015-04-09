@@ -114,17 +114,27 @@
                                                             <div class="panel-heading">
                                                                 <label>
                                                                     <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="open"> 
-                                                                    <span class="lbl padding-8">Open Enrollment</span>
+                                                                    <span class="lbl padding-8">Enrollment Period with End Date</span>
                                                                 </label>
                                                             </div>
                                                             <div class="panel-body" 
                                                                 data-bind="slideDownIf: is_open_enrollment">
-                                                                <label>
-                                                                    Start Date: 
-                                                                    <input data-bind="value: get_open_enrollment_period().start_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
-                                                                
-                                                                </label>
-                                                                
+                                                                <div class="row">
+                                                                    <div class="col-md-6">
+                                                                        <label>
+                                                                            Start Date: 
+                                                                            <input data-bind="value: get_open_enrollment_period().start_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
+                                                                        
+                                                                        </label>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <label>
+                                                                            End Date: 
+                                                                            <input data-bind="value: get_open_enrollment_period().end_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_end_date">
+                                                                        
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div class="panel form-group">
@@ -867,9 +877,9 @@
             }
             
             if (self.is_open()) {
-                // process start date normally
+                // process start/end date normally
                 self.start_date = ko.observable(normalize_date(settings.start_date));
-                self.end_date = ko.observable(null);
+                self.end_date = ko.observable(normalize_date(settings.end_date));
             } else {
                 self.start_date = ko.observable(strip_year(settings.start_date));
                 self.end_date = ko.observable(strip_year(settings.end_date));
@@ -890,7 +900,7 @@
             
             self.is_valid = ko.computed(function() {
                 if (self.is_open()) {
-                    return self.is_valid_date(self.start_date());
+                    return self.is_valid_date(self.start_date()) && self.is_valid_date(self.end_date());
                 } else {
                     return (self.is_valid_month_day(self.start_date()) && self.is_valid_month_day(self.end_date()));
                 } 
