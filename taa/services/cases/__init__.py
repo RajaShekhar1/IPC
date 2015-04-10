@@ -354,9 +354,12 @@ class CaseEnrollmentPeriodsService(DBService):
         for period in data:
             # Need a valid start date
             if not period.get('start_date'):
-                errors['open_enrollment_start_date'] = ['Invalid date']
+                errors['open_enrollment_start_date'] = ['Invalid start date']
+            elif not period.get('end_date'):
+                errors['open_enrollment_end_date'] = ['Invalid end date']
             else:
                 dateutil.parser.parse(period['start_date'])
+                dateutil.parser.parse(period['end_date'])
             
         return errors
     
@@ -377,7 +380,8 @@ class CaseEnrollmentPeriodsService(DBService):
                 periods.append(CaseAnnualEnrollmentPeriod(start_date=start, end_date=end, case_id=case.id))
             elif period['period_type'] == CaseOpenEnrollmentPeriod.PERIOD_TYPE:
                 start = self.valid_date(period['start_date'])
-                periods.append(CaseOpenEnrollmentPeriod(start_date=start, case_id=case.id))
+                end = self.valid_date(period['end_date'])
+                periods.append(CaseOpenEnrollmentPeriod(start_date=start, end_date=end, case_id=case.id))
             
         for p in periods:
             self.save(p)
