@@ -124,14 +124,12 @@
                                                                         <label>
                                                                             Start Date: 
                                                                             <input data-bind="value: get_open_enrollment_period().start_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
-                                                                        
                                                                         </label>
                                                                     </div>
                                                                     <div class="col-md-6">
                                                                         <label>
                                                                             End Date: 
                                                                             <input data-bind="value: get_open_enrollment_period().end_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_end_date">
-                                                                        
                                                                         </label>
                                                                     </div>
                                                                 </div>
@@ -1172,7 +1170,21 @@
                 if ($.trim(self.company_name()) == "") {
                     add_case_error(errors, "company_name", "Company name is required.");
                 }
-                
+
+                // an invalid enrollment period (both dates can be blank, but if one is populated, both must be)
+                if (self.is_open_enrollment() && !self.get_open_enrollment_period().is_valid()) {
+                    var start = self.get_open_enrollment_period().start_date();
+                    var end = self.get_open_enrollment_period().end_date();
+                    if(!(start == "" && end == "")) {
+                        if(!is_valid_date(start)) {
+                            add_case_error(errors, "open_enrollment_start_date", "Enter valid Start Date or leave both dates blank")
+                        }
+                        else if(!is_valid_date(end)) {
+                            add_case_error(errors, "open_enrollment_end_date", "Enter valid End Date or leave both dates blank")
+                        }
+                    }
+                }
+
                 // an invalid annual period (missing start or end)
                 if (self.is_annual_enrollment() && self.any_annual_period_missing_a_component()) {
                     var missing_observables = _.filter(self.annual_enrollment_periods(), self.missing_annual_period_predicate);
