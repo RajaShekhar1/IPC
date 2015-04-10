@@ -124,7 +124,7 @@ class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
         # Active if start and end date are both blank, or if they're both
         # populated and the current date falls between them
         return (not (self.start_date or self.end_date) or
-                (self.get_start_date() < now < (self.end_date + timedelta(days=1)).date()))
+                (self.end_date and (self.get_start_date() < now < (self.end_date + timedelta(days=1)))))
 
     def get_start_date(self):
         return self.start_date
