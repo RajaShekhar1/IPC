@@ -996,8 +996,13 @@ Product.prototype = {
     
     should_show_step_5: function() {
         return true;
+    },
+
+    should_use_date_of_hire_for_identity: function() {
+        // Right now all FPP products will use this.
+        return true;
     }
-    
+
 };
 
 function FPPTIProduct(product_data) {
@@ -1254,6 +1259,10 @@ GroupCIProduct.prototype.has_critical_illness_coverages = function() {
 };
 GroupCIProduct.prototype.should_show_step_5 = function() {return false;};
 
+GroupCIProduct.prototype.should_use_date_of_hire_for_identity = function() {
+    // Not an FPP product, use normal identity options.
+    return false;
+};
 
 // FPP Gov 
 function FPPGovProduct(product_data) {

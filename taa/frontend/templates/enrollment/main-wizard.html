@@ -1467,58 +1467,86 @@
 
                 <div id="inPersonSignerToken" data-bind="visible: is_in_person_application() == true">
                     <h4 class="green">Employee Identification</h4>
-
-                    <div class="row">
-                        <div class="col-xs-12">
-                            <p>As identity confirmation, please enter either your Date of Hire, your Employee Number, or
-                                your current Driver's License number.</p>
-                        </div>
-                    </div>
-
-                    <div class="row form-group">
-                        <div class="hidden-xs col-sm-12">
-                            <div class="col-sm-1">
-                            </div>
-
-                            <label class="" for="tokenType">My</label>
-                            <select id="tokenType" class="select1" placeholder="Select one..."
-                                    data-bind="value: identityType">
-                                <option value="" disabled="disabled">Select one...</option>
-                                <option value="Date of Hire">Date of Hire</option>
-                                <option value="Employee Num">Employee #</option>
-                                <option value="Driver's License Num">Driver's License #</option>
-                            </select>
-                            <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>
-                            <input type="text" id="ConfirmationToken" name="ConfirmationToken"
-                                   data-bind="value: identityToken"/>
-                        </div>
-                        <!-- /.hidden-xs -->
-
-                        <div class="col-xs-12 hidden-sm hidden-md hidden-lg">
-                            <div class="col-xs-1">
-                            </div>
-                            <div class="col-xs-11">
-                                <label class="" for="tokenType">My</label>
-                                <select id="tokenType" name="tokenType" class="select1"
-                                        data-bind="value: identityType">
-                                    <option value="">Select one...</option>
-                                    <option value="Date of Hire">"Date of Hire"</option>
-                                    <option value="Employee Num">"Employee #"</option>
-                                    <option value="Driver's License Num">"Driver's License #"</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-xs-12  hidden-sm hidden-md hidden-lg">
+                    <!--ko if: !insurance_product.should_use_date_of_hire_for_identity()-->
+                        <div class="row">
                             <div class="col-xs-12">
+                                <p>As identity confirmation, please enter either your Date of Hire, your Employee Number, or
+                                    your current Driver's License number.</p>
+                            </div>
+                        </div>
+
+                        <div class="row form-group">
+                            <div class="hidden-xs col-sm-12">
+                                <div class="col-sm-1">
+                                </div>
+
+                                <label class="" for="tokenType">My</label>
+                                <select id="tokenType" class="select1" placeholder="Select one..."
+                                        data-bind="value: identityType">
+                                    <option value="" disabled="disabled">Select one...</option>
+                                    <option value="Date of Hire">Date of Hire</option>
+                                    <option value="Employee Num">Employee #</option>
+                                    <option value="Driver's License Num">Driver's License #</option>
+                                </select>
                                 <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>
                                 <input type="text" id="ConfirmationToken" name="ConfirmationToken"
                                        data-bind="value: identityToken"/>
                             </div>
-                        </div>
-                        <!-- /.hidden-sm -->
+                            <!-- /.hidden-xs -->
 
-                    </div>
-                    <!-- /.form-group -->
+                            <div class="col-xs-12 hidden-sm hidden-md hidden-lg">
+                                <div class="col-xs-1">
+                                </div>
+                                <div class="col-xs-11">
+                                    <label class="" for="tokenType">My</label>
+                                    <select id="tokenType" name="tokenType" class="select1"
+                                            data-bind="value: identityType">
+                                        <option value="">Select one...</option>
+                                        <option value="Date of Hire">"Date of Hire"</option>
+                                        <option value="Employee Num">"Employee #"</option>
+                                        <option value="Driver's License Num">"Driver's License #"</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-xs-12  hidden-sm hidden-md hidden-lg">
+                                <div class="col-xs-12">
+                                    <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>
+                                    <input type="text" id="ConfirmationToken" name="ConfirmationToken"
+                                           data-bind="value: identityToken"/>
+                                </div>
+                            </div>
+                            <!-- /.hidden-sm -->
+
+                        </div>
+                        <!-- /.form-group -->
+                    <!--/ko-->
+                    <!--ko if: insurance_product.should_use_date_of_hire_for_identity() -->
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <p>As identity confirmation, please enter either your Date of Hire:</p>
+                            </div>
+                        </div>
+
+                        <div class="row form-group">
+                            <div class="hidden-xs col-sm-12">
+                                <div class="col-sm-1">
+                                </div>
+
+                                <input type="date" id="ConfirmationToken" name="ConfirmationToken"
+                                       data-bind="value: identityToken" >
+                            </div>
+                            <!-- /.hidden-xs -->
+
+                            <div class="col-xs-12  hidden-sm hidden-md hidden-lg">
+                                <div class="col-xs-12">
+                                    <input type="date" class="input-mask-date" id="ConfirmationToken" name="ConfirmationToken"
+                                           data-bind="value: identityToken" >
+                                </div>
+                            </div>
+                            <!-- /.hidden-sm -->
+
+                        </div>
+                    <!--/ko-->
                 </div>
                 <!-- /inPersonSignerToken -->
 
