@@ -75,9 +75,11 @@ function WizardUI(defaults) {
     
     self.defaults = defaults;
     self.insurance_product = build_product(self, defaults.products);
-    
+
+    // Confirmation checkboxes for step 6
     self.disclaimer_notice_confirmed = ko.observable(false);
-    
+    self.payroll_deductions_confirmed = ko.observable(false);
+
     // End of step 1, option to decline coverage for all products and skip to the end
     self.did_decline = ko.observable(false);
     
@@ -1001,6 +1003,21 @@ Product.prototype = {
     should_use_date_of_hire_for_identity: function() {
         // Right now all FPP products will use this.
         return true;
+    },
+
+    is_fpp_product: function() {
+        // Returns true if this product falls into the class of Family Protection Plan products
+        return true;
+    },
+
+    should_confirm_disclosure_notice: function() {
+        // Accelerated benefit disclosure notice checkbox is for FPP plans.
+        return this.is_fpp_product();
+    },
+
+    should_confirm_payroll_deduction: function() {
+        // Payroll deduction agree checkbox on new FPP form.
+        return this.is_fpp_product();
     }
 
 };
@@ -1263,6 +1280,11 @@ GroupCIProduct.prototype.should_use_date_of_hire_for_identity = function() {
     // Not an FPP product, use normal identity options.
     return false;
 };
+GroupCIProduct.prototype.is_fpp_product = function() {
+    // Returns true if this product falls into the class of Family Protection Plan products
+    return false;
+};
+
 
 // FPP Gov 
 function FPPGovProduct(product_data) {
@@ -2730,10 +2752,26 @@ function init_validation() {
         
 	if (!$('#step6-form').valid()) return false;
     
-        //jQuery validator rule should be handling this, but it's not, so force a popup here
-        if (!$("#confirmDisclaimer").is(':checked')) {
+        // jQuery validator rule should be handling this, but it's not, so force a popup here
+        if (window.ui.insurance_product.should_confirm_disclosure_notice()
+             && !window.ui.disclaimer_notice_confirmed()
+            ) {
             bootbox.dialog({
                 message: "Please confirm that you have received the disclosure notice.",
+                buttons: {
+                "danger": {
+                    "label": "OK",
+                    "className": "btn-warning"
+                }
+                }
+            });
+            return false;
+        }
+
+        if (window.ui.insurance_product.should_confirm_payroll_deduction()
+             && !window.ui.payroll_deductions_confirmed()) {
+            bootbox.dialog({
+                message: "Please confirm that you agree to payroll deductions by your employer.",
                 buttons: {
                 "danger": {
                     "label": "OK",
