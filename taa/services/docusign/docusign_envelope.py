@@ -14,7 +14,9 @@ from taa.services.docusign.DocuSign_config import (
     templateClientID,
     get_template_id
 )
+from taa.services.products import ProductService
 
+product_service = ProductService()
 
  
 def generate_SOHRadios(prefix, soh_questions):
@@ -109,7 +111,9 @@ def random_email_id(name='', token_length=8):
 
 def create_envelope_and_get_signing_url(wizard_data, census_record):
     # return is_error(bool), error_message, and redirectURL
-    
+
+    product = product_service.get(wizard_data['product_data']['id'])
+
     # Product code
     productType = wizard_data["product_type"]
     enrollmentState = wizard_data["agent_data"]["state"]
@@ -127,6 +131,13 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
         # fallback email if none was entered - just need a unique address
         emailTo = random_email_id(wizard_data["employee"]["first"] + "." + wizard_data["employee"]["last"]) + "@5StarEnroll.com"
 
+    # New FPP form requires email to be broken up into two parts for the PDF
+    if '@' not in emailTo:
+        ee_email_part_1 = ''
+        ee_email_part_2 = emailTo
+    else:
+        ee_email_part_1, ee_email_part_2 = emailTo.split('@')
+        
     if wizard_data["agent_data"]["is_in_person"]:
         sessionType = "inperson"
     else:
@@ -204,6 +215,8 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
         make_tab('eeOtherOwnerName', wizard_data["employee_other_owner_name"] if wizard_data["employee_owner"] == "other" else  ""),
         make_tab('eeOtherOwnerName2', wizard_data["employee_other_owner_name"] if wizard_data["employee_owner"] == "other" else  ""),
         make_tab('eeOtherOwnerSSN', wizard_data["employee_other_owner_ssn"] if wizard_data["employee_owner"] == "other" else  ""),
+        make_tab('eeEmailPart1', ee_email_part_1),
+        make_tab('eeEmailPart2', ee_email_part_2),
     ]
     
     eeTabsList += make_contact_tabs('ee', wizard_data["employee"])
