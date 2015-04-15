@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from taa import db
 from taa.helpers import JsonSerializable
@@ -116,16 +116,21 @@ class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
     def populate_data_dict(self, data):
         data['enrollment_period_type'] = Case.OPEN_ENROLLMENT_TYPE
         data['open_period_start_date'] = self.start_date if self.start_date else ''
+        data['open_period_end_date'] = self.end_date if self.end_date else ''
         return data
     
     def currently_active(self):
-        return not self.start_date or datetime.now() > self.start_date
+        now = datetime.now()
+        # Active if start and end date are both blank, or if they're both
+        # populated and the current date falls between them
+        return (not (self.start_date or self.end_date) or
+                (self.end_date and (self.get_start_date() < now < (self.end_date + timedelta(days=1)))))
 
     def get_start_date(self):
         return self.start_date
     
     def get_end_date(self):
-        return None
+        return self.end_date
 
 
 class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):

@@ -108,6 +108,7 @@ class NewCaseEnrollmentPeriodForm(Form):
     enrollment_period_type = RadioField('Period Type', choices=[('open', 'Open Enrollment'), ('annual', 'Annual Periods')])
     
     open_period_start_date = DateField('Start Date', [validators.optional()], format='%m/%d/%Y')
+    open_period_end_date = DateField('End Date', [validators.optional()], format='%m/%d/%Y')
     annual_period_dates = FieldList(FormField(AnnualPeriodForm))
     
     def __init__(self, *args, **kwargs):
@@ -119,4 +120,7 @@ class NewCaseEnrollmentPeriodForm(Form):
                 self.annual_period_dates.append_entry()
     
     def validate_open_period_start_date(self, field):
+        pass
+
+    def validate_open_period_end_date(self, field):
         pass

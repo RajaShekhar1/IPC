@@ -354,9 +354,12 @@ class CaseEnrollmentPeriodsService(DBService):
         for period in data:
             # Need a valid start date
             if not period.get('start_date'):
-                errors['open_enrollment_start_date'] = ['Invalid date']
+                errors['open_enrollment_start_date'] = ['Invalid start date']
+            elif not period.get('end_date'):
+                errors['open_enrollment_end_date'] = ['Invalid end date']
             else:
                 dateutil.parser.parse(period['start_date'])
+                dateutil.parser.parse(period['end_date'])
             
         return errors
     
@@ -377,7 +380,8 @@ class CaseEnrollmentPeriodsService(DBService):
                 periods.append(CaseAnnualEnrollmentPeriod(start_date=start, end_date=end, case_id=case.id))
             elif period['period_type'] == CaseOpenEnrollmentPeriod.PERIOD_TYPE:
                 start = self.valid_date(period['start_date'])
-                periods.append(CaseOpenEnrollmentPeriod(start_date=start, case_id=case.id))
+                end = self.valid_date(period['end_date'])
+                periods.append(CaseOpenEnrollmentPeriod(start_date=start, end_date=end, case_id=case.id))
             
         for p in periods:
             self.save(p)
@@ -709,6 +713,11 @@ def birthdate_validator(field, record):
     if not date:
         # Allow blank unless combined with required validator
         return True, None
+    else:
+        pass
+
+    if not isinstance(date, datetime):
+        return False, "Invalidate date"
     
     if date > datetime.now():
         # The preprocessor currently keeps this from happening, but I will leave 
@@ -807,12 +816,17 @@ def preprocess_date(data, record):
     if data is None or data == "":
         return None
     
-    d = dateutil.parser.parse(data)
-    if d >= datetime.today():
-        # This can happen when you try to parse 2-digit years (excel issue?)
-        # Solution should be OK, but if someone puts a future date in (like for an expected child?)
-        # it doesn't work, and also won't work for 100+ year-old people. Which can't apply for life insurance, I think.
-        d = datetime(d.year - 100, d.month, d.day)
+    try:
+        d = dateutil.parser.parse(data)
+        if d >= datetime.today():
+            # This can happen when you try to parse 2-digit years (excel issue?)
+            # Solution should be OK, but if someone puts a future date in (like for an expected child?)
+            # it doesn't work, and also won't work for 100+ year-old people. Which can't apply for life insurance, I think.
+            d = datetime(d.year - 100, d.month, d.day)
+    except ValueError:
+        # Can't be parsed as a date; return as-is and let validation
+        # handle the error
+        return data
     
     return d
     
@@ -961,10 +975,14 @@ class CensusRecordParser(object):
     def _process_file_stream(self, file_data):
         # To get universal newlines (ie, cross-platform) we use splitlines()
         bytes = file_data.getvalue()
+
+        # Autodetect CSV dialect
+        dialect = csv.Sniffer().sniff(bytes)
+
         lines = bytes.splitlines()
-        lines = self._preprocess_header_row(lines)
+        lines = self._preprocess_header_row(lines, dialect)
         
-        reader = csv.DictReader(lines, restkey="extra")
+        reader = csv.DictReader(lines, restkey="extra", dialect=dialect)
         
         try:
             headers = reader.fieldnames
@@ -985,20 +1003,20 @@ representative for assistance.""",
             
             headers = records = []
         
-        return headers, records
+        return headers, records, dialect
     
-    def _preprocess_header_row(self, lines):
+    def _preprocess_header_row(self, lines, dialect):
         """ 
         To get case-insensitive parsing behaviour, we uppercase every column in the first line
          before passing it off to the DictReader
         """
         header = []
-        header_reader = csv.reader([lines[0]])
+        header_reader = csv.reader([lines[0]], dialect)
         for row in header_reader:
             header = [col.upper() for col in row]
         
         io = StringIO.StringIO()
-        header_writer = csv.writer(io)
+        header_writer = csv.writer(io, dialect)
         header_writer.writerow(header)
         
         lines[0] = io.getvalue()
@@ -1006,7 +1024,7 @@ representative for assistance.""",
         return lines
     
     def process_file(self, file_data, error_if_matching=None):
-        headers, records = self._process_file_stream(file_data)
+        headers, records, dialect = self._process_file_stream(file_data)
         self.validate_header_row(headers, records)
         
         # Don't do any more processing if missing important headers

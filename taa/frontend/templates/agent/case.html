@@ -114,17 +114,25 @@
                                                             <div class="panel-heading">
                                                                 <label>
                                                                     <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="open"> 
-                                                                    <span class="lbl padding-8">Open Enrollment</span>
+                                                                    <span class="lbl padding-8">Enrollment Period with End Date</span>
                                                                 </label>
                                                             </div>
                                                             <div class="panel-body" 
                                                                 data-bind="slideDownIf: is_open_enrollment">
-                                                                <label>
-                                                                    Start Date: 
-                                                                    <input data-bind="value: get_open_enrollment_period().start_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
-                                                                
-                                                                </label>
-                                                                
+                                                                <div class="row">
+                                                                    <div class="col-md-6">
+                                                                        <label>
+                                                                            Start Date: 
+                                                                            <input data-bind="value: get_open_enrollment_period().start_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
+                                                                        </label>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <label>
+                                                                            End Date: 
+                                                                            <input data-bind="value: get_open_enrollment_period().end_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_end_date">
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div class="panel form-group">
@@ -213,7 +221,7 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
-                                                    <h4 class="header lighter">Partner Agents</h4>
+                                                    <h4 class="header lighter blue">Partner Agents</h4>
                                                     <div class="row">
                                                         <div class="col-sm-10 col-md-offset-1">
                                                         {% if is_admin %}
@@ -231,21 +239,25 @@
                                                             </select>
                                                         {% else %}
                                                             <div class="text partner_agents">
-                                                                <ul class="partner-agents">
-                                                                    {% if case.owner_agent is not none %}
-                                                                        <li class="owner-agent">
-                                                                            {{ case.owner_agent.name() }}
-                                                                            <span class="text-muted">(<em>owner</em>)</span>
-                                                                        </li>
-                                                                    {% endif -%}
-                                                                    {% for agent in case.partner_agents %}
-                                                                        {% if agent != case.owner_agent %}
-                                                                            <li class="partner-agent">
-                                                                            {{ agent.name() }}
+                                                                {% if case.partner_agents|count > 1 %}
+                                                                    <ul class="partner-agents">
+                                                                        {% if case.owner_agent is not none %}
+                                                                            <li class="owner-agent">
+                                                                                {{ case.owner_agent.name() }}
+                                                                                <span class="text-muted">(<em>owner</em>)</span>
                                                                             </li>
-                                                                        {% endif %}
-                                                                    {% endfor %}
-                                                                </ul>
+                                                                        {% endif -%}
+                                                                        {% for agent in case.partner_agents %}
+                                                                            {% if agent != case.owner_agent %}
+                                                                                <li class="partner-agent">
+                                                                                {{ agent.name() }}
+                                                                                </li>
+                                                                            {% endif %}
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                {% else %}
+                                                                <em>None</em>
+                                                                {% endif %}
                                                             </div>
                                                         {% endif %}
                                                         </div>
@@ -867,9 +879,9 @@
             }
             
             if (self.is_open()) {
-                // process start date normally
+                // process start/end date normally
                 self.start_date = ko.observable(normalize_date(settings.start_date));
-                self.end_date = ko.observable(null);
+                self.end_date = ko.observable(normalize_date(settings.end_date));
             } else {
                 self.start_date = ko.observable(strip_year(settings.start_date));
                 self.end_date = ko.observable(strip_year(settings.end_date));
@@ -890,7 +902,7 @@
             
             self.is_valid = ko.computed(function() {
                 if (self.is_open()) {
-                    return self.is_valid_date(self.start_date());
+                    return self.is_valid_date(self.start_date()) && self.is_valid_date(self.end_date());
                 } else {
                     return (self.is_valid_month_day(self.start_date()) && self.is_valid_month_day(self.end_date()));
                 } 
@@ -1162,7 +1174,21 @@
                 if ($.trim(self.company_name()) == "") {
                     add_case_error(errors, "company_name", "Company name is required.");
                 }
-                
+
+                // an invalid enrollment period (both dates can be blank, but if one is populated, both must be)
+                if (self.is_open_enrollment() && !self.get_open_enrollment_period().is_valid()) {
+                    var start = self.get_open_enrollment_period().start_date();
+                    var end = self.get_open_enrollment_period().end_date();
+                    if(!(start == "" && end == "")) {
+                        if(!is_valid_date(start)) {
+                            add_case_error(errors, "open_enrollment_start_date", "Enter valid Start Date or leave both dates blank")
+                        }
+                        else if(!is_valid_date(end)) {
+                            add_case_error(errors, "open_enrollment_end_date", "Enter valid End Date or leave both dates blank")
+                        }
+                    }
+                }
+
                 // an invalid annual period (missing start or end)
                 if (self.is_annual_enrollment() && self.any_annual_period_missing_a_component()) {
                     var missing_observables = _.filter(self.annual_enrollment_periods(), self.missing_annual_period_predicate);
