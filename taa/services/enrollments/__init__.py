@@ -117,8 +117,7 @@ class EnrollmentApplicationService(DBService):
             agent_id=agent_id,
             
             method=data['method'],
-            # TODO: Payment Mode
-            mode=EnrollmentApplication.MODE_WEEKLY,
+            payment_mode=data['payment_mode'],
             
             # Signing info
             signature_time = datetime.datetime.now(),
@@ -483,7 +482,7 @@ enrollment_columns = [
 
     EnrollmentColumn('identity_token', 'Identity Token', export_string),
     EnrollmentColumn('identity_token_type', 'Token Type', export_string),
-    EnrollmentColumn('mode', 'Payment Mode', export_string),
+    EnrollmentColumn('payment_mode', 'Payment Mode', lambda x: x),
     EnrollmentColumn('method', 'Enrollment Method', export_string),
 
     EnrollmentColumn('is_employee_owner', 'Is Employee Owner', export_string),

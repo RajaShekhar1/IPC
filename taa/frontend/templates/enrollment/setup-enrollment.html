@@ -287,14 +287,14 @@
           
         </div>
       </div>
-      
+
       <div class="row form-group">
         <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="email">Employee Email Address</label>
         <div class="col-xs-12 col-sm-9">
             <input type="email" name="email" id="email">
         </div>
       </div>
-    
+
     
     <div class="row">
       <div class="col-xs-12">
@@ -449,7 +449,7 @@
                 {{ product_state_mapping |tojson|safe }}, self.selected_state, self.all_states, 
                 self.selected_products, self.available_products
             );
-            
+
             self.submit_ad_hoc = function() {
                 // Run normal validation
                 var form = $(".ad-hoc-form form");
@@ -471,11 +471,11 @@
             $.validator.addMethod("productCheck", function (value, element) {
                 return self.selected_products().length > 0;
             }, 'Product is required');
-            
+
             $.validator.addMethod("stateCheck", function (value, element) {
                 return self.selected_state();
             }, 'State is required');
-            
+
             // Validation
             $(".ad-hoc-form form").validate({
                 errorElement: 'div',

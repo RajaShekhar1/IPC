@@ -17,6 +17,7 @@ from .statement_of_health import (
 )
 from .rates import get_product_rates_lookup
 from .recommendations import get_product_recommendations
+from .payment_modes import get_payment_modes, is_payment_mode_changeable
 
 class ProductService(DBService):
     
