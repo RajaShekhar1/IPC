@@ -20,6 +20,7 @@ from taa.services.cases.forms import (
 )
 from taa.services.agents import AgentService
 from taa.services.products import ProductService, get_all_states
+from taa.services.products import get_payment_modes
 from taa.services.docusign.DocuSign_config import sessionUserApprovedForDocusign
 
 case_service = CaseService()
@@ -78,6 +79,7 @@ def manage_case(case_id):
     vars['product_choices'] = products
     
     vars['all_states'] = get_all_states()
+    vars['payment_modes'] = get_payment_modes()
     vars['product_state_mapping'] = product_service.get_product_states(products)
     
     case_setup_form = UpdateCaseForm(obj=case)

@@ -32,11 +32,8 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     APPLICATION_STATUS_DECLINED = u'declined'
     application_status = db.Column(db.Unicode(32))
     
-    MODE_WEEKLY = u'weekly'
-    MODE_MONTHLY = u'monthly'
-    MODE_BIWEEKLY = u'biweekly'
-    mode = db.Column(db.Unicode(16))
-    
+    payment_mode = db.Column(db.Integer(), nullable=True)
+
     METHOD_INPERSON = u'in_person'
     METHOD_SELF_EMAIL = u'self_enroll_email'
     METHOD_PHONE = u'phone'

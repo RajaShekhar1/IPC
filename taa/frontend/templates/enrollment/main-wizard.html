@@ -292,6 +292,19 @@
 
     </div>
 
+    {# Payment Mode Selection #}
+    <div style="margin-top: 1.5em;">
+        <div class="row">
+            <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="paymentMode">
+                Payment Mode
+            </label>
+
+            <div class="form-group col-xs-12 col-sm-10">
+                <select name="paymentMode" id="paymentMode" data-bind="value: payment_mode, options: payment_mode_choices, optionsValue: 'mode', optionsText: 'name', optionsCaption: '(Select Payment Mode)'"></select>
+            </div>
+        </div>
+    </div>
+
     <div class="row" data-bind="visible: !is_recommended_table_visible()">
         <div class="align-center">
             <button type="button" class="btn btn-primary btn-lg show-rates"
@@ -301,7 +314,6 @@
         </div>
     </div>
 
-    
     <div class="center recommended-coverage-table" data-bind="slideDownIf: is_recommended_table_visible,
             css: {'ci-recommendations': insurance_product.has_critical_illness_coverages}">
         

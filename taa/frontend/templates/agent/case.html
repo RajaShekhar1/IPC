@@ -110,7 +110,14 @@
                                                             <limited-state-select params="limiter: state_product_limiter"></limited-state-select>
                                                         </div>
                                                     </div>
-                                                    
+
+                                                    <div class="form-group">
+                                                        <label class="col-md-3 control-label" for="paymentMode">Payment</label>
+                                                        <div class="col-md-9">
+                                                            <select id="paymentMode" name="paymentMode" data-bind="value: payment_mode, options: payment_mode_choices, optionsText: 'name', optionsCaption: '(Select Payment Type)'"></select>
+                                                        </div>
+                                                    </div>
+
                                                 </div>
                                                 <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
                                                     <h3 class="header lighter blue">Enrollment Periods</h3>
@@ -1004,8 +1011,18 @@
             self.annual_enrollment_periods = ko.computed(function() {
                 return _.filter(self.enrollment_periods(), function(p) {return p.period_type === "annual_period"});
             });
-            
-            
+
+
+            // Get payment modes
+            self.payment_mode_choices = {{ payment_modes | tojson | safe }};
+            self.payment_mode = ko.observable(_.find(self.payment_mode_choices, function(c) {
+                return c.mode == case_data.payment_mode;
+            }));
+            self.selected_payment_mode = ko.pureComputed(function(){
+                return (self.payment_mode()) ? parseInt(self.payment_mode().mode) : null;
+            });
+
+
             // Make sure there is at least one open enrollment period
             if (!self.get_open_enrollment_period()) {
                 self.enrollment_periods.push(new CaseEnrollmentPeriod({case_id: case_data.id, period_type: "open_with_start"}))
@@ -1094,7 +1111,7 @@
             
             // subscribe to all changes to detect data changes
             var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
-                    self.enrollment_periods, self.situs_city, self.situs_state, 
+                    self.enrollment_periods, self.situs_city, self.situs_state, self.payment_mode,
                     self.is_active, self.owner_agent_id];
             _.each(self.enrollment_periods(), function(p) {
                 fields.push(p.start_date);
@@ -1115,7 +1132,8 @@
                      self.products().length > 0 && 
                      $.trim(self.company_name()) != "" && 
                      $.trim(self.situs_city()) != "" && 
-                     self.selected_statecode() != null
+                     self.selected_statecode() != null &&
+                     self.selected_payment_mode() != null
                  );
                 
                 if (self.is_open_enrollment() && !self.get_open_enrollment_period().is_valid()) {
@@ -1236,6 +1254,7 @@
                     enrollment_period_type: self.enrollment_period_type(),
                     situs_city: self.situs_city(),
                     situs_state: self.selected_statecode() ? self.selected_statecode() : "",
+                    payment_mode: self.selected_payment_mode() ? self.selected_payment_mode() : null,
                     agent_id: self.owner_agent_id()
                 }  
             };

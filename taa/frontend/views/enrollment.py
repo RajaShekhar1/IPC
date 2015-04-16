@@ -16,6 +16,7 @@ from taa.old_model.States import get_states
 from taa.services.cases import CaseService
 from taa.services.agents import AgentService
 from taa.services.products import ProductService
+from taa.services.products import get_payment_modes, is_payment_mode_changeable
 from taa.services.enrollments import EnrollmentApplicationService
 from taa.services.docusign.docusign_envelope import create_envelope_and_get_signing_url
 
@@ -80,7 +81,15 @@ def in_person_enrollment():
         employee_data = record.get_employee_data()
         spouse_data = record.get_spouse_data()
         children_data = record.get_children_data()
-    else:   
+        payment_mode = record.case.payment_mode
+        if is_payment_mode_changeable(payment_mode):
+            # User can select payment mode
+            payment_mode_choices = get_payment_modes(True)
+        else:
+            # Payment mode is set on case and cannot be changed
+            payment_mode_choices = None
+    else:
+        # Ad-hoc enrollment
         data = request.form
         
         state = data['enrollmentState']
@@ -89,7 +98,9 @@ def in_person_enrollment():
         group_number = data['groupNumber']
         product_id = data['productID']
         product = product_service.get_if_allowed(product_id)
-        
+        payment_mode = None
+        payment_mode_choices = get_payment_modes(True)
+
         products = [product] if product else []
         employee_data = dict(
             first=data['eeFName'],
@@ -125,6 +136,8 @@ def in_person_enrollment():
         'children_data':children_data,
         'is_in_person':True,
         'health_questions': soh_questions,
+        'payment_mode_choices': payment_mode_choices,
+        'payment_mode': payment_mode,
     }
     
     # Commit any changes made (none right now)
