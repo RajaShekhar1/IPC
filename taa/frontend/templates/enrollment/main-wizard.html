@@ -305,6 +305,7 @@
         </div>
     </div>
 
+    {# Show Rates Button #}
     <div class="row" data-bind="visible: !is_recommended_table_visible()">
         <div class="align-center">
             <button type="button" class="btn btn-primary btn-lg show-rates"
@@ -314,6 +315,7 @@
         </div>
     </div>
 
+    {# Rates/Recommended Coverage and Selected Plan Table #}
     <div class="center recommended-coverage-table" data-bind="slideDownIf: is_recommended_table_visible,
             css: {'ci-recommendations': insurance_product.has_critical_illness_coverages}">
         
@@ -335,6 +337,7 @@
                         <h5 class="bigger lighter"></h5>
                     </div>
 
+                    {# Names of Individuals to Be Covered #}
                     <div class="widget-body">
                         <div class="widget-main no-padding">
                             <ul class="list-unstyled list-striped js">
@@ -352,6 +355,7 @@
             </div>
 
             <div class="col-xs-8 col-sm-9 pricing-span-body">
+                {# Good #}
                 <div class="pricing-span">
                     <div class="widget-box pricing-box-small">
                         <div class="widget-header center header-color-red3 no-padding">
@@ -374,6 +378,7 @@
                     </div>
                 </div>
 
+                {# Better #}
                 <div class="pricing-span">
                     <div class="widget-box pricing-box-small">
                         <div class="widget-header center header-color-orange no-padding">
@@ -397,6 +402,7 @@
                     </div>
                 </div>
 
+                {# Best #}
                 <div class="pricing-span">
                     <div class="widget-box pricing-box-small">
                         <div class="widget-header center header-color-best no-padding">
@@ -420,10 +426,11 @@
                     </div>
                 </div>
 
+                {# Customize #}
                 <div class="pricing-span">
                     <div class="widget-box pricing-box-small pricing-box-small-no-hover customize">
                         <div class="widget-header center header-color-grey no-padding">
-                            <h5 class="bigger lighter">customize</h5>
+                            <h5 class="bigger lighter">Customize</h5>
                         </div>
 
                         <div class="widget-body">
@@ -472,6 +479,7 @@
                     </div>
                 </div>
 
+                {# Selected Plan #}
                 <div class="pricing-span">
                     <div class="widget-box pricing-box-small pricing-box-small-no-hover">
                         <div class="widget-header center header-color-green">
@@ -517,6 +525,7 @@
     </div>
     </form>
 
+    {# Payment Estimate Banner #}
     <script type="text/html" id="recommendations_template">
         <ul class="list-unstyled list-striped pricing-table">
             <li data-bind="template: {name: employee_recommendation().is_valid() ? 'recommendation_template' : 'blank_template', 
