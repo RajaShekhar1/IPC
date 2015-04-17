@@ -289,6 +289,13 @@ function WizardUI(defaults) {
     } else {
         self.payment_mode_choices = ko.observable(defaults.payment_mode_choices);
     }
+    self.payment_mode_text = ko.pureComputed(function() {
+        try {
+            return _.find(self.payment_mode_choices(), function(x) { return x.mode == self.payment_mode() }).name.toLowerCase();
+        } catch(e) {
+            return '(NA)'
+        }
+    });
 
     self.is_show_rates_clicked = ko.observable(false);
     
@@ -479,8 +486,6 @@ function WizardUI(defaults) {
         self.insurance_product.parse_benefit_options('spouse', self.spouse(), data.spouse_rates);
         
         // Reset child rates
-        // TODO: Why is this doing this?
-        //self.child_benefits(new InsuredApplicant({}));
         self.insurance_product.parse_benefit_options('children', self.child_benefits(), data.children_rates);
         
         if (data.recommendations) {

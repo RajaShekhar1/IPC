@@ -544,7 +544,9 @@
         <div class="price" data-bind="visible: get_total_weekly_premium() > 0.0">
           <span class="label label-lg label-inverse arrowed-in arrowed-in-right">
             <span data-bind="text: formatted_total_weekly_premium()"></span>
-            <small> weekly</small>
+            <small>
+                <span data-bind="text: $root.payment_mode_text">(NA)</span>
+            </small>
           </span>
         </div>
     </script>
