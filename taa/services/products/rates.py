@@ -1,4 +1,5 @@
 import csv
+
 from taa.core import TAAFormError
 
 

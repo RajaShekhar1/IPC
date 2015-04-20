@@ -109,12 +109,12 @@ def get_product_rates(product_id):
 
     # Return rates and recommendations
     rates = product_service.get_product_rates(product, demographics)
-    
-    recommendations = product_service.get_product_recommendations(product, demographics)
-    return {
-        'success': True,
-        'employee_rates': rates['employee'],
-        'spouse_rates': rates.get('spouse'),
-        'children_rates': rates.get('children'),
-        'recommendations': recommendations
-    }
+    recommendations = product_service.get_product_recommendations(
+        product, demographics)
+    return dict(
+        success=True,
+        employee_rates=rates['employee'],
+        spouse_rates=rates.get('spouse'),
+        children_rates=rates.get('children'),
+        recommendations=recommendations
+    )
