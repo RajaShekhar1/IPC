@@ -3,16 +3,16 @@ from taa.core import TAAFormError
 
 
 def get_product_rates_lookup(product):
-    if product.get_base_product_code() == "Group CI":
+    if product.get_base_product_code() == 'Group CI':
         return GroupCIRates(product,
                             smoker_rates=build_GroupCI_smoking_rate_table(),
                             nonsmoker_rates=build_GroupCI_nonsmoking_rate_table())
-    elif product.get_base_product_code() == "FPP-Gov":
+    elif product.get_base_product_code() == 'FPP-Gov':
         return FPPGovRates()
     else:
         tables_by_code = {
-            "FPPTI": build_FPPTI_rate_table(),
-            "FPPCI": build_FPPCI_rate_table(),
+            'FPPTI': build_FPPTI_rate_table(),
+            'FPPCI': build_FPPCI_rate_table(),
             }
         return ProductRates(product,
                             tables_by_code[product.get_base_product_code()])
@@ -50,7 +50,7 @@ class ProductRates(object):
 
         if demographics.get('num_children') > 0:
             rates['children'] = {
-                "weekly_byface": self.rate_table.get_weekly_child_premiums(),
+                'weekly_byface': self.rate_table.get_weekly_child_premiums(),
                 }
 
         return rates
@@ -251,33 +251,33 @@ def load_age_lookup_table(csv_path):
     for i, age in enumerate(ages):
         for j, header in enumerate(headers):
             val = lines[1:][i][j + 1]
-            table[(age, int(header))] = float(val) if val.strip() != "" else None
+            table[(age, int(header))] = float(val) if val.strip() != '' else None
 
     return table, headers
 
 (FPPTI_weekly_by_premium_lookup,
  all_weekly_premium_options) = load_age_lookup_table(
-    "taa/services/products/data_files/FPPTI-bypremium.csv")
+    'taa/services/products/data_files/FPPTI-bypremium.csv')
 (FPPTI_weekly_by_coverage_lookup,
  all_weekly_coverage_options) = load_age_lookup_table(
-    "taa/services/products/data_files/FPPTI-byface.csv")
+    'taa/services/products/data_files/FPPTI-byface.csv')
 (FPPCI_weekly_by_premium_lookup,
  FPPCI_all_weekly_premium_options) = load_age_lookup_table(
-    "taa/services/products/data_files/FPPCI-bypremium.csv")
+    'taa/services/products/data_files/FPPCI-bypremium.csv')
 (FPPCI_weekly_by_coverage_lookup,
  FPPCI_all_weekly_coverage_options) = load_age_lookup_table(
-    "taa/services/products/data_files/FPPCI-byface.csv")
+    'taa/services/products/data_files/FPPCI-byface.csv')
 
 (FPPGOV_weekly_by_face,
  FPPGOV_all_weekly_coverage_options) = load_age_lookup_table(
-    "taa/services/products/data_files/FPPGOV-byface.csv")
+    'taa/services/products/data_files/FPPGOV-byface.csv')
 
 (GROUP_CI_non_smoking_weekly_by_coverage_lookup,
  GROUP_CI_non_smoking_all_weekly_coverage_options) = load_age_lookup_table(
-    "taa/services/products/data_files/CIEMP-rates---NonSmoking-Weekly.csv")
+    'taa/services/products/data_files/CIEMP-rates---NonSmoking-Weekly.csv')
 (GROUP_CI_smoking_weekly_by_coverage_lookup,
  GROUP_CI_smoking_all_weekly_coverage_options) = load_age_lookup_table(
-    "taa/services/products/data_files/CIEMP-rates---Smoking-Weekly.csv")
+    'taa/services/products/data_files/CIEMP-rates---Smoking-Weekly.csv')
 
 
 def build_FPPTI_rate_table():
