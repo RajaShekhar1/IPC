@@ -84,7 +84,8 @@ def get_product_rates(product_id):
     employee = data['employee']
     spouse = data['spouse']
     num_children = data['num_children']
-    
+    payment_mode = data.get('payment_mode')
+
     demographics = dict(
         employee_age=employee['age'],
         employee_height=employee['height'],
@@ -97,8 +98,9 @@ def get_product_rates(product_id):
         spouse_height=spouse['height'] if spouse else None,
         spouse_weight=spouse['weight'] if spouse else None,
         num_children=num_children,
+        payment_mode=payment_mode
     )
-    
+
     # return rates and recommendations
     rates = product_service.get_product_rates(product, demographics)
     

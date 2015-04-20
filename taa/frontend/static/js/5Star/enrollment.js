@@ -300,9 +300,13 @@ function WizardUI(defaults) {
     self.is_show_rates_clicked = ko.observable(false);
     
     self.is_rate_table_loading = ko.observable(false);
-    
+
     self.is_employee_info_valid = ko.computed(function() {
         return self.insurance_product.is_valid_employee(self.employee()) ;
+    });
+
+    self.is_payment_mode_valid = ko.computed(function() {
+        return self.payment_mode() != undefined;
     });
     
     
@@ -311,7 +315,8 @@ function WizardUI(defaults) {
         // All employee info
         var valid = self.employee().is_valid();
         valid &= self.is_employee_info_valid();
-        
+        valid &= self.is_payment_mode_valid();
+
         // Trigger jquery validation manually 
         if (self.is_show_rates_clicked()) {
             self.validator.form();
@@ -395,7 +400,8 @@ function WizardUI(defaults) {
             //product_type: self.insurance_product.product_type,
             employee: self.employee().serialize_data(),
             spouse: self.should_include_spouse_in_table()? self.spouse().serialize_data() : null,
-            num_children: self.children().length
+            num_children: self.children().length,
+            payment_mode: self.payment_mode()
         };
     };
     
@@ -453,6 +459,7 @@ function WizardUI(defaults) {
             self.spouse().weight,
             self.spouse().height,
             self.children,
+            self.payment_mode,
             //self.should_include_spouse_in_table,
             self.should_show_spouse,
             self.should_include_children_in_table
