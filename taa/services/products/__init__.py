@@ -1,8 +1,8 @@
 from flask import abort
 from flask_stormpath import current_user
 
+import recommendations
 from taa.core import DBService, db
-
 from models import (
     Product, 
     CustomGuaranteeIssueProduct, 
@@ -16,7 +16,6 @@ from .statement_of_health import (
     FPPGov_generic_states,
 )
 from .rates import get_product_rates_lookup
-from .recommendations import get_product_recommendations
 from .payment_modes import get_payment_modes, is_payment_mode_changeable
 
 
@@ -225,8 +224,8 @@ class ProductService(DBService):
         lookup = get_product_rates_lookup(product)
         return lookup.get_all_rates(**demographics)
     
-    def get_product_recommendations(self, product, demographics):
-        return get_product_recommendations(product, **demographics)
+    def get_recommendations(self, product, demographics):
+        return recommendations.get_recommendations(product, **demographics)
     
 
 class ProductCriteriaService(DBService):
