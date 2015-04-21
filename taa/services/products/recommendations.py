@@ -35,8 +35,7 @@ def lookup(product, employee_age, spouse_age=None, num_children=None):
 
 def build(csv_path):
     table = {}
-    lines = [l for l in csv.DictReader(open(csv_path, 'rU'))]
-    for line in lines:
+    for line in csv.DictReader(open(csv_path, 'rU')):
         age = int(line['age'])
         for rating in ['good', 'better', 'best']:
             if age not in table:
