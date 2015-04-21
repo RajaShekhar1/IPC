@@ -1,6 +1,7 @@
 import csv
 import os
 
+__all__ = ['get_recommendations']
 
 DATA_DIR = 'taa/services/products/data_files'
 DEFAULT_RECOMMENDATIONS = {
