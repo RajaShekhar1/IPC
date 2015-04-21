@@ -20,7 +20,7 @@ def get_recommendations(product, **demographics):
         key = (code, demographics['is_smoker'])
     elif code not in RECOMMENDATIONS:
         # TODO: should this be an error? use TI for now
-        key = 'FPP-TI'
+        key = 'FPPTI'
     else:
         key = code
     return lookup(key,
@@ -49,11 +49,11 @@ def build(csv_path):
 
 
 RECOMMENDATIONS = {
-    'FPP-CI':
+    'FPPCI':
         build(os.path.join(DATA_DIR, 'FPPCI_suggested_rates.csv')),
     'FPP-Gov':
         build(os.path.join(DATA_DIR, 'FPPGOV_suggested_rates.csv')),
-    'FPP-TI':
+    'FPPTI':
         build(os.path.join(DATA_DIR, 'FPPTI_suggested_rates.csv')),
     ('Group CI', False):
         build(os.path.join(DATA_DIR, 'CIEMP_NONsmoker_suggested_rates.csv')),
