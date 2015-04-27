@@ -15,15 +15,16 @@ CHILDREN_COLUMNS = {'good': 'ch1_cov', 'better': 'ch2_cov', 'best': 'ch3_cov'}
 
 
 def get_recommendations(product, **demographics):
-    code = product.get_base_product_code()
+    product_code = product.get_base_product_code()
     # Compute key for recommendations lookup table
-    if code == 'Group CI':
-        key = (code, 'smoker' if demographics['is_smoker'] else 'nonsmoker')
-    elif code not in RECOMMENDATIONS:
+    if product_code == 'Group CI':
+        key = (product_code,
+               'smoker' if demographics['is_smoker'] else 'nonsmoker')
+    elif product_code not in RECOMMENDATIONS:
         # TODO: should this be an error? use TI for now
         key = 'FPPTI'
     else:
-        key = code
+        key = product_code
     return lookup(key,
                   demographics['employee_age'],
                   demographics.get('spouse_age'),
@@ -59,5 +60,5 @@ RECOMMENDATIONS = {
     ('Group CI', 'nonsmoker'):
         build(os.path.join(DATA_DIR, 'CIEMP_NONsmoker_suggested_rates.csv')),
     ('Group CI', 'smoker'):
-        build(os.path.join(DATA_DIR, 'CIEMP_smoker_suggested_rates.csv')),
-    }
+        build(os.path.join(DATA_DIR, 'CIEMP_smoker_suggested_rates.csv'))
+}
