@@ -6,6 +6,15 @@ MODE_SEMIMONTHLY = 24
 MODE_MONTHLY = 12
 MODE_CHANGEABLE = -1
 
+MODES_BY_MODE = {
+    MODE_WEEKLY: 'weekly',
+    MODE_BIWEEKLY: 'biweekly',
+    MODE_SEMIMONTHLY: 'semimonthly',
+    MODE_MONTHLY: 'monthly',
+}
+
+MODES_BY_NAME = dict(zip(MODES_BY_MODE.values(), MODES_BY_MODE.keys()))
+
 # When `adhoc` is false, the option is not permitted during ad-hoc enrollment
 payment_modes = map(lambda x: dict(mode=x[0], name=x[1], immutable=x[2]), [
     (MODE_WEEKLY, 'Weekly', True),
