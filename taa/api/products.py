@@ -108,7 +108,7 @@ def get_product_rates(product_id):
     )
 
     # Return rates and recommendations
-    rates = product_service.get_product_rates(product, demographics)
+    rates = product_service.get_rates(product, demographics)
     recommendations = product_service.get_recommendations(
         product, demographics)
     return dict(

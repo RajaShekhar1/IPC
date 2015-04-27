@@ -15,7 +15,7 @@ from .statement_of_health import (
     FPPTI_generic_states, FPPCI_generic_states, GroupCI_generic_states,
     FPPGov_generic_states,
 )
-from .rates import get_product_rates_lookup
+from .rates import get_rates
 from .payment_modes import get_payment_modes, is_payment_mode_changeable
 
 
@@ -218,11 +218,10 @@ class ProductService(DBService):
             ))
         
         db.session.flush()
-        db.session.refresh(product)    
+        db.session.refresh(product)
 
-    def get_product_rates(self, product, demographics):
-        lookup = get_product_rates_lookup(product)
-        return lookup.get_all_rates(**demographics)
+    def get_rates(self, product, demographics):
+        return get_rates(product, **demographics)
     
     def get_recommendations(self, product, demographics):
         return recommendations.get_recommendations(product, **demographics)
