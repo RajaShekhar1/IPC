@@ -87,9 +87,9 @@ def intify(s, none_on_fail=True):
             return s
 
 
-def floatify(s, none_on_fail=True):
+def floatify(s, digits=2, none_on_fail=True):
     try:
-        return float(clean_number_string(s))
+        return round(float(clean_number_string(s)), digits)
     except ValueError:
         if none_on_fail:
             return None
