@@ -52,7 +52,9 @@ class Case(CaseSerializer, db.Model):
     
     partner_agents = db.relationship('Agent', secondary=case_partner_agents,
                                backref=db.backref('partner_cases', lazy='dynamic'))
-    
+
+    payment_mode = db.Column(db.Integer, nullable=True)
+
     def get_template_data(self):
         return dict(
             id=self.id,

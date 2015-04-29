@@ -61,8 +61,19 @@ configuration overrides you desire and save it as '.env'. Then run the app with
     
 This will read the Procfile and run the app similar to how heroku does it. Running flask
 directly with python will give you more output on the terminal and also allow you to 
-set pdb breakpoints with pdb.set_trace().
+set pdb breakpoints with pdb.set\_trace().
     
+
+Running tests
+-------------------
+
+[pytest](https://pytest.org/latest/index.html) is used for testing. To run the tests, ensure you are in the parent TAA directory and install the `taa` app in editable mode:
+
+    pip install -e .
+
+Run the tests with the command:
+
+    py.test
 
 
 Deploying to Heroku

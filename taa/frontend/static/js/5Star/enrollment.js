@@ -281,13 +281,32 @@ function WizardUI(defaults) {
         // return the benefit options of the any child
         return self.insurance_product.get_coverage_options_for_applicant('children')();
     });
-    
+
+    // Payment mode
+    self.payment_mode = ko.observable(defaults.payment_mode);
+    if(defaults.payment_mode_choices == null) {
+        self.payment_mode_choices = ko.observable(null);
+    } else {
+        self.payment_mode_choices = ko.observable(defaults.payment_mode_choices);
+    }
+    self.payment_mode_text = ko.pureComputed(function() {
+        try {
+            return _.find(self.payment_mode_choices(), function(x) { return x.mode == self.payment_mode() }).name.toLowerCase();
+        } catch(e) {
+            return '(NA)'
+        }
+    });
+
     self.is_show_rates_clicked = ko.observable(false);
     
     self.is_rate_table_loading = ko.observable(false);
-    
+
     self.is_employee_info_valid = ko.computed(function() {
         return self.insurance_product.is_valid_employee(self.employee()) ;
+    });
+
+    self.is_payment_mode_valid = ko.computed(function() {
+        return self.payment_mode() != undefined;
     });
     
     
@@ -296,7 +315,8 @@ function WizardUI(defaults) {
         // All employee info
         var valid = self.employee().is_valid();
         valid &= self.is_employee_info_valid();
-        
+        valid &= self.is_payment_mode_valid();
+
         // Trigger jquery validation manually 
         if (self.is_show_rates_clicked()) {
             self.validator.form();
@@ -380,7 +400,8 @@ function WizardUI(defaults) {
             //product_type: self.insurance_product.product_type,
             employee: self.employee().serialize_data(),
             spouse: self.should_include_spouse_in_table()? self.spouse().serialize_data() : null,
-            num_children: self.children().length
+            num_children: self.children().length,
+            payment_mode: self.payment_mode()
         };
     };
     
@@ -438,6 +459,7 @@ function WizardUI(defaults) {
             self.spouse().weight,
             self.spouse().height,
             self.children,
+            self.payment_mode,
             //self.should_include_spouse_in_table,
             self.should_show_spouse,
             self.should_include_children_in_table
@@ -471,8 +493,6 @@ function WizardUI(defaults) {
         self.insurance_product.parse_benefit_options('spouse', self.spouse(), data.spouse_rates);
         
         // Reset child rates
-        // TODO: Why is this doing this?
-        //self.child_benefits(new InsuredApplicant({}));
         self.insurance_product.parse_benefit_options('children', self.child_benefits(), data.children_rates);
         
         if (data.recommendations) {
@@ -666,6 +686,9 @@ function WizardUI(defaults) {
             'height_inches_1': {
                 required: { depends: any_valid_spouse_field }, 
                 spHeightLimit: true
+            },
+            paymentMode: {
+                required: true
             },
             debug: true
         },
@@ -2894,7 +2917,8 @@ function init_validation() {
             enrollCity:  window.ui.enrollCity(),
             enrollState:  window.ui.enrollState,
             product_type: window.ui.insurance_product.product_type,
-            
+            payment_mode: window.ui.payment_mode(),
+
             method: (ui.is_in_person_application()) ? 'in_person': 'self_enroll_email',
             did_decline: ui.did_decline(),
             

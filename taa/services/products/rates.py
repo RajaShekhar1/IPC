@@ -1,305 +1,267 @@
 import csv
+import itertools
+import os
+from collections import OrderedDict
+from io import BytesIO
+
+from payment_modes import MODES_BY_NAME
 from taa.core import TAAFormError
 
-def get_product_rates_lookup(product):
-    
-    
-    if product.get_base_product_code() == "Group CI":
-        return GroupCIRates(product,
-                            smoker_rates=build_GroupCI_smoking_rate_table(),
-                            nonsmoker_rates=build_GroupCI_nonsmoking_rate_table())
-    elif product.get_base_product_code() == "FPP-Gov":
-        return FPPGovRates()
-    else:
-        tables_by_code = {
-            "FPPTI": build_FPPTI_rate_table(),
-            "FPPCI": build_FPPCI_rate_table(),
-        }
-        return ProductRates(product, tables_by_code[product.get_base_product_code()])
+__all__ = ['get_rates']
 
-class ProductRates(object):
-    def __init__(self, product, rate_table):
-        self.product = product
-        self.rate_table = rate_table
-        
-    def get_all_rates(self, **demographics):
-        rates = dict(
-            employee={},
-            spouse={},
-            children={},
-        )
-        
-        if demographics.get('employee_age'):
-            age = demographics.get('employee_age')
-            rates['employee'] = {
-                'weekly_bypremium': self.rate_table.get_coverages_by_weekly_premium(age),
-                'weekly_byface': self.rate_table.get_weekly_premiums_by_coverage(age),
-            }
-        
-        if demographics.get('spouse_age'):
-            age = demographics.get('spouse_age')
-            rates['spouse'] = {
-                'weekly_bypremium': self.rate_table.get_coverages_by_weekly_premium(age),
-                'weekly_byface': self.rate_table.get_weekly_premiums_by_coverage(age),
-            }
-
-        if demographics.get('num_children') > 0:
-            rates['children'] = {
-                "weekly_byface": self.rate_table.get_weekly_child_premiums(),
-            }
-        
-        return rates
+DATA_DIR = 'taa/services/products/data_files'
+TYPE_COVERAGE = 'coverage'
+TYPE_PREMIUM = 'premium'
 
 
-class GroupCIRates(object):
-    def __init__(self, product, smoker_rates, nonsmoker_rates):
-        self.product = product
-        self.smoker_rates = smoker_rates
-        self.nonsmoker_rates = nonsmoker_rates
-        
-    def get_all_rates(self, **demographics):
-        rates = dict(
-            employee={},
-            spouse={},
-            children={},
-        )
-        
-        # First check on weight / height ranges
-        if demographics['employee_gender'].lower() == 'male':
-            emp_limits_table = GroupCI_Male_HeightWeightRangeTable
-        else:
-            emp_limits_table = GroupCI_Female_HeightWeightRangeTable
-
-        limit_errors = []
-        if not emp_limits_table.is_height_weight_in_range(
-                demographics['employee_height'], 
-                demographics['employee_weight']
-                ):
-            limit_errors += [
-                dict(field='employee_height', error='This height/weight combination is outside the range for this product.'),
-                dict(field='employee_weight', error='This height/weight combination is outside the range for this product.')
+def get_rates(product, **demographics):
+    product_code = product.get_base_product_code()
+    # Check employee eligibility
+    limit_errors = []
+    if not is_eligible(product_code, demographics['employee_gender'],
+                       demographics['employee_height'],
+                       demographics['employee_weight']):
+        limit_errors += [
+            dict(field='employee_height',
+                 error='This height/weight combination is outside the range '
+                       'for this product.'),
+            dict(field='employee_weight',
+                 error='This height/weight combination is outside the range '
+                       'for this product.')
+        ]
+    # Check spouse eligibility if required
+    if demographics.get('spouse_age') is not None and not is_eligible(
+            product_code, demographics['spouse_gender'],
+            demographics['spouse_height'], demographics['spouse_weight']):
+        limit_errors += [
+            dict(field='spouse_height',
+                 error='This height/weight combination is outside the range '
+                       'for this product.'),
+            dict(field='spouse_weight',
+                 error='This height/weight combination is outside the range '
+                       'for this product.'),
             ]
-        
-        emp_rates_table = self.smoker_rates if demographics['employee_smoker'] else self.nonsmoker_rates
-        rates['employee']['weekly_byface'] = emp_rates_table.get_premiums_by_coverage_for_age(demographics['employee_age'])
-        #rates['employee']['weekly_bycoverage'] = []
-        
-        if demographics.get('spouse_age'):
-            sp_rates_table = self.smoker_rates if demographics['spouse_smoker'] else self.nonsmoker_rates
-            rates['spouse']['weekly_byface'] = sp_rates_table.get_premiums_by_coverage_for_age(demographics['spouse_age'])
-            #rates['spouse']['weekly_bycoverage'] = []
+    # If any height/weight errors, raise an API exception
+    if limit_errors:
+        raise TAAFormError(errors=limit_errors)
+    return {
+        'employee': rates.get(product_code, demographics.get('payment_mode'),
+                              demographics['employee_age'],
+                              demographics.get('employee_smoker')),
+        'spouse': rates.get(product_code, demographics.get('payment_mode'),
+                            demographics.get('spouse_age'),
+                            demographics.get('spouse_smoker')),
+        'children': rates.get(product_code, demographics.get('payment_mode'),
+                              age=None)
+    }
 
-            if demographics['spouse_gender'].lower() == 'male':
-                sp_limits_table = GroupCI_Male_HeightWeightRangeTable
-            else:
-                sp_limits_table = GroupCI_Female_HeightWeightRangeTable
-                
-            if not sp_limits_table.is_height_weight_in_range(
-                    demographics['spouse_height'],
-                    demographics['spouse_weight']
-            ):
-                limit_errors += [
-                    dict(field='spouse_height', error='This height/weight combination is outside the range for this product.'),
-                    dict(field='spouse_weight', error='This height/weight combination is outside the range for this product.'),
-                ]
-            
 
-        
-        # If any height/weight errors, raise an API exception
-        if limit_errors:
-            raise TAAFormError(errors=limit_errors)
-            
-        rates['children'] = {
-            'weekly_byface': [
-                {'premium': .75, 'coverage': 10000},
-            ]
-        }
-        
-        return rates
-    
-class FPPGovRates(object):
-    def get_all_rates(self, **demographics):
-        rates = dict(
-            employee={},
-            spouse={},
-            children={},
-        )
-        rate_table = CoverageByAgePremiumLookup(
-            FPPGOV_all_weekly_coverage_options,
-            FPPGOV_weekly_by_face
-        )
-        
-        rates['employee']['weekly_byface'] = rate_table.get_premiums_by_coverage_for_age(
-            demographics['employee_age'])
-        
-        if demographics.get('spouse_age'):
-            rates['spouse']['weekly_byface'] = rate_table.get_premiums_by_coverage_for_age(
-                demographics['spouse_age'])
-            
-        # TODO: Check these
-        rates['children'] = {
-            'weekly_byface': [
-                {'premium': 1.15, 'coverage': 10000},
-                {'premium': 2.30, 'coverage': 20000},
-            ]
-        }
-
-        return rates
-    
-class CoverageByAgePremiumLookup(object):
-    def __init__(self, all_coverage_options, lookup_table):
-        self.all_coverage_options = all_coverage_options
-        self.lookup_table = lookup_table
-    
-    def get_premiums_by_coverage_for_age(self, age):
-        premiums = []
-        for coverage in self.all_coverage_options:
-            premium = self.get_premium_by_age_and_coverage(age, coverage)
-            if premium:
-                premiums.append(dict(coverage=coverage, premium=premium))
-        return premiums
-
-    def get_premium_by_age_and_coverage(self, age, coverage_amount):
-        return self.lookup_table.get((age, coverage_amount))
-    
-class HeightWeightRangeTable(object):
-    def __init__(self, filename):
-        
-        file_data = open(filename, 'r').read().splitlines()
-        self.data = csv.DictReader(file_data)
-        
-        self.ranges_by_height = {int(r['Inches']): r for r in self.data}
-        
-    def is_height_weight_in_range(self, height, weight):
-        if not height:
+def is_eligible(product_code, sex, height, weight):
+    if product_code in ELIGIBILITIES:
+        table = ELIGIBILITIES[product_code][sex]
+        if height is None or weight is None or height not in table:
             return False
-        
-        row = self.ranges_by_height.get(int(height))
-        if not row:
-            return False
-        if not weight:
-            return False
-        
-        return (
-            int(row['Min Weight']) <= int(weight) and 
-            int(row['Max Weight']) >= int(weight)
-        )
-    
-    
-GroupCI_Male_HeightWeightRangeTable = HeightWeightRangeTable('taa/services/products/data_files/CIEMP-Male-Height-Weight-ranges.csv')
-GroupCI_Female_HeightWeightRangeTable = HeightWeightRangeTable(
-    'taa/services/products/data_files/CIEMP-Female-Height-Weight-ranges.csv')
+        return table[height][1] <= weight <= table[height][2]
+    # Default to eligible if product has no lookup table
+    return True
 
 
-class RateTable(object):
-    def __init__(self, all_weekly_premium_options, all_weekly_coverage_options,
-                 weekly_by_premium_lookup, weekly_by_coverage_lookup,
-                 child_premiums):
-        
-        self.weekly_premium_options = all_weekly_premium_options
-        self.weekly_by_premium_lookup = weekly_by_premium_lookup
-        self.weekly_coverage_options = all_weekly_coverage_options
-        self.weekly_by_coverage_lookup = weekly_by_coverage_lookup
-        self.child_premiums = child_premiums
-        
-    def get_weekly_premiums_by_coverage(self, age):
-        premiums = []
-        for coverage in self.weekly_coverage_options:
-            premium = self.get_weekly_premium_by_coverage(age, coverage)
-            if premium:
-                premiums.append(dict(coverage=coverage, premium=premium))
-        return premiums
-    
-    def get_coverages_by_weekly_premium(self, age):
-        coverages = []
-        for weekly_premium in self.get_all_weekly_premium_options():
-            coverage = self.get_coverage_by_weekly_premium(age, weekly_premium)
-            if coverage:
-                coverages.append(dict(premium=weekly_premium, coverage=coverage))
-        
-        return coverages
-    
-    def get_weekly_child_premiums(self):
-        return self.child_premiums
-        
-    def get_all_weekly_premium_options(self):
-        return self.weekly_premium_options
-    
-    def get_all_weekly_coverage_options(self):
-        return self.weekly_coverage_options
-    
-    def get_weekly_premium_by_coverage(self, age, coverage_amount):
-        return self.weekly_by_coverage_lookup.get((age, coverage_amount))
-
-    def get_coverage_by_weekly_premium(self, age, weekly_rate):
-        return self.weekly_by_premium_lookup.get((age, weekly_rate))
-
-
-def load_age_lookup_table(csv_path):
-    lines = [l for l in csv.reader(open(csv_path, 'rU'))]
-    
-    headers = [int(x.replace(',', '')) for x in lines[0][1:]]
-    data_rows = lines[1:]
-    ages = [int(r[0]) for r in data_rows]
-
+def build_eligibility(csv_path):
     table = {}
-    for i, age in enumerate(ages):
-        for j, header in enumerate(headers):
-            val = lines[1:][i][j + 1]
-            table[(age, int(header))] = float(val) if val.strip() != "" else None
-
-    return table, headers
+    for line in csv.DictReader(open(csv_path, 'rU')):
+        table[int(line['Inches'])] = (line['Min Weight'], line['Max Weight'])
+    return table
 
 
-FPPTI_weekly_by_premium_lookup, all_weekly_premium_options = load_age_lookup_table("taa/services/products/data_files/FPPTI-bypremium.csv")
-FPPTI_weekly_by_coverage_lookup, all_weekly_coverage_options = load_age_lookup_table("taa/services/products/data_files/FPPTI-byface.csv")
-FPPCI_weekly_by_premium_lookup, FPPCI_all_weekly_premium_options = load_age_lookup_table("taa/services/products/data_files/FPPCI-bypremium.csv")
-FPPCI_weekly_by_coverage_lookup, FPPCI_all_weekly_coverage_options = load_age_lookup_table("taa/services/products/data_files/FPPCI-byface.csv")
-
-FPPGOV_weekly_by_face, FPPGOV_all_weekly_coverage_options = load_age_lookup_table("taa/services/products/data_files/FPPGOV-byface.csv") 
-
-GROUP_CI_non_smoking_weekly_by_coverage_lookup, GROUP_CI_non_smoking_all_weekly_coverage_options = load_age_lookup_table(
-    "taa/services/products/data_files/CIEMP-rates---NonSmoking-Weekly.csv")
-GROUP_CI_smoking_weekly_by_coverage_lookup, GROUP_CI_smoking_all_weekly_coverage_options = load_age_lookup_table(
-    "taa/services/products/data_files/CIEMP-rates---Smoking-Weekly.csv")
+def clean_number_string(s):
+    return s.strip().replace(',', '').replace('$', '')
 
 
+def intify(s, none_on_fail=True):
+    try:
+        return int(clean_number_string(s))
+    except ValueError:
+        if none_on_fail:
+            return None
+        else:
+            return s
 
-def build_FPPTI_rate_table():
-    
-    child_premiums = [
-        {'premium': 1.15, 'coverage': 10000},
-        {'premium': 2.30, 'coverage': 20000},
-    ]
-    
-    return RateTable(
-        all_weekly_premium_options=all_weekly_premium_options,
-        all_weekly_coverage_options=all_weekly_coverage_options,
-        weekly_by_premium_lookup=FPPTI_weekly_by_premium_lookup,
-        weekly_by_coverage_lookup=FPPTI_weekly_by_coverage_lookup,
-        child_premiums = child_premiums,
-    )
 
-def build_FPPCI_rate_table():
-    
-    child_premiums = [
-        {'premium': 1.15, 'coverage': 10000},
-        {'premium': 2.30, 'coverage': 20000},
-    ]
-    
-    return RateTable(
-        all_weekly_premium_options=all_weekly_premium_options,
-        all_weekly_coverage_options=all_weekly_coverage_options,
-        weekly_by_premium_lookup=FPPCI_weekly_by_premium_lookup,
-        weekly_by_coverage_lookup=FPPCI_weekly_by_coverage_lookup,
-        child_premiums = child_premiums,
-    )
+def floatify(s, digits=2, none_on_fail=True):
+    try:
+        return round(float(clean_number_string(s)), digits)
+    except ValueError:
+        if none_on_fail:
+            return None
+        else:
+            return s
 
-    
 
-def build_GroupCI_smoking_rate_table():
-    return CoverageByAgePremiumLookup(GROUP_CI_smoking_all_weekly_coverage_options, GROUP_CI_smoking_weekly_by_coverage_lookup)
+class Rates(object):
+    def __init__(self):
+        self._rates = {}
 
-def build_GroupCI_nonsmoking_rate_table():
-    return CoverageByAgePremiumLookup(GROUP_CI_non_smoking_all_weekly_coverage_options,
-                                      GROUP_CI_non_smoking_weekly_by_coverage_lookup)
+    def _init_dict(self, product_code, payment_mode, type_):
+        if product_code not in self._rates:
+            self._rates[product_code] = {}
+        if payment_mode not in self._rates[product_code]:
+            self._rates[product_code][payment_mode] = {}
+        if type_ not in self._rates[product_code][payment_mode]:
+            self._rates[product_code][payment_mode][type_] = OrderedDict()
+
+    def from_csv(self, path, product_code, payment_mode, type_, smoker=None):
+        self._process_data(open(path, 'rU'), product_code, payment_mode, type_,
+                           smoker)
+
+    def from_string(self, s, product_code, payment_mode, type_, smoker=None):
+        self._process_data(BytesIO(s), product_code, payment_mode, type_,
+                           smoker)
+
+    def _process_data(self, data, product_code, payment_mode, type_, smoker):
+        reader = csv.reader(data)
+        header = map(intify, reader.next())
+        if smoker is not None:
+            product_code = (product_code, smoker)
+        self._init_dict(product_code, payment_mode, type_)
+        for line in reader:
+            for index, key in enumerate(
+                    itertools.product([intify(line[0])], header[1:]), start=1):
+                self._rates[product_code][payment_mode][type_][key] = {
+                    TYPE_PREMIUM:
+                        floatify(line[index]) if type_ == TYPE_COVERAGE
+                        else key[1],
+                    TYPE_COVERAGE:
+                        intify(line[index]) if type_ == TYPE_PREMIUM else key[1]
+                }
+
+    def get(self, product_code, payment_mode, age, smoker=None):
+        result = {}
+        if age is None:
+            # Children rates/premiums are indexed with age as -1
+            age = -1
+        product_key = (product_code, smoker) if product_code ==\
+                                                'Group CI' else product_code
+        for type_ in (TYPE_PREMIUM, TYPE_COVERAGE):
+            if type_ not in result:
+                result[type_] = []
+            if (product_key in self._rates
+                    and payment_mode in self._rates[product_key]
+                    and type_ in self._rates[product_key][payment_mode]):
+                for key, value in iter(
+                        self._rates[product_key][payment_mode][type_].items()):
+                    if (key[0] == age
+                            and value[TYPE_PREMIUM] is not None
+                            and value[TYPE_COVERAGE] is not None):
+                        result[type_].append(value)
+        # Rename keys to fit existing API
+        result['weekly_byface'] = result.pop(TYPE_COVERAGE)
+        result['weekly_bypremium'] = result.pop(TYPE_PREMIUM)
+        return result
+
+
+# If a product is not in this dict, there are no limits on eligibility
+ELIGIBILITIES = {
+    'Group CI': {
+        'female': build_eligibility(
+            os.path.join(DATA_DIR, 'CIEMP-Female-Height-Weight-ranges.csv')),
+        'male': build_eligibility(
+            os.path.join(DATA_DIR, 'CIEMP-Male-Height-Weight-ranges.csv'))
+    }
+}
+
+
+# Build rate table for adults
+rates = Rates()
+rates.from_csv(os.path.join(DATA_DIR, 'CIEMP-rates---NonSmoking-Biweekly.csv'),
+               'Group CI', MODES_BY_NAME['biweekly'], TYPE_COVERAGE, smoker=False)
+rates.from_csv(os.path.join(DATA_DIR, 'CIEMP-rates---NonSmoking-Weekly.csv'),
+               'Group CI', MODES_BY_NAME['weekly'], TYPE_COVERAGE, smoker=False)
+rates.from_csv(os.path.join(DATA_DIR, 'CIEMP-rates---NonSmoking-Semimonthly.csv'),
+               'Group CI', MODES_BY_NAME['semimonthly'], TYPE_COVERAGE, smoker=False)
+rates.from_csv(os.path.join(DATA_DIR, 'CIEMP-rates---NonSmoking-Monthly.csv'),
+               'Group CI', MODES_BY_NAME['monthly'], TYPE_COVERAGE, smoker=False)
+rates.from_csv(os.path.join(DATA_DIR, 'CIEMP-rates---NonSmoking-Weekly.csv'),
+               'Group CI', MODES_BY_NAME['weekly'], TYPE_COVERAGE, smoker=False)
+rates.from_csv(os.path.join(DATA_DIR, 'CIEMP-rates---Smoking-Monthly.csv'),
+               'Group CI', MODES_BY_NAME['monthly'], TYPE_COVERAGE, smoker=True)
+rates.from_csv(os.path.join(DATA_DIR, 'CIEMP-rates---Smoking-Weekly.csv'),
+               'Group CI', MODES_BY_NAME['weekly'], TYPE_COVERAGE, smoker=True)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-byface.csv'),
+               'FPPCI', MODES_BY_NAME['weekly'], TYPE_COVERAGE)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-byface-biweekly.csv'),
+               'FPPCI', MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-byface-semimonthly.csv'),
+               'FPPCI', MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-byface-monthly.csv'),
+               'FPPCI', MODES_BY_NAME['monthly'], TYPE_COVERAGE)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-bypremium.csv'),
+               'FPPCI', MODES_BY_NAME['weekly'], TYPE_PREMIUM)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-bypremium-biweekly.csv'),
+               'FPPCI', MODES_BY_NAME['biweekly'], TYPE_PREMIUM)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-bypremium-semimonthly.csv'),
+               'FPPCI', MODES_BY_NAME['semimonthly'], TYPE_PREMIUM)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-bypremium-monthly.csv'),
+               'FPPCI', MODES_BY_NAME['monthly'], TYPE_PREMIUM)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPGOV-byface.csv'),
+               'FPP-Gov', MODES_BY_NAME['weekly'], TYPE_COVERAGE)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPGOV-byface-biweekly.csv'),
+               'FPP-Gov', MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPGOV-byface-semimonthly.csv'),
+               'FPP-Gov', MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPGOV-byface-monthly.csv'),
+               'FPP-Gov', MODES_BY_NAME['monthly'], TYPE_COVERAGE)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-byface.csv'),
+               'FPPTI', MODES_BY_NAME['weekly'], TYPE_COVERAGE)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-byface-biweekly.csv'),
+               'FPPTI', MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-byface-semimonthly.csv'),
+               'FPPTI', MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-byface-monthly.csv'),
+               'FPPTI', MODES_BY_NAME['monthly'], TYPE_COVERAGE)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-bypremium.csv'),
+               'FPPTI', MODES_BY_NAME['weekly'], TYPE_PREMIUM)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-bypremium-biweekly.csv'),
+               'FPPTI', MODES_BY_NAME['biweekly'], TYPE_PREMIUM)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-bypremium-semimonthly.csv'),
+               'FPPTI', MODES_BY_NAME['semimonthly'], TYPE_PREMIUM)
+rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-bypremium-monthly.csv'),
+               'FPPTI', MODES_BY_NAME['monthly'], TYPE_PREMIUM)
+
+# Build rate table for children (currently hardcoded)
+# TODO: Verify actual non-weekly prices
+# Group CI
+rates.from_string("age,10000\n-1,0.75", 'FPPCI',
+                  MODES_BY_NAME['weekly'], TYPE_COVERAGE)
+rates.from_string("age,10000\n-1,1.50", 'FPPCI',
+                  MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
+rates.from_string("age,10000\n-1,1.63", 'FPPCI',
+                  MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
+rates.from_string("age,10000\n-1,3.25", 'FPPCI',
+                  MODES_BY_NAME['monthly'], TYPE_COVERAGE)
+# FPPCI
+rates.from_string("age,10000,20000\n-1,1.15,2.30", 'FPPCI',
+                  MODES_BY_NAME['weekly'], TYPE_COVERAGE)
+rates.from_string("age,10000,20000\n-1,2.30,4.60", 'FPPCI',
+                  MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
+rates.from_string("age,10000,20000\n-1,2.50,4.99", 'FPPCI',
+                  MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
+rates.from_string("age,10000,20000\n-1,4.99,9.97", 'FPPCI',
+                  MODES_BY_NAME['monthly'], TYPE_COVERAGE)
+# FPP-Gov
+rates.from_string("age,10000,20000\n-1,1.15,2.30", 'FPP-Gov',
+                  MODES_BY_NAME['weekly'], TYPE_COVERAGE)
+rates.from_string("age,10000,20000\n-1,2.30,4.60", 'FPP-Gov',
+                  MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
+rates.from_string("age,10000,20000\n-1,2.50,4.99", 'FPP-Gov',
+                  MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
+rates.from_string("age,10000,20000\n-1,4.99,9.97", 'FPP-Gov',
+                  MODES_BY_NAME['monthly'], TYPE_COVERAGE)
+# FPPTI
+rates.from_string("age,10000,20000\n-1,1.15,2.30", 'FPPTI',
+                  MODES_BY_NAME['weekly'], TYPE_COVERAGE)
+rates.from_string("age,10000,20000\n-1,2.30,4.60", 'FPPTI',
+                  MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
+rates.from_string("age,10000,20000\n-1,2.50,4.99", 'FPPTI',
+                  MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
+rates.from_string("age,10000,20000\n-1,4.99,9.97", 'FPPTI',
+                  MODES_BY_NAME['monthly'], TYPE_COVERAGE)
