@@ -651,6 +651,14 @@
 
             <div data-bind="slideDownIf: existing_insurance() || replacing_insurance()">
                 <div class="modal-header">
+                    <small data-bind="visible: is_in_person_application">I want this notice read aloud to me
+                        <label>
+                            <input type="radio" name="replacment_read_aloud" value="Y" data-bind='checked: replacment_read_aloud, checkedValue: true'> Y
+                        </label>
+                        <label>
+                            <input type="radio" name="replacment_read_aloud" value="N" data-bind='checked: replacment_read_aloud, checkedValue: false'> N
+                        </label>
+                    </small>
                     <h3 class="lighter block blue center">NOTICE OF REPLACEMENT OF LIFE INSURANCE OR ANNUITIES</h3>
                 </div>
 
@@ -704,6 +712,7 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                                 <label>
                                     <input type="radio" value="replaced" data-bind="checked: replaced_or_financing"> Replaced
                                 </label>
+
                                 <label>
                                     <input type="radio" value="financing" data-bind="checked: replaced_or_financing"> Financing
                                 </label>
@@ -712,7 +721,7 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                         </div>
                         <!--/ko-->
                         <button class="btn btn-success btn-sm" data-bind="click: add_replacement_policy">Add Another Policy</button>
-
+                        <br>
                         <br>
                         <p>Make sure you know the facts. Contact your existing company or its agent for information about the old policy or contract. (If you request one, an in force illustration, policy summary or available disclosure documents must be sent to you by the existing insurer). Ask for and retain all sales material used by the agent in the sales presentation. Be sure that you are making an informed decision.</p>
                         <p>The existing policy or contract is being replaced because:

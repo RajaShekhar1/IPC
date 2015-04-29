@@ -97,6 +97,7 @@ function WizardUI(defaults) {
     self.existing_insurance = ko.observable(null);
     self.replacing_insurance = ko.observable(null);
 
+    self.replacment_read_aloud = ko.observable(null);
     self.replacement_is_terminating = ko.observable(null);
     self.replacement_using_funds = ko.observable(null);
     self.replacement_reason = ko.observable("");
@@ -2867,6 +2868,7 @@ function init_validation() {
             // validate replacement form
             if (ui.insurance_product.is_fpp_product() &&
                     (ui.replacing_insurance() || ui.existing_insurance())) {
+
                 // Must answer all questions
                 ui.replacment_read_aloud() == null
                 ui.replacement_is_terminating() == null
