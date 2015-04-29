@@ -653,10 +653,10 @@
                 <div class="modal-header">
                     <small data-bind="visible: is_in_person_application">I want this notice read aloud to me
                         <label>
-                            <input type="radio" name="replacment_read_aloud" value="Y" data-bind='checked: replacment_read_aloud, checkedValue: true'> Y
+                            <input type="radio" name="replacement_read_aloud" value="Y" data-bind='checked: replacement_read_aloud, checkedValue: true'> Y
                         </label>
                         <label>
-                            <input type="radio" name="replacment_read_aloud" value="N" data-bind='checked: replacment_read_aloud, checkedValue: false'> N
+                            <input type="radio" name="replacement_read_aloud" value="N" data-bind='checked: replacement_read_aloud, checkedValue: false'> N
                         </label>
                     </small>
                     <h3 class="lighter block blue center">NOTICE OF REPLACEMENT OF LIFE INSURANCE OR ANNUITIES</h3>
@@ -678,20 +678,20 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                     <ol>
                         <li>
                             Are you considering discontinuing making premium payments, surrendering, forfeiting, assigning to the insurer, or otherwise terminating your existing policy or contract?
-                            <input type="radio" name="replacement_is_terminating" value="Y" data-bind='checked: replacement_is_terminating'> Y
-                            <input type="radio" name="replacement_is_terminating" value="N" data-bind='checked: replacement_is_terminating'> N
+                            <input type="radio" name="replacement_is_terminating" value="Y" data-bind='checked: replacement_is_terminating, checkedValue: true'> Y
+                            <input type="radio" name="replacement_is_terminating" value="N" data-bind='checked: replacement_is_terminating, checkedValue: false'> N
 
                         </li>
                         <li>
                             Are you considering using funds from your existing policies or contracts to pay premiums due on the new policy or contract?
-                            <input type="radio" name="replacement_using_funds" value="Y" data-bind='checked: replacement_using_funds'> Y
-                            <input type="radio" name="replacement_using_funds" value="N" data-bind='checked: replacement_using_funds'> N
+                            <input type="radio" name="replacement_using_funds" value="Y" data-bind='checked: replacement_using_funds, checkedValue: true'> Y
+                            <input type="radio" name="replacement_using_funds" value="N" data-bind='checked: replacement_using_funds, checkedValue: false'> N
 
                         </li>
 
                     </ol>
 
-                    <div data-bind="slideDownIf: replacement_using_funds() === 'Y' || replacement_is_terminating() === 'Y'">
+                    <div data-bind="slideDownIf: replacement_using_funds() || replacement_is_terminating()">
                         <strong> Please list each existing policy or contract you are contemplating replacing (include the name of the insurer, the insured, and the contract number if available) and whether each policy will be replaced or used as a source of financing:</strong>
                         <!--ko foreach: replacement_policies-->
                         <div class="row form-group">
@@ -2181,51 +2181,6 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
 
                 <div class="modal-body">
                     "Disabled" means that a person is unable to work, to attend school, or to perform the normal activities of a person of like age and gender or that a person is confined in a hospital, at home or elsewhere due to injury or sickness.
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-replacement-fpp" class="modal">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="lighter block blue center">NOTICE OF REPLACEMENT OF LIFE INSURANCE OR ANNUITIES</h3>
-                </div>
-
-                <div class="modal-body">
-
-                    <p>You are contemplating the purchase of a life insurance policy or annuity contract. In some cases this purchase may involve discontinuing or changing
-an existing policy or contract. If so, a replacement is occurring. Financed purchases are also considered replacements.</p>
-
-                    <p>A replacement occurs when a new policy or contract is purchased and, in connection with the sale, you discontinue making premium payments on the existing policy or contract, or an existing policy or contract is surrendered, forfeited, assigned to the replacing insurer, or otherwise terminated or used in a financed purchase.</p>
-
-                    <p>A financed purchase occurs when the purchase of a new life insurance policy involves the use of funds obtained by the withdrawal or surrender of or by borrowing some or all of the policy values, including accumulated dividends, of an existing policy, to pay all or part of any premium or payment due on the new policy. A financed purchase is a replacement.</p>
-
-                    <p>You should carefully consider whether a replacement is in your best interests. You will pay acquisition costs and there may be surrender costs deducted from your policy or contract. You may be able to make changes to your existing policy or contract to meet your insurance needs at less cost. A financed purchase will reduce the value of your existing policy or contract and may reduce the amount paid upon the death of the insured.</p>
-
-                    <p>We want you to understand the effects of replacements before you make your purchase decision and ask that you answer the following questions.</p>
-
-                    <ol>
-                        <li>
-                            Are you considering discontinuing making premium payments, surrendering, forfeiting, assigning to the insurer, or otherwise terminating your existing policy or contract?
-                            <input type="radio" name="replacement_is_terminating" value="Y"> Y
-                            <input type="radio" name="replacement_is_terminating" value="N"> N
-
-                        </li>
-                        <li>
-                            Are you considering using funds from your existing policies or contracts to pay premiums due on the new policy or contract?
-                            <input type="radio" name="replacement_using_funds" value="Y"> Y
-                            <input type="radio" name="replacement_using_funds" value="N"> N
-
-                        </li>
-
-                    </ol>
-
                 </div>
 
                 <div class="modal-footer">

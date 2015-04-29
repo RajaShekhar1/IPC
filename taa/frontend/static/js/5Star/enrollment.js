@@ -97,7 +97,7 @@ function WizardUI(defaults) {
     self.existing_insurance = ko.observable(null);
     self.replacing_insurance = ko.observable(null);
 
-    self.replacment_read_aloud = ko.observable(null);
+    self.replacement_read_aloud = ko.observable(null);
     self.replacement_is_terminating = ko.observable(null);
     self.replacement_using_funds = ko.observable(null);
     self.replacement_reason = ko.observable("");
@@ -107,6 +107,13 @@ function WizardUI(defaults) {
     self.add_replacement_policy = function() {
         self.replacement_policies.push(new ReplacementPolicy());
     };
+
+    self.is_replacement_form_required = ko.computed(function() {
+        return (
+            self.insurance_product.is_fpp_product() &&
+            (self.existing_insurance() || self.replacing_insurance())
+        );
+    });
 
     self.policy_owner = ko.observable("self");
     self.other_owner_name = ko.observable("");
@@ -2864,21 +2871,26 @@ function init_validation() {
             return is_valid;
         }
         if (info.step == 2 && info.direction == 'next') {
+            var is_valid = true;
 
             // validate replacement form
             if (ui.insurance_product.is_fpp_product() &&
                     (ui.replacing_insurance() || ui.existing_insurance())) {
 
+                is_valid &= $('#questions-form').valid();
                 // Must answer all questions
-                ui.replacment_read_aloud() == null
-                ui.replacement_is_terminating() == null
-                ui.replacement_using_funds() == null
-                ui.replacement_policies().length == 0
+                /*if (ui.replacment_read_aloud() == null ||
+                        ui.replacement_is_terminating() == null ||
+                        ui.replacement_using_funds() == null ||
+                        ui.replacement_policies().length == 0 ||
+                        ui.replacement_reason() === '') {
+                    return false;
+                }*/
 
             }
 
             // validate questions
-            var is_valid =  are_health_questions_valid();
+            is_valid &=  are_health_questions_valid();
             if (!is_valid) {
                 $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");
                 return false;
@@ -3124,6 +3136,36 @@ function init_validation() {
     jQuery.validator.addMethod("phone", function (value, element) {
         return this.optional(element) || /^\(\d{3}\) \d{3}\-\d{4}( x\d{1,6})?$/.test(value);
     }, "Enter a valid phone number.");
+
+    $('#questions-form').validate({
+        errorElement: 'div',
+        errorClass: 'help-block',
+        focusInvalid: false,
+        rules: {
+            replacement_read_aloud: {
+                required: {
+                    depends: function() {
+                        return ui.is_replacement_form_required();
+                    }
+                }
+            },
+            replacement_is_terminating: {
+                required: {
+                    depends: function() {
+                        return ui.is_replacement_form_required();
+                    }
+                }
+            },
+            replacement_using_funds: {
+                required: {
+                    depends: function() {
+                        return ui.is_replacement_form_required();
+                    }
+                }
+            }
+
+        }
+    });
 
     $('#step3-form').validate({
         errorElement: 'div',
