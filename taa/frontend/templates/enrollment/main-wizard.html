@@ -629,7 +629,7 @@
                         <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                             question: new GlobalSOHQuestion('replace_insurance'), 
                             val: 'Yes', 
-                            highlight: 'stop',
+                            highlight: 'flag',
                             onclick: window.handle_replacement_insurance_modal
                             }">
                             Yes
@@ -648,6 +648,82 @@
             </div>
             
             <br>
+
+            <div data-bind="slideDownIf: existing_insurance() || replacing_insurance()">
+                <div class="modal-header">
+                    <h3 class="lighter block blue center">NOTICE OF REPLACEMENT OF LIFE INSURANCE OR ANNUITIES</h3>
+                </div>
+
+                <div class="modal-body">
+
+                    <p>You are contemplating the purchase of a life insurance policy or annuity contract. In some cases this purchase may involve discontinuing or changing
+an existing policy or contract. If so, a replacement is occurring. Financed purchases are also considered replacements.</p>
+
+                    <p>A replacement occurs when a new policy or contract is purchased and, in connection with the sale, you discontinue making premium payments on the existing policy or contract, or an existing policy or contract is surrendered, forfeited, assigned to the replacing insurer, or otherwise terminated or used in a financed purchase.</p>
+
+                    <p>A financed purchase occurs when the purchase of a new life insurance policy involves the use of funds obtained by the withdrawal or surrender of or by borrowing some or all of the policy values, including accumulated dividends, of an existing policy, to pay all or part of any premium or payment due on the new policy. A financed purchase is a replacement.</p>
+
+                    <p>You should carefully consider whether a replacement is in your best interests. You will pay acquisition costs and there may be surrender costs deducted from your policy or contract. You may be able to make changes to your existing policy or contract to meet your insurance needs at less cost. A financed purchase will reduce the value of your existing policy or contract and may reduce the amount paid upon the death of the insured.</p>
+
+                    <p>We want you to understand the effects of replacements before you make your purchase decision and ask that you answer the following questions.</p>
+
+                    <ol>
+                        <li>
+                            Are you considering discontinuing making premium payments, surrendering, forfeiting, assigning to the insurer, or otherwise terminating your existing policy or contract?
+                            <input type="radio" name="replacement_is_terminating" value="Y" data-bind='checked: replacement_is_terminating'> Y
+                            <input type="radio" name="replacement_is_terminating" value="N" data-bind='checked: replacement_is_terminating'> N
+
+                        </li>
+                        <li>
+                            Are you considering using funds from your existing policies or contracts to pay premiums due on the new policy or contract?
+                            <input type="radio" name="replacement_using_funds" value="Y" data-bind='checked: replacement_using_funds'> Y
+                            <input type="radio" name="replacement_using_funds" value="N" data-bind='checked: replacement_using_funds'> N
+
+                        </li>
+
+                    </ol>
+
+                    <div data-bind="slideDownIf: replacement_using_funds() === 'Y' || replacement_is_terminating() === 'Y'">
+                        <strong> Please list each existing policy or contract you are contemplating replacing (include the name of the insurer, the insured, and the contract number if available) and whether each policy will be replaced or used as a source of financing:</strong>
+                        <!--ko foreach: replacement_policies-->
+                        <div class="row form-group">
+                            <div class="col-sm-6 col-md-3">
+                                <label>Insurer Name</label><br>
+                                <input type="text" data-bind="value: name">
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <label>Contract or Policy #</label><br>
+                                <input type="text" data-bind="value: policy_number">
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <label>Insured</label><br>
+                                <input type="text" data-bind="value: insured">
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <br>
+                                <label>
+                                    <input type="radio" value="replaced" data-bind="checked: replaced_or_financing"> Replaced
+                                </label>
+                                <label>
+                                    <input type="radio" value="financing" data-bind="checked: replaced_or_financing"> Financing
+                                </label>
+                            </div>
+
+                        </div>
+                        <!--/ko-->
+                        <button class="btn btn-success btn-sm" data-bind="click: add_replacement_policy">Add Another Policy</button>
+
+                        <br>
+                        <p>Make sure you know the facts. Contact your existing company or its agent for information about the old policy or contract. (If you request one, an in force illustration, policy summary or available disclosure documents must be sent to you by the existing insurer). Ask for and retain all sales material used by the agent in the sales presentation. Be sure that you are making an informed decision.</p>
+                        <p>The existing policy or contract is being replaced because:
+                            <input type="text" class="col-xs-12" data-bind="value: replacement_reason">
+                        </p>
+
+                    </div>
+
+
+                </div>
+            </div>
 
             <div data-bind="visible: health_questions().length > 0 && do_any_health_questions_need_answering()">
                 <h3 class="lighter block green">Please answer each question below</h3>
@@ -901,8 +977,121 @@
                 <div class="visible-xs visible-sm" data-bind="with: selected_plan">
     
                     <table class="table table-striped" >
-                        <tbody data-bind="foreach: $root.health_questions">
-                            
+                        <tbody>
+                            <!--ko if: $root.insurance_product.is_fpp_product()-->
+                                <tr>
+                                    <td>
+                                        <div class="row">
+                                            <div class="col-xs-12 col-sm-6">
+                                                Is <span data-bind="text:$root.employee().name"></span> <a href="#actively_at_work_modal" data-toggle="modal">actively at work?</a>
+                                            </div>
+
+                                            <div class="col-xs-12 col-sm-6">
+                                                <div class="person-answer-small row">
+                                                    <div class="col-xs-3 col-xs-offset-2" data-bind="text: $root.employee().name()"></div>
+                                                    <div class="col-xs-7 btn-group">
+
+                                                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                              question: new NonHealthQuestion('actively_at_work'),
+                                                              is_required: true,
+                                                              val: 'Yes',
+                                                              highlight: 'checkmark',
+                                                              onclick: function() {$root.is_employee_actively_at_work(true)}
+                                                              }">
+                                                            {# onclick: show_yes_dialogue_employee #}
+                                                            Yes
+                                                        </button>
+                                                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                              question: new NonHealthQuestion('actively_at_work'),
+                                                              is_required: true,
+                                                              val: 'No',
+                                                              highlight: 'checkmark',
+                                                              onclick: function() {$root.is_employee_actively_at_work(false)}
+                                                              }">
+                                                            No
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+
+
+                                <tr data-bind="if: did_select_spouse_coverage">
+                                    <td>
+                                        <div class="row">
+                                            <div class="col-xs-12 col-sm-6">
+                                                During the prior 6 months, other than for routine medical care, has your spouse been diagnosed or treated by a member of the medical profession in a hospital or any other medical facility?
+                                            </div>
+                                            <div class="col-xs-12 col-sm-6">
+
+                                                <div class="person-answer-small row">
+                                                    <div class="col-xs-3 col-xs-offset-2" data-bind="text: $root.spouse().name()"></div>
+                                                    <div class="col-xs-7 btn-group">
+                                                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                              question: new NonHealthQuestion('spouse_treated_6_months'),
+                                                              is_required: true,
+                                                              val: 'Yes',
+                                                              highlight: 'checkmark',
+                                                              onclick: function() {$root.has_spouse_been_treated_6_months(true)}
+                                                              }">
+                                                            Yes
+                                                        </button>
+                                                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                              question: new NonHealthQuestion('spouse_treated_6_months'),
+                                                              is_required: true,
+                                                              val: 'No',
+                                                              highlight: 'checkmark',
+                                                              onclick: function() {$root.has_spouse_been_treated_6_months(false)}
+                                                              }">
+                                                            No
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr data-bind="if: did_select_spouse_coverage">
+                                    <td>
+                                        <div class="row">
+                                            <div class="col-xs-12 col-sm-6">
+                                                Has <span data-bind="$root.spouse().name"></span> been <a href="#modal-disabled-definition" data-toggle="modal">disabled</a> in the prior 6 months or received disability payments?
+                                            </div>
+                                            <div class="col-xs-12 col-sm-6">
+
+                                                <div class="person-answer-small row">
+                                                    <div class="col-xs-3 col-xs-offset-2" data-bind="text: $root.spouse().name()"></div>
+                                                    <div class="col-xs-7 btn-group">
+                                                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                              question: new NonHealthQuestion('spouse_disabled_6_months'),
+                                                              is_required: true,
+                                                              val: 'Yes',
+                                                              highlight: 'checkmark',
+                                                              onclick: function() {$root.has_spouse_been_disabled_6_months(true)}
+                                                              }">
+                                                            Yes
+                                                        </button>
+                                                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                              question: new NonHealthQuestion('spouse_disabled_6_months'),
+                                                              is_required: true,
+                                                              val: 'No',
+                                                              highlight: 'checkmark',
+                                                              onclick: function() {$root.has_spouse_been_disabled_6_months(false)}
+                                                              }">
+                                                            No
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                            <!--/ko-->
+                            <!--ko foreach: $root.health_questions-->
                             <tr data-bind="visible: does_any_applicant_need_to_answer">
                                 <td>
                                     <div class="row">
@@ -997,6 +1186,7 @@
                                     </div>
                                 </td>
                             </tr>
+                            <!--/ko-->
                         </tbody>
                     </table>
                 </div>
@@ -1990,6 +2180,52 @@
             </div>
         </div>
     </div>
+
+    <div id="modal-replacement-fpp" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="lighter block blue center">NOTICE OF REPLACEMENT OF LIFE INSURANCE OR ANNUITIES</h3>
+                </div>
+
+                <div class="modal-body">
+
+                    <p>You are contemplating the purchase of a life insurance policy or annuity contract. In some cases this purchase may involve discontinuing or changing
+an existing policy or contract. If so, a replacement is occurring. Financed purchases are also considered replacements.</p>
+
+                    <p>A replacement occurs when a new policy or contract is purchased and, in connection with the sale, you discontinue making premium payments on the existing policy or contract, or an existing policy or contract is surrendered, forfeited, assigned to the replacing insurer, or otherwise terminated or used in a financed purchase.</p>
+
+                    <p>A financed purchase occurs when the purchase of a new life insurance policy involves the use of funds obtained by the withdrawal or surrender of or by borrowing some or all of the policy values, including accumulated dividends, of an existing policy, to pay all or part of any premium or payment due on the new policy. A financed purchase is a replacement.</p>
+
+                    <p>You should carefully consider whether a replacement is in your best interests. You will pay acquisition costs and there may be surrender costs deducted from your policy or contract. You may be able to make changes to your existing policy or contract to meet your insurance needs at less cost. A financed purchase will reduce the value of your existing policy or contract and may reduce the amount paid upon the death of the insured.</p>
+
+                    <p>We want you to understand the effects of replacements before you make your purchase decision and ask that you answer the following questions.</p>
+
+                    <ol>
+                        <li>
+                            Are you considering discontinuing making premium payments, surrendering, forfeiting, assigning to the insurer, or otherwise terminating your existing policy or contract?
+                            <input type="radio" name="replacement_is_terminating" value="Y"> Y
+                            <input type="radio" name="replacement_is_terminating" value="N"> N
+
+                        </li>
+                        <li>
+                            Are you considering using funds from your existing policies or contracts to pay premiums due on the new policy or contract?
+                            <input type="radio" name="replacement_using_funds" value="Y"> Y
+                            <input type="radio" name="replacement_using_funds" value="N"> N
+
+                        </li>
+
+                    </ol>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 
     <!-- ------------------------------ Modal Disclaimer ------------------------------ -->

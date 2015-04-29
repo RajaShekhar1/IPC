@@ -94,8 +94,18 @@ function WizardUI(defaults) {
     
     self.company_name = ko.observable(defaults.company_name || "(Unknown Company)");
     
-    self.existing_insurance = "no";
-    self.replacing_insurance = "no";
+    self.existing_insurance = ko.observable(null);
+    self.replacing_insurance = ko.observable(null);
+
+    self.replacement_is_terminating = ko.observable(null);
+    self.replacement_using_funds = ko.observable(null);
+    self.replacement_reason = ko.observable("");
+
+    self.replacement_policies = ko.observableArray([new ReplacementPolicy()]);
+
+    self.add_replacement_policy = function() {
+        self.replacement_policies.push(new ReplacementPolicy());
+    };
 
     self.policy_owner = ko.observable("self");
     self.other_owner_name = ko.observable("");
@@ -836,6 +846,7 @@ function WizardUI(defaults) {
     self.is_employee_actively_at_work = ko.observable(null);
     self.has_spouse_been_treated_6_months = ko.observable(null);
     self.has_spouse_been_disabled_6_months = ko.observable(null);
+
 
     self.exit_application = function() {
         bootbox.dialog({
@@ -2551,57 +2562,77 @@ ko.bindingHandlers.flagBtn = {
 };
 
 function handle_existing_insurance_modal() {
-    $("#modal_text_existing_warning_title").show();
-    $("#modal_text_replacement_warning_title").hide();
-    $("#modal_text_soh_warning_title").hide();
+    if (ui.insurance_product.is_fpp_product()) {
 
-    $("#modal_text_existing_warning").show();
-    $("#modal_text_existing_warning_remote").hide();
-    $("#modal_text_replacement_warning").hide();
-    $("#modal_text_soh_warning").hide();
- 
-    $("#health_modal").modal('show');
-    $("#existing_warning_text").show();
-    
-    window.ui.existing_insurance = "yes";
+    } else {
+        $("#modal_text_existing_warning_title").show();
+        $("#modal_text_replacement_warning_title").hide();
+        $("#modal_text_soh_warning_title").hide();
 
+        $("#modal_text_existing_warning").show();
+        $("#modal_text_existing_warning_remote").hide();
+        $("#modal_text_replacement_warning").hide();
+        $("#modal_text_soh_warning").hide();
+
+        $("#health_modal").modal('show');
+        $("#existing_warning_text").show();
+
+    }
+
+    window.ui.existing_insurance(true);
 }
-function handle_existing_insurance_modal_remote() {
-    $("#modal_text_existing_warning_title").show();
-    $("#modal_text_replacement_warning_title").hide();
-    $("#modal_text_soh_warning_title").hide();
 
-    $("#modal_text_existing_warning").hide();
-    $("#modal_text_existing_warning_remote").show();
-    $("#modal_text_replacement_warning").hide();
-    $("#modal_text_soh_warning").hide();
- 
-    $("#health_modal").modal('show');
-    $("#existing_warning_text_remote").show();
+function handle_existing_insurance_modal_remote() {
+    if (ui.insurance_product.is_fpp_product()) {
+
+    } else {
+        $("#modal_text_existing_warning_title").show();
+        $("#modal_text_replacement_warning_title").hide();
+        $("#modal_text_soh_warning_title").hide();
+
+        $("#modal_text_existing_warning").hide();
+        $("#modal_text_existing_warning_remote").show();
+        $("#modal_text_replacement_warning").hide();
+        $("#modal_text_soh_warning").hide();
+
+        $("#health_modal").modal('show');
+        $("#existing_warning_text_remote").show();
+    }
+    window.ui.existing_insurance(true);
 } 
 
 function reset_existing_insurance_warning() {
-    window.ui.existing_insurance = "no";
+    window.ui.existing_insurance(false);
     $("#existing_warning_text_remote").hide();
     $("#existing_warning_text").hide();
 }
 
 function handle_replacement_insurance_modal() {
-    $("#modal_text_existing_warning_title").hide();
-    $("#modal_text_replacement_warning_title").show();
-    $("#modal_text_soh_warning_title").hide();
+    if (ui.insurance_product.is_fpp_product()) {
 
-    $("#modal_text_existing_warning").hide();
-    $("#modal_text_existing_warning_remote").hide();
-    $("#modal_text_replacement_warning").show();
-    $("#modal_text_soh_warning").hide();
- 
-    $("#health_modal").modal('show');
-    $("#replacement_warning_text").show();
+    } else {
+        $("#modal_text_existing_warning_title").hide();
+        $("#modal_text_replacement_warning_title").show();
+        $("#modal_text_soh_warning_title").hide();
+
+        $("#modal_text_existing_warning").hide();
+        $("#modal_text_existing_warning_remote").hide();
+        $("#modal_text_replacement_warning").show();
+        $("#modal_text_soh_warning").hide();
+
+        $("#health_modal").modal('show');
+        $("#replacement_warning_text").show();
+    }
+
+    window.ui.replacing_insurance(true);
+
 }
 function reset_replacement_insurance_warning() {
     $("#replacement_warning_text").hide();
+    window.ui.replacing_insurance(false);
 }
+
+
 function handle_question_yes() {
     $("#modal_text_existing_warning_title").hide();
     $("#modal_text_replacement_warning_title").hide();
@@ -2832,7 +2863,18 @@ function init_validation() {
             return is_valid;
         }
         if (info.step == 2 && info.direction == 'next') {
-            
+
+            // validate replacement form
+            if (ui.insurance_product.is_fpp_product() &&
+                    (ui.replacing_insurance() || ui.existing_insurance())) {
+                // Must answer all questions
+                ui.replacment_read_aloud() == null
+                ui.replacement_is_terminating() == null
+                ui.replacement_using_funds() == null
+                ui.replacement_policies().length == 0
+
+            }
+
             // validate questions
             var is_valid =  are_health_questions_valid();
             if (!is_valid) {
@@ -2928,8 +2970,8 @@ function init_validation() {
             employee: window.ui.employee().serialize_data(),
             spouse: window.ui.spouse().serialize_data(),
             
-            existing_insurance:  window.ui.existing_insurance,
-            replacing_insurance:  window.ui.replacing_insurance,
+            existing_insurance:  window.ui.existing_insurance(),
+            replacing_insurance:  window.ui.replacing_insurance(),
             is_employee_actively_at_work: ui.is_employee_actively_at_work(),
             has_spouse_been_treated_6_months: ui.has_spouse_been_treated_6_months(),
             has_spouse_been_disabled_6_months: ui.has_spouse_been_disabled_6_months(),
@@ -3341,3 +3383,13 @@ function wizard_error_placement(error, element) {
     //else error.insertAfter(element.parent());
 }
 
+
+// Simple container for replacement policy details
+function ReplacementPolicy() {
+    var self = this;
+
+    self.name = ko.observable('');
+    self.policy_number = ko.observable('');
+    self.insured = ko.observable('');
+    self.replaced_or_financing = ko.observable(null);
+}
