@@ -247,6 +247,8 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
                 dob = wizard_data["employee_beneficiary_dob"],
                 ssn = wizard_data["employee_beneficiary_ssn"],
             )
+
+        # TODO: Add in ee contingent beneficiary once the tab names are known
     
     if wizard_data["spouse_owner"] == "other":
         spouseOtherOwnerName = wizard_data["spouse_other_owner_name"]
@@ -272,7 +274,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
             {"tabLabel" : "spPremium",
              "value" : spPremium}
         ]
-        if wizard_data["spouse_beneficiary"] == "employee":
+        if wizard_data["spouse_beneficiary"] == "spouse":
             spouseTabsList += make_beneficiary_tabs(
                 prefix="sp",
                 name=wizard_data["employee"]["first"] + " " + wizard_data["employee"]["last"],
@@ -288,7 +290,9 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
                 dob=wizard_data["spouse_beneficiary_dob"],
                 ssn=wizard_data["spouse_beneficiary_ssn"],
             )
-    
+
+        # TODO: Add in spouse contingent beneficiary once the tab names are known
+
     generalRadiosList = []
     # Note: UI screens out any "yes" replacement - so all applications are "no" to replacement
     

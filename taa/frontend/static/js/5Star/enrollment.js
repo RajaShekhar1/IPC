@@ -105,19 +105,7 @@ function WizardUI(defaults) {
     self.spouse_other_owner_name = ko.observable("");
     self.spouse_other_owner_ssn = ko.observable("");
     
-    
-    self.employee_beneficiary = ko.observable("spouse");
-    self.spouse_beneficiary = ko.observable("employee");
-    self.employee_beneficiary_name = ko.observable("");
-    self.employee_beneficiary_relationship = ko.observable("");
-    self.employee_beneficiary_ssn = ko.observable("");
-    self.employee_beneficiary_dob = ko.observable("");
-    
-    self.spouse_beneficiary_name = ko.observable("");
-    self.spouse_beneficiary_relationship = ko.observable("");
-    self.spouse_beneficiary_ssn = ko.observable("");
-    self.spouse_beneficiary_dob = ko.observable("");
-    
+
     // Group the selected options for this product into a 'BenefitsPackage' which has 
     //  the individual choices for employee, spouse, and children 
     self.selected_plan = ko.observable(new NullBenefitsPackage(self));
@@ -184,7 +172,19 @@ function WizardUI(defaults) {
     self.show_spouse_name = ko.computed(function() {
         return (self.should_include_spouse_in_table()) ? self.spouse().name() : "";
     });
-    
+
+    // Beneficiaries
+    self.employee_beneficiary_type = ko.observable("spouse");
+    self.employee_other_beneficiary = ko.observable(new Beneficiary());
+    self.employee_contingent_beneficiary_type = ko.observable("none");
+    self.employee_contingent_beneficiary = ko.observable(new Beneficiary());
+
+    self.spouse_beneficiary_type = ko.observable("spouse");
+    self.spouse_other_beneficiary = ko.observable(new Beneficiary());
+    self.spouse_contingent_beneficiary_type = ko.observable("none");
+    self.spouse_contingent_beneficiary = ko.observable(new Beneficiary());
+
+
     // Children
     self.should_include_children = ko.observable(
         self.defaults.children_data.length > 0
@@ -528,6 +528,30 @@ function WizardUI(defaults) {
         return (rec.is_valid() && rec.recommended_benefit.is_valid());
     });
 
+
+
+    self.has_contingent_beneficiary_error = ko.computed(function() {
+        var employee_beneficiary_error = (
+            self.employee_contingent_beneficiary_type() === 'spouse' &&
+            self.employee_beneficiary_type() === 'spouse'
+        );
+        var spouse_beneficiary_error = (
+            self.did_select_spouse_coverage() &&
+            self.insurance_product.should_show_contingent_beneficiary() &&
+            self.spouse_contingent_beneficiary_type() === 'spouse' &&
+            self.spouse_beneficiary_type() === 'spouse'
+        );
+        return (
+            self.insurance_product.should_show_contingent_beneficiary()
+            && (
+                employee_beneficiary_error
+                || spouse_beneficiary_error
+                )
+        );
+    });
+
+
+
     self.show_health_modal = function() {
         $("#health_modal").modal('show');
     };
@@ -784,7 +808,8 @@ function WizardUI(defaults) {
         }));
         
     });
-    
+
+
     self.exit_application = function() {
         bootbox.dialog({
             message: "Are you sure you want to exit? All data on this application will be discarded.",
@@ -1017,6 +1042,11 @@ Product.prototype = {
 
     should_confirm_payroll_deduction: function() {
         // Payroll deduction agree checkbox on new FPP form.
+        return this.is_fpp_product();
+    },
+
+    should_show_contingent_beneficiary: function() {
+        // Just new FPP form for now
         return this.is_fpp_product();
     }
 
@@ -1714,6 +1744,33 @@ function HealthQuestionAnswer(question) {
             question: self.question.question_text,
             answer: answer
         }
+    };
+}
+
+// ViewModel for Beneficiaries
+function Beneficiary(options) {
+    var self = this;
+
+    var defaults = {
+        name: "",
+        relationship: "",
+        ssn: "",
+        date_of_birth: ""
+    };
+    options = $.merge({}, defaults, options);
+
+    self.name = ko.observable(options.name);
+    self.relationship = ko.observable(options.relationship);
+    self.ssn = ko.observable(options.ssn);
+    self.date_of_birth = ko.observable(options.date_of_birth);
+
+    self.serialize = function() {
+        return {
+            name: self.name(),
+            relationship: self.relationship(),
+            ssn: self.ssn(),
+            date_of_birth: self.date_of_birth()
+        };
     };
 }
 
@@ -2738,9 +2795,18 @@ function init_validation() {
             if (!$('#step4-form').valid()) return false;
         }
         if (info.step == 5 && info.direction == 'next') {
-	    var skip_for_now = false;
-	    if (skip_for_now) return true;
-	    if (!$('#step5-form').valid()) return false;
+	        var skip_for_now = false;
+	        if (skip_for_now) {
+                return true;
+            }
+	        if (!$('#step5-form').valid()) {
+                return false;
+            }
+
+            if (window.ui.has_contingent_beneficiary_error()) {
+                return false;
+            }
+
         }
         if (info.step == 6 && info.direction == 'next') {
             if (!$('#step6-form').valid()) return false;
@@ -2816,21 +2882,26 @@ function init_validation() {
             spouse_other_owner_name:  window.ui.spouse_other_owner_name(),
             spouse_other_owner_ssn:  window.ui.spouse_other_owner_ssn(),
         
-            employee_beneficiary:  window.ui.employee_beneficiary(),
-            spouse_beneficiary:  window.ui.spouse_beneficiary(),
-            employee_beneficiary_name:  window.ui.employee_beneficiary_name(),
-            employee_beneficiary_relationship:  window.ui.employee_beneficiary_relationship(),
-            employee_beneficiary_ssn:  window.ui.employee_beneficiary_ssn(),
-            employee_beneficiary_dob:  window.ui.employee_beneficiary_dob(),
+            employee_beneficiary:  window.ui.employee_beneficiary_type(),
+            spouse_beneficiary:  window.ui.spouse_beneficiary_type(),
+            employee_contingent_beneficiary_type: window.ui.employee_contingent_beneficiary_type(),
+            employee_contingent_beneficiary: window.ui.employee_contingent_beneficiary().serialize(),
+
+            employee_beneficiary_name:  window.ui.employee_other_beneficiary().name(),
+            employee_beneficiary_relationship:  window.ui.employee_other_beneficiary().relationship(),
+            employee_beneficiary_ssn:  window.ui.employee_other_beneficiary().ssn(),
+            employee_beneficiary_dob:  window.ui.employee_other_beneficiary().date_of_birth(),
             
-            spouse_beneficiary_name:  window.ui.spouse_beneficiary_name(),
-            spouse_beneficiary_relationship:  window.ui.spouse_beneficiary_relationship(),
-            spouse_beneficiary_ssn:  window.ui.spouse_beneficiary_ssn(),
-            spouse_beneficiary_dob:  window.ui.spouse_beneficiary_dob()
+            spouse_beneficiary_name:  window.ui.spouse_other_beneficiary().name(),
+            spouse_beneficiary_relationship:  window.ui.spouse_other_beneficiary().relationship(),
+            spouse_beneficiary_ssn:  window.ui.spouse_other_beneficiary().ssn(),
+            spouse_beneficiary_dob:  window.ui.spouse_other_beneficiary().date_of_birth(),
+            spouse_contingent_beneficiary_type: window.ui.spouse_contingent_beneficiary_type(),
+            spouse_contingent_beneficiary: window.ui.spouse_contingent_beneficiary().serialize()
         };
-    
+
         if (!window.ui.should_include_spouse_in_table()) {
-            wizard_results['employee_beneficiary'] = "other";
+            wizard_results['employee_beneficiary_type'] = "other";
         }
             
         // Children
@@ -3070,17 +3141,63 @@ function init_validation() {
                     }
                 }
             },
+
+            eeContBeneOtherName: {
+                required: {
+                    depends: function(element) {
+                        return (
+                            ui.insurance_product.should_show_contingent_beneficiary() &&
+                            window.ui.employee_contingent_beneficiary_type() === "other"
+                        )
+                    }
+                }
+            },
+            eeContBeneOtherRelation: {
+                required: {
+                    depends: function(element) {
+                        return (
+                            ui.insurance_product.should_show_contingent_beneficiary() &&
+                            window.ui.employee_contingent_beneficiary_type() === "other"
+                        )
+                    }
+                }
+            },
+
             spBeneOtherName: {
                 required: {
                     depends: function(element) {
                         return (window.ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
-                    }   
+                    }
                 }
             },
             spBeneOtherRelation: {
                 required: {
                     depends: function(element) {
                         return (window.ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
+                    }
+                }
+            },
+
+            spContBeneOtherName: {
+                required: {
+                    depends: function(element) {
+                        return (
+                            ui.insurance_product.should_show_contingent_beneficiary() &&
+                            ui.did_select_spouse_coverage() &&
+                            ui.spouse_contingent_beneficiary_type() === "other"
+                        );
+                    }
+                }
+            },
+
+            spContBeneOtherRelation: {
+                required: {
+                    depends: function(element) {
+                        return (
+                            ui.insurance_product.should_show_contingent_beneficiary() &&
+                            ui.did_select_spouse_coverage() &&
+                            ui.spouse_contingent_beneficiary_type() === "other"
+                        );
                     }
                 }
             }
@@ -3090,7 +3207,11 @@ function init_validation() {
             eeBeneOtherName: "required",
 	    eeBeneOtherRelation: "required",
             spBeneOtherName: "required",
-	    spBeneOtherRelation: "required"
+            eeContBeneOtherName: "required",
+            eeContBeneOtherRelation: "required",
+	    spBeneOtherRelation: "required",
+            spContBeneOtherName: "required",
+            spContBeneOtherRelation: "required"
 	},
         
         highlight: wizard_validate_highlight,
