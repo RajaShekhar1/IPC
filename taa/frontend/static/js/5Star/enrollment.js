@@ -809,6 +809,10 @@ function WizardUI(defaults) {
         
     });
 
+    // New FPP form questions
+    self.is_employee_actively_at_work = ko.observable(null);
+    self.has_spouse_been_treated_6_months = ko.observable(null);
+    self.has_spouse_been_disabled_6_months = ko.observable(null);
 
     self.exit_application = function() {
         bootbox.dialog({
@@ -1356,6 +1360,9 @@ function GIProductDecorator(product, product_data) {
 }
 
 
+
+// Step 2 Question Types
+
 var GlobalSOHQuestion = function(question_text) {
     var self = this;
     self.question_text = question_text;
@@ -1363,6 +1370,16 @@ var GlobalSOHQuestion = function(question_text) {
 GlobalSOHQuestion.prototype.get_question_text = function() {
     return this.question_text;
 };
+
+
+var NonHealthQuestion = function(question_text) {
+    var self = this;
+    self.question_text = question_text;
+};
+NonHealthQuestion.prototype.get_question_text = function() {
+    return this.question_text;
+};
+
 
 var StandardHealthQuestion = function(question, selected_plan) {
     // A viewmodel that keeps track of which applicants need to answer which health questions
@@ -2448,6 +2465,7 @@ ko.bindingHandlers.flagBtn = {
             var applicant_health_answer = _.find(applicant.health_questions(), function(soh_answer) {
                 return soh_answer.question.question_text == question_text;
             });
+
             btn_group = applicant_health_answer.button_group();
             if (!btn_group) {
                 btn_group = new QuestionButtonGroup(val.question, val.is_required);
@@ -2577,8 +2595,7 @@ function handle_question_yes() {
 function are_health_questions_valid() {
     // Will need much better code here in general
     //  should be able to highlight buttons that were missed or something
-    
-    var el;
+
     // this one can be yes or no
     if (ui.should_show_other_insurance_questions() && 
         ui.is_in_person_application() && 
@@ -2596,6 +2613,21 @@ function are_health_questions_valid() {
         //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
         return false;
     }
+
+    // fpp form
+    if (ui.insurance_product.is_fpp_product()) {
+        if (ui.is_employee_actively_at_work() === null) {
+            return false;
+        }
+        if (ui.did_select_spouse_coverage() && (
+                ui.has_spouse_been_treated_6_months() === null ||
+                ui.has_spouse_been_disabled_6_months() === null
+            )) {
+            return false;
+        }
+    }
+
+
     var valid = true;
     
     $.each(window.ui.selected_plan().get_all_covered_people(), function() {
@@ -2874,7 +2906,10 @@ function init_validation() {
             
             existing_insurance:  window.ui.existing_insurance,
             replacing_insurance:  window.ui.replacing_insurance,
-            
+            is_employee_actively_at_work: ui.is_employee_actively_at_work(),
+            has_spouse_been_treated_6_months: ui.has_spouse_been_treated_6_months(),
+            has_spouse_been_disabled_6_months: ui.has_spouse_been_disabled_6_months(),
+
             employee_owner:  window.ui.policy_owner(),
             employee_other_owner_name:  window.ui.other_owner_name(),
             employee_other_owner_ssn:  window.ui.other_owner_ssn(),

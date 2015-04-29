@@ -625,9 +625,9 @@
             </div>
             
             <br>
-            
+
             <div data-bind="visible: health_questions().length > 0 && do_any_health_questions_need_answering()">
-                <h3 class="lighter block green">Please answer each question below regarding your Statement of Health</h3>
+                <h3 class="lighter block green">Please answer each question below</h3>
 
                 <div class="hidden-xs hidden-sm" data-bind="with: selected_plan">
     
@@ -652,32 +652,163 @@
                         </div>
                     </div>
     
-                    <table class="table table-striped" data-bind="foreach: $root.health_questions">
+                    <table class="table table-striped">
+                        <tbody>
+                    <!--ko if: $root.insurance_product.is_fpp_product()-->
+
+                        <tr>
+                            <td>
+                                <div class="row">
+                                    <div class="col-xs-12 col-sm-6">
+                                        Is <span data-bind="text:$root.employee().name"></span> <a href="#actively_at_work_modal" data-toggle="modal">actively at work?</a>
+                                    </div>
+                                    <div class="col-xs-12 col-sm-6">
+
+                                        <div class="row">
+                                            <div class="col-sm-3 btn-group no-padding-right">
+
+                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                      question: new NonHealthQuestion('actively_at_work'),
+                                                      is_required: true,
+                                                      val: 'Yes',
+                                                      highlight: 'checkmark',
+                                                      onclick: function() {$root.is_employee_actively_at_work(true)}
+                                                      }">
+                                                    {# onclick: show_yes_dialogue_employee #}
+                                                    Yes
+                                                </button>
+                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                      question: new NonHealthQuestion('actively_at_work'),
+                                                      is_required: true,
+                                                      val: 'No',
+                                                      highlight: 'checkmark',
+                                                      onclick: function() {$root.is_employee_actively_at_work(false)}
+                                                      }">
+                                                    No
+                                                </button>
+                                            </div>
+                                            <div class="col-sm-3 btn-group no-padding-right" data-bind="if: did_select_spouse_coverage"></div>
+
+
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                            </td>
+
+
+                        </tr>
+
+                        <tr data-bind="if: did_select_spouse_coverage">
+                            <td>
+                                <div class="row">
+                                    <div class="col-xs-12 col-sm-6">
+                                        During the prior 6 months, other than for routine medical care, has your spouse been diagnosed or treated by a member of the medical profession in a hospital or any other medical facility?
+                                    </div>
+                                    <div class="col-xs-12 col-sm-6">
+
+                                        <div class="row">
+                                            <div class="col-sm-3 btn-group no-padding-right"></div>
+                                            <div class="col-sm-3 btn-group no-padding-right">
+
+                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                      question: new NonHealthQuestion('spouse_treated_6_months'),
+                                                      is_required: true,
+                                                      val: 'Yes',
+                                                      highlight: 'checkmark',
+                                                      onclick: function() {$root.has_spouse_been_treated_6_months(true)}
+                                                      }">
+                                                    Yes
+                                                </button>
+                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                      question: new NonHealthQuestion('spouse_treated_6_months'),
+                                                      is_required: true,
+                                                      val: 'No',
+                                                      highlight: 'checkmark',
+                                                      onclick: function() {$root.has_spouse_been_treated_6_months(false)}
+                                                      }">
+                                                    No
+                                                </button>
+                                            </div>
+                                            <!--ko foreach: {data: $parent.get_covered_children, as: 'child'} -->
+                                                <div class="col-sm-3 btn-group no-padding-right"></div>
+                                            <!--/ko-->
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                        </tr>
+                        <tr data-bind="visible: did_select_spouse_coverage()">
+
+                            <td>
+                                <div class="row">
+                                    <div class="col-xs-12 col-sm-6">
+                                        Has <span data-bind="$root.spouse().name"></span> been <a href="#modal-disabled-definition" data-toggle="modal">disabled</a> in the prior 6 months or received disability payments?
+                                    </div>
+                                    <div class="col-xs-12 col-sm-6">
+
+                                        <div class="row">
+
+                                            <div class="col-sm-3 btn-group no-padding-right"></div>
+                                            <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
+
+                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                      question: new NonHealthQuestion('spouse_disabled_6_months'),
+                                                      is_required: true,
+                                                      val: 'Yes',
+                                                      highlight: 'checkmark',
+                                                      onclick: function() {$root.has_spouse_been_disabled_6_months(true)}
+                                                      }">
+                                                    Yes
+                                                </button>
+                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                      question: new NonHealthQuestion('spouse_disabled_6_months'),
+                                                      is_required: true,
+                                                      val: 'No',
+                                                      highlight: 'checkmark',
+                                                      onclick: function() {$root.has_spouse_been_disabled_6_months(false)}
+                                                      }">
+                                                    No
+                                                </button>
+                                            </div>
+                                            <!--ko foreach: $root.get_covered_children-->
+                                                <div class="col-sm-3 btn-group no-padding-right"></div>
+                                            <!--/ko-->
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    <!--/ko-->
+
+                    <!--ko foreach: $root.health_questions-->
                         <tr data-bind="visible: does_any_applicant_need_to_answer">
                             <td>
                                 <div class="row">
                                     <div class="col-xs-12 col-sm-6" data-bind="html: get_question_text()">
                                     </div>
                                     <div class="col-xs-12 col-sm-6">
-    
+
                                         <div class="row">
                                             <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
                                                 <!--ko if: does_employee_need_to_answer-->
                                                 <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $data, 
+                                                      question: $data,
                                                       applicant: $root.employee(),
                                                       is_required: does_employee_need_to_answer,
-                                                      val: 'Yes', 
+                                                      val: 'Yes',
                                                       highlight: 'stop',
                                                       onclick: show_yes_dialogue_employee
                                                       }">
                                                     Yes
                                                 </button>
                                                 <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $data, 
+                                                      question: $data,
                                                       applicant: $root.employee(),
                                                       is_required: does_employee_need_to_answer,
-                                                      val: 'No', 
+                                                      val: 'No',
                                                       highlight: 'checkmark'
                                                       }">
                                                     No
@@ -687,20 +818,20 @@
                                             <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
                                                 <!--ko if: does_spouse_need_to_answer -->
                                                 <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $data, 
+                                                      question: $data,
                                                       applicant: $root.spouse(),
                                                       is_required: does_spouse_need_to_answer,
-                                                      val: 'Yes', 
+                                                      val: 'Yes',
                                                       highlight: 'stop',
                                                       onclick: show_yes_dialogue_spouse
                                                       }">
                                                     Yes
                                                 </button>
                                                 <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $data, 
+                                                      question: $data,
                                                       applicant: $root.spouse(),
                                                       is_required: does_spouse_need_to_answer,
-                                                      val: 'No', 
+                                                      val: 'No',
                                                       highlight: 'checkmark'
                                                       }">
                                                     No
@@ -711,20 +842,20 @@
                                             <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
                                                 <!--ko if: $parent.does_child_need_to_answer(child) -->
                                                 <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $parentContext.$data, 
+                                                      question: $parentContext.$data,
                                                       applicant: $data,
                                                       is_required: function() {return $parent.does_child_need_to_answer(child)},
-                                                      val: 'Yes', 
+                                                      val: 'Yes',
                                                       highlight: 'stop',
                                                       onclick: function() {$parent.show_yes_dialogue_child(child)}
                                                       }">
                                                     Yes
                                                 </button>
                                                 <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $parentContext.$data, 
+                                                      question: $parentContext.$data,
                                                       applicant: $data,
                                                       is_required: $parent.does_child_need_to_answer(child),
-                                                      val: 'No', 
+                                                      val: 'No',
                                                       highlight: 'checkmark'
                                                       }">
                                                     No
@@ -734,11 +865,13 @@
                                             <!--/ko-->
                                         </div>
                                     </div>
-                                            
-                                    
+
+
                                 </div>
                             </td>
                         </tr>
+                    <!--/ko-->
+                        </tbody>
                     </table>
                 </div>
                 
@@ -1798,8 +1931,46 @@
     </div>
     </div>
 
+
+    <div id="actively_at_work_modal" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="lighter block blue center">Actively at work</h3>
+                </div>
+
+                <div class="modal-body">
+                    "Actively at work" means that you are an eligible employee/member of the employee/affiliation through which you are applying for this individual insurance; you are able to work and to perform the normal activities of a person of like age and gender; and you are not confined in a hospital, at home or elsewhere due to injury or sickness on the date you signed this application.
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-disabled-definition" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="lighter block blue center">Disabled</h3>
+                </div>
+
+                <div class="modal-body">
+                    "Disabled" means that a person is unable to work, to attend school, or to perform the normal activities of a person of like age and gender or that a person is confined in a hospital, at home or elsewhere due to injury or sickness.
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <!-- ------------------------------ Modal Disclaimer ------------------------------ -->
-    
+
     <div id="modal-disclaimer" class="modal">
         <div class="modal-dialog">
             <div class="modal-content">
