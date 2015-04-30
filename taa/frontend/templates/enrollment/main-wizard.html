@@ -510,13 +510,6 @@
     </div>
     
     
-    <!-- 2014-05-06 ** Client doesn't think he wants this; removing temporarily
-        <div class="monthly_summary" data-bind="visible: selected_plan().get_total_monthly_premium() > 0">
-      <div class="well well-sm">
-          Your effective monthly total premium is <strong data-bind="text: formatted_monthly_premium"></strong>
-      </div>
-    </div>
-    -->
     <div id="benefit_required" class="error pull-right" data-bind="visible: is_selection_error_visible">
         You must select a benefit option before advancing.
     </div>
@@ -545,7 +538,7 @@
           <span class="label label-lg label-inverse arrowed-in arrowed-in-right">
             <span data-bind="text: formatted_total_weekly_premium()"></span>
             <small>
-                <span data-bind="text: $root.payment_mode_text">(NA)</span>
+                <span data-bind="text: $root.payment_mode_text_lower()">(NA)</span>
             </small>
           </span>
         </div>
@@ -1962,8 +1955,7 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                     <th class="center">Name</th>
                     <th class="center">Age</th>
                     <th class="center">Coverage</th>
-                    <th class="center">Weekly Premium</th>
-                    <th class="center">Effective Monthly</th>
+                    <th class="center"><span data-bind="text: $root.payment_mode_text"></span> Premium</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -1973,7 +1965,6 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                     <td data-bind="text:get_age"></td>
                     <td data-bind="html:display_selected_coverage"></td>
                     <td data-bind="text:display_weekly_premium"></td>
-                    <td data-bind="text:display_monthly_premium"></td>
 
                 </tr>
                 <!--/ko-->
@@ -1982,8 +1973,7 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                     <td></td>
                     <td></td>
                     <td><span class="text-primary bigger-110">Total</span></td>
-                    <td data-bind="text: formatted_total_weekly_premium()"></td>
-                    <td><span class="text-primary bigger-110" data-bind="text: formatted_monthly_premium()"></span></td>
+                    <td><span class="text-primary bigger-110" data-bind="text: formatted_total_weekly_premium()"></span></td>
                 </tr>
                 </tbody>
             </table>

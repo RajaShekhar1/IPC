@@ -307,7 +307,16 @@ function WizardUI(defaults) {
     } else {
         self.payment_mode_choices = ko.observable(defaults.payment_mode_choices);
     }
+
     self.payment_mode_text = ko.pureComputed(function() {
+        try {
+            return _.find(self.payment_mode_choices(), function(x) { return x.mode == self.payment_mode() }).name;
+        } catch(e) {
+            return '(NA)'
+        }
+    });
+
+    self.payment_mode_text_lower = ko.pureComputed(function() {
         try {
             return _.find(self.payment_mode_choices(), function(x) { return x.mode == self.payment_mode() }).name.toLowerCase();
         } catch(e) {
@@ -542,10 +551,6 @@ function WizardUI(defaults) {
         }
     };
     
-    
-    self.formatted_monthly_premium = ko.computed(function() {
-        return self.selected_plan().formatted_monthly_premium();
-    });
     
     self.lose_input_focus = function(data, event) {
         var element = $(event.target);
@@ -1984,12 +1989,7 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
     self.display_weekly_premium = ko.computed(function() {
         return self.selected_coverage().format_weekly_premium();
     });
-    self.display_monthly_premium = ko.computed(function() {
-        return format_premium_value(
-            get_monthly_premium_from_weekly(self.selected_coverage().weekly_premium)
-        );
-    });
-    
+
     self.get_existing_coverage_amount_for_product = function(product_id) {
         return parseFloat(self.get_existing_coverage_amount_by_product()[product_id]);
     };
@@ -2066,7 +2066,7 @@ function BenefitOption(options) {
     };
     
     self.format_weekly_premium_option = function() {
-        return self.format_weekly_premium() + " " + ui.payment_mode_text();
+        return self.format_weekly_premium() + " " + ui.payment_mode_text_lower();
     };
     self.format_face_value = function() {
         return format_face_value(self.face_value);
@@ -2233,22 +2233,6 @@ function BenefitsPackage(root, name) {
         }
     });
     
-    self.get_monthly_premium = function(weekly_premium) {
-        return get_monthly_premium_from_weekly(weekly_premium);
-    };
-    self.get_total_monthly_premium = ko.computed(function() {
-        var benefits = self.get_package_benefits();
-        var total = 0.0;
-        $.each(benefits, function() {
-            if (this.weekly_premium != null) {
-                total += self.get_monthly_premium(this.weekly_premium);    
-            } 
-        });
-        return total;
-    });
-    self.formatted_monthly_premium = ko.computed(function() {
-        return format_premium_value(self.get_total_monthly_premium());   
-    });
     self.is_valid = function() {return true};
     
     
@@ -2393,8 +2377,6 @@ function NullBenefitsPackage(root) {
     self.children_recommendation = ko.observable(new NullRecommendation());
     self.get_total_weekly_premium = function() { return null;};
     self.formatted_total_weekly_premium = function() { return "";};
-    self.get_total_monthly_premium = function(){return 0;};
-    self.formatted_monthly_premium = function() { return "";};
     self.is_valid = function () {return false};
     self.get_all_people = function() {return [];};
     self.get_all_covered_people = function() {return [];};
@@ -2710,10 +2692,6 @@ function are_health_questions_valid() {
     return valid;
 }
 
-
-function get_monthly_premium_from_weekly(weekly_premium) {
-    return Math.round((weekly_premium*100 * 52) / 12)/100.0;
-}
 
 function format_face_value(val) {
     if (val == null) {
