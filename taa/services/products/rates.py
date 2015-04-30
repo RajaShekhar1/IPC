@@ -117,16 +117,23 @@ class Rates(object):
         self._process_data(BytesIO(s), product_code, payment_mode, type_,
                            smoker)
 
+    @staticmethod
+    def _get_product_key(product_code, smoker=None):
+        if product_code == 'Group CI':
+            # Only Group CI has separate non-/smoker rate tables
+            return product_code, smoker
+        else:
+            return product_code
+
     def _process_data(self, data, product_code, payment_mode, type_, smoker):
         reader = csv.reader(data)
         header = map(intify, reader.next())
-        if smoker is not None:
-            product_code = (product_code, smoker)
-        self._init_dict(product_code, payment_mode, type_)
+        product_key = Rates._get_product_key(product_code, smoker)
+        self._init_dict(product_key, payment_mode, type_)
         for line in reader:
             for index, key in enumerate(
                     itertools.product([intify(line[0])], header[1:]), start=1):
-                self._rates[product_code][payment_mode][type_][key] = {
+                self._rates[product_key][payment_mode][type_][key] = {
                     TYPE_PREMIUM:
                         floatify(line[index]) if type_ == TYPE_COVERAGE
                         else key[1],
@@ -139,8 +146,7 @@ class Rates(object):
         if age is None:
             # Children rates/premiums are indexed with age as -1
             age = -1
-        product_key = (product_code, smoker) if product_code ==\
-                                                'Group CI' else product_code
+        product_key = Rates._get_product_key(product_code, smoker)
         for type_ in (TYPE_PREMIUM, TYPE_COVERAGE):
             if type_ not in result:
                 result[type_] = []
@@ -230,13 +236,13 @@ rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-bypremium-monthly.csv'),
 # Build rate table for children (currently hardcoded)
 # TODO: Verify actual non-weekly prices
 # Group CI
-rates.from_string("age,10000\n-1,0.75", 'FPPCI',
+rates.from_string("age,10000\n-1,0.75", 'Group CI',
                   MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-rates.from_string("age,10000\n-1,1.50", 'FPPCI',
+rates.from_string("age,10000\n-1,1.50", 'Group CI',
                   MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-rates.from_string("age,10000\n-1,1.63", 'FPPCI',
+rates.from_string("age,10000\n-1,1.63", 'Group CI',
                   MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-rates.from_string("age,10000\n-1,3.25", 'FPPCI',
+rates.from_string("age,10000\n-1,3.25", 'Group CI',
                   MODES_BY_NAME['monthly'], TYPE_COVERAGE)
 # FPPCI
 rates.from_string("age,10000,20000\n-1,1.15,2.30", 'FPPCI',
