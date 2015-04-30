@@ -154,8 +154,8 @@ class Rates(object):
                             and value[TYPE_COVERAGE] is not None):
                         result[type_].append(value)
         # Rename keys to fit existing API
-        result['weekly_byface'] = result.pop(TYPE_COVERAGE)
-        result['weekly_bypremium'] = result.pop(TYPE_PREMIUM)
+        result['byface'] = result.pop(TYPE_COVERAGE)
+        result['bypremium'] = result.pop(TYPE_PREMIUM)
         return result
 
 

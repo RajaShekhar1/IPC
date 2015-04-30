@@ -1045,24 +1045,24 @@ Product.prototype = {
         var self = this;
         var all_options = [new NullBenefitOption()];
         
-        if (rates.weekly_bypremium) {
-            var by_premium_options = $.map(rates.weekly_bypremium, function(rate) {
+        if (rates.bypremium) {
+            var by_premium_options = $.map(rates.bypremium, function(rate) {
                 return self.get_new_benefit_option({
                     is_by_face: false,
                     face_value: rate.coverage,
-                    weekly_premium: rate.premium
+                    premium: rate.premium
                 });
             });
             // Extends an array with another array
             $.merge(all_options, by_premium_options);
         }
         
-        if (rates.weekly_byface) {
-            var by_face_options = $.map(rates.weekly_byface, function(rate) {
+        if (rates.byface) {
+            var by_face_options = $.map(rates.byface, function(rate) {
                 return self.get_new_benefit_option({
                     is_by_face: true,
                     face_value: rate.coverage,
-                    weekly_premium: rate.premium
+                    premium: rate.premium
                 });
             });
             // Extends an array with another array
@@ -1239,7 +1239,7 @@ function GroupCIProduct(root, product_data) {
         return self.get_new_benefit_option({
             is_by_face: true,
             face_value: rate.coverage,
-            weekly_premium: rate.premium
+            premium: rate.premium
         });
     }
     
@@ -1274,7 +1274,7 @@ function GroupCIProduct(root, product_data) {
             // $5,000 to $100,000
             var valid_options = [new NullBenefitOption()];
             var rate_choices = [];
-            $.each(rates.weekly_byface, function() {
+            $.each(rates.byface, function() {
                 var rate = this;
                 if (rate.coverage % 5000 == 0) {
                     rate_choices.push(rate);
@@ -1283,13 +1283,13 @@ function GroupCIProduct(root, product_data) {
             $.merge(valid_options, $.map(rate_choices, convert_rate_to_benefit_option));
             self.all_coverage_options[applicant_type](valid_options); 
         }
-        if (applicant_type == "spouse" && rates.weekly_byface !== undefined) {
+        if (applicant_type == "spouse" && rates.byface !== undefined) {
             // $5,000 increments up to 50% of employee's current selection, 25k max
             // First, just get rates up to 25k or age limit
             //  the employee selection limit is handled in the computed function above
             var demographic_spouse_rates = [];
             var all_spouse_rates = [];
-            $.each(rates.weekly_byface, function() {
+            $.each(rates.byface, function() {
                 var rate = this;
                 if (rate.coverage % 5000 == 0 && rate.coverage <= 25000) {
                     demographic_spouse_rates.push(rate);
@@ -1312,9 +1312,9 @@ function GroupCIProduct(root, product_data) {
             $.merge(sp_options, $.map(demographic_spouse_rates, convert_rate_to_benefit_option));
             self.all_coverage_options.spouse(sp_options);
         }
-        if (applicant_type == "children" && rates.weekly_byface !== undefined) {
+        if (applicant_type == "children" && rates.byface !== undefined) {
             var ch_options = [new NullBenefitOption()];
-            $.merge(ch_options, $.map(rates.weekly_byface, convert_rate_to_benefit_option));
+            $.merge(ch_options, $.map(rates.byface, convert_rate_to_benefit_option));
             self.all_posible_children_options(ch_options);
             self.all_coverage_options.children(ch_options);
         }
@@ -1986,8 +1986,8 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
     self.display_selected_coverage = ko.computed(function() {
         return self.selected_coverage().format_face_value();
     });
-    self.display_weekly_premium = ko.computed(function() {
-        return self.selected_coverage().format_weekly_premium();
+    self.display_premium = ko.computed(function() {
+        return self.selected_coverage().format_premium();
     });
 
     self.get_existing_coverage_amount_for_product = function(product_id) {
@@ -2058,15 +2058,15 @@ function BenefitOption(options) {
     var self = this;
     
     self.is_by_face = options.is_by_face;
-    self.weekly_premium = options.weekly_premium;
+    self.premium = options.premium;
     self.face_value = options.face_value;
     
-    self.format_weekly_premium = function() {
-        return format_premium_value(self.weekly_premium);
+    self.format_premium = function() {
+        return format_premium_value(self.premium);
     };
     
-    self.format_weekly_premium_option = function() {
-        return self.format_weekly_premium() + " " + ui.payment_mode_text_lower();
+    self.format_premium_option = function() {
+        return self.format_premium() + " " + ui.payment_mode_text_lower();
     };
     self.format_face_value = function() {
         return format_face_value(self.face_value);
@@ -2078,7 +2078,7 @@ function BenefitOption(options) {
         if (self.is_by_face) {
             return self.format_face_option();
         } else {
-            return self.format_weekly_premium_option();
+            return self.format_premium_option();
         }
     };
     self.is_valid = function() {
@@ -2087,7 +2087,7 @@ function BenefitOption(options) {
     
     self.serialize_data = function() {
         return {
-            weekly_premium: self.weekly_premium,
+            premium: self.premium,
             face_value: self.face_value
         }
     }
@@ -2099,10 +2099,10 @@ BenefitOption.display_benefit_option = function(item) {
 function CIBenefitOption(wrapped_option) {
     var self = this;
     self.is_by_face = wrapped_option.is_by_face;
-    self.weekly_premium = wrapped_option.weekly_premium;
+    self.premium = wrapped_option.premium;
     self.face_value = wrapped_option.face_value;
-    self.format_weekly_premium = wrapped_option.format_weekly_premium;
-    self.format_weekly_premium_option = wrapped_option.format_weekly_premium_option;
+    self.format_premium = wrapped_option.format_premium;
+    self.format_premium_option = wrapped_option.format_premium_option;
     self.format_face_value = function() {
         var face_value_formatted = format_face_value(self.face_value);
         var ci_value = Math.round(self.face_value * .3);
@@ -2120,17 +2120,17 @@ function NullBenefitOption() {
     var self = this;
     
     self.is_by_face = true;
-    self.weekly_premium = 0;
+    self.premium = 0;
     self.face_value = 0;
     
     self.is_valid = function() {
         return false;
     };
     
-    self.format_weekly_premium_option = function() {
+    self.format_premium_option = function() {
         return "";
     };
-    self.format_weekly_premium = function() {
+    self.format_premium = function() {
         
     };
     
@@ -2212,22 +2212,22 @@ function BenefitsPackage(root, name) {
         return benefits;
     };
     
-    self.get_total_weekly_premium = ko.computed(function() {
+    self.get_total_premium = ko.computed(function() {
         var benefits = self.get_package_benefits();
         
-        // Sum the benefit weekly premiums
+        // Sum the benefit premiums
         var total = 0.0;
         $.each(benefits, function() {
-            if (this.weekly_premium != null) {
-                total += this.weekly_premium;
+            if (this.premium != null) {
+                total += this.premium;
             }
         });
         return total;
     });
     
-    self.formatted_total_weekly_premium = ko.computed(function() {
-        if (self.get_total_weekly_premium() > 0.0) {
-            return format_premium_value(self.get_total_weekly_premium());
+    self.formatted_total_premium = ko.computed(function() {
+        if (self.get_total_premium() > 0.0) {
+            return format_premium_value(self.get_total_premium());
         } else {
             return "";
         }
@@ -2375,8 +2375,8 @@ function NullBenefitsPackage(root) {
     self.employee_recommendation = ko.observable(new NullRecommendation());
     self.spouse_recommendation = ko.observable(new NullRecommendation());
     self.children_recommendation = ko.observable(new NullRecommendation());
-    self.get_total_weekly_premium = function() { return null;};
-    self.formatted_total_weekly_premium = function() { return "";};
+    self.get_total_premium = function() { return null; };
+    self.formatted_total_premium = function() { return ""; };
     self.is_valid = function () {return false};
     self.get_all_people = function() {return [];};
     self.get_all_covered_people = function() {return [];};
@@ -2401,8 +2401,8 @@ function Recommendation(recommended_benefit) {
         return true;
     };
     
-    self.format_weekly_premium_option = function() {
-        return self.recommended_benefit.format_weekly_premium_option()
+    self.format_premium_option = function() {
+        return self.recommended_benefit.format_premium_option()
     };
     self.format_face_value = function() {
         return self.recommended_benefit.format_face_value();
