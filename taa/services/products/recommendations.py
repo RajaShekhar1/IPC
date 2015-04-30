@@ -19,7 +19,7 @@ def get_recommendations(product, **demographics):
     # Compute key for recommendations lookup table
     if product_code == 'Group CI':
         key = (product_code,
-               'smoker' if demographics['is_smoker'] else 'nonsmoker')
+               'smoker' if demographics['employee_smoker'] else 'nonsmoker')
     elif product_code not in RECOMMENDATIONS:
         # TODO: should this be an error? use TI for now
         key = 'FPPTI'
