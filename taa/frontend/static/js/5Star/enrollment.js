@@ -2066,7 +2066,7 @@ function BenefitOption(options) {
     };
     
     self.format_weekly_premium_option = function() {
-        return self.format_weekly_premium() + " weekly";
+        return self.format_weekly_premium() + " " + ui.payment_mode_text();
     };
     self.format_face_value = function() {
         return format_face_value(self.face_value);
