@@ -59,9 +59,13 @@ def get_rates(product, **demographics):
 def is_eligible(product_code, sex, height, weight):
     if product_code in ELIGIBILITIES:
         table = ELIGIBILITIES[product_code][sex]
-        if height is None or weight is None or height not in table:
+        if height is None or weight is None:
             return False
-        return table[height][1] <= weight <= table[height][2]
+        height = int(height)
+        if height not in table:
+            return False
+        weight = int(weight)
+        return table[height][0] <= weight <= table[height][1]
     # Default to eligible if product has no lookup table
     return True
 
@@ -69,7 +73,8 @@ def is_eligible(product_code, sex, height, weight):
 def build_eligibility(csv_path):
     table = {}
     for line in csv.DictReader(open(csv_path, 'rU')):
-        table[int(line['Inches'])] = (line['Min Weight'], line['Max Weight'])
+        table[int(line['Inches'])] = (int(line['Min Weight']),
+                                      int(line['Max Weight']))
     return table
 
 
