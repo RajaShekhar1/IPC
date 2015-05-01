@@ -58,8 +58,8 @@ def get_rates_for(product_code, payment_mode, age, smoker=None, digits=2):
             result[type_] = None
 
     return {
-        'weekly_byface': result[TYPE_COVERAGE],
-        'weekly_bypremium': result[TYPE_PREMIUM]
+        'byface': result[TYPE_COVERAGE],
+        'bypremium': result[TYPE_PREMIUM]
     }
 
 
