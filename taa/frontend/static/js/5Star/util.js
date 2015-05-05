@@ -130,7 +130,11 @@ function submit_to_url(url, data) {
     
     form.method = "POST"; 
     form.action = url;
-    form.submit();
+
+    // Need to add to the DOM for firefox and ie
+    var wrapper = $("<div>");
+    wrapper.appendTo("body").hide();
+    $(form).appendTo(wrapper).submit();
 }
 
 
