@@ -530,8 +530,21 @@ class EnrollmentApplicationCoverageService(DBService):
     __model__ = EnrollmentApplicationCoverage
 
     def create_coverage(self, enrollment, product, data, applicant_data, applicant_coverage, applicant_type):
-        
-        
+        # Set proper premium
+        payment_mode = applicant_data.get('payment_mode')
+        weekly_premium = None
+        biweekly_premium = None
+        semimonthly_premium = None
+        monthly_premium = None
+        if payment_mode == 12:
+            weekly_premium = applicant_data['premium']
+        elif payment_mode == 12:
+            biweekly_premium = applicant_data['premium']
+        elif payment_mode == 12:
+            semimonthly_premium = applicant_data['premium']
+        elif payment_mode == 12:
+            monthly_premium = applicant_data['premium']
+
         return self.create(**dict(
             coverage_status=EnrollmentApplicationCoverage.COVERAGE_STATUS_ENROLLED,
             enrollment_application_id=enrollment.id,
@@ -541,7 +554,10 @@ class EnrollmentApplicationCoverageService(DBService):
             weight_pounds=applicant_data['weight'] if applicant_data['weight'] else None,
             is_smoker=applicant_data.get('is_smoker'),
             coverage_face_value=applicant_coverage['face_value'],
-            weekly_premium=applicant_coverage['weekly_premium'],
+            weekly_premium=weekly_premium,
+            biweekly_premium=biweekly_premium,
+            semimonthly_premium=semimonthly_premium,
+            monthly_premium=monthly_premium,
             soh_answers=json.dumps(dict(
                 existing_insurance=data['existing_insurance'],
                 replacing_insurance=data['replacing_insurance'],

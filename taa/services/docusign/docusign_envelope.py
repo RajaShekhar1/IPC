@@ -94,7 +94,7 @@ def generate_ChildTabsEntry (child_index, wizard_data):
          "value" : format(child_coverage["face_value"], ",.0f") if child_coverage else "" },
         {"tabLabel" : childStr + "Premium",
          "value" : 
-             format(child_coverage["weekly_premium"]*52/12, ",.2f") if child_coverage else ""
+             format(child_coverage["premium"]*52/12, ",.2f") if child_coverage else ""
         
         },
     ]
@@ -167,7 +167,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
     if wizard_data["employee_coverage"]:
         if wizard_data["employee_coverage"]["face_value"]:
             employeeCoverage = format(wizard_data["employee_coverage"]["face_value"], ",.0f")
-            eePremium = format(round((wizard_data["employee_coverage"]["weekly_premium"]*100 * 52) / 12)/100.0, ",.2f")
+            eePremium = format(round((wizard_data["employee_coverage"]["premium"]*100 * 52) / 12)/100.0, ",.2f")
             SOH_RadiosList += generate_SOHRadios("ee", wizard_data["employee"]["soh_questions"])
             SOH_GI_Tabs += generate_SOH_GI_tabs("ee", wizard_data["employee"]["soh_questions"])
         else:
@@ -181,7 +181,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
     if wizard_data["spouse_coverage"]:
         if wizard_data["spouse_coverage"]["face_value"]:
             spouseCoverage = format(wizard_data["spouse_coverage"]["face_value"], ",.0f")
-            spPremium = format(round((wizard_data["spouse_coverage"]["weekly_premium"]*100 * 52) / 12)/100.0, ",.2f")
+            spPremium = format(round((wizard_data["spouse_coverage"]["premium"]*100 * 52) / 12)/100.0, ",.2f")
             SOH_RadiosList += generate_SOHRadios("sp", wizard_data["spouse"]['soh_questions'])
             SOH_GI_Tabs += generate_SOH_GI_tabs("sp", wizard_data["spouse"]["soh_questions"])
         else:
