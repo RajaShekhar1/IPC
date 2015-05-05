@@ -70,7 +70,13 @@ Deploying to Heroku
     
 If you have not done so, follow the guide below to set up the git remotes for the deployment Heroku apps.
 
-To deploy the Staging branch to the taa-staging app, run the following from your directory:
+Before pushing to Heroku, you must pre-compile / minify the static assets (javascript and css) by running the following:
+
+    python manage-taa.py assets build
+
+Add the generated files to the repository, commit and push. This is necessary for any heroku environment that has ASSETS_DEBUG as false, because any files generated dynamically by heroku are "transient" and will be deleted by the heroku build system.
+
+Now, To deploy the Staging branch to the taa-staging app, run the following from your directory:
 
     git push staging Staging:master
     heroku run alembic upgrade head --remote=staging
