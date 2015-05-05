@@ -95,7 +95,7 @@ class EnrollmentApplicationService(DBService):
             emp_beneficiary_relation = data['employee_beneficiary_relationship']
             emp_beneficiary_dob = data['employee_beneficiary_dob']
             
-        if data['spouse_beneficiary'] == 'employee':
+        if data['spouse_beneficiary'] == 'spouse':
             sp_beneficiary_name = "{} {}".format(data["employee"]["first"], data["employee"]["last"])
             sp_beneficiary_ssn = self._strip_ssn(data["employee"]['ssn'])
             sp_beneficiary_relation = 'spouse'
@@ -142,7 +142,7 @@ class EnrollmentApplicationService(DBService):
             employee_beneficiary_birthdate = emp_beneficiary_dob,
             
             # spouse beneficiary
-            is_spouse_beneficiary_employee = data['spouse_beneficiary'] == 'employee',
+            is_spouse_beneficiary_employee = data['spouse_beneficiary'] == 'spouse',
             spouse_beneficiary_name = sp_beneficiary_name,
             spouse_beneficiary_ssn = sp_beneficiary_ssn,
             spouse_beneficiary_relationship = sp_beneficiary_relation,
