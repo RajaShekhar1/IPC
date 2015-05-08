@@ -178,6 +178,23 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="self-enrollment-section col-md-5 col-md-offset-1 col-xs-12">
+                                                    <h3 class="header lighter blue">Self-enrollment
+                                                    <span class="pull-right text-muted">
+                                                        <label>
+                                                            {{ case_setup_form.active(class_="ace ace-switch ace-switch-6", **{'data-bind': 'checked: is_active'})|safe }}
+                                                            <span class="lbl padding-16"  data-bind="text: switch_label">Case is Active</span>
+                                                        </label>
+                                                    </span>
+                                                    </h3>
+                                                    <div>
+                                                        <div class="panel form-group">
+                                                            <div class="panel-body"
+                                                                 data-bind="slideDownIf: is_annual_enrollment()">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div class="row">
                                                 {% if is_admin %}
