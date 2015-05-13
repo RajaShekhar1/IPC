@@ -25,9 +25,13 @@ payment_modes = map(lambda x: dict(mode=x[0], name=x[1], immutable=x[2]), [
     ])
 
 
-def get_payment_modes(changeable=False):
-    return filter(lambda x: x['immutable'] or x['immutable'] == changeable,
-                  payment_modes)
+def get_payment_modes(changeable=False, single=None):
+    result = filter(lambda x: x['immutable'] or x['immutable'] == changeable,
+                    payment_modes)
+    if single is None:
+        return result
+    else:
+        return filter(lambda x: x['mode'] == single, result)
 
 
 def is_payment_mode_changeable(payment_mode):
