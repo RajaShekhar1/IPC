@@ -7,7 +7,7 @@ from taa.services.products import (
 )
 
 
-useDemoAccount = False 
+useDemoAccount = True
 
 #Docusign credential info
 #authEmail = "docrequest@5starima.com"  #don't need if we use the api username
@@ -16,7 +16,7 @@ apiPassword = "wQtqOMu0AjSE6sGUXoqgK5Iq/Zw=" if useDemoAccount else "edJSzv7Rqc2
 apiAccountID = "599b0608-269f-4598-a1c9-da3b67281cb7" if useDemoAccount else "8271282c-7a4e-4e00-a2e9-878924c316d5"
 dsServer = "demo.docusign.net" if useDemoAccount else "na2.docusign.net"
 
-integratorKey = "STAR-0baef057-d5b4-46bd-831f-e8e66f271aa7";
+integratorKey = "STAR-0baef057-d5b4-46bd-831f-e8e66f271aa7"
 
 baseUrl = "https://" + dsServer + "/restapi/v2/accounts/" + apiAccountID
 
@@ -46,7 +46,7 @@ def dsAPIAuthenticateString():
         "<Username>" + apiUserName + "</Username>" \
         "<Password>" + apiPassword + "</Password>" \
         "<IntegratorKey>" + integratorKey + "</IntegratorKey>" \
-        "</DocuSignCredentials>";
+        "</DocuSignCredentials>"
 
 
 def sessionUserApprovedForDocusign():
