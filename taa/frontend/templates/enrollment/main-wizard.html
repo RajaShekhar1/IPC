@@ -262,6 +262,12 @@
                 
                         <input type="text"  style="width: 45%" class="child_last" data-bind="value: last"
                                placeholder="Last Name"/>
+
+                        <div class="pull-right">
+                            <button class="btn btn-xs btn-danger" data-bind="click: $root.remove_child">
+                                <i class="icon icon-minus"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -644,14 +650,26 @@
 
             <div data-bind="slideDownIf: existing_insurance() || replacing_insurance()">
                 <div class="modal-header">
-                    <small data-bind="visible: is_in_person_application">I want this notice read aloud to me
-                        <label>
-                            <input type="radio" name="replacement_read_aloud" value="Y" data-bind='checked: replacement_read_aloud, checkedValue: true'> Y
-                        </label>
-                        <label>
-                            <input type="radio" name="replacement_read_aloud" value="N" data-bind='checked: replacement_read_aloud, checkedValue: false'> N
-                        </label>
-                    </small>
+                    <div class="form-group row">
+                        <div class="col-xs-12 col-sm-9">
+                            <small data-bind="visible: is_in_person_application">I want this notice read aloud to me
+                                &nbsp;&nbsp;
+                                <label class="blue">
+                                    <input name="replacement_read_aloud" value="Y" type="radio" class="inline ace"
+                                           data-bind="checked: replacement_read_aloud, checkedValue: true"/>
+                                    <span class="lbl"> Y &nbsp; </span>
+                                </label>
+
+                                <label class="blue">
+                                    <input name="replacement_read_aloud" value="N" type="radio" class="inline ace"
+                                           data-bind="checked: replacement_read_aloud, checkedValue: false"/>
+                                    <span class="lbl"> N</span>
+                                </label>
+                            </small>
+
+                        </div>
+
+                    </div>
                     <h3 class="lighter block blue center">NOTICE OF REPLACEMENT OF LIFE INSURANCE OR ANNUITIES</h3>
                 </div>
 
@@ -668,60 +686,77 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
 
                     <p>We want you to understand the effects of replacements before you make your purchase decision and ask that you answer the following questions.</p>
 
-                    <ol>
-                        <li>
-                            Are you considering discontinuing making premium payments, surrendering, forfeiting, assigning to the insurer, or otherwise terminating your existing policy or contract?
-                            <input type="radio" name="replacement_is_terminating" value="Y" data-bind='checked: replacement_is_terminating, checkedValue: true'> Y
-                            <input type="radio" name="replacement_is_terminating" value="N" data-bind='checked: replacement_is_terminating, checkedValue: false'> N
-
-                        </li>
-                        <li>
-                            Are you considering using funds from your existing policies or contracts to pay premiums due on the new policy or contract?
-                            <input type="radio" name="replacement_using_funds" value="Y" data-bind='checked: replacement_using_funds, checkedValue: true'> Y
-                            <input type="radio" name="replacement_using_funds" value="N" data-bind='checked: replacement_using_funds, checkedValue: false'> N
-
-                        </li>
-
-                    </ol>
-
-                    <div data-bind="slideDownIf: replacement_using_funds() || replacement_is_terminating()">
-                        <strong> Please list each existing policy or contract you are contemplating replacing (include the name of the insurer, the insured, and the contract number if available) and whether each policy will be replaced or used as a source of financing:</strong>
-                        <!--ko foreach: replacement_policies-->
-                        <div class="row form-group">
-                            <div class="col-sm-6 col-md-3">
-                                <label>Insurer Name</label><br>
-                                <input type="text" data-bind="value: name">
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-11 col-sm-offset-1">
+                            <div class="row">
+                                <div class="form-group col-xs-12">
+                                    1. Are you considering discontinuing making premium payments, surrendering, forfeiting, assigning to the insurer, or otherwise terminating your existing policy or contract?
+                                    <input type="radio" class="replacement-question inline ace" name="replacement_is_terminating" value="Y" data-bind='checked: replacement_is_terminating, checkedValue: true'> <span class="lbl"> Y</span>
+                                    <input type="radio" class="replacement-question inline ace" name="replacement_is_terminating" value="N" data-bind='checked: replacement_is_terminating, checkedValue: false'> <span class="lbl"> N</span>
+                                </div>
                             </div>
-                            <div class="col-sm-6 col-md-3">
-                                <label>Contract or Policy #</label><br>
-                                <input type="text" data-bind="value: policy_number">
+                            <div class="row">
+                                <div class="form-group col-xs-12">
+                                    2. Are you considering using funds from your existing policies or contracts to pay premiums due on the new policy or contract?
+                                    <input type="radio" class="replacement-question inline ace" name="replacement_using_funds" value="Y" data-bind='checked: replacement_using_funds, checkedValue: true'> <span class="lbl"> Y</span>
+                                    <input type="radio" class="replacement-question inline ace" name="replacement_using_funds" value="N" data-bind='checked: replacement_using_funds, checkedValue: false'> <span class="lbl"> N</span>
+                                </div>
                             </div>
-                            <div class="col-sm-6 col-md-3">
-                                <label>Insured</label><br>
-                                <input type="text" data-bind="value: insured">
-                            </div>
-                            <div class="col-sm-6 col-md-3">
+
+                            <div data-bind="slideDownIf: should_show_replacement_details_form">
+                                <strong> Please list each existing policy or contract you are contemplating replacing (include the name of the insurer, the insured, and the contract number if available) and whether each policy will be replaced or used as a source of financing:</strong>
+                                <!--ko foreach: replacement_policies-->
+                                <div class="row">
+                                    <div class="col-sm-6 col-md-3 form-group">
+                                        <label>Insurer Name</label><br>
+                                        <input type="text" class="replacement-details-input" data-bind="value: name, attr: {name: 'policy-name-'+$index()}">
+                                    </div>
+                                    <div class="col-sm-6 col-md-3 form-group">
+                                        <label>Contract or Policy #</label><br>
+                                        <input type="text" class="replacement-details-input" data-bind="value: policy_number, attr: {name: 'policy-number-'+$index()}">
+                                    </div>
+                                    <div class="col-sm-6 col-md-3 form-group">
+                                        <label>Insured</label><br>
+                                        <input type="text" class="replacement-details-input" data-bind="value: insured, attr: {name: 'insured-'+$index()}">
+                                    </div>
+                                    <div class="col-sm-6 col-md-3 form-group">
+                                        <br>
+                                        <label>
+                                            <input type="radio" value="replaced" class="replacement-details-input inline ace"
+                                                   data-bind="checked: replaced_or_financing, checkedValue: 'replaced', attr: {name: 'replaced_or_financing-'+$index()}"> <span class="lbl">Replaced</span>
+                                        </label>
+
+                                        <label>
+                                            <input type="radio" name="replaced_or_financing" value="financing" class="replacement-details-input inline ace"
+                                                   data-bind="checked: replaced_or_financing, checkedValue: 'financing', attr: {name: 'replaced_or_financing-'+$index()}"> <span class="lbl">Financing</span>
+                                        </label>
+
+                                        <div class="pull-right" data-bind="if: $root.replacement_policies().length > 1" >
+                                            <button class="btn btn-xs btn-danger" data-bind="click: $root.remove_replacement_policy">
+                                                <i class="icon icon-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <!--/ko-->
+                                <button class="btn btn-success btn-sm" data-bind="click: add_replacement_policy">Add Another Policy</button>
                                 <br>
-                                <label>
-                                    <input type="radio" value="replaced" data-bind="checked: replaced_or_financing"> Replaced
-                                </label>
+                                <br>
+                                <p>Make sure you know the facts. Contact your existing company or its agent for information about the old policy or contract. (If you request one, an in force illustration, policy summary or available disclosure documents must be sent to you by the existing insurer). Ask for and retain all sales material used by the agent in the sales presentation. Be sure that you are making an informed decision.</p>
+                                <p>The existing policy or contract is being replaced because:
+                                    <input type="text" class="col-xs-12" data-bind="value: replacement_reason">
+                                </p>
 
-                                <label>
-                                    <input type="radio" value="financing" data-bind="checked: replaced_or_financing"> Financing
-                                </label>
                             </div>
+
+
 
                         </div>
-                        <!--/ko-->
-                        <button class="btn btn-success btn-sm" data-bind="click: add_replacement_policy">Add Another Policy</button>
-                        <br>
-                        <br>
-                        <p>Make sure you know the facts. Contact your existing company or its agent for information about the old policy or contract. (If you request one, an in force illustration, policy summary or available disclosure documents must be sent to you by the existing insurer). Ask for and retain all sales material used by the agent in the sales presentation. Be sure that you are making an informed decision.</p>
-                        <p>The existing policy or contract is being replaced because:
-                            <input type="text" class="col-xs-12" data-bind="value: replacement_reason">
-                        </p>
-
                     </div>
+
+
+
 
 
                 </div>
