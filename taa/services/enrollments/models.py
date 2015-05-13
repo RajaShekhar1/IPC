@@ -110,26 +110,24 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer, db.
     weekly_premium = db.Column(db.Numeric)
     biweekly_premium = db.Column(db.Numeric)
     monthly_premium = db.Column(db.Numeric)
+    semimonthly_premium = db.Column(db.Numeric)
     annual_premium = db.Column(db.Numeric)
     
     # SOH Question answers stored as a JSON array of 
     #  objects {question:"", answer:""}
     soh_answers = db.Column(db.UnicodeText)
-    
 
     def get_annualized_premium(self):
-        if self.annual_premium:
+        if self.annual_premium is not None:
             return self.annual_premium
-            
-        elif self.monthly_premium:
+        elif self.monthly_premium is not None:
             return self.monthly_premium * 12
-            
-        elif self.biweekly_premium:
+        elif self.semimonthly_premium is not None:
+            return self.monthly_premium * 24
+        elif self.biweekly_premium is not None:
             return self.biweekly_premium * 26
-            
-        elif self.weekly_premium:
+        elif self.weekly_premium is not None:
             return self.weekly_premium * 52
-            
         else:
             return 0.0
 
