@@ -102,10 +102,18 @@ function WizardUI(defaults) {
     self.replacement_using_funds = ko.observable(null);
     self.replacement_reason = ko.observable("");
 
+    self.should_show_replacement_details_form = ko.pureComputed(function() {
+        return self.replacement_using_funds() || self.replacement_is_terminating();
+    });
+
     self.replacement_policies = ko.observableArray([new ReplacementPolicy()]);
 
     self.add_replacement_policy = function() {
         self.replacement_policies.push(new ReplacementPolicy());
+    };
+
+    self.remove_replacement_policy = function(policy) {
+        self.replacement_policies.remove(policy);
     };
 
     self.is_replacement_form_required = ko.computed(function() {
@@ -256,14 +264,21 @@ function WizardUI(defaults) {
     self.add_child = function() {
         var child_insured_applicant = new InsuredApplicant(InsuredApplicant.ChildType, {last: self.employee().last() || ""}, self.selected_plan, self.health_questions);
         self.children.push(child_insured_applicant);
-	// hide Add button if now at max children
-	if (self.children().length > 3) {
-	    $("#addChildBtn").hide();
-	}
-        // Re-apply jquery date masks
-        $('.input-mask-date').mask('99/99/9999')
+
+        // Re-apply date mask to children
+        $('.input-mask-date').mask('99/99/9999');
     };
-    self.rendered_child = function(element) {
+
+    self.remove_child = function(child) {
+        self.children.remove(child);
+
+        // Uncheck include children if last child
+        if (self.children().length == 0) {
+            self.should_include_children(false);
+        }
+    };
+
+	self.rendered_child = function(element) {
         $(element).hide().slideDown(400);
     };
     self.removing_child = function(element) {
@@ -2642,18 +2657,35 @@ function are_health_questions_valid() {
 
     // this one can be yes or no
     if (ui.should_show_other_insurance_questions() && 
-        ui.is_in_person_application() && 
+        ui.is_in_person_application() &&
         general_questions_by_id['existing_insurance'].get_val() === null) {
         //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
         return false;
     }
-    if (ui.should_show_other_insurance_questions() && 
-        !ui.is_in_person_application() && general_questions_by_id['existing_insurance_remote'].get_val() != "No") {
+    if (ui.should_show_other_insurance_questions()
+        && !ui.is_in_person_application()
+        && ((!ui.insurance_product.is_fpp_product()
+            && general_questions_by_id['existing_insurance_remote'].get_val() != "No"
+           ) ||
+            // FPP products can answer yes or no now
+           (
+            ui.insurance_product.is_fpp_product()
+            && general_questions_by_id['existing_insurance_remote'].get_val() === null
+           ))
+        ) {
         //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
         return false;
     }
-    if (ui.should_show_other_insurance_questions() && 
-        general_questions_by_id['replace_insurance'].get_val() != "No") {
+    if (ui.should_show_other_insurance_questions()
+        && (
+            !ui.insurance_product.is_fpp_product()
+            && general_questions_by_id['replace_insurance'].get_val() != "No"
+            ) ||
+            (
+             ui.insurance_product.is_fpp_product()
+             && general_questions_by_id['replace_insurance'].get_val() === null
+            )
+        ) {
         //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
         return false;
     }
@@ -2778,9 +2810,9 @@ function init_validation() {
     
     $('[data-rel=tooltip]').tooltip();
 
-    var validation_debug = false;
+    var validation_debug = true;
     $('#fuelux-wizard').ace_wizard().on('change', function (e, info) {
-        if (validation_debug) {
+        if (validation_debug && info.step != 2) {
             return true;
         }
         
@@ -2802,7 +2834,7 @@ function init_validation() {
                 
                 window.ui.show_no_selection_error();
                 return false;
-            } 
+            }
             
             var current_product_id = ui.insurance_product.product_data.id;
             var plan = ui.selected_plan();
@@ -3115,7 +3147,7 @@ function init_validation() {
         return this.optional(element) || /^\(\d{3}\) \d{3}\-\d{4}( x\d{1,6})?$/.test(value);
     }, "Enter a valid phone number.");
 
-    $('#questions-form').validate({
+    var step_2_validator = $('#questions-form').validate({
         errorElement: 'div',
         errorClass: 'help-block',
         focusInvalid: false,
@@ -3142,6 +3174,26 @@ function init_validation() {
                 }
             }
 
+        },
+
+
+        highlight: wizard_validate_highlight,
+        success: wizard_validate_success,
+        errorPlacement: wizard_error_placement
+    });
+
+    $.validator.addClassRules("replacement-question", {
+        required: {
+            depends: function() {
+                return ui.is_replacement_form_required();
+            }
+        }
+    });
+    $.validator.addClassRules("replacement-details-input", {
+        required: {
+            depends: function() {
+                return ui.should_show_replacement_details_form();
+            }
         }
     });
 
