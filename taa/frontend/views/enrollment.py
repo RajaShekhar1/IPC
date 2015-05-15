@@ -87,7 +87,7 @@ def in_person_enrollment():
             payment_mode_choices = get_payment_modes(True)
         else:
             # Payment mode is set on case and cannot be changed
-            payment_mode_choices = None
+            payment_mode_choices = get_payment_modes(single=payment_mode)
     else:
         # Ad-hoc enrollment
         data = request.form
@@ -139,7 +139,7 @@ def in_person_enrollment():
         'payment_mode_choices': payment_mode_choices,
         'payment_mode': payment_mode,
     }
-    
+
     # Commit any changes made (none right now)
     db.session.commit()
     
