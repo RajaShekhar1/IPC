@@ -1,10 +1,17 @@
 import json
 import requests
 from urlparse import urljoin
+import base64
+import StringIO
+from collections import defaultdict
+
+from reportlab.pdfgen.canvas import Canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
 
 from taa import app
-
-
 
 #
 #  - Create an envelope for signing
@@ -24,57 +31,16 @@ from taa import app
 def create_envelope(email_subject, components, docusign_transport):
 
     data = {
-        "accountID" : docusign_transport.docusign_credentials.api_account_id,
+        "accountID" : docusign_transport.api_account_id,
         "status" : "sent",
         "emailSubject": email_subject,
-        "compositeTemplates": [component.attach_to_envelope() for component in components],
+        "compositeTemplates": [
+            component.generate_composite_template() for component in components],
     }
 
-    result = docusign_transport.post("/envelopes", data)
+    result = docusign_transport.post("envelopes", data)
 
     return DocusignEnvelope(result['uri'])
-
-def get_docusign_credentials():
-    'docusign_integrator_key'
-
-    return DocuSignCredentials(
-        app.config['DOCUSIGN_INTEGRATOR_KEY'],
-        app.config['DOCUSIGN_API_ACCOUNT_ID'],
-        app.config['DOCUSIGN_API_USERNAME'],
-        app.config['DOCUSIGN_API_PASSWORD'],
-        app.config['DOCUSIGN_API_ENDPOINT'],
-    )
-
-
-class DocuSignTransport(object):
-    def __init__(self, docusign_credentials):
-        self.docusign_credentials = docusign_credentials
-
-    def make_request(self, url, data):
-        req = requests.post(
-            urljoin(self.docusign_credentials.api_endpoint, url),
-            data=json.dumps(data),
-            headers=self._make_headers()
-        )
-        return req.json()
-
-    def _make_headers(self):
-        return {
-            'X-DocuSign-Authentication': "<DocuSignCredentials>" \
-                "<Username>" + self.docusign_credentials.docusign_api_username + "</Username>" \
-                "<Password>" + self.docusign_credentials.docusign_api_password + "</Password>" \
-                "<IntegratorKey>" + self.docusign_credentials.docusign_integrator_key + "</IntegratorKey>" \
-                "</DocuSignCredentials>",
-            'Accept': 'application/json',
-        }
-
-class DocuSignCredentials(object):
-    def __init__(self, integrator_key, api_account_id, api_username, api_password, api_endpoint):
-        self.integrator_key = integrator_key
-        self.api_account_id = api_account_id
-        self.api_username = api_username
-        self.api_password = api_password
-        self.api_endpoint = api_endpoint
 
 class DocusignEnvelope(object):
     def __init__(self, uri):
@@ -88,17 +54,72 @@ class DocusignEnvelope(object):
             clientUserId="123456",
             userName=recipient.name,
         )
-        view_url = docusign_transport.docusign_credentials.api_endpoint + self.uri + "/views/recipient"
+        base_url = docusign_transport.api_endpoint
+        if base_url.endswith('/'):
+            base_url = base_url[:-1]
+        view_url = base_url + self.uri + "/views/recipient"
         result = docusign_transport.post(view_url, data=data)
 
-        return result['uri']
+        return result['url']
+
+def get_docusign_transport():
+    return DocuSignTransport(
+        app.config['DOCUSIGN_INTEGRATOR_KEY'],
+        app.config['DOCUSIGN_API_ACCOUNT_ID'],
+        app.config['DOCUSIGN_API_USERNAME'],
+        app.config['DOCUSIGN_API_PASSWORD'],
+        app.config['DOCUSIGN_API_ENDPOINT'],
+    )
+
+class DocuSignTransport(object):
+    def __init__(self, integrator_key, api_account_id, api_username, api_password, api_endpoint):
+
+        self.integrator_key = integrator_key
+        self.api_account_id = api_account_id
+        self.api_username = api_username
+        self.api_password = api_password
+        self.api_endpoint = api_endpoint
+
+    def post(self, url, data):
+        full_url = urljoin(self.api_endpoint, url)
+
+        req = requests.post(
+            full_url,
+            data=json.dumps(data),
+            headers=self._make_headers()
+        )
+
+        if req.status_code < 200 or req.status_code >= 300:
+            # Print error to Heroku error logs.
+            print("""
+DOCUSIGN ERROR at URL: %s
+posted data: %s
+status is: %s
+response:
+%s""" % (full_url, data, req.status_code, req.text))
+
+            raise Exception("Bad DocuSign Request")
+
+        return req.json()
+
+    def _make_headers(self):
+        return {
+            'X-DocuSign-Authentication': "<DocuSignCredentials>" \
+                "<Username>" + self.api_username + "</Username>" \
+                "<Password>" + self.api_password + "</Password>" \
+                "<IntegratorKey>" + self.integrator_key + "</IntegratorKey>" \
+                "</DocuSignCredentials>",
+            'Accept': 'application/json',
+        }
+
 
 # Envelope Recipient
 class DocuSignRecipient(object):
-    def __init__(self, name, email, cc_only=False):
+    def __init__(self, name, email, cc_only=False, role_name=None):
         self.name = name
         self.email = email
         self.cc_only = cc_only
+        self.role_name = role_name
 
     def is_carbon_copy(self):
         return self.cc_only
@@ -109,8 +130,26 @@ class DocuSignRecipient(object):
     def is_employee(self):
         return False
 
+    def get_role_name(self):
+        if self.is_agent():
+            return "Agent"
+        elif self.is_employee():
+            return "Employee"
+        else:
+            return self.role_name if self.role_name else "None"
+
+    def is_required(self):
+        """
+        This corresponds to the TemplateRequired parameter on the API, not entirely sure if this
+        needs to be specified anymore.
+        """
+        return False
+
 class EmployeeDocuSignRecipient(DocuSignRecipient):
     def is_employee(self):
+        return True
+
+    def is_required(self):
         return True
 
 class AgentDocuSignRecipient(DocuSignRecipient):
@@ -177,28 +216,61 @@ class DocuSignSigTab(DocuSignTab):
         ))
 
 
-# Envelope Components
-
+# Envelope Components - basically, some sort of document or template
+#
+# Base class
 class DocuSignEnvelopeComponent(object):
     def __init__(self, recipients):
+        """
+        The order of the recipients dictates the DocuSign routing order for now.
+        """
         self.recipients = recipients
 
-    def get_agent(self):
-        return [r for r in recipients if r.is_agent()]
-
-    def get_employee(self):
-        return [r for r in recipients if r.is_employee()]
-
-    def attach_to_envelope(self, envelope):
+    def generate_composite_template(self):
+        """
+        DocuSign uses 'composite templates' to represent more complex combinations of
+        server-side templates, custom tabs, and attached documents (inline templates).
+        """
         raise NotImplementedError("Override")
 
-# Server-side template representation
+    def generate_recipients(self):
+
+        output = defaultdict(list)
+
+        for num, recipient in enumerate(self.recipients):
+            recip_repr = dict(
+                name=recipient.name,
+                email=recipient.email,
+                recipientId=str(num),
+                routingOrder=str(num),
+                roleName=recipient.get_role_name(),
+                templateRequired=recipient.is_required(),
+                tabs=self.generate_tabs(recipient),
+            )
+            if recipient.is_employee():
+                recip_repr['clientUserId'] = "123456"
+
+            if self.is_recipient_signer(recipient):
+                output["signers"].append(recip_repr)
+            else:
+                output['carbonCopies'].append(recip_repr)
+
+        return dict(**output)
+
+    def generate_tabs(self, recipient):
+        raise NotImplementedError("Override")
+
+    def is_recipient_signer(self, recipient):
+        raise NotImplementedError("Override")
+
+# Server-side template base class.
 class DocuSignServerTemplate(DocuSignEnvelopeComponent):
     def __init__(self, template_id, recipients):
         DocuSignEnvelopeComponent.__init__(self, recipients)
         self.template_id = template_id
 
-    def attach_to_envelope(self, envelope):
+    def generate_composite_template(self):
+
         return {
             "serverTemplates":[
                 {
@@ -209,19 +281,19 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
             "inlineTemplates":[
                 {
                     "sequence": "2",
-                    "recipients": envelope.generate_recipients(),
+                    "recipients": self.generate_recipients(),
                 }
             ]
         }
 
+    def generate_tabs(self, recipient):
+        return {}
+
+    def is_recipient_signer(self, recipient):
+        return recipient.is_employee() or recipient.is_agent()
 
 # Custom PDF documents
-import base64
-import StringIO
 
-from reportlab.pdfgen.canvas import Canvas
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.units import inch
 
 
 class BasePDFDoc(DocuSignEnvelopeComponent):
@@ -230,56 +302,76 @@ class BasePDFDoc(DocuSignEnvelopeComponent):
 
         self.page_width, self.page_height = letter
         self._pdf_data = StringIO.StringIO()
-        self._canvas = Canvas(self._pdf_data, pagesize=letter)
+        #self._canvas = Canvas(self._pdf_data, pagesize=letter)
+        self._doc = SimpleDocTemplate(self._pdf_data, pagesize=letter)
+
+        # Use this to record the last page before generating document.
+        self._num_pages = None
 
     def get_pdf_bytes(self):
         """
         Generates the PDF and encodes the bytes using base64 encoding.
         """
-        self._canvas.save()
+
+        # Capture number of pages before saving
+        self._num_pages = self._doc.page
+
+
         return base64.standard_b64encode(self._pdf_data.getvalue())
 
     def generate(self):
         raise NotImplementedError("Override this method to do custom drawing")
 
-    def get_tabs(self):
-        raise NotImplementedError("Override this method to place custom signing or tabs")
+    def generate_composite_template(self):
 
+        # Generate the PDF
+        self.generate()
 
-class ChildAttachmentForm(BasePDFDoc):
-    def __init__(self, recipients):
-        BasePDFDoc.__init__(self, recipients)
+        # Output DocuSign representation
+        return dict(
+            document=dict(
+                name=self.__class__.__name__,
+                sequence="1",
+                documentId="1",
+                pages=str(self.get_num_pages()),
+                fileExtension="pdf",
+                documentBase64=self.get_pdf_bytes(),
+            ),
+            inlineTemplates=[dict(
+                sequence="1",
+                recipients=self.generate_recipients(),
+            )],
+        )
 
-        self.children = []
+    def get_num_pages(self):
+        if self._num_pages:
+            return self._num_pages
+        else:
+            # Assume we are still drawing and need the current number of pages.
+            return self._doc.page
 
-    def add_child(self, child_first, child_last, child_ssn, child_dob, child_soh_answers):
-        self.children.append((child_first, child_last, child_ssn, child_dob, child_soh_answers))
-
-    def generate(self):
-        y = 0
-        for child_first, child_last, child_ssn, child_dob, child_soh_answers in self.children:
-            self._canvas.drawString(inch, self.page_height - y, "%s %s %s %s"%(child_first, child_last, child_ssn, child_dob))
-            y += inch
 
 
 if __name__ == "__main__":
     # Test drive the code
 
+    from documents.extra_children import ChildAttachmentForm
+
     agent = AgentDocuSignRecipient(name="Test Agent", email="agent@zachmason.com")
     employee = EmployeeDocuSignRecipient(name="Zach Mason", email="zach@zachmason.com")
-    recipients = [
+    test_recipients = [
         agent,
         employee,
     ]
-    
-    child_attachment_form = ChildAttachmentForm(recipients)
+
+    child_attachment_form = ChildAttachmentForm(test_recipients)
     child_attachment_form.add_child("Joe", "Johnson", child_dob="12/01/2010", child_ssn='123-12-1234', child_soh_answers=[])
     child_attachment_form.add_child("Susie", "Johnson", child_dob="12/01/2012", child_ssn='123-12-3234', child_soh_answers=[])
     child_attachment_form.add_child("Christy", "Johnson", child_dob="12/01/2014", child_ssn='223-12-3234', child_soh_answers=[])
 
-    general_template = DocuSignServerTemplate('666F1F5B-77C6-47CC-AC85-1784B8569C3D', recipients)
+    general_template = DocuSignServerTemplate('666F1F5B-77C6-47CC-AC85-1784B8569C3D', test_recipients)
 
-    transport = DocuSignTransport(get_docusign_credentials())
+    transport = get_docusign_transport()
     envelope_result = create_envelope(email_subject="testing: signature needed",
                                       components=[general_template, child_attachment_form],
                                       docusign_transport=transport,

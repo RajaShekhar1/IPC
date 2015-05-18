@@ -488,7 +488,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
     
     # print ("response: %s\ncontent: %s" % (response, content))
 
-    if (status != '201'): 
+    if (status != '201'):
         print "url=",url
         print "headers=",headers
         print requestBodyStr

@@ -44,7 +44,8 @@ DOCUSIGN_INTEGRATOR_KEY = env_get_text('DOCUSIGN_INTEGRATOR_KEY', 'DELM-0d0ee159
 DOCUSIGN_API_ACCOUNT_ID = env_get_text('DOCUSIGN_API_ACCOUNT_ID', '5988eb5b-bee1-4825-a078-dcac445a22ce')
 DOCUSIGN_API_USERNAME = env_get_text('DOCUSIGN_API_USERNAME', 'cb64545b-0bb7-4e77-bb0c-492b02c3dd5b')
 DOCUSIGN_API_PASSWORD = env_get_text('DOCUSIGN_API_PASSWORD', '12121212')
-DOCUSIGN_API_ENDPOINT = env_get_text('DOCUSIGN_API_ENDPOINT', "https://demo.docusign.net/restapi/v2/accounts/%s"%DOCUSIGN_API_ACCOUNT_ID)
+# Trailing slash required
+DOCUSIGN_API_ENDPOINT = env_get_text('DOCUSIGN_API_ENDPOINT', "https://demo.docusign.net/restapi/v2/accounts/%s/"%DOCUSIGN_API_ACCOUNT_ID)
 
 # Email
 EMAIL_SMTP_SERVER = "smtp.mandrillapp.com"
