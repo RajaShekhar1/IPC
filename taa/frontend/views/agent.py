@@ -26,7 +26,7 @@ agent_service = AgentService()
 product_service = ProductService()
 
 
-@app.route("/inbox", methods=['GET'])
+@app.route('/inbox', methods=['GET'])
 @login_required
 def inbox():
     if sessionUserApprovedForDocusign():
@@ -36,11 +36,11 @@ def inbox():
     else:
         flash("You are not yet authorized for signing applications. "
               "Please see your Regional Director for assistance.")
-        return redirect(url_for("home"))
+        return redirect(url_for('home'))
 
 
-@app.route("/manage-cases")
-@groups_required(["agents", "home_office", "admins"], all=False)
+@app.route('/manage-cases')
+@groups_required(['agents', 'home_office', 'admins'], all=False)
 @login_required
 def manage_cases():
     agent = agent_service.get_logged_in_agent()
@@ -61,8 +61,8 @@ def manage_cases():
     return render_template('agent/manage_cases.html', **vars)
 
 
-@app.route("/manage-case/<case_id>")
-@groups_required(["agents", "home_office", "admins"], all=False)
+@app.route('/manage-case/<case_id>')
+@groups_required(['agents', 'home_office', 'admins'], all=False)
 def manage_case(case_id):
     case = case_service.get_if_allowed(case_id)
     vars = {'case': case}
@@ -108,8 +108,8 @@ def manage_case(case_id):
     return render_template('agent/case.html', **vars)
 
 
-@app.route("/manage-case/<case_id>/census/<census_record_id>")
-@groups_required(["agents", "home_office", "admins"], all=False)
+@app.route('/manage-case/<case_id>/census/<census_record_id>')
+@groups_required(['agents', 'home_office', 'admins'], all=False)
 def edit_census_record(case_id, census_record_id):
     case = case_service.get_if_allowed(case_id)
     census_record = case_service.get_census_record(case, census_record_id)
@@ -139,9 +139,9 @@ def edit_census_record(case_id, census_record_id):
     return render_template('agent/census_record.html', **vars)
 
 
-@app.route("/sample-census-upload.csv")
+@app.route('/sample-census-upload.csv')
 def sample_upload_csv():
     sample_path = os.path.join(app.root_path, 'frontend', 'static', 'misc',
                                'sample_census_upload.csv')
     return send_file(sample_path, as_attachment=True,
-                     attachment_filename="sample_census_upload.csv")
+                     attachment_filename='sample_census_upload.csv')
