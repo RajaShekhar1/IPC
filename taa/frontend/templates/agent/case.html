@@ -6,14 +6,14 @@
 
 {% block content %}
     <flash-messages params="messages: flash_messages"></flash-messages>
-    
-    <div class="row main-container" 
+
+    <div class="row main-container"
         {# Prevent flash of unstyled content #}
         style="display: none;" data-bind="visible: true">
-    
+
         <h3 class="header header-light blue" data-bind="text: company_name"></h3>
-        
-        
+
+
         <div class="col-xs-12">
             <div class="tabbable">
                 <ul class="nav nav-tabs" id="case-nav-tabs">
@@ -23,7 +23,7 @@
                             Case Setup
                         </a>
                     </li>
-                    
+
                     <li>
                         <a href="#reports">
                             <i class="blue ace-icon fa fa-bar-chart-o bigger-120"></i>
@@ -31,45 +31,45 @@
                         </a>
                     </li>
                 </ul>
-    
+
                 <div class="tab-content">
                     <div id="setup" class="tab-pane fade in active">
                         <div class="row">
-                             
+
                             <div class="col-md-12 case-setup-section">
-                                   
-                                
+
+
                                 <form class="form-horizontal case_setup" data-bind="submit: save_settings">
-                                        
+
                                 <div class="widget-box">
                                     <div class="widget-header">
                                         <div class="row">
                                             <h3 class="col-xs-6">Main Settings</h3>
-                                            
+
                                             <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
                                                 <label style="margin-right: 15px;">
                                                     {{ case_setup_form.active(class_="ace ace-switch ace-switch-6", **{'data-bind': 'checked: is_active'})|safe }}
-                                                    <span class="lbl padding-16"  data-bind="text: switch_label">Case is Active</span>    
+                                                    <span class="lbl padding-16"  data-bind="text: switch_label">Case is Active</span>
                                                 </label>
                                             </h3>
                                         </div>
                                     </div>
                                     <div class="widget-body">
-                                        <div class="widget-main">  
+                                        <div class="widget-main">
                                             <div class="row">
                                                 <div class="col-md-5 col-xs-12">
                                                     <h3 class="header lighter blue">Settings</h3>
-                                                    
+
                                                         <div class="form-group">
                                                             <label class="col-md-3 control-label" for="company_name">Company Name</label>
                                                             <div class="col-md-8">
                                                                 {{ case_setup_form.company_name(**{
                                                                 'data-bind': "textInput: company_name, uniqueNameValidation: {remoteMethod: check_unique_name, uniqueObservable: company_name}",
                                                                 'minlength':'1',
-                                                                }) 
+                                                                })
                                                                     }}
-                                                                
-                                                                <div class="row"> 
+
+                                                                <div class="row">
                                                                     <div class="col-md-12">
                                                                         <div class="error" data-bind="visible: company_name.has_been_checked, text: get_form_error"></div>
                                                                     </div>
@@ -80,7 +80,7 @@
                                                                 <div class="ace-icon fa fa-check green bigger-125" data-bind="visible: company_name.is_unique() && !company_name.is_checking()"></div>
                                                             </div>
                                                         </div>
-                                                        
+
                                                     <div class="form-group">
                                                         <label class="col-md-3 control-label" for="groupNumber">Group Number: </label>
                                                         <div class="col-md-9">
@@ -90,7 +90,7 @@
 
                                                     {# Restore multi-product selection when multi-product enrollment is working
                                                     {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsValue: "id", optionsText: "name", selectedOptions: products, multiSelect: {
-                                                        observed: products, 
+                                                        observed: products,
                                                         options: {nonSelectedText: "No Products Selected", numberDisplayed: 3}
                                                     }'}) }}
                                                     #}
@@ -100,7 +100,7 @@
                                                             <limited-product-select params="limiter: state_product_limiter"></limited-product-select>
                                                         </div>
                                                     </div>
-                                                     
+
                                                     {{ render_field_with_errors(case_setup_form.situs_city, **{'data-bind':'value: situs_city'}) }}
                                                     {# {{ render_field_with_errors(case_setup_form.situs_state, id="case_state", **{'data-bind':'value: situs_state'}) }}
                                                      #}
@@ -121,27 +121,27 @@
                                                 </div>
                                                 <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
                                                     <h3 class="header lighter blue">Enrollment Periods</h3>
-                                                    
+
                                                     <div>
                                                         <div class="panel form-group">
                                                             <div class="panel-heading">
                                                                 <label>
-                                                                    <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="open"> 
+                                                                    <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="open">
                                                                     <span class="lbl padding-8">Enrollment Period with End Date</span>
                                                                 </label>
                                                             </div>
-                                                            <div class="panel-body" 
+                                                            <div class="panel-body"
                                                                 data-bind="slideDownIf: is_open_enrollment">
                                                                 <div class="row">
                                                                     <div class="col-md-6">
                                                                         <label>
-                                                                            Start Date: 
+                                                                            Start Date:
                                                                             <input data-bind="value: get_open_enrollment_period().start_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
                                                                         </label>
                                                                     </div>
                                                                     <div class="col-md-6">
                                                                         <label>
-                                                                            End Date: 
+                                                                            End Date:
                                                                             <input data-bind="value: get_open_enrollment_period().end_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_end_date">
                                                                         </label>
                                                                     </div>
@@ -151,7 +151,7 @@
                                                         <div class="panel form-group">
                                                             <div class="panel-heading">
                                                                 <label>
-                                                                    <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="annual"> 
+                                                                    <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="annual">
                                                                     <span class="lbl padding-8">Annual Periods</span>
                                                                 </label>
                                                             </div>
@@ -182,8 +182,8 @@
                                                     <h3 class="header lighter blue">Self-enrollment
                                                     <span class="pull-right text-muted">
                                                         <label>
-                                                            {{ case_setup_form.active(class_="ace ace-switch ace-switch-6", **{'data-bind': 'checked: is_active'})|safe }}
-                                                            <span class="lbl padding-16"  data-bind="text: switch_label">Case is Active</span>
+                                                            {{ case_setup_form.is_self_enrollment(class_="ace ace-switch btn-empty", **{'data-bind': 'checked: is_self_enrollment'})|safe }}
+                                                            <span class="lbl"></span>
                                                         </label>
                                                     </span>
                                                     </h3>
@@ -206,7 +206,7 @@
                                                                     <select id="owner_agent" name="agent_id" data-bind="value: owner_agent_id">
                                                                         <option value="">(No Owner)</option>
                                                                         {% for agent in active_agents %}
-                                                                            <option value="{{ agent.id }}" 
+                                                                            <option value="{{ agent.id }}"
                                                                                 {%-if agent.id == case.agent_id -%}
                                                                                 selected="selected"
                                                                                 {%- endif -%}
@@ -217,9 +217,9 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    
-                                                {% endif %} 
-                                            
+
+                                                {% endif %}
+
                                                 {% if not case_has_enrollments %}
                                                     <div class="col-sm-offset-1 col-sm-3">
                                                         <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="click: delete_case">
@@ -229,15 +229,15 @@
                                                 {% endif %}
                                                 {% if case_has_enrollments and not is_admin %}
                                                     <div class="col-sm-offset-1 col-sm-3">
-                                                    <div class="tooltip-wrapper tooltip-error" 
+                                                    <div class="tooltip-wrapper tooltip-error"
                                                                 data-rel="tooltip" style="display: inline-block;"
                                                                 title="Cannot delete a case with posted enrollments. Instead mark the case as ‘inactive’">
-                                                        <button type="button" disabled="disabled" 
+                                                        <button type="button" disabled="disabled"
                                                                 class="btn btn-danger btn-xs pull-left tooltip-error">
                                                             Delete Case
                                                         </button>
                                                     </div>
-                                                        
+
                                                     </div>
                                                 {% endif %}
                                                 {% if case_has_enrollments and is_admin %}
@@ -247,7 +247,7 @@
                                                     ">Delete Case</button>
                                                     </div>
                                                 {% endif %}
-                                                
+
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-12">
@@ -255,12 +255,12 @@
                                                     <div class="row">
                                                         <div class="col-sm-10 col-md-offset-1">
                                                         {% if is_admin %}
-                                                            <select data-bind="selectedOptions: partner_agents" 
-                                                                    multiple="multiple" class="form-control" 
-                                                                    id="partner-agents" 
+                                                            <select data-bind="selectedOptions: partner_agents"
+                                                                    multiple="multiple" class="form-control"
+                                                                    id="partner-agents"
                                                                     size="10" style="min-height: 8em;">
                                                                 {% for agent in active_agents %}
-                                                                    <option value="{{ agent.id }}" 
+                                                                    <option value="{{ agent.id }}"
                                                                         {%-if agent in case.partner_agents -%}
                                                                         selected="selected"
                                                                         {%- endif -%}
@@ -296,7 +296,7 @@
                                             </div>
                                         </div>
                                         <div class="widget-toolbox clearfix padding-8">
-                                            
+
                                             <button class="btn btn-primary btn-md pull-right" data-bind="
                                             {# enable: has_unsaved_data,  #}
                                             click: save_settings,
@@ -305,11 +305,11 @@
                                         </div>
                                     </div>
                                 </div>
-                                    
-                                </form> 
+
+                                </form>
                                 <br>
                                 <br>
-                                
+
                                 <div class="row" {# Prevent flash of unstyled content #}
                                     style="display: none;" data-bind="visible: true"
                                     >
@@ -319,7 +319,7 @@
                                                 <div class="row">
                                                     <div class="col-md-6"><h4 class="bigger-150">Case Census</h4></div>
                                                     <div class="col-md-6">
-                                                        
+
                                                         <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal" >
                                                             <i class="ace-icon fa fa-upload"></i>
                                                                 Upload Census
@@ -332,8 +332,8 @@
                                                 </div>
                                             </div>
                                             <div class="widget-body">
-                                                <div class="widget-main">  
-                                                    
+                                                <div class="widget-main">
+
                                                     {% if not census_records %}
                                                         <h4 class="no-census-header text-center lighter">No Census Data Uploaded</h4>
                                                         <div class="table-responsive">
@@ -353,8 +353,8 @@
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                {# 
-                                                                Don't load this on the page anymore, 
+                                                                {#
+                                                                Don't load this on the page anymore,
                                                                 we load from the server at run time for page speed
                                                                 #}
                                                             </tbody>
@@ -365,22 +365,22 @@
                                             </div>
                                         </div>
                                     </div>
-                                            
+
                                 </div>
-                                
+
                             </div>
                         </div>
                     </div>
-    
+
                     <div id="reports" class="tab-pane fade">
                         <div class="row">
                             <div class="col-xs-12">
-                                
+
                                 {# Report #}
                                 <div class="widget-box">
                                     <div class="widget-header">
                                         <div class="row">
-                                            <h3 class="col-xs-10">Report 
+                                            <h3 class="col-xs-10">Report
                                             </h3>
                                             <h3 class="col-xs-2 text-center">
                                                 <small>
@@ -390,7 +390,7 @@
                                         </div>
                                     </div>
                                     <div class="widget-body">
-                                        <div class="widget-main">  
+                                        <div class="widget-main">
                                             <div class="row">
                                                 <div class="col-xs-12">
                                                     <case-report params="settings_viewmodel: $root"></case-report>
@@ -399,7 +399,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 {# Enrollments #}
                                 <div class="row" {# Prevent flash of unstyled content #}
                                     style="display: none;" data-bind="visible: true"
@@ -410,7 +410,7 @@
                                                 <div class="row">
                                                     <div class="col-xs-6"><h4 class="bigger-150">Enrollment Records</h4></div>
                                                     <div class="col-xs-6">
-                                                        
+
                                                         <a href="{{ url_for('cases.enrollment_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
                                                             <i class="ace-icon glyphicon glyphicon-download-alt"></i>
                                                                 Download Enrollments
@@ -419,10 +419,10 @@
                                                 </div>
                                             </div>
                                             <div class="widget-body">
-                                                <div class="widget-main">  
+                                                <div class="widget-main">
                                                         <div style="width: 100%; padding-left: -10px;">
                                                             <div class="table-responsive">
-                                                                <table id="enrollment-records-table" 
+                                                                <table id="enrollment-records-table"
                                                                        class="table table-bordered table-hover no-wrap dt-responsive">
                                                                     <thead>
                                                                         <tr>
@@ -436,8 +436,8 @@
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
-                                                                        {# 
-                                                                        Don't load this on the page anymore, 
+                                                                        {#
+                                                                        Don't load this on the page anymore,
                                                                         we load from the server at run time for page speed
                                                                         #}
                                                                     </tbody>
@@ -449,7 +449,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                            
+
                                 </div>
                             </div>
                         </div>
@@ -457,11 +457,11 @@
                 </div>
             </div>
         </div>
-        
-        
+
+
     </div>
-    
-    
+
+
     <div data-bind="modal: is_permanent_delete_modal_showing" class="modal fade">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -475,9 +475,9 @@
                         <div class="row">
                             <div class="col-xs-12">
                                 <p>
-                                This case has enrollments that have been processed. 
-                                Deleting the case will permanently remove all associated enrollment and census records; 
-                                they will not be retrievable.  Are you sure you want to permanently remove all enrollment 
+                                This case has enrollments that have been processed.
+                                Deleting the case will permanently remove all associated enrollment and census records;
+                                they will not be retrievable.  Are you sure you want to permanently remove all enrollment
                                 and census records?
                                 </p>
                                 <br>
@@ -489,32 +489,32 @@
                         </div>
                     </div>
                 </div>
-                    
+
                 <div class="modal-footer">
                     <div class="form-buttons buttons-panel">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                        <button class="btn btn-danger" 
+                        <button class="btn btn-danger"
                                 data-bind="enable: is_delete_text_valid, click: remote_delete">PERMANENT DELETE</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    
+
+
     <script type="text/html" id="case-report-template">
         <div data-bind="visible: is_loading">
             <div class="loading">Loading Report...</div>
         </div>
         <div class="report-wrap" data-bind="visible: !is_loading()">
-            
+
             <!--ko if: !any_enrollments()-->
             <h2>No Enrollments Recorded</h2>
             <!--/ko-->
-            
+
             <!--ko if: any_enrollments-->
                 <h1 data-bind="text: company_name"></h1>
-                
+
                 <!--ko if: is_census_report-->
                 <h3 class="light">Summary</h3>
                 <div class="">
@@ -527,16 +527,16 @@
                         <tbody>
                             <tr>
                                 <td>
-                                    <span data-bind="text: format_total_percent_processed"></span> 
-                                    (<span data-bind="text: format_total_num_processed"></span> of 
+                                    <span data-bind="text: format_total_percent_processed"></span>
+                                    (<span data-bind="text: format_total_num_processed"></span> of
                                      <span data-bind="text: format_total_num_census"></span>)
                                 </td>
                                 <td>
-                                    <span data-bind="text: format_total_percent_taken"></span> 
+                                    <span data-bind="text: format_total_percent_taken"></span>
                                     (<span data-bind="text: format_total_num_taken"></span>)
                                 </td>
                                 <td>
-                                    <span data-bind="text: format_total_percent_declined"></span> 
+                                    <span data-bind="text: format_total_percent_declined"></span>
                                     (<span data-bind="text: format_total_num_declined"></span>)
                                 </td>
                                 <td>
@@ -547,20 +547,20 @@
                     </table>
                 </div>
                 <!--/ko-->
-            
+
                 <h4>Period: <small data-bind="text: format_enrollment_dates"></small></h4>
                 <h4 data-bind="visible: only_one_product">Product: <small data-bind="text: product_name"></small></h4>
                 <h4>Method(s): <small data-bind="text: format_enrollment_methods"></small></h4>
-                
-                
-                
+
+
+
                 <!--ko if: !is_census_report()-->
                 <h3 class="light">Total Annual Premium:  <small data-bind="text: format_total_annualized_premium"></small></h3>
                 <!--/ko-->
-                
+
                 <!--ko if: !only_one_product() -->
                 <h3 class="light">By Product</h3>
-                
+
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped no-wrap">
                         <thead>
@@ -582,7 +582,7 @@
                     </table>
                 </div>
                 <!--/ko-->
-                
+
                 <!--ko if: case_agents-->
                 <h4>
                     Case Agents: <small data-bind="text: format_case_agents"></small>
@@ -591,15 +591,15 @@
             <!--/ko-->
         </div>
     </script>
-    
+
     <loading-modal params="options: loading_modal"></loading-modal>
-    
-    
+
+
 {% endblock %}
 
 {% block modals %}
     {{ super() }}
-    
+
     {# Upload census data modal. This is in the footer so I can bind two KO controllers more easily for now. #}
     <form id="census-record-form" method="POST" enctype="multipart/form-data">
     <div id="census-upload-modal" class="modal fade">
@@ -615,15 +615,15 @@
                         <div class="row">
                             <div class="col-xs-12 ">
                                 <h4>
-                                    Select Census CSV File: 
+                                    Select Census CSV File:
                                 </h4>
                                 <p class="offset-by-twelve">Download an <a href="{{ url_for("sample_upload_csv") }}">example census data file</a> for formatting reference.</p>
                                 <input type="file" id="csv-file-input" name="csv-file" accept="text/csv,.csv">
                             </div>
                         </div>
-                        
+
                         <br>
-                        
+
                         <div class="row">
                             <div class="col-xs-12">
                                 <div class="form-group">
@@ -637,7 +637,7 @@
                                         </p>
                                     </div>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label>
                                         <input type="radio" class="ace" name="upload_type" value="merge-replace">
@@ -649,7 +649,7 @@
                                         </p>
                                     </div>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label>
                                         <input type="radio" class="ace" name="upload_type" value="replace">
@@ -661,21 +661,21 @@
                                         </p>
                                     </div>
                                 </div>
-                                
+
                             </div>
                         </div>
                     </div>
                     <div class="loading-panel modal-panel" style="display: none;">
                         <div class="text-center">
                             <h4>Uploading and processing...</h4>
-                            <i class="icon-spinner icon-spin grey bigger-200"></i>  
+                            <i class="icon-spinner icon-spin grey bigger-200"></i>
                         </div>
                     </div>
                     <div class="success-panel modal-panel" style="display: none;">
                         <h3 class="header lighter green">File Processed Successfully</h3>
                         <!--ko if: num_data_records() > 0 -->
-                            <h4><span data-bind="text: num_data_records"></span> 
-                                record<span data-bind="visible: num_data_records() > 1">s</span> 
+                            <h4><span data-bind="text: num_data_records"></span>
+                                record<span data-bind="visible: num_data_records() > 1">s</span>
                                 added or updated.</h4>
                         <!--/ko-->
                         <!--ko if: num_data_records() == 0 -->
@@ -685,10 +685,10 @@
                     <div class="error-panel modal-panel" style="display: none;">
                         <h3 class="header lighter red">
                             Bad or Missing Data
-                            <span data-bind="visible: error_records().length >= 20" 
+                            <span data-bind="visible: error_records().length >= 20"
                                   class="smaller-75 pull-right">First 20 Errors Displayed</span>
                         </h3>
-                        
+
                         <div class="row">
                             <div class="col-md-12" style="width: 100%; overflow: auto;">
                                 <!--ko foreach: {data: error_records, as: 'error_record'}-->
@@ -696,7 +696,7 @@
                                         <div class="error" data-bind="text: error_record.message"></div>
                                     </div>
                                     <div class="table-responsive">
-                                    <table data-bind="if: error_record.records.length > 0" 
+                                    <table data-bind="if: error_record.records.length > 0"
                                            class="table table-bordered upload-error-table">
                                         <thead>
                                             <tr>
@@ -710,7 +710,7 @@
                                             <tr>
                                                 <td data-bind="text: error_record.line_number"></td>
                                             <!--ko foreach: {data: error_record.headers, as: 'header'} -->
-                                                <td data-bind="css: {error: error_record.field_name == header}, attr: {title: error_record.message}" 
+                                                <td data-bind="css: {error: error_record.field_name == header}, attr: {title: error_record.message}"
                                                     data-toggle="tooltip">
                                                     <div data-bind="text: data_record[header]"></div>
                                                 </td>
@@ -724,7 +724,7 @@
                         </div>
                     </div>
                 </div>
-                    
+
                 <div class="modal-footer">
                     <div class="form-buttons buttons-panel">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
@@ -741,7 +741,7 @@
                     <div class="success-buttons buttons-panel" style="display: none;">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
                     </div>
-                    
+
                 </div>
             </div>
             <!-- /.modal-content -->
@@ -753,7 +753,7 @@
 
 {% block page_js %}
     <script>
-    
+
     function add_case_error(errors, field_name, message) {
         if (field_name in errors) {
             errors[field_name].push(message);
@@ -761,9 +761,9 @@
             errors[field_name] = [message];
         }
     }
-    
+
     function get_form_data(form) {
-        // Returns the form data as a javascript object. 
+        // Returns the form data as a javascript object.
         var data = $(form).serializeArray();
         var data_object = {};
         $.each(data, function() {
@@ -773,7 +773,7 @@
                 // Convert multi-selects to a list (key present more than once)
                 data_object[key] = [data_object[key]];
                 data_object[key].push(val);
-            } else if (key in data_object) { 
+            } else if (key in data_object) {
                 data_object[key].push(val);
             } else {
                 data_object[key] = val;
@@ -781,9 +781,9 @@
         });
         return data_object;
     }
-    
+
     $(function() {
-        
+
         $('#csv-file-input').ace_file_input({
             no_file:'No File ...',
             btn_choose:'Choose File',
@@ -793,9 +793,9 @@
             thumbnail:false,
             whitelist:'csv'
         });
-        
+
         $("#census-record-form").on("submit", function() {
-            
+
             var form = this;
             var file_select = $(this).find("input[type=file]").get(0);
             var files = file_select.files;
@@ -803,26 +803,26 @@
             if (files.length !== 1) {
                 alert("Please select a file");
                 return false;
-            } 
-            
+            }
+
             // Add the file upload to the request.
             form_data.append('csv-file', files[0], files[0].name);
-            form_data.append('upload_type', $("input[name=upload_type]:checked").val());    
-            
-            send_file_data("POST", "{{ url_for("cases.post_census_records", case_id=case.id) }}", 
+            form_data.append('upload_type', $("input[name=upload_type]:checked").val());
+
+            send_file_data("POST", "{{ url_for("cases.post_census_records", case_id=case.id) }}",
                 form_data, function(resp) {
                     census_errors_panel.error_records(resp.data.errors);
                     census_errors_panel.num_data_records(resp.data.records.length);
                     show_success_panel();
                     // Update the datatable
-                    case_management.refresh_census_table({{ case.id }},"{{ url_for("cases.census_records", case_id=case.id) }}", 
+                    case_management.refresh_census_table({{ case.id }},"{{ url_for("cases.census_records", case_id=case.id) }}",
                                                          "#census-records-table", "#census-table-loading");
                 }, function(xhr) {
                     if (xhr.status >= 400 && xhr.status < 500) {
                         show_error_panel();
                         var data = $.parseJSON(xhr.responseText).data;
                         census_errors_panel.error_records(data.errors);
-                        
+
                         // Show error tooltips
                         $('.upload-error-table td.error').tooltip({placement: "auto left"});
                     } else {
@@ -830,9 +830,9 @@
                         reset_upload_modal();
                     }
                 }, false);
-            
+
             show_loading_panel();
-            
+
             return false;
         });
         function show_loading_panel() {
@@ -859,7 +859,7 @@
             $(".form-panel").show("slide");
             $(".form-buttons").show("slide");
         }
-        
+
         function reset_upload_modal() {
             $(".modal-panel").hide();
             $(".buttons-panel").hide();
@@ -868,17 +868,17 @@
         }
         $("#upload-btn").on("click", reset_upload_modal);
         $(".back-btn").on("click", show_form_panel);
-        
+
         var CensusErrorsPanel = function() {
             var self = this;
-            
+
             self.error_records = ko.observableArray([]);
             self.num_data_records = ko.observable(0);
         };
         window.census_errors_panel = new CensusErrorsPanel();
         ko.applyBindings(census_errors_panel, $("#census-upload-modal")[0]);
-        
-        
+
+
         var CaseEnrollmentPeriod = function(period) {
             var self = this;
             var defaults = {
@@ -888,16 +888,16 @@
                 end_date: ""
             };
             var settings = $.extend({}, defaults, period);
-            
+
             self.period_type = settings.period_type;
             self.is_annual = ko.computed(function() {return self.period_type == "annual_period"});
             self.is_open = ko.computed(function() {return !self.is_annual()});
-            
+
             self.case_id = settings.case_id;
-            
+
             // Used for the missing start / end error
             self.error = ko.observable("");
-            
+
             function strip_year(d) {
                 // Strip off the year of the given date
                 var month_day_search = /\d{4}-(\d{2}-\d{2})/;
@@ -907,7 +907,7 @@
                 }
                 return "";
             }
-            
+
             if (self.is_open()) {
                 // process start/end date normally
                 self.start_date = ko.observable(normalize_date(settings.start_date));
@@ -916,20 +916,20 @@
                 self.start_date = ko.observable(strip_year(settings.start_date));
                 self.end_date = ko.observable(strip_year(settings.end_date));
             }
-            
+
             // Validates month / day formatted as MM/DD
             self.is_valid_month_day = function(val) {
-                return self.get_month_day(val).isValid(); 
+                return self.get_month_day(val).isValid();
             };
             self.get_month_day = function(val) {
                 return parse_month_date_input(val);
             };
-            
-            // Validates actual date formatted MM/DD/YYYY 
+
+            // Validates actual date formatted MM/DD/YYYY
             self.is_valid_date = function(val) {
                 return is_valid_date(val);
             };
-            
+
             self.is_valid = ko.computed(function() {
                 if (self.is_open()) {
                     return (self.is_valid_date(self.start_date()) &&
@@ -937,9 +937,9 @@
                             parse_date(self.end_date()) >= parse_date(self.start_date()));
                 } else {
                     return (self.is_valid_month_day(self.start_date()) && self.is_valid_month_day(self.end_date()));
-                } 
+                }
             });
-            
+
             self.serialize = function() {
                 return {
                     period_type: self.period_type,
@@ -949,14 +949,14 @@
                 }
             };
         };
-        
+
         function parse_month_date_input(val) {
             return parse_date(val, "MM/DD");
         }
-        
+
         var CaseSettingsPanel = function(case_data, product_choices) {
             var self = this;
-            
+
             self.report_data = ko.observable(null);
             self.report_viewmodel = ko.observable(null);
             self.report_viewmodel.subscribe(function(val) {
@@ -974,7 +974,7 @@
                 return _.contains(_.pluck(case_data.products, "id"), p.id);
             });
             self.products = ko.observableArray(matched_selected_products);
-            
+
             // Until multi-product is working, make a single-product layer on top of the products array
             self.single_product = ko.computed({
                 read: function () {
@@ -989,14 +989,14 @@
                 },
                 owner: self
             });
-            
-            
+
+
             self.enrollment_period_type = ko.observable(case_data.enrollment_period_type);
             self.enrollment_periods = ko.observableArray($.map(case_data.enrollment_periods, function(p) {
                 return new CaseEnrollmentPeriod(p)}
             ));
             self.situs_city = ko.observable(case_data.situs_city);
-            
+
             self.state_choices = {{ all_states | tojson | safe }};
             self.situs_state = ko.observable(_.find(self.state_choices, function(c) {
                 return c.statecode == case_data.situs_state;
@@ -1008,25 +1008,25 @@
             self.owner_agent_id = ko.observable(case_data.agent_id || "");
             self.partner_agents = ko.observable(
                 (case_data.partner_agents)? _.map(_.pluck(case_data.partner_agents, "id"), function(id) {return id+""}) : []);
-            
-            
+
+
             // Disable bad combos of states and products
             self.state_product_limiter = new ProductStatesLimiterViewModel(
                 {{ product_state_mapping |tojson|safe }}, self.situs_state,
-                self.state_choices, 
+                self.state_choices,
                 self.products, self.product_choices
             );
-            
+
             self.is_open_enrollment = ko.computed(function() {
-                return self.enrollment_period_type() === "open"; 
+                return self.enrollment_period_type() === "open";
             });
             self.is_annual_enrollment = ko.computed(function() {
-                return self.enrollment_period_type() === "annual"; 
+                return self.enrollment_period_type() === "annual";
             });
             self.get_open_enrollment_period = ko.computed(function() {
                 return _.find(self.enrollment_periods(), function(p) {return p.is_open()});
             });
-            
+
             self.annual_enrollment_periods = ko.computed(function() {
                 return _.filter(self.enrollment_periods(), function(p) {return p.period_type === "annual_period"});
             });
@@ -1041,6 +1041,15 @@
                 return (self.payment_mode()) ? parseInt(self.payment_mode().mode) : null;
             });
 
+            // Self-enrollment
+            self.is_self_enrollment = ko.observable(case_data.is_self_enrollment);
+            self.is_self_enrollment.subscribe(function() {
+                // Confirm disabling self-enrollment
+                if(!self.is_self_enrollment()) {
+                    bootbox.confirm('<h3>Any self-enrollment links you have sent out <u class="text-danger">will no longer work</u> if you turn off self-enrollment.</h3><p>Click <em>OK</em> to turn it off, or <em>Cancel</em> to leave it on.</p>',
+                            function(result) { self.is_self_enrollment(!result); });
+                }
+            });
 
             // Make sure there is at least one open enrollment period
             if (!self.get_open_enrollment_period()) {
@@ -1054,10 +1063,10 @@
                         case_id: case_data.id,
                         period_type: "annual_period"
                     });
-                    self.enrollment_periods.push(p); 
+                    self.enrollment_periods.push(p);
                 });
             }
-            
+
             // utility methods for algorithm below
             function get_annual_periods_after_period(period) {
                 var periods = self.annual_enrollment_periods();
@@ -1073,9 +1082,9 @@
                 if (val && period.is_valid_month_day(val) && period.end_date() == "") {
                     // Auto fill with end of next month approx. alg
                     // Initial period is two months after start
-                    var computed_date = compute_period_end(period.get_month_day(val), 2); 
+                    var computed_date = compute_period_end(period.get_month_day(val), 2);
                     period.end_date(computed_date.format("MM/DD"));
-                    
+
                     // Loop through remaining periods and fill in any that are blank
                     var remaining_periods = get_annual_periods_after_period(period);
                     var previous_period = period;
@@ -1103,13 +1112,13 @@
             first_period.start_date.subscribe(function(val) {
                 compute_quarterly_dates(first_period, val);
             });
-            
+
             // Add validation to the month/day inputs
             _.each(self.annual_enrollment_periods(), function(period) {
                 _.each([period.start_date, period.end_date], function(date_observable){
                     date_observable.subscribe(function(val) {
                         if (val == "") return;
-                        
+
                         var val_date = parse_month_date_input(val);
                         if (!val_date.isValid()) {
                             date_observable("");
@@ -1119,19 +1128,19 @@
                     });
                 });
             });
-            
-            
+
+
             // enrollment data
             self.has_census_data = ko.observable(false);
-            
+
             self.is_data_dirty = ko.observable();
-            
+
             self.flash_messages = new FlashMessages();
-            
+
             // subscribe to all changes to detect data changes
             var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
                     self.enrollment_periods, self.situs_city, self.situs_state, self.payment_mode,
-                    self.is_active, self.owner_agent_id];
+                    self.is_active, self.owner_agent_id, self.is_self_enrollment];
             _.each(self.enrollment_periods(), function(p) {
                 fields.push(p.start_date);
                 fields.push(p.end_date);
@@ -1139,22 +1148,22 @@
             $.each(fields, function() {
                 var field = this;
                 this.subscribe(function() {
-                    
-                    self.is_data_dirty(true); 
+
+                    self.is_data_dirty(true);
                 });
             });
-            
+
             self.can_activate_case = ko.computed(function() {
                  var is_valid = (
-                     self.enrollment_period_type() != null && 
+                     self.enrollment_period_type() != null &&
                      self.enrollment_periods().length > 0 &&
-                     self.products().length > 0 && 
-                     $.trim(self.company_name()) != "" && 
-                     $.trim(self.situs_city()) != "" && 
+                     self.products().length > 0 &&
+                     $.trim(self.company_name()) != "" &&
+                     $.trim(self.situs_city()) != "" &&
                      self.selected_statecode() != null &&
                      self.selected_payment_mode() != null
                  );
-                
+
                 if (self.is_open_enrollment() && !self.get_open_enrollment_period().is_valid()) {
                     is_valid = false;
                 } else if (self.is_annual_enrollment()) {
@@ -1163,18 +1172,17 @@
                         return p.is_valid();
                     });
                 }
-                
+
                 return is_valid;
             });
-            
+
             self.is_active.subscribe(function(value) {
-                
                 if (value && !self.can_activate_case()) {
                     bootbox.alert("Cannot activate case for enrollment until settings are complete.");
                     self.is_active(false);
                 }
             });
-            
+
             self.switch_label = ko.computed(function() {
                 if (self.is_active()) {
                     return "Case is Active";
@@ -1182,39 +1190,39 @@
                     return "Case is Not Active";
                 }
             });
-            
+
             self.get_form_error = ko.computed(function() {
-                if (self.company_name.is_unique !== undefined && 
+                if (self.company_name.is_unique !== undefined &&
                            !self.company_name.is_unique()) {
                     return "The name '"+self.company_name()+"' is already used."
                 }
                 return "";
             });
-            
+
             self.check_unique_name = function(current_value, callback) {
                 $.get("{{ url_for("cases.get_cases") }}", {by_name: current_value}, function(result) {
                     var is_unique = (result.data.length == 0 || current_value == case_data.company_name);
                     callback(is_unique);
                 }, "json");
-            
+
             };
-            
-            
+
+
             self.validate = function() {
-                
+
                 hide_all_errors();
-                
-                // hide missing date errors 
+
+                // hide missing date errors
                 _.invoke(self.annual_enrollment_periods(), "error", "");
-                
+
                 // unique name error
                 var unique_name_error = self.get_form_error();
                 if (unique_name_error !== "") {
                     add_case_error(errors, "company_name", unique_name_error);
                 }
-                
+
                 // all other errors
-                var errors = {}; 
+                var errors = {};
                 if ($.trim(self.company_name()) == "") {
                     add_case_error(errors, "company_name", "Company name is required.");
                 }
@@ -1245,7 +1253,7 @@
                     _.invoke(missing_observables, "error", "Must fill in start and end date");
                     return false;
                 }
-                
+
                 if (Object.keys(errors).length > 0) {
                     show_all_errors(errors);
                     return false;
@@ -1253,7 +1261,7 @@
                     return true;
                 }
             };
-            
+
             self.missing_annual_period_predicate = function(period) {
                 var start_date_present = period.start_date() != "";
                 var end_date_present = period.end_date() != "";
@@ -1263,13 +1271,12 @@
             self.any_annual_period_missing_a_component = function() {
                 return _.any(self.annual_enrollment_periods(), self.missing_annual_period_predicate);
             };
-            
+
             self.serialize_case = function() {
-                
                 var partner_agents = _.map(self.partner_agents(), function(id_str) {
                     return parseInt(id_str)
                 });
-                
+
                 return {
                     company_name: self.company_name(),
                     group_number: self.group_number(),
@@ -1280,50 +1287,50 @@
                     situs_city: self.situs_city(),
                     situs_state: self.selected_statecode() ? self.selected_statecode() : "",
                     payment_mode: self.selected_payment_mode() ? self.selected_payment_mode() : null,
-                    agent_id: self.owner_agent_id()
-                }  
+                    agent_id: self.owner_agent_id(),
+                    is_self_enrollment: self.is_self_enrollment(),
+                }
             };
-            
+
             self.serialize_enrollments = function() {
                 if (self.is_annual_enrollment()) {
                     // Only send valid periods
                     return _.invoke(
-                        _.filter(self.annual_enrollment_periods(), function(p) {return p.is_valid()}), 
+                        _.filter(self.annual_enrollment_periods(), function(p) {return p.is_valid()}),
                         "serialize");
                 } else {
                     var period = self.get_open_enrollment_period();
                     return [period.serialize()];
                 }
             };
-            
-            self.loading_modal = ko.observable(null);
-            
-            self.save_settings = function() {
 
+            self.loading_modal = ko.observable(null);
+
+            self.save_settings = function() {
                 self.flash_messages.clear();
-                
+
                 if (!self.validate()) {
                     self.flash_messages.flash_error("Please correct any errors below before saving.");
                     return;
                 }
-                
+
                 self.loading_modal({message: "Saving case..."});
-                
+
                 // Make sure case can be activated
                 if (self.is_active() && !self.can_activate_case()) {
                     self.is_active(false);
                     self.flash_messages.flash_error("The case has been deactivated due to missing settings.");
                     // Continue saving the case
                 }
-                
+
                 var case_request = send_json_data(
-                    "PUT", 
+                    "PUT",
                     "{{ url_for("cases.update_case", case_id=case.id) }}",
                     self.serialize_case()
                 );
-                
+
                 var periods_request = send_json_data(
-                    "PUT", 
+                    "PUT",
                     "{{ url_for("cases.update_case_enrollment_periods", case_id=case.id) }}",
                     self.serialize_enrollments()
                 );
@@ -1339,18 +1346,18 @@
                     self.flash_messages.flash_error("Save failed. Please correct any errors below.");
                 };
                 $.when(case_request, periods_request).then(on_success, on_failure);
-                
-                return false; 
+
+                return false;
             };
-            
+
             self.delete_case = function() {
                 bootbox.confirm("Are you sure you want to the case '"+self.company_name()+"'? This is permanent and cannot be undone!", function(result) {
                     if (!result) { return; }
-                    
+
                     self.remote_delete();
                 });
             };
-            
+
             self.remote_delete = function() {
                 var request = send_json_data("DELETE", "{{ url_for("cases.delete_case", case_id=case.id) }}", {});
                 $.when(request).then(function() {
@@ -1361,15 +1368,15 @@
                     window.location.href = "{{ url_for("manage_cases") }}";
                 }, function() {
                     bootbox.alert("There was a problem removing this case.");
-                });  
+                });
             };
-            
+
             self.is_permanent_delete_modal_showing = ko.observable(false);
             self.delete_confirmation_text = ko.observable("");
             self.is_delete_text_valid = ko.pureComputed(function() {
                 return self.delete_confirmation_text() == "DELETE";
             });
-            
+
             self.delete_case_with_enrollments = function() {
                 // Show the dialog
                 self.delete_confirmation_text("");
@@ -1377,51 +1384,51 @@
                 self.is_permanent_delete_modal_showing(false);
                 self.is_permanent_delete_modal_showing(true);
             };
-            
-            $(window).bind("beforeunload", function() { 
-                return self.has_unsaved_data() ? "You have made changes without saving. Do you you wish to leave this page and lose all changes?" : undefined; 
+
+            $(window).bind("beforeunload", function() {
+                return self.has_unsaved_data() ? "You have made changes without saving. Do you you wish to leave this page and lose all changes?" : undefined;
             });
-            
+
             self.has_unsaved_data = ko.computed(function() {
-                return self.is_data_dirty();  
+                return self.is_data_dirty();
             });
-            
+
             self.exit_print_mode = function() {
                 if (self.report_viewmodel()) {
                     self.report_viewmodel().exit_print_preview();
                 }
             };
-            
+
             // Tabs
             var setup_tab = $('#case-nav-tabs a[href="#setup"]');
             var reports_tab = $('#case-nav-tabs a[href="#reports"]');
-            
+
             self.sammy_app = Sammy(function() {
                 this.get("#setup", function() {
                     self.exit_print_mode();
-                    
+
                     setup_tab.tab('show');
-                    
+
                     // Load census data when page loads
-                    case_management.refresh_census_table({{ case.id }}, "{{ url_for("cases.census_records", case_id=case.id) }}", 
+                    case_management.refresh_census_table({{ case.id }}, "{{ url_for("cases.census_records", case_id=case.id) }}",
                         "#census-records-table", "#census-table-loading", {},
                         function(table) {
                             // This is called if there is data; enable download button
                             window.case_settings.has_census_data(true);
                     });
-                    
-                });  
-                
+
+                });
+
                 this.get("#reports", function() {
                     self.exit_print_mode();
-                    
+
                     reports_tab.tab('show');
                     if (self.report_viewmodel()) {
                         self.report_viewmodel().load_reports();
                         self.report_viewmodel().load_enrollments();
                     }
                 });
-                
+
                 this.get("#print", function() {
                     if (self.report_viewmodel()) {
                         self.report_viewmodel().enter_print_preview();
@@ -1432,30 +1439,30 @@
                     }
                 });
             }).run();
-            
+
         };
-        
+
         var CaseReportsViewModel = function(params) {
             var self = this;
-            
+
             self.is_loading = ko.observable(true);
-            
+
             self.company_name = ko.observable({});
             self.group_number = ko.observable({});
 
             self.any_enrollments = ko.observable(false);
-            
+
             self.summary_data = ko.observable({});
             self.product_data = ko.observable([]);
             self.enrollment_dates = ko.observable({});
             self.enrollment_methods = ko.observableArray([]);
             self.case_agents = ko.observableArray([]);
-            
+
             self.load_reports = function() {
                 self.is_loading(true);
                 var url = "{{ url_for("cases.enrollment_report", case_id=case.id) }}";
                 $.get(url).success(function(resp) {
-                    
+
                     // Pull out the report data
                     self.company_name(resp.data.company_name);
                     self.group_number(resp.data.group_number);
@@ -1463,7 +1470,7 @@
                     self.enrollment_methods(resp.data.enrollment_methods);
                     self.summary_data(resp.data.summary);
                     self.any_enrollments(self.summary_data().processed_enrollments > 0);
-                    
+
                     // Reformat the product data to fit the display better
                     var pdata = [];
                     $.each(resp.data.product_report, function() {
@@ -1475,9 +1482,9 @@
                             annualized_premium: data.total_annualized_premium
                         });
                     });
-                    
+
                     self.product_data(pdata);
-                    
+
                     // Case agents
                     var case_agents = [];
                     if (resp.data.case_owner) {
@@ -1489,45 +1496,45 @@
                     self.case_agents(case_agents);
                     self.is_loading(false);
                 }).error(function(e) {
-                    console.error(e); 
+                    console.error(e);
                     self.is_loading(false);
                 });
             };
-            
-            
+
+
             self.enter_print_preview = function () {
-            
+
                 $(".header ul").hide();
                 $(".container.page").hide();
                 $("#print-wrap").html($("#reports .report-wrap").clone()
                 ).prepend("<div><a class='btn btn-default hidden-print' href='#reports'>"+
                     "<span class='glyphicon glyphicon-chevron-left'></span> Back to report</a></div>").show();
             };
-            
+
             self.exit_print_preview = function() {
                 $(".header ul").show();
                 $(".container.page").show();
                 $("#print-wrap").hide();
             };
-            
+
             self.load_enrollments = function() {
-                case_management.refresh_enrollments_table({{ case.id }}, "{{ url_for("cases.enrollment_records", case_id=case.id) }}", 
+                case_management.refresh_enrollments_table({{ case.id }}, "{{ url_for("cases.enrollment_records", case_id=case.id) }}",
                     "#enrollment-records-table", "#enrollment-table-loading", {},
                     function(table) {}
                 );
             };
-            
-            
+
+
             self.format_enrollment_methods = ko.computed(function() {
-                
+
                 var display_map = {
                     in_person: 'In Person',
                     self_enroll_email: 'Self-Enroll by Email'
                 };
-                
+
                 return _.map(self.enrollment_methods(), function(m) {return display_map[m]}).join(",");
             });
-            
+
             self.format_enrollment_dates = ko.computed(function() {
                 var start = self.enrollment_dates().start;
                 var end = self.enrollment_dates().end;
@@ -1537,61 +1544,61 @@
                     return "Open enrollment starting " + normalize_date(start);
                 }
             });
-            
+
             self.is_census_report = ko.computed(function() {
                 return self.summary_data().is_census_report;
             });
-            
+
             self.only_one_product = ko.computed(function() {
-                return self.summary_data().only_one_product; 
+                return self.summary_data().only_one_product;
             });
-            
+
             self.product_name = ko.computed(function() {
                 return (self.only_one_product())? self.summary_data().product_names[0] : "";
             });
-            
+
             self.format_total_percent_processed = ko.computed(function() {
                 var percent = self.summary_data().processed_enrollments / self.summary_data().total_census * 100;
                 return percent.toFixed(2) + "%";
             });
-            
+
             self.format_total_num_census = ko.pureComputed(function() {
                 return self.summary_data().total_census;
             });
-            
+
             self.format_total_num_processed = ko.computed(function() {
                 return self.summary_data().processed_enrollments;
             });
-            
+
             self.format_total_percent_taken = ko.computed(function() {
                 var percent = self.summary_data().taken_enrollments / self.summary_data().total_census * 100;
                 return percent.toFixed(2) + "%";
             });
-            
+
             self.format_total_num_taken = ko.computed(function() {
                 return self.summary_data().taken_enrollments;
             });
-            
+
             self.format_total_num_declined = ko.computed(function() {
                 return self.summary_data().declined_enrollments;
             });
-            
+
             self.format_total_percent_declined = ko.computed(function() {
                 var percent = self.summary_data().declined_enrollments / self.summary_data().total_census * 100;
                 return percent.toFixed(2) + "%";
             });
-            
+
             self.format_total_annualized_premium = ko.computed(function() {
                  return '$'+self.summary_data().total_annualized_premium;
             });
-            
+
             self.format_case_agents = ko.computed(function() {
-                 return self.case_agents().join(", "); 
+                 return self.case_agents().join(", ");
             });
-            
+
             params.settings_viewmodel.report_viewmodel(self);
         };
-        
+
         ko.components.register('case-report', {
             viewModel: {
                 createViewModel: function(params, componentInfo) {
@@ -1600,19 +1607,19 @@
             },
             template: { element: 'case-report-template' }
         });
-        
+
         // Initialize settings viewmodel
         window.case_settings = new CaseSettingsPanel({{ case |tojson|safe }}, {{ product_choices |tojson|safe }});
         ko.applyBindings(window.case_settings, $(".content")[0]);
-        
+
         // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change
         case_settings.is_data_dirty(false);
-        
+
         $(".input-mask-date").mask("99/99/9999");
         $(".input-mask-month-day").mask("99/99");
         $('[data-rel=tooltip]').tooltip();
-        
-        
+
+
         $('#partner-agents').bootstrapDualListbox({
             infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',
             showFilterInputs: true,
@@ -1620,13 +1627,13 @@
             nonSelectedListLabel: 'Available Agents:',
             selectedListLabel: 'Case Visible to Agents:'
         });
-        
+
         // If we don't have a loctation hash, go to #setup
         if (window.location.hash == "") {
             window.location.hash = "setup";
         }
-        
-        
+
+
     });
     </script>
 {% endblock %}

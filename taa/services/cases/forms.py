@@ -1,7 +1,7 @@
 
 from flask_wtf import Form
 from wtforms.fields import (
-    StringField, SelectField, SelectMultipleField, 
+    StringField, SelectField, SelectMultipleField,
     IntegerField, RadioField, FieldList,
     FormField, DateField, BooleanField
 )
@@ -11,12 +11,11 @@ from wtforms import validators
 from taa.services.products import ProductService, get_all_states
 products_service = ProductService()
 
-   
+
 class ProductMultiSelectField(SelectMultipleField):
     def validate(self, form, extra_validators=()):
         """Override the default validation so we don't use choices here"""
         # TODO: Validate this is a product this user is allowed to enroll
-        
         return True
 
 
@@ -28,10 +27,10 @@ class _CommonCaseFormMixin(object):
     products = ProductMultiSelectField('Products', [])
     agent_id = IntegerField('Agent', [validators.Optional()])
     active = BooleanField('Active')
-    
+    is_self_enrollment = BooleanField('Self-enrollment')
+
     def __init__(self, *args, **kwargs):
         super(_CommonCaseFormMixin, self).__init__(*args, **kwargs)
-
         # self.products.choices = [(p.id, p.name) for p in products_service.all()]
         self.products.choices = []
         self.situs_state.choices = [(s['statecode'], s['name'])
@@ -41,11 +40,11 @@ class _CommonCaseFormMixin(object):
         if field.data not in products_service.get_all_statecodes():
             raise validators.ValidationError('Invalid State')
         # TODO: Validate product-state mismatch
-    
+
     def validate_products(self, field):
         pass
- 
-    
+
+
 class NewCaseForm(_CommonCaseFormMixin, Form):
     pass
 
@@ -127,21 +126,19 @@ class NewCaseEnrollmentPeriodForm(Form):
     enrollment_period_type = RadioField('Period Type',
                                         choices=[('open', 'Open Enrollment'),
                                                  ('annual', 'Annual Periods')])
-    
     open_period_start_date = DateField('Start Date', [validators.optional()],
                                        format='%m/%d/%Y')
     open_period_end_date = DateField('End Date', [validators.optional()],
                                      format='%m/%d/%Y')
     annual_period_dates = FieldList(FormField(AnnualPeriodForm))
-    
+
     def __init__(self, *args, **kwargs):
         super(NewCaseEnrollmentPeriodForm, self).__init__(*args, **kwargs)
-        
         # Default to four entries
         if len(self.annual_period_dates) < 4:
             for x in range(4 - len(self.annual_period_dates)):
                 self.annual_period_dates.append_entry()
-    
+
     def validate_open_period_start_date(self, field):
         pass
 

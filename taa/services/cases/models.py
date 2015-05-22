@@ -23,6 +23,7 @@ case_partner_agents = db.Table('case_partner_agents', db.metadata,
                                          primary_key=True),
                                )
 
+
 class CaseSerializer(JsonSerializable):
     __json_modifiers__ = {
         'products': lambda products, _: [p for p in products],
@@ -58,6 +59,7 @@ class Case(CaseSerializer, db.Model):
                                backref=db.backref('partner_cases',
                                                   lazy='dynamic'))
     payment_mode = db.Column(db.Integer, nullable=True)
+    is_self_enrollment = db.Column(db.Boolean, default=False, nullable=False)
 
     def get_template_data(self):
         return dict(
@@ -91,17 +93,19 @@ class Case(CaseSerializer, db.Model):
     def format_created_date(self):
         return self.created_date.strftime('%m/%d/%Y')
 
+
 class PeriodSerializer(JsonSerializable):
     __json_hidden__ = ['case']
     __json_modifiers__ = {
         # Use date strings rather than datetime strings
-        'start_date': lambda d,_: d.strftime('%Y-%m-%d') if d else None,
-        'end_date': lambda d,_: d.strftime('%Y-%m-%d') if d else None
+        'start_date': lambda d, _: d.strftime('%Y-%m-%d') if d else None,
+        'end_date': lambda d, _: d.strftime('%Y-%m-%d') if d else None
     }
 
-class CaseEnrollmentPeriod(PeriodSerializer, db.Model):
 
+class CaseEnrollmentPeriod(PeriodSerializer, db.Model):
     __tablename__ = 'case_enrollment_periods'
+
     id = db.Column(db.Integer, primary_key=True)
     case_id = db.Column(db.Integer, db.ForeignKey('cases.id'))
     period_type = db.Column(db.String(32))
@@ -111,7 +115,6 @@ class CaseEnrollmentPeriod(PeriodSerializer, db.Model):
     }
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
-
     case = db.relationship('Case', backref=db.backref('enrollment_periods'))
 
 
