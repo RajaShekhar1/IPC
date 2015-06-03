@@ -1,0 +1,17 @@
+<TXLife>
+	<UserAuthResponse>
+		<TransResult>
+			<ResultCode tc="1">Success</ResultCode>
+		</TransResult>
+	</UserAuthResponse>
+	<TxLifeResponse>
+		<TransRefGUID>360967cd-4ecf-4327-b95f-8baf675202af</TransRefGUID>
+		<TransType tc="103">New Business Reqeust</TransType>
+		<TransExeDate>2012-04-18</TransExeDate>
+		<TransExeTime>13:58:24</TransExeTime>
+		<TransMode tc="2">Original</TransMode>
+		<TransResult>
+			<ResultCode tc="1">Success - WN7X64-5BM4YN1</ResultCode>
+		</TransResult>
+	</TxLifeResponse>
+</TXLife>
