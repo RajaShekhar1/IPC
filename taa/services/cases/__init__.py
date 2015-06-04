@@ -352,14 +352,9 @@ class CaseEnrollmentPeriodsService(DBService):
             periods = data
         
         for period in data:
-            # Need a valid start date
-            if not period.get('start_date'):
-                errors['open_enrollment_start_date'] = ['Invalid start date']
-            elif not period.get('end_date'):
-                errors['open_enrollment_end_date'] = ['Invalid end date']
-            else:
-                dateutil.parser.parse(period['start_date'])
-                dateutil.parser.parse(period['end_date'])
+            # Not finished?
+            dateutil.parser.parse(period['start_date'])
+            dateutil.parser.parse(period['end_date'])
             
         return errors
     

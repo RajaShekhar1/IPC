@@ -57,7 +57,11 @@ function parse_date(date_str, format_str) {
     return moment(date_str, format_str);
 }
 function normalize_date(date_str) {
-    return format_date(parse_date(date_str));
+    if(date_str != '' && is_valid_date(date_str)) {
+        return format_date(parse_date(date_str));
+    } else {
+        return '';
+    }
 }
 function is_valid_date(date_str, format_str) {
     // Is the given string valid according to the format string? Defaults format to server-sent date format.
@@ -147,7 +151,6 @@ function show_all_errors(all_errors) {
     $(".submit-message").addClass("error").html("Please fix the indicated problems and resubmit.").show();
     $.each(all_errors, function(field_name, errors) {
         show_errors(field_name, errors);
-        return false;
     });
     focus_first_error(all_errors);
 }
@@ -169,8 +172,8 @@ function focus_first_error(errors) {
 }
 
 function hide_all_errors() {
-    $(".error").hide();
     $(".submit-message").removeClass("error").hide();
+    $(".error").remove();
 }
 
 
