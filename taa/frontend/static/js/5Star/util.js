@@ -57,7 +57,7 @@ function parse_date(date_str, format_str) {
     return moment(date_str, format_str);
 }
 function normalize_date(date_str) {
-    if(date_str != '') {
+    if(date_str != '' && is_valid_date(date_str)) {
         return format_date(parse_date(date_str));
     } else {
         return '';
