@@ -739,14 +739,20 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                                     </div>
 
                                 </div>
+                                <div class="row">
+                                    <div class="col-sm-12 form-group">
+                                        <p>The existing policy or contract is being replaced because:
+                                            <input type="text" class="col-xs-12" data-bind="value: replacement_reason">
+                                        </p>
+                                    </div>
+                                </div>
                                 <!--/ko-->
+                                <br>
                                 <button class="btn btn-success btn-sm" data-bind="click: add_replacement_policy">Add Another Policy</button>
                                 <br>
                                 <br>
                                 <p>Make sure you know the facts. Contact your existing company or its agent for information about the old policy or contract. (If you request one, an in force illustration, policy summary or available disclosure documents must be sent to you by the existing insurer). Ask for and retain all sales material used by the agent in the sales presentation. Be sure that you are making an informed decision.</p>
-                                <p>The existing policy or contract is being replaced because:
-                                    <input type="text" class="col-xs-12" data-bind="value: replacement_reason">
-                                </p>
+
 
                             </div>
 
@@ -808,7 +814,8 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                                                       is_required: true,
                                                       val: 'Yes',
                                                       highlight: 'checkmark',
-                                                      onclick: function() {$root.is_employee_actively_at_work(true)}
+                                                      onclick: function() {$root.is_employee_actively_at_work(true)},
+                                                      is_selected: $root.is_employee_actively_at_work() === true
                                                       }">
                                                     {# onclick: show_yes_dialogue_employee #}
                                                     Yes
@@ -818,7 +825,8 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                                                       is_required: true,
                                                       val: 'No',
                                                       highlight: 'checkmark',
-                                                      onclick: function() {$root.is_employee_actively_at_work(false)}
+                                                      onclick: function() {$root.is_employee_actively_at_work(false)},
+                                                      is_selected: $root.is_employee_actively_at_work() === false
                                                       }">
                                                     No
                                                 </button>

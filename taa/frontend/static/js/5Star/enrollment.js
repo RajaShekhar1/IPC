@@ -100,7 +100,6 @@ function WizardUI(defaults) {
     self.replacement_read_aloud = ko.observable(null);
     self.replacement_is_terminating = ko.observable(null);
     self.replacement_using_funds = ko.observable(null);
-    self.replacement_reason = ko.observable("");
 
     self.should_show_replacement_details_form = ko.pureComputed(function() {
         return self.replacement_using_funds() || self.replacement_is_terminating();
@@ -2521,6 +2520,10 @@ ko.bindingHandlers.flagBtn = {
                 btn_group = new QuestionButtonGroup(val.question, val.is_required);
                 group_lookup[val.question.get_question_text()] = btn_group;
             }
+
+            if (val.is_selected === true) {
+                btn_group.click_button(val.val);
+            }
         }
         
         btn_group.add_button(element, val.val, function(el) {
@@ -2810,9 +2813,9 @@ function init_validation() {
     
     $('[data-rel=tooltip]').tooltip();
 
-    var validation_debug = true;
+    var validation_debug = false;
     $('#fuelux-wizard').ace_wizard().on('change', function (e, info) {
-        if (validation_debug && info.step != 2) {
+        if (validation_debug) {
             return true;
         }
         
@@ -2888,15 +2891,11 @@ function init_validation() {
                     (ui.replacing_insurance() || ui.existing_insurance())) {
 
                 is_valid &= $('#questions-form').valid();
-                // Must answer all questions
-                /*if (ui.replacment_read_aloud() == null ||
-                        ui.replacement_is_terminating() == null ||
-                        ui.replacement_using_funds() == null ||
-                        ui.replacement_policies().length == 0 ||
-                        ui.replacement_reason() === '') {
-                    return false;
-                }*/
+            }
 
+            if (ui.replacing_insurance() === null || ui.existing_insurance() === null) {
+                // These always need to be answered
+                is_valid = false;
             }
 
             // validate questions
@@ -3466,4 +3465,5 @@ function ReplacementPolicy() {
     self.policy_number = ko.observable('');
     self.insured = ko.observable('');
     self.replaced_or_financing = ko.observable(null);
+    self.replacement_reason = ko.observable("");
 }
