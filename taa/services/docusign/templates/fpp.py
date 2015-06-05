@@ -33,7 +33,8 @@ class FPPTemplate(DocuSignServerTemplate):
         self.add_employee_tabs(tabs)
         self.add_spouse_tabs(tabs)
         self.add_coverage_tabs(tabs)
-        self.make_all_beneficiary_tabs(tabs)
+        self.add_all_beneficiary_tabs(tabs)
+        self.add_children_tabs(tabs)
 
         self.add_general_tabs(tabs)
 
@@ -45,8 +46,8 @@ class FPPTemplate(DocuSignServerTemplate):
         tabs = [
 
             DocuSignRadioTab('productType', "FPPTI" if self.data['product_type'] == "FPP-Gov" else self.data['product_type']),
-            DocuSignRadioTab('existingIns', self.data["existing_insurance"]),
-            DocuSignRadioTab('replace', self.data["replacing_insurance"]),
+            DocuSignRadioTab('existingIns', 'yes' if self.data["existing_insurance"] else 'no'),
+            DocuSignRadioTab('replace', 'yes' if self.data["replacing_insurance"] else 'no'),
         ]
 
         for (prefix_short, prefix_long) in {("ee", "employee"), ("sp", "spouse")}:
@@ -101,9 +102,43 @@ class FPPTemplate(DocuSignServerTemplate):
             sp_tabs_list += self.generate_SOH_tabs("sp", self.data['spouse']['soh_questions'])
             sp_tabs_list += self.generate_SOH_GI_tabs("sp", self.data['spouse']['soh_questions'])
 
+        sp_tabs_list += [
+            DocuSignRadioTab('spouse_hospital_six_months', 'yes' if self.data['has_spouse_been_treated_6_months'] else 'no'),
+            DocuSignRadioTab('spouse_disability_six_months', 'yes' if self.data['has_spouse_been_disabled_6_months'] else 'no'),
+        ]
+
         for tab in sp_tabs_list:
             tab.add_to_tabs(ds_tabs)
 
+
+    def add_children_tabs(self, ds_tabs):
+        tabs = []
+
+        #num_covered_children = len([child for child in self.data['children'] if child and child['child_coverage']])
+
+        for i, child in enumerate(self.data['children']):
+            if not self.data['children'][i] or not self.data['child_coverages'][i]:
+                continue
+
+            tabs += self.add_child_data_tabs(i)
+            tabs += self.generate_SOH_tabs("c%s"%(i+1), self.data["children"][i]['soh_questions'])
+            tabs += self.generate_SOH_GI_tabs("c%s"%(i+1), self.data["children"][i]['soh_questions'])
+
+        for tab in tabs:
+            tab.add_to_tabs(ds_tabs)
+
+    def add_child_data_tabs(self, child_index):
+        child_prefix = "child" + str(child_index + 1)
+        child_coverage = self.data["child_coverages"][child_index]
+        child_data = self.data["children"][child_index]
+        return [
+            DocuSignTextTab(child_prefix + "Name", child_data['first'] + " " + child_data['last']),
+            DocuSignTextTab(child_prefix + "DOB", child_data['birthdate']),
+            DocuSignTextTab(child_prefix + "SSN", self.format_ssn(child_data['ssn'])),
+            DocuSignTextTab(child_prefix + "Coverage", format(child_coverage["face_value"], ",.0f") if child_coverage else ""),
+            DocuSignTextTab(child_prefix + "Premium", format(child_coverage["premium"], ",.2f") if child_coverage else ""),
+            DocuSignRadioTab(child_prefix + "Gender", child_data["gender"]),
+        ]
 
     def add_coverage_tabs(self, ds_tabs):
         coverage_tabs = []
@@ -123,7 +158,10 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignTextTab('spPremium', spouse_premium),
         ]
 
-    def make_all_beneficiary_tabs(self, ds_tabs):
+        for tab in coverage_tabs:
+            tab.add_to_tabs(ds_tabs)
+
+    def add_all_beneficiary_tabs(self, ds_tabs):
         tabs = (
             self.make_applicant_beneficiary_tabs("ee", "employee") +
             self.make_applicant_beneficiary_tabs("sp", "spouse")
@@ -140,34 +178,24 @@ class FPPTemplate(DocuSignServerTemplate):
         tabs += self.make_old_style_beneficiary_tabs(short_prefix, long_prefix)
 
         # Contingent
-        contingent_key = '{}_contingent_beneficiary'.format(long_prefix)
-        if contingent_key in self.data and self.data[contingent_key]:
-            beneficiary_data = self.data[contingent_key]
+        contingent_type_key = '{}_contingent_beneficiary_type'.format(long_prefix)
+        if contingent_type_key in self.data and self.data[contingent_type_key] == 'spouse':
+            spouse_data = self.data["employee"] if long_prefix == "spouse" else self.data["spouse"]
+            tabs += self.make_beneficiary_tabs(
+                prefix=short_prefix+"Cont",
+                name=spouse_data["first"] + " " + spouse_data["last"],
+                relationship="Spouse",
+                dob=spouse_data["birthdate"],
+                ssn=spouse_data["ssn"],
+            )
+        elif contingent_type_key in self.data and self.data[contingent_type_key] == 'other':
+
+            beneficiary_data = self.data['{}_contingent_beneficiary'.format(long_prefix)]
             tabs += self.make_beneficiary_tabs(prefix='{}Cont'.format(short_prefix),
                                        name=beneficiary_data['name'],
                                        relationship=beneficiary_data['relationship'],
                                        ssn=beneficiary_data['ssn'],
                                        dob=beneficiary_data['date_of_birth']
-            )
-
-        return tabs
-
-    def make_spouse_beneficiary_tabs(self):
-        tabs = []
-
-        if not self.data.did_spouse_select_coverage():
-            return tabs
-
-        tabs += self.make_old_style_beneficiary_tabs("sp", "employee")
-
-        # Contingent
-        if 'employee_contingent_beneficiary' in self.data:
-            bene_data = self.data['employee_contingent_beneficiary']
-            tabs += self.make_beneficiary_tabs(prefix='eeCont',
-                                       name=bene_data['name'],
-                                       relationship=bene_data['relationship'],
-                                       ssn=bene_data['ssn'],
-                                       dob=bene_data['date_of_birth']
             )
 
         return tabs
@@ -179,7 +207,7 @@ class FPPTemplate(DocuSignServerTemplate):
             return self.make_beneficiary_tabs(
                 prefix=short_prefix,
                 name=spouse_data["first"] + " " + spouse_data["last"],
-                relationship="spouse",
+                relationship="Spouse",
                 dob=spouse_data["birthdate"],
                 ssn=spouse_data["ssn"],
             )
@@ -206,6 +234,8 @@ class FPPTemplate(DocuSignServerTemplate):
 
         return [
             DocuSignTextTab('eeEnrollCityState', self.data["enrollCity"] + ", " + self.data["enrollState"]),
+            DocuSignTextTab('eeEnrollCity', self.data['enrollCity']),
+            DocuSignTextTab('eeEnrollState', self.data['enrollState']),
             DocuSignTextTab('date_of_hire', self.data['identityToken']),
             DocuSignTextTab('agentCode', agent_code),
             DocuSignTextTab('agentSignName', agent_signing_name),
@@ -236,8 +266,21 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignTextTab(prefix+"BeneAge", self.get_age_from_dob(dob)),
             DocuSignTextTab(prefix+"BeneRelationship", relationship),
             DocuSignTextTab(prefix+"BeneDOB", dob),
-            DocuSignTextTab(prefix+"BeneSSN", ssn),
+            DocuSignTextTab(prefix+"BeneSSN", self.format_ssn(ssn)),
         ]
+
+    def format_ssn(self, ssn):
+        digits = [c for c in ssn if c.isdigit()]
+        if len(digits) < 9:
+            # Invalid - just return what was given
+            return ssn
+
+        return "{}-{}-{}".format(
+            ''.join(digits[:3]),
+            ''.join(digits[3:5]),
+            ''.join(digits[5:9])
+        )
+
 
     def get_age_from_dob(self, dob):
         if dob and dateutil_parse(dob):
@@ -281,7 +324,7 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignTextTab(prefix + 'FName', data["first"]),
             DocuSignTextTab(prefix + 'LName', data["last"]),
             DocuSignTextTab(prefix + 'DOB', data["birthdate"]),
-            DocuSignTextTab(prefix + 'SSN', data["ssn"]),
+            DocuSignTextTab(prefix + 'SSN', self.format_ssn(data["ssn"])),
         ]
 
         if data.get('height'):
@@ -375,7 +418,8 @@ if __name__ == "__main__":
                       "existing_coverages": [], "first": "Katherine", "gender": "female", "height": null,
                       "is_smoker": null, "last": "Adams", "phone": "4-(566)054-7761", "ssn": "287288500", "state": "FL",
                       "street_address": "23 Washington Crossing", "street_address2": "", "weight": null,
-                      "zip": "34114"}, "enroll_city": "Indianapolis", "group_number": null, "health_questions": {"2": [
+                      "zip": "34114"}, "enroll_city": "Indianapolis", "group_number": "ABC-XYZ-12334",
+    "health_questions": {"2": [
         {"label": "Hospital 90 days", "question_text": "Has any Applicant been hospitalized in the past 90 days?",
          "skip_if_coverage_at_most": null}, {"label": "Heart",
                                              "question_text": "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?",
@@ -391,12 +435,8 @@ if __name__ == "__main__":
                                                                                  "skip_if_coverage_at_most": null},
         {"label": "Ever been rejected",
          "question_text": "Has any Applicant ever applied for and been rejected for life insurance?",
-         "skip_if_coverage_at_most": null}]}, "is_in_person": true, "payment_mode": null,
-    "payment_mode_choices": [{"immutable": true, "mode": 52, "name": "Weekly"},
-                             {"immutable": true, "mode": 26, "name": "Biweekly"},
-                             {"immutable": true, "mode": 24, "name": "Semimonthly"},
-                             {"immutable": true, "mode": 12, "name": "Monthly"},
-                             {"immutable": false, "mode": -1, "name": "Leave For Applicant To Select"}], "products": [
+         "skip_if_coverage_at_most": null}]}, "is_in_person": true, "payment_mode": 12,
+    "payment_mode_choices": [{"immutable": true, "mode": 12, "name": "Monthly"}], "products": [
         {"base_product_type": "FPPCI", "bypassed_soh_questions": [], "code": "FPPCI", "gi_criteria": [], "id": 2,
          "is_guaranteed_issue": false, "name": "Family Protection Plan - Critical Illness", "product_type": "base",
          "restricted_agents": [], "visible_to_agents": true}],
@@ -404,11 +444,9 @@ if __name__ == "__main__":
                     "existing_coverages": [], "first": "Joan", "gender": "female", "height": null, "is_smoker": null,
                     "last": "Ray", "phone": "3-(608)259-3463", "ssn": "387500865", "state": "KY",
                     "street_address": "993 Lien Center", "street_address2": "54800 Grim Parkway", "weight": null,
-                    "zip": "40591"}, "state": "IN"},
-        "enrollCity": "Indianapolis",
-        "enrollState": "IN",
-                   "product_type": "FPPCI", "payment_mode": "biweekly", "method": "in_person", "did_decline": false,
-                   "identityToken": "12/12/2014", "identityType": "",
+                    "zip": "40591"}, "state": "IN"}, "enrollCity": "Indianapolis", "enrollState": "IN",
+                   "product_type": "FPPCI", "payment_mode": "monthly", "method": "in_person", "did_decline": false,
+                   "identityToken": "12/12/2020", "identityType": "",
                    "employee": {"first": "Katherine", "last": "Adams", "email": "kwoods25w@chron.com", "age": 60,
                                 "weight": null, "height": null, "is_smoker": null, "birthdate": "04/05/1955",
                                 "ssn": "287288500", "gender": "female", "phone": "4-(566)054-7761",
@@ -444,17 +482,17 @@ if __name__ == "__main__":
                        "question": "Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?",
                        "answer": "No"},
                        {"question": "Has any Applicant ever applied for and been rejected for life insurance?",
-                        "answer": "No"}]}, "existing_insurance": false, "replacing_insurance": false,
-                   "is_employee_actively_at_work": false, "has_spouse_been_treated_6_months": false,
+                        "answer": "No"}]}, "existing_insurance": false, "replacing_insurance": true,
+                   "is_employee_actively_at_work": true, "has_spouse_been_treated_6_months": false,
                    "has_spouse_been_disabled_6_months": false, "employee_owner": "self",
                    "employee_other_owner_name": "", "employee_other_owner_ssn": "", "spouse_owner": "employee",
-                   "spouse_other_owner_name": "", "spouse_other_owner_ssn": "", "employee_beneficiary": "other",
-                   "spouse_beneficiary": "spouse", "employee_contingent_beneficiary_type": "spouse",
-                   "employee_contingent_beneficiary": {}, "employee_beneficiary_name": "Little John",
-                   "employee_beneficiary_relationship": "Friend", "employee_beneficiary_ssn": "123-12-1234",
-                   "employee_beneficiary_dob": "10/10/1980", "spouse_contingent_beneficiary_type": "other",
-                   "spouse_contingent_beneficiary": {"name": "John Smith", "relationship": "Cousin",
-                                                     "ssn": "098-09-8098", "date_of_birth": "09/09/1995"}, "children": [
+                   "spouse_other_owner_name": "", "spouse_other_owner_ssn": "", "employee_beneficiary": "spouse",
+                   "spouse_beneficiary": "other", "employee_contingent_beneficiary_type": "other",
+                   "employee_contingent_beneficiary": {"name": "euaouoea", "relationship": "eee", "ssn": "123-12-1212",
+                                                       "date_of_birth": "12/12/1998"},
+                   "spouse_beneficiary_name": "uuuu", "spouse_beneficiary_relationship": "uuuaoei",
+                   "spouse_beneficiary_ssn": "234-23-4234", "spouse_beneficiary_dob": "12/12/1990",
+                   "spouse_contingent_beneficiary_type": "spouse", "spouse_contingent_beneficiary": {}, "children": [
         {"first": "Anna", "last": "Roberts", "email": "", "age": 20, "weight": null, "height": null, "is_smoker": null,
          "birthdate": "03/29/1995", "ssn": "123-12-1234", "gender": "female", "phone": "", "address1": "",
          "address2": "", "city": "", "state": "", "zip": "",
@@ -488,7 +526,7 @@ if __name__ == "__main__":
                            {"question": "Has any Applicant ever applied for and been rejected for life insurance?",
                             "answer": "No"}]},
         {"first": "Third", "last": "Child", "email": "", "age": 4, "weight": null, "height": null, "is_smoker": null,
-         "birthdate": "12/28/2010", "ssn": "", "gender": null, "phone": "", "address1": "", "address2": "", "city": "",
+         "birthdate": "12/12/2010", "ssn": "", "gender": null, "phone": "", "address1": "", "address2": "", "city": "",
          "state": "", "zip": "",
          "soh_questions": [{"question": "Has any Applicant been hospitalized in the past 90 days?", "answer": "No"}, {
          "question": "In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?",
@@ -503,10 +541,10 @@ if __name__ == "__main__":
                            "answer": "No"},
                            {"question": "Has any Applicant ever applied for and been rejected for life insurance?",
                             "answer": "No"}]}],
-                   "child_coverages": [{"premium": 2.3, "face_value": 10000}, {"premium": 2.3, "face_value": 10000},
-                                       {"premium": 2.3, "face_value": 10000}],
-                   "employee_coverage": {"premium": 35.3, "face_value": 25000},
-                   "spouse_coverage": {"premium": 4, "face_value": 10000},
+                   "child_coverages": [{"premium": 4.99, "face_value": 10000}, {"premium": 4.99, "face_value": 10000},
+                                       {"premium": 4.99, "face_value": 10000}],
+                   "employee_coverage": {"premium": 76.48, "face_value": 25000},
+                   "spouse_coverage": {"premium": 8.67, "face_value": 10000},
                    "product_data": {"base_product_type": "FPPCI", "bypassed_soh_questions": [], "code": "FPPCI",
                                     "gi_criteria": [], "id": 2, "is_guaranteed_issue": false,
                                     "name": "Family Protection Plan - Critical Illness", "product_type": "base",

@@ -243,7 +243,7 @@ class EnrollmentDataWrap(object):
         return format(self.data["employee_coverage"]["face_value"], ",.0f")
 
     def get_employee_premium(self):
-        return self.data["employee_coverage"]["premium"]
+        return self.format_money(self.data["employee_coverage"]["premium"])
 
 
     def did_spouse_select_coverage(self):
@@ -253,8 +253,11 @@ class EnrollmentDataWrap(object):
         return format(self.data["spouse_coverage"]["face_value"], ",.0f")
 
     def get_spouse_premium(self):
-        return self.data["spouse_coverage"]["premium"]
+        return self.format_money(self.data["spouse_coverage"]["premium"])
 
+
+    def format_money(self, amount):
+        return "%.2f"%amount
 
 def old_create_envelope_and_get_signing_url(enrollment_data):
     # return is_error(bool), error_message, and redirectURL
