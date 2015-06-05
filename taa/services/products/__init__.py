@@ -147,8 +147,8 @@ class ProductService(DBService):
         
         # A hard-coded list of statecodes to turn off for a given product, even if we have a form for that state
         turned_off_statecodes = {
-            'FPPTI': ['CT', 'DC', 'FL', 'IN', 'ME', 'MD', 'MA', 'MN', 'MO', 'NH', 'NJ', 'NY', 'NC', 'ND', 'OH', 'PA', 'VT', 'VA', 'WA', 'WI'],
-            'FPPCI': ['CT', 'DC', 'FL', 'ME', 'MD', 'MA', 'MN', 'MO', 'NH', 'NJ', 'NY', 'NC', 'ND', 'OH', 'PA', 'PR', 'VT', 'VA', 'WI'],
+            'FPPTI': ['CT', 'DC', 'FL', 'IN', 'ME', 'MD', 'MA', 'MN', 'MO', 'NH', 'NJ', 'NY', 'NC', 'ND', 'OH', 'PA', 'VT', 'WA', 'WI'],
+            'FPPCI': ['CT', 'DC', 'FL', 'ME', 'MD', 'MA', 'MN', 'MO', 'NH', 'NJ', 'NY', 'NC', 'ND', 'OH', 'PA', 'PR', 'VT', 'WI'],
             'Group CI': ["CA", "CO", "DC", "HI", "KS", "KY", "MO", "NE", "NC", "PA", "VA"],
         }
         # Keep the same as FPPTI
