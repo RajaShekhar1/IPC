@@ -2982,7 +2982,7 @@ function init_validation() {
             enrollCity:  window.ui.enrollCity(),
             enrollState:  window.ui.enrollState,
             product_type: window.ui.insurance_product.product_type,
-            payment_mode: window.ui.payment_mode(),
+            payment_mode: window.ui.payment_mode_text_lower(),
 
             method: (ui.is_in_person_application()) ? 'in_person': 'self_enroll_email',
             did_decline: ui.did_decline(),

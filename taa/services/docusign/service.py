@@ -165,7 +165,7 @@ class DocuSignTab(object):
     pass
 
 class DocuSignRadioTab(DocuSignTab):
-    def __init__(self, group_name, value, is_selected=False):
+    def __init__(self, group_name, value, is_selected=True):
         self.group_name = group_name
         self.value = value
         self.is_selected = is_selected
@@ -178,7 +178,7 @@ class DocuSignRadioTab(DocuSignTab):
         radio_group = next((tab for tab in tabs['radioGroupTabs'] if tab['groupName'] == self.group_name), None)
         if not radio_group:
             radio_group = dict(groupName=self.group_name, radios=[])
-            tabs.append(radio_group)
+            tabs['radioGroupTabs'].append(radio_group)
 
         # Add this radio
         radio_group['radios'].append(dict(

@@ -7,7 +7,7 @@ from taa.services.products import (
 )
 
 
-useDemoAccount = True
+useDemoAccount = False
 
 #Docusign credential info
 #authEmail = "docrequest@5starima.com"  #don't need if we use the api username
@@ -79,7 +79,8 @@ def get_template_id_PRODUCTION(product_type, state):
             "TX" : "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
             "VA" : "0AE3D3E9-60C0-4198-82C7-41D1201BF2FE",
             "WI" : "AB16F882-1ED1-4CD6-847E-6BFCCB2ADF98",
-            "generic": "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
+            #"generic": "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
+            'generic': "E26A7761-1ACF-4993-A2A1-2D021B79E68C",
         },
         "FPPCI": {
             "CO" : "2BBEB0C7-E0E0-4F9E-AFC7-B04CB4CEC46B",
@@ -90,7 +91,8 @@ def get_template_id_PRODUCTION(product_type, state):
             "TX" : "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
             "VA" : "0AE3D3E9-60C0-4198-82C7-41D1201BF2FE",
             "WI" : "AB16F882-1ED1-4CD6-847E-6BFCCB2ADF98",
-            "generic": "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
+            #"generic": "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
+            'generic': "E26A7761-1ACF-4993-A2A1-2D021B79E68C",
         },
         "Group CI": {
             "IL":"533B6385-6BD0-4815-B95B-FBC2FBE33577",

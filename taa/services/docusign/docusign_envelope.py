@@ -14,11 +14,82 @@ from taa.services.docusign.DocuSign_config import (
     templateClientID,
     get_template_id
 )
+from service import (
+    AgentDocuSignRecipient,
+    EmployeeDocuSignRecipient,
+    get_docusign_transport,
+    create_envelope
+)
+from documents.extra_children import ChildAttachmentForm
+#from documents.fpp_extra_replacement_policies import FPPExtraReplacementPoliciesForm
+from templates.fpp import FPPTemplate
 from taa.services.products import ProductService
 
 product_service = ProductService()
 
- 
+
+
+
+def create_envelope_and_get_signing_url(wizard_data, census_record):
+
+    enrollment_data = EnrollmentDataWrap(wizard_data, census_record)
+    
+    # return is_error(bool), error_message, and redirectURL
+
+    product = product_service.get(wizard_data['product_data']['id'])
+    # Product code
+    productType = wizard_data["product_type"]
+    is_fpp = ('fpp' in productType.lower())
+
+    # If FPP Product, use the new docusign code, otherwise use old path
+    if is_fpp:
+        return create_fpp_envelope_and_fetch_signing_url(enrollment_data)
+    else:
+        return old_create_envelope_and_get_signing_url(enrollment_data)
+
+
+
+def create_fpp_envelope_and_fetch_signing_url(enrollment_data):
+
+    is_error = False
+    error_message = None
+
+    owner_agent = enrollment_data.census_record.case.owner_agent if enrollment_data.census_record else 'Agent'
+    agent = AgentDocuSignRecipient(name=owner_agent.name, email=owner_agent.email)
+    employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
+                                         email=enrollment_data.get_employee_email())
+    recipients = [
+        agent,
+        employee,
+        # TODO Check if BCC's needed here
+    ]
+
+    #child_attachment_form = ChildAttachmentForm(test_recipients)
+    #child_attachment_form.add_child("Joe", "Johnson", child_dob="12/01/2010", child_ssn='123-12-1234', child_soh_answers=[])
+    #child_attachment_form.add_child("Susie", "Johnson", child_dob="12/01/2012", child_ssn='123-12-3234', child_soh_answers=[])
+    #child_attachment_form.add_child("Christy", "Johnson", child_dob="12/01/2014", child_ssn='223-12-3234', child_soh_answers=[])
+
+    # Use generic template for now
+    general_template = FPPTemplate(recipients, enrollment_data)
+
+    transport = get_docusign_transport()
+    envelope_result = create_envelope(email_subject="Signature needed",
+                                      components=[
+                                          general_template,
+                                          #child_attachment_form
+                                      ],
+                                      docusign_transport=transport,
+                                     )
+
+    redirect_url = envelope_result.get_signing_url(
+        employee,
+        callback_url=build_callback_url(enrollment_data, enrollment_data.get_session_type()),
+        docusign_transport=transport
+    )
+
+    return is_error, error_message, redirect_url
+
+
 def generate_SOHRadios(prefix, soh_questions):
     
     radioList = []
@@ -101,58 +172,105 @@ def generate_ChildTabsEntry (child_index, wizard_data):
     return tabsList
     
 
-    
-def random_email_id(name='', token_length=8):
-    chars = "ABCDEF0123456789"
-    name = filter(lambda x: x in ascii_letters + ".",name)
-    if name != '':
-        name = name + "_"
-    return name + ''.join([random.choice(chars) for i in range(token_length)])
 
-def create_envelope_and_get_signing_url(wizard_data, census_record):
+
+class EnrollmentDataWrap(object):
+    def __init__(self, wizard_data, census_record):
+        self.data = wizard_data
+        self.census_record = census_record
+
+    def __getitem__(self, item):
+        "Allow dict access to raw data"
+        return self.data[item]
+
+    def __contains__(self, item):
+        return item in self.data
+
+    def get_session_type(self):
+        if self.data["agent_data"]["is_in_person"]:
+            return "inperson"
+        else:
+            return "email"
+
+    def get_id_type(self):
+        if self.data["identityType"]:
+            return self.data["identityType"]
+        else:
+            return "email"
+
+    def get_id_token(self):
+        if self.data["identityToken"]:
+            return self.data["identityToken"]
+        else:
+            return self.get_employee_email()
+
+    def get_employer_name(self):
+        if self.census_record and self.census_record.case:
+            return self.census_record.case.company_name
+        else:
+            return self.data['agent_data']["company_name"]
+
+    def get_employee_name(self):
+        return self.data["employee"]["first"] + " " + self.data["employee"]["last"]
+
+    def get_employee_email(self):
+        emailTo = self.data["employee"]["email"]
+
+        if not emailTo:
+            # fallback email if none was entered - just need a unique address
+            emailTo = self.random_email_id(self.data["employee"]["first"] + "." + self.data["employee"]["last"]) + "@5StarEnroll.com"
+
+        return emailTo
+
+    def get_employee_email_parts(self):
+        if '@' not in self.get_employee_email():
+            return '', self.get_employee_email()
+        else:
+            return self.get_employee_email().split('@', 1)
+
+    def random_email_id(self, name='', token_length=8):
+        chars = "ABCDEF0123456789"
+        name = filter(lambda x: x in ascii_letters + ".",name)
+        if name != '':
+            name = name + "_"
+        return name + ''.join([random.choice(chars) for i in range(token_length)])
+
+
+    def did_employee_select_coverage(self):
+        return self.data["employee_coverage"] and self.data["employee_coverage"]["face_value"]
+
+    def get_employee_coverage(self):
+        return format(self.data["employee_coverage"]["face_value"], ",.0f")
+
+    def get_employee_premium(self):
+        return self.data["employee_coverage"]["premium"]
+
+
+    def did_spouse_select_coverage(self):
+        return self.data["spouse_coverage"] and self.data["spouse_coverage"]["face_value"]
+
+    def get_spouse_coverage(self):
+        return format(self.data["spouse_coverage"]["face_value"], ",.0f")
+
+    def get_spouse_premium(self):
+        return self.data["spouse_coverage"]["premium"]
+
+
+def old_create_envelope_and_get_signing_url(enrollment_data):
     # return is_error(bool), error_message, and redirectURL
 
-    product = product_service.get(wizard_data['product_data']['id'])
+    product = product_service.get(enrollment_data['product_data']['id'])
 
     # Product code
-    productType = wizard_data["product_type"]
-    enrollmentState = wizard_data["agent_data"]["state"]
-    
-    # for now, just pull into former variables we've been using
-    recipName = wizard_data["employee"]["first"] + " " + wizard_data["employee"]["last"]
-    if census_record and census_record.case:
-        employer = census_record.case.company_name
-    else:
-        employer = wizard_data['agent_data']["company_name"]
-        
-    emailTo = wizard_data["employee"]["email"]
-    
-    if emailTo == "" or emailTo == None:
-        # fallback email if none was entered - just need a unique address
-        emailTo = random_email_id(wizard_data["employee"]["first"] + "." + wizard_data["employee"]["last"]) + "@5StarEnroll.com"
+    productType = enrollment_data["product_type"]
+    enrollmentState = enrollment_data["agent_data"]["state"]
 
-    # New FPP form requires email to be broken up into two parts for the PDF
-    if '@' not in emailTo:
-        ee_email_part_1 = ''
-        ee_email_part_2 = emailTo
-    else:
-        ee_email_part_1, ee_email_part_2 = emailTo.split('@')
-        
-    if wizard_data["agent_data"]["is_in_person"]:
-        sessionType = "inperson"
-    else:
-        sessionType = "email"
-
-    if wizard_data["identityType"]:
-        idType = wizard_data["identityType"]
-    else:
-        idType = "email"
-    
-    if wizard_data["identityToken"]:
-        idToken = wizard_data["identityToken"]
-    else:
-        idToken = emailTo
-    
+    recipName = enrollment_data.get_employee_name()
+    employer = enrollment_data.get_employer_name()
+    emailTo = enrollment_data.get_employee_email()
+    sessionType = enrollment_data.get_session_type()
+    idType = enrollment_data.get_id_type()
+    idToken = enrollment_data.get_id_token()
     idTokenStr = "Authentication via " + idType + ": " + idToken
     
     SOH_RadiosList = []
@@ -164,12 +282,12 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
         recipientName = "Applicant"
     
     eeCoverageNullToken = "NONE"
-    if wizard_data["employee_coverage"]:
-        if wizard_data["employee_coverage"]["face_value"]:
-            employeeCoverage = format(wizard_data["employee_coverage"]["face_value"], ",.0f")
-            eePremium = format(round((wizard_data["employee_coverage"]["premium"]*100 * 52) / 12)/100.0, ",.2f")
-            SOH_RadiosList += generate_SOHRadios("ee", wizard_data["employee"]["soh_questions"])
-            SOH_GI_Tabs += generate_SOH_GI_tabs("ee", wizard_data["employee"]["soh_questions"])
+    if enrollment_data["employee_coverage"]:
+        if enrollment_data["employee_coverage"]["face_value"]:
+            employeeCoverage = format(enrollment_data["employee_coverage"]["face_value"], ",.0f")
+            eePremium = format(round((enrollment_data["employee_coverage"]["premium"]*100 * 52) / 12)/100.0, ",.2f")
+            SOH_RadiosList += generate_SOHRadios("ee", enrollment_data["employee"]["soh_questions"])
+            SOH_GI_Tabs += generate_SOH_GI_tabs("ee", enrollment_data["employee"]["soh_questions"])
         else:
             employeeCoverage = eeCoverageNullToken
             eePremium = " "
@@ -178,12 +296,12 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
         eePremium = " "
 
     
-    if wizard_data["spouse_coverage"]:
-        if wizard_data["spouse_coverage"]["face_value"]:
-            spouseCoverage = format(wizard_data["spouse_coverage"]["face_value"], ",.0f")
-            spPremium = format(round((wizard_data["spouse_coverage"]["premium"]*100 * 52) / 12)/100.0, ",.2f")
-            SOH_RadiosList += generate_SOHRadios("sp", wizard_data["spouse"]['soh_questions'])
-            SOH_GI_Tabs += generate_SOH_GI_tabs("sp", wizard_data["spouse"]["soh_questions"])
+    if enrollment_data["spouse_coverage"]:
+        if enrollment_data["spouse_coverage"]["face_value"]:
+            spouseCoverage = format(enrollment_data["spouse_coverage"]["face_value"], ",.0f")
+            spPremium = format(round((enrollment_data["spouse_coverage"]["premium"]*100 * 52) / 12)/100.0, ",.2f")
+            SOH_RadiosList += generate_SOHRadios("sp", enrollment_data["spouse"]['soh_questions'])
+            SOH_GI_Tabs += generate_SOH_GI_tabs("sp", enrollment_data["spouse"]["soh_questions"])
         else:
             spouseCoverage = " "
             spPremium = " "
@@ -194,32 +312,35 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
     
     childTabsList = []
     childRadiosList = []
-    for i, child in enumerate(wizard_data['children']):
-        if not wizard_data['children'][i] or not wizard_data['child_coverages'][i]:
+    for i, child in enumerate(enrollment_data['children']):
+        if not enrollment_data['children'][i] or not enrollment_data['child_coverages'][i]:
             continue
-        childTabsList += generate_ChildTabsEntry(i, wizard_data)
-        childRadiosList.append(generate_ChildGenderRadio(i, wizard_data))
-        childRadiosList += generate_SOHRadios("c%s"%(i+1), wizard_data["children"][i]['soh_questions'])
-        SOH_GI_Tabs += generate_SOH_GI_tabs("c%s"%(i+1), wizard_data["children"][i]["soh_questions"])
+        childTabsList += generate_ChildTabsEntry(i, enrollment_data)
+        childRadiosList.append(generate_ChildGenderRadio(i, enrollment_data))
+        childRadiosList += generate_SOHRadios("c%s"%(i+1), enrollment_data["children"][i]['soh_questions'])
+        SOH_GI_Tabs += generate_SOH_GI_tabs("c%s"%(i+1), enrollment_data["children"][i]["soh_questions"])
     
-    
-    eeTabsList = make_applicant_tabs("ee", wizard_data['employee'])
+
+    agent_code = user.custom_data["agent_code"]
+    agent_signing_name = user.custom_data["signing_name"]
+    eeTabsList = make_applicant_tabs("ee", enrollment_data['employee'])
     eeTabsList += [
-        make_tab('eeEnrollCityState', wizard_data["enrollCity"] + ", " + wizard_data["enrollState"]),
+        make_tab('eeEnrollCityState', enrollment_data["enrollCity"] + ", " + enrollment_data["enrollState"]),
         make_tab('identityToken', idTokenStr),
-        make_tab('agentCode', user.custom_data["agent_code"]),
-        make_tab('agentSignName', user.custom_data["signing_name"]),
+        make_tab('agentCode', agent_code),
+        make_tab('agentSignName', agent_signing_name),
         make_tab('eeCoverage', employeeCoverage),
         make_tab('eePremium', eePremium if employeeCoverage != eeCoverageNullToken else ""),
-        make_tab('Employer', wizard_data["agent_data"]["company_name"]),
-        make_tab('eeOtherOwnerName', wizard_data["employee_other_owner_name"] if wizard_data["employee_owner"] == "other" else  ""),
-        make_tab('eeOtherOwnerName2', wizard_data["employee_other_owner_name"] if wizard_data["employee_owner"] == "other" else  ""),
-        make_tab('eeOtherOwnerSSN', wizard_data["employee_other_owner_ssn"] if wizard_data["employee_owner"] == "other" else  ""),
-        make_tab('eeEmailPart1', ee_email_part_1),
-        make_tab('eeEmailPart2', ee_email_part_2),
+        make_tab('Employer', enrollment_data["agent_data"]["company_name"]),
+        make_tab('eeOtherOwnerName', enrollment_data["employee_other_owner_name"] if enrollment_data["employee_owner"] == "other" else  ""),
+        make_tab('eeOtherOwnerName2', enrollment_data["employee_other_owner_name"] if enrollment_data["employee_owner"] == "other" else  ""),
+        make_tab('eeOtherOwnerSSN', enrollment_data["employee_other_owner_ssn"] if enrollment_data["employee_owner"] == "other" else  ""),
+        make_tab('eeEmail', enrollment_data.get_employee_email())
+        #make_tab('eeEmailPart1', ee_email_part_1),
+        #make_tab('eeEmailPart2', ee_email_part_2),
     ]
     
-    eeTabsList += make_contact_tabs('ee', wizard_data["employee"])
+    eeTabsList += make_contact_tabs('ee', enrollment_data["employee"])
     
     def make_beneficiary_tabs(prefix, name, relationship, dob, ssn):
         return [
@@ -231,31 +352,31 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
     
     # add in beneficiaries if appropriate
     if employeeCoverage != eeCoverageNullToken:
-        if wizard_data["employee_beneficiary"] == "spouse":
+        if enrollment_data["employee_beneficiary"] == "spouse":
             eeTabsList += make_beneficiary_tabs(
                 prefix="ee",
-                name=wizard_data["spouse"]["first"] + " " + wizard_data["spouse"]["last"],
+                name=enrollment_data["spouse"]["first"] + " " + enrollment_data["spouse"]["last"],
                 relationship="spouse",
-                dob=wizard_data["spouse"]["birthdate"],
-                ssn=wizard_data["spouse"]["ssn"],
+                dob=enrollment_data["spouse"]["birthdate"],
+                ssn=enrollment_data["spouse"]["ssn"],
             )
         else:
             eeTabsList += make_beneficiary_tabs(
                 prefix = "ee",
-                name = wizard_data["employee_beneficiary_name"],
-                relationship = wizard_data["employee_beneficiary_relationship"],
-                dob = wizard_data["employee_beneficiary_dob"],
-                ssn = wizard_data["employee_beneficiary_ssn"],
+                name = enrollment_data["employee_beneficiary_name"],
+                relationship = enrollment_data["employee_beneficiary_relationship"],
+                dob = enrollment_data["employee_beneficiary_dob"],
+                ssn = enrollment_data["employee_beneficiary_ssn"],
             )
 
         # TODO: Add in ee contingent beneficiary once the tab names are known
     
-    if wizard_data["spouse_owner"] == "other":
-        spouseOtherOwnerName = wizard_data["spouse_other_owner_name"]
-        spouseOtherOwnerSSN = wizard_data["spouse_other_owner_ssn"]
-    elif wizard_data["spouse_owner"] == "employee":
-        spouseOtherOwnerName = wizard_data["employee"]["first"] + " " + wizard_data["employee"]["last"]
-        spouseOtherOwnerSSN = wizard_data["employee"]["ssn"]
+    if enrollment_data["spouse_owner"] == "other":
+        spouseOtherOwnerName = enrollment_data["spouse_other_owner_name"]
+        spouseOtherOwnerSSN = enrollment_data["spouse_other_owner_ssn"]
+    elif enrollment_data["spouse_owner"] == "employee":
+        spouseOtherOwnerName = enrollment_data["employee"]["first"] + " " + enrollment_data["employee"]["last"]
+        spouseOtherOwnerSSN = enrollment_data["employee"]["ssn"]
     else:
         spouseOtherOwnerName = ""
         spouseOtherOwnerSSN = ""
@@ -263,7 +384,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
     
     spouseTabsList = []
     if spouseCoverage != " ":
-        spouseTabsList += make_applicant_tabs("sp", wizard_data["spouse"])
+        spouseTabsList += make_applicant_tabs("sp", enrollment_data["spouse"])
         spouseTabsList += [
             {"tabLabel" : "spOtherOwnerName",
              "value" : spouseOtherOwnerName},
@@ -274,21 +395,21 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
             {"tabLabel" : "spPremium",
              "value" : spPremium}
         ]
-        if wizard_data["spouse_beneficiary"] == "spouse":
+        if enrollment_data["spouse_beneficiary"] == "spouse":
             spouseTabsList += make_beneficiary_tabs(
                 prefix="sp",
-                name=wizard_data["employee"]["first"] + " " + wizard_data["employee"]["last"],
+                name=enrollment_data["employee"]["first"] + " " + enrollment_data["employee"]["last"],
                 relationship="spouse",
-                dob=wizard_data["employee"]["birthdate"],
-                ssn=wizard_data["employee"]["ssn"],
+                dob=enrollment_data["employee"]["birthdate"],
+                ssn=enrollment_data["employee"]["ssn"],
             )
         else:
             spouseTabsList += make_beneficiary_tabs(
                 prefix="sp",
-                name=wizard_data["spouse_beneficiary_name"],
-                relationship=wizard_data["spouse_beneficiary_relationship"],
-                dob=wizard_data["spouse_beneficiary_dob"],
-                ssn=wizard_data["spouse_beneficiary_ssn"],
+                name=enrollment_data["spouse_beneficiary_name"],
+                relationship=enrollment_data["spouse_beneficiary_relationship"],
+                dob=enrollment_data["spouse_beneficiary_dob"],
+                ssn=enrollment_data["spouse_beneficiary_ssn"],
             )
 
         # TODO: Add in spouse contingent beneficiary once the tab names are known
@@ -306,7 +427,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
     generalRadiosList.append({"groupName": "existingIns",
                               "radios": [
                                   {"selected" : "True",
-                                   "value" : wizard_data["existing_insurance"]}
+                                   "value" : enrollment_data["existing_insurance"]}
                               ]})
     generalRadiosList.append({"groupName": "replace",
                               "radios": [
@@ -317,18 +438,18 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
     for (prefix_short, prefix_long) in {("ee", "employee"), ("sp", "spouse")}:
         generalRadiosList.append({"groupName": prefix_short + "Gender",
                               "radios": [
-                                  {"selected" : "True" if wizard_data[prefix_long] and wizard_data[prefix_long]["gender"] == "male" else "False",
+                                  {"selected" : "True" if enrollment_data[prefix_long] and enrollment_data[prefix_long]["gender"] == "male" else "False",
                                    "value" : "male"},
-                                  {"selected" : "True" if wizard_data[prefix_long] and wizard_data[prefix_long]["gender"] == "female" else "False",
+                                  {"selected" : "True" if enrollment_data[prefix_long] and enrollment_data[prefix_long]["gender"] == "female" else "False",
                                    "value" : "female"}
                               ]})
-        if wizard_data[prefix_long] and "is_smoker" in wizard_data[prefix_long]:
+        if enrollment_data[prefix_long] and "is_smoker" in enrollment_data[prefix_long]:
             generalRadiosList.append(
                 {"groupName": prefix_short + "Smoking",
                  "radios": [
-                     {"selected": "True" if wizard_data[prefix_long]["is_smoker"] else "False",
+                     {"selected": "True" if enrollment_data[prefix_long]["is_smoker"] else "False",
                       "value": "smoker"},
-                     {"selected": "True" if not wizard_data[prefix_long]["is_smoker"] else "False",
+                     {"selected": "True" if not enrollment_data[prefix_long]["is_smoker"] else "False",
                       "value": "nonsmoker"}
                  ]}
             )
@@ -338,9 +459,9 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
             (prefix_short == "sp" and spouseCoverage != " ")):
             generalRadiosList.append({"groupName": prefix_short + "Owner",
                                       "radios": [
-                                          {"selected" : "True" if wizard_data[prefix_long + "_owner"] == "self" else "False",
+                                          {"selected" : "True" if enrollment_data[prefix_long + "_owner"] == "self" else "False",
                                            "value" : "self"},
-                                          {"selected" : "True" if ((wizard_data[prefix_long + "_owner"] == "other") or (wizard_data[prefix_long + "_owner"] == "employee")) else "False",
+                                          {"selected" : "True" if ((enrollment_data[prefix_long + "_owner"] == "other") or (enrollment_data[prefix_long + "_owner"] == "employee")) else "False",
                                            "value" : "other"}
                                       ]})
          
@@ -349,7 +470,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
     agentRadiosList.append({"groupName": "existingInsAgent",
                               "radios": [
                                   {"selected" : "True",
-                                   "value" : wizard_data["existing_insurance"]}
+                                   "value" : enrollment_data["existing_insurance"]}
                               ]})
     agentRadiosList.append({"groupName": "replaceAgent",
                               "radios": [
@@ -472,7 +593,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
     requestBody =   {
         "authenticationMethod" : "email",
         "email" : emailTo,
-        "returnUrl" :  build_callback_url(wizard_data, sessionType),
+        "returnUrl" :  build_callback_url(enrollment_data, sessionType),
         "clientUserId" : templateClientID,
         "userName" : recipientName
     }
