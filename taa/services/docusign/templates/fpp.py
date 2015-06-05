@@ -222,7 +222,7 @@ class FPPTemplate(DocuSignServerTemplate):
 
     def make_payment_mode_tabs(self):
         return [
-            DocuSignRadioTab(group_name='payment_mode', value=self.data['payment_mode'], is_selected=True)
+            DocuSignRadioTab(group_name='payment_mode', value=self.data['payment_mode_text'], is_selected=True)
         ]
 
     def make_generic_tabs(self):
@@ -445,7 +445,7 @@ if __name__ == "__main__":
                     "last": "Ray", "phone": "3-(608)259-3463", "ssn": "387500865", "state": "KY",
                     "street_address": "993 Lien Center", "street_address2": "54800 Grim Parkway", "weight": null,
                     "zip": "40591"}, "state": "IN"}, "enrollCity": "Indianapolis", "enrollState": "IN",
-                   "product_type": "FPPCI", "payment_mode": "monthly", "method": "in_person", "did_decline": false,
+                   "product_type": "FPPCI", "payment_mode_text": "monthly", "method": "in_person", "did_decline": false,
                    "identityToken": "12/12/2020", "identityType": "",
                    "employee": {"first": "Katherine", "last": "Adams", "email": "kwoods25w@chron.com", "age": 60,
                                 "weight": null, "height": null, "is_smoker": null, "birthdate": "04/05/1955",
