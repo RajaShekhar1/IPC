@@ -13,6 +13,7 @@ Flask-WTF==0.11
 Jinja2==2.7.3
 Mako==1.0.0
 MarkupSafe==0.23
+Pillow==2.8.1
 PyJWT==0.4.3
 SQLAlchemy==0.9.8
 WTForms==2.0.2
@@ -32,12 +33,14 @@ itsdangerous==0.24
 jsmin==2.0.11
 mailer==0.7
 mandrill==1.0.57
+mock==1.0b1
 oauth2client==1.2
 oauthlib==0.7.2
 psycopg2==2.5.4
 py==1.4.26
 pytest==2.7.0
 python-dateutil==2.2
+reportlab==3.1.44
 requests==2.5.3
 rjsmin==1.0.9
 six==1.9.0
