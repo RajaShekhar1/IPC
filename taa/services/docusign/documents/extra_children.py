@@ -224,7 +224,7 @@ class ChildAttachmentForm(BasePDFDoc):
             pix_x = pdf_x
 
             pix_y = (self.page_height - pdf_y)
-            print("Converted %s, %s to %s %s"%(pdf_x, pdf_y, pix_x, pix_y))
+            #print("Converted %s, %s to %s %s"%(pdf_x, pdf_y, pix_x, pix_y))
             tab = DocuSignSigTab(x=pix_x, y=pix_y, document_id="1", page_number=str(self.get_num_pages()))
             tab.add_to_tabs(tabs)
 

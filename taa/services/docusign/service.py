@@ -89,6 +89,11 @@ class DocuSignTransport(object):
             headers=self._make_headers()
         )
 
+        # Useful when we want to get the direct input to docusign for debugging DocuSign errors with requests module.
+        #print("posting to docusign: %s"%full_url)
+        #print("data: %s"%json.dumps(data))
+        #print('headers: %s'%self._make_headers())
+
         if req.status_code < 200 or req.status_code >= 300:
             # Print error to Heroku error logs.
             print("""
@@ -209,8 +214,8 @@ class DocuSignSigTab(DocuSignTab):
             tabs['signHereTabs'] = []
 
         tabs['signHereTabs'].append(dict(
-            xPosition=self.x,
-            yPosition=self.y,
+            xPosition=int(self.x),
+            yPosition=int(self.y),
             documentId=self.document_id,
             pageNumber=self.page_number,
         ))
