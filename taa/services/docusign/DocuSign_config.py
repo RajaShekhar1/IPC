@@ -61,7 +61,10 @@ def get_template_id(product_type, state):
         return  get_template_id_DEMO(product_type, state)
     else:
         return get_template_id_PRODUCTION(product_type, state)
-    
+
+def get_replacement_template_id(product_type, state):
+    return "3E0CF882-8678-4476-A6B3-D60AA4111C85"
+
 def get_template_id_PRODUCTION(product_type, state):
     """
     Templates are either State specific, the generic template applying to a group of states, or else not-

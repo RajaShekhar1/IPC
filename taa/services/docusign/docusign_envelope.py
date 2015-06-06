@@ -23,6 +23,7 @@ from service import (
 from documents.extra_children import ChildAttachmentForm
 #from documents.fpp_extra_replacement_policies import FPPExtraReplacementPoliciesForm
 from templates.fpp import FPPTemplate
+from templates.fpp_replacement import FPPReplacementFormTemplate
 from taa.services.products import ProductService
 
 product_service = ProductService()
@@ -33,11 +34,9 @@ product_service = ProductService()
 def create_envelope_and_get_signing_url(wizard_data, census_record):
 
     enrollment_data = EnrollmentDataWrap(wizard_data, census_record)
-    
-    # return is_error(bool), error_message, and redirectURL
 
-    product = product_service.get(wizard_data['product_data']['id'])
     # Product code
+    #product = product_service.get(wizard_data['product_data']['id'])
     productType = wizard_data["product_type"]
     is_fpp = ('fpp' in productType.lower())
 
@@ -54,8 +53,8 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data):
     is_error = False
     error_message = None
 
-    owner_agent = enrollment_data.census_record.case.owner_agent if enrollment_data.census_record else 'Agent'
-    agent = AgentDocuSignRecipient(name=owner_agent.name, email=owner_agent.email)
+    owner_agent = enrollment_data.census_record.case.owner_agent
+    agent = AgentDocuSignRecipient(name=owner_agent.name(), email=owner_agent.email)
     employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
                                          email=enrollment_data.get_employee_email())
     recipients = [
@@ -64,20 +63,35 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data):
         # TODO Check if BCC's needed here
     ]
 
-    #child_attachment_form = ChildAttachmentForm(test_recipients)
-    #child_attachment_form.add_child("Joe", "Johnson", child_dob="12/01/2010", child_ssn='123-12-1234', child_soh_answers=[])
-    #child_attachment_form.add_child("Susie", "Johnson", child_dob="12/01/2012", child_ssn='123-12-3234', child_soh_answers=[])
-    #child_attachment_form.add_child("Christy", "Johnson", child_dob="12/01/2014", child_ssn='223-12-3234', child_soh_answers=[])
+    fpp_form = FPPTemplate(recipients, enrollment_data)
 
-    # Use generic template for now
-    general_template = FPPTemplate(recipients, enrollment_data)
+    # Build the components (sections) needed for signing
+    # Main form
+    components = [fpp_form]
+
+    # Replacement Form
+    if fpp_form.is_replacement_form_needed():
+        replacement_form = FPPReplacementFormTemplate(recipients, enrollment_data)
+        components.append(replacement_form)
+
+    # Additional Children
+    if fpp_form.is_child_attachment_form_needed():
+        child_attachment_form = ChildAttachmentForm(recipients, enrollment_data)
+
+        for i, child in enumerate(fpp_form.get_attachment_children()):
+            child.update(dict(
+                coverage=format(enrollment_data['child_coverages'][i+2]['face_value'], ",.0f"),
+                premium=format(enrollment_data['child_coverages'][i+2]['premium'], ".2f")
+            ))
+            child_attachment_form.add_child(child)
+
+        components.append(child_attachment_form)
+
+    # TODO: Additional Replacement Policies
 
     transport = get_docusign_transport()
     envelope_result = create_envelope(email_subject="Signature needed",
-                                      components=[
-                                          general_template,
-                                          #child_attachment_form
-                                      ],
+                                      components=components,
                                       docusign_transport=transport,
                                      )
 
@@ -242,9 +256,11 @@ class EnrollmentDataWrap(object):
     def get_employee_coverage(self):
         return format(self.data["employee_coverage"]["face_value"], ",.0f")
 
-    def get_employee_premium(self):
-        return self.format_money(self.data["employee_coverage"]["premium"])
+    def get_formatted_employee_premium(self):
+        return self.format_money(self.get_employee_premium())
 
+    def get_employee_premium(self):
+        return self.data["employee_coverage"]["premium"]
 
     def did_spouse_select_coverage(self):
         return self.data["spouse_coverage"] and self.data["spouse_coverage"]["face_value"]
@@ -252,12 +268,22 @@ class EnrollmentDataWrap(object):
     def get_spouse_coverage(self):
         return format(self.data["spouse_coverage"]["face_value"], ",.0f")
 
-    def get_spouse_premium(self):
-        return self.format_money(self.data["spouse_coverage"]["premium"])
+    def get_formatted_spouse_premium(self):
+        return self.format_money(self.get_spouse_premium())
 
+    def get_spouse_premium(self):
+        return self.data["spouse_coverage"]["premium"]
 
     def format_money(self, amount):
         return "%.2f"%amount
+
+    def get_num_covered_children(self):
+        return len(self.get_covered_children())
+
+    def get_covered_children(self):
+        return [child for child in self.data['children'] if child and self.data['child_coverages']]
+
+
 
 def old_create_envelope_and_get_signing_url(enrollment_data):
     # return is_error(bool), error_message, and redirectURL

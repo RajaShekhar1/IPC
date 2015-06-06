@@ -264,8 +264,10 @@ function WizardUI(defaults) {
         var child_insured_applicant = new InsuredApplicant(InsuredApplicant.ChildType, {last: self.employee().last() || ""}, self.selected_plan, self.health_questions);
         self.children.push(child_insured_applicant);
 
-        // Re-apply date mask to children
+        // Re-apply date mask to children (also ssn for step 4)
         $('.input-mask-date').mask('99/99/9999');
+        $('.input-mask-ssn').mask('999-99-9999');
+
     };
 
     self.remove_child = function(child) {
@@ -3028,7 +3030,7 @@ function init_validation() {
         if (!window.ui.should_include_spouse_in_table()) {
             wizard_results['employee_beneficiary_type'] = "other";
         }
-            
+
         // Children
         wizard_results['children'] = [];
         wizard_results['child_coverages'] = [];
@@ -3039,7 +3041,7 @@ function init_validation() {
             wizard_results['child_coverages'].push(coverage.serialize_data());
         });
         
-        // Benefits
+        // Coverages
         var emp_benefit = window.ui.selected_plan().employee_recommendation().recommended_benefit;
         if (emp_benefit.is_valid()) {
                 wizard_results['employee_coverage'] = emp_benefit.serialize_data();
@@ -3054,13 +3056,12 @@ function init_validation() {
         }
         
         wizard_results['product_data'] = ui.insurance_product.product_data;
-        
-        // Send to 'listener' for debugging
-        /*
-        ajax_post("http://requestb.in/1l091cx1", {"wizard_results": wizard_results}, function(resp) {
-            alert("Just sent to requestb.in");            
-        }, handle_remote_error, true);
-        */
+
+        // Replacement form
+        wizard_results.replacement_read_aloud = ui.replacement_read_aloud();
+        wizard_results.replacement_is_terminating = ui.replacement_is_terminating();
+        wizard_results.replacement_using_funds = ui.replacement_using_funds();
+        wizard_results.replacement_policies = _.invoke(ui.replacement_policies(), "serialize");
 
         // Send to server
         ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function (resp) {
@@ -3467,4 +3468,14 @@ function ReplacementPolicy() {
     self.insured = ko.observable('');
     self.replaced_or_financing = ko.observable(null);
     self.replacement_reason = ko.observable("");
+
+    self.serialize = function() {
+        return {
+            name: self.name(),
+            policy_number: self.policy_number(),
+            insured: self.insured(),
+            replaced_or_financing: self.replaced_or_financing(),
+            replacement_reason: self.replacement_reason()
+        };
+    };
 }

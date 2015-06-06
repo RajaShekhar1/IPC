@@ -42,10 +42,10 @@ class NumberedCanvas(Canvas):
 
 
 class ChildAttachmentForm(BasePDFDoc):
-    def __init__(self, recipients, wizard_data):
+    def __init__(self, recipients, enrollment_data):
         BasePDFDoc.__init__(self, recipients)
 
-        self.wizard_data = wizard_data
+        self.data = enrollment_data
 
         self.children = []
 
@@ -57,8 +57,6 @@ class ChildAttachmentForm(BasePDFDoc):
         Expects a dict of data with the following keys:
             first, last, ssn, gender (male or female), dob, soh_answers (dict with question, answer keys),
             coverage (int), premium (decimal)
-        :param child_data:
-        :return:
         """
         self.children.append(child_data)
 
@@ -67,11 +65,12 @@ class ChildAttachmentForm(BasePDFDoc):
         styles = getSampleStyleSheet()
 
         def draw_first_page(canvas, doc):
-            canvas.saveState()
+            #canvas.saveState()
             # Title on top of first page
-            canvas.setFont('Times-Roman', 10)
+            #canvas.setFont('Times-Roman', 10)
             #canvas.drawCentredString(self.page_width/2.0, self.page_height - 2*inch, "Extra Children Attachment Form")
-            canvas.restoreState()
+            #canvas.restoreState()
+            pass
 
         def draw_extra_pages(canvas, doc):
 
@@ -98,12 +97,11 @@ class ChildAttachmentForm(BasePDFDoc):
                                   spaceBefore=6,
                                   spaceAfter=4)
 
-        group_name = self.wizard_data['company_name']
-        employee_first = self.wizard_data['employee_first']
-        employee_last = self.wizard_data['employee_last']
-        employee_ssn = self.wizard_data['employee_ssn']
+        group_name = self.data.get_employer_name()
+        employee_first = self.data['employee']['first']
+        employee_last = self.data['employee']['last']
+        employee_ssn = self.data['employee']['ssn']
         masked_ssn = mask_ssn(employee_ssn)
-
 
         child_table_style = TableStyle([
             # Put a box around each cell
@@ -129,13 +127,13 @@ class ChildAttachmentForm(BasePDFDoc):
         ]
         for num, child in enumerate(self.children):
             row = [
-                str(num),
+                str(num + 3),
                 "%s %s"%(child['first'], child['last']),
                 child["ssn"],
                 "M" if child["gender"].lower()[0] == "m" else "F",
-                child['dob'],
-                child['coverage'],
-                child['premium'],
+                child['birthdate'],
+                "$%s"%child['coverage'],
+                "$%s"%child['premium'],
             ]
             child_table_data.append(row)
 
@@ -160,7 +158,7 @@ class ChildAttachmentForm(BasePDFDoc):
         question_data = {}
         for child in self.children:
             child_name = child['first']
-            for soh_data in child['soh_answers']:
+            for soh_data in child['soh_questions']:
                 if soh_data['question'] not in question_data:
                     question_data[soh_data['question']] = {}
 
@@ -195,7 +193,7 @@ class ChildAttachmentForm(BasePDFDoc):
                     def drawOn(self, canvas, x, y, _sW=0):
                         # Flowable alignment adjustment
                         x = self._hAlignAdjust(x,_sW)
-                        child_attachment_object.sig_coords[drawing_wrap.recipient] = (x, y + self.height)
+                        child_attachment_object.sig_coords[drawing_wrap.recipient.name] = (x, y + self.height)
                         Drawing.drawOn(self, canvas, x, y, _sW)
 
                 self.drawing = DrawingWithCoordTracking(width, height, **kwargs)
@@ -222,7 +220,7 @@ class ChildAttachmentForm(BasePDFDoc):
         if self.is_recipient_signer(recipient):
             # Add a signature tab to the last page
 
-            pdf_x, pdf_y = self.sig_coords[recipient]
+            pdf_x, pdf_y = self.sig_coords[recipient.name]
             pix_x = pdf_x
 
             pix_y = (self.page_height - pdf_y)
@@ -233,7 +231,7 @@ class ChildAttachmentForm(BasePDFDoc):
         return tabs
 
     def is_recipient_signer(self, recipient):
-        return recipient.is_employee() or recipient.is_agent()
+        return recipient.is_employee() # or recipient.is_agent()
 
 
 def mask_ssn(ssn):
@@ -252,6 +250,7 @@ if __name__ == "__main__":
     # Test drive the code
 
     from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient
+    from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
 
     agent = AgentDocuSignRecipient(name="Zachary Mason", email="zmason@delmarsd.com")
     employee = EmployeeDocuSignRecipient(name="Joe Tester", email="zach@zachmason.com")
@@ -260,42 +259,40 @@ if __name__ == "__main__":
         employee,
     ]
 
-    child_attachment_form = ChildAttachmentForm(test_recipients, wizard_data=dict(
-        company_name="DelMar SD",
-        employee_first="Test",
-        employee_last="Employee",
-        employee_ssn="123-12-1234",
-    ))
+    child_attachment_form = ChildAttachmentForm(test_recipients, enrollment_data=EnrollmentDataWrap(dict(
+        agent_data=dict(company_name="DelMar SD"),
+        employee=dict(first="Test", last="Employee", ssn="123-12-1234")
+    ), None))
 
     child_attachment_form.add_child(dict(
         first="Joe",
         last="Johnson",
-        dob="12/01/2010",
+        birthdate="12/01/2010",
         gender="male",
         ssn='123-12-1234',
-        soh_answers=[dict(question="Have you ever eaten a lollipop?", answer="no")],
+        soh_questions=[dict(question="Have you ever eaten a lollipop?", answer="no")],
         coverage=10000,
-        premium=10.50)
+        premium='10.50')
     )
     child_attachment_form.add_child(dict(
         first="Susie",
         last="Johnson",
-        dob="12/01/2012",
+        birthdate="12/01/2012",
         gender="female",
         ssn='111-12-2222',
-        soh_answers=[dict(question="Have you ever eaten a lollipop?", answer="no")],
+        soh_questions=[dict(question="Have you ever eaten a lollipop?", answer="no")],
         coverage=10000,
-        premium=10.50)
+        premium='10.50')
     )
     child_attachment_form.add_child(dict(
         first="Christy",
         last="Johnson",
-        dob="12/01/2014",
+        birthdate="12/01/2014",
         gender="female",
         ssn='444-12-4321',
-        soh_answers=[dict(question="Have you ever eaten a lollipop?", answer="GI")],
+        soh_questions=[dict(question="Have you ever eaten a lollipop?", answer="GI")],
         coverage=10000,
-        premium=5.25)
+        premium='5.25')
     )
 
     child_attachment_form.generate()
