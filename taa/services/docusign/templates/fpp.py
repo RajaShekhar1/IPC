@@ -362,51 +362,6 @@ class FPPTemplate(DocuSignServerTemplate):
 
         return tabs
 
-    # [
-    #     DocuSignTextTab('Employer', ), # Company Name
-    #
-    #     'employee_name',
-    #     'eeSSN',
-    #     'eeCoverage',
-    #     'eePremium',
-    #
-    # ]
-    # +'date_of_hire',
-    # +'group_number',
-    # +'actively_at_work', # radio: yes, no
-    # +'payment_mode', # radio
-    #
-    # +'eeBeneAge',
-    # +'eeContBeneFullName',
-    # +'eeContBeneRelationship',
-    # +'eeContBeneSSN',
-    # +'eeContBeneAge',
-    # +'eeContBeneDOB',
-    #
-    #
-    #
-    # 'spouse_hospital_six_months', # Radio yes no
-    # 'spouse_disability_six_months', # Radio yes no
-    #
-    #
-    # 'child1Name' # not fname, lname
-    #
-    # 'totalChildPremium',
-    # 'totalAllPremium',
-    #
-    #
-    # # Replacement Form
-    # 'read_aloud', # yes, no
-    # 'considering_terminating_existing', # yes, no
-    # 'considering_using_funds', # yes, no
-    #
-    # 'policy_insurer_name',
-    # 'policy_number',
-    # 'policy_insured',
-    # 'policy_replaced_or_financing', # R or F
-    # 'policy_reason',
-    # 'eeName',
-
 
 if __name__ == "__main__":
     from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient, get_docusign_transport, create_envelope

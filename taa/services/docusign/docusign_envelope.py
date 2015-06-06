@@ -25,9 +25,10 @@ from documents.extra_children import ChildAttachmentForm
 from templates.fpp import FPPTemplate
 from templates.fpp_replacement import FPPReplacementFormTemplate
 from taa.services.products import ProductService
+from taa.services.agents import AgentService
 
 product_service = ProductService()
-
+agent_service = AgentService()
 
 
 
@@ -53,8 +54,9 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data):
     is_error = False
     error_message = None
 
-    owner_agent = enrollment_data.census_record.case.owner_agent
-    agent = AgentDocuSignRecipient(name=owner_agent.name(), email=owner_agent.email)
+    owner_agent = enrollment_data.census_record.case.owner_agent if enrollment_data.census_record else agent_service.get_logged_in_agent()
+    agent = AgentDocuSignRecipient(name=owner_agent.name(),
+                                   email=owner_agent.email)
     employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
                                          email=enrollment_data.get_employee_email())
     recipients = [
