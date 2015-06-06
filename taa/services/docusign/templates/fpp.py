@@ -273,7 +273,7 @@ class FPPTemplate(DocuSignServerTemplate):
 
     def make_contact_tabs(self, prefix, data):
         return [
-            DocuSignTextTab(prefix+'Address', data['address1'] + " " + data['address2'] if 'address2' in data else ''),
+            DocuSignTextTab(prefix+'Address', data['address1'] + " " + data['address2'] if 'address2' in data and data['address2'] else ''),
             DocuSignTextTab(prefix + 'City', data['city']),
             DocuSignTextTab(prefix + 'State', data['state']),
             DocuSignTextTab(prefix + 'Zip', data['zip']),
