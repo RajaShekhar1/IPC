@@ -221,17 +221,17 @@ class FPPTemplate(DocuSignServerTemplate):
                 prefix=short_prefix+"Cont",
                 name=spouse_data["first"] + " " + spouse_data["last"],
                 relationship="Spouse",
-                dob=spouse_data["birthdate"],
-                ssn=spouse_data["ssn"],
+                dob=spouse_data.get("birthdate"),
+                ssn=spouse_data.get("ssn"),
             )
         elif contingent_type_key in self.data and self.data[contingent_type_key] == 'other':
 
             beneficiary_data = self.data['{}_contingent_beneficiary'.format(long_prefix)]
             tabs += self.make_beneficiary_tabs(prefix='{}Cont'.format(short_prefix),
-                                       name=beneficiary_data['name'],
-                                       relationship=beneficiary_data['relationship'],
-                                       ssn=beneficiary_data['ssn'],
-                                       dob=beneficiary_data['date_of_birth']
+                                       name=beneficiary_data.get('name'),
+                                       relationship=beneficiary_data.get('relationship'),
+                                       ssn=beneficiary_data.get('ssn'),
+                                       dob=beneficiary_data.get('date_of_birth'),
             )
 
         return tabs
