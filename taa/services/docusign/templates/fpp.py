@@ -100,6 +100,10 @@ class FPPTemplate(DocuSignServerTemplate):
 
 
     def add_spouse_tabs(self, ds_tabs):
+
+        if not self.data.did_spouse_select_coverage():
+            return
+
         sp_tabs_list = []
 
         sp_tabs_list += self.make_applicant_tabs(prefix="sp", data=self.data['spouse'])
@@ -128,6 +132,9 @@ class FPPTemplate(DocuSignServerTemplate):
             tabs += self.add_child_data_tabs(i)
             tabs += self.generate_SOH_tabs("c%s"%(i+1), self.data["children"][i]['soh_questions'])
             tabs += self.generate_SOH_GI_tabs("c%s"%(i+1), self.data["children"][i]['soh_questions'])
+
+        if len(self.data['children']) > 2:
+            tabs += [DocuSignTextTab('extra_children_notice', "SEE ATTACHED FOR ADDITIONAL CHILDREN")]
 
         for tab in tabs:
             tab.add_to_tabs(ds_tabs)
@@ -173,10 +180,15 @@ class FPPTemplate(DocuSignServerTemplate):
         if total_children_coverage > 0.0:
             total += total_children_coverage
 
+        if total_children_coverage > 0.0:
+            formatted_children_total = format(total_children_coverage, ".2f")
+        else:
+            formatted_children_total = ""
+
         coverage_tabs += [
             DocuSignTextTab('eePremiumTotal', ee_premium),
             DocuSignTextTab('spPremiumTotal', spouse_premium),
-            DocuSignTextTab('childPremiumTotal', format(total_children_coverage, ".2f")),
+            DocuSignTextTab('childPremiumTotal', formatted_children_total),
             DocuSignTextTab('totalAllPremium', format(total, ".2f"))
         ]
 
@@ -188,11 +200,16 @@ class FPPTemplate(DocuSignServerTemplate):
             self.make_applicant_beneficiary_tabs("ee", "employee") +
             self.make_applicant_beneficiary_tabs("sp", "spouse")
         )
+
+        if not self.data.did_spouse_select_coverage():
+            return
+
         for tab in tabs:
             tab.add_to_tabs(ds_tabs)
 
     def make_applicant_beneficiary_tabs(self, short_prefix, long_prefix):
         tabs = []
+
         if ((long_prefix == "employee" and not self.data.did_employee_select_coverage()) or
             (long_prefix == "spouse" and not self.data.did_spouse_select_coverage())):
             return tabs
@@ -238,8 +255,8 @@ class FPPTemplate(DocuSignServerTemplate):
                 prefix = short_prefix,
                 name = self.data["{}_beneficiary_name".format(long_prefix)],
                 relationship = self.data["{}_beneficiary_relationship".format(long_prefix)],
-                dob = self.data["{}_beneficiary_dob".format(long_prefix)],
-                ssn = self.data["{}_beneficiary_ssn".format(long_prefix)],
+                dob = self.data.get("{}_beneficiary_dob".format(long_prefix)),
+                ssn = self.data.get("{}_beneficiary_ssn".format(long_prefix)),
             )
 
     def make_payment_mode_tabs(self):
@@ -272,8 +289,14 @@ class FPPTemplate(DocuSignServerTemplate):
 
 
     def make_contact_tabs(self, prefix, data):
+
+        if data.get('address2'):
+            address = data['address1'] + " " + data['address2']
+        else:
+            address = data['address1']
+
         return [
-            DocuSignTextTab(prefix+'Address', data['address1'] + " " + data['address2'] if 'address2' in data and data['address2'] else ''),
+            DocuSignTextTab(prefix+'Address', address),
             DocuSignTextTab(prefix + 'City', data['city']),
             DocuSignTextTab(prefix + 'State', data['state']),
             DocuSignTextTab(prefix + 'Zip', data['zip']),

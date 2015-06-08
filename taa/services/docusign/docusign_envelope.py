@@ -202,6 +202,9 @@ class EnrollmentDataWrap(object):
     def __contains__(self, item):
         return item in self.data
 
+    def get(self, key, default=None):
+        return self.data.get(key, default)
+    
     def get_session_type(self):
         if self.data["agent_data"]["is_in_person"]:
             return "inperson"

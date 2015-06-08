@@ -193,6 +193,8 @@ class ChildAttachmentForm(BasePDFDoc):
                     def drawOn(self, canvas, x, y, _sW=0):
                         # Flowable alignment adjustment
                         x = self._hAlignAdjust(x,_sW)
+
+                        # Store the coordinates of the signature line
                         child_attachment_object.sig_coords[drawing_wrap.recipient.name] = (x, y + self.height)
                         Drawing.drawOn(self, canvas, x, y, _sW)
 

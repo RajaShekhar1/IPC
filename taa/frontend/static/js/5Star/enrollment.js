@@ -3027,8 +3027,9 @@ function init_validation() {
             spouse_contingent_beneficiary: window.ui.spouse_contingent_beneficiary().serialize()
         };
 
+
         if (!window.ui.should_include_spouse_in_table()) {
-            wizard_results['employee_beneficiary_type'] = "other";
+            wizard_results.employee_beneficiary = "other";
         }
 
         // Children
