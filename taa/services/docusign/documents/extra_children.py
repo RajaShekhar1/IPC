@@ -1,61 +1,15 @@
-import re
 
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle, _baseFontNameB
-from reportlab.lib.units import inch, mm
-from reportlab.pdfgen.canvas import Canvas
+from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.units import inch
 from reportlab.graphics.shapes import Line, String
 from reportlab.lib import colors
 from reportlab.lib.colors import black
-from reportlab.graphics.renderPDF import Drawing
 
+from utils import style, bold_style2, NumberedCanvas, create_attachment_header, create_signature_line
 from taa.services.docusign.service import (
     BasePDFDoc,
     DocuSignSigTab,
 )
-
-class NumberedCanvas(Canvas):
-    def __init__(self, *args, **kwargs):
-        Canvas.__init__(self, *args, **kwargs)
-        self._saved_page_states = []
-
-    def showPage(self):
-        self._saved_page_states.append(dict(self.__dict__))
-        self._startPage()
-
-    def save(self):
-        """add page info to each page (page x of y)"""
-        num_pages = len(self._saved_page_states)
-        for state in self._saved_page_states:
-            self.__dict__.update(state)
-            self.draw_page_number(num_pages)
-            Canvas.showPage(self)
-        Canvas.save(self)
-
-    def draw_page_number(self, page_count):
-        self.saveState()
-        self.setFont("Helvetica", 7)
-        self.drawRightString(200*mm, 20*mm,
-            "Page %d of %d" % (self._pageNumber, page_count))
-
-        self.restoreState()
-
-styles = getSampleStyleSheet()
-style = styles["Normal"]
-bold_style = ParagraphStyle(name='HeadingCustom',
-                          parent=style,
-                          fontName = _baseFontNameB,
-                          fontSize=10,
-                          leading=14,
-                          spaceBefore=6,
-                          spaceAfter=6)
-bold_style2 = ParagraphStyle(name='HeadingCustom2',
-                          parent=bold_style,
-                          fontName = _baseFontNameB,
-                          fontSize=10,
-                          leading=14,
-                          spaceBefore=6,
-                          spaceAfter=4)
 
 class ChildAttachmentForm(BasePDFDoc):
     def __init__(self, recipients, enrollment_data):
@@ -96,22 +50,7 @@ class ChildAttachmentForm(BasePDFDoc):
         return Spacer(0, size)
 
     def draw_header(self):
-
-        spacer = self.get_spacer(.2 * inch)
-
-        group_name = self.data.get_employer_name()
-        employee_first = self.data['employee']['first']
-        employee_last = self.data['employee']['last']
-        employee_ssn = self.data['employee']['ssn']
-        masked_ssn = mask_ssn(employee_ssn)
-
-        return [
-            Paragraph("5Star Family Protection Plan Application", style),
-            Paragraph(u"<u>Supplemental Form:  Children\u2019s Information</u>", bold_style),
-            spacer,
-            Paragraph("Employer/Group: %s"%group_name, style),
-            Paragraph("Employee: %s %s %s"%(employee_first, employee_last, masked_ssn), style),
-        ]
+        return create_attachment_header(u"<u>Supplemental Form:  Children\u2019s Information</u>", self.data)
 
     def draw_children_info_table(self):
         flowables = [
@@ -182,6 +121,8 @@ class ChildAttachmentForm(BasePDFDoc):
             # Draw the answer table.
             answer_table_data = []
             for child_name, answer in question_data[question].iteritems():
+                if answer is None:
+                    answer = "GI"
                 answer_table_data.append(
                     ["", Paragraph(child_name, style), Paragraph(answer, style)],
                 )
@@ -208,55 +149,10 @@ class ChildAttachmentForm(BasePDFDoc):
 
         return question_data
 
+
     def draw_signature_line(self):
+        return create_signature_line(self.page_width, self.sig_coords, self.recipients)
 
-        flowables = []
-
-        # Get a wrapper around the drawing class so we can extract the coords out for the signature tab.
-        CoordSavingDrawing = self._wrap_drawing_class()
-
-        for recip in self.get_signer_recipients():
-            flowables.append(Spacer(0, .75*inch))
-
-            # Wrap the drawings in our Drawing object so it flows with the document.
-            sig_height = 1 * inch
-            sig_drawing_wrap = CoordSavingDrawing(self.page_width, sig_height, recip)
-
-            # Pull out the drawing object we are wrapping, and add the line and the name for this recipient
-            sig_drawing = sig_drawing_wrap.drawing
-            sig_drawing.add(Line(0, 16, 4*inch, 16, strokeColor=black))
-            sig_drawing.add(String(0, 0, recip.name, fontSize=11, fillColor=black))
-
-            flowables.append(sig_drawing)
-
-        return flowables
-
-    def _wrap_drawing_class(self):
-        # The following represents a bit of a hack on reportlab to extract the coordinates of a
-        #   Flowable object just before it is rendered. This lets us feed the coordinates of the
-        #   rendered line into a DocuSign tab specification.
-        #
-        #  Normally the code would be a little more straightforward, but the  Drawing object has problems
-        #   with any extra attributes -> reportlab raises an exception if you try to track other data within the class,
-        #   so I overcome that here using closures over a wrapper object.
-        child_attachment_object = self
-        class CoordSavingDrawing(object):
-            def __init__(self, width, height, recipient, **kwargs):
-                self.recipient = recipient
-
-                drawing_wrap = self
-                class DrawingWithCoordTracking(Drawing):
-                    def drawOn(self, canvas, x, y, _sW=0):
-                        # Flowable alignment adjustment
-                        x = self._hAlignAdjust(x,_sW)
-
-                        # Store the coordinates of the signature line
-                        child_attachment_object.sig_coords[drawing_wrap.recipient.name] = (x, y + self.height)
-                        Drawing.drawOn(self, canvas, x, y, _sW)
-
-                self.drawing = DrawingWithCoordTracking(width, height, **kwargs)
-
-        return CoordSavingDrawing
 
     def generate_tabs(self, recipient):
         tabs = {}
@@ -282,17 +178,6 @@ class ChildAttachmentForm(BasePDFDoc):
 
 
 
-def mask_ssn(ssn):
-    if not ssn:
-        return ""
-
-    p = re.compile('\d\d\d-?\d\d-?(\d\d\d\d)')
-    match = p.match(ssn)
-    if not match:
-        return ssn
-
-    last_four = match.groups()[0]
-    return "xxx-xx-%s"%last_four
 
 if __name__ == "__main__":
     # Test drive the code

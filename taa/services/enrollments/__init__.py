@@ -90,9 +90,9 @@ class EnrollmentApplicationService(DBService):
             emp_beneficiary_relation = "spouse"
             emp_beneficiary_dob = data["spouse"]["birthdate"]
         else:
-            emp_beneficiary_name = data['employee_beneficiary_name']
+            emp_beneficiary_name = data.get('employee_beneficiary_name')
             emp_beneficiary_ssn = self._strip_ssn(data.get('employee_beneficiary_ssn', None))
-            emp_beneficiary_relation = data['employee_beneficiary_relationship']
+            emp_beneficiary_relation = data.get('employee_beneficiary_relationship')
             emp_beneficiary_dob = data.get('employee_beneficiary_dob', None)
             
         if data['spouse_beneficiary'] == 'spouse':
@@ -101,9 +101,9 @@ class EnrollmentApplicationService(DBService):
             sp_beneficiary_relation = 'spouse'
             sp_beneficiary_dob = data["employee"]['birthdate']
         else:
-            sp_beneficiary_name = data['spouse_beneficiary_name']
+            sp_beneficiary_name = data.get('spouse_beneficiary_name')
             sp_beneficiary_ssn = self._strip_ssn(data.get('spouse_beneficiary_ssn'))
-            sp_beneficiary_relation = data['spouse_beneficiary_relationship']
+            sp_beneficiary_relation = data.get('spouse_beneficiary_relationship')
             sp_beneficiary_dob = data.get('spouse_beneficiary_dob')
             
         enrollment_data = dict(

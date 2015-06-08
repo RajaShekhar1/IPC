@@ -20,10 +20,10 @@ from service import (
     get_docusign_transport,
     create_envelope
 )
-from documents.extra_children import ChildAttachmentForm
-#from documents.fpp_extra_replacement_policies import FPPExtraReplacementPoliciesForm
 from templates.fpp import FPPTemplate
 from templates.fpp_replacement import FPPReplacementFormTemplate
+from documents.extra_children import ChildAttachmentForm
+from documents.additional_replacement_policies import AdditionalReplacementPoliciesForm
 from taa.services.products import ProductService
 from taa.services.agents import AgentService
 
@@ -89,7 +89,9 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data):
 
         components.append(child_attachment_form)
 
-    # TODO: Additional Replacement Policies
+    if fpp_form.is_replacement_form_needed():
+        components.append(AdditionalReplacementPoliciesForm(recipients, enrollment_data))
+
 
     transport = get_docusign_transport()
     envelope_result = create_envelope(email_subject="Signature needed",
