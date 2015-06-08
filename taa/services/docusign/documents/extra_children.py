@@ -1,7 +1,7 @@
 import re
 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle, _baseFontNameB
 from reportlab.lib.units import inch, mm
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.graphics.shapes import Line, String
@@ -40,6 +40,22 @@ class NumberedCanvas(Canvas):
 
         self.restoreState()
 
+styles = getSampleStyleSheet()
+style = styles["Normal"]
+bold_style = ParagraphStyle(name='HeadingCustom',
+                          parent=style,
+                          fontName = _baseFontNameB,
+                          fontSize=10,
+                          leading=14,
+                          spaceBefore=6,
+                          spaceAfter=6)
+bold_style2 = ParagraphStyle(name='HeadingCustom2',
+                          parent=bold_style,
+                          fontName = _baseFontNameB,
+                          fontSize=10,
+                          leading=14,
+                          spaceBefore=6,
+                          spaceAfter=4)
 
 class ChildAttachmentForm(BasePDFDoc):
     def __init__(self, recipients, enrollment_data):
@@ -61,47 +77,47 @@ class ChildAttachmentForm(BasePDFDoc):
         self.children.append(child_data)
 
     def generate(self):
+        flowables = []
 
-        styles = getSampleStyleSheet()
+        flowables += self.draw_header()
 
-        def draw_first_page(canvas, doc):
-            #canvas.saveState()
-            # Title on top of first page
-            #canvas.setFont('Times-Roman', 10)
-            #canvas.drawCentredString(self.page_width/2.0, self.page_height - 2*inch, "Extra Children Attachment Form")
-            #canvas.restoreState()
-            pass
+        flowables += self.draw_children_info_table()
 
-        def draw_extra_pages(canvas, doc):
+        # Statement of Health Questions and Answers for the additional children
+        flowables += self.draw_soh_question_and_answers()
 
-            canvas.saveState()
-            #canvas.setFont('Times-Roman', 9)
-            #canvas.drawString(inch, 0.75 * inch,"Page %d" % (doc.page))
-            canvas.restoreState()
+        # Signature line and name
+        flowables += self.draw_signature_line()
 
-        style = styles["Normal"]
-        bold_style = styles["Heading3"]
-        from reportlab.lib.styles import _baseFontNameB
-        bold_style = ParagraphStyle(name='HeadingCustom',
-                                  parent=style,
-                                  fontName = _baseFontNameB,
-                                  fontSize=10,
-                                  leading=14,
-                                  spaceBefore=6,
-                                  spaceAfter=6)
-        bold_style2 = ParagraphStyle(name='HeadingCustom2',
-                                  parent=bold_style,
-                                  fontName = _baseFontNameB,
-                                  fontSize=10,
-                                  leading=14,
-                                  spaceBefore=6,
-                                  spaceAfter=4)
+        # Generate the document using reportlab's PLATYPUS layout api.
+        self._doc.build(flowables, canvasmaker=NumberedCanvas)
+
+    def get_spacer(self, size=.2 * inch):
+        return Spacer(0, size)
+
+    def draw_header(self):
+
+        spacer = self.get_spacer(.2 * inch)
 
         group_name = self.data.get_employer_name()
         employee_first = self.data['employee']['first']
         employee_last = self.data['employee']['last']
         employee_ssn = self.data['employee']['ssn']
         masked_ssn = mask_ssn(employee_ssn)
+
+        return [
+            Paragraph("5Star Family Protection Plan Application", style),
+            Paragraph(u"<u>Supplemental Form:  Children\u2019s Information</u>", bold_style),
+            spacer,
+            Paragraph("Employer/Group: %s"%group_name, style),
+            Paragraph("Employee: %s %s %s"%(employee_first, employee_last, masked_ssn), style),
+        ]
+
+    def draw_children_info_table(self):
+        flowables = [
+            self.get_spacer(),
+            Paragraph("Information and Coverage", bold_style2),
+        ]
 
         child_table_style = TableStyle([
             # Put a box around each cell
@@ -142,24 +158,45 @@ class ChildAttachmentForm(BasePDFDoc):
             ]
             child_table_data.append(row)
 
-        spacer = Spacer(0, .2 * inch)
-
-        story = [
-
-            Paragraph("5Star Family Protection Plan Application", style),
-            Paragraph(u"<u>Supplemental Form:  Children\u2019s Information</u>", bold_style),
-            spacer,
-            Paragraph("Employer/Group: %s"%group_name, style),
-            Paragraph("Employee: %s %s %s"%(employee_first, employee_last, masked_ssn), style),
-            spacer,
-            Paragraph("Information and Coverage", bold_style2),
-            Table(child_table_data, style=child_table_style, hAlign='LEFT'),
-            spacer,
-            Paragraph("Statement of Health", bold_style2),
-
+        flowables += [
+            Table(child_table_data, style=child_table_style, hAlign='LEFT')
         ]
 
-        # Build up questions mapped to child answers
+        return flowables
+
+    def draw_soh_question_and_answers(self):
+        """
+        Draws the text of the SOH question and below it a table with each recipient's answer to the question
+        """
+
+        question_data = self.group_soh_answers_by_question()
+
+        flowables = [
+            self.get_spacer(),
+            Paragraph("Statement of Health", bold_style2),
+        ]
+        for question in question_data:
+            # Draw the question.
+            flowables.append(Paragraph(question, style))
+
+            # Draw the answer table.
+            answer_table_data = []
+            for child_name, answer in question_data[question].iteritems():
+                answer_table_data.append(
+                    ["", Paragraph(child_name, style), Paragraph(answer, style)],
+                )
+            flowables.append(Table(answer_table_data, colWidths=[.2*inch, 1.5*inch, None]))
+
+        return flowables
+
+    def group_soh_answers_by_question(self):
+        """
+        We get as input a mapping of all the questions and answers for each child.
+
+        This just groups the data into a dictionary with keys being the questions and the value being a dictionary of the
+        children's answers, keyed on the child's first name.
+        """
+
         question_data = {}
         for child in self.children:
             child_name = child['first']
@@ -169,18 +206,32 @@ class ChildAttachmentForm(BasePDFDoc):
 
                 question_data[soh_data['question']][child_name] = soh_data['answer']
 
-        for question in question_data:
-            story.append(Paragraph(question, style))
+        return question_data
 
-            answer_table_data = []
-            for child_name, answer in question_data[question].iteritems():
-                answer_table_data.append(
-                    ["", Paragraph(child_name, style), Paragraph(answer, style)],
-                )
-            story.append(Table(answer_table_data, colWidths=[.2*inch, 1.5*inch, None]))
+    def draw_signature_line(self):
 
+        flowables = []
 
+        # Get a wrapper around the drawing class so we can extract the coords out for the signature tab.
+        CoordSavingDrawing = self._wrap_drawing_class()
 
+        for recip in self.get_signer_recipients():
+            flowables.append(Spacer(0, .75*inch))
+
+            # Wrap the drawings in our Drawing object so it flows with the document.
+            sig_height = 1 * inch
+            sig_drawing_wrap = CoordSavingDrawing(self.page_width, sig_height, recip)
+
+            # Pull out the drawing object we are wrapping, and add the line and the name for this recipient
+            sig_drawing = sig_drawing_wrap.drawing
+            sig_drawing.add(Line(0, 16, 4*inch, 16, strokeColor=black))
+            sig_drawing.add(String(0, 0, recip.name, fontSize=11, fillColor=black))
+
+            flowables.append(sig_drawing)
+
+        return flowables
+
+    def _wrap_drawing_class(self):
         # The following represents a bit of a hack on reportlab to extract the coordinates of a
         #   Flowable object just before it is rendered. This lets us feed the coordinates of the
         #   rendered line into a DocuSign tab specification.
@@ -205,21 +256,7 @@ class ChildAttachmentForm(BasePDFDoc):
 
                 self.drawing = DrawingWithCoordTracking(width, height, **kwargs)
 
-
-        # Signature line
-        signers = [r for r in self.recipients if r.is_employee()]
-        sig_height = 1 * inch
-        for recip in signers:
-            story.append(Spacer(0, .75*inch))
-            sig_line = Line(0, 16, 4*inch, 16, strokeColor=black)
-            #sig_line.strokeColor = black
-            sig_drawing_wrap = CoordSavingDrawing(self.page_width, sig_height, recip)
-            sig_drawing = sig_drawing_wrap.drawing
-            sig_drawing.add(sig_line)
-            sig_drawing.add(String(0, 0, recip.name, fontSize=11, fillColor=black))
-            story.append(sig_drawing)
-
-        self._doc.build(story, onFirstPage=draw_first_page, onLaterPages=draw_extra_pages, canvasmaker=NumberedCanvas)
+        return CoordSavingDrawing
 
     def generate_tabs(self, recipient):
         tabs = {}
@@ -239,6 +276,10 @@ class ChildAttachmentForm(BasePDFDoc):
 
     def is_recipient_signer(self, recipient):
         return recipient.is_employee() # or recipient.is_agent()
+
+    def get_signer_recipients(self):
+        return [r for r in self.recipients if r.is_employee()]
+
 
 
 def mask_ssn(ssn):
