@@ -171,7 +171,7 @@ class FPPTemplate(DocuSignServerTemplate):
         ]
 
         # Totals
-        total_children_coverage = sum(child_coverage['premium'] for child_coverage in self.data["child_coverages"])
+        total_children_coverage = sum(child_coverage.get('premium', 0) for child_coverage in self.data["child_coverages"])
         total = 0.0
         if self.data.did_employee_select_coverage():
             total += self.data.get_employee_premium()
@@ -200,9 +200,6 @@ class FPPTemplate(DocuSignServerTemplate):
             self.make_applicant_beneficiary_tabs("ee", "employee") +
             self.make_applicant_beneficiary_tabs("sp", "spouse")
         )
-
-        if not self.data.did_spouse_select_coverage():
-            return
 
         for tab in tabs:
             tab.add_to_tabs(ds_tabs)
