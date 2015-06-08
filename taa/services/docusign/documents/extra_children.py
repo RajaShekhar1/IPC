@@ -126,11 +126,16 @@ class ChildAttachmentForm(BasePDFDoc):
             ]
         ]
         for num, child in enumerate(self.children):
+            if child.get('gender'):
+                gender = "M" if child["gender"].lower()[0] == "m" else "F"
+            else:
+                gender = ""
+
             row = [
                 str(num + 3),
                 "%s %s"%(child['first'], child['last']),
-                child["ssn"],
-                "M" if child["gender"].lower()[0] == "m" else "F",
+                child.get("ssn", ""),
+                gender,
                 child['birthdate'],
                 "$%s"%child['coverage'],
                 "$%s"%child['premium'],
