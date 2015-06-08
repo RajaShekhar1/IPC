@@ -292,6 +292,9 @@ class FPPTemplate(DocuSignServerTemplate):
         ]
 
     def format_ssn(self, ssn):
+        if not ssn:
+            return ssn
+
         digits = [c for c in ssn if c.isdigit()]
         if len(digits) < 9:
             # Invalid - just return what was given
