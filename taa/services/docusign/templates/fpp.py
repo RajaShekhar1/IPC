@@ -27,6 +27,9 @@ class FPPTemplate(DocuSignServerTemplate):
     def is_replacement_form_needed(self):
         return self.data['replacing_insurance'] or self.data['existing_insurance']
 
+    def is_additional_replacment_policy_attachment_needed(self):
+        return len(self.data['replacement_policies']) > 1
+
     def get_attachment_children(self):
         return self.data.get_covered_children()[2:] if len(self.data.get_covered_children()) > 2 else []
 
@@ -56,6 +59,11 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignRadioTab('existingIns', 'yes' if self.data["existing_insurance"] else 'no'),
             DocuSignRadioTab('replace', 'yes' if self.data["replacing_insurance"] else 'no'),
         ]
+
+        # Replacement policies
+        if self.is_additional_replacment_policy_attachment_needed():
+            tabs.append(DocuSignTextTab('additionalPoliciesNotice', 'SEE ATTACHED'))
+        
 
         for (prefix_short, prefix_long) in {("ee", "employee"), ("sp", "spouse")}:
 

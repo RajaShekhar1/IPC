@@ -23,8 +23,8 @@ class AdditionalReplacementPoliciesForm(BasePDFDoc):
         self.data = enrollment_data
 
 
-        # Strip off the first policy to get the "extra" policies
-        self.policies = [policy for policy in self.data['replacement_policies']][1:]
+        # Put all the policies on this form if we have 2 or more
+        self.policies = [policy for policy in self.data['replacement_policies']]
 
         # Map recipient signers to the coords of the signature line so we can attach tabs to those lines.
         self.sig_coords = {}

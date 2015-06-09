@@ -89,7 +89,7 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data):
         replacement_form = FPPReplacementFormTemplate(recipients, enrollment_data)
         components.append(replacement_form)
 
-    if fpp_form.is_replacement_form_needed():
+    if fpp_form.is_additional_replacment_policy_attachment_needed():
         components.append(AdditionalReplacementPoliciesForm(recipients, enrollment_data))
 
 
