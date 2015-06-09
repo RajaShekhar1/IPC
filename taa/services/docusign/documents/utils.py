@@ -60,7 +60,7 @@ def create_signature_line(page_width, signature_coordinate_map, recipients):
 
         # Pull out the drawing object we are wrapping, and add the line and the name for this recipient
         sig_drawing.add(Line(0, 16, 4*inch, 16, strokeColor=black))
-        sig_drawing.add(String(0, 0, recip.name, fontSize=11, fillColor=black))
+        sig_drawing.add(String(0, 0, "Employee", fontSize=11, fillColor=black))
 
         flowables.append(sig_drawing)
 

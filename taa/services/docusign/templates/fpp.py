@@ -338,7 +338,7 @@ class FPPTemplate(DocuSignServerTemplate):
 
         radio_tabs = []
         for i, soh_question in enumerate(soh_questions):
-            if soh_question['answer'] and soh_question['answer'] == "no":
+            if soh_question['answer'] and soh_question['answer'].lower() == "no":
                 radio_tabs.append(DocuSignRadioTab(prefix + "SOH" + str(i+1), "no"))
 
         return radio_tabs

@@ -151,12 +151,12 @@ class ChildAttachmentForm(BasePDFDoc):
 
 
     def draw_signature_line(self):
-        return create_signature_line(self.page_width, self.sig_coords, self.recipients)
+        return create_signature_line(self.page_width, self.sig_coords, self.get_signer_recipients())
 
 
     def generate_tabs(self, recipient):
         tabs = {}
-        #if recipient.is_employee():
+
         if self.is_recipient_signer(recipient):
             # Add a signature tab to the last page
 
@@ -171,7 +171,7 @@ class ChildAttachmentForm(BasePDFDoc):
         return tabs
 
     def is_recipient_signer(self, recipient):
-        return recipient.is_employee() # or recipient.is_agent()
+        return recipient.is_employee()
 
     def get_signer_recipients(self):
         return [r for r in self.recipients if r.is_employee()]

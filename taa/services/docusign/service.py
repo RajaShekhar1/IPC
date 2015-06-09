@@ -155,6 +155,9 @@ class EmployeeDocuSignRecipient(DocuSignRecipient):
         return True
 
 class AgentDocuSignRecipient(DocuSignRecipient):
+    def is_employee(self):
+        return False
+
     def is_agent(self):
         return True
 

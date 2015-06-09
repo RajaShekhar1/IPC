@@ -71,11 +71,6 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data):
     # Main form
     components = [fpp_form]
 
-    # Replacement Form
-    if fpp_form.is_replacement_form_needed():
-        replacement_form = FPPReplacementFormTemplate(recipients, enrollment_data)
-        components.append(replacement_form)
-
     # Additional Children
     if fpp_form.is_child_attachment_form_needed():
         child_attachment_form = ChildAttachmentForm(recipients, enrollment_data)
@@ -88,6 +83,11 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data):
             child_attachment_form.add_child(child)
 
         components.append(child_attachment_form)
+
+    # Replacement Form
+    if fpp_form.is_replacement_form_needed():
+        replacement_form = FPPReplacementFormTemplate(recipients, enrollment_data)
+        components.append(replacement_form)
 
     if fpp_form.is_replacement_form_needed():
         components.append(AdditionalReplacementPoliciesForm(recipients, enrollment_data))
