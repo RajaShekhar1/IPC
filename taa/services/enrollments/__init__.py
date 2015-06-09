@@ -537,13 +537,13 @@ class EnrollmentApplicationCoverageService(DBService):
         semimonthly_premium = None
         monthly_premium = None
         if payment_mode == 52:
-            weekly_premium = applicant_data['premium']
+            weekly_premium = applicant_coverage['premium']
         elif payment_mode == 26:
-            biweekly_premium = applicant_data['premium']
+            biweekly_premium = applicant_coverage['premium']
         elif payment_mode == 24:
-            semimonthly_premium = applicant_data['premium']
+            semimonthly_premium = applicant_coverage['premium']
         elif payment_mode == 12:
-            monthly_premium = applicant_data['premium']
+            monthly_premium = applicant_coverage['premium']
         else:
             raise Exception("Invalid payment mode %s"%payment_mode)
         
