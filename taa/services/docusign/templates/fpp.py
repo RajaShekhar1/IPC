@@ -338,22 +338,15 @@ class FPPTemplate(DocuSignServerTemplate):
 
         radio_tabs = []
         for i, soh_question in enumerate(soh_questions):
-            if soh_question['answer'] and soh_question['answer'].upper() == "GI":
-                # GI - skip for now
-                selected = "False"
-                answer = "GI"
-            else:
-                selected = "True"
-                answer = "no"
-
-            radio_tabs.append(DocuSignRadioTab(prefix + "SOH" + str(i+1), answer, selected))
+            if soh_question['answer'] and soh_question['answer'] == "no":
+                radio_tabs.append(DocuSignRadioTab(prefix + "SOH" + str(i+1), "no"))
 
         return radio_tabs
 
     def generate_SOH_GI_tabs(self, prefix, soh_questions):
         tabs = []
         for i, soh_question in enumerate(soh_questions):
-            if soh_question['answer'] and soh_question['answer'].upper() == "GI":
+            if soh_question['answer'] and soh_question['answer'].upper() == "GI" or soh_question['answer'] == None:
                 # GI - skip for now
                 answer = "GI"
             else:
