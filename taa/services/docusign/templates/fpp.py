@@ -63,7 +63,7 @@ class FPPTemplate(DocuSignServerTemplate):
         # Replacement policies
         if self.is_additional_replacment_policy_attachment_needed():
             tabs.append(DocuSignTextTab('additionalPoliciesNotice', 'SEE ATTACHED'))
-        
+
 
         for (prefix_short, prefix_long) in {("ee", "employee"), ("sp", "spouse")}:
 
