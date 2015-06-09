@@ -531,7 +531,7 @@ class EnrollmentApplicationCoverageService(DBService):
 
     def create_coverage(self, enrollment, product, data, applicant_data, applicant_coverage, applicant_type):
         # Set proper premium
-        payment_mode = applicant_data.get('payment_mode')
+        payment_mode = data.get('payment_mode')
         weekly_premium = None
         biweekly_premium = None
         semimonthly_premium = None
