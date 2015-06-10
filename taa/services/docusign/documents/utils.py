@@ -51,10 +51,10 @@ def create_signature_line(page_width, signature_coordinate_map, recipients):
     # Get a wrapper around the drawing class so we can extract the coords out for the signature tab.
 
     for recip in recipients:
-        flowables.append(Spacer(0, .75*inch))
+        flowables.append(Spacer(0, .15*inch))
 
         # Wrap the drawings in our Drawing object so it flows with the document and we can extract the signature coords
-        sig_height = 1 * inch
+        sig_height = .75 * inch
         CoordSavingDrawing = _wrap_drawing_class(signature_coordinate_map, recip)
         sig_drawing = CoordSavingDrawing(page_width, sig_height)
 

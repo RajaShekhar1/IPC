@@ -79,10 +79,10 @@ class AdditionalReplacementPoliciesForm(BasePDFDoc):
 
         for num, policy in enumerate(self.policies):
             row = [
-                policy['name'],
-                policy['policy_number'],
-                policy['insured'],
-                policy['replaced_or_financing'],
+                Paragraph(policy['name'], style),
+                Paragraph(policy['policy_number'], style),
+                Paragraph(policy['insured'], style),
+                Paragraph(policy['replaced_or_financing'], style),
                 Paragraph(policy['replacement_reason'], style),
             ]
             table_data.append(row)

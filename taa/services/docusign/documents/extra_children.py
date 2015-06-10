@@ -88,7 +88,7 @@ class ChildAttachmentForm(BasePDFDoc):
 
             row = [
                 str(num + 3),
-                "%s %s"%(child['first'], child['last']),
+                Paragraph("%s %s"%(child['first'], child['last']), style),
                 child.get("ssn", ""),
                 gender,
                 child['birthdate'],

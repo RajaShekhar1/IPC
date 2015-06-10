@@ -123,7 +123,7 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer, db.
         elif self.monthly_premium is not None:
             return self.monthly_premium * 12
         elif self.semimonthly_premium is not None:
-            return self.monthly_premium * 24
+            return self.semimonthly_premium * 24
         elif self.biweekly_premium is not None:
             return self.biweekly_premium * 26
         elif self.weekly_premium is not None:

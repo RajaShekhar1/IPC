@@ -35,28 +35,39 @@ class FPPTemplate(DocuSignServerTemplate):
 
     def generate_tabs(self, recipient):
 
-        if not recipient.is_employee():
-            return {}
+        if recipient.is_agent():
+            tabs = self.make_agent_tabs()
+        else:
+            tabs = [
+                self.make_employer_tabs(),
+                self.make_employee_tabs(),
+                self.make_spouse_tabs(),
+                self.make_coverage_tabs(),
+                self.make_all_beneficiary_tabs(),
+                self.make_children_tabs(),
+                self.make_general_tabs(),
+            ]
 
-        tabs = {}
+        # Format the tabs for docusign
+        docusign_tabs = {}
+        for tab in tabs:
+            tab.add_to_tabs(docusign_tabs)
 
-        self.add_employer_tabs(tabs)
-        self.add_employee_tabs(tabs)
-        self.add_spouse_tabs(tabs)
-        self.add_coverage_tabs(tabs)
-        self.add_all_beneficiary_tabs(tabs)
-        self.add_children_tabs(tabs)
+        return docusign_tabs
 
-        self.add_general_tabs(tabs)
+    def make_agent_tabs(self):
+        return [
+            DocuSignRadioTab('existingInsAgent', 'yes' if self.data['existing_insurance'] else 'no'),
+            DocuSignRadioTab('replaceAgent', 'yes' if self.data['replacement_policies'] else 'no'),
+        ]
 
-        return tabs
-
-    def add_general_tabs(self, ds_tabs):
-
+    def make_general_tabs(self):
         tabs = [
-
+            DocuSignRadioTab('enrollType', "self" if self.data.is_self_enroll() else "assist"),
             DocuSignRadioTab('productType', "FPPTI" if self.data['product_type'] == "FPP-Gov" else self.data['product_type']),
             DocuSignRadioTab('existingIns', 'yes' if self.data["existing_insurance"] else 'no'),
+            DocuSignRadioTab('existingInsAgent', 'yes' if self.data['existing_insurance'] else 'no'),
+            DocuSignRadioTab('replaceAgent', 'yes' if self.data['replacement_policies'] else 'no'),
             DocuSignRadioTab('replace', 'yes' if self.data["replacing_insurance"] else 'no'),
         ]
 
@@ -78,19 +89,16 @@ class FPPTemplate(DocuSignServerTemplate):
                 (prefix_short == "sp" and self.data.did_spouse_select_coverage())):
                 tabs.append(DocuSignRadioTab(prefix_short + "Owner", self.data[prefix_long + "_owner"]))
 
-        for tab in tabs:
-            tab.add_to_tabs(ds_tabs)
+        return tabs
 
-    def add_employer_tabs(self, tabs):
-        emp_tabs = [
+    def make_employer_tabs(self):
+        return [
             DocuSignTextTab('employer', self.data.get_employer_name()),
             DocuSignTextTab('group_number', self.data['agent_data']['group_number'] if self.data['agent_data']['group_number'] else "")
         ]
 
-        for tab in emp_tabs:
-            tab.add_to_tabs(tabs)
 
-    def add_employee_tabs(self, ds_tabs):
+    def make_employee_tabs(self):
 
         ee_tabs_list = []
         ee_tabs_list += self.make_applicant_tabs(prefix="ee", data=self.data['employee'])
@@ -102,12 +110,11 @@ class FPPTemplate(DocuSignServerTemplate):
             ee_tabs_list += self.generate_SOH_tabs("ee", self.data['employee']['soh_questions'])
             ee_tabs_list += self.generate_SOH_GI_tabs("ee", self.data['employee']['soh_questions'])
 
-        for tab in ee_tabs_list:
-            tab.add_to_tabs(ds_tabs)
+        return ee_tabs_list
 
 
 
-    def add_spouse_tabs(self, ds_tabs):
+    def make_spouse_tabs(self):
 
         if not self.data.did_spouse_select_coverage():
             return
@@ -126,11 +133,10 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignRadioTab('spouse_disability_six_months', 'yes' if self.data['has_spouse_been_disabled_6_months'] else 'no'),
         ]
 
-        for tab in sp_tabs_list:
-            tab.add_to_tabs(ds_tabs)
+        return sp_tabs_list
 
 
-    def add_children_tabs(self, ds_tabs):
+    def make_children_tabs(self):
         tabs = []
 
         for i, child in enumerate(self.data['children']):
@@ -144,8 +150,7 @@ class FPPTemplate(DocuSignServerTemplate):
         if len(self.data['children']) > 2:
             tabs += [DocuSignTextTab('extra_children_notice', "SEE ATTACHED FOR ADDITIONAL CHILDREN")]
 
-        for tab in tabs:
-            tab.add_to_tabs(ds_tabs)
+        return tabs
 
     def add_child_data_tabs(self, child_index):
         child_prefix = "child" + str(child_index + 1)
@@ -160,7 +165,7 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignRadioTab(child_prefix + "Gender", child_data["gender"]),
         ]
 
-    def add_coverage_tabs(self, ds_tabs):
+    def make_coverage_tabs(self):
         coverage_tabs = []
 
         # Employee
@@ -200,17 +205,13 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignTextTab('totalAllPremium', format(total, ".2f"))
         ]
 
-        for tab in coverage_tabs:
-            tab.add_to_tabs(ds_tabs)
+        return coverage_tabs
 
-    def add_all_beneficiary_tabs(self, ds_tabs):
-        tabs = (
+    def make_all_beneficiary_tabs(self):
+        return (
             self.make_applicant_beneficiary_tabs("ee", "employee") +
             self.make_applicant_beneficiary_tabs("sp", "spouse")
         )
-
-        for tab in tabs:
-            tab.add_to_tabs(ds_tabs)
 
     def make_applicant_beneficiary_tabs(self, short_prefix, long_prefix):
         tabs = []
@@ -397,7 +398,7 @@ if __name__ == "__main__":
     true = True
     false = False
     null = None
-    wizard_data = {"health_questions":[{"label":"Hospital 90 days","question_text":"Has any Applicant been hospitalized in the past 90 days?","skip_if_coverage_at_most":null},{"label":"Heart","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?","skip_if_coverage_at_most":null},{"label":"Cancer","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?","skip_if_coverage_at_most":null},{"label":"Respiratory","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?","skip_if_coverage_at_most":null},{"label":"Liver","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?","skip_if_coverage_at_most":null},{"label":"HIV/AIDS","question_text":"Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?","skip_if_coverage_at_most":null},{"label":"Ever been rejected","question_text":"Has any Applicant ever applied for and been rejected for life insurance?","skip_if_coverage_at_most":null}],"agent_data":{"children_data":[{"birthdate":"03/29/1995","existing_coverages":[],"first":"Anna","last":"Roberts"},{"birthdate":"02/13/2007","existing_coverages":[],"first":"Kelly","last":"Woods"}],"company_name":"ABC","employee_data":{"birthdate":"04/05/1955","city":"Naples","email":"kwoods25w@chron.com","existing_coverages":[],"first":"Katherine","gender":"female","height":null,"is_smoker":null,"last":"Adams","phone":"4-(566)054-7761","ssn":"287288500","state":"FL","street_address":"23 Washington Crossing","street_address2":"","weight":null,"zip":"34114"},"enroll_city":"Indianapolis","group_number":"ABC-XYZ-12334","health_questions":{"2":[{"label":"Hospital 90 days","question_text":"Has any Applicant been hospitalized in the past 90 days?","skip_if_coverage_at_most":null},{"label":"Heart","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?","skip_if_coverage_at_most":null},{"label":"Cancer","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?","skip_if_coverage_at_most":null},{"label":"Respiratory","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?","skip_if_coverage_at_most":null},{"label":"Liver","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?","skip_if_coverage_at_most":null},{"label":"HIV/AIDS","question_text":"Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?","skip_if_coverage_at_most":null},{"label":"Ever been rejected","question_text":"Has any Applicant ever applied for and been rejected for life insurance?","skip_if_coverage_at_most":null}]},"is_in_person":true,"payment_mode":12,"payment_mode_choices":[{"immutable":true,"mode":12,"name":"Monthly"}],"products":[{"base_product_type":"FPPCI","bypassed_soh_questions":[],"code":"FPPCI","gi_criteria":[],"id":2,"is_guaranteed_issue":false,"name":"Family Protection Plan - Critical Illness","product_type":"base","restricted_agents":[],"visible_to_agents":true}],"spouse_data":{"birthdate":"05/07/1985","city":"Lexington","email":"kwoods25w@cornell.edu","existing_coverages":[],"first":"Joan","gender":"female","height":null,"is_smoker":null,"last":"Ray","phone":"3-(608)259-3463","ssn":"387500865","state":"KY","street_address":"993 Lien Center","street_address2":"54800 Grim Parkway","weight":null,"zip":"40591"},"state":"IN"},"enrollCity":"Indianapolis","enrollState":"IN","product_type":"FPPCI","payment_mode":12,"payment_mode_text":"monthly","method":"in_person","did_decline":false,"identityToken":"12/01/1988","identityType":"","employee":{"first":"Katherine","last":"Adams","email":"kwoods25w@chron.com","age":60,"weight":null,"height":null,"is_smoker":null,"birthdate":"04/05/1955","ssn":"287288500","gender":"female","phone":"4-(566)054-7761","address1":"23 Washington Crossing","address2":"","city":"Naples","state":"FL","zip":"34114","soh_questions":[{"question":"Has any Applicant been hospitalized in the past 90 days?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?","answer":"No"},{"question":"Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?","answer":"No"},{"question":"Has any Applicant ever applied for and been rejected for life insurance?","answer":"No"}]},"spouse":{"first":"Joan","last":"Ray","email":"kwoods25w@cornell.edu","age":30,"weight":null,"height":null,"is_smoker":null,"birthdate":"05/07/1985","ssn":"387500865","gender":"female","phone":"3-(608)259-3463","address1":"993 Lien Center","address2":"54800 Grim Parkway","city":"Lexington","state":"KY","zip":"40591","soh_questions":[{"question":"Has any Applicant been hospitalized in the past 90 days?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?","answer":"No"},{"question":"Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?","answer":"No"},{"question":"Has any Applicant ever applied for and been rejected for life insurance?","answer":"No"}]},"existing_insurance":false,"replacing_insurance":true,"is_employee_actively_at_work":false,"has_spouse_been_treated_6_months":false,"has_spouse_been_disabled_6_months":false,"employee_owner":"self","employee_other_owner_name":"","employee_other_owner_ssn":"","spouse_owner":"employee","spouse_other_owner_name":"","spouse_other_owner_ssn":"","employee_beneficiary":"spouse","spouse_beneficiary":"other","employee_contingent_beneficiary_type":"none","employee_contingent_beneficiary":{},"spouse_beneficiary_name":"Test","spouse_beneficiary_relationship":"asoentuh","spouse_beneficiary_ssn":"098-09-8098","spouse_beneficiary_dob":"12/31/2005","spouse_contingent_beneficiary_type":"none","spouse_contingent_beneficiary":{},"children":[{"first":"Anna","last":"Roberts","email":"","age":20,"weight":null,"height":null,"is_smoker":null,"birthdate":"03/29/1995","ssn":"234-52-3453","gender":"female","phone":"","address1":"","address2":"","city":"","state":"","zip":"","soh_questions":[{"question":"Has any Applicant been hospitalized in the past 90 days?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?","answer":"No"},{"question":"Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?","answer":"No"},{"question":"Has any Applicant ever applied for and been rejected for life insurance?","answer":"No"}]},{"first":"Kelly","last":"Woods","email":"","age":8,"weight":null,"height":null,"is_smoker":null,"birthdate":"02/13/2007","ssn":"234-52-3452","gender":"male","phone":"","address1":"","address2":"","city":"","state":"","zip":"","soh_questions":[{"question":"Has any Applicant been hospitalized in the past 90 days?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?","answer":"No"},{"question":"Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?","answer":"No"},{"question":"Has any Applicant ever applied for and been rejected for life insurance?","answer":"No"}]},{"first":"Third","last":"Child","email":"","age":5,"weight":null,"height":null,"is_smoker":null,"birthdate":"01/01/2010","ssn":"123-12-1234","gender":"male","phone":"","address1":"","address2":"","city":"","state":"","zip":"","soh_questions":[{"question":"Has any Applicant been hospitalized in the past 90 days?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?","answer":"No"},{"question":"Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?","answer":"No"},{"question":"Has any Applicant ever applied for and been rejected for life insurance?","answer":"No"}]}],"child_coverages":[{"premium":9.97,"face_value":20000},{"premium":9.97,"face_value":20000},{"premium":9.97,"face_value":20000}],"employee_coverage":{"premium":76.48,"face_value":25000},"spouse_coverage":{"premium":8.67,"face_value":10000},"product_data":{"base_product_type":"FPPCI","bypassed_soh_questions":[],"code":"FPPCI","gi_criteria":[],"id":2,"is_guaranteed_issue":false,"name":"Family Protection Plan - Critical Illness","product_type":"base","restricted_agents":[],"visible_to_agents":true},"replacement_read_aloud":false,"replacement_is_terminating":true,"replacement_using_funds":true,"replacement_policies":[{"name":"Test Name","policy_number":"Contract #12345","insured":"Myself","replaced_or_financing":"replaced","replacement_reason":"Just because..."},{"name":"Insurer #2","policy_number":"12l3c2cr3g4cr23g4","insured":"Spouse","replaced_or_financing":"financing","replacement_reason":"I also want this replaced"}]}
+    wizard_data = None
     enrollment_data = wrap_data = EnrollmentDataWrap(wizard_data, None)
 
     owner_agent = "Agent Mason" # census_record.case.owner_agent
@@ -446,141 +447,3 @@ if __name__ == "__main__":
 
     print(redirect_url)
 
-    data = {u'spouse_other_owner_name': u'', u'has_spouse_been_treated_6_months': False,
-            u'replacement_using_funds': None, u'replacement_is_terminating': None, u'spouse': {u'first': u'Kathryn',
-                                                                                               u'soh_questions': [{
-                                                                                                                  u'question': u'Has any Applicant been hospitalized in the past 90 days?',
-                                                                                                                  u'answer': u'No'},
-                                                                                                                  {
-                                                                                                                  u'question': u'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?',
-                                                                                                                  u'answer': u'No'},
-                                                                                                                  {
-                                                                                                                  u'question': u"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?",
-                                                                                                                  u'answer': u'No'},
-                                                                                                                  {
-                                                                                                                  u'question': u'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?',
-                                                                                                                  u'answer': u'No'},
-                                                                                                                  {
-                                                                                                                  u'question': u'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?',
-                                                                                                                  u'answer': u'No'},
-                                                                                                                  {
-                                                                                                                  u'question': u'Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?',
-                                                                                                                  u'answer': u'No'},
-                                                                                                                  {
-                                                                                                                  u'question': u'Has any Applicant ever applied for and been rejected for life insurance?',
-                                                                                                                  u'answer': u'No'}],
-                                                                                               u'email': None,
-                                                                                               u'state': None,
-                                                                                               u'height': None,
-                                                                                               u'zip': None,
-                                                                                               u'birthdate': u'07/25/1994',
-                                                                                               u'phone': None,
-                                                                                               u'age': 20, u'ssn': None,
-                                                                                               u'gender': u'female',
-                                                                                               u'weight': None,
-                                                                                               u'city': None,
-                                                                                               u'last': u'Carpenter',
-                                                                                               u'is_smoker': None,
-                                                                                               u'address2': None,
-                                                                                               u'address1': None},
-            u'employee_contingent_beneficiary': {}, u'enrollCity': u'Nowhere',
-            u'has_spouse_been_disabled_6_months': False, u'employee_other_owner_name': u'',
-            u'product_data': {u'name': u'Family Protection Plan - Critical Illness', u'is_guaranteed_issue': False,
-                              u'base_product_type': u'FPPCI', u'gi_criteria': [], u'restricted_agents': [],
-                              u'bypassed_soh_questions': [], u'visible_to_agents': True, u'product_type': u'base',
-                              u'id': 2, u'code': u'FPPCI'}, u'identityType': u'', u'children': [],
-            u'spouse_contingent_beneficiary': {}, u'employee_other_owner_ssn': u'', u'employee': {u'first': u'Philip',
-                                                                                                  u'soh_questions': [{
-                                                                                                                     u'question': u'Has any Applicant been hospitalized in the past 90 days?',
-                                                                                                                     u'answer': u'No'},
-                                                                                                                     {
-                                                                                                                     u'question': u'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?',
-                                                                                                                     u'answer': u'No'},
-                                                                                                                     {
-                                                                                                                     u'question': u"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?",
-                                                                                                                     u'answer': u'No'},
-                                                                                                                     {
-                                                                                                                     u'question': u'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?',
-                                                                                                                     u'answer': u'No'},
-                                                                                                                     {
-                                                                                                                     u'question': u'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?',
-                                                                                                                     u'answer': u'No'},
-                                                                                                                     {
-                                                                                                                     u'question': u'Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?',
-                                                                                                                     u'answer': u'No'},
-                                                                                                                     {
-                                                                                                                     u'question': u'Has any Applicant ever applied for and been rejected for life insurance?',
-                                                                                                                     u'answer': u'No'}],
-                                                                                                  u'email': u'pcarpenter8h@omniture.com',
-                                                                                                  u'state': u'NM',
-                                                                                                  u'height': None,
-                                                                                                  u'zip': u'96536',
-                                                                                                  u'birthdate': u'03/13/1952',
-                                                                                                  u'phone': u'354-492-2602',
-                                                                                                  u'age': 63,
-                                                                                                  u'ssn': u'937202347',
-                                                                                                  u'gender': u'male',
-                                                                                                  u'weight': None,
-                                                                                                  u'city': u'Mesquite',
-                                                                                                  u'last': u'Carpenter',
-                                                                                                  u'is_smoker': None,
-                                                                                                  u'address2': None,
-                                                                                                  u'address1': u'54 W Hwy 80'},
-            u'did_decline': False, u'payment_mode': 12, u'spouse_coverage': {u'face_value': 10000, u'premium': 8.23},
-            u'replacing_insurance': False, u'replacement_policies': [
-        {u'replacement_reason': u'', u'name': u'', u'replaced_or_financing': None, u'policy_number': u'',
-         u'insured': u''}], u'existing_insurance': False, u'enrollState': u'IN', u'spouse_beneficiary': u'spouse',
-            u'identityToken': u'01/01/1999', u'spouse_other_owner_ssn': u'', u'employee_owner': u'self',
-            u'agent_data': {u'children_data': [], u'state': u'IN', u'products': [
-                {u'name': u'Family Protection Plan - Critical Illness', u'is_guaranteed_issue': False,
-                 u'base_product_type': u'FPPCI', u'gi_criteria': [], u'restricted_agents': [],
-                 u'bypassed_soh_questions': [], u'visible_to_agents': True, u'product_type': u'base', u'id': 2,
-                 u'code': u'FPPCI'}],
-                            u'spouse_data': {u'first': u'Kathryn', u'email': None, u'state': None, u'height': None,
-                                             u'zip': None, u'existing_coverages': [], u'birthdate': u'07/25/1994',
-                                             u'phone': None, u'ssn': None, u'gender': u'female', u'weight': None,
-                                             u'street_address2': None, u'street_address': None, u'last': u'Carpenter',
-                                             u'is_smoker': None, u'city': None}, u'enroll_city': u'Nowhere',
-                            u'is_in_person': True, u'company_name': u'Test Partner Agents', u'payment_mode': 12,
-                            u'employee_data': {u'first': u'Philip', u'email': u'pcarpenter8h@omniture.com',
-                                               u'state': u'NM', u'height': None, u'zip': u'96536',
-                                               u'existing_coverages': [], u'birthdate': u'03/13/1952',
-                                               u'phone': u'354-492-2602', u'ssn': u'937202347', u'gender': u'male',
-                                               u'weight': None, u'street_address2': None,
-                                               u'street_address': u'54 W Hwy 80', u'last': u'Carpenter',
-                                               u'is_smoker': None, u'city': u'Mesquite'}, u'group_number': u'ABC-123',
-                            u'health_questions': {u'2': [
-                                {u'label': u'Hospital 90 days', u'skip_if_coverage_at_most': None,
-                                 u'question_text': u'Has any Applicant been hospitalized in the past 90 days?'},
-                                {u'label': u'Heart', u'skip_if_coverage_at_most': None,
-                                 u'question_text': u'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?'},
-                                {u'label': u'Cancer', u'skip_if_coverage_at_most': None,
-                                 u'question_text': u"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?"},
-                                {u'label': u'Respiratory', u'skip_if_coverage_at_most': None,
-                                 u'question_text': u'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?'},
-                                {u'label': u'Liver', u'skip_if_coverage_at_most': None,
-                                 u'question_text': u'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?'},
-                                {u'label': u'HIV/AIDS', u'skip_if_coverage_at_most': None,
-                                 u'question_text': u'Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?'},
-                                {u'label': u'Ever been rejected', u'skip_if_coverage_at_most': None,
-                                 u'question_text': u'Has any Applicant ever applied for and been rejected for life insurance?'}]},
-                            u'payment_mode_choices': [{u'name': u'Monthly', u'mode': 12, u'immutable': True}]},
-            u'spouse_owner': u'employee', u'payment_mode_text': u'monthly', u'replacement_read_aloud': None,
-            u'child_coverages': [], u'employee_coverage': {u'face_value': 10000, u'premium': 39.04},
-            u'employee_contingent_beneficiary_type': u'none', u'employee_beneficiary': u'spouse',
-            u'product_type': u'FPPCI', u'spouse_contingent_beneficiary_type': u'none', u'health_questions': [
-        {u'label': u'Hospital 90 days', u'skip_if_coverage_at_most': None,
-         u'question_text': u'Has any Applicant been hospitalized in the past 90 days?'},
-        {u'label': u'Heart', u'skip_if_coverage_at_most': None,
-         u'question_text': u'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?'},
-        {u'label': u'Cancer', u'skip_if_coverage_at_most': None,
-         u'question_text': u"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?"},
-        {u'label': u'Respiratory', u'skip_if_coverage_at_most': None,
-         u'question_text': u'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?'},
-        {u'label': u'Liver', u'skip_if_coverage_at_most': None,
-         u'question_text': u'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?'},
-        {u'label': u'HIV/AIDS', u'skip_if_coverage_at_most': None,
-         u'question_text': u'Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?'},
-        {u'label': u'Ever been rejected', u'skip_if_coverage_at_most': None,
-         u'question_text': u'Has any Applicant ever applied for and been rejected for life insurance?'}],
-            u'is_employee_actively_at_work': False, u'method': u'in_person'}

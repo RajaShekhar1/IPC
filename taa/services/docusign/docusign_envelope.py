@@ -94,7 +94,7 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data):
 
 
     transport = get_docusign_transport()
-    envelope_result = create_envelope(email_subject="Signature needed",
+    envelope_result = create_envelope(email_subject="Signature needed: " + enrollment_data.get_product_code() + " for " +  enrollment_data.get_employee_name() + " (" + enrollment_data.get_employer_name() + ")",
                                       components=components,
                                       docusign_transport=transport,
                                      )
@@ -206,7 +206,10 @@ class EnrollmentDataWrap(object):
 
     def get(self, key, default=None):
         return self.data.get(key, default)
-    
+
+    def is_self_enroll(self):
+        return not self.data["agent_data"]["is_in_person"]
+
     def get_session_type(self):
         if self.data["agent_data"]["is_in_person"]:
             return "inperson"
@@ -230,6 +233,9 @@ class EnrollmentDataWrap(object):
             return self.census_record.case.company_name
         else:
             return self.data['agent_data']["company_name"]
+
+    def get_product_code(self):
+        return self.data['product_type']
 
     def get_employee_name(self):
         return self.data["employee"]["first"] + " " + self.data["employee"]["last"]

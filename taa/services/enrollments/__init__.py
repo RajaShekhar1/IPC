@@ -545,6 +545,7 @@ class EnrollmentApplicationCoverageService(DBService):
         elif payment_mode == 12:
             monthly_premium = applicant_coverage['premium']
         else:
+            import pdb; pdb.set_trace()
             raise Exception("Invalid payment mode %s"%payment_mode)
         
         return self.create(**dict(
