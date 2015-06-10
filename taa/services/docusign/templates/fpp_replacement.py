@@ -20,21 +20,26 @@ class FPPReplacementFormTemplate(DocuSignServerTemplate):
         if not recipient.is_employee():
             return {}
 
-        # Has to be at least one. Additional, if any, will go on the attachment document.
-        policy = self.data['replacement_policies'][0]
-
         tabs = [
             DocuSignRadioTab('read_aloud', 'yes' if self.data['replacement_read_aloud'] else 'no'),
             DocuSignRadioTab('considering_terminating_existing', 'yes' if self.data['replacement_is_terminating'] else 'no'),
             DocuSignRadioTab('considering_using_funds', 'yes' if self.data['replacement_using_funds'] else 'no'),
-            DocuSignTextTab('policy_insurer_name', policy['name']),
-            DocuSignTextTab('policy_number', policy['policy_number']),
-            DocuSignTextTab('policy_insured', policy['insured']),
-            DocuSignTextTab('policy_replaced_or_financing', 'R' if policy['replaced_or_financing'] == 'replaced' else 'F'),
-            DocuSignTextTab('policy_reason', policy['replacement_reason']),
-
-            DocuSignTextTab('eeName', self.data.get_employee_name())
+            DocuSignTextTab('eeName', self.data.get_employee_name()),
+            DocuSignTextTab('agentSignName', self.data.get_agent_signing_name()),
         ]
+
+        if len(self.data['replacement_policies']) == 1:
+            # Has to be at least one. Additional, if any, will go on the attachment document.
+            policy = self.data['replacement_policies'][0]
+            tabs += [
+                DocuSignTextTab('policy_insurer_name', policy['name']),
+                DocuSignTextTab('policy_number', policy['policy_number']),
+                DocuSignTextTab('policy_insured', policy['insured']),
+                DocuSignTextTab('policy_replaced_or_financing', 'R' if policy['replaced_or_financing'] == 'replaced' else 'F'),
+                DocuSignTextTab('policy_reason', policy['replacement_reason']),
+            ]
+        else:
+            tabs.append(DocuSignTextTab('additionalPoliciesNotice', 'SEE ATTACHED'))
 
         # Format tabs for docusign
         ds_tabs = {}

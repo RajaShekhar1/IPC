@@ -54,9 +54,11 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data):
     is_error = False
     error_message = None
 
-    owner_agent = enrollment_data.census_record.case.owner_agent if enrollment_data.census_record else agent_service.get_logged_in_agent()
-    agent = AgentDocuSignRecipient(name=owner_agent.name(),
-                                   email=owner_agent.email)
+    #owner_agent = enrollment_data.census_record.case.owner_agent if enrollment_data.census_record else agent_service.get_logged_in_agent()
+
+    logged_in_agent = agent_service.get_logged_in_agent()
+    agent = AgentDocuSignRecipient(name=logged_in_agent.name(),
+                                   email=logged_in_agent.email)
     employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
                                          email=enrollment_data.get_employee_email())
     recipients = [
@@ -228,6 +230,14 @@ class EnrollmentDataWrap(object):
         else:
             return self.get_employee_email()
 
+    def get_agent_signing_name(self):
+        # TODO: need to get proper agent for self-enroll.
+        return user.custom_data["signing_name"]
+
+    def get_agent_code(self):
+        # TODO: need to get proper agent for self-enroll.
+        return user.custom_data["agent_code"]
+
     def get_employer_name(self):
         if self.census_record and self.census_record.case:
             return self.census_record.case.company_name
@@ -361,10 +371,10 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
         childRadiosList.append(generate_ChildGenderRadio(i, enrollment_data))
         childRadiosList += generate_SOHRadios("c%s"%(i+1), enrollment_data["children"][i]['soh_questions'])
         SOH_GI_Tabs += generate_SOH_GI_tabs("c%s"%(i+1), enrollment_data["children"][i]["soh_questions"])
-    
 
-    agent_code = user.custom_data["agent_code"]
-    agent_signing_name = user.custom_data["signing_name"]
+
+    agent_code = enrollment_data.get_agent_code()
+    agent_signing_name = enrollment_data.get_agent_signing_name()
     eeTabsList = make_applicant_tabs("ee", enrollment_data['employee'])
     eeTabsList += [
         make_tab('eeEnrollCityState', enrollment_data["enrollCity"] + ", " + enrollment_data["enrollState"]),

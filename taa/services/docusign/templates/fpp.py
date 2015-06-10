@@ -71,11 +71,6 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignRadioTab('replace', 'yes' if self.data["replacing_insurance"] else 'no'),
         ]
 
-        # Replacement policies
-        if self.is_additional_replacment_policy_attachment_needed():
-            tabs.append(DocuSignTextTab('additionalPoliciesNotice', 'SEE ATTACHED'))
-
-
         for (prefix_short, prefix_long) in {("ee", "employee"), ("sp", "spouse")}:
 
             tabs.append(DocuSignRadioTab(prefix_short + "Gender", self.data[prefix_long]["gender"]))
@@ -274,8 +269,8 @@ class FPPTemplate(DocuSignServerTemplate):
 
         ee_email_part_1, ee_email_part_2 = self.data.get_employee_email_parts()
 
-        agent_code = user.custom_data["agent_code"]
-        agent_signing_name = user.custom_data["signing_name"]
+        agent_code = self.data.get_agent_code()
+        agent_signing_name = self.data.get_agent_signing_name()
 
         return [
             DocuSignTextTab('eeEnrollCityState', self.data["enrollCity"] + ", " + self.data["enrollState"]),
