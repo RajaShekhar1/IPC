@@ -1548,6 +1548,8 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
 
             <div id="ChildrenInfoBlock" data-bind="visible: did_select_children_coverage()">
                 <h3 class="lighter block green">Children information</h3>
+
+                {# Loop through the children #}
                 <ul class="list-unstyled" data-bind="foreach: {data: get_valid_children}">
                     <li>
                         <div class="row form-group">
@@ -1570,7 +1572,7 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                             </label>
 
                             <div class="col-xs-12 col-sm-9">
-                                <input type="text" class="col-xs-12 col-sm-5 input-mask-ssn" data-bind="value: ssn, 
+                                <input type="text" class="col-xs-12 col-sm-5" data-bind="value: ssn, maskedInput: '999-99-9999',
 										attr: {id: 'child-ssn-'+$index()}
 										"/>
                             </div>

@@ -205,6 +205,7 @@ ko.bindingHandlers.flashMessage = {
     } 
 };
 
+// Uses the mask plugin provided with the ACE template to control what can be typed in an input.
 ko.bindingHandlers.maskedInput = {
     init: function(element, valueAccessor) {
         $(element).mask(ko.unwrap(valueAccessor()));
@@ -245,7 +246,6 @@ ko.bindingHandlers.fadeInIf = {
         }
     } 
 };
-
 
 // Wrap the ace multiselect plugin 
 ko.bindingHandlers.multiSelect = {
