@@ -1688,7 +1688,7 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                                 </label>
     
                                 <div class="col-xs-10 col-sm-9 form-group">
-                                    <input type="text" id="eeBeneOtherSSN" class="input-mask-ssn"
+                                    <input type="text" id="eeBeneOtherSSN" name="eeBeneOtherSSN" class="input-mask-ssn"
                                            data-bind="value: employee_other_beneficiary().ssn"/>
                                 </div>
                             </div>
@@ -1705,6 +1705,17 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                                 </div>
                             </div>
                         </div>
+
+                        <div class="row">
+                            <div class="col-sm-12 col-md-6 form-group">
+                                <label class="control-label col-xs-12 col-sm-12 no-padding-right">
+                                    <input type="checkbox" id="eeBeneOtherEntity" name="eeBeneOtherEntity"
+                                           data-bind="checked: employee_other_beneficiary().is_nonperson_entity"/>
+                                    beneficiary is an estate, trust, or other non-person entity
+                                </label>
+                            </div>
+                        </div>
+
                     </div>
                     <!-- /eeBeneficiaryOther -->
                 </div>

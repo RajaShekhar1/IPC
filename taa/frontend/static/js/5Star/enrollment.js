@@ -209,6 +209,12 @@ function WizardUI(defaults) {
     self.spouse_contingent_beneficiary_type = ko.observable("none");
     self.spouse_contingent_beneficiary = ko.observable(new Beneficiary());
 
+    self.is_employee_beneficiary_info_required = function () {
+        return !self.did_select_spouse_coverage() || $("#eeBeneOther").is(':checked')
+    };
+    //self.is_employee_contingent_info_required = function() {
+    //    return
+    //};
 
     // Children
     self.should_include_children = ko.observable(
@@ -1835,7 +1841,8 @@ function Beneficiary(options) {
         name: "",
         relationship: "",
         ssn: "",
-        date_of_birth: ""
+        date_of_birth: "",
+        is_nonperson_entity: false
     };
     options = $.merge({}, defaults, options);
 
@@ -1843,13 +1850,15 @@ function Beneficiary(options) {
     self.relationship = ko.observable(options.relationship);
     self.ssn = ko.observable(options.ssn);
     self.date_of_birth = ko.observable(options.date_of_birth);
+    self.is_nonperson_entity = ko.observable(options.is_nonperson_entity);
 
     self.serialize = function() {
         return {
             name: self.name(),
             relationship: self.relationship(),
             ssn: self.ssn(),
-            date_of_birth: self.date_of_birth()
+            date_of_birth: self.date_of_birth(),
+            is_nonperson_entity: self.is_nonperson_entity()
         };
     };
 }
@@ -2768,6 +2777,7 @@ function ajax_post(url, data, on_success, on_error, is_json) {
 }
 
 
+
 function init_validation() {
     $(document).on('change', 'input:radio[id^="eeOwner-"]', function () {
         var other = $('#eeOtherOwner');
@@ -3306,15 +3316,31 @@ function init_validation() {
         rules: {
             eeBeneOtherName: {
                 required: {
-                    depends: function(element) {
-                        return (!window.ui.did_select_spouse_coverage() || $("#eeBeneOther").is(':checked'))
-                    }   
+                    depends: ui.is_employee_beneficiary_info_required
                 }
             },
             eeBeneOtherRelation: {
                 required: {
-                    depends: function(element) {
-                        return (!window.ui.did_select_spouse_coverage() || $("#eeBeneOther").is(':checked'))
+                    depends: ui.is_employee_beneficiary_info_required
+                }
+            },
+            eeBeneOtherSSN: {
+                required: {
+                    depends: function(e) {
+                        return (
+                            ui.is_employee_beneficiary_info_required() &&
+                            !ui.employee_other_beneficiary().is_nonperson_entity()
+                        );
+                    }
+                }
+            },
+            eeBeneOtherDOB: {
+                required: {
+                    depends: function(e) {
+                        return (
+                            ui.is_employee_beneficiary_info_required() &&
+                            !ui.employee_other_beneficiary().is_nonperson_entity()
+                        );
                     }
                 }
             },
