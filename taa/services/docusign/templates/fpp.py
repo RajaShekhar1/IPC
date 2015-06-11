@@ -38,7 +38,8 @@ class FPPTemplate(DocuSignServerTemplate):
         if recipient.is_agent():
             tabs = self.make_agent_tabs()
         else:
-            tabs = [
+
+            lists_of_tabs = [
                 self.make_employer_tabs(),
                 self.make_employee_tabs(),
                 self.make_spouse_tabs(),
@@ -47,6 +48,9 @@ class FPPTemplate(DocuSignServerTemplate):
                 self.make_children_tabs(),
                 self.make_general_tabs(),
             ]
+            tabs = []
+            for tab_list in lists_of_tabs:
+                tabs.extend(tab_list)
 
         # Format the tabs for docusign
         docusign_tabs = {}
@@ -272,6 +276,11 @@ class FPPTemplate(DocuSignServerTemplate):
         agent_code = self.data.get_agent_code()
         agent_signing_name = self.data.get_agent_signing_name()
 
+        if self.data['spouse_owner'] == "other":
+            spouse_owner_notice = "SPOUSE POLICY OWNER: {}, {}".format(self.data['spouse_other_owner_name'], self.data['spouse_other_owner_ssn'])
+        else:
+            spouse_owner_notice = ""
+
         return [
             DocuSignTextTab('eeEnrollCityState', self.data["enrollCity"] + ", " + self.data["enrollState"]),
             DocuSignTextTab('eeEnrollCity', self.data['enrollCity']),
@@ -283,6 +292,7 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignTextTab('eeOtherOwnerName', self.data["employee_other_owner_name"] if self.data["employee_owner"] == "other" else  ""),
             DocuSignTextTab('eeOtherOwnerName2', self.data["employee_other_owner_name"] if self.data["employee_owner"] == "other" else  ""),
             DocuSignTextTab('eeOtherOwnerSSN', self.data["employee_other_owner_ssn"] if self.data["employee_owner"] == "other" else  ""),
+            DocuSignTextTab('spouse_owner_notice', spouse_owner_notice),
             DocuSignTextTab('eeEmailPart1', ee_email_part_1),
             DocuSignTextTab('eeEmailPart2', ee_email_part_2),
             DocuSignRadioTab('actively_at_work', "yes" if self.data['is_employee_actively_at_work'] else "no"),
