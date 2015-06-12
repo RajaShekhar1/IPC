@@ -51,7 +51,7 @@ def create_signature_line(page_width, signature_coordinate_map, recipients):
     # Get a wrapper around the drawing class so we can extract the coords out for the signature tab.
 
     for recip in recipients:
-        flowables.append(Spacer(0, .15*inch))
+        flowables.append(Spacer(0, .1*inch))
 
         # Wrap the drawings in our Drawing object so it flows with the document and we can extract the signature coords
         sig_height = .75 * inch
@@ -80,8 +80,12 @@ def _wrap_drawing_class(sig_coordinate_map, recipient):
             # Flowable alignment adjustment
             x = self._hAlignAdjust(x,_sW)
 
-            # Store the coordinates of the signature line
-            sig_coordinate_map[recipient.name] = (x, y + self.height)
+            # Magic number from trial and error. Will need adjustments if the height of the
+            #  signature is changed (or placement of the line within the signature drawing).
+            manual_adjustment = 10
+
+            # Store the coordinates of the signature line.
+            sig_coordinate_map[recipient.name] = (x, y + self.height + manual_adjustment)
 
             # Let the overridden method do its thing
             Drawing.drawOn(self, canvas, x, y, _sW)

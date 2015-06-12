@@ -4,6 +4,7 @@ import json
 import httplib2
 from string import ascii_letters
 
+import flask
 from flask.ext.stormpath import user
 
 from taa import app
@@ -232,10 +233,14 @@ class EnrollmentDataWrap(object):
 
     def get_agent_signing_name(self):
         # TODO: need to get proper agent for self-enroll.
+        if not flask.has_request_context():
+            return "(TEST)"
         return user.custom_data["signing_name"]
 
     def get_agent_code(self):
         # TODO: need to get proper agent for self-enroll.
+        if not flask.has_request_context():
+            return "(TEST)"
         return user.custom_data["agent_code"]
 
     def get_employer_name(self):
