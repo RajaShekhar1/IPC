@@ -309,8 +309,14 @@ class EnrollmentDataWrap(object):
         return len(self.get_covered_children())
 
     def get_covered_children(self):
-        return [child for child in self.data['children'] if child and self.data['child_coverages']]
 
+        covered_children = []
+        for i, child in enumerate(self.data['children']):
+            coverage = self.data['child_coverages'][i]
+            if coverage and coverage["face_value"]:
+                covered_children.append(child)
+
+        return covered_children
 
 
 def old_create_envelope_and_get_signing_url(enrollment_data):
