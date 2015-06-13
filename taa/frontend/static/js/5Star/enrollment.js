@@ -2918,7 +2918,8 @@ function init_validation() {
                 is_valid &= $('#questions-form').valid();
             }
 
-            if (ui.replacing_insurance() === null || ui.existing_insurance() === null) {
+            if (ui.insurance_product.is_fpp_product() &&
+                (ui.replacing_insurance() === null || ui.existing_insurance() === null)) {
                 // These always need to be answered
                 is_valid = false;
             }
