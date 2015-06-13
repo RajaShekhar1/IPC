@@ -12,8 +12,7 @@
         style="display: none;" data-bind="visible: true">
     
         <h3 class="header header-light blue" data-bind="text: company_name"></h3>
-        
-        
+
         <div class="col-xs-12">
             <div class="tabbable">
                 <ul class="nav nav-tabs" id="case-nav-tabs">
@@ -23,7 +22,14 @@
                             Case Setup
                         </a>
                     </li>
-                    
+
+                    <li class="">
+                        <a href="#enrollment">
+                            <i class="orange ace-icon glyphicon glyphicon-inbox bigger-120"></i>
+                            Enrollment
+                        </a>
+                    </li>
+
                     <li>
                         <a href="#reports">
                             <i class="blue ace-icon fa fa-bar-chart-o bigger-120"></i>
@@ -293,68 +299,76 @@
                                 <br>
                                 <br>
                                 
-                                <div class="row" {# Prevent flash of unstyled content #}
-                                    style="display: none;" data-bind="visible: true"
-                                    >
-                                    <div class="col-xs-12">
-                                        <div class="widget-box">
-                                            <div class="widget-header">
-                                                <div class="row">
-                                                    <div class="col-md-6"><h4 class="bigger-150">Case Census</h4></div>
-                                                    <div class="col-md-6">
-                                                        
-                                                        <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal" >
-                                                            <i class="ace-icon fa fa-upload"></i>
-                                                                Upload Census
-                                                        </button>
-                                                        <a data-bind="visible: has_census_data" href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
-                                                            <i class="ace-icon glyphicon glyphicon-download-alt"></i>
-                                                                Download Census
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="widget-body">
-                                                <div class="widget-main">  
-                                                    
-                                                    {% if not census_records %}
-                                                        <h4 class="no-census-header text-center lighter">No Census Data Uploaded</h4>
-                                                        <div class="table-responsive">
-                                                        <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive" style="display: none;">
-                                                    {% else %}
-                                                        <div class="table-responsive">
-                                                        <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive">
-                                                    {% endif %}
-                                                            <thead>
-                                                                <tr>
-                                                                    <th></th>
-                                                                    <th>First</th>
-                                                                    <th>Last</th>
-                                                                    <th>DOB</th>
-                                                                    <th>Email</th>
-                                                                    <th>Status</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {# 
-                                                                Don't load this on the page anymore, 
-                                                                we load from the server at run time for page speed
-                                                                #}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                    <div id="census-table-loading" class="text-center bigger-125"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                            
-                                </div>
+
                                 
                             </div>
                         </div>
                     </div>
-    
+
+                    <div id="enrollment" class="tab-pane fade">
+                        <div class="row" {# Prevent flash of unstyled content #}
+                            style="display: none;" data-bind="visible: true"
+                            >
+                            <div class="col-xs-12">
+                                <div class="widget-box">
+                                    <div class="widget-header">
+                                        <div class="row">
+                                            <div class="col-md-6"><h4 class="bigger-150">Case Census</h4></div>
+                                            <div class="col-md-6">
+
+                                                <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal" >
+                                                    <i class="ace-icon fa fa-upload"></i>
+                                                        Upload Census
+                                                </button>
+                                                <a data-bind="visible: has_census_data" href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
+                                                    <i class="ace-icon glyphicon glyphicon-download-alt"></i>
+                                                        Download Census
+                                                </a>
+                                                <a  id="add-to-census-btn" class="btn btn-primary pull-right">
+                                                    <i class="ace-icon glyphicon glyphicon-plus"></i>
+                                                        New Enrollment
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="widget-body">
+                                        <div class="widget-main">
+
+                                            {% if not census_records %}
+                                                <h4 class="no-census-header text-center lighter">No Census Data Uploaded</h4>
+                                                <div class="table-responsive">
+                                                <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive" style="display: none;">
+                                            {% else %}
+                                                <div class="table-responsive">
+                                                <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive">
+                                            {% endif %}
+                                                    <thead>
+                                                        <tr>
+                                                            <th></th>
+                                                            <th>Status</th>
+                                                            <th>First</th>
+                                                            <th>Last</th>
+                                                            <th>DOB</th>
+                                                            <th>Email</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {#
+                                                        Don't load this on the page anymore,
+                                                        we load from the server at run time for page speed
+                                                        #}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div id="census-table-loading" class="text-center bigger-125"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
                     <div id="reports" class="tab-pane fade">
                         <div class="row">
                             <div class="col-xs-12">
@@ -1385,6 +1399,7 @@
             
             // Tabs
             var setup_tab = $('#case-nav-tabs a[href="#setup"]');
+            var enrollment_tab = $('#case-nav-tabs a[href="#enrollment"]');
             var reports_tab = $('#case-nav-tabs a[href="#reports"]');
             
             self.sammy_app = Sammy(function() {
@@ -1392,17 +1407,66 @@
                     self.exit_print_mode();
                     
                     setup_tab.tab('show');
+
                     
+                });  
+
+                this.get("#enrollment", function() {
+                    self.exit_print_mode();
+
+                    enrollment_tab.tab('show');
+
                     // Load census data when page loads
-                    case_management.refresh_census_table({{ case.id }}, "{{ url_for("cases.census_records", case_id=case.id) }}", 
-                        "#census-records-table", "#census-table-loading", {},
+                    case_management.refresh_census_table({{ case.id }}, "{{ url_for("cases.census_records", case_id=case.id) }}",
+                        "#census-records-table", "#census-table-loading", {
+                                "responsive": {breakpoints: get_responsive_datatables_breakpoints()},
+                                "autoWidth": false,
+                                "aoColumnDefs":[
+                                    // Show enroll button in first column
+                                    {"aTargets":[0], "bSortable": false, "mData":function(source) {
+                                        if (source.enrollment_status !== null) {
+                                            return '<button class="btn btn-primary btn-xs enroll-employee" data-id="'+source.id+'"><span class="ace-icon glyphicon glyphicon-plus"></span> Add Coverage</button>';
+                                        }
+
+                                        return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'">Enroll</button>';
+                                    }},
+                                    {"aTargets":[1], "mData":function(source) {
+                                        return format_enrollment_status_html(source.enrollment_status);
+                                    }},
+                                    {"aTargets":[2], "mData":"employee_first", className: "min-breakIV"},
+                                    {"aTargets":[3], "mData":"employee_last"},
+                                    {"aTargets":[4], "mData": function(source) {
+                                        return normalize_date(source.employee_birthdate);
+                                    }},
+                                    {"aTargets":[5], "mData":"employee_email", className: "min-breakIII"}
+                                ],
+                                "aaSorting": [[ 3, "asc" ]]
+                            },
                         function(table) {
                             // This is called if there is data; enable download button
                             window.case_settings.has_census_data(true);
-                    });
-                    
-                });  
-                
+
+                            /*
+                            // Called when first initialized
+                            $(".employee-select-panel").show();
+                            $(".not-in-census-section").show();
+
+                            var table = $("#census-records-table").dataTable();
+
+                            init_status_filter(table);
+                            init_alphabet_search(table);
+
+                            */
+
+                        },
+                        function() {
+                                // Called if no data
+                                //$(".not-in-census-section").show();
+                        }
+                    );
+
+                });
+
                 this.get("#reports", function() {
                     self.exit_print_mode();
                     
