@@ -138,9 +138,78 @@ var case_management = (function() {
         }
         table.DataTable().columns.adjust().draw();
     }
-    
+
+
+
+    // Custom alphabet search for datatable
+    var _alphabet_search_letter;
+
+    $.fn.dataTableExt.afnFiltering.push(
+        function( oSettings, aData, iDataIndex ) {
+            if (!_alphabet_search_letter) {
+                return true;
+            }
+            var last_name_col = 3;
+
+            return (aData[last_name_col] && aData[last_name_col].charAt(0) === _alphabet_search_letter);
+        }
+    );
+
+    function init_alphabet_search(table) {
+        var alphabet = $('<div class="alphabet"/>').append('Last Name: ');
+        $('<span class="clear active"/>')
+            .data('letter', '')
+            .html('Reset')
+            .appendTo(alphabet);
+
+        for (var i = 0; i < 26; i++) {
+            var letter = String.fromCharCode(65 + i);
+
+            $('<span class="letter"/>')
+                .data('letter', letter)
+                .html(letter)
+                .appendTo(alphabet);
+        }
+
+        alphabet.insertBefore( table );
+
+        alphabet.on('click', 'span', function() {
+            alphabet.find('.active').removeClass('active');
+            $(this).addClass('active');
+
+            _alphabet_search_letter = $(this).data('letter');
+            table.fnDraw();
+        });
+    }
+
+    // Checkbox filter
+    var _should_show_enrolled = true;
+    $.fn.dataTableExt.afnFiltering.push(
+        function(oSettings, aData, iDataIndex ) {
+            if (_should_show_enrolled) {
+                return true;
+            }
+
+            return (aData[1] === "Not Enrolled");
+        }
+    );
+
+    function init_status_filter(table) {
+        var ctn = $('<div class="status-filter">');
+        ctn.html("<label><input type='checkbox' class='ace' checked='checked'> <span class='lbl'> Show Enrolled</span></label>");
+        ctn.on('change', 'input', function() {
+            _should_show_enrolled = $(this).prop("checked");
+            table.fnDraw();
+        });
+        ctn.insertBefore(table);
+    }
+
+
     return {
         refresh_census_table: refresh_census_table,
-        refresh_enrollments_table: refresh_enrollments_table
+        refresh_enrollments_table: refresh_enrollments_table,
+        init_alphabet_search: init_alphabet_search,
+        init_status_filter: init_status_filter
+
     };
 })();
