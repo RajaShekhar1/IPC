@@ -11,10 +11,6 @@ from models import (
 )
 from .statement_of_health import StatementOfHealthQuestionService
 from .states import all_states, all_statecodes, get_all_states
-from .statement_of_health import (
-    FPPTI_generic_states, FPPCI_generic_states, GroupCI_generic_states,
-    FPPGov_generic_states,
-)
 from .rates import get_rates
 from .payment_modes import get_payment_modes, is_payment_mode_changeable
 
@@ -140,29 +136,15 @@ class ProductService(DBService):
         
         if not products:
             products = self.get_all_enrollable_products()
-        
-        # A hard-coded list of statecodes to turn off for a
-        # given product, even if we have a form for that state
-        turned_off_statecodes = {
 
-            'FPPTI': ['CT', 'DC', 'IN', 'ME', 'MD', 'MA', 'MN', 'NH', 'NJ', 'NY', 'NC', 'ND', 'PA', 'VT', 'WA'],
-            'FPPCI': ['CT', 'DC', 'ME', 'MD', 'MA', 'MN', 'NH', 'NJ', 'NY', 'NC', 'ND', 'PA', 'PR', 'VT'],
-            'Group CI': ["CA", "CO", "DC", "HI", "KS", "KY", "MO", "NE", "NC", "PA", "VA"],
-
-        }
-        # Keep the same as FPPTI
-        turned_off_statecodes['FPP-Gov'] = turned_off_statecodes['FPPTI']
-        
         product_states = {}
         for product in products:
             states_with_forms = StatementOfHealthQuestionService()\
                 .get_states_with_forms_for_product(product)
-            exclude_list = turned_off_statecodes.get(
-                product.get_base_product_code(), [])
 
             product_states[product.id] = [
                 s['statecode'] for s in states_with_forms
-                if s['statecode'] not in exclude_list]
+            ]
             
         return product_states
     

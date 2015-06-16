@@ -1,18 +1,29 @@
 
 from .states import all_statecodes, states_by_statecode
 
+def get_template_id_for_product_state(base_product_code, statecode):
+
+    form = StatementOfHealthQuestionService().form_for_product_code_and_state(base_product_code, statecode)
+
+    if not form.docusign_template_id:
+        raise Exception("Form %s for product %s state %s has no template ID"%(form.label, base_product_code, statecode))
+
+    return form.docusign_template_id
+
+
 class StatementOfHealthQuestionService(object):
     def form_for_state(self, product, statecode):
+        return self.form_for_product_code_and_state(product.get_base_product_code(), statecode)
 
-        code = product.get_base_product_code()
-        
-        # Return the first form for this product that supports this state
-        for form in product_forms.get(code, []):
+    def form_for_product_code_and_state(self, base_product_code, statecode):
+        # Return the first form for this product that supports this state.
+        #  so, the order matters for the product_forms dict; state-specific should be listed first.
+        for form in product_forms.get(base_product_code, []):
             if statecode in form.statecodes:
                 return form
-        
-        raise Exception("No form exists for product '%s' in state '%s'"%(code, statecode))
-    
+
+        raise Exception("No form exists for product '%s' in state '%s'"%(base_product_code, statecode))
+
     def get_health_questions(self, product, state):
         form = self.form_for_state(product, state)
         return form.questions
@@ -23,9 +34,14 @@ class StatementOfHealthQuestionService(object):
         
         enabled_statecodes = set()
         for form in product_forms.get(code, []):
+            if not form.docusign_template_id:
+                # Do not allow enrollment in a form if the template ID is not set
+                continue
+
             for statecode in form.statecodes:
                 enabled_statecodes.add(statecode)
-            
+
+        # Transform the set into a list of state objects sorted alphabetically by statecode.
         return sorted([states_by_statecode[sc] for sc in enabled_statecodes], key=lambda x: x['statecode'])
 
     def get_all_forms_used_for_product(self, product):
@@ -63,107 +79,64 @@ class SOHQuestion(JsonSerializable):
 
 
 class ApplicationForm(object):
-    def __init__(self, label, statecodes, questions, is_generic=False):
+    def __init__(self, label, statecodes, questions, is_generic=False, docusign_template_id=None):
         self.label = label
         self.statecodes = statecodes
         self.questions = questions
         self.is_generic = is_generic
+        self.docusign_template_id = docusign_template_id
     
 
 # Common SOH Questions used in most applications
-hospitalized_question = SOHQuestion('Hospital 90 days',
-                                    'Has any Applicant been hospitalized in the past 90 days?')
-heart_question = SOHQuestion('Heart',
-                             'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?')
-cancer_question = SOHQuestion('Cancer',
-                              'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin\'s Disease (excluding non-invasive, non-melanoma skin cancer)?')
-respiratory_question = SOHQuestion('Respiratory',
-                                   'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?')
-liver_question = SOHQuestion('Liver',
-                             'In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?')
 
 aids_question = SOHQuestion('HIV/AIDS',
-                            'Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?')
+                            'Has any Applicant been diagnosed or treated by a member of the medical profession, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?')
 
+CA_CT_aids_question = SOHQuestion('HIV/AIDS', 'Has any Applicant been diagnosed or treated by a member of the medical profession for Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?')
 ever_been_rejected_question = SOHQuestion('Ever been rejected',
                                           'Has any Applicant ever applied for and been rejected for life insurance?')
 
 
+hospitalized_question = SOHQuestion('Hospital 90 days',
+                                    'Has any Applicant been hospitalized in the past 90 days?')
+heart_question = SOHQuestion('Heart',
+                             'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a member of the medical profession or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?')
+cancer_question = SOHQuestion('Cancer',
+                              'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a member of the medical profession or taken prescription medication for any form of cancer to include leukemia or Hodgkin\'s Disease (excluding non-invasive, non-melanoma skin cancer)?')
+respiratory_question = SOHQuestion('Respiratory',
+                                   'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a member of the medical profession or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?')
+liver_question = SOHQuestion('Liver',
+                             'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a member of the medical profession or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?')
+
+# FPP question lists
+fpp_generic_soh_list = [
+    aids_question,
+    ever_been_rejected_question,
+    hospitalized_question,
+    heart_question,
+    cancer_question,
+    respiratory_question,
+    liver_question,
+]
+
+ca_ct_soh_list = [CA_CT_aids_question] + [q for q in fpp_generic_soh_list[1:]]
+fl_soh_list = [
+    SOHQuestion('HIV/AIDS', 'Has any Applicant tested positive for exposure to the HIV infection or been diagnosed as having ARC or AIDS caused by the HIV infection or other sickness or condition derived from such infection?'),
+    ever_been_rejected_question,
+    hospitalized_question,
+    SOHQuestion('Heart', 'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?'),
+    SOHQuestion('Cancer', 'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession or taken prescription medication for any form of cancer to include leukemia or Hodgkin\'s Disease (excluding non-invasive, non-melanoma skin cancer)?'),
+    SOHQuestion('Respiratory', 'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?'),
+    SOHQuestion('Liver', 'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?'),
+]
 
 # Some common forms between FPPTI and FPPCI
-common_forms = {
-    'WS-UST App R409-CO': ApplicationForm('WS-UST App R409-CO', ['CO'], [
-        hospitalized_question,
-        heart_question,
-        cancer_question,
-        respiratory_question,
-        liver_question,
-        SOHQuestion('HIV/AIDS',
-                    'Have you had or been told by a member of the medical profession that you have AIDS or HIV infection?'),
-        ever_been_rejected_question
-    ]),
-    'WS-UST App R409-IL': ApplicationForm('WS-UST App R409-IL', ['IL'], [
-        hospitalized_question,
-        heart_question,
-        cancer_question,
-        respiratory_question,
-        liver_question,
-        SOHQuestion('HIV/AIDS',
-                    'Has any Applicant been diagnosed, tested, or treated by a physician for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?'),
-        ever_been_rejected_question
-    ]),
-    'WS-UST App R409-FL': ApplicationForm('WS-UST App R409-FL', ['FL'], [
-        hospitalized_question,
-        SOHQuestion('Heart',
-                    'In the past 10 years, has the Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?'),
-        SOHQuestion('Cancer',
-                    'In the past 10 years, has the Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession, or taken prescription medication for any form of cancer to include leukemia or Hodgkin\'s Disease (excluding non-invasive, non-melanoma skin cancer)?'),
-        SOHQuestion('Respiratory',
-                    'In the past 10 years, has the Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?'),
-        SOHQuestion('Liver',
-                    'In the past 10 years, has the Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?'),
-        SOHQuestion('HIV/AIDS',
-                    'Has the Applicant under this application of coverage tested positive for exposure to the HIV infection or been diagnosed as having ARC or AIDS caused by the HIV infection or other sickness or condition derived from such infection?'),
-        ever_been_rejected_question
-    ]),
-    'WS-UST App R409-MO': ApplicationForm('WS-UST App R409-MO', ['MO'], [
-        hospitalized_question,
-        heart_question,
-        cancer_question,
-        respiratory_question,
-        liver_question,
-        aids_question
-    ]),
-    "WS-UST App R409-OH": ApplicationForm('WS-UST App R409-OH', ['OH'], [
-        hospitalized_question,
-        heart_question,
-        cancer_question,
-        respiratory_question,
-        liver_question,
-        aids_question,
-        ever_been_rejected_question
-    ]),
-    "WS-UST App R409-VA":ApplicationForm('WS-UST App R409-VA', ['VA'], [
-        hospitalized_question,
-        heart_question,
-        cancer_question,
-        respiratory_question,
-        liver_question,
-        aids_question,
-        ever_been_rejected_question
-    ]),
-    "WS-UST App R409-WI": ApplicationForm('WS-UST App R409-WI', ['WI'], [
-        hospitalized_question,
-        heart_question,
-        cancer_question,
-        respiratory_question,
-        liver_question,
-        SOHQuestion('HIV/AIDS',
-                    'Has any Applicant been diagnosed by a physician as having Human Immuno-deficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)? (The applicant need not reveal HIV test results received from an anonymous counseling and testing site or the results of a home test kit.) '),
-        ever_been_rejected_question
-    ]),
-
-}
+fpp_de_sd_vi_form = ApplicationForm('DE, SD & VI FPP', ['DE', 'SD', 'VI'], fpp_generic_soh_list, docusign_template_id='5CCB952F-AEF5-4017-B46F-B1770B430DE5')
+fpp_ca_form = ApplicationForm('CA', ['CA'], ca_ct_soh_list, docusign_template_id='D3CFC594-2E46-427D-904A-6DBEF6B6207D')
+fpp_ct_form = ApplicationForm('CT', ['CT'], ca_ct_soh_list, docusign_template_id='79D81EE3-25A3-4967-A58B-9D9B9716836F')
+fpp_dc_form = ApplicationForm('DC', ['DC'], fpp_generic_soh_list, docusign_template_id='138851E3-3B66-47DC-89DA-D953C6F618A5')
+fpp_fl_form = ApplicationForm('FL', ['FL'], fl_soh_list, docusign_template_id='6047EF30-473B-4148-A674-34C94E194ED2')
+fpp_nd_form = ApplicationForm('ND', ['ND'], fpp_generic_soh_list, docusign_template_id='5C8FE7F1-6DCC-46F5-BA03-C5F16FB8F50B')
 
 
 # Common Group CI questions
@@ -208,78 +181,64 @@ group_ci_ever_rejected_question = SOHQuestion("Ever been rejected",
 )
 
 
+states_without_FPPTI_only = ['IN']
+states_without_FPPCI_only = ['CT', 'PA']
+states_without_FPP = ['NJ', 'NY', 'VT', 'WA']
+# It would be nice to not have this list, but for now update this if more custom forms are added / removed.
+states_with_custom_fpp_forms = ['DE', 'SD', 'VI', 'CA', 'CT', 'DC', 'FL', 'ND']
+
+TEMPLATE_ID_FPP_GENERIC = 'E26A7761-1ACF-4993-A2A1-2D021B79E68C'
+
+
 product_forms = {
     'FPPTI': [
-        common_forms['WS-UST App R409-CO'],
-        common_forms['WS-UST App R409-FL'],
-        common_forms['WS-UST App R409-IL'],
-        common_forms['WS-UST App R409-MO'],
-        common_forms['WS-UST App R409-OH'],
-        common_forms['WS-UST App R409-VA'],
-        common_forms['WS-UST App R409-WI'],
-        ApplicationForm('WS-UST App R409-PA', ['PA'], [
+        fpp_de_sd_vi_form,
+        fpp_ca_form,
+        fpp_ct_form,
+        fpp_dc_form,
+        fpp_fl_form,
+        fpp_nd_form,
+
+        ApplicationForm('Generic',
+                        [s for s in all_statecodes if s not in
+                        # These states do not do the TI product or have a custom form.
+                        states_without_FPP + states_without_FPPTI_only+states_with_custom_fpp_forms], [
+            aids_question,
+            ever_been_rejected_question,
             hospitalized_question,
             heart_question,
             cancer_question,
             respiratory_question,
             liver_question,
-            aids_question,
-            ever_been_rejected_question
-        ]),
-        
-        ApplicationForm('Generic', 
-                        [s for s in all_statecodes if s not in 
-                        ['CO', 'FL', 'IL', 'MO', 'OH', 'PA', 'VA', 'WI']], [
-            hospitalized_question,
-            heart_question,
-            cancer_question,
-            respiratory_question,
-            liver_question,
-            aids_question,
-            ever_been_rejected_question
-        ], is_generic=True),
+        ], is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC),
     ],
     'FPPCI': [
-        common_forms['WS-UST App R409-CO'],
-        common_forms['WS-UST App R409-FL'],
-        common_forms['WS-UST App R409-IL'],
-        common_forms['WS-UST App R409-MO'],
-        common_forms['WS-UST App R409-OH'],
-        common_forms['WS-UST App R409-VA'],
-        common_forms['WS-UST App R409-WI'],
+        fpp_de_sd_vi_form,
+        fpp_ca_form,
+        fpp_dc_form,
+        fpp_fl_form,
+        fpp_nd_form,
+
         ApplicationForm('Generic',
             [s for s in all_statecodes if s not in
-              ['CO', 'FL', 'IL', 'MO', 'OH', 'VA', 'WI']], 
+                        # These states do not do the CI product or have a custom form.
+                        states_without_FPP + states_without_FPPCI_only + states_with_custom_fpp_forms],
             [
+                aids_question,
+                ever_been_rejected_question,
                 hospitalized_question,
                 heart_question,
                 cancer_question,
                 respiratory_question,
-                liver_question,
-                aids_question,
-                ever_been_rejected_question
+                liver_question
             ], 
-            is_generic=True),
+            is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC),
     ],
+
+    # FPP-Gov is handled below by copying FPP-TI
+
     'Group CI': [
-        
-        ApplicationForm(
-            'Group CI Generic', 
-            ["AL", "AZ", "AR", "GA", "IN", "IA", "LA", "MA", "MI", "MS", "NE", "NV", "NM", "OK", "SC", "TX", "UT", "WI"], 
-            [
-                group_ci_family_member_history_question,
-                group_ci_diagnosed_question,
-                group_ci_heart_question,
-                group_ci_hypertension_question,
-                group_ci_lung_question,
-                group_ci_skin_question,
-                group_ci_hpv_question,
-                group_ci_abnormal_question,
-                group_ci_ever_rejected_question,
-            ], 
-            is_generic=True
-        ),
-        
+
         ApplicationForm('Group CI KY', ['KY'], [
             group_ci_family_member_history_question,
             group_ci_alternate_diagnosed_question,
@@ -312,7 +271,7 @@ product_forms = {
             group_ci_hpv_question,
             group_ci_abnormal_question,
             group_ci_ever_rejected_question,
-        ]),
+        ], docusign_template_id='533B6385-6BD0-4815-B95B-FBC2FBE33577'),
 
         ApplicationForm('Group CI MO', ['MO'], [
             group_ci_family_member_history_question,
@@ -350,43 +309,29 @@ product_forms = {
             ),
             
         ]),
+
+        ApplicationForm(
+            'Group CI Generic',
+            ["AL", "AZ", "AR", "GA", "IN", "IA", "LA", "MA", "MI", "MS", "NE", "NV", "NM", "OK", "SC", "TX", "UT", "WI"],
+            [
+                group_ci_family_member_history_question,
+                group_ci_diagnosed_question,
+                group_ci_heart_question,
+                group_ci_hypertension_question,
+                group_ci_lung_question,
+                group_ci_skin_question,
+                group_ci_hpv_question,
+                group_ci_abnormal_question,
+                group_ci_ever_rejected_question,
+            ],
+            is_generic=True,
+            docusign_template_id='B57234AB-5EA5-48D4-984F-D3BF07793B9B',
+        ),
     ],
-    
-    'FPP-Gov': [
-        ApplicationForm('FPP-Gov Generic', [s for s in all_statecodes if s not in
-                                            ['CO', 'FL', 'IL', 'MO', 'OH', 'PA', 'VA', 'WI']], [
-            hospitalized_question,
-            heart_question,
-            cancer_question,
-            respiratory_question,
-            liver_question,
-            aids_question,
-        ], is_generic=True),
-    ],
+
 
 
 }
 
 # FPP-Gov uses FPPTI forms
 product_forms['FPP-Gov'] = product_forms['FPPTI']
-
-# For now, define these legacy variables so docusign code works
-FPPTI_generic_states = []
-for f in product_forms['FPPTI']:
-    if f.is_generic:
-        FPPTI_generic_states += f.statecodes
-
-FPPCI_generic_states = []
-for f in product_forms['FPPCI']:
-    if f.is_generic:
-        FPPCI_generic_states += f.statecodes
-
-GroupCI_generic_states = []
-for f in product_forms['Group CI']:
-    if f.is_generic:
-        GroupCI_generic_states += f.statecodes
-        
-FPPGov_generic_states = []
-for f in product_forms['FPP-Gov']:
-    if f.is_generic:
-        FPPGov_generic_states += f.statecodes
