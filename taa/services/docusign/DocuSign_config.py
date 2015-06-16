@@ -7,7 +7,7 @@ from taa.services.products import (
 )
 
 
-useDemoAccount = False 
+useDemoAccount = False
 
 #Docusign credential info
 #authEmail = "docrequest@5starima.com"  #don't need if we use the api username
@@ -16,7 +16,7 @@ apiPassword = "wQtqOMu0AjSE6sGUXoqgK5Iq/Zw=" if useDemoAccount else "edJSzv7Rqc2
 apiAccountID = "599b0608-269f-4598-a1c9-da3b67281cb7" if useDemoAccount else "8271282c-7a4e-4e00-a2e9-878924c316d5"
 dsServer = "demo.docusign.net" if useDemoAccount else "na2.docusign.net"
 
-integratorKey = "STAR-0baef057-d5b4-46bd-831f-e8e66f271aa7";
+integratorKey = "STAR-0baef057-d5b4-46bd-831f-e8e66f271aa7"
 
 baseUrl = "https://" + dsServer + "/restapi/v2/accounts/" + apiAccountID
 
@@ -46,7 +46,7 @@ def dsAPIAuthenticateString():
         "<Username>" + apiUserName + "</Username>" \
         "<Password>" + apiPassword + "</Password>" \
         "<IntegratorKey>" + integratorKey + "</IntegratorKey>" \
-        "</DocuSignCredentials>";
+        "</DocuSignCredentials>"
 
 
 def sessionUserApprovedForDocusign():
@@ -61,7 +61,10 @@ def get_template_id(product_type, state):
         return  get_template_id_DEMO(product_type, state)
     else:
         return get_template_id_PRODUCTION(product_type, state)
-    
+
+def get_replacement_template_id(product_type, state):
+    return "3E0CF882-8678-4476-A6B3-D60AA4111C85"
+
 def get_template_id_PRODUCTION(product_type, state):
     """
     Templates are either State specific, the generic template applying to a group of states, or else not-
@@ -70,27 +73,29 @@ def get_template_id_PRODUCTION(product_type, state):
     # PRODUCTION template IDs
     templates_by_product_and_state = {
         "FPPTI": {
-            "CO" : "2BBEB0C7-E0E0-4F9E-AFC7-B04CB4CEC46B",
-            "FL" : "5D738949-D4A0-4CD0-AB55-D79D4D9219A3",
-            "IL" : "3409B833-80A2-4F88-9252-E384223FD515",
-            "OH" : "7F1691BD-300A-4955-906C-6824A7ADA050",
-            "MO" : "1C8525BE-E913-422B-8332-36B13E0B187A",
-            "PA" : "57D4EF42-FA9D-49B0-8A2C-5F6AE5F16C9E",
-            "TX" : "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
-            "VA" : "0AE3D3E9-60C0-4198-82C7-41D1201BF2FE",
-            "WI" : "AB16F882-1ED1-4CD6-847E-6BFCCB2ADF98",
-            "generic": "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
+            "CO" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"2BBEB0C7-E0E0-4F9E-AFC7-B04CB4CEC46B",
+            "FL" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"5D738949-D4A0-4CD0-AB55-D79D4D9219A3",
+            "IL" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"3409B833-80A2-4F88-9252-E384223FD515",
+            "OH" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"7F1691BD-300A-4955-906C-6824A7ADA050",
+            "MO" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"1C8525BE-E913-422B-8332-36B13E0B187A",
+            "PA" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"57D4EF42-FA9D-49B0-8A2C-5F6AE5F16C9E",
+            "TX" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"F5711F73-7D4A-44F2-8D31-2E505B8915F8",
+            "VA" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"0AE3D3E9-60C0-4198-82C7-41D1201BF2FE",
+            "WI" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"AB16F882-1ED1-4CD6-847E-6BFCCB2ADF98",
+            #"generic": "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
+            'generic': "E26A7761-1ACF-4993-A2A1-2D021B79E68C",
         },
         "FPPCI": {
-            "CO" : "2BBEB0C7-E0E0-4F9E-AFC7-B04CB4CEC46B",
-            "IL" : "3409B833-80A2-4F88-9252-E384223FD515",
-            "FL" : "5D738949-D4A0-4CD0-AB55-D79D4D9219A3",
-            "OH" : "7F1691BD-300A-4955-906C-6824A7ADA050",
-            "MO" : "1C8525BE-E913-422B-8332-36B13E0B187A",
-            "TX" : "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
-            "VA" : "0AE3D3E9-60C0-4198-82C7-41D1201BF2FE",
-            "WI" : "AB16F882-1ED1-4CD6-847E-6BFCCB2ADF98",
-            "generic": "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
+            "CO" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"2BBEB0C7-E0E0-4F9E-AFC7-B04CB4CEC46B",
+            "IL" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"3409B833-80A2-4F88-9252-E384223FD515",
+            "FL" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"5D738949-D4A0-4CD0-AB55-D79D4D9219A3",
+            "OH" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"7F1691BD-300A-4955-906C-6824A7ADA050",
+            "MO" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"1C8525BE-E913-422B-8332-36B13E0B187A",
+            "TX" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"F5711F73-7D4A-44F2-8D31-2E505B8915F8",
+            "VA" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"0AE3D3E9-60C0-4198-82C7-41D1201BF2FE",
+            "WI" : "E26A7761-1ACF-4993-A2A1-2D021B79E68C",#"AB16F882-1ED1-4CD6-847E-6BFCCB2ADF98",
+            #"generic": "F5711F73-7D4A-44F2-8D31-2E505B8915F8",
+            'generic': "E26A7761-1ACF-4993-A2A1-2D021B79E68C",
         },
         "Group CI": {
             "IL":"533B6385-6BD0-4815-B95B-FBC2FBE33577",

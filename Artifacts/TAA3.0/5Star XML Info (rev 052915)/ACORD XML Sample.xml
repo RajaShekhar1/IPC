@@ -1,0 +1,207 @@
+<TXLife xmlns="http://ACORD.org/Standards/Life/2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <UserAuthRequest>
+      <UserLoginName>VENDOR</UserLoginName>
+      <UserPswd>
+        <CryptType>NONE</CryptType>
+      </UserPswd>
+      <VendorApp>
+        <VendorName VendorCode="220">VENDOR</VendorName>
+        <AppName>iGo Forms</AppName>
+      </VendorApp>
+      <OLifEExtension VendorCode="220" ExtensionCode="6778">
+        <CompanyNumber>7A</CompanyNumber>
+      </OLifEExtension>
+    </UserAuthRequest>
+    <TXLifeRequest PrimaryObjectID="Holding_Primary">
+      <TransRefGUID>360967cd-4ecf-4327-b95f-8baf675202af</TransRefGUID>
+      <TransType tc="103">New Business Submission</TransType>
+      <TransExeDate>2012-04-13</TransExeDate>
+      <TransExeTime>14:03:17</TransExeTime>
+      <OLifE>
+        <SourceInfo>
+          <CreationDate>2012-04-13</CreationDate>
+          <CreationTime>14:03:17</CreationTime>
+          <SourceInfoName>VENDOR</SourceInfoName>
+        </SourceInfo>
+        <Holding id="Holding_Primary">
+          <Policy>
+            <ProductCode>Term</ProductCode>
+            <CarrierCode>5340</CarrierCode>
+            <PlanName>Instant Issue Term</PlanName>
+            <PolicyStatus tc="24">Approved</PolicyStatus>
+            <ReplacementType tc="3">External Replacement</ReplacementType>
+            <PaymentMode tc="4">Chek-matic</PaymentMode>
+            <PaymentAmt>117.84</PaymentAmt>
+            <PaymentMethod tc="7">Chek-matic</PaymentMethod>
+            <AccountNumber>11111111111111111111</AccountNumber>
+            <RoutingNumber>111111111</RoutingNumber>
+            <BankAcctType tc="2">Checking</BankAcctType>
+            <Life>
+              <QualPlanType tc="1">Non-Qualified</QualPlanType>
+              <Coverage>
+                <PlanName>Instant Issue Term</PlanName>
+                <IndicatorCode tc="1">Base</IndicatorCode>
+                <CurrentAmt>34345</CurrentAmt>
+                <LevelPremiumPeriod>10</LevelPremiumPeriod>
+                <CovOption>
+                  <PlanName>Accelerated Death Benefit</PlanName>
+                </CovOption>
+                <LifeParticipant id="LifeParticipant_PrimaryInsured" PartyID="Party_PrimaryInsured">
+                  <LifeParticipantRoleCode tc="1">Primary Insured</LifeParticipantRoleCode>
+                  <UnderwritingClass tc="1">Standard Risk</UnderwritingClass>
+                </LifeParticipant>
+                <LifeParticipant id="LifeParticipant_PrimaryAgent" PartyID="Party_PrimaryAgent">
+                  <LifeParticipantRoleCode tc="15">Primary Agent</LifeParticipantRoleCode>
+                </LifeParticipant>
+                <LifeParticipant DataRep="Partial" id="LifeParticipant_PrimaryBene_1" PartyID="Party_PrimaryBene_1">
+                  <LifeParticipantRoleCode tc="7">Beneficiary - Primary</LifeParticipantRoleCode>
+                  <BeneficiaryPercentDistribution>100</BeneficiaryPercentDistribution>
+                </LifeParticipant>
+              </Coverage>
+            </Life>
+            <ApplicationInfo>
+              <TrackingID>360967cd-4ecf-4327-b95f-8baf675202af</TrackingID>
+              <SignatureInfo>
+                <SignatureRoleCode tc="1">Primary Insured</SignatureRoleCode>
+                <SignatureDate>2012-04-13</SignatureDate>
+                <SignatureState tc="38">NC</SignatureState>
+                <SignatureOK tc="1">True</SignatureOK>
+              </SignatureInfo>
+              <SignatureInfo>
+                <SignatureRoleCode tc="15">Primary Agent</SignatureRoleCode>
+                <SignatureDate>2012-04-13</SignatureDate>
+                <SignatureState tc="38">NC</SignatureState>
+                <SignatureOK tc="1">True</SignatureOK>
+              </SignatureInfo>
+            </ApplicationInfo>
+          </Policy>
+        </Holding>
+        <Party id="Party_PrimaryInsured">
+          <GovtID>030000000</GovtID>
+          <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
+          <Person DataRep="Partial">
+            <FirstName>mark</FirstName>
+            <LastName>Smith</LastName>
+            <Occupation></Occupation>
+            <Gender tc="1">Male</Gender>
+            <BirthDate>1977-09-09</BirthDate>
+            <Height2>
+              <MeasureUnits tc="2"> 
+							US System Standard
+						</MeasureUnits>
+            </Height2>
+            <Weight2>
+              <MeasureUnits tc="2"> 
+							US System Standard
+						</MeasureUnits>
+              <MeasureValue>123</MeasureValue>
+            </Weight2>
+            <BirthJurisdictionTC tc="45"></BirthJurisdictionTC>
+          </Person>
+          <Address>
+            <Line1>1212 DriveLane</Line1>
+            <City>Charlotte</City>
+            <AddressStateTC tc="6"></AddressStateTC>
+            <Zip>121212121</Zip>
+          </Address>
+          <Phone>
+            <AreaCode>704</AreaCode>
+            <DialNumber>7857177</DialNumber>
+          </Phone>
+          <EMailAddress>
+            <AddrLine></AddrLine>
+          </EMailAddress>
+          <Risk></Risk>
+        </Party>
+        <Party id="Party_Payor">
+          <GovtID>030000000</GovtID>
+          <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
+          <Person DataRep="Partial">
+            <FirstName>mark</FirstName>
+            <LastName>Smith</LastName>
+            <Occupation></Occupation>
+            <Gender tc="1">Male</Gender>
+            <BirthDate>1977-09-09</BirthDate>
+            <Height2>
+              <MeasureUnits tc="2"> 
+							US System Standard
+						</MeasureUnits>
+            </Height2>
+            <Weight2>
+              <MeasureUnits tc="2"> 
+							US System Standard
+						</MeasureUnits>
+              <MeasureValue>123</MeasureValue>
+            </Weight2>
+            <BirthJurisdictionTC tc="45"></BirthJurisdictionTC>
+          </Person>
+          <Address>
+            <Line1>1212 DriveLane</Line1>
+            <City>Charlotte</City>
+            <AddressStateTC tc="6"></AddressStateTC>
+            <Zip>121212121</Zip>
+          </Address>
+          <Phone>
+            <AreaCode>704</AreaCode>
+            <DialNumber>7857177</DialNumber>
+          </Phone>
+          <EMailAddress>
+            <AddrLine></AddrLine>
+          </EMailAddress>
+          <Risk></Risk>
+        </Party>
+        <Relation id="Relation_PayorToPrimaryInsured" OriginatingObjectID="Party_PrimaryInsured" RelatedObjectID="Party_Payor">
+          <OriginatingObjectType tc="6">Party</OriginatingObjectType>
+          <RelatedObjectType tc="6">Party</RelatedObjectType>
+          <RelationRoleCode tc="168">Self</RelationRoleCode>
+          <RelationDescription tc="91">Self</RelationDescription>
+        </Relation>
+        <Party id="Party_PrimaryAgent">
+          <Person>
+            <FirstName>My Agent</FirstName>
+            <LastName>My Agent</LastName>
+          </Person>
+          <Producer>
+            <CarrierAppointment>
+              <CompanyProducerID>AD1234</CompanyProducerID>
+            </CarrierAppointment>
+          </Producer>
+        </Party>
+        <Party id="Party_PrimaryBene_1">
+          <Person DataRep="Partial">
+            <FirstName>Charlotte</FirstName>
+            <LastName>Test</LastName>
+          </Person>
+          <Risk></Risk>
+        </Party>
+        <Relation OriginatingObjectID="Party_PrimaryInsured" id="Relation_PrimaryBene1ToPrimaryInsured" RelatedObjectID="Party_PrimaryBene_1">
+          <OriginatingObjectType tc="6">Party</OriginatingObjectType>
+          <RelatedObjectType tc="6">Party</RelatedObjectType>
+          <RelationRoleCode tc="1">Spouse</RelationRoleCode>
+          <RelationDescription tc="1">Husband</RelationDescription>
+        </Relation>
+        <FormInstance id="Form_Chek-matic-GV">
+          <FormName>Chek-matic-GV</FormName>
+          <ProviderFormNumber>Chek-matic-GV</ProviderFormNumber>
+          <OriginalInputMode tc="1">Input Electronically</OriginalInputMode>
+          <CarrierCode></CarrierCode>
+          <Attachment>
+            <DateCreated>2012-04-13</DateCreated>
+            <AttachmentBasicType tc="2">Image</AttachmentBasicType>
+            <AttachmentSource>iPipeline-iGo</AttachmentSource>
+            <Description>Chek-matic-GV</Description>
+            <AttachmentData>BASE64 Encoded Document</AttachmentData>
+            <MimeTypeTC tc="17">pdf</MimeTypeTC>
+            <TransferEncodingTypeTC tc="4">base64</TransferEncodingTypeTC>
+            <ImageType tc="4">PDF</ImageType>
+            <AttachmentLocation tc="1">Inline</AttachmentLocation>
+          </Attachment>
+        </FormInstance>
+        <Relation OriginatingObjectID="Holding_Primary" RelatedObjectID="Form_Chek-matic-GV" id="Relation_Chek-matic-GV">
+          <OriginatingObjectType tc="4">Holding</OriginatingObjectType>
+          <RelatedObjectType tc="101">Form Instance</RelatedObjectType>
+          <RelationRoleCode tc="107">Form For</RelationRoleCode>
+        </Relation>
+      </OLifE>
+    </TXLifeRequest>
+  </TXLife>

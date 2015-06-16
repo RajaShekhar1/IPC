@@ -57,7 +57,7 @@ function parse_date(date_str, format_str) {
     return moment(date_str, format_str);
 }
 function normalize_date(date_str) {
-    if(date_str != '') {
+    if(date_str != '' && is_valid_date(date_str)) {
         return format_date(parse_date(date_str));
     } else {
         return '';
@@ -205,6 +205,7 @@ ko.bindingHandlers.flashMessage = {
     } 
 };
 
+// Uses the mask plugin provided with the ACE template to control what can be typed in an input.
 ko.bindingHandlers.maskedInput = {
     init: function(element, valueAccessor) {
         $(element).mask(ko.unwrap(valueAccessor()));
@@ -245,7 +246,6 @@ ko.bindingHandlers.fadeInIf = {
         }
     } 
 };
-
 
 // Wrap the ace multiselect plugin 
 ko.bindingHandlers.multiSelect = {

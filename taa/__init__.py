@@ -27,7 +27,7 @@ mandrill_flask = Mandrill(app)
 # Exception error handling
 #   (Import after the mandrill import line for dependency correctness)
 from .errors import init_exception_emails
-init_exception_emails(app, ['zmason@delmarsd.com'])
+init_exception_emails(app, ['zmason@delmarsd.com', 'jkayser@delmarsd.com'])
 
 # Init compression (only active if debug is False)
 Compress(app)

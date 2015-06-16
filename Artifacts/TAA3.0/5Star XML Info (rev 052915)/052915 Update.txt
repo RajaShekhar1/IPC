@@ -1,0 +1,5 @@
+-Removed old STP web service URLs and added new URLs to the following:
+	'FSTBIL9Q BRD.doc'
+	'TxLife Reference.docx'
+-Updated 'STP Data Map (5 Star, 67).xlsx' to latest version (version 16) (only orange tabs are relevant to vendor)
+-Removed attachments from 'TxLife Reference.docx' and included in zip as separate docs

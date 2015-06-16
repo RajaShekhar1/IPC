@@ -86,11 +86,11 @@ class EnrollmentApplicationService(DBService):
             emp_beneficiary_relation = 'spouse'
             emp_beneficiary_dob = data['spouse']['birthdate']
         else:
-            emp_beneficiary_name = data['employee_beneficiary_name']
-            emp_beneficiary_ssn = self._strip_ssn(
-                data['employee_beneficiary_ssn'])
-            emp_beneficiary_relation = data['employee_beneficiary_relationship']
-            emp_beneficiary_dob = data['employee_beneficiary_dob']
+
+            emp_beneficiary_name = data.get('employee_beneficiary_name')
+            emp_beneficiary_ssn = self._strip_ssn(data.get('employee_beneficiary_ssn', None))
+            emp_beneficiary_relation = data.get('employee_beneficiary_relationship')
+            emp_beneficiary_dob = data.get('employee_beneficiary_dob', None)
 
         if data['spouse_beneficiary'] == 'spouse':
             sp_beneficiary_name = '{} {}'.format(data['employee']['first'],
@@ -99,10 +99,11 @@ class EnrollmentApplicationService(DBService):
             sp_beneficiary_relation = 'spouse'
             sp_beneficiary_dob = data['employee']['birthdate']
         else:
-            sp_beneficiary_name = data['spouse_beneficiary_name']
-            sp_beneficiary_ssn = self._strip_ssn(data['spouse_beneficiary_ssn'])
-            sp_beneficiary_relation = data['spouse_beneficiary_relationship']
-            sp_beneficiary_dob = data['spouse_beneficiary_dob']
+            sp_beneficiary_name = data.get('spouse_beneficiary_name')
+            sp_beneficiary_ssn = self._strip_ssn(data.get('spouse_beneficiary_ssn'))
+            sp_beneficiary_relation = data.get('spouse_beneficiary_relationship')
+            sp_beneficiary_dob = data.get('spouse_beneficiary_dob')
+
         enrollment_data = dict(
             case_id=case_id,
             census_record_id=census_record_id,
@@ -497,19 +498,22 @@ class EnrollmentApplicationCoverageService(DBService):
     def create_coverage(self, enrollment, product, data, applicant_data,
                         applicant_coverage, applicant_type):
         # Set proper premium
-        payment_mode = applicant_data.get('payment_mode')
+        payment_mode = data.get('payment_mode')
         weekly_premium = None
         biweekly_premium = None
         semimonthly_premium = None
         monthly_premium = None
-        if payment_mode == 12:
-            weekly_premium = applicant_data['premium']
+        if payment_mode == 52:
+            weekly_premium = applicant_coverage['premium']
+        elif payment_mode == 26:
+            biweekly_premium = applicant_coverage['premium']
+        elif payment_mode == 24:
+            semimonthly_premium = applicant_coverage['premium']
         elif payment_mode == 12:
-            biweekly_premium = applicant_data['premium']
-        elif payment_mode == 12:
-            semimonthly_premium = applicant_data['premium']
-        elif payment_mode == 12:
-            monthly_premium = applicant_data['premium']
+            monthly_premium = applicant_coverage['premium']
+        else:
+            raise Exception("Invalid payment mode %s"%payment_mode)
+
         return self.create(**dict(
             coverage_status=EnrollmentApplicationCoverage.COVERAGE_STATUS_ENROLLED,
             enrollment_application_id=enrollment.id,

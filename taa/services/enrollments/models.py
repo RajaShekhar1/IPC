@@ -1,4 +1,4 @@
-from datetime import datetime
+import decimal
 
 from taa import db
 from taa.helpers import JsonSerializable
@@ -119,13 +119,13 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
         elif self.monthly_premium is not None:
             return self.monthly_premium * 12
         elif self.semimonthly_premium is not None:
-            return self.monthly_premium * 24
+            return self.semimonthly_premium * 24
         elif self.biweekly_premium is not None:
             return self.biweekly_premium * 26
         elif self.weekly_premium is not None:
             return self.weekly_premium * 52
         else:
-            return 0.0
+            return decimal.Decimal('0.00')
 
     def did_enroll(self):
         return self.coverage_status == self.COVERAGE_STATUS_ENROLLED

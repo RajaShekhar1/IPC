@@ -323,6 +323,7 @@ class CaseEnrollmentPeriodsService(DBService):
         else:
             periods = data
         for period in data:
+            # Not finished?
             dateutil.parser.parse(period['start_date'])
             dateutil.parser.parse(period['end_date'])
         return errors
