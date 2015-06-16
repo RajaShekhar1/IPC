@@ -5,11 +5,16 @@ import json
 from collections import defaultdict
 from decimal import Decimal
 import dateutil.parser
+import re
 import StringIO
+import unicodedata
+import uuid
 
+from taa import mandrill_flask
 from taa.core import DBService
 from taa.core import db
-from models import EnrollmentApplication, EnrollmentApplicationCoverage
+from models import (EnrollmentApplication, EnrollmentApplicationCoverage,
+                    SelfEnrollmentLink)
 
 from taa.services.cases import CaseService
 from taa.services.products import ProductService
@@ -809,3 +814,33 @@ class ProductStatsAccumulator(object):
         if product not in self._product_premiums:
             return None
         return self._product_premiums[product]
+
+
+class SelfEnrollmentLinkService(DBService):
+    __model__ = SelfEnrollmentLink
+
+    @staticmethod
+    def _slugify(s):
+        slug = unicodedata.normalize('NFKD', s)
+        slug = slug.encode('ascii', 'ignore').lower()
+        slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
+        slug = re.sub(r'[-]+', '-', slug)
+        return slug
+
+    @staticmethod
+    def generate_link(company_name):
+        return '/self-enroll/{}/{}'.format(_slugify(company_name), uuid.uuid4())
+
+#
+# class SelfEnrollmentEmailService(DBService):
+#     __model__ = SelfEnrollmentEmailLog
+#
+#     @staticmethod
+#     def send_email(from_email, from_name, subject, to_email, to_name, body):
+#         subject = 'Activation Notice for 5Star Online Enrollment'
+#         mandrill_flask.send_email(
+#             from_email=sender,
+#             subject='5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
+#             to=[{'email': e} for e in recipients],
+#             text=msg,
+#         )

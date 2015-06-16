@@ -154,3 +154,20 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
 #     Column('children_coverage', Numeric),
 #     Column('children_annual_premium', Numeric),
 # )
+
+
+class SelfEnrollmentLink(db.Model):
+    __tablename__ = 'self_enrollment_links'
+
+    id = db.Column(db.Integer, primary_key=True)
+    census_record_id = db.Column(db.Integer, db.ForeignKey('case_census.id'),
+                                 nullable=True)
+    census_record = db.relationship('CaseCensus',
+                                    backref=db.backref('self_enrollment_link'))
+    self_enrollment_setup_id = db.Column(db.Integer,
+                                         db.ForeignKey(
+                                             'self_enrollment_setups.id'),
+                                         nullable=False)
+    # self_enrollment_setup = db.relationship('SelfEnrollmentSetup')
+    url = db.Column(db.Unicode(2000), nullable=False)
+    clicks = db.Column(db.Integer, server_default='0', nullable=False)

@@ -22,20 +22,20 @@ body {
 }
 
 /* agent index widget boxes */
-@media (min-width: 768px) { 
+@media (min-width: 768px) {
     /* make the widget boxes the same size for tablet and larger */
     .home-index .widget-main {
         min-height: 20em;
     }
 }
-@media (min-width: 992px) { 
+@media (min-width: 992px) {
     /* make the widget boxes the same size for tablet and larger */
     .home-index .widget-main {
         min-height: 17em;
     }
 }
 
-@media (min-width: 1200px) { 
+@media (min-width: 1200px) {
     /* make the widget boxes the same size for desktop */
     .home-index .widget-main {
         min-height: 16em;
@@ -46,7 +46,7 @@ body {
     height: 60px;
 }
 
-.ci-recommendations .pricing-span-header li, 
+.ci-recommendations .pricing-span-header li,
 .ci-recommendations .pricing-table li {
     height: 80px;
 }
@@ -99,20 +99,20 @@ body {
 .header-color-good {
   border-color: #D1E2D0;
   background: #D1E2D0;
-  
+
 }
 
 .header-color-better {
   color: #855D10;
   border-color: #FCAE17;
   background: #FCAE17;
-  
+
 }
 
 .header-color-best {
   border-color: #5290CD;
-  background: #5290CD; 
-  
+  background: #5290CD;
+
 }
 
 #questions-form .odd, #questions-form .even {
@@ -145,7 +145,7 @@ div.alphabet {
     width: 100%;
     margin-bottom: 1em;
 }
- 
+
 div.alphabet span {
     display: table-cell;
     color: #3174c7;
@@ -155,16 +155,16 @@ div.alphabet span {
     font-size: 125%;
     padding-top: .5em;
 }
- 
+
 div.alphabet span:hover {
     text-decoration: underline;
 }
- 
+
 div.alphabet span.letter.active {
     background-color: yellow;
     font-weight: bold;
     font-size: 175%;
-    
+
 }
 
 .status-filter {
@@ -194,7 +194,7 @@ input[type=checkbox].ace.ace-switch.ace-switch-6:checked+.lbl::before {
     padding: .25em;
 }
 .criteria-select select {
-    margin: 0 1em 0 .5em; 
+    margin: 0 1em 0 .5em;
 }
 
 .enrollment-section .collapse-panel {
@@ -256,6 +256,20 @@ input[type=radio].ace+.lbl::before {
     font-weight: bold;
 }
 
+form .self-enroll input[type=text] {
+    width: 100%;
+}
+
+form .self-enroll .editor {
+    width: 100%;
+    border: 1px solid #d5d5d5;
+}
+
+.self-enroll.self-enroll-email,
+.self-enroll.self-enroll-email-off {
+    display: none;
+}
+
 @media print {
     body {
         color: #000;
@@ -264,7 +278,7 @@ input[type=radio].ace+.lbl::before {
     nav, .header ul {
         display: none;
     }
-    
+
     body, .container {
       width: 100%;
       margin: 0;

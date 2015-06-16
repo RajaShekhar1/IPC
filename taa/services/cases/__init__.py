@@ -12,8 +12,9 @@ import sqlalchemy as sa
 from taa.core import DBService
 from taa.core import db
 from taa.services.agents.models import Agent
-from models import Case, CaseCensus, CaseEnrollmentPeriod, \
-    CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod
+from models import (Case, CaseCensus, CaseEnrollmentPeriod,
+                    CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod,
+                    SelfEnrollmentSetup)
 
 class CaseService(DBService):
     __model__ = Case
@@ -22,6 +23,7 @@ class CaseService(DBService):
         super(CaseService, self).__init__(*args, **kwargs)
         self.census_records = CensusRecordService()
         self.enrollment_periods = CaseEnrollmentPeriodsService()
+        self.self_enrollment = SelfEnrollmentService()
 
     def _preprocess_params(self, kwargs):
         kwargs = super(CaseService, self)._preprocess_params(kwargs)
@@ -289,6 +291,17 @@ class CaseService(DBService):
         from taa.services.enrollments import EnrollmentApplicationService
         return bool(
             EnrollmentApplicationService().find(case_id=case.id).count())
+
+    # Self-enrollment setup
+
+    def get_self_enrollment_setup(self, case):
+        return self.self_enrollment.first(case_id=case.id)
+
+    def create_self_enrollment_setup(self, case, data):
+        return self.self_enrollment.create(case_id=case.id, **data)
+
+    def update_self_enrollment_setup(self, setup, data):
+        return self.self_enrollment.update(setup, **data)
 
 
 class CaseEnrollmentPeriodsService(DBService):
@@ -1092,3 +1105,7 @@ class CensusRecordParser(object):
             self.get_field_from_csv_column(csv_col_name).database_name: data
             for csv_col_name, data in record.items()
             }
+
+
+class SelfEnrollmentService(DBService):
+    __model__ = SelfEnrollmentSetup

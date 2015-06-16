@@ -1,11 +1,11 @@
 
 from flask_wtf import Form
 from wtforms.fields import (
-    StringField, SelectField, SelectMultipleField,
-    IntegerField, RadioField, FieldList,
-    FormField, DateField, BooleanField
+    BooleanField, DateField, FieldList, FileField, FormField, HiddenField,
+    IntegerField, RadioField, SelectField, SelectMultipleField, StringField,
+    TextAreaField,
 )
-from wtforms.widgets import CheckboxInput
+from wtforms.widgets import CheckboxInput, html_params, HTMLString
 from wtforms import validators
 
 from taa.services.products import ProductService, get_all_states
@@ -60,6 +60,23 @@ class SSNField(StringField):
             for char in valuelist[0]:
                 if char.isdigit():
                     self.data += char
+
+class Editable(object):
+    def __call__(self, field, **kwargs):
+        kwargs.setdefault('id', field.id)
+        # kwargs.setdefault('onsubmit', 'return false;')
+        element = HTMLString(u'<div contenteditable="true" %s>%s</div>' %
+        (html_params(**kwargs), unicode(field._value())))
+        hidden = HTMLString(u'<input type="hidden" id="{id}-value" '
+                            u'name="{name}" onclick="document.getElementById('
+                            u'\'{id}-value\').value = document.getElementById('
+                            u'\'{id}\').innerHTML;">'.format(name=field.name,
+                                                             id=field.id))
+        return element + hidden
+
+
+class EditableField(StringField):
+    widget = Editable()
 
 
 class CensusRecordForm(Form):
@@ -144,3 +161,39 @@ class NewCaseEnrollmentPeriodForm(Form):
 
     def validate_open_period_end_date(self, field):
         pass
+
+
+class SelfEnrollmentSetupForm(Form):
+    CASE_TARGETED = ('case-targeted', 'Targeted (specific for each person)')
+    CASE_GENERIC = ('case-generic', 'Generic (same link for everyone)')
+    CASELESS_GENERIC = ('caseless-generic', 'Ad-hoc (same link for everyone)')
+    self_enrollment_type = SelectField('Link type', choices=[])
+    use_email = BooleanField('Enabled')
+    email_sender_name = StringField('Sender Name',
+                                    [validators.InputRequired()])
+    email_sender_email = StringField('Sender Email',
+                                     [validators.InputRequired(),
+                                      validators.Email()])
+    email_message = EditableField('Email Message', [validators.InputRequired()])
+    use_landing_page = BooleanField('Enabled')
+    page_title = StringField('Title', [validators.InputRequired()])
+    page_text = EditableField('Message', [validators.InputRequired()])
+    page_disclaimer = EditableField('Disclaimer', [validators.InputRequired()])
+    created_by = HiddenField('')
+
+    def __init__(self, *args, **kwargs):
+        Form.__init__(self, *args, **kwargs)
+        type_choices = []
+        # setup = kwargs.get('obj')
+        case = kwargs.get('case')
+        if case is None:
+            # Caseless generic (ad-hoc)
+            type_choices.append(self.CASELESS_GENERIC)
+        elif case.census_records is None:
+            # Case-based generic
+            type_choices.append(self.CASE_GENERIC)
+        else:
+            # Case-based targeted or generic
+            type_choices.append(self.CASE_TARGETED)
+            type_choices.append(self.CASE_GENERIC)
+        self.self_enrollment_type.choices = type_choices

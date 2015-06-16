@@ -8,13 +8,15 @@ from taa import app
 from taa.core import TAAFormError
 from taa.helpers import get_posted_data
 from taa.api import route
-from taa.services.cases import CaseService
+from taa.services.cases import CaseService, SelfEnrollmentService
 from taa.services.cases.forms import (
-    NewCaseForm,
-    UpdateCaseForm,
     CensusRecordForm,
+    NewCaseForm,
+    SelfEnrollmentSetupForm,
+    UpdateCaseForm,
 )
 from taa.services.agents import AgentService
+from taa.services.enrollments import SelfEnrollmentLinkService
 from taa.services.products import ProductService
 
 bp = Blueprint('cases', __name__, url_prefix='/cases')
@@ -263,3 +265,50 @@ def delete_census_record(case_id, census_record_id):
     census_record = case_service.get_census_record(case, census_record_id)
     case_service.delete_census_record(census_record)
     return None, 204
+
+
+# @route(bp, '/<case_id>/self_enrollment_setup/<self_enrollment_setup_id>',
+#        methods=['PUT'])
+@route(bp, '/<case_id>/self_enrollment_setup', methods=['PUT'])
+@groups_required(api_groups, all=False)
+def update_self_enrollment_setup(case_id):
+    case = case_service.get_if_allowed(case_id)
+    self_enrollment_setup = case_service.get_self_enrollment_setup(case)
+    form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
+    from pprint import pprint
+    print("**************")
+    pprint(form.data)
+    if form.validate_on_submit():
+        if self_enrollment_setup is None:
+            return case_service.create_self_enrollment_setup(case, form.data)
+        else:
+            return case_service.update_self_enrollment_setup(
+                self_enrollment_setup, form.data)
+    raise TAAFormError(form.errors)
+
+
+def _generate_single_link(company_name, census_id=None):
+    return '{}/{}'.format(
+        request.url_root,
+        SelfEnrollmentLinkService.generate_link(company_name))
+
+@route(bp, '/generate_self_enrollment_link/<int:self_enrollment_setup_id>',
+       methods=['GET'])
+@groups_required(api_groups, all=False)
+def generate_self_enrollment_link(self_enrollment_setup_id):
+    self_enrollment_setup = SelfEnrollmentService.get(self_enrollment_setup_id)
+    case = case_service.get_if_allowed(self_enrollment_setup.case.id)
+    if case is None:
+        abort(400, {'errors': "Case ID is required"})
+    self_enrollment_setup = case_service.get_self_enrollment_setup(case)
+    # Generate and save links
+    if self_enrollment_setup.self_enrollment_type == 'case-generic':
+        print("******* '{}'".format(_generate_single_link(case.company_name)))
+    elif self_enrollment_setup.self_enrollment_type == 'case-targeted':
+        if case.census_records is not None:
+            for record in case.census_records:
+                print("******* '{}'".format(_generate_single_link(case.company_name, record.id)))
+                # _generate_single_link(case.company_name, record.id)
+    else:
+        abort(400, {'errors': "Invalid self-enrollment type '{}'; must be"
+                              "either 'case-generic' or 'case-targeted'"})

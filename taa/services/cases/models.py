@@ -59,7 +59,13 @@ class Case(CaseSerializer, db.Model):
                                backref=db.backref('partner_cases',
                                                   lazy='dynamic'))
     payment_mode = db.Column(db.Integer, nullable=True)
-    is_self_enrollment = db.Column(db.Boolean, default=False, nullable=False)
+    is_self_enrollment = db.Column(db.Boolean, server_default='FALSE',
+                                   nullable=False)
+    # self_enrollment_setup_id = db.Column(db.Integer,
+    #                                      db.ForeignKey('self_enrollment_setups.id'),
+    #                                      nullable=True)
+    self_enrollment_setup = db.relationship('SelfEnrollmentSetup',
+                                            uselist=False, backref='case')
 
     def get_template_data(self):
         return dict(
@@ -347,3 +353,44 @@ class CaseCensus(CensusRecordSerializer, db.Model):
 
     def child_birthdate(self, num):
         return getattr(self, 'child{}_birthdate'.format(num))
+
+
+class SelfEnrollmentSerializer(JsonSerializable):
+    __json_hidden__ = ['case']
+
+
+class SelfEnrollmentSetup(SelfEnrollmentSerializer, db.Model):
+    """
+    Model a case's self-enrollment email and landing page templates.
+    """
+    __tablename__ = 'self_enrollment_setups'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # Case
+    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True)
+    # case = db.relationship('Case', uselist=False,
+    #                        backref='self_enrollment_setup')
+    # Type
+    TYPE_CASE_TARGETED = 'case-targeted'
+    TYPE_CASE_GENERIC = 'case-generic'
+    TYPE_CASELESS_GENERIC = 'caseless-generic'
+    self_enrollment_type = db.Column(db.Unicode(16), nullable=False)
+    # Email
+    use_email = db.Column(db.Boolean, nullable=False, server_default='FALSE')
+    email_sender_name = db.Column(db.Unicode)
+    email_sender_email = db.Column(db.Unicode)
+    email_subject = db.Column(db.Unicode)
+    email_message = db.Column(db.UnicodeText)
+    # Landing page
+    use_landing_page = db.Column(db.Boolean, nullable=False,
+                                 server_default='TRUE')
+    page_title = db.Column(db.Unicode)
+    page_text = db.Column(db.UnicodeText)
+    page_disclaimer = db.Column(db.UnicodeText)
+    # Links
+    links = db.relationship('SelfEnrollmentLink')
+    # Metadata
+    created_by = db.Column(db.Integer, db.ForeignKey('agents.id'),
+                           nullable=False)
+    created_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    updated_date = db.Column(db.DateTime, nullable=False, default=db.func.now())

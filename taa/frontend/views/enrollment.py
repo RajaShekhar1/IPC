@@ -5,6 +5,8 @@ ENROLLMENT pages and handling, DOCUSIGN interaction
 import os
 import json
 
+import requests
+
 from flask import request, render_template, jsonify, session, send_from_directory, url_for
 from flask.ext.stormpath import login_required
 
@@ -117,10 +119,10 @@ def in_person_enrollment():
         'company_name': company_name,
         'group_number': group_number,
         'products': products,
-        'employee_data':employee_data,
-        'spouse_data':spouse_data,
-        'children_data':children_data,
-        'is_in_person':True,
+        'employee_data': employee_data,
+        'spouse_data': spouse_data,
+        'children_data': children_data,
+        'is_in_person': True,
         'health_questions': soh_questions,
         'payment_mode_choices': payment_mode_choices,
         'payment_mode': payment_mode,
@@ -133,6 +135,22 @@ def in_person_enrollment():
         states=get_states(),
         nav_menu=get_nav_menu(),
     )
+
+
+@app.route('/self-enroll/<string:company_name>/<string:uuid>')
+def self_enrollment(company_name, uuid):
+    record_id = None #SelfEnrollService.get_census_id(company_name, uuid)
+    if record_id is None:
+        case_id = None #SelfEnrollService.get_case_id(company_name, uuid)
+    else:
+        case_id = None
+        # 'is_in_person': False,
+        # 'state': state if state != 'XX' else None,
+        # 'enroll_city': enroll_city,
+        # TODO: See comment on landing page
+        # TODO: Don't worry about product not being available in the state
+    return requests.post(url_for(in_person_enrollment),
+                         params={'record_id': record_id, 'case_id': case_id})
 
 
 @app.route('/submit-wizard-data', methods=['POST'])
