@@ -270,6 +270,10 @@ form .self-enroll .editor {
     display: none;
 }
 
+.self-enroll-email-confirm {
+    display: none;
+}
+
 @media print {
     body {
         color: #000;
