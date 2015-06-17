@@ -57,24 +57,6 @@ requested to cease using this site for any purpose.
           {% else -%}
           {{ render_field_with_errors(form.self_enrollment_type, disabled=true) }}
           {% endif -%}
-          <div class="col-sm-9 col-sm-offset-3">
-            <a class="btn btn-primary" href="#" disabled>Send email</a>
-{#            {% if case.self_enrollment_setup is not none -%}#}
-{#              {% if case.self_enrollment_setup.links|count == 0 -%}#}
-{#              <a class="btn btn-primary" href="{{ url_for('cases.generate_self_enrollment_link', self_enrollment_setup_id=case.self_enrollment_setup.id) }}">#}
-{#                <strong><i class="fa fa-link"></i></strong>#}
-{#                Generate self-enroll link(s)#}
-{#              </a>#}
-{#              {% endif -%}#}
-{#              <span>#}
-{#                <i class="fa fa-caret-right"></i>#}
-{#                <strong>{{ case.self_enrollment_setup.links|count }}</strong> links have been generated#}
-{#                (census contains <strong>{{ case.census_records|count }}</strong> records).#}
-{#              </span>#}
-{#            {% else -%}#}
-{#              <div class="alert alert-warning">You can generate links after clicking <strong>Save Changes</strong> below</div>#}
-{#            {% endif -%}#}
-          </div>
         </div>
         <h3>Email</h3>
         <div class="form-group self-enroll self-enroll-email">
@@ -83,6 +65,29 @@ requested to cease using this site for any purpose.
           {{ render_field_with_errors(form.email_message, class_='wysiwyg-editor', default=default_email_message) }}
           <div class="col-xs-9 col-xs-offset-3">
             <a id="reset-email-message" class="btn btn-xs pull-right">Reset to default message</a>
+          </div>
+          <div class="col-sm-9 col-sm-offset-3">
+            Send email/link to those who:
+            <div class="btn-group btn-overlap btn-corner">
+              <a class="btn btn-sm btn-primary">haven't been sent link ...</a>
+              <a class="btn btn-sm btn-primary">have not enrolled ...</a>
+              <a class="btn btn-sm btn-primary">have declined ...</a>
+            </div>
+              {#            {% if case.self_enrollment_setup is not none -%}#}
+              {#              {% if case.self_enrollment_setup.links|count == 0 -%}#}
+              {#              <a class="btn btn-primary" href="{{ url_for('cases.generate_self_enrollment_link', self_enrollment_setup_id=case.self_enrollment_setup.id) }}">#}
+              {#                <strong><i class="fa fa-link"></i></strong>#}
+              {#                Generate self-enroll link(s)#}
+              {#              </a>#}
+              {#              {% endif -%}#}
+              {#              <span>#}
+              {#                <i class="fa fa-caret-right"></i>#}
+              {#                <strong>{{ case.self_enrollment_setup.links|count }}</strong> links have been generated#}
+              {#                (census contains <strong>{{ case.census_records|count }}</strong> records).#}
+              {#              </span>#}
+              {#            {% else -%}#}
+              {#              <div class="alert alert-warning">You can generate links after clicking <strong>Save Changes</strong> below</div>#}
+              {#            {% endif -%}#}
           </div>
         </div>
         <div class="form-group self-enroll self-enroll-email-off">
@@ -117,6 +122,9 @@ requested to cease using this site for any purpose.
     </div>
     {{ render_field_with_errors(form.created_by, value=agent.id) }}
   </form>
+
+  <div class="self-enroll-email-confirm">
+  </div>
 {% endblock %}
 
 {% block page_js %}

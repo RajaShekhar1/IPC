@@ -171,3 +171,23 @@ class SelfEnrollmentLink(db.Model):
     # self_enrollment_setup = db.relationship('SelfEnrollmentSetup')
     url = db.Column(db.Unicode(2000), nullable=False)
     clicks = db.Column(db.Integer, server_default='0', nullable=False)
+    emails = db.relationship('SelfEnrollmentEmailLog', backref='link')
+
+
+class SelfEnrollmentEmailLog(db.Model):
+    __tabelname__ = 'self_enrollment_email_log'
+
+    id = db.Column(db.Integer, primary_key=True)
+    link_id = db.Column(db.Integer, db.ForeignKey('self_enrollment_links.id'),
+                        nullable=False)
+    census_id = db.Column(db.Integer, db.ForeignKey('case_census.id'),
+                          nullable=False)
+    census_record = db.relationship('CaseCensus')
+    agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=False)
+    sent_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    email_to_address = db.Column(db.Unicode)
+    email_to_name = db.Column(db.Unicode)
+    email_from_address = db.Column(db.Unicode)
+    email_from_name = db.Column(db.Unicode)
+    email_subject = db.Column(db.Unicode)
+    email_body = db.Column(db.UnicodeText)
