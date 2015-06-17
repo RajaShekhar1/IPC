@@ -69,9 +69,9 @@ requested to cease using this site for any purpose.
           <div class="col-sm-9 col-sm-offset-3">
             Send email/link to those who:
             <div class="btn-group btn-overlap btn-corner">
-              <a class="btn btn-sm btn-primary">haven't been sent link ...</a>
-              <a class="btn btn-sm btn-primary">have not enrolled ...</a>
-              <a class="btn btn-sm btn-primary">have declined ...</a>
+              <a class="btn btn-sm btn-primary" href="{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which='not-sent') }}">haven't been sent link ...</a>
+              <a class="btn btn-sm btn-primary" href="{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which='not-enrolled') }}">have not enrolled ...</a>
+              <a class="btn btn-sm btn-primary" href="{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which='declined') }}">have declined ...</a>
             </div>
               {#            {% if case.self_enrollment_setup is not none -%}#}
               {#              {% if case.self_enrollment_setup.links|count == 0 -%}#}

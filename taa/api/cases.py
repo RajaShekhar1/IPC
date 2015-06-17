@@ -16,7 +16,9 @@ from taa.services.cases.forms import (
     UpdateCaseForm,
 )
 from taa.services.agents import AgentService
-from taa.services.enrollments import SelfEnrollmentLinkService
+from taa.services.enrollments import (EnrollmentApplicationService,
+                                      SelfEnrollmentEmailService,
+                                      SelfEnrollmentLinkService)
 from taa.services.products import ProductService
 
 bp = Blueprint('cases', __name__, url_prefix='/cases')
@@ -24,6 +26,9 @@ bp = Blueprint('cases', __name__, url_prefix='/cases')
 case_service = CaseService()
 agent_service = AgentService()
 product_service = ProductService()
+self_enrollment_email_service = SelfEnrollmentEmailService()
+self_enrollment_link_service = SelfEnrollmentLinkService()
+enrollment_application_service = EnrollmentApplicationService()
 
 api_groups = ['agents', 'home_office', 'admins']
 
@@ -275,9 +280,6 @@ def update_self_enrollment_setup(case_id):
     case = case_service.get_if_allowed(case_id)
     self_enrollment_setup = case_service.get_self_enrollment_setup(case)
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
-    from pprint import pprint
-    print("**************")
-    pprint(form.data)
     if form.validate_on_submit():
         if self_enrollment_setup is None:
             return case_service.create_self_enrollment_setup(case, form.data)
@@ -287,28 +289,66 @@ def update_self_enrollment_setup(case_id):
     raise TAAFormError(form.errors)
 
 
-def _generate_single_link(company_name, census_id=None):
-    return '{}/{}'.format(
-        request.url_root,
-        SelfEnrollmentLinkService.generate_link(company_name))
+def get_census_records_for_status(case, status=None):
+    result = []
+    if case is None or case.self_enrollment_setup is None:
+        return result
+    if status is None:
+        return result if case.census_records is None else case.census_records
+    for record in case.census_records:
+        if status == 'not-sent':
+            if len(self_enrollment_email_service.get_for_census_record(record)) == 0:
+                result.append(record)
+        else:
+            enroll = enrollment_application_service.get_enrollment_status(record)
+            if status == 'not-enrolled' and enroll is None:
+                result.append(record)
+            elif status == 'declined' and enroll == 'enrolled':
+                result.append(record)
+    return result
 
-@route(bp, '/generate_self_enrollment_link/<int:self_enrollment_setup_id>',
-       methods=['GET'])
+
+@route(bp, '/<case_id>/self_enroll_email/<string:which>', methods=['GET'])
 @groups_required(api_groups, all=False)
-def generate_self_enrollment_link(self_enrollment_setup_id):
-    self_enrollment_setup = SelfEnrollmentService.get(self_enrollment_setup_id)
-    case = case_service.get_if_allowed(self_enrollment_setup.case.id)
+def email_self_enrollment_link(case_id, which):
+    """
+    click email link
+    - call this fn with case_id and type
+    - this fun
+    """
+    case = case_service.get_if_allowed(case_id)
     if case is None:
-        abort(400, {'errors': "Case ID is required"})
-    self_enrollment_setup = case_service.get_self_enrollment_setup(case)
-    # Generate and save links
-    if self_enrollment_setup.self_enrollment_type == 'case-generic':
-        print("******* '{}'".format(_generate_single_link(case.company_name)))
-    elif self_enrollment_setup.self_enrollment_type == 'case-targeted':
-        if case.census_records is not None:
-            for record in case.census_records:
-                print("******* '{}'".format(_generate_single_link(case.company_name, record.id)))
-                # _generate_single_link(case.company_name, record.id)
-    else:
-        abort(400, {'errors': "Invalid self-enrollment type '{}'; must be"
-                              "either 'case-generic' or 'case-targeted'"})
+        abort(401, "Access not permitted to this case")
+    setup = case.self_enrollment_setup
+    if setup is None or setup.self_enrollment_type != 'case-targeted':
+        abort(400, "Case not configured for targeted self-enrollment")
+    agent = agent_service.get_logged_in_agent()
+    eligible_census = get_census_records_for_status(case, status=which)
+    result = []
+    for record in eligible_census:
+        if record.employee_email is None or '@' not in record.employee_email:
+            # Census record does not has a valid email; skip
+            continue
+        # Get previously generated link if available
+        link = self_enrollment_link_service.get_for_census_record(record)
+        if link is None:
+            # Otherwise generate one
+            link = self_enrollment_link_service.generate_link(request.url_root,
+                                                              case, record)
+        if link is None:
+            abort(500, "Could not retrieve or create self-enrollment link")
+        name = '{} {}'.format(record.employee_first, record.employee_last)
+        print("Emailing {}".format(name))
+        success = self_enrollment_email_service.send(
+            agent, link, record,
+            from_email=setup.email_sender_email,
+            from_name=setup.email_sender_name,
+            to_email=record.employee_email,
+            to_name=name,
+            subject='Activation Notice for 5Star Online Enrollment',
+            body=setup.email_message + '\r\n' + link.url)
+        result.append("{} {} at <{}>".format(
+            'Emailed' if success else 'Failed to email',
+            name,
+            record.employee_email))
+    return result

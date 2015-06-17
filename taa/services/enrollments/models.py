@@ -191,3 +191,4 @@ class SelfEnrollmentEmailLog(db.Model):
     email_from_name = db.Column(db.Unicode)
     email_subject = db.Column(db.Unicode)
     email_body = db.Column(db.UnicodeText)
+    is_success = db.Column(db.Boolean, nullable=False)
