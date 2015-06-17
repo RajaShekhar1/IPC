@@ -53,5 +53,6 @@ def get_template_id(product_type, state):
 
 
 def get_replacement_template_id(product_type, state):
-    return "3E0CF882-8678-4476-A6B3-D60AA4111C85"
+    return "7286ACB9-8B08-43BB-99EB-C7A37B8B8F2A"
+    #return "3E0CF882-8678-4476-A6B3-D60AA4111C85"
 
