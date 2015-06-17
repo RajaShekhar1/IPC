@@ -301,7 +301,7 @@ def get_census_records_for_status(case, status=None):
                 result.append(record)
         else:
             enroll = enrollment_application_service.get_enrollment_status(record)
-            if status == 'not-enrolled' and enroll is None:
+            if status == 'not-enrolled' and enroll != 'enrolled':
                 result.append(record)
             elif status == 'declined' and enroll == 'enrolled':
                 result.append(record)
