@@ -368,8 +368,6 @@ class SelfEnrollmentSetup(SelfEnrollmentSerializer, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     # Case
     case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True)
-    # case = db.relationship('Case', uselist=False,
-    #                        backref='self_enrollment_setup')
     # Type
     TYPE_CASE_TARGETED = 'case-targeted'
     TYPE_CASE_GENERIC = 'case-generic'
@@ -394,3 +392,25 @@ class SelfEnrollmentSetup(SelfEnrollmentSerializer, db.Model):
                            nullable=False)
     created_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
     updated_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
+
+    @property
+    def sent_count(self):
+        if self.self_enrollment_type != self.TYPE_CASE_TARGETED:
+            return 0
+        if self.links is None:
+            return 0
+        return len(self.links)
+
+    @property
+    def enrolled_count(self):
+        if self.self_enrollment_type != self.TYPE_CASE_TARGETED:
+            return 0
+        return len(filter(lambda x: x.get_enrollment_status() == 'enrolled',
+                          self.case.census_records))
+
+    @property
+    def declined_count(self):
+        if self.self_enrollment_type != self.TYPE_CASE_TARGETED:
+            return 0
+        return len(filter(lambda x: x.get_enrollment_status() != 'enrolled',
+                          self.case.census_records))
