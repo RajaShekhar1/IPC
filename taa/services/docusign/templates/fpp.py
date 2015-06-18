@@ -113,7 +113,7 @@ class FPPTemplate(DocuSignServerTemplate):
     def make_spouse_tabs(self):
 
         if not self.data.did_spouse_select_coverage():
-            return
+            return []
 
         sp_tabs_list = []
 

@@ -31,11 +31,19 @@ class FPPReplacementFormTemplate(DocuSignServerTemplate):
         if len(self.data['replacement_policies']) == 1:
             # Has to be at least one. Additional, if any, will go on the attachment document.
             policy = self.data['replacement_policies'][0]
+
+            if policy['replaced_or_financing'] == 'replaced':
+                replaced_or_financing = 'R'
+            elif not policy['replaced_or_financing']:
+                replaced_or_financing = ''
+            else:
+                replaced_or_financing = 'F'
+
             tabs += [
                 DocuSignTextTab('policy_insurer_name', policy['name']),
                 DocuSignTextTab('policy_number', policy['policy_number']),
                 DocuSignTextTab('policy_insured', policy['insured']),
-                DocuSignTextTab('policy_replaced_or_financing', 'R' if policy['replaced_or_financing'] == 'replaced' else 'F'),
+                DocuSignTextTab('policy_replaced_or_financing', replaced_or_financing),
                 DocuSignTextTab('policy_reason', policy['replacement_reason']),
             ]
         else:

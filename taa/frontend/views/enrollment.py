@@ -17,7 +17,7 @@ from nav import get_nav_menu
 from taa.models import db
 from taa.old_model.States import get_states
 
-from taa.services.cases import CaseService
+from taa.services.cases import CaseService, SelfEnrollmentService
 from taa.services.agents import AgentService
 from taa.services.products import ProductService
 from taa.services.products import get_payment_modes, is_payment_mode_changeable
@@ -29,6 +29,7 @@ product_service = ProductService()
 case_service = CaseService()
 agent_service = AgentService()
 enrollment_service = EnrollmentApplicationService()
+self_enrollment_service = SelfEnrollmentService()
 self_enrollment_link_service = SelfEnrollmentLinkService()
 
 @app.route('/enroll')
@@ -76,7 +77,7 @@ def in_person_enrollment():
 
 
 def _in_person_enrollment(record_id=None, data=None, is_self_enroll=False):
-    is_in_person = True
+
     if record_id is not None:
         # Enrolling from a case census record
         record_id = int(record_id)
@@ -87,7 +88,6 @@ def _in_person_enrollment(record_id=None, data=None, is_self_enroll=False):
         if is_self_enroll:
             state = record.employee_state or record.case.situs_state
             enroll_city = record.employee_city or record.case.situs_city
-            is_in_person = False
         else:
             state = record.case.situs_state
             enroll_city = record.case.situs_city
@@ -144,7 +144,7 @@ def _in_person_enrollment(record_id=None, data=None, is_self_enroll=False):
         'employee_data': employee_data,
         'spouse_data': spouse_data,
         'children_data': children_data,
-        'is_in_person': is_in_person,
+        'is_in_person': not is_self_enroll,
         'health_questions': soh_questions,
         'payment_mode_choices': payment_mode_choices,
         'payment_mode': payment_mode,
@@ -166,25 +166,45 @@ def self_enrollment(company_name, uuid):
     vars = {'is_valid': False}
     if setup is not None:
         session['is_self_enroll'] = True
+
+        # Store these in session rather than as a form submission for security purposes
+        session['self_enrollment_setup_id'] = setup.id
+        session['census_record_id'] = census_record.id if census_record else None
+
         vars.update({
             'is_valid': True,
             'page_title': setup.page_title,
             'page_text': setup.page_text,
             'page_disclaimer': setup.page_disclaimer,
-            'census_record': census_record,
-            'self_enrollment_setup': setup,
         })
     return render_template('enrollment/landing_page.html', **vars)
 
 
 @app.route('/self-enrollment', methods=['POST'])
 def self_enrollment2():
-    id = request.form.get('record_id')
-    if session.get('is_self_enroll') is not None:
-        return _in_person_enrollment(record_id=int(id) if id else None,
-                                     is_self_enroll=True)
-    else:
-        abort(404)
+
+    if session.get('is_self_enroll') is None:
+        abort(401)
+
+    census_record_id = session.get('census_record_id', None)
+    enrollment_setup = self_enrollment_service.get(session['self_enrollment_setup_id'])
+
+    data = {}
+    if not census_record_id:
+        # Generic link
+        data['enrollmentState'] = enrollment_setup.case.situs_state
+        data['enrollmentCity'] = enrollment_setup.case.situs_city
+        data['companyName'] = enrollment_setup.case.company_name
+        data['groupNumber'] = enrollment_setup.case.group_number
+        data['productID'] = enrollment_setup.case.products[0].id
+        data['eeFName'] = ""
+        data['eeLName'] = ""
+        data['email'] = ""
+
+    # TODO: Override data with form submission (city, state)
+
+    return _in_person_enrollment(record_id=census_record_id, data=data, is_self_enroll=True)
+
 
 
 @app.route('/submit-wizard-data', methods=['POST'])
