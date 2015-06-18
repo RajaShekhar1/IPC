@@ -308,7 +308,7 @@ def get_census_records_for_status(case, status=None):
     return result
 
 
-@route(bp, '/<case_id>/self_enroll_email/<string:which>', methods=['GET'])
+@route(bp, '/<case_id>/self_enroll_email/<string:which>', methods=['POST'])
 @groups_required(api_groups, all=False)
 def email_self_enrollment_link(case_id, which):
     """
@@ -317,8 +317,6 @@ def email_self_enrollment_link(case_id, which):
     - this fun
     """
     case = case_service.get_if_allowed(case_id)
-    if case is None:
-        abort(401, "Access not permitted to this case")
     setup = case.self_enrollment_setup
     if setup is None or setup.self_enrollment_type != 'case-targeted':
         abort(400, "Case not configured for targeted self-enrollment")
@@ -328,6 +326,7 @@ def email_self_enrollment_link(case_id, which):
     for record in eligible_census:
         if record.employee_email is None or '@' not in record.employee_email:
             # Census record does not has a valid email; skip
+            result.append("{} {} did not have a valid email.".format(record.employee_first, record.employee_last))
             continue
         # Get previously generated link if available
         link = self_enrollment_link_service.get_for_census_record(record)
@@ -345,7 +344,7 @@ def email_self_enrollment_link(case_id, which):
             from_name=setup.email_sender_name,
             to_email=record.employee_email,
             to_name=name,
-            subject='Activation Notice for 5Star Online Enrollment',
+            subject='Enrollment Link for 5Star Online Enrollment',
             body=setup.email_message + '\r\n' + link.url)
         result.append("{} {} at <{}>".format(
             'Emailed' if success else 'Failed to email',

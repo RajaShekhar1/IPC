@@ -155,8 +155,10 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
 #     Column('children_annual_premium', Numeric),
 # )
 
+class SelfEnrollmentLinkSerializer(JsonSerializable):
+    __json_hidden__ = ['census_record', 'emails']
 
-class SelfEnrollmentLink(db.Model):
+class SelfEnrollmentLink(SelfEnrollmentLinkSerializer, db.Model):
     __tablename__ = 'self_enrollment_links'
 
     id = db.Column(db.Integer, primary_key=True)

@@ -11,6 +11,8 @@ import unicodedata
 import uuid
 
 import requests
+import mandrill
+from flask import render_template
 
 from taa import mandrill_flask
 from taa.core import DBService
@@ -861,7 +863,6 @@ class SelfEnrollmentEmailService(DBService):
     def _send_email(self, from_email, from_name, to_email, to_name, subject,
                     body):
         try:
-            to_email = 'jkayser@delmarit.com'
             mandrill_flask.send_email(
                 to=[{'email': to_email, 'name': to_name}],
                 from_email=from_email,
@@ -870,9 +871,17 @@ class SelfEnrollmentEmailService(DBService):
                 html=body,
                 auto_text=True,
             )
-            return True
-        except requests.exceptions.HTTPError:
+        except mandrill.Error as e:
+            print("Exception sending email: %s - %s; to %s"%(e.__class__, e, to_email))
             return False
+        except requests.exceptions.HTTPError as e:
+            print("Exception sending email: %s - %s; to %s"%(e.__class__, e, to_email))
+            return False
+        except Exception as e:
+            print "Exception sending email: %s - %s"%(e.__class__, e)
+            return False
+
+        return True
 
     def send(self, agent, link, census, **kwargs):
         success = self._send_email(**kwargs)
