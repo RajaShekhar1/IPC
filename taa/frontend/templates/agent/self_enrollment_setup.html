@@ -189,6 +189,7 @@ requested to cease using this site for any purpose.
 
       // Show success message if required
       if(window.location.hash == '#success') {
+        window.location.href = window.location.href.replace(/#.*$/, '#');
         $('#save-success').show();
       }
 
@@ -236,7 +237,8 @@ requested to cease using this site for any purpose.
             data: data,
             dataType: 'json',
             success: function(results) {
-              window.location.href += '#success';
+              window.location.hash = 'success';
+              window.location.reload();
             },
             error: function(xhr) {
               $('#save-fail').show();
