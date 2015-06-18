@@ -156,7 +156,11 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
 # )
 
 
-class SelfEnrollmentLink(db.Model):
+class SelfEnrollmentLinkSerializer(JsonSerializable):
+    __json_hidden__ = ['census_record', 'case']
+
+
+class SelfEnrollmentLink(SelfEnrollmentLinkSerializer, db.Model):
     __tablename__ = 'self_enrollment_links'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -168,14 +172,18 @@ class SelfEnrollmentLink(db.Model):
                                          db.ForeignKey(
                                              'self_enrollment_setups.id'),
                                          nullable=False)
-    # self_enrollment_setup = db.relationship('SelfEnrollmentSetup')
+    self_enrollment_setup = db.relationship('SelfEnrollmentSetup')
     url = db.Column(db.Unicode(2000), nullable=False)
     clicks = db.Column(db.Integer, server_default='0', nullable=False)
     emails = db.relationship('SelfEnrollmentEmailLog', backref='link')
 
 
-class SelfEnrollmentEmailLog(db.Model):
-    __tabelname__ = 'self_enrollment_email_log'
+class SelfEnrollmentEmailLogSerializer(JsonSerializable):
+    __json_hidden__ = ['agent', 'census_record', 'self_enrollment_link']
+
+
+class SelfEnrollmentEmailLog(SelfEnrollmentEmailLogSerializer, db.Model):
+    __tablename__ = 'self_enrollment_email_log'
 
     id = db.Column(db.Integer, primary_key=True)
     link_id = db.Column(db.Integer, db.ForeignKey('self_enrollment_links.id'),

@@ -845,6 +845,13 @@ class SelfEnrollmentLinkService(DBService):
         db.session.commit()
         return link
 
+    def get_self_enrollment_data_for(self, uuid):
+        link = db.session.query(SelfEnrollmentLink).filter(
+            SelfEnrollmentLink.url.endswith(uuid)).first()
+        link.clicks += 1
+        db.session.commit()
+        return link.self_enrollment_setup, link.census_record
+
 
 class SelfEnrollmentEmailService(DBService):
     __model__ = SelfEnrollmentEmailLog
