@@ -80,7 +80,11 @@
             <tr>
                 <td>
                     {% if link_logo|default(True) %}
-                        <a href="/"><img src="{{ logopath }}" alt="5Star TAA"></a>
+                        {% if current_user.is_authenticated() -%}
+                            <a href="/"><img src="{{ logopath }}" alt="5Star TAA"></a>
+                        {% else -%}
+                            <img src="{{ logopath }}" alt="5Star TAA">
+                        {% endif -%}
                     {% else %}
                         <img src="/static/img/5Star_logo_TAA.png">
                     {% endif %}
