@@ -87,7 +87,7 @@ requested to cease using this site for any purpose.
               <p>
                 {% if setup and setup.links and setup.links|count > 0 -%}
                   Self-enrollment link:
-                  <strong><a href="{{ setup.links[0].url }}">{{ setup.links[0].url }}</a></strong>
+                  <strong><a target="_blank" href="{{ setup.links[0].url }}">{{ setup.links[0].url }}</a></strong>
                 {% endif -%}
               </p>
               <p>
