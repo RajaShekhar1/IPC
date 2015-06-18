@@ -144,12 +144,16 @@ def in_person_enrollment():
 def self_enrollment(company_name, uuid):
     setup, census_record = self_enrollment_link_service.get_self_enrollment_data_for(uuid,
                                                                                      current_user.is_anonymous())
-    # populate button data -> case enrollment
-    return render_template('enrollment/landing_page.html',
-                           page_title=setup.page_title,
-                           page_text=setup.page_text,
-                           page_disclaimer=setup.page_disclaimer,
-                           census_record=census_record)
+    vars = {'is_valid': False}
+    if setup is not None:
+        vars.update({
+            'is_valid': True,
+            'page_title': setup.page_title,
+            'page_text': setup.page_text,
+            'page_disclaimer': setup.page_disclaimer,
+            'census_record': census_record,
+        })
+    return render_template('enrollment/landing_page.html', **vars)
 
 
 @app.route('/self-enroll', methods=['PUT'])

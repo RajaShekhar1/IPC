@@ -848,6 +848,9 @@ class SelfEnrollmentLinkService(DBService):
     def get_self_enrollment_data_for(self, uuid, increment_clicks=True):
         link = db.session.query(SelfEnrollmentLink).filter(
             SelfEnrollmentLink.url.endswith(uuid)).first()
+        if link is None:
+            # Link no longer exists
+            return None, None
         if increment_clicks:
             link.clicks += 1
             db.session.commit()
