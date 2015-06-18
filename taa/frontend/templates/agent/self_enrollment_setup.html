@@ -79,7 +79,7 @@ requested to cease using this site for any purpose.
           <div class="col-sm-9 col-sm-offset-3">
             <div class="alert alert-info">
               <p>
-                {% if setup.links|count > 0 -%}
+                {% if setup and setup.links and setup.links|count > 0 -%}
                   Self-enrollment link:
                   <strong><a href="{{ setup.links[0].url }}">{{ setup.links[0].url }}</a></strong>
                 {% endif -%}
@@ -187,6 +187,11 @@ requested to cease using this site for any purpose.
       $('#page_text').ace_wysiwyg();
       $('#page_disclaimer').ace_wysiwyg();
 
+      // Show success message if required
+      if(window.location.hash == '#success') {
+        $('#save-success').show();
+      }
+
 {#      $('#edit-self-enrollment-form').submit(function() {#}
 {#        $('#email_message').val($('#editor-email-message').val());#}
 {#        $('#page_text').val($('#editor-page-text').val());#}
@@ -231,7 +236,7 @@ requested to cease using this site for any purpose.
             data: data,
             dataType: 'json',
             success: function(results) {
-              $('#save-success').show();
+              window.location.href += '#success';
             },
             error: function(xhr) {
               $('#save-fail').show();
