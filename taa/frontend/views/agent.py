@@ -145,16 +145,6 @@ def sample_upload_csv():
                      attachment_filename='sample_census_upload.csv')
 
 
-# def _edit_self_enrollment_setup(vars):
-#     return render_template('agent/self_enrollment_setup.html', **vars)
-#
-#
-# @app.route('/manage-self-enrollment/<int:self_enrollment_setup_id>')
-# @groups_required(['agents', 'home_office', 'admins'], all=False)
-# def edit_self_enroll_setup_adhoc(self_enrollment_setup_id):
-#     pass
-
-
 @app.route('/manage-case/<int:case_id>/self-enrollment')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def edit_self_enroll_setup(case_id=None):
@@ -177,10 +167,6 @@ def edit_self_enroll_setup(case_id=None):
         'product_list': '<ul><li>{}</li></ul>'.format(
             '</li><li>'.join([product.name for product in case.products])),
     }
-    if case.self_enrollment_setup is None:
-        # New self-enrollment setup
-        return render_template('agent/self_enrollment_setup.html', **vars)
-    else:
-        # Existing self-enrollment setup
+    if case.self_enrollment_setup is not None:
         vars['setup'] = case.self_enrollment_setup
-        return render_template('agent/self_enrollment_setup.html', **vars)
+    return render_template('agent/self_enrollment_setup.html', **vars)
