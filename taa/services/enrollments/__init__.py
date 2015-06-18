@@ -1,20 +1,22 @@
-import csv
-import time
-import datetime
-import json
 from collections import defaultdict
 from decimal import Decimal
+import csv
+import datetime
 import dateutil.parser
+import json
 import re
 import StringIO
+import time
 import unicodedata
 import uuid
+
+import requests
 
 from taa import mandrill_flask
 from taa.core import DBService
 from taa.core import db
 from models import (EnrollmentApplication, EnrollmentApplicationCoverage,
-                    SelfEnrollmentLink)
+                    SelfEnrollmentEmailLog, SelfEnrollmentLink)
 
 from taa.services.cases import CaseService
 from taa.services.products import ProductService
@@ -823,6 +825,10 @@ class ProductStatsAccumulator(object):
 class SelfEnrollmentLinkService(DBService):
     __model__ = SelfEnrollmentLink
 
+    def get_for_census_record(self, census_record):
+        # record = CaseService.get_census_record(census_record_id)
+        return self.find(census_record_id=census_record.id).first()
+
     @staticmethod
     def _slugify(s):
         slug = unicodedata.normalize('NFKD', s)
@@ -831,20 +837,56 @@ class SelfEnrollmentLinkService(DBService):
         slug = re.sub(r'[-]+', '-', slug)
         return slug
 
-    @staticmethod
-    def generate_link(company_name):
-        return '/self-enroll/{}/{}'.format(_slugify(company_name), uuid.uuid4())
+    def generate_link(self, prefix, case, record=None):
+        url = '{}self-enroll/{}/{}'.format(
+            prefix,
+            SelfEnrollmentLinkService._slugify(case.company_name or ''),
+            uuid.uuid4().hex)
+        link = self.create(
+            self_enrollment_setup_id=case.self_enrollment_setup.id,
+            census_record_id=None if record is None else record.id,
+            url=url)
+        db.session.commit()
+        return link
 
-#
-# class SelfEnrollmentEmailService(DBService):
-#     __model__ = SelfEnrollmentEmailLog
-#
-#     @staticmethod
-#     def send_email(from_email, from_name, subject, to_email, to_name, body):
-#         subject = 'Activation Notice for 5Star Online Enrollment'
-#         mandrill_flask.send_email(
-#             from_email=sender,
-#             subject='5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
-#             to=[{'email': e} for e in recipients],
-#             text=msg,
-#         )
+
+class SelfEnrollmentEmailService(DBService):
+    __model__ = SelfEnrollmentEmailLog
+
+    def get_for_census_record(self, census_record):
+        # record = CaseService.get_census_record(census_record_id)
+        # return self.find(census_id=census_record.id)
+        return self.find(census_id=census_record.id).all()
+
+    def _send_email(self, from_email, from_name, to_email, to_name, subject,
+                    body):
+        try:
+            to_email = 'jkayser@delmarit.com'
+            mandrill_flask.send_email(
+                to=[{'email': to_email, 'name': to_name}],
+                from_email=from_email,
+                from_name=from_name,
+                subject=subject,
+                html=body,
+                auto_text=True,
+            )
+            return True
+        except requests.exceptions.HTTPError:
+            return False
+
+    def send(self, agent, link, census, **kwargs):
+        success = self._send_email(**kwargs)
+        self.create(**dict(
+            link_id=link.id,
+            census_id=census.id,
+            agent_id=agent.id,
+            email_to_address=kwargs.get('to_email'),
+            email_to_name=kwargs.get('to_name'),
+            email_from_address=kwargs.get('from_email'),
+            email_from_name=kwargs.get('from_name'),
+            email_subject=kwargs.get('subject'),
+            email_body=kwargs.get('body'),
+            is_success=success,
+        ))
+        db.session.commit()
+        return success
