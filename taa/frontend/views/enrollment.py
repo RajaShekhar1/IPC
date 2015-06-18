@@ -86,12 +86,15 @@ def _in_person_enrollment(record_id=None, data=None, is_self_enroll=False):
         # Set a flag that we are currently enrolling from this case
         session['active_case_id'] = record.case_id
         session['enrolling_census_record_id'] = record.id
-        if is_self_enroll:
-            state = record.employee_state or record.case.situs_state
-            enroll_city = record.employee_city or record.case.situs_city
-        else:
-            state = record.case.situs_state
-            enroll_city = record.case.situs_city
+
+        # Defaults, but can be overridden by user data
+        state = record.employee_state or record.case.situs_state
+        enroll_city = record.employee_city or record.case.situs_city
+        if 'enrollmentState' in data and data['enrollmentState']:
+            state = data['enrollmentState']
+        if 'enrollmentCity' in data and data['enrollmentCity']:
+            enroll_city = data['enrollmentCity']
+
         company_name = record.case.company_name
         group_number = record.case.group_number
         products = record.case.products
@@ -112,7 +115,7 @@ def _in_person_enrollment(record_id=None, data=None, is_self_enroll=False):
         company_name = data['companyName']
         group_number = data['groupNumber']
         product_id = data['productID']
-        product = product_service.get_if_allowed(product_id)
+        product = product_service.get(product_id)
         payment_mode = None
         payment_mode_choices = get_payment_modes(True)
         products = [product] if product else []
@@ -179,6 +182,14 @@ def self_enrollment(company_name, uuid):
             for state in states:
                 allowed_statecodes.add(state)
 
+        # Defaults for enrollment city / state
+        if census_record:
+            selected_state = census_record.employee_state or census_record.case.situs_state
+            selected_city = census_record.employee_city or census_record.case.situs_city
+        else:
+            selected_state = setup.case.situs_state
+            selected_city = setup.case.situs_city
+
         vars.update({
             'is_valid': True,
             'page_title': setup.page_title,
@@ -186,6 +197,8 @@ def self_enrollment(company_name, uuid):
             'page_disclaimer': setup.page_disclaimer,
             'all_states': [s['statecode'] for s in get_all_states()],
             'allowed_states': list(allowed_statecodes),
+            'selected_state': selected_state,
+            'selected_city': selected_city,
         })
     return render_template('enrollment/landing_page.html', **vars)
 
@@ -215,7 +228,7 @@ def self_enrollment2():
         data['enrollmentCity'] = request.form['enrollmentCity']
     if 'enrollmentState' in request.form:
         data['enrollmentState'] = request.form['enrollmentState']
-        
+
     return _in_person_enrollment(record_id=census_record_id, data=data, is_self_enroll=True)
 
 

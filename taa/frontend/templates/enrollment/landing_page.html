@@ -55,8 +55,8 @@
     var self = this;
 
     self.allowed_states = allowed_states;
-    self.enrollment_city = ko.observable(null);
-    self.enrollment_state = ko.observable(null);
+    self.enrollment_city = ko.observable("{{ selected_city }}");
+    self.enrollment_state = ko.observable("{{ selected_state }}");
     self.err_msg_city = ko.observable("");
     self.err_msg_state = ko.observable("");
 
