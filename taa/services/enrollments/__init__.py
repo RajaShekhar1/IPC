@@ -851,6 +851,9 @@ class SelfEnrollmentLinkService(DBService):
         if link is None:
             # Link no longer exists
             return None, None
+        if not link.self_enrollment_setup.case.active:
+            # Case is not active
+            return None, None
         if increment_clicks:
             link.clicks += 1
             db.session.commit()
