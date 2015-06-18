@@ -9,6 +9,7 @@ import requests
 
 from flask import request, render_template, jsonify, session, send_from_directory, url_for
 from flask.ext.stormpath import login_required
+from flask_stormpath import current_user
 
 from taa import app
 from nav import get_nav_menu
@@ -141,7 +142,8 @@ def in_person_enrollment():
 
 @app.route('/self-enroll/<string:company_name>/<string:uuid>')
 def self_enrollment(company_name, uuid):
-    setup, census_record = self_enrollment_link_service.get_self_enrollment_data_for(uuid)
+    setup, census_record = self_enrollment_link_service.get_self_enrollment_data_for(uuid,
+                                                                                     current_user.is_anonymous())
     # populate button data -> case enrollment
     return render_template('enrollment/landing_page.html',
                            page_title=setup.page_title,
