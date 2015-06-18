@@ -2,7 +2,21 @@
 {% block title %} - Self-enroll{% endblock %}
 
 {% block content %}
-  {{ page_text }}
+  <h1>{{ page_title|safe }}</h1>
+{#  state:'{{ census_record.employee_state }}'#}
+{#  city:'{{ census_record.employee_city }}'#}
+{#  {% if census_record %}#}
+{#    state:'{{ census_record.case.situs_state }}'#}
+{#    city:'{{ census_record.case.situs_city }}'#}
+{#  {% endif %}#}
   <hr>
-  {{ page_disclaimer }}
+  {{ page_text|safe }}
+  <a class="btn btn-lg btn-primary" href="">
+    <strong><i class="fa fa-arrow-right"></i></strong>
+    Proceed to enrollment
+  </a>
+  <hr>
+  <div class="text-muted">
+    {{ page_disclaimer|safe }}
+  </div>
 {% endblock %}
