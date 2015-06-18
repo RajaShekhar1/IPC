@@ -4,18 +4,16 @@
 {% block content %}
     {% if is_valid -%}
       <h1>{{ page_title|safe }}</h1>
-        {#  state:'{{ census_record.employee_state }}'#}
-        {#  city:'{{ census_record.employee_city }}'#}
-        {#  {% if census_record %}#}
-        {#    state:'{{ census_record.case.situs_state }}'#}
-        {#    city:'{{ census_record.case.situs_city }}'#}
-        {#  {% endif %}#}
       <hr>
         {{ page_text|safe }}
-      <a class="btn btn-lg btn-primary" href="">
-        <strong><i class="fa fa-arrow-right"></i></strong>
-        Proceed to enrollment
-      </a>
+      <form action="{{ url_for('self_enrollment2') }}" method="POST">
+        <input type="hidden" name="self_enrollment_setup_id" value="{{ self_enrollment_setup.id }}">
+        <input type="hidden" name="record_id" value="{{ census_record.id }}">
+        <button type="submit" class="btn btn-lg btn-primary">
+          <strong><i class="fa fa-arrow-right"></i></strong>
+          Proceed to enrollment
+        </button>
+      </form>
       <hr>
       <div class="text-muted">
           {{ page_disclaimer|safe }}
