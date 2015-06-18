@@ -1,7 +1,7 @@
 from datetime import datetime
 import StringIO
 
-from flask import Blueprint, request, abort, make_response, jsonify, redirect, url_for
+from flask import Blueprint, request, abort, make_response, jsonify, redirect, url_for, render_template
 from flask_stormpath import current_user, groups_required
 
 from taa import app
@@ -338,14 +338,27 @@ def email_self_enrollment_link(case_id, which):
             abort(500, "Could not retrieve or create self-enrollment link")
         name = '{} {}'.format(record.employee_first, record.employee_last)
         print("Emailing {}".format(name))
+
+        email_body = render_template(
+            "emails/enrollment_email.html",
+            custom_message=setup.email_message,
+            employee_first=record.employee_first,
+            enrollment_url=link.url,
+        )
+        email_subject = "Enrollment Request:  {employee_first} {employee_last} ({company_name}) - {product_name}".format(
+            employee_first=record.employee_first,
+            employee_last=record.employee_last,
+            company_name=record.case.company_name,
+            product_name=record.case.products[0].name,
+        )
         success = self_enrollment_email_service.send(
             agent, link, record,
             from_email=setup.email_sender_email,
             from_name=setup.email_sender_name,
             to_email=record.employee_email,
             to_name=name,
-            subject='Enrollment Link for 5Star Online Enrollment',
-            body=setup.email_message + '\r\n' + link.url)
+            subject=email_subject,
+            body=email_body)
         result.append("{} {} at <{}>".format(
             'Emailed' if success else 'Failed to email',
             name,

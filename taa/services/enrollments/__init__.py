@@ -12,7 +12,6 @@ import uuid
 
 import requests
 import mandrill
-from flask import render_template
 
 from taa import mandrill_flask
 from taa.core import DBService

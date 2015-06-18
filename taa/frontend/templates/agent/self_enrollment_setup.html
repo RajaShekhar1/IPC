@@ -67,12 +67,18 @@ requested to cease using this site for any purpose.
             <a id="reset-email-message" class="btn btn-xs pull-right">Reset to default message</a>
           </div>
           <div class="col-sm-9 col-sm-offset-3">
-            Send email/link to those who:
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#email-target-links-modal" >
+                <i class="ace-icon fa fa-envelope"></i>
+                    Select Emails for Sending
+            </button>
+            {#  Send email/link to those who:
             <div class="btn-group btn-overlap btn-corner">
               <a class="btn btn-sm btn-primary" href="{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which='not-sent') }}">haven't been sent link ...</a>
               <a class="btn btn-sm btn-primary" href="{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which='not-enrolled') }}">have not enrolled ...</a>
               <a class="btn btn-sm btn-primary" href="{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which='declined') }}">have declined ...</a>
             </div>
+            #}
+
               {#            {% if case.self_enrollment_setup is not none -%}#}
               {#              {% if case.self_enrollment_setup.links|count == 0 -%}#}
               {#              <a class="btn btn-primary" href="{{ url_for('cases.generate_self_enrollment_link', self_enrollment_setup_id=case.self_enrollment_setup.id) }}">#}
@@ -125,6 +131,111 @@ requested to cease using this site for any purpose.
 
   <div class="self-enroll-email-confirm">
   </div>
+{% endblock %}
+
+{% block modals %}
+  {{ super() }}
+
+    {# Send targeted email modal #}
+    <form id="send-emails-form" method="POST" enctype="multipart/form-data">
+    <div id="email-target-links-modal" class="modal fade">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span
+                        aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title">Email Census Self-Enroll</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-panel modal-panel">
+                        <h3>Send to employees who ...</h3>
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <div class="form-group">
+                                    <label>
+                                        <input type="radio" class="ace" name="send_type" value="not-sent" checked>
+                                        <span class="lbl">  have not been sent a link</span>
+                                    </label>
+                                    {#
+                                    <div class="row">
+                                        <p class="col-xs-10 col-xs-offset-1">
+                                            This option adds new records to any existing employee records without updating any existing data.
+                                        </p>
+                                    </div>
+                                    #}
+                                </div>
+
+                                <div class="form-group">
+                                    <label>
+                                        <input type="radio" class="ace" name="send_type" value="not-enrolled">
+                                        <span class="lbl">  have not enrolled</span>
+                                    </label>
+                                    {#
+                                    <div class="row">
+                                        <p class="col-xs-10 col-xs-offset-1">
+                                            This option adds new records to any existing employee records and also updates existing records whose SSN match the uploaded data.
+                                        </p>
+                                    </div>
+                                    #}
+                                </div>
+
+                                <div class="form-group">
+                                    <label>
+                                        <input type="radio" class="ace" name="send_type" value="declined">
+                                        <span class="lbl">  have declined</span>
+                                    </label>
+                                    {#
+                                    <div class="row">
+                                        <p class="col-xs-10 col-xs-offset-1">
+                                            This option first removes all existing employee records in this case, then adds the new uploaded data.
+                                        </p>
+                                    </div>
+                                    #}
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="loading-panel modal-panel" style="display: none;">
+                        <div class="text-center">
+                            <h4>Sending enrollment emails...</h4>
+                            <i class="icon-spinner icon-spin grey bigger-200"></i>
+                        </div>
+                    </div>
+                    <div class="success-panel modal-panel" style="display: none;">
+                        <h3 class="header lighter green">Emails Sent Successfully</h3>
+                        <div id="email-status-wrap"></div>
+                    </div>
+                    <div class="error-panel modal-panel" style="display: none;">
+                        <h3 class="header lighter red">Emails Failed to Send</h3>
+                        <div id="email-error"></div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <div class="form-buttons buttons-panel">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Send Now</button>
+                    </div>
+                    <div class="processing-buttons buttons-panel" style="display: none;">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                    <div class="error-buttons buttons-panel" style="display: none;">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary back-btn">
+                            <i class="glyphicon glyphicon-chevron-left"></i> Back</button>
+                    </div>
+                    <div class="success-buttons buttons-panel" style="display: none;">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
+                    </div>
+
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    </form>
 {% endblock %}
 
 {% block page_js %}
@@ -182,7 +293,7 @@ requested to cease using this site for any purpose.
           'insertImage',
           null,
           'undo',
-          'redo',
+          'redo'
         ]
       });
       $('#page_text').ace_wysiwyg();
@@ -242,7 +353,42 @@ requested to cease using this site for any purpose.
           console.error(e);
         }
         return false;
+      });
+
+      $('#send-emails-form').on('submit', function() {
+        $('.form-panel').hide();
+           $('.form-buttons').hide();
+        $('.loading-panel').show();
+          $('.processing-buttons').show();
+        var send_type = $("input[name=send_type]:checked").val();
+        try {
+          $.ajax({
+            url: '{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which="") }}' + send_type,
+            method: 'POST',
+            dataType: 'json',
+            success: function(results) {
+              $('.loading-panel').hide();
+              $('.success-panel').show();
+               $('.processing-buttons').hide();
+              $('.success-buttons').show();
+              var sent_status_list = results.data;
+              $('#email-status-wrap').text("Sent "+sent_status_list.length+" messages:\n"+sent_status_list.join('\n'));
+            },
+            error: function(xhr) {
+              $('.loading-panel').hide();
+                $('.processing-buttons').hide();
+              $('.error-panel').show();
+                $('.error-buttons').show();
+
+            }
+          });
+        } catch(e) {
+          console.error(e);
+        }
+        return false;
       })
+
+
     });
   </script>
 {% endblock -%}

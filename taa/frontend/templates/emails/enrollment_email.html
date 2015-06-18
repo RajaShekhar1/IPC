@@ -47,7 +47,11 @@
                     </tr>
                     </tbody>
                 </table>
-                <p style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">Hello {{enrollment.employee_first}},</p>
+                <p style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">Hello {{employee_first}},</p>
+
+                <p style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">
+                    {{ custom_message | safe }}
+                </p>
 
                 <p style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">
 
