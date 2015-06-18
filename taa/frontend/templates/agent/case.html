@@ -193,20 +193,36 @@
                                                                 <p>Self-enrollment is not currently active.</p>
                                                             </div>
                                                             <div class="panel-body" data-bind="slideDownIf: is_self_enrollment()">
-                                                                <div class="self-enrollment-setup">
-                                                                    <a href="{{ url_for('edit_self_enroll_setup', case_id=case.id) }}"><i class="fa fa-pencil-square-o"></i> Edit Email/Landing Page Templates and Manage Notifications</a>
-                                                                </div>
-                                                                {% if case.self_enrollment_setup is not none and case.self_enrollment_setup.self_enrollment_type == 'case-targeted' -%}
-                                                                    <hr>
-                                                                    <strong>Self-enrollment stats</strong>
-                                                                    <ul>
-                                                                    <li>{{ case.census_records|count or '0' }} in census</li>
-                                                                    <ul>
-                                                                        <li>{{ case.self_enrollment_setup.sent or '0' }} Sent email link</li>
-                                                                        <li>{{ case.self_enrollment_setup.enrolled or '0' }} Enrolled</li>
-                                                                        <li>{{ case.self_enrollment_setup.declined or '0' }} Declined</li>
-                                                                    </ul>
+                                                                {% if case.self_enrollment_setup is not none -%}
+                                                                    {% if not case.active -%}
+                                                                        <div class="label label-danger">
+                                                                            Self-enrollment links will not work unless the case is active.
+                                                                        </div>
+                                                                    {% endif -%}
+                                                                    {% if case.self_enrollment_setup.self_enrollment_type == 'case-targeted' -%}
+                                                                        <hr>
+                                                                        <strong>Self-enrollment stats</strong>
+                                                                        <ul>
+                                                                        <li>{{ case.census_records|count or '0' }} in census</li>
+                                                                        <ul>
+                                                                            <li>{{ case.self_enrollment_setup.sent or '0' }} Sent email link</li>
+                                                                            <li>{{ case.self_enrollment_setup.enrolled or '0' }} Enrolled</li>
+                                                                            <li>{{ case.self_enrollment_setup.declined or '0' }} Declined</li>
+                                                                        </ul>
+                                                                        <hr>
+                                                                    {% endif -%}
+                                                                {% else -%}
+                                                                    <div class="label label-warning">
+                                                                        Self-enrollment setup has not yet been completed.
+                                                                    </div>
+                                                                    <br><br>
                                                                 {% endif -%}
+                                                                <div class="self-enrollment-setup">
+                                                                    <a href="{{ url_for('edit_self_enroll_setup', case_id=case.id) }}">
+                                                                        <i class="fa fa-pencil-square-o"></i>
+                                                                        Edit Email/Landing Page Templates and Manage Notifications
+                                                                    </a>
+                                                                </div>
                                                                 </ul>
                                                             </div>
                                                         </div>
