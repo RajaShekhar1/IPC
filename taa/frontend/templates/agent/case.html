@@ -210,6 +210,18 @@
                                                                             <li>{{ case.self_enrollment_setup.declined or '0' }} Declined</li>
                                                                         </ul>
                                                                         <hr>
+                                                                    {% elif case.self_enrollment_setup.self_enrollment_type == 'case-generic' -%}
+                                                                        {% if case.self_enrollment_setup.links -%}
+                                                                            Self-enrollment link:
+                                                                            <div>
+                                                                                <a target="_blank" href="{{ case.self_enrollment_setup.links[0].url }}">
+                                                                                    {{ case.self_enrollment_setup.links[0].url }}
+                                                                                </a>
+                                                                            </div>
+                                                                            <br>
+                                                                        {% else -%}
+                                                                            Self-enrollment link has not yet been created.
+                                                                        {% endif -%}
                                                                     {% endif -%}
                                                                 {% else -%}
                                                                     <div class="label label-warning">
