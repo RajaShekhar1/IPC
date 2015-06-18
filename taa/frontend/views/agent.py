@@ -170,6 +170,7 @@ def edit_self_enroll_setup(case_id=None):
     self_enrollment_setup = case_service.get_self_enrollment_setup(case)
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
     vars = {
+        'nav_menu': get_nav_menu(),
         'agent': agent,
         'case': case,
         'form': form,

@@ -19,6 +19,7 @@ from taa.services.agents import AgentService
 from taa.services.enrollments import (EnrollmentApplicationService,
                                       SelfEnrollmentEmailService,
                                       SelfEnrollmentLinkService)
+from taa.services.enrollments.models import EnrollmentApplication
 from taa.services.products import ProductService
 
 bp = Blueprint('cases', __name__, url_prefix='/cases')
@@ -301,9 +302,9 @@ def get_census_records_for_status(case, status=None):
                 result.append(record)
         else:
             enroll = enrollment_application_service.get_enrollment_status(record)
-            if status == 'not-enrolled' and enroll != 'enrolled':
+            if status == 'not-enrolled' and enroll != EnrollmentApplication.APPLICATION_STATUS_ENROLLED:
                 result.append(record)
-            elif status == 'declined' and enroll == 'enrolled':
+            elif status == 'declined' and enroll == EnrollmentApplication.APPLICATION_STATUS_DECLINED:
                 result.append(record)
     return result
 
@@ -359,7 +360,7 @@ def email_self_enrollment_link(case_id, which):
             to_name=name,
             subject=email_subject,
             body=email_body)
-        result.append("{} {} at <{}>".format(
+        result.append("{} {} at &lt;{}&gt;".format(
             'Emailed' if success else 'Failed to email',
             name,
             record.employee_email))

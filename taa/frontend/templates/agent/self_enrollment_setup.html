@@ -1,6 +1,6 @@
 {% extends 'base_ace_latest.html' -%}
 {% from 'form_macros.html' import render_checkbox, render_field_with_errors -%}
-{% set active_page = 'nav_agent_manage_case' -%}
+{% set active_page = "nav_manage_cases" -%}
 
 {% set default_email_message = """
 """.format(agent_name=agent.name()) -%}
@@ -168,7 +168,7 @@ requested to cease using this site for any purpose.
                                 <div class="form-group">
                                     <label>
                                         <input type="radio" class="ace" name="send_type" value="not-enrolled">
-                                        <span class="lbl">  have not enrolled</span>
+                                        <span class="lbl">  have not enrolled or declined</span>
                                     </label>
                                     {#
                                     <div class="row">
@@ -372,7 +372,7 @@ requested to cease using this site for any purpose.
                $('.processing-buttons').hide();
               $('.success-buttons').show();
               var sent_status_list = results.data;
-              $('#email-status-wrap').text("Sent "+sent_status_list.length+" messages:\n"+sent_status_list.join('\n'));
+              $('#email-status-wrap').html("Sent "+sent_status_list.length+" messages:<br><br>"+sent_status_list.join('<br>'));
             },
             error: function(xhr) {
               $('.loading-panel').hide();
