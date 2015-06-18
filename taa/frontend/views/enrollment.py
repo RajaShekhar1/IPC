@@ -199,9 +199,13 @@ def submit_wizard_data():
             None, session['enrolling_census_record_id'])
     else:
         census_record = None
-    # Get the agent for this session - for now, it is the logged-in user, but
-    # will need to be determined differently for self-enroll situations
+    # Get the agent for this session
+    # For self-enroll situations, the owner agent is used
+    # TODO: Use agent who sent emails for targeted links
     agent = agent_service.get_logged_in_agent()
+    if (agent is None and session.get('is_self_enroll') is not None and
+            census_record.case is not None):
+        agent = census_record.case.owner_agent
     # Create and save the enrollment data
     enrollment_application = enrollment_service.save_enrollment_data(
         wizard_results, census_record, agent)
