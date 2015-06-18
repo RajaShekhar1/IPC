@@ -850,11 +850,15 @@ class SelfEnrollmentLinkService(DBService):
         db.session.commit()
         return link
 
-    def get_self_enrollment_data_for(self, uuid):
+    def get_self_enrollment_data_for(self, uuid, increment_clicks=True):
         link = db.session.query(SelfEnrollmentLink).filter(
             SelfEnrollmentLink.url.endswith(uuid)).first()
-        link.clicks += 1
-        db.session.commit()
+        if link is None:
+            # Link no longer exists
+            return None, None
+        if increment_clicks:
+            link.clicks += 1
+            db.session.commit()
         return link.self_enrollment_setup, link.census_record
 
 

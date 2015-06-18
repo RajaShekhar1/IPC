@@ -273,8 +273,6 @@ def delete_census_record(case_id, census_record_id):
     return None, 204
 
 
-# @route(bp, '/<case_id>/self_enrollment_setup/<self_enrollment_setup_id>',
-#        methods=['PUT'])
 @route(bp, '/<case_id>/self_enrollment_setup', methods=['PUT'])
 @groups_required(api_groups, all=False)
 def update_self_enrollment_setup(case_id):
@@ -282,8 +280,15 @@ def update_self_enrollment_setup(case_id):
     self_enrollment_setup = case_service.get_self_enrollment_setup(case)
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
     if form.validate_on_submit():
+        print(self_enrollment_setup)
         if self_enrollment_setup is None:
-            return case_service.create_self_enrollment_setup(case, form.data)
+            setup = case_service.create_self_enrollment_setup(case, form.data)
+            case.self_enrollment_setup = setup
+            if setup.self_enrollment_type == 'case-generic':
+                # Generate generic self-enrollment link
+                self_enrollment_link_service.generate_link(request.url_root,
+                                                           case)
+            return setup
         else:
             return case_service.update_self_enrollment_setup(
                 self_enrollment_setup, form.data)
@@ -312,11 +317,6 @@ def get_census_records_for_status(case, status=None):
 @route(bp, '/<case_id>/self_enroll_email/<string:which>', methods=['POST'])
 @groups_required(api_groups, all=False)
 def email_self_enrollment_link(case_id, which):
-    """
-    click email link
-    - call this fn with case_id and type
-    - this fun
-    """
     case = case_service.get_if_allowed(case_id)
     setup = case.self_enrollment_setup
     if setup is None or setup.self_enrollment_type != 'case-targeted':

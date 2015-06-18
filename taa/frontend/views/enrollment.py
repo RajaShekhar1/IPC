@@ -9,6 +9,7 @@ import requests
 
 from flask import request, render_template, jsonify, session, send_from_directory, url_for
 from flask.ext.stormpath import login_required
+from flask_stormpath import current_user
 
 from taa import app
 from nav import get_nav_menu
@@ -141,25 +142,18 @@ def in_person_enrollment():
 
 @app.route('/self-enroll/<string:company_name>/<string:uuid>')
 def self_enrollment(company_name, uuid):
-    setup, census_record = self_enrollment_link_service.get_self_enrollment_data_for(uuid)
-    # populate button data -> case enrollment
-    return render_template('enrollment/landing_page.html',
-                           page_title=setup.page_title,
-                           page_text=setup.page_text,
-                           page_disclaimer=setup.page_disclaimer,
-                           census_record=census_record)
-    # record_id = None #SelfEnrollService.get_census_id(company_name, uuid)
-    # if record_id is None:
-    #     case_id = None #SelfEnrollService.get_case_id(company_name, uuid)
-    # else:
-    #     case_id = None
-    #     # 'is_in_person': False,
-    #     # 'state': state if state != 'XX' else None,
-    #     # 'enroll_city': enroll_city,
-    #     # TODO: See comment on landing page
-    #     # TODO: Don't worry about product not being available in the state
-    # return requests.post(url_for(in_person_enrollment),
-    #                      params={'record_id': record_id, 'case_id': case_id})
+    setup, census_record = self_enrollment_link_service.get_self_enrollment_data_for(uuid,
+                                                                                     current_user.is_anonymous())
+    vars = {'is_valid': False}
+    if setup is not None:
+        vars.update({
+            'is_valid': True,
+            'page_title': setup.page_title,
+            'page_text': setup.page_text,
+            'page_disclaimer': setup.page_disclaimer,
+            'census_record': census_record,
+        })
+    return render_template('enrollment/landing_page.html', **vars)
 
 
 @app.route('/self-enroll', methods=['PUT'])

@@ -2,21 +2,30 @@
 {% block title %} - Self-enroll{% endblock %}
 
 {% block content %}
-  <h1>{{ page_title|safe }}</h1>
-{#  state:'{{ census_record.employee_state }}'#}
-{#  city:'{{ census_record.employee_city }}'#}
-{#  {% if census_record %}#}
-{#    state:'{{ census_record.case.situs_state }}'#}
-{#    city:'{{ census_record.case.situs_city }}'#}
-{#  {% endif %}#}
-  <hr>
-  {{ page_text|safe }}
-  <a class="btn btn-lg btn-primary" href="">
-    <strong><i class="fa fa-arrow-right"></i></strong>
-    Proceed to enrollment
-  </a>
-  <hr>
-  <div class="text-muted">
-    {{ page_disclaimer|safe }}
-  </div>
+    {% if is_valid -%}
+      <h1>{{ page_title|safe }}</h1>
+        {#  state:'{{ census_record.employee_state }}'#}
+        {#  city:'{{ census_record.employee_city }}'#}
+        {#  {% if census_record %}#}
+        {#    state:'{{ census_record.case.situs_state }}'#}
+        {#    city:'{{ census_record.case.situs_city }}'#}
+        {#  {% endif %}#}
+      <hr>
+        {{ page_text|safe }}
+      <a class="btn btn-lg btn-primary" href="">
+        <strong><i class="fa fa-arrow-right"></i></strong>
+        Proceed to enrollment
+      </a>
+      <hr>
+      <div class="text-muted">
+          {{ page_disclaimer|safe }}
+      </div>
+    {% else -%}
+      <h1>Invalid self-enrollment link</h1>
+      <hr>
+      <p>
+        We're very sorry for the inconvenience, but the link you have clicked no longer allows self-enrollment.
+        Please contact your agent if you have any questions.
+      </p>
+    {% endif -%}
 {% endblock %}

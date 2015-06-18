@@ -77,30 +77,29 @@ requested to cease using this site for any purpose.
               <a class="btn btn-sm btn-primary" href="{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which='not-enrolled') }}">have not enrolled ...</a>
               <a class="btn btn-sm btn-primary" href="{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which='declined') }}">have declined ...</a>
             </div>
-            #}
 
-              {#            {% if case.self_enrollment_setup is not none -%}#}
-              {#              {% if case.self_enrollment_setup.links|count == 0 -%}#}
-              {#              <a class="btn btn-primary" href="{{ url_for('cases.generate_self_enrollment_link', self_enrollment_setup_id=case.self_enrollment_setup.id) }}">#}
-              {#                <strong><i class="fa fa-link"></i></strong>#}
-              {#                Generate self-enroll link(s)#}
-              {#              </a>#}
-              {#              {% endif -%}#}
-              {#              <span>#}
-              {#                <i class="fa fa-caret-right"></i>#}
-              {#                <strong>{{ case.self_enrollment_setup.links|count }}</strong> links have been generated#}
-              {#                (census contains <strong>{{ case.census_records|count }}</strong> records).#}
-              {#              </span>#}
-              {#            {% else -%}#}
-              {#              <div class="alert alert-warning">You can generate links after clicking <strong>Save Changes</strong> below</div>#}
-              {#            {% endif -%}#}
+            #}
           </div>
         </div>
         <div class="form-group self-enroll self-enroll-email-off">
           <div class="col-sm-9 col-sm-offset-3">
             <div class="alert alert-info">
-              You must send the email/enrollment link through your usual email program when using generic self-enrollment.
+              <p>
+                {% if setup and setup.links and setup.links|count > 0 -%}
+                  Self-enrollment link:
+                  <strong><a href="{{ setup.links[0].url }}">{{ setup.links[0].url }}</a></strong>
+                {% endif -%}
+              </p>
+              <p>
+                You must send the email/enrollment link through your usual email program when using generic self-enrollment.
+              </p>
             </div>
+            {% if not setup -%}
+              <div class="alert alert-warning">
+                The self-enrollment link will be generated for you after you save this form.
+              </div>
+            {% else -%}
+            {% endif -%}
           </div>
         </div>
         <h3>Landing Page</h3>
@@ -299,6 +298,12 @@ requested to cease using this site for any purpose.
       $('#page_text').ace_wysiwyg();
       $('#page_disclaimer').ace_wysiwyg();
 
+      // Show success message if required
+      if(window.location.hash == '#success') {
+        window.location.href = window.location.href.replace(/#.*$/, '#');
+        $('#save-success').show();
+      }
+
 {#      $('#edit-self-enrollment-form').submit(function() {#}
 {#        $('#email_message').val($('#editor-email-message').val());#}
 {#        $('#page_text').val($('#editor-page-text').val());#}
@@ -343,7 +348,8 @@ requested to cease using this site for any purpose.
             data: data,
             dataType: 'json',
             success: function(results) {
-              $('#save-success').show();
+              window.location.hash = 'success';
+              window.location.reload();
             },
             error: function(xhr) {
               $('#save-fail').show();
