@@ -205,9 +205,9 @@
                                                                         <ul>
                                                                         <li>{{ case.census_records|count or '0' }} in census</li>
                                                                         <ul>
-                                                                            <li>{{ case.self_enrollment_setup.sent or '0' }} Sent email link</li>
-                                                                            <li>{{ case.self_enrollment_setup.enrolled or '0' }} Enrolled</li>
-                                                                            <li>{{ case.self_enrollment_setup.declined or '0' }} Declined</li>
+                                                                            <li>{{ case.self_enrollment_setup.sent_count }} sent email link</li>
+                                                                            <li>{{ case.self_enrollment_setup.enrolled_count }} enrolled</li>
+                                                                            <li>{{ case.self_enrollment_setup.declined_count }} not enrolled or declined</li>
                                                                         </ul>
                                                                         <hr>
                                                                     {% elif case.self_enrollment_setup.self_enrollment_type == 'case-generic' -%}
