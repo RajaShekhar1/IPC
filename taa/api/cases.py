@@ -1,8 +1,10 @@
 from datetime import datetime
 import StringIO
 
+
 from flask import Blueprint, request, abort, make_response, jsonify, redirect, url_for, render_template
-from flask_stormpath import current_user, groups_required
+from flask_stormpath import current_user, groups_required, login_required
+
 
 from taa import app
 from taa.core import TAAFormError
@@ -36,6 +38,7 @@ api_groups = ['agents', 'home_office', 'admins']
 
 # Case management endpoints
 @route(bp, '/')
+@login_required
 @groups_required(api_groups, all=False)
 def get_cases():
 
@@ -53,12 +56,14 @@ def get_cases():
 
 
 @route(bp, '/<case_id>')
+@login_required
 @groups_required(api_groups, all=False)
 def get_case(case_id):
     return case_service.get_if_allowed(case_id)
 
 
 @route(bp, '/', methods=['POST'])
+@login_required
 @groups_required(api_groups, all=False)
 def create_case():
     data = get_posted_data()
@@ -86,6 +91,7 @@ def create_case():
 
 
 @route(bp, '/<case_id>', methods=['PUT'])
+@login_required
 @groups_required(api_groups, all=False)
 def update_case(case_id):
     case = case_service.get_if_allowed(case_id)
@@ -122,6 +128,7 @@ def update_case(case_id):
 
 
 @route(bp, '/<case_id>', methods=['DELETE'])
+@login_required
 @groups_required(api_groups, all=False)
 def delete_case(case_id):
     case_service.delete_case(case_service.get_if_allowed(case_id))
@@ -130,6 +137,7 @@ def delete_case(case_id):
 
 # Enrollment Periods
 @route(bp, '/<case_id>/enrollment_periods', methods=['GET'])
+@login_required
 @groups_required(api_groups, all=False)
 def get_case_enrollment_periods(case_id):
     return case_service.get_enrollment_periods(case_service.get_if_allowed(
@@ -137,6 +145,7 @@ def get_case_enrollment_periods(case_id):
 
 
 @route(bp, '/<case_id>/enrollment_periods', methods=['PUT'])
+@login_required
 @groups_required(api_groups, all=False)
 def update_case_enrollment_periods(case_id):
     """
@@ -156,6 +165,7 @@ def update_case_enrollment_periods(case_id):
 
 # Enrollment Reports
 @route(bp, '/<case_id>/enrollment_report', methods=['GET'])
+@login_required
 @groups_required(api_groups, all=False)
 def enrollment_report(case_id):
     from taa.services.enrollments import EnrollmentApplicationService
@@ -164,6 +174,7 @@ def enrollment_report(case_id):
 
 
 @route(bp, '/<case_id>/enrollment_records', methods=['GET'])
+@login_required
 @groups_required(api_groups, all=False)
 def enrollment_records(case_id):
     """
@@ -190,6 +201,7 @@ def enrollment_records(case_id):
 
 # Census Records
 @route(bp, '/<case_id>/census_records', methods=['GET'])
+@login_required
 @groups_required(api_groups, all=False)
 def census_records(case_id):
     # Extract search parameters
@@ -212,6 +224,7 @@ def census_records(case_id):
 
 
 @route(bp, '/<case_id>/census_records', methods=['POST'])
+@login_required
 @groups_required(api_groups, all=False)
 def post_census_records(case_id):
     case = case_service.get_if_allowed(case_id)
@@ -254,6 +267,7 @@ def has_csv_extension(filename):
 
 
 @route(bp, '/<case_id>/census_records/<census_record_id>', methods=['PUT'])
+@login_required
 @groups_required(api_groups, all=False)
 def update_census_record(case_id, census_record_id):
     case = case_service.get_if_allowed(case_id)
@@ -265,6 +279,7 @@ def update_census_record(case_id, census_record_id):
 
 
 @route(bp, '/<case_id>/census_records/<census_record_id>', methods=['DELETE'])
+@login_required
 @groups_required(api_groups, all=False)
 def delete_census_record(case_id, census_record_id):
     case = case_service.get_if_allowed(case_id)
@@ -274,6 +289,7 @@ def delete_census_record(case_id, census_record_id):
 
 
 @route(bp, '/<case_id>/self_enrollment_setup', methods=['PUT'])
+@login_required
 @groups_required(api_groups, all=False)
 def update_self_enrollment_setup(case_id):
     case = case_service.get_if_allowed(case_id)
@@ -314,7 +330,9 @@ def get_census_records_for_status(case, status=None):
     return result
 
 
+
 @route(bp, '/<case_id>/self_enroll_email/<string:which>', methods=['POST'])
+@login_required
 @groups_required(api_groups, all=False)
 def email_self_enrollment_link(case_id, which):
     case = case_service.get_if_allowed(case_id)

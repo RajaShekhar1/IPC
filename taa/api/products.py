@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from flask_stormpath import user, groups_required
+from flask_stormpath import login_required, groups_required, user
 
 from taa.core import TAAFormError
 from taa.api import route
@@ -11,13 +11,14 @@ bp = Blueprint('products', __name__, url_prefix='/products')
 read_product_api_groups = ['agents', 'home_office', 'admins']
 write_product_groups = ['home_office', 'admins']
 
-# TODO: Will need to eventually add a group type for people doing self-enroll 
+# TODO: Will need to eventually add a group type for people doing self-enroll
 read_product_rate_groups = ['agents', 'home_office', 'admins']
 
 product_service = ProductService()
 
 
 @route(bp, '/', methods=['GET'])
+@login_required
 @groups_required(read_product_api_groups, all=False)
 def get_products():
     # TODO: Limit products returned if agent to
@@ -31,12 +32,14 @@ def get_products():
 
 
 @route(bp, '/<product_id>')
+@login_required
 @groups_required(read_product_api_groups, all=False)
 def get_product(product_id):
     return product_service.get_or_404(product_id)
 
 
 @route(bp, '/', methods=['POST'])
+@login_required
 @groups_required(write_product_groups, all=False)
 def create_product():
     data = get_posted_data()
@@ -48,16 +51,17 @@ def create_product():
 
 
 @route(bp, '/<product_id>', methods=['PUT'])
+@login_required
 @groups_required(write_product_groups, all=False)
 def update_product(product_id):
     product = product_service.get_if_allowed(product_id)
     data = get_posted_data()
-    
+
     if product.is_base_product():
         # Handle a little differently
         product_service.update_product_restricted_agents(product, **data)
         return product
-    
+
     form = EditProductForm()
     if form.validate_on_submit():
         product_service.update_product_agents(product, **data)
@@ -67,11 +71,12 @@ def update_product(product_id):
         del data['gi_criteria']
         del data['bypassed_questions']
         return product_service.update(product, **data)
-    
+
     raise TAAFormError(form.errors)
 
 
 @route(bp, '/<product_id>', methods=['DELETE'])
+@login_required
 @groups_required(write_product_groups, all=False)
 def delete_product(product_id):
     product_service.delete(product_service.edit_if_allowed(product_id))
@@ -85,7 +90,7 @@ def get_product_rates(product_id):
     # product = product_service.get_if_allowed(product_id)
     product = product_service.get(product_id)
     data = get_posted_data()
-    
+
     # Pull parameters from the request
     employee = data['employee']
     spouse = data['spouse']

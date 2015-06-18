@@ -6,7 +6,6 @@ API setup
 from functools import wraps
 
 from flask import jsonify
-from flask_stormpath import login_required
 from flask_wtf.csrf import CsrfProtect
 from werkzeug.wrappers import Response
 
@@ -39,7 +38,6 @@ def route(bp, *args, **kwargs):
 
     def decorator(f):
         @bp.route(*args, **kwargs)
-        @login_required
         @wraps(f)
         def wrapper(*args, **kwargs):
             # Call the wrapped function
