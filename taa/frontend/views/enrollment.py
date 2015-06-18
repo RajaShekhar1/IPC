@@ -17,6 +17,7 @@ from nav import get_nav_menu
 from taa.models import db
 from taa.old_model.States import get_states
 
+from taa.services.products.states import get_all_states
 from taa.services.cases import CaseService, SelfEnrollmentService
 from taa.services.agents import AgentService
 from taa.services.products import ProductService
@@ -158,7 +159,7 @@ def _in_person_enrollment(record_id=None, data=None, is_self_enroll=False):
         nav_menu=get_nav_menu(),
     )
 
-
+# Self Enrollment Landing Page
 @app.route('/self-enroll/<string:company_name>/<string:uuid>')
 def self_enrollment(company_name, uuid):
     setup, census_record = self_enrollment_link_service.get_self_enrollment_data_for(uuid,
@@ -171,15 +172,24 @@ def self_enrollment(company_name, uuid):
         session['self_enrollment_setup_id'] = setup.id
         session['census_record_id'] = census_record.id if census_record else None
 
+        # Find out what states are allowed
+        allowed_statecodes = set()
+        product_states = product_service.get_product_states(setup.case.products)
+        for product_id, states in product_states.items():
+            for state in states:
+                allowed_statecodes.add(state)
+
         vars.update({
             'is_valid': True,
             'page_title': setup.page_title,
             'page_text': setup.page_text,
             'page_disclaimer': setup.page_disclaimer,
+            'all_states': [s['statecode'] for s in get_all_states()],
+            'allowed_states': list(allowed_statecodes),
         })
     return render_template('enrollment/landing_page.html', **vars)
 
-
+# Begin application from self-enrollment landing page.
 @app.route('/self-enrollment', methods=['POST'])
 def self_enrollment2():
 
@@ -201,8 +211,11 @@ def self_enrollment2():
         data['eeLName'] = ""
         data['email'] = ""
 
-    # TODO: Override data with form submission (city, state)
-
+    if 'enrollmentCity' in request.form:
+        data['enrollmentCity'] = request.form['enrollmentCity']
+    if 'enrollmentState' in request.form:
+        data['enrollmentState'] = request.form['enrollmentState']
+        
     return _in_person_enrollment(record_id=census_record_id, data=data, is_self_enroll=True)
 
 

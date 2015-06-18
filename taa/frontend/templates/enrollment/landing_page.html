@@ -6,7 +6,28 @@
       <h1>{{ page_title|safe }}</h1>
       <hr>
         {{ page_text|safe }}
-      <form action="{{ url_for('self_enrollment2') }}" method="POST">
+
+      <br>
+
+      <form data-bind="submit: proceed_to_enrollment" action="{{ url_for('self_enrollment2') }}" method="POST">
+
+        <div class="row form-group">
+          <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentCity">Location of this enrollment:</label>
+          <div class="col-xs-12 col-sm-9">
+              <input type="text" id="enrollmentCity" name="enrollmentCity" placeholder="City" data-bind="value: enrollment_city">
+              <select name="enrollmentState" class="" data-bind="value: enrollment_state">
+                <option value="">(Select State)</option>
+                {% for state in all_states %}
+                  <option>{{ state }}</option>
+                {% endfor %}
+              </select>
+          </div>
+          <div class="col-xs-12 col-sm-9 error">
+            <div data-bind="text: err_msg_city"></div>
+            <div data-bind="text: err_msg_state"></div>
+
+          </div>
+        </div>
 
         <button type="submit" class="btn btn-lg btn-primary">
           <strong><i class="fa fa-arrow-right"></i></strong>
@@ -25,4 +46,49 @@
         Please contact your agent if you have any questions.
       </p>
     {% endif -%}
+{% endblock %}
+
+{% block page_js %}
+  <script>
+
+  var SelfEnrollSetupViewModel = function(allowed_states) {
+    var self = this;
+
+    self.allowed_states = allowed_states;
+    self.enrollment_city = ko.observable(null);
+    self.enrollment_state = ko.observable(null);
+    self.err_msg_city = ko.observable("");
+    self.err_msg_state = ko.observable("");
+
+    self.proceed_to_enrollment = function() {
+
+      // Clear error messages
+      self.err_msg_city("");
+      self.err_msg_state("");
+
+      // Validate city and state
+      if (!self.enrollment_city()) {
+        self.err_msg_city("Enrollment City is required");
+        return false;
+      }
+      if (!self.enrollment_state()) {
+        self.err_msg_state("Enrollment State is required");
+        return false;
+      }
+
+      if (!_.contains(self.allowed_states, self.enrollment_state())) {
+        self.err_msg_state("We're sorry, but this product cannot be enrolled from the state of "+self.enrollment_state()+".");
+        return false;
+      }
+
+      return true;
+    };
+
+  };
+  $(function() {
+    window.vm = new SelfEnrollSetupViewModel({{ allowed_states |tojson|safe }});
+    ko.applyBindings(window.vm);
+  });
+
+  </script>
 {% endblock %}
