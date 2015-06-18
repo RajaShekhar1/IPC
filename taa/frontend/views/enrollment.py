@@ -187,6 +187,7 @@ def self_enrollment2():
         abort(404)
 
 
+
 @app.route('/submit-wizard-data', methods=['POST'])
 def submit_wizard_data():
     data = request.json
