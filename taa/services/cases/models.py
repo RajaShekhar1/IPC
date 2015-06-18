@@ -188,7 +188,7 @@ class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
 
 
 class CensusRecordSerializer(JsonSerializable):
-    __json_hidden__ = ['case', 'enrollment_applications']
+    __json_hidden__ = ['case', 'enrollment_applications', 'self_enrollment_link']
     __json_modifiers__ = {
         # 'enrollment_applications': lambda apps, _: [a for a in apps]
     }
@@ -356,7 +356,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
 
 
 class SelfEnrollmentSerializer(JsonSerializable):
-    __json_hidden__ = ['case']
+    __json_hidden__ = ['case', 'links']
 
 
 class SelfEnrollmentSetup(SelfEnrollmentSerializer, db.Model):
