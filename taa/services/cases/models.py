@@ -356,7 +356,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
 
 
 class SelfEnrollmentSerializer(JsonSerializable):
-    __json_hidden__ = ['case']
+    __json_hidden__ = ['case', 'links']
 
 
 class SelfEnrollmentSetup(SelfEnrollmentSerializer, db.Model):

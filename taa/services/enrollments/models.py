@@ -156,7 +156,7 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
 # )
 
 class SelfEnrollmentLinkSerializer(JsonSerializable):
-    __json_hidden__ = ['census_record', 'case', 'emails']
+    __json_hidden__ = ['census_record', 'case', 'emails', 'self_enrollment_setup']
 
 class SelfEnrollmentLink(SelfEnrollmentLinkSerializer, db.Model):
     __tablename__ = 'self_enrollment_links'
@@ -180,7 +180,7 @@ class SelfEnrollmentEmailLogSerializer(JsonSerializable):
     __json_hidden__ = ['agent', 'census_record', 'self_enrollment_link']
 
 
-class SelfEnrollmentEmailLog(SelfEnrollmentEmailLogSerializer, db.Model):
+class SelfEnrollmentEmailLog(db.Model):
     __tablename__ = 'self_enrollment_email_log'
 
     id = db.Column(db.Integer, primary_key=True)
