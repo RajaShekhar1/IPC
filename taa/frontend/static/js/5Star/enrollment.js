@@ -3290,12 +3290,11 @@ function init_validation() {
             spLName2: {required: true},
             spGender: {required: true},
             spssn: {
-                required: true
-                /*{
+                required: {
                     depends: function (element) {
                         return ($("#spOwner-self").is(':checked'))
                     }
-                }*/
+                }
             },
             spOwner: {required: true},
             spOtherOwnerName: {
@@ -3344,7 +3343,7 @@ function init_validation() {
                     depends: ui.is_employee_beneficiary_info_required
                 }
             },
-            eeBeneOtherSSN: {
+            /*eeBeneOtherSSN: {
                 required: {
                     depends: function(e) {
                         return (
@@ -3364,7 +3363,7 @@ function init_validation() {
                     }
                 }
             },
-
+            */
             eeContBeneOtherName: {
                 required: {
                     depends: function(element) {
@@ -3385,6 +3384,7 @@ function init_validation() {
                     }
                 }
             },
+            /*
             eeContBeneOtherSSN: {
                 required: {
                     depends: function(e) {
@@ -3407,6 +3407,7 @@ function init_validation() {
                     }
                 }
             },
+            */
 
             spBeneOtherName: {
                 required: {
@@ -3422,7 +3423,7 @@ function init_validation() {
                     }
                 }
             },
-
+            /*
             spBeneOtherSSN: {
                 required: {
                     depends: function(e) {
@@ -3445,7 +3446,7 @@ function init_validation() {
                     }
                 }
             },
-
+            */
             spContBeneOtherName: {
                 required: {
                     depends: function(element) {
@@ -3469,6 +3470,7 @@ function init_validation() {
                     }
                 }
             },
+            /*
             spContBeneOtherSSN: {
                 required: {
                     depends: function(e) {
@@ -3493,6 +3495,7 @@ function init_validation() {
                     }
                 }
             }
+            */
         },
 
         messages: {
