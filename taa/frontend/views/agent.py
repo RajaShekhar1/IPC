@@ -163,6 +163,7 @@ def edit_self_enroll_setup(case_id=None):
         'nav_menu': get_nav_menu(),
         'agent': agent,
         'case': case,
+        'company_name': case.company_name,
         'form': form,
         'products': products,
         'product_list': '<ul><li>{}</li></ul>'.format(

@@ -17,14 +17,6 @@ Products:
 <br><br>
 {products}<br>""".format(company_name=case.company_name, products=product_list) -%}
 
-{% set default_page_disclaimer = """
-This webpage, and any accompanying pages, is solely intended for the applicants of <strong>{company_name}</strong> for
-insurance benefits. If you are not the intended recipient, you are hereby notified that any use, dissemination,
-distribution, or copying of the information contained herein is strictly prohibited. You are further hereby
-requested to cease using this site for any purpose.
-<br><br>
- """.format(company_name=case.company_name) -%}
-
 {% block title %} - Manage Self-enrollment{% endblock -%}
 
 {% block content -%}
@@ -107,9 +99,11 @@ requested to cease using this site for any purpose.
           {{ render_field_with_errors(form.page_title, default="Welcome to your Benefit Enrollment") }}
           {{ render_field_with_errors(form.page_text, class_='wysiwyg-editor', default=default_page_text) }}
           <a id="reset-page-text" class="btn btn-xs pull-right">Reset to default message</a>
-          <br><br>
-          {{ render_field_with_errors(form.page_disclaimer, class_='wysiwyg-editor', default=default_page_disclaimer) }}
-          <a id="reset-page-disclaimer" class="btn btn-xs pull-right">Reset to default message</a>
+          <br><br><br>
+          <div class="col-sm-3 control-label">Disclaimer</div>
+          <div class="col-sm-9">
+            {% include "enrollment/self_enrollment_disclaimer.html" -%}
+          </div>
         </div>
       </div>
     </div>
@@ -258,13 +252,10 @@ requested to cease using this site for any purpose.
       $('#reset-page-text').click(function() {
         $('#page_text').html("{{ default_page_text|replace('\n', '\\n')|safe }}").focus();
       });
-      $('#reset-page-disclaimer').click(function() {
-        $('#page_disclaimer').html("{{ default_page_disclaimer|replace('\n', '\\n')|safe }}").focus();
-      });
 
       // Set default values if applicable
       $.each(['#email_sender_name', '#email_sender_email', '#email_message',
-        '#page_title', '#page_text', '#page_disclaimer'], function(index, value) {
+        '#page_title', '#page_text'], function(index, value) {
         if($(value).prop('tagName') == 'DIV') {
           if($(value).html() == '') {
             $(value).html($(value).attr('default'));
@@ -296,7 +287,6 @@ requested to cease using this site for any purpose.
         ]
       });
       $('#page_text').ace_wysiwyg();
-      $('#page_disclaimer').ace_wysiwyg();
 
       // Show success message if required
       if(window.location.hash == '#success') {
@@ -307,7 +297,6 @@ requested to cease using this site for any purpose.
 {#      $('#edit-self-enrollment-form').submit(function() {#}
 {#        $('#email_message').val($('#editor-email-message').val());#}
 {#        $('#page_text').val($('#editor-page-text').val());#}
-{#        $('#page_disclaimer').val($('#editor-page-disclaimer').val());#}
 {#      });#}
 
       {# Hide the delete button if we are not admin and this has enrollments #}

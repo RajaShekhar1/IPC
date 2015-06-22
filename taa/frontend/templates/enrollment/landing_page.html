@@ -12,7 +12,7 @@
       <form data-bind="submit: proceed_to_enrollment" action="{{ url_for('self_enrollment2') }}" method="POST">
 
         <div class="row form-group">
-          <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentCity">Location of this enrollment:</label>
+          <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="enrollmentCity">I am enrolling from:</label>
           <div class="col-xs-12 col-sm-9">
               <input type="text" id="enrollmentCity" name="enrollmentCity" placeholder="City" data-bind="value: enrollment_city">
               <select name="enrollmentState" class="" data-bind="value: enrollment_state">
@@ -44,7 +44,7 @@
       </form>
       <hr>
       <div class="text-muted">
-          {{ page_disclaimer|safe }}
+        {% include "enrollment/self_enrollment_disclaimer.html" %}
       </div>
     {% else -%}
       <h1>Invalid self-enrollment link</h1>
