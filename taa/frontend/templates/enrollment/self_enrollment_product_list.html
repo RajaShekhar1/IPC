@@ -1,0 +1,18 @@
+{% block product_list -%}
+<div>
+  Enrolling:
+  <ul>
+      {% for product in products -%}
+        <li>
+            {% if product.brochure_url -%}
+              <a href="{{ product.brochure_url }}" target="_blank">
+            {% endif -%}
+            {{ product.name }}
+            {% if product.brochure_url -%}
+              </a>
+            {% endif -%}
+        </li>
+      {% endfor -%}
+  </ul>
+</div>
+{% endblock -%}
