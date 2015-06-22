@@ -674,11 +674,11 @@
                 </div>
 
                 <div class="modal-body">
-{#
+
                     <!--ko foreach: get_replacement_paragraphs()-->
                         <p data-bind="html: $data"></p>
                     <!--/ko-->
-#}
+
                     <div class="row">
                         <div class="col-xs-12 col-sm-11 col-sm-offset-1">
                             <div class="row">
@@ -749,11 +749,7 @@
                         </div>
                     </div>
 
-
-
-
-
-                </>
+                </div>
             </div>
 
             <div data-bind="visible: health_questions().length > 0 && do_any_health_questions_need_answering()">

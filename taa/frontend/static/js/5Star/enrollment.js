@@ -107,7 +107,7 @@ function WizardUI(defaults) {
     self.should_show_replacement_details_form = ko.pureComputed(function() {
         return self.replacement_using_funds() || self.replacement_is_terminating();
     });
-    /*
+
     self.get_replacement_paragraphs = ko.computed(function() {
         var paragraph_map = self.insurance_product.get_replacement_paragraphs();
         var paragraphs = paragraph_map[self.enrollState];
@@ -116,7 +116,7 @@ function WizardUI(defaults) {
         }
         return paragraphs;
     });
-    */
+
     self.replacement_policies = ko.observableArray([new ReplacementPolicy()]);
 
     self.add_replacement_policy = function() {

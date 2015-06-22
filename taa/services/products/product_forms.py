@@ -332,8 +332,7 @@ generic_fpp_replacement_form = ReplacementForm(
                 'NC', 'NE', 'NH', 'NJ', 'NM', 'OH', 'OR', 'RI', 'SC', 'TX', 'UT', 'VA', 'VT',
                 'WI', 'WV'],
     docusign_template_id='7286ACB9-8B08-43BB-99EB-C7A37B8B8F2A',
-    paragraphs=[
-        """\
+    paragraphs="""\
 You are contemplating the purchase of a life insurance policy or annuity contract. In some cases this purchase may involve discontinuing or changing an existing policy or contract. If so, a replacement is occurring. Financed purchases are also considered replacements.
 A replacement occurs when a new policy or contract is purchased and, in connection with the sale, you discontinue making premium payments on the existing policy or contract, or an existing policy or contract is surrendered, forfeited, assigned to the replacing insurer, or otherwise terminated or used in a financed purchase.
 A financed purchase occurs when the purchase of a new life insurance policy involves the use of funds obtained by the withdrawal or surrender of or by borrowing some or all of the policy values, including accumulated dividends, of an existing policy to pay all or part of any premium or payment due on the new policy. A financed purchase is a replacement.
@@ -341,7 +340,6 @@ You should carefully consider whether a replacement is in your best interests. Y
 We want you to understand the effects of replacements before you make your purchase decision and ask that you answer the following questions and consider the questions below.
 Make sure you know the facts. Contact your existing company or its agent for information about the old policy or contract. If you request one, an in force illustration, policy summary or available disclosure documents must be sent to you by the existing insurer. Ask for and retain all sales material used by the agent in the sales presentation. Be sure that you are making an informed decision.\
 """.split('\n')
-    ]
 )
 
 GA_fpp_replacement_form = ReplacementForm(

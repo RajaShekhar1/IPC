@@ -80,13 +80,13 @@ class Product(ProductJsonSerializable, db.Model):
         :return: a dictionary with statecodes as keys mapped to lists of HTML strings
         representing paragraphs of text to show up on the replacement form.
         """
-        state_replacement_paragraphs = defaultdict(list)
+        state_replacement_paragraphs = {}
         forms = product_form_service.get_replacement_forms_for_product(self.get_base_product_code())
         for replacement_form in forms:
             for statecode in replacement_form.statecodes:
                 form = product_form_service.get_replacement_form(self.get_base_product_code(), statecode)
                 if form:
-                    state_replacement_paragraphs[statecode].append(form.paragraphs)
+                    state_replacement_paragraphs[statecode] = form.paragraphs
 
         return state_replacement_paragraphs
 
