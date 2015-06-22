@@ -7,6 +7,9 @@
       <hr>
         {{ page_text|safe }}
 
+      <br><br>
+      {% include "enrollment/self_enrollment_product_list.html" -%}
+
       <br>
 
       <form data-bind="submit: proceed_to_enrollment" action="{{ url_for('self_enrollment2') }}" method="POST">

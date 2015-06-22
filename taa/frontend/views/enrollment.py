@@ -198,6 +198,7 @@ def self_enrollment(company_name, uuid):
             'is_valid': True,
             'page_title': setup.page_title,
             'company_name': setup.case.company_name,
+            'products': setup.case.products,
             'page_text': setup.page_text,
             'page_disclaimer': setup.page_disclaimer,
             'all_states': [s['statecode'] for s in get_all_states()],

@@ -149,8 +149,6 @@ def sample_upload_csv():
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def edit_self_enroll_setup(case_id=None):
     agent = agent_service.get_logged_in_agent()
-    products = (product_service.get_products_for_agent(agent)
-                if agent is not None else [])
     if case_id is None:
         # Ad-hoc self-enrollment setup
         case = None
@@ -165,9 +163,7 @@ def edit_self_enroll_setup(case_id=None):
         'case': case,
         'company_name': case.company_name,
         'form': form,
-        'products': products,
-        'product_list': '<ul><li>{}</li></ul>'.format(
-            '</li><li>'.join([product.name for product in case.products])),
+        'products': case.products,
     }
     if case.self_enrollment_setup is not None:
         vars['setup'] = case.self_enrollment_setup

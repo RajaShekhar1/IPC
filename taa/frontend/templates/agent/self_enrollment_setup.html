@@ -12,10 +12,7 @@ benefits from 5Star Life.
 This enrollment should take less than 5 minutes to complete. To view details of the offered products, see the link(s) below.
 Please follow the instructions carefully on the next page, stepping through the simple interview using the next/previous
 buttons at the lower right of the page. At the end you will be presented with a complete application form to electronically sign.
-<br><br>
-Products:
-<br><br>
-{products}<br>""".format(company_name=case.company_name, products=product_list) -%}
+""".format(company_name=case.company_name) -%}
 
 {% block title %} - Manage Self-enrollment{% endblock -%}
 
@@ -98,11 +95,18 @@ Products:
         <div class="form-group self-enroll self-enroll-landing-page">
           {{ render_field_with_errors(form.page_title, default="Welcome to your Benefit Enrollment") }}
           {{ render_field_with_errors(form.page_text, class_='wysiwyg-editor', default=default_page_text) }}
-          <a id="reset-page-text" class="btn btn-xs pull-right">Reset to default message</a>
-          <br><br><br>
-          <div class="col-sm-3 control-label">Disclaimer</div>
-          <div class="col-sm-9">
-            {% include "enrollment/self_enrollment_disclaimer.html" -%}
+          <div class="row">
+            <div class="col-sm-9 col-sm-offset-3">
+                {% include "enrollment/self_enrollment_product_list.html" -%}
+            </div>
+            <a id="reset-page-text" class="btn btn-xs pull-right">Reset to default message</a>
+          </div>
+          <br><br>
+          <div class="row">
+            <div class="col-sm-3 control-label">Disclaimer</div>
+            <div class="col-sm-9">
+                {% include "enrollment/self_enrollment_disclaimer.html" -%}
+            </div>
           </div>
         </div>
       </div>
