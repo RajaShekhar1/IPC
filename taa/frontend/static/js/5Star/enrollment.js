@@ -107,7 +107,16 @@ function WizardUI(defaults) {
     self.should_show_replacement_details_form = ko.pureComputed(function() {
         return self.replacement_using_funds() || self.replacement_is_terminating();
     });
-
+    /*
+    self.get_replacement_paragraphs = ko.computed(function() {
+        var paragraph_map = self.insurance_product.get_replacement_paragraphs();
+        var paragraphs = paragraph_map[self.enrollState];
+        if (!paragraphs) {
+            return [];
+        }
+        return paragraphs;
+    });
+    */
     self.replacement_policies = ko.observableArray([new ReplacementPolicy()]);
 
     self.add_replacement_policy = function() {
@@ -1134,6 +1143,10 @@ Product.prototype = {
     should_show_contingent_beneficiary: function() {
         // Just new FPP form for now
         return this.is_fpp_product();
+    },
+
+    get_replacement_paragraphs: function() {
+        return [];
     }
 
 };
@@ -1144,6 +1157,10 @@ function FPPTIProduct(product_data) {
 }
 // Inherit from product
 FPPTIProduct.prototype = Object.create(Product.prototype);
+
+FPPTIProduct.prototype.get_replacement_paragraphs = function() {
+    return this.product_data.replacement_paragraphs;
+};
 
 function FPPCIProduct(product_data) {
     this.product_type = "FPPCI";
@@ -1157,6 +1174,10 @@ FPPCIProduct.prototype.get_new_benefit_option = function(options) {
 FPPCIProduct.prototype.has_critical_illness_coverages = function() {
     return true;
 };
+FPPCIProduct.prototype.get_replacement_paragraphs = function() {
+    return this.product_data.replacement_paragraphs;
+};
+
 
 function GroupCIProduct(root, product_data) {
     var self = this;
@@ -1414,6 +1435,9 @@ FPPGovProduct.prototype.requires_weight = function() {return false;};
 FPPGovProduct.prototype.requires_is_smoker = function() {return false;};
 FPPGovProduct.prototype.has_critical_illness_coverages = function() {
     return false;
+};
+FPPGovProduct.prototype.get_replacement_paragraphs = function() {
+    return this.product_data.replacement_paragraphs;
 };
 
 

@@ -1,6 +1,6 @@
 from flask.ext.stormpath import user
 
-from taa.services.products.statement_of_health import get_template_id_for_product_state
+from taa.services.products.product_forms import ProductFormService
 
 # Docusign credential info - currently only used by Group CI with the older code.
 apiUserName = "e8e7df3d-09be-47d6-922b-387956638a6c"
@@ -49,7 +49,7 @@ def get_template_id(product_type, state):
     available for a given state.  So, look for specific states first, then if generic, otherwise fail.
     """
 
-    return get_template_id_for_product_state(product_type, state)
+    return ProductFormService().get_application_form_template_id(product_type, state)
 
 
 def get_replacement_template_id(product_type, state):

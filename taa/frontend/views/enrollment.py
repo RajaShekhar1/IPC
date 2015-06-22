@@ -22,11 +22,13 @@ from taa.services.cases import CaseService, SelfEnrollmentService
 from taa.services.agents import AgentService
 from taa.services.products import ProductService
 from taa.services.products import get_payment_modes, is_payment_mode_changeable
+from taa.services.products.product_forms import ProductFormService
 from taa.services.enrollments import (EnrollmentApplicationService,
                                       SelfEnrollmentLinkService)
 from taa.services.docusign.docusign_envelope import create_envelope_and_get_signing_url
 
 product_service = ProductService()
+product_form_service = ProductFormService()
 case_service = CaseService()
 agent_service = AgentService()
 enrollment_service = EnrollmentApplicationService()
@@ -65,19 +67,19 @@ def enroll_start():
 @app.route('/in-person-enrollment', methods=['POST'])
 @login_required
 def in_person_enrollment():
+    """
+    Agent sitting down with employee for the enrollment wizard. Always done via a case census record.
+    """
+
     record_id = request.form.get('record_id')
-    is_self_enroll = session.get('is_self_enrollment', False)
-    if record_id is not None:
-        # In-person enrollment
-        return _in_person_enrollment(record_id=int(record_id),
-                                     is_self_enroll=is_self_enroll)
-    else:
-        # Ad-hoc enrollment
-        return _in_person_enrollment(data=request.form,
-                                     is_self_enroll=is_self_enroll)
+    record = case_service.census_records.get(record_id)
+
+    return _setup_enrollment_session(record.case, record_id=int(record_id),
+                                     is_self_enroll=False)
 
 
-def _in_person_enrollment(record_id=None, data=None, is_self_enroll=False):
+
+def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False):
 
     if record_id is not None:
         # Enrolling from a case census record
@@ -90,9 +92,9 @@ def _in_person_enrollment(record_id=None, data=None, is_self_enroll=False):
         # Defaults, but can be overridden by user data
         state = record.employee_state or record.case.situs_state
         enroll_city = record.employee_city or record.case.situs_city
-        if 'enrollmentState' in data and data['enrollmentState']:
+        if is_self_enroll and data and 'enrollmentState' in data and data['enrollmentState']:
             state = data['enrollmentState']
-        if 'enrollmentCity' in data and data['enrollmentCity']:
+        if is_self_enroll and data and 'enrollmentCity' in data and data['enrollmentCity']:
             enroll_city = data['enrollmentCity']
 
         company_name = record.case.company_name
@@ -109,7 +111,7 @@ def _in_person_enrollment(record_id=None, data=None, is_self_enroll=False):
             # Payment mode is set on case and cannot be changed
             payment_mode_choices = get_payment_modes(single=payment_mode)
     else:
-        # Ad-hoc enrollment
+        # Generic case-link enrollment
         state = data['enrollmentState']
         enroll_city = data['enrollmentCity']
         company_name = data['companyName']
@@ -127,6 +129,7 @@ def _in_person_enrollment(record_id=None, data=None, is_self_enroll=False):
         )
         spouse_data = None
         children_data = []
+
     # refresh active_case
     session['active_case'] = {
         'company_name': company_name,
@@ -134,6 +137,12 @@ def _in_person_enrollment(record_id=None, data=None, is_self_enroll=False):
         'situs_state': state,
         'situs_city': enroll_city,
     }
+
+    # Validate that we can enroll in the product for this state - do we have a form?
+    if not any(product_form_service.form_for_product_code_and_state(p.get_base_product_code, state) for p in products):
+        # Change the state back to the case state to allow them to continue?
+        state = case.situs_state
+
     # Get SOH Questions
     from taa.services.products import StatementOfHealthQuestionService
     soh_questions = {}
@@ -153,8 +162,10 @@ def _in_person_enrollment(record_id=None, data=None, is_self_enroll=False):
         'payment_mode_choices': payment_mode_choices,
         'payment_mode': payment_mode,
     }
+
     # Commit any changes made (none right now)
     db.session.commit()
+
     return render_template(
         'enrollment/main-wizard.html',
         wizard_data=wizard_data,
@@ -205,6 +216,10 @@ def self_enrollment(company_name, uuid):
 # Begin application from self-enrollment landing page.
 @app.route('/self-enrollment', methods=['POST'])
 def self_enrollment2():
+    """
+    This is the submission handler for the self-enrollment landing page when
+        a user is starting an enrollment using the wizard.
+    """
 
     if session.get('is_self_enroll') is None:
         abort(401)
@@ -215,6 +230,7 @@ def self_enrollment2():
     data = {}
     if not census_record_id:
         # Generic link
+        case = enrollment_setup.case
         data['enrollmentState'] = enrollment_setup.case.situs_state
         data['enrollmentCity'] = enrollment_setup.case.situs_city
         data['companyName'] = enrollment_setup.case.company_name
@@ -229,7 +245,7 @@ def self_enrollment2():
     if 'enrollmentState' in request.form:
         data['enrollmentState'] = request.form['enrollmentState']
 
-    return _in_person_enrollment(record_id=census_record_id, data=data, is_self_enroll=True)
+    return _setup_enrollment_session(enrollment_setup.case, record_id=census_record_id, data=data, is_self_enroll=True)
 
 
 

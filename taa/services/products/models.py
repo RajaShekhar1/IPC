@@ -1,6 +1,9 @@
+from collections import defaultdict
 
 from taa import db
 from taa.helpers import JsonSerializable
+from taa.services.products.product_forms import ProductFormService
+product_form_service = ProductFormService()
 
 class ProductJsonSerializable(JsonSerializable):
     __json_hidden__ = ['cases', 'customized_products']
@@ -13,9 +16,10 @@ class ProductJsonSerializable(JsonSerializable):
         
         # Base product type 'code'
         data['base_product_type'] = self.get_base_product_code()
-        
         data['is_guaranteed_issue'] = self.is_guaranteed_issue()
-        
+
+        # Get replacement form text for the wizard
+        data['replacement_paragraphs'] = self.get_replacement_paragraphs()
         return data
 
 
@@ -70,8 +74,22 @@ class Product(ProductJsonSerializable, db.Model):
             return self.base_product.name if self.base_product else '(Not Selected)'
         else:
             return 'Base Product'
-        
-    
+
+    def get_replacement_paragraphs(self):
+        """
+        :return: a dictionary with statecodes as keys mapped to lists of HTML strings
+        representing paragraphs of text to show up on the replacement form.
+        """
+        state_replacement_paragraphs = defaultdict(list)
+        forms = product_form_service.get_replacement_forms_for_product(self.get_base_product_code())
+        for replacement_form in forms:
+            for statecode in replacement_form.statecodes:
+                form = product_form_service.get_replacement_form(self.get_base_product_code(), statecode)
+                if form:
+                    state_replacement_paragraphs[statecode].append(form.paragraphs)
+
+        return state_replacement_paragraphs
+
 # Relate custom products to agents - who can see these products
 product_agents = db.Table('product_agents', db.metadata,
     db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True),
