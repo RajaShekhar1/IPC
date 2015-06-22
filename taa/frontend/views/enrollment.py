@@ -183,9 +183,13 @@ def self_enrollment(company_name, uuid):
                 allowed_statecodes.add(state)
 
         # Defaults for enrollment city / state
-        if census_record:
+        if census_record is not None:
             selected_state = census_record.employee_state or census_record.case.situs_state
             selected_city = census_record.employee_city or census_record.case.situs_city
+            vars.update(
+                {'is_enrolled':
+                 enrollment_service.get_enrollment_status(
+                     census_record) == 'enrolled'})
         else:
             selected_state = setup.case.situs_state
             selected_city = setup.case.situs_city

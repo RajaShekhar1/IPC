@@ -29,6 +29,14 @@
           </div>
         </div>
 
+          {% if is_enrolled -%}
+            <h3 class="alert alert-warning">
+              <em>Note:</em> You have previously enrolled, so
+              any coverage you select will be added to coverage
+              you previously applied for.
+            </h3>
+          {% endif -%}
+
         <button type="submit" class="btn btn-lg btn-primary">
           <strong><i class="fa fa-arrow-right"></i></strong>
           Proceed to enrollment
