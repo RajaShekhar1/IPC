@@ -1610,8 +1610,14 @@
                                     {"aTargets":[1], "mData":function(source) {
                                         return format_enrollment_status_html(source.enrollment_status);
                                     }},
-                                    {"aTargets":[2], "mData":"employee_first", className: "min-breakIV"},
-                                    {"aTargets":[3], "mData":"employee_last"},
+                                    {"aTargets":[2], "mData":function(source) {
+                                        return "<a href='/enrollment-case/{{ case.id }}/census/" + source.id + "'>"+ source.employee_first + "</a>";
+                                    }},
+                                    {"aTargets":[3], "mData":function(source) {
+                                        return "<a href='/enrollment-case/{{ case.id }}/census/" + source.id + "'>"+ source.employee_last + "</a>";
+                                    }},
+                                    //{"aTargets":[2], "mData":"employee_first", className: "min-breakIV"},
+                                    //{"aTargets":[3], "mData":"employee_last"},
                                     {"aTargets":[4], "mData": function(source) {
                                         return normalize_date(source.employee_birthdate);
                                     }},
@@ -1622,14 +1628,6 @@
                         function(table) {
                             // This is called if there is data; enable download button
                             window.case_settings.has_census_data(true);
-
-                            /*
-                            // Called when first initialized
-                            $(".employee-select-panel").show();
-                            $(".not-in-census-section").show();
-                            */
-
-                            //var table = $("#census-records-table").dataTable();
 
                             case_management.init_status_filter(table);
                             case_management.init_alphabet_search(table);
@@ -1845,7 +1843,7 @@
                 self.add_to_census_modal.show_modal();
             });
 
-            $(".employee-select-panel").on('click', "button.enroll-employee", function() {
+            $("#enrollment").on('click', "button.enroll-employee", function() {
                 var record_id = $(this).attr('data-id');
 
                 submit_to_url("{{ url_for('in_person_enrollment') }}", {record_id: record_id});

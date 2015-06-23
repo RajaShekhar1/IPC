@@ -59,7 +59,7 @@ def manage_cases():
     return render_template('agent/manage_cases.html', **vars)
 
 
-@app.route('/manage-case/<case_id>')
+@app.route('/enrollment-case/<case_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def manage_case(case_id):
     case = case_service.get_if_allowed(case_id)
@@ -106,7 +106,7 @@ def manage_case(case_id):
     return render_template('agent/case.html', **vars)
 
 
-@app.route('/manage-case/<case_id>/census/<census_record_id>')
+@app.route('/enrollment-case/<case_id>/census/<census_record_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def edit_census_record(case_id, census_record_id):
     case = case_service.get_if_allowed(case_id)
@@ -144,8 +144,8 @@ def sample_upload_csv():
     return send_file(sample_path, as_attachment=True,
                      attachment_filename='sample_census_upload.csv')
 
-
 @app.route('/manage-case/<int:case_id>/self-enrollment')
+@app.route('/enrollment-case/<int:case_id>/self-enrollment')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def edit_self_enroll_setup(case_id=None):
     agent = agent_service.get_logged_in_agent()
