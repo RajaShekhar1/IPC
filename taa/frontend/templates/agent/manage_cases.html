@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% set active_page = 'nav_manage_cases' -%}
-{% block title %} - Agent Manage Cases{% endblock %}
+{% block title %} - Agent Enrollment Cases{% endblock %}
 
 {% block head %}
  {{ super() }}
@@ -9,7 +9,7 @@
 
 {% block content %}
 
-<h3 class="header lighter">Manage Cases</h3>
+<h3 class="header lighter">Enrollment Cases</h3>
 
     
 <div class="row">
@@ -29,13 +29,12 @@
             </div>
         {% else %}
             <div class="table-responsive">
-                <table id="cases_table" class="table table-striped table-bordered table-hover">
+                <table id="cases_table" class="table table-striped table-bordered table-hover DTTT_selectable">
                     <thead>
                         <tr>
-                            <th></th>
-                            <th>Owner Agent</th>
                             <th>Company</th>
                             <th>Location</th>
+                            <th>Owner Agent</th>
                             <th>Product</th>
                             <th>Active</th>
                             <th>Created</th>
@@ -43,13 +42,10 @@
                     </thead>
                     <tbody>
                         {% for case in agent_cases %}
-                            <tr>    
-                                <td><a href="{{ url_for("manage_case", case_id=case.id) }}" class="btn btn-xs btn-default">
-                                    <span class="icon icon-edit"></span>Edit
-                                </a></td>
-                                <td>{{ case.format_owner_name() }}</td>
+                            <tr data-case-id="{{ case.id }}">
                                 <td>{{ case.company_name }}</td>
                                 <td>{{ case.format_location() }}</td>
+                                <td>{{ case.format_owner_name() }}</td>
                                 <td>{{ case.get_product_names() }}</td>
                                 <td>{{ case.format_is_active() }}</td>
                                 <td>{{ case.format_created_date() }}</td>
@@ -172,7 +168,13 @@
         }
         
         $("#cases_table").dataTable();
-        
+
+        $("#cases_table tr").on("click", function() {
+            var case_id = $(this).attr("data-case-id");
+            var url = {{ url_for("manage_case", case_id="") }} + case_id;
+            location.href = url;
+        });
+
         var form = new ManageCasesPage();
         window.form = form;
         

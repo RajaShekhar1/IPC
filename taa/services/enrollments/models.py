@@ -165,7 +165,8 @@ class SelfEnrollmentLink(SelfEnrollmentLinkSerializer, db.Model):
     census_record_id = db.Column(db.Integer, db.ForeignKey('case_census.id'),
                                  nullable=True)
     census_record = db.relationship('CaseCensus',
-                                    backref=db.backref('self_enrollment_link'))
+                                    backref='self_enrollment_links'
+     )
     self_enrollment_setup_id = db.Column(db.Integer,
                                          db.ForeignKey(
                                              'self_enrollment_setups.id'),
@@ -177,10 +178,10 @@ class SelfEnrollmentLink(SelfEnrollmentLinkSerializer, db.Model):
 
 
 class SelfEnrollmentEmailLogSerializer(JsonSerializable):
-    __json_hidden__ = ['agent', 'census_record', 'self_enrollment_link']
+    __json_hidden__ = ['agent', 'census_record', 'link']
 
 
-class SelfEnrollmentEmailLog(db.Model):
+class SelfEnrollmentEmailLog(SelfEnrollmentEmailLogSerializer, db.Model):
     __tablename__ = 'self_enrollment_email_log'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -198,3 +199,9 @@ class SelfEnrollmentEmailLog(db.Model):
     email_subject = db.Column(db.Unicode)
     email_body = db.Column(db.UnicodeText)
     is_success = db.Column(db.Boolean, nullable=False)
+
+    status = db.Column(db.Unicode(16))
+
+    STATUS_PENDING = u'pending'
+    STATUS_FAILURE = u'failure'
+    STATUS_SUCCESS = u'success'

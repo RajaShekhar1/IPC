@@ -900,8 +900,10 @@ class SelfEnrollmentEmailService(DBService):
         return True
 
     def send(self, agent, link, census, **kwargs):
+
         success = self._send_email(**kwargs)
-        self.create(**dict(
+
+        email_record = self.create(**dict(
             link_id=link.id,
             census_id=census.id,
             agent_id=agent.id,
@@ -913,5 +915,31 @@ class SelfEnrollmentEmailService(DBService):
             email_body=kwargs.get('body'),
             is_success=success,
         ))
+
         db.session.commit()
         return success
+
+    def queue_email(self, email_log_id):
+        "Sends a pending email log to the queue for sending"
+
+        # Import the tasks module here so we don't have circular import.
+        from taa import tasks
+        # Queue up the task to be run in the background
+        tasks.send_email.delay(email_log_id)
+
+
+    def create_pending_email(self, agent, link, census, **kwargs):
+        # Create a pending record in the database
+        return self.create(**dict(
+            link_id=link.id,
+            census_id=census.id,
+            agent_id=agent.id,
+            email_to_address=kwargs.get('to_email'),
+            email_to_name=kwargs.get('to_name'),
+            email_from_address=kwargs.get('from_email'),
+            email_from_name=kwargs.get('from_name'),
+            email_subject=kwargs.get('subject'),
+            email_body=kwargs.get('body'),
+            is_success=False,
+            status=SelfEnrollmentEmailLog.STATUS_PENDING
+        ))

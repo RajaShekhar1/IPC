@@ -37,8 +37,8 @@ def inbox():
         return redirect(url_for('home'))
 
 
-@app.route('/manage-cases')
-@groups_required(['agents', 'home_office', 'admins'], all=False)
+@app.route("/enrollment-cases")
+@groups_required(["agents", "home_office", "admins"], all=False)
 @login_required
 def manage_cases():
     agent = agent_service.get_logged_in_agent()
@@ -59,7 +59,7 @@ def manage_cases():
     return render_template('agent/manage_cases.html', **vars)
 
 
-@app.route('/manage-case/<case_id>')
+@app.route('/enrollment-case/<case_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def manage_case(case_id):
     case = case_service.get_if_allowed(case_id)
@@ -106,7 +106,7 @@ def manage_case(case_id):
     return render_template('agent/case.html', **vars)
 
 
-@app.route('/manage-case/<case_id>/census/<census_record_id>')
+@app.route('/enrollment-case/<case_id>/census/<census_record_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def edit_census_record(case_id, census_record_id):
     case = case_service.get_if_allowed(case_id)
@@ -144,13 +144,11 @@ def sample_upload_csv():
     return send_file(sample_path, as_attachment=True,
                      attachment_filename='sample_census_upload.csv')
 
-
 @app.route('/manage-case/<int:case_id>/self-enrollment')
+@app.route('/enrollment-case/<int:case_id>/self-enrollment')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def edit_self_enroll_setup(case_id=None):
     agent = agent_service.get_logged_in_agent()
-    products = (product_service.get_products_for_agent(agent)
-                if agent is not None else [])
     if case_id is None:
         # Ad-hoc self-enrollment setup
         case = None
@@ -163,10 +161,9 @@ def edit_self_enroll_setup(case_id=None):
         'nav_menu': get_nav_menu(),
         'agent': agent,
         'case': case,
+        'company_name': case.company_name,
         'form': form,
-        'products': products,
-        'product_list': '<ul><li>{}</li></ul>'.format(
-            '</li><li>'.join([product.name for product in case.products])),
+        'products': case.products,
     }
     if case.self_enrollment_setup is not None:
         vars['setup'] = case.self_enrollment_setup

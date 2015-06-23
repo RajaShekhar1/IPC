@@ -675,16 +675,9 @@
 
                 <div class="modal-body">
 
-                    <p>You are contemplating the purchase of a life insurance policy or annuity contract. In some cases this purchase may involve discontinuing or changing
-an existing policy or contract. If so, a replacement is occurring. Financed purchases are also considered replacements.</p>
-
-                    <p>A replacement occurs when a new policy or contract is purchased and, in connection with the sale, you discontinue making premium payments on the existing policy or contract, or an existing policy or contract is surrendered, forfeited, assigned to the replacing insurer, or otherwise terminated or used in a financed purchase.</p>
-
-                    <p>A financed purchase occurs when the purchase of a new life insurance policy involves the use of funds obtained by the withdrawal or surrender of or by borrowing some or all of the policy values, including accumulated dividends, of an existing policy, to pay all or part of any premium or payment due on the new policy. A financed purchase is a replacement.</p>
-
-                    <p>You should carefully consider whether a replacement is in your best interests. You will pay acquisition costs and there may be surrender costs deducted from your policy or contract. You may be able to make changes to your existing policy or contract to meet your insurance needs at less cost. A financed purchase will reduce the value of your existing policy or contract and may reduce the amount paid upon the death of the insured.</p>
-
-                    <p>We want you to understand the effects of replacements before you make your purchase decision and ask that you answer the following questions.</p>
+                    <!--ko foreach: get_replacement_paragraphs()-->
+                        <p data-bind="html: $data"></p>
+                    <!--/ko-->
 
                     <div class="row">
                         <div class="col-xs-12 col-sm-11 col-sm-offset-1">
@@ -749,21 +742,12 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                                 <!--/ko-->
                                 <br>
                                 <button class="btn btn-success btn-sm" data-bind="click: add_replacement_policy">Add Another Policy</button>
-                                <br>
-                                <br>
-                                <p>Make sure you know the facts. Contact your existing company or its agent for information about the old policy or contract. (If you request one, an in force illustration, policy summary or available disclosure documents must be sent to you by the existing insurer). Ask for and retain all sales material used by the agent in the sales presentation. Be sure that you are making an informed decision.</p>
-
-
                             </div>
 
 
 
                         </div>
                     </div>
-
-
-
-
 
                 </div>
             </div>
@@ -1789,6 +1773,7 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                             </div>
                         </div>
 
+                        {#
                         <div class="row">
                             <div class="col-sm-12 col-md-6 form-group">
                                 <label class="control-label col-xs-12 col-sm-12 no-padding-right">
@@ -1798,7 +1783,7 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                                 </label>
                             </div>
                         </div>
-
+                        #}
                     </div>
                     <!-- /eeBeneficiaryOther -->
                 </div>
@@ -1884,7 +1869,7 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                                 </div>
                             </div>
                         </div>
-
+                        {#
                         <div class="row">
                             <div class="col-sm-12 col-md-6 form-group">
                                 <label class="control-label col-xs-12 col-sm-12 no-padding-right">
@@ -1894,6 +1879,7 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                                 </label>
                             </div>
                         </div>
+                        #}
                     </div>
                     <!-- /eeContBeneficiaryOther -->
                 </div>
@@ -1977,7 +1963,7 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                                 </div>
                             </div>
                         </div>
-
+                        {#
                         <div class="row">
                             <div class="col-sm-12 col-md-6 form-group">
                                 <label class="control-label col-xs-12 col-sm-12 no-padding-right">
@@ -1987,6 +1973,7 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                                 </label>
                             </div>
                         </div>
+                        #}
                     </div>
                     <!-- /spBeneficiaryOther -->
                 </div>
@@ -2069,7 +2056,7 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                                 </div>
                             </div>
                         </div>
-
+                        {#
                         <div class="row">
                             <div class="col-sm-12 col-md-6 form-group">
                                 <label class="control-label col-xs-12 col-sm-12 no-padding-right">
@@ -2079,6 +2066,7 @@ an existing policy or contract. If so, a replacement is occurring. Financed purc
                                 </label>
                             </div>
                         </div>
+                         #}
                     </div>
                     <!-- /spContBeneficiaryOther -->
                 </div>
