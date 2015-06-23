@@ -61,23 +61,27 @@ class JsonSerializable(object):
     def to_json(self):
         field_names = self.get_field_names()
 
-        public = self.__json_public__ or field_names
+        # Remove hidden fields first so we don't trigger any SQLAlchemy issues
         hidden = self.__json_hidden__ or []
+        public = [k for k in (self.__json_public__ or field_names) if k not in hidden]
         modifiers = self.__json_modifiers__ or dict()
         added = self.__json_add__ or dict()
-        
-        rv = dict()
+
+        retv = dict()
         for key in public:
-            rv[key] = getattr(self, key)
+            retv[key] = getattr(self, key)
         for key, modifier in modifiers.items():
             value = getattr(self, key)
-            rv[key] = modifier(value, self)
+            retv[key] = modifier(value, self)
         for key, modifier in added.items():
-            rv[key] = modifier(self)
-            
+            retv[key] = modifier(self)
+
+        # Do one last pass through hidden in case it was added in the modifiers or added
         for key in hidden:
-            rv.pop(key, None)
-        return rv
+            if key in retv:
+                retv.pop(key)
+
+        return retv
     
     
 #

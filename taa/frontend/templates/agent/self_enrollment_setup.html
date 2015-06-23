@@ -60,14 +60,7 @@ buttons at the lower right of the page. At the end you will be presented with a 
                 <i class="ace-icon fa fa-envelope"></i>
                     Select Emails for Sending
             </button>
-            {#  Send email/link to those who:
-            <div class="btn-group btn-overlap btn-corner">
-              <a class="btn btn-sm btn-primary" href="{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which='not-sent') }}">haven't been sent link ...</a>
-              <a class="btn btn-sm btn-primary" href="{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which='not-enrolled') }}">have not enrolled ...</a>
-              <a class="btn btn-sm btn-primary" href="{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which='declined') }}">have declined ...</a>
-            </div>
 
-            #}
           </div>
         </div>
         <div class="form-group self-enroll self-enroll-email-off">

@@ -7,7 +7,7 @@ from flask_stormpath import current_user, groups_required, login_required
 
 
 from taa import app
-from taa.core import TAAFormError
+from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
 from taa.services.cases import CaseService, SelfEnrollmentService
@@ -220,6 +220,7 @@ def census_records(case_id):
                 'attachment; filename=case_export_{0}.csv'.format(date_str)
         }
         return make_response(body, 200, headers)
+
     return data
 
 
@@ -341,12 +342,17 @@ def email_self_enrollment_link(case_id, which):
         abort(400, "Case not configured for targeted self-enrollment")
     agent = agent_service.get_logged_in_agent()
     eligible_census = get_census_records_for_status(case, status=which)
-    result = []
+
+    #from taa.tasks import batch_emails
+    #batch_emails.delay(setup.id, [cr.id for cr in eligible_census])
+
+    results = []
     for record in eligible_census:
         if record.employee_email is None or '@' not in record.employee_email:
             # Census record does not has a valid email; skip
-            result.append("{} {} did not have a valid email.".format(record.employee_first, record.employee_last))
+            #results.append("{} {} did not have a valid email.".format(record.employee_first, record.employee_last))
             continue
+
         # Get previously generated link if available
         link = self_enrollment_link_service.get_for_census_record(record)
         if link is None:
@@ -355,8 +361,9 @@ def email_self_enrollment_link(case_id, which):
                                                               case, record)
         if link is None:
             abort(500, "Could not retrieve or create self-enrollment link")
+
         name = '{} {}'.format(record.employee_first, record.employee_last)
-        print("Emailing {}".format(name))
+        #print("Emailing {}".format(name))
 
         email_body = render_template(
             "emails/enrollment_email.html",
@@ -370,7 +377,7 @@ def email_self_enrollment_link(case_id, which):
             company_name=record.case.company_name,
             product_name=record.case.products[0].name,
         )
-        success = self_enrollment_email_service.send(
+        email_log = self_enrollment_email_service.create_pending_email(
             agent, link, record,
             from_email=setup.email_sender_email,
             from_name=setup.email_sender_name,
@@ -378,8 +385,13 @@ def email_self_enrollment_link(case_id, which):
             to_name=name,
             subject=email_subject,
             body=email_body)
-        result.append("{} {} at &lt;{}&gt;".format(
-            'Emailed' if success else 'Failed to email',
-            name,
-            record.employee_email))
-    return result
+        results.append(email_log)
+
+    # Insert the pending emails together for speed.
+    db.session.commit()
+
+    # Queue up the results to celery
+    for email_log in results:
+        self_enrollment_email_service.queue_email(email_log.id)
+
+    return ["Scheduled %s emails for immediate processing."%len(results)]

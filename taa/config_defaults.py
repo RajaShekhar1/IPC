@@ -65,6 +65,12 @@ EMAIL_FROM_ADDRESS = "enrollment@5StarEnroll.com"
 MANDRILL_API_KEY = env_get_text('MANDRILL_API_KEY', "-h0QL63ppE05jaU3aWvRjg")
 MANDRILL_DEFAULT_FROM = env_get_text('MANDRILL_DEFAULT_FROM', "enrollment@5StarEnroll.com")
 
+# Celery message broker (background task runner)
+BROKER_URL = env_get_text('CELERY_BROKER_URL', "amqp://")
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TIMEZONE = 'US/Eastern'
+
 # Database
 SQLALCHEMY_DATABASE_URI = env_get_text('DATABASE_URL', "postgresql://taa:fQj9lJTFbOQUBYo@localhost/taa")
 SQLALCHEMY_ECHO = env_get_bool('SQLALCHEMY_ECHO', True)
