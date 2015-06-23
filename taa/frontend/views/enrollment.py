@@ -8,7 +8,7 @@ import json
 import requests
 
 from flask import (abort, jsonify, render_template, request,
-                   send_from_directory, session, url_for)
+                   send_from_directory, session, url_for, redirect)
 from flask.ext.stormpath import login_required
 from flask_stormpath import current_user
 
@@ -40,27 +40,31 @@ self_enrollment_link_service = SelfEnrollmentLinkService()
 def enroll_start():
     should_show_next_applicant = bool(request.args.get('next'))
     if session.get('active_case_id') and should_show_next_applicant:
+        # We no longer use the separate setup enrollment page, forward agent to manage_case page
         case = case_service.get_if_allowed(session['active_case_id'])
-    else:
-        # Clear session variables
-        session['active_case_id'] = None
-        session['enrolling_census_record_id'] = None
-        case = None
-    agent = agent_service.get_logged_in_agent()
-    agent_products = product_service.get_products_for_agent(agent)
-    product_states = product_service.get_product_states(agent_products)
-    all_states = product_service.get_all_states()
-    return render_template(
-        'enrollment/setup-enrollment.html',
-        # form=form,
-        product_state_mapping=product_states,
-        all_states=all_states,
-        agent_products=agent_products,
-        agent_cases=case_service.get_agent_cases(agent, only_enrolling=True),
-        active_case=case,
-        should_show_next_applicant=should_show_next_applicant and case,
-        nav_menu=get_nav_menu(),
-    )
+        return redirect(location=url_for('manage_case', case_id=case.id)+"#enrollment")
+
+    abort(404)
+    # else:
+    #     # Clear session variables
+    #     session['active_case_id'] = None
+    #     session['enrolling_census_record_id'] = None
+    #     case = None
+    # agent = agent_service.get_logged_in_agent()
+    # agent_products = product_service.get_products_for_agent(agent)
+    # product_states = product_service.get_product_states(agent_products)
+    # all_states = product_service.get_all_states()
+    # return render_template(
+    #     'enrollment/setup-enrollment.html',
+    #     # form=form,
+    #     product_state_mapping=product_states,
+    #     all_states=all_states,
+    #     agent_products=agent_products,
+    #     agent_cases=case_service.get_agent_cases(agent, only_enrolling=True),
+    #     active_case=case,
+    #     should_show_next_applicant=should_show_next_applicant and case,
+    #     nav_menu=get_nav_menu(),
+    # )
 
 
 # Wizard
@@ -161,6 +165,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         'health_questions': soh_questions,
         'payment_mode_choices': payment_mode_choices,
         'payment_mode': payment_mode,
+        'case_id': case.id,
     }
 
     # Commit any changes made (none right now)
@@ -178,7 +183,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
 def self_enrollment(company_name, uuid):
     setup, census_record = self_enrollment_link_service.get_self_enrollment_data_for(uuid,
                                                                                      current_user.is_anonymous())
-    vars = {'is_valid': False}
+    vars = {'is_valid': False, 'allowed_states': []}
     if setup is not None:
         session['is_self_enroll'] = True
 

@@ -92,6 +92,16 @@ class Product(ProductJsonSerializable, db.Model):
 
         return state_replacement_paragraphs
 
+    def get_brochure_url(self):
+        if self.brochure_url:
+            return self.brochure_url
+
+        # Will check a base product if necessary
+        if not self.is_base_product():
+            return self.get_base_product().brochure_url
+
+        return None
+
 # Relate custom products to agents - who can see these products
 product_agents = db.Table('product_agents', db.metadata,
     db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True),

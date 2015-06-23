@@ -6,7 +6,8 @@ from .states import all_statecodes
 class ProductFormService(object):
 
     def get_application_form_template_id(self, base_product_code, statecode):
-        return self.form_for_product_code_and_state(base_product_code, statecode)
+        form = self.form_for_product_code_and_state(base_product_code, statecode)
+        return form.docusign_template_id
 
     def get_replacement_template_id(self, base_product_code, statecode):
         form = self.get_replacement_form(base_product_code, statecode)
@@ -343,7 +344,7 @@ Make sure you know the facts. Contact your existing company or its agent for inf
 )
 
 GA_fpp_replacement_form = ReplacementForm(
-    statecodes=['GA'],
+    statecodes=['GA', 'IN'],
     docusign_template_id='3D0498C5-B843-4C6A-A3D1-1E6317F2EDA3',
     paragraphs="""\
 Are you thinking about buying a new policy and discontinuing or changing an existing policy? If you are, your decision could be a good one or a mistake. You will not know for sure unless you make a careful comparison of your existing policy and the proposed policy.

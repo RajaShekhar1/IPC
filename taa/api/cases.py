@@ -370,6 +370,7 @@ def email_self_enrollment_link(case_id, which):
             custom_message=setup.email_message,
             employee_first=record.employee_first,
             enrollment_url=link.url,
+            company_name=record.case.company_name,
         )
         email_subject = "Enrollment Request:  {employee_first} {employee_last} ({company_name}) - {product_name}".format(
             employee_first=record.employee_first,
