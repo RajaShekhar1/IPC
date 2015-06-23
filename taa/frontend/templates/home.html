@@ -10,9 +10,9 @@
         <div class="row">
             <div class="col-sm-6">
                 {{ render_simple_widget(
-                        title="Cases", 
-                        body_html='<p class="lead">Setup cases, manage census data, define enrollment periods and view enrollment reports.</p>', 
-                        button_text="Manage Cases", 
+                        title="Enrollment Cases",
+                        body_html='<p class="lead">Setup group cases for enrollment, manage census data, view enrollment reports and initiate in-person as well as self-enrolled apps.</p><p class="lead">More text here<br>More text here<br>More text here<br></p>',
+                        button_text="Enrollment Cases",
                         button_classes="btn btn-success btn-lg", 
                         button_url=url_for("manage_cases")
                    ) 
@@ -20,36 +20,22 @@
             </div>
             <div class="col-sm-6">
                 {{ render_simple_widget(
-                        title="Enrollment", 
-                        body_html='''<p class="lead">Enroll from existing case census or ad-hoc interview; in-person enrollments present complete application form at end for signature.</p><p><i class="icon-info-sign bigger-120 blue"></i> All submitted applications will also
-                                need electronic signature of enrolling agent, completed via the signing section of
-                                this page.</p>''', 
-                        button_text="Enroll applicants", 
-                        button_classes="btn btn-lg btn-info", 
-                        button_url=url_for('enroll_start')
-                    ) 
-                }}
-            </div>
-        </div>
-        <br>
-        <div class="row">
-            <div class="col-sm-offset-3 col-sm-6">
-                {{ render_simple_widget(
-                        title="Agent Signing", 
+                        title="Agent Signing",
                         body_html='''<p class="lead">All applications require signature by agent. Completed interviews will
                                 be routed to your "signing inbox" <span class="smaller-80">(powered by Docusign; in their <i>Manage</i> area)</span>
                                 for finalizing any pending applications with your confirmation and signature.</p>
 
                             <p><i class="icon-warning-sign bigger-120 orange"></i> Applications will not be not
-                                submitted for processing until your signature is complete on the document.</p>''', 
-                        button_text="Access agent signing inbox", 
-                        button_classes="btn btn-lg btn-warning", 
-                        button_url=url_for('inbox'),
-                   ) 
+                                submitted for processing until your signature is complete on the document.</p>''',
+                        button_text="Access agent signing inbox",
+                        button_classes="btn btn-lg btn-warning",
+                        button_url=url_for('inbox')
+                   )
                 }}
-                
+
             </div>
         </div>
+        <br>
         <!-- /.row -->
     </div>
     

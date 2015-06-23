@@ -12,11 +12,12 @@ def get_nav_menu():
         is_admin = AgentService().is_user_admin(current_user)
     except Exception:
         return []
+
     if is_agent:
         return [
             dict(nav_name='nav_home', url_name='home', display='Home'),
-            dict(nav_name='nav_manage_cases', url_name='manage_cases', display='Manage Cases'),
-            dict(nav_name='nav_enroll', url_name='enroll_start', display='Enroll'),
+            dict(nav_name='nav_manage_cases', url_name='manage_cases', display='Enrollment Cases'),
+            #dict(nav_name='nav_enroll', url_name='enroll_start', display='Enroll'),
             dict(nav_name='nav_agentsign', url_name='inbox', display='Sign'),
         ]
     elif is_home_office:
@@ -24,14 +25,14 @@ def get_nav_menu():
             dict(nav_name='nav_home', url_name='home', display='Home'),
             dict(nav_name='nav_manage_agents', url_name='manage_agents', display='Agents'),
             dict(nav_name='nav_customproducts', url_name='manage_custom_products', display='Products'),
-            dict(nav_name='nav_manage_cases', url_name='manage_cases', display='Manage Cases'),
+            dict(nav_name='nav_manage_cases', url_name='manage_cases', display='Enrollment Cases'),
         ]
     elif is_admin:
         return [
             dict(nav_name='nav_home', url_name='home', display='Home'),
             dict(nav_name='nav_manage_agents', url_name='manage_agents', display='Agents'),
             dict(nav_name='nav_customproducts', url_name='manage_custom_products', display='Products'),
-            dict(nav_name='nav_manage_cases', url_name='manage_cases', display='Manage Cases'),
+            dict(nav_name='nav_manage_cases', url_name='manage_cases', display='Enrollment Cases'),
             dict(nav_name='nav_agentsign', url_name='inbox', display='Sign'),
         ]
     return []

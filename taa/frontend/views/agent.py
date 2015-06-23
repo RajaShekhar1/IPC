@@ -37,8 +37,8 @@ def inbox():
         return redirect(url_for('home'))
 
 
-@app.route('/manage-cases')
-@groups_required(['agents', 'home_office', 'admins'], all=False)
+@app.route("/enrollment-cases")
+@groups_required(["agents", "home_office", "admins"], all=False)
 @login_required
 def manage_cases():
     agent = agent_service.get_logged_in_agent()
