@@ -109,19 +109,19 @@ def manage_case(case_id):
     # Self-enrollment settings - always ensure the self-enrollment setup object exists for a case, even if not active
     self_enrollment_setup = case_service.get_self_enrollment_setup(case)
     if self_enrollment_setup is None:
-        case.self_enrollment_setup = case_service.create_self_enrollment_setup(case, {
+        self_enrollment_setup = case_service.create_self_enrollment_setup(case, {
             'self_enrollment_type': SelfEnrollmentSetup.TYPE_CASE_GENERIC,
             'created_by': agent.id,
             'page_title': 'Welcome to your Benefit Enrollment',
             'page_text': '''You have reached the enrollment page for ABC, which is offering you important insurance benefits from 5Star Life.
 
 This enrollment should take less than 5 minutes to complete. To view details of the offered products, see the link(s) below. Please follow the instructions carefully on the next page, stepping through the simple interview using the next/previous buttons at the lower right of the page. At the end you will be presented with a complete application form to electronically sign.''',
-            'email_sender_name': agent.name,
+            'email_sender_name': agent.name(),
             'email_sender_email': agent.email,
-            'email_subject': '',
-
+            'email_subject': 'Benefit enrollment - your action needed',
         })
-        #if setup.self_enrollment_type == 'case-generic':
+        case.self_enrollment_setup = self_enrollment_setup
+
         # Generate generic self-enrollment link
         self_enrollment_link_service.generate_link(request.url_root, case)
 
