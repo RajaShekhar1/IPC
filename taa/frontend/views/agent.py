@@ -119,6 +119,8 @@ This enrollment should take less than 5 minutes to complete. To view details of 
             'email_sender_name': agent.name(),
             'email_sender_email': agent.email,
             'email_subject': 'Benefit enrollment - your action needed',
+            'email_greeting_salutation': "Dear",
+            'email_greeting_type': SelfEnrollmentSetup.EMAIL_GREETING_FIRST_NAME,
         })
         case.self_enrollment_setup = self_enrollment_setup
 

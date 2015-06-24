@@ -403,8 +403,26 @@ buttons at the lower right of the page. At the end you will be presented with a 
                                                                         <div class="form-group self-enroll self-enroll-email">
                                                                           {{ render_field_with_errors(form.email_sender_name, style="width: 100%;", default=agent.name()) }}
                                                                           {{ render_field_with_errors(form.email_sender_email, default=agent.email) }}
-
                                                                           {{ render_field_with_errors(form.email_subject, default=default_email_subject) }}
+
+                                                                            <div class="form-group">
+                                                                                <div class="col-sm-3 control-label">
+                                                                                    <label for="email_greeting_salutation">Greeting</label>
+                                                                                </div>
+                                                                                <div class="col-sm-9">
+                                                                                    <div class="row">
+                                                                                        <div class="col-xs-3">
+                                                                                            {{ form.email_greeting_salutation(placeholder="Optional Salutation") }}
+                                                                                        </div>
+                                                                                        <div class="col-xs-9">
+                                                                                            {{ form.email_greeting_type() }}
+                                                                                        </div>
+                                                                                    </div>
+
+
+                                                                                </div>
+                                                                            </div>
+
                                                                           {{ render_field_with_errors(form.email_message, class_='wysiwyg-editor', default=default_email_message) }}
                                                                           <div class="col-xs-9 col-xs-offset-3">
                                                                             <a id="reset-email-message" class="btn btn-xs pull-right">Reset to default message & subject</a>
@@ -2433,7 +2451,7 @@ buttons at the lower right of the page. At the end you will be presented with a 
                $('.processing-buttons').hide();
               $('.success-buttons').show();
               var sent_status_list = results.data;
-              $('#email-status-wrap').html("Sent "+sent_status_list.length+" messages:<br><br>"+sent_status_list.join('<br>'));
+              $('#email-status-wrap').html(sent_status_list.join('<br>'));
             },
             error: function(xhr) {
               $('.loading-panel').hide();

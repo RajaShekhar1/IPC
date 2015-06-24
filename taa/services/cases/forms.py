@@ -8,6 +8,7 @@ from wtforms.fields import (
 from wtforms.widgets import CheckboxInput, html_params, HTMLString
 from wtforms import validators
 
+from taa.services.cases.models import SelfEnrollmentSetup
 from taa.services.products import ProductService, get_all_states
 products_service = ProductService()
 
@@ -173,7 +174,15 @@ class SelfEnrollmentSetupForm(Form):
     email_sender_email = StringField('Sender Email',
                                      [validators.InputRequired(),
                                       validators.Email()])
-    email_subject = StringField('Email Subject',
+    email_greeting_salutation = StringField('Greeting', [])
+    email_greeting_type = SelectField('', choices=[
+        (SelfEnrollmentSetup.EMAIL_GREETING_FIRST_NAME, "First Name (\"John\")"),
+        (SelfEnrollmentSetup.EMAIL_GREETING_FULL_NAME, "First & Last Name (\"John Doe\")"),
+        (SelfEnrollmentSetup.EMAIL_GREETING_LAST_NAME, "Last Name (\"Doe\")"),
+        (SelfEnrollmentSetup.EMAIL_GREETING_TITLE_LAST, "Title & Last Name (\"Mr./Ms. Doe\")"),
+        (SelfEnrollmentSetup.EMAIL_GREETING_BLANK, "Leave blank"),
+    ])
+    email_subject = StringField('Subject',
                                      [validators.InputRequired()])
 
     email_message = EditableField('Email Message', [validators.InputRequired()])
