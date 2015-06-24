@@ -8,7 +8,7 @@ import json
 import requests
 
 from flask import (abort, jsonify, render_template, request,
-                   send_from_directory, session, url_for)
+                   send_from_directory, session, url_for, redirect)
 from flask.ext.stormpath import login_required
 from flask_stormpath import current_user
 
@@ -40,27 +40,31 @@ self_enrollment_link_service = SelfEnrollmentLinkService()
 def enroll_start():
     should_show_next_applicant = bool(request.args.get('next'))
     if session.get('active_case_id') and should_show_next_applicant:
+        # We no longer use the separate setup enrollment page, forward agent to manage_case page
         case = case_service.get_if_allowed(session['active_case_id'])
-    else:
-        # Clear session variables
-        session['active_case_id'] = None
-        session['enrolling_census_record_id'] = None
-        case = None
-    agent = agent_service.get_logged_in_agent()
-    agent_products = product_service.get_products_for_agent(agent)
-    product_states = product_service.get_product_states(agent_products)
-    all_states = product_service.get_all_states()
-    return render_template(
-        'enrollment/setup-enrollment.html',
-        # form=form,
-        product_state_mapping=product_states,
-        all_states=all_states,
-        agent_products=agent_products,
-        agent_cases=case_service.get_agent_cases(agent, only_enrolling=True),
-        active_case=case,
-        should_show_next_applicant=should_show_next_applicant and case,
-        nav_menu=get_nav_menu(),
-    )
+        return redirect(location=url_for('manage_case', case_id=case.id)+"#enrollment")
+
+    abort(404)
+    # else:
+    #     # Clear session variables
+    #     session['active_case_id'] = None
+    #     session['enrolling_census_record_id'] = None
+    #     case = None
+    # agent = agent_service.get_logged_in_agent()
+    # agent_products = product_service.get_products_for_agent(agent)
+    # product_states = product_service.get_product_states(agent_products)
+    # all_states = product_service.get_all_states()
+    # return render_template(
+    #     'enrollment/setup-enrollment.html',
+    #     # form=form,
+    #     product_state_mapping=product_states,
+    #     all_states=all_states,
+    #     agent_products=agent_products,
+    #     agent_cases=case_service.get_agent_cases(agent, only_enrolling=True),
+    #     active_case=case,
+    #     should_show_next_applicant=should_show_next_applicant and case,
+    #     nav_menu=get_nav_menu(),
+    # )
 
 
 # Wizard
@@ -70,12 +74,17 @@ def in_person_enrollment():
     """
     Agent sitting down with employee for the enrollment wizard. Always done via a case census record.
     """
-
     record_id = request.form.get('record_id')
+    enrollment_city_override = request.form.get('enrollment_city')
+    enrollment_state_override = request.form.get('enrollment_state')
+
     record = case_service.census_records.get(record_id)
 
     return _setup_enrollment_session(record.case, record_id=int(record_id),
-                                     is_self_enroll=False)
+                                     is_self_enroll=False, data={
+            'enrollmentCity': enrollment_city_override,
+            'enrollmentState': enrollment_state_override,
+        })
 
 
 
@@ -85,17 +94,24 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         # Enrolling from a case census record
         record_id = int(record_id)
         record = case_service.get_census_record(None, record_id)
-        # Set a flag that we are currently enrolling from this case
+
+        # Set a boolean in the session that we are currently enrolling from this case and record;
+        #    may not be necessary anymore since we moved the enrollment page to the case management page.
         session['active_case_id'] = record.case_id
         session['enrolling_census_record_id'] = record.id
 
-        # Defaults, but can be overridden by user data
-        state = record.employee_state or record.case.situs_state
-        enroll_city = record.employee_city or record.case.situs_city
-        if is_self_enroll and data and 'enrollmentState' in data and data['enrollmentState']:
-            state = data['enrollmentState']
-        if is_self_enroll and data and 'enrollmentCity' in data and data['enrollmentCity']:
-            enroll_city = data['enrollmentCity']
+        override_state = data.get('enrollmentState') if data and data.get('enrollmentState') else None
+        override_city = data.get('enrollmentCity') if data and data.get('enrollmentCity') else None
+
+        if is_self_enroll:
+            # Data is user-provided enrollment location, and trumps the usual defaults
+            state = override_state or record.employee_state or record.case.situs_state
+            city = override_city or record.employee_city or record.case.situs_city
+        else:
+            # Data is agent-provided override of case defaults. Ignore employee location since this is in-person,
+            #   presumably at the worksite.
+            state = override_state or record.case.situs_state
+            city = override_city or record.case.situs_city
 
         company_name = record.case.company_name
         group_number = record.case.group_number
@@ -113,7 +129,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     else:
         # Generic case-link enrollment
         state = data['enrollmentState']
-        enroll_city = data['enrollmentCity']
+        city = data['enrollmentCity']
         company_name = data['companyName']
         group_number = data['groupNumber']
         product_id = data['productID']
@@ -135,11 +151,11 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         'company_name': company_name,
         'group_number': group_number,
         'situs_state': state,
-        'situs_city': enroll_city,
+        'situs_city': city,
     }
 
     # Validate that we can enroll in the product for this state - do we have a form?
-    if not any(product_form_service.form_for_product_code_and_state(p.get_base_product_code, state) for p in products):
+    if not any(product_form_service.form_for_product_code_and_state(p.get_base_product_code(), state) for p in products):
         # Change the state back to the case state to allow them to continue?
         state = case.situs_state
 
@@ -150,7 +166,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         soh_questions[product.id] = StatementOfHealthQuestionService().get_health_questions(product, state)
     wizard_data = {
         'state': state if state != 'XX' else None,
-        'enroll_city': enroll_city,
+        'enroll_city': city,
         'company_name': company_name,
         'group_number': group_number,
         'products': products,
@@ -161,6 +177,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         'health_questions': soh_questions,
         'payment_mode_choices': payment_mode_choices,
         'payment_mode': payment_mode,
+        'case_id': case.id,
     }
 
     # Commit any changes made (none right now)
@@ -178,7 +195,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
 def self_enrollment(company_name, uuid):
     setup, census_record = self_enrollment_link_service.get_self_enrollment_data_for(uuid,
                                                                                      current_user.is_anonymous())
-    vars = {'is_valid': False}
+    vars = {'is_valid': False, 'allowed_states': []}
     if setup is not None:
         session['is_self_enroll'] = True
 

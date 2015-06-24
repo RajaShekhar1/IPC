@@ -43,6 +43,10 @@
 
                                 5Star Life Insurance Company
                             </div>
+                            <div style="font-size:16px;color:rgb(119,119,119);font-family:arial">
+
+                                and {{ company_name }}
+                            </div>
                         </td>
                     </tr>
                     </tbody>
@@ -53,21 +57,27 @@
                     {{ custom_message | safe }}
                 </p>
 
-                <p style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">
-
-                    5Star Enrollment has sent you a new DocuSign document to view and sign. Please click on the &#39;Begin
-                    Enrollment&#39; button below to begin signing.</p>
 
         </tr>
         <tr>
             <td align="center"
-                style="background-color:rgb(244,244,244);border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;border-bottom-color:rgb(204,204,204);border-bottom-style:solid;border-bottom-width:1px">
+                style="background-color:rgb(244,244,244);border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;">
     
                 <a style="font-size:16px;color:rgb(0,0,1);background-color:rgb(255,196,35);border:1px solid rgb(231,178,54);border-top-left-radius:5px;border-top-right-radius:5px;border-bottom-right-radius:5px;border-bottom-left-radius:5px;display:inline-block;font-family:arial;font-weight:bold;line-height:40px;min-height:40px;width:250px;text-align:center;text-decoration:none"
                    href="{{enrollment_url}}"
                    target="_blank">Begin Enrollment</a></td>
 
         </tr>
+        <tr>
+            <td style="background-color:rgb(244,244,244);border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;border-bottom-color:rgb(204,204,204);border-bottom-style:solid;border-bottom-width:1px">
+                <p style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">
+
+                    This offer, and any accompanying pages or links, is solely intended for the applicants of {{ company_name }} for insurance benefits. If you are not the intended recipient, you are hereby notified that any use, dissemination, distribution, or copying of the information contained herein is strictly prohibited.
+
+                </p>
+            </td>
+        </tr>
+
         </tbody>
     </table>
     <span><span><span></span></span></span></div>

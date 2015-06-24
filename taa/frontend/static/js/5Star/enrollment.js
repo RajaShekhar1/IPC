@@ -74,6 +74,7 @@ function WizardUI(defaults) {
     var self = this;
     
     self.defaults = defaults;
+    self.case_id = defaults.case_id;
     self.insurance_product = build_product(self, defaults.products);
 
     // Confirmation checkboxes for step 6
@@ -920,7 +921,7 @@ function WizardUI(defaults) {
                     label: "Exit application and discard data",
                     className: "btn-danger",
                     callback: function () {
-                        window.location.href = "/enroll?next=1";
+                        window.location.href = "/enrollment-case/"+self.case_id+"#enrollment";
                     }
                 }
             }

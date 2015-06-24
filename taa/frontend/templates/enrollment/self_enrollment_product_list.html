@@ -4,11 +4,11 @@
   <ul>
       {% for product in products -%}
         <li>
-            {% if product.brochure_url -%}
-              <a href="{{ product.brochure_url }}" target="_blank">
+            {% if product.get_brochure_url() -%}
+              <a href="{{ product.get_brochure_url() }}" target="_blank">
             {% endif -%}
             {{ product.name }}
-            {% if product.brochure_url -%}
+            {% if product.get_brochure_url() -%}
               </a>
             {% endif -%}
         </li>

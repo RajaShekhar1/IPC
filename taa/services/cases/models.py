@@ -371,7 +371,6 @@ class SelfEnrollmentSetup(SelfEnrollmentSerializer, db.Model):
     # Type
     TYPE_CASE_TARGETED = 'case-targeted'
     TYPE_CASE_GENERIC = 'case-generic'
-    TYPE_CASELESS_GENERIC = 'caseless-generic'
     self_enrollment_type = db.Column(db.Unicode(16), nullable=False)
     # Email
     use_email = db.Column(db.Boolean, nullable=False, server_default='FALSE')

@@ -3,17 +3,20 @@ AGENT pages and DOCUSIGN inbox
 """
 import os
 
-from flask import render_template, redirect, url_for, flash, send_file
+from flask import render_template, redirect, url_for, flash, send_file, request
 from flask_stormpath import login_required, groups_required, current_user
 
 from taa import app
 from nav import get_nav_menu
 from taa.api.cases import census_records
 from taa.services.docusign.docu_console import console_url
-from taa.services.cases import CaseService
+from taa.services.cases import CaseService, SelfEnrollmentSetup
 from taa.services.cases.forms import (CensusRecordForm,
                                       NewCaseEnrollmentPeriodForm,
-                                      SelfEnrollmentSetupForm, UpdateCaseForm)
+                                      SelfEnrollmentSetupForm,
+                                      UpdateCaseForm
+                                      )
+from taa.services.enrollments import SelfEnrollmentLinkService
 from taa.services.agents import AgentService
 from taa.services.products import ProductService, get_all_states
 from taa.services.products import get_payment_modes
@@ -22,7 +25,7 @@ from taa.services.docusign.DocuSign_config import sessionUserApprovedForDocusign
 case_service = CaseService()
 agent_service = AgentService()
 product_service = ProductService()
-
+self_enrollment_link_service = SelfEnrollmentLinkService()
 
 @app.route('/inbox', methods=['GET'])
 @login_required
@@ -103,6 +106,32 @@ def manage_case(case_id):
     # Has active enrollments?
     vars['case_has_enrollments'] = case_service.does_case_have_enrollments(case)
 
+    # Self-enrollment settings - always ensure the self-enrollment setup object exists for a case, even if not active
+    self_enrollment_setup = case_service.get_self_enrollment_setup(case)
+    if self_enrollment_setup is None:
+        self_enrollment_setup = case_service.create_self_enrollment_setup(case, {
+            'self_enrollment_type': SelfEnrollmentSetup.TYPE_CASE_GENERIC,
+            'created_by': agent.id,
+            'page_title': 'Welcome to your Benefit Enrollment',
+            'page_text': '''You have reached the enrollment page for ABC, which is offering you important insurance benefits from 5Star Life.
+
+This enrollment should take less than 5 minutes to complete. To view details of the offered products, see the link(s) below. Please follow the instructions carefully on the next page, stepping through the simple interview using the next/previous buttons at the lower right of the page. At the end you will be presented with a complete application form to electronically sign.''',
+            'email_sender_name': agent.name(),
+            'email_sender_email': agent.email,
+            'email_subject': 'Benefit enrollment - your action needed',
+        })
+        case.self_enrollment_setup = self_enrollment_setup
+
+        # Generate generic self-enrollment link
+        self_enrollment_link_service.generate_link(request.url_root, case)
+
+    form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
+
+    vars['form'] = form
+    vars['products'] = case.products
+    vars['company_name'] = case.company_name
+    vars['agent'] = agent
+
     return render_template('agent/case.html', **vars)
 
 
@@ -149,12 +178,7 @@ def sample_upload_csv():
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def edit_self_enroll_setup(case_id=None):
     agent = agent_service.get_logged_in_agent()
-    if case_id is None:
-        # Ad-hoc self-enrollment setup
-        case = None
-    else:
-        # Case-based self-enrollment setup
-        case = case_service.get_if_allowed(case_id)
+    case = case_service.get_if_allowed(case_id)
     self_enrollment_setup = case_service.get_self_enrollment_setup(case)
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
     vars = {

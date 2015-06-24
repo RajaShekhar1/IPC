@@ -67,6 +67,9 @@ MANDRILL_DEFAULT_FROM = env_get_text('MANDRILL_DEFAULT_FROM', "enrollment@5StarE
 
 # Celery message broker (background task runner)
 BROKER_URL = env_get_text('CELERY_BROKER_URL', "amqp://")
+if env_get_text('CLOUDAMQP_URL'):
+    BROKER_URL = env_get_text('CLOUDAMQP_URL')
+
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TIMEZONE = 'US/Eastern'

@@ -4,6 +4,20 @@
 {% set active_page = "nav_manage_cases" -%}
 {% block title %} - Agent Manage Case{% endblock %}
 
+{% set default_email_subject = "Benefit enrollment - your action needed" -%}
+
+{% set default_email_message = """
+""".format() -%}
+
+{% set default_page_text = """
+You have reached the enrollment page for <strong>{company_name}</strong>, which is offering you important insurance
+benefits from 5Star Life.
+<br><br>
+This enrollment should take less than 5 minutes to complete. To view details of the offered products, see the link(s) below.
+Please follow the instructions carefully on the next page, stepping through the simple interview using the next/previous
+buttons at the lower right of the page. At the end you will be presented with a complete application form to electronically sign.
+""".format(company_name=case.company_name) -%}
+
 {% block content %}
     <flash-messages params="messages: flash_messages"></flash-messages>
 
@@ -43,8 +57,6 @@
                         <div class="row">
 
                             <div class="col-md-12 case-setup-section">
-
-
                                 <form class="form-horizontal case_setup" data-bind="submit: save_settings">
 
                                 <div class="widget-box">
@@ -184,71 +196,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="self-enrollment-section col-md-5 col-md-offset-1 col-xs-12">
-                                                    <h3 class="header lighter blue">Self-enrollment
-                                                    <span class="pull-right text-muted">
-                                                        <label>
-                                                            {{ case_setup_form.is_self_enrollment(class_="ace ace-switch btn-empty", **{'data-bind': 'checked: is_self_enrollment'})|safe }}
-                                                            <span class="lbl"></span>
-                                                        </label>
-                                                    </span>
-                                                    </h3>
-                                                    <div>
-                                                        <div class="panel form-group">
-                                                            <div class="panel-body" data-bind="slideDownIf: !is_self_enrollment()">
-                                                                <p>Self-enrollment is not currently active.</p>
-                                                            </div>
-                                                            <div class="panel-body" data-bind="slideDownIf: is_self_enrollment()">
-                                                                {% if case.self_enrollment_setup is not none -%}
-                                                                    {% if not case.active -%}
-                                                                        <div class="label label-danger">
-                                                                            Self-enrollment links will not work unless the case is active.
-                                                                        </div>
-                                                                    {% endif -%}
-                                                                    {% if case.self_enrollment_setup.self_enrollment_type == 'case-targeted' -%}
-                                                                        <hr>
-                                                                        <strong>Self-enrollment stats</strong>
-                                                                        <ul>
-                                                                        <li>{{ case.census_records|count or '0' }} in census</li>
-                                                                        <ul>
-                                                                            <li>{{ case.self_enrollment_setup.sent_count }} sent email link</li>
-                                                                            <li>{{ case.self_enrollment_setup.enrolled_count }} enrolled</li>
-                                                                            <li>{{ case.self_enrollment_setup.declined_count }} not enrolled or declined</li>
-                                                                        </ul>
-                                                                        <hr>
-                                                                    {% elif case.self_enrollment_setup.self_enrollment_type == 'case-generic' -%}
-                                                                        {% if case.self_enrollment_setup.links -%}
-                                                                            Self-enrollment link:
-                                                                            <div>
-                                                                                <a target="_blank" href="{{ case.self_enrollment_setup.links[0].url }}">
-                                                                                    {{ case.self_enrollment_setup.links[0].url }}
-                                                                                </a>
-                                                                            </div>
-                                                                            <br>
-                                                                            Link clicks:
-                                                                            <strong>{{ case.self_enrollment_setup.links[0].clicks }}</strong>
-                                                                            <br><br>
-                                                                        {% else -%}
-                                                                            Self-enrollment link has not yet been created.
-                                                                        {% endif -%}
-                                                                    {% endif -%}
-                                                                {% else -%}
-                                                                    <div class="label label-warning">
-                                                                        Self-enrollment setup has not yet been completed.
-                                                                    </div>
-                                                                    <br><br>
-                                                                {% endif -%}
-                                                                <div class="self-enrollment-setup">
-                                                                    <a href="{{ url_for('edit_self_enroll_setup', case_id=case.id) }}">
-                                                                        <i class="fa fa-pencil-square-o"></i>
-                                                                        Edit Email/Landing Page Templates and Manage Notifications
-                                                                    </a>
-                                                                </div>
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+
                                             </div>
                                             <div class="row">
                                                 {% if is_admin %}
@@ -366,6 +314,184 @@
 
                             </div>
                         </div>
+
+                        <div class="row">
+                            <div class="col-md-12 self-enrollment-section">
+                                {# <form class="form-horizontal case_setup" data-bind="submit: save_settings">
+                                #}
+                                <form class="form-horizontal" id="edit-self-enrollment-form" action="{{ url_for('cases.update_self_enrollment_setup', case_id=case.id) }}" method="PUT">
+                                    <div class="widget-box">
+                                    <div class="widget-header">
+                                        <div class="row">
+                                            <h3 class="col-xs-6">Self-enrollment Settings</h3>
+
+                                            <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
+                                                <label>
+                                                    {{ case_setup_form.is_self_enrollment(class_="ace ace-switch btn-empty", **{'data-bind': 'checked: is_self_enrollment'})|safe }}
+                                                    <span class="lbl"></span>
+                                                </label>
+                                            </h3>
+                                        </div>
+                                    </div>
+                                    <div class="widget-body">
+                                        <div class="widget-main">
+                                            <div class="row">
+                                                <div class="col-xs-12">
+
+                                                    <div class="panel form-group">
+                                                        <div class="panel-body" data-bind="slideDownIf: !is_self_enrollment()">
+                                                            <p>Self-enrollment is not currently active.</p>
+                                                        </div>
+                                                        <div class="panel-body" data-bind="slideDownIf: is_self_enrollment()">
+                                                            <div class="row">
+                                                                <div class="col-xs-12">
+                                                                    <h3 class="header lighter blue">Self-Enrollment Usage</h3>
+                                                                    {% if case.self_enrollment_setup.self_enrollment_type == 'case-targeted' -%}
+                                                                        <ul>
+                                                                            <li>{{ case.census_records|count or '0' }} in census</li>
+                                                                            <li>{{ case.self_enrollment_setup.sent_count }} sent email link</li>
+                                                                            <li>{{ case.self_enrollment_setup.enrolled_count }} enrolled</li>
+                                                                            <li>{{ case.self_enrollment_setup.declined_count }} not enrolled or declined</li>
+                                                                        </ul>
+                                                                    {% elif case.self_enrollment_setup.self_enrollment_type == 'case-generic' -%}
+                                                                        {% if case.self_enrollment_setup.links -%}
+                                                                            Self-enrollment link:
+                                                                            <div>
+                                                                                <a target="_blank" href="{{ case.self_enrollment_setup.links[0].url }}">
+                                                                                    {{ case.self_enrollment_setup.links[0].url }}
+                                                                                </a>
+                                                                            </div>
+                                                                            <br>
+                                                                            Link clicks:
+                                                                            <strong>{{ case.self_enrollment_setup.links[0].clicks }}</strong>
+                                                                            <br><br>
+                                                                        {% else -%}
+                                                                            Self-enrollment link has not yet been created.
+                                                                        {% endif -%}
+                                                                    {% endif -%}
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="self-enrollment-setup">
+                                                                {# <a href="{{ url_for('edit_self_enroll_setup', case_id=case.id) }}">
+                                                                    <i class="fa fa-pencil-square-o"></i>
+                                                                    Edit Email/Landing Page Templates and Manage Notifications
+                                                                </a>
+                                                                 #}
+                                                                <div id="save-success" class="alert alert-block alert-success" style="display: none;">
+                                                                    <strong><i class="ace-icon fa fa-check"></i></strong>
+                                                                    Successfully saved self-enrollment settings.
+                                                                </div>
+
+                                                                  <div id="save-fail" class="alert alert-danger" style="display: none;">
+                                                                    <strong><i class="ace-icon fa fa-exclamation-triangle"></i></strong>
+                                                                    Failed to save self-enrollment settings.
+                                                                  </div>
+
+                                                                    <div class="row">
+                                                                      <div class="col-xs-12">
+                                                                        {% if not case.active -%}
+                                                                        <div class="label label-danger">
+                                                                          <em>NOTE</em>: Case is currently not active. Self-enrollment links will not work unless the case is active.
+                                                                        </div>
+                                                                        {% endif -%}
+                                                                        <h3 class="header lighter blue">Self-enrollment type</h3>
+                                                                        <div class="form-group self-enroll self-enroll-type">
+                                                                          {{ render_field_with_errors(form.self_enrollment_type) }}
+                                                                        </div>
+                                                                        <h3 class="header lighter blue">Email</h3>
+                                                                        <div class="form-group self-enroll self-enroll-email">
+                                                                          {{ render_field_with_errors(form.email_sender_name, style="width: 100%;", default=agent.name()) }}
+                                                                          {{ render_field_with_errors(form.email_sender_email, default=agent.email) }}
+
+                                                                          {{ render_field_with_errors(form.email_subject, default=default_email_subject) }}
+                                                                          {{ render_field_with_errors(form.email_message, class_='wysiwyg-editor', default=default_email_message) }}
+                                                                          <div class="col-xs-9 col-xs-offset-3">
+                                                                            <a id="reset-email-message" class="btn btn-xs pull-right">Reset to default message & subject</a>
+                                                                          </div>
+                                                                        </div>
+                                                                        <div class="form-group self-enroll self-enroll-email-off">
+                                                                          <div class="col-sm-9 col-sm-offset-3">
+                                                                            <div class="alert alert-info">
+                                                                              <p>
+                                                                                {% if setup and setup.links and setup.links|count > 0 -%}
+                                                                                  Self-enrollment link:
+                                                                                  <strong><a target="_blank" href="{{ setup.links[0].url }}">{{ setup.links[0].url }}</a></strong>
+                                                                                {% endif -%}
+                                                                              </p>
+                                                                              <p>
+                                                                                You must send the email/enrollment link through your usual email program when using generic self-enrollment.
+                                                                              </p>
+                                                                            </div>
+                                                                            {% if not setup -%}
+                                                                              <div class="alert alert-warning">
+                                                                                The self-enrollment link will be generated for you after you save this form.
+                                                                              </div>
+                                                                            {% else -%}
+                                                                            {% endif -%}
+                                                                          </div>
+                                                                        </div>
+
+                                                                        <h3 class="header lighter blue">Landing Page</h3>
+                                                                        <div class="form-group self-enroll self-enroll-landing-page">
+                                                                          {{ render_field_with_errors(form.page_title, default="Welcome to your Benefit Enrollment") }}
+                                                                          {{ render_field_with_errors(form.page_text, class_='wysiwyg-editor', default=default_page_text) }}
+                                                                          <div class="row">
+                                                                              <div class="col-sm-9 col-sm-offset-3">
+                                                                                  <a id="reset-page-text" class="btn btn-xs pull-right">Reset to default message</a>
+                                                                              </div>
+                                                                            <div class="col-sm-9 col-sm-offset-3">
+                                                                                {% include "enrollment/self_enrollment_product_list.html" -%}
+                                                                            </div>
+                                                                          </div>
+                                                                          <br><br>
+                                                                          <div class="row">
+                                                                            <div class="col-sm-3 control-label">Disclaimer</div>
+                                                                            <div class="col-sm-9">
+                                                                                {% include "enrollment/self_enrollment_disclaimer.html" -%}
+                                                                            </div>
+                                                                          </div>
+                                                                        </div>
+                                                                      </div>
+                                                                    </div>
+                                                                    <hr>
+
+                                                                    {{ render_field_with_errors(form.created_by, value=agent.id) }}
+
+
+                                                                  <div class="self-enroll-email-confirm">
+                                                                  </div>
+
+                                                            </div>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="widget-toolbox clearfix padding-8">
+
+                                            {#
+                                            <button class="btn btn-primary btn-md pull-right" data-bind="
+                                             enable: has_unsaved_data,
+                                            click: save_settings,
+                                            css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}
+
+                                            ">Save</button>
+                                            #}
+                                            <div class="pull-right clearfix">
+                                              <button type="submit" class="btn btn-primary" data-bind="visible: is_self_enrollment">Save</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                </form>
+
+                            </div>
+
+
+                        </div>
                     </div>
 
                     <div id="enrollment" class="tab-pane fade">
@@ -376,8 +502,8 @@
                                 <div class="widget-box">
                                     <div class="widget-header">
                                         <div class="row">
-                                            <div class="col-md-6"><h4 class="bigger-150">Case Census</h4></div>
-                                            <div class="col-md-6">
+                                            <div class="col-md-4"><h4 class="bigger-150">Case Census</h4></div>
+                                            <div class="col-md-8">
 
                                                 <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal" >
                                                     <i class="ace-icon fa fa-upload"></i>
@@ -391,20 +517,33 @@
                                                     <i class="ace-icon glyphicon glyphicon-plus"></i>
                                                         New Enrollment
                                                 </a>
+                                                <button data-bind="visible: is_self_enrollment()" type="button" class="btn btn-warning pull-right" data-toggle="modal" data-target="#email-target-links-modal" >
+                                                    <i class="ace-icon fa fa-envelope"></i>
+                                                    Bulk Enroll
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="widget-body">
                                         <div class="widget-main">
 
+                                            <div class="row">
+                                                <div class="col-xs-12">
+                                                    <label>Enrollment City: <input type='text' data-bind="value: enrollment_city_override"></label>
+                                                    <label>Enrollment State: <limited-state-select params="limiter: state_product_override_limiter"></limited-state-select></label>
+                                                </div>
+                                            </div>
+
                                             {% if not census_records %}
                                                 <h4 class="no-census-header text-center lighter">No Census Data Uploaded</h4>
-                                                <div class="table-responsive">
-                                                <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive" style="display: none;">
-                                            {% else %}
-                                                <div class="table-responsive">
-                                                <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive">
                                             {% endif %}
+
+                                            <div class="table-responsive">
+                                                {% if not census_records  %}
+                                                <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive" style="display: none;">
+                                                {% else %}
+                                                <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive">
+                                                {% endif %}
                                                     <thead>
                                                         <tr>
                                                             <th></th>
@@ -663,14 +802,116 @@
 {% block modals %}
     {{ super() }}
 
+    {# Send targeted email modal #}
+    <form id="send-emails-form" method="POST" enctype="multipart/form-data">
+    <div id="email-target-links-modal" class="modal fade">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span
+                        aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title">Email Census Self-Enroll</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-panel modal-panel">
+                        <h3>Send to employees who ...</h3>
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <div class="form-group">
+                                    <label>
+                                        <input type="radio" class="ace" name="send_type" value="not-sent" checked>
+                                        <span class="lbl">  have not been sent a link</span>
+                                    </label>
+                                    {#
+                                    <div class="row">
+                                        <p class="col-xs-10 col-xs-offset-1">
+                                            This option adds new records to any existing employee records without updating any existing data.
+                                        </p>
+                                    </div>
+                                    #}
+                                </div>
+
+                                <div class="form-group">
+                                    <label>
+                                        <input type="radio" class="ace" name="send_type" value="not-enrolled">
+                                        <span class="lbl">  have not enrolled or declined</span>
+                                    </label>
+                                    {#
+                                    <div class="row">
+                                        <p class="col-xs-10 col-xs-offset-1">
+                                            This option adds new records to any existing employee records and also updates existing records whose SSN match the uploaded data.
+                                        </p>
+                                    </div>
+                                    #}
+                                </div>
+
+                                <div class="form-group">
+                                    <label>
+                                        <input type="radio" class="ace" name="send_type" value="declined">
+                                        <span class="lbl">  have declined</span>
+                                    </label>
+                                    {#
+                                    <div class="row">
+                                        <p class="col-xs-10 col-xs-offset-1">
+                                            This option first removes all existing employee records in this case, then adds the new uploaded data.
+                                        </p>
+                                    </div>
+                                    #}
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="loading-panel modal-panel" style="display: none;">
+                        <div class="text-center">
+                            <h4>Sending enrollment emails...</h4>
+                            <i class="icon-spinner icon-spin grey bigger-200"></i>
+                        </div>
+                    </div>
+                    <div class="success-panel modal-panel" style="display: none;">
+                        <h3 class="header lighter green">Emails Sent Successfully</h3>
+                        <div id="email-status-wrap"></div>
+                    </div>
+                    <div class="error-panel modal-panel" style="display: none;">
+                        <h3 class="header lighter red">Emails Failed to Send</h3>
+                        <div id="email-error"></div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <div class="form-buttons buttons-panel">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Send Now</button>
+                    </div>
+                    <div class="processing-buttons buttons-panel" style="display: none;">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                    <div class="error-buttons buttons-panel" style="display: none;">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary back-btn">
+                            <i class="glyphicon glyphicon-chevron-left"></i> Back</button>
+                    </div>
+                    <div class="success-buttons buttons-panel" style="display: none;">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
+                    </div>
+
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    </form>
+
+
     {# Confirm that an employee is not in the census using SSN. #}
-    <div id="add-to-census-modal" class="modal fade" data-bind="with: add_to_census_modal">
+    <div id="add-to-census-modal" class="modal fade">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal"><span
                         aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                    <h4 class="modal-title">Add To Census</h4>
+                    <h4 class="modal-title">New Enrollment</h4>
                 </div>
                 <div class="modal-body">
                     <div class="form-panel modal-panel" data-bind="if: add_form_showing">
@@ -698,7 +939,7 @@
 
                     <div class="no-matches-panel modal-panel" data-bind="if: no_matches_found">
                         <h3 class="header lighter green">No employee with that SSN was found.</h3>
-                        <p>Click 'Add To Census' to add this employee to the census</p>
+                        <p>Click 'Begin Enrollment' to create new employee</p>
                     </div>
                     <div class="one-match-panel modal-panel" data-bind="if: one_match_found">
                         <h3 class="header lighter green">We found a matching employee record:</h3>
@@ -707,7 +948,6 @@
                             <span data-bind="text: matched_employee().last"></span>,
                             Birthdate: <span data-bind="text: matched_employee().formatted_birthdate()"></span>
                         </strong>
-                        <h3>Is this you?</h3>
                     </div>
                     <div class="error-panel modal-panel" data-bind="if: multiple_matches_found">
                         <h3 class="header lighter">
@@ -748,17 +988,17 @@
                         <button type="submit" class="btn btn-primary"
                                 data-bind="click: find_matches, visible: current_panel() == PANEL_FORM">Next</button>
                         <button type="button" class="btn btn-success"
-                                data-bind="click: add_to_census, visible: no_matches_found">Add to census</button>
+                                data-bind="click: add_to_census, visible: no_matches_found">Begin Enrollment</button>
 
                         <button type="button" class="btn btn-success"
-                                data-bind="click: enroll_from_match, visible: one_match_found">Yes, enroll me</button>
+                                data-bind="click: enroll_from_match, visible: one_match_found">Enroll this employee</button>
                         <button type="button" class="btn btn-warning"
-                                data-bind="click: add_to_census, visible: one_match_found">No, add me</button>
+                                data-bind="click: add_to_census, visible: one_match_found">Enroll new employee</button>
 
                         <button type="button" class="btn btn-success"
-                                data-bind="click: enroll_from_match, visible: multiple_matches_found">Enroll selected record</button>
+                                data-bind="click: enroll_from_match, visible: multiple_matches_found">Enroll selected employee</button>
                         <button type="button" class="btn btn-warning"
-                                data-bind="click: add_to_census, visible: multiple_matches_found">No, add to Census</button>
+                                data-bind="click: add_to_census, visible: multiple_matches_found">Enroll new employee</button>
                     </div>
 
                 </div>
@@ -1177,6 +1417,10 @@
             self.situs_state = ko.observable(_.find(self.state_choices, function(c) {
                 return c.statecode == case_data.situs_state;
             }));
+
+            self.enrollment_city_override = ko.observable(self.situs_city());
+            self.enrollment_state_override = ko.observable(self.situs_state());
+
             self.selected_statecode = ko.pureComputed(function(){
                 return (self.situs_state()) ? self.situs_state().statecode : null;
             });
@@ -1187,11 +1431,19 @@
 
 
             // Disable bad combos of states and products
-            self.state_product_limiter = new ProductStatesLimiterViewModel(
-                {{ product_state_mapping |tojson|safe }}, self.situs_state,
-                self.state_choices,
-                self.products, self.product_choices
+            self.state_product_limiter = new ProductStatesLimiterViewModel({{ product_state_mapping |tojson|safe }},
+                    self.situs_state,
+                    self.state_choices,
+                    self.products, self.product_choices
             );
+
+            // Limit the states that can be chosen as 'enrolling from state' by the products
+            self.state_product_override_limiter = new StatesLimiterViewModel({{ product_state_mapping |tojson|safe }},
+                    self.enrollment_state_override,
+                    self.state_choices,
+                    self.products
+            );
+
 
             self.is_open_enrollment = ko.computed(function() {
                 return self.enrollment_period_type() === "open";
@@ -1836,7 +2088,7 @@
             var self = this;
 
             self.add_to_census_modal = new AddToCensusViewModel(case_data.id);
-
+            ko.applyBindings(self.add_to_census_modal, $("#add-to-census-modal")[0]);
             $("#add-to-census-btn").on('click', function() {
 
                 $("#add-to-census-modal").modal("show");
@@ -1846,7 +2098,20 @@
             $("#enrollment").on('click', "button.enroll-employee", function() {
                 var record_id = $(this).attr('data-id');
 
-                submit_to_url("{{ url_for('in_person_enrollment') }}", {record_id: record_id});
+                var enrollment_state = "";
+                var enrollment_city = "";
+                if (window.case_settings.enrollment_state_override()) {
+                    enrollment_state = window.case_settings.enrollment_state_override().statecode;
+                }
+                if (window.case_settings.enrollment_city_override()) {
+                    enrollment_city = window.case_settings.enrollment_city_override();
+                }
+
+                submit_to_url("{{ url_for('in_person_enrollment') }}", {
+                    record_id: record_id,
+                    enrollment_city: enrollment_city,
+                    enrollment_state: enrollment_state
+                });
             });
 
         };
@@ -1868,12 +2133,10 @@
             self.is_selected = ko.observable(false);
         };
 
-        var AddToCensusViewModel = function(selected_case_observable) {
+        var AddToCensusViewModel = function(case_id) {
             var self = this;
 
-            self.selected_case = selected_case_observable;
-
-            self.case_id = ko.observable(null);
+            self.case_id = ko.observable(case_id);
 
             self.matched_employees = ko.observableArray([]);
             self.matched_employees.error = ko.observable("");
@@ -1899,9 +2162,8 @@
             self.PANEL_MANYMATCHES = "matches";
             self.current_panel = ko.observable(self.PANEL_FORM);
 
-            self.show_modal = function(case_id) {
+            self.show_modal = function() {
                 // Initialize the modal
-                self.case_id(case_id);
                 self.current_panel(self.PANEL_FORM);
                 self.ssn("");
                 self.ssn.error("");
@@ -1946,7 +2208,7 @@
                 // Submit search
                 self.loading_message("Checking census for matches...");
                 self.current_panel(self.PANEL_LOADING);
-                $.get("/cases/" + self.selected_case() + "/census_records",
+                $.get("/cases/" + self.case_id() + "/census_records",
                     {filter_ssn: self.ssn()}
                 ).success(function(resp) {
                     if (resp.data.length > 0) {
@@ -1978,7 +2240,7 @@
             self.add_to_census = function() {
                 self.loading_message("Adding employee to census...");
                 self.current_panel(self.PANEL_LOADING);
-                ajax_post("/cases/"+self.selected_case()+"/census_records",
+                ajax_post("/cases/"+self.case_id()+"/census_records",
                     {ssn: self.ssn()},
                     function(resp) {
                         // Go to enrollment
@@ -2039,5 +2301,156 @@
 
 
     });
+
+    // Self-enrollment settings
+    $(function() {
+      // Show or hide landing page as necessary
+      $('#self_enrollment_type').change(function() {
+        if($('#self_enrollment_type option:selected').val() == 'case-generic') {
+          $('.self-enroll-email').hide();
+          $('.self-enroll-email-off').show();
+        } else {
+          $('.self-enroll-email').show();
+          $('.self-enroll-email-off').hide();
+        }
+      }).change();
+
+      // Buttons to reset text
+      $('#reset-email-message').click(function() {
+        $('#email_message').html("{{ default_email_message|replace('\n', '\\n')|safe }}").focus();
+        $('#email_subject').val("{{ default_email_subject|replace('\n', '\\n')|safe }}").focus();
+      });
+      $('#reset-page-text').click(function() {
+        $('#page_text').html("{{ default_page_text|replace('\n', '\\n')|safe }}").focus();
+      });
+
+      // Set default values if applicable
+      $.each(['#email_sender_name', '#email_sender_email', '#email_message',
+        '#page_title', '#page_text'], function(index, value) {
+        if($(value).prop('tagName') == 'DIV') {
+          if($(value).html() == '') {
+            $(value).html($(value).attr('default'));
+          }
+        } else {
+          if($(value).val() == '') {
+            $(value).val($(value).attr('default'));
+          }
+        }
+      });
+
+      $('#email_message').ace_wysiwyg({
+        toolbar: [
+          'bold',
+          'italic',
+          'underline',
+          null,
+          'createLink',
+          'unlink',
+          null,
+          null, //'insertImage',
+          null,
+          'undo',
+          'redo'
+        ]
+      });
+      $('#page_text').ace_wysiwyg();
+
+      // Show success message if required
+      if(window.location.hash == '#success') {
+        window.location.href = window.location.href.replace(/#.*$/, '#');
+        $('#save-success').show();
+      }
+
+{#      $('#edit-self-enrollment-form').submit(function() {#}
+{#        $('#email_message').val($('#editor-email-message').val());#}
+{#        $('#page_text').val($('#editor-page-text').val());#}
+{#      });#}
+
+      {# Hide the delete button if we are not admin and this has enrollments #}
+{#      {% if census_record.enrollment_applications and not is_admin %}#}
+{#        $('button.delete').hide();#}
+{#      {% endif %}#}
+{##}
+{#      $('button.delete').on('click', function() {#}
+{#        {% if census_record.enrollment_applications  %}#}
+{#          if (!confirm("WARNING: This census record has enrollments. Deleting the record will remove all enrollment data associated. Do you still want to delete this census record?")) {#}
+{#            return;#}
+{#          }#}
+{#        {% else %}#}
+{#          if (!confirm("Please confirm you want to delete this census record")) {#}
+{#            return;#}
+{#          }#}
+{#        {% endif %}#}
+{##}
+{#        send_form_data('DELETE', "{{ url_for('cases.delete_census_record', case_id=case.id, census_record_id=census_record.id) }}",#}
+{#                {}, function() {#}
+{#                  window.location = "{{ url_for('manage_case', case_id=case.id) }}";#}
+{#                }, function() {#}
+{#                  alert("Sorry, there was a problem deleting this census record");#}
+{#                });#}
+{#      });#}
+
+      $('#edit-self-enrollment-form').on('submit', function() {
+        $('#save-success').hide();
+        $('#save-fail').hide();
+        try {
+          // Trigger 'submit' on hidden fields
+          $('input[type="hidden"]').click();
+          var data = $(this).serialize();
+          console.log(data);
+          $.ajax({
+            url: $(this).attr('action'),
+            method: 'PUT',
+            data: data,
+            dataType: 'json',
+            success: function(results) {
+              window.location.reload();
+            },
+            error: function(xhr) {
+              $('#save-fail').show();
+            }
+          });
+        } catch(e) {
+          console.error(e);
+        }
+        return false;
+      });
+
+      $('#send-emails-form').on('submit', function() {
+        $('.form-panel').hide();
+        $('.form-buttons').hide();
+        $('.loading-panel').show();
+        $('.processing-buttons').show();
+        var send_type = $("input[name=send_type]:checked").val();
+        try {
+          $.ajax({
+            url: '{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which="") }}' + send_type,
+            method: 'POST',
+            dataType: 'json',
+            success: function(results) {
+              $('.loading-panel').hide();
+              $('.success-panel').show();
+               $('.processing-buttons').hide();
+              $('.success-buttons').show();
+              var sent_status_list = results.data;
+              $('#email-status-wrap').html("Sent "+sent_status_list.length+" messages:<br><br>"+sent_status_list.join('<br>'));
+            },
+            error: function(xhr) {
+              $('.loading-panel').hide();
+                $('.processing-buttons').hide();
+              $('.error-panel').show();
+                $('.error-buttons').show();
+
+            }
+          });
+        } catch(e) {
+          console.error(e);
+        }
+        return false;
+      })
+
+
+    });
+
     </script>
 {% endblock %}

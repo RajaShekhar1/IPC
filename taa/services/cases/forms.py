@@ -166,7 +166,6 @@ class NewCaseEnrollmentPeriodForm(Form):
 class SelfEnrollmentSetupForm(Form):
     CASE_TARGETED = ('case-targeted', 'Targeted (specific for each person)')
     CASE_GENERIC = ('case-generic', 'Generic (same link for everyone)')
-    CASELESS_GENERIC = ('caseless-generic', 'Ad-hoc (same link for everyone)')
     self_enrollment_type = SelectField('Link type', choices=[])
     use_email = BooleanField('Enabled')
     email_sender_name = StringField('Sender Name',
@@ -174,6 +173,9 @@ class SelfEnrollmentSetupForm(Form):
     email_sender_email = StringField('Sender Email',
                                      [validators.InputRequired(),
                                       validators.Email()])
+    email_subject = StringField('Email Subject',
+                                     [validators.InputRequired()])
+
     email_message = EditableField('Email Message', [validators.InputRequired()])
     use_landing_page = BooleanField('Enabled')
     page_title = StringField('Title', [validators.InputRequired()])
@@ -183,12 +185,9 @@ class SelfEnrollmentSetupForm(Form):
     def __init__(self, *args, **kwargs):
         Form.__init__(self, *args, **kwargs)
         type_choices = []
-        # setup = kwargs.get('obj')
         case = kwargs.get('case')
-        if case is None:
-            # Caseless generic (ad-hoc)
-            type_choices.append(self.CASELESS_GENERIC)
-        elif case.census_records is None:
+
+        if case.census_records is None:
             # Case-based generic
             type_choices.append(self.CASE_GENERIC)
         else:
