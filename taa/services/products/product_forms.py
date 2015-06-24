@@ -339,12 +339,55 @@ A replacement occurs when a new policy or contract is purchased and, in connecti
 A financed purchase occurs when the purchase of a new life insurance policy involves the use of funds obtained by the withdrawal or surrender of or by borrowing some or all of the policy values, including accumulated dividends, of an existing policy to pay all or part of any premium or payment due on the new policy. A financed purchase is a replacement.
 You should carefully consider whether a replacement is in your best interests. You will pay acquisition costs and there may be surrender costs deducted from your policy or contract. You may be able to make changes to your existing policy or contract to meet your insurance needs at less cost. A financed purchase will reduce the value of your existing policy and may reduce the amount paid upon the death of the insured.
 We want you to understand the effects of replacements before you make your purchase decision and ask that you answer the following questions and consider the questions below.
-Make sure you know the facts. Contact your existing company or its agent for information about the old policy or contract. If you request one, an in force illustration, policy summary or available disclosure documents must be sent to you by the existing insurer. Ask for and retain all sales material used by the agent in the sales presentation. Be sure that you are making an informed decision.\
+Make sure you know the facts. Contact your existing company or its agent for information about the old policy or contract. If you request one, an in force illustration, policy summary or available disclosure documents must be sent to you by the existing insurer. Ask for and retain all sales material used by the agent in the sales presentation. Be sure that you are making an informed decision.
+\
+""".split('\n')
+)
+
+CA_fpp_replacement_form = ReplacementForm(
+    statecodes=['CA'],
+    docusign_template_id='C3F52784-1C3C-454F-B268-58062E1D0F38',
+    paragraphs="""\
+Are you thinking about buying a new life insurance policy or annuity and discontinuing or changing an existing one? If you are, your decision could be a good one - or a mistake. You will not know for sure unless you make a careful comparison of your existing benefits and the proposed benefits.
+Make sure you understand the facts. You should ask the company or agent that sold you your existing policy to give you information about it.
+Hear both sides before you decide. This way you can be sure you are making a decision that is in your best interest.
+We are required by law to notify your existing company that you may be replacing their policy.
+\
+""".split('\n')
+)
+
+DE_fpp_replacement_form = ReplacementForm(
+    statecodes=['DE'],
+    docusign_template_id='F581E793-5BB8-4B5D-8DC3-156E9A307D4A',
+    paragraphs="""\
+It is in your best interest to get all the facts before making a decision. Make sure you fully understand both the proposed new policy and your existing insurance. New policies may contain provisions which limit benefits during the initial period of the contract, in particular, the suicide and incontestable clauses.
+To assist you in evaluating the proposed and the existing insurance, Delaware Insurance Regulation 30 requires that the insurer advising or recommending replacement:
+Provide the consumer, not later than the date the policy or contract is delivered, a concise summary of the policy or contracts to be issued.
+Allow a 20 day period following the delivery of the policy during which time the consumer may surrender the new policy for a full refund.
+Advise the present insurance company(s) of the pending replacement.
+This same regulation requires your present insurer to provide, on your request, a similar summary describing your present insurance. This information will be provided if you request it using the form at the end of this application enrollment.
+IT IS SELDOM WISE TO TERMINATE YOUR EXISTING POLICY UNTIL YOUR NEW POLICY HAS BEEN ISSUED AND YOU HAVE EXAMINED IT AND FOUND IT TO BE ACCEPTABLE.
+\
+""".split('\n')
+)
+
+FL_fpp_replacement_form = ReplacementForm(
+    statecodes=['FL'],
+    docusign_template_id='04ADEC90-34F7-4329-B323-5E608DA51302',
+    paragraphs="""\
+A decision to buy a new policy and discontinue or change an existing policy may be a wise choice or a mistake.
+Get all the facts. Make sure you fully understand both the proposed policy and your existing policy or policies. New policies may contain clauses which limit or exclude coverage of certain events in the initial period of the contract, such as the suicide and incontestable clauses which may have already been satisfied in your existing policy or policies.
+Your best source of facts on the proposed policy is the proposed company and its agent. The best source on your existing policy is the existing company and its agent.
+Hear from both before you make your decision. This way you can be sure your decision is in your best interest.
+If you indicate that you intend to replace or change an existing policy, Florida regulations require notification of the company that issued the policy.
+Florida regulations give you the right to receive a written Comparative Information Form which summarizes your policy values. You may indicate whether or not you wish to receive a Comparative Information Form from the proposed company and your existing insurer or insurers by placing your initials in the appropriate box at the conclusion of this enrollment.
+DO NOT TAKE ACTION TO TERMINATE YOUR EXISTING POLICY UNTIL YOUR NEW POLICY HAS BEEN ISSUED AND YOU HAVE EXAMINED IT AND FOUND IT ACCEPTABLE.
+\
 """.split('\n')
 )
 
 GA_fpp_replacement_form = ReplacementForm(
-    statecodes=['GA', 'IN'],
+    statecodes=['GA'],
     docusign_template_id='3D0498C5-B843-4C6A-A3D1-1E6317F2EDA3',
     paragraphs="""\
 Are you thinking about buying a new policy and discontinuing or changing an existing policy? If you are, your decision could be a good one or a mistake. You will not know for sure unless you make a careful comparison of your existing policy and the proposed policy.
@@ -367,6 +410,237 @@ ITEMS TO CONSIDER
 </ol>\
 and
 REMEMBER, you have thirty (30) days following receipt of any individual life insurance policy to examine its contents. If you are not satisfied with it for any reason, you have the right to return it to the insurer at its home or branch office or to the agent through whom it was purchased, for a full refund of premium.
+\
+""".split('\n')
+)
+
+ID_fpp_replacement_form = ReplacementForm(
+    statecodes=['ID'],
+    docusign_template_id='6B692851-B782-455D-A246-F8A022665602',
+    paragraphs="""\
+Are you thinking about buying a new life insurance policy or annuity and discontinuing or changing an existing one? If you are, your decision could be a good one - or a mistake. You will not know for sure unless you make a careful comparison of your existing benefits and the proposed benefits. Make sure you understand the facts. You should ask for the advice of the company or agent that sold you your existing policy to give you information concerning any proposed replacement.
+As a general rule, there are disadvantages to dropping your existing life insurance or annuities. Hear both sides before you decide. That way you can be sure you are making a decision that is in your best interest.
+Idaho law requires your existing company to be notified that you may be replacing their policy.
+\
+""".split('\n')
+)
+
+IL_fpp_replacement_form = ReplacementForm(
+    statecodes=['IL'],
+    docusign_template_id='3CB0CF26-86AA-41E3-BF79-9DDA87ED75FF',
+    paragraphs="""\
+Are you thinking about buying a new life insurance policy or annuity and discontinuing or changing an existing one? If you are, your decision could be a good one - or a mistake. You will not know for sure unless you make a careful comparison of your existing benefits and the proposed benefits.
+Make sure you understand the facts. You should ask the insurance producer or company that sold you your existing policy to give you information about it.
+Hear both sides before you decide. This way you can be sure you are making a decision that is in your best interest.
+We are required by law to notify your existing company that you may be replacing their policy.
+\
+""".split('\n')
+)
+
+IN_fpp_replacement_form = ReplacementForm(
+    statecodes=['IN'],
+    docusign_template_id='15F43418-C806-4195-AC69-683E22B44157',
+    paragraphs="""\
+If you are thinking about discontinuing or changing an existing life insurance policy or annuity contract and buying a replacement, your decision could be a good one - or possibly a mistake. Make sure that you understand the facts. You should:
+<ul>\
+<li>Make a careful comparison of your existing policy and the proposed policy.</li>\
+<li>Ask the company or agent that sold you your existing policy to provide you with complete information about it.</li>\
+<li>Consider both sides before you decide.</li>\
+<li>Determine what you want your insurance program to do.</li>\
+<li>Consider your present health. You may have had a change which could affect your insurability, so make sure to continue your present policy until a new policy is delivered to you and accepted by you.</li>\
+</ul>\
+Indiana Department of Insurance Regulation, 760 IAC 1-16.1 requires that the company making the replacement notify your existing insurance company that you may be replacing your existing policy. (You have the right, within 20 days after delivery of a replacement policy, to return it to the company and to claim an unconditional refund of all premiums paid on it.)
+\
+""".split('\n')
+)
+
+MA_fpp_replacement_form = ReplacementForm(
+    statecodes=['MA'],
+    docusign_template_id='AA0D8B97-FEA8-4B92-AA12-43F0E481A1F1',
+    paragraphs="""\
+IMPORTANT NOTICE REQUIRED BY THE COMMISSIONER OF INSURANCE
+READ CAREFULLY BEFORE PROCEEDING
+This Notice is required by the Commissioner of Insurance because you have indicated that you are buying a new life insurance policy or annuity and discontinuing or changing an existing one. Such a decision could be a good one, or a mistake. You will not know for sure until you make a careful comparison of your existing policy and the proposed replacement policy. Premiums alone are not determinative of low cost. Take the time to obtain and understand the facts.
+We are required by law to notify your existing company that you may be replacing their policy.
+Consider both sides before you decide. This way you can be sure you are making a decision that is in your best interest.
+Cash Value Insurance: To make a comparison of cash value policies (policies with loan or surrender values in addition to death protection), consideration must be given to each policy's cash values, premiums, coverage amounts and dividends, if any, over the life of the policy.
+To simplify this task, you may wish to request from your existing insurance company and the company issuing the replacement policy yield index figures for five, ten and 20 years. The yield index is a percentage that represents an estimate of the interest rate the insurer projects you will earn on the savings portion of the cash value policy. The policy with the higher yield index will generally be the better buy.
+The Yield Index Committee of the National Association of Insurance Commissioners in 1986 devised a method for calculating a yield index. In order to request this yield index information, merely check the box below and your request will be forwarded to both insurance companies.
+You can also compare the cash values and/or surrender values listed in the replacing company's policy summary for the first five policy years with those in your current policy for the next five years. Low cash values or surrender values in early policy years are often the result of high expenses associated with issuing a new policy. If the replacement policy has low values in its early years, it will usually take longer for it to provide you with benefits that equal or exceed the benefits of your existing policy. In some cases, the replacement policy may never provide benefits equal to those in your present policy.
+
+Term Insurance: If you are replacing your present insurance policy with term insurance (policies that provide death protection only), it makes sense to shop for a low- cost policy. Costs for term insurance vary widely and substantial savings may be realized by comparison shopping. Premiums alone are not always determinative of low cost since some policies pay dividends and others do not. You may wish to request interest- adjusted cost indices for five, ten and 20 years from several insurance companies including your existing insurer to help you compare term insurance premiums. The policy with the lower index numbers is usually the better buy.
+\
+""".split('\n')
+)
+
+MI_fpp_replacement_form = ReplacementForm(
+    statecodes=['MI'],
+    docusign_template_id='7BD30243-4AC5-4682-A68A-9C7469C58DF9',
+    paragraphs="""\
+You are contemplating the purchase of a life insurance policy or annuity contract. In some cases this purchase may involve discontinuing or changing an existing policy or contract. If so, a replacement is occurring. Financed purchases are also considered replacements.
+A replacement occurs when a new policy or contract is purchased and, in connection with the sale, you discontinue making premium payments on the existing policy or contract, or an existing policy or contract is surrendered, forfeited, assigned to the replacing insurer, or otherwise terminated or used in a financed purchase.
+A financed purchase occurs when the purchase of a new life insurance policy involves the use of funds obtained by the withdrawal or surrender of or by borrowing some or all of the policy values, including accumulated dividends, of an existing policy to pay all or part of any premium or payment due on the new policy. A financed purchase is a replacement.
+You should carefully consider whether a replacement is in your best interests. You will pay acquisition costs and there may be surrender costs deducted from your policy or contract. You may be able to make changes to your existing policy or contract to meet your insurance needs at less cost. A financed purchase will reduce the value of your existing policy and may reduce the amount paid upon the death of the insured.
+We want you to understand the effects of replacements before you make your purchase decision and ask that you answer the following questions and consider the questions below.
+Make sure you know the facts. Contact your existing company or its agent for information about the old policy or contract. If you request one, an in force illustration, policy summary or available disclosure documents must be sent to you by the existing insurer. Ask for and retain all sales material used by the agent in the sales presentation. Be sure that you are making an informed decision.
+\
+""".split('\n')
+)
+
+MN_fpp_replacement_form = ReplacementForm(
+    statecodes=['MN'],
+    docusign_template_id='A0E37A85-7E4F-448B-8BEE-7CB633D71BB7',
+    paragraphs="""\
+REPLACEMENT is any transaction where, in connection with the purchase of new insurance or a new annuity, you lapse, surrender, convert to paid-up insurance, place on extended term, or borrow all or part of the policy loan values on an existing insurance policy or an annuity. (See reverse side for definitions.)
+IF YOU INTEND TO REPLACE COVERAGE
+In connection with the purchase of this insurance or annuity, if you have replaced or intend to replace your present life insurance coverage or annuity(ies), you should be certain that you understand all the relevant factors involved.
+You should be aware that you may be required to provide evidence of insurability and
+(1) If your health condition has changed since the application was taken on your present policies, you may be required to pay additional premiums under the new policy, or be denied coverage.
+(2) Your present occupation or activities may not be covered or could require additional premiums.
+(3) The incontestable and suicide clause will begin anew in a new policy. This could result in a claim under the new policy being denied that would otherwise have been paid.
+(4) Current law may not require your present insurer(s) to refund any premiums.
+(5) It is to your advantage to obtain information regarding your existing policies or annuity contracts from the insurer or agent from whom you purchased the policy or annuity contract.
+
+(If you are purchasing an annuity, clauses (1), (2), and (3) above would not apply to the new annuity contract.)
+
+THE INSURANCE OR ANNUITY I INTEND TO PURCHASE FROM 5STAR LIFE INSURANCE COMPANY MAY REPLACE OR ALTER EXISTING LIFE INSURANCE POLICY(IES) OR ANNUITY CONTRACT(S).
+\
+""".split('\n')
+)
+
+MO_fpp_replacement_form = ReplacementForm(
+    statecodes=['MO'],
+    docusign_template_id='12A979B9-95D9-4B4B-9EEF-9E38DEA64483',
+    paragraphs="""\
+Replacing Your Life Insurance Policy or Annuity?
+Are you thinking about buying a new policy and discontinuing or changing an existing policy? If you are, your decision could be a good one - or a mistake. You will not know for sure unless you make a careful comparison of your existing policy and the proposed policy.
+Make sure you understand the facts. Ask the company or insurance producer that sold you your existing policy to provide you with a policy summary statement.
+The reverse side contains a check list of some of the items you should consider in making our decision. TAKE TIME TO READ IT.
+Do not let one insurance producer or insurer prevent you from obtaining information from another insurance producer or insurer which may be to your advantage.
+Hear both sides before you decide. This way you can be sure you are making a decision that is in your best interest.
+We are required to notify your existing company that you may be replacing their policy.
+
+ITEMS TO CONSIDER
+<ol>
+<li>If the policy coverages are basically similar, premiums for a new policy may be higher because rates increase as your age increases.</li>\
+<li>Cash values and dividends, if any, may grow slower under a new policy initially because of the initial costs of issuing a policy.</li>\
+<li>Your present insurance company may be able to make a change on terms which may be more favorable than if you replace existing insurance with new insurance.</li>\
+<li>If you borrow against an existing policy to pay premiums on a new policy, death benefits payable under your existing policy will be reduced by the amount of any unpaid loan, including unpaid interest.</li>\
+<li>Current interest rates are not guaranteed. Guaranteed interest rates are usually considerably lower than current rates. What rates are guaranteed?</li>\
+<li>Are premiums guaranteed or subject to change - up or down?</li>\
+<li>Participating policies pay dividends that may materially reduce the cost of insurance over the life of the contract. Dividends, however, are not guaranteed.</li>\
+<li>CAUTION, you are urged not to take action to terminate, assign or alter your existing life insurance coverage until after you have been issued the new policy, examined it and have found it to be acceptable to you; and</li>\
+<li>REMEMBER, you have twenty (20) days following receipt to examine the contents of any individual life insurance policy or annuity. If you are not satisfied with it for any reason, you have the right to return it to the insurer at its home or branch office, or to the insurance producer through whom it was purchased, for a full refund of premium.</li>\
+</ol>
+\
+""".split('\n')
+)
+
+NV_fpp_replacement_form = ReplacementForm(
+    statecodes=['NV'],
+    docusign_template_id='5CD85DC9-F8DB-4A78-8E6E-B0DB14749CB9',
+    paragraphs="""\
+You have been offered a policy to replace all or part of your existing policy of life insurance.
+Before you replace your existing policy, you should consider whether you could suffer a Financial Loss under the new policy because of your Age or the condition of your Health. You should also consider whether you will pay more for premiums because of your age or health.
+You Will incur additional costs to acquire the new policy, including the payment of commissions to the agent advocating the replacement of your existing policy.
+To make an informed decision about the replacement of your policy, you should discuss the provisions of your existing policy with your agent or the company which issued it to determine whether your policy can be changed to meet your present needs.
+Your new policy provides 10 days for you to decide whether you wish to keep it.
+The agent who is offering to replace your existing policy is required to obtain your signature on this notice. Also, he will be notifying your existing insurance company that you are considering the replacement of your policy.
+\
+""".split('\n')
+)
+
+OK_fpp_replacement_form = ReplacementForm(
+    statecodes=['OK'],
+    docusign_template_id='9C4D288B-8D77-4DDC-8D49-DE1313443FB3',
+    paragraphs="""\
+NOTICE TO APPLICANTS REGARDING REPLACEMENT OF LIFE INSURANCE OR AN ANNUITY. THIS NOTICE IS FOR YOUR BENEFIT AND IS REQUIRED BY LAW.
+<ol>\
+<li>If you are urged to purchase life insurance and to surrender, lapse, or in any other way change the status of existing life insurance, the agent is required to give you this notice.</li>\
+<li>It may not be advantageous to drop or change existing life insurance in favor of new life insurance, whether issued by the same or a different insurance company. Some of the disadvantages are:<br>\
+a. The amount of the annual premium under an existing policy may be lower than that under a new policy having the same or similar benefits.<br>\
+b. Generally, the initial costs of life insurance policies are charged against the cash value increases in the earlier policy years, the replacement of an old policy could result in the policyholder sustaining the burden of these costs twice.<br>\
+c. The incontestable and suicide clauses begin anew in a new policy. This could result in a claim under a new policy being denied by the company which would have been paid under the old policy.<br>\
+d. Existing policies may have more favorable provisions than new policies in such areas as settlement options and disability benefits.<br>\
+e. An existing policy may have a reserve value in addition to any cash value which may be of some benefit to the insured.<br>\
+f. The insurance company carrying your current insurance policy can often make a desired change on terms which would be more favorable than if existing insurance is replaced with new insurance.</li>\
+<li>It may not be advantageous to change an existing policy to reduce paid-up or extended term insurance or to borrow against its loan value beyond your expected ability or intention to repay in order to obtain funds for premiums on a new policy.</li>\
+<li>There may be a situation in which a replacement policy is advantageous. You may want to receive the comments of the present insurance company before deciding this important financial matter.</li>
+\
+</ol>
+\
+""".split('\n')
+)
+
+PA_fpp_replacement_form = ReplacementForm(
+    statecodes=['PA'],
+    docusign_template_id='A739D21A-F30C-4915-9927-1178A52F726F',
+    paragraphs="""\
+You have indicated that you intend to replace existing life insurance or annuity coverage in connection with the purchase of our life insurance or annuity policy. As a result, we are required to send you this notice. Please read it carefully.
+Whether it is to your advantage to replace your existing insurance or annuity coverage, only you can decide. It is in your best interest, however, to have adequate information before a decision to replace your present coverage becomes final so that you may understand the essential features of the proposed policy and your existing insurance or annuity coverage.
+You may want to contact your existing life insurance or annuity company or its agent for additional information and advice or discuss your purchase with other advisors. Your existing company will provide this information to you. The information you receive should be of value to you in reaching a final decision.
+If either the proposed coverage or the existing coverage you intend to replace is participating, you should be aware that dividends may materially reduce the cost of insurance and are an important factor to consider. Dividends, however, are not guaranteed.
+You should recognize that a policy which has been in existence for a period of time may have certain advantages to you over a new policy. If the policy coverages are basically similar, the premiums for a new policy may be higher because rates increase as your age increases. Under your existing policy, the period of time during which the issuing company could contest the policy because of a material misrepresentation or omission concerning the medical information requested in your application, or deny coverage for death caused by suicide, may have expired or may expire earlier than it will under the proposed policy. Your existing policy may have options which are not available under the policy being proposed to you or may not come into effect under the proposed policy until a later time during your life. Also, your proposed policy's cash values and dividends, if any, may grow slower initially because the company will incur the cost of issuing your new policy. On the other hand, the proposed policy may offer advantages which are more important to you.
+If you are considering borrowing against your existing policy to pay the premiums on the proposed policy, you should understand that in the event of your death, the amount of any unpaid loan, including unpaid interest, will be deducted from the benefits of your existing policy thereby reducing your total insurance coverage.
+After we have issued your policy, you will have 20 days from the date the new policy is received by you to notify us you are cancelling the policy issued on your application and you will receive back all payments you made to us.
+You are urged not to take action to terminate or alter your existing life insurance or annuity coverage until you have been issued the new policy, examined it and have found it acceptable to you.
+\
+""".split('\n')
+)
+
+TN_fpp_replacement_form = ReplacementForm(
+    statecodes=['TN'],
+    docusign_template_id='D0A05387-6A06-4BA7-91CF-F69BD429A3E7',
+    paragraphs="""\
+Are you thinking about buying a new life insurance policy and discontinuing or changing an existing one? If you are, your decision could be a good one - or a mistake. You will not know for sure unless you make a careful comparison of your existing benefits and the proposed benefits.
+Make sure you understand the facts. You should ask the company or agent that sold you your existing policy to give you information about it. You are urged not to take action to terminate, assign or alter your existing life insurance coverage until you have been issued the new policy, examined it and have found it acceptable.
+Hear both sides before you decide. This way you can be sure you are making a decision that is in your best interest.
+IF YOU SHOULD FAIL TO QUALIFY FOR THE LIFE INSURANCE FOR WHICH YOU HAVE APPLIED, YOU MAY FIND YOURSELF UNABLE TO PURCHASE OTHER LIFE INSURANCE OR ABLE TO PURCHASE IT ONLY AT SUBSTANTIALLY HIGHER RATES.
+We are required by law to notify your existing company that you may be replacing their policy.
+
+\
+""".split('\n')
+)
+
+# blank template to gracefully fail if in one of these states until we determine application logic to not require replacement for these states 
+empty_fpp_replacement_form = ReplacementForm(
+    statecodes=['CT', 'DC', 'ND', 'VI'],
+    docusign_template_id='0F15241A-B176-4E5B-9E59-0809053994DC',
+    paragraphs="""\
+Your state does not require completion of a replacement certificate.  Please select "N" for the following two questions:\
+""".split('\n')
+)
+
+# blank template to gracefully fail if in one of these states until we determine application logic to not allow replacement for these states 
+NoNo_fpp_replacement_form = ReplacementForm(
+    statecodes=['KS', 'KY'],
+    docusign_template_id='0F15241A-B176-4E5B-9E59-0809053994DC',
+    paragraphs="""\
+
+<span class=\"error">STOP!  Your state does not accept insurance replacements.  We cannot continue this application. <br><br>\
+Please cancel this enrollment application and consult with your enrollment professional.<br><br>\
+If you proceed, your application WILL be declined for coverage.</span>
+<br><br><br><br>
+\
+""".split('\n')
+)
+
+SD_fpp_replacement_form = ReplacementForm(
+    statecodes=['SD'],
+    docusign_template_id='272C42C9-A20D-4205-BEEF-5AFC23720251',
+    paragraphs="""\
+In order to complete this application, you will complete a REPLACEMENT OF LIFE INSURANCE OR ANNUITY notice at the end of this application interview.  It will require you to provide the following informationin order to submit this application:
+NAME OF INSURED
+ADDRESS and PHONE OF INSURED
+NAME OF EXISTING INSURER
+EXISTING POLICY NUMBER
+NAME OF EXISTING AGENT
+TYPE OF EXCHANGE OF EXISTING COVERAGE (Example: Lapsed policy, loan, or surrender)
+REPLACEMENT POLICY NUMBER (or other identifying number [application or receipt number or unique personally identifiable number or company assigned number])
+GENERIC DESCRIPTION OF REPLACING POLICY
+
+Please note your application will not be able to be completed without these items.
+\
 """.split('\n')
 )
 
@@ -374,9 +648,27 @@ REMEMBER, you have thirty (30) days following receipt of any individual life ins
 
 
 
+
 def get_replacement_forms():
     fpp_forms = [
+        CA_fpp_replacement_form,
+        DE_fpp_replacement_form,
+        FL_fpp_replacement_form,
         GA_fpp_replacement_form,
+        ID_fpp_replacement_form,
+        IL_fpp_replacement_form,
+        IN_fpp_replacement_form,
+        MA_fpp_replacement_form,
+        MI_fpp_replacement_form,
+        MN_fpp_replacement_form,
+        MO_fpp_replacement_form,
+        NV_fpp_replacement_form,
+        OK_fpp_replacement_form,
+        PA_fpp_replacement_form,
+        TN_fpp_replacement_form,
+        SD_fpp_replacement_form,
+        NoNo_fpp_replacement_form,
+        empty_fpp_replacement_form,
         generic_fpp_replacement_form,
     ]
 
