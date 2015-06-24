@@ -403,6 +403,7 @@ buttons at the lower right of the page. At the end you will be presented with a 
                                                                         <div class="form-group self-enroll self-enroll-email">
                                                                           {{ render_field_with_errors(form.email_sender_name, style="width: 100%;", default=agent.name()) }}
                                                                           {{ render_field_with_errors(form.email_sender_email, default=agent.email) }}
+
                                                                           {{ render_field_with_errors(form.email_subject, default=default_email_subject) }}
                                                                           {{ render_field_with_errors(form.email_message, class_='wysiwyg-editor', default=default_email_message) }}
                                                                           <div class="col-xs-9 col-xs-offset-3">
@@ -525,6 +526,13 @@ buttons at the lower right of the page. At the end you will be presented with a 
                                     </div>
                                     <div class="widget-body">
                                         <div class="widget-main">
+
+                                            <div class="row">
+                                                <div class="col-xs-12">
+                                                    <label>Enrollment City: <input type='text' data-bind="value: enrollment_city_override"></label>
+                                                    <label>Enrollment State: <limited-state-select params="limiter: state_product_override_limiter"></limited-state-select></label>
+                                                </div>
+                                            </div>
 
                                             {% if not census_records %}
                                                 <h4 class="no-census-header text-center lighter">No Census Data Uploaded</h4>
@@ -1409,6 +1417,10 @@ buttons at the lower right of the page. At the end you will be presented with a 
             self.situs_state = ko.observable(_.find(self.state_choices, function(c) {
                 return c.statecode == case_data.situs_state;
             }));
+
+            self.enrollment_city_override = ko.observable(self.situs_city());
+            self.enrollment_state_override = ko.observable(self.situs_state());
+
             self.selected_statecode = ko.pureComputed(function(){
                 return (self.situs_state()) ? self.situs_state().statecode : null;
             });
@@ -1419,11 +1431,19 @@ buttons at the lower right of the page. At the end you will be presented with a 
 
 
             // Disable bad combos of states and products
-            self.state_product_limiter = new ProductStatesLimiterViewModel(
-                {{ product_state_mapping |tojson|safe }}, self.situs_state,
-                self.state_choices,
-                self.products, self.product_choices
+            self.state_product_limiter = new ProductStatesLimiterViewModel({{ product_state_mapping |tojson|safe }},
+                    self.situs_state,
+                    self.state_choices,
+                    self.products, self.product_choices
             );
+
+            // Limit the states that can be chosen as 'enrolling from state' by the products
+            self.state_product_override_limiter = new StatesLimiterViewModel({{ product_state_mapping |tojson|safe }},
+                    self.enrollment_state_override,
+                    self.state_choices,
+                    self.products
+            );
+
 
             self.is_open_enrollment = ko.computed(function() {
                 return self.enrollment_period_type() === "open";
@@ -2078,7 +2098,20 @@ buttons at the lower right of the page. At the end you will be presented with a 
             $("#enrollment").on('click', "button.enroll-employee", function() {
                 var record_id = $(this).attr('data-id');
 
-                submit_to_url("{{ url_for('in_person_enrollment') }}", {record_id: record_id});
+                var enrollment_state = "";
+                var enrollment_city = "";
+                if (window.case_settings.enrollment_state_override()) {
+                    enrollment_state = window.case_settings.enrollment_state_override().statecode;
+                }
+                if (window.case_settings.enrollment_city_override()) {
+                    enrollment_city = window.case_settings.enrollment_city_override();
+                }
+
+                submit_to_url("{{ url_for('in_person_enrollment') }}", {
+                    record_id: record_id,
+                    enrollment_city: enrollment_city,
+                    enrollment_state: enrollment_state
+                });
             });
 
         };
