@@ -4,20 +4,6 @@
 {% set active_page = "nav_manage_cases" -%}
 {% block title %} - Agent Manage Case{% endblock %}
 
-{% set default_email_subject = "Benefit enrollment - your action needed" -%}
-
-{% set default_email_message = """
-""".format() -%}
-
-{% set default_page_text = """
-You have reached the enrollment page for <strong>{company_name}</strong>, which is offering you important insurance
-benefits from 5Star Life.
-<br><br>
-This enrollment should take less than 5 minutes to complete. To view details of the offered products, see the link(s) below.
-Please follow the instructions carefully on the next page, stepping through the simple interview using the next/previous
-buttons at the lower right of the page. At the end you will be presented with a complete application form to electronically sign.
-""".format(company_name=case.company_name) -%}
-
 {% block content %}
     <flash-messages params="messages: flash_messages"></flash-messages>
 
@@ -423,7 +409,7 @@ buttons at the lower right of the page. At the end you will be presented with a 
                                                                                 </div>
                                                                             </div>
 
-                                                                          {{ render_field_with_errors(form.email_message, class_='wysiwyg-editor', default=default_email_message) }}
+                                                                          {{ render_field_with_errors(form.email_message, class_='wysiwyg-editor', default=default_email_message, style="font-family: Times New Roman; font-size: 110%;") }}
                                                                           <div class="col-xs-9 col-xs-offset-3">
                                                                             <a id="reset-email-message" class="btn btn-xs pull-right">Reset to default message & subject</a>
                                                                           </div>
@@ -453,7 +439,7 @@ buttons at the lower right of the page. At the end you will be presented with a 
                                                                         <h3 class="header lighter blue">Landing Page</h3>
                                                                         <div class="form-group self-enroll self-enroll-landing-page">
                                                                           {{ render_field_with_errors(form.page_title, default="Welcome to your Benefit Enrollment") }}
-                                                                          {{ render_field_with_errors(form.page_text, class_='wysiwyg-editor', default=default_page_text) }}
+                                                                          {{ render_field_with_errors(form.page_text, class_='wysiwyg-editor', default=default_page_text, style="font-family: Times New Roman; font-size: 110%;") }}
                                                                           <div class="row">
                                                                               <div class="col-sm-9 col-sm-offset-3">
                                                                                   <a id="reset-page-text" class="btn btn-xs pull-right">Reset to default message</a>
