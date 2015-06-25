@@ -15,7 +15,7 @@ and set up a virtual environment for python:
 
     sudo apt-get update
     sudo apt-get upgrade
-    sudo apt-get install python-dev python-pip postgresql-9.3 postgresql-client-9.3 postgresql-server-dev-9.3 nginx php5-fpm phppgadmin php5-pgsql git
+    sudo apt-get install -y python-dev python-pip postgresql-9.3 postgresql-client-9.3 postgresql-server-dev-9.3 nginx php5-fpm phppgadmin php5-pgsql git
     wget -qO- https://toolbelt.heroku.com/install-ubuntu.sh | sh
     sudo pip install virtualenv
     virtualenv ~/env
@@ -117,6 +117,3 @@ After this, your git config should contain:
     [remote "heroku-staging"]
         url = git@heroku.com:taa-staging.git 
         fetch = +refs/heads/*:refs/remotes/heroku-staging/*
-
-
-
