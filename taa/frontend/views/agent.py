@@ -106,6 +106,22 @@ def manage_case(case_id):
     # Has active enrollments?
     vars['case_has_enrollments'] = case_service.does_case_have_enrollments(case)
 
+    vars['default_email_message'] = """
+This is your online enrollment notice for {company_name} benefits from 5Star Life Insurance Company. As an employee/affiliate of {company_name}, you are eligible for the benefits listed below. <strong><emphasis>This email is unique to you specifically</strong></emphasis>; please do not forward this link to anyone else, as it will contain access to your personal information. <br>
+<br>
+Nearly 85% of Americans say most people need life insurance, yet only 62% have coverage and a staggering 33% say they don't have enough life insurance, including one-fourth who already have life insurance coverage. Financial experts recommend having enough life insurance to replace income for 7 to 10 years. This offering from 5Star Life is a highly affordable and convenient way to meet the needs of your family when they need it most. <br>
+<br>
+You may review the benefits from the brochure link provided. When ready, click the button below to begin a brief enrollment online form that should take just a few minutes to complete.
+""".format(company_name=case.company_name)
+
+    vars['default_email_subject'] = "Benefit enrollment - your action needed"
+
+    vars['default_page_text'] = """
+You have reached the enrollment page for {company_name}, which is offering you important insurance benefits from 5Star Life. To view details of the offered products, see the link(s) below. This enrollment should take less than 5 minutes to complete. <br>
+<br>
+Please follow the instructions carefully on the next page, stepping through the simple interview using the next/previous buttons at the lower right of the page. At the end you will be presented with a complete application form to sign electronically. <br>
+""".format(company_name=case.company_name)
+
     # Self-enrollment settings - always ensure the self-enrollment setup object exists for a case, even if not active
     self_enrollment_setup = case_service.get_self_enrollment_setup(case)
     if self_enrollment_setup is None:
@@ -113,14 +129,13 @@ def manage_case(case_id):
             'self_enrollment_type': SelfEnrollmentSetup.TYPE_CASE_GENERIC,
             'created_by': agent.id,
             'page_title': 'Welcome to your Benefit Enrollment',
-            'page_text': '''You have reached the enrollment page for ABC, which is offering you important insurance benefits from 5Star Life.
-
-This enrollment should take less than 5 minutes to complete. To view details of the offered products, see the link(s) below. Please follow the instructions carefully on the next page, stepping through the simple interview using the next/previous buttons at the lower right of the page. At the end you will be presented with a complete application form to electronically sign.''',
+            'page_text': vars['default_page_text'],
             'email_sender_name': agent.name(),
             'email_sender_email': agent.email,
-            'email_subject': 'Benefit enrollment - your action needed',
+            'email_subject': vars['default_email_subject'],
             'email_greeting_salutation': "Dear",
             'email_greeting_type': SelfEnrollmentSetup.EMAIL_GREETING_FIRST_NAME,
+            'email_message': vars['default_email_message'],
         })
         case.self_enrollment_setup = self_enrollment_setup
 
