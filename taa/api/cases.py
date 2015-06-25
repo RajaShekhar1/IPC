@@ -10,7 +10,7 @@ from taa import app
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
-from taa.services.cases import CaseService, SelfEnrollmentService
+from taa.services.cases import CaseService, SelfEnrollmentService, SelfEnrollmentSetup
 from taa.services.cases.forms import (
     CensusRecordForm,
     NewCaseForm,
@@ -343,13 +343,10 @@ def email_self_enrollment_link(case_id, which):
     agent = agent_service.get_logged_in_agent()
     eligible_census = get_census_records_for_status(case, status=which)
 
-    #from taa.tasks import batch_emails
-    #batch_emails.delay(setup.id, [cr.id for cr in eligible_census])
-
     results = []
     for record in eligible_census:
         if record.employee_email is None or '@' not in record.employee_email:
-            # Census record does not has a valid email; skip
+            # Census record does not has a valid email; TODO insert into email log in as failure.
             #results.append("{} {} did not have a valid email.".format(record.employee_first, record.employee_last))
             continue
 
@@ -368,16 +365,11 @@ def email_self_enrollment_link(case_id, which):
         email_body = render_template(
             "emails/enrollment_email.html",
             custom_message=setup.email_message,
-            employee_first=record.employee_first,
+            greeting=build_email_greeting(record, setup),
             enrollment_url=link.url,
             company_name=record.case.company_name,
         )
-        email_subject = "Enrollment Request:  {employee_first} {employee_last} ({company_name}) - {product_name}".format(
-            employee_first=record.employee_first,
-            employee_last=record.employee_last,
-            company_name=record.case.company_name,
-            product_name=record.case.products[0].name,
-        )
+        email_subject = setup.email_subject if setup.email_subject else 'Benefit Enrollment - your action needed'
         email_log = self_enrollment_email_service.create_pending_email(
             agent, link, record,
             from_email=setup.email_sender_email,
@@ -396,3 +388,29 @@ def email_self_enrollment_link(case_id, which):
         self_enrollment_email_service.queue_email(email_log.id)
 
     return ["Scheduled %s emails for immediate processing."%len(results)]
+
+
+def build_email_greeting(record, setup):
+    salutation = ''
+    if setup.email_greeting_salutation:
+        salutation = '{} '.format(setup.email_greeting_salutation)
+    greeting_end = ''
+    if setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_FIRST_NAME:
+        greeting_end = "{},".format(record.employee_first)
+    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_FULL_NAME:
+        greeting_end = "{} {},".format(record.employee_first, record.employee_last)
+    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_LAST_NAME:
+        greeting_end = "{},".format(record.employee_last)
+    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_TITLE_LAST:
+        if not record.employee_gender:
+            title = 'Mr./Ms.'
+        elif record.employee_gender.lower()[0] == 'm':
+            title = 'Mr.'
+        else:
+            title = 'Mrs.'
+
+        greeting_end = "{} {},".format(title, record.employee_last)
+    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_BLANK:
+        greeting_end = ''
+    greeting = "{}{}".format(salutation, greeting_end)
+    return greeting

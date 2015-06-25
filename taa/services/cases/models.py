@@ -376,6 +376,15 @@ class SelfEnrollmentSetup(SelfEnrollmentSerializer, db.Model):
     use_email = db.Column(db.Boolean, nullable=False, server_default='FALSE')
     email_sender_name = db.Column(db.Unicode)
     email_sender_email = db.Column(db.Unicode)
+    email_greeting_salutation = db.Column(db.Unicode)
+
+    email_greeting_type = db.Column(db.Unicode(16))
+    EMAIL_GREETING_FIRST_NAME = 'firstname'
+    EMAIL_GREETING_FULL_NAME = 'fullname'
+    EMAIL_GREETING_LAST_NAME = 'lastname'
+    EMAIL_GREETING_TITLE_LAST = 'titlelast'
+    EMAIL_GREETING_BLANK = 'blank'
+
     email_subject = db.Column(db.Unicode)
     email_message = db.Column(db.UnicodeText)
     # Landing page

@@ -42,7 +42,7 @@
                     </thead>
                     <tbody>
                         {% for case in agent_cases %}
-                            <tr data-case-id="{{ case.id }}">
+                            <tr data-case-id="{{ case.id }}" data-case-active="{{ case.active }}">
                                 <td>{{ case.company_name }}</td>
                                 <td>{{ case.format_location() }}</td>
                                 <td>{{ case.format_owner_name() }}</td>
@@ -169,9 +169,12 @@
         
         $("#cases_table").dataTable();
 
-        $("#cases_table tr").on("click", function() {
+        $("#cases_table").on("click", "tr", function() {
             var case_id = $(this).attr("data-case-id");
-            var url = {{ url_for("manage_case", case_id="") }} + case_id;
+            var is_active = $(this).attr("data-case-active");
+            var tab = (is_active !== "False") ? "enrollment" : "setup";
+
+            var url = {{ url_for("manage_case", case_id="") }} + case_id + "#" + tab;
             location.href = url;
         });
 
