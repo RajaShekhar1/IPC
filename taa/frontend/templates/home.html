@@ -11,7 +11,8 @@
             <div class="col-sm-6">
                 {{ render_simple_widget(
                         title="Enrollment Cases",
-                        body_html='<p class="lead">Setup group cases for enrollment, manage census data, view enrollment reports and initiate in-person as well as self-enrolled apps.</p><p class="lead">More text here<br>More text here<br>More text here<br></p>',
+                        body_html='<p class="lead">All enrollments are conducted within a group case. Configure group settings, manage census data, and view enrollment reports here.</p><p class="lead">Enrollments may be enroller-assisted or self-serve via email or web link (based on the case setup).</p>
+		<p><i class="icon-warning-sign bigger-120 orange"></i> Note: Self-enrollment applications still require Agent signature.  See your inbox.</p>',
                         button_text="Enrollment Cases",
                         button_classes="btn btn-success btn-lg", 
                         button_url=url_for("manage_cases")
