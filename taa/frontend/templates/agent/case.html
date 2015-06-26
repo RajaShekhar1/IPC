@@ -1572,7 +1572,7 @@
             // subscribe to all changes to detect data changes
             var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
                     self.enrollment_periods, self.situs_city, self.situs_state, self.payment_mode,
-                    self.is_active, self.owner_agent_id, self.is_self_enrollment];
+                    self.is_active, self.owner_agent_id, self.is_self_enrollment, self.self_enrollment_type];
             _.each(self.enrollment_periods(), function(p) {
                 fields.push(p.start_date);
                 fields.push(p.end_date);
@@ -1860,7 +1860,36 @@
 
                     setup_tab.tab('show');
                     
-                });  
+                });
+
+                // If switching to another tab, we check for dirty and warn the user
+                this.before({except: {path: '#setup'}}, function() {
+
+                    if (self.has_unsaved_data()) {
+                        bootbox.dialog({
+                            title: "Unsaved Changes",
+                            message: "You have made changes without saving. Please save your changes or discard before leaving this page.",
+                            buttons: {
+                                main: {label: "Save", className: 'btn-primary', callback: function() {
+                                    self.save_settings();
+                                }},
+                                danger: {label: "Discard Changes", className: 'btn-danger', callback: function() {
+                                    window.location.reload();
+                                }},
+                                cancel: {label: "Cancel", className: 'btn-default', callback: function() {}}
+                            }
+                        });
+                        /*bootbox.confirm("You have made changes without saving. Please save your changes.",
+                            function(result) {
+                                if (result) {
+
+                                }
+                            });
+                        */
+                        this.redirect("#setup");
+                        return false;
+                    }
+                });
 
                 this.get("#enrollment", function() {
                     self.exit_print_mode();
