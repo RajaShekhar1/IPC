@@ -144,6 +144,7 @@ Please follow the instructions carefully on the next page, stepping through the 
 
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
 
+    vars['setup'] = case.self_enrollment_setup
     vars['form'] = form
     vars['products'] = case.products
     vars['company_name'] = case.company_name

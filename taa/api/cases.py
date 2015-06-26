@@ -296,8 +296,19 @@ def update_self_enrollment_setup(case_id):
     case = case_service.get_if_allowed(case_id)
     self_enrollment_setup = case_service.get_self_enrollment_setup(case)
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
+    
+    if ('self_enrollment_type' in request.form
+            and request.form['self_enrollment_type'] == SelfEnrollmentSetup.TYPE_CASE_GENERIC):
+        # Remove email-specific fields from the form so they are not validated
+        del form.email_greeting_type
+        del form.email_greeting_salutation
+        del form.email_subject
+        del form.email_sender_email
+        del form.email_sender_email
+        del form.email_message
+
+
     if form.validate_on_submit():
-        print(self_enrollment_setup)
         if self_enrollment_setup is None:
             setup = case_service.create_self_enrollment_setup(case, form.data)
             case.self_enrollment_setup = setup
