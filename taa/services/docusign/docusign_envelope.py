@@ -35,7 +35,7 @@ agent_service = AgentService()
 
 def create_envelope_and_get_signing_url(wizard_data, census_record, case):
 
-    enrollment_data = EnrollmentDataWrap(wizard_data, census_record)
+    enrollment_data = EnrollmentDataWrap(wizard_data, census_record, case)
 
     # Product code
     #product = product_service.get(wizard_data['product_data']['id'])
@@ -200,9 +200,10 @@ def generate_ChildTabsEntry (child_index, wizard_data):
 
 
 class EnrollmentDataWrap(object):
-    def __init__(self, wizard_data, census_record):
+    def __init__(self, wizard_data, census_record, case):
         self.data = wizard_data
         self.census_record = census_record
+        self.case = case
 
     def __getitem__(self, item):
         "Allow dict access to raw data"
@@ -239,6 +240,12 @@ class EnrollmentDataWrap(object):
         # TODO: need to get proper agent for self-enroll.
         if not flask.has_request_context():
             return "(TEST)"
+
+        # TODO: Need to store all agent custom_data in database so we can get to
+        #   it when not logged in (ie, self enroll)
+        if not user or user.is_anonymous():
+            return ""
+
         if 'signing_name' not in user.custom_data:
             return user.full_name
         return user.custom_data["signing_name"]
@@ -247,6 +254,13 @@ class EnrollmentDataWrap(object):
         # TODO: need to get proper agent for self-enroll.
         if not flask.has_request_context():
             return "(TEST)"
+
+        # TODO: Need to store all agent custom_data in database so we can get to
+        #   it when not logged in (ie, self enroll)
+        if not user or user.is_anonymous():
+            return ""
+            #return self.case.owner_agent.
+
         if 'agent_code' not in user.custom_data:
             return "HOME OFFICE"
         return user.custom_data["agent_code"]
@@ -394,6 +408,7 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
 
     agent_code = enrollment_data.get_agent_code()
     agent_signing_name = enrollment_data.get_agent_signing_name()
+
     eeTabsList = make_applicant_tabs("ee", enrollment_data['employee'])
     eeTabsList += [
         make_tab('eeEnrollCityState', enrollment_data["enrollCity"] + ", " + enrollment_data["enrollState"]),
