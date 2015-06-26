@@ -17,8 +17,8 @@ from taa import mandrill_flask
 from taa.core import DBService
 from taa.core import db
 from models import (EnrollmentApplication, EnrollmentApplicationCoverage,
-                    SelfEnrollmentEmailLog, SelfEnrollmentLink, SelfEnrollmentSetup)
-
+                    SelfEnrollmentEmailLog, SelfEnrollmentLink)
+from taa.services.cases.models import SelfEnrollmentSetup
 from taa.services.cases import CaseService
 from taa.services.products import ProductService
 case_service = CaseService()
