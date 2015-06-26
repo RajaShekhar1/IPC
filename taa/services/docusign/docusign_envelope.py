@@ -44,13 +44,13 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
 
     # If FPP Product, use the new docusign code, otherwise use old path
     if is_fpp:
-        return create_fpp_envelope_and_fetch_signing_url(enrollment_data)
+        return create_fpp_envelope_and_fetch_signing_url(enrollment_data, census_record.case)
     else:
         return old_create_envelope_and_get_signing_url(enrollment_data)
 
 
 
-def create_fpp_envelope_and_fetch_signing_url(enrollment_data):
+def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
 
     is_error = False
     error_message = None
@@ -58,6 +58,10 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data):
     #owner_agent = enrollment_data.census_record.case.owner_agent if enrollment_data.census_record else agent_service.get_logged_in_agent()
 
     logged_in_agent = agent_service.get_logged_in_agent()
+
+    if not logged_in_agent:
+        logged_in_agent = case.owner_agent
+
     agent = AgentDocuSignRecipient(name=logged_in_agent.name(),
                                    email=logged_in_agent.email)
     employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),

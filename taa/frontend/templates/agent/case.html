@@ -1572,17 +1572,23 @@
             // subscribe to all changes to detect data changes
             var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
                     self.enrollment_periods, self.situs_city, self.situs_state, self.payment_mode,
-                    self.is_active, self.owner_agent_id, self.is_self_enrollment, self.self_enrollment_type];
+                    self.is_active, self.owner_agent_id, self.is_self_enrollment,
+                //self.self_enrollment_type
+            ];
             _.each(self.enrollment_periods(), function(p) {
                 fields.push(p.start_date);
                 fields.push(p.end_date);
             });
             $.each(fields, function() {
                 var field = this;
-                this.subscribe(function() {
+                field.subscribe(function() {
 
                     self.is_data_dirty(true);
                 });
+            });
+            // For now, trigger dirty on every change within the self-enroll setup.
+            $("#edit-self-enrollment-form").on("change", "input, select, [contenteditable]", function() {
+                self.is_data_dirty(true);
             });
 
             self.can_activate_case = ko.computed(function() {
@@ -2479,7 +2485,23 @@
         return false;
       });
 
+        // http://stackoverflow.com/questions/1391278/contenteditable-change-events
+        // Trigger a change event on the contenteditable fields for handling simplicity
+        $('body').on('focus', '[contenteditable]', function() {
+            var $this = $(this);
+            $this.data('before', $this.html());
+            return $this;
+        }).on('blur keyup paste input', '[contenteditable]', function() {
+            var $this = $(this);
+            if ($this.data('before') !== $this.html()) {
+                $this.data('before', $this.html());
+                $this.trigger('change');
+            }
+            return $this;
+        });
 
+        // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change
+        case_settings.is_data_dirty(false);
     });
 
     </script>
