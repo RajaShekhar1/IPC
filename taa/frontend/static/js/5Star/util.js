@@ -611,13 +611,14 @@ var ProductStatesLimiterViewModel = function (product_statecode_mapping,
 
 
   // When the state changes, remove any ineligible products from the selection
+  /*
   self.selected_state.subscribe(function (state) {
     var valid_products = _.without(self.selected_products(), function (product) {
-      return !self.is_valid_product_for_state(product, state);
+      return self.is_valid_product_for_state(product, state);
     });
     self.selected_products(valid_products);
   });
-
+  */
 
   // Based on product selection, change which states are enabled
   self.enabled_states = ko.computed(function () {
@@ -631,7 +632,7 @@ var ProductStatesLimiterViewModel = function (product_statecode_mapping,
   // List the products that can be selected given the current selected state
   self.enabled_products = ko.computed(function () {
 
-    if (self.selected_state() !== null) {
+    if (self.selected_state() !== null && self.selected_state()) {
       return _.filter(self.available_products(), function (product) {
         return self.is_valid_product_for_state(product, self.selected_state());
       });
