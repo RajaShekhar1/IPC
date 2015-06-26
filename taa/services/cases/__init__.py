@@ -298,6 +298,8 @@ class CaseService(DBService):
         return self.self_enrollment.first(case_id=case.id)
 
     def create_self_enrollment_setup(self, case, data):
+        if 'created_by' not in data:
+            data['created_by'] = case.agent_id
         return self.self_enrollment.create(case_id=case.id, **data)
 
     def update_self_enrollment_setup(self, setup, data):

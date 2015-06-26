@@ -397,7 +397,7 @@ class SelfEnrollmentSetup(SelfEnrollmentSerializer, db.Model):
     links = db.relationship('SelfEnrollmentLink')
     # Metadata
     created_by = db.Column(db.Integer, db.ForeignKey('agents.id'),
-                           nullable=False)
+                           nullable=True)
     created_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
     updated_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
 
