@@ -1,14 +1,23 @@
 from flask.ext.stormpath import user
 
+from taa.config_defaults import (
+    DOCUSIGN_API_ACCOUNT_ID,
+    DOCUSIGN_API_ENDPOINT,
+    DOCUSIGN_API_PASSWORD,
+    DOCUSIGN_API_USERNAME,
+    DOCUSIGN_INTEGRATOR_KEY,
+)
 from taa.services.products.product_forms import ProductFormService
 
 # Docusign credential info - currently only used by Group CI with the older code.
-apiUserName = "e8e7df3d-09be-47d6-922b-387956638a6c"
-apiPassword = "wQtqOMu0AjSE6sGUXoqgK5Iq/Zw="
-apiAccountID = "599b0608-269f-4598-a1c9-da3b67281cb7"
-dsServer = "demo.docusign.net"
-integratorKey = "STAR-0baef057-d5b4-46bd-831f-e8e66f271aa7"
-baseUrl = "https://" + dsServer + "/restapi/v2/accounts/" + apiAccountID
+apiUserName = DOCUSIGN_API_USERNAME
+apiPassword = DOCUSIGN_API_PASSWORD
+apiAccountID = DOCUSIGN_API_ACCOUNT_ID
+#dsServer = "demo.docusign.net"
+integratorKey = DOCUSIGN_INTEGRATOR_KEY
+# Strip off the trailing slash for compatibility with TAA 1.0 code
+baseUrl = DOCUSIGN_API_ENDPOINT[:-1]
+#"https://" + dsServer + "/restapi/v2/accounts/" + apiAccountID
 
 # to add an embedded recipient you must set their clientUserId property in addition to the recipient name and email.
 # Whatever you set the clientUserId to you MUST use the same value when requesting the signing URL;
