@@ -296,7 +296,7 @@ def update_self_enrollment_setup(case_id):
     case = case_service.get_if_allowed(case_id)
     self_enrollment_setup = case_service.get_self_enrollment_setup(case)
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
-    
+
     if ('self_enrollment_type' in request.form
             and request.form['self_enrollment_type'] == SelfEnrollmentSetup.TYPE_CASE_GENERIC):
         # Remove email-specific fields from the form so they are not validated
@@ -352,6 +352,10 @@ def email_self_enrollment_link(case_id, which):
     if setup is None or setup.self_enrollment_type != 'case-targeted':
         abort(400, "Case not configured for targeted self-enrollment")
     agent = agent_service.get_logged_in_agent()
+    if not agent:
+        # Use the owning agent
+        agent = case.owner_agent
+
     eligible_census = get_census_records_for_status(case, status=which)
 
     results = []
