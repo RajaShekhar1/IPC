@@ -169,7 +169,7 @@
         
         $("#cases_table").dataTable();
 
-        $("#cases_table").on("click", "tr", function() {
+        $("#cases_table tbody").on("click", "tr", function() {
             var case_id = $(this).attr("data-case-id");
             var is_active = $(this).attr("data-case-active");
             var tab = (is_active !== "False") ? "enrollment" : "setup";
