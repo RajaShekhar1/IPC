@@ -89,15 +89,14 @@ def in_person_enrollment():
 
 
 def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False):
+    session['active_case_id'] = case.id
 
     if record_id is not None:
         # Enrolling from a case census record
         record_id = int(record_id)
         record = case_service.get_census_record(None, record_id)
 
-        # Set a boolean in the session that we are currently enrolling from this case and record;
-        #    may not be necessary anymore since we moved the enrollment page to the case management page.
-        session['active_case_id'] = record.case_id
+        # Set in the session that we are currently enrolling from this case and record
         session['enrolling_census_record_id'] = record.id
 
         override_state = data.get('enrollmentState') if data and data.get('enrollmentState') else None
@@ -276,6 +275,9 @@ def self_enrollment2():
 @app.route('/submit-wizard-data', methods=['POST'])
 def submit_wizard_data():
     data = request.json
+    case_id = session['active_case_id']
+    case = case_service.get(case_id)
+
     wizard_results = data['wizard_results']
     print("[ENROLLMENT SUBMITTED]: {}".format(wizard_results))
     # Save enrollment information and updated census data prior to
@@ -285,19 +287,20 @@ def submit_wizard_data():
             None, session['enrolling_census_record_id'])
     else:
         census_record = None
+
     # Get the agent for this session
     # For self-enroll situations, the owner agent is used
     # TODO: Use agent who sent emails for targeted links
     agent = agent_service.get_logged_in_agent()
-    if (agent is None and session.get('is_self_enroll') is not None and
-            census_record.case is not None):
-        agent = census_record.case.owner_agent
+    if (agent is None and session.get('is_self_enroll') is not None):
+        agent = case.owner_agent
+
     # Create and save the enrollment data
     enrollment_application = enrollment_service.save_enrollment_data(
         wizard_results, census_record, agent)
     if not wizard_results.get('did_decline'):
         # Hand off wizard_results to docusign
-        is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results, census_record);
+        is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results, census_record, case)
         # Return the redirect url or error
         resp = {'error': is_error,
                 'error_message': error_message,

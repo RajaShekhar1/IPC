@@ -195,7 +195,7 @@ if __name__ == "__main__":
     child_attachment_form = ChildAttachmentForm(test_recipients, enrollment_data=EnrollmentDataWrap(dict(
         agent_data=dict(company_name="DelMar SD"),
         employee=dict(first="Test", last="Employee", ssn="123-12-1234")
-    ), None))
+    ), None, None))
 
     child_attachment_form.add_child(dict(
         first="Joe",

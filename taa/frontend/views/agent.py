@@ -71,11 +71,17 @@ def manage_case(case_id):
     agent = agent_service.get_logged_in_agent()
     if agent:
         products = product_service.get_products_for_agent(agent)
+        agent_name = agent.name()
+        agent_id = agent.id
+        agent_email = agent.email
     else:
         products = product_service.get_all_enrollable_products()
         vars['is_admin'] = True
         vars['active_agents'] = agent_service.get_active_agents()
         vars['header_title'] = 'Home Office'
+        agent_name = ""
+        agent_id = None
+        agent_email = ""
 
     vars['product_choices'] = products
     vars['all_states'] = get_all_states()
@@ -127,11 +133,11 @@ Please follow the instructions carefully on the next page, stepping through the 
     if self_enrollment_setup is None:
         self_enrollment_setup = case_service.create_self_enrollment_setup(case, {
             'self_enrollment_type': SelfEnrollmentSetup.TYPE_CASE_GENERIC,
-            'created_by': agent.id,
+            'created_by': agent_id,
             'page_title': 'Welcome to your Benefit Enrollment',
             'page_text': vars['default_page_text'],
-            'email_sender_name': agent.name(),
-            'email_sender_email': agent.email,
+            'email_sender_name': agent_name,
+            'email_sender_email': agent_email,
             'email_subject': vars['default_email_subject'],
             'email_greeting_salutation': "Dear",
             'email_greeting_type': SelfEnrollmentSetup.EMAIL_GREETING_FIRST_NAME,
@@ -144,10 +150,14 @@ Please follow the instructions carefully on the next page, stepping through the 
 
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
 
+    vars['setup'] = case.self_enrollment_setup
     vars['form'] = form
     vars['products'] = case.products
     vars['company_name'] = case.company_name
-    vars['agent'] = agent
+    vars['agent_id'] = agent_id
+    vars['agent_name'] = agent_name
+    vars['agent_email'] = agent_email
+    vars['generic_link'] = SelfEnrollmentLinkService().get_generic_link(case)
 
     return render_template('agent/case.html', **vars)
 

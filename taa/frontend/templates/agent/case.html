@@ -329,7 +329,7 @@
                                                             <p>Self-enrollment is not currently active.</p>
                                                         </div>
                                                         <div class="panel-body" data-bind="slideDownIf: is_self_enrollment()">
-                                                            <div class="row">
+                                                            {#<div class="row">
                                                                 <div class="col-xs-12">
                                                                     <h3 class="header lighter blue">Self-Enrollment Usage</h3>
                                                                     {% if case.self_enrollment_setup.self_enrollment_type == 'case-targeted' -%}
@@ -356,7 +356,7 @@
                                                                         {% endif -%}
                                                                     {% endif -%}
                                                                 </div>
-                                                            </div>
+                                                            </div>#}
 
                                                             <div class="self-enrollment-setup">
                                                                 {# <a href="{{ url_for('edit_self_enroll_setup', case_id=case.id) }}">
@@ -376,24 +376,39 @@
 
                                                                     <div class="row">
                                                                       <div class="col-xs-12">
-                                                                        {% if not case.active -%}
-                                                                        <div class="label label-danger">
+
+                                                                        <div class="label label-danger" data-bind="visible: !is_active()">
                                                                           <em>NOTE</em>: Case is currently not active. Self-enrollment links will not work unless the case is active.
                                                                         </div>
-                                                                        {% endif -%}
+
                                                                         <h3 class="header lighter blue">Self-enrollment type</h3>
                                                                         <div class="form-group self-enroll self-enroll-type">
-                                                                          {{ render_field_with_errors(form.self_enrollment_type) }}
+                                                                          {{ render_field_with_errors(form.self_enrollment_type, **{'data-bind': 'value: self_enrollment_type'}) }}
                                                                         </div>
-                                                                        <h3 class="header lighter blue">Email</h3>
-                                                                        <div class="form-group self-enroll self-enroll-email">
-                                                                          {{ render_field_with_errors(form.email_sender_name, style="width: 100%;", default=agent.name()) }}
-                                                                          {{ render_field_with_errors(form.email_sender_email, default=agent.email) }}
+                                                                        <h3 class="header lighter blue">Enrollment Email</h3>
+                                                                        <div class="form-group self-enroll">
+                                                                          <div class="col-sm-3 control-label">Generic enrollment link</div>
+                                                                          <div class="col-sm-9">
+                                                                            <div class="">
+                                                                              <p class="well well-sm">
+                                                                                  <strong><a target="_blank" href="{{ generic_link }}">{{ generic_link }}</a></strong>
+                                                                              </p>
+                                                                              <p class="alert alert-info">
+                                                                                You must send the generic enrollment link through your usual email program.
+                                                                              </p>
+                                                                            </div>
+
+                                                                          </div>
+                                                                        </div>
+
+                                                                          <div class="form-group self-enroll self-enroll-email">
+                                                                          {{ render_field_with_errors(form.email_sender_name, style="width: 100%;", default=agent_name) }}
+                                                                          {{ render_field_with_errors(form.email_sender_email, default=agent_email) }}
                                                                           {{ render_field_with_errors(form.email_subject, default=default_email_subject) }}
 
                                                                             <div class="form-group">
                                                                                 <div class="col-sm-3 control-label">
-                                                                                    <label for="email_greeting_salutation">Greeting</label>
+                                                                                    <label for="email_greeting_salutation">Targeted Email Greeting</label>
                                                                                 </div>
                                                                                 <div class="col-sm-9">
                                                                                     <div class="row">
@@ -414,27 +429,7 @@
                                                                             <a id="reset-email-message" class="btn btn-xs pull-right">Reset to default message & subject</a>
                                                                           </div>
                                                                         </div>
-                                                                        <div class="form-group self-enroll self-enroll-email-off">
-                                                                          <div class="col-sm-9 col-sm-offset-3">
-                                                                            <div class="alert alert-info">
-                                                                              <p>
-                                                                                {% if setup and setup.links and setup.links|count > 0 -%}
-                                                                                  Self-enrollment link:
-                                                                                  <strong><a target="_blank" href="{{ setup.links[0].url }}">{{ setup.links[0].url }}</a></strong>
-                                                                                {% endif -%}
-                                                                              </p>
-                                                                              <p>
-                                                                                You must send the email/enrollment link through your usual email program when using generic self-enrollment.
-                                                                              </p>
-                                                                            </div>
-                                                                            {% if not setup -%}
-                                                                              <div class="alert alert-warning">
-                                                                                The self-enrollment link will be generated for you after you save this form.
-                                                                              </div>
-                                                                            {% else -%}
-                                                                            {% endif -%}
-                                                                          </div>
-                                                                        </div>
+
 
                                                                         <h3 class="header lighter blue">Landing Page</h3>
                                                                         <div class="form-group self-enroll self-enroll-landing-page">
@@ -459,8 +454,6 @@
                                                                       </div>
                                                                     </div>
                                                                     <hr>
-
-                                                                    {{ render_field_with_errors(form.created_by, value=agent.id) }}
 
 
                                                                   <div class="self-enroll-email-confirm">
@@ -517,11 +510,11 @@
                                                     <i class="ace-icon glyphicon glyphicon-download-alt"></i>
                                                         Download Census
                                                 </a>
-                                                <a  id="add-to-census-btn" class="btn btn-primary pull-right">
+                                                <a  id="add-to-census-btn" class="btn btn-primary pull-right" data-bind="visible: is_active">
                                                     <i class="ace-icon glyphicon glyphicon-plus"></i>
                                                         New Enrollment
                                                 </a>
-                                                <button data-bind="visible: is_self_enrollment()" type="button" class="btn btn-warning pull-right" data-toggle="modal" data-target="#email-target-links-modal" >
+                                                <button data-bind="visible: is_self_enrollment() && is_active() && has_census_data() && self_enrollment_type() == 'case-targeted'" type="button" class="btn btn-warning pull-right" data-toggle="modal" data-target="#email-target-links-modal" >
                                                     <i class="ace-icon fa fa-envelope"></i>
                                                     Email Enroll
                                                 </button>
@@ -531,7 +524,7 @@
                                     <div class="widget-body">
                                         <div class="widget-main">
 
-                                            <div class="row">
+                                            <div class="row" data-bind='visible: has_census_data'>
                                                 <div class="col-xs-12">
                                                     <label>Enrollment City: <input type='text' data-bind="value: enrollment_city_override"></label>
                                                     <label>Enrollment State: <limited-state-select params="limiter: state_product_override_limiter"></limited-state-select></label>
@@ -1226,6 +1219,10 @@
                     census_errors_panel.error_records(resp.data.errors);
                     census_errors_panel.num_data_records(resp.data.records.length);
                     show_success_panel();
+
+                    // Short-term fix: reload page
+                    window.location.reload();
+
                     // Update the datatable
                     case_management.refresh_census_table({{ case.id }},"{{ url_for("cases.census_records", case_id=case.id) }}",
                                                          "#census-records-table", "#census-table-loading");
@@ -1482,6 +1479,7 @@
                             function(result) { self.is_self_enrollment(!result); });
                 }
             });
+            self.self_enrollment_type = ko.observable(case_data.self_enrollment_type);
 
             // Make sure there is at least one open enrollment period
             if (!self.get_open_enrollment_period()) {
@@ -1572,17 +1570,23 @@
             // subscribe to all changes to detect data changes
             var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
                     self.enrollment_periods, self.situs_city, self.situs_state, self.payment_mode,
-                    self.is_active, self.owner_agent_id, self.is_self_enrollment];
+                    self.is_active, self.owner_agent_id, self.is_self_enrollment,
+                //self.self_enrollment_type
+            ];
             _.each(self.enrollment_periods(), function(p) {
                 fields.push(p.start_date);
                 fields.push(p.end_date);
             });
             $.each(fields, function() {
                 var field = this;
-                this.subscribe(function() {
+                field.subscribe(function() {
 
                     self.is_data_dirty(true);
                 });
+            });
+            // For now, trigger dirty on every change within the self-enroll setup.
+            $("#edit-self-enrollment-form").on("change", "input, select, [contenteditable]", function() {
+                self.is_data_dirty(true);
             });
 
             self.can_activate_case = ko.computed(function() {
@@ -1609,11 +1613,24 @@
             });
 
             self.is_active.subscribe(function(value) {
+
                 if (value && !self.can_activate_case()) {
                     bootbox.alert("Cannot activate case for enrollment until settings are complete.");
                     self.is_active(false);
                 }
+
+                self.toggle_enrollment_buttons();
             });
+
+            self.toggle_enrollment_buttons = function() {
+                // If the case is not active, we must remove enrollment buttons on the census.
+                if (self.is_active()) {
+                    $("button.enroll-employee").prop('disabled', false);
+                } else {
+                    $("button.enroll-employee").prop('disabled', true)
+                }
+            };
+            self.toggle_enrollment_buttons();
 
             self.switch_label = ko.computed(function() {
                 if (self.is_active()) {
@@ -1766,10 +1783,28 @@
                     "{{ url_for("cases.update_case_enrollment_periods", case_id=case.id) }}",
                     self.serialize_enrollments()
                 );
+
+                // Self Enroll settings
+                $('#save-success').hide();
+                $('#save-fail').hide();
+
+                // Trigger 'submit' on hidden fields
+                $('input[type="hidden"]').click();
+
+                var self_enroll_request = $.ajax({
+                    url: $('#edit-self-enrollment-form').attr('action'),
+                    method: 'PUT',
+                    data: $('#edit-self-enrollment-form').serialize(),
+                    dataType: 'json'
+                });
+
                 var on_success = function(case_xhr, periods_xhr) {
                     self.is_data_dirty(false);
                     self.flash_messages.flash_success("Data Saved");
+                    $("#save-success").text("Data Saved");
                     self.loading_modal(null);
+
+                    //window.location.reload();
                 };
                 var on_failure = function(failed_xhr) {
                     var errors = failed_xhr.responseJSON.errors || [];
@@ -1777,7 +1812,7 @@
                     self.loading_modal(null);
                     self.flash_messages.flash_error("Save failed. Please correct any errors below.");
                 };
-                $.when(case_request, periods_request).then(on_success, on_failure);
+                $.when(case_request, periods_request, self_enroll_request).then(on_success, on_failure);
 
                 return false;
             };
@@ -1842,7 +1877,38 @@
 
                     setup_tab.tab('show');
                     
-                });  
+                });
+
+                // If switching to another tab, we check for dirty and warn the user
+                this.before({except: {path: '#setup'}}, function() {
+
+                    if (self.has_unsaved_data()) {
+                        bootbox.dialog({
+                            title: "Unsaved Changes",
+                            message: "You have made changes without saving. Please save your changes or discard before leaving this page.",
+                            buttons: {
+                                main: {label: "Save", className: 'btn-primary', callback: function() {
+                                    self.save_settings();
+                                }},
+                                danger: {label: "Discard Changes", className: 'btn-danger', callback: function() {
+                                    // disable the page unload check
+                                    self.is_data_dirty(false);
+                                    window.location.reload();
+                                }},
+                                cancel: {label: "Cancel", className: 'btn-default', callback: function() {}}
+                            }
+                        });
+                        /*bootbox.confirm("You have made changes without saving. Please save your changes.",
+                            function(result) {
+                                if (result) {
+
+                                }
+                            });
+                        */
+                        this.redirect("#setup");
+                        return false;
+                    }
+                });
 
                 this.get("#enrollment", function() {
                     self.exit_print_mode();
@@ -1884,6 +1950,7 @@
                         function(table) {
                             // This is called if there is data; enable download button
                             window.case_settings.has_census_data(true);
+                            window.case_settings.toggle_enrollment_buttons();
 
                             case_management.init_status_filter(table);
                             case_management.init_alphabet_search(table);
@@ -2395,28 +2462,8 @@
 {#      });#}
 
       $('#edit-self-enrollment-form').on('submit', function() {
-        $('#save-success').hide();
-        $('#save-fail').hide();
-        try {
-          // Trigger 'submit' on hidden fields
-          $('input[type="hidden"]').click();
-          var data = $(this).serialize();
-          console.log(data);
-          $.ajax({
-            url: $(this).attr('action'),
-            method: 'PUT',
-            data: data,
-            dataType: 'json',
-            success: function(results) {
-              window.location.reload();
-            },
-            error: function(xhr) {
-              $('#save-fail').show();
-            }
-          });
-        } catch(e) {
-          console.error(e);
-        }
+        window.case_settings.save_settings();
+
         return false;
       });
 
@@ -2426,8 +2473,8 @@
         $('.loading-panel').show();
         $('.processing-buttons').show();
         var send_type = $("input[name=send_type]:checked").val();
-        try {
-          $.ajax({
+
+        $.ajax({
             url: '{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which="") }}' + send_type,
             method: 'POST',
             dataType: 'json',
@@ -2447,13 +2494,28 @@
 
             }
           });
-        } catch(e) {
-          console.error(e);
-        }
+
+
         return false;
-      })
+      });
 
+        // http://stackoverflow.com/questions/1391278/contenteditable-change-events
+        // Trigger a change event on the contenteditable fields for handling simplicity
+        $('body').on('focus', '[contenteditable]', function() {
+            var $this = $(this);
+            $this.data('before', $this.html());
+            return $this;
+        }).on('blur keyup paste input', '[contenteditable]', function() {
+            var $this = $(this);
+            if ($this.data('before') !== $this.html()) {
+                $this.data('before', $this.html());
+                $this.trigger('change');
+            }
+            return $this;
+        });
 
+        // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change
+        case_settings.is_data_dirty(false);
     });
 
     </script>

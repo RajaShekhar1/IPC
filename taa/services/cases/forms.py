@@ -166,15 +166,15 @@ class NewCaseEnrollmentPeriodForm(Form):
 
 class SelfEnrollmentSetupForm(Form):
     CASE_TARGETED = ('case-targeted', 'Targeted (specific for each person)')
-    CASE_GENERIC = ('case-generic', 'Generic (same link for everyone)')
-    self_enrollment_type = SelectField('Link type', choices=[])
+    CASE_GENERIC = ('case-generic', 'Generic only (same link for everyone)')
+    self_enrollment_type = SelectField('Link type', choices=[CASE_GENERIC, CASE_TARGETED])
     use_email = BooleanField('Enabled')
-    email_sender_name = StringField('Sender Name',
+    email_sender_name = StringField('Targeted Sender Name',
                                     [validators.InputRequired()])
-    email_sender_email = StringField('Sender Email',
+    email_sender_email = StringField('Targeted Sender Email',
                                      [validators.InputRequired(),
                                       validators.Email()])
-    email_greeting_salutation = StringField('Greeting', [])
+    email_greeting_salutation = StringField('Targeted Email Greeting', [])
     email_greeting_type = SelectField('', choices=[
         (SelfEnrollmentSetup.EMAIL_GREETING_FIRST_NAME, "First Name (\"John\")"),
         (SelfEnrollmentSetup.EMAIL_GREETING_FULL_NAME, "First & Last Name (\"John Doe\")"),
@@ -182,25 +182,11 @@ class SelfEnrollmentSetupForm(Form):
         (SelfEnrollmentSetup.EMAIL_GREETING_TITLE_LAST, "Title & Last Name (\"Mr./Ms. Doe\")"),
         (SelfEnrollmentSetup.EMAIL_GREETING_BLANK, "Leave blank"),
     ])
-    email_subject = StringField('Subject',
+    email_subject = StringField('Targeted Email Subject',
                                      [validators.InputRequired()])
 
-    email_message = EditableField('Email Message', [validators.InputRequired()])
+    email_message = EditableField('Targeted Email Message', [validators.InputRequired()])
     use_landing_page = BooleanField('Enabled')
     page_title = StringField('Title', [validators.InputRequired()])
     page_text = EditableField('Message', [validators.InputRequired()])
-    created_by = HiddenField('')
 
-    def __init__(self, *args, **kwargs):
-        Form.__init__(self, *args, **kwargs)
-        type_choices = []
-        case = kwargs.get('case')
-
-        if case.census_records is None:
-            # Case-based generic
-            type_choices.append(self.CASE_GENERIC)
-        else:
-            # Case-based targeted or generic
-            type_choices.append(self.CASE_TARGETED)
-            type_choices.append(self.CASE_GENERIC)
-        self.self_enrollment_type.choices = type_choices

@@ -144,7 +144,7 @@ if __name__ == "__main__":
     form = AdditionalReplacementPoliciesForm(test_recipients, enrollment_data=EnrollmentDataWrap(dict(
         agent_data=dict(company_name="DelMar SD"),
         employee=dict(first="Test", last="Employee", ssn="123-12-1234")
-    ), None), additional_policies=[dict(
+    ), None, None), additional_policies=[dict(
         name="Test Policy",
         policy_number="123415",
         insured="Joe Johnson",
