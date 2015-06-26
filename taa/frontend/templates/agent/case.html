@@ -1891,6 +1891,8 @@
                                     self.save_settings();
                                 }},
                                 danger: {label: "Discard Changes", className: 'btn-danger', callback: function() {
+                                    // disable the page unload check
+                                    self.is_data_dirty(false);
                                     window.location.reload();
                                 }},
                                 cancel: {label: "Cancel", className: 'btn-default', callback: function() {}}
