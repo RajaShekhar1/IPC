@@ -391,7 +391,7 @@
                                                                           <div class="col-sm-9">
                                                                             <div class="">
                                                                               <p class="well well-sm">
-                                                                                  <strong><a target="_blank" href="{{ setup.links[0].url }}">{{ setup.links[0].url }}</a></strong>
+                                                                                  <strong><a target="_blank" href="{{ generic_link }}">{{ generic_link }}</a></strong>
                                                                               </p>
                                                                               <p class="alert alert-info">
                                                                                 You must send the generic enrollment link through your usual email program.
@@ -1613,11 +1613,24 @@
             });
 
             self.is_active.subscribe(function(value) {
+
                 if (value && !self.can_activate_case()) {
                     bootbox.alert("Cannot activate case for enrollment until settings are complete.");
                     self.is_active(false);
                 }
+
+                self.toggle_enrollment_buttons();
             });
+
+            self.toggle_enrollment_buttons = function() {
+                // If the case is not active, we must remove enrollment buttons on the census.
+                if (self.is_active()) {
+                    $("button.enroll-employee").prop('disabled', false);
+                } else {
+                    $("button.enroll-employee").prop('disabled', true)
+                }
+            };
+            self.toggle_enrollment_buttons();
 
             self.switch_label = ko.computed(function() {
                 if (self.is_active()) {
@@ -1935,6 +1948,7 @@
                         function(table) {
                             // This is called if there is data; enable download button
                             window.case_settings.has_census_data(true);
+                            window.case_settings.toggle_enrollment_buttons();
 
                             case_management.init_status_filter(table);
                             case_management.init_alphabet_search(table);

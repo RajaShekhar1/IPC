@@ -874,6 +874,16 @@ class SelfEnrollmentLinkService(DBService):
             db.session.commit()
         return link.self_enrollment_setup, link.census_record
 
+    def get_generic_link(self, case):
+        link = db.session.query(SelfEnrollmentLink
+            ).filter_by(census_record_id=None
+            ).first()
+
+        if not link:
+            return None
+        else:
+            return link.url
+
 
 class SelfEnrollmentEmailService(DBService):
     __model__ = SelfEnrollmentEmailLog
