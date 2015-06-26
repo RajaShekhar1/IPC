@@ -42,7 +42,7 @@
                     </thead>
                     <tbody>
                         {% for case in agent_cases %}
-                            <tr data-case-id="{{ case.id }}" data-case-active="{{ case.active }}">
+                            <tr data-case-id="{{ case.id }}" data-case-active="{{ case.can_enroll() }}">
                                 <td>{{ case.company_name }}</td>
                                 <td>{{ case.format_location() }}</td>
                                 <td>{{ case.format_owner_name() }}</td>

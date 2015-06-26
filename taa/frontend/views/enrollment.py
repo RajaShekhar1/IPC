@@ -194,6 +194,8 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
 def self_enrollment(company_name, uuid):
     setup, census_record = self_enrollment_link_service.get_self_enrollment_data_for(uuid,
                                                                                      current_user.is_anonymous())
+    case = self_enrollment_link_service.get_case_for_link(uuid)
+
     vars = {'is_valid': False, 'allowed_states': []}
     if setup is not None:
         session['is_self_enroll'] = True
@@ -233,6 +235,20 @@ def self_enrollment(company_name, uuid):
             'selected_state': selected_state,
             'selected_city': selected_city,
         })
+    elif case:
+        vars.update({
+            'page_title': 'Enrollment service for {} not available'.format(case.company_name),
+            'error_message': '''We're sorry for the inconvenience, but {} is not currently accepting benefit enrollments.<br><br>
+            Please contact your enrollment or benefit representative if you have any questions.'''.format(case.company_name)
+
+        })
+    else:
+        vars.update({
+            'page_title': 'Enrollment service not available',
+            'error_message': '''We're sorry for the inconvenience, but the link you have followed does not permit enrollment at this time.<br><br>
+            Please contact your enrollment or benefit representative if you have any questions.'''
+        })
+
     return render_template('enrollment/landing_page.html', **vars)
 
 # Begin application from self-enrollment landing page.

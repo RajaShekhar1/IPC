@@ -71,10 +71,7 @@ class CaseService(DBService):
         return self.search_cases(by_agent=agent.id, **kwargs)
 
     def is_enrolling(self, case):
-        return case.active and any(
-            period.currently_active()
-            for period in self.get_enrollment_periods(case)
-        )
+        return case.can_enroll()
 
     def get_most_recent_enrollment_period(self, case):
         periods = self.get_enrollment_periods(case)
@@ -116,7 +113,7 @@ class CaseService(DBService):
         return self.enrollment_periods.validate_for_case(case, data)
 
     def get_enrollment_periods(self, case):
-        return self.enrollment_periods.get_all_for_case(case)
+        return case.enrollment_periods
 
     def get_case_enrollment_period_data(self, case):
         # Return a dict for populating the form
@@ -369,9 +366,6 @@ class CaseEnrollmentPeriodsService(DBService):
         date = dateutil.parser.parse(d)
         # Strip time
         return datetime_date(date.year, date.month, date.day)
-
-    def get_all_for_case(self, case):
-        return case.enrollment_periods
 
     def remove_all_for_case(self, case):
         self.query().filter(CaseEnrollmentPeriod.case == case).delete()

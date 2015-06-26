@@ -177,6 +177,19 @@ class SelfEnrollmentLink(SelfEnrollmentLinkSerializer, db.Model):
     emails = db.relationship('SelfEnrollmentEmailLog', backref='link')
 
 
+    def is_active(self):
+        return self.is_linked() and self.is_case_active() and self.is_self_enroll_active()
+
+    def is_self_enroll_active(self):
+        return self.self_enrollment_setup.case.is_self_enrollment
+
+    def is_case_active(self):
+        return self.self_enrollment_setup.case.can_enroll()
+
+    def is_linked(self):
+        return self.self_enrollment_setup and self.self_enrollment_setup.case
+
+
 class SelfEnrollmentEmailLogSerializer(JsonSerializable):
     __json_hidden__ = ['agent', 'census_record', 'link']
 
