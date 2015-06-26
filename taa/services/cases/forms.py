@@ -167,7 +167,7 @@ class NewCaseEnrollmentPeriodForm(Form):
 class SelfEnrollmentSetupForm(Form):
     CASE_TARGETED = ('case-targeted', 'Targeted (specific for each person)')
     CASE_GENERIC = ('case-generic', 'Generic only (same link for everyone)')
-    self_enrollment_type = SelectField('Link type', choices=[])
+    self_enrollment_type = SelectField('Link type', choices=[CASE_GENERIC, CASE_TARGETED])
     use_email = BooleanField('Enabled')
     email_sender_name = StringField('Targeted Sender Name',
                                     [validators.InputRequired()])
@@ -191,16 +191,3 @@ class SelfEnrollmentSetupForm(Form):
     page_text = EditableField('Message', [validators.InputRequired()])
     created_by = HiddenField('')
 
-    def __init__(self, *args, **kwargs):
-        Form.__init__(self, *args, **kwargs)
-        type_choices = []
-        case = kwargs.get('case')
-
-        if case.census_records is None:
-            # Case-based generic
-            type_choices.append(self.CASE_GENERIC)
-        else:
-            # Case-based targeted or generic
-            type_choices.append(self.CASE_TARGETED)
-            type_choices.append(self.CASE_GENERIC)
-        self.self_enrollment_type.choices = type_choices

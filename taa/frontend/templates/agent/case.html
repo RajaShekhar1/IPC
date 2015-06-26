@@ -383,7 +383,7 @@
 
                                                                         <h3 class="header lighter blue">Self-enrollment type</h3>
                                                                         <div class="form-group self-enroll self-enroll-type">
-                                                                          {{ render_field_with_errors(form.self_enrollment_type) }}
+                                                                          {{ render_field_with_errors(form.self_enrollment_type, **{'data-bind': 'value: self_enrollment_type'}) }}
                                                                         </div>
                                                                         <h3 class="header lighter blue">Enrollment Email</h3>
                                                                         <div class="form-group self-enroll">
@@ -512,11 +512,11 @@
                                                     <i class="ace-icon glyphicon glyphicon-download-alt"></i>
                                                         Download Census
                                                 </a>
-                                                <a  id="add-to-census-btn" class="btn btn-primary pull-right">
+                                                <a  id="add-to-census-btn" class="btn btn-primary pull-right" data-bind="visible: is_active">
                                                     <i class="ace-icon glyphicon glyphicon-plus"></i>
                                                         New Enrollment
                                                 </a>
-                                                <button data-bind="visible: is_self_enrollment()" type="button" class="btn btn-warning pull-right" data-toggle="modal" data-target="#email-target-links-modal" >
+                                                <button data-bind="visible: is_self_enrollment() && is_active() && has_census_data() && self_enrollment_type() == 'case-targeted'" type="button" class="btn btn-warning pull-right" data-toggle="modal" data-target="#email-target-links-modal" >
                                                     <i class="ace-icon fa fa-envelope"></i>
                                                     Email Enroll
                                                 </button>
@@ -526,7 +526,7 @@
                                     <div class="widget-body">
                                         <div class="widget-main">
 
-                                            <div class="row">
+                                            <div class="row" data-bind='visible: has_census_data'>
                                                 <div class="col-xs-12">
                                                     <label>Enrollment City: <input type='text' data-bind="value: enrollment_city_override"></label>
                                                     <label>Enrollment State: <limited-state-select params="limiter: state_product_override_limiter"></limited-state-select></label>
@@ -1221,6 +1221,10 @@
                     census_errors_panel.error_records(resp.data.errors);
                     census_errors_panel.num_data_records(resp.data.records.length);
                     show_success_panel();
+
+                    // Short-term fix: reload page
+                    window.location.reload();
+
                     // Update the datatable
                     case_management.refresh_census_table({{ case.id }},"{{ url_for("cases.census_records", case_id=case.id) }}",
                                                          "#census-records-table", "#census-table-loading");
@@ -1477,6 +1481,7 @@
                             function(result) { self.is_self_enrollment(!result); });
                 }
             });
+            self.self_enrollment_type = ko.observable(case_data.self_enrollment_type);
 
             // Make sure there is at least one open enrollment period
             if (!self.get_open_enrollment_period()) {
