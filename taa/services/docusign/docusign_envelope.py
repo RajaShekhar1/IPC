@@ -33,7 +33,7 @@ agent_service = AgentService()
 
 
 
-def create_envelope_and_get_signing_url(wizard_data, census_record):
+def create_envelope_and_get_signing_url(wizard_data, census_record, case):
 
     enrollment_data = EnrollmentDataWrap(wizard_data, census_record)
 
@@ -44,7 +44,7 @@ def create_envelope_and_get_signing_url(wizard_data, census_record):
 
     # If FPP Product, use the new docusign code, otherwise use old path
     if is_fpp:
-        return create_fpp_envelope_and_fetch_signing_url(enrollment_data, census_record.case)
+        return create_fpp_envelope_and_fetch_signing_url(enrollment_data, case)
     else:
         return old_create_envelope_and_get_signing_url(enrollment_data)
 
@@ -239,12 +239,16 @@ class EnrollmentDataWrap(object):
         # TODO: need to get proper agent for self-enroll.
         if not flask.has_request_context():
             return "(TEST)"
+        if 'signing_name' not in user.custom_data:
+            return user.full_name
         return user.custom_data["signing_name"]
 
     def get_agent_code(self):
         # TODO: need to get proper agent for self-enroll.
         if not flask.has_request_context():
             return "(TEST)"
+        if 'agent_code' not in user.custom_data:
+            return "HOME OFFICE"
         return user.custom_data["agent_code"]
 
     def get_employer_name(self):

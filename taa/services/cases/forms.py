@@ -189,5 +189,4 @@ class SelfEnrollmentSetupForm(Form):
     use_landing_page = BooleanField('Enabled')
     page_title = StringField('Title', [validators.InputRequired()])
     page_text = EditableField('Message', [validators.InputRequired()])
-    created_by = HiddenField('')
 

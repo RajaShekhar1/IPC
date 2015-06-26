@@ -300,7 +300,7 @@ def submit_wizard_data():
         wizard_results, census_record, agent)
     if not wizard_results.get('did_decline'):
         # Hand off wizard_results to docusign
-        is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results, census_record)
+        is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results, census_record, case)
         # Return the redirect url or error
         resp = {'error': is_error,
                 'error_message': error_message,
