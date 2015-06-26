@@ -17,7 +17,7 @@ from taa import mandrill_flask
 from taa.core import DBService
 from taa.core import db
 from models import (EnrollmentApplication, EnrollmentApplicationCoverage,
-                    SelfEnrollmentEmailLog, SelfEnrollmentLink)
+                    SelfEnrollmentEmailLog, SelfEnrollmentLink, SelfEnrollmentSetup)
 
 from taa.services.cases import CaseService
 from taa.services.products import ProductService
@@ -877,6 +877,7 @@ class SelfEnrollmentLinkService(DBService):
     def get_generic_link(self, case):
         link = db.session.query(SelfEnrollmentLink
             ).filter_by(census_record_id=None
+            ).filter(SelfEnrollmentLink.self_enrollment_setup.has(SelfEnrollmentSetup.case_id==case.id)
             ).first()
 
         if not link:
