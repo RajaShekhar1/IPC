@@ -50,7 +50,7 @@ var case_management = (function() {
                 table_settings.aaData = resp.data;
                 table.wrap("<div class='dataTables_borderWrap' />").dataTable(table_settings);
                 if (init_callback !== undefined) {
-                    init_callback(table);
+                    init_callback(table, resp.data);
                 }
             } else if (no_data_cb !== undefined) {
                 no_data_cb();

@@ -1,0 +1,31 @@
+{% block content %}
+<div class="self-enroll self-enroll-email">
+  {{ render_field_with_errors(form.email_sender_name, default=agent_name, class_="form-control") }}
+  {{ render_field_with_errors(form.email_sender_email, default=agent_email, class_="form-control") }}
+  {{ render_field_with_errors(form.email_subject, default=default_email_subject, class_="form-control") }}
+
+  <div class="form-group">
+    <div class="col-sm-3 control-label">
+      <label for="email_greeting_salutation">Targeted Email Greeting</label>
+    </div>
+    <div class="col-sm-9">
+      <div class="row">
+        <div class="col-xs-3">
+          {{ form.email_greeting_salutation(placeholder="Optional Salutation", class_="form-control") }}
+        </div>
+        <div class="col-xs-9">
+          {{ form.email_greeting_type(class_="form-control") }}
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+  {{ render_field_with_errors(form.email_message, class_='wysiwyg-editor email_message', default=default_email_message, **{'data-bind':"wysiwyg: 'simple'"}) }}
+  <div class="col-xs-9 col-xs-offset-3">
+    <a id="reset-email-message" class="btn btn-mini pull-right">Reset to default <span class="hidden-sm hidden-xs">message & subject</span></a>
+  </div>
+</div>
+{% endblock %}
+
