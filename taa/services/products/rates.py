@@ -132,18 +132,19 @@ class Rates(object):
 
     def _process_data(self, data, product_code, payment_mode, type_, smoker):
         reader = csv.reader(data)
-        header = map(intify, reader.next())
+        header = map(floatify, reader.next())
         product_key = Rates._get_product_key(product_code, smoker)
         self._init_dict(product_key, payment_mode, type_)
         for line in reader:
             for index, key in enumerate(
-                    itertools.product([intify(line[0])], header[1:]), start=1):
+                    itertools.product([floatify(line[0])], header[1:]), start=1):
+                
                 self._rates[product_key][payment_mode][type_][key] = {
                     TYPE_PREMIUM:
                         floatify(line[index]) if type_ == TYPE_COVERAGE
                         else key[1],
                     TYPE_COVERAGE:
-                        intify(line[index]) if type_ == TYPE_PREMIUM else key[1]
+                        floatify(line[index]) if type_ == TYPE_PREMIUM else key[1]
                 }
 
     def get(self, product_code, payment_mode, age, smoker=None):
@@ -152,6 +153,7 @@ class Rates(object):
             # Children rates/premiums are indexed with age as -1
             age = -1
         product_key = Rates._get_product_key(product_code, smoker)
+
         for type_ in (TYPE_PREMIUM, TYPE_COVERAGE):
             if type_ not in result:
                 result[type_] = []
