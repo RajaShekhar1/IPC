@@ -90,6 +90,14 @@ def in_person_enrollment():
 
 def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False):
     session['active_case_id'] = case.id
+    
+    payment_mode = case.payment_mode
+    if is_payment_mode_changeable(payment_mode):
+        # User can select payment mode
+        payment_mode_choices = get_payment_modes(True)
+    else:
+        # Payment mode is set on case and cannot be changed
+        payment_mode_choices = get_payment_modes(single=payment_mode)
 
     if record_id is not None:
         # Enrolling from a case census record
@@ -118,13 +126,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         employee_data = record.get_employee_data()
         spouse_data = record.get_spouse_data()
         children_data = record.get_children_data()
-        payment_mode = record.case.payment_mode
-        if is_payment_mode_changeable(payment_mode):
-            # User can select payment mode
-            payment_mode_choices = get_payment_modes(True)
-        else:
-            # Payment mode is set on case and cannot be changed
-            payment_mode_choices = get_payment_modes(single=payment_mode)
+
     else:
         # Generic case-link enrollment
         state = data['enrollmentState']
@@ -133,8 +135,6 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         group_number = data['groupNumber']
         product_id = data['productID']
         product = product_service.get(product_id)
-        payment_mode = None
-        payment_mode_choices = get_payment_modes(True)
         products = [product] if product else []
         employee_data = dict(
             first=data['eeFName'],
