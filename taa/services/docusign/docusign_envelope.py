@@ -211,7 +211,7 @@ class EnrollmentDataWrap(object):
 
     def __setitem__(self, item, val):
         self.data[item] = val
-    
+
     def __contains__(self, item):
         return item in self.data
 
@@ -240,39 +240,48 @@ class EnrollmentDataWrap(object):
             return self.get_employee_email()
 
     def get_agent_signing_name(self):
-        # TODO: need to get proper agent for self-enroll.
         if not flask.has_request_context():
             return "(TEST)"
 
-        # TODO: Need to store all agent custom_data in database so we can get to
-        #   it when not logged in (ie, self enroll)
-        if not user or user.is_anonymous():
+        agent = self.get_signing_agent()
+        if not agent:
             return ""
 
-        if 'signing_name' not in user.custom_data:
-            return user.full_name
-        return user.custom_data["signing_name"]
+        # Get stormpath user for agent
+        agent_user = agent_service.get_agent_stormpath_account(agent)
+        if not agent_user:
+            return ""
+
+        if 'signing_name' not in agent_user.custom_data:
+            return agent_user.full_name
+
+        return agent_user.custom_data["signing_name"]
 
     def get_agent_code(self):
-        # TODO: need to get proper agent for self-enroll.
         if not flask.has_request_context():
             return "(TEST)"
 
-        # TODO: Need to store all agent custom_data in database so we can get to
-        #   it when not logged in (ie, self enroll)
-        if not user or user.is_anonymous():
+        agent = self.get_signing_agent()
+        if not agent:
             return ""
-            #return self.case.owner_agent.
 
-        if 'agent_code' not in user.custom_data:
-            return "HOME OFFICE"
-        return user.custom_data["agent_code"]
+        return agent.agent_code
+
+    def get_signing_agent(self):
+        if self.is_self_enroll():
+            # TODO: need to get proper agent for self-enroll.
+            agent = self.case.owner_agent
+            if not agent:
+                # This is not good - the case should not be active without an owner agent
+                return None
+
+            return agent
+        else:
+            return agent_service.get_logged_in_agent()
+
 
     def get_employer_name(self):
-        if self.census_record and self.census_record.case:
-            return self.census_record.case.company_name
-        else:
-            return self.data['agent_data']["company_name"]
+        return self.case.company_name
 
     def get_product_code(self):
         return self.data['product_type']
