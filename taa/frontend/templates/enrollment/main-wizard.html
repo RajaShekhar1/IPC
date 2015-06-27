@@ -572,12 +572,11 @@
                             class="text-warning bigger-120">read</span> to you by your agent at the time he/she takes your application.</span>
                     </div>
                     <div class="col-xs-12 col-sm-3 btn-group no-padding-right">
-    
                         <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                             question: new GlobalSOHQuestion('existing_insurance'), 
                             val: 'Yes', 
-                            highlight: 'flag',
-                            onclick: window.handle_existing_insurance_modal
+                            highlight: $root.get_has_existing_question_highlight(),
+                            onclick: $root.select_has_existing_insurance
                             }">
                             Yes
                         </button>
@@ -589,7 +588,6 @@
                             }">
                             No
                         </button>
-    
                     </div>
                 </div>
     
@@ -603,8 +601,8 @@
                         <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                             question: new GlobalSOHQuestion('replace_insurance'), 
                             val: 'Yes', 
-                            highlight: 'flag',
-                            onclick: window.handle_replacement_insurance_modal
+                            highlight: $root.get_replacing_question_highlight(),
+                            onclick: $root.select_replacing_insurance
                             }">
                             Yes
                         </button>
@@ -620,10 +618,18 @@
                 </div>
             
             </div>
+
+            <div data-bind="slideDownIf: should_show_NAIC_replacement_notice">
+                <div class="row">
+                    <div class="col-xs-12">
+                        Your enrollment professional has a copy of the "IMPORTANT NOTICE: REPLACEMENT OF LIFE INSURANCE OR ANNUITY" available upon request.
+                    </div>
+                </div>
+            </div>
             
             <br>
 
-            <div data-bind="slideDownIf: existing_insurance() || replacing_insurance()">
+            <div data-bind="slideDownIf: should_show_replacement_form">
                 <div class="modal-header">
                     <div class="form-group row">
                         <div class="col-xs-12 col-sm-9">
@@ -631,13 +637,13 @@
                                 &nbsp;&nbsp;
                                 <label class="blue">
                                     <input name="replacement_read_aloud" value="Y" type="radio" class="inline ace"
-                                           data-bind="checked: replacement_read_aloud, checkedValue: true"/>
+                                           data-bind="checked: replacement_read_aloud, checkedValue: true, disabled: is_self_enroll()"/>
                                     <span class="lbl"> Y &nbsp; </span>
                                 </label>
 
                                 <label class="blue">
                                     <input name="replacement_read_aloud" value="N" type="radio" class="inline ace"
-                                           data-bind="checked: replacement_read_aloud, checkedValue: false"/>
+                                           data-bind="checked: replacement_read_aloud, checkedValue: false, disabled: is_self_enroll()"/>
                                     <span class="lbl"> N</span>
                                 </label>
                             </small>
@@ -2251,7 +2257,7 @@
 
     <hr/>
     <div class="row-fluid wizard-actions">
-        <button class="btn btn-default btn-xs pull-left" data-bind="click: exit_application">
+        <button class="btn btn-default btn-xs pull-left" data-bind="click: exit_application, visible: is_in_person_application">
             Cancel 
         </button>
         
@@ -2423,6 +2429,30 @@
         </div>
         <!-- /.modal-dialog -->
     </div>
+
+    <div id="warning_modal" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">
+                      <span data-bind="text: warning_modal_title"></span>
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        <span class="bigger-120" data-bind="text: warning_modal_body"></span>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+
 
 {% endblock %}
 

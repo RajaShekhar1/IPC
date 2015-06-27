@@ -877,16 +877,19 @@ class SelfEnrollmentLinkService(DBService):
 
         return link.self_enrollment_setup.case
 
-    def get_generic_link(self, case):
+    def get_generic_link(self, prefix, case):
         link = db.session.query(SelfEnrollmentLink
             ).filter_by(census_record_id=None
             ).filter(SelfEnrollmentLink.self_enrollment_setup.has(SelfEnrollmentSetup.case_id==case.id)
             ).first()
 
-        if not link:
+        if not link and not case.is_self_enrollment:
             return None
-        else:
-            return link.url
+
+        if not link:
+            link = self.generate_link(prefix, case, record=None)
+
+        return link.url
 
 
 class SelfEnrollmentEmailService(DBService):

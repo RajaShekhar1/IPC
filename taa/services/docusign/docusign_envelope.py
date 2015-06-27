@@ -209,6 +209,9 @@ class EnrollmentDataWrap(object):
         "Allow dict access to raw data"
         return self.data[item]
 
+    def __setitem__(self, item, val):
+        self.data[item] = val
+    
     def __contains__(self, item):
         return item in self.data
 
