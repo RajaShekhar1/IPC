@@ -46,7 +46,7 @@ class FPPReplacementFormTemplate(DocuSignServerTemplate):
                 DocuSignTextTab('policy_replaced_or_financing', replaced_or_financing),
                 DocuSignTextTab('policy_reason', policy['replacement_reason']),
             ]
-        else:
+        elif len(self.data['replacement_policies']) > 1:
             tabs.append(DocuSignTextTab('additionalPoliciesNotice', 'SEE ATTACHED'))
 
         # Format tabs for docusign

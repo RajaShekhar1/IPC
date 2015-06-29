@@ -5,7 +5,7 @@ from flask import (
     redirect,
     request,
 )
-from flask.ext.stormpath import groups_required, StormpathError
+from flask.ext.stormpath import groups_required, StormpathError, current_user
 from stormpath.client import Client as SPClient
 
 from taa import (
@@ -55,7 +55,7 @@ def get_stormpath_application():
 @groups_required(['admins', 'home_office'], all=False)
 def admin():
     accounts = []
-    
+
     for acc in search_stormpath_accounts():
         accounts.append(
             {'fname': acc.given_name,
@@ -64,7 +64,8 @@ def admin():
              'agency': acc.custom_data.get('agency'),
              'agent_code': acc.custom_data.get('agent_code'),
              'signing_name': acc.custom_data.get('signing_name'),
-             'status': "Activated" if acc.custom_data.get('activated') else "Not Activated"
+             'status': "Activated" if acc.custom_data.get('activated') else "Not Activated",
+             'is_user_admin': agent_service.is_user_admin(current_user),
          })
         #print dumps(dict(acc.custom_data), indent=2, sort_keys=True)
         
@@ -74,7 +75,7 @@ def admin():
 
 
 @app.route('/edituser', methods = ['GET', 'POST'])
-@groups_required(['admins', 'home_office'], all=False)
+@groups_required(['admins'], all=False)
 def updateUser():
 
     user_email = request.args['user']

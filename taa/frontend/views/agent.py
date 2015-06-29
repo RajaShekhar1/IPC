@@ -157,7 +157,7 @@ Please follow the instructions carefully on the next page, stepping through the 
     vars['agent_id'] = agent_id
     vars['agent_name'] = agent_name
     vars['agent_email'] = agent_email
-    vars['generic_link'] = SelfEnrollmentLinkService().get_generic_link(case)
+    vars['generic_link'] = SelfEnrollmentLinkService().get_generic_link(request.url_root, case)
 
     return render_template('agent/case.html', **vars)
 

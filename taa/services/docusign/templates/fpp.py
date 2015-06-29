@@ -22,7 +22,32 @@ class FPPTemplate(DocuSignServerTemplate):
         return self.data.get_num_covered_children() > 2
 
     def is_replacement_form_needed(self):
-        return self.data['replacing_insurance'] or self.data['existing_insurance']
+        """
+        Implement the slightly complicated rules dictating whether or not the replacement form
+        for the appropriate state will be shown, based mostly on what state the
+        enrollment application was taken in.
+        :return: True if the form is needed.
+        """
+
+        # These states don't do replacements
+        if self.data['enrollState'] in ['KY', 'KS', 'CT', 'DC', 'ND', 'VI']:
+            return False
+
+        # NAIC states and MI have a special rule if the replacement question is 'No'
+        from taa.services.products.product_forms import generic_fpp_replacement_form
+        if (self.data['enrollState'] in (generic_fpp_replacement_form.statecodes + ['MI'])
+                and not self.data['replacing_insurance']):
+            self.data['replacement_is_terminating'] = False
+            self.data['replacement_using_funds'] = False
+            self.data['replacement_policies'] = []
+            return True
+
+        # Self-enroll needs to be given the form if the existing question is Yes.
+        if self.data.is_self_enroll() and self.data['existing_insurance']:
+            return True
+
+        # Otherwise just include form if replacing insurance question is yes.
+        return self.data['replacing_insurance']
 
     def is_additional_replacment_policy_attachment_needed(self):
         return len(self.data['replacement_policies']) > 1

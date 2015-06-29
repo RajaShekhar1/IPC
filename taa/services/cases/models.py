@@ -29,6 +29,8 @@ class CaseSerializer(JsonSerializable):
         'products': lambda products, _: [p for p in products],
         'enrollment_periods': lambda periods, _: [p for p in periods],
         'partner_agents': lambda agents, _: [a for a in agents],
+         # When serializing active, make sure we take into account the enrollment period.
+        'active': lambda _, case: case.can_enroll()
     }
     __json_hidden__ = ['census_records', 'enrollment_records']
 
@@ -67,15 +69,6 @@ class Case(CaseSerializer, db.Model):
     self_enrollment_setup = db.relationship('SelfEnrollmentSetup',
                                             uselist=False, backref='case')
 
-    def get_template_data(self):
-        return dict(
-            id=self.id,
-            company=self.company_name,
-            state=self.situs_state,
-            product=self.products[0].name if self.products else '',
-            active=self.active
-        )
-
     def get_product_names(self):
         return ','.join(p.name for p in self.products)
 
@@ -94,7 +87,10 @@ class Case(CaseSerializer, db.Model):
         return "{0}, {1}".format(self.situs_city, self.situs_state)
 
     def format_is_active(self):
-        return "Active" if self.active else "Not Active"
+        return "Active" if self.can_enroll() else "Not Active"
+
+    def can_enroll(self):
+        return self.active and any(p.currently_active() for p in self.enrollment_periods)
 
     def format_created_date(self):
         return self.created_date.strftime('%m/%d/%Y')

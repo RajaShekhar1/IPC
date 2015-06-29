@@ -50,11 +50,10 @@
         {% include "enrollment/self_enrollment_disclaimer.html" %}
       </div>
     {% else -%}
-      <h1>Invalid self-enrollment link</h1>
+      <h1>{{ page_title |safe}}</h1>
       <hr>
       <p>
-        We're very sorry for the inconvenience, but the link you have clicked does not currently allow self-enrollment.
-        Please contact your agent if you have any questions.
+        {{ error_message|safe }}
       </p>
     {% endif -%}
 {% endblock %}

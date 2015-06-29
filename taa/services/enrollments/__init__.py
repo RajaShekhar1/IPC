@@ -851,22 +851,14 @@ class SelfEnrollmentLinkService(DBService):
         return link
 
     def get_self_enrollment_data_for(self, uuid, increment_clicks=True):
-        link = db.session.query(SelfEnrollmentLink).filter(
-            SelfEnrollmentLink.url.endswith(uuid)).first()
-        if link is None:
-            # Link no longer exists
-            return None, None
-
-        # make sure the link is setup properly
-        if not link.self_enrollment_setup.case:
-            return None, None
-
-        if not link.self_enrollment_setup.case.active:
-            # Case is not active
-            return None, None
-
-        if not link.self_enrollment_setup.case.is_self_enrollment:
-            # Self-enrollment is not active
+        """
+        :param uuid: the unique id at the end of self-enroll links
+        :param increment_clicks: whether or not to count this as a page view
+        :return: The enrollment setup object and the linked census record, if any
+        """
+        link = self.get_link_by_uuid(uuid)
+        if link is None or not link.is_active():
+            # Link no longer exists or is not active.
             return None, None
 
         if increment_clicks:
@@ -874,16 +866,30 @@ class SelfEnrollmentLinkService(DBService):
             db.session.commit()
         return link.self_enrollment_setup, link.census_record
 
-    def get_generic_link(self, case):
+    def get_link_by_uuid(self, uuid):
+        return db.session.query(SelfEnrollmentLink).filter(
+            SelfEnrollmentLink.url.endswith(uuid)).first()
+
+    def get_case_for_link(self, uuid):
+        link = self.get_link_by_uuid(uuid)
+        if not link or not link.is_linked():
+            return None
+
+        return link.self_enrollment_setup.case
+
+    def get_generic_link(self, prefix, case):
         link = db.session.query(SelfEnrollmentLink
             ).filter_by(census_record_id=None
             ).filter(SelfEnrollmentLink.self_enrollment_setup.has(SelfEnrollmentSetup.case_id==case.id)
             ).first()
 
-        if not link:
+        if not link and not case.is_self_enrollment:
             return None
-        else:
-            return link.url
+
+        if not link:
+            link = self.generate_link(prefix, case, record=None)
+
+        return link.url
 
 
 class SelfEnrollmentEmailService(DBService):

@@ -88,7 +88,6 @@ function WizardUI(defaults) {
     self.is_in_person_application = ko.observable('is_in_person' in defaults && defaults.is_in_person);
     self.is_self_enroll = ko.pureComputed(function() {return !self.is_in_person_application()});
 
-    // Data used on steps 2-5
     self.identityToken = ko.observable("");
     self.identityType = ko.observable("");
     
@@ -97,15 +96,118 @@ function WizardUI(defaults) {
     self.was_state_provided = ("state" in defaults && defaults.state !== null && defaults.state != "XX");
     
     self.company_name = ko.observable(defaults.company_name || "(Unknown Company)");
-    
+
+    // Step 2 data
     self.existing_insurance = ko.observable(null);
     self.replacing_insurance = ko.observable(null);
 
-    self.replacement_read_aloud = ko.observable(null);
+    self.NAIC_AND_MI = ['AK', 'AL', 'AR', 'AZ', 'CO', 'IA', 'LA', 'MD', 'ME', 'MS', 'MT',
+                'NC', 'NE', 'NH', 'NJ', 'NM', 'OH', 'OR', 'RI', 'SC', 'TX', 'UT', 'VA', 'VT',
+                'WI', 'WV', 'MI'];
+
+    self.is_NAIC_OR_MI = function() {
+      return self.insurance_product.is_fpp_product() && _.contains(self.NAIC_AND_MI, self.enrollState);
+    };
+
+    self.is_KY_OR_KS = function() {
+      return self.enrollState == "KY" || self.enrollState == "KS";
+    };
+
+    self.is_CT_DC_ND_VI = function() {
+      return _.contains(['CT', 'DC', 'ND', 'VI'], self.enrollState);
+    };
+
+    self.is_non_NAIC_other = function() {
+      return !(self.is_NAIC_OR_MI() || self.is_KY_OR_KS() || self.is_CT_DC_ND_VI());
+    };
+
+    self.get_has_existing_question_highlight = function() {
+      if (self.is_self_enroll()) {
+        return 'flag';
+      }
+
+      return "checkmark";
+    };
+
+    self.get_replacing_question_highlight = function() {
+      if (self.is_KY_OR_KS()) {
+        return "stop";
+      }
+      if (self.is_CT_DC_ND_VI()) {
+        return "checkmark";
+      }
+
+      return 'flag';
+    };
+
+    self.warning_modal_title = ko.observable("");
+    self.warning_modal_body = ko.observable("");
+    self.show_warning_modal = function(title, body) {
+      self.warning_modal_title(title);
+      self.warning_modal_body(body);
+      $("#warning_modal").modal('show');
+    };
+
+    var default_warning_body = 'STOP: A "yes" response to this question disqualifies you from completing this application in your state.';
+
+    self.select_has_existing_insurance = function() {
+      self.existing_insurance(true);
+    };
+
+    self.select_replacing_insurance = function() {
+      self.replacing_insurance(true);
+
+      if (!self.insurance_product.is_fpp_product() || self.is_KY_OR_KS()) {
+        self.show_warning_modal("Replacement Notice", default_warning_body);
+      }
+    };
+
+    self.should_show_NAIC_replacement_notice = ko.computed(function() {
+      // Show special notice if we are in this category and we say 'No' to the replacement question.
+      return (self.is_NAIC_OR_MI() && self.replacing_insurance() === false);
+    });
+
+    self.should_show_replacement_form = ko.computed(function() {
+      if (!self.insurance_product.is_fpp_product()) {
+        return false;
+      }
+
+      if (self.is_KY_OR_KS() || self.is_CT_DC_ND_VI())
+        return false;
+
+      // Self-enroll is the only way that existing insurance does anything when yes.
+      if (self.is_self_enroll() && self.existing_insurance())
+        return true;
+
+      if (self.should_show_NAIC_replacement_notice())
+        return false;
+
+      return self.replacing_insurance();
+    });
+
+    self.replacement_read_aloud = ko.observable(false);
     self.replacement_is_terminating = ko.observable(null);
     self.replacement_using_funds = ko.observable(null);
 
+    // Watch for self-enroll situation that stops the user from continuing.
+    var self_enroll_stop_message = "This response requires you to speak with your insurance representative directly, and prevents you from continuing enrollment at this time. You may cancel this enrollment session and contact your representative.";
+    self.replacement_is_terminating.subscribe(function() {
+      if (self.is_self_enroll() && self.replacement_is_terminating()) {
+        self.show_warning_modal("Replacement Notice", self_enroll_stop_message);
+      }
+    });
+    self.replacement_using_funds.subscribe(function() {
+      if (self.is_self_enroll() && self.replacement_using_funds()) {
+        self.show_warning_modal("Replacement Notice", self_enroll_stop_message);
+      }
+    });
+
+    // Policy details form
     self.should_show_replacement_details_form = ko.pureComputed(function() {
+        if (self.is_self_enroll()) {
+          // Not allowed to do this for self-enroll.
+          return false;
+        }
         return self.replacement_using_funds() || self.replacement_is_terminating();
     });
 
@@ -2627,7 +2729,7 @@ function handle_existing_insurance_modal() {
         $("#modal_text_soh_warning_title").hide();
 
         $("#modal_text_existing_warning").show();
-        $("#modal_text_existing_warning_remote").hide();
+        //$("#modal_text_existing_warning_remote").hide();
         $("#modal_text_replacement_warning").hide();
         $("#modal_text_soh_warning").hide();
 
@@ -2638,25 +2740,6 @@ function handle_existing_insurance_modal() {
 
     window.ui.existing_insurance(true);
 }
-
-function handle_existing_insurance_modal_remote() {
-    if (ui.insurance_product.is_fpp_product()) {
-
-    } else {
-        $("#modal_text_existing_warning_title").show();
-        $("#modal_text_replacement_warning_title").hide();
-        $("#modal_text_soh_warning_title").hide();
-
-        $("#modal_text_existing_warning").hide();
-        $("#modal_text_existing_warning_remote").show();
-        $("#modal_text_replacement_warning").hide();
-        $("#modal_text_soh_warning").hide();
-
-        $("#health_modal").modal('show');
-        $("#existing_warning_text_remote").show();
-    }
-    window.ui.existing_insurance(true);
-} 
 
 function reset_existing_insurance_warning() {
     window.ui.existing_insurance(false);
@@ -2714,20 +2797,7 @@ function are_health_questions_valid() {
         //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
         return false;
     }
-    if (ui.should_show_other_insurance_questions()
-        && !ui.is_in_person_application()
-        && ((!ui.insurance_product.is_fpp_product()
-            && general_questions_by_id['existing_insurance_remote'].get_val() != "No"
-           ) ||
-            // FPP products can answer yes or no now
-           (
-            ui.insurance_product.is_fpp_product()
-            && general_questions_by_id['existing_insurance_remote'].get_val() === null
-           ))
-        ) {
-        //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
-        return false;
-    }
+
     if (ui.should_show_other_insurance_questions()
         && (
             !ui.insurance_product.is_fpp_product()
@@ -2749,7 +2819,9 @@ function are_health_questions_valid() {
         }
         if (ui.did_select_spouse_coverage() && (
                 ui.has_spouse_been_treated_6_months() === null ||
-                ui.has_spouse_been_disabled_6_months() === null
+                ui.has_spouse_been_disabled_6_months() === null ||
+                // If spouse disabled, cannot continue with app (unless GI)
+                ui.has_spouse_been_disabled_6_months() === true
             )) {
             return false;
         }
@@ -2938,14 +3010,23 @@ function init_validation() {
 
             // validate replacement form
             if (ui.insurance_product.is_fpp_product() &&
-                    (ui.replacing_insurance() || ui.existing_insurance())) {
-
+                    (ui.should_show_replacement_form())) {
                 is_valid &= $('#questions-form').valid();
             }
 
             if (ui.insurance_product.is_fpp_product() &&
                 (ui.replacing_insurance() === null || ui.existing_insurance() === null)) {
                 // These always need to be answered
+                is_valid = false;
+            }
+
+            if (ui.insurance_product.is_fpp_product() && ui.is_KY_OR_KS() && ui.replacing_insurance()) {
+                // Must stop here for these states, no replacements.
+                is_valid = false;
+            }
+            if (ui.insurance_product.is_fpp_product() && ui.is_self_enroll()
+                && (ui.replacement_is_terminating() || ui.replacement_using_funds())) {
+                // can't continue as self-enroll with either of these as a yes.
                 is_valid = false;
             }
 

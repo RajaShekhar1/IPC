@@ -30,6 +30,12 @@ class AgentService(DBService):
                 activated=user.custom_data.get('activated', False),
                 stormpath_url=stormpath_url,
             )
+        else:
+            existing_agent.first = user.given_name
+            existing_agent.last = user.surname
+            existing_agent.email = user.email
+            existing_agent.agent_code = user.custom_data.get('agent_code', "")
+            db.session.commit()
 
         return existing_agent
 
@@ -53,6 +59,16 @@ class AgentService(DBService):
             return {g.name for g in user.groups}
         else:
             return set()
+
+    def get_agent_stormpath_account(self, agent):
+
+        from taa.frontend.views.admin import search_stormpath_accounts
+        agent_account = None
+        for account in search_stormpath_accounts():
+            if account.href == agent.stormpath_url:
+                agent_account = account
+
+        return agent_account
 
     #def get_agent_from_stormpath_account(self, stormpath_account_url):
     #    pass
