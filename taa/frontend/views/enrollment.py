@@ -326,7 +326,7 @@ def submit_wizard_data():
             'redirect': url_for('ds_landing_page',
                                 event='decline',
                                 name=wizard_results['employee']['first'],
-                                type='inperson'
+                                type=wizard_results["agent_data"]["is_in_person"],
                                 )
         }
     data = jsonify(**resp)
