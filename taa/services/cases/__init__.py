@@ -233,7 +233,6 @@ class CaseService(DBService):
         return False
 
     def create_ad_hoc_census_record(self, case, **data):
-        # TODO: move this check up to the specific API that requires it if necessary
         # Ad-hoc records that decline are a special case that have no
         # requirements
         # if 'ssn' not in data:
