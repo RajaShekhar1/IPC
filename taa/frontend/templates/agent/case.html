@@ -1378,8 +1378,21 @@ style="display: none;" data-bind="visible: true">
                       return c.statecode == case_data.situs_state;
                     }));
 
+                    // Overrides for city state when doing an in-person enrollment.
                     self.enrollment_city_override = ko.observable(self.situs_city());
                     self.enrollment_state_override = ko.observable(self.situs_state());
+                    self.get_enrollment_city_override = ko.pureComputed(function() {
+                      if (!self.enrollment_city_override()) {
+                        return "";
+                      }
+                      return self.enrollment_city_override();
+                    });
+                    self.get_enrollment_state_override = ko.pureComputed(function() {
+                      if (!self.enrollment_state_override()) {
+                        return "";
+                      }
+                      return self.enrollment_state_override().statecode;
+                    });
 
                     self.selected_statecode = ko.pureComputed(function(){
                       return (self.situs_state()) ? self.situs_state().statecode : null;
@@ -2131,19 +2144,10 @@ style="display: none;" data-bind="visible: true">
               $("#enrollment").on('click', "button.enroll-employee", function() {
                 var record_id = $(this).attr('data-id');
 
-                var enrollment_state = "";
-                var enrollment_city = "";
-                if (window.case_settings.enrollment_state_override()) {
-                  enrollment_state = window.case_settings.enrollment_state_override().statecode;
-                }
-                if (window.case_settings.enrollment_city_override()) {
-                  enrollment_city = window.case_settings.enrollment_city_override();
-                }
-
                 submit_to_url("{{ url_for('in_person_enrollment') }}", {
                   record_id: record_id,
-                  enrollment_city: enrollment_city,
-                  enrollment_state: enrollment_state
+                  enrollment_city: window.case_settings.get_enrollment_city_override(),
+                  enrollment_state: window.case_settings.get_enrollment_state_override()
                 });
               });
             };
@@ -2301,7 +2305,12 @@ style="display: none;" data-bind="visible: true">
               self.enroll_from_record = function(id) {
                 self.loading_message("Loading Enrollment Application...");
                 self.current_panel(self.PANEL_LOADING);
-                submit_to_url("{{ url_for('in_person_enrollment') }}", {record_id: id});
+
+                submit_to_url("{{ url_for('in_person_enrollment') }}", {
+                  record_id: id,
+                  enrollment_city: window.case_settings.get_enrollment_city_override(),
+                  enrollment_state: window.case_settings.get_enrollment_state_override()
+                });
               }
             };
             /* END: AddToCensusViewModel */
