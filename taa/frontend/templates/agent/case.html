@@ -790,9 +790,9 @@ style="display: none;" data-bind="visible: true">
                       </div>
                       <div class="col-md-9">
                         <select class="form-control" data-bind="value: send_type" name="send_type">
-                          <option data-bind="text: 'employees who have not been sent a link'" value="not-sent"></option>
-                          <option data-bind="text: 'employees who have not applied or declined'" value='not-applied'></option>
-                          <option data-bind="text: 'employees who have declined'" value='declined'></option>
+                          <option data-bind="text: numbers.not_sent()+' employees who have not been sent a link'" value="not-sent"></option>
+                          <option data-bind="text: numbers.not_applied()+' employees who have not applied or declined'" value='not-applied'></option>
+                          <option data-bind="text: numbers.declined()+' employees who have declined'" value='declined'></option>
                         </select>
                       </div>
                     </div>
@@ -1946,8 +1946,7 @@ style="display: none;" data-bind="visible: true">
                           function() {
                             // Called if no data
                             //$(".not-in-census-section").show();
-                          }
-                        );
+                          });
                       }, 0);
 
 
@@ -2342,11 +2341,23 @@ style="display: none;" data-bind="visible: true">
                 not_sent: ko.observable(0),
                 not_applied: ko.observable(0),
                 declined: ko.observable(0)
-              }
+              };
 
-              (function() {
-                window.census_data
-              })()
+              (function wait() {
+                if(window.census_data) {
+                    self.numbers.not_sent(window.census_data.reduce(function addNotSent(acc, app) {
+                      return !app.sent_email ? acc+1 : acc;
+                    },0));
+                    self.numbers.not_applied(window.census_data.reduce(function addNotApplied(acc, app) {
+                      return app.enrollment_status===null ? acc+1 : acc;
+                    },0));
+                    self.numbers.declined(window.census_data.reduce(function addDeclined(acc, app) {
+                      return app.enrollment_status==='declined' ? acc+1 : acc;
+                    },0));
+                } else {
+                    setTimeout(wait, 200);
+                }
+              })();
 
               self.send_type = ko.observable("");
               self.emailSettings = window.case_settings.emailSettings;

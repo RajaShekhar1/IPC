@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from taa import db
 from taa.helpers import JsonSerializable
 
-
 # The product selection for a given case
 case_products = db.Table('case_products', db.metadata,
                          db.Column('case_id', db.Integer,
@@ -188,7 +187,8 @@ class CensusRecordSerializer(JsonSerializable):
         # 'enrollment_applications': lambda apps, _: [a for a in apps]
     }
     __json_add__ = {
-        'enrollment_status': lambda record: record.get_enrollment_status()
+        'enrollment_status': lambda record: record.get_enrollment_status(),
+        'sent_email': lambda record: record.get_sent_email()
     }
     __json_hidden__ = ['case', 'enrollment_applications', 'self_enrollment_links']
 
@@ -196,6 +196,10 @@ class CensusRecordSerializer(JsonSerializable):
         from taa.services.enrollments import EnrollmentApplicationService
         enrollments = EnrollmentApplicationService()
         return enrollments.get_enrollment_status(self)
+
+    def get_sent_email(self):
+        from taa.services.enrollments import SelfEnrollmentEmailService
+        return len(SelfEnrollmentEmailService().get_for_census_record(self)) > 0
 
 
 class CaseCensus(CensusRecordSerializer, db.Model):
