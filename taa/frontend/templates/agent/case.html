@@ -1549,7 +1549,7 @@ style="display: none;" data-bind="visible: true">
                       // enrollment data
                       self.census_data = ko.observable([]);
                       self.has_census_data = ko.pureComputed(function() {
-                          return self.census_data().length > 0
+                          return self.census_data().length > 0;
                       });
 
                       self.is_data_dirty = ko.observable();
