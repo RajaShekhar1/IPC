@@ -1559,8 +1559,7 @@ style="display: none;" data-bind="visible: true">
                       // subscribe to all changes to detect data changes
                       var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
                         self.enrollment_periods, self.situs_city, self.situs_state, self.payment_mode,
-                        self.is_active, self.owner_agent_id, self.is_self_enrollment,
-                        //self.self_enrollment_type
+                        self.is_active, self.owner_agent_id, self.is_self_enrollment
                       ];
                       _.each(self.enrollment_periods(), function(p) {
                         fields.push(p.start_date);

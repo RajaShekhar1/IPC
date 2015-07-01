@@ -147,7 +147,7 @@ class CaseService(DBService):
                            search_text=None, text_columns=None,
                            sorting=None, sort_desc=False, include_enrolled=True,
                            filter_ssn=None, filter_birthdate=None):
-        from taa.services.enrollments.models import EnrollmentApplication
+        from taa.services.enrollments.models import EnrollmentApplication, SelfEnrollmentEmailLog
         query = self.census_records.find(case_id=case.id)
         # Filter enrollment status. Also load in any enrollment data eagerly.
         if include_enrolled == False:
@@ -167,6 +167,10 @@ class CaseService(DBService):
                     ).subqueryload('coverages'
                     ).joinedload('product')
             )
+
+        # Eagerly load the number of sent self-enrollment emails.
+        #CaseCensus.email_logs.any(SelfEnrollmentEmailLog.status == SelfEnrollmentEmailLog.STATUS_SUCCESS)
+
         if filter_ssn:
             query = query.filter(CaseCensus.employee_ssn ==
                                  filter_ssn.replace('-', ''))

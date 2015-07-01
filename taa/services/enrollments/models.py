@@ -202,7 +202,7 @@ class SelfEnrollmentEmailLog(SelfEnrollmentEmailLogSerializer, db.Model):
                         nullable=False)
     census_id = db.Column(db.Integer, db.ForeignKey('case_census.id'),
                           nullable=False)
-    census_record = db.relationship('CaseCensus')
+    census_record = db.relationship('CaseCensus', backref='email_logs')
     agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=False)
     sent_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
     email_to_address = db.Column(db.Unicode)
