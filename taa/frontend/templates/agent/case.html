@@ -797,6 +797,11 @@ style="display: none;" data-bind="visible: true">
                       </div>
                     </div>
                     {% include "agent/self_enroll_email_settings.html" %}
+                    <br />
+                    <br />
+                    <ul class="list-unstyled row" data-bind="foreach: errors">
+                      <li class="alert alert-danger" data-bind="text: $data"></li>
+                    </ul>
                   </div>
                   <div class="loading-panel modal-panel" style="display: none;">
                     <div class="text-center">
@@ -1360,6 +1365,16 @@ style="display: none;" data-bind="visible: true">
                       greeting_salutation: ko.observable(case_data.self_enrollment_setup.email_greeting_salutation),
                       message: ko.observable(case_data.self_enrollment_setup.email_message)
                     };
+
+                    /* $('#reset-email-message').click(function() {
+                      $('#email_message').html("{{ default_email_message|replace('\n', '\\n')|safe }}").focus();
+                      $('#email_subject').val("{{ default_email_subject|replace('\n', '\\n')|safe }}").focus();
+                    }); */
+
+                    self.resetEmail = function() {
+                      self.emailSettings.message("{{ default_email_message|replace('\n', '\\n')|safe }}")
+                      self.emailSettings.subject("{{ default_email_subject|replace('\n', '\\n')|safe }}")
+                    }
 
                     self.landing = {
                       page_title: ko.observable(case_data.self_enrollment_setup.page_title),
@@ -2347,36 +2362,63 @@ style="display: none;" data-bind="visible: true">
               self.send_type = ko.observable("");
               self.emailSettings = window.case_settings.emailSettings;
 
+              self.resetEmail = function() {
+                self.emailSettings.message("{{ default_email_message|replace('\n', '\\n')|safe }}")
+                self.emailSettings.subject("{{ default_email_subject|replace('\n', '\\n')|safe }}")
+              }
+
+              self.errors = ko.observableArray();
+
               self.send_emails = function() {
-                window.case_settings.save_settings(function(promise) {
-                  $('.form-panel').hide();
-                  $('.form-buttons').hide();
-                  $('.loading-panel').show();
-                  $('.processing-buttons').show();
-                  promise.then(function(data) {
-                    $.ajax({
-                      url: '{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which="") }}' + self.send_type(),
-                      method: 'POST',
-                      dataType: 'json',
-                      success: function(results) {
-                        $('.loading-panel').hide();
-                        $('.success-panel').show();
-                        $('.processing-buttons').hide();
-                        $('.success-buttons').show();
-                        var sent_status_list = results.data;
-                        $('#email-status-wrap').html(sent_status_list.join('<br>'));
-                      },
-                      error: function(xhr) {
-                        $('.loading-panel').hide();
-                        $('.processing-buttons').hide();
-                        $('.error-panel').show();
-                        $('.error-buttons').show();
-                      }
+                var num_emails = self.numbers[self.send_type().replace("-", "_")]();
+                self.errors([]);
+                if(num_emails == 0) {
+                  self.errors.push("There are no census records that match the selected criteria.");
+                  return false;
+                }
+                if(confirm("You are about to send "+num_emails+" emails. Are you sure?")) {
+                  window.case_settings.save_settings(function(promise) {
+                    $('#email-target-links-modal .form-panel').hide();
+                    $('#email-target-links-modal .form-buttons').hide();
+                    $('#email-target-links-modal .loading-panel').show();
+                    $('#email-target-links-modal .processing-buttons').show();
+                    promise.then(function(data) {
+                      $.ajax({
+                        url: '{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which="") }}' + self.send_type(),
+                        method: 'POST',
+                        dataType: 'json',
+                        success: function(results) {
+                          $('#email-target-links-modal .loading-panel').hide();
+                          $('#email-target-links-modal .success-panel').show();
+                          $('#email-target-links-modal .processing-buttons').hide();
+                          $('#email-target-links-modal .success-buttons').show();
+                          $("#email-target-links-modal .success-buttons button").click(function() {
+                            $('#email-target-links-modal .success-buttons').hide();
+                            $('#email-target-links-modal .form-buttons').show();
+                            $('#email-target-links-modal .modal-panel').hide();
+                            $('#email-target-links-modal .form-panel').show();
+                          });
+                          var sent_status_list = results.data;
+                          $('#email-target-links-modal #email-status-wrap').html(sent_status_list.join('<br>'));
+                        },
+                        error: function(xhr) {
+                          $('#email-target-links-modal .loading-panel').hide();
+                          $('#email-target-links-modal .form-buttons').hide();
+                          $('#email-target-links-modal .error-panel').show();
+                          $('#email-target-links-modal .error-buttons').show();
+                          $("#email-target-links-modal .error-buttons button:not(.back-btn)").click(function() {
+                            $('#email-target-links-modal .error-buttons').hide();
+                            $('#email-target-links-modal .processing-buttons').show();
+                            $('#email-target-links-modal .modal-panel').hide();
+                            $('#email-target-links-modal .form-panel').show();
+                          });
+                        }
+                      });
+                    }, function failure(err) {
+                      console.log(err);
                     });
-                  }, function failure(err) {
-                    console.log(err);
                   });
-                });
+                }
               }
             }
 
@@ -2419,11 +2461,7 @@ style="display: none;" data-bind="visible: true">
               }
             }).change();
 
-            // Buttons to reset text
-            $('#reset-email-message').click(function() {
-              $('#email_message').html("{{ default_email_message|replace('\n', '\\n')|safe }}").focus();
-              $('#email_subject').val("{{ default_email_subject|replace('\n', '\\n')|safe }}").focus();
-            });
+            // Buttons to reset tex
             $('#reset-page-text').click(function() {
               $('#page_text').html("{{ default_page_text|replace('\n', '\\n')|safe }}").focus();
             });
