@@ -1155,8 +1155,7 @@ style="display: none;" data-bind="visible: true">
                     form_data.append('csv-file', files[0], files[0].name);
                     form_data.append('upload_type', $("input[name=upload_type]:checked").val());
 
-                    send_file_data("POST", "{{ url_for("cases.post_census_records", case_id=case.id) }}",
-                    form_data, function(resp) {
+                    function handle_upload_success(resp) {
                       census_errors_panel.error_records(resp.data.errors);
                       census_errors_panel.num_data_records(resp.data.records.length);
                       show_success_panel();
@@ -1166,8 +1165,10 @@ style="display: none;" data-bind="visible: true">
 
                       // Update the datatable
                       case_management.refresh_census_table({{ case.id }},"{{ url_for("cases.census_records", case_id=case.id) }}",
-                      "#census-records-table", "#census-table-loading");
-                    }, function(xhr) {
+                                                    "#census-records-table", "#census-table-loading");
+                    }
+
+                    function handle_upload_error(xhr) {
                       if (xhr.status >= 400 && xhr.status < 500) {
                         show_error_panel();
                         var data = $.parseJSON(xhr.responseText).data;
@@ -1179,7 +1180,10 @@ style="display: none;" data-bind="visible: true">
                         alert("Sorry, there was a problem communicating with the server.");
                         reset_upload_modal();
                       }
-                    }, false);
+                    }
+
+                    send_file_data("POST", "{{ url_for("cases.post_census_records", case_id=case.id) }}",
+                        form_data, handle_upload_success, handle_upload_error, false);
 
                     show_loading_panel();
 
@@ -1514,9 +1518,11 @@ style="display: none;" data-bind="visible: true">
                         });
                       });
 
-
                       // enrollment data
-                      self.has_census_data = ko.observable(false);
+                      self.census_data = ko.observable([]);
+                      self.has_census_data = ko.pureComputed(function() {
+                          return self.census_data().length > 0
+                      });
 
                       self.is_data_dirty = ko.observable();
 
@@ -1723,7 +1729,7 @@ style="display: none;" data-bind="visible: true">
                               page_title: settings.page_title,
                               page_text: settings.page_text,
                             };
-                          }
+                          };
 
                           self.loading_modal = ko.observable(null);
 
@@ -1901,55 +1907,28 @@ style="display: none;" data-bind="visible: true">
                         enrollment_tab.tab('show');
 
                         // Load census data when page loads
-                        setTimeout(function() {
+                        setTimeout(load_initial_census_data, 0);
+
+                        function load_initial_census_data() {
                           case_management.refresh_census_table({{ case.id }}, "{{ url_for("cases.census_records", case_id=case.id) }}",
-                          "#census-records-table", "#census-table-loading", {
-                            "responsive": {breakpoints: get_responsive_datatables_breakpoints()},
-                            "autoWidth": false,
-                            "aoColumnDefs":[
-                              // Show enroll button in first column
-                              {"aTargets":[0], "bSortable": false, "mData":function(source) {
-                                if (source.enrollment_status !== null) {
-                                  return '<button class="btn btn-primary btn-xs enroll-employee" data-id="'+source.id+'"><span class="ace-icon glyphicon glyphicon-plus"></span> Add Coverage</button>';
-                                }
+                          "#census-records-table", "#census-table-loading",
+                          handle_census_data_loaded,
+                          handle_no_census_data_loaded);
+                        }
 
-                                return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'">Enroll</button>';
-                              }},
-                              {"aTargets":[1], "mData":function(source) {
-                                return format_enrollment_status_html(source.enrollment_status);
-                              }},
-                              {"aTargets":[2], "mData":function(source) {
-                                return "<a href='/enrollment-case/{{ case.id }}/census/" + source.id + "'>"+ source.employee_first + "</a>";
-                              }},
-                              {"aTargets":[3], "mData":function(source) {
-                                return "<a href='/enrollment-case/{{ case.id }}/census/" + source.id + "'>"+ source.employee_last + "</a>";
-                              }},
-                              //{"aTargets":[2], "mData":"employee_first", className: "min-breakIV"},
-                              //{"aTargets":[3], "mData":"employee_last"},
-                              {"aTargets":[4], "mData": function(source) {
-                                return normalize_date(source.employee_birthdate);
-                              }},
-                              {"aTargets":[5], "mData":"employee_email", className: "min-breakIII"}
-                            ],
-                            "aaSorting": [[ 3, "asc" ]]
-                          },
-                          function(table) {
-                            // This is called if there is data; enable download button
-                            window.case_settings.has_census_data(true);
+                        function handle_census_data_loaded(table, data) {
+                          window.case_settings.census_data(data);
+                          window.case_settings.toggle_enrollment_buttons();
+
+                          case_management.init_status_filter(table);
+                          case_management.init_alphabet_search(table);
+
+                        }
+
+                        function handle_no_census_data_loaded() {
+                            window.case_settings.census_data([]);
                             window.case_settings.toggle_enrollment_buttons();
-
-                            case_management.init_status_filter(table);
-                            case_management.init_alphabet_search(table);
-
-
-                          },
-                          function() {
-                            // Called if no data
-                            //$(".not-in-census-section").show();
-                          });
-                      }, 0);
-
-
+                        }
                     });
 
                     this.get("#reports", function() {
@@ -2334,30 +2313,27 @@ style="display: none;" data-bind="visible: true">
             // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change
             case_settings.is_data_dirty(false);
 
-            function ModalViewModel(case_data) {
+            function SendEmailsModalViewModel(case_settings_vm) {
               var self = this;
+              self.case_settings_vm = case_settings_vm;
 
               self.numbers = {
-                not_sent: ko.observable(0),
-                not_applied: ko.observable(0),
-                declined: ko.observable(0)
-              };
-
-              (function wait() {
-                if(window.census_data) {
-                    self.numbers.not_sent(window.census_data.reduce(function addNotSent(acc, app) {
+                not_sent: ko.pureComputed(function() {
+                    return self.case_settings_vm.census_data().reduce(function addNotSent(acc, app) {
                       return !app.sent_email ? acc+1 : acc;
-                    },0));
-                    self.numbers.not_applied(window.census_data.reduce(function addNotApplied(acc, app) {
+                    },0);
+                }),
+                not_applied: ko.pureComputed(function() {
+                    return self.case_settings_vm.census_data().reduce(function addNotApplied(acc, app) {
                       return app.enrollment_status===null ? acc+1 : acc;
-                    },0));
-                    self.numbers.declined(window.census_data.reduce(function addDeclined(acc, app) {
+                    },0);
+                }),
+                declined: ko.pureComputed(function() {
+                    return self.case_settings_vm.census_data().reduce(function addDeclined(acc, app) {
                       return app.enrollment_status==='declined' ? acc+1 : acc;
-                    },0));
-                } else {
-                    setTimeout(wait, 200);
-                }
-              })();
+                    },0);
+                })
+              };
 
               self.send_type = ko.observable("");
               self.emailSettings = window.case_settings.emailSettings;
@@ -2395,7 +2371,7 @@ style="display: none;" data-bind="visible: true">
               }
             }
 
-            window.modal_bindings = new ModalViewModel({{ case |tojson|safe }});
+            window.modal_bindings = new SendEmailsModalViewModel(window.case_settings);
             ko.applyBindings(window.modal_bindings, $(".modals #email-target-links-modal")[0]);
 
             window.case_enrollment = new CaseEnrollmentsViewModel({{ case |tojson|safe }});
@@ -2462,35 +2438,6 @@ style="display: none;" data-bind="visible: true">
               window.location.href = window.location.href.replace(/#.*$/, '#');
               $('#save-success').show();
             }
-
-            {#      $('#edit-self-enrollment-form').submit(function() {#}
-            {#        $('#email_message').val($('#editor-email-message').val());#}
-            {#        $('#page_text').val($('#editor-page-text').val());#}
-            {#      });#}
-
-            {# Hide the delete button if we are not admin and this has enrollments #}
-            {#      {% if census_record.enrollment_applications and not is_admin %}#}
-            {#        $('button.delete').hide();#}
-            {#      {% endif %}#}
-            {##}
-            {#      $('button.delete').on('click', function() {#}
-            {#        {% if census_record.enrollment_applications  %}#}
-            {#          if (!confirm("WARNING: This census record has enrollments. Deleting the record will remove all enrollment data associated. Do you still want to delete this census record?")) {#}
-            {#            return;#}
-            {#          }#}
-            {#        {% else %}#}
-            {#          if (!confirm("Please confirm you want to delete this census record")) {#}
-            {#            return;#}
-            {#          }#}
-            {#        {% endif %}#}
-            {##}
-            {#        send_form_data('DELETE', "{{ url_for('cases.delete_census_record', case_id=case.id, census_record_id=census_record.id) }}",#}
-            {#                {}, function() {#}
-            {#                  window.location = "{{ url_for('manage_case', case_id=case.id) }}";#}
-            {#                }, function() {#}
-            {#                  alert("Sorry, there was a problem deleting this census record");#}
-            {#                });#}
-            {#      });#}
 
             $('#edit-self-enrollment-form').on('submit', function() {
               window.case_settings.save_settings();
