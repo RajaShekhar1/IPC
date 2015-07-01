@@ -407,7 +407,7 @@ style="display: none;" data-bind="visible: true">
               <h3 class="header lighter blue">Landing Page</h3>
               <div class="form-group self-enroll self-enroll-landing-page">
                 {{ render_field_with_errors(form.page_title, default="Welcome to your Benefit Enrollment", **{"data-bind": "value:landing.page_title"}) }}
-                {{ render_field_with_errors(form.page_text, class_='wysiwyg-editor', default=default_page_text, style="font-family: Times New Roman; font-size: 110%;", **{"data-bind": "wysiwyg: {type:'full', value: landing.page_text}"}) }}
+                {{ render_field_with_errors(form.page_text, class_='wysiwyg-editor', default=default_page_text, **{"data-bind": "wysiwyg: {type:'full', value: landing.page_text}"}) }}
                 <div class="row">
                   <div class="col-sm-9 col-sm-offset-3">
                     <a id="reset-page-text" class="btn btn-xs pull-right">Reset to default message</a>
@@ -1753,6 +1753,9 @@ style="display: none;" data-bind="visible: true">
                               email_sender_email: settings.sender_email,
                               email_sender_name: settings.sender_name,
                               email_subject: settings.subject,
+                              email_message: settings.message,
+                              email_greeting_type: settings.greeting_type,
+                              email_greeting_salutation: settings.greeting_salutation,
                               email_message: settings.message,
                               page_title: settings.page_title,
                               page_text: settings.page_text,
