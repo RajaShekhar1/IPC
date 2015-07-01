@@ -294,6 +294,7 @@ def delete_census_record(case_id, census_record_id):
 @groups_required(api_groups, all=False)
 def update_self_enrollment_setup(case_id):
     case = case_service.get_if_allowed(case_id)
+
     self_enrollment_setup = case_service.get_self_enrollment_setup(case)
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
 

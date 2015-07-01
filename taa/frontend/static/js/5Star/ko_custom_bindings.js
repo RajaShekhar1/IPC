@@ -55,13 +55,16 @@ ko.bindingHandlers.wysiwyg = (function() {
   };
   return {
     init: function wysiwyg_init(element, valueAccessor, allBindings, viewModel, bindingContext) {
-      var value = valueAccessor();
-      if(allBindings().value) {
-
-      }
-      var toolbar = this.toolbars[value] || this.toolbars.simple;
+      var va = valueAccessor();
+      //va object has type and initial value observable
+      var html = va.value, type = va.type;
+      var toolbar = this.toolbars[type] || this.toolbars.simple;
       $(element).ace_wysiwyg({
         toolbar: toolbar
+      });
+      $(element).html(html());
+      $(element).on("change", function() {
+        html($(element).html());
       });
     },
   };
