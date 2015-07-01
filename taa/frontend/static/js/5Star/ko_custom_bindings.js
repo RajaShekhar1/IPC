@@ -62,6 +62,9 @@ ko.bindingHandlers.wysiwyg = (function() {
       $(element).ace_wysiwyg({
         toolbar: toolbar
       });
+      if(html().indexOf("<font")<=0) {
+        html("<font size='3'>"+html()+"</font>")
+      }
       $(element).html(html());
       $(element).on("change", function() {
         html($(element).html());
