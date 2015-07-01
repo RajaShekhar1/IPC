@@ -189,9 +189,40 @@ class SelfEnrollmentLink(SelfEnrollmentLinkSerializer, db.Model):
     def is_linked(self):
         return self.self_enrollment_setup and self.self_enrollment_setup.case
 
+class SelfEnrollmentEmailBatchSerializer(JsonSerializable):
+    __json_hidden__ = ['email_logs', 'case']
+
+class SelfEnrollmentEmailBatchSerializerWithEmails(JsonSerializable):
+    __json_hidden__ = ['case']
+
+
+class _SelfEnrollmentEmailBatch(db.Model):
+    __tablename__ = "self_enrollment_email_batches"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=False)
+
+    email_from_address = db.Column(db.Unicode)
+    email_from_name = db.Column(db.Unicode)
+    email_subject = db.Column(db.Unicode)
+    email_body = db.Column(db.UnicodeText)
+
+    sent_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
+
+    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'),
+                          nullable=False)
+    case = db.relationship('Case', backref="batches")
+
+class SelfEnrollmentEmailBatchWithEmails(SelfEnrollmentEmailBatchSerializerWithEmails, _SelfEnrollmentEmailBatch):
+    pass
+
+#This class doesn't serialize emails.
+class SelfEnrollmentEmailBatch(SelfEnrollmentEmailBatchSerializer, _SelfEnrollmentEmailBatch):
+    pass
 
 class SelfEnrollmentEmailLogSerializer(JsonSerializable):
-    __json_hidden__ = ['agent', 'census_record', 'link']
+    __json_hidden__ = ['agent', 'census_record', 'link', 'batch']
 
 
 class SelfEnrollmentEmailLog(SelfEnrollmentEmailLogSerializer, db.Model):
@@ -207,10 +238,10 @@ class SelfEnrollmentEmailLog(SelfEnrollmentEmailLogSerializer, db.Model):
     sent_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
     email_to_address = db.Column(db.Unicode)
     email_to_name = db.Column(db.Unicode)
-    email_from_address = db.Column(db.Unicode)
-    email_from_name = db.Column(db.Unicode)
-    email_subject = db.Column(db.Unicode)
-    email_body = db.Column(db.UnicodeText)
+
+    batch_id = db.Column(db.Integer, db.ForeignKey('self_enrollment_email_batches.id'), nullable=True)
+    batch = db.relationship('_SelfEnrollmentEmailBatch', backref="email_logs")
+
     is_success = db.Column(db.Boolean, nullable=False)
 
     status = db.Column(db.Unicode(16))

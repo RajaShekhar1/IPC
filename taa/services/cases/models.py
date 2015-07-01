@@ -31,7 +31,7 @@ class CaseSerializer(JsonSerializable):
          # When serializing active, make sure we take into account the enrollment period.
         'active': lambda _, case: case.can_enroll()
     }
-    __json_hidden__ = ['census_records', 'enrollment_records']
+    __json_hidden__ = ['census_records', 'enrollment_records', 'batches']
 
 
 class Case(CaseSerializer, db.Model):
