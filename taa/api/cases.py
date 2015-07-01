@@ -211,6 +211,7 @@ def census_records(case_id):
     }
     data = case_service.get_census_records(case_service.get_if_allowed(case_id),
                                            **args)
+
     if request.args.get('format') == 'csv':
         body = case_service.export_census_records(data)
         date_str = datetime.now().strftime('%Y-%m-%d')
@@ -294,6 +295,7 @@ def delete_census_record(case_id, census_record_id):
 @groups_required(api_groups, all=False)
 def update_self_enrollment_setup(case_id):
     case = case_service.get_if_allowed(case_id)
+
     self_enrollment_setup = case_service.get_self_enrollment_setup(case)
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
 

@@ -40,6 +40,31 @@ body {
     .home-index .widget-main {
         min-height: 16em;
     }
+    .btn-lg-block {
+        display:block;
+        width:100%;
+    }
+}
+
+/* agent index widget boxes */
+@media (max-width: 768px) {
+    .btn-xs-block {
+        display:block;
+        width:100%;
+    }
+}
+@media (max-width: 992px) {
+    .btn-sm-block {
+        display:block;
+        width:100%;
+    }
+}
+
+@media (max-width: 1200px) {
+    .btn-md-block {
+        display:block;
+        width:100%;
+    }
 }
 
 .pricing-span-header li, .pricing-table li {

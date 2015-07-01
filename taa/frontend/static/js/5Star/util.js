@@ -8,7 +8,7 @@ function send_file_data(method, url, data, on_success, on_error) {
   return submit_data(method, url, data, false, on_success, on_error, false);
 }
 
-// <data> is a plain javascript object 
+// <data> is a plain javascript object
 function send_json_data(method, url, data, on_success, on_error) {
   return submit_data(method, url, JSON.stringify(data), false, on_success, on_error, 'application/json');
 }
@@ -17,9 +17,9 @@ function get_loading_html(message) {
   var text = message || "Loading data...";
   //return "<span class='icon-spinner icon-spin grey bigger-200'></span> <span class='bigger-175'> "+text+"</span>";
   return '<div class="text-center">' +
-      "<h4>" + text + "</h4>" +
-      '<i class="icon-spinner icon-spin grey bigger-200"></i>' +
-      "</div>";
+  "<h4>" + text + "</h4>" +
+  '<i class="icon-spinner icon-spin grey bigger-200"></i>' +
+  "</div>";
 }
 
 // Misc Formatting
@@ -82,12 +82,12 @@ function get_responsive_datatables_breakpoints() {
   //         'min-breakIV' to hide it below 560,
   //          etc.
   return [
-    {name: 'breakI', width: Infinity},
-    {name: 'breakII', width: 1024},
-    {name: 'breakIII', width: 768},
-    {name: 'breakIV', width: 600},
-    {name: 'breakV', width: 560},
-    {name: 'smallphone', width: 480}
+  {name: 'breakI', width: Infinity},
+  {name: 'breakII', width: 1024},
+  {name: 'breakIII', width: 768},
+  {name: 'breakIV', width: 600},
+  {name: 'breakV', width: 560},
+  {name: 'smallphone', width: 480}
   ];
 }
 
@@ -95,9 +95,9 @@ function get_responsive_datatables_breakpoints() {
 // The shortcut functions above use this method to wrap the jquery ajax call in slightly different ways
 function submit_data(method, url, data, should_process_data, on_success, on_error, contentType) {
   on_success = on_success || function () {
-      };
+  };
   on_error = on_error || function () {
-      };
+  };
 
   var options = {
     url: url,
@@ -124,7 +124,7 @@ function submit_data(method, url, data, should_process_data, on_success, on_erro
   return $.ajax(options);
 }
 
-// Forces the page to submit a post as if a form were submitted, without needing a form on the page 
+// Forces the page to submit a post as if a form were submitted, without needing a form on the page
 function submit_to_url(url, data) {
   var form = document.createElement('form');
   for (k in data) {
@@ -158,8 +158,8 @@ function show_all_errors(all_errors) {
 
 function show_errors(field_name, field_error_messages) {
   get_field(field_name).after(
-      $("<div>").addClass("error").html(field_error_messages.join("<br>"))
-  );
+    $("<div>").addClass("error").html(field_error_messages.join("<br>"))
+    );
 }
 
 function get_field(field_name) {
@@ -247,7 +247,7 @@ ko.bindingHandlers.fadeInIf = {
   }
 };
 
-// Wrap the ace multiselect plugin 
+// Wrap the ace multiselect plugin
 ko.bindingHandlers.multiSelect = {
   init: function (element, valueAccessor, allBindings, viewModel) {
     // Expects the value to have initial plugin options using the 'options' key,
@@ -308,10 +308,28 @@ ko.bindingHandlers.uniqueNameValidation = {
 };
 
 
+//Adding contenteditable change function
+// http://stackoverflow.com/questions/1391278/contenteditable-change-events
+// Trigger a change event on the contenteditable fields for handling simplicity
+$(function() {
+  $('body').on('focus', '[contenteditable]', function() {
+    var $this = $(this);
+    $this.data('before', $this.html());
+    return $this;
+  }).on('blur keyup paste input', '[contenteditable]', function() {
+    var $this = $(this);
+    if ($this.data('before') !== $this.html()) {
+      $this.data('before', $this.html());
+      $this.trigger('change');
+    }
+    return $this;
+  });
+});
+
 // Components
 
 // Flash message component
-// params should have a FlashMessages object named "messages". 
+// params should have a FlashMessages object named "messages".
 // Use this object to communicate with the flash message components.
 var FlashMessages = function () {
   var self = this;
@@ -352,26 +370,26 @@ ko.components.register('flash-messages', {
     self.flash_messages = params.messages;
   },
   template: '\
-        <!--ko foreach: flash_messages.messages-->\
-        <div class="alert alert-block" \
-            data-bind="visible: is_visible, \
-            css: {\'alert-success\': is_success(), \'alert-danger\': is_error()}">\
-            <button type="button" class="close" data-bind="click: dismiss">\
-                <i class="ace-icon fa fa-times"></i>\
-            </button>\
-            \
-            <p>\
-                <strong data-bind="visible: is_success()">\
-                    <i class="ace-icon fa fa-check"></i>\
-                </strong>\
-                \
-                <strong data-bind="visible: is_error()">\
-                    <i class="ace-icon fa fa-exclamation-triangle"></i>\
-                </strong>\
-                <span data-bind="html: message"></span>\
-            </p>\
-        </div>\
-        <!--/ko-->'
+  <!--ko foreach: flash_messages.messages-->\
+  <div class="alert alert-block" \
+  data-bind="visible: is_visible, \
+  css: {\'alert-success\': is_success(), \'alert-danger\': is_error()}">\
+  <button type="button" class="close" data-bind="click: dismiss">\
+  <i class="ace-icon fa fa-times"></i>\
+  </button>\
+  \
+  <p>\
+  <strong data-bind="visible: is_success()">\
+  <i class="ace-icon fa fa-check"></i>\
+  </strong>\
+  \
+  <strong data-bind="visible: is_error()">\
+  <i class="ace-icon fa fa-exclamation-triangle"></i>\
+  </strong>\
+  <span data-bind="html: message"></span>\
+  </p>\
+  </div>\
+  <!--/ko-->'
 });
 
 
@@ -407,30 +425,30 @@ ko.components.register('loading-modal', {
     });
   },
   template: '\
-        <div class="modal fade" data-bind="modal: is_showing">\
-            <div class="modal-dialog">\
-                <div class="modal-content">\
-                    <div class="modal-header">\
-                        <button type="button" class="close" data-dismiss="modal"><span\
-                            aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>\
-                        <h4 class="modal-title" data-bind="html: title">Please wait</h4>\
-                    </div>\
-                    <div class="modal-body">\
-                        <div class="form-panel modal-panel">\
-                            <div class="text-center">\
-                                <h4 data-bind="html: message"></h4>\
-                                <i class="icon-spinner icon-spin grey bigger-200"></i>\
-                            </div>\
-                        </div>\
-                    </div>\
-                    <div class="modal-footer">\
-                    </div>\
-                </div>\
-                <!-- /.modal-content -->\
-            </div>\
-            <!-- /.modal-dialog -->\
-        </div>\
-    '
+  <div class="modal fade" data-bind="modal: is_showing">\
+  <div class="modal-dialog">\
+  <div class="modal-content">\
+  <div class="modal-header">\
+  <button type="button" class="close" data-dismiss="modal"><span\
+  aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>\
+  <h4 class="modal-title" data-bind="html: title">Please wait</h4>\
+  </div>\
+  <div class="modal-body">\
+  <div class="form-panel modal-panel">\
+  <div class="text-center">\
+  <h4 data-bind="html: message"></h4>\
+  <i class="icon-spinner icon-spin grey bigger-200"></i>\
+  </div>\
+  </div>\
+  </div>\
+  <div class="modal-footer">\
+  </div>\
+  </div>\
+  <!-- /.modal-content -->\
+  </div>\
+  <!-- /.modal-dialog -->\
+  </div>\
+  '
 });
 
 // Height select
@@ -461,32 +479,32 @@ ko.components.register('height-select', {
     self.height_inches_part.subscribe(self.update_height);
   },
   template: '\
-        <label>\
-        Height:\
-            <select data-bind="value: height_feet_part, attr: {name: \'height_feet_\'+name_suffix}">\
-                <option></option>\
-                <option>4</option>\
-                <option>5</option>\
-                <option>6</option>\
-            </select> Feet\
-        </label>\
-        <label>\
-            <select data-bind="value: height_inches_part, attr: {name: \'height_inches_\'+name_suffix}">\
-                <option></option>\
-                <option>0</option>\
-                <option>1</option>\
-                <option>2</option>\
-                <option>3</option>\
-                <option>4</option>\
-                <option>5</option>\
-                <option>6</option>\
-                <option>7</option>\
-                <option>8</option>\
-                <option>9</option>\
-                <option>10</option>\
-                <option>11</option>\
-            </select> Inches\
-        </label>'
+  <label>\
+  Height:\
+  <select data-bind="value: height_feet_part, attr: {name: \'height_feet_\'+name_suffix}">\
+  <option></option>\
+  <option>4</option>\
+  <option>5</option>\
+  <option>6</option>\
+  </select> Feet\
+  </label>\
+  <label>\
+  <select data-bind="value: height_inches_part, attr: {name: \'height_inches_\'+name_suffix}">\
+  <option></option>\
+  <option>0</option>\
+  <option>1</option>\
+  <option>2</option>\
+  <option>3</option>\
+  <option>4</option>\
+  <option>5</option>\
+  <option>6</option>\
+  <option>7</option>\
+  <option>8</option>\
+  <option>9</option>\
+  <option>10</option>\
+  <option>11</option>\
+  </select> Inches\
+  </label>'
 });
 
 function get_feet_part(val) {
@@ -512,12 +530,12 @@ ko.components.register('limited-state-select', {
     this.limiter = params.limiter;
   },
   template: '<select name="enrollmentState" id="enrollmentState" data-bind="\
-                value: limiter.selected_state,\
-                options: limiter.available_states,\
-                optionsCaption: \'(Select State)\',\
-                optionsText: \'statecode\',\
-                optionsAfterRender: limiter.disable_state_option_if_invalid\
-            "></select>'
+  value: limiter.selected_state,\
+  options: limiter.available_states,\
+  optionsCaption: \'(Select State)\',\
+  optionsText: \'statecode\',\
+  optionsAfterRender: limiter.disable_state_option_if_invalid\
+  "></select>'
 });
 
 // Used when only one product is selected (no multi-product)
@@ -526,16 +544,16 @@ ko.components.register('limited-product-select', {
     this.limiter = params.limiter;
   },
   template: '<select name="productID" id="productID" data-bind="\
-                  value: limiter.selected_product, \
-                  options: limiter.available_products,\
-                  optionsText: \'name\', \
-                  optionsCaption: \'(Select Product)\', \
-                  optionsAfterRender: limiter.disable_product_option_if_invalid"> \
-          </select>'
+  value: limiter.selected_product, \
+  options: limiter.available_products,\
+  optionsText: \'name\', \
+  optionsCaption: \'(Select Product)\', \
+  optionsAfterRender: limiter.disable_product_option_if_invalid"> \
+  </select>'
 });
 var ProductStatesLimiterViewModel = function (product_statecode_mapping,
-                                              selected_state, available_states,
-                                              selected_products, available_products) {
+  selected_state, available_states,
+  selected_products, available_products) {
   // product_state_mapping: links a given product_id to a list of valid state codes
   // selected_state: an observable that can be null, or a two-letter statecode
   // available_states: the states we can select from
@@ -618,7 +636,7 @@ var ProductStatesLimiterViewModel = function (product_statecode_mapping,
     });
     self.selected_products(valid_products);
   });
-  */
+*/
 
   // Based on product selection, change which states are enabled
   self.enabled_states = ko.computed(function () {
@@ -664,8 +682,8 @@ function map_states_to_products_from_statecode_map(available_states, product_sta
 
 
 var StatesLimiterViewModel = function(product_statecode_mapping,
-                                      selected_state, available_states,
-                                      selected_products) {
+  selected_state, available_states,
+  selected_products) {
   var self = this;
   self.available_states = available_states;
   self.selected_state = selected_state;
@@ -703,10 +721,41 @@ var StatesLimiterViewModel = function(product_statecode_mapping,
   selected_products.subscribe(function (products) {
     // reset the selected state if not valid for the new product(s).
     if (!_.any(products, function(product) {
-          return self.is_valid_product_for_state(product, self.selected_state());
+      return self.is_valid_product_for_state(product, self.selected_state());
     })) {
       self.selected_state(null);
     }
   });
 };
 
+// Adding a helped class to remove elements on various device settings
+/*$("[data-remove]").each(function() {
+    function removeOnResize() {
+      var w = $(window).width();
+      var sizes = {
+        xs: [768, 0],
+        sm: [992, 1],
+        md: [1200, 2],
+        lg: [120000, 3]
+      }
+      for(var i = 0; i < sizeArr.length; i++) {
+        var size = sizeArr[i]
+        var cSize = sizes[size], pSize = cSize[1]==0 ? [0] : sizes[Object.keys(sizes)[cSize[1]-1]], max = cSize[0], min = pSize[0];
+        console.log(w <= max && w >= min );
+        if(w <= max && w >= min) {
+          elem.remove();
+        } else {
+          if(elem.index()==0) {
+            elem.parent().prepend(elem);
+          } else {
+            elem.parent().children().eq(elem.index()-1).after(elem);
+          }
+        }
+      }
+    }
+    var sizeArr = $(this).data("remove").split(" "), elem = $(this);
+    removeOnResize();
+    $(window).resize(function() {
+      removeOnResize();
+    });
+});*/
