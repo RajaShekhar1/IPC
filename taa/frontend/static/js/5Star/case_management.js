@@ -23,10 +23,10 @@ var case_management = (function() {
                 return format_enrollment_status_html(source.enrollment_status);
               }},
               {"aTargets":[2], "mData":function(source) {
-                return "<a href='/enrollment-case/{{ case.id }}/census/" + source.id + "'>"+ source.employee_first + "</a>";
+                return "<a href='/enrollment-case/"+source.case_id+"/census/" + source.id + "'>"+ source.employee_first + "</a>";
               }},
               {"aTargets":[3], "mData":function(source) {
-                return "<a href='/enrollment-case/{{ case.id }}/census/" + source.id + "'>"+ source.employee_last + "</a>";
+                return "<a href='/enrollment-case/"+source.case_id+"/census/" + source.id + "'>"+ source.employee_last + "</a>";
               }},
               {"aTargets":[4], "mData": function(source) {
                 return normalize_date(source.employee_birthdate);
