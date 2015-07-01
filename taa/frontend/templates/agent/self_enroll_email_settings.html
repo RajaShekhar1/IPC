@@ -23,8 +23,7 @@
   </div>
   {{ render_field_with_errors(form.email_message, class_='wysiwyg-editor', default=default_email_message, **{'data-bind':"wysiwyg: { type: 'simple', value: emailSettings.message}"}) }}
   <div class="col-xs-9 col-xs-offset-3">
-    <a id="reset-email-message" class="btn btn-mini pull-right">Reset to default <span class="hidden-sm hidden-xs">message &amp; subject</span></a>
+    <a id="reset-email-message" data-bind="click:resetEmail" class="btn btn-mini pull-right">Reset to default <span class="hidden-sm hidden-xs">message &amp; subject</span></a>
   </div>
 </div>
 {% endblock %}
-

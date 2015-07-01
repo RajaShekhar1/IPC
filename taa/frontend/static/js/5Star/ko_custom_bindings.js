@@ -67,5 +67,11 @@ ko.bindingHandlers.wysiwyg = (function() {
         html($(element).html());
       });
     },
+    update: function wysiwyg_update(element, valueAccessor, allBindings, viewModel, bindingContext) {
+      var va = valueAccessor();
+      //va object has type and initial value observable
+      var html = va.value, type = va.type;
+      $(element).html(html());
+    }
   };
 })();
