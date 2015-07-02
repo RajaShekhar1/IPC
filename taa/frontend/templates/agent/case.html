@@ -1829,7 +1829,7 @@ style="display: none;" data-bind="visible: true">
                           };
                           var done = $.when(case_request, periods_request, self_enroll_request);
 
-                          if(cb) {
+                          if(cb && typeof(cb) === "function") {
                             cb(done);
                             self.loading_modal(null);
                             return;
