@@ -2,7 +2,7 @@ var case_management = (function() {
 
     var loading_html = "<span class='icon-spinner icon-spin grey bigger-200'></span> <span class='bigger-175'> Loading data...</span>";
 
-    function refresh_census_table(case_id, url, table_selector, loading_selector, init_callback, no_data_cb) {
+    function refresh_census_table(case_id, url, table_selector, loading_selector, init_callback, no_data_cb, success_callback) {
 
         // show loading message under the table
         var loading = $(loading_selector);
@@ -36,7 +36,6 @@ var case_management = (function() {
             "aaSorting": [[ 3, "asc" ]]
           };
 
-
         // Show loading
         loading.html(loading_html);
 
@@ -50,6 +49,9 @@ var case_management = (function() {
             // If table exists, add new data. Otherwise, initialize
             if ($.fn.DataTable.fnIsDataTable(table.get(0))) {
                 table.dataTable().fnAddData(resp.data);
+                if (success_callback !== undefined) {
+                    success_callback(table, resp.data);
+                }
             } else if (resp.data.length > 0){
                 table.show();
                 $(".no-census-header").hide();
@@ -58,6 +60,9 @@ var case_management = (function() {
                 table.wrap("<div class='dataTables_borderWrap' />").dataTable(table_settings);
                 if (init_callback !== undefined) {
                     init_callback(table, resp.data);
+                }
+                if (success_callback !== undefined) {
+                    success_callback(table, resp.data);
                 }
             } else if (no_data_cb !== undefined) {
                 no_data_cb();
@@ -163,7 +168,7 @@ var case_management = (function() {
     );
 
     function init_alphabet_search(table) {
-        var alphabet = $('<div class="alphabet"/>').append('Last Name: ');
+        var alphabet = $('<div class="alphabet hidden-sm hidden-xs"/>').append('Last Name: ');
         $('<span class="clear active"/>')
             .data('letter', '')
             .html('Reset')

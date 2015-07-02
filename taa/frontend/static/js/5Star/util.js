@@ -528,13 +528,15 @@ function get_inches_part(val) {
 ko.components.register('limited-state-select', {
   viewModel: function (params) {
     this.limiter = params.limiter;
+    this.is_disabled = ko.observable(params.disabled || false);
   },
   template: '<select name="enrollmentState" id="enrollmentState" data-bind="\
   value: limiter.selected_state,\
   options: limiter.available_states,\
   optionsCaption: \'(Select State)\',\
   optionsText: \'statecode\',\
-  optionsAfterRender: limiter.disable_state_option_if_invalid\
+  optionsAfterRender: limiter.disable_state_option_if_invalid,\
+  disable: is_disabled\
   "></select>'
 });
 
@@ -542,13 +544,16 @@ ko.components.register('limited-state-select', {
 ko.components.register('limited-product-select', {
   viewModel: function (params) {
     this.limiter = params.limiter;
+    this.is_disabled = ko.observable(params.disabled || false);
   },
   template: '<select name="productID" id="productID" data-bind="\
   value: limiter.selected_product, \
   options: limiter.available_products,\
   optionsText: \'name\', \
   optionsCaption: \'(Select Product)\', \
-  optionsAfterRender: limiter.disable_product_option_if_invalid"> \
+  optionsAfterRender: limiter.disable_product_option_if_invalid,\
+  disable: is_disabled\
+  "> \
   </select>'
 });
 var ProductStatesLimiterViewModel = function (product_statecode_mapping,

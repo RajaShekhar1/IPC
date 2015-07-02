@@ -188,9 +188,9 @@ class CensusRecordSerializer(JsonSerializable):
     }
     __json_add__ = {
         'enrollment_status': lambda record: record.get_enrollment_status(),
-        'sent_email': lambda record: record.get_sent_email()
+        'sent_email': lambda record: record.sent_email_count,
     }
-    __json_hidden__ = ['case', 'enrollment_applications', 'self_enrollment_links']
+    __json_hidden__ = ['case', 'enrollment_applications', 'self_enrollment_links', 'email_logs']
 
     def get_enrollment_status(self):
         from taa.services.enrollments import EnrollmentApplicationService
@@ -198,8 +198,9 @@ class CensusRecordSerializer(JsonSerializable):
         return enrollments.get_enrollment_status(self)
 
     def get_sent_email(self):
-        from taa.services.enrollments import SelfEnrollmentEmailService
-        return len(SelfEnrollmentEmailService().get_for_census_record(self)) > 0
+        from taa.services.enrollments import SelfEnrollmentEmailService, SelfEnrollmentEmailLog
+        email_logs = SelfEnrollmentEmailService().get_for_census_record(self)
+        return any(email.status == SelfEnrollmentEmailLog.STATUS_SUCCESS for email in email_logs)
 
 
 class CaseCensus(CensusRecordSerializer, db.Model):

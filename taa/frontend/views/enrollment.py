@@ -89,8 +89,11 @@ def in_person_enrollment():
 
 
 def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False):
+
+    # Defaults for session enrollment variables.
     session['active_case_id'] = case.id
-    
+    session['enrolling_census_record_id'] = None
+
     payment_mode = case.payment_mode
     if is_payment_mode_changeable(payment_mode):
         # User can select payment mode
@@ -144,14 +147,6 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         )
         spouse_data = None
         children_data = []
-
-    # refresh active_case
-    session['active_case'] = {
-        'company_name': company_name,
-        'group_number': group_number,
-        'situs_state': state,
-        'situs_city': city,
-    }
 
     # Validate that we can enroll in the product for this state - do we have a form?
     if not any(product_form_service.form_for_product_code_and_state(p.get_base_product_code(), state) for p in products):
@@ -295,12 +290,12 @@ def submit_wizard_data():
     case = case_service.get(case_id)
 
     wizard_results = data['wizard_results']
-    print("[ENROLLMENT SUBMITTED]: {}".format(wizard_results))
+    print("[ENROLLMENT SUBMITTED]: (case {}) {}".format(case_id, wizard_results))
     # Save enrollment information and updated census data prior to
     # DocuSign hand-off
     if session.get('enrolling_census_record_id'):
         census_record = case_service.get_census_record(
-            None, session['enrolling_census_record_id'])
+            case, session['enrolling_census_record_id'])
     else:
         census_record = None
 
@@ -311,9 +306,11 @@ def submit_wizard_data():
     if (agent is None and session.get('is_self_enroll') is not None):
         agent = case.owner_agent
 
-    # Create and save the enrollment data
+    # Create and save the enrollment data. Creates a census record if this is a generic link, and in
+    #   either case updates the census record with the latest enrollment data.
     enrollment_application = enrollment_service.save_enrollment_data(
-        wizard_results, census_record, agent)
+        wizard_results, case, census_record, agent)
+
     if not wizard_results.get('did_decline'):
         # Hand off wizard_results to docusign
         is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results, census_record, case)
@@ -329,7 +326,7 @@ def submit_wizard_data():
             'redirect': url_for('ds_landing_page',
                                 event='decline',
                                 name=wizard_results['employee']['first'],
-                                type='inperson'
+                                type=wizard_results["agent_data"]["is_in_person"],
                                 )
         }
     data = jsonify(**resp)

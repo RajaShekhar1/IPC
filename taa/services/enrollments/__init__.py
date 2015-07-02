@@ -37,16 +37,17 @@ class EnrollmentApplicationService(DBService):
         self.coverages_service = EnrollmentApplicationCoverageService()
         self.report_service = EnrollmentReportService()
 
-    def save_enrollment_data(self, data, census_record, agent):
+    def save_enrollment_data(self, data, case, census_record, agent):
+
+        if not census_record:
+            census_record = case_service.create_ad_hoc_census_record(case=case, data=data)
+
         # Update the census record data with the new data
-        if census_record:
-            case_service.update_census_record_from_enrollment(census_record,
-                                                              data)
-        else:
-            census_record = case_service.create_ad_hoc_census_record(case=None,
-                                                                     data=data)
+        case_service.update_census_record_from_enrollment(census_record, data)
+
         # Store extra enrollment data on the enrollment
         enrollment = self._create_enrollment(census_record, data, agent)
+
         # Save coverages
         self._save_coverages(enrollment, data)
         return enrollment
@@ -69,6 +70,7 @@ class EnrollmentApplicationService(DBService):
         else:
             case_id = None
             census_record_id = None
+
         # Link to agent if given
         if agent:
             agent_code = agent.agent_code
@@ -78,6 +80,7 @@ class EnrollmentApplicationService(DBService):
             agent_code = None
             agent_name = None
             agent_id = None
+
         # Handle decline coverage case
         if data['did_decline']:
             return self.create(**dict(
@@ -851,7 +854,6 @@ class SelfEnrollmentLinkService(DBService):
             self_enrollment_setup_id=case.self_enrollment_setup.id,
             census_record_id=None if record is None else record.id,
             url=url)
-        db.session.commit()
         return link
 
     def get_self_enrollment_data_for(self, uuid, increment_clicks=True):

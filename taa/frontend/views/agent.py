@@ -67,7 +67,7 @@ def manage_cases():
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def manage_case(case_id):
     case = case_service.get_if_allowed(case_id)
-    vars = {'case': case}
+    vars = {'case': case, 'can_edit_case': False}
 
     agent = agent_service.get_logged_in_agent()
     if agent:
@@ -75,9 +75,11 @@ def manage_case(case_id):
         agent_name = agent.name()
         agent_id = agent.id
         agent_email = agent.email
+        vars['can_edit_case'] = (agent is case_service.get_case_owner(case))
     else:
         products = product_service.get_all_enrollable_products()
         vars['is_admin'] = True
+        vars['can_edit_case'] = True
         vars['active_agents'] = agent_service.get_active_agents()
         vars['header_title'] = 'Home Office'
         agent_name = ""
@@ -91,23 +93,11 @@ def manage_case(case_id):
 
     case_setup_form = UpdateCaseForm(obj=case)
     vars['case_setup_form'] = case_setup_form
-    if not case.products:
-        vars['case_product'] = None
-    else:
-        vars['case_product'] = case.products[0]
-    if not case.situs_state:
-        vars['case_state'] = None
-    else:
-        vars['case_state'] = case.situs_state
 
     enrollment_periods = NewCaseEnrollmentPeriodForm(
         **case_service.get_case_enrollment_period_data(case))
     vars['enrollment_period_form'] = enrollment_periods
 
-    vars['census_records'] = [
-        case_service.census_records.get_record_dict(record)
-        for record in census_records(case_id)
-        ]
     vars['nav_menu'] = get_nav_menu()
 
     # Has active enrollments?
@@ -169,6 +159,7 @@ def edit_census_record(case_id, census_record_id):
     case = case_service.get_if_allowed(case_id)
     census_record = case_service.get_census_record(case, census_record_id)
     record_form = CensusRecordForm(obj=census_record)
+    agent = agent_service.get_logged_in_agent()
 
     # Get the child entries out
     child_form_fields = []
@@ -188,6 +179,7 @@ def edit_census_record(case_id, census_record_id):
         form=record_form,
         child_form_fields=child_form_fields,
         is_admin=is_admin,
+        can_edit_case = is_admin or (agent is case_service.get_case_owner(case)),
         header_title='Home Office' if is_admin else '',
         nav_menu=get_nav_menu()
     )

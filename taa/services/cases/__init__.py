@@ -149,6 +149,7 @@ class CaseService(DBService):
                            filter_ssn=None, filter_birthdate=None):
         from taa.services.enrollments.models import EnrollmentApplication
         query = self.census_records.find(case_id=case.id)
+
         # Filter enrollment status. Also load in any enrollment data eagerly.
         if include_enrolled == False:
             # Since we need to filter on enrollment status, pull in the
@@ -167,6 +168,7 @@ class CaseService(DBService):
                     ).subqueryload('coverages'
                     ).joinedload('product')
             )
+
         if filter_ssn:
             query = query.filter(CaseCensus.employee_ssn ==
                                  filter_ssn.replace('-', ''))
@@ -184,6 +186,7 @@ class CaseService(DBService):
             query = query.offset(offset)
         if num_records > 0:
             query = query.limit(num_records)
+
         return query.all()
 
     def export_census_records(self, records):
@@ -233,7 +236,6 @@ class CaseService(DBService):
         return False
 
     def create_ad_hoc_census_record(self, case, **data):
-        # TODO: move this check up to the specific API that requires it if necessary
         # Ad-hoc records that decline are a special case that have no
         # requirements
         # if 'ssn' not in data:
@@ -243,6 +245,22 @@ class CaseService(DBService):
                                                               is_uploaded_census=False))
         db.session.flush()
         return record
+
+    def process_uploaded_census_data(self, case, merge_type, file_obj):
+        if merge_type == 'merge-skip':
+            return self.merge_census_data(case, self._create_file_buffer(file_obj),
+                                                             replace_matching=False)
+        elif merge_type == 'merge-replace':
+            return self.merge_census_data(case, self._create_file_buffer(file_obj),
+                                                             replace_matching=True)
+        else:
+            return self.replace_census_data(case, self._create_file_buffer(file_obj))
+
+    def _create_file_buffer(self, file_obj):
+        # Read data into a buffer
+        file_data = StringIO.StringIO()
+        file_obj.save(file_data)
+        return file_data
 
     def merge_census_data(self, case, file_data, replace_matching):
         return self.census_records.merge_census_data(case, file_data,
@@ -302,6 +320,18 @@ class CaseService(DBService):
     def update_self_enrollment_setup(self, setup, data):
         return self.self_enrollment.update(setup, **data)
 
+    def can_current_user_edit_case(self, case):
+        from taa.services.agents import AgentService
+        agent_service = AgentService()
+        logged_in_agent = agent_service.get_logged_in_agent()
+        is_case_owner = logged_in_agent and logged_in_agent is self.get_case_owner(case)
+
+        if agent_service.can_manage_all_cases(current_user):
+            return True
+        if is_case_owner:
+            return True
+
+        return False
 
 class CaseEnrollmentPeriodsService(DBService):
     __model__ = CaseEnrollmentPeriod
@@ -387,36 +417,6 @@ class CensusRecordService(DBService):
                     isinstance(kwargs[c.name], datetime)):
                 kwargs[c.name] = kwargs[c.name].date()
         return kwargs
-
-    def get_record_dict(self, census_record):
-        """
-        Returns a dictionary suitable for displaying by the UI
-        """
-        from taa.models import EnrollmentApplication
-        enrollment_status = ''
-        for application in census_record.enrollment_applications:
-            if (application.application_status ==
-                    EnrollmentApplication.APPLICATION_STATUS_ENROLLED):
-                enrollment_status = 'Enrolled'
-            else:
-                enrollment_status = 'Declined'
-        return dict(
-            id=census_record.id,
-            ssn=self.format_ssn(census_record.employee_ssn),
-            first=census_record.employee_first,
-            last=census_record.employee_last,
-            email=census_record.employee_email,
-            sp_first=census_record.spouse_first,
-            sp_last=census_record.spouse_last,
-            completed_enrollment=enrollment_status != '',
-            elected_coverage=enrollment_status == 'Enrolled',
-        )
-
-    def get_full_record_dict(self, census_record):
-        return {
-            field.csv_column_name: getattr(census_record, field.database_name)
-            for field in CensusRecordParser.all_possible_fields
-            }
 
     def export_csv(self, file, census_records):
         writer = csv.writer(file)

@@ -3107,10 +3107,14 @@ function init_validation() {
     });
 
     function submit_application() {
+        // Massage the agent_data resubmitted so we don't resend all product info.
+        var agent_data =  window.ui.defaults;
+        delete agent_data['products'];
+
         // Pull out all the data we need for docusign 
         var wizard_results = {
             health_questions: $.map(window.ui.health_questions(), function(q) {return q.question}),
-            agent_data: window.ui.defaults,
+            agent_data: agent_data,
             enrollCity:  window.ui.enrollCity(),
             enrollState:  window.ui.enrollState,
             product_type: window.ui.insurance_product.product_type,
@@ -3190,6 +3194,8 @@ function init_validation() {
         }
         
         wizard_results['product_data'] = ui.insurance_product.product_data;
+        // But again, no need to retransmit all this data.
+        delete wizard_results['product_data']['replacement_paragraphs'];
 
         // Replacement form
         wizard_results.replacement_read_aloud = ui.replacement_read_aloud();

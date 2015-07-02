@@ -69,15 +69,20 @@
                       </div>
                   {% endfor %}
 
-                  {# <h3>Children:</h3>
-                   #}
-                  <div class="pull-left clearfix">
-                      <button type="button" class="btn btn-danger delete">Delete Record</button>
-                  </div>
-                  <div class="pull-right clearfix">
-                      <button type="button" class="btn btn-sm" id="go-back">Cancel</button>
-                      <button type="submit" class="btn btn-primary">Save Changes</button>
-                  </div>
+                  {% if can_edit_case %}
+                      <div class="pull-left clearfix">
+                          <button type="button" class="btn btn-danger delete">Delete Record</button>
+                      </div>
+                      <div class="pull-right clearfix">
+                          <button type="button" class="btn btn-sm" id="go-back">Cancel</button>
+                          <button type="submit" class="btn btn-primary">Save Changes</button>
+                      </div>
+                  {% else %}
+                      <div class="pull-right clearfix">
+                          <button type="button" class="btn btn-primary" id="go-back">Return to case</button>
+                      </div>
+                  {% endif %}
+
               </div>
           </div>
       </form>
@@ -149,7 +154,11 @@
               }
 
               return false;
-          })
+          });
+
+          {% if not can_edit_case %}
+              $("input, select").prop("disabled", true);
+          {% endif %}
       });
       </script>
   {% endblock %}
