@@ -329,41 +329,9 @@ style="display: none;" data-bind="visible: true">
                     <p>Self-enrollment is not currently active.</p>
                   </div>
                   <div class="panel-body" data-bind="slideDownIf: is_self_enrollment()">
-                    {#<div class="row">
-                    <div class="col-xs-12">
-                    <h3 class="header lighter blue">Self-Enrollment Usage</h3>
-                    {% if case.self_enrollment_setup.self_enrollment_type == 'case-targeted' -%}
-                    <ul>
-                    <li>{{ case.census_records|count or '0' }} in census</li>
-                    <li>{{ case.self_enrollment_setup.sent_count }} sent email link</li>
-                    <li>{{ case.self_enrollment_setup.enrolled_count }} enrolled</li>
-                    <li>{{ case.self_enrollment_setup.declined_count }} not enrolled or declined</li>
-                  </ul>
-                  {% elif case.self_enrollment_setup.self_enrollment_type == 'case-generic' -%}
-                  {% if case.self_enrollment_setup.links -%}
-                  Self-enrollment link:
-                  <div>
-                  <a target="_blank" href="{{ case.self_enrollment_setup.links[0].url }}">
-                  {{ case.self_enrollment_setup.links[0].url }}
-                </a>
-              </div>
-              <br>
-              Link clicks:
-              <strong>{{ case.self_enrollment_setup.links[0].clicks }}</strong>
-              <br><br>
-              {% else -%}
-              Self-enrollment link has not yet been created.
-              {% endif -%}
-              {% endif -%}
-            </div>
-          </div>#}
 
           <div class="self-enrollment-setup">
-            {# <a href="{{ url_for('edit_self_enroll_setup', case_id=case.id) }}">
-            <i class="fa fa-pencil-square-o"></i>
-            Edit Email/Landing Page Templates and Manage Notifications
-          </a>
-          #}
+
           <div id="save-success" class="alert alert-block alert-success" style="display: none;">
             <strong><i class="ace-icon fa fa-check"></i></strong>
             Successfully saved self-enrollment settings.
@@ -1749,15 +1717,15 @@ style="display: none;" data-bind="visible: true">
                               }
                             }
                             return {
+                              self_enrollment_type: self.self_enrollment_type(),
                               email_sender_email: settings.sender_email,
                               email_sender_name: settings.sender_name,
                               email_subject: settings.subject,
-                              email_message: settings.message,
                               email_greeting_type: settings.greeting_type,
                               email_greeting_salutation: settings.greeting_salutation,
                               email_message: settings.message,
                               page_title: settings.page_title,
-                              page_text: settings.page_text,
+                              page_text: settings.page_text
                             };
                           };
 
