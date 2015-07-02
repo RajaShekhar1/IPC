@@ -76,7 +76,7 @@ CELERY_TIMEZONE = 'US/Eastern'
 
 # Database
 SQLALCHEMY_DATABASE_URI = env_get_text('DATABASE_URL', "postgresql://taa:fQj9lJTFbOQUBYo@localhost/taa")
-SQLALCHEMY_ECHO = env_get_bool('SQLALCHEMY_ECHO', False)
+SQLALCHEMY_ECHO = env_get_bool('SQLALCHEMY_ECHO', True)
 
 # File uploads
 MAX_CONTENT_LENGTH = 16777216

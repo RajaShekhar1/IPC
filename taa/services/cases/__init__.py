@@ -408,36 +408,6 @@ class CensusRecordService(DBService):
                 kwargs[c.name] = kwargs[c.name].date()
         return kwargs
 
-    def get_record_dict(self, census_record):
-        """
-        Returns a dictionary suitable for displaying by the UI
-        """
-        from taa.models import EnrollmentApplication
-        enrollment_status = ''
-        for application in census_record.enrollment_applications:
-            if (application.application_status ==
-                    EnrollmentApplication.APPLICATION_STATUS_ENROLLED):
-                enrollment_status = 'Enrolled'
-            else:
-                enrollment_status = 'Declined'
-        return dict(
-            id=census_record.id,
-            ssn=self.format_ssn(census_record.employee_ssn),
-            first=census_record.employee_first,
-            last=census_record.employee_last,
-            email=census_record.employee_email,
-            sp_first=census_record.spouse_first,
-            sp_last=census_record.spouse_last,
-            completed_enrollment=enrollment_status != '',
-            elected_coverage=enrollment_status == 'Enrolled',
-        )
-
-    def get_full_record_dict(self, census_record):
-        return {
-            field.csv_column_name: getattr(census_record, field.database_name)
-            for field in CensusRecordParser.all_possible_fields
-            }
-
     def export_csv(self, file, census_records):
         writer = csv.writer(file)
         # Write the header row

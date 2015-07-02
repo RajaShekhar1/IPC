@@ -66,7 +66,7 @@ def manage_cases():
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def manage_case(case_id):
     case = case_service.get_if_allowed(case_id)
-    vars = {'case': case}
+    vars = {'case': case, 'can_edit_case': False}
 
     agent = agent_service.get_logged_in_agent()
     if agent:
@@ -90,23 +90,11 @@ def manage_case(case_id):
 
     case_setup_form = UpdateCaseForm(obj=case)
     vars['case_setup_form'] = case_setup_form
-    if not case.products:
-        vars['case_product'] = None
-    else:
-        vars['case_product'] = case.products[0]
-    if not case.situs_state:
-        vars['case_state'] = None
-    else:
-        vars['case_state'] = case.situs_state
 
     enrollment_periods = NewCaseEnrollmentPeriodForm(
         **case_service.get_case_enrollment_period_data(case))
     vars['enrollment_period_form'] = enrollment_periods
 
-    vars['census_records'] = [
-        case_service.census_records.get_record_dict(record)
-        for record in census_records(case_id)
-        ]
     vars['nav_menu'] = get_nav_menu()
 
     # Has active enrollments?

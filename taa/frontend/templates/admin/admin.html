@@ -52,14 +52,17 @@
 	  <td>{{acc['agent_code']}}</td>
 	  <td class="hidden-480">{{acc['signing_name']}}</td>
 	  <td>
-	    <a href={{base_url + acc['email']}}>
-	    {% if acc['status']=='Activated' %}
-	    <span class="label label-success">Activated
-	      {% else %}
-	      <span class="label label-danger arrowed-in">Not Activated
-		{% endif %}
-	      </span>
-	      </a>
+	    {%if is_user_admin %}
+          <a href={{base_url + acc['email']}}>
+        {% endif %}
+            {% if acc['status']=='Activated' %}
+              <span class="label label-success">Activated</span>
+            {% else %}
+              <span class="label label-danger arrowed-in">Not Activated</span>
+            {% endif %}
+        {%if is_user_admin %}
+          </a>
+        {% endif %}
 	  </td>
 	</tr>
 	{% else %}

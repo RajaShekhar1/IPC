@@ -101,17 +101,16 @@ style="display: none;" data-bind="visible: true">
                     <div class="form-group">
                       <label class="col-md-3 control-label" for="productID">Product</label>
                       <div class="col-md-9">
-                        <limited-product-select params="limiter: state_product_limiter"></limited-product-select>
+                        <limited-product-select params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-product-select>
                       </div>
                     </div>
 
                     {{ render_field_with_errors(case_setup_form.situs_city, **{'data-bind':'value: situs_city'}) }}
-                    {# {{ render_field_with_errors(case_setup_form.situs_state, id="case_state", **{'data-bind':'value: situs_state'}) }}
-                    #}
+
                     <div class="form-group">
                       <label class="col-md-3 control-label" for="enrollmentState">State</label>
                       <div class="col-md-9">
-                        <limited-state-select params="limiter: state_product_limiter"></limited-state-select>
+                        <limited-state-select params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-state-select>
                       </div>
                     </div>
 
@@ -286,7 +285,7 @@ style="display: none;" data-bind="visible: true">
     <div class="widget-toolbox clearfix padding-8">
 
       <button class="btn btn-primary btn-md pull-right" data-bind="
-      {# enable: has_unsaved_data,  #}
+      disable: !can_edit_case,
       click: save_settings,
       css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}
       ">Save</button>
@@ -303,8 +302,6 @@ style="display: none;" data-bind="visible: true">
 
 <div class="row">
   <div class="col-md-12 self-enrollment-section">
-    {# <form class="form-horizontal case_setup" data-bind="submit: save_settings">
-    #}
     <form class="form-horizontal" id="edit-self-enrollment-form">
       <div class="widget-box">
         <div class="widget-header">
@@ -409,17 +406,11 @@ style="display: none;" data-bind="visible: true">
 </div>
 </div>
 <div class="widget-toolbox clearfix padding-8">
-
-  {#
-  <button class="btn btn-primary btn-md pull-right" data-bind="
-  enable: has_unsaved_data,
-  click: save_settings,
-  css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}
-
-  ">Save</button>
-  #}
   <div class="pull-right clearfix">
-    <button type="submit" class="btn btn-primary" data-bind="visible: is_self_enrollment">Save</button>
+    <button type="submit" class="btn btn-primary" data-bind="visible: is_self_enrollment,
+      disable: !can_edit_case,
+      click: save_settings,
+      css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}">Save</button>
   </div>
 </div>
 </div>
@@ -443,11 +434,12 @@ style="display: none;" data-bind="visible: true">
           <div class="col-md-4"><h4 class="bigger-150">Case Census</h4></div>
           <div class="col-md-8">
 
-            <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal" >
+            <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal"
+                    data-bind="visible: can_edit_case">
               <i class="ace-icon fa fa-upload"></i>
               Upload Census
             </button>
-            <a data-bind="visible: has_census_data" href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
+            <a data-bind="visible: has_census_data() && can_edit_case" href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
               <i class="ace-icon glyphicon glyphicon-download-alt"></i>
               Download Census
             </a>
@@ -472,16 +464,10 @@ style="display: none;" data-bind="visible: true">
             </div>
           </div>
 
-          {% if not census_records %}
-          <h4 class="no-census-header text-center lighter">No Census Data Uploaded</h4>
-          {% endif %}
+          <h4 class="no-census-header text-center lighter" data-bind="visible: census_data().length == 0">No Census Data Uploaded</h4>
 
           <div class="table-responsive">
-            {% if not census_records  %}
-            <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive" style="display: none;">
-              {% else %}
-              <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive">
-                {% endif %}
+            <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive" data-bind="visble: census_data().length > 0">
                 <thead>
                   <tr>
                     <th></th>
@@ -495,7 +481,7 @@ style="display: none;" data-bind="visible: true">
                 <tbody>
                   {#
                   Don't load this on the page anymore,
-                  we load from the server at run time for page speed
+                  we load from the server using ajax at run time (helps with performance, needs to be able to reload anyway)
                   #}
                 </tbody>
               </table>
@@ -1288,9 +1274,10 @@ style="display: none;" data-bind="visible: true">
                     return parse_date(val, "MM/DD");
                   }
 
-                  var CaseSettingsPanel = function(case_data, product_choices) {
+                  var CaseSettingsPanel = function(case_data, product_choices, can_edit_case) {
                     var self = this;
 
+                    self.can_edit_case = can_edit_case;
                     self.report_data = ko.observable(null);
                     self.report_viewmodel = ko.observable(null);
                     self.report_viewmodel.subscribe(function(val) {
@@ -1519,25 +1506,28 @@ style="display: none;" data-bind="visible: true">
                       self.flash_messages = new FlashMessages();
 
                       // subscribe to all changes to detect data changes
-                      var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
-                        self.enrollment_periods, self.situs_city, self.situs_state, self.payment_mode,
-                        self.is_active, self.owner_agent_id, self.is_self_enrollment
-                      ];
-                      _.each(self.enrollment_periods(), function(p) {
-                        fields.push(p.start_date);
-                        fields.push(p.end_date);
-                      });
-                      $.each(fields, function() {
-                        var field = this;
-                        field.subscribe(function() {
+                      if (self.can_edit_case) {
+                        var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
+                          self.enrollment_periods, self.situs_city, self.situs_state, self.payment_mode,
+                          self.is_active, self.owner_agent_id, self.is_self_enrollment
+                        ];
+                        _.each(self.enrollment_periods(), function(p) {
+                          fields.push(p.start_date);
+                          fields.push(p.end_date);
+                        });
+                        $.each(fields, function() {
+                          var field = this;
+                          field.subscribe(function() {
 
+                            self.is_data_dirty(true);
+                          });
+                        });
+                        // For now, trigger dirty on every change within the self-enroll setup.
+                        $("#edit-self-enrollment-form").on("change", "input, select, [contenteditable]", function() {
                           self.is_data_dirty(true);
                         });
-                      });
-                      // For now, trigger dirty on every change within the self-enroll setup.
-                      $("#edit-self-enrollment-form").on("change", "input, select, [contenteditable]", function() {
-                        self.is_data_dirty(true);
-                      });
+
+                      }
 
                       self.can_activate_case = ko.computed(function() {
                         var is_valid = (
@@ -1729,6 +1719,11 @@ style="display: none;" data-bind="visible: true">
                           self.save_settings = function(cb) {
                             self.flash_messages.clear();
 
+                            if (!self.can_edit_case) {
+                              self.flash_messages.flash_error("Only the case owner agent or home office can make changes to the case.");
+                              return;
+                            }
+
                             if (!self.validate()) {
                               self.flash_messages.flash_error("Please correct any errors below before saving.");
                               return;
@@ -1834,9 +1829,12 @@ style="display: none;" data-bind="visible: true">
                           self.is_permanent_delete_modal_showing(true);
                         };
 
-                        $(window).bind("beforeunload", function() {
-                          return self.has_unsaved_data() ? "You have made changes without saving. Do you you wish to leave this page and lose all changes?" : undefined;
-                        });
+                        if (self.can_edit_case) {
+                          $(window).bind("beforeunload", function() {
+                            return self.has_unsaved_data() ? "You have made changes without saving. Do you you wish to leave this page and lose all changes?" : undefined;
+                          });
+                        }
+
 
                         self.has_unsaved_data = ko.computed(function() {
                           return self.is_data_dirty();
@@ -1859,6 +1857,11 @@ style="display: none;" data-bind="visible: true">
 
                             setup_tab.tab('show');
 
+                            // Disable all data entry on case setup if case is not editable
+                            if (!self.can_edit_case) {
+                              $("#setup").find("input, select, button").prop("disabled", true);
+                            }
+
                           });
 
                           // If switching to another tab, we check for dirty and warn the user
@@ -1880,74 +1883,69 @@ style="display: none;" data-bind="visible: true">
                                   cancel: {label: "Cancel", className: 'btn-default', callback: function() {}}
                                 }
                               });
-                              /*bootbox.confirm("You have made changes without saving. Please save your changes.",
-                              function(result) {
-                              if (result) {
 
+                              this.redirect("#setup");
+                              return false;
                             }
                           });
-                          */
-                          this.redirect("#setup");
-                          return false;
-                        }
-                      });
 
-                      this.get("#enrollment", function() {
-                        self.exit_print_mode();
+                          this.get("#enrollment", function() {
+                            self.exit_print_mode();
 
-                        enrollment_tab.tab('show');
+                            enrollment_tab.tab('show');
 
-                        // Load census data when tab loads
-                        console.log("SetTimeout for load_initial_census_data")
-                        setTimeout(load_initial_census_data, 0);
+                            // Load census data when tab loads
+                            console.log("SetTimeout for load_initial_census_data")
+                            setTimeout(load_initial_census_data, 0);
 
-                        function load_initial_census_data() {
-                          case_management.refresh_census_table({{ case.id }}, "{{ url_for("cases.census_records", case_id=case.id) }}",
-                                  "#census-records-table", "#census-table-loading",
-                                  handle_census_data_loaded_first_time,
-                                  handle_no_census_data_loaded,
-                                  handle_census_data_loaded
-                          );
-                        }
+                            function load_initial_census_data() {
+                              case_management.refresh_census_table({{ case.id }}, "{{ url_for("cases.census_records", case_id=case.id) }}",
+                                      "#census-records-table", "#census-table-loading",
+                                      handle_census_data_loaded_first_time,
+                                      handle_no_census_data_loaded,
+                                      handle_census_data_loaded
+                              );
+                            }
 
-                        function handle_census_data_loaded_first_time(table, data) {
-                          case_management.init_status_filter(table);
-                          case_management.init_alphabet_search(table);
-                        }
+                            function handle_census_data_loaded_first_time(table, data) {
+                              case_management.init_status_filter(table);
+                              case_management.init_alphabet_search(table);
+                            }
 
-                        function handle_census_data_loaded(table, data) {
-                          window.case_settings.census_data(data);
-                          window.case_settings.toggle_enrollment_buttons();
-                        }
+                            function handle_census_data_loaded(table, data) {
+                              window.case_settings.census_data(data);
+                              window.case_settings.toggle_enrollment_buttons();
+                            }
 
-                        function handle_no_census_data_loaded() {
-                            window.case_settings.census_data([]);
-                            window.case_settings.toggle_enrollment_buttons();
-                        }
-                    });
+                            function handle_no_census_data_loaded() {
+                                window.case_settings.census_data([]);
+                                window.case_settings.toggle_enrollment_buttons();
+                            }
+                        });
 
-                    this.get("#reports", function() {
-                      self.exit_print_mode();
+                        this.get("#reports", function() {
+                          self.exit_print_mode();
 
-                      reports_tab.tab('show');
-                      if (self.report_viewmodel()) {
-                        self.report_viewmodel().load_reports();
-                        self.report_viewmodel().load_enrollments();
-                      }
-                    });
+                          reports_tab.tab('show');
+                          if (self.report_viewmodel()) {
+                            self.report_viewmodel().load_reports();
+                            self.report_viewmodel().load_enrollments();
+                          }
+                        });
 
-                    this.get("#print", function() {
-                      if (self.report_viewmodel()) {
-                        self.report_viewmodel().enter_print_preview();
-                        window.print();
-                      } else {
-                        // Go to report page
-                        window.location = "#reports";
-                      }
-                    });
+                        this.get("#print", function() {
+                          if (self.report_viewmodel()) {
+                            self.report_viewmodel().enter_print_preview();
+                            window.print();
+                          } else {
+                            // Go to report page
+                            window.location = "#reports";
+                          }
+                        });
                   }).run();
 
                 };
+                /* end CaseSettingsPanel */
 
                 /* CaseReportsViewModel */
                 var CaseReportsViewModel = function(params) {
@@ -2298,7 +2296,7 @@ style="display: none;" data-bind="visible: true">
             /* END: AddToCensusViewModel */
 
             // Initialize settings viewmodel
-            window.case_settings = new CaseSettingsPanel({{ case |tojson|safe }}, {{ product_choices |tojson|safe }});
+            window.case_settings = new CaseSettingsPanel({{ case |tojson|safe }}, {{ product_choices |tojson|safe }}, {{ 'true' if can_edit_case else 'false'}});
             ko.applyBindings(window.case_settings, $(".content")[0]);
 
             // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change
@@ -2310,7 +2308,6 @@ style="display: none;" data-bind="visible: true">
 
               self.numbers = {
                 not_sent: ko.pureComputed(function() {
-                    console.log("recalc not_sent");
                     return self.case_settings_vm.census_data().reduce(function addNotSent(acc, app) {
                       return !app.sent_email ? acc+1 : acc;
                     },0);
@@ -2330,6 +2327,12 @@ style="display: none;" data-bind="visible: true">
               self.send_type = ko.observable("");
               self.emailSettings = window.case_settings.emailSettings;
 
+              self.num_emails_to_send = ko.pureComputed(function() {
+                if (!self.send_type()) return 0;
+
+                return self.numbers[self.send_type().replace("-", "_")]();
+              });
+
               self.resetEmail = function() {
                 self.emailSettings.message("{{ default_email_message|replace('\n', '\\n')|safe }}");
                 self.emailSettings.subject("{{ default_email_subject|replace('\n', '\\n')|safe }}");
@@ -2338,56 +2341,87 @@ style="display: none;" data-bind="visible: true">
               self.errors = ko.observableArray();
 
               self.send_emails = function() {
-                var num_emails = self.numbers[self.send_type().replace("-", "_")]();
+
                 self.errors([]);
-                if(num_emails == 0) {
+                if(self.num_emails_to_send() == 0) {
                   self.errors.push("There are no census records that match the selected criteria.");
                   return false;
                 }
-                if(confirm("You are about to send "+num_emails+" emails. Are you sure?")) {
-                  window.case_settings.save_settings(function(promise) {
-                    $('#email-target-links-modal .form-panel').hide();
-                    $('#email-target-links-modal .form-buttons').hide();
-                    $('#email-target-links-modal .loading-panel').show();
-                    $('#email-target-links-modal .processing-buttons').show();
-                    promise.then(function(data) {
-                      $.ajax({
-                        url: '{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which="") }}' + self.send_type(),
-                        method: 'POST',
-                        dataType: 'json',
-                        success: function(results) {
-                          $('#email-target-links-modal .loading-panel').hide();
-                          $('#email-target-links-modal .success-panel').show();
-                          $('#email-target-links-modal .processing-buttons').hide();
-                          $('#email-target-links-modal .success-buttons').show();
-                          $("#email-target-links-modal .success-buttons button").click(function() {
-                            $('#email-target-links-modal .success-buttons').hide();
-                            $('#email-target-links-modal .form-buttons').show();
-                            $('#email-target-links-modal .modal-panel').hide();
-                            $('#email-target-links-modal .form-panel').show();
-                          });
-                          var sent_status_list = results.data;
-                          $('#email-target-links-modal #email-status-wrap').html(sent_status_list.join('<br>'));
-                        },
-                        error: function(xhr) {
-                          $('#email-target-links-modal .loading-panel').hide();
-                          $('#email-target-links-modal .form-buttons').hide();
-                          $('#email-target-links-modal .error-panel').show();
-                          $('#email-target-links-modal .error-buttons').show();
-                          $("#email-target-links-modal .error-buttons button:not(.back-btn)").click(function() {
-                            $('#email-target-links-modal .error-buttons').hide();
-                            $('#email-target-links-modal .processing-buttons').show();
-                            $('#email-target-links-modal .modal-panel').hide();
-                            $('#email-target-links-modal .form-panel').show();
-                          });
-                        }
-                      });
-                    }, function failure(err) {
-                      console.log(err);
-                    });
+
+                if(!confirm("You are about to send "+self.num_emails_to_send()+" emails. Are you sure?")) {
+                  return false;
+                }
+
+                if (window.case_settings.can_edit_case) {
+                  // Save the case (along with any changes the email) and then send emails.
+                  self.show_loading_panel();
+                  window.case_settings.save_settings(save_callback);
+                } else {
+                  // Todo: send email settings overrides
+                  // Just send the emails.
+                  send_emails({});
+                }
+
+                function save_callback(promise) {
+                  promise.then(send_emails, handle_failed_save);
+                }
+
+                function handle_failed_save() {
+                  bootbox.alert("Sorry, there was a problem saving the case data before sending the emails. No emails were sent.");
+                }
+
+                function send_emails(data) {
+                  $.ajax({
+                    url: '{{ url_for('cases.email_self_enrollment_link', case_id=case.id, which="") }}' + self.send_type(),
+                    method: 'POST',
+                    dataType: 'json',
+                    success: function(results) {
+                      self.show_finished_panel();
+                      var sent_status_list = results.data;
+                      $('#email-target-links-modal #email-status-wrap').html(sent_status_list.join('<br>'));
+                    },
+                    error: function(xhr) {
+                      self.show_error_panel();
+                    }
                   });
                 }
-              }
+
+              };
+
+              self.show_form_panel = function() {
+                $('#email-target-links-modal .success-buttons').hide();
+                $('#email-target-links-modal .form-buttons').show();
+                $('#email-target-links-modal .modal-panel').hide();
+                $('#email-target-links-modal .form-panel').show();
+              };
+              self.show_loading_panel = function () {
+                $('#email-target-links-modal .form-panel').hide();
+                $('#email-target-links-modal .form-buttons').hide();
+                $('#email-target-links-modal .loading-panel').show();
+                $('#email-target-links-modal .processing-buttons').show();
+              };
+              self.show_finished_panel = function() {
+                $('#email-target-links-modal .loading-panel').hide();
+                $('#email-target-links-modal .success-panel').show();
+                $('#email-target-links-modal .processing-buttons').hide();
+                $('#email-target-links-modal .success-buttons').show();
+                // Show the first panel when we click again
+                $("#email-target-links-modal .success-buttons button").click(function() {
+                  self.show_form_panel();
+                });
+              };
+              self.show_error_panel = function() {
+                $('#email-target-links-modal .loading-panel').hide();
+                $('#email-target-links-modal .form-buttons').hide();
+                $('#email-target-links-modal .error-panel').show();
+                $('#email-target-links-modal .error-buttons').show();
+                $("#email-target-links-modal .error-buttons button:not(.back-btn)").click(function() {
+                  $('#email-target-links-modal .error-buttons').hide();
+                  $('#email-target-links-modal .processing-buttons').show();
+                  $('#email-target-links-modal .modal-panel').hide();
+                  $('#email-target-links-modal .form-panel').show();
+                });
+              };
             }
 
             window.modal_bindings = new SendEmailsModalViewModel(window.case_settings);

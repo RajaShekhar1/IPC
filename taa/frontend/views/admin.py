@@ -65,13 +65,12 @@ def admin():
              'agent_code': acc.custom_data.get('agent_code'),
              'signing_name': acc.custom_data.get('signing_name'),
              'status': "Activated" if acc.custom_data.get('activated') else "Not Activated",
-             'is_user_admin': agent_service.is_user_admin(current_user),
          })
         #print dumps(dict(acc.custom_data), indent=2, sort_keys=True)
         
     #show the un-activated accounts first
     accounts = sorted(accounts, reverse=True, key=(lambda x: x['status']))
-    return render_template('admin/admin.html', accounts=accounts, nav_menu=get_nav_menu())
+    return render_template('admin/admin.html', accounts=accounts, nav_menu=get_nav_menu(), is_user_admin=agent_service.is_user_admin(current_user))
 
 
 @app.route('/edituser', methods = ['GET', 'POST'])
