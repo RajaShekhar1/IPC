@@ -346,8 +346,7 @@ def update_self_enrollment_setup(case_id):
 
 def get_census_records_for_status(case, status=None):
     result = []
-    import pdb; pdb.set_trace()
-
+    
     if case is None or case.self_enrollment_setup is None:
         return result
     if status is None:
