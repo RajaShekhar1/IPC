@@ -1,0 +1,98 @@
+{% block header %}
+
+    {# All CSS assets #}
+    {% assets "css_ace_latest" -%}
+        <link rel="stylesheet" href="{{ ASSET_URL }}">
+    {% endassets %}
+
+    <!--[if lte IE 9]>
+      <link rel="stylesheet" href="{{ url_for('static', filename='ace-v1.3.3/css/ace-ie.min.css') }}" />
+    <![endif]-->
+
+    {% block page_css -%}
+        {# Override to add specific CSS links to a page #}
+    {%- endblock %}
+
+    {# Header scripts #}
+    <script src="{{ url_for('static', filename='js/ace-extra.min.js') }}"></script>
+
+    <!--[if lt IE 9]>
+    <script src="{{ url_for('static', filename='ace-v1.3.3/js/html5shiv.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='ace-v1.3.3/js/respond.min.js') }}"></script>
+    <![endif]-->
+
+    <!--[if !IE]> -->
+  <script src="{{ url_for('static', filename='ace-v1.3.3/js/jquery.min.js') }}"></script>
+  <!-- <![endif]-->
+  <!--[if lte IE 9]>
+   <script src="{{ url_for('static', filename='ace-v1.3.3/js/jquery1x.min.js') }}"></script>
+  <![endif]-->
+
+
+
+  <!--[if lte IE 8]>
+   <script src="{{ url_for('static', filename='ace-v1.3.3/js/excanvas.min.js') }}"></script>
+  <![endif]-->
+
+  {# For WYSIWYG editor #}
+  <script src="{{ url_for('static', filename='ace-v1.3.3/js/jquery.hotkeys.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='ace-v1.3.3/js/bootstrap-wysiwyg.min.js') }}"></script>
+{% endblock %}
+
+{% assets "css_ace_latest" -%}
+    <link rel="stylesheet" href="{{ ASSET_URL }}">
+{% endassets %}
+<div class="emailPreview container">
+  <h1>Email Preview</h1>
+  {% include "emails/enrollment_email.html" %}
+</div>
+<hr />
+<div class="sentData">
+  <h1>Email Status</h1>
+  <div class="table-responsive">
+    <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Recipient Name</th>
+            <th>Recipient Email</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for email in batch_emails %}
+            {% if email.status=="pending" %}
+            <tr class="bg-warning">
+            {% elif email.status=="failed" %}
+            <tr class="bg-danger">
+            {% elif email.status=="success" %}
+            <tr class="bg-success">
+            {% endif %}
+              <td>{{email.id}}</td>
+              <td>{{email.email_to_name}}</td>
+              <td>{{email.email_to_address}}</td>
+              <td>{{email.status}}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+</div>
+
+{% block js_footer %}
+
+    {% assets "js_vendor_latest" -%}
+        <script src="{{ ASSET_URL }}"></script>
+    {% endassets %}
+    {% assets "taa_app" -%}
+        <script src="{{ ASSET_URL }}"></script>
+    {% endassets %}
+    {% block page_js %}
+      <script>
+      $(function() {
+        $(".dt-responsive").dataTable()
+      });
+      </script>
+    {% endblock %}
+{% endblock %}
