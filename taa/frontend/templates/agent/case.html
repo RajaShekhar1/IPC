@@ -778,7 +778,7 @@ style="display: none;" data-bind="visible: true">
                     </div>
                   </div>
                   <div class="success-panel modal-panel" style="display: none;">
-                    <h3 class="header lighter green">Emails Sent Successfully</h3>
+                    <h3 class="header lighter green">Emails Scheduled for Delivery</h3>
                     <div id="email-status-wrap"></div>
                   </div>
                   <div class="error-panel modal-panel" style="display: none;">
@@ -1133,8 +1133,7 @@ style="display: none;" data-bind="visible: true">
                       census_errors_panel.num_data_records(resp.data.records.length);
                       show_success_panel();
 
-                      // Short-term fix: reload page
-                      window.location.reload();
+                      window.case_settings.census_data(resp.data.records);
 
                       // Update the datatable
                       case_management.refresh_census_table({{ case.id }},"{{ url_for("cases.census_records", case_id=case.id) }}",
@@ -1334,15 +1333,10 @@ style="display: none;" data-bind="visible: true">
                       message: ko.observable(case_data.self_enrollment_setup.email_message)
                     };
 
-                    /* $('#reset-email-message').click(function() {
-                      $('#email_message').html("{{ default_email_message|replace('\n', '\\n')|safe }}").focus();
-                      $('#email_subject').val("{{ default_email_subject|replace('\n', '\\n')|safe }}").focus();
-                    }); */
-
                     self.resetEmail = function() {
-                      self.emailSettings.message("{{ default_email_message|replace('\n', '\\n')|safe }}")
+                      self.emailSettings.message("{{ default_email_message|replace('\n', '\\n')|safe }}");
                       self.emailSettings.subject("{{ default_email_subject|replace('\n', '\\n')|safe }}")
-                    }
+                    };
 
                     self.landing = {
                       page_title: ko.observable(case_data.self_enrollment_setup.page_title),
@@ -1786,7 +1780,6 @@ style="display: none;" data-bind="visible: true">
                             self.flash_messages.flash_success("Data Saved");
                             $("#save-success").text("Data Saved");
                             self.loading_modal(null);
-                            //window.location.reload();
                           };
                           var on_failure = function(failed_xhr) {
                             var errors = failed_xhr.responseJSON.errors || [];
@@ -1904,23 +1897,27 @@ style="display: none;" data-bind="visible: true">
 
                         enrollment_tab.tab('show');
 
-                        // Load census data when page loads
+                        // Load census data when tab loads
+                        console.log("SetTimeout for load_initial_census_data")
                         setTimeout(load_initial_census_data, 0);
 
                         function load_initial_census_data() {
                           case_management.refresh_census_table({{ case.id }}, "{{ url_for("cases.census_records", case_id=case.id) }}",
-                          "#census-records-table", "#census-table-loading",
-                          handle_census_data_loaded,
-                          handle_no_census_data_loaded);
+                                  "#census-records-table", "#census-table-loading",
+                                  handle_census_data_loaded_first_time,
+                                  handle_no_census_data_loaded,
+                                  handle_census_data_loaded
+                          );
+                        }
+
+                        function handle_census_data_loaded_first_time(table, data) {
+                          case_management.init_status_filter(table);
+                          case_management.init_alphabet_search(table);
                         }
 
                         function handle_census_data_loaded(table, data) {
                           window.case_settings.census_data(data);
                           window.case_settings.toggle_enrollment_buttons();
-
-                          case_management.init_status_filter(table);
-                          case_management.init_alphabet_search(table);
-
                         }
 
                         function handle_no_census_data_loaded() {
@@ -2313,6 +2310,7 @@ style="display: none;" data-bind="visible: true">
 
               self.numbers = {
                 not_sent: ko.pureComputed(function() {
+                    console.log("recalc not_sent");
                     return self.case_settings_vm.census_data().reduce(function addNotSent(acc, app) {
                       return !app.sent_email ? acc+1 : acc;
                     },0);
@@ -2333,9 +2331,9 @@ style="display: none;" data-bind="visible: true">
               self.emailSettings = window.case_settings.emailSettings;
 
               self.resetEmail = function() {
-                self.emailSettings.message("{{ default_email_message|replace('\n', '\\n')|safe }}")
-                self.emailSettings.subject("{{ default_email_subject|replace('\n', '\\n')|safe }}")
-              }
+                self.emailSettings.message("{{ default_email_message|replace('\n', '\\n')|safe }}");
+                self.emailSettings.subject("{{ default_email_subject|replace('\n', '\\n')|safe }}");
+              };
 
               self.errors = ko.observableArray();
 

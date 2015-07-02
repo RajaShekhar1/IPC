@@ -850,7 +850,6 @@ class SelfEnrollmentLinkService(DBService):
             self_enrollment_setup_id=case.self_enrollment_setup.id,
             census_record_id=None if record is None else record.id,
             url=url)
-        db.session.commit()
         return link
 
     def get_self_enrollment_data_for(self, uuid, increment_clicks=True):

@@ -235,6 +235,7 @@ def post_census_records(case_id):
     if not file_obj:
         # Attempt to process an ad-hoc post. Currently only SSN is required.
         return case_service.create_ad_hoc_census_record(case, ssn=data['ssn'])
+
     if not (file_obj and has_csv_extension(file_obj.filename)):
         return dict(
             errors=[dict(
@@ -245,23 +246,16 @@ def post_census_records(case_id):
             )]
         )
 
-    # Process the CSV Data
+    # Process the uploaded file
+    errors, records = case_service.process_uploaded_census_data(case, data['upload_type'], file_obj)
 
-    # Read data into a buffer
-    file_data = StringIO.StringIO()
-    file_obj.save(file_data)
-    if data['upload_type'] == 'merge-skip':
-        errors, records = case_service.merge_census_data(case, file_data,
-                                                         replace_matching=False)
-    elif data['upload_type'] == 'merge-replace':
-        errors, records = case_service.merge_census_data(case, file_data,
-                                                         replace_matching=True)
-    else:
-        errors, records = case_service.replace_census_data(case, file_data)
-    # Return at most 20 errors at a time
-    # returns all added or changed records
-    status = 400 if errors else 200
-    return dict(errors=errors[:20], records=records), status
+    # If no errors, we retrieve the data in bulk so the serializer has everything it needs
+    #   (otherwise it will query per record)
+    if not errors:
+        records = case_service.get_census_records(case)
+
+    # Return at most 20 errors at a time, otherwise returns all added or changed records
+    return dict(errors=errors[:20], records=records), (400 if errors else 200)
 
 
 def has_csv_extension(filename):
@@ -318,6 +312,9 @@ def update_self_enrollment_setup(case_id):
                 # Generate generic self-enrollment link
                 self_enrollment_link_service.generate_link(request.url_root,
                                                            case)
+                # Commit changes
+                db.session.commit()
+
             return setup
         else:
             return case_service.update_self_enrollment_setup(

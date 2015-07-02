@@ -147,8 +147,9 @@ class CaseService(DBService):
                            search_text=None, text_columns=None,
                            sorting=None, sort_desc=False, include_enrolled=True,
                            filter_ssn=None, filter_birthdate=None):
-        from taa.services.enrollments.models import EnrollmentApplication, SelfEnrollmentEmailLog
+        from taa.services.enrollments.models import EnrollmentApplication
         query = self.census_records.find(case_id=case.id)
+
         # Filter enrollment status. Also load in any enrollment data eagerly.
         if include_enrolled == False:
             # Since we need to filter on enrollment status, pull in the
@@ -168,9 +169,6 @@ class CaseService(DBService):
                     ).joinedload('product')
             )
 
-        # Eagerly load the number of sent self-enrollment emails.
-        #CaseCensus.email_logs.any(SelfEnrollmentEmailLog.status == SelfEnrollmentEmailLog.STATUS_SUCCESS)
-
         if filter_ssn:
             query = query.filter(CaseCensus.employee_ssn ==
                                  filter_ssn.replace('-', ''))
@@ -188,6 +186,7 @@ class CaseService(DBService):
             query = query.offset(offset)
         if num_records > 0:
             query = query.limit(num_records)
+
         return query.all()
 
     def export_census_records(self, records):
@@ -247,6 +246,22 @@ class CaseService(DBService):
         db.session.flush()
         return record
 
+    def process_uploaded_census_data(self, case, merge_type, file_obj):
+        if merge_type == 'merge-skip':
+            return self.merge_census_data(case, self._create_file_buffer(file_obj),
+                                                             replace_matching=False)
+        elif merge_type == 'merge-replace':
+            return self.merge_census_data(case, self._create_file_buffer(file_obj),
+                                                             replace_matching=True)
+        else:
+            return self.replace_census_data(case, self._create_file_buffer(file_obj))
+
+    def _create_file_buffer(self, file_obj):
+        # Read data into a buffer
+        file_data = StringIO.StringIO()
+        file_obj.save(file_data)
+        return file_data
+
     def merge_census_data(self, case, file_data, replace_matching):
         return self.census_records.merge_census_data(case, file_data,
                                                      replace_matching)
@@ -304,6 +319,8 @@ class CaseService(DBService):
 
     def update_self_enrollment_setup(self, setup, data):
         return self.self_enrollment.update(setup, **data)
+
+
 
 
 class CaseEnrollmentPeriodsService(DBService):

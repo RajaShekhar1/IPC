@@ -188,7 +188,7 @@ class CensusRecordSerializer(JsonSerializable):
     }
     __json_add__ = {
         'enrollment_status': lambda record: record.get_enrollment_status(),
-        #'sent_email': lambda record: record.sent_email_count
+        'sent_email': lambda record: record.sent_email_count,
     }
     __json_hidden__ = ['case', 'enrollment_applications', 'self_enrollment_links', 'email_logs']
 

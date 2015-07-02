@@ -2,6 +2,7 @@ import decimal
 
 from taa import db
 from taa.helpers import JsonSerializable
+from taa.services.cases import CaseCensus
 
 
 class EnrollmentSerializer(JsonSerializable):
@@ -194,3 +195,13 @@ class SelfEnrollmentEmailLog(SelfEnrollmentEmailLogSerializer, db.Model):
     STATUS_PENDING = u'pending'
     STATUS_FAILURE = u'failure'
     STATUS_SUCCESS = u'success'
+
+CaseCensus.sent_email_count = db.column_property(
+    db.select([db.func.count(SelfEnrollmentEmailLog.id)]).\
+            where(SelfEnrollmentEmailLog.census_id==CaseCensus.id).\
+            where(db.or_(
+                SelfEnrollmentEmailLog.status == SelfEnrollmentEmailLog.STATUS_SUCCESS,
+                SelfEnrollmentEmailLog.status == SelfEnrollmentEmailLog.STATUS_PENDING,
+            )).\
+            correlate_except(SelfEnrollmentEmailLog)
+)
