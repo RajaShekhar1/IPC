@@ -131,30 +131,6 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
         return self.coverage_status == self.COVERAGE_STATUS_ENROLLED
 
 
-# enrollment_requests = Table('enrollment_requests', metadata,
-#     Column('id', Integer, primary_key=True),
-#     Column('enrollment_id', Integer, ForeignKey('enrollments.id'), nullable=False),
-#     Column('token', String, nullable=False),
-#     Column('expiration', Date, nullable=False),
-# )
-#
-# enrollment_elections = Table('enrollment_elections', metadata,
-#     Column('id', Integer, primary_key=True),
-#     Column('enrollment_id', Integer, ForeignKey('enrollments.id')),
-#     Column('product_id', Integer, ForeignKey('products.id')),
-#
-#     Column('coverage_taken', Boolean),
-#
-#     Column('total_annual_premium', Numeric),
-#     Column('employee_coverage', Numeric),
-#     Column('employee_annual_premium', Numeric),
-#     Column('spouse_coverage', Numeric),
-#     Column('spouse_annual_premium', Numeric),
-#
-#     Column('children_coverage', Numeric),
-#     Column('children_annual_premium', Numeric),
-# )
-
 class SelfEnrollmentLinkSerializer(JsonSerializable):
     __json_hidden__ = ['census_record', 'case', 'emails', 'self_enrollment_setup']
 

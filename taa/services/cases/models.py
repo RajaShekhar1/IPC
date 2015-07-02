@@ -1,7 +1,5 @@
 from datetime import datetime, timedelta
 
-from sqlalchemy_utils import aggregated
-
 from taa import db
 from taa.helpers import JsonSerializable
 
@@ -190,7 +188,7 @@ class CensusRecordSerializer(JsonSerializable):
     }
     __json_add__ = {
         'enrollment_status': lambda record: record.get_enrollment_status(),
-        'sent_email': lambda record: record.sent_email_count
+        #'sent_email': lambda record: record.sent_email_count
     }
     __json_hidden__ = ['case', 'enrollment_applications', 'self_enrollment_links', 'email_logs']
 
@@ -269,12 +267,6 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     child6_first = db.Column(db.String(256))
     child6_last = db.Column(db.String(256))
     child6_birthdate = db.Column(db.Date)
-
-    # Include a count of emails sent.
-    @aggregated('email_logs', db.Column(db.Integer))
-    def sent_email_count(self):
-        # TODO: Must check status of email
-        return db.func.count('1')
 
     def get_smoker_boolean(self, value):
         if value == 'Y':
