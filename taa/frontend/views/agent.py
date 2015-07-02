@@ -74,9 +74,11 @@ def manage_case(case_id):
         agent_name = agent.name()
         agent_id = agent.id
         agent_email = agent.email
+        vars['can_edit_case'] = (agent is case_service.get_case_owner(case))
     else:
         products = product_service.get_all_enrollable_products()
         vars['is_admin'] = True
+        vars['can_edit_case'] = True
         vars['active_agents'] = agent_service.get_active_agents()
         vars['header_title'] = 'Home Office'
         agent_name = ""
@@ -156,6 +158,7 @@ def edit_census_record(case_id, census_record_id):
     case = case_service.get_if_allowed(case_id)
     census_record = case_service.get_census_record(case, census_record_id)
     record_form = CensusRecordForm(obj=census_record)
+    agent = agent_service.get_logged_in_agent()
 
     # Get the child entries out
     child_form_fields = []
@@ -175,6 +178,7 @@ def edit_census_record(case_id, census_record_id):
         form=record_form,
         child_form_fields=child_form_fields,
         is_admin=is_admin,
+        can_edit_case = is_admin or (agent is case_service.get_case_owner(case)),
         header_title='Home Office' if is_admin else '',
         nav_menu=get_nav_menu()
     )

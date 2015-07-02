@@ -1537,7 +1537,8 @@ style="display: none;" data-bind="visible: true">
                           $.trim(self.company_name()) != "" &&
                           $.trim(self.situs_city()) != "" &&
                           self.selected_statecode() != null &&
-                          self.selected_payment_mode() != null
+                          self.selected_payment_mode() != null &&
+                          self.owner_agent_id() > 0
                         );
 
                         if (self.is_open_enrollment() && !self.get_open_enrollment_period().is_valid()) {

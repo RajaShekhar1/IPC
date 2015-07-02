@@ -320,8 +320,18 @@ class CaseService(DBService):
     def update_self_enrollment_setup(self, setup, data):
         return self.self_enrollment.update(setup, **data)
 
+    def can_current_user_edit_case(self, case):
+        from taa.services.agents import AgentService
+        agent_service = AgentService()
+        logged_in_agent = agent_service.get_logged_in_agent()
+        is_case_owner = logged_in_agent and logged_in_agent is self.get_case_owner(case)
 
+        if agent_service.can_manage_all_cases(current_user):
+            return True
+        if is_case_owner:
+            return True
 
+        return False
 
 class CaseEnrollmentPeriodsService(DBService):
     __model__ = CaseEnrollmentPeriod

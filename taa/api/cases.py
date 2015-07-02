@@ -95,12 +95,13 @@ def create_case():
 @groups_required(api_groups, all=False)
 def update_case(case_id):
     case = case_service.get_if_allowed(case_id)
-    data = get_posted_data()
     is_admin = agent_service.can_manage_all_cases(current_user)
-    if not agent_service.get_logged_in_agent() and not is_admin:
+    if not case_service.can_current_user_edit_case(case):
         abort(401)
         return
+
     form = UpdateCaseForm()
+    data = get_posted_data()
     # Allow the owner agent to be updated only if an admin
     if 'agent_id' in data:
         if not is_admin:
@@ -131,7 +132,12 @@ def update_case(case_id):
 @login_required
 @groups_required(api_groups, all=False)
 def delete_case(case_id):
-    case_service.delete_case(case_service.get_if_allowed(case_id))
+    case = case_service.get_if_allowed(case_id)
+    if not case_service.can_current_user_edit_case(case):
+        abort(401)
+        return
+
+    case_service.delete_case(case)
     return None, 204
 
 
@@ -155,6 +161,10 @@ def update_case_enrollment_periods(case_id):
     of a case's enrollment periods are of the same type.
     """
     case = case_service.get_if_allowed(case_id)
+    if not case_service.can_current_user_edit_case(case):
+        abort(401)
+        return
+
     periods = request.json
     errors = case_service.validate_enrollment_periods(case, periods)
     if not errors:
@@ -230,6 +240,10 @@ def census_records(case_id):
 @groups_required(api_groups, all=False)
 def post_census_records(case_id):
     case = case_service.get_if_allowed(case_id)
+    if not case_service.can_current_user_edit_case(case):
+        abort(401)
+        return
+
     data = get_posted_data()
     file_obj = request.files.get('csv-file')
     if not file_obj:
@@ -267,6 +281,9 @@ def has_csv_extension(filename):
 @groups_required(api_groups, all=False)
 def update_census_record(case_id, census_record_id):
     case = case_service.get_if_allowed(case_id)
+    if not case_service.can_current_user_edit_case(case):
+        abort(401)
+        return
     census_record = case_service.get_census_record(case, census_record_id)
     form = CensusRecordForm()
     if form.validate_on_submit():
@@ -279,6 +296,9 @@ def update_census_record(case_id, census_record_id):
 @groups_required(api_groups, all=False)
 def delete_census_record(case_id, census_record_id):
     case = case_service.get_if_allowed(case_id)
+    if not case_service.can_current_user_edit_case(case):
+        abort(401)
+        return
     census_record = case_service.get_census_record(case, census_record_id)
     case_service.delete_census_record(census_record)
     return None, 204
@@ -289,7 +309,9 @@ def delete_census_record(case_id, census_record_id):
 @groups_required(api_groups, all=False)
 def update_self_enrollment_setup(case_id):
     case = case_service.get_if_allowed(case_id)
-
+    if not case_service.can_current_user_edit_case(case):
+        abort(401)
+        return
     self_enrollment_setup = case_service.get_self_enrollment_setup(case)
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
 
