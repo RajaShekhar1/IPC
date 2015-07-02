@@ -191,6 +191,13 @@ class SelfEnrollmentLink(SelfEnrollmentLinkSerializer, db.Model):
 
 class SelfEnrollmentEmailBatchSerializer(JsonSerializable):
     __json_hidden__ = ['email_logs', 'case']
+    __json_add__ = {
+        'email_count': lambda batch: batch.get_email_count()
+    }
+    def get_email_count(self):
+        return db.session.query(SelfEnrollmentEmailLog
+        ).filter_by(batch_id=self.id
+        ).count()
 
 class SelfEnrollmentEmailBatchSerializerWithEmails(JsonSerializable):
     __json_hidden__ = ['case']

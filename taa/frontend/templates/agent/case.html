@@ -538,9 +538,8 @@ style="display: none;" data-bind="visible: true">
           <div class="row">
             <div class="col-sm-10 col-sm-offset-1">
               <h3>Email Notification History</h3>
-              <ul class="list-unstyled">
-                <li class="alert alert-success">Sent n emails on mm/dd/YYYY hh:MM P</li>
-                <li class="alert alert-danger">Failed to send n emails on mm/dd/YYYY hh:MM P</li>
+              <ul class="list-unstyled" data-bind="foreach:email_batches">
+                <li><a href="#" data-bind="click: $parent.batch_preview ">Sent <span data-bind="text: email_count"></span> emails on <span data-bind="text: moment(sent_date).format('MM/DD/YYYY hh:mma')"></span></a></li>
               </ul>
             </div>
           </div>
@@ -1586,6 +1585,16 @@ style="display: none;" data-bind="visible: true">
                       $("#edit-self-enrollment-form").on("change", "input, select, [contenteditable]", function() {
                         self.is_data_dirty(true);
                       });
+
+                      self.email_batches = ko.observableArray([]);
+
+                      $.getJSON("/cases/{{ case.id }}/self_enroll_email_batches", function(data) {
+                        self.email_batches(data.data);
+                      });
+
+                      self.batch_preview = function(batch) {
+                        window.open("/batch-info/{{case.id}}/batch/"+batch.id, "batchView", "menubar=no,location=no,resizable=no,width=700,height=500,scrollbars=yes,status=yes");
+                      }
 
                       self.can_activate_case = ko.computed(function() {
                         var is_valid = (
