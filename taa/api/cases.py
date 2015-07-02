@@ -315,16 +315,16 @@ def update_self_enrollment_setup(case_id):
     self_enrollment_setup = case_service.get_self_enrollment_setup(case)
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
 
-    if ('self_enrollment_type' in request.form
-            and request.form['self_enrollment_type'] == SelfEnrollmentSetup.TYPE_CASE_GENERIC):
+    if ('self_enrollment_type' in request.json
+            and request.json['self_enrollment_type'] == SelfEnrollmentSetup.TYPE_CASE_GENERIC):
+
         # Remove email-specific fields from the form so they are not validated
         del form.email_greeting_type
         del form.email_greeting_salutation
         del form.email_subject
         del form.email_sender_email
-        del form.email_sender_email
+        del form.email_sender_name
         del form.email_message
-
 
     if form.validate_on_submit():
         if self_enrollment_setup is None:
@@ -346,7 +346,7 @@ def update_self_enrollment_setup(case_id):
 
 def get_census_records_for_status(case, status=None):
     result = []
-    
+
     if case is None or case.self_enrollment_setup is None:
         return result
     if status is None:
@@ -393,7 +393,7 @@ def email_self_enrollment_batch_post(case_id):
 
     eligible_census = get_census_records_for_status(case, status=send_type)
 
-    results = self_enrollment_email_service.create_batch_for_case(case, eligible_census)
+    results = self_enrollment_email_service.create_batch_for_case(case, eligible_census, request.url_root)
 
     # Insert the pending emails together for speed.
     db.session.commit()

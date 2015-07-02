@@ -12,8 +12,7 @@ import uuid
 
 import requests
 import mandrill
-
-from flask import render_template
+from flask import render_template, abort
 
 from taa import mandrill_flask
 from taa.core import DBService
@@ -897,30 +896,7 @@ class SelfEnrollmentLinkService(DBService):
 
         return link.url
 
-def build_email_greeting(record, setup):
-    salutation = ''
-    if setup.email_greeting_salutation:
-        salutation = '{} '.format(setup.email_greeting_salutation)
-    greeting_end = ''
-    if setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_FIRST_NAME:
-        greeting_end = "{},".format(record.employee_first)
-    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_FULL_NAME:
-        greeting_end = "{} {},".format(record.employee_first, record.employee_last)
-    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_LAST_NAME:
-        greeting_end = "{},".format(record.employee_last)
-    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_TITLE_LAST:
-        if not record.employee_gender:
-            title = 'Mr./Ms.'
-        elif record.employee_gender.lower()[0] == 'm':
-            title = 'Mr.'
-        else:
-            title = 'Mrs.'
 
-        greeting_end = "{} {},".format(title, record.employee_last)
-    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_BLANK:
-        greeting_end = ''
-    greeting = "{}{}".format(salutation, greeting_end)
-    return greeting
 
 class SelfEnrollmentEmailBatchService(DBService):
     __model__ = SelfEnrollmentEmailBatch
@@ -938,17 +914,18 @@ class SelfEnrollmentEmailService(DBService):
         return db.session.query(SelfEnrollmentEmailBatchWithEmails
         ).get(batch_id)
 
-    def create_batch_for_case(self, case, census_records):
+    def create_batch_for_case(self, case, census_records, url_root):
         self_enrollment_link_service = SelfEnrollmentLinkService()
         self_enrollment_batch_service = SelfEnrollmentEmailBatchService()
         setup = case.self_enrollment_setup
         agent = agent_service.get_logged_in_agent()
-
+        if not agent:
+            agent = case_service.get_case_owner(case)
 
         batch = self_enrollment_batch_service.create(**dict(
             email_from_address=setup.email_sender_email,
             email_from_name=setup.email_sender_name,
-            email_subject= setup.email_subject,
+            email_subject= setup.email_subject if setup.email_subject else 'Benefit Enrollment - your action needed',
             email_body= setup.email_message,
             agent_id = agent.id,
             case_id = case.id
@@ -966,27 +943,18 @@ class SelfEnrollmentEmailService(DBService):
             link = self_enrollment_link_service.get_for_census_record(record)
             if link is None:
                 # Otherwise generate one
-                link = self_enrollment_link_service.generate_link(request.url_root,
+                link = self_enrollment_link_service.generate_link(url_root,
                                                                   case, record)
             if link is None:
                 abort(500, "Could not retrieve or create self-enrollment link")
 
             name = '{} {}'.format(record.employee_first, record.employee_last)
-            #print("Emailing {}".format(name))
 
-            email_body = render_template(
-                "emails/enrollment_email.html",
-                custom_message=setup.email_message,
-                greeting=build_email_greeting(record, setup),
-                enrollment_url=link.url,
-                company_name=record.case.company_name,
-            )
-            email_subject = setup.email_subject if setup.email_subject else 'Benefit Enrollment - your action needed'
             email_log = self.create_pending_email(
                 agent, link, record, batch,
                 to_email=record.employee_email,
-                to_name=name
-                )
+                to_name=name,
+            )
             results.append(email_log)
         return results
 
