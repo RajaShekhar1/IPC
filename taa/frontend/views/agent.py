@@ -39,7 +39,6 @@ def inbox():
               "Please see your Regional Director for assistance.")
         return redirect(url_for('home'))
 
-
 @app.route("/enrollment-cases")
 @groups_required(["agents", "home_office", "admins"], all=False)
 @login_required

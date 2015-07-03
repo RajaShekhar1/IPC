@@ -1,170 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
-  {% set logopath = "/static/img/5Star_logo_TAA.png" %}
-  <head>
-    {% block head %}
+{% set logopath = "/static/img/5Star_logo_TAA.png" %}
+<head>
+  {% block head %}
 
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <meta name="description" content="Application Enrollment for 5Star Life Insurance Company">
-        <meta name="keywords" content="Electronic Enrollment 5Star Life Insurance">
-        <meta name="author" content="Thumbprint Software LLC">
-        <link rel="shortcut icon" href="{{ url_for('static', filename='ico/favicon.ico') }}">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="Application Enrollment for 5Star Life Insurance Company">
+    <meta name="keywords" content="Electronic Enrollment 5Star Life Insurance">
+    <meta name="author" content="Thumbprint Software LLC">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='ico/favicon.ico') }}">
 
-        <title>5Star Enrollment{% block title %}{% endblock %}</title>
-        {% block ace_config_header %}
+    <title>5Star Enrollment{% block title %}{% endblock %}</title>
+    {% block ace_config_header %}
 
-            {# All CSS assets #}
-            {% assets "css_all" -%}
-            <link rel="stylesheet" href="{{ ASSET_URL }}">
-            {% endassets %}
+      {# All CSS assets #}
+      {% assets "css_all" -%}
+        <link rel="stylesheet" href="{{ ASSET_URL }}">
+      {% endassets %}
 
-            <!--[if lte IE 8]>
+      <!--[if lte IE 8]>
               <link rel="stylesheet" href="{{ url_for('static', filename='css/ace-ie.min.css') }}" />
             <![endif]-->
 
-            {% block page_css -%}
-                {# Override to add specific CSS links to a page #}
-            {%- endblock %}
+      {% block page_css -%}
+        {# Override to add specific CSS links to a page #}
+      {%- endblock %}
 
-            {# Header scripts #}
-            <script src="{{ url_for('static', filename='js/ace-extra.min.js') }}"></script>
+      {# Header scripts #}
+      <script src="{{ url_for('static', filename='js/ace-extra.min.js') }}"></script>
 
-            <!--[if lt IE 9]>
+      <!--[if lt IE 9]>
             <script src="{{ url_for('static', filename='js/html5shiv.js') }}"></script>
             <script src="{{ url_for('static', filename='assets/js/respond.min.js') }}"></script>
             <![endif]-->
 
-            <!--[if !IE]> -->
-            <script type="text/javascript">
-              window.jQuery || document.write("<script src='/static/js/jquery-2.1.1.min.js'>"+"<"+"/script>");
-            </script>
-            <!-- <![endif]-->
+      <!--[if !IE]> -->
+      <script type="text/javascript">
+        window.jQuery || document.write("<script src='/static/js/jquery-2.1.1.min.js'>"+"<"+"/script>");
+      </script>
+      <!-- <![endif]-->
 
-            <!--[if IE]>
+      <!--[if IE]>
             <script type="text/javascript">
               window.jQuery || document.write("<script src='{{ url_for("static", filename="js/jquery-1.11.1.min.js") }}'>"+"<"+"/script>");
             </script>
             <![endif]-->
 
-        {% endblock %}
     {% endblock %}
-  </head>
-  <body class="no-skin">
+  {% endblock %}
+</head>
+<body class="no-skin">
 
 
 {% block navbar %}
-    <div class="header">
-        {% if include_navmenu |default(True) %}
-            <ul class="nav nav-pills pull-right">
-                {% for menu_item in nav_menu %}
-                    <li class=
-                            {%- if active_page == menu_item.nav_name -%}
-                                "active"
-                            {%- else -%}
-                                "inactive"
-                            {%- endif -%}
-                    >
-                        <a href="{{ url_for(menu_item.url_name) }}">{{ menu_item.display }}</a>
-                    </li>
-                {% endfor %}
-                {% if current_user.is_authenticated() -%}
-                <li id="nav_logout">
-                    <a href="{{ url_for('taa_logout') }}">Logout</a>
-                </li>
-                {% endif -%}
-            </ul>
-        {% endif %}
-        <table>
-            <tr>
-                <td>
-                    {% if link_logo|default(True) %}
-                        {% if current_user.is_authenticated() -%}
-                            <a href="/"><img src="{{ logopath }}" alt="5Star TAA"></a>
-                        {% else -%}
-                            <img src="{{ logopath }}" alt="5Star TAA">
-                        {% endif -%}
-                    {% else %}
-                        <img src="/static/img/5Star_logo_TAA.png">
-                    {% endif %}
-                </td>
-                <td>
-                    <h3 class="text-muted">
-                        {{ header_title }}
-                        {% if 'headername' in session.keys() %}
-                            <br>
-                            <span class="blue smaller-60 lighter">
+  <div class="header">
+    {% if include_navmenu |default(True) %}
+      <ul class="nav nav-pills pull-right">
+        {% for menu_item in nav_menu %}
+          <li class=
+                      {%- if active_page == menu_item.nav_name -%}
+                        "active"
+                      {%- else -%}
+                        "inactive"
+                      {%- endif -%}
+          >
+          <a href="{{ url_for(menu_item.url_name) }}">{{ menu_item.display }}</a>
+          </li>
+        {% endfor %}
+        {% if current_user.is_authenticated() -%}
+          <li id="nav_logout">
+            <a href="{{ url_for('taa_logout') }}">Logout</a>
+          </li>
+        {% endif -%}
+      </ul>
+    {% endif %}
+    <table>
+      <tr>
+        <td>
+          {% if link_logo|default(True) %}
+            {% if current_user.is_authenticated() -%}
+              <a href="/"><img src="{{ logopath }}" alt="5Star TAA"></a>
+            {% else -%}
+              <img src="{{ logopath }}" alt="5Star TAA">
+            {% endif -%}
+          {% else %}
+            <img src="/static/img/5Star_logo_TAA.png">
+          {% endif %}
+        </td>
+        <td>
+          <h3 class="text-muted">
+            {{ header_title }}
+            {% if 'headername' in session.keys() %}
+              <br>
+              <span class="blue smaller-60 lighter">
                                 {{session['headername']}}
                             </span>
-                        {% endif %}
-                    </h3>
-                </td>
-            </tr>
-        </table>
-    </div>
+            {% endif %}
+          </h3>
+        </td>
+      </tr>
+    </table>
+  </div>
 {% endblock %}
 
-    <div class="container page">
+<div class="container page">
 
-            {% block breadcrumbs %}
-            {#
-            <div id="breadcrumbs" class="breadcrumbs">
+  {% block breadcrumbs %}
 
-               <!-- searchbox -->
-             </div>
-             #}
-            {% endblock %}
+  {% endblock %}
 
-
-            <div class="content page-content clearfix">
-
-
-                <!-- display any Flashed messages just inside top of content area -->
-                {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                {% for message in messages %}
-                <div class="alert alert-warning">
-                <button type="button" class="close" data-dismiss="alert">
-                  <i class="ace-icon fa fa-times"></i>
-                </button>{{ message }}</div>
-                {% endfor %}
-                {% endif %}
-                {% endwith %}
+  <div class="content page-content clearfix">
+    <!-- display any Flashed messages just inside top of content area -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-warning">
+            <button type="button" class="close" data-dismiss="alert">
+              <i class="ace-icon fa fa-times"></i>
+            </button>{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
 
-                <!-- now for inherited stuff...  -->
-                {% block content %}
-                {% endblock %}
-            </div>
-            {% block footer %}
-                <br>
-                <br>
-                <div class="footer">
-                    <div class="footer-inner">
-                        <div class="footer-content">
-                           <p>&copy; 2015 5Star Life Insurance Company, an AFBA related enterprise</p>
-                        </div>
-                    </div>
-                </div>
-            {% endblock %}
-    </div> <!-- /container page -->
-
-    <div id="print-wrap" class="container"></div>
-
-    {# Put modals at the end of the body #}
-    {% block modals %}
+    <!-- now for inherited stuff...  -->
+    {% block content %}
     {% endblock %}
+  </div>
+  {% block footer %}
+    <br>
+    <br>
+    <div class="footer">
+      <div class="footer-inner">
+        <div class="footer-content">
+          <p>&copy; 2015 5Star Life Insurance Company, an AFBA related enterprise</p>
+        </div>
+      </div>
+    </div>
+  {% endblock %}
+</div> <!-- /container page -->
 
-    {% block js_footer %}
+<div id="print-wrap" class="container"></div>
 
-        {% assets "js_main" -%}
-            <script src="{{ ASSET_URL }}"></script>
-        {% endassets %}
+{# Put modals at the end of the body #}
+{% block modals %}
+{% endblock %}
 
-        {% block page_js %}
-            {# Override to add custom JS to a specific page #}
-        {% endblock %}
-    {% endblock %}
-  </body>
+{% block js_footer %}
+
+  {% assets "js_main" -%}
+    <script src="{{ ASSET_URL }}"></script>
+  {% endassets %}
+
+  {% block page_js %}
+    {# Override to add custom JS to a specific page #}
+  {% endblock %}
+{% endblock %}
+</body>
 </html>

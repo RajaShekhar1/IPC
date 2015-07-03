@@ -1,0 +1,49 @@
+
+
+{% set breadcrumb_paths = {
+  'home': {
+    'name': 'Home',
+    'icon': '<i class="ace-icon fa fa-home"></i>',
+    'paths':{
+      'cases': {
+        'name': 'Enrollment Cases',
+        'icon': '<i class="ace-icon fa fa-briefcase',
+        'paths': {
+          'case': {
+            'name': 'Case',
+            'icon': '',
+            'paths': {
+              'census_record': 'Enrollment Record',
+              'icon': '<i class="ace-icon glyphicon glyphicon-user"></i>',
+              'paths': {}
+            }
+          }
+        }
+      }
+    }
+  }
+}
+%}
+
+{% macro render_breadcrumbs(path, name='') %}
+
+  <ul class="breadcrumb">
+    <li><a href="{{ url_for('index') }}"><i class="ace-icon fa fa-home"></i> Home</a></li>
+    <li><a href="{{ url_for('manage_cases') }}"><i class="ace-icon fa fa-briefcase"></i> Enrollment Cases</a></li>
+    <li class="active" data-bind="text: company_name"></li>
+  </ul>
+
+    <div class="form-group">
+        <div class="col-sm-3 control-label">{{ field.label }}</div>
+        <div class="col-sm-9">
+            {{ field(**kwargs)|safe }}
+            {% if field.errors %}
+              <ul class="errors">
+              {% for error in field.errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+              </ul>
+            {% endif %}
+        </div>
+  </div>
+{% endmacro %}
