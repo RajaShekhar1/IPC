@@ -222,6 +222,7 @@ class SelfEnrollmentEmailLog(SelfEnrollmentEmailLogSerializer, db.Model):
     sent_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
     email_to_address = db.Column(db.Unicode)
     email_to_name = db.Column(db.Unicode)
+    email_body = db.Column(db.Unicode)
 
     batch_id = db.Column(db.Integer, db.ForeignKey('self_enrollment_email_batches.id'), nullable=True)
     batch = db.relationship('_SelfEnrollmentEmailBatch', backref="email_logs")

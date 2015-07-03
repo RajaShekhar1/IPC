@@ -954,9 +954,49 @@ class SelfEnrollmentEmailService(DBService):
                 agent, link, record, batch,
                 to_email=record.employee_email,
                 to_name=name,
+                email_body=self.generate_email_body(link, record)
             )
             results.append(email_log)
         return results
+
+    def generate_email_body(self, link, census_record):
+        case = census_record.case
+        setup = case.self_enrollment_setup
+
+        return render_template(
+            "emails/enrollment_email.html",
+            custom_message=setup.email_message,
+            greeting=self.build_email_greeting(census_record),
+            enrollment_url=link.url,
+            company_name=case.company_name,
+        )
+
+    def build_email_greeting(self, record):
+        setup = record.case.self_enrollment_setup
+
+        salutation = ''
+        if setup.email_greeting_salutation:
+            salutation = '{} '.format(setup.email_greeting_salutation)
+        greeting_end = ''
+        if setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_FIRST_NAME:
+            greeting_end = "{},".format(record.employee_first)
+        elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_FULL_NAME:
+            greeting_end = "{} {},".format(record.employee_first, record.employee_last)
+        elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_LAST_NAME:
+            greeting_end = "{},".format(record.employee_last)
+        elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_TITLE_LAST:
+            if not record.employee_gender:
+                title = 'Mr./Ms.'
+            elif record.employee_gender.lower()[0] == 'm':
+                title = 'Mr.'
+            else:
+                title = 'Mrs.'
+
+            greeting_end = "{} {},".format(title, record.employee_last)
+        elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_BLANK:
+            greeting_end = ''
+        greeting = "{}{}".format(salutation, greeting_end)
+        return greeting
 
     def get_for_census_record(self, census_record):
         # record = CaseService.get_census_record(census_record_id)
@@ -1023,6 +1063,7 @@ class SelfEnrollmentEmailService(DBService):
             agent_id=agent.id,
             email_to_address=kwargs.get('to_email'),
             email_to_name=kwargs.get('to_name'),
+            email_body=kwargs.get('email_body'),
             batch_id = batch.id,
             is_success=False,
             status=SelfEnrollmentEmailLog.STATUS_PENDING
