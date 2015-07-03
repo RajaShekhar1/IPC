@@ -325,22 +325,13 @@ def update_self_enrollment_setup(case_id):
         del form.email_sender_email
         del form.email_message
 
-
     if form.validate_on_submit():
-        if self_enrollment_setup is None:
-            setup = case_service.create_self_enrollment_setup(case, form.data)
-            case.self_enrollment_setup = setup
-            if setup.self_enrollment_type == 'case-generic':
-                # Generate generic self-enrollment link
-                self_enrollment_link_service.generate_link(request.url_root,
-                                                           case)
-                # Commit changes
-                db.session.commit()
-
-            return setup
-        else:
-            return case_service.update_self_enrollment_setup(
-                self_enrollment_setup, form.data)
+        # Update enrolling agent
+        data = get_posted_data()
+        case_service.update_enrolling_agent(case, data['enrolling_agent_id'])
+        # Update self enrollment setup
+        return case_service.update_self_enrollment_setup(
+            self_enrollment_setup, form.data)
     raise TAAFormError(form.errors)
 
 

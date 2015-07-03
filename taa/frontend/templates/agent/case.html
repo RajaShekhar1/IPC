@@ -383,6 +383,24 @@
                                     <div class="form-group self-enroll self-enroll-type">
                                       {{ render_field_with_errors(form.self_enrollment_type, **{'data-bind': 'value: self_enrollment_type'}) }}
                                     </div>
+
+                                    <h3 class="header lighter blue">Enrolling Agent</h3>
+
+                                    <div class="form-group self-enroll self-enroll-agent">
+                                      <div class="col-sm-3 control-label">Signing agent for self-enrolled apps</div>
+                                      <div class="col-sm-9">
+                                        {% if True %}
+                                          <select data-bind="value: enrolling_agent_id" class="">
+                                            <option value="">(Default Signing Agent)</option>
+                                            {% for agent in case_agents %}
+                                              <option value="{{ agent.id }}">{{ agent.name() }}</option>
+                                            {% endfor %}
+                                          </select>
+                                        {% endif %}
+                                      </div>
+                                    </div>
+
+
                                     <h3 class="header lighter blue">Enrollment Email</h3>
 
                                     <div class="form-group self-enroll">

@@ -141,6 +141,8 @@ var CaseSettingsPanel = function(case_data, product_choices, can_edit_case, sett
   });
   self.self_enrollment_type = ko.observable(case_data.self_enrollment_type);
 
+  self.enrolling_agent_id = ko.observable(case_data.self_enrollment_setup.enrolling_agent_id);
+
   // Make sure there is at least one open enrollment period
   if (!self.get_open_enrollment_period()) {
     self.enrollment_periods.push(new CaseEnrollmentPeriod({case_id: case_data.id, period_type: "open_with_start"}))
@@ -406,7 +408,7 @@ var CaseSettingsPanel = function(case_data, product_choices, can_edit_case, sett
     }
   };
 
-  self.serialize_enrollments = function() {
+  self.serialize_enrollment_periods = function() {
     if (self.is_annual_enrollment()) {
       // Only send valid periods
       return _.invoke(
@@ -427,6 +429,7 @@ var CaseSettingsPanel = function(case_data, product_choices, can_edit_case, sett
     }
     return {
       self_enrollment_type: self.self_enrollment_type(),
+      enrolling_agent_id: self.enrolling_agent_id(),
       email_sender_email: settings.sender_email,
       email_sender_name: settings.sender_name,
       email_subject: settings.subject,
@@ -444,24 +447,11 @@ var CaseSettingsPanel = function(case_data, product_choices, can_edit_case, sett
   self.save_settings = function(cb) {
     self.flash_messages.clear();
 
-    if (!self.can_edit_case) {
-      self.flash_messages.flash_error("Only the case owner agent or home office can make changes to the case.");
-      return;
-    }
-
-    if (!self.validate()) {
-      self.flash_messages.flash_error("Please correct any errors below before saving.");
+    if (!self.can_save_case()) {
       return;
     }
 
     self.loading_modal({message: "Saving case..."});
-
-    // Make sure case can be activated
-    if (self.is_active() && !self.can_activate_case()) {
-      self.is_active(false);
-      self.flash_messages.flash_error("The case has been deactivated due to missing settings.");
-      // Continue saving the case
-    }
 
     var case_request = send_json_data(
             "PUT",
@@ -472,7 +462,7 @@ var CaseSettingsPanel = function(case_data, product_choices, can_edit_case, sett
     var periods_request = send_json_data(
             "PUT",
             urls.get_case_api_enrollment_periods_url(case_data.id),
-            self.serialize_enrollments()
+            self.serialize_enrollment_periods()
     );
 
     var self_enroll_request = send_json_data(
@@ -509,6 +499,28 @@ var CaseSettingsPanel = function(case_data, product_choices, can_edit_case, sett
 
     return false;
   };
+
+  self.can_save_case = function() {
+    if (!self.can_edit_case) {
+      self.flash_messages.flash_error("Only the case owner agent or home office can make changes to the case.");
+      return false;
+    }
+
+    if (!self.validate()) {
+      self.flash_messages.flash_error("Please correct any errors below before saving.");
+      return false;
+    }
+
+    // Make sure case can be activated
+    if (self.is_active() && !self.can_activate_case()) {
+      self.is_active(false);
+      self.flash_messages.flash_error("The case has been deactivated due to missing settings.");
+      // Continue saving the case
+    }
+
+    return true;
+  };
+
   self.delete_case = function() {
     bootbox.confirm("Are you sure you want to the case '"+self.company_name()+"'? This is permanent and cannot be undone!", function(result) {
       if (!result) { return; }
