@@ -46,8 +46,10 @@ db = SQLAlchemy(app)
 # Register API blueprints
 from api.cases import bp as cases_api
 from api.products import bp as products_api
+from api.enrollments import bp as enrollments_api
 app.register_blueprint(cases_api)
 app.register_blueprint(products_api)
+app.register_blueprint(enrollments_api)
 
 # API custom JSON encoder
 app.json_encoder = JSONEncoder
@@ -67,5 +69,3 @@ import frontend.views
 # Initialize webassets
 from assets import init_app as init_assets
 init_assets(app)
-
-
