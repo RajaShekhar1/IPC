@@ -30,17 +30,17 @@
             <tbody>
               {% for product in enrollment_data %}
                 <tr style="background:rgba(50,50,50,.1)">
-                  <td data-bind="text: moment('{{ product.time }}').format('MM/DD/YYYY hh:mma')"></td>
-                  <td>{{product.product_name}}</td>
-                  <td>{{product.status.capitalize()}}</td>
+                  <td><strong data-bind="text: moment('{{ product.time }}').format('MM/DD/YYYY hh:mma')"></strong></td>
+                  <td><strong>{{product.product_name}}</strong></td>
+                  <td><strong>{{product.status.capitalize()}}</strong></td>
                   {% if product.status=='declined'%}
-                    <td>N/A</td>
-                    <td>N/A</td>
-                    <td>N/A</td>
+                    <td><strong>N/A</strong></td>
+                    <td><strong>N/A</strong></td>
+                    <td><strong>N/A</strong<td>
                   {% else %}
                     <td></td>
                     <td></td>
-                    <td></td>
+                    <td><strong>{{product.total}}</strong></td>
                   {% endif %}
                 </tr>
                 {% if product.status!='declined'%}

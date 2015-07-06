@@ -193,7 +193,8 @@ def edit_census_record(case_id, census_record_id):
                     product_name=enrollment_data["product_"+str(i)+"_name"],
                     time=enrollment_data["signature_time"],
                     coverage=[],
-                    status=enrollment_data["application_status"]
+                    status=enrollment_data["application_status"],
+                    total=0
                 ))
                 for j in ["emp", "sp", "ch"]:
                     if(j=="emp"):
@@ -202,6 +203,7 @@ def edit_census_record(case_id, census_record_id):
                         who="Spouse"
                     elif(j=="ch"):
                         who="Child"
+                    enroll_data[i-1]["total"]+=(enrollment_data["product_"+str(i)+"_"+j+"_annual_premium"] or 0)
                     enroll_data[i-1]["coverage"].append(dict(
                         who=who,
                         annual_premium=enrollment_data["product_"+str(i)+"_"+j+"_annual_premium"],
