@@ -86,6 +86,7 @@ def manage_case(case_id):
         agent_id = None
         agent_email = ""
 
+    vars['case_agents'] = case_service.get_agents_for_case(case)
     vars['product_choices'] = products
     vars['all_states'] = get_all_states()
     vars['payment_modes'] = get_payment_modes()
@@ -133,6 +134,8 @@ Please follow the instructions carefully on the next page, stepping through the 
             'email_greeting_salutation': "Dear",
             'email_greeting_type': SelfEnrollmentSetup.EMAIL_GREETING_FIRST_NAME,
             'email_message': vars['default_email_message'],
+            # If owner set, use owner as agent, otherwise logged-in agent ID
+            'enrolling_agent_id': case.agent_id if case.agent_id else agent_id,
         })
         case.self_enrollment_setup = self_enrollment_setup
 

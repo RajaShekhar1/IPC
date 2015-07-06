@@ -85,7 +85,7 @@ def create_case():
         form.agent_id.data = agent.id
     if form.validate_on_submit():
         data['created_date'] = datetime.now()
-        return case_service.create(**data)
+        return case_service.create_new_case(**data)
 
     raise TAAFormError(form.errors)
 
@@ -327,20 +327,13 @@ def update_self_enrollment_setup(case_id):
         del form.email_message
 
     if form.validate_on_submit():
-        if self_enrollment_setup is None:
-            setup = case_service.create_self_enrollment_setup(case, form.data)
-            case.self_enrollment_setup = setup
-            if setup.self_enrollment_type == 'case-generic':
-                # Generate generic self-enrollment link
-                self_enrollment_link_service.generate_link(request.url_root,
-                                                           case)
-                # Commit changes
-                db.session.commit()
+        # Update enrolling agent
+        data = get_posted_data()
+        case_service.update_enrolling_agent(case, data['enrolling_agent_id'])
 
-            return setup
-        else:
-            return case_service.update_self_enrollment_setup(
-                self_enrollment_setup, form.data)
+        # Update self enrollment setup
+        return case_service.update_self_enrollment_setup(self_enrollment_setup, form.data)
+
     raise TAAFormError(form.errors)
 
 

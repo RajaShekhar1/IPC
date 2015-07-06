@@ -98,8 +98,15 @@ class CaseService(DBService):
                                          case.id)
         db.session.execute(sql)
         db.session.flush()
+
         case.partner_agents = agents
         db.session.flush()
+
+        # If the enrolling agent is no longer part of the case, remove him
+        if (case.self_enrollment_setup and
+                case.self_enrollment_setup.enrolling_agent not in self.get_agents_for_case(case)):
+            self.update_enrolling_agent(case, agent_id=None)
+            db.session.flush()
 
     def get_case_owner(self, case):
         return case.owner_agent if case.owner_agent else None
@@ -107,8 +114,19 @@ class CaseService(DBService):
     def get_case_partner_agents(self, case):
         return [a for a in case.partner_agents if a != case.owner_agent]
 
-    # Enrollment Periods
+    def get_agents_for_case(self, case):
+        agents = []
+        if self.get_case_owner(case):
+            agents.append(self.get_case_owner(case))
 
+        agents += self.get_case_partner_agents(case)
+
+        return agents
+
+    def update_enrolling_agent(self, case, agent_id):
+        self.self_enrollment.update_enrolling_agent(case, agent_id)
+
+    # Enrollment Periods
     def validate_enrollment_periods(self, case, data):
         return self.enrollment_periods.validate_for_case(case, data)
 
@@ -332,6 +350,17 @@ class CaseService(DBService):
             return True
 
         return False
+
+    def create_new_case(self, **kwargs):
+        case = DBService.create(**kwargs)
+
+        # Make sure a self-enrollment setup is created too.
+        SelfEnrollmentService().create(**{
+            'case_id': case.id,
+        })
+
+        return case
+
 
 class CaseEnrollmentPeriodsService(DBService):
     __model__ = CaseEnrollmentPeriod
@@ -1106,3 +1135,22 @@ class CensusRecordParser(object):
 
 class SelfEnrollmentService(DBService):
     __model__ = SelfEnrollmentSetup
+
+    def update_enrolling_agent(self, case, agent_id=None):
+        case_service = CaseService()
+        from taa.services.agents import AgentService
+        agent_service = AgentService()
+
+        enrolling_agent = None
+        if not agent_id:
+            # We want the owner agent if one currently exists.
+            if case_service.get_case_owner(case):
+                enrolling_agent = case_service.get_case_owner(case)
+        else:
+            # Allow this agent if he is part of this case.
+            selected_agent = agent_service.get(agent_id)
+            if selected_agent in case_service.get_agents_for_case(case):
+                enrolling_agent = selected_agent
+
+        # Set the enrolling agent on the self_enrollment_setup.
+        case.self_enrollment_setup.enrolling_agent = enrolling_agent
