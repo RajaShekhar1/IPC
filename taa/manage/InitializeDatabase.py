@@ -1,4 +1,3 @@
-
 from flask import current_app
 from flask_script import Command, prompt, prompt_pass
 from werkzeug.datastructures import MultiDict
@@ -12,10 +11,10 @@ class InitializeDatabaseCommand(Command):
     """Add all the default products and other default data"""
 
     def run(self):
-        
+
         product_data = [
             dict(
-                code=u"FPPTI", 
+                code=u"FPPTI",
                 name=u"Family Protection Plan - Terminal Illness",
                 product_type=u"base",
                 visible_to_agents=True,
@@ -44,5 +43,5 @@ class InitializeDatabaseCommand(Command):
             if not product_service.find(code=product['code']).first():
                 product_service.create(**product)
                 print("Product '{}' created successfully".format(product['code']))
-        
+
         db.session.commit()
