@@ -308,9 +308,8 @@ ko.bindingHandlers.uniqueNameValidation = {
 };
 
 
-//Adding contenteditable change function
+// Trigger a change event on any contenteditable fields for easier tracking.
 // http://stackoverflow.com/questions/1391278/contenteditable-change-events
-// Trigger a change event on the contenteditable fields for handling simplicity
 $(function() {
   $('body').on('focus', '[contenteditable]', function() {
     var $this = $(this);
@@ -632,17 +631,6 @@ var ProductStatesLimiterViewModel = function (product_statecode_mapping,
     }, state);
   };
 
-
-  // When the state changes, remove any ineligible products from the selection
-  /*
-  self.selected_state.subscribe(function (state) {
-    var valid_products = _.without(self.selected_products(), function (product) {
-      return self.is_valid_product_for_state(product, state);
-    });
-    self.selected_products(valid_products);
-  });
-*/
-
   // Based on product selection, change which states are enabled
   self.enabled_states = ko.computed(function () {
     return _.filter(self.available_states, function (state) {
@@ -732,35 +720,3 @@ var StatesLimiterViewModel = function(product_statecode_mapping,
     }
   });
 };
-
-// Adding a helped class to remove elements on various device settings
-/*$("[data-remove]").each(function() {
-    function removeOnResize() {
-      var w = $(window).width();
-      var sizes = {
-        xs: [768, 0],
-        sm: [992, 1],
-        md: [1200, 2],
-        lg: [120000, 3]
-      }
-      for(var i = 0; i < sizeArr.length; i++) {
-        var size = sizeArr[i]
-        var cSize = sizes[size], pSize = cSize[1]==0 ? [0] : sizes[Object.keys(sizes)[cSize[1]-1]], max = cSize[0], min = pSize[0];
-        console.log(w <= max && w >= min );
-        if(w <= max && w >= min) {
-          elem.remove();
-        } else {
-          if(elem.index()==0) {
-            elem.parent().prepend(elem);
-          } else {
-            elem.parent().children().eq(elem.index()-1).after(elem);
-          }
-        }
-      }
-    }
-    var sizeArr = $(this).data("remove").split(" "), elem = $(this);
-    removeOnResize();
-    $(window).resize(function() {
-      removeOnResize();
-    });
-});*/
