@@ -8,10 +8,17 @@
 <flash-messages params="messages: flash_messages"></flash-messages>
 
 <div class="row main-container"
-{# Prevent flash of unstyled content #}
-style="display: none;" data-bind="visible: true">
+        {# Prevent flash of unstyled content #}
+        style="display: none;" data-bind="visible: true">
+<ul class="breadcrumb col-xs-12">
+    <li><a href="{{ url_for('index') }}"><i class="ace-icon fa fa-home"></i> Home</a></li>
+    <li><a href="{{ url_for('manage_cases') }}"><i class="ace-icon fa fa-briefcase"></i> Enrollment Cases</a></li>
+    <li class="active" data-bind="text: company_name"></li>
+</ul>
 
-<h3 class="header header-light blue" data-bind="text: company_name"></h3>
+<div class="col-xs-12 ">
+  <h3 class="header header-light blue" data-bind="text: company_name"></h3>
+</div>
 
 <div class="col-xs-12">
   <div class="tabbable">
@@ -49,7 +56,6 @@ style="display: none;" data-bind="visible: true">
                 <div class="widget-header">
                   <div class="row">
                     <h3 class="col-xs-6">Main Settings</h3>
-
                     <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
                       <label style="margin-right: 15px;">
                         {{ case_setup_form.active(class_="ace ace-switch ace-switch-6", **{'data-bind': 'checked: is_active'})|safe }}
@@ -518,7 +524,7 @@ style="display: none;" data-bind="visible: true">
             <h3 class="col-xs-10">Report
             </h3>
             <h3 class="col-xs-2 text-center">
-              <small>
+              <small data-bind="visible: report_viewmodel() && report_viewmodel().any_enrollments()">
                 <a href="#print"><i class="ace-icon glyphicon glyphicon-print"></i> Print</a>
               </small>
             </h3>
@@ -540,7 +546,7 @@ style="display: none;" data-bind="visible: true">
       style="display: none;" data-bind="visible: true"
       >
       <div class="col-xs-12">
-        <div class="widget-box" data-bind="visible: report_viewmodel() && report_viewmodel().any_enrollments">
+        <div class="widget-box" data-bind="visible: report_viewmodel() && report_viewmodel().any_enrollments()">
           <div class="widget-header">
             <div class="row">
               <div class="col-xs-6"><h4 class="bigger-150">Enrollment Records</h4></div>
@@ -1283,7 +1289,7 @@ style="display: none;" data-bind="visible: true">
                     return parse_date(val, "MM/DD");
                   }
 
-                  var CaseSettingsPanel = function(case_data, product_choices, can_edit_case) {
+                  var CaseSettingsPanel = function(case_data, product_choices, can_edit_case, settings) {
                     var self = this;
 
                     self.can_edit_case = can_edit_case;
@@ -1330,8 +1336,8 @@ style="display: none;" data-bind="visible: true">
                     };
 
                     self.resetEmail = function() {
-                      self.emailSettings.message("{{ default_email_message|replace('\n', '\\n')|safe }}");
-                      self.emailSettings.subject("{{ default_email_subject|replace('\n', '\\n')|safe }}")
+                      self.emailSettings.message(settings.default_email_message);
+                      self.emailSettings.subject(settings.default_email_subject);
                     };
 
                     self.landing = {
@@ -1346,7 +1352,7 @@ style="display: none;" data-bind="visible: true">
                     ));
                     self.situs_city = ko.observable(case_data.situs_city);
 
-                    self.state_choices = {{ all_states | tojson | safe }};
+                    self.state_choices = settings.all_states;
                     self.situs_state = ko.observable(_.find(self.state_choices, function(c) {
                       return c.statecode == case_data.situs_state;
                     }));
@@ -1377,14 +1383,14 @@ style="display: none;" data-bind="visible: true">
 
 
                       // Disable bad combos of states and products
-                      self.state_product_limiter = new ProductStatesLimiterViewModel({{ product_state_mapping |tojson|safe }},
+                      self.state_product_limiter = new ProductStatesLimiterViewModel(settings.product_state_mapping,
                         self.situs_state,
                         self.state_choices,
                         self.products, self.product_choices
                       );
 
                       // Limit the states that can be chosen as 'enrolling from state' by the products
-                      self.state_product_override_limiter = new StatesLimiterViewModel({{ product_state_mapping |tojson|safe }},
+                      self.state_product_override_limiter = new StatesLimiterViewModel(settings.product_state_mapping,
                         self.enrollment_state_override,
                         self.state_choices,
                         self.products
@@ -1407,7 +1413,7 @@ style="display: none;" data-bind="visible: true">
 
 
                       // Get payment modes
-                      self.payment_mode_choices = {{ payment_modes | tojson | safe }};
+                      self.payment_mode_choices = settings.payment_modes;
                       self.payment_mode = ko.observable(_.find(self.payment_mode_choices, function(c) {
                         return c.mode == case_data.payment_mode;
                       }));
@@ -1609,7 +1615,7 @@ style="display: none;" data-bind="visible: true">
                         });
 
                         self.check_unique_name = function(current_value, callback) {
-                          $.get("{{ url_for("cases.get_cases") }}", {by_name: current_value}, function(result) {
+                          $.get(urls.get_cases_api_url(), {by_name: current_value}, function(result) {
                             var is_unique = (result.data.length == 0 || current_value == case_data.company_name);
                             callback(is_unique);
                           }, "json");
@@ -1760,19 +1766,19 @@ style="display: none;" data-bind="visible: true">
 
                             var case_request = send_json_data(
                               "PUT",
-                              "{{ url_for("cases.update_case", case_id=case.id) }}",
+                              urls.get_case_api_url(case_data.id),
                               self.serialize_case()
                             );
 
                             var periods_request = send_json_data(
                               "PUT",
-                              "{{ url_for("cases.update_case_enrollment_periods", case_id=case.id) }}",
+                              urls.get_case_api_enrollment_periods_url(case_data.id),
                               self.serialize_enrollments()
                             );
 
                             var self_enroll_request = send_json_data(
                               "PUT",
-                              "{{ url_for("cases.update_self_enrollment_setup", case_id=case.id) }}",
+                              urls.get_case_api_self_enrollment_url(case_data.id),
                               self.serialize_self_enroll()
                             );
 
@@ -1823,13 +1829,13 @@ style="display: none;" data-bind="visible: true">
                         };
 
                         self.remote_delete = function() {
-                          var request = send_json_data("DELETE", "{{ url_for("cases.delete_case", case_id=case.id) }}", {});
+                          var request = send_json_data("DELETE", urls.get_case_api_url(case_data.id), {}, {});
                           $.when(request).then(function() {
                             bootbox.alert("Case deleted successfully");
                             // Allow leaving the page (disables the page unload trigger prompt)
                             self.is_data_dirty(false);
                             // Go back to main page
-                            window.location.href = "{{ url_for("manage_cases") }}";
+                            window.location.href = urls.get_manage_case_url(case_data.id);
                           }, function() {
                             bootbox.alert("There was a problem removing this case.");
                           });
@@ -1919,7 +1925,7 @@ style="display: none;" data-bind="visible: true">
                             setTimeout(load_initial_census_data, 0);
 
                             function load_initial_census_data() {
-                              case_management.refresh_census_table({{ case.id }}, "{{ url_for("cases.census_records", case_id=case.id) }}",
+                              case_management.refresh_census_table(case_data.id, urls.get_case_api_census_records_url(case_data.id),
                                       "#census-records-table", "#census-table-loading",
                                       handle_census_data_loaded_first_time,
                                       handle_no_census_data_loaded,
@@ -2316,7 +2322,19 @@ style="display: none;" data-bind="visible: true">
             /* END: AddToCensusViewModel */
 
             // Initialize settings viewmodel
-            window.case_settings = new CaseSettingsPanel({{ case |tojson|safe }}, {{ product_choices |tojson|safe }}, {{ 'true' if can_edit_case else 'false'}});
+            var settings = {
+              default_email_message: "{{ default_email_message|replace('\n', '\\n')|safe }}",
+              default_email_subject: "{{ default_email_subject|replace('\n', '\\n')|safe }}",
+              all_states: {{ all_states | tojson | safe }},
+              product_state_mapping: {{ product_state_mapping |tojson|safe }},
+              payment_modes: {{ payment_modes | tojson | safe }}
+            };
+            window.case_settings = new CaseSettingsPanel(
+                    {{ case |tojson|safe }},
+                    {{ product_choices |tojson|safe }},
+                    {{ 'true' if can_edit_case else 'false'}},
+                    settings
+            );
             ko.applyBindings(window.case_settings, $(".content")[0]);
 
             // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change
