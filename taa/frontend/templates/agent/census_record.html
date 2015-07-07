@@ -4,20 +4,80 @@
   {% block title %} - Agent Manage Case{% endblock %}
 
   {% block content %}
+
       <ul class="breadcrumb col-xs-12">
         <li><a href="{{ url_for('index') }}"><i class="ace-icon fa fa-home"></i> Home</a></li>
         <li><a href="{{ url_for('manage_cases') }}"><i class="ace-icon fa fa-briefcase"></i> Enrollment Cases</a></li>
         <li><a href="{{ url_for('manage_case', case_id=case.id) }}">{{ census_record.case.company_name }}</a></li>
         <li class="active"><i class="ace-icon glyphicon glyphicon-user"></i> {{ census_record.employee_first }} {{ census_record.employee_last }}</li>
       </ul>
+
       <div class="col-xs-12">
         <h1 class="header lighter">Edit Census Record</h1>
       </div>
 
-      {% if census_record.enrollment_status==null %}
-        <div class="col-xs-12"><button class="btn btn-primary btn-sm enroll-employee" data-id="{{census_record.id}}">Enroll</button></div>
+      <div class="col-xs-12">
+        <h3>
+          Enrollments
+          {% if case_is_enrolling %}
+            {% if enrollment_status==None %}
+              <button class="btn btn-primary btn-sm enroll-employee pull-right" data-id="{{census_record.id}}">Enroll</button>
+            {% elif enrollment_status!=None %}
+              <button class="btn btn-primary btn-sm enroll-employee pull-right" data-id="{{census_record.id}}">Add Coverage</button>
+            {% endif %}
+          {% endif %}
+        </h3>
+      </div>
+      {% if enroll_data %}
+        <div class="col-xs-12 table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Product</th>
+                <th>Status</th>
+                <th>Coverage For</th>
+                <th>Face Amount</th>
+                <th>Annual Premium</th>
+            </thead>
+            <tbody>
+              {% for product in enrollment_data %}
+                <tr style="background:rgba(50,50,50,.1)">
+                  <td><strong data-bind="text: moment('{{ product.time }}').format('MM/DD/YYYY hh:mma')"></strong></td>
+                  <td><strong>{{product.product_name}}</strong></td>
+                  <td><strong>{{product.status.capitalize()}}</strong></td>
+                  {% if product.status=='declined'%}
+                    <td><strong>N/A</strong></td>
+                    <td><strong>N/A</strong></td>
+                    <td><strong>N/A</strong<td>
+                  {% else %}
+                    <td></td>
+                    <td></td>
+                    <td><strong>{{product.total}}</strong></td>
+                  {% endif %}
+                </tr>
+                {% if product.status!='declined'%}
+                  {% for coverage in product.coverage %}
+                    <tr>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                      <td>{{coverage.who}}</td>
+                      <td data-bind="text: formatThousand('{{coverage.coverage or 'No Coverage'}}')"></td>
+                      <td data-bind="text: formatThousand('{{coverage.annual_premium}}')"></td>
+                    </tr>
+                  {% endfor %}
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center">
+          <p>No enrollments</p>
+        </div>
       {% endif %}
-
+      <hr />
       <form class="col-xs-12 form-horizontal" id="edit-record-form" action="{{ url_for("cases.update_census_record", case_id=case.id, census_record_id=census_record.id) }}">
           <div class="row">
 
@@ -101,7 +161,16 @@
   {% block page_js %}
 
       <script>
+
       $(function() {
+          function CensusRecordViewModel() {
+            var self = this;
+            self.formatThousand = function(amount) {
+              return amount.substr(0, amount.length-3)+amount.substr(amount.length-3).replace("000", "K");
+            }
+          }
+
+          ko.applyBindings(new CensusRecordViewModel());
           $("#go-back").on("click", function() {
               window.location.href = ("{{ url_for("manage_case", case_id=case.id) }}#enrollment")
           });

@@ -16,7 +16,7 @@ from taa.services.cases.forms import (CensusRecordForm,
                                       SelfEnrollmentSetupForm,
                                       UpdateCaseForm
                                       )
-from taa.services.enrollments import SelfEnrollmentLinkService, SelfEnrollmentEmailService
+from taa.services.enrollments import SelfEnrollmentLinkService, SelfEnrollmentEmailService, EnrollmentApplicationService
 from taa.services.agents import AgentService
 from taa.services.products import ProductService, get_all_states
 from taa.services.products import get_payment_modes
@@ -25,6 +25,7 @@ from taa.services.docusign.DocuSign_config import sessionUserApprovedForDocusign
 case_service = CaseService()
 agent_service = AgentService()
 product_service = ProductService()
+enrollment_service = EnrollmentApplicationService()
 self_enrollment_link_service = SelfEnrollmentLinkService()
 self_enrollment_email_service = SelfEnrollmentEmailService()
 
@@ -177,13 +178,43 @@ def edit_census_record(case_id, census_record_id):
 
     is_admin = agent_service.can_manage_all_cases(current_user)
 
+    enrollment_data=enrollment_service.get_enrollment_data(census_record)
+    enroll_data=[]
+    if enrollment_data:
+        for i in range(1, 6+1):
+            if enrollment_data["product_"+str(i)+"_name"]:
+                enroll_data.append(dict(
+                    product_name=enrollment_data["product_"+str(i)+"_name"],
+                    time=enrollment_data["signature_time"],
+                    coverage=[],
+                    status=enrollment_data["application_status"],
+                    total=0
+                ))
+                for j in ["emp", "sp", "ch"]:
+                    if(j=="emp"):
+                        who="Employee"
+                    elif(j=="sp"):
+                        who="Spouse"
+                    elif(j=="ch"):
+                        who="Child"
+                    enroll_data[i-1]["total"]+=(enrollment_data["product_"+str(i)+"_"+j+"_annual_premium"] or 0)
+                    enroll_data[i-1]["coverage"].append(dict(
+                        who=who,
+                        annual_premium=enrollment_data["product_"+str(i)+"_"+j+"_annual_premium"],
+                        coverage=enrollment_data["product_"+str(i)+"_"+j+"_coverage"],
+                    ))
+
+
     vars = dict(
         case=case,
         census_record=census_record,
         form=record_form,
         child_form_fields=child_form_fields,
+        enrollment_status=enrollment_service.get_enrollment_status(census_record),
+        enrollment_data=enroll_data,
+        enrollment_data_debug=enrollment_service.get_enrollment_data(census_record),
         is_admin=is_admin,
-        can_edit_case = is_admin or (agent is case_service.get_case_owner(case)),
+        case_is_enrolling=case_service.is_enrolling(case),
         header_title='Home Office' if is_admin else '',
         nav_menu=get_nav_menu()
     )

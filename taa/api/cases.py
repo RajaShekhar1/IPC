@@ -208,6 +208,31 @@ def enrollment_records(case_id):
         return make_response(body, 200, headers)
     return data
 
+@route(bp, '/<case_id>/enrollment_records/<int:census_id>', methods=['GET'])
+@login_required
+@groups_required(api_groups, all=False)
+def enrollment_record(case_id, census_id):
+    """
+    Combines the census and enrollment records for export.
+
+    format=json|csv (json by default)
+    """
+    from taa.services.enrollments import EnrollmentApplicationService
+    enrollment_service = EnrollmentApplicationService()
+    data = enrollment_service.get_enrollment_record_for_census(
+        case_service.get_if_allowed(case_id), census_id)
+    if request.args.get('format') == 'csv':
+        body = enrollment_service.export_enrollment_data(data)
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        headers = {
+            'Content-Type': 'text/csv',
+            'Content-Disposition':
+                'attachment; filename=enrollment_export_{0}.csv'.format(
+                    date_str)
+        }
+        return make_response(body, 200, headers)
+    return data
+
 
 # Census Records
 @route(bp, '/<case_id>/census_records', methods=['GET'])
