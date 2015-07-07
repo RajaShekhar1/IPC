@@ -984,6 +984,7 @@ class SelfEnrollmentEmailService(DBService):
             greeting=self.build_email_greeting(census_record),
             enrollment_url=link.url,
             company_name=case.company_name,
+            products = case.products
         )
 
     def build_email_greeting(self, record):
