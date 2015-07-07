@@ -2,7 +2,7 @@ from datetime import datetime
 import StringIO
 
 
-from flask import Blueprint, request, abort, make_response, jsonify, redirect, url_for, render_template
+from flask import Blueprint, request, abort, make_response
 from flask_stormpath import current_user, groups_required, login_required
 
 
@@ -10,7 +10,7 @@ from taa import app
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
-from taa.services.cases import CaseService, SelfEnrollmentService, SelfEnrollmentSetup
+from taa.services.cases import CaseService, SelfEnrollmentSetup
 from taa.services.cases.forms import (
     CensusRecordForm,
     NewCaseForm,
@@ -85,7 +85,7 @@ def create_case():
         form.agent_id.data = agent.id
     if form.validate_on_submit():
         data['created_date'] = datetime.now()
-        return case_service.create(**data)
+        return case_service.create_new_case(**data)
 
     raise TAAFormError(form.errors)
 
@@ -315,28 +315,31 @@ def update_self_enrollment_setup(case_id):
     self_enrollment_setup = case_service.get_self_enrollment_setup(case)
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
 
-    if ('self_enrollment_type' in request.form
-            and request.form['self_enrollment_type'] == SelfEnrollmentSetup.TYPE_CASE_GENERIC):
+    if ('self_enrollment_type' in request.json
+            and request.json['self_enrollment_type'] == SelfEnrollmentSetup.TYPE_CASE_GENERIC):
+
         # Remove email-specific fields from the form so they are not validated
         del form.email_greeting_type
         del form.email_greeting_salutation
         del form.email_subject
         del form.email_sender_email
-        del form.email_sender_email
+        del form.email_sender_name
         del form.email_message
 
     if form.validate_on_submit():
         # Update enrolling agent
         data = get_posted_data()
         case_service.update_enrolling_agent(case, data['enrolling_agent_id'])
+
         # Update self enrollment setup
-        return case_service.update_self_enrollment_setup(
-            self_enrollment_setup, form.data)
+        return case_service.update_self_enrollment_setup(self_enrollment_setup, form.data)
+
     raise TAAFormError(form.errors)
 
 
 def get_census_records_for_status(case, status=None):
     result = []
+
     if case is None or case.self_enrollment_setup is None:
         return result
     if status is None:
@@ -347,18 +350,31 @@ def get_census_records_for_status(case, status=None):
                 result.append(record)
         else:
             enroll = enrollment_application_service.get_enrollment_status(record)
-            if status == 'not-enrolled' and enroll != EnrollmentApplication.APPLICATION_STATUS_ENROLLED:
+            if status == 'not-enrolled' and enroll != EnrollmentApplication.APPLICATION_STATUS_ENROLLED and enroll != EnrollmentApplication.APPLICATION_STATUS_DECLINED:
                 result.append(record)
             elif status == 'declined' and enroll == EnrollmentApplication.APPLICATION_STATUS_DECLINED:
                 result.append(record)
     return result
 
-
-
-@route(bp, '/<case_id>/self_enroll_email/<string:which>', methods=['POST'])
+@route(bp, '/<case_id>/self_enroll_email_batches', methods=['GET'])
 @login_required
 @groups_required(api_groups, all=False)
-def email_self_enrollment_link(case_id, which):
+def email_self_enrollment_batch_get_all(case_id):
+    case = case_service.get_if_allowed(case_id)
+    return self_enrollment_email_service.get_batches_for_case(case)
+
+@route(bp, '/<case_id>/self_enroll_email_batches/<batch_id>', methods=['GET'])
+@login_required
+@groups_required(api_groups, all=False)
+def email_self_enrollment_batch_get(case_id, batch_id):
+    case = case_service.get_if_allowed(case_id)
+    return self_enrollment_email_service.get_batch_for_case(case, batch_id)
+
+@route(bp, '/<case_id>/self_enroll_email_batches', methods=['POST'])
+@login_required
+@groups_required(api_groups, all=False)
+def email_self_enrollment_batch_post(case_id):
+    send_type = request.args["send_type"]
     case = case_service.get_if_allowed(case_id)
     setup = case.self_enrollment_setup
     if setup is None or setup.self_enrollment_type != 'case-targeted':
@@ -368,44 +384,9 @@ def email_self_enrollment_link(case_id, which):
         # Use the owning agent
         agent = case.owner_agent
 
-    eligible_census = get_census_records_for_status(case, status=which)
+    eligible_census = get_census_records_for_status(case, status=send_type)
 
-    results = []
-    for record in eligible_census:
-        if record.employee_email is None or '@' not in record.employee_email:
-            # Census record does not has a valid email; TODO insert into email log in as failure.
-            #results.append("{} {} did not have a valid email.".format(record.employee_first, record.employee_last))
-            continue
-
-        # Get previously generated link if available
-        link = self_enrollment_link_service.get_for_census_record(record)
-        if link is None:
-            # Otherwise generate one
-            link = self_enrollment_link_service.generate_link(request.url_root,
-                                                              case, record)
-        if link is None:
-            abort(500, "Could not retrieve or create self-enrollment link")
-
-        name = '{} {}'.format(record.employee_first, record.employee_last)
-        #print("Emailing {}".format(name))
-
-        email_body = render_template(
-            "emails/enrollment_email.html",
-            custom_message=setup.email_message,
-            greeting=build_email_greeting(record, setup),
-            enrollment_url=link.url,
-            company_name=record.case.company_name,
-        )
-        email_subject = setup.email_subject if setup.email_subject else 'Benefit Enrollment - your action needed'
-        email_log = self_enrollment_email_service.create_pending_email(
-            agent, link, record,
-            from_email=setup.email_sender_email,
-            from_name=setup.email_sender_name,
-            to_email=record.employee_email,
-            to_name=name,
-            subject=email_subject,
-            body=email_body)
-        results.append(email_log)
+    results = self_enrollment_email_service.create_batch_for_case(case, eligible_census, request.url_root)
 
     # Insert the pending emails together for speed.
     db.session.commit()
@@ -415,29 +396,3 @@ def email_self_enrollment_link(case_id, which):
         self_enrollment_email_service.queue_email(email_log.id)
 
     return ["Scheduled %s emails for immediate processing."%len(results)]
-
-
-def build_email_greeting(record, setup):
-    salutation = ''
-    if setup.email_greeting_salutation:
-        salutation = '{} '.format(setup.email_greeting_salutation)
-    greeting_end = ''
-    if setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_FIRST_NAME:
-        greeting_end = "{},".format(record.employee_first)
-    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_FULL_NAME:
-        greeting_end = "{} {},".format(record.employee_first, record.employee_last)
-    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_LAST_NAME:
-        greeting_end = "{},".format(record.employee_last)
-    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_TITLE_LAST:
-        if not record.employee_gender:
-            title = 'Mr./Ms.'
-        elif record.employee_gender.lower()[0] == 'm':
-            title = 'Mr.'
-        else:
-            title = 'Mrs.'
-
-        greeting_end = "{} {},".format(title, record.employee_last)
-    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_BLANK:
-        greeting_end = ''
-    greeting = "{}{}".format(salutation, greeting_end)
-    return greeting

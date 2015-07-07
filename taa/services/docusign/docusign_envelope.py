@@ -268,7 +268,6 @@ class EnrollmentDataWrap(object):
         return agent.agent_code
 
     def get_signing_agent(self):
-        import pdb; pdb.set_trace()
         if self.is_self_enroll():
             if self.case.self_enrollment_setup.enrolling_agent:
                 return self.case.self_enrollment_setup.enrolling_agent
@@ -279,6 +278,7 @@ class EnrollmentDataWrap(object):
                 raise Exception("Tried to enroll a case without an owner agent.")
         else:
             return agent_service.get_logged_in_agent()
+
 
     def get_employer_name(self):
         return self.case.company_name
@@ -923,3 +923,4 @@ def build_callback_url(wizard_data, session_type):
         name=wizard_data["employee"]["first"], 
         session_type=session_type,
     )
+

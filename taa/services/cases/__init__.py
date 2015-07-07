@@ -123,8 +123,10 @@ class CaseService(DBService):
 
         return agents
 
-    # Enrollment Periods
+    def update_enrolling_agent(self, case, agent_id):
+        self.self_enrollment.update_enrolling_agent(case, agent_id)
 
+    # Enrollment Periods
     def validate_enrollment_periods(self, case, data):
         return self.enrollment_periods.validate_for_case(case, data)
 
@@ -349,8 +351,18 @@ class CaseService(DBService):
 
         return False
 
-    def update_enrolling_agent(self, case, agent_id):
-        self.self_enrollment.update_enrolling_agent(case, agent_id)
+    def create_new_case(self, **kwargs):
+        case = DBService.create(self, **kwargs)
+
+        # Make sure a self-enrollment setup is created too.
+        setup = SelfEnrollmentService().create(**{
+            'case_id': case.id,
+            'self_enrollment_type': SelfEnrollmentSetup.TYPE_CASE_GENERIC,
+            'use_email':True,
+            'use_landing_page':True,
+        })
+
+        return case
 
 
 class CaseEnrollmentPeriodsService(DBService):

@@ -6,7 +6,7 @@ import os
 from flask import render_template, redirect, url_for, flash, send_file, request
 from flask_stormpath import login_required, groups_required, current_user
 
-from taa import app
+from taa import app, db
 from nav import get_nav_menu
 from taa.api.cases import census_records
 from taa.services.docusign.docu_console import console_url
@@ -16,7 +16,7 @@ from taa.services.cases.forms import (CensusRecordForm,
                                       SelfEnrollmentSetupForm,
                                       UpdateCaseForm
                                       )
-from taa.services.enrollments import SelfEnrollmentLinkService
+from taa.services.enrollments import SelfEnrollmentLinkService, SelfEnrollmentEmailService
 from taa.services.agents import AgentService
 from taa.services.products import ProductService, get_all_states
 from taa.services.products import get_payment_modes
@@ -26,6 +26,7 @@ case_service = CaseService()
 agent_service = AgentService()
 product_service = ProductService()
 self_enrollment_link_service = SelfEnrollmentLinkService()
+self_enrollment_email_service = SelfEnrollmentEmailService()
 
 @app.route('/inbox', methods=['GET'])
 @login_required
@@ -38,6 +39,7 @@ def inbox():
         flash("You are not yet authorized for signing applications. "
               "Please see your Regional Director for assistance.")
         return redirect(url_for('home'))
+
 
 @app.route("/enrollment-cases")
 @groups_required(["agents", "home_office", "admins"], all=False)
@@ -132,12 +134,14 @@ Please follow the instructions carefully on the next page, stepping through the 
             'email_greeting_salutation': "Dear",
             'email_greeting_type': SelfEnrollmentSetup.EMAIL_GREETING_FIRST_NAME,
             'email_message': vars['default_email_message'],
-            'enrolling_agent_id': case.owner_agent if case.owner_agent else None
+            # If owner set, use owner as agent, otherwise logged-in agent ID
+            'enrolling_agent_id': case.agent_id if case.agent_id else agent_id,
         })
         case.self_enrollment_setup = self_enrollment_setup
 
         # Generate generic self-enrollment link
         self_enrollment_link_service.generate_link(request.url_root, case)
+        db.session.commit()
 
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
 
@@ -148,7 +152,7 @@ Please follow the instructions carefully on the next page, stepping through the 
     vars['agent_id'] = agent_id
     vars['agent_name'] = agent_name
     vars['agent_email'] = agent_email
-    vars['generic_link'] = SelfEnrollmentLinkService().get_generic_link(request.url_root, case)
+    vars['generic_link'] = self_enrollment_link_service.get_generic_link(request.url_root, case)
 
     return render_template('agent/case.html', **vars)
 
@@ -212,3 +216,38 @@ def edit_self_enroll_setup(case_id=None):
     if case.self_enrollment_setup is not None:
         vars['setup'] = case.self_enrollment_setup
     return render_template('agent/self_enrollment_setup.html', **vars)
+
+@app.route('/batch-info/<int:case_id>/batch/<batch_id>')
+@groups_required(['agents', 'home_office', 'admins'], all=False)
+def view_batch_email_information(case_id, batch_id=None):
+        batch = self_enrollment_email_service.get_batch_for_case(case_id, batch_id)
+        case = case_service.get_if_allowed(case_id)
+        setup = case.self_enrollment_setup
+        email_test = batch.email_logs[0]
+        return render_template(
+            "agent/preview_email.html",
+            custom_message=batch.email_body,
+            greeting=build_fake_email_greeting(setup),
+            enrollment_url="#",
+            company_name=case.company_name,
+            batch_emails=batch.email_logs
+        )
+def build_fake_email_greeting(setup):
+    salutation = ''
+    if setup.email_greeting_salutation:
+        salutation = '{} '.format(setup.email_greeting_salutation)
+    greeting_end = ''
+    if setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_FIRST_NAME:
+        greeting_end = "Firstname,"
+    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_FULL_NAME:
+        greeting_end = "Firstname Lastname,"
+    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_LAST_NAME:
+        greeting_end = "Lastname,"
+    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_TITLE_LAST:
+        title = 'Mr./Ms.'
+
+        greeting_end = "{} Lastname,".format(title)
+    elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_BLANK:
+        greeting_end = ''
+    greeting = "{}{}".format(salutation, greeting_end)
+    return greeting

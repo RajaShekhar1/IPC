@@ -1,12 +1,11 @@
 # Celery tasks
 
 import celery
-from flask import render_template
 
 from taa import db
 from taa.services.enrollments import SelfEnrollmentEmailService, SelfEnrollmentLinkService, SelfEnrollmentEmailLog
 from taa.services.agents import AgentService
-from taa.services.cases import CensusRecordService, SelfEnrollmentService
+from taa.services.cases import CensusRecordService, SelfEnrollmentService, SelfEnrollmentSetup
 
 self_enrollment_email_service = SelfEnrollmentEmailService()
 self_enrollment_link_service = SelfEnrollmentLinkService()
@@ -22,21 +21,18 @@ app.config_from_object('taa.config_defaults')
 def send_email(email_log_id):
     email_log = self_enrollment_email_service.get(email_log_id)
 
-    #agent = agent_service.get(agent_id)
-    #link = self_enrollment_link_service.get(link_id)
-    #record = census_record_service.get(record_id) if record_id else None
-
     if email_log.status != SelfEnrollmentEmailLog.STATUS_PENDING:
         print("Background task found email no longer in pending state, aborting")
         return
 
     # Send the email
     success = self_enrollment_email_service._send_email(
-            from_email=email_log.email_from_address,
-            from_name=email_log.email_from_name,
+            from_email=email_log.batch.email_from_address,
+            from_name=email_log.batch.email_from_name,
+            subject=email_log.batch.email_subject,
             to_email=email_log.email_to_address,
             to_name=email_log.email_to_name,
-            subject=email_log.email_subject,
+            # use the log's body, which has the rendered email
             body=email_log.email_body,
     )
 
