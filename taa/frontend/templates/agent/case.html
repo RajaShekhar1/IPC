@@ -2424,9 +2424,10 @@
                   return false;
                 }
 
+                self.show_loading_panel();
+
                 if (window.case_settings.can_edit_case) {
                   // Save the case (along with any changes the email) and then send emails.
-                  self.show_loading_panel();
                   window.case_settings.save_settings(save_callback);
                 } else {
                   // Todo: send email settings overrides
