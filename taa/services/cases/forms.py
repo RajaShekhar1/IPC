@@ -92,8 +92,8 @@ class CensusRecordForm(Form):
     employee_email = StringField('Employee Email', [validators.optional()])
     employee_phone = StringField('Employee Phone')
     employee_street_address = StringField('Employee Street Address')
-    employee_street_address2 = StringField('Employee Street Address2')
-    employee_city = StringField('Employee Street Address')
+    employee_street_address2 = StringField('Employee Street Address 2')
+    employee_city = StringField('Employee City')
     employee_state = SelectField('Employee Statecode',
                                  choices=[(s['statecode'], s['name'])
                                           for s in get_all_states()])
@@ -113,8 +113,8 @@ class CensusRecordForm(Form):
     spouse_email = StringField('Spouse Email')
     spouse_phone = StringField('Spouse Phone')
     spouse_street_address = StringField('Spouse Street Address')
-    spouse_street_address2 = StringField('Spouse Street Address2')
-    spouse_city = StringField('Spouse Street Address')
+    spouse_street_address2 = StringField('Spouse Street Address 2')
+    spouse_city = StringField('Spouse City')
     spouse_state = SelectField('Spouse Statecode',
                                choices=[(s['statecode'], s['name'])
                                         for s in get_all_states()])
@@ -189,4 +189,3 @@ class SelfEnrollmentSetupForm(Form):
     use_landing_page = BooleanField('Enabled')
     page_title = StringField('Title', [validators.InputRequired()])
     page_text = EditableField('Message', [validators.InputRequired()])
-

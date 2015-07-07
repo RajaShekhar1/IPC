@@ -11,7 +11,7 @@ from ..services.cases.models import CaseCensus
 from ..models import db
 
 class ScrambleDataCommand(Command):
-    """Scrable all data in the database to not contain real information"""
+    """Scramble all data in the database to not contain real information"""
 
     def run(self):
 
@@ -41,10 +41,18 @@ class ScrambleDataCommand(Command):
         # Get census data from database
         census_data = db.session.query(CaseCensus).all()
 
-        # Create a range of "social security numbers" and select the number we need for the census data.
-        ssn_range = xrange(100000000, 999999999)
-        # Sampling ensures that the data is unique
-        ssns = random.sample(ssn_range, len(census_data)*2);
+
+        used_ssns = set()
+
+        def gen_ssn():
+            return "".join([random.choice("0123456789") for _ in range(9)])
+
+        def get_ssn():
+            new_ssn = gen_ssn()
+            while new_ssn in used_ssns:
+                new_ssn = gen_ssn()
+            used_ssns.add(new_ssn)
+            return new_ssn
 
         def scramble_date(date):
             new_month = random.randrange(1,13)
@@ -56,11 +64,11 @@ class ScrambleDataCommand(Command):
             # Email domains come from here [http://www.fakemailgenerator.com] to allow for checking emails sent.
             # Emails are formatted as firstname.lastname@domain.com
             email_domains = ["cuvox.de", "jourrapide.com", "armyspy.com", "dayrep.com", "fleckens.hu", "gustr.com", "rhyta.com", "superrito.com"]
-            return first.lower()+"."+last.lower()+"@"+random.choice(email_domains)
+            return first.lower()+last.lower()+"@"+random.choice(email_domains)
 
 
         def scramble_phone():
-            return str(random.randrange(100, 999))+"-"+str(random.randrange(100, 999))+"-"+str(random.randrange(1000, 9990))
+            return str(random.randrange(100, 999))+"-"+str(random.randrange(100, 999))+"-"+str(random.randrange(1000, 9999))
 
         for census in census_data:
 
@@ -70,44 +78,37 @@ class ScrambleDataCommand(Command):
             # Create an address for our family
             address = str(random.randrange(1, 9999))+" "+random.choice(streets)
 
+            attributes = [
+                ("employee_first", lambda : random.choice(firstNames)),
+                ("employee_last", lambda : last_name),
+                ("employee_ssn", lambda : get_ssn()),
+                ("employee_email", lambda : scramble_email(census.employee_first, census.employee_last)),
+                ("employee_street_address", lambda: address),
+                ("employee_phone", lambda: scramble_phone()),
 
+                ("spouse_first", lambda : random.choice(firstNames)),
+                ("spouse_last", lambda : last_name),
+                ("spouse_ssn", lambda : get_ssn()),
+                ("spouse_email", lambda : scramble_email(census.spouse_first, census.spouse_last)),
+                ("spouse_street_address", lambda: address),
+                ("spouse_phone", lambda: scramble_phone()),
+            ]
 
-            # Set employee information
-            census.employee_first = random.choice(firstNames)
-            census.employee_last = last_name
-
-            census.employee_ssn = ssns.pop()
-
-            census.employee_email = scramble_email(census.employee_first, census.employee_last)
-            census.employee_street_address = address
-
-            census.employee_birthdate = scramble_date(census.employee_birthdate)
-            census.employee_phone = scramble_phone()
-
-
-
-            # Set spouse information
-            census.spouse_first = random.choice(firstNames)
-            census.spouse_last = last_name
-
-            census.spouse_ssn = ssns.pop()
-
-            census.spouse_email = scramble_email(census.spouse_first, census.spouse_last)
-            census.spouse_street_address = address
-
-            census.spouse_birthdate = scramble_date(census.spouse_birthdate)
-            census.spouse_phone = scramble_phone()
+            # Set employee and spouse information
+            for attr, new_val in attributes:
+                if getattr(census, attr):
+                    setattr(census, attr, new_val())
 
             # Six possible children in a record
             for x in range(1, 6+1):
                 # Check each child to see if the exists (if there is a first name)
-                if getattr(census,"child"+str(x)+"_first"):
+                if getattr(census, "child{}_first".format(x)):
                     # Set new first and last name for the child
-                    setattr(census, "child"+str(x)+"_first", random.choice(firstNames))
-                    setattr(census, "child"+str(x)+"_last", last_name)
+                    setattr(census, "child{}_first".format(x), random.choice(firstNames))
+                    setattr(census, "child{}_last".format(x), last_name)
 
                     # Some records may not have birthdates. If not create random date.
-                    birthdate = getattr(census, "child"+str(x)+"_birthdate") or datetime.datetime.now().replace(year=random.randrange(1995, 2001))
-                    setattr(census, "child_"+str(x)+"_birthdate", scramble_date(birthdate))
+                    birthdate = getattr(census, "child{}_birthdate".format(x)) or datetime.datetime.now().replace(year=random.randrange(1995, 2001))
+                    setattr(census, "child{}_birthdate".format(x), scramble_date(birthdate))
 
         db.session.commit()
