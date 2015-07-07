@@ -2,7 +2,7 @@ from datetime import datetime
 import StringIO
 
 
-from flask import Blueprint, request, abort, make_response, jsonify, redirect, url_for, render_template
+from flask import Blueprint, request, abort, make_response
 from flask_stormpath import current_user, groups_required, login_required
 
 
@@ -10,7 +10,7 @@ from taa import app
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
-from taa.services.cases import CaseService, SelfEnrollmentService, SelfEnrollmentSetup
+from taa.services.cases import CaseService, SelfEnrollmentSetup
 from taa.services.cases.forms import (
     CensusRecordForm,
     NewCaseForm,
@@ -85,7 +85,7 @@ def create_case():
         form.agent_id.data = agent.id
     if form.validate_on_submit():
         data['created_date'] = datetime.now()
-        return case_service.create(**data)
+        return case_service.create_new_case(**data)
 
     raise TAAFormError(form.errors)
 
@@ -196,6 +196,31 @@ def enrollment_records(case_id):
     enrollment_service = EnrollmentApplicationService()
     data = enrollment_service.get_all_enrollment_records(
         case_service.get_if_allowed(case_id))
+    if request.args.get('format') == 'csv':
+        body = enrollment_service.export_enrollment_data(data)
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        headers = {
+            'Content-Type': 'text/csv',
+            'Content-Disposition':
+                'attachment; filename=enrollment_export_{0}.csv'.format(
+                    date_str)
+        }
+        return make_response(body, 200, headers)
+    return data
+
+@route(bp, '/<case_id>/enrollment_records/<int:census_id>', methods=['GET'])
+@login_required
+@groups_required(api_groups, all=False)
+def enrollment_record(case_id, census_id):
+    """
+    Combines the census and enrollment records for export.
+
+    format=json|csv (json by default)
+    """
+    from taa.services.enrollments import EnrollmentApplicationService
+    enrollment_service = EnrollmentApplicationService()
+    data = enrollment_service.get_enrollment_record_for_census(
+        case_service.get_if_allowed(case_id), census_id)
     if request.args.get('format') == 'csv':
         body = enrollment_service.export_enrollment_data(data)
         date_str = datetime.now().strftime('%Y-%m-%d')
@@ -327,20 +352,13 @@ def update_self_enrollment_setup(case_id):
         del form.email_message
 
     if form.validate_on_submit():
-        if self_enrollment_setup is None:
-            setup = case_service.create_self_enrollment_setup(case, form.data)
-            case.self_enrollment_setup = setup
-            if setup.self_enrollment_type == 'case-generic':
-                # Generate generic self-enrollment link
-                self_enrollment_link_service.generate_link(request.url_root,
-                                                           case)
-                # Commit changes
-                db.session.commit()
+        # Update enrolling agent
+        data = get_posted_data()
+        case_service.update_enrolling_agent(case, data['enrolling_agent_id'])
 
-            return setup
-        else:
-            return case_service.update_self_enrollment_setup(
-                self_enrollment_setup, form.data)
+        # Update self enrollment setup
+        return case_service.update_self_enrollment_setup(self_enrollment_setup, form.data)
+
     raise TAAFormError(form.errors)
 
 

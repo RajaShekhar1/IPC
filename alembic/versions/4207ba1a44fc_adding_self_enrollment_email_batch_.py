@@ -28,7 +28,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.add_column(u'self_enrollment_email_log', sa.Column('batch_id', sa.Integer(), nullable=True))
-    op.create_foreign_key(None, 'self_enrollment_email_log', 'self_enrollment_email_batches', ['batch_id'], ['id'])
     op.drop_column(u'self_enrollment_email_log', 'email_from_address')
     op.drop_column(u'self_enrollment_email_log', 'email_from_name')
     op.drop_column(u'self_enrollment_email_log', 'email_subject')
@@ -42,7 +41,6 @@ def downgrade():
     op.add_column(u'self_enrollment_email_log', sa.Column('email_subject', sa.VARCHAR(), autoincrement=False, nullable=True))
     op.add_column(u'self_enrollment_email_log', sa.Column('email_from_name', sa.VARCHAR(), autoincrement=False, nullable=True))
     op.add_column(u'self_enrollment_email_log', sa.Column('email_from_address', sa.VARCHAR(), autoincrement=False, nullable=True))
-    op.drop_constraint(None, 'self_enrollment_email_log', type_='foreignkey')
     op.drop_column(u'self_enrollment_email_log', 'batch_id')
     op.drop_table('self_enrollment_email_batches')
     ### end Alembic commands ###

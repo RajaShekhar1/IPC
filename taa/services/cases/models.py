@@ -62,9 +62,6 @@ class Case(CaseSerializer, db.Model):
     payment_mode = db.Column(db.Integer, nullable=True)
     is_self_enrollment = db.Column(db.Boolean, server_default='FALSE',
                                    nullable=False)
-    # self_enrollment_setup_id = db.Column(db.Integer,
-    #                                      db.ForeignKey('self_enrollment_setups.id'),
-    #                                      nullable=True)
     self_enrollment_setup = db.relationship('SelfEnrollmentSetup',
                                             uselist=False, backref='case')
 
@@ -89,7 +86,14 @@ class Case(CaseSerializer, db.Model):
         return "Active" if self.can_enroll() else "Not Active"
 
     def can_enroll(self):
-        return self.active and any(p.currently_active() for p in self.enrollment_periods)
+        return (self.active and
+                any(p.currently_active() for p in self.enrollment_periods) and
+                self.has_signing_agent()
+                )
+
+    def has_signing_agent(self):
+        # Require an owner agent, even if we have a self-enroll enrolling agent.
+        return bool(self.owner_agent)
 
     def format_created_date(self):
         return self.created_date.strftime('%m/%d/%Y')
@@ -131,7 +135,7 @@ class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
 
     def currently_active(self):
         now = datetime.now()
-        if self.end_date is None and self.start_date < now:
+        if self.end_date is None and self.start_date and self.start_date < now:
             # End date is blank and start date is in the past
             return True
         elif self.get_start_date() < now < (self.end_date + timedelta(days=1)):
@@ -357,7 +361,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
 
 
 class SelfEnrollmentSerializer(JsonSerializable):
-    __json_hidden__ = ['case', 'links']
+    __json_hidden__ = ['case', 'links', 'enrolling_agent']
 
 
 class SelfEnrollmentSetup(SelfEnrollmentSerializer, db.Model):
@@ -401,6 +405,10 @@ class SelfEnrollmentSetup(SelfEnrollmentSerializer, db.Model):
                            nullable=True)
     created_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
     updated_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
+
+    # Enrolling agent for self-enroll.
+    enrolling_agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
+    enrolling_agent = db.relationship('Agent', foreign_keys=[enrolling_agent_id])
 
     @property
     def sent_count(self):

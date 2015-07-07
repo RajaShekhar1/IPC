@@ -153,8 +153,11 @@ def login():
                 return redirect(url_for('login'))
 
         except StormpathError, err:
-            flash(err.message['message'])
-
+            if 'message' in err.message:
+                flash(err.message['message'])
+            else:
+                flash(err.message)
+                
     return render_template('user_account/login.html',
                            form = form,
                            nav_menu=get_nav_menu(),

@@ -40,6 +40,7 @@ class Product(ProductJsonSerializable, db.Model):
     code = db.Column(db.String, nullable=False)
     name = db.Column(db.String, nullable=False)
     brochure_url = db.Column(db.Unicode(2000))
+    brochure_name = db.Column(db.Unicode(256))
 
     # Boolean that controls whether on not this can be enrolled by agents
     visible_to_agents = db.Column(db.Boolean, nullable=False, server_default='True')
@@ -91,6 +92,15 @@ class Product(ProductJsonSerializable, db.Model):
                     state_replacement_paragraphs[statecode] = form.paragraphs
 
         return state_replacement_paragraphs
+
+    def get_brochure_name(self):
+        if self.brochure_name:
+            return self.brochure_name
+
+        if not self.is_base_product():
+            return self.get_base_product().brochure_name
+
+        return None
 
     def get_brochure_url(self):
         if self.brochure_url:

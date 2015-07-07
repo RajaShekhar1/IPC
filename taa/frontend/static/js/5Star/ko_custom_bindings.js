@@ -1,18 +1,14 @@
+
+// wysiwyg editor. Takes an object like: {value: [observable value], type: ['simple'|'full']}
+//  The simple editor has fewer toolbar options, suitable for email body editing.
+//  The full editor has more control over the text in the body and can insert images.
+//  Defaults to simple type toolbar.
 ko.bindingHandlers.wysiwyg = (function() {
-  this.toolbars = {
+  var toolbars = {
     simple: [ 'bold','italic','underline',null,'createLink','unlink',null,null,null,'undo','redo'],
     full: [
-      {
-        name: 'font',
-        title: 'Change the font',
-        values: ['Times New Roman', 'Arial', 'Verdana', 'Open Sans', 'Tahoma']
-      },
       null,
-      {
-        name: 'fontSize',
-        title: 'Change the font size',
-        values:{1 : 'Small' , 3 : 'Normal' , 5 : 'Huge'}
-      },
+      null,
       null,
       'bold',
       'italic',
@@ -37,8 +33,9 @@ ko.bindingHandlers.wysiwyg = (function() {
         button_text: 'Add'
       },
       'unlink',
+      null,
       {
-        name: 'createLink',
+        name: 'insertImage',
         placeholder: 'Image URL',
         button_insert_class: 'btn-purple',
         button_insert: 'Add',
@@ -54,24 +51,32 @@ ko.bindingHandlers.wysiwyg = (function() {
     ]
   };
   return {
-    init: function wysiwyg_init(element, valueAccessor, allBindings, viewModel, bindingContext) {
+    init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+      // object has type and initial value observable
       var va = valueAccessor();
-      //va object has type and initial value observable
       var html = va.value, type = va.type;
-      var toolbar = this.toolbars[type] || this.toolbars.simple;
+      var toolbar = toolbars[type] || toolbars.simple;
       $(element).ace_wysiwyg({
         toolbar: toolbar
       });
-      $(element).html(html());
+
+      // Set initial value.
+      $(element).html(ko.unwrap(html));
+
+      // Update the observable when the page changes.
       $(element).on("change", function() {
         html($(element).html());
       });
     },
-    update: function wysiwyg_update(element, valueAccessor, allBindings, viewModel, bindingContext) {
-      var va = valueAccessor();
-      //va object has type and initial value observable
-      var html = va.value, type = va.type;
-      $(element).html(html());
+
+    // What to do when the observed value changes.
+    update: function(element, valueAccessor) {
+      var updated_html = ko.unwrap(valueAccessor().value);
+
+      // We only need to update the HTML if the content has changed (if the observable was changed by a script).
+      if ($(element).html() != updated_html) {
+        $(element).html(updated_html);
+      }
     }
   };
 })();

@@ -203,6 +203,24 @@ class EnrollmentApplicationService(DBService):
             data.append(export_record)
         return data
 
+    def get_enrollment_record_for_census(self, case, census_record_id):
+        """
+        Does not do any combining data.
+        Includes census data for each enrollment, so the same employee in the
+        census will show up multiple times, once for each enrollment.
+        """
+        census_record = CaseService().get_census_record(case, census_record_id)
+        data = []
+        if not census_record.enrollment_applications:
+            return data
+        for enrollment in census_record.enrollment_applications:
+            export_record = dict()
+            export_record.update(self.get_census_data(census_record))
+            export_record.update(self.get_unmerged_enrollment_data(
+                census_record, enrollment))
+            data.append(export_record)
+        return data
+
     def get_all_enrollment_records(self, case):
         """
         Does not do any combining data.
@@ -888,14 +906,11 @@ class SelfEnrollmentLinkService(DBService):
             ).filter(SelfEnrollmentLink.self_enrollment_setup.has(SelfEnrollmentSetup.case_id==case.id)
             ).first()
 
-        if not link and not case.is_self_enrollment:
-            return None
-
         if not link:
             link = self.generate_link(prefix, case, record=None)
+            db.session.commit()
 
         return link.url
-
 
 
 class SelfEnrollmentEmailBatchService(DBService):
