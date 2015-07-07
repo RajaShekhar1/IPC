@@ -7,6 +7,16 @@ from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
 
+from taa.services.cases import CaseService
+from taa.services.agents import AgentService
+from taa.services.enrollments import EnrollmentApplicationService
+
+from taa.services.docusign.docusign_envelope import create_envelope_and_get_signing_url
+
+case_service = CaseService()
+agent_service = AgentService()
+enrollment_service = EnrollmentApplicationService()
+
 bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
 
 # Wizard original endpoint data
@@ -65,36 +75,27 @@ bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
 def home():
     return "Hallo world"
 
-@route(bp, '/<case_id>/submit-data', methods=["POST"])
-def submit_data(case_id):
-    case = case_service.get(case_id)
-    data = request.form or request.json
-    """
-    wizard_results = data['wizard_results']
-    print("[ENROLLMENT SUBMITTED]: (case {}) {}".format(case_id, wizard_results))
+@route(bp, '/submit-data', methods=["POST"])
+def submit_data():
+    data = request.json
+    case = case_service.get(data["agent_data"]["case_id"])
     # Save enrollment information and updated census data prior to
     # DocuSign hand-off
-    if session.get('enrolling_census_record_id'):
+    if data['census_record_id']:
         census_record = case_service.get_census_record(
-            case, session['enrolling_census_record_id'])
+            case, data['census_record_id'])
     else:
         census_record = None
-
-    # Get the agent for this session
-    # For self-enroll situations, the owner agent is used
-    # TODO: Use agent who sent emails for targeted links
     agent = agent_service.get_logged_in_agent()
-    if (agent is None and session.get('is_self_enroll') is not None):
-        agent = case.owner_agent
+    enrollment_application = enrollment_service.save_enrollment_data(
+        data, case, census_record, agent)
 
     # Create and save the enrollment data. Creates a census record if this is a generic link, and in
     #   either case updates the census record with the latest enrollment data.
-    enrollment_application = enrollment_service.save_enrollment_data(
-        wizard_results, case, census_record, agent)
 
-    if not wizard_results.get('did_decline'):
+    if not data.get('did_decline'):
         # Hand off wizard_results to docusign
-        is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results, census_record, case)
+        is_error, error_message, redirect = create_envelope_and_get_signing_url(data, census_record, case)
         # Return the redirect url or error
         resp = {'error': is_error,
                 'error_message': error_message,
@@ -106,13 +107,12 @@ def submit_data(case_id):
             'error_message': '',
             'redirect': url_for('ds_landing_page',
                                 event='decline',
-                                name=wizard_results['employee']['first'],
-                                type=wizard_results["agent_data"]["is_in_person"],
+                                name=data['employee']['first'],
+                                type=data["agent_data"]["is_in_person"],
                                 )
         }
     data = jsonify(**resp)
     # Need to manually commit all changes since this doesn't go through the API
     # right now
     db.session.commit()
-    """
     return data
