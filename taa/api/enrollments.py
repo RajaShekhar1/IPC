@@ -65,12 +65,11 @@ bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
 def home():
     return "Hallo world"
 
-@route(bp, '/submit-data', methods=["POST"])
-def submit_data():
-    data = request.json
-    case_id = session['active_case_id']
+@route(bp, '/<case_id>/submit-data', methods=["POST"])
+def submit_data(case_id):
     case = case_service.get(case_id)
-
+    data = request.form or request.json
+    """
     wizard_results = data['wizard_results']
     print("[ENROLLMENT SUBMITTED]: (case {}) {}".format(case_id, wizard_results))
     # Save enrollment information and updated census data prior to
@@ -115,4 +114,5 @@ def submit_data():
     # Need to manually commit all changes since this doesn't go through the API
     # right now
     db.session.commit()
+    """
     return data
