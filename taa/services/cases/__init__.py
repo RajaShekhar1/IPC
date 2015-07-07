@@ -352,11 +352,14 @@ class CaseService(DBService):
         return False
 
     def create_new_case(self, **kwargs):
-        case = DBService.create(**kwargs)
+        case = DBService.create(self, **kwargs)
 
         # Make sure a self-enrollment setup is created too.
-        SelfEnrollmentService().create(**{
+        setup = SelfEnrollmentService().create(**{
             'case_id': case.id,
+            'self_enrollment_type': SelfEnrollmentSetup.TYPE_CASE_GENERIC,
+            'use_email':True,
+            'use_landing_page':True,
         })
 
         return case

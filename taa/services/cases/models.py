@@ -93,7 +93,7 @@ class Case(CaseSerializer, db.Model):
 
     def has_signing_agent(self):
         # Require an owner agent, even if we have a self-enroll enrolling agent.
-        return self.owner_agent
+        return bool(self.owner_agent)
 
     def format_created_date(self):
         return self.created_date.strftime('%m/%d/%Y')
@@ -135,7 +135,7 @@ class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
 
     def currently_active(self):
         now = datetime.now()
-        if self.end_date is None and self.start_date < now:
+        if self.end_date is None and self.start_date and self.start_date < now:
             # End date is blank and start date is in the past
             return True
         elif self.get_start_date() < now < (self.end_date + timedelta(days=1)):

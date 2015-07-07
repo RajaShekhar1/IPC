@@ -888,14 +888,11 @@ class SelfEnrollmentLinkService(DBService):
             ).filter(SelfEnrollmentLink.self_enrollment_setup.has(SelfEnrollmentSetup.case_id==case.id)
             ).first()
 
-        if not link and not case.is_self_enrollment:
-            return None
-
         if not link:
             link = self.generate_link(prefix, case, record=None)
+            db.session.commit()
 
         return link.url
-
 
 
 class SelfEnrollmentEmailBatchService(DBService):

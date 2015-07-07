@@ -481,7 +481,7 @@
       <div class="widget-body">
         <div class="widget-main">
 
-          <div class="row" data-bind='visible: has_census_data'>
+          <div class="row" data-bind='visible: is_active'>
             <div class="col-xs-12">
               <label>Enrollment City: <input type='text' data-bind="value: enrollment_city_override"></label>
               <label>Enrollment State: <limited-state-select params="limiter: state_product_override_limiter"></limited-state-select></label>
@@ -1359,8 +1359,8 @@
                     };
 
                     self.landing = {
-                      page_title: ko.observable(case_data.self_enrollment_setup.page_title),
-                      page_text: ko.observable(case_data.self_enrollment_setup.page_text),
+                      page_title: ko.observable(case_data.self_enrollment_setup.page_title || $("#page_title").html()),
+                      page_text: ko.observable(case_data.self_enrollment_setup.page_text || $("#page_text").html())
                     };
 
 
@@ -1557,9 +1557,11 @@
                             self.is_data_dirty(true);
                           });
                         });
-                        // For now, trigger dirty on every change within the self-enroll setup.
+                        // For now, trigger dirty on every change within the self-enroll setup if it is enabled.
                         $("#edit-self-enrollment-form").on("change", "input, select, [contenteditable]", function() {
-                          self.is_data_dirty(true);
+                          if (self.is_self_enrollment()) {
+                            self.is_data_dirty(true);
+                          }
                         });
 
                       }
@@ -1572,7 +1574,7 @@
 
                       self.batch_preview = function(batch) {
                         window.open("/batch-info/{{case.id}}/batch/"+batch.id, "batchView", "menubar=no,location=no,resizable=no,width=700,height=500,scrollbars=yes,status=yes");
-                      }
+                      };
 
                       self.can_activate_case = ko.computed(function() {
                         var is_valid = (
@@ -1723,7 +1725,7 @@
                             situs_state: self.selected_statecode() ? self.selected_statecode() : "",
                             payment_mode: self.selected_payment_mode() ? self.selected_payment_mode() : null,
                             agent_id: self.owner_agent_id(),
-                            is_self_enrollment: self.is_self_enrollment(),
+                            is_self_enrollment: self.is_self_enrollment()
                           }
                         };
 
@@ -1764,52 +1766,45 @@
 
 
                           self.save_settings = function(cb) {
-                            self.flash_messages.clear();
+                          self.flash_messages.clear();
 
-                            if (!self.can_save_case()) {
-                              return;
-                            }
+                          if (!self.can_save_case()) {
+                            return;
+                          }
 
-                            self.loading_modal({message: "Saving case..."});
+                          self.loading_modal({message: "Saving case..."});
 
-                            // Make sure case can be activated
-                            if (self.is_active() && !self.can_activate_case()) {
-                              self.is_active(false);
-                              self.flash_messages.flash_error("The case has been deactivated due to missing settings.");
-                              // Continue saving the case
-                            }
+                          // Make sure case can be activated
+                          if (self.is_active() && !self.can_activate_case()) {
+                            self.is_active(false);
+                            self.flash_messages.flash_error("The case has been deactivated due to missing settings.");
+                            // Continue saving the case
+                          }
 
-                            var case_request = send_json_data(
-                              "PUT",
-                              urls.get_case_api_url(case_data.id),
-                              self.serialize_case()
-                            );
+                          var case_request = send_json_data(
+                            "PUT",
+                            urls.get_case_api_url(case_data.id),
+                            self.serialize_case()
+                          );
 
-                            var periods_request = send_json_data(
-                              "PUT",
-                              urls.get_case_api_enrollment_periods_url(case_data.id),
-                              self.serialize_enrollment_periods()
-                            );
+                          var periods_request = send_json_data(
+                            "PUT",
+                            urls.get_case_api_enrollment_periods_url(case_data.id),
+                            self.serialize_enrollment_periods()
+                          );
 
+                          if (self.is_self_enrollment()) {
+                            // Also save self enrollment settings.
                             var self_enroll_request = send_json_data(
                               "PUT",
                               urls.get_case_api_self_enrollment_url(case_data.id),
                               self.serialize_self_enroll()
                             );
+                          }
 
-                            // Self Enroll settings
-                            $('#save-success').hide();
-                            $('#save-fail').hide();
-
-                            /*// Trigger 'submit' on hidden fields
-                            $('input[type="hidden"]').click();
-
-                            var self_enroll_request = $.ajax({
-                            url: $('#edit-self-enrollment-form').attr('action'),
-                            method: 'PUT',
-                            data: $('#edit-self-enrollment-form').serialize(),
-                            dataType: 'json'
-                          });*/
+                          // Self Enroll settings
+                          $('#save-success').hide();
+                          $('#save-fail').hide();
 
                           var on_success = function(case_xhr, periods_xhr, self_enroll_xhr) {
                             self.is_data_dirty(false);
@@ -1823,7 +1818,11 @@
                             self.loading_modal(null);
                             self.flash_messages.flash_error("Save failed. Please correct any errors below.");
                           };
-                          var done = $.when(case_request, periods_request, self_enroll_request);
+                          if (!self.is_self_enrollment()) {
+                            var done = $.when(case_request, periods_request);
+                          } else {
+                            var done = $.when(case_request, periods_request, self_enroll_request);
+                          }
 
                           if(cb && typeof(cb) === "function") {
                             cb(done);
@@ -2374,8 +2373,6 @@
             );
             ko.applyBindings(window.case_settings, $(".content")[0]);
 
-            // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change
-            case_settings.is_data_dirty(false);
 
             function SendEmailsModalViewModel(case_settings_vm) {
               var self = this;
@@ -2538,7 +2535,7 @@
               }
             }).change();
 
-            // Buttons to reset tex
+            // Buttons to reset text
             $('#reset-page-text').click(function() {
               $('#page_text').html("{{ default_page_text|replace('\n', '\\n')|safe }}").focus();
             });
@@ -2549,10 +2546,12 @@
               if($(value).prop('tagName') == 'DIV') {
                 if($(value).html() == '') {
                   $(value).html($(value).attr('default'));
+                  $(value).trigger('change');
                 }
               } else {
                 if($(value).val() == '') {
                   $(value).val($(value).attr('default'));
+                  $(value).trigger('change');
                 }
               }
             });
@@ -2570,7 +2569,7 @@
             });
 
 
-            // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change
+            // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change.
             case_settings.is_data_dirty(false);
           });
 

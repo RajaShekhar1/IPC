@@ -436,7 +436,7 @@ ko.components.register('loading-modal', {
   <div class="form-panel modal-panel">\
   <div class="text-center">\
   <h4 data-bind="html: message"></h4>\
-  <i class="icon-spinner icon-spin grey bigger-200"></i>\
+  <i class="ace-icon fa fa-spinner fa-spin grey bigger-200"></i>\
   </div>\
   </div>\
   </div>\

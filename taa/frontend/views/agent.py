@@ -6,7 +6,7 @@ import os
 from flask import render_template, redirect, url_for, flash, send_file, request
 from flask_stormpath import login_required, groups_required, current_user
 
-from taa import app
+from taa import app, db
 from nav import get_nav_menu
 from taa.api.cases import census_records
 from taa.services.docusign.docu_console import console_url
@@ -141,6 +141,7 @@ Please follow the instructions carefully on the next page, stepping through the 
 
         # Generate generic self-enrollment link
         self_enrollment_link_service.generate_link(request.url_root, case)
+        db.session.commit()
 
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
 
@@ -151,7 +152,7 @@ Please follow the instructions carefully on the next page, stepping through the 
     vars['agent_id'] = agent_id
     vars['agent_name'] = agent_name
     vars['agent_email'] = agent_email
-    vars['generic_link'] = SelfEnrollmentLinkService().get_generic_link(request.url_root, case)
+    vars['generic_link'] = self_enrollment_link_service.get_generic_link(request.url_root, case)
 
     return render_template('agent/case.html', **vars)
 

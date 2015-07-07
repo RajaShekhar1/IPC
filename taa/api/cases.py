@@ -2,7 +2,7 @@ from datetime import datetime
 import StringIO
 
 
-from flask import Blueprint, request, abort, make_response, jsonify, redirect, url_for, render_template
+from flask import Blueprint, request, abort, make_response
 from flask_stormpath import current_user, groups_required, login_required
 
 
@@ -10,7 +10,7 @@ from taa import app
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
-from taa.services.cases import CaseService, SelfEnrollmentService, SelfEnrollmentSetup
+from taa.services.cases import CaseService, SelfEnrollmentSetup
 from taa.services.cases.forms import (
     CensusRecordForm,
     NewCaseForm,

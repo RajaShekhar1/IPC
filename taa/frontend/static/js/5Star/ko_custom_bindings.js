@@ -63,6 +63,7 @@ ko.bindingHandlers.wysiwyg = (function() {
       // Set initial value.
       $(element).html(ko.unwrap(html));
 
+      // Update the observable when the page changes.
       $(element).on("change", function() {
         html($(element).html());
       });
