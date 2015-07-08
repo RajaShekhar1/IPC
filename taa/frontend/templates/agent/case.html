@@ -1639,6 +1639,9 @@ style="display: none;" data-bind="visible: true">
                         $.get("/batch-info/{{case.id}}/logs/"+batch.id, function(data) {
                           $("#log"+batch.id).html(data);
                           $("#log"+batch.id+" .dt-responsive").dataTable();
+                          $("#log"+batch.id+" .dt-responsive .status").each(function() {
+                            $(this).html(format_enrollment_status_html($(this).text()))
+                          });
                         });
                       };
 

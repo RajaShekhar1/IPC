@@ -269,10 +269,17 @@ def view_batch_email_preview(case_id, batch_id=None):
 @app.route('/batch-info/<int:case_id>/logs/<batch_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def view_batch_email_logs(case_id, batch_id=None):
+        case = case_service.get_if_allowed(case_id)
         batch = self_enrollment_email_service.get_batch_for_case(case_id, batch_id)
+        email_logs = []
+
+        for email in batch.email_logs:
+            census_record = case_service.get_census_record(case, email.census_id)
+            email.enrollment_status = enrollment_service.get_enrollment_status(census_record)
+            email_logs.append(email)
         return render_template(
             "agent/email_logs.html",
-            batch_emails=batch.email_logs,
+            batch_emails=email_logs,
         )
 def build_fake_email_greeting(setup):
     salutation = ''

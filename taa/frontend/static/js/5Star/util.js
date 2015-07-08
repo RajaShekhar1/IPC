@@ -24,6 +24,7 @@ function get_loading_html(message) {
 
 // Misc Formatting
 function format_enrollment_status_text(status) {
+  console.log(status);
   if (status === "enrolled") {
     return "Enrolled";
   } else if (status === "declined") {

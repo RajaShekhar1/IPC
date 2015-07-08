@@ -4,10 +4,11 @@
     <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Recipient Name</th>
-            <th>Recipient Email</th>
-            <th>Status</th>
+            <th>Sent</th>
+            <th>Enroll Status</th>
+            <th>First</th>
+            <th>Last</th>
+            <th>Email</th>
           </tr>
         </thead>
         <tbody>
@@ -19,14 +20,14 @@
             {% elif email.status=="success" %}
             <tr class="bg-success">
             {% endif %}
-              <td>{{email.id}}</td>
-              <td>{{email.email_to_name}}</td>
-              <td>{{email.email_to_address}}</td>
               <td>{{email.status}}</td>
+              <td class="status">{{email.enrollment_status}}</td>
+              <td>{{email.email_to_name.split()[0]}}</td>
+              <td>{{email.email_to_name.split()[1]}}</td>
+              <td>{{email.email_to_address}}</td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
-
     </div>
 </div>
