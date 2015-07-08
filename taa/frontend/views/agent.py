@@ -248,9 +248,9 @@ def edit_self_enroll_setup(case_id=None):
         vars['setup'] = case.self_enrollment_setup
     return render_template('agent/self_enrollment_setup.html', **vars)
 
-@app.route('/batch-info/<int:case_id>/batch/<batch_id>')
+@app.route('/batch-info/<int:case_id>/preview/<batch_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
-def view_batch_email_information(case_id, batch_id=None):
+def view_batch_email_preview(case_id, batch_id=None):
         batch = self_enrollment_email_service.get_batch_for_case(case_id, batch_id)
         case = case_service.get_if_allowed(case_id)
         setup = case.self_enrollment_setup
@@ -261,8 +261,15 @@ def view_batch_email_information(case_id, batch_id=None):
             greeting=build_fake_email_greeting(setup),
             enrollment_url="#",
             company_name=case.company_name,
-            batch_emails=batch.email_logs,
             products = case.products
+        )
+@app.route('/batch-info/<int:case_id>/logs/<batch_id>')
+@groups_required(['agents', 'home_office', 'admins'], all=False)
+def view_batch_email_logs(case_id, batch_id=None):
+        batch = self_enrollment_email_service.get_batch_for_case(case_id, batch_id)
+        return render_template(
+            "agent/email_logs.html",
+            batch_emails=batch.email_logs,
         )
 def build_fake_email_greeting(setup):
     salutation = ''

@@ -1,0 +1,32 @@
+<div class="sentData">
+  <h1>Email Status</h1>
+  <div class="table-responsive">
+    <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Recipient Name</th>
+            <th>Recipient Email</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for email in batch_emails %}
+            {% if email.status=="pending" %}
+            <tr class="bg-warning">
+            {% elif email.status=="failed" %}
+            <tr class="bg-danger">
+            {% elif email.status=="success" %}
+            <tr class="bg-success">
+            {% endif %}
+              <td>{{email.id}}</td>
+              <td>{{email.email_to_name}}</td>
+              <td>{{email.email_to_address}}</td>
+              <td>{{email.status}}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+</div>
