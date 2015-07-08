@@ -165,7 +165,6 @@ def edit_census_record(case_id, census_record_id):
     census_record = case_service.get_census_record(case, census_record_id)
     record_form = CensusRecordForm(obj=census_record)
     agent = agent_service.get_logged_in_agent()
-
     # Get the child entries out
     child_form_fields = []
     for x in range(1, 6+1):
@@ -218,6 +217,10 @@ def edit_census_record(case_id, census_record_id):
         header_title='Home Office' if is_admin else '',
         nav_menu=get_nav_menu()
     )
+    if agent:
+        vars['can_edit_case'] = (agent is case_service.get_case_owner(case))
+    else:
+        vars['can_edit_case'] = True
     return render_template('agent/census_record.html', **vars)
 
 
