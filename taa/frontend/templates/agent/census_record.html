@@ -18,7 +18,7 @@
 
       <div class="col-xs-12">
         <h3>
-          Enrollments
+          Enrollment history for {{census_record.employee_first}} {{census_record.employee_last}}
           {% if case_is_enrolling %}
             {% if enrollment_status==None %}
               <button class="btn btn-primary btn-sm enroll-employee pull-right" data-id="{{census_record.id}}">Enroll</button>
