@@ -19,13 +19,6 @@
       <div class="col-xs-12">
         <h3>
           Enrollment history for {{census_record.employee_first}} {{census_record.employee_last}}
-          {% if case_is_enrolling %}
-            {% if enrollment_status==None %}
-              <button class="btn btn-primary btn-sm enroll-employee pull-right" data-id="{{census_record.id}}">Enroll</button>
-            {% elif enrollment_status!=None %}
-              <button class="btn btn-primary btn-sm enroll-employee pull-right" data-id="{{census_record.id}}">Add Coverage</button>
-            {% endif %}
-          {% endif %}
         </h3>
       </div>
       {% if enroll_data %}
@@ -77,6 +70,15 @@
           <p>No enrollments</p>
         </div>
       {% endif %}
+      <div class="row">
+        {% if case_is_enrolling %}
+          {% if enrollment_status==None %}
+            <button class="btn btn-primary btn-sm enroll-employee pull-right" data-id="{{census_record.id}}">Enroll</button>
+          {% elif enrollment_status!=None %}
+            <button class="btn btn-primary btn-sm enroll-employee pull-right" data-id="{{census_record.id}}"><i class="fa fa-plus"></i> Add Coverage</button>
+          {% endif %}
+        {% endif %}
+      </div>
       <hr />
       <form class="col-xs-12 form-horizontal" id="edit-record-form" action="{{ url_for("cases.update_census_record", case_id=case.id, census_record_id=census_record.id) }}">
           <div class="row">
