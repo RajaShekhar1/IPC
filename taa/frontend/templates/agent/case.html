@@ -772,13 +772,13 @@
                 <div class="modal-body">
                   <div class="form-panel modal-panel form-horizontal">
                     <div class="form-group">
-                      <div class="control-label col-md-3">
+                      <div class="control-label col-sm-3">
                         <label>Send To: </label>
                       </div>
-                      <div class="col-md-9">
+                      <div class="col-sm-9">
                         <select class="form-control" data-bind="value: send_type" name="send_type">
                           <option data-bind="text: numbers.not_sent()+' employees who have not been sent a link'" value="not-sent"></option>
-                          <option data-bind="text: numbers.not_enrolled()+' employees who have not enrolled or declined'" value='not-enrolled'></option>
+                          <option data-bind="text: numbers.not_enrolled()+' employees who have neither enrolled nor declined'" value='not-enrolled'></option>
                           <option data-bind="text: numbers.declined()+' employees who have declined'" value='declined'></option>
                         </select>
                       </div>

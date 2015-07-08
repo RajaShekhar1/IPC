@@ -8,7 +8,7 @@
       <ul class="breadcrumb col-xs-12">
         <li><a href="{{ url_for('index') }}"><i class="ace-icon fa fa-home"></i> Home</a></li>
         <li><a href="{{ url_for('manage_cases') }}"><i class="ace-icon fa fa-briefcase"></i> Enrollment Cases</a></li>
-        <li><a href="{{ url_for('manage_case', case_id=case.id) }}">{{ census_record.case.company_name }}</a></li>
+        <li><a href="{{ url_for('manage_case', case_id=case.id) }}#enrollment">{{ census_record.case.company_name }}</a></li>
         <li class="active"><i class="ace-icon glyphicon glyphicon-user"></i> {{ census_record.employee_first }} {{ census_record.employee_last }}</li>
       </ul>
 
