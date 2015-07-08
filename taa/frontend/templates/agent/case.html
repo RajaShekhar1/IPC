@@ -1397,13 +1397,14 @@ style="display: none;" data-bind="visible: true">
                       owner: self
                     });
 
+
                     self.emailSettings = {
                       sender_name: ko.observable(case_data.self_enrollment_setup.email_sender_name),
                       sender_email: ko.observable(case_data.self_enrollment_setup.email_sender_email),
-                      subject: ko.observable(case_data.self_enrollment_setup.email_subject),
+                      subject: ko.observable(case_data.self_enrollment_setup.email_subject || settings.default_email_subject),
                       greeting_type: ko.observable(case_data.self_enrollment_setup.email_greeting_type),
                       greeting_salutation: ko.observable(case_data.self_enrollment_setup.email_greeting_salutation),
-                      message: ko.observable(case_data.self_enrollment_setup.email_message)
+                      message: ko.observable(case_data.self_enrollment_setup.email_message || settings.default_email_message)
                     };
 
                     self.resetEmail = function() {
