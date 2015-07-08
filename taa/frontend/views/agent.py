@@ -148,6 +148,7 @@ Please follow the instructions carefully on the next page, stepping through the 
 
     vars['setup'] = case.self_enrollment_setup
     vars['form'] = form
+    vars['case_owner'] = case_service.get_case_owner(case)
     vars['products'] = case.products
     vars['company_name'] = case.company_name
     vars['agent_id'] = agent_id

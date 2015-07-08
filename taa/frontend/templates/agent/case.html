@@ -370,9 +370,12 @@ style="display: none;" data-bind="visible: true">
                           <div class="form-group self-enroll self-enroll-agent">
                             <div class="col-sm-3 control-label">Signing agent for self-enrolled apps</div>
                             <div class="col-sm-9">
-                              {% if True %}
+                              {% if not case_owner %}
+                                <p>Owner agent for this case</p>
+                              {% elif case_owner and case_agents|length == 1 %}
+                                <p>{{ case_owner.name() }}</p>
+                              {% else %}
                               <select data-bind="value: enrolling_agent_id" class="">
-                                <option value="">(Default Signing Agent)</option>
                                 {% for agent in case_agents %}
                                 <option value="{{ agent.id }}">{{ agent.name() }}</option>
                                 {% endfor %}
