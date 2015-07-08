@@ -36,7 +36,6 @@ style="display: none;" data-bind="visible: true">
           Enrollment
         </a>
       </li>
-
       <li class="" data-bind="visible: email_batches().length > 0">
         <a href="#history">
           <i class="orange ace-icon fa fa-clock-o bigger-120"></i>
@@ -584,6 +583,39 @@ style="display: none;" data-bind="visible: true">
   </div>
 
 </div>
+</div>
+
+<div id="history" class="tab-pane fade">
+  <div class="row" {# Prevent flash of unstyled content #}
+  style="display: none;" data-bind="visible: true"
+  >
+  <div class="col-xs-12">
+    <div class="widget-box">
+      <div class="widget-header">
+        <div class="row">
+          <div class="col-md-4"><h4 class="bigger-150">Case Census</h4></div>
+          <div class="col-md-8">
+          </div>
+        </div>
+      </div>
+      <div class="widget-body">
+        <div class="widget-main">
+          <div class="row" data-bind="visible: email_batches().length > 0">
+            <div class="col-sm-10 col-sm-offset-1">
+              <h3>Email Notification History</h3>
+              <ul class="list-unstyled" data-bind="foreach:email_batches">
+                <li><a href="#" data-bind="click: $parent.batch_preview ">Sent <span data-bind="text: email_count"></span> emails on <span data-bind="text: moment(sent_date).format('MM/DD/YYYY hh:mma')"></span></a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
 </div>
 
 <div id="reports" class="tab-pane fade">
