@@ -633,17 +633,17 @@
                 <div class="modal-header">
                     <div class="form-group row">
                         <div class="col-xs-12 col-sm-9">
-                            <small data-bind="visible: is_in_person_application">I want this notice read aloud to me
+                            <small>I want this notice read aloud to me
                                 &nbsp;&nbsp;
                                 <label class="blue">
                                     <input name="replacement_read_aloud" value="Y" type="radio" class="inline ace"
-                                           data-bind="checked: replacement_read_aloud, checkedValue: true, disabled: is_self_enroll()"/>
+                                           data-bind="checked: replacement_read_aloud, checkedValue: true, disable: is_self_enroll()"/>
                                     <span class="lbl"> Y &nbsp; </span>
                                 </label>
 
                                 <label class="blue">
                                     <input name="replacement_read_aloud" value="N" type="radio" class="inline ace"
-                                           data-bind="checked: replacement_read_aloud, checkedValue: false, disabled: is_self_enroll()"/>
+                                           data-bind="checked: replacement_read_aloud, checkedValue: false, disable: is_self_enroll()"/>
                                     <span class="lbl"> N</span>
                                 </label>
                             </small>

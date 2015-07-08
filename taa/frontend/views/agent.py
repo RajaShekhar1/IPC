@@ -261,7 +261,8 @@ def view_batch_email_information(case_id, batch_id=None):
             greeting=build_fake_email_greeting(setup),
             enrollment_url="#",
             company_name=case.company_name,
-            batch_emails=batch.email_logs
+            batch_emails=batch.email_logs,
+            products = case.products
         )
 def build_fake_email_greeting(setup):
     salutation = ''

@@ -7,12 +7,12 @@
 <body>
 
 <div style="margin:10px;font-family:arial,helvetica,sans-serif">
-    
+
     <table border="0" cellspacing="0" cellpadding="15" width="600" st
            yle="border:1px solid rgb(204,204,204);margin:10px;border-collapse:collapse">
         <tbody>
         <tr>
-        
+
             <td style="line-height:42px">
                 <table border="0" cellspacing="0" cellpadding="0" width="100%">
                     <tbody>
@@ -37,7 +37,7 @@
                         </td>
                         <td></td>
                         <td>
-                            <div style="font-size:16px;color:rgb(0,0,1);font-family:arial;font-weight:bold">5Star Enrollment 
+                            <div style="font-size:16px;color:rgb(0,0,1);font-family:arial;font-weight:bold">5Star Enrollment
                             </div>
                             <div style="font-size:16px;color:rgb(119,119,119);font-family:arial">
 
@@ -57,12 +57,16 @@
                     {{ custom_message | safe }}
                 </p>
 
+                <div style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">
+                    {% include "enrollment/self_enrollment_product_list.html" %}
+                </div>
+
 
         </tr>
         <tr>
             <td align="center"
                 style="background-color:rgb(244,244,244);border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;">
-    
+
                 <a style="font-size:16px;color:rgb(0,0,1);background-color:rgb(255,196,35);border:1px solid rgb(231,178,54);border-top-left-radius:5px;border-top-right-radius:5px;border-bottom-right-radius:5px;border-bottom-left-radius:5px;display:inline-block;font-family:arial;font-weight:bold;line-height:40px;min-height:40px;width:250px;text-align:center;text-decoration:none"
                    href="{{enrollment_url}}"
                    target="_blank">Begin Enrollment</a></td>

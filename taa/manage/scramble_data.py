@@ -10,82 +10,105 @@ import calendar, datetime
 from ..services.cases.models import CaseCensus
 from ..models import db
 
-nameFile = open(os.path.dirname(os.path.realpath(__file__))+'/names.txt', 'r')
-names = nameFile.read()
-names = names.splitlines()
-random.shuffle(names)
-firstNames = [n.split(" ")[0] for n in names]
-lastNames = [n.split(" ")[1] for n in names]
-
-streetsApi = "https://www.randomlists.com/data/streets.json"
-streetsResponse = urllib.urlopen(streetsApi)
-
-streets = json.load(streetsResponse)["data"]
-
-# citiesApi = "https://www.randomlists.com/data/us-cities.json"
-# citiesResponse = urllib.urlopen(citiesApi)
-
-# cities = json.load(citiesResponse)["data"]
-
-# statesApi = "https://www.randomlists.com/data/states.json"
-# statesResponse = urllib.urlopen(statesApi)
-
-# states = json.load(statesResponse)["data"]
-
-# Email domains come from here [http://www.fakemailgenerator.com] to allow for checking emails sent.
-# Emails are formatted as firstname.lastname@domain.com
-email_domains = ["cuvox.de", "jourrapide.com", "armyspy.com", "dayrep.com", "fleckens.hu", "gustr.com", "rhyta.com", "superrito.com"]
-
 class ScrambleDataCommand(Command):
-    """Scrable all data in the database to not contain real information"""
+    """Scramble all data in the database to not contain real information"""
 
     def run(self):
-        census_data_query = db.session.query(CaseCensus)
-        record_count = census_data_query.count()
-        census_data = census_data_query.all()
-        ssn_range = xrange(100000000, 999999999)
-        ssns = random.sample(ssn_range, record_count*3);
-        print streets
+
+        # Read names.txt file
+        nameFile = open(os.path.dirname(os.path.realpath(__file__))+'/names.txt', 'r')
+        names = nameFile.read()
+        names = names.splitlines()
+
+        # Parse names files into first and last names
+        firstNames = [n.split(" ")[0] for n in names]
+        lastNames = [n.split(" ")[1] for n in names]
+
+        # Get a list of 'real-ish' street names
+        streetsApi = "https://www.randomlists.com/data/streets.json"
+        streetsResponse = urllib.urlopen(streetsApi)
+        streets = json.load(streetsResponse)["data"]
+
+        # These API's aren't needed, but might be useful if we need to scramble cities and states
+        # citiesApi = "https://www.randomlists.com/data/us-cities.json"
+        # citiesResponse = urllib.urlopen(citiesApi)
+        # cities = json.load(citiesResponse)["data"]
+
+        # statesApi = "https://www.randomlists.com/data/states.json"
+        # statesResponse = urllib.urlopen(statesApi)
+        # states = json.load(statesResponse)["data"]
+
+        # Get census data from database
+        census_data = db.session.query(CaseCensus).all()
+
+
+        used_ssns = set()
+
+        def gen_ssn():
+            return "".join([random.choice("0123456789") for _ in range(9)])
+
+        def get_ssn():
+            new_ssn = gen_ssn()
+            while new_ssn in used_ssns:
+                new_ssn = gen_ssn()
+            used_ssns.add(new_ssn)
+            return new_ssn
+
+        def scramble_date(date):
+            new_month = random.randrange(1,13)
+            days_in_month = calendar.monthrange(date.year, new_month)
+            new_day = random.randrange(1, days_in_month[1]+1)
+            return date.replace(day=new_day, month=new_month)
+
+        def scramble_email(first, last):
+            # Email domains come from here [http://www.fakemailgenerator.com] to allow for checking emails sent.
+            # Emails are formatted as firstname.lastname@domain.com
+            email_domains = ["cuvox.de", "jourrapide.com", "armyspy.com", "dayrep.com", "fleckens.hu", "gustr.com", "rhyta.com", "superrito.com"]
+            return first.lower()+last.lower()+"@"+random.choice(email_domains)
+
+
+        def scramble_phone():
+            return str(random.randrange(100, 999))+"-"+str(random.randrange(100, 999))+"-"+str(random.randrange(1000, 9999))
+
         for census in census_data:
-            emp_first_name = random.choice(firstNames)
-            sp_first_name = random.choice(firstNames)
+
+            # Get a random last name for our family
             last_name = random.choice(lastNames)
 
+            # Create an address for our family
             address = str(random.randrange(1, 9999))+" "+random.choice(streets)
 
-            census.employee_first=emp_first_name
-            census.employee_last=last_name
-            census.employee_ssn=ssns.pop()
-            census.employee_email=emp_first_name.lower()+"."+last_name.lower()+"@"+random.choice(email_domains)
-            census.employee_street_address = address
-            new_month = random.randrange(1,13)
-            days_in_month = calendar.monthrange(census.employee_birthdate.year, new_month)
-            new_day = random.randrange(1, days_in_month[1]+1)
-            census.employee_birthdate = census.employee_birthdate.replace(day=new_day, month=new_month)
-            census.employee_phone = str(random.randrange(100, 999))+"-"+str(random.randrange(100, 999))+"-"+str(random.randrange(1000, 9990))
+            attributes = [
+                ("employee_first", lambda : random.choice(firstNames)),
+                ("employee_last", lambda : last_name),
+                ("employee_ssn", lambda : get_ssn()),
+                ("employee_email", lambda : scramble_email(census.employee_first, census.employee_last)),
+                ("employee_street_address", lambda: address),
+                ("employee_phone", lambda: scramble_phone()),
 
-            census.spouse_first = sp_first_name
-            census.spouse_last= last_name
-            census.spouse_ssn=ssns.pop()
-            census.spouse_email=sp_first_name.lower()+"."+last_name.lower()+"@"+random.choice(email_domains)
-            census.spouse_street_address = address
-            new_month = random.randrange(1,13)
-            days_in_month = calendar.monthrange(census.spouse_birthdate.year, new_month)
-            new_day = random.randrange(1, days_in_month[1]+1)
-            census.spouse_birthdate = census.spouse_birthdate.replace(day=new_day, month=new_month)
-            census.spouse_phone = str(random.randrange(100, 999))+"-"+str(random.randrange(100, 999))+"-"+str(random.randrange(1000, 9990))
+                ("spouse_first", lambda : random.choice(firstNames)),
+                ("spouse_last", lambda : last_name),
+                ("spouse_ssn", lambda : get_ssn()),
+                ("spouse_email", lambda : scramble_email(census.spouse_first, census.spouse_last)),
+                ("spouse_street_address", lambda: address),
+                ("spouse_phone", lambda: scramble_phone()),
+            ]
 
+            # Set employee and spouse information
+            for attr, new_val in attributes:
+                if getattr(census, attr):
+                    setattr(census, attr, new_val())
+
+            # Six possible children in a record
             for x in range(1, 6+1):
-                if getattr(census,"child"+str(x)+"_first"):
-                    ch_first_name = random.choice(firstNames)
-                    setattr(census, "child"+str(x)+"_first", ch_first_name)
-                    setattr(census, "child"+str(x)+"_last", last_name)
-                    birthdate = getattr(census, "child"+str(x)+"_birthdate")
-                    if birthdate:
-                        new_month = random.randrange(1,13)
-                        days_in_month = calendar.monthrange(birthdate.year, new_month)
-                        new_day = day = random.randrange(1, days_in_month[1]+1)
-                        setattr(census, "child_"+str(x)+"_birthdate", birthdate.replace(day=new_day, month=new_month))
+                # Check each child to see if the exists (if there is a first name)
+                if getattr(census, "child{}_first".format(x)):
+                    # Set new first and last name for the child
+                    setattr(census, "child{}_first".format(x), random.choice(firstNames))
+                    setattr(census, "child{}_last".format(x), last_name)
 
+                    # Some records may not have birthdates. If not create random date.
+                    birthdate = getattr(census, "child{}_birthdate".format(x)) or datetime.datetime.now().replace(year=random.randrange(1995, 2001))
+                    setattr(census, "child{}_birthdate".format(x), scramble_date(birthdate))
 
         db.session.commit()
