@@ -219,7 +219,7 @@ def enrollment_record(case_id, census_id):
     """
     from taa.services.enrollments import EnrollmentApplicationService
     enrollment_service = EnrollmentApplicationService()
-    data = enrollment_service.get_enrollment_record_for_census(
+    data = enrollment_service.get_enrollment_records_for_census(
         case_service.get_if_allowed(case_id), census_id)
     if request.args.get('format') == 'csv':
         body = enrollment_service.export_enrollment_data(data)

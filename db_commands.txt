@@ -1,0 +1,19 @@
+
+# Dropping local
+sudo -u postgres dropdb taa
+
+# Creating local
+sudo -u postgres createdb -T template0 -E utf-8 taa
+
+# Restore local from local file
+pg_restore --verbose --clean --no-acl --no-owner -h localhost -U taa -W -d taa db.dump
+
+# Create a local dump
+pg_dump -Fc --no-acl --no-owner -h localhost -U taa -W taa > taa-local.dump
+
+# remote - get latest backup from app <app>
+curl -o latest.dump `heroku pg:backups public-url --app <app>`
+
+# restore file to remote app DB
+#  NOTE: must put the file at a public URL like amazon S3
+heroku pg:backups restore 'https://s3.amazonaws.com/me/items/3H0q/mydb.dump' DATABASE_URL --app <app>

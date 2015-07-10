@@ -371,9 +371,9 @@ style="display: none;" data-bind="visible: true">
                             <div class="col-sm-3 control-label">Signing agent for self-enrolled apps</div>
                             <div class="col-sm-9">
                               {% if not case_owner %}
-                              <p>Owner agent for this case</p>
+                                <p class="form-control">Owner agent for this case</p>
                               {% elif case_owner and case_agents|length == 1 %}
-                              <p>{{ case_owner.name() }}</p>
+                                <p class="form-control">{{ case_owner.name() }}</p>
                               {% else %}
                               <select data-bind="value: enrolling_agent_id" class="">
                                 {% for agent in case_agents %}
@@ -498,10 +498,10 @@ style="display: none;" data-bind="visible: true">
           </div>
         </div>
 
-        <h4 class="no-census-header text-center lighter" data-bind="visible: census_data().length == 0">No Census Data Uploaded</h4>
+        <h4 class="no-census-header text-center lighter" data-bind="visible: census_data().length == 0" style="display: none;">No Census Data</h4>
 
-        <div class="table-responsive">
-          <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive" data-bind="visble: census_data().length > 0">
+        <div class="table-responsive" data-bind="visible: census_data().length > 0">
+          <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive">
             <thead>
               <tr>
                 <th></th>
@@ -540,14 +540,13 @@ style="display: none;" data-bind="visible: true">
     <div class="widget-box">
       <div class="widget-header">
         <div class="row">
-          <div class="col-md-4"><h4 class="bigger-150">Case Census</h4></div>
+          <div class="col-md-4"><h4 class="bigger-150">Enrollment Email History</h4></div>
           <div class="col-md-8">
           </div>
         </div>
       </div>
       <div class="widget-body">
         <div class="widget-main">
-          <h3>Email Notification History</h3>
           <div class="row" data-bind="visible: email_batches().length > 0">
             <div class="accordion-style1 panel-group col-sm-10 col-offset-sm-1" id="accordion">
               <!-- ko foreach : { data: email_batches } -->
@@ -829,7 +828,7 @@ style="display: none;" data-bind="visible: true">
                   <div class="form-panel modal-panel form-horizontal">
                     <div class="form-group">
                       <div class="control-label col-sm-3">
-                        <label>Send To: </label>
+                        <label>Send To</label>
                       </div>
                       <div class="col-sm-9">
                         <select class="form-control" data-bind="value: send_type" name="send_type">

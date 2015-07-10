@@ -4,38 +4,44 @@
   {% block title %} - Agent Manage Case{% endblock %}
 
   {% block content %}
-
-      <ul class="breadcrumb col-xs-12">
-        <li><a href="{{ url_for('index') }}"><i class="ace-icon fa fa-home"></i> Home</a></li>
-        <li><a href="{{ url_for('manage_cases') }}"><i class="ace-icon fa fa-briefcase"></i> Enrollment Cases</a></li>
-        <li><a href="{{ url_for('manage_case', case_id=case.id) }}#enrollment">{{ census_record.case.company_name }}</a></li>
-        <li class="active"><i class="ace-icon glyphicon glyphicon-user"></i> {{ census_record.employee_first }} {{ census_record.employee_last }}</li>
-      </ul>
-
-      <div class="col-xs-12">
-        <h1 class="header lighter">Edit Census Record</h1>
+      <div class="row">
+        <ul class="breadcrumb col-xs-12">
+          <li><a href="{{ url_for('index') }}"><i class="ace-icon fa fa-home"></i> Home</a></li>
+          <li><a href="{{ url_for('manage_cases') }}"><i class="ace-icon fa fa-briefcase"></i> Enrollment Cases</a></li>
+          <li><a href="{{ url_for('manage_case', case_id=case.id) }}#enrollment">{{ census_record.case.company_name }}</a></li>
+          <li class="active"><i class="ace-icon glyphicon glyphicon-user"></i> {{ census_record.employee_first }} {{ census_record.employee_last }}</li>
+        </ul>
       </div>
 
-      <div class="col-xs-12">
-        <h3>
-          Enrollment history for {{census_record.employee_first}} {{census_record.employee_last}}
-        </h3>
+      <div class="row">
+        <div class="col-xs-12">
+          <h1 class="header lighter">Edit Census Record</h1>
+        </div>
       </div>
+
+      <div class="row">
+        <div class="col-xs-12">
+          <h3>
+            Enrollment history for {{census_record.employee_first}} {{census_record.employee_last}}
+          </h3>
+        </div>
+      </div>
+
+      <div class="row">
       {% if enrollment_data %}
-        <div class="col-xs-12 table-responsive">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Timestamp</th>
-                <th>Product</th>
-                <th>Status</th>
-                <th>Coverage For</th>
-                <th>Face Amount</th>
-                <th>Annual Premium</th>
-            </thead>
-            <tbody>
-              {% for product in enrollment_data %}
-                {% if product %}
+          <div class="col-xs-12 table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Product</th>
+                  <th>Status</th>
+                  <th>Coverage For</th>
+                  <th>Face Amount</th>
+                  <th>Annual Premium</th>
+              </thead>
+              <tbody>
+                {% for product in enrollment_data %}
                   <tr style="background:rgba(50,50,50,.1)">
                     <td><strong data-bind="text: moment('{{ product.time }}').format('MM/DD/YYYY hh:mma')"></strong></td>
                     <td><strong>{{product.product_name}}</strong></td>
@@ -50,7 +56,8 @@
                       <td><strong>{{product.total}}</strong></td>
                     {% endif %}
                   </tr>
-                  {% if product.status!='declined'%}
+
+                  {% if product.status != 'declined'%}
                     {% for coverage in product.coverage %}
                       <tr>
                         <td></td>
@@ -62,24 +69,26 @@
                       </tr>
                     {% endfor %}
                   {% endif %}
-                {% endif %}
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
       {% else %}
-        <div class="text-center">
-          <p>No enrollments</p>
-        </div>
+          <div class="text-center col-xs-12">
+            <p>No enrollments</p>
+          </div>
       {% endif %}
+      </div>
       <div class="row">
+        <div class="col-xs-12">
         {% if case_is_enrolling %}
-          {% if enrollment_status==None %}
-            <button class="btn btn-primary btn-sm enroll-employee pull-right" data-id="{{census_record.id}}">Enroll</button>
-          {% elif enrollment_status!=None %}
-            <button class="btn btn-primary btn-sm enroll-employee pull-right" data-id="{{census_record.id}}"><i class="fa fa-plus"></i> Add Coverage</button>
+          {% if enrollment_status == None %}
+            <button class="btn btn-primary btn-sm enroll-employee" data-id="{{census_record.id}}">Enroll</button>
+          {% elif enrollment_status != None %}
+            <button class="btn btn-primary btn-sm enroll-employee" data-id="{{census_record.id}}"><i class="fa fa-plus"></i> Add Coverage</button>
           {% endif %}
         {% endif %}
+        </div>
       </div>
       <hr />
       <form class="col-xs-12 form-horizontal" id="edit-record-form" action="{{ url_for("cases.update_census_record", case_id=case.id, census_record_id=census_record.id) }}">
