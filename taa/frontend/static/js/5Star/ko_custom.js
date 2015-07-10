@@ -80,3 +80,14 @@ ko.bindingHandlers.wysiwyg = (function() {
     }
   };
 })();
+
+
+/* Case Report component */
+ko.components.register('case-report', {
+  viewModel: {
+    createViewModel: function(params, componentInfo) {
+      return new CaseReportsViewModel(params);
+    }
+  },
+  template: { element: 'case-report-template' }
+});

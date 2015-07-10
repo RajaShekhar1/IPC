@@ -21,7 +21,7 @@
           Enrollment history for {{census_record.employee_first}} {{census_record.employee_last}}
         </h3>
       </div>
-      {% if enroll_data %}
+      {% if enrollment_data %}
         <div class="col-xs-12 table-responsive">
           <table class="table">
             <thead>
@@ -35,31 +35,33 @@
             </thead>
             <tbody>
               {% for product in enrollment_data %}
-                <tr style="background:rgba(50,50,50,.1)">
-                  <td><strong data-bind="text: moment('{{ product.time }}').format('MM/DD/YYYY hh:mma')"></strong></td>
-                  <td><strong>{{product.product_name}}</strong></td>
-                  <td><strong>{{product.status.capitalize()}}</strong></td>
-                  {% if product.status=='declined'%}
-                    <td><strong>N/A</strong></td>
-                    <td><strong>N/A</strong></td>
-                    <td><strong>N/A</strong<td>
-                  {% else %}
-                    <td></td>
-                    <td></td>
-                    <td><strong>{{product.total}}</strong></td>
+                {% if product %}
+                  <tr style="background:rgba(50,50,50,.1)">
+                    <td><strong data-bind="text: moment('{{ product.time }}').format('MM/DD/YYYY hh:mma')"></strong></td>
+                    <td><strong>{{product.product_name}}</strong></td>
+                    <td><strong>{{product.status.capitalize()}}</strong></td>
+                    {% if product.status=='declined'%}
+                      <td><strong>N/A</strong></td>
+                      <td><strong>N/A</strong></td>
+                      <td><strong>N/A</strong<td>
+                    {% else %}
+                      <td></td>
+                      <td></td>
+                      <td><strong>{{product.total}}</strong></td>
+                    {% endif %}
+                  </tr>
+                  {% if product.status!='declined'%}
+                    {% for coverage in product.coverage %}
+                      <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>{{coverage.who}}</td>
+                        <td data-bind="text: formatThousand('{{coverage.coverage or 'No Coverage'}}')"></td>
+                        <td data-bind="text: formatThousand('{{coverage.annual_premium}}')"></td>
+                      </tr>
+                    {% endfor %}
                   {% endif %}
-                </tr>
-                {% if product.status!='declined'%}
-                  {% for coverage in product.coverage %}
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td>{{coverage.who}}</td>
-                      <td data-bind="text: formatThousand('{{coverage.coverage or 'No Coverage'}}')"></td>
-                      <td data-bind="text: formatThousand('{{coverage.annual_premium}}')"></td>
-                    </tr>
-                  {% endfor %}
                 {% endif %}
               {% endfor %}
             </tbody>
