@@ -203,7 +203,7 @@ class EnrollmentApplicationService(DBService):
             data.append(export_record)
         return data
 
-    def get_enrollment_record_for_census(self, case, census_record_id):
+    def get_enrollment_records_for_census(self, case, census_record_id):
         """
         Does not do any combining data.
         Includes census data for each enrollment, so the same employee in the

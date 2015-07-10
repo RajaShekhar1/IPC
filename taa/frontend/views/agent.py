@@ -178,9 +178,10 @@ def edit_census_record(case_id, census_record_id):
 
     is_admin = agent_service.can_manage_all_cases(current_user)
 
-    enrollment_data=enrollment_service.get_enrollment_data(census_record)
+    enrollment_records = enrollment_service.get_enrollment_records_for_census(census_record.case, census_record.id)
     enroll_data=[]
-    if enrollment_data:
+    
+    for z, enrollment_data in enumerate(enrollment_records):
         for i in range(1, 6+1):
             if enrollment_data["product_"+str(i)+"_name"]:
                 enroll_data.append(dict(
@@ -197,13 +198,12 @@ def edit_census_record(case_id, census_record_id):
                         who="Spouse"
                     elif(j=="ch"):
                         who="Child"
-                    enroll_data[i-1]["total"]+=(enrollment_data["product_"+str(i)+"_"+j+"_annual_premium"] or 0)
-                    enroll_data[i-1]["coverage"].append(dict(
+                    enroll_data[z]["total"]+=(enrollment_data["product_"+str(i)+"_"+j+"_annual_premium"] or 0)
+                    enroll_data[z]["coverage"].append(dict(
                         who=who,
                         annual_premium=enrollment_data["product_"+str(i)+"_"+j+"_annual_premium"],
                         coverage=enrollment_data["product_"+str(i)+"_"+j+"_coverage"],
                     ))
-
 
     vars = dict(
         case=case,
