@@ -264,7 +264,7 @@
                                placeholder="Last Name"/>
 
                         <div class="pull-right">
-                            <button class="btn btn-xs btn-danger" data-bind="click: $root.remove_child">
+                            <button type="button" class="btn btn-xs btn-danger" data-bind="click: $root.remove_child">
                                 <i class="icon icon-minus"></i>
                             </button>
                         </div>
@@ -808,88 +808,6 @@
 
 
                         </tr>
-
-                        <tr data-bind="if: did_select_spouse_coverage">
-                            <td>
-                                <div class="row">
-                                    <div class="col-xs-12 col-sm-6">
-                                        During the prior 6 months, other than for routine medical care, has your spouse been diagnosed or treated by a member of the medical profession in a hospital or any other medical facility?
-                                    </div>
-                                    <div class="col-xs-12 col-sm-6">
-
-                                        <div class="row">
-                                            <div class="col-sm-3 btn-group no-padding-right"></div>
-                                            <div class="col-sm-3 btn-group no-padding-right">
-
-                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: new NonHealthQuestion('spouse_treated_6_months'),
-                                                      is_required: true,
-                                                      val: 'Yes',
-                                                      highlight: 'checkmark',
-                                                      onclick: function() {$root.has_spouse_been_treated_6_months(true)}
-                                                      }">
-                                                    Yes
-                                                </button>
-                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: new NonHealthQuestion('spouse_treated_6_months'),
-                                                      is_required: true,
-                                                      val: 'No',
-                                                      highlight: 'checkmark',
-                                                      onclick: function() {$root.has_spouse_been_treated_6_months(false)}
-                                                      }">
-                                                    No
-                                                </button>
-                                            </div>
-                                            <!--ko foreach: {data: $parent.get_covered_children, as: 'child'} -->
-                                                <div class="col-sm-3 btn-group no-padding-right"></div>
-                                            <!--/ko-->
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-
-                        </tr>
-                        <tr data-bind="visible: did_select_spouse_coverage()">
-
-                            <td>
-                                <div class="row">
-                                    <div class="col-xs-12 col-sm-6">
-                                        Has <span data-bind="$root.spouse().name"></span> been <a href="#modal-disabled-definition" data-toggle="modal">disabled</a> in the prior 6 months or received disability payments?
-                                    </div>
-                                    <div class="col-xs-12 col-sm-6">
-
-                                        <div class="row">
-
-                                            <div class="col-sm-3 btn-group no-padding-right"></div>
-                                            <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
-
-                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: new NonHealthQuestion('spouse_disabled_6_months'),
-                                                      is_required: true,
-                                                      val: 'Yes',
-                                                      highlight: 'stop',
-                                                      onclick: function() {$root.has_spouse_been_disabled_6_months(true); handle_question_yes();}
-                                                      }">
-                                                    Yes
-                                                </button>
-                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: new NonHealthQuestion('spouse_disabled_6_months'),
-                                                      is_required: true,
-                                                      val: 'No',
-                                                      highlight: 'checkmark',
-                                                      onclick: function() {$root.has_spouse_been_disabled_6_months(false)}
-                                                      }">
-                                                    No
-                                                </button>
-                                            </div>
-                                            <!--ko foreach: $root.get_covered_children-->
-                                                <div class="col-sm-3 btn-group no-padding-right"></div>
-                                            <!--/ko-->
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
                     <!--/ko-->
 
                     <!--ko foreach: $root.health_questions-->
@@ -908,7 +826,7 @@
                                                       applicant: $root.employee(),
                                                       is_required: does_employee_need_to_answer,
                                                       val: 'Yes',
-                                                      highlight: 'stop',
+                                                      highlight: $data.get_yes_highlight(),
                                                       onclick: show_yes_dialogue_employee
                                                       }">
                                                     Yes
@@ -931,7 +849,7 @@
                                                       applicant: $root.spouse(),
                                                       is_required: does_spouse_need_to_answer,
                                                       val: 'Yes',
-                                                      highlight: 'stop',
+                                                      highlight: $data.get_yes_highlight(),
                                                       onclick: show_yes_dialogue_spouse
                                                       }">
                                                     Yes
@@ -1026,81 +944,8 @@
                                         </div>
                                     </td>
                                 </tr>
-
-
-                                <tr data-bind="if: did_select_spouse_coverage">
-                                    <td>
-                                        <div class="row">
-                                            <div class="col-xs-12 col-sm-6">
-                                                During the prior 6 months, other than for routine medical care, has your spouse been diagnosed or treated by a member of the medical profession in a hospital or any other medical facility?
-                                            </div>
-                                            <div class="col-xs-12 col-sm-6">
-
-                                                <div class="person-answer-small row">
-                                                    <div class="col-xs-3 col-xs-offset-2" data-bind="text: $root.spouse().name()"></div>
-                                                    <div class="col-xs-7 btn-group">
-                                                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                              question: new NonHealthQuestion('spouse_treated_6_months'),
-                                                              is_required: true,
-                                                              val: 'Yes',
-                                                              highlight: 'checkmark',
-                                                              onclick: function() {$root.has_spouse_been_treated_6_months(true)}
-                                                              }">
-                                                            Yes
-                                                        </button>
-                                                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                              question: new NonHealthQuestion('spouse_treated_6_months'),
-                                                              is_required: true,
-                                                              val: 'No',
-                                                              highlight: 'checkmark',
-                                                              onclick: function() {$root.has_spouse_been_treated_6_months(false)}
-                                                              }">
-                                                            No
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <tr data-bind="if: did_select_spouse_coverage">
-                                    <td>
-                                        <div class="row">
-                                            <div class="col-xs-12 col-sm-6">
-                                                Has <span data-bind="$root.spouse().name"></span> been <a href="#modal-disabled-definition" data-toggle="modal">disabled</a> in the prior 6 months or received disability payments?
-                                            </div>
-                                            <div class="col-xs-12 col-sm-6">
-
-                                                <div class="person-answer-small row">
-                                                    <div class="col-xs-3 col-xs-offset-2" data-bind="text: $root.spouse().name()"></div>
-                                                    <div class="col-xs-7 btn-group">
-                                                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                              question: new NonHealthQuestion('spouse_disabled_6_months'),
-                                                              is_required: true,
-                                                              val: 'Yes',
-                                                              highlight: 'checkmark',
-                                                              onclick: function() {$root.has_spouse_been_disabled_6_months(true)}
-                                                              }">
-                                                            Yes
-                                                        </button>
-                                                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                              question: new NonHealthQuestion('spouse_disabled_6_months'),
-                                                              is_required: true,
-                                                              val: 'No',
-                                                              highlight: 'checkmark',
-                                                              onclick: function() {$root.has_spouse_been_disabled_6_months(false)}
-                                                              }">
-                                                            No
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-
                             <!--/ko-->
+
                             <!--ko foreach: $root.health_questions-->
                             <tr data-bind="visible: does_any_applicant_need_to_answer">
                                 <td>
@@ -1118,7 +963,7 @@
                                                           applicant: $root.employee(),
                                                           is_required: does_employee_need_to_answer,
                                                           val: 'Yes', 
-                                                          highlight: 'stop',
+                                                          highlight: $data.get_yes_highlight(),
                                                           onclick: show_yes_dialogue_employee
                                                           }">
                                                         Yes
@@ -1144,7 +989,7 @@
                                                           applicant: $root.spouse(),
                                                           is_required: does_spouse_need_to_answer,
                                                           val: 'Yes', 
-                                                          highlight: 'stop',
+                                                          highlight: $data.get_yes_highlight(),
                                                           onclick: show_yes_dialogue_spouse
                                                           }">
                                                         Yes

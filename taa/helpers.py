@@ -54,10 +54,15 @@ class JsonSerializable(object):
     __json_add__ = None
     
     def get_field_names(self):
-        # Iterate through SQLAlchemy properties
-        for p in self.__mapper__.iterate_properties:
-            yield p.key
-    
+        if hasattr(self, '__mapper__'):
+            # Iterate through SQLAlchemy properties
+            for p in self.__mapper__.iterate_properties:
+                yield p.key
+        else:
+            # Iterate through normal properties
+            for k in self.__dict__.keys():
+                yield k
+
     def to_json(self):
         field_names = self.get_field_names()
 

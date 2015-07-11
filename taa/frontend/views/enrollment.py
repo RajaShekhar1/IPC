@@ -153,11 +153,16 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         # Change the state back to the case state to allow them to continue?
         state = case.situs_state
 
-    # Get SOH Questions
+    # Get SOH Questions and other form or product specific questions
     from taa.services.products import StatementOfHealthQuestionService
     soh_questions = {}
     for product in products:
         soh_questions[product.id] = StatementOfHealthQuestionService().get_health_questions(product, state)
+
+    spouse_questions = {}
+    for product in products:
+        spouse_questions[product.id] = StatementOfHealthQuestionService().get_spouse_questions(product, state)
+
     wizard_data = {
         'state': state if state != 'XX' else None,
         'enroll_city': city,
@@ -169,6 +174,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         'children_data': children_data,
         'is_in_person': not is_self_enroll,
         'health_questions': soh_questions,
+        'spouse_questions': spouse_questions,
         'payment_mode_choices': payment_mode_choices,
         'payment_mode': payment_mode,
         'case_id': case.id,
