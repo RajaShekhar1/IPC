@@ -94,10 +94,8 @@ function get_responsive_datatables_breakpoints() {
 
 // The shortcut functions above use this method to wrap the jquery ajax call in slightly different ways
 function submit_data(method, url, data, should_process_data, on_success, on_error, contentType) {
-  on_success = on_success || function () {
-  };
-  on_error = on_error || function () {
-  };
+  on_success = on_success || function () {};
+  on_error = on_error || function () {};
 
   var options = {
     url: url,

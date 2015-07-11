@@ -1932,13 +1932,13 @@ style="display: none;" data-bind="visible: true">
                           };
 
                           self.remote_delete = function() {
-                            var request = send_json_data("DELETE", urls.get_case_api_url(case_data.id), {}, {});
+                            var request = send_json_data("DELETE", urls.get_case_api_url(case_data.id));
                             $.when(request).then(function() {
                               bootbox.alert("Case deleted successfully");
                               // Allow leaving the page (disables the page unload trigger prompt)
                               self.is_data_dirty(false);
                               // Go back to main page
-                              window.location.href = urls.get_manage_case_url(case_data.id);
+                              window.location.href = urls.get_manage_cases_url();
                             }, function() {
                               bootbox.alert("There was a problem removing this case.");
                             });
