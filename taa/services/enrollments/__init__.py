@@ -338,6 +338,7 @@ class EnrollmentApplicationService(DBService):
 
         # Include the calculated total annualized premium also
         total_annual_premium = Decimal('0.00')
+        total_premium = Decimal('0.00')
 
         # Export coverages for at most six products
         product_list = case_service.get_products_for_case(enrollment.case)
@@ -369,11 +370,17 @@ class EnrollmentApplicationService(DBService):
                     '{}_{}_annual_premium'.format(prefix, applicant_abbr): annualized_premium,
                     '{}_{}_premium'.format(prefix, applicant_abbr): premium,
                 })
+
+                # Update totals
+                if premium and premium > Decimal('0.00'):
+                    total_premium += premium
                 if annualized_premium and annualized_premium > Decimal('0.00'):
                     total_annual_premium += annualized_premium
+
             enrollment_data.update(product_data)
 
         enrollment_data['total_annual_premium'] = total_annual_premium
+        enrollment_data['total_premium'] = total_premium
 
         return enrollment_data
 
@@ -509,7 +516,8 @@ for product_num in range(1, 6+1):
     product_coverage_cols = [
         EnrollmentColumn('product_{}_name'.format(product_num),
                          'Product {} Name'.format(product_num),
-                         export_string)
+                         export_string),
+        EnrollmentColumn('total_premium', 'Total Premium', export_string),
     ]
     for dependent_abbr, dependent_title in (('emp', 'Employee'),
                                             ('sp', 'Spouse'),
@@ -530,6 +538,8 @@ for product_num in range(1, 6+1):
                              'Product {} {} Annual Premium'.format(product_num,
                                                                    dependent_abbr),
                              export_string),
+
+
         ]
     coverage_columns += product_coverage_cols
 
