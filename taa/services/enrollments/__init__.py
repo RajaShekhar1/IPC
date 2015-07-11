@@ -317,14 +317,16 @@ class EnrollmentApplicationService(DBService):
     def get_unmerged_enrollment_data(self, census_record, enrollment):
         """
         If we are not merging, we know we are dealing with coverages from
-        single enrollment.
+        a single enrollment.
         """
         enrollment_data = {}
         if not census_record.enrollment_applications or not enrollment:
             return None
+
         # Export data from enrollment
         for col in enrollment_columns:
             enrollment_data[col.get_field_name()] = col.get_value(enrollment)
+
         # Add Coverage data
         coverages = enrollment.coverages
         employee_coverage = self.find_first_coverage_by_product_for_applicant_type(
@@ -333,8 +335,10 @@ class EnrollmentApplicationService(DBService):
             coverages, EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
         children_coverage = self.find_first_coverage_by_product_for_applicant_type(
             coverages, EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
-        # Include total annualized premium also
+
+        # Include the calculated total annualized premium also
         total_annual_premium = Decimal('0.00')
+
         # Export coverages for at most six products
         product_list = case_service.get_products_for_case(enrollment.case)
         for x in range(6):
@@ -343,28 +347,34 @@ class EnrollmentApplicationService(DBService):
             else:
                 product = None
             prefix = 'product_{0}'.format(x + 1)
-            product_data = {'{}_name'.format(prefix): product.name
-                            if product else ''}
+            product_data = {'{}_name'.format(prefix): product.name if product else ''}
             for applicant_abbr, applicant_coverages in (('emp',
                                                          employee_coverage),
                                                         ('sp',
                                                          spouse_coverage),
                                                         ('ch',
                                                          children_coverage)):
-                coverage = (applicant_coverages[product].coverage_face_value
-                            if applicant_coverages.get(product) else '')
-                premium = (applicant_coverages[product].get_annualized_premium()
-                           if applicant_coverages.get(product) else '')
+                if applicant_coverages.get(product):
+                    applicant_coverage = applicant_coverages[product]
+                    coverage = applicant_coverage.coverage_face_value
+                    premium = applicant_coverage.get_premium()
+                    annualized_premium = applicant_coverage.get_annualized_premium()
+                else:
+                    coverage = ''
+                    premium = ''
+                    annualized_premium = ''
+
                 product_data.update({
-                    '{}_{}_coverage'.format(prefix, applicant_abbr):
-                        coverage,
-                    '{}_{}_annual_premium'.format(prefix, applicant_abbr):
-                        premium,
+                    '{}_{}_coverage'.format(prefix, applicant_abbr): coverage,
+                    '{}_{}_annual_premium'.format(prefix, applicant_abbr): annualized_premium,
+                    '{}_{}_premium'.format(prefix, applicant_abbr): premium,
                 })
-                if premium and premium > Decimal('0.00'):
-                    total_annual_premium += premium
+                if annualized_premium and annualized_premium > Decimal('0.00'):
+                    total_annual_premium += annualized_premium
             enrollment_data.update(product_data)
+
         enrollment_data['total_annual_premium'] = total_annual_premium
+
         return enrollment_data
 
     def find_most_recent_coverage_by_product_for_applicant_type(self,
@@ -508,6 +518,11 @@ for product_num in range(1, 6+1):
             EnrollmentColumn('product_{}_{}_coverage'.format(product_num,
                                                              dependent_abbr),
                              'Product {} {} Coverage'.format(product_num,
+                                                             dependent_abbr),
+                             export_string),
+            EnrollmentColumn('product_{}_{}_premium'.format(product_num,
+                                                             dependent_abbr),
+                             'Product {} {} Premium'.format(product_num,
                                                              dependent_abbr),
                              export_string),
             EnrollmentColumn('product_{}_{}_annual_premium'.format(product_num,
