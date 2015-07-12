@@ -1,6 +1,4 @@
 
-
-
 // IE8 and below polyfill for object.create
 if (typeof Object.create != 'function') {
     (function () {
@@ -22,17 +20,13 @@ if (typeof Object.create != 'function') {
 }
 
 function init_rate_form(data) {
-    
-    
+
     var ui = new WizardUI(data);
-    
-    //ui.build_health_questions(data.health_questions);
     
     // Allow other JS functions to access the ui object
     window.ui = ui;
     
     ko.applyBindings(ui);
-    
 }
 
 function build_product(root, products) {
@@ -251,8 +245,10 @@ function WizardUI(defaults) {
     self.selected_plan = ko.observable(new NullBenefitsPackage(self));
     
     // SOH Questions (depends on product and selected plan)
-    var question_data = process_health_question_data(self, defaults.health_questions, self.insurance_product.product_data);
-    self.health_questions = ko.observableArray(question_data);
+    var questions = process_spouse_question_data(self, defaults.spouse_questions, self.insurance_product.product_data);
+    var soh_questions = process_health_question_data(self, defaults.health_questions, self.insurance_product.product_data);
+    $.merge(questions, soh_questions);
+    self.health_questions = ko.observableArray(questions);
     
     
     // Which, if any, of the good, better, best recommended plans was chosen (even if customized)
@@ -890,11 +886,11 @@ function WizardUI(defaults) {
         return child.any_valid_field();
     }
     
-    $.validator.addClassRules("child_birthdate", 
+    $.validator.addClassRules("child_birthdate",
         {
             required: {
                 depends: is_child_field_required
-            }, 
+            },
             date: {
                 depends: is_child_field_required
             },
@@ -1004,9 +1000,39 @@ function WizardUI(defaults) {
 
     // New FPP form questions
     self.is_employee_actively_at_work = ko.observable(null);
-    self.has_spouse_been_treated_6_months = ko.observable(null);
-    self.has_spouse_been_disabled_6_months = ko.observable(null);
+    self.has_spouse_been_treated_6_months = ko.pureComputed(function() {
+        return _find_answer_for_spouse_question_with_label("Spouse Treated 6 Months");
+    });
+    self.has_spouse_been_disabled_6_months = ko.pureComputed(function() {
+        return _find_answer_for_spouse_question_with_label("Spouse Disabled 6 Months");
+    });
 
+    function _find_answer_for_spouse_question_with_label(lbl) {
+        if (!self.did_select_spouse_coverage()) {
+            return null;
+        }
+
+        var spouse_question = _.find(self.health_questions(), function(q) {
+            return q.get_question_label() === lbl;
+        });
+        if (!spouse_question) {
+            return null;
+        }
+
+        if (spouse_question.can_spouse_skip_due_to_GI()) {
+            return "GI";
+        }
+
+        // Find the answer given
+        var spouse_answer = _.find(self.spouse().health_questions(), function(answer) {
+            return answer.question.label === spouse_question.get_question_label();
+        });
+        if (!spouse_answer) {
+            return null;
+        }
+
+        return spouse_answer.answer();
+    }
 
     self.exit_application = function() {
         bootbox.dialog({
@@ -1038,6 +1064,7 @@ function WizardUI(defaults) {
 function process_health_question_data(root, health_question_data_by_product, product_data) {
     // Build up the master list of health questions for the product
     var questions = [];
+
     _.each(health_question_data_by_product, function (product_health_questions, product_id) {
         if (product_id == product_data.id) {
             var question_factory;
@@ -1050,8 +1077,9 @@ function process_health_question_data(root, health_question_data_by_product, pro
             } else if (root.insurance_product.product_type == "Group CI") {
                 question_factory = function (question_data) {
                     return new GIHealthQuestion(root.insurance_product, question_data, root.selected_plan,
-                        // Employees must answer if >= 10000 coverage
+
                         [
+                            // Employees must answer if >= 10000 coverage
                             {
                                 guarantee_issue_amount: 10000,
                                 applicant_type: 'Employee',
@@ -1062,20 +1090,9 @@ function process_health_question_data(root, health_question_data_by_product, pro
                                 height_min: null,
                                 height_max: null
                             },
-                            // Spouse always has to answer
-                            /*{
-                                guarantee_issue_amount: 10000,
-                                applicant_type: 'Spouse',
-                                age_max: null,
-                                age_min: null,
-                                weight_min: null,
-                                weight_max: null,
-                                height_min: null,
-                                height_max: null
-                            },*/
-                            
+                            // Spouse always has to answer, so don't put criteria in for spouse.
                             {
-                                // Children never have to answer, make the GI amount big
+                                // Children never have to answer, make the max GI amount bigger to get this effect.
                                 guarantee_issue_amount: 25000,
                                 applicant_type: 'Child',
                                 age_max: null,
@@ -1110,6 +1127,32 @@ function process_health_question_data(root, health_question_data_by_product, pro
     });
     return questions;
 }
+
+function process_spouse_question_data(root, question_data_by_product, product_data) {
+    // Build up the master list of questions for the product
+    var questions = [];
+
+    _.each(question_data_by_product, function (product_questions, product_id) {
+        if (product_id == product_data.id) {
+            var question_factory;
+            if (product_data.is_guaranteed_issue) {
+                question_factory = function (question_data) {
+                    return new GIHealthQuestion(root.insurance_product, question_data, root.selected_plan,
+                        product_data.gi_criteria,
+                        product_data.statement_of_health_bypass_type, product_data.bypassed_soh_questions);
+                };
+            } else {
+                question_factory = function (question_data) {
+                    return new StandardHealthQuestion(question_data, root.selected_plan);
+                }
+            }
+
+            questions = _.map(product_questions, question_factory);
+        }
+    });
+    return questions;
+}
+
 
 // Model for different insurance products
 // Product is abstract base class
@@ -1601,6 +1644,9 @@ var StandardHealthQuestion = function(question, selected_plan) {
     self.question = question;
     
     self.does_employee_need_to_answer = ko.computed(function() {
+        if (self.question.is_spouse_only) {
+            return false;
+        }
         return self.selected_plan().did_select_employee_coverage();
     });
     self.does_spouse_need_to_answer = ko.computed(function() {
@@ -1608,18 +1654,28 @@ var StandardHealthQuestion = function(question, selected_plan) {
     });
     
     self.does_child_need_to_answer = function(child) {
+        if (self.question.is_spouse_only) {
+            return false;
+        }
         return self.selected_plan().did_select_children_coverage();
     };
-    
+
+    self.can_employee_skip_due_to_GI = function() {return false};
+    self.can_spouse_skip_due_to_GI = function() {return false};
+
     self.show_yes_dialogue_employee = function() {return self.show_yes_dialogue(); };
     self.show_yes_dialogue_spouse = function() {return self.show_yes_dialogue(); };
     self.show_yes_dialogue_child = function(child) {return self.show_yes_dialogue(); };
     
     
     self.show_yes_dialogue = function() {
-        handle_question_yes();  
+        if (self.does_yes_stop_app()) {
+            handle_question_yes();
+        } else {
+            // do nothing
+        }
     };
-    
+
     self.does_any_applicant_need_to_answer = ko.computed(function() {
         
         return _.any(self.selected_plan().get_covered_applicants_with_type(), function(data) {
@@ -1636,6 +1692,12 @@ StandardHealthQuestion.prototype.get_question_label = function() {
 StandardHealthQuestion.prototype.does_applicant_need_to_answer = function(applicant_type, applicant) {
     return true;
 };
+StandardHealthQuestion.prototype.get_yes_highlight = function() {
+    return (this.does_yes_stop_app()) ? 'stop' : 'checkmark';
+};
+StandardHealthQuestion.prototype.does_yes_stop_app = function() {
+    return !this.question.is_ignored;
+};
 
 
 var GIHealthQuestion = function(product, question, selected_plan, applicant_criteria, skip_mode, skipped_questions) {
@@ -1646,44 +1708,38 @@ var GIHealthQuestion = function(product, question, selected_plan, applicant_crit
     self.applicant_criteria = applicant_criteria;
     self.skip_mode = skip_mode;
     self.skipped_questions = skipped_questions;
-    
+
+
     self.does_employee_need_to_answer = ko.computed(function() {
         if (!self.selected_plan()) return false;
         if (!self.selected_plan().did_select_employee_coverage()) {
             return false;
         } 
-        if (self.has_employee_met_GI_criteria() && self.should_skip_if_GI_criteria_met()) {
+        if (self.can_employee_skip_due_to_GI()) {
             return false;
         }
-        
+        if (self.question.is_spouse_only) {
+            return false;
+        }
+
         return true;
     });
-    
+
+
+
     self.does_spouse_need_to_answer = ko.computed(function() {
         if (!self.selected_plan()) return false;
         if (!self.selected_plan().did_select_spouse_coverage()) {
             return false;
         } 
-        if (self.has_spouse_met_GI_criteria() && self.should_skip_if_GI_criteria_met()) {
+        if (self.can_spouse_skip_due_to_GI()) {
             return false;
         }
         
         return true;
     });
-    /*
-    self.do_children_need_to_answer = ko.computed(function() {
-        if (!self.selected_plan()) return false;
-        if (!self.selected_plan().did_select_children_coverage()) {
-            return false;
-        } 
-        
-        if (self.has_child_met_GI_criteria() && self.should_skip_if_GI_criteria_met()) {
-            return false;
-        }
-        
-        return true;
-    });
-    */
+
+
     self.does_child_need_to_answer = function(child_applicant) {
         if (!self.selected_plan()) return false;
         if (!self.selected_plan().did_select_children_coverage()) {
@@ -1693,7 +1749,11 @@ var GIHealthQuestion = function(product, question, selected_plan, applicant_crit
         if (self.has_child_met_GI_criteria(child_applicant) && self.should_skip_if_GI_criteria_met()) {
             return false;
         }
-        
+
+        if (self.question.is_spouse_only) {
+            return false;
+        }
+
         return true;
     };
     
@@ -1730,10 +1790,14 @@ var GIHealthQuestion = function(product, question, selected_plan, applicant_crit
     self.has_spouse_met_GI_criteria = ko.computed(function() {
         return self.get_met_gi_criteria_for_spouse() !== undefined;
     });
-    
-    //self.has_child_met_GI_criteria = ko.computed(function() {
-    //    return self.get_met_gi_criteria_for_child() !== undefined;
-    //});
+
+    self.can_employee_skip_due_to_GI = ko.computed(function() {
+        return self.has_employee_met_GI_criteria() && self.should_skip_if_GI_criteria_met();
+    });
+
+    self.can_spouse_skip_due_to_GI = ko.computed(function() {
+        return self.has_spouse_met_GI_criteria() && self.should_skip_if_GI_criteria_met();
+    });
     
     self.get_met_gi_criteria_for_child = function(child_applicant) {
         if (!self.selected_plan().did_select_children_coverage()) {
@@ -1938,13 +2002,21 @@ GIHealthQuestion.prototype.should_skip_if_GI_criteria_met = function() {
         });
     }
 };
-
-//function HealthQuestionAnswerSet(product, )
-
-function HealthQuestionAnswer(question) {
+GIHealthQuestion.prototype.does_yes_stop_app = function() {
     var self = this;
+
+    // If GI, clicking YES always stops (but will show the reduce/remove dialogue if optional).
+    return true;
+};
+
+function HealthQuestionAnswer(question, button_group, question_object) {
+    var self = this;
+
     self.question = question;
-    
+
+    // This has all the additional attributes for the question
+    self.question_object = question_object;
+
     self.button_group = ko.observable(null);
     
     
@@ -1968,6 +2040,8 @@ function HealthQuestionAnswer(question) {
         
         return {
             question: self.question.question_text,
+            label: self.question.label,
+            is_spouse_only: self.question.is_spouse_only || false,
             answer: answer
         }
     };
@@ -2067,7 +2141,7 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
         // We need to depend on the root's health_questions for the current product
         _.each(product_health_questions(), function(hq) {
             // Not answered ("null") by default
-            var q = new HealthQuestionAnswer(hq.question, null);
+            var q = new HealthQuestionAnswer(hq.question, null, hq);
             questions.push(q);
         });
         
@@ -2192,6 +2266,14 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
         // Serialize the SOH questions
         data.soh_questions = [];
         _.each(self.health_questions(), function(soh_answer) {
+            if (soh_answer.button_group()
+                    && soh_answer.question_object.question.is_spouse_only) {
+                // We don't want to serialize these questions right now since we want only the health questions.
+                //   (and these are sent separately right now using special observables has_spouse_been_[treated|disabled]_6_months...)
+                // In the future, may add an attribute like 'non-health-question' to strip these out.
+                // skip (continue)
+                return true;
+            }
             data.soh_questions.push(soh_answer.serialize());
         });
         
@@ -2678,17 +2760,23 @@ ko.bindingHandlers.flagBtn = {
         }
         
         btn_group.add_button(element, val.val, function(el) {
-            if (val.highlight == "flag") {
+            var highlight_type;
+            if (typeof val.highlight === "function") {
+                highlight_type = val.highlight();
+            } else {
+                highlight_type = val.highlight;
+            }
+            if (highlight_type === "flag") {
                 $(el
                 ).prepend('<i class="icon glyphicon glyphicon-flag"></i>'
                 ).addClass("btn btn-warning"
                 );
-            } else if (val.highlight == "checkmark") {
+            } else if (highlight_type === "checkmark") {
                 $(el
                 ).prepend('<i class="icon glyphicon glyphicon-ok"></i>'
                 ).addClass("btn-success"
                 );
-            } else if (val.highlight == "stop") {
+            } else if (highlight_type === "stop") {
                 $(el
                 ).prepend('<i class="icon glyphicon glyphicon-remove"></i>'
                 ).addClass("btn-danger"
@@ -2817,14 +2905,6 @@ function are_health_questions_valid() {
         if (ui.is_employee_actively_at_work() === null) {
             return false;
         }
-        if (ui.did_select_spouse_coverage() && (
-                ui.has_spouse_been_treated_6_months() === null ||
-                ui.has_spouse_been_disabled_6_months() === null ||
-                // If spouse disabled, cannot continue with app (unless GI)
-                ui.has_spouse_been_disabled_6_months() === true
-            )) {
-            return false;
-        }
     }
 
 
@@ -2833,7 +2913,18 @@ function are_health_questions_valid() {
     $.each(window.ui.selected_plan().get_all_covered_people(), function() {
         var covered_person = this;
         $.each(covered_person.health_questions(), function() {
-            if (this.button_group() && this.button_group().is_required() && this.button_group().get_val() != "No") {
+            if (this.button_group()
+                    && this.button_group().is_required()
+                    && (
+                        // If a no-op question, but still required, must select yes or no.
+                        (this.question.is_ignored
+                         && this.button_group().get_val() === null
+                        )
+                        // If this is required, must be no.
+                        || (!this.question.is_ignored
+                            && this.button_group().get_val() !== "No"
+                        )
+                    )) {
                 valid = false;
                 // break
                 return false;

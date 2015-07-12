@@ -194,16 +194,13 @@ def enrollment_records(case_id):
     """
     from taa.services.enrollments import EnrollmentApplicationService
     enrollment_service = EnrollmentApplicationService()
-    data = enrollment_service.get_all_enrollment_records(
-        case_service.get_if_allowed(case_id))
+    data = enrollment_service.get_all_enrollment_records(case_service.get_if_allowed(case_id))
     if request.args.get('format') == 'csv':
         body = enrollment_service.export_enrollment_data(data)
         date_str = datetime.now().strftime('%Y-%m-%d')
         headers = {
             'Content-Type': 'text/csv',
-            'Content-Disposition':
-                'attachment; filename=enrollment_export_{0}.csv'.format(
-                    date_str)
+            'Content-Disposition': 'attachment; filename=enrollment_export_{0}.csv'.format(date_str)
         }
         return make_response(body, 200, headers)
     return data
@@ -213,13 +210,13 @@ def enrollment_records(case_id):
 @groups_required(api_groups, all=False)
 def enrollment_record(case_id, census_id):
     """
-    Combines the census and enrollment records for export.
+    Combines the census and enrollment records for export, but for a single census record.
 
     format=json|csv (json by default)
     """
     from taa.services.enrollments import EnrollmentApplicationService
     enrollment_service = EnrollmentApplicationService()
-    data = enrollment_service.get_enrollment_record_for_census(
+    data = enrollment_service.get_enrollment_records_for_census(
         case_service.get_if_allowed(case_id), census_id)
     if request.args.get('format') == 'csv':
         body = enrollment_service.export_enrollment_data(data)

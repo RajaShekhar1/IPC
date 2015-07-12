@@ -46,6 +46,11 @@ function format_enrollment_status_html(status) {
   }
 }
 
+//Specific Date handling
+function parse_month_date_input(val) {
+  return parse_date(val, "MM/DD");
+}
+
 // Date handling
 function parse_date(date_str, format_str) {
   // Parse a date as a moment object from the given string, according to the format string.
@@ -55,6 +60,7 @@ function parse_date(date_str, format_str) {
   }
   return moment(date_str, format_str);
 }
+
 function normalize_date(date_str) {
   if (date_str != '' && is_valid_date(date_str)) {
     return format_date(parse_date(date_str));
@@ -94,10 +100,8 @@ function get_responsive_datatables_breakpoints() {
 
 // The shortcut functions above use this method to wrap the jquery ajax call in slightly different ways
 function submit_data(method, url, data, should_process_data, on_success, on_error, contentType) {
-  on_success = on_success || function () {
-  };
-  on_error = on_error || function () {
-  };
+  on_success = on_success || function () {};
+  on_error = on_error || function () {};
 
   var options = {
     url: url,

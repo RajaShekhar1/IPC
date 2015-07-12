@@ -301,10 +301,14 @@ class CaseService(DBService):
             if not agent_service.can_manage_all_cases(current_user):
                 abort(401, "The current user does not have permission to delete"
                            "an enrolled census record.")
-            from taa.services.enrollments import (EnrollmentApplicationService,
-                                                  EnrollmentApplicationCoverageService)
+            from taa.services.enrollments import EnrollmentApplicationService
             enrollment_service = EnrollmentApplicationService()
             enrollment_service.delete_enrollment_data(record)
+
+        # Remove the attached email logs, if any.
+        for log in record.email_logs:
+            db.session.delete(log)
+
         return self.census_records.delete(record)
 
     def delete_case(self, case):
@@ -312,11 +316,15 @@ class CaseService(DBService):
         from taa.services.enrollments import EnrollmentApplicationService
         enrollments_service = EnrollmentApplicationService()
         agent_service = AgentService()
+
         # Remove all enrollments if allowed
         if agent_service.can_manage_all_cases(current_user):
             enrollments_service.delete_case_enrollment_data(case)
+
         # remove all census records and enrollment_periods first
-        self.census_records.remove_all_for_case(case)
+        for record in self.get_census_records(case):
+            self.delete_census_record(record)
+
         self.enrollment_periods.remove_all_for_case(case)
         return self.delete(case)
 

@@ -166,7 +166,7 @@
                         window.location.href = "{{ url_for("manage_case", case_id="") }}"+results.data.id;
                     },
                     error: function(xhr) {
-                        console.log(xhr.responseJSON.errors)
+                        console.log(xhr.responseJSON.errors);
                     }
                 });
             };
