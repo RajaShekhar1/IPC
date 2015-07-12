@@ -1,5 +1,8 @@
 var urls = (function urls() {
   return {
+    get_manage_cases_url: function() {
+      return '/enrollment-cases';
+    },
     get_manage_case_url: function(case_id) {
       return '/enrollment-case/' + case_id;
     },

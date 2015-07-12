@@ -128,6 +128,20 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
         else:
             return decimal.Decimal('0.00')
 
+    def get_premium(self):
+        if self.annual_premium is not None:
+            return self.annual_premium
+        elif self.monthly_premium is not None:
+            return self.monthly_premium
+        elif self.semimonthly_premium is not None:
+            return self.semimonthly_premium
+        elif self.biweekly_premium is not None:
+            return self.biweekly_premium
+        elif self.weekly_premium is not None:
+            return self.weekly_premium
+        else:
+            return decimal.Decimal('0.00')
+
     def did_enroll(self):
         return self.coverage_status == self.COVERAGE_STATUS_ENROLLED
 
