@@ -2004,12 +2004,9 @@ GIHealthQuestion.prototype.should_skip_if_GI_criteria_met = function() {
 };
 GIHealthQuestion.prototype.does_yes_stop_app = function() {
     var self = this;
-    if (!self.should_skip_if_GI_criteria_met()) {
-        // If required in GI config, we don't ignore this question.
-        return true;
-    }
-    // Otherwise default behavior.
-    return !this.question.is_ignored;
+
+    // If GI, clicking YES always stops (but will show the reduce/remove dialogue if optional).
+    return true;
 };
 
 function HealthQuestionAnswer(question, button_group, question_object) {
