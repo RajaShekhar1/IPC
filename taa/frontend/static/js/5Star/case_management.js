@@ -47,7 +47,7 @@ var case_management = (function() {
             // Clear loading
             loading.html("");
             // If table exists, add new data. Otherwise, initialize
-            if ($.fn.DataTable.fnIsDataTable(table.get(0))) {
+            if ($.fn.DataTable.fnIsDataTable(table[0])) {
                 table.dataTable().fnAddData(resp.data);
                 if (success_callback !== undefined) {
                     success_callback(table, resp.data);

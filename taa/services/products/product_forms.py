@@ -40,6 +40,12 @@ class ProductFormService(object):
     def get_replacement_forms_for_product(self, base_product_code):
         return get_replacement_forms().get(base_product_code, [])
 
+    def get_spouse_questions(self):
+        return [
+            fpp_spouse_treated_6_months,
+            fpp_spouse_disabled_6_months,
+        ]
+
 
 # Application forms
 class ApplicationForm(object):
@@ -57,6 +63,7 @@ class SOHQuestion(JsonSerializable):
         self.label = label
         self.question = question
         self.skip_if_coverage_at_most = skip_if_coverage_at_most
+        self.is_spouse_only = False
 
     def to_json(self):
         return dict(
@@ -65,6 +72,21 @@ class SOHQuestion(JsonSerializable):
             skip_if_coverage_at_most=self.skip_if_coverage_at_most,
         )
 
+
+class SpouseGIQuestion(JsonSerializable):
+    def __init__(self, label, question, is_ignored=False):
+        self.label = label
+        self.question_text = question
+        self.is_ignored = is_ignored
+        self.is_spouse_only = True
+
+# FPP Spouse Questions
+fpp_spouse_treated_6_months = SpouseGIQuestion(
+    "Spouse Treated 6 Months",
+    "During the prior 6 months, other than for routine medical care, has your spouse been diagnosed or treated by a member of the medical profession in a hospital or any other medical facility?",
+    is_ignored=True,
+)
+fpp_spouse_disabled_6_months = SpouseGIQuestion("Spouse Disabled 6 Months", 'Has <span data-bind="$root.spouse().name"></span> been <a href="#modal-disabled-definition" data-toggle="modal">disabled</a> in the prior 6 months or received disability payments?')
 
 
 

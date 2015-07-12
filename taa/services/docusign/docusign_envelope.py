@@ -461,10 +461,10 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
         else:
             eeTabsList += make_beneficiary_tabs(
                 prefix = "ee",
-                name = enrollment_data["employee_beneficiary_name"],
-                relationship = enrollment_data["employee_beneficiary_relationship"],
-                dob = enrollment_data["employee_beneficiary_dob"],
-                ssn = enrollment_data["employee_beneficiary_ssn"],
+                name = enrollment_data.get("employee_beneficiary_name", ''),
+                relationship = enrollment_data.get("employee_beneficiary_relationship", ''),
+                dob = enrollment_data.get("employee_beneficiary_dob", ''),
+                ssn = enrollment_data.get("employee_beneficiary_ssn", ''),
             )
 
         # TODO: Add in ee contingent beneficiary once the tab names are known
@@ -641,8 +641,8 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
              "roleName" :  templateRoleName,
              "clientUserId": templateClientID 
              },
-            {"email" : user.email,
-             "name" : user.custom_data["signing_name"],
+            {"email" : enrollment_data.get_signing_agent().email, #user.email,
+             "name" : enrollment_data.get_agent_signing_name(),
              "tabs" : {
                  "radioGroupTabs": agentRadiosList
              },
@@ -680,7 +680,7 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
     uri = data.get('uri')
     
     # write to log in case we need for short-term retrieval
-    print ("Envelope for %s (%s) by %s: %s\n" % (recipientName, emailTo, user.custom_data["signing_name"], uri))
+    print ("Envelope for %s (%s) by %s: %s\n" % (recipientName, emailTo, enrollment_data.get_agent_signing_name(), uri))
     
     
     #
@@ -719,147 +719,6 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
 
     return False, None, viewUrl
 
-
-def construct_composite_envelope():
-    """
-    Builds a DocuSign composite envelope using a server template and one or more plain PDFs that we generate
-    """
-
-    import requests
-
-    # DocuSign
-    docusign_integrator_key = 'DELM-0d0ee159-7e61-499f-81ec-5c03bec86ec3'
-    docusign_api_password = '12121212'
-    docusign_api_username = 'cb64545b-0bb7-4e77-bb0c-492b02c3dd5b'
-    docusign_api_account_id = '5988eb5b-bee1-4825-a078-dcac445a22ce'
-
-    auth_string = "<DocuSignCredentials>" \
-        "<Username>" + docusign_api_username + "</Username>" \
-        "<Password>" + docusign_api_password + "</Password>" \
-        "<IntegratorKey>" + docusign_integrator_key + "</IntegratorKey>" \
-        "</DocuSignCredentials>"
-
-    headers = {'X-DocuSign-Authentication': auth_string,
-               'Accept': 'application/json',
-    }
-
-    from reportlab.pdfgen.canvas import Canvas
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib.units import inch
-    page_width, page_height = letter
-    import StringIO
-
-    pdf_data = StringIO.StringIO()
-    canvas = Canvas(pdf_data, pagesize=letter)
-    canvas.drawString(inch, page_height - inch, "Testing Extra Page")
-    canvas.save()
-
-    import base64
-    pdf_b64_data = base64.standard_b64encode(pdf_data.getvalue())
-
-    tabs = {
-         "textTabs": [make_tab('Employer', "DELMAR SD INC")],
-         "radioGroupTabs": [],
-    }
-    agent_tabs = {
-        "radioGroupTabs": [
-            {"groupName": "existingInsAgent",
-            "radios": [
-                {"selected" : "True", "value" : "yes"}
-            ]},
-            {"groupName": "replaceAgent",
-            "radios": [
-                {"selected" : "True", "value" : "no"}
-            ]}
-        ]
-    }
-
-    recipients = {
-        "signers": [
-            {
-                "name": "Zach Mason",
-                "email": "zach@zachmason.com",
-                "recipientId": "1",
-                "routingOrder": "1",
-                "roleName": "Employee",
-                "templateRequired": True,
-                "tabs": tabs,
-                "clientUserId":"123456",
-            },
-            {
-                "name": "Agent Mason",
-                "email": "agent@zachmason.com",
-                "recipientId": "2",
-                "routingOrder": "2",
-                "roleName": "Agent",
-                "templateRequired": False,
-                "tabs": agent_tabs,
-            }
-        ],
-    }
-
-    data = {
-        "accountID" : docusign_api_account_id,
-        "status" : "sent",
-        "emailSubject": "testing: signature needed",
-        "compositeTemplates": [
-            {
-                "serverTemplates":[
-                    {
-                        "templateId": '666F1F5B-77C6-47CC-AC85-1784B8569C3D',
-                        "sequence": "1",
-                    },
-                ],
-                "inlineTemplates":[
-                    {
-                        "sequence": "2",
-                        "recipients": recipients,
-                    }
-                ]
-            },
-            {
-                "document":{
-                    "name": 'ExtraChildrenForm',
-                    "sequence": "1",
-                    "documentId": "1",
-                    "pages": "1",
-                    "fileExtension":"pdf",
-                    "documentBase64":pdf_b64_data,
-                },
-                "inlineTemplates":[
-                    {
-                        "sequence": "1",
-                        "recipients": recipients,
-                    }
-                ]
-            },
-
-        ],
-
-    }
-
-    import json
-    docusign_base_url = "https://demo.docusign.net/restapi/v2/accounts/" + docusign_api_account_id
-    docusign_envelope_url = docusign_base_url + "/envelopes"
-    result = requests.post(docusign_envelope_url, data=json.dumps(data), headers=headers)
-
-    print(result.json())
-
-    envelope_uri = result.json()['uri']
-
-
-    # Get the View URL
-    data2 = dict(
-        authenticationMethod="email",
-        email="zach@zachmason.com",
-        returnUrl="https://5starenroll.com",
-        clientUserId="123456",
-        userName="Zach Mason",
-    )
-    view_url = docusign_base_url + envelope_uri + "/views/recipient"
-    result2 = requests.post(view_url, json=data2, headers=headers)
-
-    print(result2.json())
 
 
 def make_tab(name, val):

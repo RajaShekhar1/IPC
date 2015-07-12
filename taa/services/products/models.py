@@ -72,6 +72,9 @@ class Product(ProductJsonSerializable, db.Model):
     def is_base_product(self):
         return True
 
+    def is_fpp(self):
+        return self.get_base_product_code().lower().startswith('fpp')
+
     def format_type(self):
         if self.is_guaranteed_issue():
             return self.base_product.name if self.base_product else '(Not Selected)'

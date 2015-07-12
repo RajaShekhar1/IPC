@@ -148,6 +148,7 @@ Please follow the instructions carefully on the next page, stepping through the 
 
     vars['setup'] = case.self_enrollment_setup
     vars['form'] = form
+    vars['case_owner'] = case_service.get_case_owner(case)
     vars['products'] = case.products
     vars['company_name'] = case.company_name
     vars['agent_id'] = agent_id
@@ -165,7 +166,6 @@ def edit_census_record(case_id, census_record_id):
     census_record = case_service.get_census_record(case, census_record_id)
     record_form = CensusRecordForm(obj=census_record)
     agent = agent_service.get_logged_in_agent()
-
     # Get the child entries out
     child_form_fields = []
     for x in range(1, 6+1):
@@ -178,32 +178,11 @@ def edit_census_record(case_id, census_record_id):
 
     is_admin = agent_service.can_manage_all_cases(current_user)
 
-    enrollment_data=enrollment_service.get_enrollment_data(census_record)
-    enroll_data=[]
-    if enrollment_data:
-        for i in range(1, 6+1):
-            if enrollment_data["product_"+str(i)+"_name"]:
-                enroll_data.append(dict(
-                    product_name=enrollment_data["product_"+str(i)+"_name"],
-                    time=enrollment_data["signature_time"],
-                    coverage=[],
-                    status=enrollment_data["application_status"],
-                    total=0
-                ))
-                for j in ["emp", "sp", "ch"]:
-                    if(j=="emp"):
-                        who="Employee"
-                    elif(j=="sp"):
-                        who="Spouse"
-                    elif(j=="ch"):
-                        who="Child"
-                    enroll_data[i-1]["total"]+=(enrollment_data["product_"+str(i)+"_"+j+"_annual_premium"] or 0)
-                    enroll_data[i-1]["coverage"].append(dict(
-                        who=who,
-                        annual_premium=enrollment_data["product_"+str(i)+"_"+j+"_annual_premium"],
-                        coverage=enrollment_data["product_"+str(i)+"_"+j+"_coverage"],
-                    ))
+    enrollment_records = enrollment_service.get_enrollment_records_for_census(census_record.case, census_record.id)
 
+    enroll_data = []
+    for enrollment_data in enrollment_records:
+        enroll_data += [format_enroll_data(enrollment_data, product_num) for product_num in range(1, 6+1)]
 
     vars = dict(
         case=case,
@@ -212,14 +191,50 @@ def edit_census_record(case_id, census_record_id):
         child_form_fields=child_form_fields,
         enrollment_status=enrollment_service.get_enrollment_status(census_record),
         enrollment_data=enroll_data,
-        enrollment_data_debug=enrollment_service.get_enrollment_data(census_record),
         is_admin=is_admin,
         case_is_enrolling=case_service.is_enrolling(case),
         header_title='Home Office' if is_admin else '',
         nav_menu=get_nav_menu()
     )
+    if agent:
+        vars['can_edit_case'] = (agent is case_service.get_case_owner(case))
+    else:
+        vars['can_edit_case'] = True
     return render_template('agent/census_record.html', **vars)
 
+def format_enroll_data(enrollment_data, product_number):
+    if enrollment_data["product_{}_name".format(product_number)]:
+        data = dict(
+            product_name=enrollment_data["product_{}_name".format(product_number)],
+            time=enrollment_data["signature_time"],
+            coverage=[get_coverage_for_product(enrollment_data, product_number, j) for j in ["emp","sp","ch"]],
+            status=enrollment_data["application_status"],
+            total=reduce(lambda coverage_type, accum: calc_total(enrollment_data, product_number, coverage_type, accum),
+                         ["emp","sp","ch"], 0)
+        )
+    else:
+        data = None
+
+    return data
+
+def get_coverage_for_product(enrollment_data, product_number, coverage_type):
+    if coverage_type == "emp":
+        coverage_label = "Employee"
+    elif coverage_type == "sp":
+        coverage_label = "Spouse"
+    else:
+        coverage_label = "Child"
+    return dict(
+        who=coverage_label,
+        annual_premium=enrollment_data["product_{}_{}_annual_premium".format(product_number, coverage_type)],
+        coverage=enrollment_data["product_{}_{}_coverage".format(product_number, coverage_type)],
+    )
+
+def calc_total(enrollment_data, product_number, x, y):
+    premium = enrollment_data["product_{}_{}_annual_premium".format(product_number, y)]
+    if not premium:
+        return x
+    return x + premium
 
 @app.route('/sample-census-upload.csv')
 def sample_upload_csv():
@@ -248,9 +263,9 @@ def edit_self_enroll_setup(case_id=None):
         vars['setup'] = case.self_enrollment_setup
     return render_template('agent/self_enrollment_setup.html', **vars)
 
-@app.route('/batch-info/<int:case_id>/batch/<batch_id>')
+@app.route('/batch-info/<int:case_id>/preview/<batch_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
-def view_batch_email_information(case_id, batch_id=None):
+def view_batch_email_preview(case_id, batch_id=None):
         batch = self_enrollment_email_service.get_batch_for_case(case_id, batch_id)
         case = case_service.get_if_allowed(case_id)
         setup = case.self_enrollment_setup
@@ -261,7 +276,22 @@ def view_batch_email_information(case_id, batch_id=None):
             greeting=build_fake_email_greeting(setup),
             enrollment_url="#",
             company_name=case.company_name,
-            batch_emails=batch.email_logs
+            products = case.products
+        )
+@app.route('/batch-info/<int:case_id>/logs/<batch_id>')
+@groups_required(['agents', 'home_office', 'admins'], all=False)
+def view_batch_email_logs(case_id, batch_id=None):
+        case = case_service.get_if_allowed(case_id)
+        batch = self_enrollment_email_service.get_batch_for_case(case_id, batch_id)
+        email_logs = []
+
+        for email in batch.email_logs:
+            census_record = case_service.get_census_record(case, email.census_id)
+            email.enrollment_status = enrollment_service.get_enrollment_status(census_record)
+            email_logs.append(email)
+        return render_template(
+            "agent/email_logs.html",
+            batch_emails=email_logs,
         )
 def build_fake_email_greeting(setup):
     salutation = ''

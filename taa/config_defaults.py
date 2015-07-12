@@ -69,7 +69,11 @@ MANDRILL_DEFAULT_FROM = env_get_text('MANDRILL_DEFAULT_FROM', "enrollment@5StarE
 BROKER_URL = env_get_text('CELERY_BROKER_URL', "amqp://")
 if env_get_text('CLOUDAMQP_URL'):
     BROKER_URL = env_get_text('CLOUDAMQP_URL')
-
+# See for config settings for CloudAMQP: https://www.cloudamqp.com/docs/python.html
+BROKER_POOL_LIMIT = 1
+CELERY_SEND_EVENTS = False
+BROKER_HEARTBEAT = 30
+CELERY_EVENT_QUEUE_EXPIRES = 60
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TIMEZONE = 'US/Eastern'

@@ -18,8 +18,14 @@ class StatementOfHealthQuestionService(object):
 
     def get_health_questions(self, product, state):
         form = product_form_service.form_for_state(product, state)
-        return form.questions
-    
+        return [question for question in form.questions]
+
+    def get_spouse_questions(self, product, state):
+        if not product.is_fpp():
+            return []
+        else:
+            return product_form_service.get_spouse_questions()
+
     def get_states_with_forms_for_product(self, product):
 
         code = product.get_base_product_code()
@@ -41,17 +47,33 @@ class StatementOfHealthQuestionService(object):
         return product_form_service.get_all_application_forms().get(code, [])
 
     def get_all_category_labels_for_product(self, product):
-        # We want to keep them in the same order (mostly) as seen in the forms, but not included more than once
-        used_category_labels = set()
+
         category_labels = []
-        for form in self.get_all_forms_used_for_product(product):
-            for index, question in enumerate(form.questions):
-                if question.label not in used_category_labels:
-                    used_category_labels.add(question.label)
-                    if len(category_labels) <= index:
-                        category_labels.append(question.label)
-                    else:
-                        category_labels.insert(index, question.label)
-        
+        category_labels += self._add_spouse_questions(product)
+        category_labels += self._add_health_questions(product)
         return category_labels
 
+    def _add_spouse_questions(self, product):
+        if product.is_fpp():
+            return [q.label for q in product_form_service.get_spouse_questions()]
+        else:
+            return []
+
+    def _add_health_questions(self, product):
+        "We want to keep them in the same order (mostly) as seen in the forms, but not included more than once"
+        labels = []
+        used_category_labels = set()
+        for form in self.get_all_forms_used_for_product(product):
+            for index, question in enumerate(form.questions):
+                if question.label in used_category_labels:
+                    continue
+                else:
+                    used_category_labels.add(question.label)
+
+                # Keep it in the same order as outlined
+                if len(labels) <= index:
+                    labels.append(question.label)
+                else:
+                    labels.insert(index, question.label)
+
+        return labels

@@ -1,0 +1,33 @@
+<div class="sentData">
+  <h3>Email Status</h3>
+  <div class="table-responsive">
+    <table id="email-logs-table" class="table table-bordered table-hover no-wrap dt-responsive">
+        <thead>
+          <tr>
+            <th>Sent</th>
+            <th>Enroll Status</th>
+            <th>First</th>
+            <th>Last</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for email in batch_emails %}
+            {% if email.status=="pending" %}
+            <tr class="bg-warning">
+            {% elif email.status=="failed" %}
+            <tr class="bg-danger">
+            {% elif email.status=="success" %}
+            <tr class="bg-success">
+            {% endif %}
+              <td>{{email.status}}</td>
+              <td class="status">{{email.enrollment_status}}</td>
+              <td>{{email.email_to_name.split()[0]}}</td>
+              <td>{{email.email_to_name.split()[1]}}</td>
+              <td>{{email.email_to_address}}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+</div>

@@ -99,15 +99,17 @@ class FPPTemplate(DocuSignServerTemplate):
 
         for (prefix_short, prefix_long) in {("ee", "employee"), ("sp", "spouse")}:
 
-            tabs.append(DocuSignRadioTab(prefix_short + "Gender", self.data[prefix_long]["gender"]))
+            if prefix_short == 'ee' or (prefix_short == 'sp' and self.data.did_spouse_select_coverage()):
+                tabs.append(DocuSignRadioTab(prefix_short + "Gender", self.data[prefix_long]["gender"]))
 
             if self.data[prefix_long] and "is_smoker" in self.data[prefix_long]:
                 smoker_button = "smoker" if self.data[prefix_long]["is_smoker"] else "nonsmoker"
                 tabs.append(DocuSignRadioTab(prefix_short + "Smoking", smoker_button))
 
             # only include Owner checkbox if coverage was selected
-            if ((prefix_short == "ee" and self.data.did_employee_select_coverage()) or
-                (prefix_short == "sp" and self.data.did_spouse_select_coverage())):
+            if ((prefix_short == "ee" and self.data.did_employee_select_coverage())
+                    or (prefix_short == "sp" and self.data.did_spouse_select_coverage())):
+
                 tabs.append(DocuSignRadioTab(prefix_short + "Owner", self.data[prefix_long + "_owner"]))
 
         return tabs
@@ -155,13 +157,19 @@ class FPPTemplate(DocuSignServerTemplate):
             sp_tabs_list += [DocuSignTextTab('spEmail', self.data['spouse']['email'])]
 
         if self.data.did_spouse_select_coverage():
+            # Special treatment for first two questions (non-health questions)
+            if self.data['has_spouse_been_treated_6_months'] in ['Yes', 'No']:
+                sp_tabs_list += [DocuSignRadioTab('spouse_hospital_six_months', self.data['has_spouse_been_treated_6_months'].lower())]
+            elif self.data['has_spouse_been_treated_6_months'].upper() == 'GI':
+                sp_tabs_list += [DocuSignTextTab('spouse_hospital_six_months_gi', 'GI')]
+
+            if self.data['has_spouse_been_disabled_6_months'] in ['Yes', 'No']:
+                sp_tabs_list += [DocuSignRadioTab('spouse_disability_six_months', self.data['has_spouse_been_disabled_6_months'].lower())]
+            elif self.data['has_spouse_been_disabled_6_months'].upper() == 'GI':
+                sp_tabs_list += [DocuSignTextTab('spouse_disability_six_months_gi', 'GI')]
+
             sp_tabs_list += self.generate_SOH_tabs("sp", self.data['spouse']['soh_questions'])
             sp_tabs_list += self.generate_SOH_GI_tabs("sp", self.data['spouse']['soh_questions'])
-
-        sp_tabs_list += [
-            DocuSignRadioTab('spouse_hospital_six_months', 'yes' if self.data['has_spouse_been_treated_6_months'] else 'no'),
-            DocuSignRadioTab('spouse_disability_six_months', 'yes' if self.data['has_spouse_been_disabled_6_months'] else 'no'),
-        ]
 
         return sp_tabs_list
 
@@ -392,7 +400,7 @@ class FPPTemplate(DocuSignServerTemplate):
         "Statement of health radio button answers"
 
         radio_tabs = []
-        for i, soh_question in enumerate(soh_questions):
+        for i, soh_question in enumerate(q for q in soh_questions if not q.get('is_spouse_only')):
             if soh_question['answer'] and soh_question['answer'].lower() == "no":
                 radio_tabs.append(DocuSignRadioTab(prefix + "SOH" + str(i+1), "no"))
 
@@ -400,7 +408,7 @@ class FPPTemplate(DocuSignServerTemplate):
 
     def generate_SOH_GI_tabs(self, prefix, soh_questions):
         tabs = []
-        for i, soh_question in enumerate(soh_questions):
+        for i, soh_question in enumerate(q for q in soh_questions if not q.get('is_spouse_only')):
             if soh_question['answer'] and soh_question['answer'].upper() == "GI" or soh_question['answer'] == None:
                 # GI - skip for now
                 answer = "GI"
