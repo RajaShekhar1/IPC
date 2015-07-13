@@ -55,6 +55,8 @@ class ScrambleDataCommand(Command):
             return new_ssn
 
         def scramble_date(date):
+            if not isinstance(date, datetime.date):
+                date = datetime.datetime.strptime(date, '%m/%d/%Y')
             new_month = random.randrange(1,13)
             days_in_month = calendar.monthrange(date.year, new_month)
             new_day = random.randrange(1, days_in_month[1]+1)
@@ -85,6 +87,7 @@ class ScrambleDataCommand(Command):
                 ("employee_email", lambda : scramble_email(census.employee_first, census.employee_last)),
                 ("employee_street_address", lambda: address),
                 ("employee_phone", lambda: scramble_phone()),
+                ("employee_birthdate", lambda: scramble_date(census.employee_birthdate)),
 
                 ("spouse_first", lambda : random.choice(firstNames)),
                 ("spouse_last", lambda : last_name),
@@ -92,7 +95,23 @@ class ScrambleDataCommand(Command):
                 ("spouse_email", lambda : scramble_email(census.spouse_first, census.spouse_last)),
                 ("spouse_street_address", lambda: address),
                 ("spouse_phone", lambda: scramble_phone()),
+                ("spouse_birthdate", lambda: scramble_date(census.spouse_birthdate)),
             ]
+
+            for enrollment_application in census.enrollment_applications:
+                beneficiary_attributes =[
+                    ("employee_beneficiary_name", lambda: "{} {}".format(random.choice(firstNames), random.choice(lastNames))),
+                    ("spouse_beneficiary_name", lambda: "{} {}".format(random.choice(firstNames), random.choice(lastNames))),
+                    ("employee_other_owner_name", lambda: "{} {}".format(random.choice(firstNames), random.choice(lastNames))),
+                    ("employee_beneficiary_ssn", lambda: get_ssn()),
+                    ("spouse_beneficiary_ssn", lambda: get_ssn()),
+                    ("employee_other_owner_ssn", lambda: get_ssn()),
+                    ("employee_beneficiary_birthdate", lambda: scramble_date(enrollment_application.employee_beneficiary_birthdate)),
+                    ("spouse_beneficiary_birthdate", lambda: scramble_date(enrollment_application.employee_beneficiary_birthdate)),
+                ]
+                for attr, new_val in beneficiary_attributes:
+                    if getattr(enrollment_application, attr):
+                        setattr(enrollment_application, attr, new_val())
 
             # Set employee and spouse information
             for attr, new_val in attributes:
