@@ -76,6 +76,7 @@ CELERY_EVENT_QUEUE_EXPIRES = 60
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TIMEZONE = 'US/Eastern'
+CELERY_ACKS_LATE = True
 
 # Database
 SQLALCHEMY_DATABASE_URI = env_get_text('DATABASE_URL', "postgresql://taa:fQj9lJTFbOQUBYo@localhost/taa")
