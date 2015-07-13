@@ -1689,7 +1689,17 @@ StandardHealthQuestion.prototype.get_question_text = function() {
 StandardHealthQuestion.prototype.get_question_label = function() {
     return this.question.label;  
 };
+
 StandardHealthQuestion.prototype.does_applicant_need_to_answer = function(applicant_type, applicant) {
+    var self = this;
+    if (applicant_type == "Employee") {
+        return self.does_employee_need_to_answer();
+    } else if (applicant_type == "Spouse") {
+        return self.does_spouse_need_to_answer();
+    } else if (applicant_type == "Child") {
+        return self.does_child_need_to_answer(applicant);
+    }
+    console.error("Got unknown applicant type '"+applicant_type+"'");
     return true;
 };
 StandardHealthQuestion.prototype.get_yes_highlight = function() {
@@ -1978,19 +1988,6 @@ var GIHealthQuestion = function(product, question, selected_plan, applicant_crit
     };
 };
 GIHealthQuestion.prototype = Object.create(StandardHealthQuestion.prototype);
-
-GIHealthQuestion.prototype.does_applicant_need_to_answer = function(applicant_type, applicant) {
-    var self = this;
-    if (applicant_type == "Employee") {
-        return self.does_employee_need_to_answer();
-    } else if (applicant_type == "Spouse") {
-        return self.does_spouse_need_to_answer();
-    } else if (applicant_type == "Child") {
-        return self.does_child_need_to_answer(applicant);
-    }
-    console.error("Got unknown applicant type '"+applicant_type+"'");
-    return true;
-};
 
 GIHealthQuestion.prototype.should_skip_if_GI_criteria_met = function() {
     var self = this;
