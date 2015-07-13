@@ -72,7 +72,6 @@ if env_get_text('CLOUDAMQP_URL'):
 # See for config settings for CloudAMQP: https://www.cloudamqp.com/docs/python.html
 BROKER_POOL_LIMIT = 1
 CELERY_SEND_EVENTS = False
-BROKER_HEARTBEAT = 30
 CELERY_EVENT_QUEUE_EXPIRES = 60
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
