@@ -41,28 +41,20 @@
 	{% for acc in accounts %}
 	<tr>
 	  <td>
-		{%if is_user_admin %}
-	    	<a href={{base_url + acc['email']}}>{{ acc['fname'] + " " + acc['lname']}}</a>
-		{% else %}
-		    {{ acc['fname'] + " " + acc['lname'] }}
-		{% endif %}
+      <a href={{base_url + acc['email']}}>{{ acc['fname'] + " " + acc['lname']}}</a>
 	  </td>
 	  <td>{{acc['agency']}}</td>
 	  <td class="hidden-480">{{acc['email']}}</td>
 	  <td>{{acc['agent_code']}}</td>
 	  <td class="hidden-480">{{acc['signing_name']}}</td>
 	  <td>
-	    {%if is_user_admin %}
           <a href={{base_url + acc['email']}}>
-        {% endif %}
             {% if acc['status']=='Activated' %}
               <span class="label label-success">Activated</span>
             {% else %}
               <span class="label label-danger arrowed-in">Not Activated</span>
             {% endif %}
-        {%if is_user_admin %}
           </a>
-        {% endif %}
 	  </td>
 	</tr>
 	{% else %}
