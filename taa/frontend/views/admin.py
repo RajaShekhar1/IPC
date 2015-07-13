@@ -74,7 +74,7 @@ def admin():
 
 
 @app.route('/edituser', methods = ['GET', 'POST'])
-@groups_required(['admins'], all=False)
+@groups_required(['admins', 'home_office'], all=False)
 def updateUser():
 
     user_email = request.args['user']
