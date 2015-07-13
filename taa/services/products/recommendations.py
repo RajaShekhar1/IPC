@@ -13,8 +13,11 @@ EMP_COLUMNS = {'good': 'emp1_cov', 'better': 'emp2_cov', 'best': 'emp3_cov'}
 SPOUSE_COLUMNS = {'good': 'sp1_cov', 'better': 'sp2_cov', 'best': 'sp3_cov'}
 CHILDREN_COLUMNS = {'good': 'ch1_cov', 'better': 'ch2_cov', 'best': 'ch3_cov'}
 
+RECOMMENDATIONS = None
 
 def get_recommendations(product, **demographics):
+    init_from_data_files()
+
     product_code = product.get_base_product_code()
     # Compute key for recommendations lookup table
     if product_code == 'Group CI':
@@ -31,9 +34,27 @@ def get_recommendations(product, **demographics):
                   demographics.get('num_children'))
 
 
+
 def lookup(product, employee_age, spouse_age=None, num_children=None):
+    init_from_data_files()
     return RECOMMENDATIONS[product].get(employee_age, DEFAULT_RECOMMENDATIONS)
 
+
+def init_from_data_files():
+    global RECOMMENDATIONS
+    if RECOMMENDATIONS is None:
+        RECOMMENDATIONS = {
+            'FPPCI':
+                build(os.path.join(DATA_DIR, 'FPPCI_suggested_rates.csv')),
+            'FPP-Gov':
+                build(os.path.join(DATA_DIR, 'FPPGOV_suggested_rates.csv')),
+            'FPPTI':
+                build(os.path.join(DATA_DIR, 'FPPTI_suggested_rates.csv')),
+            ('Group CI', 'nonsmoker'):
+                build(os.path.join(DATA_DIR, 'CIEMP_NONsmoker_suggested_rates.csv')),
+            ('Group CI', 'smoker'):
+                build(os.path.join(DATA_DIR, 'CIEMP_smoker_suggested_rates.csv'))
+        }
 
 def build(csv_path):
     table = {}
@@ -48,17 +69,3 @@ def build(csv_path):
                 'children': line.get(CHILDREN_COLUMNS[rating])
             }
     return table
-
-
-RECOMMENDATIONS = {
-    'FPPCI':
-        build(os.path.join(DATA_DIR, 'FPPCI_suggested_rates.csv')),
-    'FPP-Gov':
-        build(os.path.join(DATA_DIR, 'FPPGOV_suggested_rates.csv')),
-    'FPPTI':
-        build(os.path.join(DATA_DIR, 'FPPTI_suggested_rates.csv')),
-    ('Group CI', 'nonsmoker'):
-        build(os.path.join(DATA_DIR, 'CIEMP_NONsmoker_suggested_rates.csv')),
-    ('Group CI', 'smoker'):
-        build(os.path.join(DATA_DIR, 'CIEMP_smoker_suggested_rates.csv'))
-}

@@ -5,7 +5,7 @@ import operator as op
 import random
 from collections import OrderedDict
 
-from taa.services.products import ProductService
+from taa.services.products import ProductService, Product
 from taa.services.products.rates import Rates, TYPE_COVERAGE, TYPE_PREMIUM
 from taa.services.products.payment_modes import MODES_BY_MODE
 
@@ -13,11 +13,21 @@ from taa.services.products.payment_modes import MODES_BY_MODE
 # Generate dummy data, test rate table, and verification rate table
 rates = Rates()
 VERIFIER = {}
-ps = ProductService()
-products = sorted([product.code for product in ps.get_base_products()])
-ages = range(1, 101)
-premiums = [random.randint(1, 500) for _ in range(random.randint(1, 10))]
-coverages = [random.randint(1000, 100000) for _ in range(random.randint(1, 10))]
+
+# Just have two to test that it separates the rates.
+base_products = [
+    Product(
+        code='FPPTI',
+    ),
+    Product(
+        code='Group CI',
+    )
+]
+products = sorted([product.code for product in base_products])
+
+ages = range(1, 30+1)
+premiums = [random.randint(1, 500) for _ in range(4)]
+coverages = [random.randint(1000, 100000) for _ in range(4)]
 for product_code in products:
     for payment_mode in iter(MODES_BY_MODE.keys()):
         for type_ in (TYPE_COVERAGE, TYPE_PREMIUM):
@@ -40,46 +50,23 @@ for product_code in products:
             rates.from_string('\n'.join(lines),
                               product_code, payment_mode, type_)
 
-
 def get_rates_for(product_code, payment_mode, age, smoker=None, digits=2):
     # Verification function
     result = {}
     for type_ in (TYPE_COVERAGE, TYPE_PREMIUM):
         result[type_] = []
-        try:
-            for item in iter(VERIFIER.get(
-                    (product_code, payment_mode, type_, age)).items()):
-                result[type_].append(
-                    {'coverage': item[0] if type_ == TYPE_COVERAGE else item[1],
-                     'premium': round(item[0], digits) if type_ == TYPE_PREMIUM
-                     else round(item[1], digits)}
-                )
-        except AttributeError:
-            result[type_] = None
+
+        for item in iter(VERIFIER.get(
+                (product_code, payment_mode, type_, age)).items()):
+            result[type_].append(
+                {'coverage': item[0] if type_ == TYPE_COVERAGE else item[1],
+                 'premium': round(item[0], digits) if type_ == TYPE_PREMIUM
+                 else round(item[1], digits)}
+            )
 
     return {
         'byface': result[TYPE_COVERAGE],
         'bypremium': result[TYPE_PREMIUM]
-    }
-
-
-def get_demographics(e_age=None, e_height=None, e_weight=None, e_gender=None,
-                     e_smoker=None, s_age=None, s_height=None, s_weight=None,
-                     s_gender=None, s_smoker=None, num_children=None,
-                     mode=None):
-    return {
-        'employee_age': e_age,
-        'employee_height': e_height,
-        'employee_weight': e_weight,
-        'employee_gender': e_gender,
-        'employee_smoker': e_smoker,
-        'spouse_age': s_age,
-        'spouse_height': s_height,
-        'spouse_weight': s_weight,
-        'spouse_gender': s_gender,
-        'spouse_smoker': s_smoker,
-        'num_children': num_children,
-        'payment_mode': mode
     }
 
 
@@ -88,21 +75,6 @@ def test_groupci():
         for age in ages:
             assert cmp(rates.get('Group CI', payment_mode, age),
                        get_rates_for('Group CI', payment_mode, age)) == 0
-
-
-def test_fppci():
-    for payment_mode in iter(MODES_BY_MODE.keys()):
-        for age in ages:
-            assert cmp(rates.get('FPPCI', payment_mode, age),
-                       get_rates_for('FPPCI', payment_mode, age)) == 0
-
-
-def test_fppgov():
-    for payment_mode in iter(MODES_BY_MODE.keys()):
-        for age in ages:
-            assert cmp(rates.get('FPP-Gov', payment_mode, age),
-                       get_rates_for('FPP-Gov', payment_mode, age)) == 0
-
 
 def test_fppti():
     for payment_mode in iter(MODES_BY_MODE.keys()):
