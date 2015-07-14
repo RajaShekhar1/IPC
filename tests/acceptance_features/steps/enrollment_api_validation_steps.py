@@ -26,7 +26,7 @@ def step_impl(context):
     if not hasattr(context, 'import_record'):
         context.import_record = dict()
 
-    table = context.passed_table if hasattr(context, 'passed_table') else context.table
+    table = context.table if getattr(context, 'table') else context.passed_table
     for row in table:
         context.import_record.update(dict(zip(row.headings, row.cells)))
 

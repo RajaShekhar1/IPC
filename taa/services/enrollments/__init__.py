@@ -1,6 +1,7 @@
 
 from models import (EnrollmentApplication, EnrollmentApplicationCoverage,
                     SelfEnrollmentEmailLog, SelfEnrollmentLink, SelfEnrollmentEmailBatch, SelfEnrollmentEmailBatchWithEmails)
+from enrollment_import import EnrollmentImportService
 
 # Export the services we provide
 from enrollment_application import EnrollmentApplicationService

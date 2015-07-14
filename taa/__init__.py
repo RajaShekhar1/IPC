@@ -108,4 +108,3 @@ import frontend.views
 # Initialize webassets
 from assets import init_app as init_assets
 init_assets(app)
-

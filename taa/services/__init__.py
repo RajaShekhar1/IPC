@@ -1,4 +1,3 @@
-
 # A basic IoC service-locator-like pattern from
 #  http://code.activestate.com/recipes/413268-dependency-injection-the-python-way/
 class FeatureBroker:
