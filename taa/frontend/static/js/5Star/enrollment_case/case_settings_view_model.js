@@ -1,5 +1,6 @@
 var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, can_edit_case, settings) {
   var self = this;
+  self.case_id = case_data.id;
 
   self.can_edit_case = can_edit_case;
 

@@ -3,6 +3,9 @@ from hamcrest import assert_that, equal_to, has_items
 
 use_step_matcher("parse")
 
+from taa.services import RequiredFeature
+enrollment_import_service = RequiredFeature('EnrollmentImportService')
+
 @given(u"I have an API User named {user_name} with token {user_token}")
 def step_impl(context, user_name, user_token):
     if not hasattr(context, 'users'):
@@ -17,11 +20,11 @@ def step_impl(context, token):
 @given(u'I add the following enrollment data columns')
 def step_impl(context):
     if not hasattr(context, 'import_record'):
-        context.import_record = EnrollmentImportData(dict())
+        context.import_record = dict()
 
     table = context.passed_table if hasattr(context, 'passed_table') else context.table
     for row in table:
-        context.import_record.data.update(dict(zip(row.headings, row.cells)))
+        context.import_record.update(dict(zip(row.headings, row.cells)))
 
 @given(u'I prepare an enrollment file with data')
 def step_impl(context):
@@ -31,7 +34,7 @@ def step_impl(context):
 
 @given("I prepare an enrollment file with basic valid enrollment data")
 def step_impl(context):
-    context.import_record = EnrollmentImportData(dict(
+    context.import_record = dict(
         user_token='ABC',
         case_token='XYZ',
         product_code='FPPTI',
@@ -57,23 +60,22 @@ def step_impl(context):
         agent_name='Andy Agent',
         agent_code='26CODE',
         agent_sig_txt='esign by Andy Agent'
-    ))
+    )
 
 
 
 @given(u"I substitute '{bad_value}' for the column '{column_name}'")
 def step_impl(context, bad_value, column_name):
-    context.import_record.data[column_name] = bad_value
+    context.import_record[column_name] = bad_value
 
 @given(u"I clear the data on column '{column_name}'")
 def step_impl(context, column_name):
-    context.import_record.data[column_name] = ""
+    context.import_record[column_name] = ""
 
 @when(u"I submit the file to the Enrollment API")
 def step_impl(context):
 
-    flat_file_service = EnrollmentImportService()
-    context.result = flat_file_service.submit_file_records([context.import_record])
+    context.result = enrollment_import_service.submit_file_records([context.import_record])
 
 @then(u'I should see a success response')
 def step_impl(context):
@@ -95,10 +97,4 @@ class APIUser(object):
     def __init__(self, user_name, user_token):
         self.user_name = user_name
         self.user_token = user_token
-
-class EnrollmentImportData(object):
-    def __init__(self, data):
-        self.data = data
-
-
 

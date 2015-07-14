@@ -17,7 +17,7 @@ var CaseReportsViewModel = function(params) {
 
   self.load_reports = function() {
     self.is_loading(true);
-    var url = urls.get_case_api_enrollment_report_url();
+    var url = urls.get_case_api_enrollment_report_url(params.settings_viewmodel.case_id);
     $.get(url).success(function(resp) {
       // Pull out the report data
       self.company_name(resp.data.company_name);
