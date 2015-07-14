@@ -374,7 +374,7 @@ class CaseService(DBService):
         case = DBService.create(self, **kwargs)
 
         # Make sure a self-enrollment setup is created too.
-        setup = SelfEnrollmentService().create(**{
+        setup = self.self_enrollment.create(**{
             'case_id': case.id,
             'self_enrollment_type': SelfEnrollmentSetup.TYPE_CASE_GENERIC,
             'use_email':True,

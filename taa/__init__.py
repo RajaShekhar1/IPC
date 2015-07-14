@@ -1,9 +1,5 @@
 
-import sys
-from gzip import GzipFile
-from io import BytesIO
-
-from flask import Flask, current_app, request
+from flask import Flask
 from flask_sslify import SSLify
 from flask_sqlalchemy import SQLAlchemy
 from flask.ext.stormpath import StormpathManager
@@ -43,6 +39,49 @@ stormpath_manager.login_view = 'login'
 # Init database - export the db variable here so other parts of the app can access the database
 db = SQLAlchemy(app)
 
+# Initialize our model service classes
+from taa.services import services
+from taa.services.agents import AgentService
+from taa.services.cases import (
+    CaseService,
+    CaseEnrollmentPeriodsService,
+    CensusRecordService,
+    SelfEnrollmentService,
+)
+from taa.services.enrollments import (
+    EnrollmentApplicationService,
+    SelfEnrollmentEmailService,
+    SelfEnrollmentLinkService,
+    SelfEnrollmentEmailBatchService,
+    EnrollmentImportService,
+    EnrollmentApplicationCoverageService,
+    EnrollmentReportService,
+)
+from taa.services.products import (
+    ProductService,
+    ProductFormService,
+    StatementOfHealthQuestionService,
+)
+
+services.Provide('CaseService', CaseService())
+services.Provide('CaseEnrollmentPeriodsService', CaseEnrollmentPeriodsService())
+services.Provide('CensusRecordService', CensusRecordService())
+services.Provide('SelfEnrollmentService', SelfEnrollmentService())
+
+services.Provide('AgentService', AgentService())
+
+services.Provide('ProductService', ProductService())
+services.Provide('ProductFormService', ProductFormService())
+services.Provide('StatementOfHealthQuestionService', StatementOfHealthQuestionService())
+
+services.Provide('EnrollmentApplicationService', EnrollmentApplicationService())
+services.Provide('EnrollmentApplicationCoverageService', EnrollmentApplicationCoverageService())
+services.Provide('EnrollmentImportService', EnrollmentImportService())
+services.Provide('SelfEnrollmentEmailService', SelfEnrollmentEmailService())
+services.Provide('SelfEnrollmentLinkService', SelfEnrollmentLinkService())
+services.Provide('SelfEnrollmentEmailBatchService', SelfEnrollmentEmailBatchService())
+services.Provide('EnrollmentReportService', EnrollmentReportService())
+
 # Register API blueprints
 from api.cases import bp as cases_api
 from api.products import bp as products_api
@@ -70,15 +109,3 @@ import frontend.views
 from assets import init_app as init_assets
 init_assets(app)
 
-# Initialize runtime services
-from taa.services import services
-from taa.services.cases import (
-    CaseService,
-    CaseEnrollmentPeriodsService,
-    CensusRecordService,
-    SelfEnrollmentService,
-)
-services.Provide('CaseService', CaseService())
-services.Provide('CaseEnrollmentPeriodsService', CaseEnrollmentPeriodsService())
-services.Provide('CensusRecordService', CensusRecordService())
-services.Provide('SelfEnrollmentService', SelfEnrollmentService())

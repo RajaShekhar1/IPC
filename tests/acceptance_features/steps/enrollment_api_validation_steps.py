@@ -3,8 +3,8 @@ from hamcrest import assert_that, equal_to, has_items
 
 use_step_matcher("parse")
 
-from taa.services import RequiredFeature
-enrollment_import_service = RequiredFeature('EnrollmentImportService')
+from taa.services import LookupService
+enrollment_import_service = LookupService('EnrollmentImportService')
 
 @given(u"I have an API User named {user_name} with token {user_token}")
 def step_impl(context, user_name, user_token):
@@ -16,6 +16,10 @@ def step_impl(context, user_name, user_token):
 @given("I have a Case with the token {token}")
 def step_impl(context, token):
     context.case_token = token
+
+@given("The following are valid product codes")
+def step_impl(context):
+    context.valid_product_codes = context.table.rows
 
 @given(u'I add the following enrollment data columns')
 def step_impl(context):
@@ -62,7 +66,27 @@ def step_impl(context):
         agent_sig_txt='esign by Andy Agent'
     )
 
+@given(u"I add valid spouse enrollment data")
+def step_impl(context):
+    context.import_record.update(dict(
+        sp_first="Jane",
+        sp_last="Doe",
+        sp_birthate="1990-01-01",
+        sp_ssn="123-33-4444",
+        sp_premium="3.00",
+        sp_coverage="10000",
+    ))
 
+@given(u'I add valid child enrollment data')
+def step_impl(context):
+    context.import_record.update(dict(
+        ch1_first="Johnny",
+        ch1_last="Doe",
+        ch1_birthate="2009-01-01",
+        ch1_ssn="126-66-7777",
+        ch1_premium="2.50",
+        ch1_coverage="10000",
+    ))
 
 @given(u"I substitute '{bad_value}' for the column '{column_name}'")
 def step_impl(context, bad_value, column_name):
@@ -74,7 +98,6 @@ def step_impl(context, column_name):
 
 @when(u"I submit the file to the Enrollment API")
 def step_impl(context):
-
     context.result = enrollment_import_service.submit_file_records([context.import_record])
 
 @then(u'I should see a success response')
