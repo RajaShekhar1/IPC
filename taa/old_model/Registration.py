@@ -9,7 +9,7 @@ from flask.ext.stormpath.forms import RegistrationForm, LoginForm
 class TAA_RegistrationForm(RegistrationForm):
     """
     Register a new user.  Adds a couple of needed slots to Stormpath default registration
-    
+
     signing_name: full name used for agent signing account setup (so we don't bother with parsing first/last with Jr., III, etc.
     repassword:  used to re-enter password for confirmation check
     agent_code:  whatever they enter, but will be admin-edited to be the 5-char 5Star agent code
@@ -24,7 +24,7 @@ class TAA_RegistrationForm(RegistrationForm):
 
 class TAA_LoginForm (LoginForm):
     allowForgotPass = False
-    
+
 
 class TAA_UserForm(Form):
     """
@@ -41,5 +41,3 @@ class TAA_UserForm(Form):
     status = StringField('Status')
     activated = BooleanField('activated')
     send_notice = BooleanField('activated', default = False)
-    
-
