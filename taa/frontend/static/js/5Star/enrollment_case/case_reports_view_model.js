@@ -70,7 +70,8 @@ self.exit_print_preview = function() {
 };
 
 self.load_enrollments = function() {
-  case_management.refresh_enrollments_table(window.case_id, urls.get_case_api_enrollment_records_url(window.case_id),
+  case_management.refresh_enrollments_table(params.settings_viewmodel.case_id,
+      urls.get_case_api_enrollment_records_url(params.settings_viewmodel.case_id),
   "#enrollment-records-table", "#enrollment-table-loading", {},
   function(table) {}
 );

@@ -18,7 +18,6 @@ from taa.models import db
 from taa.old_model.States import get_states
 
 from taa.services.products.states import get_all_states
-from taa.services.cases import CaseService, SelfEnrollmentService
 from taa.services.agents import AgentService
 from taa.services.products import ProductService
 from taa.services.products import get_payment_modes, is_payment_mode_changeable
@@ -26,13 +25,14 @@ from taa.services.products.product_forms import ProductFormService
 from taa.services.enrollments import (EnrollmentApplicationService,
                                       SelfEnrollmentLinkService)
 from taa.services.docusign.docusign_envelope import create_envelope_and_get_signing_url
+from taa.services import RequiredFeature
 
 product_service = ProductService()
 product_form_service = ProductFormService()
-case_service = CaseService()
+case_service = RequiredFeature('CaseService')
 agent_service = AgentService()
 enrollment_service = EnrollmentApplicationService()
-self_enrollment_service = SelfEnrollmentService()
+self_enrollment_service = RequiredFeature('SelfEnrollmentService')
 self_enrollment_link_service = SelfEnrollmentLinkService()
 
 @app.route('/enroll')

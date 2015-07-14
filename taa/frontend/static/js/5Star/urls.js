@@ -45,7 +45,7 @@ var urls = (function urls() {
     get_case_email_self_enrollment_batches_url: function(case_id) {
       return '/cases/' + case_id + '/self_enroll_email_batches';
     },
-    get_case_email_self_enrollment_batches_url: function(case_id, batch_id) {
+    get_case_email_self_enrollment_batch_url: function(case_id, batch_id) {
       return '/cases/' + case_id + '/self_enroll_email_batches/' + batch_id;
     },
     get_product_api_url: function(product_id) {

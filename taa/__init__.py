@@ -69,3 +69,16 @@ import frontend.views
 # Initialize webassets
 from assets import init_app as init_assets
 init_assets(app)
+
+# Initialize runtime services
+from taa.services import services
+from taa.services.cases import (
+    CaseService,
+    CaseEnrollmentPeriodsService,
+    CensusRecordService,
+    SelfEnrollmentService,
+)
+services.Provide('CaseService', CaseService())
+services.Provide('CaseEnrollmentPeriodsService', CaseEnrollmentPeriodsService())
+services.Provide('CensusRecordService', CensusRecordService())
+services.Provide('SelfEnrollmentService', SelfEnrollmentService())

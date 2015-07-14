@@ -70,7 +70,7 @@ function handle_upload_success(resp) {
   window.case_settings.census_data(resp.data.records);
 
   // Update the datatable
-  case_management.refresh_census_table(window.case_id, urls.get_case_api_census_record_url(window.case_id),
+  case_management.refresh_census_table(window.case_id, urls.get_case_api_census_records_url(window.case_id),
   "#census-records-table", "#census-table-loading");
 }
 
