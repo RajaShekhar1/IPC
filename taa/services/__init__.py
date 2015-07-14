@@ -1,4 +1,3 @@
-
 # A basic IoC service-locator-like pattern from
 #  http://code.activestate.com/recipes/413268-dependency-injection-the-python-way/
 class FeatureBroker:
@@ -62,7 +61,7 @@ class RequiredFeature(object):
       return self.result # <-- will request the feature upon first call
 
    def __getattr__(self, name):
-      assert name == 'result', "Unexpected attribute request other then 'result'"
+      assert name == 'result', "Unexpected attribute request other then 'result' - {}".format(name)
       self.result = self.Request()
       return self.result
 

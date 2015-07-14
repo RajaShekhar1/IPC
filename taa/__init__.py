@@ -78,7 +78,9 @@ from taa.services.cases import (
     CensusRecordService,
     SelfEnrollmentService,
 )
+from taa.services.enrollments import EnrollmentImportService
 services.Provide('CaseService', CaseService())
 services.Provide('CaseEnrollmentPeriodsService', CaseEnrollmentPeriodsService())
 services.Provide('CensusRecordService', CensusRecordService())
 services.Provide('SelfEnrollmentService', SelfEnrollmentService())
+services.Provide('EnrollmentImportService', EnrollmentImportService())

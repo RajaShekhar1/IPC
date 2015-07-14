@@ -23,6 +23,7 @@ from taa.services.cases.models import SelfEnrollmentSetup
 from taa.services.cases import CaseService
 from taa.services.products import ProductService
 from taa.services.agents import AgentService
+from enrollment_import import EnrollmentImportService
 case_service = CaseService()
 product_service = ProductService()
 agent_service = AgentService()

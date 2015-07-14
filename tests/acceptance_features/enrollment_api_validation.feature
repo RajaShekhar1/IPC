@@ -39,6 +39,7 @@ Scenario: Submit an enrollment that is missing some basic headers which are alwa
     | missing_header | user_token       |
     | missing_header | case_token       |
     | missing_header | product_code     |
+    | missing_header | payment_mode     |
     | missing_header | emp_first        |
     | missing_header | emp_last         |
     | missing_header | emp_gender       |
@@ -62,56 +63,56 @@ Scenario: Submit an enrollment that is missing some basic headers which are alwa
     | missing_header | signed_at_state  |
 
 
-Scenario: A user submits an enrollment with an invalid token
-  Given I prepare an enrollment file with basic valid enrollment data
-  But I substitute 'BOGUS' for the column 'user_token'
-  When I submit the file to the Enrollment API
-  Then I should see the following errors in the response
-  | error_type    | error_field |
-  | invalid_token | user_token  |
-
-
-Scenario Outline: A user submits a file with invalid data types.
-  Given I prepare an enrollment file with basic valid enrollment data
-  But I substitute '<bad_value>' for the column '<column_name>'
-  When I submit the file to the Enrollment API
-  Then I should see the following errors in the response
-    | error_type   | error_field   |
-    | <error_type> | <error_field> |
-
-Examples:
-  | column_name   | bad_value     | error_type       | error_field   |
-  | emp_ssn       | ABC123        | invalid_ssn      | emp_ssn       |
-  | emp_birthdate | Oct 1st, 1999 | invalid_date     | emp_birthdate |
-  | emp_coverage  | 33,000        | invalid_coverage | emp_coverage  |
-  | emp_premium   | $10.00        | invalid_premium  | emp_premium   |
-  | payment_mode  | hourly        | invalid_mode     | payment_mode  |
-
-
-Scenario Outline: A user submits a file with missing data for required columns.
-  Given I prepare an enrollment file with basic valid enrollment data
-  But I clear the data on column '<column_name>'
-  When I submit the file to the Enrollment API
-  Then I should see the following errors in the response
-    | error_type    | error_field   |
-    | missing_data  | <column_name> |
-
-Examples:
-  | column_name   |
-  | user_token    |
-  | case_token    |
-  | product_code  |
-  | emp_first     |
-  | emp_last      |
-  | emp_ssn       |
-  | emp_birthdate |
-  | payment_mode  |
-  | agent_name    |
-  | agent_code    |
-  | employee_pin  |
-
-
-#Scenario Outline: A user submits a file with invalid dates
+#Scenario: A user submits an enrollment with an invalid token
+#  Given I prepare an enrollment file with basic valid enrollment data
+#  But I substitute 'BOGUS' for the column 'user_token'
+#  When I submit the file to the Enrollment API
+#  Then I should see the following errors in the response
+#  | error_type    | error_field |
+#  | invalid_token | user_token  |
+#
+#
+#Scenario Outline: A user submits a file with invalid data types.
+#  Given I prepare an enrollment file with basic valid enrollment data
+#  But I substitute '<bad_value>' for the column '<column_name>'
+#  When I submit the file to the Enrollment API
+#  Then I should see the following errors in the response
+#    | error_type   | error_field   |
+#    | <error_type> | <error_field> |
+#
+#Examples:
+#  | column_name   | bad_value     | error_type       | error_field   |
+#  | emp_ssn       | ABC123        | invalid_ssn      | emp_ssn       |
+#  | emp_birthdate | Oct 1st, 1999 | invalid_date     | emp_birthdate |
+#  | emp_coverage  | 33,000        | invalid_coverage | emp_coverage  |
+#  | emp_premium   | $10.00        | invalid_premium  | emp_premium   |
+#  | payment_mode  | hourly        | invalid_mode     | payment_mode  |
+#
+#
+#Scenario Outline: A user submits a file with missing data for required columns.
+#  Given I prepare an enrollment file with basic valid enrollment data
+#  But I clear the data on column '<column_name>'
+#  When I submit the file to the Enrollment API
+#  Then I should see the following errors in the response
+#    | error_type    | error_field   |
+#    | missing_data  | <column_name> |
+#
+#Examples:
+#  | column_name   |
+#  | user_token    |
+#  | case_token    |
+#  | product_code  |
+#  | emp_first     |
+#  | emp_last      |
+#  | emp_ssn       |
+#  | emp_birthdate |
+#  | payment_mode  |
+#  | agent_name    |
+#  | agent_code    |
+#  | employee_pin  |
+#
+#
+##Scenario Outline: A user submits a file with invalid dates
 
 
 

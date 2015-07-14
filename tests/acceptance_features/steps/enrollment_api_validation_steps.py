@@ -3,8 +3,13 @@ from hamcrest import assert_that, equal_to, has_items
 
 use_step_matcher("parse")
 
-from taa.services import RequiredFeature
-enrollment_import_service = RequiredFeature('EnrollmentImportService')
+# from taa.services import RequiredFeature
+# enrollment_import_service = RequiredFeature('EnrollmentImportService')
+# enrollment_import_service.submit_file_records([])
+
+from taa.services.enrollments import EnrollmentImportService
+
+enrollment_import_service = EnrollmentImportService()
 
 @given(u"I have an API User named {user_name} with token {user_token}")
 def step_impl(context, user_name, user_token):
@@ -22,7 +27,7 @@ def step_impl(context):
     if not hasattr(context, 'import_record'):
         context.import_record = dict()
 
-    table = context.passed_table if hasattr(context, 'passed_table') else context.table
+    table = context.table if getattr(context, 'table') else context.passed_table
     for row in table:
         context.import_record.update(dict(zip(row.headings, row.cells)))
 
@@ -74,7 +79,6 @@ def step_impl(context, column_name):
 
 @when(u"I submit the file to the Enrollment API")
 def step_impl(context):
-
     context.result = enrollment_import_service.submit_file_records([context.import_record])
 
 @then(u'I should see a success response')
