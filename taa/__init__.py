@@ -1,3 +1,6 @@
+import locale
+# Make sure this is set for the whole app for formatting dates, times, currency, etc.
+locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 from flask import Flask
 from flask_sslify import SSLify
@@ -62,6 +65,9 @@ from taa.services.products import (
     ProductFormService,
     StatementOfHealthQuestionService,
 )
+from taa.services.data_import import (
+    FileImportService,
+)
 
 services.Provide('CaseService', CaseService())
 services.Provide('CaseEnrollmentPeriodsService', CaseEnrollmentPeriodsService())
@@ -81,6 +87,8 @@ services.Provide('SelfEnrollmentEmailService', SelfEnrollmentEmailService())
 services.Provide('SelfEnrollmentLinkService', SelfEnrollmentLinkService())
 services.Provide('SelfEnrollmentEmailBatchService', SelfEnrollmentEmailBatchService())
 services.Provide('EnrollmentReportService', EnrollmentReportService())
+
+services.Provide('FileImportService', FileImportService)
 
 # Register API blueprints
 from api.cases import bp as cases_api

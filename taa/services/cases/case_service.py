@@ -282,6 +282,7 @@ class CaseService(DBService):
         # Read data into a buffer
         file_data = StringIO.StringIO()
         file_obj.save(file_data)
+        file_data.seek(0)
         return file_data
 
     def merge_census_data(self, case, file_data, replace_matching):

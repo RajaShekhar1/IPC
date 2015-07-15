@@ -1,3 +1,5 @@
+import csv
+
 from taa.services.cases.census_import import (
     preprocess_date,
     preprocess_gender,
@@ -17,16 +19,19 @@ from taa.services.cases.census_import import (
 
 
 class EnrollmentImportService(object):
+    def convert_csv_to_json(self, csv_bytes):
+        pass
+
     def submit_file_records(self, records):
         return EnrollmentImportResponse()
 
 class EnrollmentImportResponse(object):
-    def __init__(self, result):
+    def __init__(self):
         self.errors = []
 
     def add_error(self, type, fields):
         error = EnrollmentImportError(type, fields)
-        self.errors.append(error);
+        self.errors.append(error)
         return error
 
     def is_success(self):

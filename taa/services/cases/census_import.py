@@ -3,6 +3,7 @@ from datetime import datetime
 import re
 import csv
 import StringIO
+from taa.services import RequiredFeature
 
 
 class CensusRecordField(object):
@@ -235,6 +236,9 @@ def preprocess_y_n(data, record):
         return 'N'
 
 class CensusRecordParser(object):
+
+    file_import_service = RequiredFeature('FileImportService')
+
     # Construct the fields and wire up the correct validation
     # Employee
     employee_first = CensusRecordField('EMP_FIRST', 'employee_first', preprocess_string, [required_validator])
@@ -343,49 +347,6 @@ class CensusRecordParser(object):
         self.valid_data = []
         self.used_ssns = set()
         self.line_number = 0
-
-    def _process_file_stream(self, file_data):
-        # To get universal newlines (ie, cross-platform) we use splitlines()
-        bytes = file_data.getvalue()
-        # Autodetect CSV dialect
-        dialect = csv.Sniffer().sniff(bytes)
-        lines = bytes.splitlines()
-        lines = self._preprocess_header_row(lines, dialect)
-        reader = csv.DictReader(lines, restkey='extra', dialect=dialect)
-        try:
-            headers = reader.fieldnames
-            records = [r for r in reader]
-        except csv.Error as e:
-            self.error_message(
-                # message="Invalid CSV file format. First problem found on "
-                # "line {}. Detailed error: {}".format(# reader.line_num, e)
-                message="There was a problem in the file or file format that "
-                        "prevented us from accepting it. Please ensure you are "
-                        "sending a valid CSV file, compare your file with the "
-                        "provided sample CSV, or otherwise double-check the "
-                        "data you are sending. If you continue to have "
-                        "problems, please contact your 5Star representative "
-                        "for assistance.",
-            )
-            # TODO: log the actual exception
-            line_number = reader.line_num
-            headers = records = []
-        return headers, records, dialect
-
-    def _preprocess_header_row(self, lines, dialect):
-        """
-        To get case-insensitive parsing behaviour, we uppercase every column
-        in the first line before passing it off to the DictReader
-        """
-        header = []
-        header_reader = csv.reader([lines[0]], dialect)
-        for row in header_reader:
-            header = [col.upper() for col in row]
-        io = StringIO.StringIO()
-        header_writer = csv.writer(io, dialect)
-        header_writer.writerow(header)
-        lines[0] = io.getvalue()
-        return lines
 
     def process_file(self, file_data, error_if_matching=None):
         headers, records, dialect = self._process_file_stream(file_data)
@@ -517,3 +478,19 @@ class CensusRecordParser(object):
             self.get_field_from_csv_column(csv_col_name).database_name: data
             for csv_col_name, data in record.items()
             }
+
+    def _process_file_stream(self, file_data):
+        result = self.file_import_service.process_file_stream(file_data)
+        if result.has_error():
+            self.error_message(
+                message=result.get_error_message(),
+            )
+            # TODO: log the actual exception
+            headers, records = [], []
+            dialect = None
+        else:
+            headers = result.get_headers()
+            records = result.get_rows()
+            dialect = result.get_dialect()
+
+        return headers, records, dialect

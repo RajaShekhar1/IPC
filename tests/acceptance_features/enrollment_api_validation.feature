@@ -156,7 +156,7 @@ Scenario: User submits child data with the enrollment.
   Given I prepare an enrollment file with basic valid enrollment data
   And I add the following enrollment data columns
     | ch1_first | ch1_last | ch1_birthdate | ch1_ssn | ch1_coverage | ch1_premium |
-    | Johnny    | Doe      | 2010-02-02    |         |              |             |
+    | Johnny    | Doe      | 2010-02-02    |         |    10000          |    2.50         |
   When I submit the file to the Enrollment API
   Then I should see a success response
 
@@ -164,10 +164,10 @@ Scenario: User submits a second child's data with the enrollment.
   Given I prepare an enrollment file with basic valid enrollment data
   And I add the following enrollment data columns
     | ch1_first | ch1_last | ch1_birthdate | ch1_ssn | ch1_coverage | ch1_premium |
-    | Johnny    | Doe      | 2010-02-02    |         |              |             |
+    | Johnny    | Doe      | 2010-02-02    |         |  10000          |    2.50  |
   And I add the following enrollment data columns
     | ch2_first | ch1_last | ch1_birthdate | ch1_ssn | ch1_coverage | ch1_premium |
-    | Susie      | Doe      | 2011-03-03    |         |              |             |
+    | Susie      | Doe      | 2011-03-03    |         | 10000          |    2.50  |
   When I submit the file to the Enrollment API
   Then I should see a success response
 
