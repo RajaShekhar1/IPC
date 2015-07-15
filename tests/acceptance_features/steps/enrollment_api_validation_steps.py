@@ -120,4 +120,3 @@ class APIUser(object):
     def __init__(self, user_name, user_token):
         self.user_name = user_name
         self.user_token = user_token
-

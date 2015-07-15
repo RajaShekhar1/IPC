@@ -59,6 +59,9 @@ from taa.services.enrollments import (
     EnrollmentImportService,
     EnrollmentApplicationCoverageService,
     EnrollmentReportService,
+    ImagedFormGeneratorService,
+    FormPDFRenderer,
+    FormTemplateTabRepository,
 )
 from taa.services.products import (
     ProductService,
@@ -87,6 +90,9 @@ services.Provide('SelfEnrollmentEmailService', SelfEnrollmentEmailService())
 services.Provide('SelfEnrollmentLinkService', SelfEnrollmentLinkService())
 services.Provide('SelfEnrollmentEmailBatchService', SelfEnrollmentEmailBatchService())
 services.Provide('EnrollmentReportService', EnrollmentReportService())
+services.Provide('ImagedFormGeneratorService', ImagedFormGeneratorService())
+services.Provide("FormPDFRenderer", FormPDFRenderer())
+services.Provide("FormTemplateTabRepository", FormTemplateTabRepository())
 
 services.Provide('FileImportService', FileImportService)
 

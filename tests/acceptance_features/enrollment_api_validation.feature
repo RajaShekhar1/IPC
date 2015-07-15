@@ -31,7 +31,6 @@ Scenario: Submit an enrollment with the minimal data needed to validate.
   When I submit the file to the Enrollment API
   Then I should see a success response
 
-
 Scenario: Submit an enrollment that is missing some basic headers which are always required.
   Given I prepare an enrollment file with data
     | bogus_header    |
@@ -75,7 +74,7 @@ Scenario: Submit an enrollment that is missing some basic headers which are alwa
 #  | invalid_token | user_token  |
 #
 #
-Scenario: Users submits an invalid product code
+Scenario: User submits an invalid product code
   Given I prepare an enrollment file with basic valid enrollment data
   But I substitute 'MY_BAD_PRODUCT_CODE' for the column 'product_code'
   When I submit the file to the Enrollment API
@@ -83,6 +82,17 @@ Scenario: Users submits an invalid product code
     | error_type      | error_field  |
     | invalid_product | product_code |
 
+Scenario Outline: User submits valid payment modes
+  Given I prepare an enrollment file with basic valid enrollment data
+  And I substitute '<val>' for the column 'payment_mode'
+  When I submit the file to the Enrollment API
+  Then I should see a success response
+Examples:
+  | val         |
+  | weekly      |
+  | biweekly    |
+  | semimonthly |
+  | monthly     |
 
 #Scenario Outline: A user submits a file with invalid data types.
 #  Given I prepare an enrollment file with basic valid enrollment data

@@ -25,7 +25,7 @@ class FeatureBroker:
         return item in self.providers
 
 # Export the service locator
-services = FeatureBroker()
+services = FeatureBroker(allowReplace=True)
 
 
 # Assertions about services / features

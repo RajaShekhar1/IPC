@@ -111,8 +111,5 @@ def submit_data():
                                 type=data["agent_data"]["is_in_person"],
                                 )
         }
-    data = jsonify(**resp)
-    # Need to manually commit all changes since this doesn't go through the API
-    # right now
-    db.session.commit()
-    return data
+
+    return resp
