@@ -43,6 +43,7 @@ oauth2client==1.2
 oauthlib==0.7.2
 psycopg2==2.5.4
 py==1.4.26
+PyPDF2==1.25
 pytest==2.7.0
 python-dateutil==2.2
 pytz==2015.4
