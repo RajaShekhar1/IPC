@@ -296,8 +296,7 @@ def submit_wizard_data():
     case = case_service.get(case_id)
 
     wizard_results = data['wizard_results']
-    print("[ENROLLMENT SUBMITTED]")
-    # for troubledshooting..   print("[ENROLLMENT SUBMITTED]: (case {}) {}".format(case_id, wizard_results))
+    print("[ENROLLMENT SUBMITTED]: (case {}) {}".format(case_id, wizard_results))
     # Save enrollment information and updated census data prior to
     # DocuSign hand-off
     if session.get('enrolling_census_record_id'):

@@ -85,7 +85,6 @@ def create_case():
         form.agent_id.data = agent.id
     if form.validate_on_submit():
         data['created_date'] = datetime.now()
-        data['case_token'] = case_service.generate_token()
         return case_service.create_new_case(**data)
 
     raise TAAFormError(form.errors)

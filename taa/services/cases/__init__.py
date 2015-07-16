@@ -2,7 +2,6 @@ import dateutil.parser
 from datetime import datetime, date as datetime_date
 import re
 import csv
-import uuid
 import StringIO
 
 from flask import abort
@@ -311,13 +310,6 @@ class CaseService(DBService):
             db.session.delete(log)
 
         return self.census_records.delete(record)
-
-    def generate_token(self):
-        return uuid.uuid4().hex
-
-    def populate_case_token(self, case):
-        if not case.case_token:
-            case.case_token = self.generate_token()
 
     def delete_case(self, case):
         from taa.services.agents import AgentService
