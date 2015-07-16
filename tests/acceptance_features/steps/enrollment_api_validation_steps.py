@@ -6,6 +6,31 @@ use_step_matcher("parse")
 from taa.services import LookupService, services_broker
 enrollment_import_service = LookupService('EnrollmentImportService')
 
+
+# Environment stubs
+class MockApiTokenService(object):
+    def __init__(self):
+       self.valid_tokens = {}
+
+    def is_valid_token(self, token):
+        return token in self.valid_tokens
+
+class MockCaseService(object):
+    def __init__(self):
+        self.valid_tokens = {}
+
+    def is_valid_case_token(self, token):
+        return token in self.valid_tokens
+
+class MockProductService(object):
+    def __init__(self):
+        self.valid_product_codes = {}
+
+    def is_valid_product_code(self, code):
+        return code in self.valid_product_codes
+
+
+
 @given(u"I have an API User named {user_name} with token {user_token}")
 def step_impl(context, user_name, user_token):
     if not hasattr(context, 'mock_token_service'):
@@ -14,14 +39,21 @@ def step_impl(context, user_name, user_token):
 
     context.mock_token_service.valid_tokens[user_token] = user_name
 
-@given("I have a Case with the token {token}")
+@given(u"I have a Case with the token {token}")
 def step_impl(context, token):
-    context.case_token = token
+    if not hasattr(context, 'mock_case_service'):
+        context.mock_case_service = MockCaseService()
+        services_broker.Provide('CaseService', context.mock_case_service)
 
-@given("The following are valid product codes")
+    context.mock_case_service.valid_tokens[token] = True
+
+
+@given(u"The following are valid product codes")
 def step_impl(context):
     if not hasattr(context, 'mock_product_service'):
-        context.mock_product_service = MockProductsService()
+        context.mock_product_service = MockProductService()
+        services_broker.Provide('ProductService', context.mock_product_service)
+
     context.valid_product_codes = context.table.rows
 
 @given(u'I add the following enrollment data columns')
@@ -116,19 +148,3 @@ def step_impl(context):
 
     assert_that(actual_errors, has_items(expected_errors))
     assert_that(context.result.is_error(), equal_to(True))
-
-# Environment stubs
-
-class MockApiTokenService(object):
-    def __init__(self):
-       self.valid_tokens = {}
-
-    def is_valid_token(self, token):
-        return token in self.valid_tokens
-
-class MockProductsService(object):
-    def __init__(self):
-        self.valid_product_codes = {}
-
-    def is_valid_product_code(self, code):
-        return code in self.valid_product_codes
