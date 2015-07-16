@@ -17,10 +17,10 @@ from nav import get_nav_menu
 from taa.models import db
 from taa.old_model.Registration import TAA_UserForm
 from taa.old_model.Enrollment import AgentActivationEmail
+from taa.services import LookupService
 
-from taa.services.agents import AgentService, ApiTokenService
-agent_service = AgentService()
-api_token_service = ApiTokenService()
+agent_service = LookupService('AgentService')
+api_token_service = LookupService('ApiTokenService')
 
 
 def search_stormpath_accounts(filter_email=None):

@@ -3,15 +3,16 @@ from hamcrest import assert_that, equal_to, has_items
 
 use_step_matcher("parse")
 
-from taa.services import LookupService
+from taa.services import LookupService, services_broker
 enrollment_import_service = LookupService('EnrollmentImportService')
 
 @given(u"I have an API User named {user_name} with token {user_token}")
 def step_impl(context, user_name, user_token):
-    if not hasattr(context, 'users'):
-        context.users = []
+    if not hasattr(context, 'mock_token_service'):
+        context.mock_token_service = MockApiTokenService()
+        services_broker.Provide('APITokenService', context.mock_token_service)
 
-    context.users.append(APIUser(user_name, user_token))
+    context.mock_token_service.valid_tokens[user_token] = user_name
 
 @given("I have a Case with the token {token}")
 def step_impl(context, token):
@@ -19,6 +20,8 @@ def step_impl(context, token):
 
 @given("The following are valid product codes")
 def step_impl(context):
+    if not hasattr(context, 'mock_product_service'):
+        context.mock_product_service = MockProductsService()
     context.valid_product_codes = context.table.rows
 
 @given(u'I add the following enrollment data columns')
@@ -116,7 +119,16 @@ def step_impl(context):
 
 # Environment stubs
 
-class APIUser(object):
-    def __init__(self, user_name, user_token):
-        self.user_name = user_name
-        self.user_token = user_token
+class MockApiTokenService(object):
+    def __init__(self):
+       self.valid_tokens = {}
+
+    def is_valid_token(self, token):
+        return token in self.valid_tokens
+
+class MockProductsService(object):
+    def __init__(self):
+        self.valid_product_codes = {}
+
+    def is_valid_product_code(self, code):
+        return code in self.valid_product_codes

@@ -3,13 +3,17 @@ import unittest2
 from mock import Mock, sentinel, call, patch
 from hamcrest import assert_that, has_items, equal_to
 
+from taa.services import initialize_services, services_broker
 from taa.services.enrollments import ImagedFormGeneratorService
-from taa.services import services_broker
 from taa.services.docusign.service import DocuSignRadioTab, DocuSignTextTab
 
 
 class TestEnrollmentImportFormGeneration(unittest2.TestCase):
     def setUp(self):
+        # Reset to default services before each test.
+        initialize_services()
+
+        # Setup some sample data.
         self.template_id = sentinel.template_id
         self.good_enrollment_data = [
             DocuSignTextTab('empFirst', 'Joe'),
@@ -23,17 +27,20 @@ class TestEnrollmentImportFormGeneration(unittest2.TestCase):
             {'label': 'paymentMode', 'x': sentinel.empPaymentModeX, 'y': sentinel.empPaymentModeY, 'value': 'monthly'},
         ]
 
-        # Return the test data when requested.
-        self.tab_repository = Mock()
-        services_broker.Provide("FormTemplateTabRepository", self.tab_repository)
-        self.tab_repository.return_value.get_tabs_for_template.return_value = self.tab_repository_test_data
+        # Override with mock services
+        self.tab_repository = self.mock_service("FormTemplateTabRepository")
+        self.pdf_renderer = self.mock_service("FormPDFRenderer")
 
-        self.pdf_renderer = Mock()
-        services_broker.Provide("FormPDFRenderer", self.pdf_renderer)
+        # Return the test data when requested.
+        self.tab_repository.return_value.get_tabs_for_template.return_value = self.tab_repository_test_data
 
         # System under test
         self.sut = ImagedFormGeneratorService()
 
+    def mock_service(self, name):
+        mock = Mock()
+        services_broker.Provide(name, mock)
+        return mock
 
     def test_it_queries_the_tab_repository(self):
 

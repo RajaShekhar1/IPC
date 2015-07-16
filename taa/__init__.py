@@ -43,58 +43,8 @@ stormpath_manager.login_view = 'login'
 db = SQLAlchemy(app)
 
 # Initialize our model service classes
-from taa.services import services_broker
-from taa.services.agents import AgentService
-from taa.services.cases import (
-    CaseService,
-    CaseEnrollmentPeriodsService,
-    CensusRecordService,
-    SelfEnrollmentService,
-)
-from taa.services.enrollments import (
-    EnrollmentApplicationService,
-    SelfEnrollmentEmailService,
-    SelfEnrollmentLinkService,
-    SelfEnrollmentEmailBatchService,
-    EnrollmentImportService,
-    EnrollmentApplicationCoverageService,
-    EnrollmentReportService,
-    ImagedFormGeneratorService,
-    FormPDFRenderer,
-    FormTemplateTabRepository,
-)
-from taa.services.products import (
-    ProductService,
-    ProductFormService,
-    StatementOfHealthQuestionService,
-)
-from taa.services.data_import import (
-    FileImportService,
-)
-
-services_broker.Provide('CaseService', CaseService())
-services_broker.Provide('CaseEnrollmentPeriodsService', CaseEnrollmentPeriodsService())
-services_broker.Provide('CensusRecordService', CensusRecordService())
-services_broker.Provide('SelfEnrollmentService', SelfEnrollmentService())
-
-services_broker.Provide('AgentService', AgentService())
-
-services_broker.Provide('ProductService', ProductService())
-services_broker.Provide('ProductFormService', ProductFormService())
-services_broker.Provide('StatementOfHealthQuestionService', StatementOfHealthQuestionService())
-
-services_broker.Provide('EnrollmentApplicationService', EnrollmentApplicationService())
-services_broker.Provide('EnrollmentApplicationCoverageService', EnrollmentApplicationCoverageService())
-services_broker.Provide('EnrollmentImportService', EnrollmentImportService())
-services_broker.Provide('SelfEnrollmentEmailService', SelfEnrollmentEmailService())
-services_broker.Provide('SelfEnrollmentLinkService', SelfEnrollmentLinkService())
-services_broker.Provide('SelfEnrollmentEmailBatchService', SelfEnrollmentEmailBatchService())
-services_broker.Provide('EnrollmentReportService', EnrollmentReportService())
-services_broker.Provide('ImagedFormGeneratorService', ImagedFormGeneratorService())
-services_broker.Provide("FormPDFRenderer", FormPDFRenderer())
-services_broker.Provide("FormTemplateTabRepository", FormTemplateTabRepository())
-
-services_broker.Provide('FileImportService', FileImportService)
+from taa.services import initialize_services
+initialize_services()
 
 # Register API blueprints
 from api.cases import bp as cases_api
