@@ -80,6 +80,7 @@ def step_impl(context):
         payment_mode='weekly',
         emp_first='Joe',
         emp_last='Johnson',
+        emp_gender='m',
         emp_ssn='123121234',
         emp_birthdate='01/31/1980',
         emp_coverage='50000',
@@ -92,7 +93,7 @@ def step_impl(context):
         emp_phone='',
         emp_pin='12341234',
         emp_sig_txt='esign by Joe Johnson',
-        emp_application_date='06/01/2015',
+        application_date='06/01/2015',
         time_stamp='06/01/2015T23:00:00',
         signed_at_city='Lansing',
         signed_at_state='MI',
@@ -146,5 +147,5 @@ def step_impl(context):
     actual_errors = [(e.get_type(), e.get_fields()[0] if e.get_fields() else "")
                      for e in context.result.get_errors()]
 
-    assert_that(actual_errors, has_items(expected_errors))
+    assert_that(actual_errors, has_items(*expected_errors))
     assert_that(context.result.is_error(), equal_to(True))

@@ -88,7 +88,7 @@ def birthdate_validator(field, record):
     else:
         pass
     if not isinstance(date, datetime):
-        return False, "Invalidate date"
+        return False, "Invalid date"
     if date > datetime.now():
         # The preprocessor currently keeps this from happening, but I will leave
         #  it in here in case that changes
