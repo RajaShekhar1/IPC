@@ -116,7 +116,7 @@ def required_validator(field, record, message=None):
     data = field.get_column_from_record(record)
     if not data:
         message = message if message else "Required Data Missing"
-        return False, "missing_required", message
+        return False, "missing_data", message
     return True, None, None
 
 def ssn_validator(field, record):
@@ -389,6 +389,7 @@ class EnrollmentRecordParser(object):
         for record in records:
             missing_keys = self._get_missing_data_keys(record)
             for key in missing_keys:
-                self.error_record_field(message="missing_header",
+                self.error_record_field(type="missing_header",
+                                        message="Missing required table column",
                                         field_name=self.get_field_by_dict_key(key).dict_key_name,
                                         data=record)
