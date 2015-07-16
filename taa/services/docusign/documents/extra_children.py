@@ -142,6 +142,9 @@ class ChildAttachmentForm(BasePDFDoc):
         for child in self.children:
             child_name = child['first']
             for soh_data in child['soh_questions']:
+                if soh_data.get('is_spouse_only'):
+                    continue
+
                 if soh_data['question'] not in question_data:
                     question_data[soh_data['question']] = {}
 
