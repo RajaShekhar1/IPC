@@ -12,12 +12,22 @@ class ImagedFormGeneratorService(object):
 
         for tab_value in enrollment_data:
             if isinstance(tab_value, DocuSignTextTab):
-                value = tab_value.name
+                label = tab_value.name
+                text = tab_value.value
 
-                for tab_name, tab_def in tab_definitions.items():
-                    if tab_value.name == tab_name:
-                        self.pdf_renderer.draw_text(x=tab_def['x'], y=tab_def['y'], text=value)
-
+                tab_defs = filter(lambda x: x['label'] == label, tab_definitions)
+                if not tab_defs:
+                    continue
+                tab_def = tab_defs[0]
+                self.pdf_renderer.draw_text(text=text, x=tab_def['x'], y=tab_def['y'], width=tab_def['width'])
+            elif isinstance(tab_value, DocuSignRadioTab):
+                label = tab_value.group_name
+                value = tab_value.value
+                tab_defs = filter(lambda x: x['label'] == label and x['value'] == value, tab_definitions)
+                if not tab_defs:
+                    continue
+                tab_def = tab_defs[0]
+                self.pdf_renderer.draw_radio_checkmark(x=tab_def['x'], y=tab_def['y'])
 
 class FormTemplateTabRepository(object):
     def get_tabs_for_template(self, template_id):
@@ -25,7 +35,7 @@ class FormTemplateTabRepository(object):
 
 
 class FormPDFRenderer(object):
-    def draw_text(self, x, y, width):
+    def draw_text(self, text, x, y, width):
         pass
 
     def draw_radio_checkmark(self, x, y):

@@ -25,7 +25,7 @@ class FeatureBroker:
         return item in self.providers
 
 # Export the service locator
-services = FeatureBroker(allowReplace=True)
+services_broker = FeatureBroker(allowReplace=True)
 
 
 # Assertions about services / features
@@ -65,17 +65,20 @@ class RequiredFeature(object):
 
     def __getattr__(self, name):
         assert name == 'result', "Unexpected attribute request other then 'result'"
-        self.result = self.Request()
-        return self.result
+        return self.Request()
+        # Zach - don't cache this, just do the dict lookup each time so we can swap service implementations globally
+        #  for tests
+        #self.result = self.Request()
+        #return self.result
 
     def Request(self):
-        obj = services[self.feature]
+        obj = services_broker[self.feature]
         assert self.assertion(obj), \
             "The value %r of %r does not match the specified criteria" \
             % (obj, self.feature)
         return obj
 
 def LookupService(service_name):
-    if service_name not in services:
+    if service_name not in services_broker:
         raise ValueError("Could not find service named '{0}'".format(service_name))
-    return services[service_name]
+    return services_broker[service_name]
