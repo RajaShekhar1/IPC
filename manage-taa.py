@@ -3,10 +3,11 @@ from flask_assets import ManageAssets
 
 from taa import app
 from taa.manage import InitializeDatabaseCommand
-from taa.manage.sync_agents import SyncAgentsCommand
-from taa.manage.scramble_data import ScrambleDataCommand
-from taa.manage.init_brochures import InitProductBrochures
 from taa.manage.check_case_tokens import CheckCaseTokensCommand
+from taa.manage.docusign2taa import DocusignImportCommand
+from taa.manage.init_brochures import InitProductBrochures
+from taa.manage.scramble_data import ScrambleDataCommand
+from taa.manage.sync_agents import SyncAgentsCommand
 from taa.assets import init_app as init_assets
 
 manager = Manager(app)
@@ -17,6 +18,7 @@ manager.add_command("sync_agents", SyncAgentsCommand())
 manager.add_command("add_brochure_links", InitProductBrochures())
 manager.add_command("check_case_tokens", CheckCaseTokensCommand())
 manager.add_command("scramble_data", ScrambleDataCommand())
+manager.add_command("import_docusign", DocusignImportCommand())
 
 if __name__ == "__main__":
     manager.run()

@@ -258,3 +258,38 @@ CaseCensus.sent_email_count = db.column_property(
             )).\
             correlate_except(SelfEnrollmentEmailLog)
 )
+
+
+class FormTemplate(db.Model):
+    __tablename__ = 'form_templates'
+
+    id = db.Column(db.Integer, primary_key=True)
+    template_id = db.Column(db.Unicode, nullable=False)
+    data = db.Column(db.LargeBinary)
+    name = db.Column(db.Unicode)
+    description = db.Column(db.Unicode)
+    pages = db.Column(db.Integer, nullable=False)
+    modified_at = db.Column(db.DateTime)
+
+
+class FormTemplateTabs(db.Model):
+    __tablename__ = 'form_template_tabs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    form_template_id = db.Column(db.Integer, db.ForeignKey('form_templates.id'),
+                                 nullable=False)
+    template = db.relationship('FormTemplate', backref='tabs')
+    page = db.Column(db.Integer, nullable=False)
+    x = db.Column(db.Integer, nullable=False)
+    y = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.Unicode)
+    type_ = db.Column(db.Unicode)
+    label = db.Column(db.Unicode)
+    is_bold = db.Column(db.Boolean, server_default='FALSE')
+    is_italic = db.Column(db.Boolean, server_default='FALSE')
+    is_underline = db.Column(db.Boolean, server_default='FALSE')
+    custom_type = db.Column(db.Unicode)
+    width = db.Column(db.Integer)
+    height = db.Column(db.Integer)
+    font = db.Column(db.Unicode)
+    font_size = db.Column(db.Integer)
