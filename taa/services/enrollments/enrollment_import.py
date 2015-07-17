@@ -11,7 +11,7 @@ from taa.services.cases.census_import import (
     )
 
 import re
-import dateutil.parser
+import iso8601
 from datetime import datetime
 
 from taa.services.products.payment_modes import is_payment_mode
@@ -110,6 +110,27 @@ class EnrollmentRecordField():
     def add_validator(self, validator):
         self.validators.append(validator)
 
+
+# PREPROCESSORS
+
+def preprocess_date(data, record):
+    if data is None or data == '':
+        return None
+    try:
+        d = iso8601.parse_date(data, None)
+        if d >= datetime.today():
+            # This can happen when you try to parse 2-digit years (excel issue?)
+            # Solution should be OK, but if someone puts a future date in
+            # (like for an expected child?) it doesn't work, and also won't
+            # work for 100+ year-old people. Which can't apply for life
+            # insurance, I think.
+            d = datetime(d.year - 100, d.month, d.day)
+    except:
+        # Can't be parsed as a date; return as-is and let validation
+        # handle the error
+        return data
+    return d
+
 # VALIDATORS
 
 def required_validator(field, record, message=None):
@@ -147,7 +168,7 @@ def gender_validator(field, record):
     if not gender:
         # Allow blank unless combined with required validator
         return True, None, None
-    if gender not in ['male', 'female', 'm', 'f']:
+    if gender not in ['m', 'f']:
         return False, "invalid_gender", "Gender must be 'Male' or 'Female'"
     return True, None, None
 
@@ -185,10 +206,17 @@ def coverage_validator(field, record):
         return False, "invalid_coverage", "Invalid coverage format"
     return True, None, None
 
-zip_pattern = re.compile('^\d{3,5}$')
-
+def premium_validator(field, record):
+    premium_pattern = re.compile('^[0-9]+\.[0-9][0-9]$')
+    premium = field.get_column_from_record(record)
+    if not premium:
+        return True, None, None
+    if not premium_pattern.match(premium):
+        return False, "invalid_premium", "Invalid premium format"
+    return True, None, None
 
 def zip_validator(field, record):
+    zip_pattern = re.compile('^\d{5,}$')
     zip = field.get_column_from_record(record)
     if not zip:
         # Allow blank unless combined with required validator
@@ -219,11 +247,11 @@ class EnrollmentRecordParser(object):
     payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_string, [required_validator, payment_mode_validator])
     emp_first = EnrollmentRecordField("emp_first", "employee_first", preprocess_string, [required_validator])
     emp_last = EnrollmentRecordField("emp_last", "employee_last", preprocess_string, [required_validator])
-    emp_gender = EnrollmentRecordField("emp_gender", "employee_gender", preprocess_gender, [required_validator, gender_validator])
+    emp_gender = EnrollmentRecordField("emp_gender", "employee_gender", preprocess_string, [required_validator, gender_validator])
     emp_ssn = EnrollmentRecordField("emp_ssn", "employee_ssn", preprocess_numbers, [required_validator, ssn_validator])
     emp_birthdate = EnrollmentRecordField("emp_birthdate", "employee_birthdate", preprocess_date, [required_validator, birthdate_validator])
     emp_coverage = EnrollmentRecordField("emp_coverage", "employee_coverage", preprocess_string, [required_validator, coverage_validator])
-    emp_premium = EnrollmentRecordField("emp_premium", "employee_premium", preprocess_string, [required_validator])
+    emp_premium = EnrollmentRecordField("emp_premium", "employee_premium", preprocess_string, [required_validator, premium_validator])
     emp_street = EnrollmentRecordField("emp_street", "employee_street", preprocess_string, [required_validator])
     emp_street2 = EnrollmentRecordField("emp_street2", "employee_street2", preprocess_string, [])
     emp_city = EnrollmentRecordField("emp_city", "employee_city", preprocess_string, [required_validator])
