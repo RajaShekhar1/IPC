@@ -64,7 +64,7 @@ Feature: Validate an enrollment record submitted via API.
       | missing_header | signed_at_city   |
       | missing_header | signed_at_state  |
 
-  @wip
+
   Scenario: A user submits an enrollment with an invalid api token
     Given I prepare an enrollment file with basic valid enrollment data
     But I substitute 'BOGUS' for the column 'user_token'
@@ -73,7 +73,7 @@ Feature: Validate an enrollment record submitted via API.
       | error_type    | error_field |
       | invalid_token | user_token  |
 
-  @wip
+
   Scenario: A user submits an enrollment with an invalid case token
     Given I prepare an enrollment file with basic valid enrollment data
     But I substitute 'BOGUS' for the column 'case_token'
@@ -223,7 +223,7 @@ Feature: Validate an enrollment record submitted via API.
       | ' '       | ch1_premium  | missing_data |
       | ' '       | ch2_coverage | missing_data |
       | ' '       | ch2_premium  | missing_data |
-#
+
 #  Scenario: It should detect invalid combinations of products and states
 #    Given I prepare an enrollment file with basic valid enrollment data
 #    Given 'IN' is not a valid state for the 'FPPTI' product
@@ -233,43 +233,45 @@ Feature: Validate an enrollment record submitted via API.
 #    Then I should see the following errors in the response
 #      | error_type                | error_field     |
 #      | invalid_state_for_product | signed_at_state |
-#
-#
-#  Scenario: The user submits answers to exactly the right number of questions
-#  given the product and applicant type.
-#    Given The product 'FPPTI' has the following health questions
-#      | applicant | question                                          |
-#      | employee  | How are you feeling today?                        |
-#      | employee  | Have you had a heart attack in the past 6 months? |
-#      | spouse    | How are you feeling today?                        |
-#      | spouse    | Have you had a heart attack in the past 6 months? |
-#      | spouse    | Special spouse-only question                      |
-#      | child     | Special child question                            |
-#    Given I prepare an enrollment file with basic valid enrollment data
-#    And I add valid spouse enrollment data
-#    And I add valid child enrollment data
-#    And I add the following enrollment data columns
-#      | emp_question_1_answer | emp_question_2_answer |
-#      | N                     | N                     |
-#    And I add the following enrollment data columns
-#      | sp_question_1_answer | sp_question_2_answer | sp_question_3_answer |
-#      | Y                    | N                    | N                    |
-#    And I add the following enrollment data columns
-#      | ch1_question_1_answer |
-#      | N                     |
-#    When I submit the file to the Enrollment API
-#    Then I should see a success response
-#
-#
-#  Scenario: The user does not submit answers for the questions required for the product.
-#    Given The product 'FPPTI' has the following health questions
-#      | applicant | question                   |
-#      | employee  | How are you feeling today? |
-#    And I prepare an enrollment file with basic valid enrollment data
-#    When I submit the file to the Enrollment API
-#    Then I should see the following errors in the response
-#      | error_type        |
-#      | invalid_questions |
+
+  @wip
+  Scenario: The user submits answers to exactly the right number of questions given the product and applicant type.
+    Given The product 'FPPTI' has the following health questions
+      | applicant | question                                          |
+      | employee  | How are you feeling today?                        |
+      | employee  | Have you had a heart attack in the past 6 months? |
+      | spouse    | How are you feeling today?                        |
+      | spouse    | Have you had a heart attack in the past 6 months? |
+      | spouse    | Special spouse-only question                      |
+      | child     | Special child question                            |
+    Given I prepare an enrollment file with basic valid enrollment data
+    And I add valid spouse enrollment data
+    And I add valid child enrollment data
+    And I add the following enrollment data columns
+      | emp_question_1_answer | emp_question_2_answer |
+      | N                     | N                     |
+    And I add the following enrollment data columns
+      | sp_question_1_answer | sp_question_2_answer | sp_question_3_answer |
+      | Y                    | N                    | N                    |
+    And I add the following enrollment data columns
+      | ch1_question_1_answer |
+      | N                     |
+    And I add the following enrollment data columns
+      | ch2_question_1_answer |
+      | N                     |
+    When I submit the file to the Enrollment API
+    Then I should see a success response
+
+  
+  Scenario: The user does not submit answers for the questions required for the product.
+    Given The product 'FPPTI' has the following health questions
+      | applicant | question                   |
+      | employee  | How are you feeling today? |
+    And I prepare an enrollment file with basic valid enrollment data
+    When I submit the file to the Enrollment API
+    Then I should see the following errors in the response
+      | error_type        | error_field   |
+      | invalid_questions | emp_questions |
 #
 #  Scenario: The user submits the wrong number of employee questions for the product.
 #    Given The product 'FPPTI' has the following health questions

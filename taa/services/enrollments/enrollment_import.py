@@ -265,13 +265,27 @@ def state_validator(field, record):
     ps = ProductService()
     if not state or not len(state) == 2 or not state in ps.get_all_statecodes():
         return False, "invalid_state", "Invalid US State. Must be two-letter abbreviation."
-
     return True, None, None
 
+class validate_question_answered(object):
+    def __init__(self):
+        self.num_questions_answered = {}
+
+    def __call__(self, field, record):
+        question = field.get_column_from_record(record)
+        type=field.dict_key_name.split("_")[0]
+        if not question:
+            return True, None, None
+        if not self.num_questions_answered.has_key(type):
+            self.num_questions_answered[type] = 0
+        if question not in ["Y", "N"]:
+            return False, "invalid_question", "Questions must be answered with Y or N"
+        self.num_questions_answered[type]+=1
+        return True, None, None
 
 
 class EnrollmentRecordParser(object):
-
+    product_service = RequiredFeature("ProductService")
     #Case/Record information
     user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator])
     case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator])
@@ -387,6 +401,7 @@ class EnrollmentRecordParser(object):
         agent_sig_txt
     ]
 
+    #Child data
     MAX_CHILDREN = 6
     for num in range(1, MAX_CHILDREN + 1):
         child_first = EnrollmentRecordField('ch{}_first'.format(num),
@@ -419,6 +434,29 @@ class EnrollmentRecordParser(object):
                                     )
         all_fields += [child_first, child_last, child_birthdate, child_ssn, child_coverage, child_premium]
 
+    # Health Questions
+    MAX_HEALTH_QUESTIONS = 5
+    num_question_validator = validate_question_answered()
+    for num in range(1, MAX_HEALTH_QUESTIONS+1):
+        employee_question = EnrollmentRecordField('emp_question_{}_answer'.format(num),
+                                                  'employee_question_{}_answer'.format(num),
+                                                  preprocess_y_n,
+                                                  [num_question_validator]
+                                                  )
+        spouse_question = EnrollmentRecordField('sp_question_{}_answer'.format(num),
+                                                  'spouse_question_{}_answer'.format(num),
+                                                  preprocess_y_n,
+                                                  [num_question_validator]
+                                                  )
+        for child in range(1, MAX_CHILDREN + 1):
+            child_question = EnrollmentRecordField('ch{}_question_{}_answer'.format(child, num),
+                                                   'child_question_{}_answer'.format(child, num),
+                                                    preprocess_y_n,
+                                                    [num_question_validator]
+                                                  )
+            all_fields += [child_question]
+        all_fields += [employee_question, spouse_question]
+
     def __init__(self):
         self.errors = []
         self.valid_data = []
@@ -439,6 +477,23 @@ class EnrollmentRecordParser(object):
         valid_data = []
         for record in preprocessed_records:
             if self.validate_record(record):
+                for group in self.num_question_validator.num_questions_answered:
+                    if group[:2] == "ch":
+                        required = self.product_service.get_num_health_questions(record.get("product_code"), "child")
+                    elif group == "sp":
+                        required = self.product_service.get_num_health_questions(record.get("product_code"), "spouse")
+                    elif group == "emp":
+                        required = self.product_service.get_num_health_questions(record.get("product_code"), "employee")
+                    else:
+                        # something went wrong
+                        pass
+                    actual = self.num_question_validator.num_questions_answered[group]
+                    if actual != required:
+                        self.error_record_field("invalid_questions",
+                                                "Looking for {} {} question, found {}".format(required, group, actual),
+                                                "{}_questions".format(group),
+                                                record
+                                                )
                 self.postprocess_record(record)
                 self.valid_data.append(record)
 
@@ -464,26 +519,6 @@ class EnrollmentRecordParser(object):
         is_valid = True
         for field in self.all_fields:
             is_valid &= field.validate(self, record)
-        # Do not allow duplicate employee SSNs in a single upload
-        ssn = record.get(self.emp_ssn.dict_key_name)
-        if ssn and ssn in self.used_ssns:
-            is_valid = False
-            self.error_record_field(
-                "Duplicate SSN in data",
-                self.emp_ssn.dict_key_name,
-                record
-            )
-        elif ssn:
-            self.used_ssns.add(ssn)
-        # Some modes require us to throw an error if an existing record exists
-        # in the database (matched on SSN). Check that here.
-        # if self.error_if_matching and ssn in self.error_if_matching:
-        #     self.error_record_field(
-        #         "A census record exists that matches this SSN. This is not "
-        #         "allowed when uploading in 'Add New Records' mode.",
-        #         self.emp.csv_column_name,
-        #         record
-        #     )
         return is_valid
 
     def error_record_field(self, type, message, field_name, data):
