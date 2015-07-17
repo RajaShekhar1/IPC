@@ -1,10 +1,8 @@
 import csv
 
 from taa.services.cases.census_import import (
-    preprocess_gender,
     preprocess_numbers,
     preprocess_string,
-    preprocess_y_n,
     preprocess_zip,
     )
 
@@ -21,11 +19,11 @@ class EnrollmentImportService(object):
     def submit_file_records(self, records):
         response = EnrollmentImportResponse()
         parser = EnrollmentRecordParser()
+
         # Process all records
         parser.process_records(records)
         errors = parser.errors
-
-        # If there are errors in the parser, return
+        # If there are errors in the parser, add them to the response
         for error in errors:
             response.add_error(error["type"], error["field_name"])
 
@@ -224,24 +222,6 @@ class EnrollmentRecordParser(object):
         agent_sig_txt
     ]
 
-    # instantiate num question validator
-    # num_question_validator = validate_question_answered()
-
-     # Health Questions
-    # MAX_HEALTH_QUESTIONS = 5
-    # for num in range(1, MAX_HEALTH_QUESTIONS+1):
-    #     employee_question = EnrollmentRecordField('emp_question_{}_answer'.format(num),
-    #                                               'employee_question_{}_answer'.format(num),
-    #                                               preprocess_y_n,
-    #                                               [num_question_validator]
-    #                                               )
-    #     spouse_question = EnrollmentRecordField('sp_question_{}_answer'.format(num),
-    #                                               'spouse_question_{}_answer'.format(num),
-    #                                               preprocess_y_n,
-    #                                               [num_question_validator]
-    #                                               )
-    #     all_fields += [employee_question, spouse_question]
-
     #Child data
     MAX_CHILDREN = 6
     for num in range(1, MAX_CHILDREN + 1):
@@ -268,18 +248,6 @@ class EnrollmentRecordParser(object):
                                             preprocess_string,
                                             [premium_validator])
 
-        # question_fields = []
-        # for q_num in range(1, MAX_HEALTH_QUESTIONS+1):
-        #     child_question = EnrollmentRecordField('ch{}_question_{}_answer'.format(num, q_num),
-        #                                            'child_question_{}_answer'.format(num, q_num),
-        #                                             preprocess_y_n,
-        #                                             [num_question_validator]
-        #                                           )
-        #     child_question.add_validator(
-        #                                     RequiredIfAnyInGroupValidator([child_first],
-        #                                     "ch{}_question_{} is required if child is set".format(num, q_num))
-        #                                 )
-        #     question_fields += [child_question]
         child_premium.add_validator(RequiredIfAnyInGroupValidator([child_coverage],
                                         "child_premium is required if child_coverage is provided")
                                     )
@@ -287,7 +255,7 @@ class EnrollmentRecordParser(object):
                                         "child_coverage is required if child_premium is provided")
                                     )
         all_fields += [child_first, child_last, child_birthdate, child_ssn, child_coverage, child_premium]
-        # all_fields += question_fields
+
 
     def __init__(self):
         self.errors = []
@@ -310,7 +278,6 @@ class EnrollmentRecordParser(object):
                 self.postprocess_record(record)
                 self.valid_data.append(record)
         self.validate_questions(records)
-
 
     def preprocess_record(self, record):
         data = {}
@@ -393,6 +360,3 @@ class EnrollmentRecordParser(object):
                                         message="Missing required table column",
                                         field_name=self.get_field_by_dict_key(key).dict_key_name,
                                         data=record)
-
-    def validate_questions(self, records):
-        pass
