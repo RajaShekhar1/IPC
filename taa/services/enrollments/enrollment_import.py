@@ -300,7 +300,7 @@ class EnrollmentRecordParser(object):
     sp_birthdate = EnrollmentRecordField("sp_birthdate", "spouse_birthdate", preprocess_date, [birthdate_validator])
     sp_ssn = EnrollmentRecordField("sp_ssn", "spouse_ssn", preprocess_numbers, [ssn_validator])
     sp_coverage = EnrollmentRecordField("sp_coverage", "spouse_coverage", preprocess_string, [coverage_validator])
-    sp_premium = EnrollmentRecordField("sp_permium", "spouse_premium", preprocess_string, [premium_validator])
+    sp_premium = EnrollmentRecordField("sp_premium", "spouse_premium", preprocess_string, [premium_validator])
 
     #Signing Information
     emp_sig_txt = EnrollmentRecordField("emp_sig_txt", "employee_sig_txt", preprocess_string, [required_validator])
@@ -325,6 +325,25 @@ class EnrollmentRecordParser(object):
                                           ))
         # If any in group provided, all must be valid
         field.add_validator(validator)
+
+    premium_coverage_required = [
+        (emp_premium, emp_coverage),
+        (emp_coverage, emp_premium),
+        (sp_premium, sp_coverage),
+        (sp_coverage, sp_premium)
+    ]
+
+    for field, group in premium_coverage_required:
+        field.add_validator(RequiredIfAnyInGroupValidator([group],
+                            "{} is required if {} is provided".format(field.dict_key_name, group.dict_key_name))
+                            )
+
+    sp_premium.add_validator(
+            RequiredIfAnyInGroupValidator(
+                [sp_coverage],
+                "Spouse premium is required if spouse coverage is provided"
+            )
+        )
 
     all_fields = [
         #Case data
@@ -392,6 +411,12 @@ class EnrollmentRecordParser(object):
                                             'child{}_premium'.format(num),
                                             preprocess_string,
                                             [premium_validator])
+        child_premium.add_validator(RequiredIfAnyInGroupValidator([child_coverage],
+                                        "child_premium is required if child_coverage is provided")
+                                    )
+        child_coverage.add_validator(RequiredIfAnyInGroupValidator([child_premium],
+                                        "child_coverage is required if child_premium is provided")
+                                    )
         all_fields += [child_first, child_last, child_birthdate, child_ssn, child_coverage, child_premium]
 
     def __init__(self):

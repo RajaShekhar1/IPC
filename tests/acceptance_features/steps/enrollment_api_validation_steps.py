@@ -107,7 +107,7 @@ def step_impl(context):
     context.import_record.update(dict(
         sp_first="Jane",
         sp_last="Doe",
-        sp_birthate="1990-01-01",
+        sp_birthdate="1990-01-01",
         sp_ssn="123-33-4444",
         sp_premium="3.00",
         sp_coverage="10000",
@@ -122,6 +122,14 @@ def step_impl(context):
         ch1_ssn="126-66-7777",
         ch1_premium="2.50",
         ch1_coverage="10000",
+    ))
+    context.import_record.update(dict(
+        ch2_first="Mary",
+        ch2_last="Doe",
+        ch2_birthate="2009-12-01",
+        ch2_ssn="124-44-888",
+        ch2_premium="2.50",
+        ch2_coverage="10000",
     ))
 
 @given(u"I substitute '{bad_value}' for the column '{column_name}'")

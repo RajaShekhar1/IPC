@@ -203,26 +203,26 @@ Feature: Validate an enrollment record submitted via API.
     When I submit the file to the Enrollment API
     Then I should see a success response
 
-#  Scenario Outline: User submits coverage without premium and vice versa
-#    Given I prepare an enrollment file with basic valid enrollment data
-#    And I add valid spouse enrollment data
-#    And I add valid child enrollment data
-#    But I substitute <bad_value> for the column '<column_name>'
-#    When I submit the file to the Enrollment API
-#    Then I should see the following errors in the response
-#      | error_type   | error_field   |
-#      | <error_type> | <column_name> |
-#
-#    Examples:
-#      | bad_value | column_name  | error_type   |
-#      | ' '       | emp_coverage | missing_data |
-#      | ' '       | emp_premium  | missing_data |
-#      | ' '       | sp_coverage  | missing_data |
-#      | ' '       | sp_premium   | missing_data |
-#      | ' '       | ch1_coverage | missing_data |
-#      | ' '       | ch1_premium  | missing_data |
-#      | ' '       | ch2_coverage | missing_data |
-#      | ' '       | ch2_premium  | missing_data |
+  Scenario Outline: User submits coverage without premium and vice versa
+    Given I prepare an enrollment file with basic valid enrollment data
+    And I add valid spouse enrollment data
+    And I add valid child enrollment data
+    But I substitute <bad_value> for the column '<column_name>'
+    When I submit the file to the Enrollment API
+    Then I should see the following errors in the response
+      | error_type   | error_field   |
+      | <error_type> | <column_name> |
+
+    Examples:
+      | bad_value | column_name  | error_type   |
+      | ' '       | emp_coverage | missing_data |
+      | ' '       | emp_premium  | missing_data |
+      | ' '       | sp_coverage  | missing_data |
+      | ' '       | sp_premium   | missing_data |
+      | ' '       | ch1_coverage | missing_data |
+      | ' '       | ch1_premium  | missing_data |
+      | ' '       | ch2_coverage | missing_data |
+      | ' '       | ch2_premium  | missing_data |
 #
 #  Scenario: It should detect invalid combinations of products and states
 #    Given I prepare an enrollment file with basic valid enrollment data
