@@ -77,39 +77,79 @@ def home():
 
 @route(bp, '/submit-data', methods=["POST"])
 def submit_data():
-    data = request.json
-    case = case_service.get(data["agent_data"]["case_id"])
-    # Save enrollment information and updated census data prior to
-    # DocuSign hand-off
-    if data['census_record_id']:
-        census_record = case_service.get_census_record(
-            case, data['census_record_id'])
-    else:
-        census_record = None
-    agent = agent_service.get_logged_in_agent()
-    enrollment_application = enrollment_service.save_enrollment_data(
-        data, case, census_record, agent)
+    pass
 
-    # Create and save the enrollment data. Creates a census record if this is a generic link, and in
-    #   either case updates the census record with the latest enrollment data.
+    # 1. authenticate
+    #  - check URL parameters for an API user_token
+    #    - flag as a 3rd party enrollment import
+    #  - check for logged-in-agent
+    #  - check for self-enroll token (move to URL parameter)
+    # 2. determine which case we are importing to
+    #  - if authenticated via API token,
+    #     case_token must be in either the URL params, otherwise require it on every record
+    #     case_id may not be used
+    #  - if authenticated via login, case_id must be provided in the URL parameters
+    #  - if authenticated via self-enroll token, case is retrieved from the self enroll setup
+    # 3. normalize data format
+    #  - use content type header probably - text/plain for flat-file, text/csv for csv, or application/json
+    #  - convert flat-file to CSV
+    #  - parse CSV to list-of-dicts
+    #  - convert JSON to CSV list-of-dict format if it needs to be converted from wizard,
+    #    otherwise leave as list of dicts
+    #    - how to determine if from wizard?
+    # 4. validate data
+    #  - configure the validator with whether or not the case_token is required
+    #  - if any submitted enrollment data fails validation, we fail the whole thing
+    #  - MAYBE skip validation if logged in or self enroll, but would prefer not to skip if possible.
+    #  - TODO: do we accept declines from 3rd party enrollment, if so define did_decline column
+    # 5. save enrollment data
+    #  - same as now, except also save raw JSON data
+    # 6. submit
+    #  - Batch this part if this is not a wizard enrollment
+    #  - TODO: need to update the docusign service code to expect the new column names
+    #  - If this is a 3rd party import, the docusign submission is changed by:
+    #     - removing the employee and agent as recipients
+    #     - generate the server templates locally instead of via DocuSign
+    #  - Otherwise, submit to DocuSign normally (with employee and agent recipients)
+    #  - Soon, will submit to Dell XML
+    # 7. return response
+    #  - If 3rd party import, we return success with # records processed, or errors.
+    #    - If this came from the dropbox, we need to reply via email
+    #    - otherwise we return JSON
+    #  - If wizard, then we also include a redirect URL for DocuSign.
 
-    if not data.get('did_decline'):
-        # Hand off wizard_results to docusign
-        is_error, error_message, redirect = create_envelope_and_get_signing_url(data, census_record, case)
-        # Return the redirect url or error
-        resp = {'error': is_error,
-                'error_message': error_message,
-                'redirect': redirect}
-    else:
-        # Declined
-        resp = {
-            'error': False,
-            'error_message': '',
-            'redirect': url_for('ds_landing_page',
-                                event='decline',
-                                name=data['employee']['first'],
-                                type=data["agent_data"]["is_in_person"],
-                                )
-        }
 
-    return resp
+    # data = request.json
+    # case = case_service.get(data["agent_data"]["case_id"])
+    # # Save enrollment information and updated census data prior to
+    # # DocuSign hand-off
+    # if data['census_record_id']:
+    #     census_record = case_service.get_census_record(
+    #         case, data['census_record_id'])
+    # else:
+    #     census_record = None
+    # agent = agent_service.get_logged_in_agent()
+    # enrollment_application = enrollment_service.save_enrollment_data(
+    #     data, case, census_record, agent)
+    #
+    #
+    # if not data.get('did_decline'):
+    #     # Hand off wizard_results to docusign
+    #     is_error, error_message, redirect = create_envelope_and_get_signing_url(data, census_record, case)
+    #     # Return the redirect url or error
+    #     resp = {'error': is_error,
+    #             'error_message': error_message,
+    #             'redirect': redirect}
+    # else:
+    #     # Declined
+    #     resp = {
+    #         'error': False,
+    #         'error_message': '',
+    #         'redirect': url_for('ds_landing_page',
+    #                             event='decline',
+    #                             name=data['employee']['first'],
+    #                             type=data["agent_data"]["is_in_person"],
+    #                             )
+    #     }
+    #
+    # return resp

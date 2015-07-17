@@ -322,3 +322,6 @@ Feature: Validate an enrollment record submitted via API.
 ## TODO: well-formed email address
 ## TODO: question Y / N / GI handling?
 ## TODO: Other boolean questions (actively at work) required? and Y/N validation
+
+# TODO: check that the case is currently enrolling
+# TODO: check that the case is enrolling the submitted product
