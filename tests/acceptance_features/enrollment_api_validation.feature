@@ -156,35 +156,34 @@ Feature: Validate an enrollment record submitted via API.
       | agent_name    |
       | agent_code    |
       | emp_pin       |
-#
-#
-#  Scenario: User submits spouse data with the enrollment.
-#    Given I prepare an enrollment file with basic valid enrollment data
-#    And I add the following enrollment data columns
-#      | sp_first | sp_last | sp_birthdate | sp_ssn      | sp_coverage | sp_premium |
-#      | Jane     | Johnson | 01/01/1989   | 123-33-4444 | 10000       | 3.00       |
-#    When I submit the file to the Enrollment API
-#    Then I should see a success response
-#
-#
-#  Scenario Outline: User submits spouse data with missing data that is only required when some spouse data is present.
-#    Given I prepare an enrollment file with basic valid enrollment data
-#    And I add the following enrollment data columns
-#      | sp_first   | sp_last   | sp_birthdate   | sp_ssn   | sp_coverage | sp_premium |
-#      | <sp_first> | <sp_last> | <sp_birthdate> | <sp_ssn> | 10000       | 3.00       |
-#    When I submit the file to the Enrollment API
-#    Then I should see the following errors in the response
-#      | error_type   | error_field   |
-#      | <error_type> | <error_field> |
-#
-#    Examples:
-#      | sp_first | sp_last | sp_birthdate | sp_ssn      | error_type   | error_field  |
-#      | Jane     | Doe     | 1990-01-01   |             | missing_data | sp_ssn       |
-#      | Jane     | Doe     |              | 123-12-1234 | missing_data | sp_birthdate |
-#      | Jane     |         | 1990-01-01   | 123-12-1234 | missing_data | sp_last      |
-#      |          | Doe     | 1990-01-01   | 123-12-1234 | missing_data | sp_first     |
-#
-#
+
+
+  Scenario: User submits spouse data with the enrollment.
+    Given I prepare an enrollment file with basic valid enrollment data
+    And I add the following enrollment data columns
+      | sp_first | sp_last | sp_birthdate | sp_ssn      | sp_coverage | sp_premium |
+      | Jane     | Johnson | 1989-01-01   | 123-33-4444 | 10000       | 3.00       |
+    When I submit the file to the Enrollment API
+    Then I should see a success response
+
+
+  Scenario Outline: User submits spouse data with missing data that is only required when some spouse data is present.
+    Given I prepare an enrollment file with basic valid enrollment data
+    And I add the following enrollment data columns
+      | sp_first   | sp_last   | sp_birthdate   | sp_ssn   | sp_coverage | sp_premium |
+      | <sp_first> | <sp_last> | <sp_birthdate> | <sp_ssn> | 10000       | 3.00       |
+    When I submit the file to the Enrollment API
+    Then I should see the following errors in the response
+      | error_type   | error_field   |
+      | <error_type> | <error_field> |
+
+    Examples:
+      | sp_first | sp_last | sp_birthdate | sp_ssn      | error_type   | error_field  |
+      | Jane     | Doe     | 1990-01-01   |             | missing_data | sp_ssn       |
+      | Jane     | Doe     |              | 123-12-1234 | missing_data | sp_birthdate |
+      | Jane     |         | 1990-01-01   | 123-12-1234 | missing_data | sp_last      |
+      |          | Doe     | 1990-01-01   | 123-12-1234 | missing_data | sp_first     |
+
 #  Scenario: User submits child data with the enrollment.
 #    Given I prepare an enrollment file with basic valid enrollment data
 #    And I add the following enrollment data columns

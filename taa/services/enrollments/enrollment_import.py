@@ -132,6 +132,18 @@ def preprocess_date(data, record):
 
 # VALIDATORS
 
+class RequiredIfAnyInGroupValidator(object):
+    def __init__(self, group_fields, message=None):
+        self.group_fields = group_fields
+        self.message = message
+
+    def __call__(self, field, record):
+        # If any of the given fields have a value, require this field
+        if any(group_field.get_column_from_record(record)
+               for group_field in self.group_fields):
+            return required_validator(field, record, self.message)
+        return True, None, None
+
 def required_validator(field, record, message=None):
     data = field.get_column_from_record(record)
     if not data:
@@ -259,10 +271,14 @@ def state_validator(field, record):
 
 
 class EnrollmentRecordParser(object):
+
+    #Case/Record information
     user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator])
     case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator])
     product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [required_validator, product_validator])
     payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_string, [required_validator, payment_mode_validator])
+
+    #Employee Information
     emp_first = EnrollmentRecordField("emp_first", "employee_first", preprocess_string, [required_validator])
     emp_last = EnrollmentRecordField("emp_last", "employee_last", preprocess_string, [required_validator])
     emp_gender = EnrollmentRecordField("emp_gender", "employee_gender", preprocess_string, [required_validator, gender_validator])
@@ -277,6 +293,16 @@ class EnrollmentRecordParser(object):
     emp_zipcode = EnrollmentRecordField("emp_zipcode", "employee_zipcode", preprocess_zip, [required_validator, zip_validator])
     emp_phone = EnrollmentRecordField("emp_phone", "employee_phone", preprocess_string, [])
     emp_pin = EnrollmentRecordField("emp_pin", "employee_pin", preprocess_numbers, [required_validator])
+
+    #Spouse Information
+    sp_first = EnrollmentRecordField("sp_first", "spouse_first", preprocess_string, [])
+    sp_last = EnrollmentRecordField("sp_last", "spouse_last", preprocess_string, [])
+    sp_birthdate = EnrollmentRecordField("sp_birthdate", "spouse_birthdate", preprocess_date, [birthdate_validator])
+    sp_ssn = EnrollmentRecordField("sp_ssn", "spouse_ssn", preprocess_numbers, [ssn_validator])
+    sp_coverage = EnrollmentRecordField("sp_coverage", "spouse_coverage", preprocess_string, [coverage_validator])
+    sp_premium = EnrollmentRecordField("sp_permium", "spouse_premium", preprocess_string, [premium_validator])
+
+    #Signing Information
     emp_sig_txt = EnrollmentRecordField("emp_sig_txt", "employee_sig_txt", preprocess_string, [required_validator])
     application_date = EnrollmentRecordField("application_date", "application_date", preprocess_date, [required_validator])
     time_stamp = EnrollmentRecordField("time_stamp", "time_stamp", preprocess_date, [required_validator])
@@ -285,11 +311,30 @@ class EnrollmentRecordParser(object):
     agent_name = EnrollmentRecordField("agent_name", "agent_name", preprocess_string, [required_validator])
     agent_code = EnrollmentRecordField("agent_code", "agent_code", preprocess_string, [required_validator])
     agent_sig_txt = EnrollmentRecordField("agent_sig_txt", "agent_sig_txt", preprocess_string, [required_validator])
+
+
+    #All spouse data is required if any spouse data is given
+    spouse_fields = [sp_first, sp_last, sp_birthdate, sp_ssn]
+    for field in spouse_fields:
+        validator = RequiredIfAnyInGroupValidator(
+            spouse_fields,
+            message="{} is required if any of the following are"
+                    "provided: {}".format(field.dict_key_name,
+                                          ', '.join([f.dict_key_name
+                                                     for f in spouse_fields
+                                                     if f is not field])
+                                          ))
+        # If any in group provided, all must be valid
+        field.add_validator(validator)
+
     all_fields = [
+        #Case data
         user_token,
         case_token,
-        product_code ,
-        payment_mode ,
+        product_code,
+        payment_mode,
+
+        #Employee data
         emp_first,
         emp_last,
         emp_gender,
@@ -303,6 +348,16 @@ class EnrollmentRecordParser(object):
         emp_state,
         emp_zipcode,
         emp_phone,
+
+        #Spouse data
+        sp_first,
+        sp_last,
+        sp_birthdate,
+        sp_ssn,
+        sp_coverage,
+        sp_premium,
+
+        #Signing data
         emp_pin,
         emp_sig_txt,
         application_date,
