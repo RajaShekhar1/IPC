@@ -184,25 +184,25 @@ Feature: Validate an enrollment record submitted via API.
       | Jane     |         | 1990-01-01   | 123-12-1234 | missing_data | sp_last      |
       |          | Doe     | 1990-01-01   | 123-12-1234 | missing_data | sp_first     |
 
-#  Scenario: User submits child data with the enrollment.
-#    Given I prepare an enrollment file with basic valid enrollment data
-#    And I add the following enrollment data columns
-#      | ch1_first | ch1_last | ch1_birthdate | ch1_ssn | ch1_coverage | ch1_premium |
-#      | Johnny    | Doe      | 2010-02-02    |         | 10000        | 2.50        |
-#    When I submit the file to the Enrollment API
-#    Then I should see a success response
-#
-#  Scenario: User submits a second child's data with the enrollment.
-#    Given I prepare an enrollment file with basic valid enrollment data
-#    And I add the following enrollment data columns
-#      | ch1_first | ch1_last | ch1_birthdate | ch1_ssn | ch1_coverage | ch1_premium |
-#      | Johnny    | Doe      | 2010-02-02    |         | 10000        | 2.50        |
-#    And I add the following enrollment data columns
-#      | ch2_first | ch1_last | ch1_birthdate | ch1_ssn | ch1_coverage | ch1_premium |
-#      | Susie     | Doe      | 2011-03-03    |         | 10000        | 2.50        |
-#    When I submit the file to the Enrollment API
-#    Then I should see a success response
-#
+  Scenario: User submits child data with the enrollment.
+    Given I prepare an enrollment file with basic valid enrollment data
+    And I add the following enrollment data columns
+      | ch1_first | ch1_last | ch1_birthdate | ch1_ssn | ch1_coverage | ch1_premium |
+      | Johnny    | Doe      | 2010-02-02    |         | 10000        | 2.50        |
+    When I submit the file to the Enrollment API
+    Then I should see a success response
+
+  Scenario: User submits a second child's data with the enrollment.
+    Given I prepare an enrollment file with basic valid enrollment data
+    And I add the following enrollment data columns
+      | ch1_first | ch1_last | ch1_birthdate | ch1_ssn | ch1_coverage | ch1_premium |
+      | Johnny    | Doe      | 2010-02-02    |         | 10000        | 2.50        |
+    And I add the following enrollment data columns
+      | ch2_first | ch2_last | ch2_birthdate | ch2_ssn | ch2_coverage | ch2_premium |
+      | Susie     | Doe      | 2011-03-03    |         | 10000        | 2.50        |
+    When I submit the file to the Enrollment API
+    Then I should see a success response
+
 #  Scenario Outline: User submits coverage without premium and vice versa
 #    Given I prepare an enrollment file with basic valid enrollment data
 #    And I add valid spouse enrollment data

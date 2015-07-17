@@ -312,7 +312,6 @@ class EnrollmentRecordParser(object):
     agent_code = EnrollmentRecordField("agent_code", "agent_code", preprocess_string, [required_validator])
     agent_sig_txt = EnrollmentRecordField("agent_sig_txt", "agent_sig_txt", preprocess_string, [required_validator])
 
-
     #All spouse data is required if any spouse data is given
     spouse_fields = [sp_first, sp_last, sp_birthdate, sp_ssn]
     for field in spouse_fields:
@@ -368,6 +367,32 @@ class EnrollmentRecordParser(object):
         agent_code,
         agent_sig_txt
     ]
+
+    MAX_CHILDREN = 6
+    for num in range(1, MAX_CHILDREN + 1):
+        child_first = EnrollmentRecordField('ch{}_first'.format(num),
+                                        'child{}_first'.format(num),
+                                        preprocess_string, [])
+        child_last = EnrollmentRecordField('ch{}_last'.format(num),
+                                       'child{}_last'.format(num),
+                                       preprocess_string, [])
+        child_birthdate = EnrollmentRecordField('ch{}_birthdate'.format(num),
+                                            'child{}_birthdate'.format(num),
+                                            preprocess_date,
+                                            [birthdate_validator])
+        child_ssn = EnrollmentRecordField('ch{}_ssn'.format(num),
+                                            'child{}_ssn'.format(num),
+                                            preprocess_numbers,
+                                            [ssn_validator])
+        child_coverage = EnrollmentRecordField('ch{}_coverage'.format(num),
+                                            'child{}_coverage'.format(num),
+                                            preprocess_string,
+                                            [coverage_validator])
+        child_premium = EnrollmentRecordField('ch{}_premium'.format(num),
+                                            'child{}_premium'.format(num),
+                                            preprocess_string,
+                                            [premium_validator])
+        all_fields += [child_first, child_last, child_birthdate, child_ssn, child_coverage, child_premium]
 
     def __init__(self):
         self.errors = []
