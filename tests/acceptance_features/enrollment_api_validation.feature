@@ -64,23 +64,33 @@ Feature: Validate an enrollment record submitted via API.
       | missing_header | signed_at_city   |
       | missing_header | signed_at_state  |
 
+  @wip
+  Scenario: A user submits an enrollment with an invalid api token
+    Given I prepare an enrollment file with basic valid enrollment data
+    But I substitute 'BOGUS' for the column 'user_token'
+    When I submit the file to the Enrollment API
+    Then I should see the following errors in the response
+      | error_type    | error_field |
+      | invalid_token | user_token  |
 
-#  Scenario: A user submits an enrollment with an invalid token
-#    Given I prepare an enrollment file with basic valid enrollment data
-#    But I substitute 'BOGUS' for the column 'user_token'
-#    When I submit the file to the Enrollment API
-#    Then I should see the following errors in the response
-#      | error_type    | error_field |
-#      | invalid_token | user_token  |
-#
-#
-#  Scenario: User submits an invalid product code
-#    Given I prepare an enrollment file with basic valid enrollment data
-#    But I substitute 'MY_BAD_PRODUCT_CODE' for the column 'product_code'
-#    When I submit the file to the Enrollment API
-#    Then I should see the following errors in the response
-#      | error_type      | error_field  |
-#      | invalid_product | product_code |
+  @wip
+  Scenario: A user submits an enrollment with an invalid case token
+    Given I prepare an enrollment file with basic valid enrollment data
+    But I substitute 'BOGUS' for the column 'case_token'
+    When I submit the file to the Enrollment API
+    Then I should see the following errors in the response
+      | error_type    | error_field |
+      | invalid_token | case_token  |
+
+
+
+  Scenario: User submits an invalid product code
+    Given I prepare an enrollment file with basic valid enrollment data
+    But I substitute 'MY_BAD_PRODUCT_CODE' for the column 'product_code'
+    When I submit the file to the Enrollment API
+    Then I should see the following errors in the response
+      | error_type      | error_field  |
+      | invalid_product | product_code |
 
 
   Scenario Outline: User submits valid payment modes
@@ -124,7 +134,6 @@ Feature: Validate an enrollment record submitted via API.
       | emp_state     | ZZ        | invalid_state    | emp_state     |
       # Must be at least 5 digits (may be longer)
       | emp_zipcode   | 1234      | invalid_zip      | emp_zipcode   |
-
 
   Scenario Outline: A user submits a file with missing data for required columns.
     Given I prepare an enrollment file with basic valid enrollment data

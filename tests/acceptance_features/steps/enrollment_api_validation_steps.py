@@ -35,7 +35,7 @@ class MockProductService(object):
 def step_impl(context, user_name, user_token):
     if not hasattr(context, 'mock_token_service'):
         context.mock_token_service = MockApiTokenService()
-        services_broker.Provide('APITokenService', context.mock_token_service)
+        services_broker.Provide('ApiTokenService', context.mock_token_service)
 
     context.mock_token_service.valid_tokens[user_token] = user_name
 
@@ -54,7 +54,7 @@ def step_impl(context):
         context.mock_product_service = MockProductService()
         services_broker.Provide('ProductService', context.mock_product_service)
 
-    context.valid_product_codes = context.table.rows
+    context.mock_product_service.valid_product_codes = [r[0] for r in context.table.rows]
 
 @given(u'I add the following enrollment data columns')
 def step_impl(context):

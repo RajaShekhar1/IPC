@@ -15,7 +15,7 @@ import iso8601
 from datetime import datetime
 
 from taa.services.products.payment_modes import is_payment_mode
-
+from taa.services import RequiredFeature, LookupService
 
 class EnrollmentImportService(object):
     def convert_csv_to_json(self, csv_bytes):
@@ -33,7 +33,6 @@ class EnrollmentImportService(object):
             response.add_error(error["type"], error["field_name"])
 
         return response
-
 
 
 class EnrollmentImportResponse(object):
@@ -161,7 +160,26 @@ def payment_mode_validator(field, record):
 
 def product_validator(field, record):
     # Needs a database call to check if product exists
+    product_service = LookupService("ProductService")
+    product_code = field.get_column_from_record(record)
+    if not product_service.is_valid_product_code(product_code):
+        return False, "invalid_product", "Product code not found"
     return True, None, None
+
+def api_token_validator(field, record):
+    api_token_service = LookupService("ApiTokenService")
+    api_token = field.get_column_from_record(record)
+    if not api_token_service.is_valid_token(api_token):
+        return False, "invalid_token", "Invalid API token provided"
+    return True, None, None
+
+def case_token_validator(field, record):
+    case_service = LookupService("CaseService")
+    case_token = field.get_column_from_record(record)
+    if not case_service.is_valid_case_token(case_token):
+        return False, "invalid_token", "Invalid Case token provided"
+    return True, None, None
+
 
 def gender_validator(field, record):
     gender = field.get_column_from_record(record)
@@ -241,8 +259,8 @@ def state_validator(field, record):
 
 
 class EnrollmentRecordParser(object):
-    user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator])
-    case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator])
+    user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator])
+    case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator])
     product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [required_validator, product_validator])
     payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_string, [required_validator, payment_mode_validator])
     emp_first = EnrollmentRecordField("emp_first", "employee_first", preprocess_string, [required_validator])
