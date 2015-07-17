@@ -141,6 +141,9 @@ def step_impl(context):
         ch1_premium="2.50",
         ch1_coverage="10000",
     ))
+
+@given(u'I add a valid second child enrollment data')
+def step_impl(context):
     context.import_record.update(dict(
         ch2_first="Mary",
         ch2_last="Doe",
