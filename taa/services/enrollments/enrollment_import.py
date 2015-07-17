@@ -1,7 +1,6 @@
 import csv
 
 from taa.services.cases.census_import import (
-    preprocess_date,
     preprocess_gender,
     preprocess_numbers,
     preprocess_string,
@@ -9,11 +8,9 @@ from taa.services.cases.census_import import (
     preprocess_zip,
     )
 
-from taa.services.validators import Validator
-validator_service = Validator()
+from taa.services.preprocessors import *
 
-import iso8601
-from datetime import datetime
+from taa.services.validators import *
 
 from taa.services import RequiredFeature
 
@@ -33,7 +30,6 @@ class EnrollmentImportService(object):
             response.add_error(error["type"], error["field_name"])
 
         return response
-
 
 class EnrollmentImportResponse(object):
     def __init__(self):
@@ -111,74 +107,52 @@ class EnrollmentRecordField():
         self.validators.append(validator)
 
 
-# PREPROCESSORS
-
-def preprocess_date(data, record):
-    if data is None or data == '':
-        return None
-    try:
-        d = iso8601.parse_date(data, None)
-        if d >= datetime.today():
-            # This can happen when you try to parse 2-digit years (excel issue?)
-            # Solution should be OK, but if someone puts a future date in
-            # (like for an expected child?) it doesn't work, and also won't
-            # work for 100+ year-old people. Which can't apply for life
-            # insurance, I think.
-            d = datetime(d.year - 100, d.month, d.day)
-    except:
-        # Can't be parsed as a date; return as-is and let validation
-        # handle the error
-        return data
-    return d
-
-# VALIDATORS
-
 class EnrollmentRecordParser(object):
     product_service = RequiredFeature("ProductService")
     #Case/Record information
-    user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [validator_service.required_validator, validator_service.api_token_validator])
-    case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [validator_service.required_validator, validator_service.case_token_validator])
-    product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [validator_service.required_validator, validator_service.product_validator])
-    payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_string, [validator_service.required_validator, validator_service.payment_mode_validator])
+    user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator])
+    case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator])
+    product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [required_validator, product_validator])
+    payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_string, [required_validator, payment_mode_validator])
 
     #Employee Information
-    emp_first = EnrollmentRecordField("emp_first", "employee_first", preprocess_string, [validator_service.required_validator])
-    emp_last = EnrollmentRecordField("emp_last", "employee_last", preprocess_string, [validator_service.required_validator])
-    emp_gender = EnrollmentRecordField("emp_gender", "employee_gender", preprocess_string, [validator_service.required_validator, validator_service.gender_validator])
-    emp_ssn = EnrollmentRecordField("emp_ssn", "employee_ssn", preprocess_numbers, [validator_service.required_validator, validator_service.ssn_validator])
-    emp_birthdate = EnrollmentRecordField("emp_birthdate", "employee_birthdate", preprocess_date, [validator_service.required_validator, validator_service.birthdate_validator])
-    emp_coverage = EnrollmentRecordField("emp_coverage", "employee_coverage", preprocess_string, [validator_service.required_validator, validator_service.coverage_validator])
-    emp_premium = EnrollmentRecordField("emp_premium", "employee_premium", preprocess_string, [validator_service.required_validator, validator_service.premium_validator])
-    emp_street = EnrollmentRecordField("emp_street", "employee_street", preprocess_string, [validator_service.required_validator])
+    emp_first = EnrollmentRecordField("emp_first", "employee_first", preprocess_string, [required_validator])
+    emp_last = EnrollmentRecordField("emp_last", "employee_last", preprocess_string, [required_validator])
+    emp_gender = EnrollmentRecordField("emp_gender", "employee_gender", preprocess_string, [required_validator, gender_validator])
+    emp_ssn = EnrollmentRecordField("emp_ssn", "employee_ssn", preprocess_numbers, [required_validator, ssn_validator])
+    emp_birthdate = EnrollmentRecordField("emp_birthdate", "employee_birthdate", preprocess_date, [required_validator, birthdate_validator])
+    emp_coverage = EnrollmentRecordField("emp_coverage", "employee_coverage", preprocess_string, [required_validator, coverage_validator])
+    emp_premium = EnrollmentRecordField("emp_premium", "employee_premium", preprocess_string, [required_validator, premium_validator])
+    emp_street = EnrollmentRecordField("emp_street", "employee_street", preprocess_string, [required_validator])
     emp_street2 = EnrollmentRecordField("emp_street2", "employee_street2", preprocess_string, [])
-    emp_city = EnrollmentRecordField("emp_city", "employee_city", preprocess_string, [validator_service.required_validator])
-    emp_state = EnrollmentRecordField("emp_state", "employee_state", preprocess_string, [validator_service.required_validator, validator_service.state_validator])
-    emp_zipcode = EnrollmentRecordField("emp_zipcode", "employee_zipcode", preprocess_zip, [validator_service.required_validator, validator_service.zip_validator])
+    emp_city = EnrollmentRecordField("emp_city", "employee_city", preprocess_string, [required_validator])
+    emp_state = EnrollmentRecordField("emp_state", "employee_state", preprocess_string, [required_validator, state_validator])
+    emp_zipcode = EnrollmentRecordField("emp_zipcode", "employee_zipcode", preprocess_zip, [required_validator, zip_validator])
     emp_phone = EnrollmentRecordField("emp_phone", "employee_phone", preprocess_string, [])
-    emp_pin = EnrollmentRecordField("emp_pin", "employee_pin", preprocess_numbers, [validator_service.required_validator])
+    emp_pin = EnrollmentRecordField("emp_pin", "employee_pin", preprocess_numbers, [required_validator])
 
     #Spouse Information
     sp_first = EnrollmentRecordField("sp_first", "spouse_first", preprocess_string, [])
     sp_last = EnrollmentRecordField("sp_last", "spouse_last", preprocess_string, [])
-    sp_birthdate = EnrollmentRecordField("sp_birthdate", "spouse_birthdate", preprocess_date, [validator_service.birthdate_validator])
-    sp_ssn = EnrollmentRecordField("sp_ssn", "spouse_ssn", preprocess_numbers, [validator_service.ssn_validator])
-    sp_coverage = EnrollmentRecordField("sp_coverage", "spouse_coverage", preprocess_string, [validator_service.coverage_validator])
-    sp_premium = EnrollmentRecordField("sp_premium", "spouse_premium", preprocess_string, [validator_service.premium_validator])
+    sp_birthdate = EnrollmentRecordField("sp_birthdate", "spouse_birthdate", preprocess_date, [birthdate_validator])
+    sp_ssn = EnrollmentRecordField("sp_ssn", "spouse_ssn", preprocess_numbers, [ssn_validator])
+    sp_coverage = EnrollmentRecordField("sp_coverage", "spouse_coverage", preprocess_string, [coverage_validator])
+    sp_premium = EnrollmentRecordField("sp_premium", "spouse_premium", preprocess_string, [premium_validator])
 
     #Signing Information
-    emp_sig_txt = EnrollmentRecordField("emp_sig_txt", "employee_sig_txt", preprocess_string, [validator_service.required_validator])
-    application_date = EnrollmentRecordField("application_date", "application_date", preprocess_date, [validator_service.required_validator])
-    time_stamp = EnrollmentRecordField("time_stamp", "time_stamp", preprocess_date, [validator_service.required_validator])
-    signed_at_city = EnrollmentRecordField("signed_at_city", "signed_at_city", preprocess_string, [validator_service.required_validator])
-    signed_at_state = EnrollmentRecordField("signed_at_state", "signed_at_state", preprocess_string, [validator_service.required_validator, validator_service.state_validator])
-    agent_name = EnrollmentRecordField("agent_name", "agent_name", preprocess_string, [validator_service.required_validator])
-    agent_code = EnrollmentRecordField("agent_code", "agent_code", preprocess_string, [validator_service.required_validator])
-    agent_sig_txt = EnrollmentRecordField("agent_sig_txt", "agent_sig_txt", preprocess_string, [validator_service.required_validator])
+    emp_sig_txt = EnrollmentRecordField("emp_sig_txt", "employee_sig_txt", preprocess_string, [required_validator])
+    application_date = EnrollmentRecordField("application_date", "application_date", preprocess_date, [required_validator])
+    time_stamp = EnrollmentRecordField("time_stamp", "time_stamp", preprocess_date, [required_validator])
+    signed_at_city = EnrollmentRecordField("signed_at_city", "signed_at_city", preprocess_string, [required_validator])
+    signed_at_state = EnrollmentRecordField("signed_at_state", "signed_at_state", preprocess_string, [required_validator, state_validator])
+    agent_name = EnrollmentRecordField("agent_name", "agent_name", preprocess_string, [required_validator])
+    agent_code = EnrollmentRecordField("agent_code", "agent_code", preprocess_string, [required_validator])
+    agent_sig_txt = EnrollmentRecordField("agent_sig_txt", "agent_sig_txt", preprocess_string, [required_validator])
 
     #All spouse data is required if any spouse data is given
     spouse_fields = [sp_first, sp_last, sp_birthdate, sp_ssn]
     for field in spouse_fields:
-        validator = validator_service.RequiredIfAnyInGroupValidator(
+        validator = RequiredIfAnyInGroupValidator(
             spouse_fields,
             message="{} is required if any of the following are"
                     "provided: {}".format(field.dict_key_name,
@@ -197,12 +171,12 @@ class EnrollmentRecordParser(object):
     ]
 
     for field, group in premium_coverage_required:
-        field.add_validator(validator_service.RequiredIfAnyInGroupValidator([group],
+        field.add_validator(RequiredIfAnyInGroupValidator([group],
                             "{} is required if {} is provided".format(field.dict_key_name, group.dict_key_name))
                             )
 
     sp_premium.add_validator(
-            validator_service.RequiredIfAnyInGroupValidator(
+            RequiredIfAnyInGroupValidator(
                 [sp_coverage],
                 "Spouse premium is required if spouse coverage is provided"
             )
@@ -280,19 +254,19 @@ class EnrollmentRecordParser(object):
         child_birthdate = EnrollmentRecordField('ch{}_birthdate'.format(num),
                                             'child{}_birthdate'.format(num),
                                             preprocess_date,
-                                            [validator_service.birthdate_validator])
+                                            [birthdate_validator])
         child_ssn = EnrollmentRecordField('ch{}_ssn'.format(num),
                                             'child{}_ssn'.format(num),
                                             preprocess_numbers,
-                                            [validator_service.ssn_validator])
+                                            [ssn_validator])
         child_coverage = EnrollmentRecordField('ch{}_coverage'.format(num),
                                             'child{}_coverage'.format(num),
                                             preprocess_string,
-                                            [validator_service.coverage_validator])
+                                            [coverage_validator])
         child_premium = EnrollmentRecordField('ch{}_premium'.format(num),
                                             'child{}_premium'.format(num),
                                             preprocess_string,
-                                            [validator_service.premium_validator])
+                                            [premium_validator])
 
         # question_fields = []
         # for q_num in range(1, MAX_HEALTH_QUESTIONS+1):
@@ -306,10 +280,10 @@ class EnrollmentRecordParser(object):
         #                                     "ch{}_question_{} is required if child is set".format(num, q_num))
         #                                 )
         #     question_fields += [child_question]
-        child_premium.add_validator(validator_service.RequiredIfAnyInGroupValidator([child_coverage],
+        child_premium.add_validator(RequiredIfAnyInGroupValidator([child_coverage],
                                         "child_premium is required if child_coverage is provided")
                                     )
-        child_coverage.add_validator(validator_service.RequiredIfAnyInGroupValidator([child_premium],
+        child_coverage.add_validator(RequiredIfAnyInGroupValidator([child_premium],
                                         "child_coverage is required if child_premium is provided")
                                     )
         all_fields += [child_first, child_last, child_birthdate, child_ssn, child_coverage, child_premium]
