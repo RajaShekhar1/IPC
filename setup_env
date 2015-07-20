@@ -1,0 +1,11 @@
+#!/bin/bash -e
+
+BASEDIR=`dirname $0`/..
+
+if [ ! -d "$BASEDIR/taa_env" ]; then
+    virtualenv -q $BASEDIR/taa_env 
+    echo "Virtualenv created."
+fi
+
+pip install -r $BASEDIR/requirements.pip -E $BASEDIR/taa_env
+echo "Requirements installed."
