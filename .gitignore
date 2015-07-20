@@ -16,3 +16,7 @@ taa/frontend/static/.webassets-cache/*
 *.swp
 Vagrantfile
 *.dump
+.coverage
+coverage.xml
+nosetests.xml
+reports
