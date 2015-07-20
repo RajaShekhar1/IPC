@@ -1,21 +1,17 @@
 import csv
 
 from taa.services.cases.census_import import (
-    preprocess_date,
-    preprocess_gender,
     preprocess_numbers,
     preprocess_string,
-    preprocess_y_n,
     preprocess_zip,
-    RequiredIfAnyInGroupValidator
     )
 
-import re
-import iso8601
-from datetime import datetime
+from taa.services.preprocessors import *
 
-from taa.services.products.payment_modes import is_payment_mode
-from taa.services import RequiredFeature, LookupService
+from taa.services.validators import *
+
+from taa.services import RequiredFeature
+from taa.services import RequiredFeature
 
 class EnrollmentImportService(object):
     def convert_csv_to_json(self, csv_bytes):
@@ -24,16 +20,15 @@ class EnrollmentImportService(object):
     def submit_file_records(self, records):
         response = EnrollmentImportResponse()
         parser = EnrollmentRecordParser()
+
         # Process all records
         parser.process_records(records)
         errors = parser.errors
-
-        # If there are errors in the parser, return
+        # If there are errors in the parser, add them to the response
         for error in errors:
             response.add_error(error["type"], error["field_name"])
 
         return response
-
 
 class EnrollmentImportResponse(object):
     def __init__(self):
@@ -85,7 +80,8 @@ class EnrollmentRecordField():
     def validate(self, parser, record):
         all_valid = True
         for validator in self.validators:
-            is_valid, error_type, error_message = validator(self, record)
+            field = self
+            is_valid, error_type, error_message = validator(field, record)
             if not is_valid:
                 parser.error_record_field(error_type,
                                           error_message,
@@ -110,159 +106,15 @@ class EnrollmentRecordField():
         self.validators.append(validator)
 
 
-# PREPROCESSORS
-
-def preprocess_date(data, record):
-    if data is None or data == '':
-        return None
-    try:
-        d = iso8601.parse_date(data, None)
-        if d >= datetime.today():
-            # This can happen when you try to parse 2-digit years (excel issue?)
-            # Solution should be OK, but if someone puts a future date in
-            # (like for an expected child?) it doesn't work, and also won't
-            # work for 100+ year-old people. Which can't apply for life
-            # insurance, I think.
-            d = datetime(d.year - 100, d.month, d.day)
-    except:
-        # Can't be parsed as a date; return as-is and let validation
-        # handle the error
-        return data
-    return d
-
-# VALIDATORS
-
-def required_validator(field, record, message=None):
-    data = field.get_column_from_record(record)
-    if not data:
-        message = message if message else "Required Data Missing"
-        return False, "missing_data", message
-    return True, None, None
-
-def ssn_validator(field, record):
-    ssn_pattern = re.compile('^\d{9}$')
-    ssn = field.get_column_from_record(record)
-    if not ssn:
-        # Allow blank unless combined with required validator
-        return True, None, None
-    elif not ssn_pattern.match(ssn):
-        return False, "invalid_ssn", "Invalid SSN"
-    return True, None, None
-
-def payment_mode_validator(field, record):
-    payment_mode = field.get_column_from_record(record)
-    if not payment_mode:
-        # If product is not set and it is not required, we can return true
-        return True, None, None
-    if not is_payment_mode(name=payment_mode):
-        return False, "invalid_mode", "Invalid payment mode"
-    return True, None, None
-
-def product_validator(field, record):
-    # Needs a database call to check if product exists
-    product_service = LookupService("ProductService")
-    product_code = field.get_column_from_record(record)
-    if not product_service.is_valid_product_code(product_code):
-        return False, "invalid_product", "Product code not found"
-    return True, None, None
-
-def api_token_validator(field, record):
-    api_token_service = LookupService("ApiTokenService")
-    api_token = field.get_column_from_record(record)
-    if not api_token_service.is_valid_token(api_token):
-        return False, "invalid_token", "Invalid API token provided"
-    return True, None, None
-
-def case_token_validator(field, record):
-    case_service = LookupService("CaseService")
-    case_token = field.get_column_from_record(record)
-    if not case_service.is_valid_case_token(case_token):
-        return False, "invalid_token", "Invalid Case token provided"
-    return True, None, None
-
-
-def gender_validator(field, record):
-    gender = field.get_column_from_record(record)
-    if not gender:
-        # Allow blank unless combined with required validator
-        return True, None, None
-    if gender not in ['m', 'f']:
-        return False, "invalid_gender", "Gender must be 'Male' or 'Female'"
-    return True, None, None
-
-def birthdate_validator(field, record):
-    date = field.get_column_from_record(record)
-    if not date:
-        # Allow blank unless combined with required validator
-        return True, None, None
-    else:
-        pass
-    if not isinstance(date, datetime):
-        return False, "invalid_date", "Invalid date"
-    if date > datetime.now():
-        # The preprocessor currently keeps this from happening, but I will leave
-        #  it in here in case that changes
-        return False, "invalid_date", "Future date is not allowed for a birthday"
-    return True, None, None
-
-
-def email_validator(field, record):
-    email = field.get_column_from_record(record)
-    if not email:
-        # Allow blank unless combined with required validator
-        return True, None, None
-    if '@' not in email and len(email) < 3:
-        return False, "invalid_email", 'Invalid email'
-    return True, None, None
-
-def coverage_validator(field, record):
-    coverage_pattern = re.compile('^[0-9]+$')
-    coverage = field.get_column_from_record(record)
-    if not coverage:
-        return True, None, None
-    if not coverage_pattern.match(coverage):
-        return False, "invalid_coverage", "Invalid coverage format"
-    return True, None, None
-
-def premium_validator(field, record):
-    premium_pattern = re.compile('^[0-9]+\.[0-9][0-9]$')
-    premium = field.get_column_from_record(record)
-    if not premium:
-        return True, None, None
-    if not premium_pattern.match(premium):
-        return False, "invalid_premium", "Invalid premium format"
-    return True, None, None
-
-def zip_validator(field, record):
-    zip_pattern = re.compile('^\d{5,}$')
-    zip = field.get_column_from_record(record)
-    if not zip:
-        # Allow blank unless combined with required validator
-        return True, None, None
-    if not zip_pattern.match(zip):
-        return False, "invalid_zip", "Invalid ZIP code"
-    return True, None, None
-
-
-def state_validator(field, record):
-    state = field.get_column_from_record(record)
-    if not state:
-        return True, None, None
-
-    from taa.services.products import ProductService
-    ps = ProductService()
-    if not state or not len(state) == 2 or not state in ps.get_all_statecodes():
-        return False, "invalid_state", "Invalid US State. Must be two-letter abbreviation."
-
-    return True, None, None
-
-
-
 class EnrollmentRecordParser(object):
+    product_service = RequiredFeature("ProductService")
+    #Case/Record information
     user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator])
     case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator])
     product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [required_validator, product_validator])
     payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_string, [required_validator, payment_mode_validator])
+
+    #Employee Information
     emp_first = EnrollmentRecordField("emp_first", "employee_first", preprocess_string, [required_validator])
     emp_last = EnrollmentRecordField("emp_last", "employee_last", preprocess_string, [required_validator])
     emp_gender = EnrollmentRecordField("emp_gender", "employee_gender", preprocess_string, [required_validator, gender_validator])
@@ -277,6 +129,16 @@ class EnrollmentRecordParser(object):
     emp_zipcode = EnrollmentRecordField("emp_zipcode", "employee_zipcode", preprocess_zip, [required_validator, zip_validator])
     emp_phone = EnrollmentRecordField("emp_phone", "employee_phone", preprocess_string, [])
     emp_pin = EnrollmentRecordField("emp_pin", "employee_pin", preprocess_numbers, [required_validator])
+
+    #Spouse Information
+    sp_first = EnrollmentRecordField("sp_first", "spouse_first", preprocess_string, [])
+    sp_last = EnrollmentRecordField("sp_last", "spouse_last", preprocess_string, [])
+    sp_birthdate = EnrollmentRecordField("sp_birthdate", "spouse_birthdate", preprocess_date, [birthdate_validator])
+    sp_ssn = EnrollmentRecordField("sp_ssn", "spouse_ssn", preprocess_numbers, [ssn_validator])
+    sp_coverage = EnrollmentRecordField("sp_coverage", "spouse_coverage", preprocess_string, [coverage_validator])
+    sp_premium = EnrollmentRecordField("sp_premium", "spouse_premium", preprocess_string, [premium_validator])
+
+    #Signing Information
     emp_sig_txt = EnrollmentRecordField("emp_sig_txt", "employee_sig_txt", preprocess_string, [required_validator])
     application_date = EnrollmentRecordField("application_date", "application_date", preprocess_date, [required_validator])
     time_stamp = EnrollmentRecordField("time_stamp", "time_stamp", preprocess_date, [required_validator])
@@ -285,11 +147,48 @@ class EnrollmentRecordParser(object):
     agent_name = EnrollmentRecordField("agent_name", "agent_name", preprocess_string, [required_validator])
     agent_code = EnrollmentRecordField("agent_code", "agent_code", preprocess_string, [required_validator])
     agent_sig_txt = EnrollmentRecordField("agent_sig_txt", "agent_sig_txt", preprocess_string, [required_validator])
+
+    #All spouse data is required if any spouse data is given
+    spouse_fields = [sp_first, sp_last, sp_birthdate, sp_ssn]
+    for field in spouse_fields:
+        validator = RequiredIfAnyInGroupValidator(
+            spouse_fields,
+            message="{} is required if any of the following are"
+                    "provided: {}".format(field.dict_key_name,
+                                          ', '.join([f.dict_key_name
+                                                     for f in spouse_fields
+                                                     if f is not field])
+                                          ))
+        # If any in group provided, all must be valid
+        field.add_validator(validator)
+
+    premium_coverage_required = [
+        (emp_premium, emp_coverage),
+        (emp_coverage, emp_premium),
+        (sp_premium, sp_coverage),
+        (sp_coverage, sp_premium)
+    ]
+
+    for field, group in premium_coverage_required:
+        field.add_validator(RequiredIfAnyInGroupValidator([group],
+                            "{} is required if {} is provided".format(field.dict_key_name, group.dict_key_name))
+                            )
+
+    sp_premium.add_validator(
+            RequiredIfAnyInGroupValidator(
+                [sp_coverage],
+                "Spouse premium is required if spouse coverage is provided"
+            )
+        )
+
     all_fields = [
+        #Case data
         user_token,
         case_token,
-        product_code ,
-        payment_mode ,
+        product_code,
+        payment_mode,
+
+        #Employee data
         emp_first,
         emp_last,
         emp_gender,
@@ -303,6 +202,16 @@ class EnrollmentRecordParser(object):
         emp_state,
         emp_zipcode,
         emp_phone,
+
+        #Spouse data
+        sp_first,
+        sp_last,
+        sp_birthdate,
+        sp_ssn,
+        sp_coverage,
+        sp_premium,
+
+        #Signing data
         emp_pin,
         emp_sig_txt,
         application_date,
@@ -314,29 +223,73 @@ class EnrollmentRecordParser(object):
         agent_sig_txt
     ]
 
+    #Child data
+    MAX_CHILDREN = 6
+    for num in range(1, MAX_CHILDREN + 1):
+        child_first = EnrollmentRecordField('ch{}_first'.format(num),
+                                        'child{}_first'.format(num),
+                                        preprocess_string, [])
+        child_last = EnrollmentRecordField('ch{}_last'.format(num),
+                                       'child{}_last'.format(num),
+                                       preprocess_string, [])
+        child_birthdate = EnrollmentRecordField('ch{}_birthdate'.format(num),
+                                            'child{}_birthdate'.format(num),
+                                            preprocess_date,
+                                            [birthdate_validator])
+        child_ssn = EnrollmentRecordField('ch{}_ssn'.format(num),
+                                            'child{}_ssn'.format(num),
+                                            preprocess_numbers,
+                                            [ssn_validator])
+        child_coverage = EnrollmentRecordField('ch{}_coverage'.format(num),
+                                            'child{}_coverage'.format(num),
+                                            preprocess_string,
+                                            [coverage_validator])
+        child_premium = EnrollmentRecordField('ch{}_premium'.format(num),
+                                            'child{}_premium'.format(num),
+                                            preprocess_string,
+                                            [premium_validator])
+
+        child_premium.add_validator(RequiredIfAnyInGroupValidator([child_coverage],
+                                        "child_premium is required if child_coverage is provided")
+                                    )
+        child_coverage.add_validator(RequiredIfAnyInGroupValidator([child_premium],
+                                        "child_coverage is required if child_premium is provided")
+                                    )
+        all_fields += [child_first, child_last, child_birthdate, child_ssn, child_coverage, child_premium]
+
+
     def __init__(self):
         self.errors = []
         self.valid_data = []
-        self.used_ssns = set()
 
     fields_by_dict_key = {field.dict_key_name: field for field in all_fields}
 
     def get_field_by_dict_key(self, dict_key):
         return self.fields_by_dict_key.get(dict_key)
 
+    def validate_statecode(self, records):
+        for record in records:
+            if not self.product_service.is_valid_statecode(record.get("product_code"), record.get("signed_at_state")):
+                self.error_record_field("invalid_state_for_product",
+                                        "Provided 'signed at state' is invalid for this product.",
+                                        "signed_at_state",
+                                        record)
+                return False
+            return True
+
+
     def process_records(self, records):
         self.validate_data_keys(records)
         # Don't do any more processing if missing important data_keys
         if self.errors:
             return
+        # self.validate_questions(records)
         preprocessed_records = (self.preprocess_record(record)
                                 for record in records)
-        valid_data = []
         for record in preprocessed_records:
-            if self.validate_record(record):
+            if self.validate_record(record) and self.validate_statecode(records):
                 self.postprocess_record(record)
                 self.valid_data.append(record)
-
 
     def preprocess_record(self, record):
         data = {}
@@ -359,26 +312,6 @@ class EnrollmentRecordParser(object):
         is_valid = True
         for field in self.all_fields:
             is_valid &= field.validate(self, record)
-        # Do not allow duplicate employee SSNs in a single upload
-        ssn = record.get(self.emp_ssn.dict_key_name)
-        if ssn and ssn in self.used_ssns:
-            is_valid = False
-            self.error_record_field(
-                "Duplicate SSN in data",
-                self.emp_ssn.dict_key_name,
-                record
-            )
-        elif ssn:
-            self.used_ssns.add(ssn)
-        # Some modes require us to throw an error if an existing record exists
-        # in the database (matched on SSN). Check that here.
-        # if self.error_if_matching and ssn in self.error_if_matching:
-        #     self.error_record_field(
-        #         "A census record exists that matches this SSN. This is not "
-        #         "allowed when uploading in 'Add New Records' mode.",
-        #         self.emp.csv_column_name,
-        #         record
-        #     )
         return is_valid
 
     def error_record_field(self, type, message, field_name, data):
