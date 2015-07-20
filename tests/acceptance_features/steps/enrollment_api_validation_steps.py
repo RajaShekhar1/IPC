@@ -25,22 +25,22 @@ class MockCaseService(object):
 class MockProductService(object):
     def __init__(self):
         self._valid_product_codes = {}
-        self.health_questions = {
+        self.health_questions = {}
+        self.valid_statecodes = {}
 
-        }
     @property
     def valid_product_codes(self):
         return self._valid_product_codes
 
     @valid_product_codes.setter
     def valid_product_codes(self, value):
-        # import ipdb; ipdb.set_trace()
         for v in value:
             self.health_questions[v] = {
                 "employee": [],
                 "spouse": [],
                 "child": []
             }
+            self.valid_statecodes[v] = [u"IN", u"MI", u"OH"]
         self._valid_product_codes = value
 
     def is_valid_product_code(self, code):
@@ -48,6 +48,13 @@ class MockProductService(object):
 
     def get_num_health_questions(self, product_code, applicant_type):
         return len(self.health_questions[product_code][applicant_type])
+
+    def invalidate_statecode(self, product_code, statecode):
+        if self.is_valid_statecode(product_code, statecode):
+            self.valid_statecodes[product_code].remove(statecode)
+
+    def is_valid_statecode(self, product_code, statecode):
+        return statecode in self.valid_statecodes[product_code]
 
 @given(u"I have an API User named {user_name} with token {user_token}")
 def step_impl(context, user_name, user_token):
@@ -168,6 +175,10 @@ def step_impl(context, product_code):
         services_broker.Provide('ProductService', context.mock_product_service)
     for r in context.table.rows:
         context.mock_product_service.health_questions[product_code][r[0]].append(r[1])
+
+@given(u"'{statecode}' is not a valid state for the '{product_code}' product")
+def step_impl(context, statecode, product_code):
+    context.mock_product_service.invalidate_statecode(product_code, statecode)
 
 @when(u"I submit the file to the Enrollment API")
 def step_impl(context):

@@ -11,6 +11,7 @@ from taa.services.preprocessors import *
 from taa.services.validators import *
 
 from taa.services import RequiredFeature
+from taa.services import RequiredFeature
 
 class EnrollmentImportService(object):
     def convert_csv_to_json(self, csv_bytes):
@@ -266,18 +267,29 @@ class EnrollmentRecordParser(object):
     def get_field_by_dict_key(self, dict_key):
         return self.fields_by_dict_key.get(dict_key)
 
+    def validate_statecode(self, records):
+        for record in records:
+            if not self.product_service.is_valid_statecode(record.get("product_code"), record.get("signed_at_state")):
+                self.error_record_field("invalid_state_for_product",
+                                        "Provided 'signed at state' is invalid for this product.",
+                                        "signed_at_state",
+                                        record)
+                return False
+            return True
+
+
     def process_records(self, records):
         self.validate_data_keys(records)
         # Don't do any more processing if missing important data_keys
         if self.errors:
             return
+        # self.validate_questions(records)
         preprocessed_records = (self.preprocess_record(record)
                                 for record in records)
         for record in preprocessed_records:
-            if self.validate_record(record):
+            if self.validate_record(record) and self.validate_statecode(records):
                 self.postprocess_record(record)
                 self.valid_data.append(record)
-        self.validate_questions(records)
 
     def preprocess_record(self, record):
         data = {}

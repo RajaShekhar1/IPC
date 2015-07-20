@@ -225,15 +225,16 @@ Feature: Validate an enrollment record submitted via API.
       | ' '       | ch2_coverage | missing_data |
       | ' '       | ch2_premium  | missing_data |
 
-#  Scenario: It should detect invalid combinations of products and states
-#    Given I prepare an enrollment file with basic valid enrollment data
-#    Given 'IN' is not a valid state for the 'FPPTI' product
-#    And I substitute 'FPPTI' for the column 'product_code'
-#    And I substitute 'IN' for the column 'signed_at_state'
-#    When I submit the file to the Enrollment API
-#    Then I should see the following errors in the response
-#      | error_type                | error_field     |
-#      | invalid_state_for_product | signed_at_state |
+    @wip
+  Scenario: It should detect invalid combinations of products and states
+    Given I prepare an enrollment file with basic valid enrollment data
+    Given 'IN' is not a valid state for the 'FPPTI' product
+    And I substitute 'FPPTI' for the column 'product_code'
+    And I substitute 'IN' for the column 'signed_at_state'
+    When I submit the file to the Enrollment API
+    Then I should see the following errors in the response
+      | error_type                | error_field     |
+      | invalid_state_for_product | signed_at_state |
 
 #  @wip
 #  Scenario: The user submits answers to exactly the right number of questions given the product and applicant type.
