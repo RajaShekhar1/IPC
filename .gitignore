@@ -20,3 +20,4 @@ Vagrantfile
 coverage.xml
 nosetests.xml
 reports
+cover
