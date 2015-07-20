@@ -78,7 +78,7 @@ Feature: Submit enrollments using the API
     When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token 'CASE-123'
     Then It should look up the case with token 'CASE-123' in the database
 
-  Scenario: It should use the case token in the file for each record if no case token is passed in the params.
-    Given I create a minimally valid CSV file with case_token 'CASE-123'
-    When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token ' '
-    Then It should look up the case with token 'CASE-123' in the database
+#  Scenario: It should use the case token in the file for each record if no case token is passed in the params.
+#    Given I create a minimally valid CSV file with case_token 'CASE-123'
+#    When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token ' '
+#    Then It should look up the case with token 'CASE-123' in the database
