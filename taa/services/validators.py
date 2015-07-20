@@ -89,7 +89,6 @@ def birthdate_validator( field, record):
         return False, "invalid_date", "Future date is not allowed for a birthday"
     return True, None, None
 
-
 def email_validator( field, record):
     email = field.get_column_from_record(record)
     if not email:
@@ -138,7 +137,7 @@ def state_validator( field, record):
         return False, "invalid_state", "Invalid US State. Must be two-letter abbreviation."
     return True, None, None
 
-def validate_question_answered( field, record):
+def question_answered_validator( field, record):
         answer = field.get_column_from_record(record)
         type=field.dict_key_name.split("_")[0]
         if not answer:

@@ -119,6 +119,9 @@ class EnrollmentRecordField():
 
 
 class EnrollmentRecordParser(object):
+
+    MAX_QUESTIONS = 6
+
     product_service = RequiredFeature("ProductService")
     #Case/Record information
     user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator])
@@ -269,6 +272,28 @@ class EnrollmentRecordParser(object):
                                     )
         all_fields += [child_first, child_last, child_birthdate, child_ssn, child_coverage, child_premium]
 
+    for q_num in range(1, MAX_QUESTIONS+1):
+        questions = []
+        emp_question = EnrollmentRecordField("emp_question_{}_answer".format(q_num),
+                                             "employee_question_{}_answer".format(q_num),
+                                             preprocess_string,
+                                             [question_answered_validator]
+                                             )
+        sp_question = EnrollmentRecordField("sp_question_{}_answer".format(q_num),
+                                            "spouse_question_{}_answer".format(q_num),
+                                            preprocess_string,
+                                            [question_answered_validator]
+                                            )
+        for num in range(1, MAX_CHILDREN+1):
+            ch_question = EnrollmentRecordField("ch{}_question_{}_answer".format(num, q_num),
+                                                "child{}_question_{}_answer".format(num, q_num),
+                                                preprocess_string,
+                                                [question_answered_validator]
+                                                )
+            questions += [ch_question]
+        questions += [emp_question, sp_question]
+        all_fields += questions
+
 
     def __init__(self):
         self.errors = []
@@ -300,8 +325,9 @@ class EnrollmentRecordParser(object):
                                 for record in records)
         for record in preprocessed_records:
             if self.validate_record(record) and self.validate_statecode(records):
-                self.postprocess_record(record)
-                self.valid_data.append(record)
+                if self.validate_questions(record):
+                    self.postprocess_record(record)
+                    self.valid_data.append(record)
 
     def preprocess_record(self, record):
         data = {}
@@ -384,3 +410,49 @@ class EnrollmentRecordParser(object):
                                         message="Missing required table column",
                                         field_name=self.get_field_by_dict_key(key).dict_key_name,
                                         data=record)
+
+    def validate_questions(self, record):
+        for who in self.product_service.health_questions[record.get("product_code")]:
+            required_count = self.product_service.get_num_health_questions(record.get("product_code"), who)
+            actual_count = 0
+            if who == "employee":
+                for q_num in range(1, self.MAX_QUESTIONS+1):
+                    question = record.get("emp_question_{}_answer".format(q_num))
+                    if not question:
+                        # If there isn't a question here, we have reached the number of questions for this person
+                        break
+                    #Otherwise, add this question to the count
+                    actual_count+=1
+                if actual_count is not required_count:
+                    self.error_record_field(type="invalid_questions",
+                                            message="Incorrect number of questions supplied",
+                                            field_name="emp_questions",
+                                            data=record)
+            elif who == "spouse":
+                for q_num in range(1, self.MAX_QUESTIONS+1):
+                    question = record.get("sp_question_{}_answer".format(q_num))
+                    if not question:
+                        # If there isn't a question here, we have reached the number of questions for this person
+                        break
+                    #Otherwise, add this question to the count
+                    actual_count+=1
+                if actual_count is not required_count:
+                    self.error_record_field(type="invalid_questions",
+                                            message="Incorrect number of questions supplied",
+                                            field_name="ch_questions",
+                                            data=record)
+            elif who == "child":
+                for num in range(1, self.MAX_CHILDREN+1):
+                    actual_count = 0
+                    for q_num in range(1, self.MAX_QUESTIONS+1):
+                        question = record.get("ch{}_question_{}_answer".format(num, q_num))
+                        if not question:
+                            # If there isn't a question here, we have reached the number of questions for this person
+                            break
+                        #Otherwise, add this question to the count
+                        actual_count+=1
+                    if actual_count is not required_count:
+                        self.error_record_field(type="invalid_questions",
+                                                message="Incorrect number of questions supplied",
+                                                field_name="ch_questions",
+                                                data=record)
