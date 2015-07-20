@@ -3,41 +3,33 @@ ENROLLMENT pages and handling, DOCUSIGN interaction
 """
 
 import os
-import json
-
-import requests
 
 from flask import (abort, jsonify, render_template, request,
                    send_from_directory, session, url_for, redirect)
 from flask.ext.stormpath import login_required
 from flask_stormpath import current_user
 
-from taa import app
 from nav import get_nav_menu
+from taa import app
 from taa.models import db
 from taa.old_model.States import get_states
-
 from taa.services.products.states import get_all_states
-from taa.services.cases import CaseService, SelfEnrollmentService
-from taa.services.agents import AgentService
-from taa.services.products import ProductService
 from taa.services.products import get_payment_modes, is_payment_mode_changeable
-from taa.services.products.product_forms import ProductFormService
-from taa.services.enrollments import (EnrollmentApplicationService,
-                                      SelfEnrollmentLinkService)
 from taa.services.docusign.docusign_envelope import create_envelope_and_get_signing_url
+from taa.services import LookupService
 
-product_service = ProductService()
-product_form_service = ProductFormService()
-case_service = CaseService()
-agent_service = AgentService()
-enrollment_service = EnrollmentApplicationService()
-self_enrollment_service = SelfEnrollmentService()
-self_enrollment_link_service = SelfEnrollmentLinkService()
+product_service = LookupService('ProductService')
+product_form_service = LookupService('ProductFormService')
+case_service = LookupService('CaseService')
+agent_service = LookupService('AgentService')
+enrollment_service = LookupService('EnrollmentApplicationService')
+self_enrollment_service = LookupService('SelfEnrollmentService')
+self_enrollment_link_service = LookupService('SelfEnrollmentLinkService')
 
 @app.route('/enroll')
 @login_required
 def enroll_start():
+    """This is a placeholder route that just redirects to the manage case page"""
     should_show_next_applicant = bool(request.args.get('next'))
     if session.get('active_case_id') and should_show_next_applicant:
         # We no longer use the separate setup enrollment page, forward agent to manage_case page
@@ -45,27 +37,6 @@ def enroll_start():
         return redirect(location=url_for('manage_case', case_id=case.id)+"#enrollment")
 
     abort(404)
-    # else:
-    #     # Clear session variables
-    #     session['active_case_id'] = None
-    #     session['enrolling_census_record_id'] = None
-    #     case = None
-    # agent = agent_service.get_logged_in_agent()
-    # agent_products = product_service.get_products_for_agent(agent)
-    # product_states = product_service.get_product_states(agent_products)
-    # all_states = product_service.get_all_states()
-    # return render_template(
-    #     'enrollment/setup-enrollment.html',
-    #     # form=form,
-    #     product_state_mapping=product_states,
-    #     all_states=all_states,
-    #     agent_products=agent_products,
-    #     agent_cases=case_service.get_agent_cases(agent, only_enrolling=True),
-    #     active_case=case,
-    #     should_show_next_applicant=should_show_next_applicant and case,
-    #     nav_menu=get_nav_menu(),
-    # )
-
 
 # Wizard
 @app.route('/in-person-enrollment', methods=['POST'])

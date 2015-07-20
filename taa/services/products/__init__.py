@@ -14,6 +14,7 @@ from .states import all_states, all_statecodes, get_all_states
 from .rates import get_rates
 from .payment_modes import get_payment_modes, is_payment_mode_changeable
 
+from statement_of_health import ProductFormService
 
 class ProductService(DBService):
     __model__ = Product

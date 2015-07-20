@@ -1,12 +1,8 @@
 from datetime import datetime
-import StringIO
-
 
 from flask import Blueprint, request, abort, make_response
 from flask_stormpath import current_user, groups_required, login_required
 
-
-from taa import app
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
@@ -17,24 +13,19 @@ from taa.services.cases.forms import (
     SelfEnrollmentSetupForm,
     UpdateCaseForm,
 )
-from taa.services.agents import AgentService
-from taa.services.enrollments import (EnrollmentApplicationService,
-                                      SelfEnrollmentEmailService,
-                                      SelfEnrollmentLinkService)
 from taa.services.enrollments.models import EnrollmentApplication
-from taa.services.products import ProductService
+from taa.services import LookupService
 
 bp = Blueprint('cases', __name__, url_prefix='/cases')
 
-case_service = CaseService()
-agent_service = AgentService()
-product_service = ProductService()
-self_enrollment_email_service = SelfEnrollmentEmailService()
-self_enrollment_link_service = SelfEnrollmentLinkService()
-enrollment_application_service = EnrollmentApplicationService()
+case_service = LookupService('CaseService')
+agent_service = LookupService('AgentService')
+product_service = LookupService('ProductService')
+self_enrollment_email_service = LookupService('SelfEnrollmentEmailService')
+self_enrollment_link_service = LookupService('SelfEnrollmentLinkService')
+enrollment_application_service = LookupService('EnrollmentApplicationService')
 
 api_groups = ['agents', 'home_office', 'admins']
-
 
 # Case management endpoints
 @route(bp, '/')

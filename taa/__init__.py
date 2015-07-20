@@ -1,9 +1,8 @@
+import locale
+# Make sure this is set for the whole app for formatting dates, times, currency, etc.
+locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
-import sys
-from gzip import GzipFile
-from io import BytesIO
-
-from flask import Flask, current_app, request
+from flask import Flask
 from flask_sslify import SSLify
 from flask_sqlalchemy import SQLAlchemy
 from flask.ext.stormpath import StormpathManager
@@ -43,11 +42,17 @@ stormpath_manager.login_view = 'login'
 # Init database - export the db variable here so other parts of the app can access the database
 db = SQLAlchemy(app)
 
+# Initialize our model service classes
+from taa.services import initialize_services
+initialize_services()
+
 # Register API blueprints
 from api.cases import bp as cases_api
 from api.products import bp as products_api
+from api.enrollments import bp as enrollments_api
 app.register_blueprint(cases_api)
 app.register_blueprint(products_api)
+app.register_blueprint(enrollments_api)
 
 # API custom JSON encoder
 app.json_encoder = JSONEncoder
@@ -67,5 +72,3 @@ import frontend.views
 # Initialize webassets
 from assets import init_app as init_assets
 init_assets(app)
-
-

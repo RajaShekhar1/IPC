@@ -2,7 +2,8 @@
 from flask_stormpath import current_user
 
 from taa.core import DBService, db
-from models import Agent
+from models import Agent, ApiToken
+import uuid
 
 class AgentService(DBService):
 
@@ -78,3 +79,25 @@ class AgentService(DBService):
             ).filter(Agent.activated == True
             ).order_by(Agent.last, Agent.first
             ).all()
+
+
+class ApiTokenService(DBService):
+    __model__ = ApiToken
+
+    def get_token_by_sp_href(self, sp_href):
+        return self.find(stormpath_url=sp_href).first()
+
+    def get_sp_user_by_token(self, token):
+        pass
+
+    def is_valid_token(self, token):
+        pass
+
+    def create_new_token(self, name, sp_href, activated=False):
+        new_token = self.create(**dict(
+            api_token=uuid.uuid4().hex,
+            name=name,
+            stormpath_url=sp_href,
+            activated=activated
+        ))
+        return new_token

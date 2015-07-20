@@ -46,6 +46,11 @@ function format_enrollment_status_html(status) {
   }
 }
 
+//Specific Date handling
+function parse_month_date_input(val) {
+  return parse_date(val, "MM/DD");
+}
+
 // Date handling
 function parse_date(date_str, format_str) {
   // Parse a date as a moment object from the given string, according to the format string.
@@ -55,6 +60,7 @@ function parse_date(date_str, format_str) {
   }
   return moment(date_str, format_str);
 }
+
 function normalize_date(date_str) {
   if (date_str != '' && is_valid_date(date_str)) {
     return format_date(parse_date(date_str));

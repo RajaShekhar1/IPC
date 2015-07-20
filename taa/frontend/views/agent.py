@@ -178,32 +178,44 @@ def edit_census_record(case_id, census_record_id):
 
     is_admin = agent_service.can_manage_all_cases(current_user)
 
-    enrollment_records = enrollment_service.get_enrollment_records_for_census(census_record.case, census_record.id)
-    enroll_data=[]
-    
-    for z, enrollment_data in enumerate(enrollment_records):
-        for i in range(1, 6+1):
-            if enrollment_data["product_"+str(i)+"_name"]:
-                enroll_data.append(dict(
-                    product_name=enrollment_data["product_"+str(i)+"_name"],
-                    time=enrollment_data["signature_time"],
-                    coverage=[],
-                    status=enrollment_data["application_status"],
-                    total=0
-                ))
-                for j in ["emp", "sp", "ch"]:
-                    if(j=="emp"):
-                        who="Employee"
-                    elif(j=="sp"):
-                        who="Spouse"
-                    elif(j=="ch"):
-                        who="Child"
-                    enroll_data[z]["total"]+=(enrollment_data["product_"+str(i)+"_"+j+"_annual_premium"] or 0)
-                    enroll_data[z]["coverage"].append(dict(
-                        who=who,
-                        annual_premium=enrollment_data["product_"+str(i)+"_"+j+"_annual_premium"],
-                        coverage=enrollment_data["product_"+str(i)+"_"+j+"_coverage"],
-                    ))
+    enrollment_data=enrollment_service.get_enrollment_data(census_record)
+
+    def format_enroll_data(i):
+        def get_coverage(j):
+            if j == "emp":
+                who="Employee"
+            elif j == "sp":
+                who="Spouse"
+            else:
+                who="Child"
+            return dict(
+                who=who,
+                annual_premium=enrollment_data["product_{}_{}_annual_premium".format(i, j)],
+                coverage=enrollment_data["product_{}_{}_coverage".format(i, j)],
+            )
+
+        def calc_total(x, y):
+            premium = enrollment_data["product_{}_{}_annual_premium".format(i, y)]
+            if not premium:
+                return x
+            return x + premium
+
+        if enrollment_data["product_{}_name".format(i)]:
+            data = dict(
+                product_name=enrollment_data["product_{}_name".format(i)],
+                time=enrollment_data["signature_time"],
+                coverage=[get_coverage(j) for j in ["emp","sp","ch"]],
+                status=enrollment_data["application_status"],
+                total=reduce(calc_total, ["emp","sp","ch"], 0)
+            )
+        else:
+            data = None
+        return data
+
+    if enrollment_data:
+        enroll_data = [format_enroll_data(i) for i in range(1, 6+1)]
+    else:
+        enroll_data = []
 
     vars = dict(
         case=case,
@@ -212,7 +224,6 @@ def edit_census_record(case_id, census_record_id):
         child_form_fields=child_form_fields,
         enrollment_status=enrollment_service.get_enrollment_status(census_record),
         enrollment_data=enroll_data,
-        enrollment_data_debug=enrollment_service.get_enrollment_data(census_record),
         is_admin=is_admin,
         case_is_enrolling=case_service.is_enrolling(case),
         header_title='Home Office' if is_admin else '',
@@ -224,6 +235,39 @@ def edit_census_record(case_id, census_record_id):
         vars['can_edit_case'] = True
     return render_template('agent/census_record.html', **vars)
 
+def format_enroll_data(enrollment_data, product_number):
+    if enrollment_data["product_{}_name".format(product_number)]:
+        data = dict(
+            product_name=enrollment_data["product_{}_name".format(product_number)],
+            time=enrollment_data["signature_time"],
+            coverage=[get_coverage_for_product(enrollment_data, product_number, j) for j in ["emp","sp","ch"]],
+            status=enrollment_data["application_status"],
+            total=reduce(lambda coverage_type, accum: calc_total(enrollment_data, product_number, coverage_type, accum),
+                         ["emp","sp","ch"], 0)
+        )
+    else:
+        data = None
+
+    return data
+
+def get_coverage_for_product(enrollment_data, product_number, coverage_type):
+    if coverage_type == "emp":
+        coverage_label = "Employee"
+    elif coverage_type == "sp":
+        coverage_label = "Spouse"
+    else:
+        coverage_label = "Child"
+    return dict(
+        who=coverage_label,
+        annual_premium=enrollment_data["product_{}_{}_annual_premium".format(product_number, coverage_type)],
+        coverage=enrollment_data["product_{}_{}_coverage".format(product_number, coverage_type)],
+    )
+
+def calc_total(enrollment_data, product_number, x, y):
+    premium = enrollment_data["product_{}_{}_annual_premium".format(product_number, y)]
+    if not premium:
+        return x
+    return x + premium
 
 @app.route('/sample-census-upload.csv')
 def sample_upload_csv():
