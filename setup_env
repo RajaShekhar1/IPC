@@ -1,11 +1,18 @@
 #!/bin/bash -e
 
 BASEDIR=`dirname $0`/..
+ENV_BIN=$BASEDIR/bin
 
 if [ ! -d "$BASEDIR/taa_env" ]; then
     virtualenv -q $BASEDIR/taa_env 
     echo "Virtualenv created."
 fi
 
-pip install -r $BASEDIR/requirements.pip -E $BASEDIR/taa_env
+pip install -r requirements.txt -E $BASEDIR/taa_env
 echo "Requirements installed."
+
+$ENV_BIN/alembic upgrade head
+$ENV_BIN/python manage-taa.py initialize_db
+$ENV_BIN/python manage-taa.py sync_agents
+$ENV_BIN/python manage-taa.py add_brochure_links
+$ENV_BIN/python manage-taa.py check_case_tokens
