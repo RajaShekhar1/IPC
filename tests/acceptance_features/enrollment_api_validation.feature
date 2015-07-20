@@ -235,6 +235,7 @@ Feature: Validate an enrollment record submitted via API.
       | error_type                | error_field     |
       | invalid_state_for_product | signed_at_state |
 
+  @wip
   Scenario: The user submits answers to exactly the right number of questions given the product and applicant type.
     Given The product 'FPPTI' has the following health questions
       | applicant | question                                          |
