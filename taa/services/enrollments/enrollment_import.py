@@ -439,10 +439,12 @@ class EnrollmentRecordParser(object):
                 if actual_count is not required_count:
                     self.error_record_field(type="invalid_questions",
                                             message="Incorrect number of questions supplied",
-                                            field_name="ch_questions",
+                                            field_name="sp_questions",
                                             data=record)
             elif who == "child":
                 for num in range(1, self.MAX_CHILDREN+1):
+                    if not record.get("ch{}_first".format(num)):
+                        continue
                     actual_count = 0
                     for q_num in range(1, self.MAX_QUESTIONS+1):
                         question = record.get("ch{}_question_{}_answer".format(num, q_num))
