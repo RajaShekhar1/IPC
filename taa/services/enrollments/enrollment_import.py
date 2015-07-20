@@ -1,5 +1,6 @@
 import csv
 
+from taa.core import TAAFormError
 from taa.services.cases.census_import import (
     preprocess_numbers,
     preprocess_string,
@@ -7,15 +8,26 @@ from taa.services.cases.census_import import (
     )
 
 from taa.services.preprocessors import *
-
 from taa.services.validators import *
 
-from taa.services import RequiredFeature
-from taa.services import RequiredFeature
+from taa.services.products.payment_modes import is_payment_mode
+from taa.services import RequiredFeature, LookupService
+from taa.services.enrollments.enrollment_import_processor import EnrollmentProcessor
 
 class EnrollmentImportService(object):
-    def convert_csv_to_json(self, csv_bytes):
-        pass
+    case_service = RequiredFeature("CaseService")
+    file_import_service = RequiredFeature("FileImportService")
+
+    def process_enrollment_data(self, data, data_format, case_token=None, auth_token=None):
+        processor = EnrollmentProcessor()
+        processor.process_enrollment_import_request(
+            data,
+            data_format,
+            case_token=case_token,
+            auth_token=auth_token
+        )
+
+        return processor
 
     def submit_file_records(self, records):
         response = EnrollmentImportResponse()

@@ -4,7 +4,7 @@ import cStringIO
 class FileImportService(object):
 
 
-    def process_file_stream(self, file_obj):
+    def process_delimited_file_stream(self, file_obj):
         """
         Read in file data as either comma or tab separated values,
          output as rows of dictionaries.

@@ -1,21 +1,17 @@
+from StringIO import StringIO
+
 from flask import Blueprint, request, abort, make_response, jsonify, redirect, url_for, render_template
 from flask_stormpath import current_user, groups_required, login_required
-
 
 from taa import app
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
 
-from taa.services.cases import CaseService
-from taa.services.agents import AgentService
-from taa.services.enrollments import EnrollmentApplicationService
+from taa.services import LookupService
 
 from taa.services.docusign.docusign_envelope import create_envelope_and_get_signing_url
 
-case_service = CaseService()
-agent_service = AgentService()
-enrollment_service = EnrollmentApplicationService()
 
 bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
 
@@ -71,52 +67,29 @@ bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
 # spouse_contingent_beneficiary: window.ui.spouse_contingent_beneficiary().serialize()
 # };
 
-@route(bp, '/')
-def home():
-    return "Hallo world"
+case_service = LookupService("CaseService")
+enrollment_import_service = LookupService("EnrollmentImportService")
 
-@route(bp, '/submit-data', methods=["POST"])
+@route(bp, '/', methods=["POST"])
 def submit_data():
-    pass
 
-    # 1. authenticate
-    #  - check URL parameters for an API user_token
-    #    - flag as a 3rd party enrollment import
-    #  - check for logged-in-agent
-    #  - check for self-enroll token (move to URL parameter)
-    # 2. determine which case we are importing to
-    #  - if authenticated via API token,
-    #     case_token must be in either the URL params, otherwise require it on every record
-    #     case_id may not be used
-    #  - if authenticated via login, case_id must be provided in the URL parameters
-    #  - if authenticated via self-enroll token, case is retrieved from the self enroll setup
-    # 3. normalize data format
-    #  - use content type header probably - text/plain for flat-file, text/csv for csv, or application/json
-    #  - convert flat-file to CSV
-    #  - parse CSV to list-of-dicts
-    #  - convert JSON to CSV list-of-dict format if it needs to be converted from wizard,
-    #    otherwise leave as list of dicts
-    #    - how to determine if from wizard?
-    # 4. validate data
-    #  - configure the validator with whether or not the case_token is required
-    #  - if any submitted enrollment data fails validation, we fail the whole thing
-    #  - MAYBE skip validation if logged in or self enroll, but would prefer not to skip if possible.
-    #  - TODO: do we accept declines from 3rd party enrollment, if so define did_decline column
-    # 5. save enrollment data
-    #  - same as now, except also save raw JSON data
-    # 6. submit
-    #  - Batch this part if this is not a wizard enrollment
-    #  - TODO: need to update the docusign service code to expect the new column names
-    #  - If this is a 3rd party import, the docusign submission is changed by:
-    #     - removing the employee and agent as recipients
-    #     - generate the server templates locally instead of via DocuSign
-    #  - Otherwise, submit to DocuSign normally (with employee and agent recipients)
-    #  - Soon, will submit to Dell XML
-    # 7. return response
-    #  - If 3rd party import, we return success with # records processed, or errors.
-    #    - If this came from the dropbox, we need to reply via email
-    #    - otherwise we return JSON
-    #  - If wizard, then we also include a redirect URL for DocuSign.
+    case_token = request.args.get('case_token')
+    auth_token = request.args.get('auth_token')
+    data_format = request.args.get('format', 'json')
+
+    data = StringIO(request.data)
+
+    import_results = enrollment_import_service.process_enrollment_data(
+        data,
+        data_format,
+        case_token=case_token,
+        auth_token=auth_token,
+    )
+
+    return {
+        'num_processed': import_results.get_num_processed()
+    }
+
 
 
     # data = request.json

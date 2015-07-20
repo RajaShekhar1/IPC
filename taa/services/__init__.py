@@ -78,11 +78,24 @@ class RequiredFeature(object):
             % (obj, self.feature)
         return obj
 
+class ServiceProxy(object):
+    """
+    Basic proxy for a service resolved using the broker. This forces the correct service to be resolved
+     for every attribute access.
+    """
+    def __init__(self, service_name):
+        object.__setattr__(self, 'service_name', service_name)
+
+    def __getattribute__(self, name):
+        return getattr(services_broker[object.__getattribute__(self, "service_name")], name)
+
+    def __setattr__(self, key, value):
+        return setattr(services_broker[object.__getattribute__(self, "service_name")], key, value)
+
 def LookupService(service_name):
     if service_name not in services_broker:
         raise ValueError("Could not find service named '{0}'".format(service_name))
-    return services_broker[service_name]
-
+    return ServiceProxy(service_name)
 
 def initialize_services():
     """
@@ -102,6 +115,7 @@ def initialize_services():
         SelfEnrollmentLinkService,
         SelfEnrollmentEmailBatchService,
         EnrollmentImportService,
+        EnrollmentRecordParser,
         EnrollmentApplicationCoverageService,
         EnrollmentReportService,
         ImagedFormGeneratorService,
@@ -116,6 +130,7 @@ def initialize_services():
     from taa.services.data_import import (
         FileImportService,
     )
+    from taa.services.users import UserService
 
     services_broker.Provide('CaseService', CaseService())
     services_broker.Provide('CaseEnrollmentPeriodsService', CaseEnrollmentPeriodsService())
@@ -132,6 +147,7 @@ def initialize_services():
     services_broker.Provide('EnrollmentApplicationService', EnrollmentApplicationService())
     services_broker.Provide('EnrollmentApplicationCoverageService', EnrollmentApplicationCoverageService())
     services_broker.Provide('EnrollmentImportService', EnrollmentImportService())
+    services_broker.Provide('EnrollmentRecordParser', EnrollmentRecordParser())
     services_broker.Provide('SelfEnrollmentEmailService', SelfEnrollmentEmailService())
     services_broker.Provide('SelfEnrollmentLinkService', SelfEnrollmentLinkService())
     services_broker.Provide('SelfEnrollmentEmailBatchService', SelfEnrollmentEmailBatchService())
@@ -140,4 +156,5 @@ def initialize_services():
     services_broker.Provide("FormPDFRenderer", FormPDFRenderer())
     services_broker.Provide("FormTemplateTabRepository", FormTemplateTabRepository())
 
-    services_broker.Provide('FileImportService', FileImportService)
+    services_broker.Provide('FileImportService', FileImportService())
+    services_broker.Provide('UserService', UserService())
