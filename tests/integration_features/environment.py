@@ -10,6 +10,7 @@ def before_all(context):
     #desired_capabilities['client_secret'] = 'secret'
 
     context.browser = webdriver.Firefox(
+        log_file='firefox.log',
         #desired_capabilities=desired_capabilities,
         #command_executor="http://hub.testingbot.com:4444/wd/hub"
     )

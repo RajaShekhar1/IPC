@@ -1,5 +1,5 @@
 from behave import use_step_matcher, given, then, when, step
-from hamcrest import assert_that, equal_to, has_items
+from hamcrest import assert_that, equal_to, has_items, has_item
 
 use_step_matcher("parse")
 
@@ -197,3 +197,12 @@ def step_impl(context):
 
     assert_that(actual_errors, has_items(*expected_errors))
     assert_that(context.result.is_error(), equal_to(True))
+
+
+@then("the parsed record should include the following attributes")
+def step_impl(context):
+    records = context.result.get_parsed_records()
+    record = records[0]
+    keys = [row['attribute_name'] for row in context.table]
+    for key in keys:
+        assert_that(record.keys(), has_item(key))

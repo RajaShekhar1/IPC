@@ -40,11 +40,14 @@ class EnrollmentImportService(object):
         for error in errors:
             response.add_error(error["type"], error["field_name"])
 
+        response.records = parser.get_valid_data()
+
         return response
 
 class EnrollmentImportResponse(object):
     def __init__(self):
         self.errors = []
+        self.records = []
 
     def add_error(self, type, fields):
         error = EnrollmentImportError(type, fields)
@@ -60,6 +63,8 @@ class EnrollmentImportResponse(object):
     def get_errors(self):
         return self.errors
 
+    def get_parsed_records(self):
+        return self.records
 
 class EnrollmentImportError(object):
     def __init__(self, type, fields):
@@ -123,13 +128,13 @@ class EnrollmentRecordParser(object):
     MAX_QUESTIONS = 6
 
     product_service = RequiredFeature("ProductService")
-    #Case/Record information
+    # Case/Record information
     user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator])
     case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator])
     product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [required_validator, product_validator])
     payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_string, [required_validator, payment_mode_validator])
 
-    #Employee Information
+    # Employee Information
     emp_first = EnrollmentRecordField("emp_first", "employee_first", preprocess_string, [required_validator])
     emp_last = EnrollmentRecordField("emp_last", "employee_last", preprocess_string, [required_validator])
     emp_gender = EnrollmentRecordField("emp_gender", "employee_gender", preprocess_string, [required_validator, gender_validator])
@@ -145,7 +150,7 @@ class EnrollmentRecordParser(object):
     emp_phone = EnrollmentRecordField("emp_phone", "employee_phone", preprocess_string, [])
     emp_pin = EnrollmentRecordField("emp_pin", "employee_pin", preprocess_numbers, [required_validator])
 
-    #Spouse Information
+    # Spouse Information
     sp_first = EnrollmentRecordField("sp_first", "spouse_first", preprocess_string, [])
     sp_last = EnrollmentRecordField("sp_last", "spouse_last", preprocess_string, [])
     sp_birthdate = EnrollmentRecordField("sp_birthdate", "spouse_birthdate", preprocess_date, [birthdate_validator])
@@ -153,7 +158,7 @@ class EnrollmentRecordParser(object):
     sp_coverage = EnrollmentRecordField("sp_coverage", "spouse_coverage", preprocess_string, [coverage_validator])
     sp_premium = EnrollmentRecordField("sp_premium", "spouse_premium", preprocess_string, [premium_validator])
 
-    #Signing Information
+    # Signing Information
     emp_sig_txt = EnrollmentRecordField("emp_sig_txt", "employee_sig_txt", preprocess_string, [required_validator])
     application_date = EnrollmentRecordField("application_date", "application_date", preprocess_date, [required_validator])
     time_stamp = EnrollmentRecordField("time_stamp", "time_stamp", preprocess_date, [required_validator])
@@ -163,7 +168,7 @@ class EnrollmentRecordParser(object):
     agent_code = EnrollmentRecordField("agent_code", "agent_code", preprocess_string, [required_validator])
     agent_sig_txt = EnrollmentRecordField("agent_sig_txt", "agent_sig_txt", preprocess_string, [required_validator])
 
-    #All spouse data is required if any spouse data is given
+    # All spouse data is required if any spouse data is given
     spouse_fields = [sp_first, sp_last, sp_birthdate, sp_ssn]
     for field in spouse_fields:
         validator = RequiredIfAnyInGroupValidator(
@@ -197,13 +202,13 @@ class EnrollmentRecordParser(object):
         )
 
     all_fields = [
-        #Case data
+        # Case data
         user_token,
         case_token,
         product_code,
         payment_mode,
 
-        #Employee data
+        # Employee data
         emp_first,
         emp_last,
         emp_gender,
@@ -218,7 +223,7 @@ class EnrollmentRecordParser(object):
         emp_zipcode,
         emp_phone,
 
-        #Spouse data
+        # Spouse data
         sp_first,
         sp_last,
         sp_birthdate,
@@ -226,7 +231,7 @@ class EnrollmentRecordParser(object):
         sp_coverage,
         sp_premium,
 
-        #Signing data
+        # Signing data
         emp_pin,
         emp_sig_txt,
         application_date,
@@ -238,7 +243,7 @@ class EnrollmentRecordParser(object):
         agent_sig_txt
     ]
 
-    #Child data
+    # Child data
     MAX_CHILDREN = 6
     for num in range(1, MAX_CHILDREN + 1):
         child_first = EnrollmentRecordField('ch{}_first'.format(num),
@@ -272,7 +277,7 @@ class EnrollmentRecordParser(object):
                                     )
         all_fields += [child_first, child_last, child_birthdate, child_ssn, child_coverage, child_premium]
 
-    for q_num in range(1, MAX_QUESTIONS+1):
+    for q_num in range(1, MAX_QUESTIONS + 1):
         questions = []
         emp_question = EnrollmentRecordField("emp_question_{}_answer".format(q_num),
                                              "employee_question_{}_answer".format(q_num),
@@ -284,7 +289,7 @@ class EnrollmentRecordParser(object):
                                             preprocess_string,
                                             [question_answered_validator]
                                             )
-        for num in range(1, MAX_CHILDREN+1):
+        for num in range(1, MAX_CHILDREN + 1):
             ch_question = EnrollmentRecordField("ch{}_question_{}_answer".format(num, q_num),
                                                 "child{}_question_{}_answer".format(num, q_num),
                                                 preprocess_string,
@@ -399,10 +404,11 @@ class EnrollmentRecordParser(object):
 
     def validate_data_keys(self, records):
         if len(records) == 0:
-            self.error_message(
-                "The uploaded CSV file did not appear to have a valid header "
-                "row. Please see the sample data file for formatting examples."
-            )
+            self.error_record_field(type="missing_header",
+                                    message="The uploaded CSV file did not appear to have a valid header "
+                                            "row. Please see the sample data file for formatting examples.",
+                                    field_name="",
+                                    data=None)
         for record in records:
             missing_keys = self._get_missing_data_keys(record)
             for key in missing_keys:
@@ -412,6 +418,8 @@ class EnrollmentRecordParser(object):
                                         data=record)
 
     def validate_questions(self, record):
+        is_valid = True
+
         for who in self.product_service.health_questions[record.get("product_code")]:
             required_count = self.product_service.get_num_health_questions(record.get("product_code"), who)
             actual_count = 0
@@ -421,40 +429,44 @@ class EnrollmentRecordParser(object):
                     if not question:
                         # If there isn't a question here, we have reached the number of questions for this person
                         break
-                    #Otherwise, add this question to the count
+                    # Otherwise, add this question to the count
                     actual_count+=1
                 if actual_count is not required_count:
                     self.error_record_field(type="invalid_questions",
                                             message="Incorrect number of questions supplied",
                                             field_name="emp_questions",
                                             data=record)
+                    is_valid = False
             elif who == "spouse":
-                for q_num in range(1, self.MAX_QUESTIONS+1):
+                for q_num in range(1, self.MAX_QUESTIONS + 1):
                     question = record.get("sp_question_{}_answer".format(q_num))
                     if not question:
                         # If there isn't a question here, we have reached the number of questions for this person
                         break
-                    #Otherwise, add this question to the count
+                    # Otherwise, add this question to the count
                     actual_count+=1
                 if actual_count is not required_count:
                     self.error_record_field(type="invalid_questions",
                                             message="Incorrect number of questions supplied",
                                             field_name="sp_questions",
                                             data=record)
+                    is_valid = False
             elif who == "child":
                 for num in range(1, self.MAX_CHILDREN+1):
                     if not record.get("ch{}_first".format(num)):
                         continue
                     actual_count = 0
-                    for q_num in range(1, self.MAX_QUESTIONS+1):
+                    for q_num in range(1, self.MAX_QUESTIONS + 1):
                         question = record.get("ch{}_question_{}_answer".format(num, q_num))
                         if not question:
                             # If there isn't a question here, we have reached the number of questions for this person
                             break
-                        #Otherwise, add this question to the count
+                        # Otherwise, add this question to the count
                         actual_count+=1
                     if actual_count is not required_count:
                         self.error_record_field(type="invalid_questions",
                                                 message="Incorrect number of questions supplied",
                                                 field_name="ch_questions",
                                                 data=record)
+                        is_valid = False
+        return is_valid
