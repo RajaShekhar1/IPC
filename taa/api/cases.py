@@ -254,9 +254,10 @@ def census_records(case_id):
 @groups_required(api_groups, all=False)
 def post_census_records(case_id):
     case = case_service.get_if_allowed(case_id)
-    if not case_service.can_current_user_edit_case(case):
-        abort(401)
-        return
+    # Temporary fix for partner agents to add a single empty record using new enrollment button
+    #if not case_service.can_current_user_edit_case(case):
+    #    abort(401)
+    #    return
 
     data = get_posted_data()
     file_obj = request.files.get('csv-file')
