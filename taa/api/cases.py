@@ -254,16 +254,18 @@ def census_records(case_id):
 @groups_required(api_groups, all=False)
 def post_census_records(case_id):
     case = case_service.get_if_allowed(case_id)
-    # Temporary fix for partner agents to add a single empty record using new enrollment button
-    #if not case_service.can_current_user_edit_case(case):
-    #    abort(401)
-    #    return
 
     data = get_posted_data()
     file_obj = request.files.get('csv-file')
     if not file_obj:
-        # Attempt to process an ad-hoc post. Currently only SSN is required.
+        # Attempt to process an ad-hoc post. Currently only SSN is required, and anyone who can
+        #  view / enroll the case can do this
         return case_service.create_ad_hoc_census_record(case, ssn=data['ssn'])
+
+    # Case upload - must be able to edit case settings
+    if not case_service.can_current_user_edit_case(case):
+        abort(401)
+        return
 
     if not (file_obj and has_csv_extension(file_obj.filename)):
         return dict(

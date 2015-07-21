@@ -1,7 +1,7 @@
 import datetime
 
 from behave import *
-
+from hamcrest import assert_that, equal_to
 use_step_matcher("parse")
 
 from taa.core import db
@@ -10,6 +10,7 @@ from taa.services.cases.models import Case, CaseOpenEnrollmentPeriod
 from taa.services.products import payment_modes
 from pages.login_page import LoginPage
 from pages.case_enrollment import CaseEnrollmentPage
+from pages.wizard_page import WizardPage
 
 test_agent_stormpath_url = 'https://api.stormpath.com/v1/accounts/2qQtvZLi6tpUGjXFYtVSRK'
 test_agent_stormpath_url2 = 'https://api.stormpath.com/v1/accounts/3vwaoifZRl8Z1pHIzdvjwe'
@@ -96,4 +97,7 @@ def step_impl(context):
     """
     :type context behave.runner.Context
     """
-    pass
+    wizard_page = WizardPage(context)
+    did_load = wizard_page.wait_until_loaded()
+    assert_that(did_load, equal_to(True))
+

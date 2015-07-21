@@ -15,14 +15,14 @@ class CaseEnrollmentPage(PageBase):
     ADD_ENROLLMENT_BUTTON = '#add-to-census-btn'
     NEW_ENROLLMENT_SSN_INPUT = '#add-census-ssn-input'
     ENROLLMENT_NEXT_BTN = '.success-buttons .btn-primary'
-
+    BEGIN_ENROLLMENT_BTN = '.success-buttons .btn-success'
 
     #def __init__(self, context, http_scheme='http', hostname='localhost:5000'):
     #    super(LoginPage, self).__init__(context, http_scheme=http_scheme, hostname=hostname)
 
     def test_navigation_succeeded(self):
-        return EC.title_contains("Agent Manage Case")
-        
+        #return EC.title_contains("Agent Manage Case")
+        return EC.element_to_be_clickable([By.ID, self.ADD_ENROLLMENT_BUTTON])
     def get_base_url(self):
         return "{}://{}".format(self.http_scheme, self.hostname)
         
@@ -33,12 +33,17 @@ class CaseEnrollmentPage(PageBase):
         add_enrollment_button = self.lookup(self.ADD_ENROLLMENT_BUTTON)
         add_enrollment_button.click()
 
-        WebDriverWait(self.browser, 2).until(EC.visibility_of(self.lookup(self.NEW_ENROLLMENT_SSN_INPUT)))
+        ssn_input = self.lookup(self.NEW_ENROLLMENT_SSN_INPUT)
 
-        time.sleep(.25)
-        self.lookup(self.NEW_ENROLLMENT_SSN_INPUT).send_keys('123-12-1234')
+        WebDriverWait(self.browser, 10).until(EC.visibility_of(ssn_input))
+
+        ssn_input.click()
+        ssn_input.send_keys(ssn)
 
         next_btn = self.lookup(self.ENROLLMENT_NEXT_BTN)
         next_btn.click()
 
-        time.sleep(.25)
+        begin_enrollment_btn = self.lookup(self.BEGIN_ENROLLMENT_BTN)
+        WebDriverWait(self.browser, 10).until(EC.visibility_of(begin_enrollment_btn))
+
+        begin_enrollment_btn.click()
