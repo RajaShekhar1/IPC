@@ -1,2 +1,2 @@
 #!/bin/bash
-/home/vagrant/env/bin/behave tests/acceptance_features
+behave tests/acceptance_features
