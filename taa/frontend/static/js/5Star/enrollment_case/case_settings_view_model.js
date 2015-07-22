@@ -1,6 +1,7 @@
 var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, can_edit_case, settings) {
   var self = this;
   self.case_id = case_data.id;
+  self.case_token = case_data.case_token;
 
   self.can_edit_case = can_edit_case;
 
@@ -623,6 +624,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   var enrollment_tab = $('#case-nav-tabs a[href="#enrollment"]');
   var history_tab = $('#case-nav-tabs a[href="#history"]');
   var reports_tab = $('#case-nav-tabs a[href="#reports"]');
+  var api_tab = $('#case-nav-tabs a[href="#api"]');
 
   self.sammy_app = Sammy(function() {
     this.get("#setup", function() {
@@ -713,6 +715,12 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
         self.report_viewmodel().load_enrollments();
       }
     });
+
+    this.get("#api", function() {
+      self.exit_print_mode();
+      api_tab.tab('show');
+    })
+
 
     this.get("#print", function() {
       if (self.report_viewmodel()) {

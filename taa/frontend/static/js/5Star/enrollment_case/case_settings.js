@@ -27,32 +27,32 @@ function get_form_data(form) {
   return data_object;
 }
 
-function show_loading_panel() {
-  $(".form-panel").hide("slide");
-  $(".loading-panel").show("slide");
-  $(".processing-buttons").show("fade");
-  $(".form-buttons").hide("fade");
+function show_loading_panel(modal) {
+  $(".form-panel", modal).hide("slide");
+  $(".loading-panel", modal).show("slide");
+  $(".processing-buttons", modal).show("fade");
+  $(".form-buttons", modal).hide("fade");
 }
 
-function show_error_panel() {
-  $(".loading-panel").hide("slide");
-  $(".error-panel").show("slide");
-  $(".error-buttons").show("fade");
-  $(".processing-buttons").hide("fade");
+function show_error_panel(modal) {
+  $(".loading-panel", modal).hide("slide");
+  $(".error-panel", modal).show("slide");
+  $(".error-buttons", modal).show("fade");
+  $(".processing-buttons", modal).hide("fade");
 }
 
-function show_success_panel() {
-  $(".loading-panel").hide("slide");
-  $(".success-panel").show("slide");
-  $(".success-buttons").show("fade");
-  $(".processing-buttons").hide("fade");
+function show_success_panel(modal) {
+  $(".loading-panel", modal).hide("slide");
+  $(".success-panel", modal).show("slide");
+  $(".success-buttons", modal).show("fade");
+  $(".processing-buttons", modal).hide("fade");
 }
 
-function show_form_panel() {
-  $(".modal-panel").hide("slide");
-  $(".buttons-panel").hide("slide");
-  $(".form-panel").show("slide");
-  $(".form-buttons").show("slide");
+function show_form_panel(modal) {
+  $(".modal-panel", modal).hide("slide");
+  $(".buttons-panel", modal).hide("slide");
+  $(".form-panel", modal).show("slide");
+  $(".form-buttons", modal).show("slide");
 }
 
 function reset_upload_modal() {
@@ -133,7 +133,29 @@ function observe_census_record_form_submit() {
     send_file_data("POST", urls.get_case_api_census_records_url(window.case_id),
     form_data, handle_upload_success, handle_upload_error, false);
 
-    show_loading_panel();
+    show_loading_panel($(this));
+
+    return false;
+  });
+}
+
+function observe_enrollment_upload_form_submit() {
+  $("#enrollment-csv-form").on("submit", function() {
+    var form = this;
+    var file_select = $(this).find("input[type=file]").get(0);
+    var files = file_select.files;
+    var form_data = new FormData();
+    if (files.length !== 1) {
+      alert("Please select a file");
+      return false;
+    }
+    // Add the file upload to the request.
+    form_data.append('csv-file', files[0], files[0].name);
+    form_data.append('upload_type', $("input[name=upload_type]:checked").val());
+
+    //send_file_data("POST", urls.get_case_api_census_records_url(window.case_id), form_data, handle_upload_success, handle_upload_error, false);
+
+    show_loading_panel($(this));
 
     return false;
   });
@@ -141,6 +163,16 @@ function observe_census_record_form_submit() {
 
 function init_settings_fields() {
   $('#csv-file-input').ace_file_input({
+    no_file:'No File ...',
+    btn_choose:'Choose File',
+    btn_change:'Change File',
+    droppable:false,
+    onchange:null,
+    thumbnail:false,
+    whitelist:'csv'
+  });
+
+  $('#csv-file-input-enrollment').ace_file_input({
     no_file:'No File ...',
     btn_choose:'Choose File',
     btn_change:'Change File',

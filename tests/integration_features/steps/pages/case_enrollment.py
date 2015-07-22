@@ -16,7 +16,7 @@ class CaseEnrollmentPage(PageBase):
     NEW_ENROLLMENT_SSN_INPUT = '#add-census-ssn-input'
     ENROLLMENT_NEXT_BTN = '.success-buttons .btn-primary'
     BEGIN_ENROLLMENT_BTN = '.success-buttons .btn-success'
-    
+
     def test_navigation_succeeded(self):
         return EC.element_to_be_clickable([By.ID, self.ADD_ENROLLMENT_BUTTON])
 

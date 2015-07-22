@@ -133,7 +133,7 @@ def updateUser():
 
                 token = api_token_service.get_token_by_sp_href(account.href)
 
-                if "api_access" not in groups:
+                if "api_users" not in groups:
                     if token:
                         token.activated = False
                         db.session.commit()
