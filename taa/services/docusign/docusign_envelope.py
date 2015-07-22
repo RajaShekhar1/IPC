@@ -37,7 +37,7 @@ agent_service = AgentService()
 def create_envelope_and_get_signing_url(wizard_data, census_record, case):
     enrollment_data = EnrollmentDataWrap(wizard_data, census_record, case)
     # Product code
-    #product = product_service.get(wizard_data['product_data']['id'])
+    # product = product_service.get(wizard_data['product_data']['id'])
     productType = wizard_data['product_type']
     is_fpp = ('fpp' in productType.lower())
     # If FPP Product, use the new docusign code, otherwise use old path
@@ -54,7 +54,6 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
     logged_in_agent = agent_service.get_logged_in_agent()
     if not logged_in_agent:
         logged_in_agent = case.owner_agent
-
     agent = AgentDocuSignRecipient(name=logged_in_agent.name(),
                                    email=logged_in_agent.email)
     employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
@@ -89,7 +88,7 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
 
     transport = get_docusign_transport()
     envelope_result = create_envelope(
-        email_subject='Signature needed: {} for {} ({})'.format(
+        email_subject="Signature needed: {} for {} ({})".format(
             enrollment_data.get_product_code(),
             enrollment_data.get_employee_name(),
             enrollment_data.get_employer_name()),
