@@ -12,7 +12,7 @@ from taa.services.validators import *
 
 from taa.services.products.payment_modes import is_payment_mode
 from taa.services import RequiredFeature, LookupService
-from taa.services.enrollments.enrollment_import_processor import EnrollmentProcessor
+from taa.services.enrollments.enrollment_import_processor import EnrollmentProcessor, EnrollmentImportError
 
 class EnrollmentImportService(object):
     case_service = RequiredFeature("CaseService")
@@ -34,11 +34,11 @@ class EnrollmentImportService(object):
         parser = EnrollmentRecordParser()
 
         # Process all records
-        parser.process_records(records)
+        parser.process_records(records, case=None)
         errors = parser.errors
         # If there are errors in the parser, add them to the response
         for error in errors:
-            response.add_error(error["type"], error["field_name"])
+            response.add_error(error["type"], error["field_name"], message=error['message'])
 
         response.records = parser.get_valid_data()
 
@@ -49,8 +49,8 @@ class EnrollmentImportResponse(object):
         self.errors = []
         self.records = []
 
-    def add_error(self, type, fields):
-        error = EnrollmentImportError(type, fields)
+    def add_error(self, type, fields, message):
+        error = EnrollmentImportError(type, fields, message)
         self.errors.append(error)
         return error
 
@@ -66,23 +66,6 @@ class EnrollmentImportResponse(object):
     def get_parsed_records(self):
         return self.records
 
-class EnrollmentImportError(object):
-    def __init__(self, type, fields):
-        self.type = type
-        self.fields = [fields]
-
-    def get_type(self):
-        return self.type
-
-    def get_fields(self):
-        """
-        returns a list of column names that this error refers to.
-        """
-        return self.fields
-
-    def get_message(self):
-        error_messages = dict()
-        return error_messages.get(self.type, "Error with column: {}".format(self.type))
 
 
 class EnrollmentRecordField():
@@ -125,9 +108,11 @@ class EnrollmentRecordField():
 
 class EnrollmentRecordParser(object):
 
-    MAX_QUESTIONS = 6
+    MAX_QUESTIONS = 20
 
     product_service = RequiredFeature("ProductService")
+    case_service = RequiredFeature("CaseService")
+
     # Case/Record information
     user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator])
     case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator])
@@ -304,35 +289,60 @@ class EnrollmentRecordParser(object):
         self.errors = []
         self.valid_data = []
 
+    def process_records(self, records, case):
+
+        self.validate_data_keys(records)
+        # Don't do any more processing if missing important data_keys
+        if self.errors:
+            return
+
+        preprocessed_records = (self.preprocess_record(record) for record in records)
+        for record in preprocessed_records:
+            validation_tests = [
+                lambda: self.validate_record(record),
+                lambda: self.validate_statecode(record),
+                lambda: self.validate_questions(record),
+                lambda: self.validate_case(record, case),
+            ]
+            is_valid = True
+            for test in validation_tests:
+                if not test():
+                    is_valid = False
+                    break
+            if is_valid:
+                self.postprocess_record(record)
+                self.valid_data.append(record)
+
     fields_by_dict_key = {field.dict_key_name: field for field in all_fields}
 
     def get_field_by_dict_key(self, dict_key):
         return self.fields_by_dict_key.get(dict_key)
 
-    def validate_statecode(self, records):
-        for record in records:
-            if not self.product_service.is_valid_statecode(record.get("product_code"), record.get("signed_at_state")):
-                self.error_record_field("invalid_state_for_product",
-                                        "Provided 'signed at state' is invalid for this product.",
-                                        "signed_at_state",
-                                        record)
-                return False
-            return True
+    def validate_case(self, record, default_case):
+        if 'case_token' in record:
+            case = self.case_service.get_case_by_token(record['case_token'])
+        else:
+            case = default_case
+
+        if not case:
+            return False
+
+        # Store the case ID in the record
+        record['case_id'] = case.id
+
+        # TODO: Validate case is enrolling
+
+        return True
 
 
-    def process_records(self, records):
-        self.validate_data_keys(records)
-        # Don't do any more processing if missing important data_keys
-        if self.errors:
-            return
-        # self.validate_questions(records)
-        preprocessed_records = (self.preprocess_record(record)
-                                for record in records)
-        for record in preprocessed_records:
-            if self.validate_record(record) and self.validate_statecode(records):
-                if self.validate_questions(record):
-                    self.postprocess_record(record)
-                    self.valid_data.append(record)
+    def validate_statecode(self, record):
+        if not self.product_service.is_valid_statecode_for_product(record.get("product_code"), record.get("signed_at_state")):
+            self.error_record_field("invalid_state_for_product",
+                                    "Provided 'signed at state' is invalid for this product.",
+                                    "signed_at_state",
+                                    record)
+            return False
+        return True
 
     def preprocess_record(self, record):
         data = {}
@@ -373,6 +383,11 @@ class EnrollmentRecordParser(object):
         return self.valid_data
 
     def _get_missing_data_keys(self, record):
+
+        # Do a case-insensitive match on the columns
+        for key in record.keys():
+            record[key.lower()] = record[key]
+
         required_data_keys = [
             "user_token",
             "case_token",
@@ -420,53 +435,54 @@ class EnrollmentRecordParser(object):
     def validate_questions(self, record):
         is_valid = True
 
-        for who in self.product_service.health_questions[record.get("product_code")]:
-            required_count = self.product_service.get_num_health_questions(record.get("product_code"), who)
-            actual_count = 0
-            if who == "employee":
-                for q_num in range(1, self.MAX_QUESTIONS+1):
-                    question = record.get("emp_question_{}_answer".format(q_num))
-                    if not question:
-                        # If there isn't a question here, we have reached the number of questions for this person
-                        break
-                    # Otherwise, add this question to the count
-                    actual_count+=1
-                if actual_count is not required_count:
-                    self.error_record_field(type="invalid_questions",
-                                            message="Incorrect number of questions supplied",
-                                            field_name="emp_questions",
-                                            data=record)
-                    is_valid = False
-            elif who == "spouse":
-                for q_num in range(1, self.MAX_QUESTIONS + 1):
-                    question = record.get("sp_question_{}_answer".format(q_num))
-                    if not question:
-                        # If there isn't a question here, we have reached the number of questions for this person
-                        break
-                    # Otherwise, add this question to the count
-                    actual_count+=1
-                if actual_count is not required_count:
-                    self.error_record_field(type="invalid_questions",
-                                            message="Incorrect number of questions supplied",
-                                            field_name="sp_questions",
-                                            data=record)
-                    is_valid = False
-            elif who == "child":
-                for num in range(1, self.MAX_CHILDREN+1):
-                    if not record.get("ch{}_first".format(num)):
-                        continue
-                    actual_count = 0
-                    for q_num in range(1, self.MAX_QUESTIONS + 1):
-                        question = record.get("ch{}_question_{}_answer".format(num, q_num))
-                        if not question:
-                            # If there isn't a question here, we have reached the number of questions for this person
-                            break
-                        # Otherwise, add this question to the count
-                        actual_count+=1
-                    if actual_count is not required_count:
-                        self.error_record_field(type="invalid_questions",
-                                                message="Incorrect number of questions supplied",
-                                                field_name="ch_questions",
-                                                data=record)
-                        is_valid = False
+        for applicant_abbr, applicant_type in [("emp", "employee"), ("sp", "spouse"), ("ch", "child")]:
+            required_count = self.product_service.get_num_health_questions(
+                record.get("product_code"),
+                record['signed_at_state'],
+                applicant_type
+            )
+
+            if applicant_type == "employee":
+                is_valid = self._add_error_if_wrong_question_count(record, required_count, applicant_abbr)
+            elif applicant_type == "spouse":
+                if not self._does_record_have_spouse(record):
+                    continue
+                is_valid = self._add_error_if_wrong_question_count(record, required_count, applicant_abbr)
+            else:
+                valid_child_nums = [n for n in range(1, self.MAX_CHILDREN + 1)
+                                    if self._does_record_have_child(record, n)
+                ]
+                for num in valid_child_nums:
+                    child_prefix = "{}{}".format(applicant_abbr, num)
+                    is_valid = self._add_error_if_wrong_question_count(record, required_count, child_prefix)
+
         return is_valid
+
+    def _does_record_have_spouse(self, record):
+        return record.get("sp_first")
+
+    def _does_record_have_child(self, record, num):
+        return record.get("ch{}_first".format(num))
+
+    def _add_error_if_wrong_question_count(self, record, required_count, applicant_prefix):
+        if self._count_valid_questions(record, applicant_prefix) is not required_count:
+            self.error_record_field(type="invalid_questions",
+                                    message="Incorrect number of questions supplied; {} should have {} questions".format(applicant_prefix, required_count),
+                                    field_name="{}_questions".format(applicant_prefix),
+                                    data=record)
+            return False
+
+        return True
+
+    def _count_valid_questions(self, record, applicant_prefix):
+        actual_count = 0
+        for q_num in range(1, self.MAX_QUESTIONS + 1):
+            question = record.get("{}_question_{}_answer".format(applicant_prefix, q_num))
+            if not question:
+                # If there isn't a question here, we have reached the number of questions for this person
+                break
+
+            # Otherwise, add this question to the count
+            actual_count += 1
+
+        return actual_count

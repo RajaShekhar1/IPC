@@ -22,6 +22,12 @@ class MockCaseService(object):
     def is_valid_case_token(self, token):
         return token in self.valid_tokens
 
+    def get_case_by_token(self, token):
+        return
+
+    def is_case_enrolling(self, case):
+        return True
+
 class MockProductService(object):
     def __init__(self):
         self._valid_product_codes = {}
@@ -46,15 +52,16 @@ class MockProductService(object):
     def is_valid_product_code(self, code):
         return code in self.valid_product_codes
 
-    def get_num_health_questions(self, product_code, applicant_type):
+    def get_num_health_questions(self, product_code, statecode, applicant_type):
         return len(self.health_questions[product_code][applicant_type])
 
+    def is_valid_statecode_for_product(self, product_code, statecode):
+        return statecode in self.valid_statecodes[product_code]
+
     def invalidate_statecode(self, product_code, statecode):
-        if self.is_valid_statecode(product_code, statecode):
+        if self.is_valid_statecode_for_product(product_code, statecode):
             self.valid_statecodes[product_code].remove(statecode)
 
-    def is_valid_statecode(self, product_code, statecode):
-        return statecode in self.valid_statecodes[product_code]
 
 @given(u"I have an API User named {user_name} with token {user_token}")
 def step_impl(context, user_name, user_token):
@@ -89,6 +96,10 @@ def step_impl(context):
     table = context.table if getattr(context, 'table') else context.passed_table
     for row in table:
         context.import_record.update(dict(zip(row.headings, row.cells)))
+
+@step("I remove the column '{col_name}'")
+def step_impl(context, col_name):
+    del context.import_record[col_name]
 
 @given(u'I prepare an enrollment file with data')
 def step_impl(context):

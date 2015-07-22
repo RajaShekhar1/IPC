@@ -56,13 +56,15 @@ def step_impl(context, user_name):
 
 @given(u"I create a minimally valid CSV file with case_token '{case_token}'")
 def step_impl(context, case_token):
-    context.csv_data = """
-USER_TOKEN,CASE_TOKEN,PRODUCT_CODE,PAYMENT_MODE,EMP_FIRST,EMP_LAST,EMP_SSN,EMP_BIRTHDATE,EMP_COVERAGE,EMP_PREMIUM,\
-EMP_STREET,EMP_STREET2,EMP_CITY,EMP_STATE,EMP_ZIPCODE,EMP_PHONE,EMP_PIN,EMP_SIG_TXT,EMP_APPLICATION_DATE,\
-TIME_STAMP,SIGNED_AT_CITY,SIGNED_AT_STATE,AGENT_NAME,AGENT_CODE,AGENT_SIG_TXT
-USER-123,{case_token},FPPTI,monthly,Joe,Smith,111223333,2015-01-31,50000,33.25,\
+    context.csv_data = """\
+USER_TOKEN,CASE_TOKEN,PRODUCT_CODE,PAYMENT_MODE,EMP_FIRST,EMP_LAST,EMP_SSN,EMP_BIRTHDATE,EMP_GENDER,EMP_COVERAGE,EMP_PREMIUM,\
+EMP_STREET,EMP_STREET2,EMP_CITY,EMP_STATE,EMP_ZIPCODE,EMP_PHONE,EMP_PIN,EMP_SIG_TXT,APPLICATION_DATE,\
+TIME_STAMP,SIGNED_AT_CITY,SIGNED_AT_STATE,AGENT_NAME,AGENT_CODE,AGENT_SIG_TXT,\
+EMP_QUESTION_1_ANSWER,EMP_QUESTION_2_ANSWER,EMP_QUESTION_3_ANSWER,EMP_QUESTION_4_ANSWER,EMP_QUESTION_5_ANSWER,EMP_QUESTION_6_ANSWER,EMP_QUESTION_7_ANSWER
+USER-123,{case_token},FPPTI,monthly,Joe,Smith,111223333,1980-01-31,m,50000,33.25,\
 123 Sesame,,Chicago,IL,45555,,11441144,esigned by JOE SMITH,2015-01-01,\
-2015-01-01T10:30:00,Chicago,IL,Test Agent,26TEST,esigned by TEST AGENT
+2015-01-01T10:30:00,Chicago,IL,Test Agent,26TEST,esigned by TEST AGENT,\
+n,n,n,n,n,n,n
 """.format(case_token=case_token)
 
 @step(u"I submit the enrollment data to the API using the auth_token '{auth_token}' and case_token '{case_token}'")
@@ -70,9 +72,6 @@ def step_impl(context, auth_token, case_token):
     # Override key services
     context.mock_case_service = Mock()
     services_broker.Provide("CaseService", context.mock_case_service)
-    context.mock_enrollment_record_parser = Mock()
-    context.mock_enrollment_record_parser.return_value.errors = []
-    services_broker.Provide("EnrollmentRecordParser", context.mock_enrollment_record_parser)
 
     # Create params
     params = {'format':'csv'}
@@ -91,7 +90,7 @@ def step_impl(context, auth_token, case_token):
 
 @step(u"I should see a {status_code:d} response")
 def step_impl(context, status_code):
-    assert_that(context.resp.status_code, equal_to(status_code), str(context.resp))
+    assert_that(context.resp.status_code, equal_to(status_code), str(context.resp.data))
 
 @then("I should see a positive number of records processed in the result")
 def step_impl(context):
@@ -102,6 +101,6 @@ def step_impl(context):
 @then("It should look up the case with token '{case_token}' in the database")
 def step_impl(context, case_token):
     call_list = context.mock_case_service.mock_calls
-    expected = call().get_case_for_token(case_token)
+    expected = call().get_case_by_token(case_token)
     assert_that(call_list, has_item(expected))
 

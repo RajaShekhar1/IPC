@@ -133,15 +133,14 @@ def state_validator( field, record):
 
     from taa.services.products import ProductService
     ps = ProductService()
-    if not state or not len(state) == 2 or not state in ps.get_all_statecodes():
-        return False, "invalid_state", "Invalid US State. Must be two-letter abbreviation."
+    if not state or not len(state) == 2 or not state.upper() in ps.get_all_statecodes():
+        return False, "invalid_state", "Invalid US State. Must be two-letter abbreviation, got '{}'.".format(state)
     return True, None, None
 
 def question_answered_validator( field, record):
         answer = field.get_column_from_record(record)
-        type=field.dict_key_name.split("_")[0]
         if not answer:
             return True, None, None
-        if answer not in ["Y", "N"]:
+        if answer.upper() not in ["Y", "N"]:
             return False, "invalid_question", "Questions must be answered with Y or N"
         return True, None, None

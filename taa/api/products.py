@@ -10,8 +10,6 @@ from taa.services.products.forms import NewProductForm, EditProductForm
 bp = Blueprint('products', __name__, url_prefix='/products')
 read_product_api_groups = ['agents', 'home_office', 'admins']
 write_product_groups = ['home_office', 'admins']
-
-# TODO: Will need to eventually add a group type for people doing self-enroll
 read_product_rate_groups = ['agents', 'home_office', 'admins']
 
 product_service = ProductService()
@@ -85,6 +83,7 @@ def delete_product(product_id):
 
 # Rates and recommendations for a product given key demographic data
 @route(bp, '/<product_id>/rates', methods=['POST'])
+# TODO: This is unauthenticated right now to accomodate self-enroll use case.
 # @groups_required(read_product_rate_groups, all=False)
 def get_product_rates(product_id):
     # product = product_service.get_if_allowed(product_id)
