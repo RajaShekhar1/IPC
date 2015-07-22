@@ -156,6 +156,8 @@ Please follow the instructions carefully on the next page, stepping through the 
     vars['agent_email'] = agent_email
     vars['generic_link'] = self_enrollment_link_service.get_generic_link(request.url_root, case)
 
+    vars["current_user_groups"] = [g.group.name for g in current_user.group_memberships]
+
     return render_template('agent/case.html', **vars)
 
 
