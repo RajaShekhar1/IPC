@@ -443,6 +443,7 @@ class EnrollmentRecordParser(object):
                                             data=record)
             elif who == "child":
                 for num in range(1, self.MAX_CHILDREN+1):
+                    # loop throught the children first, and only use this child if the first name is set.
                     if not record.get("ch{}_first".format(num)):
                         continue
                     actual_count = 0

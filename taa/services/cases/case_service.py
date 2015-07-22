@@ -374,6 +374,8 @@ class CaseService(DBService):
     def create_new_case(self, **kwargs):
         case = DBService.create(self, **kwargs)
 
+        self.populate_case_token(case)
+
         # Make sure a self-enrollment setup is created too.
         setup = self.self_enrollment.create(**{
             'case_id': case.id,
