@@ -29,7 +29,6 @@ style="display: none;" data-bind="visible: true">
           Case Setup
         </a>
       </li>
-
       <li class="">
         <a href="#enrollment">
           <i class="orange ace-icon fa fa-user bigger-120"></i>
@@ -49,6 +48,14 @@ style="display: none;" data-bind="visible: true">
           Enrollment Reports
         </a>
       </li>
+      {% if "enrollment_importers" in current_user_groups %}
+      <li data-bind="visible: true">
+        <a href="#api">
+          <i class="blue ace-icon fa fa-bolt bigger-120"></i>
+          API
+        </a>
+      </li>
+      {% endif %}
     </ul>
 
     <div class="tab-content">
@@ -105,209 +112,209 @@ style="display: none;" data-bind="visible: true">
                       </div>
 
                       {# Restore multi-product selection when multi-product enrollment is working
-                      {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsValue: "id", optionsText: "name", selectedOptions: products, multiSelect: {
-                      observed: products,
-                      options: {nonSelectedText: "No Products Selected", numberDisplayed: 3}
-                      }'}) }}
-                      #}
-                      <div class="form-group">
-                        <label class="col-md-3 control-label" for="productID">Product</label>
-                        <div class="col-md-9">
-                          <limited-product-select params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-product-select>
+                        {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsValue: "id", optionsText: "name", selectedOptions: products, multiSelect: {
+                          observed: products,
+                          options: {nonSelectedText: "No Products Selected", numberDisplayed: 3}
+                        }'}) }}
+                        #}
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="productID">Product</label>
+                          <div class="col-md-9">
+                            <limited-product-select params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-product-select>
+                          </div>
                         </div>
-                      </div>
 
-                      {{ render_field_with_errors(case_setup_form.situs_city, **{'data-bind':'value: situs_city'}) }}
+                        {{ render_field_with_errors(case_setup_form.situs_city, **{'data-bind':'value: situs_city'}) }}
 
-                      <div class="form-group">
-                        <label class="col-md-3 control-label" for="enrollmentState">State</label>
-                        <div class="col-md-9">
-                          <limited-state-select params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-state-select>
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="enrollmentState">State</label>
+                          <div class="col-md-9">
+                            <limited-state-select params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-state-select>
+                          </div>
                         </div>
-                      </div>
 
-                      <div class="form-group">
-                        <label class="col-md-3 control-label" for="paymentMode">Payment</label>
-                        <div class="col-md-9">
-                          <select id="paymentMode" name="paymentMode" data-bind="value: payment_mode, options: payment_mode_choices, optionsText: 'name', optionsCaption: '(Select Payment Type)'"></select>
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="paymentMode">Payment</label>
+                          <div class="col-md-9">
+                            <select id="paymentMode" name="paymentMode" data-bind="value: payment_mode, options: payment_mode_choices, optionsText: 'name', optionsCaption: '(Select Payment Type)'"></select>
+                          </div>
                         </div>
+
                       </div>
+                      <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
+                        <h3 class="header lighter blue">Enrollment Periods</h3>
 
-                    </div>
-                    <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
-                      <h3 class="header lighter blue">Enrollment Periods</h3>
-
-                      <div>
+                        <div>
+                          <div class="panel form-group">
+                            <div class="panel-heading">
+                              <label>
+                                <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="open">
+                                <span class="lbl padding-8">Enrollment Period with End Date</span>
+                              </label>
+                            </div>
+                            <div class="panel-body"
+                            data-bind="slideDownIf: is_open_enrollment">
+                            <div class="row">
+                              <div class="col-md-6">
+                                <label>
+                                  Start Date:
+                                  <input data-bind="value: get_open_enrollment_period().start_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
+                                </label>
+                              </div>
+                              <div class="col-md-6">
+                                <label>
+                                  End Date:
+                                  <input data-bind="value: get_open_enrollment_period().end_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_end_date">
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                         <div class="panel form-group">
                           <div class="panel-heading">
                             <label>
-                              <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="open">
-                              <span class="lbl padding-8">Enrollment Period with End Date</span>
+                              <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="annual">
+                              <span class="lbl padding-8">Annual Periods</span>
                             </label>
                           </div>
                           <div class="panel-body"
-                          data-bind="slideDownIf: is_open_enrollment">
+                          data-bind="slideDownIf: is_annual_enrollment()">
+                          <!--ko foreach: annual_enrollment_periods-->
                           <div class="row">
                             <div class="col-md-6">
-                              <label>
+                              <label class="">
                                 Start Date:
-                                <input data-bind="value: get_open_enrollment_period().start_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
+                                <input type="text" data-bind="value: start_date" class="input-mask-month-day" placeholder="MM/DD">
                               </label>
                             </div>
                             <div class="col-md-6">
-                              <label>
+                              <label class="">
                                 End Date:
-                                <input data-bind="value: get_open_enrollment_period().end_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_end_date">
+                                <input type="text" data-bind="value: end_date" class="input-mask-month-day" placeholder="MM/DD">
                               </label>
                             </div>
                           </div>
+                          <div class="error" data-bind="text: error, visible: error() != ''"></div>
+                          <!--/ko-->
                         </div>
-                      </div>
-                      <div class="panel form-group">
-                        <div class="panel-heading">
-                          <label>
-                            <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="annual">
-                            <span class="lbl padding-8">Annual Periods</span>
-                          </label>
-                        </div>
-                        <div class="panel-body"
-                        data-bind="slideDownIf: is_annual_enrollment()">
-                        <!--ko foreach: annual_enrollment_periods-->
-                        <div class="row">
-                          <div class="col-md-6">
-                            <label class="">
-                              Start Date:
-                              <input type="text" data-bind="value: start_date" class="input-mask-month-day" placeholder="MM/DD">
-                            </label>
-                          </div>
-                          <div class="col-md-6">
-                            <label class="">
-                              End Date:
-                              <input type="text" data-bind="value: end_date" class="input-mask-month-day" placeholder="MM/DD">
-                            </label>
-                          </div>
-                        </div>
-                        <div class="error" data-bind="text: error, visible: error() != ''"></div>
-                        <!--/ko-->
                       </div>
                     </div>
                   </div>
-                </div>
 
-              </div>
-              <div class="row">
-                {% if is_admin %}
-                <div class="col-md-6">
-                  <div class="row">
-                    <div class="form-group">
-                      <label class="col-md-3 control-label" for="owner_agent">Owner Agent</label>
-                      <div class="col-md-9">
-                        <select id="owner_agent" name="agent_id" data-bind="value: owner_agent_id">
-                          <option value="">(No Owner)</option>
-                          {% for agent in active_agents %}
-                          <option value="{{ agent.id }}"
-                          {%-if agent.id == case.agent_id -%}
-                          selected="selected"
-                          {%- endif -%}
-                          >{{ agent.name() }}</option>
-                          {% endfor %}
-                        </select>
+                </div>
+                <div class="row">
+                  {% if is_admin %}
+                  <div class="col-md-6">
+                    <div class="row">
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="owner_agent">Owner Agent</label>
+                        <div class="col-md-9">
+                          <select id="owner_agent" name="agent_id" data-bind="value: owner_agent_id">
+                            <option value="">(No Owner)</option>
+                            {% for agent in active_agents %}
+                            <option value="{{ agent.id }}"
+                            {%-if agent.id == case.agent_id -%}
+                            selected="selected"
+                            {%- endif -%}
+                            >{{ agent.name() }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {% endif %}
+                  {% endif %}
 
-                {% if not case_has_enrollments %}
-                <div class="col-sm-offset-1 col-sm-3">
-                  <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="click: delete_case">
+                  {% if not case_has_enrollments %}
+                  <div class="col-sm-offset-1 col-sm-3">
+                    <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="click: delete_case">
+                      Delete Case
+                    </button>
+                  </div>
+                  {% endif %}
+                  {% if case_has_enrollments and not is_admin %}
+                  <div class="col-sm-offset-1 col-sm-3">
+                    <div class="tooltip-wrapper tooltip-error"
+                    data-rel="tooltip" style="display: inline-block;"
+                    title="Cannot delete a case with posted enrollments. Instead mark the case as ‘inactive’">
+                    <button type="button" disabled="disabled"
+                    class="btn btn-danger btn-xs pull-left tooltip-error">
                     Delete Case
                   </button>
                 </div>
-                {% endif %}
-                {% if case_has_enrollments and not is_admin %}
-                <div class="col-sm-offset-1 col-sm-3">
-                  <div class="tooltip-wrapper tooltip-error"
-                  data-rel="tooltip" style="display: inline-block;"
-                  title="Cannot delete a case with posted enrollments. Instead mark the case as ‘inactive’">
-                  <button type="button" disabled="disabled"
-                  class="btn btn-danger btn-xs pull-left tooltip-error">
-                  Delete Case
-                </button>
+
               </div>
+              {% endif %}
+              {% if case_has_enrollments and is_admin %}
+              <div class="col-sm-offset-1 col-sm-3">
+                <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="
+                click: delete_case_with_enrollments
+                ">Delete Case</button>
+              </div>
+              {% endif %}
 
             </div>
-            {% endif %}
-            {% if case_has_enrollments and is_admin %}
-            <div class="col-sm-offset-1 col-sm-3">
-              <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="
-              click: delete_case_with_enrollments
-              ">Delete Case</button>
-            </div>
-            {% endif %}
-
-          </div>
-          <div class="row">
-            <div class="col-sm-12">
-              <h4 class="header lighter blue">Partner Agents</h4>
-              <div class="row">
-                <div class="col-sm-10 col-md-offset-1">
-                  {% if is_admin %}
-                  <select data-bind="selectedOptions: partner_agents"
-                  multiple="multiple" class="form-control"
-                  id="partner-agents"
-                  size="10" style="min-height: 8em;">
-                  {% for agent in active_agents %}
-                  <option value="{{ agent.id }}"
-                  {%-if agent in case.partner_agents -%}
-                  selected="selected"
-                  {%- endif -%}
-                  >{{ agent.name() }}</option>
-                  {% endfor %}
-                </select>
-                {% else %}
-                <div class="text partner_agents">
-                  {% if case.partner_agents|count > 1 %}
-                  <ul class="partner-agents">
-                    {% if case.owner_agent is not none %}
-                    <li class="owner-agent">
-                      {{ case.owner_agent.name() }}
-                      <span class="text-muted">(<em>owner</em>)</span>
-                    </li>
-                    {% endif -%}
-                    {% for agent in case.partner_agents %}
-                    {% if agent != case.owner_agent %}
-                    <li class="partner-agent">
-                      {{ agent.name() }}
-                    </li>
-                    {% endif %}
+            <div class="row">
+              <div class="col-sm-12">
+                <h4 class="header lighter blue">Partner Agents</h4>
+                <div class="row">
+                  <div class="col-sm-10 col-md-offset-1">
+                    {% if is_admin %}
+                    <select data-bind="selectedOptions: partner_agents"
+                    multiple="multiple" class="form-control"
+                    id="partner-agents"
+                    size="10" style="min-height: 8em;">
+                    {% for agent in active_agents %}
+                    <option value="{{ agent.id }}"
+                    {%-if agent in case.partner_agents -%}
+                    selected="selected"
+                    {%- endif -%}
+                    >{{ agent.name() }}</option>
                     {% endfor %}
-                  </ul>
+                  </select>
                   {% else %}
-                  <em>None</em>
+                  <div class="text partner_agents">
+                    {% if case.partner_agents|count > 1 %}
+                    <ul class="partner-agents">
+                      {% if case.owner_agent is not none %}
+                      <li class="owner-agent">
+                        {{ case.owner_agent.name() }}
+                        <span class="text-muted">(<em>owner</em>)</span>
+                      </li>
+                      {% endif -%}
+                      {% for agent in case.partner_agents %}
+                      {% if agent != case.owner_agent %}
+                      <li class="partner-agent">
+                        {{ agent.name() }}
+                      </li>
+                      {% endif %}
+                      {% endfor %}
+                    </ul>
+                    {% else %}
+                    <em>None</em>
+                    {% endif %}
+                  </div>
                   {% endif %}
                 </div>
-                {% endif %}
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="widget-toolbox clearfix padding-8">
+        <div class="widget-toolbox clearfix padding-8">
 
-        <button class="btn btn-primary btn-md pull-right" data-bind="
-        disable: !can_edit_case,
-        click: save_settings,
-        css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}
-        ">Save</button>
+          <button class="btn btn-primary btn-md pull-right" data-bind="
+          disable: !can_edit_case,
+          click: save_settings,
+          css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}
+          ">Save</button>
+        </div>
       </div>
     </div>
-  </div>
 
-</form>
-<br>
-<br>
+  </form>
+  <br>
+  <br>
 
 </div>
 </div>
@@ -370,9 +377,9 @@ style="display: none;" data-bind="visible: true">
                             <div class="col-sm-3 control-label">Signing agent for self-enrolled apps</div>
                             <div class="col-sm-9">
                               {% if not case_owner %}
-                                <p class="form-control">Owner agent for this case</p>
+                              <p class="form-control">Owner agent for this case</p>
                               {% elif case_owner and case_agents|length == 1 %}
-                                <p class="form-control">{{ case_owner.name() }}</p>
+                              <p class="form-control">{{ case_owner.name() }}</p>
                               {% else %}
                               <select data-bind="value: enrolling_agent_id" class="">
                                 {% for agent in case_agents %}
@@ -513,20 +520,20 @@ style="display: none;" data-bind="visible: true">
             </thead>
             <tbody>
               {#
-              Don't load this on the page anymore,
-              we load from the server using ajax at run time (helps with performance, needs to be able to reload anyway)
-              #}
-            </tbody>
-          </table>
+                Don't load this on the page anymore,
+                we load from the server using ajax at run time (helps with performance, needs to be able to reload anyway)
+                #}
+              </tbody>
+            </table>
 
+          </div>
+          <div id="census-table-loading" class="text-center bigger-125"></div>
         </div>
-        <div id="census-table-loading" class="text-center bigger-125"></div>
       </div>
+
     </div>
 
   </div>
-
-</div>
 
 </div>
 </div>
@@ -585,87 +592,119 @@ style="display: none;" data-bind="visible: true">
 </div>
 </div>
 
-<div id="reports" class="tab-pane fade">
+<div id="api" class="tab-pane fade">
   <div class="row">
     <div class="col-xs-12">
-
-      {# Report #}
       <div class="widget-box">
         <div class="widget-header">
           <div class="row">
-            <h3 class="col-xs-10">Report
-            </h3>
-            <h3 class="col-xs-2 text-center">
-              <small data-bind="visible: report_viewmodel() && report_viewmodel().any_enrollments()">
-                <a href="#print"><i class="ace-icon glyphicon glyphicon-print"></i> Print</a>
-              </small>
-            </h3>
+            <h3 class="col-xs-12">API</h3>
           </div>
         </div>
         <div class="widget-body">
           <div class="widget-main">
             <div class="row">
-              <div class="col-xs-12">
-                <case-report params="settings_viewmodel: $root"></case-report>
+              <label class="text-right col-sm-3 control-label">Case Token</label>
+              <div class="col-sm-7">
+                <strong data-bind="text: case_settings.case_token"></strong><br />
+                <a href="#">Read the API Documentation</a>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {# Enrollments #}
-      <div class="row" {# Prevent flash of unstyled content #}
-      style="display: none;" data-bind="visible: true"
-      >
-      <div class="col-xs-12">
-        <div class="widget-box" data-bind="visible: report_viewmodel() && report_viewmodel().any_enrollments()">
-          <div class="widget-header">
+            <br /><br />
             <div class="row">
-              <div class="col-xs-6"><h4 class="bigger-150">Enrollment Records</h4></div>
-              <div class="col-xs-6">
-
-                <a href="{{ url_for('cases.enrollment_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
-                  <i class="ace-icon glyphicon glyphicon-download-alt"></i>
-                  Download Enrollments
-                </a>
+              <label class="text-right col-sm-3 control-label">Upload Enrollment Records</label>
+              <div class="col-sm-9">
+                <button type="button" id="csv-upload-btn" class="btn btn-default" data-toggle="modal" data-target="#enrollment-csv-modal">Upload CSV File</button>
               </div>
             </div>
-          </div>
-          <div class="widget-body">
-            <div class="widget-main">
-              <div style="width: 100%; padding-left: -10px;">
-                <div class="table-responsive">
-                  <table id="enrollment-records-table"
-                  class="table table-bordered table-hover no-wrap dt-responsive">
-                  <thead>
-                    <tr>
-                      <th class="min-breakII">Date</th>
-                      <th>First</th>
-                      <th>Last</th>
-                      <th class="min-breakII">DOB</th>
-                      <th class="min-breakI">Email</th>
-                      <th class="min-breakV">Status</th>
-                      <th>Total Premium</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {#
-                    Don't load this on the page anymore,
-                    we load from the server at run time for page speed
-                    #}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div id="enrollment-table-loading" class="text-center bigger-125"></div>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </div>
-</div>
+
+  <div id="reports" class="tab-pane fade">
+    <div class="row">
+      <div class="col-xs-12">
+
+        {# Report #}
+        <div class="widget-box">
+          <div class="widget-header">
+            <div class="row">
+              <h3 class="col-xs-10">Report
+              </h3>
+              <h3 class="col-xs-2 text-center">
+                <small data-bind="visible: report_viewmodel() && report_viewmodel().any_enrollments()">
+                  <a href="#print"><i class="ace-icon glyphicon glyphicon-print"></i> Print</a>
+                </small>
+              </h3>
+            </div>
+          </div>
+          <div class="widget-body">
+            <div class="widget-main">
+              <div class="row">
+                <div class="col-xs-12">
+                  <case-report params="settings_viewmodel: $root"></case-report>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {# Enrollments #}
+        <div class="row" {# Prevent flash of unstyled content #}
+        style="display: none;" data-bind="visible: true"
+        >
+        <div class="col-xs-12">
+          <div class="widget-box" data-bind="visible: report_viewmodel() && report_viewmodel().any_enrollments()">
+            <div class="widget-header">
+              <div class="row">
+                <div class="col-xs-6"><h4 class="bigger-150">Enrollment Records</h4></div>
+                <div class="col-xs-6">
+
+                  <a href="{{ url_for('cases.enrollment_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
+                    <i class="ace-icon glyphicon glyphicon-download-alt"></i>
+                    Download Enrollments
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div class="widget-body">
+              <div class="widget-main">
+                <div style="width: 100%; padding-left: -10px;">
+                  <div class="table-responsive">
+                    <table id="enrollment-records-table"
+                    class="table table-bordered table-hover no-wrap dt-responsive">
+                    <thead>
+                      <tr>
+                        <th class="min-breakII">Date</th>
+                        <th>First</th>
+                        <th>Last</th>
+                        <th class="min-breakII">DOB</th>
+                        <th class="min-breakI">Email</th>
+                        <th class="min-breakV">Status</th>
+                        <th>Total Premium</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {#
+                        Don't load this on the page anymore,
+                        we load from the server at run time for page speed
+                        #}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div id="enrollment-table-loading" class="text-center bigger-125"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </div>
 </div>
 </div>
@@ -1140,58 +1179,168 @@ style="display: none;" data-bind="visible: true">
                       <!-- /.modal-dialog -->
                     </div>
                   </form>
+
+                  {# Upload CSV file for api tab #}
+                  <form id="enrollment-csv-form" method="POST" enctype="multipart/form-data">
+                    <div id="enrollment-csv-modal" class="modal fade">
+                      <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span
+                              aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                            <h4 class="modal-title">Upload Enrollment Data</h4>
+                          </div>
+                          <div class="modal-body">
+                          <div class="form-panel modal-panel">
+                            <div class="row">
+                              <div class="col-xs-12 ">
+                                <h4>
+                                  Select Enrollment CSV File:
+                                </h4>
+                                <input type="file" id="csv-file-input-enrollment" name="csv-file" accept="text/csv,.csv">
+                              </div>
+                            </div>
+
+                            <br>
+                            </div>
+                          </div>
+                          <div class="loading-panel modal-panel" style="display: none;">
+                            <div class="text-center">
+                              <h4>Uploading and processing...</h4>
+                              <i class="icon-spinner icon-spin grey bigger-200"></i>
+                            </div>
+                          </div>
+                          <div class="success-panel modal-panel" style="display: none;">
+                            <h3 class="header lighter green">File Processed Successfully</h3>
+                            <!--ko if: num_data_records() > 0 -->
+                            <h4><span data-bind="text: num_data_records"></span>
+                              record<span data-bind="visible: num_data_records() > 1">s</span>
+                              added or updated.</h4>
+                              <!--/ko-->
+                              <!--ko if: num_data_records() == 0 -->
+                              <h4>No new data was added to the census.</h4>
+                              <!--/ko-->
+                            </div>
+                            <div class="error-panel modal-panel" style="display: none;">
+                              <h3 class="header lighter red">
+                                Bad or Missing Data
+                                <span data-bind="visible: error_records().length >= 20"
+                                  class="smaller-75 pull-right">First 20 Errors Displayed</span>
+                                </h3>
+
+                                <div class="row">
+                                  <div class="col-md-12" style="width: 100%; overflow: auto;">
+                                    <!--ko foreach: {data: error_records, as: 'error_record'}-->
+                                    <div data-bind="if: error_record.message && error_record.records.length == 0">
+                                      <div class="error" data-bind="text: error_record.message"></div>
+                                    </div>
+                                    <div class="table-responsive">
+                                      <table data-bind="if: error_record.records.length > 0"
+                                        class="table table-bordered upload-error-table">
+                                        <thead>
+                                          <tr>
+                                            <th>Record #</th>
+                                            <!--ko foreach: error_record.headers-->
+                                            <th data-bind="text: $data"></th>
+                                            <!--/ko-->
+                                          </tr>
+                                        </thead>
+                                        <tbody data-bind="foreach: {data: error_record.records, as: 'data_record'}">
+                                          <tr>
+                                            <td data-bind="text: error_record.line_number"></td>
+                                            <!--ko foreach: {data: error_record.headers, as: 'header'} -->
+                                            <td data-bind="css: {error: error_record.field_name == header}, attr: {title: error_record.message}"
+                                            data-toggle="tooltip">
+                                            <div data-bind="text: data_record[header]"></div>
+                                          </td>
+                                          <!--/ko-->
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  <!--/ko-->
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                        <div class="modal-footer">
+                          <div class="form-buttons buttons-panel">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                          </div>
+                          <div class="processing-buttons buttons-panel" style="display: none;">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                          </div>
+                          <div class="error-buttons buttons-panel" style="display: none;">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary back-btn">
+                              <i class="glyphicon glyphicon-chevron-left"></i> Back</button>
+                            </div>
+                            <div class="success-buttons buttons-panel" style="display: none;">
+                              <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
+                            </div>
+
+                          </div>
+                        </div>
+                        <!-- /.modal-content -->
+                      </div>
+                      <!-- /.modal-dialog -->
+                    </div>
+                  </form>
                 </div>
                 {% endblock %}
 
-{% block page_js %}
-  <script>
-    window.case_id = {{ case.id }};
+                {% block page_js %}
+                <script>
+                window.case_id = {{ case.id }};
 
-    $(document).ready(function() {
-      // Initialize settings viewmodel
-      var settings = {
-        default_email_message: "{{ default_email_message|replace('\n', '\\n')|safe }}",
-        default_email_subject: "{{ default_email_subject|replace('\n', '\\n')|safe }}",
-        default_page_text: "{{ default_page_text|replace('\n', '\\n')|safe }}",
-        all_states: {{ all_states | tojson | safe }},
-        product_state_mapping: {{ product_state_mapping |tojson|safe }},
-        payment_modes: {{ payment_modes | tojson | safe }}
-      };
+                $(document).ready(function() {
+                  // Initialize settings viewmodel
+                  var settings = {
+                    default_email_message: "{{ default_email_message|replace('\n', '\\n')|safe }}",
+                    default_email_subject: "{{ default_email_subject|replace('\n', '\\n')|safe }}",
+                    default_page_text: "{{ default_page_text|replace('\n', '\\n')|safe }}",
+                    all_states: {{ all_states | tojson | safe }},
+                    product_state_mapping: {{ product_state_mapping |tojson|safe }},
+                    payment_modes: {{ payment_modes | tojson | safe }}
+                  };
 
 
-      //TODO: this might be better as a component
-      var CensusErrorsPanel = function CaseErrorsPanel() {
-        var self = this;
-        self.error_records = ko.observableArray([]);
-        self.num_data_records = ko.observable(0);
-      };
+                  //TODO: this might be better as a component
+                  var CensusErrorsPanel = function CaseErrorsPanel() {
+                    var self = this;
+                    self.error_records = ko.observableArray([]);
+                    self.num_data_records = ko.observable(0);
+                  };
 
-      window.case_settings = new CaseSettingsPanel(
-        {{ case |tojson|safe }},
-        {{ product_choices |tojson|safe }},
-        {{ 'true' if can_edit_case else 'false'}},
-        settings
-      );
+                  window.case_settings = new CaseSettingsPanel(
+                    {{ case |tojson|safe }},
+                    {{ product_choices |tojson|safe }},
+                    {{ 'true' if can_edit_case else 'false'}},
+                    settings
+                  );
 
-      //Initialize new View Models for knockout
-      window.census_errors_panel = new CensusErrorsPanel();
-      window.modal_bindings = new SendEmailsModalViewModel(window.case_settings, settings);
-      window.case_enrollment = new CaseEnrollmentsViewModel({{ case |tojson|safe }});
+                  //Initialize new View Models for knockout
+                  window.census_errors_panel = new CensusErrorsPanel();
+                  window.modal_bindings = new SendEmailsModalViewModel(window.case_settings, settings);
+                  window.case_enrollment = new CaseEnrollmentsViewModel({{ case |tojson|safe }});
 
-      //Apply all knockout bindings
-      ko.applyBindings(window.case_settings, $(".content")[0]);
-      ko.applyBindings(census_errors_panel, $("#census-upload-modal")[0]);
-      ko.applyBindings(window.modal_bindings, $(".modals #email-target-links-modal")[0]);
+                  //Apply all knockout bindings
+                  ko.applyBindings(window.case_settings, $(".content")[0]);
+                  ko.applyBindings(census_errors_panel, $("#census-upload-modal")[0]);
+                  ko.applyBindings(window.modal_bindings, $(".modals #email-target-links-modal")[0]);
 
-      // Self-enrollment settings
-      apply_default_values(settings);
-      handle_url_hashs();
-      init_settings_fields();
-      observe_census_record_form_submit();
-      observe_settings_events(settings);
+                  // Self-enrollment settings
+                  apply_default_values(settings);
+                  handle_url_hashs();
+                  init_settings_fields();
+                  observe_census_record_form_submit();
+                  observe_enrollment_upload_form_submit();
+                  observe_settings_events(settings);
 
-      // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change.
-      window.case_settings.is_data_dirty(false);
-    });
-  </script>
-{% endblock %}
+                  // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change.
+                  window.case_settings.is_data_dirty(false);
+                });
+                </script>
+                {% endblock %}
