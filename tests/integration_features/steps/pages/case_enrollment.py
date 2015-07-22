@@ -17,12 +17,9 @@ class CaseEnrollmentPage(PageBase):
     ENROLLMENT_NEXT_BTN = '.success-buttons .btn-primary'
     BEGIN_ENROLLMENT_BTN = '.success-buttons .btn-success'
 
-    #def __init__(self, context, http_scheme='http', hostname='localhost:5000'):
-    #    super(LoginPage, self).__init__(context, http_scheme=http_scheme, hostname=hostname)
-
     def test_navigation_succeeded(self):
-        #return EC.title_contains("Agent Manage Case")
         return EC.element_to_be_clickable([By.ID, self.ADD_ENROLLMENT_BUTTON])
+
     def get_base_url(self):
         return "{}://{}".format(self.http_scheme, self.hostname)
         
@@ -35,7 +32,7 @@ class CaseEnrollmentPage(PageBase):
 
         ssn_input = self.lookup(self.NEW_ENROLLMENT_SSN_INPUT)
 
-        WebDriverWait(self.browser, 10).until(EC.visibility_of(ssn_input))
+        WebDriverWait(self.browser, 5).until(EC.visibility_of(ssn_input))
 
         ssn_input.click()
         ssn_input.send_keys(ssn)
@@ -44,6 +41,6 @@ class CaseEnrollmentPage(PageBase):
         next_btn.click()
 
         begin_enrollment_btn = self.lookup(self.BEGIN_ENROLLMENT_BTN)
-        WebDriverWait(self.browser, 10).until(EC.visibility_of(begin_enrollment_btn))
+        WebDriverWait(self.browser, 5).until(EC.visibility_of(begin_enrollment_btn))
 
         begin_enrollment_btn.click()

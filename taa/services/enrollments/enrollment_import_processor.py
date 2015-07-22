@@ -8,6 +8,7 @@ class EnrollmentProcessor(object):
     case_service = RequiredFeature("CaseService")
     enrollment_record_parser = RequiredFeature("EnrollmentRecordParser")
     user_service = RequiredFeature("UserService")
+    file_import_service = RequiredFeature("FileImportService")
 
     def __init__(self):
         self.errors = []
@@ -17,13 +18,15 @@ class EnrollmentProcessor(object):
 
         self.authenticate_user(auth_token)
 
-        case = self.get_case_if_enrolling(case_token)
+        case = self.get_case(case_token)
+
+        processed_data = self.extract_dictionaries(data, data_format)
 
         # Process all records
-        self.enrollment_record_parser.process_records(data)
+        self.enrollment_record_parser.process_records(processed_data, case)
 
         for error in self.enrollment_record_parser.errors:
-            self._add_error(error["type"], error["field_name"])
+            self._add_error(error["type"], error["field_name"], error['message'])
 
         if self.errors:
             raise TAAFormError(errors=[e.to_json() for e in self.errors])
@@ -41,8 +44,8 @@ class EnrollmentProcessor(object):
     def get_num_processed(self):
         return self.num_processed
 
-    def _add_error(self, type, fields):
-        error = EnrollmentImportError(type, fields)
+    def _add_error(self, type, fields, message):
+        error = EnrollmentImportError(type, fields, message)
         self.errors.append(error)
         return error
 
@@ -58,7 +61,7 @@ class EnrollmentProcessor(object):
     def process_wizard_enrollment_request(self, case_id, auth_token=None):
         pass
 
-    def get_case_if_enrolling(self, case_token):
+    def get_case(self, case_token):
         if case_token:
             case = self.case_service.get_case_for_token(case_token)
         else:
@@ -68,10 +71,18 @@ class EnrollmentProcessor(object):
         #if not self.case_service.is_case_enrolling(case):
         #    abort(401)
 
+    def extract_dictionaries(self, data, data_format):
+        if data_format == "csv":
+            result = self.file_import_service.process_delimited_file_stream(data)
+            if result.has_error():
+                raise TAAFormError(result.get_error_message())
+            return result.get_rows()
+
 class EnrollmentImportError(object):
-    def __init__(self, type, fields):
+    def __init__(self, type, fields, message):
         self.type = type
         self.fields = [fields]
+        self.message = message
 
     def get_type(self):
         return self.type
@@ -83,8 +94,9 @@ class EnrollmentImportError(object):
         return self.fields
 
     def get_message(self):
-        error_messages = dict()
-        return error_messages.get(self.type, "Error with column: {}".format(self.type))
+        if self.message:
+            return self.message
+        return "Error with column: {}".format(self.type)
 
     def to_json(self):
         return {'type':self.type, 'message': self.get_message(), 'fields':self.fields}

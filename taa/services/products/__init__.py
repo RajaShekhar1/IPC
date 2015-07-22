@@ -61,7 +61,33 @@ class ProductService(DBService):
         if not product:
             abort(400)
         return product
-    
+
+    def is_valid_product_code(self, code):
+        return code in [p.code for p in self.get_all_enrollable_products()]
+
+    def is_valid_statecode(self, statecode):
+        return statecode in self.get_all_statecodes()
+
+    def is_valid_statecode_for_product(self, product_code, statecode):
+        products = self.get_products_by_codes([product_code])
+        if not products:
+            return False
+
+        return (self.is_valid_statecode(statecode)
+               and statecode in self.get_product_states(products)[products[0].id]
+        )
+
+    def get_num_health_questions(self, product_code, statecode, applicant_type):
+        products = self.get_products_by_codes([product_code])
+        if not products:
+            return 0
+        product = products[0]
+
+        soh_service = StatementOfHealthQuestionService()
+        all_questions = soh_service.get_health_questions(product, statecode)
+
+        return len(all_questions)
+
     def get_if_allowed(self, product_id):
         from taa.services.agents import AgentService
         
@@ -103,6 +129,7 @@ class ProductService(DBService):
         return product in self.get_products_for_agent(agent)
     
     def can_agent_edit_product(self, agent, product):
+        # Right now, only HOAdmin users can edit products.
         return False
         
     def get_all_enrollable_products(self):
