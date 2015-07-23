@@ -1,5 +1,5 @@
 import os
-from cStringIO import StringIO
+from io import BytesIO
 
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
@@ -46,7 +46,9 @@ class ImagedFormGeneratorService(object):
             elif isinstance(tab_value, DocuSignRadioTab):
                 label = tab_value.group_name
                 value = tab_value.value
-                tab_defs = filter(lambda x: x.label == '{}.{}'.format(label, value), tab_definitions)
+                tab_defs = filter(
+                    lambda x: x.label == '{}.{}'.format(label,
+                                                        value), tab_definitions)
                 if not tab_defs:
                     continue
                 tab_def = tab_defs[0]
@@ -62,22 +64,20 @@ class ImagedFormGeneratorService(object):
                     text = tab_value.value
                     font = tab_def.font
                     fontsize = tab_def.font_size
-                    self.pdf_renderer.draw_text(text=text, x=tab_def.x, y=tab_def.y, width=tab_def.width, font=font, fontsize=fontsize)
+                    self.pdf_renderer.draw_text(text=text, x=tab_def.x,
+                                                y=tab_def.y,
+                                                width=tab_def.width,
+                                                font=font, fontsize=fontsize)
                 elif isinstance(tab_value, DocuSignRadioTab):
-                    self.pdf_renderer.draw_radio_checkmark(x=tab_def.x, y=tab_def.y)
+                    self.pdf_renderer.draw_radio_checkmark(x=tab_def.x,
+                                                           y=tab_def.y)
             self.pdf_renderer.next_page()
 
-        x = self.pdf_renderer.pdf
-
-        # Write PDF
-        form = template.data
-        with open('/tmp/baseform.pdf', 'wb') as f:
-            f.write(form)
-
         if path is not None:
-            merge_pdfs('/tmp/values.pdf', '/tmp/baseform.pdf', path)
+            overlay_pdf = self.pdf_renderer.get_pdf_bytes()
+            base_pdf = BytesIO(template.data)
+            merge_pdfs(base_pdf, overlay_pdf, path)
 
-        return True
 
 class FormTemplateTabRepository(object):
     def get_tabs_for_template(self, template_id):
@@ -98,9 +98,9 @@ FONTMAP = {
 
 class FormPDFRenderer(object):
     def __init__(self):
-        self.buffer = StringIO()
-        self.c = canvas.Canvas('/tmp/values.pdf', pagesize=(8.5 * inch,
-                                                            11 * inch))
+        self.buf = BytesIO()
+        self.c = canvas.Canvas(self.buf, pagesize=(8.5 * inch,
+                                                   11 * inch))
         self.c.setStrokeColorRGB(0, 0, 0)
         self.c.setFillColorRGB(0, 0, 0)
         self.c.setFont('Helvetica', 12)
@@ -127,11 +127,14 @@ class FormPDFRenderer(object):
     def next_page(self):
         self.c.showPage()
 
-    @property
-    def pdf(self):
+    def get_pdf_bytes(self, as_bytesio=True):
         self.c.save()
-        pdf = self.c
-        return pdf
+        if as_bytesio:
+            return self.buf
+        else:
+            pdf = self.buf.getvalue()
+            self.buf.close()
+            return pdf
 
     def _translate(self, x, y):
         face = pdfmetrics.getFont(self.c._fontname).face
