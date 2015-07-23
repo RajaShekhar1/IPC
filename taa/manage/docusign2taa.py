@@ -266,12 +266,13 @@ class DocusignImportCommand(Command):
                 height=tab['height'],
                 font=tab['font'],
                 font_size=tab['font_size'],
+                font_color=tab['font_color'],
             )
             db.session.add(newtab)
         db.session.commit()
         if test_id is not None:
             # Write test enrollment
-            outpath = '/tmp/enrollment-{}-TEST.pdf'.format(template_id)
+            outpath = '/tmp/pdf/enrollment-{}-TEST.pdf'.format(template_id)
             writer = ImagedFormGeneratorService()
             writer.generate_form_pdf(template_id, TEST_ENROLLMENT_DATA,
                                      path=outpath)
@@ -358,6 +359,7 @@ class DocusignDocument(object):
                     self._get_or_none('FontSize', tab,
                                       lambda x: int(''.join([c for c in x
                                                              if c.isdigit()]))),
+                'font_color': self._get_or_none('FontColor', root=tab),
             }
             doc['tabs'].append(data)
         return doclist

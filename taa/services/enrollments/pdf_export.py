@@ -1,6 +1,7 @@
 import os
 from io import BytesIO
 
+from reportlab.lib.colors import HexColor
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
@@ -12,6 +13,10 @@ from pdf_generation import merge_pdfs
 from taa.services import RequiredFeature
 from taa.services.docusign.service import DocuSignTextTab, DocuSignRadioTab
 from taa.services.enrollments.models import FormTemplate, FormTemplateTabs
+
+
+DEFAULT_FONT = 'LucidaConsole'
+DEFAULT_COLOR = HexColor('#000000')
 
 
 class ImagedFormGeneratorService(object):
@@ -64,10 +69,16 @@ class ImagedFormGeneratorService(object):
                     text = tab_value.value
                     font = tab_def.font
                     fontsize = tab_def.font_size
+                    is_bold = tab_def.is_bold
+                    is_italic = tab_def.is_italic
+                    fontcolor = tab_def.font_color
                     self.pdf_renderer.draw_text(text=text, x=tab_def.x,
                                                 y=tab_def.y,
                                                 width=tab_def.width,
-                                                font=font, fontsize=fontsize)
+                                                font=font, fontsize=fontsize,
+                                                is_bold=is_bold,
+                                                is_italic=is_italic,
+                                                fontcolor=fontcolor)
                 elif isinstance(tab_value, DocuSignRadioTab):
                     self.pdf_renderer.draw_radio_checkmark(x=tab_def.x,
                                                            y=tab_def.y)
@@ -92,12 +103,33 @@ pdfmetrics.registerFont(
 pdfmetrics.registerFont(
     TTFont('CourierNew', os.path.join('Artifacts', 'fonts',
                                       'CourierNew-Bold.ttf')))
+
+
 FONTMAP = {
     'CourierNew': 'CourierNew',
     'LucidaConsole': 'LucidaConsole',
+    'LucidaConsole-Oblique': 'Courier-Oblique',
+    'LucidaConsole-Bold': 'Courier-Bold',
+    'LucidaConsole-BoldOblique': 'Courier-BoldOblique',
     'Arial': 'Helvetica',
     'TimesNewRoman': 'Times',
 }
+
+
+# Unverified; approximated from HTML colors
+COLORMAP = {
+    'Black': HexColor('#000000'),
+    'BrightBlue': HexColor('#add8e6'),
+    'BrightRed': HexColor('#ff0000'),
+    'DarkGreen': HexColor('#006400'),
+    'DarkRed': HexColor('#8b0000'),
+    'Gold': HexColor('#ffd700'),
+    'Green': HexColor('#008000'),
+    'NavyBlue': HexColor('#000080'),
+    'Purple': HexColor('#800080'),
+    'White': HexColor('#ffffff'),
+}
+
 
 class FormPDFRenderer(object):
     def __init__(self):
@@ -106,20 +138,26 @@ class FormPDFRenderer(object):
         self._initialize()
 
     def draw_text(self, text, x, y, width, font=None, fontsize=None,
-                  is_bold=False, is_italic=False):
-        font = FONTMAP.get(font, 'Helvetica')
+                  is_bold=False, is_italic=False, fontcolor=None):
+        font = font or DEFAULT_FONT
         if is_bold and is_italic:
             font += '-BoldOblique'
         elif is_bold:
             font += '-Bold'
         elif is_italic:
             font += '-Oblique'
+        font = FONTMAP.get(font, DEFAULT_FONT)
         fontsize = fontsize or 10
+        if fontcolor is not None:
+            self.c.saveState()
+            self.c.setFillColor(COLORMAP.get(fontcolor, DEFAULT_COLOR))
         self.c.setFont(font, fontsize)
         self.c.drawString(*self._translate(x, y), text=text)
+        if fontcolor is not None:
+            self.c.restoreState()
 
     def draw_radio_checkmark(self, x, y):
-        self.c.setFont('Courier', 10)
+        self.c.setFont('LucidaConsole', 10)
         self.c.drawString(*self._translate(x, y), text="X")
 
     def next_page(self):

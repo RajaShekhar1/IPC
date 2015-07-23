@@ -293,3 +293,4 @@ class FormTemplateTabs(db.Model):
     height = db.Column(db.Integer)
     font = db.Column(db.Unicode)
     font_size = db.Column(db.Integer)
+    font_color = db.Column(db.Unicode)
