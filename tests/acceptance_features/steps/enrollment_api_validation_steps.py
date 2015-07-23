@@ -143,6 +143,7 @@ def step_impl(context):
     context.import_record.update(dict(
         sp_first="Jane",
         sp_last="Doe",
+        sp_gender="f",
         sp_birthdate="1990-01-01",
         sp_ssn="123-33-4444",
         sp_premium="3.00",

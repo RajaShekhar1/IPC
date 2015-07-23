@@ -1,6 +1,8 @@
 from unittest2 import TestCase
-from StringIO import StringIO
+import csv
 from hamcrest import assert_that, equal_to
+
+from taa.services.data_import.file_import import FlatFileImporter, FlatFileDocumentation, FlatFileFieldDefinition, FlatFileImportResult, FileImportService
 
 class TestFlatFile(TestCase):
     def setUp(self):
@@ -75,40 +77,33 @@ class TestFlatFile(TestCase):
         assert_that(result.get_data(), equal_to(expected))
 
     def test_it_should_generate_basic_documentation(self):
-        # Should have csv name,
-        pass
+        flat_file_spec = [
+            FlatFileFieldDefinition(
+                size=16,
+                csv_name="auth_token",
+                title="User API Authorization Token",
+                description="",
+            ),
+            FlatFileFieldDefinition(
+                size=1,
+                csv_name="actively_at_work",
+                title="Is the employee actively at work?",
+                description="",
+            ),
+        ]
 
+        documentation = FlatFileDocumentation(flat_file_spec)
 
-class FlatFileFieldDefinition(object):
-    def __init__(self, size, csv_name, title, description):
-        self.size = size
-        self.csv_name = csv_name
-        self.title = title
-        self.description = description
+        expected = """\
+Field,From,To,Length,Description
+auth_token,1,16,16,
+actively_at_work,17,17,1,
+"""
 
+        assert_that(documentation.toCSV(), equal_to(expected))
 
-class FlatFileImporter(object):
-    def __init__(self, spec):
-        self.spec = spec
-
-    def import_data(self, bytes):
-        reader = StringIO(bytes)
-        response = FlatFileImportResult()
-        for line in reader:
-            lineReader = StringIO(line)
-            data = {}
-            for s in self.spec:
-                data[s.csv_name] = lineReader.read(s.size)
-            response.data.append(data)
-        return response
-
-
-class FlatFileImportResult(object):
-    def __init__(self, data = None):
-        self.data = data if data is not None else []
-
-    def get_data(self):
-        return self.data
-
-    def get_errors(self):
-        pass
+    def test_it_should_generate_a_flat_file_spec_based_on_enrollment_records(self):
+        importer = FileImportService()
+        spec = importer.get_flat_file_spec()
+        documentation = FlatFileDocumentation(spec)
+        print(documentation.toCSV())

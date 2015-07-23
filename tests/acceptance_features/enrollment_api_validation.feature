@@ -328,93 +328,93 @@ Feature: Validate an enrollment record submitted via API.
       | error_type        | error_field  |
       | invalid_questions | ch1_questions |
 
-#  Scenario: It should accept all optional fields in addition to the basic data and not ignore these columns.
-#    Given I prepare an enrollment file with basic valid enrollment data
-#    And I add valid spouse enrollment data
-#    And I add valid child enrollment data
-#    And I add the following enrollment data columns
-#      | actively_at_work | emp_email     | emp_date_of_hire | emp_height_inches | emp_weight_pounds | emp_smoker |
-#      | Y                | joe@gmail.com | 2010-01-31       | 70                | 150               | N          |
-#    And I add the following enrollment data columns
-#      | sp_height_inches | sp_weight_pounds | sp_smoker |
-#      | 65               | 130              | N         |
-#    And I add the following enrollment data columns
-#      | sp_street | sp_street2 | sp_city | sp_state | sp_zipcode | sp_phone   |
-#      | Other st  |            | Chicago | IL       | 11444      | 1242223535 |
-#    And I add the following enrollment data columns
-#      | existing_insurance | replacing_insurance | sp_treated_6_months | sp_disabled_6_months |
-#      | N                  | N                   | N                   | N                    |
-#    And I add the following enrollment data columns
-#      | replacement_read_aloud | replacement_is_terminating | replacement_using_funds |
-#      | N                      | N                          | N                       |
-#    And I add the following enrollment data columns
-#      | replacement_policy1_name | replacement_policy1_number | replacement_policy1_insured |
-#      | Prudential               | 111AAA33                   | Joe                         |
-#    And I add the following enrollment data columns
-#      | replacement_policy1_replaced_or_financing | replacement_policy1_reason |
-#      | R                                         | Needed better coverage     |
-#    And I add the following enrollment data columns
-#      | emp_bene_name   | emp_bene_birthdate | emp_bene_relationship | emp_bene_ssn |
-#      | Emp. Prim. Bene | 1990-10-10         | Brother               | 555-55-5555  |
-#    And I add the following enrollment data columns
-#      | sp_bene_name | sp_bene_birthdate | sp_bene_relationship | sp_bene_ssn |
-#      | Sp prim bene | 1980-11-11        | daughter             | 111-11-1112 |
-#    And I add the following enrollment data columns
-#      | emp_cont_bene_name | emp_cont_bene_birthdate | emp_cont_bene_relationship | emp_cont_bene_ssn |
-#      | Emp. Cont. Bene    | 1989-01-10              | Relatative                 | 666-55-5555       |
-#    And I add the following enrollment data columns
-#      | sp_cont_bene_name | sp_cont_bene_birthdate | sp_cont_bene_relationship | sp_cont_bene_ssn |
-#      | Sp cont bene      | 1985-11-12             | friend                    | 121-12-1112      |
-#    When I submit the file to the Enrollment API
-#    Then I should see a success response
-#    And the parsed record should include the following attributes
-#      | attribute_name                            |
-#      # Misc form questions
-#      | actively_at_work                          |
-#      # Additional employee data
-#      | emp_email                                 |
-#      | emp_date_of_hire                          |
-#      | emp_height_inches                         |
-#      | emp_weight_pounds                         |
-#      | emp_smoker                                |
-#      # Additional spouse data
-#      | sp_street                                 |
-#      | sp_street2                                |
-#      | sp_city                                   |
-#      | sp_state                                  |
-#      | sp_zipcode                                |
-#      | sp_phone                                  |
-#      # Other questions
-#      | existing_insurance                        |
-#      | replacing_insurance                       |
-#      | sp_treated_6_months                       |
-#      | sp_disabled_6_months                      |
-#      # Replacement attributes
-#      | replacement_read_aloud                    |
-#      | replacement_is_terminating                |
-#      | replacement_using_funds                   |
-#      | replacement_policy1_name                  |
-#      | replacement_policy1_number                |
-#      | replacement_policy1_insured               |
-#      | replacement_policy1_replaced_or_financing |
-#      | replacement_policy1_reason                |
-#      # Beneficiary attributes
-#      | emp_bene_name                             |
-#      | emp_bene_birthdate                        |
-#      | emp_bene_relationship                     |
-#      | emp_bene_ssn                              |
-#      | sp_bene_name                              |
-#      | sp_bene_birthdate                         |
-#      | sp_bene_relationship                      |
-#      | sp_bene_ssn                               |
-#      | emp_cont_bene_name                        |
-#      | emp_cont_bene_birthdate                   |
-#      | emp_cont_bene_relationship                |
-#      | emp_cont_bene_ssn                         |
-#      | sp_cont_bene_name                         |
-#      | sp_cont_bene_birthdate                    |
-#      | sp_cont_bene_relationship                 |
-#      | sp_cont_bene_ssn                          |
+ Scenario: It should accept all optional fields in addition to the basic data and not ignore these columns.
+   Given I prepare an enrollment file with basic valid enrollment data
+   And I add valid spouse enrollment data
+   And I add valid child enrollment data
+   And I add the following enrollment data columns
+     | actively_at_work | emp_email     | emp_date_of_hire | emp_height_inches | emp_weight_pounds | emp_smoker |
+     | Y                | joe@gmail.com | 2010-01-31       | 70                | 150               | N          |
+   And I add the following enrollment data columns
+     | sp_height_inches | sp_weight_pounds | sp_smoker |
+     | 65               | 130              | N         |
+   And I add the following enrollment data columns
+     | sp_street | sp_street2 | sp_city | sp_state | sp_zipcode | sp_phone   |
+     | Other st  |            | Chicago | IL       | 11444      | 1242223535 |
+   And I add the following enrollment data columns
+     | existing_insurance | replacing_insurance | sp_treated_6_months | sp_disabled_6_months |
+     | N                  | N                   | N                   | N                    |
+   And I add the following enrollment data columns
+     | replacement_read_aloud | replacement_is_terminating | replacement_using_funds |
+     | N                      | N                          | N                       |
+   And I add the following enrollment data columns
+     | replacement_policy1_name | replacement_policy1_number | replacement_policy1_insured |
+     | Prudential               | 111AAA33                   | Joe                         |
+   And I add the following enrollment data columns
+     | replacement_policy1_replaced_or_financing | replacement_policy1_reason |
+     | R                                         | Needed better coverage     |
+   And I add the following enrollment data columns
+     | emp_bene_name   | emp_bene_birthdate | emp_bene_relationship | emp_bene_ssn |
+     | Emp. Prim. Bene | 1990-10-10         | Brother               | 555-55-5555  |
+   And I add the following enrollment data columns
+     | sp_bene_name | sp_bene_birthdate | sp_bene_relationship | sp_bene_ssn |
+     | Sp prim bene | 1980-11-11        | daughter             | 111-11-1112 |
+   And I add the following enrollment data columns
+     | emp_cont_bene_name | emp_cont_bene_birthdate | emp_cont_bene_relationship | emp_cont_bene_ssn |
+     | Emp. Cont. Bene    | 1989-01-10              | Relatative                 | 666-55-5555       |
+   And I add the following enrollment data columns
+     | sp_cont_bene_name | sp_cont_bene_birthdate | sp_cont_bene_relationship | sp_cont_bene_ssn |
+     | Sp cont bene      | 1985-11-12             | friend                    | 121-12-1112      |
+   When I submit the file to the Enrollment API
+   Then I should see a success response
+   And the parsed record should include the following attributes
+     | attribute_name                            |
+     # Misc form questions
+     | actively_at_work                          |
+     # Additional employee data
+     | emp_email                                 |
+     | emp_date_of_hire                          |
+     | emp_height_inches                         |
+     | emp_weight_pounds                         |
+     | emp_smoker                                |
+     # Additional spouse data
+     | sp_street                                 |
+     | sp_street2                                |
+     | sp_city                                   |
+     | sp_state                                  |
+     | sp_zipcode                                |
+     | sp_phone                                  |
+     # Other questions
+     | existing_insurance                        |
+     | replacing_insurance                       |
+     | sp_treated_6_months                       |
+     | sp_disabled_6_months                      |
+     # Replacement attributes
+     | replacement_read_aloud                    |
+     | replacement_is_terminating                |
+     | replacement_using_funds                   |
+     | replacement_policy1_name                  |
+     | replacement_policy1_number                |
+     | replacement_policy1_insured               |
+     | replacement_policy1_replaced_or_financing |
+     | replacement_policy1_reason                |
+     # Beneficiary attributes
+     | emp_bene_name                             |
+     | emp_bene_birthdate                        |
+     | emp_bene_relationship                     |
+     | emp_bene_ssn                              |
+     | sp_bene_name                              |
+     | sp_bene_birthdate                         |
+     | sp_bene_relationship                      |
+     | sp_bene_ssn                               |
+     | emp_cont_bene_name                        |
+     | emp_cont_bene_birthdate                   |
+     | emp_cont_bene_relationship                |
+     | emp_cont_bene_ssn                         |
+     | sp_cont_bene_name                         |
+     | sp_cont_bene_birthdate                    |
+     | sp_cont_bene_relationship                 |
+     | sp_cont_bene_ssn                          |
 
 
 

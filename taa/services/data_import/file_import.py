@@ -1,8 +1,23 @@
 import csv
 import cStringIO
 
-class FileImportService(object):
+from taa.services.enrollments.enrollment_import import EnrollmentRecordParser
 
+class FileImportService(object):
+    def get_flat_file_spec(self):
+        flat_file_spec = []
+        for field in EnrollmentRecordParser.all_fields:
+            #self.dict_key_name = dict_key_name
+            #self.database_name = database_name
+            #self.description = description
+            #self.title = title
+            flat_file_spec.append(FlatFileFieldDefinition(
+                size = field.flat_file_size,
+                csv_name = field.dict_key_name,
+                title = field.title,
+                description = field.description
+            ))
+        return flat_file_spec
 
     def process_delimited_file_stream(self, file_obj):
         """
@@ -87,3 +102,51 @@ for assistance."""
 
     def get_error_message(self):
         return self.error
+
+class FlatFileFieldDefinition(object):
+    def __init__(self, size, csv_name, title, description):
+        self.size = size
+        self.csv_name = csv_name
+        self.title = title
+        self.description = description
+
+class FlatFileDocumentation(object):
+    def __init__(self, spec):
+        self.spec = spec
+
+    def toCSV(self):
+        fieldnames = ["Field", "From", "To", "Length", "Description"]
+        output = cStringIO.StringIO()
+        writer = csv.DictWriter(output, fieldnames=fieldnames, lineterminator="\n")
+        writer.writeheader()
+        distanceRead = 1
+        for s in self.spec:
+            writer.writerow({"Field":s.csv_name, "From":distanceRead, "To":distanceRead+s.size-1, "Length":s.size, "Description": s.description})
+            distanceRead += s.size
+        return output.getvalue()
+
+class FlatFileImporter(object):
+    def __init__(self, spec):
+        self.spec = spec
+
+    def import_data(self, bytes):
+        reader = cStringIO.StringIO(bytes)
+        response = FlatFileImportResult()
+        for line in reader:
+            lineReader = cStringIO.StringIO(line)
+            data = {}
+            for s in self.spec:
+                data[s.csv_name] = lineReader.read(s.size)
+            response.data.append(data)
+        return response
+
+
+class FlatFileImportResult(object):
+    def __init__(self, data = None):
+        self.data = data if data is not None else []
+
+    def get_data(self):
+        return self.data
+
+    def get_errors(self):
+        pass
