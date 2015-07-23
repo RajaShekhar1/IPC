@@ -1,9 +1,11 @@
+import os
 from cStringIO import StringIO
 
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.pdfmetrics import stringWidth
+from reportlab.pdfbase.ttfonts import TTFont
 
 from .models import db
 from pdf_generation import merge_pdfs
@@ -79,30 +81,34 @@ class ImagedFormGeneratorService(object):
 
 class FormTemplateTabRepository(object):
     def get_tabs_for_template(self, template_id):
-        # db.session.query(FormTemplateTabs).filter(FormTemplateTabs.form_template_id)
         form_template_id = FormTemplate.query.filter_by(
             template_id=template_id).first().id
         return list(FormTemplateTabs.query.filter_by(
             form_template_id=form_template_id))
 
 
+FONTPATH_LUCIDIA = os.path.join('Artifacts', 'fonts', 'LucidaConsole.ttf')
+FONTPATH_COURIERNEW = os.path.join('Artifacts', 'fonts', 'CourierNew-Bold.ttf')
 FONTMAP = {
-    'CourierNew': 'Courier',
+    'CourierNew': 'CourierNew',
+    'LucidaConsole': 'LucidaConsole',
     'Arial': 'Helvetica',
     'TimesNewRoman': 'Times',
-    # 'ArialNarrow': 'Helvetica','Calibri','Garamond','Georgia','LucidaConsole','Tahoma','Trebuchet','Verdana','MSGothic','MSMincho
 }
 
 class FormPDFRenderer(object):
     def __init__(self):
         self.buffer = StringIO()
         self.c = canvas.Canvas('/tmp/values.pdf', pagesize=(8.5 * inch,
-                                                                  11 * inch))
+                                                            11 * inch))
         self.c.setStrokeColorRGB(0, 0, 0)
         self.c.setFillColorRGB(0, 0, 0)
         self.c.setFont('Helvetica', 12)
+        pdfmetrics.registerFont(TTFont('LucidaConsole', FONTPATH_LUCIDIA))
+        pdfmetrics.registerFont(TTFont('CourierNew', FONTPATH_COURIERNEW))
 
-    def draw_text(self, text, x, y, width, font=None, fontsize=None, is_bold=False, is_italic=False):
+    def draw_text(self, text, x, y, width, font=None, fontsize=None,
+                  is_bold=False, is_italic=False):
         font = FONTMAP.get(font, 'Helvetica')
         if is_bold and is_italic:
             font += '-BoldOblique'
@@ -112,11 +118,11 @@ class FormPDFRenderer(object):
             font += '-Oblique'
         fontsize = fontsize or 10
         self.c.setFont(font, fontsize)
-        self.c.drawString(self._translate_x(x), self._translate_y(y), text)
+        self.c.drawString(*self._translate(x, y), text=text)
 
     def draw_radio_checkmark(self, x, y):
         self.c.setFont('Courier', 10)
-        self.c.drawString(self._translate_x(x), self._translate_y(y), "X")
+        self.c.drawString(*self._translate(x, y), text="X")
 
     def next_page(self):
         self.c.showPage()
@@ -127,10 +133,10 @@ class FormPDFRenderer(object):
         pdf = self.c
         return pdf
 
-    def _translate_x(self, x):
-        return x + 10
-
-    def _translate_y(self, y):
+    def _translate(self, x, y):
         face = pdfmetrics.getFont(self.c._fontname).face
         y_offset = face.descent * self.c._fontsize / 1000
-        return 11 * inch - y - y_offset - 16
+        return x + 8, self.c._pagesize[1] - y - y_offset - 14
+
+    def _get_width(self, s):
+        return stringWidth(s, self.c._fontname, self.c._fontsize)
