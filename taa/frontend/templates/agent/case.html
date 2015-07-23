@@ -1212,55 +1212,17 @@ style="display: none;" data-bind="visible: true">
                           </div>
                           <div class="success-panel modal-panel" style="display: none;">
                             <h3 class="header lighter green">File Processed Successfully</h3>
-                            <!--ko if: num_data_records() > 0 -->
-                            <h4><span data-bind="text: num_data_records"></span>
-                              record<span data-bind="visible: num_data_records() > 1">s</span>
-                              added or updated.</h4>
-                              <!--/ko-->
-                              <!--ko if: num_data_records() == 0 -->
-                              <h4>No new data was added to the census.</h4>
-                              <!--/ko-->
                             </div>
                             <div class="error-panel modal-panel" style="display: none;">
-                              <h3 class="header lighter red">
+                              <h3 class="col-sm-10 col-sm-offset-1 header lighter red">
                                 Bad or Missing Data
                                 <span data-bind="visible: error_records().length >= 20"
                                   class="smaller-75 pull-right">First 20 Errors Displayed</span>
-                                </h3>
-
-                                <div class="row">
-                                  <div class="col-md-12" style="width: 100%; overflow: auto;">
-                                    <!--ko foreach: {data: error_records, as: 'error_record'}-->
-                                    <div data-bind="if: error_record.message && error_record.records.length == 0">
-                                      <div class="error" data-bind="text: error_record.message"></div>
-                                    </div>
-                                    <div class="table-responsive">
-                                      <table data-bind="if: error_record.records.length > 0"
-                                        class="table table-bordered upload-error-table">
-                                        <thead>
-                                          <tr>
-                                            <th>Record #</th>
-                                            <!--ko foreach: error_record.headers-->
-                                            <th data-bind="text: $data"></th>
-                                            <!--/ko-->
-                                          </tr>
-                                        </thead>
-                                        <tbody data-bind="foreach: {data: error_record.records, as: 'data_record'}">
-                                          <tr>
-                                            <td data-bind="text: error_record.line_number"></td>
-                                            <!--ko foreach: {data: error_record.headers, as: 'header'} -->
-                                            <td data-bind="css: {error: error_record.field_name == header}, attr: {title: error_record.message}"
-                                            data-toggle="tooltip">
-                                            <div data-bind="text: data_record[header]"></div>
-                                          </td>
-                                          <!--/ko-->
-                                        </tr>
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                  <!--/ko-->
-                                </div>
-                              </div>
+                              </h3>
+                              <!--ko foreach: {data: error_records, as: 'error_record'}-->
+                                <div class="col-sm-10 col-sm-offset-1 alert alert-danger" data-bind="text: error_record.type + ': ' + error_record.fields"></div>
+                              <!--/ko-->
+                              <div class="clearfix"></div>
                             </div>
                           </div>
 
@@ -1326,9 +1288,12 @@ style="display: none;" data-bind="visible: true">
                   window.modal_bindings = new SendEmailsModalViewModel(window.case_settings, settings);
                   window.case_enrollment = new CaseEnrollmentsViewModel({{ case |tojson|safe }});
 
+                  window.enrollment_api_panel = new EnrollmentAPIPanel({{ case |tojson|safe }});
+
                   //Apply all knockout bindings
                   ko.applyBindings(window.case_settings, $(".content")[0]);
                   ko.applyBindings(census_errors_panel, $("#census-upload-modal")[0]);
+                  ko.applyBindings(window.enrollment_api_panel, $("#enrollment-csv-modal")[0]);
                   ko.applyBindings(window.modal_bindings, $(".modals #email-target-links-modal")[0]);
 
                   // Self-enrollment settings
