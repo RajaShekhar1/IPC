@@ -3,6 +3,7 @@ from io import BytesIO
 
 from reportlab.lib.colors import HexColor
 from reportlab.lib.units import inch
+from reportlab.lib.utils import simpleSplit
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -139,6 +140,7 @@ class FormPDFRenderer(object):
 
     def draw_text(self, text, x, y, width, font=None, fontsize=None,
                   is_bold=False, is_italic=False, fontcolor=None):
+        # Determine font to use
         font = font or DEFAULT_FONT
         if is_bold and is_italic:
             font += '-BoldOblique'
@@ -148,10 +150,15 @@ class FormPDFRenderer(object):
             font += '-Oblique'
         font = FONTMAP.get(font, DEFAULT_FONT)
         fontsize = fontsize or 10
+        # Set font color if specified
         if fontcolor is not None:
             self.c.saveState()
             self.c.setFillColor(COLORMAP.get(fontcolor, DEFAULT_COLOR))
         self.c.setFont(font, fontsize)
+        # Ensure text fits in width if specified
+        if width is not None and len(text) > 0:
+            lines = simpleSplit(text, self.c._fontname, self.c._fontsize, width)
+            text = lines[0]
         self.c.drawString(*self._translate(x, y), text=text)
         if fontcolor is not None:
             self.c.restoreState()
@@ -184,6 +191,3 @@ class FormPDFRenderer(object):
         face = pdfmetrics.getFont(self.c._fontname).face
         y_offset = face.descent * self.c._fontsize / 1000
         return x + 8, self.c._pagesize[1] - y - y_offset - 14
-
-    def _get_width(self, s):
-        return stringWidth(s, self.c._fontname, self.c._fontsize)
