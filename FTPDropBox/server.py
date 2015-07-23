@@ -12,6 +12,18 @@ API_URL = ""
 class TAAFileHandler(AbstractedFS):
     def listdir(self, path):
         return []
+    def chdir(self, path):
+        pass
+    def mkdir(self, path):
+        pass
+    def rmdir(self, path):
+        pass
+    def remove(self, path):
+        pass
+    def rename(self, src, dst):
+        pass
+    def chmod(self, path, mode):
+        pass    
 
 class TAAHandler(TLS_FTPHandler):
     def on_login(self, username):

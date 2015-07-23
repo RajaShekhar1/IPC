@@ -334,6 +334,7 @@ def submit_enrollment_records():
         errors = [{"type": e.get_type(), "fields": e.get_fields(), "message": e.get_message()} for e in response.get_errors()]
         return Response(json.dumps(errors), status=400, mimetype='application/json')
 
+#TODO: This endpoint needs to be deleted before release!
 @app.route('/test-error-email/<type>', methods=["GET"])
 def test_error_email(type):
     if type == "multi":
