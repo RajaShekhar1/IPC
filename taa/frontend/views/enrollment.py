@@ -3,9 +3,10 @@ ENROLLMENT pages and handling, DOCUSIGN interaction
 """
 
 import os
+import json
 
 from flask import (abort, jsonify, render_template, request,
-                   send_from_directory, session, url_for, redirect)
+                   send_from_directory, session, url_for, redirect, Response)
 from flask.ext.stormpath import login_required
 from flask_stormpath import current_user
 
@@ -25,6 +26,7 @@ agent_service = LookupService('AgentService')
 enrollment_service = LookupService('EnrollmentApplicationService')
 self_enrollment_service = LookupService('SelfEnrollmentService')
 self_enrollment_link_service = LookupService('SelfEnrollmentLinkService')
+enrollment_import_service = LookupService('EnrollmentImportService')
 
 @app.route('/enroll')
 @login_required
@@ -257,9 +259,6 @@ def self_enrollment2():
 
     return _setup_enrollment_session(enrollment_setup.case, record_id=census_record_id, data=data, is_self_enroll=True)
 
-
-
-
 @app.route('/submit-wizard-data', methods=['POST'])
 def submit_wizard_data():
     data = request.json
@@ -314,6 +313,67 @@ def submit_wizard_data():
     return data
 
 
+@app.route('/submit-enrollment-records', methods=["POST"])
+def submit_enrollment_records():
+    file = request.files["csv-file"]
+    if not file:
+        return "No File Submitted!"
+    lineData = [line.strip().split(",") for line in file]
+    data = []
+    headers = lineData.pop(0)
+    for line in lineData:
+        if line is not "":
+            curLine = {}
+            for i in range(0, len(line)):
+                curLine[headers[i].strip(' \t\r\n')] = line[i].strip(' \t\r\n')
+            data.append(curLine)
+    response = enrollment_import_service.submit_file_records(data)
+    if response.is_success():
+        return Response(json.dumps(data), status=200, mimetype='application/json')
+    else:
+        errors = [{"type": e.get_type(), "fields": e.get_fields(), "message": e.get_message()} for e in response.get_errors()]
+        return Response(json.dumps(errors), status=400, mimetype='application/json')
+
+@app.route('/test-error-email/<type>', methods=["GET"])
+def test_error_email(type):
+    if type == "multi":
+        test = [{
+                'agent_name': 'Andy Agent',
+                'emp_coverage': '50000',
+                'emp_premium': '10.00',
+                'user_token': 'ABC',
+                'emp_street': '123 Sesame',
+                'emp_state': 'MI',
+                'emp_pin': '12341234',
+                'time_stamp': '2015-01-01 10:01:00',
+                'signed_at_city': 'Lansing',
+                'emp_ssn': '123-12-1234',
+                'emp_birthdate': '1990-01-01',
+                'payment_mode': 'weekly',
+                'application_date': '2015-01-01',
+                'agent_sig_txt': 'esign by Andy Agent',
+                'emp_first': 'Joe',
+                'signed_at_state': 'MI',
+                'emp_sig_txt': 'esign by Joe',
+                'case_token': 'XYZ',
+                'emp_street2': '',
+                'agent_code': '26ABC',
+                'emp_zipcode': '12345',
+                'emp_last': 'Johnson'
+            }]
+    else:
+        test = []
+    response = enrollment_import_service.submit_file_records(test)
+    if response.is_success():
+        return render_template('emails/enrollment_upload_email.html',
+                               errors=[]
+                               )
+    else:
+        errors = [{"type": e.get_type(), "fields": e.get_fields(), "message": e.get_message()} for e in response.get_errors()]
+        return render_template('emails/enrollment_upload_email.html',
+                               errors=errors
+                               )
+
 @app.route('/application_completed', methods=['GET'])
 def ds_landing_page():
     """
@@ -328,7 +388,6 @@ def ds_landing_page():
                            ds_event=ds_event,
                            nav_menu=get_nav_menu(),
                            )
-
 
 # TODO: just use this route in the future rather than adding more individual
 # routes for files

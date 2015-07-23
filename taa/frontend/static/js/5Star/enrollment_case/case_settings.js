@@ -62,10 +62,10 @@ function reset_upload_modal() {
   $(".form-buttons").show();
 }
 
-function handle_upload_success(resp) {
+function handle_upload_success(resp, modal) {
   census_errors_panel.error_records(resp.data.errors);
   census_errors_panel.num_data_records(resp.data.records.length);
-  show_success_panel();
+  show_success_panel($(modal));
 
   window.case_settings.census_data(resp.data.records);
 
@@ -74,9 +74,9 @@ function handle_upload_success(resp) {
   "#census-records-table", "#census-table-loading");
 }
 
-function handle_upload_error(xhr) {
+function handle_upload_error(xhr, modal) {
   if (xhr.status >= 400 && xhr.status < 500) {
-    show_error_panel();
+    show_error_panel($(modal));
     var data = $.parseJSON(xhr.responseText).data;
     census_errors_panel.error_records(data.errors);
 
@@ -84,13 +84,15 @@ function handle_upload_error(xhr) {
     $('.upload-error-table td.error').tooltip({placement: "auto left"});
   } else {
     alert("Sorry, there was a problem communicating with the server.");
-    reset_upload_modal();
+    reset_upload_modal($(modal));
   }
 }
 
 function observe_settings_events(settings) {
   $("#upload-btn").on("click", reset_upload_modal);
-  $(".back-btn").on("click", show_form_panel);
+  $(".back-btn").on("click", function() {
+    show_form_panel($(this).parents(".modal"));
+  });
 
   // Buttons to reset text
   $('#reset-page-text').click(function() {
@@ -131,12 +133,27 @@ function observe_census_record_form_submit() {
 
 
     send_file_data("POST", urls.get_case_api_census_records_url(window.case_id),
-    form_data, handle_upload_success, handle_upload_error, false);
+    form_data, function(data) {
+      handle_upload_success(data, form);
+    }, function(err) {
+        handle_upload_error(err, form);
+    }, false);
 
     show_loading_panel($(this));
 
     return false;
   });
+}
+
+function handle_enrollment_upload_error(err, modal) {
+  if (err.status >= 400 && err.status < 500) {
+    var errors = $.parseJSON(err.responseText);
+    window.enrollment_api_panel.error_records(errors);
+    show_error_panel($(modal));
+  } else {
+    alert("Sorry, there was a problem communicating with the server.");
+    reset_upload_modal($(modal));
+  }
 }
 
 function observe_enrollment_upload_form_submit() {
@@ -153,7 +170,11 @@ function observe_enrollment_upload_form_submit() {
     form_data.append('csv-file', files[0], files[0].name);
     form_data.append('upload_type', $("input[name=upload_type]:checked").val());
 
-    //send_file_data("POST", urls.get_case_api_census_records_url(window.case_id), form_data, handle_upload_success, handle_upload_error, false);
+    send_file_data("POST", urls.get_submit_enrollment_records_url(), form_data, function(data) {
+      console.log(data);
+    }, function(err) {
+      handle_enrollment_upload_error(err, form);
+    }, false);
 
     show_loading_panel($(this));
 

@@ -32,7 +32,6 @@ class EnrollmentImportService(object):
     def submit_file_records(self, records):
         response = EnrollmentImportResponse()
         parser = EnrollmentRecordParser()
-
         # Process all records
         parser.process_records(records, case=None)
         errors = parser.errors
