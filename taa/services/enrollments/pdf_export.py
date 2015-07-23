@@ -73,10 +73,9 @@ class ImagedFormGeneratorService(object):
                                                            y=tab_def.y)
             self.pdf_renderer.next_page()
 
-        if path is not None:
-            overlay_pdf = self.pdf_renderer.get_pdf_bytes()
-            base_pdf = BytesIO(template.data)
-            merge_pdfs(base_pdf, overlay_pdf, path)
+        overlay_pdf = self.pdf_renderer.get_pdf_bytes()
+        base_pdf = BytesIO(template.data)
+        return merge_pdfs(base_pdf, overlay_pdf, path)
 
 
 class FormTemplateTabRepository(object):
@@ -87,8 +86,12 @@ class FormTemplateTabRepository(object):
             form_template_id=form_template_id))
 
 
-FONTPATH_LUCIDIA = os.path.join('Artifacts', 'fonts', 'LucidaConsole.ttf')
-FONTPATH_COURIERNEW = os.path.join('Artifacts', 'fonts', 'CourierNew-Bold.ttf')
+pdfmetrics.registerFont(
+    TTFont('LucidaConsole', os.path.join('Artifacts', 'fonts',
+                                         'LucidaConsole.ttf')))
+pdfmetrics.registerFont(
+    TTFont('CourierNew', os.path.join('Artifacts', 'fonts',
+                                      'CourierNew-Bold.ttf')))
 FONTMAP = {
     'CourierNew': 'CourierNew',
     'LucidaConsole': 'LucidaConsole',
@@ -98,14 +101,9 @@ FONTMAP = {
 
 class FormPDFRenderer(object):
     def __init__(self):
-        self.buf = BytesIO()
-        self.c = canvas.Canvas(self.buf, pagesize=(8.5 * inch,
-                                                   11 * inch))
-        self.c.setStrokeColorRGB(0, 0, 0)
-        self.c.setFillColorRGB(0, 0, 0)
-        self.c.setFont('Helvetica', 12)
-        pdfmetrics.registerFont(TTFont('LucidaConsole', FONTPATH_LUCIDIA))
-        pdfmetrics.registerFont(TTFont('CourierNew', FONTPATH_COURIERNEW))
+        self.buf = None
+        self.c = None
+        self._initialize()
 
     def draw_text(self, text, x, y, width, font=None, fontsize=None,
                   is_bold=False, is_italic=False):
@@ -135,6 +133,14 @@ class FormPDFRenderer(object):
             pdf = self.buf.getvalue()
             self.buf.close()
             return pdf
+
+    def _initialize(self):
+        self.buf = BytesIO()
+        self.c = canvas.Canvas(self.buf, pagesize=(8.5 * inch,
+                                                   11 * inch))
+        self.c.setStrokeColorRGB(0, 0, 0)
+        self.c.setFillColorRGB(0, 0, 0)
+        self.c.setFont('Helvetica', 12)
 
     def _translate(self, x, y):
         face = pdfmetrics.getFont(self.c._fontname).face

@@ -1,7 +1,8 @@
 from PyPDF2 import PdfFileReader, PdfFileWriter
+from io import BytesIO
 
 
-def merge_pdfs(base_bytes, overlay_bytes, outpath):
+def merge_pdfs(base_bytes, overlay_bytes, outpath=None):
     base_reader = PdfFileReader(base_bytes)
     overlay_reader = PdfFileReader(overlay_bytes)
     writer = PdfFileWriter()
@@ -12,5 +13,10 @@ def merge_pdfs(base_bytes, overlay_bytes, outpath):
         base_page.mergePage(overlay_page)
         writer.insertPage(base_page, page)
 
-    with open(outpath, 'wb') as f:
-        writer.write(f)
+    if outpath is None:
+        buf = BytesIO()
+        writer.write(buf)
+        return buf.getvalue()
+    else:
+        with open(outpath, 'wb') as f:
+            writer.write(f)
