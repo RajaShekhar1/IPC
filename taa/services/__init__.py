@@ -121,6 +121,7 @@ def initialize_services():
         ImagedFormGeneratorService,
         FormPDFRenderer,
         FormTemplateTabRepository,
+        merge_pdfs,
     )
     from taa.services.products import (
         ProductService,
@@ -155,6 +156,7 @@ def initialize_services():
     services_broker.Provide('ImagedFormGeneratorService', ImagedFormGeneratorService())
     services_broker.Provide("FormPDFRenderer", FormPDFRenderer())
     services_broker.Provide("FormTemplateTabRepository", FormTemplateTabRepository())
+    services_broker.Provide("merge_pdfs", lambda: merge_pdfs)
 
     services_broker.Provide('FileImportService', FileImportService())
     services_broker.Provide('UserService', UserService())

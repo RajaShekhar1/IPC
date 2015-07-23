@@ -10,7 +10,6 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfbase.ttfonts import TTFont
 
 from .models import db
-from pdf_generation import merge_pdfs
 from taa.services import RequiredFeature
 from taa.services.docusign.service import DocuSignTextTab, DocuSignRadioTab
 from taa.services.enrollments.models import FormTemplate, FormTemplateTabs
@@ -18,18 +17,17 @@ from taa.services.enrollments.models import FormTemplate, FormTemplateTabs
 
 DEFAULT_FONT = 'LucidaConsole'
 DEFAULT_COLOR = HexColor('#000000')
-
+FONT_DIR = 'taa/services/enrollments/pdf_generator_fonts'
 
 class ImagedFormGeneratorService(object):
 
     tab_repository = RequiredFeature('FormTemplateTabRepository')
     pdf_renderer = RequiredFeature('FormPDFRenderer')
+    merge_pdfs = RequiredFeature('merge_pdfs')
 
     def generate_form_pdf(self, template_id, enrollment_data, path=None):
-        template = FormTemplate.query.filter_by(
-            template_id=template_id).first()
-        if template is None:
-            # Failed to retrieve template
+        template = self.tab_repository.get_template(template_id)
+        if not template:
             raise Exception("Template ID '{}' not found".format(template_id))
 
         tab_definitions = self.tab_repository.get_tabs_for_template(template_id)
@@ -87,7 +85,7 @@ class ImagedFormGeneratorService(object):
 
         overlay_pdf = self.pdf_renderer.get_pdf_bytes()
         base_pdf = BytesIO(template.data)
-        return merge_pdfs(base_pdf, overlay_pdf, path)
+        return self.merge_pdfs(base_pdf, overlay_pdf, path)
 
 
 class FormTemplateTabRepository(object):
@@ -97,13 +95,18 @@ class FormTemplateTabRepository(object):
         return list(FormTemplateTabs.query.filter_by(
             form_template_id=form_template_id))
 
+    def has_template(self, template_id):
+        return bool(self.has_template(template_id))
+
+    def get_template(self, template_id):
+        return FormTemplate.query.filter_by(
+            template_id=template_id).first()
+
 
 pdfmetrics.registerFont(
-    TTFont('LucidaConsole', os.path.join('Artifacts', 'fonts',
-                                         'LucidaConsole.ttf')))
+    TTFont('LucidaConsole', os.path.join(FONT_DIR, 'LucidaConsole.ttf')))
 pdfmetrics.registerFont(
-    TTFont('CourierNew', os.path.join('Artifacts', 'fonts',
-                                      'CourierNew-Bold.ttf')))
+    TTFont('CourierNew', os.path.join(FONT_DIR, 'CourierNew-Bold.ttf')))
 
 
 FONTMAP = {
