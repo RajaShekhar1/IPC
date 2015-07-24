@@ -23,7 +23,9 @@ class MockCaseService(object):
         return token in self.valid_tokens
 
     def get_case_by_token(self, token):
-        return
+        class Case:
+            id = 2
+        return Case()
 
     def is_case_enrolling(self, case):
         return True
@@ -155,7 +157,7 @@ def step_impl(context):
     context.import_record.update(dict(
         ch1_first="Johnny",
         ch1_last="Doe",
-        ch1_birthate="2009-01-01",
+        ch1_birthdate="2009-01-01",
         ch1_ssn="126-66-7777",
         ch1_premium="2.50",
         ch1_coverage="10000",
@@ -166,10 +168,58 @@ def step_impl(context):
     context.import_record.update(dict(
         ch2_first="Mary",
         ch2_last="Doe",
-        ch2_birthate="2009-12-01",
+        ch2_birthdate="2009-12-01",
         ch2_ssn="124-44-8888",
         ch2_premium="2.50",
         ch2_coverage="10000",
+    ))
+
+@given(u"I add valid optional enrollment data")
+def step_impl(context):
+    context.import_record.update(dict(
+        actively_at_work="Y",
+        emp_email="joe@gmail.com",
+        emp_date_of_hire="2010-01-31",
+        emp_height_inches="70",
+        emp_weight_pounds="150",
+        emp_smoker="N",
+        sp_height_inches="65",
+        sp_weight_pounds="130",
+        sp_smoker="N",
+        sp_street="Other st",
+        sp_street2="",
+        sp_city="Chicago",
+        sp_state="IL",
+        sp_zipcode="11444",
+        sp_phone="1242223535",
+        existing_insurance="N",
+        replacing_insurance="N",
+        sp_treated_6_months="N",
+        sp_disabled_6_months="N",
+        replacement_read_aloud="N",
+        replacement_is_terminating="N",
+        replacement_using_funds="N",
+        replacement_policy1_name="Prudential",
+        replacement_policy1_number="111AAA33",
+        replacement_policy1_insured="Joe",
+        replacement_policy1_replaced_or_financing="R",
+        replacement_policy1_reason="Needed better coverage",
+        emp_bene_name="Emp. Prim. Bene",
+        emp_bene_birthdate="1990-10-10",
+        emp_bene_relationship="Brother",
+        emp_bene_ssn="555-55-5555",
+        sp_bene_name="Sp prim bene",
+        sp_bene_birthdate="1980-11-11",
+        sp_bene_relationship="daughter",
+        sp_bene_ssn="111-11-1112",
+        emp_cont_bene_name="Emp. Cont. Bene ",
+        emp_cont_bene_birthdate="1989-01-10",
+        emp_cont_bene_relationship="Relative",
+        emp_cont_bene_ssn="666-55-5555",
+        sp_cont_bene_name="Sp cont bene",
+        sp_cont_bene_birthdate="1985-11-12",
+        sp_cont_bene_relationship="friend",
+        sp_cont_bene_ssn="121-12-1112"
     ))
 
 @given(u"I substitute '{bad_value}' for the column '{column_name}'")
