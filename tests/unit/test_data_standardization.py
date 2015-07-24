@@ -247,6 +247,13 @@ class TestDataStandardization(TestCase):
         }
         assert_that(output, has_entries(expected))
 
+    def test_it_should_add_identityToken(self):
+        output = self.import_service.standardize_imported_data(self.init_data)
+        expected = {
+            'identityToken': self.init_data['emp_date_of_hire']
+        }
+        assert_that(output, has_entries(expected))
+
     def get_mock_product_service(self):
         mock_product_service = Mock()
         mock_product_service.get_products_by_codes.return_value = [sentinel.product]

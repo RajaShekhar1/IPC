@@ -26,12 +26,14 @@ class MockUserService(object):
     def can_current_user_submit_enrollments(self):
         return 'api_users' in self.user_groups.get(self.logged_in_user, [])
 
+
 class MockTokenService(object):
     def __init__(self):
         self.valid_tokens = []
 
     def is_valid_token(self, token):
         return token in self.valid_tokens
+
 
 class MockProductService(object):
     def is_valid_product_code(self, code):
@@ -56,6 +58,37 @@ class MockProductFormService(object):
     def get_health_questions(self):
         return [Mock()] * 7
 
+class MockCaseService(object):
+    pass
+
+def build_mock_case_service(context):
+    # Build a mock case
+    mock_case = Mock()
+    mock_case.owner_agent = Mock()
+
+    # Build the service
+    mock_case_service = Mock()
+    service_instance = Mock()
+
+    # Lookup by ID
+    service_instance.get.return_value = mock_case
+
+    # Lookup by token
+    service_instance.get_case_for_token.return_value = mock_case
+
+    # Active
+    service_instance.is_case_enrolling.return_value = True
+
+    # Valid token
+    service_instance.is_valid_case_token.return_value = True
+
+    # Export mocked service to the app
+    provide_mock(context, "CaseService", 'mock_case_service', mock_case_service)
+
+class MockEnrollmentApplicationService(object):
+    def save_enrollment_data(self, data, case, census_record, agent):
+        return Mock()
+
 @given("I have a case that is enrolling with an api token 'CASE-123' and self-enroll token 'SE-123'")
 def step_impl(context):
     """
@@ -64,7 +97,9 @@ def step_impl(context):
     # Set up other mock services
     provide_mock(context, 'ProductService', 'mock_product_service', MockProductService())
     provide_mock(context, 'ProductFormService', 'mock_product_form_service', MockProductFormService())
-
+    provide_mock(context, 'EnrollmentApplicationService', 'mock_enrollment_application_service', MockEnrollmentApplicationService())
+    #provide_mock(context, "CaseService", 'mock_case_service', Mock())
+    build_mock_case_service(context)
 
 @given("I have a user named {name} with token {user_token} in group {group}")
 def step_impl(context, name, user_token, group):
@@ -92,11 +127,9 @@ USER-123,{case_token},FPPTI,monthly,Joe,Smith,111223333,1980-01-31,m,50000,33.25
 n,n,n,n,n,n,n
 """.format(case_token=case_token)
 
+
 @step(u"I submit the enrollment data to the API using the auth_token '{auth_token}' and case_token '{case_token}'")
 def step_impl(context, auth_token, case_token):
-    # Override key services
-    context.mock_case_service = Mock()
-    services_broker.Provide("CaseService", context.mock_case_service)
 
     # Create params
     params = {'format':'csv'}
@@ -125,7 +158,13 @@ def step_impl(context):
 
 @then("It should look up the case with token '{case_token}' in the database")
 def step_impl(context, case_token):
-    call_list = context.mock_case_service.mock_calls
-    expected = call().get_case_by_token(case_token)
-    assert_that(call_list, has_item(expected))
+    service = context.mock_case_service.return_value
 
+    assert_that(service.get_case_for_token.call_count, greater_than(0))
+
+
+@then("It should check to see if the case is enrolling")
+def step_impl(context):
+    service = context.mock_case_service.return_value
+
+    assert_that(service.is_case_enrolling.call_count, greater_than(0))

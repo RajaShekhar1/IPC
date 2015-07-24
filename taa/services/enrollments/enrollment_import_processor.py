@@ -19,13 +19,12 @@ class EnrollmentProcessor(object):
     def process_enrollment_import_request(self, data, data_format, auth_token=None, case_token=None):
 
         self.authenticate_user(auth_token)
-
-        case = self.get_case(case_token)
-
         processed_data = self.extract_dictionaries(data, data_format)
+        method = 'import'
+        case_from_token = self.get_case(case_token)
 
         # Process all records
-        self.enrollment_record_parser.process_records(processed_data, case)
+        self.enrollment_record_parser.process_records(processed_data, case_from_token)
 
         for error in self.enrollment_record_parser.errors:
             self._add_error(error["type"], error["field_name"], error['message'])
@@ -35,7 +34,8 @@ class EnrollmentProcessor(object):
 
         for cur_data in self.get_valid_data():
             wizard_data = self.enrollment_import_service.standardize_imported_data(cur_data)
-            case = self.get_case(cur_data.get("case_token"))
+            wizard_data['method'] = method
+            case = self.case_service.get(cur_data['case_id'])
             agent = case.owner_agent
 
             self.enrollment_service.save_enrollment_data(wizard_data, case, None, agent)
@@ -78,11 +78,8 @@ class EnrollmentProcessor(object):
             case = self.case_service.get_case_for_token(case_token)
         else:
             case = None
-        if not self.case_service.is_case_enrolling(case):
-            self._add_error("invalid_case", [], "Case is not enrolling")
-            raise TAAFormError(errors=[e.to_json() for e in self.errors])
-        return case
 
+        return case
 
     def extract_dictionaries(self, data, data_format):
         if data_format == "csv":

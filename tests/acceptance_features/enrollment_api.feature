@@ -82,7 +82,10 @@ Feature: Submit enrollments using the API
     When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token ' '
     Then It should look up the case with token 'CASE-123' in the database
 
-  # - IF CASE IS NOT ENROLLING, reject with an error
+  Scenario: It should verify that the case is currently enrolling.
+    Given I create a minimally valid CSV file with case_token 'CASE-123'
+    When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token 'CASE-123'
+    Then It should check to see if the case is enrolling
 
   #  - use data_format parameter  - text/plain for flat-file, text/csv for csv, or application/json
   #  - convert flat-file to CSV

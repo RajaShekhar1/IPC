@@ -102,19 +102,14 @@ class EnrollmentImportService(object):
         out_data["payment_mode_text"] = data["payment_mode"]
 
         out_data["existing_insurance"] = data.get("existing_insurance") in ["Y","y"]
-
         out_data["replacing_insurance"] = data.get("replacing_insurance") in ["Y","y"]
-
         out_data["replacement_read_aloud"] = data.get("replacement_read_aloud") in ["Y","y"]
-
         out_data["replacement_is_terminating"] = data.get("replacement_is_terminating") in ["Y","y"]
-
         out_data["replacement_using_funds"] = data.get("replacement_using_funds") in ["Y","y"]
 
         out_data["is_employee_actively_at_work"] = data.get("actively_at_work") in ["Y","y"]
 
         out_data["has_spouse_been_treated_6_months"] = data.get("sp_treated_6_months") in ["Y","y"]
-
         out_data["has_spouse_been_disabled_6_months"] = data.get("sp_disabled_6_months") in ["Y","y"]
 
         out_data["employee_beneficiary"] = data.get("emp_bene_relationship")
@@ -135,10 +130,8 @@ class EnrollmentImportService(object):
             replacement_reason=data.get("replacement_policy1_reason")
         ))
 
-        emp_address = "{}{}{}{}{}".format(data.get("emp_street"), data.get("emp_street2"), data.get("emp_city"), data.get("emp_state"), data.get("emp_zipcode"))
-
-        sp_address = "{}{}{}{}{}".format(data.get("sp_street"), data.get("sp_street2"), data.get("sp_city"), data.get("sp_state"), data.get("sp_zipcode"))
-
+        emp_address = (data.get("emp_street"), data.get("emp_street2"), data.get("emp_city"), data.get("emp_state"), data.get("emp_zipcode"))
+        sp_address = (data.get("sp_street"), data.get("sp_street2"), data.get("sp_city"), data.get("sp_state"), data.get("sp_zipcode"))
         out_data["is_spouse_address_same_as_employee"] = emp_address == sp_address
 
         out_data["employee"].update(build_person("emp"))
@@ -158,6 +151,10 @@ class EnrollmentImportService(object):
                     face_value=data.get("ch{}_coverage".format(num)),
                     premium=data.get("ch{}_premium".format(num))
                 ))
+
+        # identityToken is date of hire
+        out_data['identityToken'] = data.get('emp_date_of_hire')
+
         return out_data
 
 class EnrollmentImportResponse(object):
@@ -543,7 +540,7 @@ class EnrollmentRecordParser(object):
 
     def validate_case(self, record, default_case):
         if 'case_token' in record:
-            case = self.case_service.get_case_by_token(record['case_token'])
+            case = self.case_service.get_case_for_token(record['case_token'])
         else:
             case = default_case
 
@@ -554,10 +551,13 @@ class EnrollmentRecordParser(object):
                                     record)
             return False
 
+        # Validate case is enrolling
+        if not self.case_service.is_case_enrolling(case):
+            self.error_record_field("invalid_case", "Case is not enrolling", "case_token", record)
+            return False
+
         # Store the case ID in the record
         record['case_id'] = case.id
-
-        # TODO: Validate case is enrolling
 
         return True
 

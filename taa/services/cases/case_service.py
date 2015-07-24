@@ -66,7 +66,7 @@ class CaseService(DBService):
     def get_case_for_token(self, token):
         query = self.query()
         query = query.filter(Case.case_token==token)
-        return results
+        return query.first()
 
     def get_products_for_case(self, case):
         # Return the sorted list of products for this case
