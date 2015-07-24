@@ -22,7 +22,7 @@ class MockCaseService(object):
     def is_valid_case_token(self, token):
         return token in self.valid_tokens
 
-    def get_case_by_token(self, token):
+    def get_case_for_token(self, token):
         class Case:
             id = 2
         return Case()
