@@ -416,7 +416,61 @@ Feature: Validate an enrollment record submitted via API.
      | sp_cont_bene_relationship                 |
      | sp_cont_bene_ssn                          |
 
-
+ Scenario: It should create valid optional enrollment data
+   Given I prepare an enrollment file with basic valid enrollment data
+   And I add valid spouse enrollment data
+   And I add valid child enrollment data
+   And I add valid optional enrollment data
+   When I submit the file to the Enrollment API
+   Then I should see a success response
+   And the parsed record should include the following attributes
+     | attribute_name                            |
+     # Misc form questions
+     | actively_at_work                          |
+     # Additional employee data
+     | emp_email                                 |
+     | emp_date_of_hire                          |
+     | emp_height_inches                         |
+     | emp_weight_pounds                         |
+     | emp_smoker                                |
+     # Additional spouse data
+     | sp_street                                 |
+     | sp_street2                                |
+     | sp_city                                   |
+     | sp_state                                  |
+     | sp_zipcode                                |
+     | sp_phone                                  |
+     # Other questions
+     | existing_insurance                        |
+     | replacing_insurance                       |
+     | sp_treated_6_months                       |
+     | sp_disabled_6_months                      |
+     # Replacement attributes
+     | replacement_read_aloud                    |
+     | replacement_is_terminating                |
+     | replacement_using_funds                   |
+     | replacement_policy1_name                  |
+     | replacement_policy1_number                |
+     | replacement_policy1_insured               |
+     | replacement_policy1_replaced_or_financing |
+     | replacement_policy1_reason                |
+     # Beneficiary attributes
+     | emp_bene_name                             |
+     | emp_bene_birthdate                        |
+     | emp_bene_relationship                     |
+     | emp_bene_ssn                              |
+     | sp_bene_name                              |
+     | sp_bene_birthdate                         |
+     | sp_bene_relationship                      |
+     | sp_bene_ssn                               |
+     | emp_cont_bene_name                        |
+     | emp_cont_bene_birthdate                   |
+     | emp_cont_bene_relationship                |
+     | emp_cont_bene_ssn                         |
+     | sp_cont_bene_name                         |
+     | sp_cont_bene_birthdate                    |
+     | sp_cont_bene_relationship                 |
+     | sp_cont_bene_ssn                          |
 
 
 

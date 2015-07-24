@@ -57,6 +57,9 @@ class EnrollmentImportService(object):
                 city=data.get("{}_city".format(prefix)),
                 state=data.get("{}_state".format(prefix)),
                 zip=data.get("{}_zipcode".format(prefix)),
+                height=data.get("{}_height_inches".format(prefix)),
+                weight=data.get("{}_weight_pounds".format(prefix)),
+                is_smoker=data.get("{}_smoker".format(prefix))=="Y"
             )
             return base_dict
 
@@ -64,6 +67,8 @@ class EnrollmentImportService(object):
             "employee": {},
             "spouse": {},
             "children": [],
+            "child_coverages": [],
+            "replacement_policies": [],
         }
         out_data["enrollCity"] = data.get("signed_at_city")
         out_data["enrollState"] = data.get("signed_at_state")
@@ -72,6 +77,30 @@ class EnrollmentImportService(object):
         out_data["payment_mode"] = MODES_BY_NAME.get(data["payment_mode"])
         out_data["payment_mode_text"] = data["payment_mode"]
 
+        out_data["existing_insurance"] = data.get("existing_insurance")=="Y"
+
+        out_data["replacing_insurance"] = data.get("replacing_insurance")=="Y"
+
+        out_data["replacement_read_aloud"] = data.get("replacement_read_aloud")=="Y"
+
+        out_data["replacement_is_terminating"] = data.get("replacement_is_terminating")=="Y"
+
+        out_data["replacement_using_funds"] = data.get("replacement_using_funds")=="Y"
+
+        out_data["is_employee_actively_at_work"] = data.get("actively_at_work")=="Y"
+
+        out_data["has_spouse_been_treated_6_months"] = data.get("sp_treated_6_months")=="Y"
+
+        out_data["has_spouse_been_disabled_6_months"] = data.get("sp_disabled_6_months")=="Y"
+
+        out_data["replacement_policies"].append(dict(
+            name=data.get("replacement_policy1_name"),
+            policy_number=data.get("replacement_policy1_number"),
+            insured=data.get("replacement_policy1_insured"),
+            replaced_or_financing=data.get("replacement_policy1_replaced_or_financing"),
+            replacement_reason=data.get("replacement_policy1_reason")
+        ))
+
         emp_address = "{}{}{}{}{}".format(data.get("emp_street"), data.get("emp_street2"), data.get("emp_city"), data.get("emp_state"), data.get("emp_zipcode"))
 
         sp_address = "{}{}{}{}{}".format(data.get("sp_street"), data.get("sp_street2"), data.get("sp_city"), data.get("sp_state"), data.get("sp_zipcode"))
@@ -79,11 +108,22 @@ class EnrollmentImportService(object):
         out_data["is_spouse_address_same_as_employee"] = emp_address == sp_address
 
         out_data["employee"].update(build_person("emp"))
+        out_data["employee_coverage"] = dict(
+            face_value=data.get("emp_coverage"),
+            premium=data.get("emp_premium")
+        )
         out_data["spouse"].update(build_person("sp"))
+        out_data["spouse_coverage"] = dict(
+            face_value=data.get("sp_coverage"),
+            premium=data.get("sp_premium")
+        )
         for num in range(1, EnrollmentRecordParser.MAX_CHILDREN+1):
             if data.get("ch{}_first".format(num)):
                 out_data["children"].append(build_person("ch{}".format(num)))
-        print(out_data)
+                out_data["child_coverages"].append(dict(
+                    face_value=data.get("ch{}_coverage".format(num)),
+                    premium=data.get("ch{}_premium".format(num))
+                ))
         return out_data
 
 class EnrollmentImportResponse(object):
