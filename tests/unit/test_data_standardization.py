@@ -1,15 +1,19 @@
 from unittest2 import TestCase
 import csv
-from hamcrest import assert_that, equal_to
+
+from hamcrest import assert_that, equal_to, has_entries, contains
+from mock import Mock, sentinel
 
 from taa.services.enrollments.enrollment_import import EnrollmentImportService, EnrollmentRecordParser
 
 class TestDataStandardization(TestCase):
     def setUp(self):
-        pass
+        # Set up the service and stub out it's dependencies.
+        self.import_service = EnrollmentImportService()
+        self.import_service.product_service = self.get_mock_product_service()
+        self.import_service.soh_service = self.get_mock_soh_service()
 
-    def test_it_should_standardize_dict_passed_in(self):
-        init_data = dict(
+        self.init_data = dict(
             user_token='ABC',
             case_token='XYZ',
             product_code='FPPTI',
@@ -115,7 +119,142 @@ class TestDataStandardization(TestCase):
             sp_cont_bene_relationship="friend",
             sp_cont_bene_ssn="121-12-1112"
         )
-        import_service = EnrollmentImportService()
-        output = import_service.standardize_imported_data(init_data)
 
-        #assert_that(output, equal_to(expected))
+    def test_it_should_standardize_required_main_data(self):
+        output = self.import_service.standardize_imported_data(self.init_data)
+        expected = {
+             'enrollCity': 'Lansing',
+             'enrollState': 'MI',
+             'existing_insurance': False,
+             'has_spouse_been_disabled_6_months': False,
+             'has_spouse_been_treated_6_months': False,
+             'is_employee_actively_at_work': True,
+             'is_spouse_address_same_as_employee': False,
+             'payment_mode': 52,
+             'payment_mode_text': 'weekly',
+             'product_type': 'FPPTI',
+        }
+
+        # Check each key
+        assert_that(output, has_entries(expected))
+
+    def test_it_should_standardize_employee_data(self):
+
+        output = self.import_service.standardize_imported_data(self.init_data)
+        expected = {
+            'address1': '123 Sesame',
+            'address2': '',
+            'birthdate': '1980-01-31',
+            'city': 'Indianapolis',
+            'first': 'Joe',
+            'gender': 'm',
+            'height': '70',
+            'is_smoker': False,
+            'last': 'Johnson',
+            'phone': '',
+            'ssn': '123121234',
+            'state': 'IN',
+            'weight': '150',
+            'zip': '47999',
+            'soh_questions': [{'answer': 'No', 'question':self.mock_question_text}],
+        }
+        assert_that(output.get('employee'), has_entries(expected))
+
+    def test_it_should_standardize_spouse_info(self):
+
+        output = self.import_service.standardize_imported_data(self.init_data)
+        expected = {
+            'address1': 'Other st',
+            'address2': '',
+            'birthdate': '1990-01-01',
+            'city': 'Chicago',
+            'first': 'Jane',
+            'gender': 'f',
+            'height': '65',
+            'is_smoker': False,
+            'last': 'Doe',
+            'phone': '1242223535',
+            'ssn': '123-33-4444',
+            'state': 'IL',
+            'weight': '130',
+            'zip': '11444'}
+
+        assert_that(output['spouse'], has_entries(expected))
+
+    def test_it_should_standardize_children_data(self):
+
+        output = self.import_service.standardize_imported_data(self.init_data)
+
+        expected = [{
+            'address1': None,
+            'address2': None,
+            'birthdate': '2009-01-01',
+            'city': None,
+            'first': 'Johnny',
+            'gender': 'm',
+            'height': None,
+            'is_smoker': False,
+            'last': 'Doe',
+            'phone': None,
+            'ssn': '126-66-7777',
+            'state': None,
+            'weight': None,
+            'zip': None},
+            {'address1': None,
+            'address2': None,
+            'birthdate': '2009-12-01',
+            'city': None,
+            'first': 'Mary',
+            'gender': 'f',
+            'height': None,
+            'is_smoker': False,
+            'last': 'Doe',
+            'phone': None,
+            'ssn': '124-44-8888',
+            'state': None,
+            'weight': None,
+            'zip': None}
+        ]
+        assert_that(output['children'][0], has_entries(expected[0]))
+        assert_that(output['children'][1], has_entries(expected[1]))
+
+
+    def test_it_should_standardize_coverages(self):
+
+        output = self.import_service.standardize_imported_data(self.init_data)
+        expected = {
+            'child_coverages': [
+                     {'face_value': '10000', 'premium': '2.50'},
+                     {'face_value': '10000', 'premium': '2.50'},
+            ],
+            'employee_coverage': {'face_value': '50000', 'premium': '10.00'},
+            'spouse_coverage': {'face_value': '10000', 'premium': '3.00'}
+        }
+        assert_that(output, has_entries(expected))
+
+    def test_it_should_standardize_replacement_data(self):
+        output = self.import_service.standardize_imported_data(self.init_data)
+        expected = {
+            'replacement_is_terminating': False,
+            'replacement_policies': [{'insured': 'Joe',
+                                   'name': 'Prudential',
+                                   'policy_number': '111AAA33',
+                                   'replaced_or_financing': 'R',
+                                   'replacement_reason': 'Needed better coverage'}],
+            'replacement_read_aloud': False,
+            'replacement_using_funds': False,
+            'replacing_insurance': False,
+        }
+        assert_that(output, has_entries(expected))
+
+    def get_mock_product_service(self):
+        mock_product_service = Mock()
+        mock_product_service.get_products_by_codes.return_value = [sentinel.product]
+        return mock_product_service
+
+    def get_mock_soh_service(self):
+        mock_soh_service = Mock()
+        self.mock_question = Mock()
+        self.mock_question_text = self.mock_question.question
+        mock_soh_service.get_health_questions.return_value = [self.mock_question]
+        return mock_soh_service

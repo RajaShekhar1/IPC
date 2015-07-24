@@ -37,7 +37,6 @@ class EnrollmentProcessor(object):
             wizard_data = self.enrollment_import_service.standardize_imported_data(cur_data)
             case = self.get_case(cur_data.get("case_token"))
             agent = case.owner_agent
-            import ipdb; ipdb.set_trace()
 
             self.enrollment_service.save_enrollment_data(wizard_data, case, None, agent)
 

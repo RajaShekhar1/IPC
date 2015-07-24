@@ -1,11 +1,11 @@
 
 from .states import states_by_statecode
-from product_forms import ProductFormService
+from taa.services import LookupService, RequiredFeature
 
-product_form_service = ProductFormService()
+
 
 def get_template_id_for_product_state(base_product_code, statecode):
-
+    product_form_service = LookupService('ProductFormService')
     form = product_form_service.form_for_product_code_and_state(base_product_code, statecode)
 
     if not form.docusign_template_id:
@@ -15,23 +15,24 @@ def get_template_id_for_product_state(base_product_code, statecode):
 
 
 class StatementOfHealthQuestionService(object):
+    product_form_service = RequiredFeature('ProductFormService')
 
     def get_health_questions(self, product, state):
-        form = product_form_service.form_for_state(product, state)
+        form = self.product_form_service.form_for_state(product, state)
         return [question for question in form.questions]
 
     def get_spouse_questions(self, product, state):
         if not product.is_fpp():
             return []
         else:
-            return product_form_service.get_spouse_questions()
+            return self.product_form_service.get_spouse_questions()
 
     def get_states_with_forms_for_product(self, product):
 
         code = product.get_base_product_code()
         
         enabled_statecodes = set()
-        for form in product_form_service.get_all_application_forms().get(code, []):
+        for form in self.product_form_service.get_all_application_forms().get(code, []):
             if not form.docusign_template_id:
                 # Do not allow enrollment in a form if the template ID is not set
                 continue
@@ -44,7 +45,7 @@ class StatementOfHealthQuestionService(object):
 
     def get_all_forms_used_for_product(self, product):
         code = product.get_base_product_code()
-        return product_form_service.get_all_application_forms().get(code, [])
+        return self.product_form_service.get_all_application_forms().get(code, [])
 
     def get_all_category_labels_for_product(self, product):
 
@@ -55,7 +56,7 @@ class StatementOfHealthQuestionService(object):
 
     def _add_spouse_questions(self, product):
         if product.is_fpp():
-            return [q.label for q in product_form_service.get_spouse_questions()]
+            return [q.label for q in self.product_form_service.get_spouse_questions()]
         else:
             return []
 

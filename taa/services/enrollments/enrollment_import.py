@@ -18,6 +18,8 @@ from taa.services.enrollments.enrollment_import_processor import EnrollmentProce
 class EnrollmentImportService(object):
     case_service = RequiredFeature("CaseService")
     file_import_service = RequiredFeature("FileImportService")
+    product_service = RequiredFeature("ProductService")
+    soh_service = RequiredFeature("StatementOfHealthQuestionService")
 
     def process_enrollment_data(self, data, data_format, case_token=None, auth_token=None):
         processor = EnrollmentProcessor()
@@ -45,7 +47,7 @@ class EnrollmentImportService(object):
         return response
 
     def standardize_imported_data(self, data):
-        product_service = LookupService("ProductService")
+
         def build_person(prefix):
             base_dict = dict(
                 first=data.get("{}_first".format(prefix)),
@@ -66,10 +68,10 @@ class EnrollmentImportService(object):
             )
             answers = dict(Y="Yes", N="No", y="Yes", n="No")
             code = data.get("product_code")
-            products = product_service.get_products_by_codes([code])
+            products = self.product_service.get_products_by_codes([code])
             product = products[0]
             state = data.get("signed_at_state")
-            questions = StatementOfHealthQuestionService().get_health_questions(product, state)
+            questions = self.soh_service.get_health_questions(product, state)
 
             for q_num in range(1, len(questions)+1):
                 answer = data.get("{}_question_{}_answer".format(prefix, q_num))

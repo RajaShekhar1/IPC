@@ -33,13 +33,38 @@ class MockTokenService(object):
     def is_valid_token(self, token):
         return token in self.valid_tokens
 
+class MockProductService(object):
+    def is_valid_product_code(self, code):
+        return True
+
+    def is_valid_statecode_for_product(self, statecode, product_code):
+        return True
+
+    def get_num_health_questions(self, statecode, product_code, applicant_type):
+        return 7
+
+    def get_products_by_codes(self, codes):
+        return [Mock()]
+
+
+class MockProductFormService(object):
+    def form_for_state(self, product, statecode):
+        mock_form = Mock()
+        mock_form.questions = [Mock()] * 7
+        return mock_form
+
+    def get_health_questions(self):
+        return [Mock()] * 7
 
 @given("I have a case that is enrolling with an api token 'CASE-123' and self-enroll token 'SE-123'")
 def step_impl(context):
     """
     :type context behave.runner.Context
     """
-    pass
+    # Set up other mock services
+    provide_mock(context, 'ProductService', 'mock_product_service', MockProductService())
+    provide_mock(context, 'ProductFormService', 'mock_product_form_service', MockProductFormService())
+
 
 @given("I have a user named {name} with token {user_token} in group {group}")
 def step_impl(context, name, user_token, group):
