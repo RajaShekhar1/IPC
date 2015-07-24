@@ -23,7 +23,9 @@ class MockCaseService(object):
         return token in self.valid_tokens
 
     def get_case_by_token(self, token):
-        return
+        class Case:
+            id = 2
+        return Case()
 
     def is_case_enrolling(self, case):
         return True
@@ -155,7 +157,7 @@ def step_impl(context):
     context.import_record.update(dict(
         ch1_first="Johnny",
         ch1_last="Doe",
-        ch1_birthate="2009-01-01",
+        ch1_birthdate="2009-01-01",
         ch1_ssn="126-66-7777",
         ch1_premium="2.50",
         ch1_coverage="10000",
@@ -166,7 +168,7 @@ def step_impl(context):
     context.import_record.update(dict(
         ch2_first="Mary",
         ch2_last="Doe",
-        ch2_birthate="2009-12-01",
+        ch2_birthdate="2009-12-01",
         ch2_ssn="124-44-8888",
         ch2_premium="2.50",
         ch2_coverage="10000",

@@ -10,7 +10,7 @@ from taa.services.cases.census_import import (
 from taa.services.preprocessors import *
 from taa.services.validators import *
 
-from taa.services.products.payment_modes import is_payment_mode
+from taa.services.products.payment_modes import is_payment_mode, MODES_BY_NAME
 from taa.services import RequiredFeature, LookupService
 from taa.services.enrollments.enrollment_import_processor import EnrollmentProcessor, EnrollmentImportError
 
@@ -35,7 +35,6 @@ class EnrollmentImportService(object):
         # Process all records
         parser.process_records(records, case=None)
         errors = parser.errors
-        response.records = parser.valid_data
         # If there are errors in the parser, add them to the response
         for error in errors:
             response.add_error(error["type"], error["field_name"], message=error['message'])
@@ -47,24 +46,18 @@ class EnrollmentImportService(object):
     def standardize_imported_data(self, data):
         def build_person(prefix):
             base_dict = dict(
-                first=data["{}_first".format(prefix)],
-                last=data["{}_last".format(prefix)],
-                birthdate=data["{}_birthdate".format(prefix)],
-                ssn=data["{}_ssn".format(prefix)],
-                gender=data["{}_gender".format(prefix)],
+                first=data.get("{}_first".format(prefix)),
+                last=data.get("{}_last".format(prefix)),
+                birthdate=data.get("{}_birthdate".format(prefix)),
+                ssn=data.get("{}_ssn".format(prefix)),
+                gender=data.get("{}_gender".format(prefix)),
+                phone=data.get("{}_phone".format(prefix)),
+                address1=data.get("{}_street".format(prefix)),
+                address2=data.get("{}_street2".format(prefix)),
+                city=data.get("{}_city".format(prefix)),
+                state=data.get("{}_state".format(prefix)),
+                zip=data.get("{}_zipcode".format(prefix)),
             )
-            if data.get("{}_phone".format(prefix)) != None:
-                base_dict["phone"]=data["{}_phone".format(prefix)]
-            if data.get("{}_street".format(prefix)) != None:
-                base_dict["address1"]=data["{}_street".format(prefix)]
-            if data.get("{}_street2".format(prefix)) != None:
-                base_dict["address2"]=data["{}_street2".format(prefix)]
-            if data.get("{}_city".format(prefix)) != None:
-                base_dict["city"]=data["{}_city".format(prefix)]
-            if data.get("{}_state".format(prefix)) != None:
-                base_dict["state"]=data["{}_state".format(prefix)]
-            if data.get("{}_zipcode".format(prefix)) != None:
-                base_dict["zip"]=data["{}_zipcode".format(prefix)]
             return base_dict
 
         out_data = {
@@ -72,10 +65,24 @@ class EnrollmentImportService(object):
             "spouse": {},
             "children": [],
         }
+        out_data["enrollCity"] = data.get("signed_at_city")
+        out_data["enrollState"] = data.get("signed_at_state")
+        out_data["product_type"] = data.get("product_code")
+
+        out_data["payment_mode"] = MODES_BY_NAME.get(data["payment_mode"])
+        out_data["payment_mode_text"] = data["payment_mode"]
+
+        emp_address = "{}{}{}{}{}".format(data.get("emp_street"), data.get("emp_street2"), data.get("emp_city"), data.get("emp_state"), data.get("emp_zipcode"))
+
+        sp_address = "{}{}{}{}{}".format(data.get("sp_street"), data.get("sp_street2"), data.get("sp_city"), data.get("sp_state"), data.get("sp_zipcode"))
+
+        out_data["is_spouse_address_same_as_employee"] = emp_address == sp_address
+
         out_data["employee"].update(build_person("emp"))
         out_data["spouse"].update(build_person("sp"))
         for num in range(1, EnrollmentRecordParser.MAX_CHILDREN+1):
-            out_data["children"].append(build_person("ch{}".format(num)))
+            if data.get("ch{}_first".format(num)):
+                out_data["children"].append(build_person("ch{}".format(num)))
         print(out_data)
         return out_data
 
@@ -187,6 +194,48 @@ class EnrollmentRecordParser(object):
     sp_coverage = EnrollmentRecordField("sp_coverage", "spouse_coverage", preprocess_string, [coverage_validator], flat_file_size=6, description="")
     sp_premium = EnrollmentRecordField("sp_premium", "spouse_premium", preprocess_string, [premium_validator], flat_file_size=6, description="")
 
+    #Optional Fields
+    actively_at_work = EnrollmentRecordField("actively_at_work", "actively_at_work", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
+    emp_email = EnrollmentRecordField("emp_email", "employee_email", preprocess_string, [], flat_file_size=40, description="")
+    emp_date_of_hire = EnrollmentRecordField("emp_date_of_hire", "employee_date_of_hire", preprocess_date, [], flat_file_size=8, description="")
+    emp_height_inches = EnrollmentRecordField("emp_height_inches", "employee_height_inches", preprocess_numbers, [], flat_file_size=2, description="")
+    emp_weight_pounds = EnrollmentRecordField("emp_weight_pounds", "employee_weight_pounds", preprocess_numbers, [], flat_file_size=3, description="")
+    emp_smoker = EnrollmentRecordField("emp_smoker", "employee_smoker", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
+    sp_street = EnrollmentRecordField("sp_street", "spouse_street", preprocess_string, [], flat_file_size=29, description="")
+    sp_street2 = EnrollmentRecordField("sp_street2", "spouse_street2", preprocess_string, [], flat_file_size=29, description="")
+    sp_city = EnrollmentRecordField("sp_city", "spouse_city", preprocess_string, [], flat_file_size=14, description="")
+    sp_state = EnrollmentRecordField("sp_state", "spouse_state", preprocess_string, [state_validator], flat_file_size=2, description="")
+    sp_zipcode = EnrollmentRecordField("sp_zipcode", "spouse_zipcode", preprocess_zip, [zip_validator], flat_file_size=9, description="")
+    sp_phone = EnrollmentRecordField("sp_phone", "spouse_phone", preprocess_numbers, [], flat_file_size=10, description="")
+    existing_insurance = EnrollmentRecordField("existing_insurance", "existing_insurance", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
+    replacing_insurance = EnrollmentRecordField("replacing_insurance", "replacing_insurance", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
+    sp_treated_6_months = EnrollmentRecordField("sp_treated_6_months", "sp_treated_6_months", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
+    sp_disabled_6_months = EnrollmentRecordField("sp_disabled_6_months", "sp_disabled_6_months", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
+    replacement_read_aloud = EnrollmentRecordField("replacement_read_aloud", "replacement_read_aloud", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
+    replacement_is_terminating = EnrollmentRecordField("replacement_is_terminating", "replacement_is_terminating", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
+    replacement_using_funds = EnrollmentRecordField("replacement_using_funds", "replacement_using_funds", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
+    replacement_policy1_name = EnrollmentRecordField("replacement_policy1_name", "replacement_policy1_name", preprocess_string, [], flat_file_size=20, description="")
+    replacement_policy1_number = EnrollmentRecordField("replacement_policy1_number", "replacement_policy1_number", preprocess_string, [], flat_file_size=10, description="")
+    replacement_policy1_insured = EnrollmentRecordField("replacement_policy1_insured", "replacement_policy1_insured", preprocess_string, [], flat_file_size=20, description="")
+    replacement_policy1_replaced_or_financing = EnrollmentRecordField("replacement_policy1_replaced_or_financing", "replacement_policy1_replaced_or_financing", preprocess_string, [], flat_file_size=1, description="")
+    replacement_policy1_reason = EnrollmentRecordField("replacement_policy1_reason", "replacement_policy1_reason", preprocess_string, [], flat_file_size=70, description="")
+    emp_bene_name = EnrollmentRecordField("emp_bene_name", "employee_bene_name", preprocess_string, [], flat_file_size=40, description="")
+    emp_bene_birthdate = EnrollmentRecordField("emp_bene_birthdate", "employee_bene_birthdate", preprocess_date, [birthdate_validator], flat_file_size=8, description="")
+    emp_bene_relationship = EnrollmentRecordField("emp_bene_relationship", "employee_bene_relationship", preprocess_string, [], flat_file_size=15, description="")
+    emp_bene_ssn = EnrollmentRecordField("emp_bene_ssn", "employee_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="")
+    sp_bene_name = EnrollmentRecordField("sp_bene_name", "spouse_bene_name", preprocess_string, [], flat_file_size=40, description="")
+    sp_bene_birthdate = EnrollmentRecordField("sp_bene_birthdate", "spouse_bene_birthdate", preprocess_date, [], flat_file_size=8, description="")
+    sp_bene_relationship = EnrollmentRecordField("sp_bene_relationship", "spouse_bene_relationship", preprocess_string, [], flat_file_size=15, description="")
+    sp_bene_ssn = EnrollmentRecordField("sp_bene_ssn", "spouse_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="")
+    emp_cont_bene_name = EnrollmentRecordField("emp_cont_bene_name", "employee_cont_bene_name", preprocess_string, [], flat_file_size=40, description="")
+    emp_cont_bene_birthdate = EnrollmentRecordField("emp_cont_bene_birthdate", "employee_cont_bene_birthdate", preprocess_date, [birthdate_validator], flat_file_size=8, description="")
+    emp_cont_bene_relationship = EnrollmentRecordField("emp_cont_bene_relationship", "employee_cont_bene_relationship", preprocess_string, [], flat_file_size=15, description="")
+    emp_cont_bene_ssn = EnrollmentRecordField("emp_cont_bene_ssn", "employee_cont_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="")
+    sp_cont_bene_name = EnrollmentRecordField("sp_cont_bene_name", "spouse_cont_bene_name", preprocess_string, [], flat_file_size=40, description="")
+    sp_cont_bene_birthdate = EnrollmentRecordField("sp_cont_bene_birthdate", "spouse_cont_bene_birthdate", preprocess_date, [birthdate_validator], flat_file_size=8, description="")
+    sp_cont_bene_relationship = EnrollmentRecordField("sp_cont_bene_relationship", "spouse_cont_bene_relationship", preprocess_string, [], flat_file_size=15, description="")
+    sp_cont_bene_ssn = EnrollmentRecordField("sp_cont_bene_ssn", "spouse_cont_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="")
+
     # Signing Information
     emp_sig_txt = EnrollmentRecordField("emp_sig_txt", "employee_sig_txt", preprocess_string, [required_validator], flat_file_size=70, description="")
     application_date = EnrollmentRecordField("application_date", "application_date", preprocess_date, [required_validator], flat_file_size=8, description="")
@@ -266,6 +315,48 @@ class EnrollmentRecordParser(object):
         sp_ssn,
         sp_coverage,
         sp_premium,
+
+        #Optional fields
+        actively_at_work,
+        emp_email,
+        emp_date_of_hire,
+        emp_height_inches,
+        emp_weight_pounds,
+        emp_smoker,
+        sp_street,
+        sp_street2,
+        sp_city,
+        sp_state,
+        sp_zipcode,
+        sp_phone,
+        existing_insurance,
+        replacing_insurance,
+        sp_treated_6_months,
+        sp_disabled_6_months,
+        replacement_read_aloud,
+        replacement_is_terminating,
+        replacement_using_funds,
+        replacement_policy1_name,
+        replacement_policy1_number,
+        replacement_policy1_insured,
+        replacement_policy1_replaced_or_financing,
+        replacement_policy1_reason,
+        emp_bene_name,
+        emp_bene_birthdate,
+        emp_bene_relationship,
+        emp_bene_ssn,
+        sp_bene_name,
+        sp_bene_birthdate,
+        sp_bene_relationship,
+        sp_bene_ssn,
+        emp_cont_bene_name,
+        emp_cont_bene_birthdate,
+        emp_cont_bene_relationship,
+        emp_cont_bene_ssn,
+        sp_cont_bene_name,
+        sp_cont_bene_birthdate,
+        sp_cont_bene_relationship,
+        sp_cont_bene_ssn,
 
         # Signing data
         emp_pin,
@@ -383,6 +474,10 @@ class EnrollmentRecordParser(object):
             case = default_case
 
         if not case:
+            self.error_record_field("invalid_case",
+                                    "A valid case could not be found for the current information",
+                                    "case_token",
+                                    record)
             return False
 
         # Store the case ID in the record
