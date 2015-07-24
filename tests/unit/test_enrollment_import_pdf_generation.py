@@ -80,7 +80,6 @@ class TestEnrollmentImportFormGeneration(unittest2.TestCase):
         assert_that(self.pdf_renderer.mock_calls, has_items(*expected_calls))
 
 
-
 class FakeTabDef(object):
     def __init__(self, label, x, y, name=None, width=None, font=None, font_size=None, is_bold=None, is_italic=None, font_color=None, page=1):
         self.label = label
