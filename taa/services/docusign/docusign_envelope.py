@@ -222,10 +222,14 @@ class EnrollmentDataWrap(object):
         return self.data.get(key, default)
 
     def is_self_enroll(self):
+        if self.data["is_third_party"]:
+            return False
         return not self.data['agent_data']['is_in_person']
 
     def get_session_type(self):
-        if self.data['agent_data']['is_in_person']:
+        if self.data["is_third_party"]:
+            return 'thirdparty'
+        elif self.data['agent_data']['is_in_person']:
             return 'inperson'
         else:
             return 'email'
@@ -886,4 +890,3 @@ def build_callback_url(wizard_data, session_type):
                 name=wizard_data['employee']['first'],
                 session_type=session_type,
     ))
-

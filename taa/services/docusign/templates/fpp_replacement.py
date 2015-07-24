@@ -8,7 +8,7 @@ class FPPReplacementFormTemplate(DocuSignServerTemplate):
     def __init__(self, recipients, enrollment_data):
 
         product_type = enrollment_data["product_type"]
-        state = enrollment_data["agent_data"]["state"]
+        state = enrollment_data["enrollState"]
         template_id = get_replacement_template_id(product_type, state)
 
         DocuSignServerTemplate.__init__(self, template_id, recipients)

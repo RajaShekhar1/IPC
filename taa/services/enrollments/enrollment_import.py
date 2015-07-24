@@ -11,6 +11,7 @@ from taa.services.preprocessors import *
 from taa.services.validators import *
 
 from taa.services.products.payment_modes import is_payment_mode, MODES_BY_NAME
+from taa.services.products import StatementOfHealthQuestionService
 from taa.services import RequiredFeature, LookupService
 from taa.services.enrollments.enrollment_import_processor import EnrollmentProcessor, EnrollmentImportError
 
@@ -44,6 +45,7 @@ class EnrollmentImportService(object):
         return response
 
     def standardize_imported_data(self, data):
+        product_service = LookupService("ProductService")
         def build_person(prefix):
             base_dict = dict(
                 first=data.get("{}_first".format(prefix)),
@@ -59,8 +61,24 @@ class EnrollmentImportService(object):
                 zip=data.get("{}_zipcode".format(prefix)),
                 height=data.get("{}_height_inches".format(prefix)),
                 weight=data.get("{}_weight_pounds".format(prefix)),
-                is_smoker=data.get("{}_smoker".format(prefix))=="Y"
+                is_smoker=data.get("{}_smoker".format(prefix))=="Y",
+                soh_questions=[]
             )
+            answers = dict(Y="Yes", N="No", y="Yes", n="No")
+            code = data.get("product_code")
+            products = product_service.get_products_by_codes([code])
+            product = products[0]
+            state = data.get("signed_at_state")
+            questions = StatementOfHealthQuestionService().get_health_questions(product, state)
+
+            for q_num in range(1, len(questions)+1):
+                answer = data.get("{}_question_{}_answer".format(prefix, q_num))
+
+                if answer:
+                    base_dict["soh_questions"].append(dict(
+                        question=questions[q_num-1].question,
+                        answer=answers.get(answer)
+                    ))
             return base_dict
 
         out_data = {
@@ -70,6 +88,10 @@ class EnrollmentImportService(object):
             "child_coverages": [],
             "replacement_policies": [],
         }
+
+        out_data["is_third_party"] = data.get("is_third_party")
+        out_data["did_decline"] = data.get("did_decline") or False
+
         out_data["enrollCity"] = data.get("signed_at_city")
         out_data["enrollState"] = data.get("signed_at_state")
         out_data["product_type"] = data.get("product_code")
@@ -77,21 +99,31 @@ class EnrollmentImportService(object):
         out_data["payment_mode"] = MODES_BY_NAME.get(data["payment_mode"])
         out_data["payment_mode_text"] = data["payment_mode"]
 
-        out_data["existing_insurance"] = data.get("existing_insurance")=="Y"
+        out_data["existing_insurance"] = data.get("existing_insurance") in ["Y","y"]
 
-        out_data["replacing_insurance"] = data.get("replacing_insurance")=="Y"
+        out_data["replacing_insurance"] = data.get("replacing_insurance") in ["Y","y"]
 
-        out_data["replacement_read_aloud"] = data.get("replacement_read_aloud")=="Y"
+        out_data["replacement_read_aloud"] = data.get("replacement_read_aloud") in ["Y","y"]
 
-        out_data["replacement_is_terminating"] = data.get("replacement_is_terminating")=="Y"
+        out_data["replacement_is_terminating"] = data.get("replacement_is_terminating") in ["Y","y"]
 
-        out_data["replacement_using_funds"] = data.get("replacement_using_funds")=="Y"
+        out_data["replacement_using_funds"] = data.get("replacement_using_funds") in ["Y","y"]
 
-        out_data["is_employee_actively_at_work"] = data.get("actively_at_work")=="Y"
+        out_data["is_employee_actively_at_work"] = data.get("actively_at_work") in ["Y","y"]
 
-        out_data["has_spouse_been_treated_6_months"] = data.get("sp_treated_6_months")=="Y"
+        out_data["has_spouse_been_treated_6_months"] = data.get("sp_treated_6_months") in ["Y","y"]
 
-        out_data["has_spouse_been_disabled_6_months"] = data.get("sp_disabled_6_months")=="Y"
+        out_data["has_spouse_been_disabled_6_months"] = data.get("sp_disabled_6_months") in ["Y","y"]
+
+        out_data["employee_beneficiary"] = data.get("emp_bene_relationship")
+        out_data["employee_beneficiary_name"] = data.get("emp_bene_name")
+        out_data["employee_beneficiary_ssn"] = data.get("emp_bene_ssn")
+        out_data["employee_beneficiary_relationship"] = data.get("emp_bene_relationship")
+
+        out_data["spouse_beneficiary"] = data.get("sp_bene_relationship")
+        out_data["spouse_beneficiary_name"] = data.get("sp_bene_name")
+        out_data["spouse_beneficiary_ssn"] = data.get("sp_bene_ssn")
+        out_data["spouse_beneficiary_relationship"] = data.get("sp_bene_relationship")
 
         out_data["replacement_policies"].append(dict(
             name=data.get("replacement_policy1_name"),

@@ -6,9 +6,11 @@ from taa.services import RequiredFeature
 class EnrollmentProcessor(object):
     api_token_service = RequiredFeature("ApiTokenService")
     case_service = RequiredFeature("CaseService")
+    enrollment_service = RequiredFeature("EnrollmentApplicationService")
     enrollment_record_parser = RequiredFeature("EnrollmentRecordParser")
     user_service = RequiredFeature("UserService")
     file_import_service = RequiredFeature("FileImportService")
+    enrollment_import_service = RequiredFeature("EnrollmentImportService")
 
     def __init__(self):
         self.errors = []
@@ -30,6 +32,17 @@ class EnrollmentProcessor(object):
 
         if self.errors:
             raise TAAFormError(errors=[e.to_json() for e in self.errors])
+
+        for cur_data in self.get_valid_data():
+            wizard_data = self.enrollment_import_service.standardize_imported_data(cur_data)
+            case = self.get_case(cur_data.get("case_token"))
+            agent = case.owner_agent
+            import ipdb; ipdb.set_trace()
+
+            self.enrollment_service.save_enrollment_data(wizard_data, case, None, agent)
+
+    def get_valid_data(self):
+        return self.enrollment_record_parser.get_valid_data()
 
     def authenticate_user(self, auth_token):
         is_valid_user = (not auth_token
@@ -66,10 +79,11 @@ class EnrollmentProcessor(object):
             case = self.case_service.get_case_for_token(case_token)
         else:
             case = None
-
+        if not self.case_service.is_case_enrolling(case):
+            self._add_error("invalid_case", [], "Case is not enrolling")
+            raise TAAFormError(errors=[e.to_json() for e in self.errors])
         return case
-        #if not self.case_service.is_case_enrolling(case):
-        #    abort(401)
+
 
     def extract_dictionaries(self, data, data_format):
         if data_format == "csv":

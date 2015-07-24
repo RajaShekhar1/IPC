@@ -45,7 +45,7 @@ Feature: Submit enrollments using the API
   Background:
     Given I have a user named BHI with token USER-123 in group api_users
     Given I have a case that is enrolling with an api token 'CASE-123' and self-enroll token 'SE-123'
-
+  @wip
   Scenario: It should return a success response with a valid CSV enrollment file.
     Given I create a minimally valid CSV file with case_token 'CASE-123'
     When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token ' '
@@ -90,7 +90,7 @@ Feature: Submit enrollments using the API
   #  - leave JSON as list-of-dicts
 
   # save enrollment data
-    # - first convert to wizard format
+    # + first convert to wizard format
     #  - modify enrollment_service.save_enrollment_data() to save the raw data in a new column
 
   # if there are errors

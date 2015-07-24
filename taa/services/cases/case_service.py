@@ -63,6 +63,11 @@ class CaseService(DBService):
             results = [case for case in results if self.is_enrolling(case)]
         return results
 
+    def get_case_for_token(self, token):
+        query = self.query()
+        query = query.filter(Case.case_token==token)
+        return results
+
     def get_products_for_case(self, case):
         # Return the sorted list of products for this case
         return sorted(case.products, cmp=lambda x, y: cmp(x.name, y.name))
