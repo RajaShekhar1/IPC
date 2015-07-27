@@ -1,5 +1,6 @@
 import datetime
 
+from taa.config_defaults import STORMPATH_API_KEY_ID, STORMPATH_API_KEY_SECRET, STORMPATH_APPLICATION
 from taa.core import db
 from taa.services import LookupService
 from taa.services.cases.models import Case, CaseOpenEnrollmentPeriod
@@ -16,22 +17,67 @@ test_agent_stormpath_url = 'https://api.stormpath.com/v1/accounts/2qQtvZLi6tpUGj
 test_agent_stormpath_url2 = 'https://api.stormpath.com/v1/accounts/3vwaoifZRl8Z1pHIzdvjwe'
 
 
-def create_agent(first, last, agent_code, email, url, activated=True):
-    return agent_service.create(**{
+def create_agent(first, last, agent_code, email, activated=True):
+    from stormpath.client import Client
+    client = Client(id=STORMPATH_API_KEY_ID,
+               secret=STORMPATH_API_KEY_SECRET)
+    stormpath_application = client.applications.search(STORMPATH_APPLICATION)[0]
+
+    matches = filter(lambda a: a.email == email, stormpath_application.accounts)
+
+    if matches:
+        # We have a match, update with info
+        account = matches[0]
+        account.given_name = first
+        account.surname = last
+
+        #account.custom_data['agency'] = data['agency']
+        account.custom_data['agent_code'] = agent_code
+        #account.custom_data['signing_name'] = data['signing_name']
+        #account.custom_data['ds_apikey'] = data['ds_apikey']
+        account.custom_data['activated'] = activated
+        account.save()
+    else:
+        account = stormpath_application.accounts.create({
+            'given_name': first,
+            'surname': last,
+            'username': email,
+            'email': email,
+            'password': '12121212',
+            'custom_data': {
+                'agent_code': agent_code,
+                'activated': True,
+            },
+         })
+
+    # Make sure in agent group
+    agents_group = filter(lambda g: g.name=='agents', stormpath_application.groups.items)[0]
+    existing_membership = [acct_mem
+                           for acct_mem in agents_group.account_memberships
+                           if acct_mem.account.email==account.email]
+    if not existing_membership:
+        # Add this account to the group
+        agents_group.add_account(account)
+
+    # Create user in database
+    agent = agent_service.create(**{
         'first': first,
         'last': last,
         'agent_code': agent_code,
         'email': email,
-        'stormpath_url':url,
+        'stormpath_url':account.href,
         'activated':activated,
-
     })
+
+    db.session.commit()
+    return agent
 
 
 def create_case(company_name='Test Case', case_token='CASE-123123'):
 
-    agent = create_agent(first='TEST', last='AGENT', agent_code='26AGENT', email='test@delmarsd.com',
-                         url=test_agent_stormpath_url)
+    agent = create_agent(first='TEST', last='AGENT',
+                         agent_code='26AGENT',
+                         email='test-case-owner@delmarsd.com')
     case = case_service.create_new_case(**dict(
         company_name=company_name,
         group_number="GRP-NUM-EX123",

@@ -10,7 +10,7 @@ from taa.services import LookupService
 from pages.login_page import LoginPage
 from pages.case_enrollment import CaseEnrollmentPage
 from pages.wizard_page import WizardPage
-from tests.db_util import create_case, test_agent_stormpath_url, test_agent_stormpath_url2
+from tests.db_util import create_case, create_agent
 
 
 @given("I have a case that is actively enrolling named '{case_name}'")
@@ -23,8 +23,12 @@ def step_impl(context, agent_name):
     """
     creates agent in the database
     """
-    agent_service = LookupService('AgentService')
-    context.agent = agent_service.find(stormpath_url=test_agent_stormpath_url2).first()
+    context.agent = create_agent(first=agent_name.split()[0],
+                                 last=agent_name.split()[1],
+                                 agent_code='26BPT',
+                                 email='test-agent@5starenroll.com',
+                                 activated=True
+                                 )
 
 
 @step("I make '{agent_name}' a partner agent on '{case_name}'")
@@ -33,7 +37,6 @@ def step_impl(context, agent_name, case_name):
     :type context behave.runner.Context
     """
     case_service = LookupService('CaseService')
-    agent_service = LookupService('AgentService')
 
     if context.agent not in context.case.partner_agents:
         case_service.update_partner_agents(context.case, [a for a in context.case.partner_agents]+[context.agent])
