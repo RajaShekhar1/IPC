@@ -250,7 +250,7 @@ class DocuSignEnvelopeComponent(object):
                 routingOrder=str(num),
                 roleName=recipient.get_role_name(),
                 templateRequired=recipient.is_required(),
-                tabs=self.generate_tabs(recipient),
+                tabs=self.generate_docusign_formatted_tabs(recipient),
             )
             if recipient.is_employee():
                 recip_repr['clientUserId'] = "123456"
@@ -262,7 +262,16 @@ class DocuSignEnvelopeComponent(object):
 
         return dict(**output)
 
+    def generate_docusign_formatted_tabs(self, recipient):
+        # Format tabs for docusign
+        ds_tabs = {}
+        for tab in self.generate_tabs(recipient):
+            tab.add_to_tabs(ds_tabs)
+
+        return ds_tabs
+
     def generate_tabs(self, recipient):
+        """Returns list of our own internal tab representation"""
         raise NotImplementedError("Override")
 
     def is_recipient_signer(self, recipient):
@@ -292,7 +301,7 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
         }
 
     def generate_tabs(self, recipient):
-        return {}
+        return []
 
     def is_recipient_signer(self, recipient):
         return recipient.is_employee() or recipient.is_agent()

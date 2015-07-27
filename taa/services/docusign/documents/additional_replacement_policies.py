@@ -104,7 +104,7 @@ class AdditionalReplacementPoliciesForm(BasePDFDoc):
 
 
     def generate_tabs(self, recipient):
-        tabs = {}
+        tabs = []
 
         if self.is_recipient_signer(recipient):
             # Add a signature tab to the last page
@@ -115,7 +115,7 @@ class AdditionalReplacementPoliciesForm(BasePDFDoc):
             pix_y = (self.page_height - pdf_y)
             #print("Converted %s, %s to %s %s"%(pdf_x, pdf_y, pix_x, pix_y))
             tab = DocuSignSigTab(x=pix_x, y=pix_y, document_id="1", page_number=str(self.get_num_pages()))
-            tab.add_to_tabs(tabs)
+            tabs.append(tab)
 
         return tabs
 

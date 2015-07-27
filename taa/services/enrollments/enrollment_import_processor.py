@@ -49,16 +49,20 @@ class EnrollmentProcessor(object):
             enrollment_record = self.save_validated_data(standardized_data, case)
 
             # Create DocuSign tabs
-            #data_wrap = EnrollmentDataWrap(standardized_data,
-            #                               census_record=enrollment_record.census_record,
-            #                               case=enrollment_record.case)
-            #employee_recip, recipients = create_envelope_recipients(case, data_wrap)
-            #components = create_fpp_envelope_components(data_wrap, recipients)
-            #main_form = components[0]
-            #tabs = [main_form.generate_tabs(recipient)  for recipient in recipients]
-            # Create PDF
+            data_wrap = EnrollmentDataWrap(standardized_data,
+                                           census_record=enrollment_record.census_record,
+                                           case=enrollment_record.case)
+            employee_recip, recipients = create_envelope_recipients(case, data_wrap)
+            components = create_fpp_envelope_components(data_wrap, recipients)
+            main_form = components[0]
+            tabs = []
+            for recipient in recipients:
+                tabs += main_form.generate_tabs(recipient)
 
-            #pdf_bytes = self.pdf_generator_service.generate_form_pdf(main_form.template_id, main_form.)
+            # Create PDF
+            pdf_bytes = self.pdf_generator_service.generate_form_pdf(main_form.template_id, tabs)
+            with open('test_output.pdf', 'wb+') as f:
+                f.write(pdf_bytes)
 
         db.session.commit()
 

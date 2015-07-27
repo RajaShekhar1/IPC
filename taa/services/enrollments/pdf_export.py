@@ -23,10 +23,14 @@ FONT_DIR = 'taa/services/enrollments/pdf_generator_fonts'
 class ImagedFormGeneratorService(object):
 
     tab_repository = RequiredFeature('FormTemplateTabRepository')
-    pdf_renderer = RequiredFeature('FormPDFRenderer')
+    pdf_renderer_service = RequiredFeature('FormPDFRenderer')
     merge_pdfs = RequiredFeature('merge_pdfs')
 
     def generate_form_pdf(self, template_id, enrollment_tabs, path=None):
+
+        # Get a new FormPDFRenderer
+        self.pdf_renderer = self.pdf_renderer_service()
+
         template = self.tab_repository.get_template(template_id)
         if not template:
             raise Exception("Template ID '{}' not found".format(template_id))
@@ -91,17 +95,20 @@ class ImagedFormGeneratorService(object):
 
 class FormTemplateTabRepository(object):
     def get_tabs_for_template(self, template_id):
-        form_template_id = FormTemplate.query.filter_by(
-            template_id=template_id).first().id
+        if not self.has_template(template_id):
+            return []
+
+        form_template_id = self.get_template(template_id).id
+
         return list(FormTemplateTabs.query.filter_by(
             form_template_id=form_template_id))
 
     def has_template(self, template_id):
-        return bool(self.has_template(template_id))
+        return bool(self.get_template(template_id))
 
     def get_template(self, template_id):
-        return FormTemplate.query.filter_by(
-            template_id=template_id).first()
+        return FormTemplate.query.filter(
+            FormTemplate.template_id.ilike(template_id)).first()
 
 
 pdfmetrics.registerFont(
@@ -144,6 +151,8 @@ class FormPDFRenderer(object):
 
     def draw_text(self, text, x, y, width, font=None, fontsize=None,
                   is_bold=False, is_italic=False, fontcolor=None):
+        text = str(text)
+
         # Determine font to use
         font = font or DEFAULT_FONT
         if is_bold and is_italic:

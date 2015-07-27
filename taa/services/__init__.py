@@ -154,7 +154,7 @@ def initialize_services():
     services_broker.Provide('SelfEnrollmentEmailBatchService', SelfEnrollmentEmailBatchService())
     services_broker.Provide('EnrollmentReportService', EnrollmentReportService())
     services_broker.Provide('ImagedFormGeneratorService', ImagedFormGeneratorService())
-    services_broker.Provide("FormPDFRenderer", FormPDFRenderer())
+    services_broker.Provide("FormPDFRenderer", lambda: FormPDFRenderer)
     services_broker.Provide("FormTemplateTabRepository", FormTemplateTabRepository())
     services_broker.Provide("merge_pdfs", lambda: merge_pdfs)
 

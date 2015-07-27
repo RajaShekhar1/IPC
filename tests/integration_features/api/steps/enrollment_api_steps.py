@@ -94,11 +94,7 @@ def step_impl(context):
 
     case = context.case
 
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import create_session
-    engine = create_engine('postgresql://taa:fQj9lJTFbOQUBYo@localhost/taa-test')
-    db_session = create_session(engine)
-    enrollment_data = db_session.query(EnrollmentApplication).first()
+    enrollment_data = db.session.query(EnrollmentApplication).first()
     assert enrollment_data, "Enrollment data was not saved"
 
     for key, expected_value in context.table[0].items():

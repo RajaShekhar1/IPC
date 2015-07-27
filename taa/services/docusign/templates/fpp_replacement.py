@@ -18,7 +18,7 @@ class FPPReplacementFormTemplate(DocuSignServerTemplate):
     def generate_tabs(self, recipient):
 
         if not recipient.is_employee():
-            return {}
+            return []
 
         tabs = [
             DocuSignRadioTab('read_aloud', 'yes' if self.data['replacement_read_aloud'] else 'no'),
@@ -49,9 +49,4 @@ class FPPReplacementFormTemplate(DocuSignServerTemplate):
         elif len(self.data['replacement_policies']) > 1:
             tabs.append(DocuSignTextTab('additionalPoliciesNotice', 'SEE ATTACHED'))
 
-        # Format tabs for docusign
-        ds_tabs = {}
-        for tab in tabs:
-            tab.add_to_tabs(ds_tabs)
-
-        return ds_tabs
+        return tabs

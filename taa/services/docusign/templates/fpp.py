@@ -75,12 +75,7 @@ class FPPTemplate(DocuSignServerTemplate):
             for tab_list in lists_of_tabs:
                 tabs.extend(tab_list)
 
-        # Format the tabs for docusign
-        docusign_tabs = {}
-        for tab in tabs:
-            tab.add_to_tabs(docusign_tabs)
-
-        return docusign_tabs
+        return tabs
 
     def make_agent_tabs(self):
         return [
