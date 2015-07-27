@@ -4,7 +4,7 @@ from behave import *
 from hamcrest import assert_that, equal_to
 use_step_matcher("parse")
 
-from taa.core import db
+from taa import db
 from taa.services import LookupService
 
 from pages.login_page import LoginPage

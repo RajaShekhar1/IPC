@@ -51,8 +51,7 @@ def create_app(bind=None):
 
     # Init database - export the db variable here so other parts of the app can access the database
     global db
-    db_opts = {'bind':bind} if bind else None
-    db = SQLAlchemy(app, session_options=db_opts)
+    db = SQLAlchemy(app)
 
     # Initialize our model service classes
     from taa.services import initialize_services
