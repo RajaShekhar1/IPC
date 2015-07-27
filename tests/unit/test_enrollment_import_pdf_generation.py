@@ -58,7 +58,7 @@ class TestEnrollmentImportFormGeneration(unittest2.TestCase):
         self.imaged_form_generator.generate_form_pdf(self.template_id, self.good_enrollment_data)
 
         expected_calls = [
-            call().draw_text(
+            call()().draw_text(
                 x=sentinel.empFirstX,
                 y=sentinel.empFirstY,
                 width=sentinel.empFirstWidth,
@@ -68,13 +68,13 @@ class TestEnrollmentImportFormGeneration(unittest2.TestCase):
                 is_bold=None,
                 fontcolor=None,
                 font=None),
-            call().draw_text(x=sentinel.empLastX, y=sentinel.empLastY, width=sentinel.empLastWidth, text='Smith',
+            call()().draw_text(x=sentinel.empLastX, y=sentinel.empLastY, width=sentinel.empLastWidth, text='Smith',
                             is_italic=None,
                             fontsize=None,
                             is_bold=None,
                             fontcolor=None,
                             font=None),
-            call().draw_radio_checkmark(x=sentinel.empPaymentModeX, y=sentinel.empPaymentModeY),
+            call()().draw_radio_checkmark(x=sentinel.empPaymentModeX, y=sentinel.empPaymentModeY),
         ]
 
         assert_that(self.pdf_renderer.mock_calls, has_items(*expected_calls))
