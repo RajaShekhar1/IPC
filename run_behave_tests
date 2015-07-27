@@ -1,2 +1,0 @@
-#!/bin/bash
-behave tests/acceptance_features

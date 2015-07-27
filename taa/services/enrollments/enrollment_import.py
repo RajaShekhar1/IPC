@@ -1,4 +1,5 @@
 import csv
+from decimal import Decimal
 
 from taa.core import TAAFormError
 from taa.services.cases.census_import import (
@@ -14,6 +15,7 @@ from taa.services.products.payment_modes import is_payment_mode, MODES_BY_NAME
 from taa.services.products import StatementOfHealthQuestionService
 from taa.services import RequiredFeature, LookupService
 from taa.services.enrollments.enrollment_import_processor import EnrollmentProcessor, EnrollmentImportError
+
 
 class EnrollmentImportService(object):
     case_service = RequiredFeature("CaseService")
@@ -46,7 +48,12 @@ class EnrollmentImportService(object):
 
         return response
 
-    def standardize_imported_data(self, data):
+    def standardize_imported_data(self, data, method='api_import'):
+
+        code = data.get("product_code")
+        products = self.product_service.get_products_by_codes([code])
+        product = products[0]
+        state = data.get("signed_at_state")
 
         def build_person(prefix):
             base_dict = dict(
@@ -56,6 +63,7 @@ class EnrollmentImportService(object):
                 ssn=data.get("{}_ssn".format(prefix)),
                 gender=data.get("{}_gender".format(prefix)),
                 phone=data.get("{}_phone".format(prefix)),
+                email=data.get("{}_email".format(prefix)),
                 address1=data.get("{}_street".format(prefix)),
                 address2=data.get("{}_street2".format(prefix)),
                 city=data.get("{}_city".format(prefix)),
@@ -67,10 +75,7 @@ class EnrollmentImportService(object):
                 soh_questions=[]
             )
             answers = dict(Y="Yes", N="No", y="Yes", n="No")
-            code = data.get("product_code")
-            products = self.product_service.get_products_by_codes([code])
-            product = products[0]
-            state = data.get("signed_at_state")
+
             questions = self.soh_service.get_health_questions(product, state)
 
             for q_num in range(1, len(questions)+1):
@@ -91,7 +96,9 @@ class EnrollmentImportService(object):
             "replacement_policies": [],
         }
 
-        out_data["is_third_party"] = data.get("is_third_party")
+        # Pass through all the original data to start
+        out_data.update(data)
+
         out_data["did_decline"] = data.get("did_decline") or False
 
         out_data["enrollCity"] = data.get("signed_at_city")
@@ -135,27 +142,50 @@ class EnrollmentImportService(object):
         out_data["is_spouse_address_same_as_employee"] = emp_address == sp_address
 
         out_data["employee"].update(build_person("emp"))
-        out_data["employee_coverage"] = dict(
-            face_value=data.get("emp_coverage"),
-            premium=data.get("emp_premium")
-        )
         out_data["spouse"].update(build_person("sp"))
-        out_data["spouse_coverage"] = dict(
-            face_value=data.get("sp_coverage"),
-            premium=data.get("sp_premium")
-        )
+
+        out_data["employee_coverage"] = self.format_coverage(data.get("emp_coverage"), data.get("emp_premium"))
+        out_data["spouse_coverage"] = self.format_coverage(data.get("sp_coverage"), data.get("sp_premium"))
+
         for num in range(1, EnrollmentRecordParser.MAX_CHILDREN+1):
             if data.get("ch{}_first".format(num)):
                 out_data["children"].append(build_person("ch{}".format(num)))
-                out_data["child_coverages"].append(dict(
-                    face_value=data.get("ch{}_coverage".format(num)),
-                    premium=data.get("ch{}_premium".format(num))
-                ))
+                out_data["child_coverages"].append(
+                    self.format_coverage(
+                        face_value=data.get("ch{}_coverage".format(num)),
+                        premium=data.get("ch{}_premium".format(num)),
+                    )
+                )
+
+
 
         # identityToken is date of hire
         out_data['identityToken'] = data.get('emp_date_of_hire')
+        out_data['identityType'] = 'Date of Hire'
+
+        # Source / method of the enrollment.
+        out_data['method'] = method
+        if method == 'api_import':
+            out_data['is_third_party'] = True
+
+        # Owner
+        out_data['employee_owner'] = 'self'
+        out_data['employee_other_owner_name'] = ''
+        out_data['employee_other_owner_ssn'] = ''
+        out_data['spouse_owner'] = 'employee'
+        out_data['spouse_other_owner_name'] = ''
+        out_data['spouse_other_owner_ssn'] = ''
+
+        # Product
+        out_data['product_data'] = {'id': product.id}
 
         return out_data
+
+    def format_coverage(self, face_value, premium):
+        return dict(
+            face_value=int(face_value) if face_value else None,
+            premium=Decimal(premium) if premium else None,
+        )
 
 class EnrollmentImportResponse(object):
     def __init__(self):
@@ -178,7 +208,6 @@ class EnrollmentImportResponse(object):
 
     def get_parsed_records(self):
         return self.records
-
 
 
 class EnrollmentRecordField():
@@ -265,19 +294,13 @@ class EnrollmentRecordParser(object):
     sp_coverage = EnrollmentRecordField("sp_coverage", "spouse_coverage", preprocess_string, [coverage_validator], flat_file_size=6, description="")
     sp_premium = EnrollmentRecordField("sp_premium", "spouse_premium", preprocess_string, [premium_validator], flat_file_size=6, description="")
 
-    #Optional Fields
+    # Optional Fields
     actively_at_work = EnrollmentRecordField("actively_at_work", "actively_at_work", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
     emp_email = EnrollmentRecordField("emp_email", "employee_email", preprocess_string, [], flat_file_size=40, description="")
     emp_date_of_hire = EnrollmentRecordField("emp_date_of_hire", "employee_date_of_hire", preprocess_date, [], flat_file_size=8, description="")
     emp_height_inches = EnrollmentRecordField("emp_height_inches", "employee_height_inches", preprocess_numbers, [], flat_file_size=2, description="")
     emp_weight_pounds = EnrollmentRecordField("emp_weight_pounds", "employee_weight_pounds", preprocess_numbers, [], flat_file_size=3, description="")
     emp_smoker = EnrollmentRecordField("emp_smoker", "employee_smoker", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
-    sp_street = EnrollmentRecordField("sp_street", "spouse_street", preprocess_string, [], flat_file_size=29, description="")
-    sp_street2 = EnrollmentRecordField("sp_street2", "spouse_street2", preprocess_string, [], flat_file_size=29, description="")
-    sp_city = EnrollmentRecordField("sp_city", "spouse_city", preprocess_string, [], flat_file_size=14, description="")
-    sp_state = EnrollmentRecordField("sp_state", "spouse_state", preprocess_string, [state_validator], flat_file_size=2, description="")
-    sp_zipcode = EnrollmentRecordField("sp_zipcode", "spouse_zipcode", preprocess_zip, [zip_validator], flat_file_size=9, description="")
-    sp_phone = EnrollmentRecordField("sp_phone", "spouse_phone", preprocess_numbers, [], flat_file_size=10, description="")
     existing_insurance = EnrollmentRecordField("existing_insurance", "existing_insurance", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
     replacing_insurance = EnrollmentRecordField("replacing_insurance", "replacing_insurance", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
     sp_treated_6_months = EnrollmentRecordField("sp_treated_6_months", "sp_treated_6_months", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
@@ -387,7 +410,7 @@ class EnrollmentRecordParser(object):
         sp_coverage,
         sp_premium,
 
-        #Optional fields
+        # Optional fields
         actively_at_work,
         emp_email,
         emp_date_of_hire,
@@ -552,7 +575,7 @@ class EnrollmentRecordParser(object):
             return False
 
         # Validate case is enrolling
-        if not self.case_service.is_case_enrolling(case):
+        if not self.case_service.is_enrolling(case):
             self.error_record_field("invalid_case", "Case is not enrolling", "case_token", record)
             return False
 
@@ -560,7 +583,6 @@ class EnrollmentRecordParser(object):
         record['case_id'] = case.id
 
         return True
-
 
     def validate_statecode(self, record):
         if not self.product_service.is_valid_statecode_for_product(record.get("product_code"), record.get("signed_at_state")):

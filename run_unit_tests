@@ -1,2 +1,0 @@
-#!/bin/sh
-nosetests -c nose.cfg --with-xunit

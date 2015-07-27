@@ -9,6 +9,7 @@ from taa.manage.init_brochures import InitProductBrochures
 from taa.manage.scramble_data import ScrambleDataCommand
 from taa.manage.sync_agents import SyncAgentsCommand
 from taa.assets import init_app as init_assets
+from taa.manage.database import ResetDataCommand
 
 manager = Manager(app)
 manager.add_command('initialize_db', InitializeDatabaseCommand())
@@ -19,6 +20,7 @@ manager.add_command("add_brochure_links", InitProductBrochures())
 manager.add_command("check_case_tokens", CheckCaseTokensCommand())
 manager.add_command("scramble_data", ScrambleDataCommand())
 manager.add_command("import_docusign", DocusignImportCommand())
+manager.add_command("clear_and_reset_database", ResetDataCommand())
 
 if __name__ == "__main__":
     manager.run()

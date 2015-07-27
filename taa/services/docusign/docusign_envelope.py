@@ -48,44 +48,23 @@ def create_envelope_and_get_signing_url(wizard_data, census_record, case):
 
 
 def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
-    is_error = False
-    error_message = None
-    # owner_agent = enrollment_data.census_record.case.owner_agent if enrollment_data.census_record else agent_service.get_logged_in_agent()
-    logged_in_agent = agent_service.get_logged_in_agent()
-    if not logged_in_agent:
-        logged_in_agent = case.owner_agent
-    agent = AgentDocuSignRecipient(name=logged_in_agent.name(),
-                                   email=logged_in_agent.email)
-    employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
-                                         email=enrollment_data.get_employee_email())
-    recipients = [
-        agent,
-        employee,
-        # TODO Check if BCC's needed here
-    ]
-    fpp_form = FPPTemplate(recipients, enrollment_data)
-    # Build the components (sections) needed for signing
-    # Main form
-    components = [fpp_form]
-    # Additional Children
-    if fpp_form.is_child_attachment_form_needed():
-        child_attachment_form = ChildAttachmentForm(recipients, enrollment_data)
-        for i, child in enumerate(fpp_form.get_attachment_children()):
-            child.update(dict(
-                coverage=format(enrollment_data['child_coverages'][i+2]['face_value'], ',.0f'),
-                premium=format(enrollment_data['child_coverages'][i+2]['premium'], '.2f')
-            ))
-            child_attachment_form.add_child(child)
-        components.append(child_attachment_form)
-    # Replacement Form
-    if fpp_form.is_replacement_form_needed():
-        replacement_form = FPPReplacementFormTemplate(recipients,
-                                                      enrollment_data)
-        components.append(replacement_form)
-    if fpp_form.is_additional_replacment_policy_attachment_needed():
-        components.append(AdditionalReplacementPoliciesForm(recipients,
-                                                            enrollment_data))
+    employee, envelope_result, transport = create_fpp_envelope(enrollment_data, case)
+    redirect_url = fetch_signing_url(employee, enrollment_data, envelope_result, transport)
 
+    return False, None, redirect_url
+
+
+def get_signing_agent(case):
+    if agent_service.get_logged_in_agent():
+        signing_agent = agent_service.get_logged_in_agent()
+    else:
+        signing_agent = case.owner_agent
+    return signing_agent
+
+
+def create_fpp_envelope(enrollment_data, case):
+    employee, recipients = create_envelope_recipients(case, enrollment_data)
+    components = create_fpp_envelope_components(enrollment_data, recipients)
     transport = get_docusign_transport()
     envelope_result = create_envelope(
         email_subject="Signature needed: {} for {} ({})".format(
@@ -95,13 +74,63 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
         components=components,
         docusign_transport=transport,
     )
+    return employee, envelope_result, transport
+
+
+def create_fpp_envelope_components(enrollment_data, recipients):
+    # Build the components (sections) needed for signing
+    components = []
+
+    # Main form
+    fpp_form = FPPTemplate(recipients, enrollment_data)
+    components.append(fpp_form)
+
+    # Additional Children
+    if fpp_form.is_child_attachment_form_needed():
+        child_attachment_form = ChildAttachmentForm(recipients, enrollment_data)
+        for i, child in enumerate(fpp_form.get_attachment_children()):
+            child.update(dict(
+                coverage=format(enrollment_data['child_coverages'][i + 2]['face_value'], ',.0f'),
+                premium=format(enrollment_data['child_coverages'][i + 2]['premium'], '.2f')
+            ))
+            child_attachment_form.add_child(child)
+        components.append(child_attachment_form)
+
+    # Replacement Form
+    if fpp_form.is_replacement_form_needed():
+        replacement_form = FPPReplacementFormTemplate(recipients,
+                                                      enrollment_data)
+        components.append(replacement_form)
+
+    # Additional replacement policies form
+    if fpp_form.is_additional_replacment_policy_attachment_needed():
+        components.append(AdditionalReplacementPoliciesForm(recipients,
+                                                            enrollment_data))
+    return components
+
+
+def create_envelope_recipients(case, enrollment_data):
+    signing_agent = get_signing_agent(case)
+    agent = AgentDocuSignRecipient(name=signing_agent.name(),
+                                   email=signing_agent.email)
+    employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
+                                         email=enrollment_data.get_employee_email())
+    recipients = [
+        agent,
+        employee,
+        # TODO Check if BCC's needed here
+    ]
+    return employee, recipients
+
+
+def fetch_signing_url(employee, enrollment_data, envelope_result, transport):
     redirect_url = envelope_result.get_signing_url(
         employee,
         callback_url=build_callback_url(
             enrollment_data, enrollment_data.get_session_type()),
         docusign_transport=transport
     )
-    return is_error, error_message, redirect_url
+    return redirect_url
 
 
 def generate_SOHRadios(prefix, soh_questions):
@@ -302,9 +331,8 @@ class EnrollmentDataWrap(object):
         emailTo = self.data['employee']['email']
         if not emailTo:
             # fallback email if none was entered - just need a unique address
-            emailTo = '{}.{}@5StarEnroll.com'.format(
-                self.random_email_id(self.data['employee']['first'],
-                                     self.data['employee']['last']))
+            name = self.data['employee']['first']+ '.' + self.data['employee']['last']
+            emailTo = '{}.{}@5StarEnroll.com'.format(name, self.random_email_id(name))
         return emailTo
 
     def get_employee_email_parts(self):

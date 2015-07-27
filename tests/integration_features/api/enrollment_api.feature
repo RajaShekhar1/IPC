@@ -45,7 +45,7 @@ Feature: Submit enrollments using the API
   Background:
     Given I have a user named BHI with token USER-123 in group api_users
     Given I have a case that is enrolling with an api token 'CASE-123' and self-enroll token 'SE-123'
-  @wip
+
   Scenario: It should return a success response with a valid CSV enrollment file.
     Given I create a minimally valid CSV file with case_token 'CASE-123'
     When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token ' '
@@ -66,26 +66,37 @@ Feature: Submit enrollments using the API
     When I submit the enrollment data to the API using the auth_token 'FAKE' and case_token ' '
     Then I should see a 401 response
 
-  Scenario: It should allow a logged-in api user to submit an enrollment
-    Given I log in as the user 'BHI'
-    Given I create a minimally valid CSV file with case_token 'CASE-123'
-    When I submit the enrollment data to the API using the auth_token ' ' and case_token ' '
-    Then I should see a 200 response
-
-  Scenario: It should look up the case by token if the case token is passed in the params.
-    Given I create a minimally valid CSV file with case_token 'CASE-123'
-    When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token 'CASE-123'
-    Then It should look up the case with token 'CASE-123' in the database
-
-  Scenario: It should use the case token in the file for each record if no case token is passed in the params.
-    Given I create a minimally valid CSV file with case_token 'CASE-123'
-    When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token ' '
-    Then It should look up the case with token 'CASE-123' in the database
-
   Scenario: It should verify that the case is currently enrolling.
+    Given I deactivate the case with token 'CASE-123'
     Given I create a minimally valid CSV file with case_token 'CASE-123'
     When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token 'CASE-123'
-    Then It should check to see if the case is enrolling
+    Then I should see a 400 response
+
+
+  Scenario: It should save the enrollment data to the enrollment records table.
+    Given I create a minimally valid CSV file with case_token 'CASE-123'
+    When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token 'CASE-123'
+    Then I should see a 200 response
+    And I should see an enrollment record in the database with the following data
+      | signature_time      | payment_mode |
+      | 2015-01-01 10:30:00 | 12           |
+
+
+#  Scenario: It should allow a logged-in api user to submit an enrollment
+#    Given I log in as the user 'BHI'
+#    Given I create a minimally valid CSV file with case_token 'CASE-123'
+#    When I submit the enrollment data to the API using the auth_token ' ' and case_token ' '
+#    Then I should see a 200 response
+
+#  Scenario: It should look up the case by token if the case token is passed in the params.
+#    Given I create a minimally valid CSV file with case_token 'CASE-123'
+#    When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token 'CASE-123'
+#    Then It should look up the case with token 'CASE-123' in the database
+#
+#  Scenario: It should use the case token in the file for each record if no case token is passed in the params.
+#    Given I create a minimally valid CSV file with case_token 'CASE-123'
+#    When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token ' '
+#    Then It should look up the case with token 'CASE-123' in the database
 
   #  - use data_format parameter  - text/plain for flat-file, text/csv for csv, or application/json
   #  - convert flat-file to CSV
@@ -95,6 +106,8 @@ Feature: Submit enrollments using the API
   # save enrollment data
     # + first convert to wizard format
     #  - modify enrollment_service.save_enrollment_data() to save the raw data in a new column
+
+
 
   # if there are errors
   #  - if it's from the dropbox, determine the email and send email errors

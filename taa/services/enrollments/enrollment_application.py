@@ -101,6 +101,8 @@ class EnrollmentApplicationService(DBService):
             sp_beneficiary_relation = data.get('spouse_beneficiary_relationship')
             sp_beneficiary_dob = data.get('spouse_beneficiary_dob')
 
+        given_sig_time = data.get('time_stamp')
+        signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
         enrollment_data = dict(
             case_id=case_id,
             census_record_id=census_record_id,
@@ -111,34 +113,34 @@ class EnrollmentApplicationService(DBService):
             method=data['method'],
             payment_mode=data['payment_mode'],
             # Signing info
-            signature_time = datetime.datetime.now(),
-            signature_city = data['enrollCity'],
-            signature_state = data['enrollState'],
-            identity_token = data['identityToken'],
-            identity_token_type = data['identityType'],
+            signature_time=signature_time,
+            signature_city=data['enrollCity'],
+            signature_state=data['enrollState'],
+            identity_token=data['identityToken'],
+            identity_token_type=data['identityType'],
             # Owner
-            is_employee_owner = data['employee_owner'] != 'other',
-            employee_other_owner_name = data['employee_other_owner_name'],
-            employee_other_owner_ssn = self._strip_ssn(
+            is_employee_owner=data['employee_owner'] != 'other',
+            employee_other_owner_name=data['employee_other_owner_name'],
+            employee_other_owner_ssn=self._strip_ssn(
                 data['employee_other_owner_ssn']),
-            is_spouse_owner = data['spouse_owner'] != 'other',
-            spouse_other_owner_name = data['spouse_other_owner_name'],
-            spouse_other_owner_ssn = self._strip_ssn(
+            is_spouse_owner=data['spouse_owner'] != 'other',
+            spouse_other_owner_name=data['spouse_other_owner_name'],
+            spouse_other_owner_ssn=self._strip_ssn(
                 data['spouse_other_owner_ssn']),
             # emp beneficiary
-            is_employee_beneficiary_spouse = (data['employee_beneficiary'] ==
+            is_employee_beneficiary_spouse=(data['employee_beneficiary'] ==
                                               'spouse'),
-            employee_beneficiary_name = emp_beneficiary_name,
-            employee_beneficiary_ssn = emp_beneficiary_ssn,
-            employee_beneficiary_relationship = emp_beneficiary_relation,
-            employee_beneficiary_birthdate = emp_beneficiary_dob,
+            employee_beneficiary_name=emp_beneficiary_name,
+            employee_beneficiary_ssn=emp_beneficiary_ssn,
+            employee_beneficiary_relationship=emp_beneficiary_relation,
+            employee_beneficiary_birthdate=emp_beneficiary_dob,
             # spouse beneficiary
-            is_spouse_beneficiary_employee = (data['spouse_beneficiary'] ==
+            is_spouse_beneficiary_employee=(data['spouse_beneficiary'] ==
                                               'spouse'),
-            spouse_beneficiary_name = sp_beneficiary_name,
-            spouse_beneficiary_ssn = sp_beneficiary_ssn,
-            spouse_beneficiary_relationship = sp_beneficiary_relation,
-            spouse_beneficiary_birthdate = sp_beneficiary_dob,
+            spouse_beneficiary_name=sp_beneficiary_name,
+            spouse_beneficiary_ssn=sp_beneficiary_ssn,
+            spouse_beneficiary_relationship=sp_beneficiary_relation,
+            spouse_beneficiary_birthdate=sp_beneficiary_dob,
         )
         return self.create(**enrollment_data)
 

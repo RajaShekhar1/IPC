@@ -1,26 +1,34 @@
 from flask import abort
 
-from taa.core import TAAFormError
+from taa.core import TAAFormError, db
 from taa.services import RequiredFeature
+from taa.services.docusign.docusign_envelope import \
+    EnrollmentDataWrap,\
+    create_envelope_recipients,\
+    create_fpp_envelope_components
+
 
 class EnrollmentProcessor(object):
     api_token_service = RequiredFeature("ApiTokenService")
     case_service = RequiredFeature("CaseService")
-    enrollment_service = RequiredFeature("EnrollmentApplicationService")
-    enrollment_record_parser = RequiredFeature("EnrollmentRecordParser")
-    user_service = RequiredFeature("UserService")
-    file_import_service = RequiredFeature("FileImportService")
     enrollment_import_service = RequiredFeature("EnrollmentImportService")
+    enrollment_service = RequiredFeature("EnrollmentApplicationService")
+    enrollment_record_parser_service = RequiredFeature("EnrollmentRecordParser")
+    file_import_service = RequiredFeature("FileImportService")
+    pdf_generator_service = RequiredFeature('ImagedFormGeneratorService')
+    user_service = RequiredFeature("UserService")
 
     def __init__(self):
         self.errors = []
         self.num_processed = 1
+        self.enrollment_record_parser = None
 
     def process_enrollment_import_request(self, data, data_format, auth_token=None, case_token=None):
+        # Instantiate new record parser
+        self.enrollment_record_parser = self.enrollment_record_parser_service()
 
         self.authenticate_user(auth_token)
         processed_data = self.extract_dictionaries(data, data_format)
-        method = 'import'
         case_from_token = self.get_case(case_token)
 
         # Process all records
@@ -32,13 +40,31 @@ class EnrollmentProcessor(object):
         if self.errors:
             raise TAAFormError(errors=[e.to_json() for e in self.errors])
 
-        for cur_data in self.get_valid_data():
-            wizard_data = self.enrollment_import_service.standardize_imported_data(cur_data)
-            wizard_data['method'] = method
-            case = self.case_service.get(cur_data['case_id'])
-            agent = case.owner_agent
+        for record in self.get_valid_data():
+            # Standardize
+            standardized_data = self.enrollment_import_service.standardize_imported_data(record, method='api_import')
+            case = self.case_service.get(standardized_data['case_id'])
 
-            self.enrollment_service.save_enrollment_data(wizard_data, case, None, agent)
+            # Save
+            enrollment_record = self.save_validated_data(standardized_data, case)
+
+            # Create DocuSign tabs
+            #data_wrap = EnrollmentDataWrap(standardized_data,
+            #                               census_record=enrollment_record.census_record,
+            #                               case=enrollment_record.case)
+            #employee_recip, recipients = create_envelope_recipients(case, data_wrap)
+            #components = create_fpp_envelope_components(data_wrap, recipients)
+            #main_form = components[0]
+            #tabs = [main_form.generate_tabs(recipient)  for recipient in recipients]
+            # Create PDF
+
+            #pdf_bytes = self.pdf_generator_service.generate_form_pdf(main_form.template_id, main_form.)
+
+        db.session.commit()
+
+    def save_validated_data(self, standardized_data, case):
+        agent = case.owner_agent
+        return self.enrollment_service.save_enrollment_data(standardized_data, case, None, agent)
 
     def get_valid_data(self):
         return self.enrollment_record_parser.get_valid_data()
@@ -87,6 +113,7 @@ class EnrollmentProcessor(object):
             if result.has_error():
                 raise TAAFormError(result.get_error_message())
             return result.get_rows()
+
 
 class EnrollmentImportError(object):
     def __init__(self, type, fields, message):

@@ -2,6 +2,7 @@
 from dateutil.parser import parse as dateutil_parse
 from dateutil.relativedelta import *
 from datetime import date
+from decimal import Decimal
 
 from taa.services.docusign.service import DocuSignServerTemplate, DocuSignTextTab, DocuSignRadioTab
 from taa.services.docusign.DocuSign_config import get_template_id
@@ -117,7 +118,7 @@ class FPPTemplate(DocuSignServerTemplate):
     def make_employer_tabs(self):
         return [
             DocuSignTextTab('employer', self.data.get_employer_name()),
-            DocuSignTextTab('group_number', self.data['agent_data']['group_number'] if self.data['agent_data']['group_number'] else "")
+            DocuSignTextTab('group_number', self.data.case.group_number if self.data.case.group_number else "")
         ]
 
 
@@ -223,7 +224,7 @@ class FPPTemplate(DocuSignServerTemplate):
 
         # Totals
         total_children_coverage = sum(child_coverage.get('premium', 0) for child_coverage in self.data["child_coverages"])
-        total = 0.0
+        total = Decimal('0.00')
         if self.data.did_employee_select_coverage():
             total += self.data.get_employee_premium()
         if self.data.did_spouse_select_coverage():

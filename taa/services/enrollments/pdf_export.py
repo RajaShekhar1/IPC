@@ -19,13 +19,14 @@ DEFAULT_FONT = 'LucidaConsole'
 DEFAULT_COLOR = HexColor('#000000')
 FONT_DIR = 'taa/services/enrollments/pdf_generator_fonts'
 
+
 class ImagedFormGeneratorService(object):
 
     tab_repository = RequiredFeature('FormTemplateTabRepository')
     pdf_renderer = RequiredFeature('FormPDFRenderer')
     merge_pdfs = RequiredFeature('merge_pdfs')
 
-    def generate_form_pdf(self, template_id, enrollment_data, path=None):
+    def generate_form_pdf(self, template_id, enrollment_tabs, path=None):
         template = self.tab_repository.get_template(template_id)
         if not template:
             raise Exception("Template ID '{}' not found".format(template_id))
@@ -33,7 +34,7 @@ class ImagedFormGeneratorService(object):
         tab_definitions = self.tab_repository.get_tabs_for_template(template_id)
 
         tab_pages = {}
-        for tab_value in enrollment_data:
+        for tab_value in enrollment_tabs:
             if isinstance(tab_value, DocuSignTextTab):
                 label = tab_value.name
                 text = tab_value.value

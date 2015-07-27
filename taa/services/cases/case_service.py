@@ -68,6 +68,9 @@ class CaseService(DBService):
         query = query.filter(Case.case_token==token)
         return query.first()
 
+    def is_valid_case_token(self, token):
+        return bool(self.get_case_for_token(token))
+
     def get_products_for_case(self, case):
         # Return the sorted list of products for this case
         return sorted(case.products, cmp=lambda x, y: cmp(x.name, y.name))

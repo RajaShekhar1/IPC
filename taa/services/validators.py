@@ -4,6 +4,7 @@ from datetime import datetime
 
 from taa.services.products.payment_modes import is_payment_mode
 
+
 class RequiredIfAnyInGroupValidator(object):
     def __init__(self, group_fields, message=None):
         self.group_fields = group_fields
@@ -16,14 +17,16 @@ class RequiredIfAnyInGroupValidator(object):
             return required_validator(field, record, self.message)
         return True, None, None
 
-def required_validator( field, record, message=None):
+
+def required_validator(field, record, message=None):
     data = field.get_column_from_record(record)
     if not data:
         message = message if message else "Required Data Missing"
         return False, "missing_data", message
     return True, None, None
 
-def ssn_validator( field, record):
+
+def ssn_validator(field, record):
     ssn_pattern = re.compile('^\d{9}$')
     ssn = field.get_column_from_record(record)
     if not ssn:
@@ -33,7 +36,8 @@ def ssn_validator( field, record):
         return False, "invalid_ssn", "Invalid SSN"
     return True, None, None
 
-def payment_mode_validator( field, record):
+
+def payment_mode_validator(field, record):
     payment_mode = field.get_column_from_record(record)
     if not payment_mode:
         # If product is not set and it is not required, we can return true
@@ -42,7 +46,8 @@ def payment_mode_validator( field, record):
         return False, "invalid_mode", "Invalid payment mode"
     return True, None, None
 
-def product_validator( field, record):
+
+def product_validator(field, record):
     product_service = LookupService("ProductService")
     # Needs a database call to check if product exists
     product_code = field.get_column_from_record(record)
@@ -50,14 +55,16 @@ def product_validator( field, record):
         return False, "invalid_product", "Product code not found"
     return True, None, None
 
-def api_token_validator( field, record):
+
+def api_token_validator(field, record):
     api_token_service = LookupService("ApiTokenService")
     api_token = field.get_column_from_record(record)
     if not api_token_service.is_valid_token(api_token):
         return False, "invalid_token", "Invalid API token provided"
     return True, None, None
 
-def case_token_validator( field, record):
+
+def case_token_validator(field, record):
     case_service = LookupService("CaseService")
     case_token = field.get_column_from_record(record)
     if not case_service.is_valid_case_token(case_token):
@@ -65,7 +72,7 @@ def case_token_validator( field, record):
     return True, None, None
 
 
-def gender_validator( field, record):
+def gender_validator(field, record):
     gender = field.get_column_from_record(record)
     if not gender:
         # Allow blank unless combined with required validator
@@ -74,7 +81,8 @@ def gender_validator( field, record):
         return False, "invalid_gender", "Gender must be 'Male' or 'Female'"
     return True, None, None
 
-def birthdate_validator( field, record):
+
+def birthdate_validator(field, record):
     date = field.get_column_from_record(record)
     if not date:
         # Allow blank unless combined with required validator
@@ -89,7 +97,8 @@ def birthdate_validator( field, record):
         return False, "invalid_date", "Future date is not allowed for a birthday"
     return True, None, None
 
-def email_validator( field, record):
+
+def email_validator(field, record):
     email = field.get_column_from_record(record)
     if not email:
         # Allow blank unless combined with required validator
@@ -98,7 +107,8 @@ def email_validator( field, record):
         return False, "invalid_email", 'Invalid email'
     return True, None, None
 
-def coverage_validator( field, record):
+
+def coverage_validator(field, record):
     coverage_pattern = re.compile('^[0-9]+$')
     coverage = field.get_column_from_record(record)
     if not coverage:
@@ -107,7 +117,8 @@ def coverage_validator( field, record):
         return False, "invalid_coverage", "Invalid coverage format"
     return True, None, None
 
-def premium_validator( field, record):
+
+def premium_validator(field, record):
     premium_pattern = re.compile('^[0-9]+\.[0-9][0-9]$')
     premium = field.get_column_from_record(record)
     if not premium:
@@ -116,7 +127,8 @@ def premium_validator( field, record):
         return False, "invalid_premium", "Invalid premium format"
     return True, None, None
 
-def zip_validator( field, record):
+
+def zip_validator(field, record):
     zip_pattern = re.compile('^\d{5,}$')
     zip = field.get_column_from_record(record)
     if not zip:
@@ -126,7 +138,8 @@ def zip_validator( field, record):
         return False, "invalid_zip", "Invalid ZIP code"
     return True, None, None
 
-def state_validator( field, record):
+
+def state_validator(field, record):
     state = field.get_column_from_record(record)
     if not state:
         return True, None, None
@@ -137,7 +150,8 @@ def state_validator( field, record):
         return False, "invalid_state", "Invalid US State. Must be two-letter abbreviation, got '{}'.".format(state)
     return True, None, None
 
-def question_answered_validator( field, record):
+
+def question_answered_validator(field, record):
         answer = field.get_column_from_record(record)
         if not answer:
             return True, None, None

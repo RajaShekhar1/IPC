@@ -20,4 +20,5 @@ coverage.xml
 nosetests.xml
 reports
 cover
+htmlcov
 FTPDropBox/taa.pem

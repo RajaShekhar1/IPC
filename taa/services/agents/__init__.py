@@ -91,7 +91,7 @@ class ApiTokenService(DBService):
         pass
 
     def is_valid_token(self, token):
-        pass
+        return bool(self.find(api_token=token, activated=True).all())
 
     def create_new_token(self, name, sp_href, activated=False):
         new_token = self.create(**dict(

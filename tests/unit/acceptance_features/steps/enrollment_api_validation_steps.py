@@ -27,7 +27,7 @@ class MockCaseService(object):
             id = 2
         return Case()
 
-    def is_case_enrolling(self, case):
+    def is_enrolling(self, case):
         return True
 
 class MockProductService(object):

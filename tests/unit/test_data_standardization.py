@@ -1,5 +1,5 @@
+from decimal import Decimal
 from unittest2 import TestCase
-import csv
 
 from hamcrest import assert_that, equal_to, has_entries, contains
 from mock import Mock, sentinel
@@ -90,6 +90,7 @@ class TestDataStandardization(TestCase):
             sp_state="IL",
             sp_zipcode="11444",
             sp_phone="1242223535",
+            sp_email='sp@email.com',
             existing_insurance="N",
             replacing_insurance="N",
             sp_treated_6_months="N",
@@ -148,6 +149,7 @@ class TestDataStandardization(TestCase):
             'city': 'Indianapolis',
             'first': 'Joe',
             'gender': 'm',
+            'email':'joe@gmail.com',
             'height': '70',
             'is_smoker': False,
             'last': 'Johnson',
@@ -174,6 +176,7 @@ class TestDataStandardization(TestCase):
             'is_smoker': False,
             'last': 'Doe',
             'phone': '1242223535',
+            'email':'sp@email.com',
             'ssn': '123-33-4444',
             'state': 'IL',
             'weight': '130',
@@ -224,11 +227,11 @@ class TestDataStandardization(TestCase):
         output = self.import_service.standardize_imported_data(self.init_data)
         expected = {
             'child_coverages': [
-                     {'face_value': '10000', 'premium': '2.50'},
-                     {'face_value': '10000', 'premium': '2.50'},
+                     {'face_value': 10000, 'premium': Decimal('2.50')},
+                     {'face_value': 10000, 'premium': Decimal('2.50')},
             ],
-            'employee_coverage': {'face_value': '50000', 'premium': '10.00'},
-            'spouse_coverage': {'face_value': '10000', 'premium': '3.00'}
+            'employee_coverage': {'face_value': 50000, 'premium': Decimal('10.00')},
+            'spouse_coverage': {'face_value': 10000, 'premium': Decimal('3.00')}
         }
         assert_that(output, has_entries(expected))
 
@@ -256,7 +259,8 @@ class TestDataStandardization(TestCase):
 
     def get_mock_product_service(self):
         mock_product_service = Mock()
-        mock_product_service.get_products_by_codes.return_value = [sentinel.product]
+        self.mock_product = Mock()
+        mock_product_service.get_products_by_codes.return_value = [self.mock_product]
         return mock_product_service
 
     def get_mock_soh_service(self):
