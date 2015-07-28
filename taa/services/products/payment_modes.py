@@ -33,10 +33,12 @@ def get_payment_modes(changeable=False, single=None):
     else:
         return filter(lambda x: x['mode'] == single, result)
 
-def is_payment_mode(name=None):
+def is_payment_mode(name=None, payments_per_year=None):
     result = payment_modes
     if name:
-        result = filter(lambda x: x['name'].lower() == name.lower(), payment_modes)
+        result = filter(lambda mode: mode['name'].lower() == name.lower(), payment_modes)
+    if payments_per_year:
+        result = filter(lambda mode: mode['mode'] == payments_per_year, payment_modes)
     return bool(result)
 
 

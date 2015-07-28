@@ -115,7 +115,7 @@ def step_impl(context):
         user_token='ABC',
         case_token='XYZ',
         product_code='FPPTI',
-        payment_mode='weekly',
+        payment_mode='52',
         emp_first='Joe',
         emp_last='Johnson',
         emp_gender='m',

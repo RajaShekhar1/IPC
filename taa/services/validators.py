@@ -39,10 +39,14 @@ def ssn_validator(field, record):
 
 def payment_mode_validator(field, record):
     payment_mode = field.get_column_from_record(record)
+    try:
+        payment_mode = int(payment_mode)
+    except:
+        return False, "invalid_mode", "Invalid payment mode"
     if not payment_mode:
         # If product is not set and it is not required, we can return true
         return True, None, None
-    if not is_payment_mode(name=payment_mode):
+    if not is_payment_mode(payments_per_year=payment_mode):
         return False, "invalid_mode", "Invalid payment mode"
     return True, None, None
 

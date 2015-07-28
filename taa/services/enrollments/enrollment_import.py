@@ -11,7 +11,7 @@ from taa.services.cases.census_import import (
 from taa.services.preprocessors import *
 from taa.services.validators import *
 
-from taa.services.products.payment_modes import is_payment_mode, MODES_BY_NAME
+from taa.services.products.payment_modes import is_payment_mode, get_payment_modes
 from taa.services.products import StatementOfHealthQuestionService
 from taa.services import RequiredFeature, LookupService
 from taa.services.enrollments.enrollment_import_processor import EnrollmentProcessor, EnrollmentImportError
@@ -104,8 +104,8 @@ class EnrollmentImportService(object):
         out_data["enrollState"] = data.get("signed_at_state")
         out_data["product_type"] = data.get("product_code")
 
-        out_data["payment_mode"] = MODES_BY_NAME.get(data["payment_mode"])
-        out_data["payment_mode_text"] = data["payment_mode"]
+        out_data["payment_mode"] = int(data["payment_mode"])
+        out_data["payment_mode_text"] = get_payment_modes(single=int(data["payment_mode"]))[0].get("name").lower()
 
         out_data["existing_insurance"] = data.get("existing_insurance") in ["Y","y"]
         out_data["replacing_insurance"] = data.get("replacing_insurance") in ["Y","y"]
@@ -260,14 +260,14 @@ class EnrollmentRecordParser(object):
     user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator], flat_file_size=64, description="A token representing the api user")
     case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator], flat_file_size=64, description="A token representing a case")
     product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [required_validator, product_validator], flat_file_size=5, description="A 5 character string representing the product")
-    payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_string, [required_validator, payment_mode_validator], flat_file_size=2, description="A two digit number resenting the payment mode")
+    payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_numbers, [required_validator, payment_mode_validator], flat_file_size=2, description="A two digit number resenting the payment mode")
 
     # Employee Information
     emp_first = EnrollmentRecordField("emp_first", "employee_first", preprocess_string, [required_validator], flat_file_size=14, description="Employee first name")
     emp_last = EnrollmentRecordField("emp_last", "employee_last", preprocess_string, [required_validator], flat_file_size=20, description="Employee last name")
     emp_gender = EnrollmentRecordField("emp_gender", "employee_gender", preprocess_string, [required_validator, gender_validator], flat_file_size=1, description="Employee gender, either 'M' or 'F'")
     emp_ssn = EnrollmentRecordField("emp_ssn", "employee_ssn", preprocess_numbers, [required_validator, ssn_validator], flat_file_size=9, description="Employee SSN, format NNNNNNNNN")
-    emp_birthdate = EnrollmentRecordField("emp_birthdate", "employee_birthdate", preprocess_date, [required_validator, birthdate_validator], flat_file_size=8, description="Employee Birthday, format MMDDCCYY")
+    emp_birthdate = EnrollmentRecordField("emp_birthdate", "employee_birthdate", preprocess_date, [required_validator, birthdate_validator], flat_file_size=10, description="Employee Birthday, format YYYY-MM-DD")
     emp_coverage = EnrollmentRecordField("emp_coverage", "employee_coverage", preprocess_string, [required_validator, coverage_validator], flat_file_size=6, description="Employee Coverage, format NNNNNN")
     emp_premium = EnrollmentRecordField("emp_premium", "employee_premium", preprocess_string, [required_validator, premium_validator], flat_file_size=6, description="Employee Premium, format NN.NNN")
     emp_street = EnrollmentRecordField("emp_street", "employee_street", preprocess_string, [required_validator], flat_file_size=29, description="Employee street address")
@@ -281,7 +281,7 @@ class EnrollmentRecordParser(object):
     # Spouse Information
     sp_first = EnrollmentRecordField("sp_first", "spouse_first", preprocess_string, [], flat_file_size=14, description="Spouse first name")
     sp_last = EnrollmentRecordField("sp_last", "spouse_last", preprocess_string, [], flat_file_size=20, description="Spouse last name")
-    sp_birthdate = EnrollmentRecordField("sp_birthdate", "spouse_birthdate", preprocess_date, [birthdate_validator], flat_file_size=8, description="Spouse birthdate, format MMDDCCYY")
+    sp_birthdate = EnrollmentRecordField("sp_birthdate", "spouse_birthdate", preprocess_date, [birthdate_validator], flat_file_size=10, description="Spouse birthdate, format YYYY-MM-DD")
     sp_gender = EnrollmentRecordField("sp_gender", "spouse_gender", preprocess_string, [gender_validator], flat_file_size=1)
     sp_ssn = EnrollmentRecordField("sp_ssn", "spouse_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="")
     sp_street = EnrollmentRecordField("sp_street", "spouse_street", preprocess_string, [], flat_file_size=29, description="Spouse street address")
