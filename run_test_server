@@ -1,0 +1,1 @@
+SQLALCHEMY_ECHO=False DATABASE_NAME=taa-test python run_server.py

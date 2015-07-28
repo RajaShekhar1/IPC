@@ -22,3 +22,4 @@ reports
 cover
 htmlcov
 FTPDropBox/taa.pem
+node_modules

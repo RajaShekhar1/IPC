@@ -79,7 +79,8 @@ CELERY_TIMEZONE = 'US/Eastern'
 CELERY_ACKS_LATE = True
 
 # Database
-SQLALCHEMY_DATABASE_URI = env_get_text('DATABASE_URL', "postgresql://taa:fQj9lJTFbOQUBYo@localhost/taa")
+DATABASE_NAME = env_get_text('DATABASE_NAME', 'taa')
+SQLALCHEMY_DATABASE_URI = env_get_text('DATABASE_URL', "postgresql://taa:fQj9lJTFbOQUBYo@localhost/{}".format(DATABASE_NAME))
 SQLALCHEMY_ECHO = env_get_bool('SQLALCHEMY_ECHO', True)
 
 # File uploads

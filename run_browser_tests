@@ -1,4 +1,4 @@
 #!/bin/sh -e
-DATABASE_URL=postgresql://taa:fQj9lJTFbOQUBYo@localhost/taa-test python run_server.py &
-DATABASE_URL=postgresql://taa:fQj9lJTFbOQUBYo@localhost/taa-test behave tests/integration_features/browser
+DATABASE_NAME=taa-test python run_server.py &
+DATABASE_NAME=taa-test behave tests/integration_features/browser
 #behave tests/integration_features/browser
