@@ -103,8 +103,8 @@ Feature: Submit enrollments using the API
 #    When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token ' '
 #    Then It should look up the case with token 'CASE-123' in the database
 
-  #  - use data_format parameter  - flat for flat-file, csv for csv, or json
-  #  - convert flat-file to CSV
+  #  + use format parameter  - flat for flat-file, csv for csv, or json
+  #  + convert flat-file to CSV
   #  + parse CSV to list-of-dicts
   #  - leave JSON as list-of-dicts
 
