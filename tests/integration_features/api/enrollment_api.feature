@@ -1,4 +1,3 @@
-
 Feature: Submit enrollments using the API
   In order to allow integration with 3rd party enrollment processing kiosks
   As a 3rd party user

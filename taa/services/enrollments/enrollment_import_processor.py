@@ -108,7 +108,6 @@ class EnrollmentProcessor(object):
             case = self.case_service.get_case_for_token(case_token)
         else:
             case = None
-
         return case
 
     def extract_dictionaries(self, data, data_format):
@@ -117,6 +116,11 @@ class EnrollmentProcessor(object):
             if result.has_error():
                 raise TAAFormError(result.get_error_message())
             return result.get_rows()
+        elif data_format == "flat":
+            result = self.file_import_service.process_flat_file_stream(data)
+            if result.has_error():
+                raise TAAFormError(result.get_error_message())
+            return result.get_data()
 
 
 class EnrollmentImportError(object):

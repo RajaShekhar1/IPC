@@ -1,5 +1,6 @@
 import csv
 import cStringIO
+import pdfkit
 
 from taa.services.enrollments.enrollment_import import EnrollmentRecordParser
 
@@ -19,6 +20,18 @@ class FileImportService(object):
             ))
         return flat_file_spec
 
+    def process_flat_file_stream(self, file_obj, spec=None):
+        """
+        Read in file data accordign to flat file syntax,
+            output as rows of dictionaries.
+        If no spec is defined, use default flat_file_spec defined above
+        """
+        if not spec:
+            spec = self.get_flat_file_spec()
+        importer = FlatFileImporter(spec)
+        importer.import_file(file_obj)
+        return importer
+
     def process_delimited_file_stream(self, file_obj):
         """
         Read in file data as either comma or tab separated values,
@@ -26,12 +39,12 @@ class FileImportService(object):
          Also can access headers as a list,
             or the CSV dialect object.
         """
-        importer = FileImporter()
+        importer = CSVFileImporter()
         importer.import_file(file_obj)
         return importer
 
 
-class FileImporter(object):
+class CSVFileImporter(object):
     default_error_message = """There was a problem in the file or file format that \
 prevented us from accepting it. Please ensure you are \
 sending a valid CSV file, compare your file with the \
@@ -111,42 +124,93 @@ class FlatFileFieldDefinition(object):
         self.description = description
 
 class FlatFileDocumentation(object):
+    fieldnames = ["Field", "From", "To", "Length", "Description"]
     def __init__(self, spec):
         self.spec = spec
 
-    def toCSV(self):
-        fieldnames = ["Field", "From", "To", "Length", "Description"]
+    def toCSV(self, filename = None):
         output = cStringIO.StringIO()
-        writer = csv.DictWriter(output, fieldnames=fieldnames, lineterminator="\n")
+        writer = csv.DictWriter(output, fieldnames=self.fieldnames, lineterminator="\n")
         writer.writeheader()
         distanceRead = 1
         for s in self.spec:
             writer.writerow({"Field":s.csv_name, "From":distanceRead, "To":distanceRead+s.size-1, "Length":s.size, "Description": s.description})
             distanceRead += s.size
+        if filename:
+            with open(filename, "w+") as f:
+                f.write(output.getvalue())
         return output.getvalue()
 
-class FlatFileImporter(object):
-    def __init__(self, spec):
-        self.spec = spec
+    def toHTML(self, filename = None):
+        template = """
+<html>
+<head>
+<body style="font-family:sans-serif;">
+<h1 style="text-align:center;">5Star Flat File Syntax Documentation</h1>
+<table>
+{}
+</table>
+</body>
+</html>
+"""
+        table_rows = "<tr style='background:rgba(200,50,45,.2);'>{}</tr>\n".format("".join(["<th style='color:#fff;text-align:left;padding:0px 10px;'>{}</th>".format(fn) for fn in self.fieldnames]))
+        distanceRead = 1
+        for s in self.spec:
+            table_rows+="<tr>{}</tr>\n".format("<td>{}</td>\
+<td>{}</td>\
+<td>{}</td>\
+<td>{}</td>\
+<td>{}</td>".format(s.csv_name, distanceRead, distanceRead+s.size-1, s.size, s.description))
+            distanceRead += s.size
+        if filename:
+            with open(filename, "w+") as f:
+                f.write(template.format(table_rows))
+        return template.format(table_rows)
 
-    def import_data(self, bytes):
-        reader = cStringIO.StringIO(bytes)
-        response = FlatFileImportResult()
-        for line in reader:
+    def toPDF(self, filename):
+        """
+        Takes a file name and converts the html output from toHTML() to a PDF using Pandoc. It saves the PDF to the given file name and returns True if it was successful.
+        """
+        html = self.toHTML()
+        pdfkit.from_string(html, filename)
+
+class FlatFileImporter(object):
+    def __init__(self, spec, data=None):
+        self.spec = spec
+        self.data = data if data is not None else []
+        self.errors = []
+
+    def import_file(self, file_obj):
+        bytes = file_obj.read()
+        spec_size = reduce(lambda acc, spec: acc + spec.size, self.spec, 0)
+        for i, line in enumerate(bytes.splitlines()):
+            if spec_size != len(line):
+                self.errors.append("Line {}: Expected a line {} characters long. Recieved a line {} characters long.".format(i+1, spec_size, len(line)))
+                continue
             lineReader = cStringIO.StringIO(line)
             data = {}
             for s in self.spec:
-                data[s.csv_name] = lineReader.read(s.size)
-            response.data.append(data)
-        return response
+                data[s.csv_name] = lineReader.read(s.size).strip()
+            self.data.append(data)
+    def get_data(self):
+        return self.data
 
+    def has_error(self):
+        return self.errors
+
+    def get_errors(self):
+        return self.errors
 
 class FlatFileImportResult(object):
     def __init__(self, data = None):
         self.data = data if data is not None else []
+        self.errors = []
 
     def get_data(self):
         return self.data
 
+    def has_error(self):
+        return self.errors
+
     def get_errors(self):
-        pass
+        return self.errors

@@ -76,6 +76,10 @@ class ImagedFormGeneratorService(object):
                     is_bold = tab_def.is_bold
                     is_italic = tab_def.is_italic
                     fontcolor = tab_def.font_color
+                    # Special case for SignHere and DateSigned tabs
+                    if (tab_def.type_ == 'SignHere' or
+                            tab_def.type_ == 'DateSigned'):
+                        fontcolor = 'Green'
                     self.pdf_renderer.draw_text(text=text, x=tab_def.x,
                                                 y=tab_def.y,
                                                 width=tab_def.width,
