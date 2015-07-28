@@ -107,6 +107,10 @@ def updateUser():
             form.activated.data = custom_data['activated'] if 'activated' in keyset else False
             #form.status.data = "Activated" if custom_data['activated'] else "Not Activated"
 
+    sp_app = get_stormpath_application()
+    all_groups = {g.name: g for g in sp_app.groups}
+    all_group_names = [g.name for g in sp_app.groups]
+
     if form.validate_on_submit():
         try:
             accounts = search_stormpath_accounts(filter_email=user_email)
@@ -129,10 +133,10 @@ def updateUser():
 
                 groups = request.values.getlist("groups")
 
-                sp_app = get_stormpath_application()
-
                 token = api_token_service.get_token_by_sp_href(account.href)
 
+                # "api_users" is not a real group, we just pass it along with the groups to indicate if the user
+                #  has an active api token or not.
                 if "api_users" not in groups:
                     if token:
                         token.activated = False
@@ -143,7 +147,7 @@ def updateUser():
                         db.session.commit()
                     else:
                         full_name = "{} {}".format(account.given_name, account.surname)
-                        api_token_service.create_new_token(account.given_name, account.href)
+                        api_token_service.create_new_token(full_name, account.href, activated=True)
                         db.session.commit()
 
                 # If the account has a group membership that is not in the posted data, delete it
@@ -151,7 +155,8 @@ def updateUser():
                     if gms.group.name not in groups:
                         gms.delete()
 
-                # For each group name that is in the posted data, add a membership link between the account and the group
+                # For each group name that is in the posted data,
+                #  add a membership link between the account and the group
                 # TODO: See if there is a way to get rid of these list comprehension (something like a .get() function from Stormpath)
                 for group in groups:
                     matching_groups = [item
@@ -166,7 +171,6 @@ def updateUser():
                     if not existing_membership:
                         # Add this account to the group
                         sp_group.add_account(account)
-
 
                 # save your changes
                 account.save()
@@ -197,9 +201,11 @@ def updateUser():
         except StormpathError as err:
             flash(err.message['message'])
 
+
     return render_template('admin/update-user.html',
                            form=form,
-                           group_membership=group_membership,
+                           group_membership=[g.group.name for g in group_membership],
+                           groups=all_group_names,
                            token=token,
                            nav_menu=get_nav_menu()
     )

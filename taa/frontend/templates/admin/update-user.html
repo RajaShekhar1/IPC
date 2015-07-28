@@ -95,6 +95,7 @@
                 <br /><br />
                 <label class="col-sm-3">Access Control</label>
                 <div class="col-sm-9">
+
                   <div class="text-center col-sm-3">
                     <strong>
                       API Access
@@ -105,38 +106,43 @@
                       <span class="lbl"></span>
                     </label>
                   </div>
-                  <div class="text-center col-sm-3">
-                    <strong>
-                      Can Import
-                    </strong>
-                    <br />
-                    <label>
-                      <input type="checkbox" {% for gms in group_membership if gms.group.name=="enrollment_importers" %}checked="checked"{% endfor %}  name="groups" value="enrollment_importers" class="ace ace-switch ace-switch-7" />
-                      <span class="lbl"></span>
-                    </label>
-                  </div>
-                  <div class="text-center col-sm-3">
-                    <strong>
-                      Home Office Admin
-                    </strong>
-                    <br />
-                    <label>
-                      <input type="checkbox" {% for gms in group_membership if gms.group.name=="admins" %}checked="checked"{% endfor %}  name="groups" value="admins" class="ace ace-switch ace-switch-7" />
-                      <span class="lbl"></span>
-                    </label>
-                  </div>
-                  <div class="text-center col-sm-3">
-                    <strong>
-                      Agent
-                    </strong>
-                    <br />
-                    <label>
-                      <input type="checkbox" {% for gms in group_membership if gms.group.name=="agents" %}checked="checked"{% endfor %} name="groups" value="agents" class="ace ace-switch ace-switch-7" />
-                      <span class="lbl"></span>
-                    </label>
-                  </div>
-                </div>
 
+                  {% for group in groups %}
+                    <div class="text-center col-sm-3">
+                      <strong>
+                        {{ group }}
+                      </strong>
+                      <br />
+                      <label>
+                        <input type="checkbox" {% if group in group_membership %}checked="checked"{% endif %}  name="groups" value="{{ group }}" class="ace ace-switch ace-switch-7" />
+                        <span class="lbl"></span>
+                      </label>
+                    </div>
+                  {% endfor %}
+{#                  <div class="text-center col-sm-3">#}
+{#                    <strong>#}
+{#                      Home Office Admin#}
+{#                    </strong>#}
+{#                    <br />#}
+{#                    <label>#}
+{#                      <input type="checkbox" {% for gms in group_membership if gms.group.name=="admins" %}checked="checked"{% endfor %}  name="groups" value="admins" class="ace ace-switch ace-switch-7" />#}
+{#                      <span class="lbl"></span>#}
+{#                    </label>#}
+{#                  </div>#}
+{#                  <div class="text-center col-sm-3">#}
+{#                    <strong>#}
+{#                      Agent#}
+{#                    </strong>#}
+{#                    <br />#}
+{#                    <label>#}
+{#                      <input type="checkbox" {% for gms in group_membership if gms.group.name=="agents" %}checked="checked"{% endfor %} name="groups" value="agents" class="ace ace-switch ace-switch-7" />#}
+{#                      <span class="lbl"></span>#}
+{#                    </label>#}
+{#                  </div>#}
+                </div>
+            {% for gms in group_memberships  %}
+              member of {{ gms }}
+            {% endfor %}
                 <br><br><br />
 
                 <div class="clearfix">
