@@ -1,7 +1,7 @@
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler, TLS_FTPHandler
 from pyftpdlib.servers import FTPServer
-from pyftpdlib.filesystems import AbstractedFS
+from pyftpdlib.filesystems import AbstractedFS, FilesystemError
 import os
 import requests
 import urllib
@@ -23,19 +23,22 @@ class TAAFileHandler(AbstractedFS):
     def rename(self, src, dst):
         pass
     def chmod(self, path, mode):
-        pass    
+        pass
 
 class TAAHandler(TLS_FTPHandler):
     def on_login(self, username):
         print(username)
 
-    def on_file_received(self, f):
-        with open(f, "rb") as f:
-            pass
-            # csv_response = urllib.quote_plus(f.read())
-            # response = requests.post(API_URL)
-            # import pdb; pdb.set_trace()
-
+    def on_file_received(self, filename):
+        url = sys.argv[3]
+        user_token = sys.argv[4]
+        data_format = filename.split(".")[1]
+        if data_format not in ["csv", "flat", "json"]:
+            raise FilesystemError("Incorrect data format. Please submit a .csv, .flat, or .json file")
+        with open(filename, "rb") as f:
+            data = f.read()
+        print requests.post("{}?auth_token={}&format={}".format(url, user_token, data_format), data=data).text
+        os.remove(filename)
 
 def main():
     authorizer = DummyAuthorizer()
@@ -43,12 +46,12 @@ def main():
     authorizer.add_anonymous(os.getcwd())
 
     handler = TAAHandler
-    handler.certfile = sys.argv[2] or 'keyfile.pem'
+    handler.certfile = sys.argv[2]
     handler.authorizer = authorizer
     handler.abstracted_fs = TAAFileHandler
     handler.banner = "Take An App - FTP drop box"
 
-    port = sys.argv[1] or 2100
+    port = sys.argv[1]
     address = ("", port)
     server = FTPServer(address, handler)
 
