@@ -1,3 +1,11 @@
+#!/bin/bash
 export SQLALCHEMY_ECHO=False
+
+pass=$1
+if [[ -n "$pass" ]]; then
+  echo "pass supplied"
+else
+  pass="fQj9lJTFbOQUBYo"
+fi
 #DATABASE_URL=postgresql://taa:fQj9lJTFbOQUBYo@localhost/taa-test alembic upgrade head
-DATABASE_URL=postgresql://taa:fQj9lJTFbOQUBYo@localhost/taa-test behave tests/integration_features/api
+DATABASE_URL=postgresql://taa:`echo $pass`@localhost/taa-test behave tests/integration_features/api

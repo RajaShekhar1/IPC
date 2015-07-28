@@ -80,7 +80,6 @@ class EnrollmentImportService(object):
 
             for q_num in range(1, len(questions)+1):
                 answer = data.get("{}_question_{}_answer".format(prefix, q_num))
-
                 if answer:
                     base_dict["soh_questions"].append(dict(
                         question=questions[q_num-1].question,
@@ -333,7 +332,7 @@ class EnrollmentRecordParser(object):
     # Signing Information
     emp_sig_txt = EnrollmentRecordField("emp_sig_txt", "employee_sig_txt", preprocess_string, [required_validator], flat_file_size=70, description="")
     application_date = EnrollmentRecordField("application_date", "application_date", preprocess_date, [required_validator], flat_file_size=8, description="")
-    time_stamp = EnrollmentRecordField("time_stamp", "time_stamp", preprocess_date, [required_validator], flat_file_size=6, description="")
+    time_stamp = EnrollmentRecordField("time_stamp", "time_stamp", preprocess_date, [required_validator], flat_file_size=19, description="Format:  YYYY-MM-DDThh-mm-ss")
     signed_at_city = EnrollmentRecordField("signed_at_city", "signed_at_city", preprocess_string, [required_validator], flat_file_size=15, description="")
     signed_at_state = EnrollmentRecordField("signed_at_state", "signed_at_state", preprocess_string, [required_validator, state_validator], flat_file_size=2, description="")
     agent_name = EnrollmentRecordField("agent_name", "agent_name", preprocess_string, [required_validator], flat_file_size=15, description="")
