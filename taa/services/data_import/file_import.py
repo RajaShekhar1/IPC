@@ -116,12 +116,14 @@ for assistance."""
     def get_error_message(self):
         return self.error
 
+
 class FlatFileFieldDefinition(object):
     def __init__(self, size, csv_name, title, description):
         self.size = size
         self.csv_name = csv_name
         self.title = title
         self.description = description
+
 
 class FlatFileDocumentation(object):
     fieldnames = ["Field", "From", "To", "Length", "Description"]
@@ -175,6 +177,7 @@ class FlatFileDocumentation(object):
         html = self.toHTML()
         pdfkit.from_string(html, filename)
 
+
 class FlatFileImporter(object):
     def __init__(self, spec, data=None):
         self.spec = spec
@@ -201,6 +204,7 @@ class FlatFileImporter(object):
 
     def get_errors(self):
         return self.errors
+
 
 class FlatFileImportResult(object):
     def __init__(self, data = None):

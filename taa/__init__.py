@@ -17,6 +17,7 @@ db = None
 mandrill_flask = None
 stormpath_manager = None
 
+
 # initialization and config
 def create_app(bind=None):
     global app

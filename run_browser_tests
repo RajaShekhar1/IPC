@@ -1,4 +1,9 @@
 #!/bin/sh -e
-DATABASE_NAME=taa-test python run_server.py &
-DATABASE_NAME=taa-test behave tests/integration_features/browser
-#behave tests/integration_features/browser
+export DATABASE_NAME=taa-test
+export SQLALCHEMY_ECHO=False
+export SERVER_PORT=5050
+export PORT=$SERVER_PORT
+python run_server.py &
+SERVER_ID=$!
+behave tests/integration_features/browser
+kill $SERVER_ID

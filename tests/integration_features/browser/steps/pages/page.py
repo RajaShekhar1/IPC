@@ -1,3 +1,4 @@
+import os
 
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
@@ -7,7 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 class PageError(Exception): pass
 
 class PageBase(object):
-    def __init__(self, context, http_scheme='http', hostname='localhost:5000'):
+    def __init__(self, context, http_scheme='http', hostname='localhost:{}'.format(os.environ.get('SERVER_PORT', 5000))):
         self.browser = context.browser
         self.context = context
         self.http_scheme = http_scheme
@@ -22,10 +23,6 @@ class PageBase(object):
 
     def navigate(self):
         self.browser.get(self.get_url())
-        #try:
-        #    self.test_navigation_succeeded()
-        #except NoSuchElementException as e:
-        #    return False
 
         try:
             WebDriverWait(self.browser, 10).until(self.test_navigation_succeeded())

@@ -81,6 +81,12 @@ Feature: Submit enrollments using the API
       | 2015-01-01 10:30:00 | 12           |
 
 
+  Scenario: It should process a flat file format.
+    Given I create a minimally valid flat-file with case_token 'CASE-123'
+    When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token 'CASE-123'
+    Then I should see a 200 response
+
+
 #  Scenario: It should allow a logged-in api user to submit an enrollment
 #    Given I log in as the user 'BHI'
 #    Given I create a minimally valid CSV file with case_token 'CASE-123'
@@ -97,7 +103,7 @@ Feature: Submit enrollments using the API
 #    When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token ' '
 #    Then It should look up the case with token 'CASE-123' in the database
 
-  #  - use data_format parameter  - text/plain for flat-file, text/csv for csv, or application/json
+  #  - use data_format parameter  - flat for flat-file, csv for csv, or json
   #  - convert flat-file to CSV
   #  + parse CSV to list-of-dicts
   #  - leave JSON as list-of-dicts

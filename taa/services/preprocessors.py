@@ -1,6 +1,7 @@
 import iso8601
 from datetime import datetime
 
+
 def preprocess_date(data, record):
     if data is None or data == '':
         return None
