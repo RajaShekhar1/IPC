@@ -1,4 +1,4 @@
-// form_data is
+
 function send_form_data(method, url, data, on_success, on_error) {
   return submit_data(method, url, data, true, on_success, on_error);
 }
@@ -724,3 +724,24 @@ var StatesLimiterViewModel = function(product_statecode_mapping,
     }
   });
 };
+
+
+// IE8 and below polyfill for object.create
+if (typeof Object.create != 'function') {
+    (function () {
+        var F = function () {};
+        Object.create = function (o) {
+            if (arguments.length > 1) {
+                throw Error('Second argument not supported');
+            }
+            if (o === null) {
+                throw Error('Cannot set a null [[Prototype]]');
+            }
+            if (typeof o != 'object') {
+                throw new TypeError('Argument must be an object');
+            }
+            F.prototype = o;
+            return new F();
+        };
+    })();
+}
