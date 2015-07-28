@@ -144,6 +144,7 @@ def updateUser():
                     else:
                         full_name = "{} {}".format(account.given_name, account.surname)
                         api_token_service.create_new_token(account.given_name, account.href)
+                        db.session.commit()
 
                 # If the account has a group membership that is not in the posted data, delete it
                 for gms in account.group_memberships:
