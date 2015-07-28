@@ -1,8 +1,8 @@
 import csv
 import cStringIO
-import pdfkit
 
 from taa.services.enrollments.enrollment_import import EnrollmentRecordParser
+
 
 class FileImportService(object):
     def get_flat_file_spec(self):
@@ -171,6 +171,7 @@ class FlatFileDocumentation(object):
         """
         Takes a file name and converts the html output from toHTML() to a PDF using Pandoc. It saves the PDF to the given file name and returns True if it was successful.
         """
+        import pdfkit
         html = self.toHTML()
         pdfkit.from_string(html, filename)
 

@@ -67,7 +67,8 @@ class TestEnrollmentImportFormGeneration(unittest2.TestCase):
                 fontsize=None,
                 is_bold=None,
                 fontcolor=None,
-                font=None),
+                font=None,
+            ),
             call()().draw_text(x=sentinel.empLastX, y=sentinel.empLastY, width=sentinel.empLastWidth, text='Smith',
                             is_italic=None,
                             fontsize=None,
@@ -81,7 +82,7 @@ class TestEnrollmentImportFormGeneration(unittest2.TestCase):
 
 
 class FakeTabDef(object):
-    def __init__(self, label, x, y, name=None, width=None, font=None, font_size=None, is_bold=None, is_italic=None, font_color=None, page=1):
+    def __init__(self, label, x, y, name=None, width=None, font=None, font_size=None, is_bold=None, is_italic=None, font_color=None, page=1, type_=None):
         self.label = label
         self.name = name
         self.x = x
@@ -93,3 +94,4 @@ class FakeTabDef(object):
         self.is_italic = is_italic
         self.font_color = font_color
         self.page = page
+        self.type_ = type_
