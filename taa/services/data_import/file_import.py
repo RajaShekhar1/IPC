@@ -200,22 +200,7 @@ class FlatFileImporter(object):
         return self.data
 
     def has_error(self):
-        return self.errors
-
-    def get_errors(self):
-        return self.errors
-
-
-class FlatFileImportResult(object):
-    def __init__(self, data = None):
-        self.data = data if data is not None else []
-        self.errors = []
-
-    def get_data(self):
-        return self.data
-
-    def has_error(self):
-        return self.errors
+        return bool(self.errors)
 
     def get_errors(self):
         return self.errors

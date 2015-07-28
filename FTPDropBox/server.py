@@ -26,18 +26,17 @@ class TAAFileHandler(AbstractedFS):
         pass
 
 class TAAHandler(TLS_FTPHandler):
-    def on_login(self, username):
-        print(username)
-
     def on_file_received(self, filename):
         url = sys.argv[3]
         user_token = sys.argv[4]
-        data_format = filename.split(".")[1]
-        if data_format not in ["csv", "flat", "json"]:
-            raise FilesystemError("Incorrect data format. Please submit a .csv, .flat, or .json file")
+        _, ext = os.path.splitext(filename)
+        if not ext or ext not in [".csv", ".flat", ".json"]:
+            data_format = "flat"
+        else:
+            data_format = ext[1:]
         with open(filename, "rb") as f:
             data = f.read()
-        print requests.post("{}?auth_token={}&format={}".format(url, user_token, data_format), data=data).text
+        print requests.post("{}?auth_token={}&format={}&email_errors=true".format(url, user_token, data_format), data=data).text
         os.remove(filename)
 
 def main():

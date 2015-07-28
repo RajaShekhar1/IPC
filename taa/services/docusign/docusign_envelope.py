@@ -255,6 +255,9 @@ class EnrollmentDataWrap(object):
             return False
         return not self.data['agent_data']['is_in_person']
 
+    def is_import(self):
+        return bool(self.data.get("is_third_party"))
+
     def get_session_type(self):
         if self.data["is_third_party"]:
             return 'thirdparty'
@@ -314,6 +317,8 @@ class EnrollmentDataWrap(object):
                 # an owner agent.
                 raise Exception('Tried to enroll a case without an '
                                 'owner agent.')
+        elif self.is_import():
+            return self.case.owner_agent
         else:
             return agent_service.get_logged_in_agent()
 

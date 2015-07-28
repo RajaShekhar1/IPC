@@ -2,7 +2,7 @@ from unittest2 import TestCase
 import csv, cStringIO
 from hamcrest import assert_that, equal_to
 
-from taa.services.data_import.file_import import FlatFileImporter, FlatFileDocumentation, FlatFileFieldDefinition, FlatFileImportResult, FileImportService
+from taa.services.data_import.file_import import FlatFileImporter, FlatFileDocumentation, FlatFileFieldDefinition, FileImportService
 
 class TestFlatFile(TestCase):
     def setUp(self):
@@ -68,6 +68,7 @@ class TestFlatFile(TestCase):
         with open("tests/data/minimal_data.flat", "r+") as f:
             result = self.file_import_service.process_flat_file_stream(f)
         # this needs an actual test written
+        assert_that(result.has_error(), equal_to(False), result.get_errors())
 
     def test_it_should_return_an_error_when_multiple_lines_are_too_short(self):
         file_obj = cStringIO.StringIO("1234123412341Y\n123412341234123N")

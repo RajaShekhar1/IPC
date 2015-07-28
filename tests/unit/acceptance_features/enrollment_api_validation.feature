@@ -19,8 +19,8 @@ Feature: Validate an enrollment record submitted via API.
       | emp_first | emp_last | emp_birthdate | emp_ssn     | emp_coverage | emp_premium | emp_gender |
       | Joe       | Johnson  | 1990-01-01    | 123-12-1234 | 50000        | 10.00       | m          |
     And I add the following enrollment data columns
-      | emp_street | emp_street2 | emp_city | emp_state | emp_zipcode | emp_phone |
-      | 123 Sesame |             | Lansing  | MI        | 12345       |           |
+      | emp_street | emp_street2 | emp_city | emp_state | emp_zipcode | emp_phone | emp_date_of_hire |
+      | 123 Sesame |             | Lansing  | MI        | 12345       |           | 2012-01-01       |
     And I add the following enrollment data columns
       | emp_pin  | emp_sig_txt  | application_date | time_stamp          | signed_at_city | signed_at_state |
       | 12341234 | esign by Joe | 2015-01-01       | 2015-01-01 10:01:00 | Lansing        | MI              |
@@ -333,8 +333,8 @@ Feature: Validate an enrollment record submitted via API.
    And I add valid spouse enrollment data
    And I add valid child enrollment data
    And I add the following enrollment data columns
-     | actively_at_work | emp_email     | emp_date_of_hire | emp_height_inches | emp_weight_pounds | emp_smoker |
-     | Y                | joe@gmail.com | 2010-01-31       | 70                | 150               | N          |
+     | actively_at_work | emp_email     | emp_height_inches | emp_weight_pounds | emp_smoker |
+     | Y                | joe@gmail.com | 70                | 150               | N          |
    And I add the following enrollment data columns
      | sp_height_inches | sp_weight_pounds | sp_smoker |
      | 65               | 130              | N         |

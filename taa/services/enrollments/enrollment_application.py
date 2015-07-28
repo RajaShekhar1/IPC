@@ -19,11 +19,11 @@ from enrollment_application_coverages import (
 class EnrollmentApplicationService(DBService):
     __model__ = EnrollmentApplication
 
-    report_service = RequiredFeature('EnrollmentReportService') 
+    report_service = RequiredFeature('EnrollmentReportService')
     coverages_service = RequiredFeature('EnrollmentApplicationCoverageService')
     case_service = RequiredFeature('CaseService')
     product_service = RequiredFeature('ProductService')
-    
+
     def save_enrollment_data(self, data, case, census_record, agent):
 
         if not census_record:

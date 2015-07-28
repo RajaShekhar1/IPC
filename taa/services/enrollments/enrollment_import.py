@@ -23,7 +23,7 @@ class EnrollmentImportService(object):
     product_service = RequiredFeature("ProductService")
     soh_service = RequiredFeature("StatementOfHealthQuestionService")
 
-    def process_enrollment_data(self, data, data_format, case_token=None, auth_token=None):
+    def process_enrollment_data(self, data, data_format, case_token=None, auth_token=None, email_errors=False):
         processor = EnrollmentProcessor()
         processor.process_enrollment_import_request(
             data,
@@ -31,7 +31,8 @@ class EnrollmentImportService(object):
             case_token=case_token,
             auth_token=auth_token
         )
-
+        if email_errors:
+            processor.send_errors_email()
         return processor
 
     def submit_file_records(self, records):
@@ -50,42 +51,10 @@ class EnrollmentImportService(object):
 
     def standardize_imported_data(self, data, method='api_import'):
 
-        code = data.get("product_code")
-        products = self.product_service.get_products_by_codes([code])
-        product = products[0]
-        state = data.get("signed_at_state")
-
-        def build_person(prefix):
-            base_dict = dict(
-                first=data.get("{}_first".format(prefix)),
-                last=data.get("{}_last".format(prefix)),
-                birthdate=data.get("{}_birthdate".format(prefix)),
-                ssn=data.get("{}_ssn".format(prefix)),
-                gender=data.get("{}_gender".format(prefix)),
-                phone=data.get("{}_phone".format(prefix)),
-                email=data.get("{}_email".format(prefix)),
-                address1=data.get("{}_street".format(prefix)),
-                address2=data.get("{}_street2".format(prefix)),
-                city=data.get("{}_city".format(prefix)),
-                state=data.get("{}_state".format(prefix)),
-                zip=data.get("{}_zipcode".format(prefix)),
-                height=data.get("{}_height_inches".format(prefix)),
-                weight=data.get("{}_weight_pounds".format(prefix)),
-                is_smoker=data.get("{}_smoker".format(prefix))=="Y",
-                soh_questions=[]
-            )
-            answers = dict(Y="Yes", N="No", y="Yes", n="No")
-
-            questions = self.soh_service.get_health_questions(product, state)
-
-            for q_num in range(1, len(questions)+1):
-                answer = data.get("{}_question_{}_answer".format(prefix, q_num))
-                if answer:
-                    base_dict["soh_questions"].append(dict(
-                        question=questions[q_num-1].question,
-                        answer=answers.get(answer)
-                    ))
-            return base_dict
+        def valOrBlank(val):
+            if not val:
+                return ""
+            return val
 
         out_data = {
             "employee": {},
@@ -94,6 +63,49 @@ class EnrollmentImportService(object):
             "child_coverages": [],
             "replacement_policies": [],
         }
+
+        code = data.get("product_code")
+        products = self.product_service.get_products_by_codes([code])
+        product = products[0]
+        state = data.get("signed_at_state")
+
+        def build_beneficiary_data(prefix, out_prefix):
+            out_data["{}_beneficiary".format(out_prefix)] = valOrBlank(data.get("{}_bene_relationship".format(prefix)))
+            out_data["{}_beneficiary_name".format(out_prefix)] = valOrBlank(data.get("{}_bene_name".format(prefix)))
+            out_data["{}_beneficiary_ssn".format(out_prefix)] = valOrBlank(data.get("{}_bene_ssn".format(prefix)))
+            out_data["{}_beneficiary_birthdate".format(out_prefix)] = valOrBlank(data.get("{}_bene_birthdate".format(prefix)))
+            out_data["{}_beneficiary_relationship".format(out_prefix)] = valOrBlank(data.get("{}_bene_relationship".format(prefix)))
+
+        def build_person(prefix):
+            genders = dict(m="male", M="male", f="female", F="female")
+            base_dict = dict(
+                first=valOrBlank(data.get("{}_first".format(prefix))),
+                last=valOrBlank(data.get("{}_last".format(prefix))),
+                birthdate=valOrBlank(data.get("{}_birthdate".format(prefix))),
+                ssn=valOrBlank(data.get("{}_ssn".format(prefix))),
+                gender=genders.get(data.get("{}_gender".format(prefix))),
+                phone=valOrBlank(data.get("{}_phone".format(prefix))),
+                email=valOrBlank(data.get("{}_email".format(prefix))),
+                address1=valOrBlank(data.get("{}_street".format(prefix))),
+                address2=valOrBlank(data.get("{}_street2".format(prefix))),
+                city=valOrBlank(data.get("{}_city".format(prefix))),
+                state=valOrBlank(data.get("{}_state".format(prefix))),
+                zip=valOrBlank(data.get("{}_zipcode".format(prefix))),
+                height=valOrBlank(data.get("{}_height_inches".format(prefix))),
+                weight=valOrBlank(data.get("{}_weight_pounds".format(prefix))),
+                is_smoker=data.get("{}_smoker".format(prefix)) in ["Y", "y"],
+                soh_questions=[]
+            )
+            answers = dict(Y="Yes", N="No", y="Yes", n="No")
+            questions = self.soh_service.get_health_questions(product, state)
+            for q_num in range(1, len(questions)+1):
+                answer = data.get("{}_question_{}_answer".format(prefix, q_num))
+                if answer:
+                    base_dict["soh_questions"].append(dict(
+                        question=questions[q_num-1].question,
+                        answer=answers.get(answer)
+                    ))
+            return base_dict
 
         # Pass through all the original data to start
         out_data.update(data)
@@ -118,23 +130,14 @@ class EnrollmentImportService(object):
         out_data["has_spouse_been_treated_6_months"] = data.get("sp_treated_6_months") in ["Y","y"]
         out_data["has_spouse_been_disabled_6_months"] = data.get("sp_disabled_6_months") in ["Y","y"]
 
-        out_data["employee_beneficiary"] = data.get("emp_bene_relationship")
-        out_data["employee_beneficiary_name"] = data.get("emp_bene_name")
-        out_data["employee_beneficiary_ssn"] = data.get("emp_bene_ssn")
-        out_data["employee_beneficiary_relationship"] = data.get("emp_bene_relationship")
-
-        out_data["spouse_beneficiary"] = data.get("sp_bene_relationship")
-        out_data["spouse_beneficiary_name"] = data.get("sp_bene_name")
-        out_data["spouse_beneficiary_ssn"] = data.get("sp_bene_ssn")
-        out_data["spouse_beneficiary_relationship"] = data.get("sp_bene_relationship")
-
-        out_data["replacement_policies"].append(dict(
-            name=data.get("replacement_policy1_name"),
-            policy_number=data.get("replacement_policy1_number"),
-            insured=data.get("replacement_policy1_insured"),
-            replaced_or_financing=data.get("replacement_policy1_replaced_or_financing"),
-            replacement_reason=data.get("replacement_policy1_reason")
-        ))
+        if data.get("replacement_policy1_name"):
+            out_data["replacement_policies"].append(dict(
+                name=data.get("replacement_policy1_name"),
+                policy_number=data.get("replacement_policy1_number"),
+                insured=data.get("replacement_policy1_insured"),
+                replaced_or_financing=data.get("replacement_policy1_replaced_or_financing"),
+                replacement_reason=data.get("replacement_policy1_reason")
+            ))
 
         emp_address = (data.get("emp_street"), data.get("emp_street2"), data.get("emp_city"), data.get("emp_state"), data.get("emp_zipcode"))
         sp_address = (data.get("sp_street"), data.get("sp_street2"), data.get("sp_city"), data.get("sp_state"), data.get("sp_zipcode"))
@@ -142,6 +145,9 @@ class EnrollmentImportService(object):
 
         out_data["employee"].update(build_person("emp"))
         out_data["spouse"].update(build_person("sp"))
+
+        build_beneficiary_data("emp", "employee")
+        build_beneficiary_data("sp", "spouse")
 
         out_data["employee_coverage"] = self.format_coverage(data.get("emp_coverage"), data.get("emp_premium"))
         out_data["spouse_coverage"] = self.format_coverage(data.get("sp_coverage"), data.get("sp_premium"))
@@ -159,7 +165,7 @@ class EnrollmentImportService(object):
 
 
         # identityToken is date of hire
-        out_data['identityToken'] = data.get('emp_date_of_hire')
+        out_data['identityToken'] = data.get('emp_date_of_hire', '')
         out_data['identityType'] = 'Date of Hire'
 
         # Source / method of the enrollment.
@@ -277,6 +283,7 @@ class EnrollmentRecordParser(object):
     emp_zipcode = EnrollmentRecordField("emp_zipcode", "employee_zipcode", preprocess_zip, [required_validator, zip_validator], flat_file_size=9, description="Employee zipcode, up to 9 characters")
     emp_phone = EnrollmentRecordField("emp_phone", "employee_phone", preprocess_string, [], flat_file_size=10, description="Employee phone number, format NNNNNNNNNN")
     emp_pin = EnrollmentRecordField("emp_pin", "employee_pin", preprocess_numbers, [required_validator], flat_file_size=15, description="Employee pin, format NNNNNNNNNNNNNNN")
+    emp_date_of_hire = EnrollmentRecordField("emp_date_of_hire", "employee_date_of_hire", preprocess_date, [required_validator], flat_file_size=10, description="")
 
     # Spouse Information
     sp_first = EnrollmentRecordField("sp_first", "spouse_first", preprocess_string, [], flat_file_size=14, description="Spouse first name")
@@ -296,7 +303,6 @@ class EnrollmentRecordParser(object):
     # Optional Fields
     actively_at_work = EnrollmentRecordField("actively_at_work", "actively_at_work", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
     emp_email = EnrollmentRecordField("emp_email", "employee_email", preprocess_string, [], flat_file_size=40, description="")
-    emp_date_of_hire = EnrollmentRecordField("emp_date_of_hire", "employee_date_of_hire", preprocess_date, [], flat_file_size=8, description="")
     emp_height_inches = EnrollmentRecordField("emp_height_inches", "employee_height_inches", preprocess_numbers, [], flat_file_size=2, description="")
     emp_weight_pounds = EnrollmentRecordField("emp_weight_pounds", "employee_weight_pounds", preprocess_numbers, [], flat_file_size=3, description="")
     emp_smoker = EnrollmentRecordField("emp_smoker", "employee_smoker", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
@@ -393,6 +399,7 @@ class EnrollmentRecordParser(object):
         emp_state,
         emp_zipcode,
         emp_phone,
+        emp_date_of_hire,
 
         # Spouse data
         sp_first,
@@ -412,7 +419,6 @@ class EnrollmentRecordParser(object):
         # Optional fields
         actively_at_work,
         emp_email,
-        emp_date_of_hire,
         emp_height_inches,
         emp_weight_pounds,
         emp_smoker,
@@ -635,7 +641,6 @@ class EnrollmentRecordParser(object):
         # Do a case-insensitive match on the columns
         for key in record.keys():
             record[key.lower()] = record[key]
-
         required_data_keys = [
             "user_token",
             "case_token",
@@ -654,6 +659,7 @@ class EnrollmentRecordParser(object):
             "emp_state",
             "emp_zipcode",
             "emp_pin",
+            "emp_date_of_hire",
             "emp_sig_txt",
             "application_date",
             "time_stamp",

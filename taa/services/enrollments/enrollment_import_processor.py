@@ -62,7 +62,8 @@ class EnrollmentProcessor(object):
 
             # Create PDF
             pdf_bytes = self.pdf_generator_service.generate_form_pdf(main_form.template_id, tabs)
-            with open('test_output.pdf', 'wb+') as f:
+            import datetime
+            with open('test_pdfs/test_output-{}.pdf'.format(datetime.datetime.now()), 'wb+') as f:
                 f.write(pdf_bytes)
 
         db.session.commit()
@@ -100,6 +101,9 @@ class EnrollmentProcessor(object):
 
     def get_errors(self):
         return self.errors
+
+    def send_errors_email(self):
+        pass
 
     def process_wizard_enrollment_request(self, case_id, auth_token=None):
         pass

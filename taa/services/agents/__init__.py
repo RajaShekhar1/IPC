@@ -88,7 +88,7 @@ class ApiTokenService(DBService):
         return self.find(stormpath_url=sp_href).first()
 
     def get_sp_user_by_token(self, token):
-        pass
+        self.find(api_token=token).first()
 
     def is_valid_token(self, token):
         return bool(self.find(api_token=token, activated=True).all())

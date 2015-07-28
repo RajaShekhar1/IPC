@@ -130,6 +130,7 @@ def step_impl(context):
         emp_zipcode='47999',
         emp_phone='',
         emp_pin='12341234',
+        emp_date_of_hire="2012-01-01",
         emp_sig_txt='esign by Joe Johnson',
         application_date='2015-06-01',
         time_stamp='2015-06-01 23:00:00',
