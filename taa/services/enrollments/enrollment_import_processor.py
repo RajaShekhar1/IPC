@@ -25,6 +25,7 @@ class EnrollmentProcessor(object):
 
     def process_enrollment_import_request(self, data, data_format, auth_token=None, case_token=None):
         # Instantiate new record parser
+
         self.enrollment_record_parser = self.enrollment_record_parser_service()
 
         self.authenticate_user(auth_token)

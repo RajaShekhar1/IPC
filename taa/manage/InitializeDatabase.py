@@ -1,19 +1,42 @@
 from flask import current_app
-from flask_script import Command, prompt, prompt_pass
+from flask_script import Command, prompt, prompt_pass, Option
 from werkzeug.datastructures import MultiDict
 
+import uuid
+
 from ..services.products import ProductService
+from ..services.agents import ApiTokenService
 from ..models import db
 
 product_service = ProductService()
+api_token_service = ApiTokenService()
 
 
 class InitializeDatabaseCommand(Command):
     """Add all the default products and other default data"""
 
-    def run(self):
-        init_basic_data()
+    option_list = (
+        Option('--only', '-o', dest='task', required=False),
+    )
 
+    def run(self, task):
+        if task == "basic_data":
+            init_basic_data()
+        elif task == "drop_box":
+            init_drop_box()
+        else:
+            init_basic_data()
+            init_drop_box()
+
+def init_drop_box():
+    new_token = uuid.uuid4().hex
+    api_token_service.create(**dict(
+        api_token=new_token,
+        name="DropBox User",
+        activated=True,
+        stormpath_url=""
+    ))
+    db.session.commit()
 
 def init_basic_data():
     product_data = [

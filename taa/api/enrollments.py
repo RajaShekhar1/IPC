@@ -19,11 +19,9 @@ enrollment_import_service = LookupService("EnrollmentImportService")
 
 @route(bp, '/', methods=["POST"])
 def submit_data():
-
     case_token = request.args.get('case_token')
     auth_token = request.args.get('auth_token')
     data_format = request.args.get('format', 'json')
-
     data = StringIO(request.data)
 
     import_results = enrollment_import_service.process_enrollment_data(
