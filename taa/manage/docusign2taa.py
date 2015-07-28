@@ -22,6 +22,13 @@ TEST_ENROLLMENT_DATA = [
     DocuSignRadioTab('existingInsAgent', 'no'),
     DocuSignRadioTab('replaceAgent', 'yes'),
 
+    DocuSignTextTab('AgentSignature', 'Agent Signature'),
+    DocuSignTextTab('Signature 5', 'Signature'),
+    DocuSignTextTab('Signature 179', 'Signature'),
+    DocuSignTextTab('Date Signed', 'Date Signed'),
+    # Dupe vv; currently no way to differentiate (must change DocuSign template)
+    DocuSignTextTab('Date Signed', 'Date Signed'),
+
     DocuSignTextTab('employer', 'DelMar Test Case'),
     DocuSignTextTab('group_number', 'GRP-NUM-EX123'),
     DocuSignTextTab('eeName', 'John Smith'),
