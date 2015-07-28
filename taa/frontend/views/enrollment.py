@@ -41,6 +41,50 @@ def enroll_start():
     abort(404)
 
 # Wizard
+
+@app.route('/test-wizard')
+def test_wizard():
+    #case_id = request.params.get('case_id')
+    #case = case_service.get(case_id)
+    fppti = product_service.query().filter_by(code='FPPTI').first()
+    products = [fppti]
+    state = 'MI'
+
+    # Get SOH Questions and other form or product specific questions
+    from taa.services.products import StatementOfHealthQuestionService
+    soh_questions = {}
+    for product in products:
+        soh_questions[product.id] = StatementOfHealthQuestionService().get_health_questions(product, state)
+
+    spouse_questions = {}
+    for product in products:
+        spouse_questions[product.id] = StatementOfHealthQuestionService().get_spouse_questions(product, state)
+
+    payment_mode = 26
+    if is_payment_mode_changeable(payment_mode):
+        # User can select payment mode
+        payment_mode_choices = get_payment_modes(True)
+    else:
+        # Payment mode is set on case and cannot be changed
+        payment_mode_choices = get_payment_modes(single=payment_mode)
+
+    return render_template(
+        'enrollment/main-wizard.html',
+        wizard_data={
+            'products':products,
+            'state':'MI',
+            'enroll_city':'Lansing',
+            'children_data':[],
+            'payment_mode': payment_mode,
+            'payment_mode_choices':payment_mode_choices,
+            'health_questions':soh_questions,
+            'spouse_questions':spouse_questions,
+            'is_in_person': True,
+        },
+        states=get_states(),
+        nav_menu=get_nav_menu(),
+    )
+
 @app.route('/in-person-enrollment', methods=['POST'])
 @login_required
 def in_person_enrollment():
@@ -262,6 +306,10 @@ def self_enrollment2():
 @app.route('/submit-wizard-data', methods=['POST'])
 def submit_wizard_data():
     data = request.json
+
+    if 'active_case_id' not in session:
+        abort(401)
+
     case_id = session['active_case_id']
     case = case_service.get(case_id)
 
