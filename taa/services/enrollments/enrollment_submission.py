@@ -1,3 +1,4 @@
+import json
 from taa.services import RequiredFeature
 from taa.services.docusign.docusign_envelope import \
     EnrollmentDataWrap,\
@@ -20,7 +21,7 @@ class EnrollmentSubmissionProcessor(object):
 
     def submit_to_docusign(self, enrollment_record):
 
-        data_wrap = EnrollmentDataWrap(enrollment_record.standardized_data,
+        data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data),
                                        census_record=enrollment_record.census_record,
                                        case=enrollment_record.case)
         employee_recip, recipients = create_envelope_recipients(enrollment_record.case, data_wrap)

@@ -54,7 +54,7 @@ class EnrollmentProcessor(object):
             enrollment_record = self.save_validated_data(standardized_data, case, record)
 
             # Submit the enrollment
-            self.submit_imported_enrollment.submit_enrollment(enrollment_record)
+            self.enrollment_submission.submit_imported_enrollment(enrollment_record)
 
         db.session.commit()
 
