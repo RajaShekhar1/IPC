@@ -4,7 +4,6 @@ from pyftpdlib.servers import FTPServer
 from pyftpdlib.filesystems import AbstractedFS, FilesystemError
 import os
 import requests
-import urllib
 import sys
 
 API_URL = ""

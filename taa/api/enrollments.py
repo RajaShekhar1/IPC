@@ -1,16 +1,9 @@
 from StringIO import StringIO
 
-from flask import Blueprint, request, abort, make_response, jsonify, redirect, url_for, render_template
-from flask_stormpath import current_user, groups_required, login_required
+from flask import Blueprint, request
 
-from taa import app
-from taa.core import TAAFormError, db
-from taa.helpers import get_posted_data
 from taa.api import route
-
 from taa.services import LookupService
-
-from taa.services.docusign.docusign_envelope import create_envelope_and_get_signing_url
 
 
 bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
