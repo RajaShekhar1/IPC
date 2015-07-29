@@ -29,15 +29,9 @@ class InitializeDatabaseCommand(Command):
 
 def init_drop_box():
     if not api_token_service.find(name="DropBox User").count():
-        new_token = uuid.uuid4().hex
-        api_token_service.create(**dict(
-            api_token=new_token,
-            name="DropBox User",
-            activated=True,
-            stormpath_url=""
-        ))
+        token = api_token_service.create_new_token(name="DropBox User", sp_href="", activated=True)
+        print("The Drop Box API token is {}".format(token))
         db.session.commit()
-
 
 def init_basic_data():
     product_data = [

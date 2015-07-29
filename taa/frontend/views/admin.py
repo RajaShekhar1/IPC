@@ -23,7 +23,7 @@ agent_service = LookupService('AgentService')
 api_token_service = LookupService('ApiTokenService')
 
 
-def search_stormpath_accounts(filter_email=None):
+def search_stormpath_accounts(filter_email=None, filter_href=None):
     """
     The flask-stormpath extension has some strange caching issues when using the
     manager to query. Use the stormpath library directly here.
@@ -34,6 +34,8 @@ def search_stormpath_accounts(filter_email=None):
 
     if filter_email:
         params['email'] = filter_email
+    if filter_href:
+        params['href'] = filter_href
 
     if params:
         return [a for a in sp_app.accounts.search(params)]

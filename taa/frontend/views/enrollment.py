@@ -334,46 +334,6 @@ def submit_enrollment_records():
         errors = [{"type": e.get_type(), "fields": e.get_fields(), "message": e.get_message()} for e in response.get_errors()]
         return Response(json.dumps(errors), status=400, mimetype='application/json')
 
-#TODO: This endpoint needs to be deleted before release!
-@app.route('/test-error-email/<type>', methods=["GET"])
-def test_error_email(type):
-    if type == "multi":
-        test = [{
-                'agent_name': 'Andy Agent',
-                'emp_coverage': '50000',
-                'emp_premium': '10.00',
-                'user_token': 'ABC',
-                'emp_street': '123 Sesame',
-                'emp_state': 'MI',
-                'emp_pin': '12341234',
-                'time_stamp': '2015-01-01 10:01:00',
-                'signed_at_city': 'Lansing',
-                'emp_ssn': '123-12-1234',
-                'emp_birthdate': '1990-01-01',
-                'payment_mode': 'weekly',
-                'application_date': '2015-01-01',
-                'agent_sig_txt': 'esign by Andy Agent',
-                'emp_first': 'Joe',
-                'signed_at_state': 'MI',
-                'emp_sig_txt': 'esign by Joe',
-                'case_token': 'XYZ',
-                'emp_street2': '',
-                'agent_code': '26ABC',
-                'emp_zipcode': '12345',
-                'emp_last': 'Johnson'
-            }]
-    else:
-        test = []
-    response = enrollment_import_service.submit_file_records(test)
-    if response.is_success():
-        return render_template('emails/enrollment_upload_email.html',
-                               errors=[]
-                               )
-    else:
-        errors = [{"type": e.get_type(), "fields": e.get_fields(), "message": e.get_message()} for e in response.get_errors()]
-        return render_template('emails/enrollment_upload_email.html',
-                               errors=errors
-                               )
 
 @app.route('/application_completed', methods=['GET'])
 def ds_landing_page():

@@ -25,14 +25,16 @@ class EnrollmentImportService(object):
 
     def process_enrollment_data(self, data, data_format, case_token=None, auth_token=None, email_errors=False):
         processor = EnrollmentProcessor()
-        processor.process_enrollment_import_request(
-            data,
-            data_format,
-            case_token=case_token,
-            auth_token=auth_token
-        )
-        if email_errors:
-            processor.send_errors_email()
+        try:
+            processor.process_enrollment_import_request(
+                data,
+                data_format,
+                case_token=case_token,
+                auth_token=auth_token
+            )
+        except TAAFormError:
+            if email_errors:
+                processor.send_errors_email()
         return processor
 
     def submit_file_records(self, records):

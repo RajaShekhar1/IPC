@@ -1,5 +1,7 @@
-from flask import abort
+from flask import abort, render_template
 
+import mandrill
+from taa import mandrill_flask
 from taa.core import TAAFormError, db
 from taa.services import RequiredFeature
 
@@ -22,6 +24,7 @@ class EnrollmentProcessor(object):
         self.errors = []
         self.num_processed = 1
         self.enrollment_record_parser = None
+        self.enrolling_agent = None
 
     def process_enrollment_import_request(self, data, data_format, auth_token=None, case_token=None):
         # Instantiate new record parser
@@ -31,6 +34,7 @@ class EnrollmentProcessor(object):
         self.authenticate_user(auth_token)
         processed_data = self.extract_dictionaries(data, data_format)
         case_from_token = self.get_case(case_token)
+        self.enrolling_agent = self.get_user(processed_data[0].get("user_token"))
 
         # Process all records
         self.enrollment_record_parser.process_records(processed_data, case_from_token)
@@ -88,8 +92,54 @@ class EnrollmentProcessor(object):
     def get_errors(self):
         return self.errors
 
+    def _send_email(self, from_email, from_name, to_email, to_name, subject,
+                    body):
+        try:
+            mandrill_flask.send_email(
+                to=[{'email': to_email, 'name': to_name}],
+                from_email=from_email,
+                from_name=from_name,
+                subject=subject,
+                html=body,
+                auto_text=True,
+            )
+        except mandrill.Error as e:
+            print("Exception sending email: %s - %s; to %s"%(e.__class__, e, to_email))
+            return False
+        except requests.exceptions.HTTPError as e:
+            print("Exception sending email: %s - %s; to %s"%(e.__class__, e, to_email))
+            return False
+        except Exception as e:
+            print "Exception sending email: %s - %s"%(e.__class__, e)
+            return False
+
+        return True
+
+    def _error_email_body(self):
+        if self.is_success():
+            return render_template('emails/enrollment_upload_email.html',
+                                   errors=[]
+                                   )
+        else:
+            errors = [{"type": e.get_type(), "fields": e.get_fields(), "message": e.get_message()} for e in self.get_errors()]
+            return render_template('emails/enrollment_upload_email.html',
+                                   errors=errors
+                                   )
+
     def send_errors_email(self):
-        pass
+        errors = self.get_errors()
+        if errors:
+            agent_email = self.enrolling_agent.email
+            agent_name = "{} {}".format(self.enrolling_agent.first, self.enrolling_agent.last).capitalize()
+            email_body = self._error_email_body()
+            self._send_email(
+                from_email="errors@5Star.com",
+                from_name="5Star Enrollment",
+                to_email=agent_email,
+                to_name=agent_name,
+                subject="Your recent upload to 5Star Enrollment",
+                body=email_body
+                )
 
     def process_wizard_enrollment_request(self, case_id, auth_token=None):
         pass
@@ -100,6 +150,13 @@ class EnrollmentProcessor(object):
         else:
             case = None
         return case
+
+    def get_user(self, user_token):
+        if user_token:
+            user = self.api_token_service.get_sp_user_by_token(user_token)
+        else:
+            user = None
+        return user
 
     def extract_dictionaries(self, data, data_format):
         if data_format == "csv":

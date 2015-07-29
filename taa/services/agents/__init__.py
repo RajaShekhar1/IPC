@@ -3,6 +3,7 @@ from flask_stormpath import current_user
 
 from taa.core import DBService, db
 from models import Agent, ApiToken
+
 import uuid
 
 class AgentService(DBService):
@@ -62,7 +63,6 @@ class AgentService(DBService):
             return set()
 
     def get_agent_stormpath_account(self, agent):
-
         from taa.frontend.views.admin import search_stormpath_accounts
         agent_account = None
         for account in search_stormpath_accounts():
@@ -88,7 +88,11 @@ class ApiTokenService(DBService):
         return self.find(stormpath_url=sp_href).first()
 
     def get_sp_user_by_token(self, token):
-        self.find(api_token=token).first()
+        agent_service = AgentService()
+        from taa.frontend.views.admin import search_stormpath_accounts
+        token_user = self.find(api_token=token).first()
+        existing_agent = agent_service.find(stormpath_url=token_user.stormpath_url).first()
+        return existing_agent
 
     def is_valid_token(self, token):
         return bool(self.find(api_token=token, activated=True).all())
