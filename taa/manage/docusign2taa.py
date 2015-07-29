@@ -3,7 +3,7 @@
 Convert exported DocuSign XML templates to proprietery TAA format that can be
 used to generate PDFs internally without relying on the DocuSign service.
 """
-
+import os
 import base64
 import sys
 import xml.etree.ElementTree as ET
@@ -18,198 +18,34 @@ from taa.services.enrollments import ImagedFormGeneratorService
 from taa.services.enrollments.models import FormTemplate, FormTemplateTabs
 
 
-TEST_ENROLLMENT_DATA = [
-    DocuSignRadioTab('existingInsAgent', 'no'),
-    DocuSignRadioTab('replaceAgent', 'yes'),
-
-    DocuSignTextTab('AgentSignature', 'Agent Signature'),
-    DocuSignTextTab('Signature 5', 'Signature'),
-    DocuSignTextTab('Signature 179', 'Signature'),
-    DocuSignTextTab('Date Signed', 'Date Signed'),
-    # Dupe vv; currently no way to differentiate (must change DocuSign template)
-    DocuSignTextTab('Date Signed', 'Date Signed'),
-
-    DocuSignTextTab('employer', 'DelMar Test Case'),
-    DocuSignTextTab('group_number', 'GRP-NUM-EX123'),
-    DocuSignTextTab('eeName', 'John Smith'),
-    DocuSignTextTab('eeFName', 'John'),
-    DocuSignTextTab('eeLName', 'Smith'),
-    DocuSignTextTab('eeDOB', '10/10/1981'),
-    DocuSignTextTab('eeSSN', '123-12-4124'),
-    DocuSignTextTab('eeAddress', '123 Sesame Apt L6'),
-    DocuSignTextTab('eeCity', 'Chicago'),
-    DocuSignTextTab('eeState', 'IL'),
-    DocuSignTextTab('eeZip', '12345'),
-    DocuSignTextTab('eePhone', '(999), 888-7777'),
-    DocuSignTextTab('eeEmail', 'john@johnsmith.com'),
-    DocuSignRadioTab('payment_mode', 'monthly'),
-    DocuSignTextTab('eeEnrollCityState', 'Lansing, MI'),
-    DocuSignTextTab('eeEnrollCity', 'Lansing'),
-    DocuSignTextTab('eeEnrollState', 'MI'),
-    DocuSignTextTab('date_of_hire', '01/01/2010'),
-    DocuSignTextTab('agentCode', '55117'),
-    DocuSignTextTab('agentSignName', 'Testing Agent'),
-    DocuSignTextTab('Employer', 'DelMar Test Case'),
-    DocuSignTextTab('eeOtherOwnerName', 'OTHER OWNER'),
-    DocuSignTextTab('eeOtherOwnerName2', 'OTHER OWNER'),
-    DocuSignTextTab('eeOtherOwnerSSN', '000-99-9888'),
-    DocuSignTextTab('spouse_owner_notice', 'SPOUSE POLICY OWNER: OTHER SPOUSE OWNER, 092-03-7489'),
-    DocuSignTextTab('eeEmailPart1', 'john'),
-    DocuSignTextTab('eeEmailPart2', 'johnsmith.com'),
-    DocuSignRadioTab('actively_at_work', 'no'),
-    DocuSignRadioTab('eeSOH1', 'no'),
-    DocuSignRadioTab('eeSOH2', 'no'),
-    DocuSignRadioTab('eeSOH3', 'no'),
-    DocuSignRadioTab('eeSOH4', 'no'),
-    DocuSignRadioTab('eeSOH5', 'no'),
-    DocuSignRadioTab('eeSOH6', 'no'),
-    DocuSignRadioTab('eeSOH7', 'no'),
-    DocuSignTextTab('eeSOH1gi', ''),
-    DocuSignTextTab('eeSOH2gi', ''),
-    DocuSignTextTab('eeSOH3gi', ''),
-    DocuSignTextTab('eeSOH4gi', ''),
-    DocuSignTextTab('eeSOH5gi', ''),
-    DocuSignTextTab('eeSOH6gi', ''),
-    DocuSignTextTab('eeSOH7gi', ''),
-    DocuSignTextTab('spName', 'Jane Smith'),
-    DocuSignTextTab('spFName', 'Jane'),
-    DocuSignTextTab('spLName', 'Smith'),
-    DocuSignTextTab('spDOB', '12/12/1980'),
-    DocuSignTextTab('spSSN', '328-79-3408'),
-    DocuSignTextTab('sp_address_same_as_employee', 'SAME AS EMPLOYEE'),
-    DocuSignTextTab('sp_email_same_as_employee', 'SAME AS EMPLOYEE'),
-    DocuSignRadioTab('spouse_hospital_six_months', 'yes'),
-    DocuSignRadioTab('spouse_disability_six_months', 'no'),
-    DocuSignRadioTab('spSOH1', 'no'),
-    DocuSignRadioTab('spSOH2', 'no'),
-    DocuSignRadioTab('spSOH3', 'no'),
-    DocuSignRadioTab('spSOH4', 'no'),
-    DocuSignRadioTab('spSOH5', 'no'),
-    DocuSignRadioTab('spSOH6', 'no'),
-    DocuSignRadioTab('spSOH7', 'no'),
-    DocuSignTextTab('spSOH1gi', ''),
-    DocuSignTextTab('spSOH2gi', ''),
-    DocuSignTextTab('spSOH3gi', ''),
-    DocuSignTextTab('spSOH4gi', ''),
-    DocuSignTextTab('spSOH5gi', ''),
-    DocuSignTextTab('spSOH6gi', ''),
-    DocuSignTextTab('spSOH7gi', ''),
-    DocuSignTextTab('eeCoverage', '125,000'),
-    DocuSignTextTab('eePremium', '52.35'),
-    DocuSignTextTab('spCoverage', '50,000'),
-    DocuSignTextTab('spPremium', '24.75'),
-    DocuSignTextTab('eePremiumTotal', '52.35'),
-    DocuSignTextTab('spPremiumTotal', '24.75'),
-    DocuSignTextTab('childPremiumTotal', '14.94'),
-    DocuSignTextTab('totalAllPremium', '92.04'),
-    DocuSignTextTab('eeBeneFullName', 'EMP BENEFICIARY'),
-    DocuSignTextTab('eeBeneAge', '16'),
-    DocuSignTextTab('eeBeneRelationship', 'EMP BENE REL'),
-    DocuSignTextTab('eeBeneDOB', '01/10/1999'),
-    DocuSignTextTab('eeBeneSSN', '019-01-0101'),
-    DocuSignTextTab('eeContBeneFullName', 'EMP CONT NAME'),
-    DocuSignTextTab('eeContBeneAge', '27'),
-    DocuSignTextTab('eeContBeneRelationship', 'EMP CONT REL'),
-    DocuSignTextTab('eeContBeneDOB', '12/11/1987'),
-    DocuSignTextTab('eeContBeneSSN', '881-82-8181'),
-    DocuSignTextTab('spBeneFullName', 'SP BENE NAME'),
-    DocuSignTextTab('spBeneAge', '14'),
-    DocuSignTextTab('spBeneRelationship', 'SP BENE REL'),
-    DocuSignTextTab('spBeneDOB', '12/12/2000'),
-    DocuSignTextTab('spBeneSSN', '998-98-9898'),
-    DocuSignTextTab('spContBeneFullName', 'SP CONT BENE NAME'),
-    DocuSignTextTab('spContBeneAge', '36'),
-    DocuSignTextTab('spContBeneRelationship', 'SP CONT BENE REL'),
-    DocuSignTextTab('spContBeneDOB', '03/03/1979'),
-    DocuSignTextTab('spContBeneSSN', '333-33-3333'),
-    DocuSignTextTab('child1Name', 'Susie Smith'),
-    DocuSignTextTab('child1DOB', '12/13/1999'),
-    DocuSignTextTab('child1SSN', '879-23-8479'),
-    DocuSignTextTab('child1Coverage', '10,000'),
-    DocuSignTextTab('child1Premium', '4.98'),
-    DocuSignRadioTab('child1Gender', 'female'),
-    DocuSignRadioTab('c1SOH1', 'no'),
-    DocuSignRadioTab('c1SOH2', 'no'),
-    DocuSignRadioTab('c1SOH3', 'no'),
-    DocuSignRadioTab('c1SOH4', 'no'),
-    DocuSignRadioTab('c1SOH5', 'no'),
-    DocuSignRadioTab('c1SOH6', 'no'),
-    DocuSignRadioTab('c1SOH7', 'no'),
-    DocuSignTextTab('c1SOH1gi', ''),
-    DocuSignTextTab('c1SOH2gi', ''),
-    DocuSignTextTab('c1SOH3gi', ''),
-    DocuSignTextTab('c1SOH4gi', ''),
-    DocuSignTextTab('c1SOH5gi', ''),
-    DocuSignTextTab('c1SOH6gi', ''),
-    DocuSignTextTab('c1SOH7gi', ''),
-    DocuSignTextTab('child2Name', 'Johnny Smith'),
-    DocuSignTextTab('child2DOB', '12/14/2000'),
-    DocuSignTextTab('child2SSN', '232-32-2323'),
-    DocuSignTextTab('child2Coverage', '10,000'),
-    DocuSignTextTab('child2Premium', '4.98'),
-    DocuSignRadioTab('child2Gender', 'male'),
-    DocuSignRadioTab('c2SOH1', 'no'),
-    DocuSignRadioTab('c2SOH2', 'no'),
-    DocuSignRadioTab('c2SOH3', 'no'),
-    DocuSignRadioTab('c2SOH4', 'no'),
-    DocuSignRadioTab('c2SOH5', 'no'),
-    DocuSignRadioTab('c2SOH6', 'no'),
-    DocuSignRadioTab('c2SOH7', 'no'),
-    DocuSignTextTab('c2SOH1gi', ''),
-    DocuSignTextTab('c2SOH2gi', ''),
-    DocuSignTextTab('c2SOH3gi', ''),
-    DocuSignTextTab('c2SOH4gi', ''),
-    DocuSignTextTab('c2SOH5gi', ''),
-    DocuSignTextTab('c2SOH6gi', ''),
-    DocuSignTextTab('c2SOH7gi', ''),
-    DocuSignTextTab('child3Name', 'Robert Smith'),
-    DocuSignTextTab('child3DOB', '12/11/2001'),
-    DocuSignTextTab('child3SSN', '777-77-7777'),
-    DocuSignTextTab('child3Coverage', '10,000'),
-    DocuSignTextTab('child3Premium', '4.98'),
-    DocuSignRadioTab('child3Gender', 'male'),
-    DocuSignRadioTab('c3SOH1', 'no'),
-    DocuSignRadioTab('c3SOH2', 'no'),
-    DocuSignRadioTab('c3SOH3', 'no'),
-    DocuSignRadioTab('c3SOH4', 'no'),
-    DocuSignRadioTab('c3SOH5', 'no'),
-    DocuSignRadioTab('c3SOH6', 'no'),
-    DocuSignRadioTab('c3SOH7', 'no'),
-    DocuSignTextTab('c3SOH1gi', ''),
-    DocuSignTextTab('c3SOH2gi', ''),
-    DocuSignTextTab('c3SOH3gi', ''),
-    DocuSignTextTab('c3SOH4gi', ''),
-    DocuSignTextTab('c3SOH5gi', ''),
-    DocuSignTextTab('c3SOH6gi', ''),
-    DocuSignTextTab('c3SOH7gi', ''),
-    DocuSignTextTab('extra_children_notice', 'SEE ATTACHED FOR ADDITIONAL CHILDREN'),
-    DocuSignRadioTab('enrollType', 'assist'),
-    DocuSignRadioTab('productType', 'FPPTI'),
-    DocuSignRadioTab('existingIns', 'no'),
-    DocuSignRadioTab('existingInsAgent', 'no'),
-    DocuSignRadioTab('replaceAgent', 'yes'),
-    DocuSignRadioTab('replace', 'yes'),
-    DocuSignRadioTab('eeGender', 'male'),
-    DocuSignRadioTab('eeSmoking', 'nonsmoker'),
-    DocuSignRadioTab('eeOwner', 'other'),
-    DocuSignRadioTab('spGender', 'female'),
-    DocuSignRadioTab('spSmoking', 'nonsmoker'),
-    DocuSignRadioTab('spOwner', 'other'),
-]
 
 
 class DocusignImportCommand(Command):
+    """Imports DocuSign XML templates to the database"""
     option_list = (
-        Option('-f', '--filename', dest='filename', required=True,
-               help="Input XML file"),
+        Option('-f', '--filename', dest='filename_or_dirname', required=True,
+               help="Input XML file or directory of files"),
         Option('-s', '--safe', dest='safe', required=False,
                help="Safe mode (don't overwrite)", action='store_true'),
-        Option('-t', '--test', dest='test_id', required=False,
-               help="Write PDF populated with data from specified "
-                    "enrollment ID for testing"),
     )
 
-    def run(self, filename, safe=False, test_id=None):
+    def run(self, filename_or_dirname, safe=False):
+        if os.path.isdir(filename_or_dirname):
+            filenames = self.get_file_names(filename_or_dirname)
+        else:
+            filenames = [filename_or_dirname]
+
+        for filename in filenames:
+            self.import_xml_file(filename, safe)
+
+    def get_file_names(self, dirname):
+        return [
+            os.path.join(dirname, fname)
+            for fname in os.listdir(dirname)
+            if not fname.startswith('.')
+        ]
+
+    def import_xml_file(self, filename, safe):
         with open(filename, 'r') as f:
             doc = DocusignDocument(filename)
         template_id = doc.meta['template_id']
@@ -277,12 +113,8 @@ class DocusignImportCommand(Command):
             )
             db.session.add(newtab)
         db.session.commit()
-        if test_id is not None:
-            # Write test enrollment
-            outpath = '/tmp/pdf/enrollment-{}-TEST.pdf'.format(template_id)
-            writer = ImagedFormGeneratorService()
-            writer.generate_form_pdf(template_id, TEST_ENROLLMENT_DATA,
-                                     path=outpath)
+
+
 
 
 class DocusignDocument(object):
