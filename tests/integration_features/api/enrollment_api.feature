@@ -86,7 +86,6 @@ Feature: Submit enrollments using the API
     When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token 'CASE-123'
     Then I should see a 200 response
 
-
 #  Scenario: It should allow a logged-in api user to submit an enrollment
 #    Given I log in as the user 'BHI'
 #    Given I create a minimally valid CSV file with case_token 'CASE-123'

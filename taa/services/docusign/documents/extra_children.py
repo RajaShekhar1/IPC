@@ -11,6 +11,7 @@ from taa.services.docusign.service import (
     DocuSignSigTab,
 )
 
+
 class ChildAttachmentForm(BasePDFDoc):
     def __init__(self, recipients, enrollment_data):
         BasePDFDoc.__init__(self, recipients)

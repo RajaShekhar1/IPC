@@ -64,7 +64,7 @@ def get_signing_agent(case):
 
 def create_fpp_envelope(enrollment_data, case):
     employee, recipients = create_envelope_recipients(case, enrollment_data)
-    components = create_fpp_envelope_components(enrollment_data, recipients)
+    components = create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer=True)
     transport = get_docusign_transport()
     envelope_result = create_envelope(
         email_subject="Signature needed: {} for {} ({})".format(
@@ -77,12 +77,12 @@ def create_fpp_envelope(enrollment_data, case):
     return employee, envelope_result, transport
 
 
-def create_fpp_envelope_components(enrollment_data, recipients):
+def create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer):
     # Build the components (sections) needed for signing
     components = []
 
     # Main form
-    fpp_form = FPPTemplate(recipients, enrollment_data)
+    fpp_form = FPPTemplate(recipients, enrollment_data, should_use_docusign_renderer)
     components.append(fpp_form)
 
     # Additional Children
@@ -99,7 +99,8 @@ def create_fpp_envelope_components(enrollment_data, recipients):
     # Replacement Form
     if fpp_form.is_replacement_form_needed():
         replacement_form = FPPReplacementFormTemplate(recipients,
-                                                      enrollment_data)
+                                                      enrollment_data,
+                                                      should_use_docusign_renderer)
         components.append(replacement_form)
 
     # Additional replacement policies form

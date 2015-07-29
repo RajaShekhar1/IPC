@@ -9,13 +9,13 @@ from taa.services.docusign.DocuSign_config import get_template_id
 
 
 class FPPTemplate(DocuSignServerTemplate):
-    def __init__(self, recipients, enrollment_data):
+    def __init__(self, recipients, enrollment_data, use_docusign_renderer):
 
         product_type = enrollment_data["product_type"]
         state = enrollment_data["enrollState"]
         template_id = get_template_id(product_type, state)
 
-        DocuSignServerTemplate.__init__(self, template_id, recipients)
+        DocuSignServerTemplate.__init__(self, template_id, recipients, use_docusign_renderer)
 
         self.data = enrollment_data
 

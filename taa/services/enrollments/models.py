@@ -1,5 +1,7 @@
 import decimal
 
+from sqlalchemy.dialects.postgresql import JSON
+
 from taa import db
 from taa.helpers import JsonSerializable
 from taa.services.cases import CaseCensus
@@ -61,6 +63,10 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     spouse_beneficiary_relationship = db.Column(db.UnicodeText)
     spouse_beneficiary_birthdate = db.Column(db.UnicodeText)
     spouse_beneficiary_ssn = db.Column(db.Unicode(16))
+
+    # Save the raw data that we receive
+    received_data = db.Column(JSON(none_as_null=False))
+    standardized_data = db.Column(JSON(none_as_null=False))
 
     def get_signature_time_as_int(self):
         'useful for sorting'

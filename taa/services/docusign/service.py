@@ -1,14 +1,18 @@
 import json
-import requests
 from urlparse import urljoin
 import base64
 import StringIO
 from collections import defaultdict
 
+import requests
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate
+from PyPDF2 import PdfFileReader
+
+from taa.services import RequiredFeature
 
 from taa import app
+
 
 #
 #  - Create an envelope for signing
@@ -117,11 +121,13 @@ response:
 
 # Envelope Recipient
 class DocuSignRecipient(object):
-    def __init__(self, name, email, cc_only=False, role_name=None):
+    def __init__(self, name, email, cc_only=False, role_name=None, _exclude_from_envelope=False):
         self.name = name
         self.email = email
         self.cc_only = cc_only
         self.role_name = role_name
+
+        self._exclude_from_envelope = _exclude_from_envelope
 
     def is_carbon_copy(self):
         return self.cc_only
@@ -146,6 +152,9 @@ class DocuSignRecipient(object):
         needs to be specified anymore.
         """
         return False
+
+    def should_exclude_from_envelope(self):
+        return self._exclude_from_envelope
 
 class EmployeeDocuSignRecipient(DocuSignRecipient):
     def is_employee(self):
@@ -243,6 +252,9 @@ class DocuSignEnvelopeComponent(object):
         output = defaultdict(list)
 
         for num, recipient in enumerate(self.recipients):
+            if recipient.should_exclude_from_envelope():
+                continue
+
             recip_repr = dict(
                 name=recipient.name,
                 email=recipient.email,
@@ -277,28 +289,71 @@ class DocuSignEnvelopeComponent(object):
     def is_recipient_signer(self, recipient):
         raise NotImplementedError("Override")
 
+    def make_inline_doc_repr(self, num_pages, pdf_bytes, recipients):
+        return dict(
+            document=dict(
+                name=self.__class__.__name__,
+                sequence="1",
+                documentId="1",
+                pages=str(num_pages),
+                fileExtension="pdf",
+                documentBase64=pdf_bytes,
+            ),
+            inlineTemplates=[dict(
+                sequence="1",
+                recipients=recipients,
+            )],
+        )
+
+
 # Server-side template base class.
 class DocuSignServerTemplate(DocuSignEnvelopeComponent):
-    def __init__(self, template_id, recipients):
+
+    pdf_generator_service = RequiredFeature("ImagedFormGeneratorService")
+
+    def __init__(self, template_id, recipients, use_docusign_renderer=True):
         DocuSignEnvelopeComponent.__init__(self, recipients)
         self.template_id = template_id
+        self.use_docusign_renderer = use_docusign_renderer
 
     def generate_composite_template(self):
+        if self.use_docusign_renderer:
+            return self.generate_server_pdfs()
+        else:
+            return self.generate_inline_pdfs()
 
+    def generate_server_pdfs(self):
         return {
-            "serverTemplates":[
+            "serverTemplates": [
                 {
                     "templateId": self.template_id,
                     "sequence": "1",
                 },
             ],
-            "inlineTemplates":[
+            "inlineTemplates": [
                 {
                     "sequence": "2",
                     "recipients": self.generate_recipients(),
                 }
             ]
         }
+
+    def generate_inline_pdfs(self):
+        tabs = []
+        for recipient in self.recipients:
+            tabs += self.generate_tabs(recipient)
+        pdf_bytes = self.pdf_generator_service.generate_form_pdf(self.template_id, tabs)
+        num_pages = self.get_num_pages(pdf_bytes)
+        return self.make_inline_doc_repr(
+            num_pages=num_pages,
+            pdf_bytes=pdf_bytes,
+            recipients=self.generate_recipients()
+        )
+
+    def get_num_pages(self, pdf_bytes):
+        reader = PdfFileReader(pdf_bytes)
+        num_pages = reader.getNumPages()
+        return num_pages
 
     def generate_tabs(self, recipient):
         return []
@@ -342,19 +397,10 @@ class BasePDFDoc(DocuSignEnvelopeComponent):
         self.generate()
 
         # Output DocuSign representation
-        return dict(
-            document=dict(
-                name=self.__class__.__name__,
-                sequence="1",
-                documentId="1",
-                pages=str(self.get_num_pages()),
-                fileExtension="pdf",
-                documentBase64=self.get_pdf_bytes(),
-            ),
-            inlineTemplates=[dict(
-                sequence="1",
-                recipients=self.generate_recipients(),
-            )],
+        return self.make_inline_doc_repr(
+            num_pages=self.get_num_pages(),
+            pdf_bytes=self.get_pdf_bytes(),
+            recipients=self.generate_recipients()
         )
 
     def get_num_pages(self):

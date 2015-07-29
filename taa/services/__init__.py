@@ -118,6 +118,7 @@ def initialize_services():
         EnrollmentRecordParser,
         EnrollmentApplicationCoverageService,
         EnrollmentReportService,
+        EnrollmentSubmissionService,
         ImagedFormGeneratorService,
         FormPDFRenderer,
         FormTemplateTabRepository,
@@ -148,6 +149,7 @@ def initialize_services():
     services_broker.Provide('EnrollmentApplicationService', EnrollmentApplicationService())
     services_broker.Provide('EnrollmentApplicationCoverageService', EnrollmentApplicationCoverageService())
     services_broker.Provide('EnrollmentImportService', EnrollmentImportService())
+    services_broker.Provide('EnrollmentSubmissionService', EnrollmentSubmissionService())
     services_broker.Provide('EnrollmentRecordParser', lambda: EnrollmentRecordParser)
     services_broker.Provide('SelfEnrollmentEmailService', SelfEnrollmentEmailService())
     services_broker.Provide('SelfEnrollmentLinkService', SelfEnrollmentLinkService())

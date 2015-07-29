@@ -1,8 +1,9 @@
 
-from decimal import Decimal
 import csv
 import datetime
 import dateutil.parser
+from decimal import Decimal
+import json
 import StringIO
 
 from taa.core import DBService, db
@@ -24,7 +25,11 @@ class EnrollmentApplicationService(DBService):
     case_service = RequiredFeature('CaseService')
     product_service = RequiredFeature('ProductService')
 
-    def save_enrollment_data(self, data, case, census_record, agent):
+    def save_enrollment_data(self, data, case, census_record, agent, received_data=None):
+        """
+        Save all the enrollment and coverage information, including creating a census record if required.
+            - received_data is to record the raw imported data that we have not standardized
+        """
 
         if not census_record:
             census_record = self.case_service.create_ad_hoc_census_record(case=case, data=data)
@@ -33,7 +38,7 @@ class EnrollmentApplicationService(DBService):
         self.case_service.update_census_record_from_enrollment(census_record, data)
 
         # Store extra enrollment data on the enrollment
-        enrollment = self._create_enrollment(census_record, data, agent)
+        enrollment = self._create_enrollment(census_record, data, agent, received_data=received_data)
 
         # Save coverages
         self._save_coverages(enrollment, data)
@@ -49,7 +54,7 @@ class EnrollmentApplicationService(DBService):
                 self.coverages_service.delete(coverage)
             self.delete(enrollment_application)
 
-    def _create_enrollment(self, census_record, data, agent):
+    def _create_enrollment(self, census_record, data, agent, received_data=None):
         # Link to census record and case, if it exists
         if census_record:
             case_id = census_record.case_id
@@ -104,6 +109,8 @@ class EnrollmentApplicationService(DBService):
         given_sig_time = data.get('time_stamp')
         signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
         enrollment_data = dict(
+            received_data=json.dumps(received_data),
+            standardized_data=json.dumps(data.as_dict()),
             case_id=case_id,
             census_record_id=census_record_id,
             application_status=EnrollmentApplication.APPLICATION_STATUS_ENROLLED,

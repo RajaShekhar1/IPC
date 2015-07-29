@@ -2,20 +2,20 @@ from flask import abort
 
 from taa.core import TAAFormError, db
 from taa.services import RequiredFeature
-from taa.services.docusign.docusign_envelope import \
-    EnrollmentDataWrap,\
-    create_envelope_recipients,\
-    create_fpp_envelope_components
+
 
 
 class EnrollmentProcessor(object):
+
     api_token_service = RequiredFeature("ApiTokenService")
     case_service = RequiredFeature("CaseService")
+
     enrollment_import_service = RequiredFeature("EnrollmentImportService")
     enrollment_service = RequiredFeature("EnrollmentApplicationService")
     enrollment_record_parser_service = RequiredFeature("EnrollmentRecordParser")
+    enrollment_submission = RequiredFeature("EnrollmentSubmissionService")
+
     file_import_service = RequiredFeature("FileImportService")
-    pdf_generator_service = RequiredFeature('ImagedFormGeneratorService')
     user_service = RequiredFeature("UserService")
 
     def __init__(self):
@@ -47,30 +47,16 @@ class EnrollmentProcessor(object):
             case = self.case_service.get(standardized_data['case_id'])
 
             # Save
-            enrollment_record = self.save_validated_data(standardized_data, case)
+            enrollment_record = self.save_validated_data(standardized_data, case, record)
 
-            # Create DocuSign tabs
-            data_wrap = EnrollmentDataWrap(standardized_data,
-                                           census_record=enrollment_record.census_record,
-                                           case=enrollment_record.case)
-            employee_recip, recipients = create_envelope_recipients(case, data_wrap)
-            components = create_fpp_envelope_components(data_wrap, recipients)
-            main_form = components[0]
-            tabs = []
-            for recipient in recipients:
-                tabs += main_form.generate_tabs(recipient)
-
-            # Create PDF
-            pdf_bytes = self.pdf_generator_service.generate_form_pdf(main_form.template_id, tabs)
-            import datetime
-            with open('test_pdfs/test_output-{}.pdf'.format(datetime.datetime.now()), 'wb+') as f:
-                f.write(pdf_bytes)
+            # Submit the enrollment
+            self.submit_imported_enrollment.submit_enrollment(enrollment_record)
 
         db.session.commit()
 
-    def save_validated_data(self, standardized_data, case):
+    def save_validated_data(self, standardized_data, case, raw_data):
         agent = case.owner_agent
-        return self.enrollment_service.save_enrollment_data(standardized_data, case, None, agent)
+        return self.enrollment_service.save_enrollment_data(standardized_data, case, None, agent, received_data=raw_data)
 
     def get_valid_data(self):
         return self.enrollment_record_parser.get_valid_data()
