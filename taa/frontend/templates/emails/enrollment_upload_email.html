@@ -47,21 +47,28 @@
               </tbody>
             </table>
             <p style="font-size:14px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">Agent,</p>
-
-            <p style="font-size:14px;margin-bottom:1em;padding-bottom:1em;border-bottom-color:rgb(205,205,205);border-bottom-width:1px;border-bottom-style:solid;color:rgb(119,119,119);font-family:arial">
-              Your recent upload of enrollment data failed.</p>
-              <br />
-              <strong align="center" style="display:block;width:100%;text-align:center;font-weight:bold;">Errors</strong>
-            </tr>
-            {% for error in errors %}
-            <tr>
-              <td align="center"
-              style="background-color:#ff7566;border-top-color:#ff4339;border-top-style:solid;border-top-width:1px;border-bottom-color:#ff4339;border-bottom-style:solid;border-bottom-width:1px">
-                    <strong style="font-weight:bold;">{{error.type}}: {{", ".join(error.fields)}}</strong><br />
-                    {{error.message}}
-              </td>
-            </tr>
-            {% endfor %}
+            {% if errors %}
+              <p style="font-size:14px;margin-bottom:1em;padding-bottom:1em;border-bottom-color:rgb(205,205,205);border-bottom-width:1px;border-bottom-style:solid;color:rgb(119,119,119);font-family:arial">
+                Your recent upload of enrollment data failed.</p>
+                <br />
+                <strong align="center" style="display:block;width:100%;text-align:center;font-weight:bold;">Errors</strong>
+              </tr>
+              {% for error in errors %}
+              <tr>
+                <td align="center"
+                style="background-color:#ff7566;border-top-color:#ff4339;border-top-style:solid;border-top-width:1px;border-bottom-color:#ff4339;border-bottom-style:solid;border-bottom-width:1px">
+                      <strong style="font-weight:bold;">{{error.type}}: {{", ".join(error.fields)}}</strong><br />
+                      {{error.message}}
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <p style="font-size:14px;margin-bottom:1em;padding-bottom:1em;border-bottom-color:rgb(205,205,205);border-bottom-width:1px;border-bottom-style:solid;color:rgb(119,119,119);font-family:arial">
+                Your recent upload of enrollment data completed successfully.</p>
+                <br />
+                <strong align="center" style="display:block;width:100%;text-align:center;font-weight:bold;">Errors</strong>
+              </tr>
+            {% endif %}
             <tr>
               <td align="center"
               style="background-color:rgb(244,244,244);border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;border-bottom-color:rgb(204,204,204);border-bottom-style:solid;border-bottom-width:1px">

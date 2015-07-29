@@ -27,10 +27,9 @@ def submit_data():
     )
 
     return {
-        'num_processed': import_results.get_num_processed()
+        'num_processed': import_results.get_num_processed(),
+        'num_errors': len(import_results.get_errors())
     }
-
-
 
     # data = request.json
     # case = case_service.get(data["agent_data"]["case_id"])
