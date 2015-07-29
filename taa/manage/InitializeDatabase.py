@@ -1,6 +1,4 @@
-from flask import current_app
-from flask_script import Command, prompt, prompt_pass, Option
-from werkzeug.datastructures import MultiDict
+from flask_script import Command, Option
 
 import uuid
 
@@ -28,15 +26,18 @@ class InitializeDatabaseCommand(Command):
             init_basic_data()
             init_drop_box()
 
+
 def init_drop_box():
-    new_token = uuid.uuid4().hex
-    api_token_service.create(**dict(
-        api_token=new_token,
-        name="DropBox User",
-        activated=True,
-        stormpath_url=""
-    ))
-    db.session.commit()
+    if not api_token_service.find(name="DropBox User").count():
+        new_token = uuid.uuid4().hex
+        api_token_service.create(**dict(
+            api_token=new_token,
+            name="DropBox User",
+            activated=True,
+            stormpath_url=""
+        ))
+        db.session.commit()
+
 
 def init_basic_data():
     product_data = [
@@ -66,8 +67,8 @@ def init_basic_data():
         ),
     ]
     for product in product_data:
-        print("Checking {}".format(product['code']))
+        #print("Checking {}".format(product['code']))
         if not product_service.find(code=product['code']).first():
             product_service.create(**product)
-            print("Product '{}' created successfully".format(product['code']))
+            #print("Product '{}' created successfully".format(product['code']))
     db.session.commit()
