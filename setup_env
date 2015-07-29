@@ -16,3 +16,4 @@ $ENV_BIN/python manage-taa.py initialize_db
 $ENV_BIN/python manage-taa.py sync_agents
 $ENV_BIN/python manage-taa.py add_brochure_links
 $ENV_BIN/python manage-taa.py check_case_tokens
+$ENV_BIN/python manage-taa.py import_docusign -f taa/services/enrollments/docusign_xml_templates 
