@@ -6,13 +6,9 @@ from taa.services.enrollments.enrollment_import import EnrollmentRecordParser
 
 class FileImportService(object):
     def get_flat_file_spec(self):
-        flat_file_spec = []
+        flat_file_spec = FlatFileSpec("record")
         for field in EnrollmentRecordParser.all_fields:
-            #self.dict_key_name = dict_key_name
-            #self.database_name = database_name
-            #self.description = description
-            #self.title = title
-            flat_file_spec.append(FlatFileFieldDefinition(
+            flat_file_spec.add_to_spec(FlatFileFieldDefinition(
                 size = field.flat_file_size,
                 csv_name = field.dict_key_name,
                 title = field.title,
@@ -20,15 +16,22 @@ class FileImportService(object):
             ))
         return flat_file_spec
 
+    def get_flat_file_header_spec(self):
+        flat_file_header_spec = FlatFileSpec("header")
+        flat_file_header_spec.add_standard_headers()
+        return flat_file_header_spec
+
     def process_flat_file_stream(self, file_obj, spec=None):
         """
-        Read in file data accordign to flat file syntax,
+        Read in file data according to flat file syntax,
             output as rows of dictionaries.
         If no spec is defined, use default flat_file_spec defined above
         """
+        header_spec=None
         if not spec:
             spec = self.get_flat_file_spec()
-        importer = FlatFileImporter(spec)
+            header_spec = self.get_flat_file_header_spec()
+        importer = FlatFileImporter(spec=spec, header_spec=header_spec)
         importer.import_file(file_obj)
         return importer
 
@@ -125,17 +128,57 @@ class FlatFileFieldDefinition(object):
         self.description = description
 
 
+class FlatFileSpec(object):
+    def __init__(self, type_name):
+        self.spec = []
+        self.type = type_name
+
+    def add_to_spec(self, definition):
+        if isinstance(definition, list):
+            self.spec+=definition
+        else:
+            self.spec.append(definition)
+
+    def get_spec(self):
+        return self.spec
+
+    def is_header_spec(self):
+        return self.type == "header"
+
+    def add_standard_headers(self):
+        self.add_to_spec([
+            FlatFileFieldDefinition(
+                size=16,
+                csv_name="FILE_TYPE",
+                title="File Type",
+                description="Must be TAA_ENROLLMENT"
+            ),
+            FlatFileFieldDefinition(
+                size=8,
+                csv_name="VERSION",
+                title="Version Number",
+                description="Must be 1.0"
+            ),
+            FlatFileFieldDefinition(
+                size=8,
+                csv_name="RECORD_COUNT",
+                title="Record Count",
+                description="Must match number of record in file"
+            )
+        ])
+
 class FlatFileDocumentation(object):
     fieldnames = ["Field", "From", "To", "Length", "Description"]
-    def __init__(self, spec):
-        self.spec = spec
+    def __init__(self, row_spec, header_spec=None):
+        self.header_spec = header_spec
+        self.row_spec = row_spec
 
     def toCSV(self, filename = None):
         output = cStringIO.StringIO()
         writer = csv.DictWriter(output, fieldnames=self.fieldnames, lineterminator="\n")
         writer.writeheader()
         distanceRead = 1
-        for s in self.spec:
+        for s in self.row_spec:
             writer.writerow({"Field":s.csv_name, "From":distanceRead, "To":distanceRead+s.size-1, "Length":s.size, "Description": s.description})
             distanceRead += s.size
         if filename:
@@ -149,29 +192,45 @@ class FlatFileDocumentation(object):
 <head>
 <body style="font-family:sans-serif;">
 <h1 style="text-align:center;">5Star Flat File Syntax Documentation</h1>
+<h2>Headers</h2>
+<table>
+{}
+</table>
+<h2>Rows</h2>
 <table>
 {}
 </table>
 </body>
 </html>
 """
-        table_rows = "<tr style='background:rgba(200,50,45,.2);'>{}</tr>\n".format("".join(["<th style='color:#fff;text-align:left;padding:0px 10px;'>{}</th>".format(fn) for fn in self.fieldnames]))
+        header_table_rows = ""
+        if self.header_spec:
+            header_table_headers = "".join(["<th style='color:#fff;text-align:left;padding:0px 10px;'>{}</th>".format(fn) for fn in self.fieldnames])
+            header_table_rows = "<tr style='background:rgba(200,50,45,.2);'>{}</tr>\n".format(header_table_headers)
+            distanceRead = 1
+            for s in self.header_spec.get_spec():
+                columns = ["<td>{}</td>".format(n) for n in [s.csv_name, distanceRead, distanceRead+s.size-1, s.size, s.description]]
+                header_table_rows+="<tr>{}</tr>\n".format("".join(columns))
+                distanceRead += s.size
+
+        table_headers = "".join(["<th style='color:#fff;text-align:left;padding:0px 10px;'>{}</th>".format(fn) for fn in self.fieldnames])
+        table_rows = "<tr style='background:rgba(200,50,45,.2);'>{}</tr>\n".format(table_headers)
         distanceRead = 1
-        for s in self.spec:
-            table_rows+="<tr>{}</tr>\n".format("<td>{}</td>\
-<td>{}</td>\
-<td>{}</td>\
-<td>{}</td>\
-<td>{}</td>".format(s.csv_name, distanceRead, distanceRead+s.size-1, s.size, s.description))
+
+        for s in self.row_spec.get_spec():
+            columns = ["<td>{}</td>".format(n) for n in [s.csv_name, distanceRead, distanceRead+s.size-1, s.size, s.description]]
+            table_rows+="<tr>{}</tr>\n".format("".join(columns))
             distanceRead += s.size
+
         if filename:
             with open(filename, "w+") as f:
-                f.write(template.format(table_rows))
-        return template.format(table_rows)
+                f.write(template.format(header_table_rows, table_rows))
+
+        return template.format(header_table_rows, table_rows)
 
     def toPDF(self, filename):
         """
-        Takes a file name and converts the html output from toHTML() to a PDF using Pandoc. It saves the PDF to the given file name and returns True if it was successful.
+        Takes a file name and converts the html output from toHTML() to a PDF using PDFKit. It saves the PDF to the given file name
         """
         import pdfkit
         html = self.toHTML()
@@ -179,15 +238,39 @@ class FlatFileDocumentation(object):
 
 
 class FlatFileImporter(object):
-    def __init__(self, spec, data=None):
-        self.spec = spec
+    def __init__(self, spec, data=None, header_spec=None):
+        self.spec = spec.get_spec()
+        if header_spec:
+            self.header_spec = header_spec.get_spec()
+        else:
+            self.header_spec = None
         self.data = data if data is not None else []
+        self.record_count = 0
         self.errors = []
+        self.headers = {}
 
     def import_file(self, file_obj):
         bytes = file_obj.read()
+        file_lines = bytes.splitlines()
+
+        if self.header_spec:
+            headers = file_lines[0]
+            records = file_lines[1:]
+        else:
+            records = file_lines
+        self.record_count = len(records)
+        if self.has_headers():
+            header_spec_size = reduce(lambda acc, spec: acc + spec.size, self.header_spec, 0)
+            if header_spec_size != len(headers):
+                self.errors.append("Expected a header line {} characters long. Recieved a line {} characters long.".format(header_spec_size, len(headers)))
+            else:
+                lineReader = cStringIO.StringIO(headers)
+                for s in self.header_spec:
+                    self.headers[s.csv_name.lower()] = lineReader.read(s.size).strip()
+                self.validate_headers()
+
         spec_size = reduce(lambda acc, spec: acc + spec.size, self.spec, 0)
-        for i, line in enumerate(bytes.splitlines()):
+        for i, line in enumerate(records):
             if spec_size != len(line):
                 self.errors.append("Line {}: Expected a line {} characters long. Recieved a line {} characters long.".format(i+1, spec_size, len(line)))
                 continue
@@ -196,11 +279,37 @@ class FlatFileImporter(object):
             for s in self.spec:
                 data[s.csv_name] = lineReader.read(s.size).strip()
             self.data.append(data)
+
     def get_data(self):
         return self.data
+
+    def get_headers(self):
+        return self.headers
+
+    def validate_headers(self):
+        if not self.headers["file_type"]=="TAA_ENROLLMENT":
+            expected = "TAA_ENROLLMENT"
+            self.errors.append("Expected FILE_TYPE header to be {} but got {}".format(expected, self.headers["file_type"]))
+        if not self.headers["version"]=="1.0":
+            expected = "1.0"
+            self.errors.append("Expected VERSION header to be {} but got {}".format(expected, self.headers["version"]))
+        if not int(self.headers["record_count"])==self.record_count:
+            expected = self.record_count
+            self.errors.append("Expected RECORD_COUNT header to be {} but got {}".format(expected, self.headers["record_count"]))
+
+    def has_headers(self):
+        return self.header_spec is not None
 
     def has_error(self):
         return bool(self.errors)
 
     def get_errors(self):
-        return self.errors
+        class FlatFileFormatError(object):
+            def __init__(self, message):
+                self.message = message
+            def to_json(self):
+                return {"type": "flat_file_format_error", "message": self.message}
+        return [HeaderError(message) for message in self.errors]
+
+    def get_error_message(self):
+        return "".join("Error {}: {}".format(i, message) for i, message in enumerate(self.errors))

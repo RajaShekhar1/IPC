@@ -32,7 +32,10 @@ class CSVToFlatFileCommand(Command):
         data is a list of dictionaries
         spec is a list of FlatFileFieldSpec objects
         """
-        return "\n".join([self.format_flat_file_record(row, spec) for row in data])
+        record_count = "{}{}".format(len(data), "".join([" " for i in range(0, 8-len(data))]))
+        header = "TAA_ENROLLMENT  1.0     {}".format(record_count)
+        records = "\n".join([self.format_flat_file_record(row, spec) for row in data])
+        return "{}\n{}".format(header, records)
 
     def format_flat_file_record(self, row, spec):
         row_text = ""

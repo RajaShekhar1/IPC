@@ -26,6 +26,7 @@ class EnrollmentProcessor(object):
         self.num_processed = 1
         self.enrollment_record_parser = None
         self.enrolling_agent = None
+        self.processed_data = []
 
     def process_enrollment_import_request(self, data, data_format, auth_token=None, case_token=None):
 
@@ -40,8 +41,8 @@ class EnrollmentProcessor(object):
 
     def validate_records(self, case_token, data, data_format):
         processed_data = self.extract_dictionaries(data, data_format)
+        self.processed_data = processed_data
         case_from_token = self.get_case(case_token)
-        self.enrolling_agent = self.get_user(processed_data[0].get("user_token"))
         # Process all records
         self.enrollment_record_parser = self.enrollment_record_parser_service()
         self.enrollment_record_parser.process_records(processed_data, case_from_token)
@@ -116,7 +117,7 @@ class EnrollmentProcessor(object):
 
     def send_errors_email(self):
         errors = self.get_errors()
-        if errors:
+        if self.enrolling_agent and errors:
             agent_email = self.enrolling_agent.email
             agent_name = "{} {}".format(self.enrolling_agent.first, self.enrolling_agent.last).capitalize()
             email_body = self._error_email_body()
@@ -176,6 +177,7 @@ class EnrollmentProcessor(object):
         elif data_format == "flat":
             result = self.file_import_service.process_flat_file_stream(data)
             if result.has_error():
+                self.errors += result.get_errors()
                 raise TAAFormError(result.get_error_message())
             return result.get_data()
 
