@@ -23,7 +23,6 @@ class EnrollmentProcessor(object):
 
     def __init__(self):
         self.errors = []
-        self.num_processed = 1
         self.enrollment_record_parser = None
         self.enrolling_agent = None
         self.processed_data = []
@@ -40,12 +39,11 @@ class EnrollmentProcessor(object):
         self.submit_validated_data()
 
     def validate_records(self, case_token, data, data_format):
-        processed_data = self.extract_dictionaries(data, data_format)
-        self.processed_data = processed_data
+        self.processed_data = self.extract_dictionaries(data, data_format)
         case_from_token = self.get_case(case_token)
         # Process all records
         self.enrollment_record_parser = self.enrollment_record_parser_service()
-        self.enrollment_record_parser.process_records(processed_data, case_from_token)
+        self.enrollment_record_parser.process_records(self.processed_data, case_from_token)
         for error in self.enrollment_record_parser.errors:
             self._add_error(error["type"], error["field_name"], error['message'])
 
@@ -88,7 +86,7 @@ class EnrollmentProcessor(object):
             abort(401, "Missing or invalid authentication token")
 
     def get_num_processed(self):
-        return self.num_processed
+        return len(self.processed_data)
 
     def _add_error(self, type, fields, message):
         error = EnrollmentImportError(type, fields, message)
@@ -116,19 +114,40 @@ class EnrollmentProcessor(object):
                                    )
 
     def send_errors_email(self):
-        errors = self.get_errors()
-        if self.enrolling_agent and errors:
-            agent_email = self.enrolling_agent.email
-            agent_name = "{} {}".format(self.enrolling_agent.first, self.enrolling_agent.last).capitalize()
-            email_body = self._error_email_body()
-            self._send_email(
-                from_email="errors@5Star.com",
-                from_name="5Star Enrollment",
-                to_email=agent_email,
-                to_name=agent_name,
-                subject="Your recent upload to 5Star Enrollment",
-                body=email_body
-                )
+
+        error_email = self.get_error_email()
+        if not error_email or not self.get_errors():
+            return
+
+        self._send_email(
+            from_email="support@5Starenroll.com",
+            from_name="5Star Enrollment",
+            to_email=error_email,
+            to_name=self.get_error_email_name(),
+            subject="Errors importing records to 5Star Enrollment",
+            body=self._error_email_body()
+            )
+
+    def get_error_email(self):
+        user = self.get_error_user()
+        if not user:
+            return None
+
+        return user.email
+
+    def get_error_email_name(self):
+        user = self.get_error_user()
+        if not user:
+            return None
+
+        return user.name
+
+    def get_error_user(self):
+        """Who to send errors to. Pull it from the auth_token"""
+        if not self.processed_data:
+            return None
+
+        return self.get_user(self.processed_data[0].get('auth_token'))
 
     def _send_email(self, from_email, from_name, to_email, to_name, subject,
                     body):

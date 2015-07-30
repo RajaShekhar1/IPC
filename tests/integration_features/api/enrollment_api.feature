@@ -71,7 +71,6 @@ Feature: Submit enrollments using the API
     When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token 'CASE-123'
     Then I should see a 400 response
 
-
   Scenario: It should save the enrollment data to the enrollment records table.
     Given I create a minimally valid CSV file with case_token 'CASE-123'
     When I submit the enrollment data to the API using the auth_token 'USER-123' and case_token 'CASE-123'
@@ -79,7 +78,6 @@ Feature: Submit enrollments using the API
     And I should see an enrollment record in the database with the following data
       | signature_time      | payment_mode |
       | 2015-01-01 10:30:00 | 12           |
-
 
   Scenario: It should process a flat file format.
     Given I create a minimally valid flat-file with case_token 'CASE-123'

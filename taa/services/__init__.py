@@ -119,7 +119,6 @@ def initialize_services():
         SelfEnrollmentLinkService,
         SelfEnrollmentEmailBatchService,
         EnrollmentImportService,
-        EnrollmentRecordParser,
         EnrollmentApplicationCoverageService,
         EnrollmentReportService,
         EnrollmentSubmissionService,
@@ -128,6 +127,7 @@ def initialize_services():
         FormTemplateTabRepository,
         merge_pdfs,
     )
+    from taa.services.enrollments import EnrollmentRecordParser
     from taa.services.products import (
         ProductService,
         ProductFormService,

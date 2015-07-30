@@ -318,17 +318,11 @@ def submit_enrollment_records():
     file = request.files["csv-file"]
     if not file:
         return "No File Submitted!"
-    lineData = [line.strip().split(",") for line in file]
-    data = []
-    headers = lineData.pop(0)
-    for line in lineData:
-        if line is not "":
-            curLine = {}
-            for i in range(0, len(line)):
-                curLine[headers[i].strip(' \t\r\n')] = line[i].strip(' \t\r\n')
-            data.append(curLine)
-    response = enrollment_import_service.submit_file_records(data)
-    if response.is_success():
+
+    import_service = LookupService("EnrollmentImportService")
+    result = import_service.process_enrollment_data(data=StringIO(file.read()), data_format='csv')
+
+    if result.is_success():
         return Response(json.dumps(data), status=200, mimetype='application/json')
     else:
         errors = [{"type": e.get_type(), "fields": e.get_fields(), "message": e.get_message()} for e in response.get_errors()]

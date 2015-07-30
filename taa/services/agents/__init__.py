@@ -1,6 +1,7 @@
 
 from flask_stormpath import current_user
 
+from taa.services import RequiredFeature
 from taa.core import DBService, db
 from models import Agent, ApiToken
 
@@ -8,6 +9,8 @@ import uuid
 
 
 class AgentService(DBService):
+
+    user_service = RequiredFeature("UserService")
 
     __model__ = Agent
 
@@ -64,13 +67,7 @@ class AgentService(DBService):
             return set()
 
     def get_agent_stormpath_account(self, agent):
-        from taa.frontend.views.admin import search_stormpath_accounts
-        agent_account = None
-        for account in search_stormpath_accounts():
-            if account.href == agent.stormpath_url:
-                agent_account = account
-
-        return agent_account
+        return self.user_service.get_stormpath_user_by_href(agent.stormpath_url)
 
     def get_active_agents(self):
         return self.query(
@@ -82,18 +79,24 @@ class AgentService(DBService):
 class ApiTokenService(DBService):
     __model__ = ApiToken
 
+    user_service = RequiredFeature("UserService")
+
     def get_token_by_sp_href(self, sp_href):
+        "Does a given user's StormPath href have an associated API auth token?"
         return self.find(stormpath_url=sp_href).first()
 
     def get_sp_user_by_token(self, token):
-        agent_service = AgentService()
-        from taa.frontend.views.admin import search_stormpath_accounts
-        token_user = self.find(api_token=token).first()
-        existing_agent = agent_service.find(stormpath_url=token_user.stormpath_url).first()
-        return existing_agent
+        token_row = self.get_row_by_token(token)
+        if not token_row:
+            return None
+        else:
+            return self.user_service.get_stormpath_user_by_href(token_row.stormpath_url)
 
     def is_valid_token(self, token):
-        return bool(self.find(api_token=token, activated=True).all())
+        return bool(self.get_row_by_token(token))
+
+    def get_row_by_token(self, token):
+        return self.find(api_token=token, activated=True).first()
 
     def create_new_token(self, name, sp_href, activated=False):
         new_token = self.create(**dict(

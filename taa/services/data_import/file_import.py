@@ -1,7 +1,7 @@
 import csv
 import cStringIO
 
-from taa.services.enrollments.enrollment_import import EnrollmentRecordParser
+from taa.services.enrollments import EnrollmentRecordParser
 
 
 class FileImportService(object):

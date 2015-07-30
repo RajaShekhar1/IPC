@@ -1,11 +1,10 @@
 from behave import use_step_matcher, given, then, when, step
-from hamcrest import assert_that, equal_to, has_items, has_item
+from hamcrest import assert_that, equal_to, has_items, has_item, greater_than_or_equal_to
 
 use_step_matcher("parse")
 
 from taa.services import LookupService, services_broker
-enrollment_import_service = LookupService('EnrollmentImportService')
-
+enrollment_parser_service = LookupService("EnrollmentRecordParser")
 
 # Environment stubs
 class MockApiTokenService(object):
@@ -245,27 +244,29 @@ def step_impl(context, statecode, product_code):
 
 @when(u"I submit the file to the Enrollment API")
 def step_impl(context):
-    context.result = enrollment_import_service.submit_file_records([context.import_record])
+    parser = enrollment_parser_service()
+    parser.process_records([context.import_record], case=None)
+    context.errors = parser.errors
+    context.records = parser.get_valid_data()
 
 @then(u'I should see a success response')
 def step_impl(context):
-    assert_that(context.result.is_success(), equal_to(True))
+    assert_that(len(context.errors), equal_to(0))
 
 
 @then(u'I should see the following errors in the response')
 def step_impl(context):
     expected_errors = [(row['error_type'], row['error_field']) for row in context.table]
-    actual_errors = [(e.get_type(), e.get_fields()[0] if e.get_fields() else "")
-                     for e in context.result.get_errors()]
+    actual_errors = [(e['type'], e['field_name'] if e['field_name'] else "")
+                     for e in context.errors]
 
     assert_that(actual_errors, has_items(*expected_errors))
-    assert_that(context.result.is_error(), equal_to(True))
+    assert_that(len(context.errors), greater_than_or_equal_to(1))
 
 
 @then("the parsed record should include the following attributes")
 def step_impl(context):
-    records = context.result.get_parsed_records()
-    record = records[0]
+    record = context.records[0]
     keys = [row['attribute_name'] for row in context.table]
     for key in keys:
         assert_that(record.keys(), has_item(key))

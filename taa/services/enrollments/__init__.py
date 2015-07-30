@@ -6,7 +6,8 @@ from enrollment_import import EnrollmentImportService
 # Export the services we provide
 from enrollment_application import EnrollmentApplicationService
 from enrollment_application_coverages import EnrollmentApplicationCoverageService
-from enrollment_import import EnrollmentImportService, EnrollmentRecordParser
+from enrollment_import import EnrollmentImportService
+from enrollment_record_parser import EnrollmentRecordParser
 from enrollment_import_processor import EnrollmentProcessor
 from enrollment_submission import EnrollmentSubmissionService
 from enrollment_reports import EnrollmentReportService
