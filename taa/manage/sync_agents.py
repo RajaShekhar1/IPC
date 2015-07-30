@@ -5,7 +5,7 @@ from werkzeug.datastructures import MultiDict
 
 from ..services.agents import AgentService
 from ..models import db
-from services.users.UserService import search_stormpath_accounts
+from taa.services.users.UserService import search_stormpath_accounts
 
 agent_service = AgentService()
 
