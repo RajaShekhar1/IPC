@@ -269,6 +269,7 @@ class EnrollmentRecordParser(object):
     case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator], flat_file_size=0, description="A token representing a case")
     product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [required_validator, product_validator], flat_file_size=5, description="A 5 character string representing the product")
     payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_numbers, [required_validator, payment_mode_validator], flat_file_size=2, description="A two digit number resenting the payment mode")
+    enrollment_type = EnrollmentRecordField("enrollment_type", "enrollment_type", preprocess_string, [required_validator], flat_file_size=2, description="'A' for Enroller-Assisted enrollment, 'S' for self-enrollment")
 
     # Employee Information
     emp_first = EnrollmentRecordField("emp_first", "employee_first", preprocess_string, [required_validator], flat_file_size=14, description="Employee first name")
@@ -386,6 +387,7 @@ class EnrollmentRecordParser(object):
         case_token,
         product_code,
         payment_mode,
+        enrollment_type,
 
         # Employee data
         emp_first,
