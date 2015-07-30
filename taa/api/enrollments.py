@@ -30,4 +30,5 @@ def submit_data():
     return {
         'num_processed': import_results.get_num_processed(),
         'num_errors': len(import_results.get_errors())
+        'errors': [error.to_json() for error in import_results.get_errors()]
     }, 400 if import_results.is_error() else 200

@@ -1,0 +1,221 @@
+
+<html>
+<head>
+<body style="font-family:sans-serif;">
+<h1 style="text-align:center;">5Star Flat File Syntax Documentation</h1>
+<h2>Headers</h2>
+<table>
+<tr style='background:rgba(200,50,45,.2);'><th style='color:#fff;text-align:left;padding:0px 10px;'>Field</th><th style='color:#fff;text-align:left;padding:0px 10px;'>From</th><th style='color:#fff;text-align:left;padding:0px 10px;'>To</th><th style='color:#fff;text-align:left;padding:0px 10px;'>Length</th><th style='color:#fff;text-align:left;padding:0px 10px;'>Description</th></tr>
+<tr><td>FILE_TYPE</td><td>1</td><td>16</td><td>16</td><td>Must be TAA_ENROLLMENT</td></tr>
+<tr><td>VERSION</td><td>17</td><td>24</td><td>8</td><td>Must be 1.0</td></tr>
+<tr><td>RECORD_COUNT</td><td>25</td><td>32</td><td>8</td><td>Must match number of record in file</td></tr>
+
+</table>
+<h2>Rows</h2>
+<table>
+<tr style='background:rgba(200,50,45,.2);'><th style='color:#fff;text-align:left;padding:0px 10px;'>Field</th><th style='color:#fff;text-align:left;padding:0px 10px;'>From</th><th style='color:#fff;text-align:left;padding:0px 10px;'>To</th><th style='color:#fff;text-align:left;padding:0px 10px;'>Length</th><th style='color:#fff;text-align:left;padding:0px 10px;'>Description</th></tr>
+<tr><td>user_token</td><td>1</td><td>64</td><td>64</td><td>A token representing the api user</td></tr>
+<tr><td>case_token</td><td>65</td><td>128</td><td>64</td><td>A token representing a case</td></tr>
+<tr><td>product_code</td><td>129</td><td>133</td><td>5</td><td>A 5 character string representing the product</td></tr>
+<tr><td>payment_mode</td><td>134</td><td>135</td><td>2</td><td>A two digit number resenting the payment mode</td></tr>
+<tr><td>emp_first</td><td>136</td><td>149</td><td>14</td><td>Employee first name</td></tr>
+<tr><td>emp_last</td><td>150</td><td>169</td><td>20</td><td>Employee last name</td></tr>
+<tr><td>emp_gender</td><td>170</td><td>170</td><td>1</td><td>Employee gender, either 'M' or 'F'</td></tr>
+<tr><td>emp_ssn</td><td>171</td><td>179</td><td>9</td><td>Employee SSN, format NNNNNNNNN</td></tr>
+<tr><td>emp_birthdate</td><td>180</td><td>189</td><td>10</td><td>Employee Birthday, format YYYY-MM-DD</td></tr>
+<tr><td>emp_coverage</td><td>190</td><td>195</td><td>6</td><td>Employee Coverage, format NNNNNN</td></tr>
+<tr><td>emp_premium</td><td>196</td><td>201</td><td>6</td><td>Employee Premium, format NN.NNN</td></tr>
+<tr><td>emp_street</td><td>202</td><td>230</td><td>29</td><td>Employee street address</td></tr>
+<tr><td>emp_street2</td><td>231</td><td>259</td><td>29</td><td>Employee street address 2</td></tr>
+<tr><td>emp_city</td><td>260</td><td>273</td><td>14</td><td>Employee city</td></tr>
+<tr><td>emp_state</td><td>274</td><td>275</td><td>2</td><td>2 character employee statecode</td></tr>
+<tr><td>emp_zipcode</td><td>276</td><td>284</td><td>9</td><td>Employee zipcode, up to 9 characters</td></tr>
+<tr><td>emp_phone</td><td>285</td><td>294</td><td>10</td><td>Employee phone number, format NNNNNNNNNN</td></tr>
+<tr><td>emp_date_of_hire</td><td>295</td><td>304</td><td>10</td><td></td></tr>
+<tr><td>sp_first</td><td>305</td><td>318</td><td>14</td><td>Spouse first name</td></tr>
+<tr><td>sp_last</td><td>319</td><td>338</td><td>20</td><td>Spouse last name</td></tr>
+<tr><td>sp_birthdate</td><td>339</td><td>348</td><td>10</td><td>Spouse birthdate, format YYYY-MM-DD</td></tr>
+<tr><td>sp_gender</td><td>349</td><td>349</td><td>1</td><td></td></tr>
+<tr><td>sp_street</td><td>350</td><td>378</td><td>29</td><td>Spouse street address</td></tr>
+<tr><td>sp_street2</td><td>379</td><td>407</td><td>29</td><td>Spouse street address 2</td></tr>
+<tr><td>sp_city</td><td>408</td><td>421</td><td>14</td><td>Spouse city</td></tr>
+<tr><td>sp_state</td><td>422</td><td>423</td><td>2</td><td>2 character Spouse statecode</td></tr>
+<tr><td>sp_zipcode</td><td>424</td><td>432</td><td>9</td><td>Spouse zipcode, up to 9 characters</td></tr>
+<tr><td>sp_phone</td><td>433</td><td>442</td><td>10</td><td>Spouse phone number, format NNNNNNNNNN</td></tr>
+<tr><td>sp_ssn</td><td>443</td><td>451</td><td>9</td><td></td></tr>
+<tr><td>sp_coverage</td><td>452</td><td>457</td><td>6</td><td></td></tr>
+<tr><td>sp_premium</td><td>458</td><td>463</td><td>6</td><td></td></tr>
+<tr><td>actively_at_work</td><td>464</td><td>464</td><td>1</td><td></td></tr>
+<tr><td>emp_email</td><td>465</td><td>504</td><td>40</td><td></td></tr>
+<tr><td>emp_height_inches</td><td>505</td><td>506</td><td>2</td><td></td></tr>
+<tr><td>emp_weight_pounds</td><td>507</td><td>509</td><td>3</td><td></td></tr>
+<tr><td>emp_smoker</td><td>510</td><td>510</td><td>1</td><td></td></tr>
+<tr><td>sp_street</td><td>511</td><td>539</td><td>29</td><td>Spouse street address</td></tr>
+<tr><td>sp_street2</td><td>540</td><td>568</td><td>29</td><td>Spouse street address 2</td></tr>
+<tr><td>sp_city</td><td>569</td><td>582</td><td>14</td><td>Spouse city</td></tr>
+<tr><td>sp_state</td><td>583</td><td>584</td><td>2</td><td>2 character Spouse statecode</td></tr>
+<tr><td>sp_zipcode</td><td>585</td><td>593</td><td>9</td><td>Spouse zipcode, up to 9 characters</td></tr>
+<tr><td>sp_phone</td><td>594</td><td>603</td><td>10</td><td>Spouse phone number, format NNNNNNNNNN</td></tr>
+<tr><td>existing_insurance</td><td>604</td><td>604</td><td>1</td><td></td></tr>
+<tr><td>replacing_insurance</td><td>605</td><td>605</td><td>1</td><td></td></tr>
+<tr><td>sp_treated_6_months</td><td>606</td><td>606</td><td>1</td><td></td></tr>
+<tr><td>sp_disabled_6_months</td><td>607</td><td>607</td><td>1</td><td></td></tr>
+<tr><td>replacement_read_aloud</td><td>608</td><td>608</td><td>1</td><td></td></tr>
+<tr><td>replacement_is_terminating</td><td>609</td><td>609</td><td>1</td><td></td></tr>
+<tr><td>replacement_using_funds</td><td>610</td><td>610</td><td>1</td><td></td></tr>
+<tr><td>replacement_policy1_name</td><td>611</td><td>630</td><td>20</td><td></td></tr>
+<tr><td>replacement_policy1_number</td><td>631</td><td>640</td><td>10</td><td></td></tr>
+<tr><td>replacement_policy1_insured</td><td>641</td><td>660</td><td>20</td><td></td></tr>
+<tr><td>replacement_policy1_replaced_or_financing</td><td>661</td><td>661</td><td>1</td><td></td></tr>
+<tr><td>replacement_policy1_reason</td><td>662</td><td>731</td><td>70</td><td></td></tr>
+<tr><td>emp_bene_name</td><td>732</td><td>771</td><td>40</td><td></td></tr>
+<tr><td>emp_bene_birthdate</td><td>772</td><td>779</td><td>8</td><td></td></tr>
+<tr><td>emp_bene_relationship</td><td>780</td><td>794</td><td>15</td><td></td></tr>
+<tr><td>emp_bene_ssn</td><td>795</td><td>803</td><td>9</td><td></td></tr>
+<tr><td>sp_bene_name</td><td>804</td><td>843</td><td>40</td><td></td></tr>
+<tr><td>sp_bene_birthdate</td><td>844</td><td>851</td><td>8</td><td></td></tr>
+<tr><td>sp_bene_relationship</td><td>852</td><td>866</td><td>15</td><td></td></tr>
+<tr><td>sp_bene_ssn</td><td>867</td><td>875</td><td>9</td><td></td></tr>
+<tr><td>emp_cont_bene_name</td><td>876</td><td>915</td><td>40</td><td></td></tr>
+<tr><td>emp_cont_bene_birthdate</td><td>916</td><td>923</td><td>8</td><td></td></tr>
+<tr><td>emp_cont_bene_relationship</td><td>924</td><td>938</td><td>15</td><td></td></tr>
+<tr><td>emp_cont_bene_ssn</td><td>939</td><td>947</td><td>9</td><td></td></tr>
+<tr><td>sp_cont_bene_name</td><td>948</td><td>987</td><td>40</td><td></td></tr>
+<tr><td>sp_cont_bene_birthdate</td><td>988</td><td>995</td><td>8</td><td></td></tr>
+<tr><td>sp_cont_bene_relationship</td><td>996</td><td>1010</td><td>15</td><td></td></tr>
+<tr><td>sp_cont_bene_ssn</td><td>1011</td><td>1019</td><td>9</td><td></td></tr>
+<tr><td>emp_pin</td><td>1020</td><td>1034</td><td>15</td><td>Employee pin, format NNNNNNNNNNNNNNN</td></tr>
+<tr><td>emp_sig_txt</td><td>1035</td><td>1104</td><td>70</td><td></td></tr>
+<tr><td>application_date</td><td>1105</td><td>1112</td><td>8</td><td></td></tr>
+<tr><td>time_stamp</td><td>1113</td><td>1131</td><td>19</td><td>Format:  YYYY-MM-DDThh-mm-ss</td></tr>
+<tr><td>signed_at_city</td><td>1132</td><td>1146</td><td>15</td><td></td></tr>
+<tr><td>signed_at_state</td><td>1147</td><td>1148</td><td>2</td><td></td></tr>
+<tr><td>agent_name</td><td>1149</td><td>1163</td><td>15</td><td></td></tr>
+<tr><td>agent_code</td><td>1164</td><td>1171</td><td>8</td><td></td></tr>
+<tr><td>agent_sig_txt</td><td>1172</td><td>1241</td><td>70</td><td></td></tr>
+<tr><td>ch1_first</td><td>1242</td><td>1255</td><td>14</td><td></td></tr>
+<tr><td>ch1_last</td><td>1256</td><td>1275</td><td>20</td><td></td></tr>
+<tr><td>ch1_birthdate</td><td>1276</td><td>1283</td><td>8</td><td></td></tr>
+<tr><td>ch1_gender</td><td>1284</td><td>1284</td><td>1</td><td></td></tr>
+<tr><td>ch1_ssn</td><td>1285</td><td>1293</td><td>9</td><td></td></tr>
+<tr><td>ch1_coverage</td><td>1294</td><td>1299</td><td>6</td><td></td></tr>
+<tr><td>ch1_premium</td><td>1300</td><td>1305</td><td>6</td><td></td></tr>
+<tr><td>ch2_first</td><td>1306</td><td>1319</td><td>14</td><td></td></tr>
+<tr><td>ch2_last</td><td>1320</td><td>1339</td><td>20</td><td></td></tr>
+<tr><td>ch2_birthdate</td><td>1340</td><td>1347</td><td>8</td><td></td></tr>
+<tr><td>ch2_gender</td><td>1348</td><td>1348</td><td>1</td><td></td></tr>
+<tr><td>ch2_ssn</td><td>1349</td><td>1357</td><td>9</td><td></td></tr>
+<tr><td>ch2_coverage</td><td>1358</td><td>1363</td><td>6</td><td></td></tr>
+<tr><td>ch2_premium</td><td>1364</td><td>1369</td><td>6</td><td></td></tr>
+<tr><td>ch3_first</td><td>1370</td><td>1383</td><td>14</td><td></td></tr>
+<tr><td>ch3_last</td><td>1384</td><td>1403</td><td>20</td><td></td></tr>
+<tr><td>ch3_birthdate</td><td>1404</td><td>1411</td><td>8</td><td></td></tr>
+<tr><td>ch3_gender</td><td>1412</td><td>1412</td><td>1</td><td></td></tr>
+<tr><td>ch3_ssn</td><td>1413</td><td>1421</td><td>9</td><td></td></tr>
+<tr><td>ch3_coverage</td><td>1422</td><td>1427</td><td>6</td><td></td></tr>
+<tr><td>ch3_premium</td><td>1428</td><td>1433</td><td>6</td><td></td></tr>
+<tr><td>ch4_first</td><td>1434</td><td>1447</td><td>14</td><td></td></tr>
+<tr><td>ch4_last</td><td>1448</td><td>1467</td><td>20</td><td></td></tr>
+<tr><td>ch4_birthdate</td><td>1468</td><td>1475</td><td>8</td><td></td></tr>
+<tr><td>ch4_gender</td><td>1476</td><td>1476</td><td>1</td><td></td></tr>
+<tr><td>ch4_ssn</td><td>1477</td><td>1485</td><td>9</td><td></td></tr>
+<tr><td>ch4_coverage</td><td>1486</td><td>1491</td><td>6</td><td></td></tr>
+<tr><td>ch4_premium</td><td>1492</td><td>1497</td><td>6</td><td></td></tr>
+<tr><td>ch5_first</td><td>1498</td><td>1511</td><td>14</td><td></td></tr>
+<tr><td>ch5_last</td><td>1512</td><td>1531</td><td>20</td><td></td></tr>
+<tr><td>ch5_birthdate</td><td>1532</td><td>1539</td><td>8</td><td></td></tr>
+<tr><td>ch5_gender</td><td>1540</td><td>1540</td><td>1</td><td></td></tr>
+<tr><td>ch5_ssn</td><td>1541</td><td>1549</td><td>9</td><td></td></tr>
+<tr><td>ch5_coverage</td><td>1550</td><td>1555</td><td>6</td><td></td></tr>
+<tr><td>ch5_premium</td><td>1556</td><td>1561</td><td>6</td><td></td></tr>
+<tr><td>ch6_first</td><td>1562</td><td>1575</td><td>14</td><td></td></tr>
+<tr><td>ch6_last</td><td>1576</td><td>1595</td><td>20</td><td></td></tr>
+<tr><td>ch6_birthdate</td><td>1596</td><td>1603</td><td>8</td><td></td></tr>
+<tr><td>ch6_gender</td><td>1604</td><td>1604</td><td>1</td><td></td></tr>
+<tr><td>ch6_ssn</td><td>1605</td><td>1613</td><td>9</td><td></td></tr>
+<tr><td>ch6_coverage</td><td>1614</td><td>1619</td><td>6</td><td></td></tr>
+<tr><td>ch6_premium</td><td>1620</td><td>1625</td><td>6</td><td></td></tr>
+<tr><td>ch1_question_1_answer</td><td>1626</td><td>1626</td><td>1</td><td></td></tr>
+<tr><td>ch2_question_1_answer</td><td>1627</td><td>1627</td><td>1</td><td></td></tr>
+<tr><td>ch3_question_1_answer</td><td>1628</td><td>1628</td><td>1</td><td></td></tr>
+<tr><td>ch4_question_1_answer</td><td>1629</td><td>1629</td><td>1</td><td></td></tr>
+<tr><td>ch5_question_1_answer</td><td>1630</td><td>1630</td><td>1</td><td></td></tr>
+<tr><td>ch6_question_1_answer</td><td>1631</td><td>1631</td><td>1</td><td></td></tr>
+<tr><td>emp_question_1_answer</td><td>1632</td><td>1632</td><td>1</td><td></td></tr>
+<tr><td>sp_question_1_answer</td><td>1633</td><td>1633</td><td>1</td><td></td></tr>
+<tr><td>ch1_question_2_answer</td><td>1634</td><td>1634</td><td>1</td><td></td></tr>
+<tr><td>ch2_question_2_answer</td><td>1635</td><td>1635</td><td>1</td><td></td></tr>
+<tr><td>ch3_question_2_answer</td><td>1636</td><td>1636</td><td>1</td><td></td></tr>
+<tr><td>ch4_question_2_answer</td><td>1637</td><td>1637</td><td>1</td><td></td></tr>
+<tr><td>ch5_question_2_answer</td><td>1638</td><td>1638</td><td>1</td><td></td></tr>
+<tr><td>ch6_question_2_answer</td><td>1639</td><td>1639</td><td>1</td><td></td></tr>
+<tr><td>emp_question_2_answer</td><td>1640</td><td>1640</td><td>1</td><td></td></tr>
+<tr><td>sp_question_2_answer</td><td>1641</td><td>1641</td><td>1</td><td></td></tr>
+<tr><td>ch1_question_3_answer</td><td>1642</td><td>1642</td><td>1</td><td></td></tr>
+<tr><td>ch2_question_3_answer</td><td>1643</td><td>1643</td><td>1</td><td></td></tr>
+<tr><td>ch3_question_3_answer</td><td>1644</td><td>1644</td><td>1</td><td></td></tr>
+<tr><td>ch4_question_3_answer</td><td>1645</td><td>1645</td><td>1</td><td></td></tr>
+<tr><td>ch5_question_3_answer</td><td>1646</td><td>1646</td><td>1</td><td></td></tr>
+<tr><td>ch6_question_3_answer</td><td>1647</td><td>1647</td><td>1</td><td></td></tr>
+<tr><td>emp_question_3_answer</td><td>1648</td><td>1648</td><td>1</td><td></td></tr>
+<tr><td>sp_question_3_answer</td><td>1649</td><td>1649</td><td>1</td><td></td></tr>
+<tr><td>ch1_question_4_answer</td><td>1650</td><td>1650</td><td>1</td><td></td></tr>
+<tr><td>ch2_question_4_answer</td><td>1651</td><td>1651</td><td>1</td><td></td></tr>
+<tr><td>ch3_question_4_answer</td><td>1652</td><td>1652</td><td>1</td><td></td></tr>
+<tr><td>ch4_question_4_answer</td><td>1653</td><td>1653</td><td>1</td><td></td></tr>
+<tr><td>ch5_question_4_answer</td><td>1654</td><td>1654</td><td>1</td><td></td></tr>
+<tr><td>ch6_question_4_answer</td><td>1655</td><td>1655</td><td>1</td><td></td></tr>
+<tr><td>emp_question_4_answer</td><td>1656</td><td>1656</td><td>1</td><td></td></tr>
+<tr><td>sp_question_4_answer</td><td>1657</td><td>1657</td><td>1</td><td></td></tr>
+<tr><td>ch1_question_5_answer</td><td>1658</td><td>1658</td><td>1</td><td></td></tr>
+<tr><td>ch2_question_5_answer</td><td>1659</td><td>1659</td><td>1</td><td></td></tr>
+<tr><td>ch3_question_5_answer</td><td>1660</td><td>1660</td><td>1</td><td></td></tr>
+<tr><td>ch4_question_5_answer</td><td>1661</td><td>1661</td><td>1</td><td></td></tr>
+<tr><td>ch5_question_5_answer</td><td>1662</td><td>1662</td><td>1</td><td></td></tr>
+<tr><td>ch6_question_5_answer</td><td>1663</td><td>1663</td><td>1</td><td></td></tr>
+<tr><td>emp_question_5_answer</td><td>1664</td><td>1664</td><td>1</td><td></td></tr>
+<tr><td>sp_question_5_answer</td><td>1665</td><td>1665</td><td>1</td><td></td></tr>
+<tr><td>ch1_question_6_answer</td><td>1666</td><td>1666</td><td>1</td><td></td></tr>
+<tr><td>ch2_question_6_answer</td><td>1667</td><td>1667</td><td>1</td><td></td></tr>
+<tr><td>ch3_question_6_answer</td><td>1668</td><td>1668</td><td>1</td><td></td></tr>
+<tr><td>ch4_question_6_answer</td><td>1669</td><td>1669</td><td>1</td><td></td></tr>
+<tr><td>ch5_question_6_answer</td><td>1670</td><td>1670</td><td>1</td><td></td></tr>
+<tr><td>ch6_question_6_answer</td><td>1671</td><td>1671</td><td>1</td><td></td></tr>
+<tr><td>emp_question_6_answer</td><td>1672</td><td>1672</td><td>1</td><td></td></tr>
+<tr><td>sp_question_6_answer</td><td>1673</td><td>1673</td><td>1</td><td></td></tr>
+<tr><td>ch1_question_7_answer</td><td>1674</td><td>1674</td><td>1</td><td></td></tr>
+<tr><td>ch2_question_7_answer</td><td>1675</td><td>1675</td><td>1</td><td></td></tr>
+<tr><td>ch3_question_7_answer</td><td>1676</td><td>1676</td><td>1</td><td></td></tr>
+<tr><td>ch4_question_7_answer</td><td>1677</td><td>1677</td><td>1</td><td></td></tr>
+<tr><td>ch5_question_7_answer</td><td>1678</td><td>1678</td><td>1</td><td></td></tr>
+<tr><td>ch6_question_7_answer</td><td>1679</td><td>1679</td><td>1</td><td></td></tr>
+<tr><td>emp_question_7_answer</td><td>1680</td><td>1680</td><td>1</td><td></td></tr>
+<tr><td>sp_question_7_answer</td><td>1681</td><td>1681</td><td>1</td><td></td></tr>
+<tr><td>ch1_question_8_answer</td><td>1682</td><td>1682</td><td>1</td><td></td></tr>
+<tr><td>ch2_question_8_answer</td><td>1683</td><td>1683</td><td>1</td><td></td></tr>
+<tr><td>ch3_question_8_answer</td><td>1684</td><td>1684</td><td>1</td><td></td></tr>
+<tr><td>ch4_question_8_answer</td><td>1685</td><td>1685</td><td>1</td><td></td></tr>
+<tr><td>ch5_question_8_answer</td><td>1686</td><td>1686</td><td>1</td><td></td></tr>
+<tr><td>ch6_question_8_answer</td><td>1687</td><td>1687</td><td>1</td><td></td></tr>
+<tr><td>emp_question_8_answer</td><td>1688</td><td>1688</td><td>1</td><td></td></tr>
+<tr><td>sp_question_8_answer</td><td>1689</td><td>1689</td><td>1</td><td></td></tr>
+<tr><td>ch1_question_9_answer</td><td>1690</td><td>1690</td><td>1</td><td></td></tr>
+<tr><td>ch2_question_9_answer</td><td>1691</td><td>1691</td><td>1</td><td></td></tr>
+<tr><td>ch3_question_9_answer</td><td>1692</td><td>1692</td><td>1</td><td></td></tr>
+<tr><td>ch4_question_9_answer</td><td>1693</td><td>1693</td><td>1</td><td></td></tr>
+<tr><td>ch5_question_9_answer</td><td>1694</td><td>1694</td><td>1</td><td></td></tr>
+<tr><td>ch6_question_9_answer</td><td>1695</td><td>1695</td><td>1</td><td></td></tr>
+<tr><td>emp_question_9_answer</td><td>1696</td><td>1696</td><td>1</td><td></td></tr>
+<tr><td>sp_question_9_answer</td><td>1697</td><td>1697</td><td>1</td><td></td></tr>
+<tr><td>ch1_question_10_answer</td><td>1698</td><td>1698</td><td>1</td><td></td></tr>
+<tr><td>ch2_question_10_answer</td><td>1699</td><td>1699</td><td>1</td><td></td></tr>
+<tr><td>ch3_question_10_answer</td><td>1700</td><td>1700</td><td>1</td><td></td></tr>
+<tr><td>ch4_question_10_answer</td><td>1701</td><td>1701</td><td>1</td><td></td></tr>
+<tr><td>ch5_question_10_answer</td><td>1702</td><td>1702</td><td>1</td><td></td></tr>
+<tr><td>ch6_question_10_answer</td><td>1703</td><td>1703</td><td>1</td><td></td></tr>
+<tr><td>emp_question_10_answer</td><td>1704</td><td>1704</td><td>1</td><td></td></tr>
+<tr><td>sp_question_10_answer</td><td>1705</td><td>1705</td><td>1</td><td></td></tr>
+
+</table>
+</body>
+</html>
