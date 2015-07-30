@@ -116,6 +116,7 @@ def step_impl(context):
         case_token='XYZ',
         product_code='FPPTI',
         payment_mode='52',
+        enrollment_type='S',
         emp_first='Joe',
         emp_last='Johnson',
         emp_gender='m',

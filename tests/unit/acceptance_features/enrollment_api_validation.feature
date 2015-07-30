@@ -13,8 +13,8 @@ Feature: Validate an enrollment record submitted via API.
 
   Scenario: Submit an enrollment with the minimal data needed to validate.
     Given I prepare an enrollment file with data
-      | user_token | case_token | product_code | payment_mode |
-      | ABC        | XYZ        | FPPTI        | 52           |
+      | user_token | case_token | product_code | payment_mode | enrollment_type |
+      | ABC        | XYZ        | FPPTI        | 52           | S               |
     And I add the following enrollment data columns
       | emp_first | emp_last | emp_birthdate | emp_ssn     | emp_coverage | emp_premium | emp_gender |
       | Joe       | Johnson  | 1990-01-01    | 123-12-1234 | 50000        | 10.00       | m          |
