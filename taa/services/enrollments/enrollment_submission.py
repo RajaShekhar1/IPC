@@ -1,8 +1,10 @@
 import json
 
+from taa.config_defaults import DOCUSIGN_CC_RECIPIENTS
 from taa.services import RequiredFeature
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
 from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient, CarbonCopyRecipient
+
 
 class EnrollmentSubmissionService(object):
     def submit_imported_enrollment(self, enrollment_record):
@@ -23,9 +25,12 @@ class EnrollmentSubmissionProcessor(object):
         data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data),
                                        census_record=enrollment_record.census_record,
                                        case=enrollment_record.case)
-        #employee_recip, recipients = self.docusign_service.create_envelope_recipients(enrollment_record.case, data_wrap)
         recipients = self._create_import_recipients(enrollment_record.case, data_wrap)
-        components = self.docusign_service.create_fpp_envelope_components(data_wrap, recipients, should_use_docusign_renderer=False)
+        components = self.docusign_service.create_fpp_envelope_components(
+            data_wrap,
+            recipients,
+            should_use_docusign_renderer=False
+        )
 
         # Generate envelope
         envelope = self.docusign_service.create_envelope(
@@ -48,9 +53,11 @@ class EnrollmentSubmissionProcessor(object):
                                      email=enrollment_data.get_employee_email(),
                                      exclude_from_envelope=True),
         ]
-        recipients += self._get_carbon_copy_recipients(enrollment_data)
+        recipients += self._get_carbon_copy_recipients()
         return recipients
 
-    def _get_carbon_copy_recipients(self, enrollment_data):
-
-        return [CarbonCopyRecipient("Zach Mason", "zach@zachmason.com")]
+    def _get_carbon_copy_recipients(self):
+        return [
+            CarbonCopyRecipient(name, email)
+            for name, email in DOCUSIGN_CC_RECIPIENTS
+        ]

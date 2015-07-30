@@ -28,40 +28,50 @@ class EnrollmentProcessor(object):
         self.enrolling_agent = None
 
     def process_enrollment_import_request(self, data, data_format, auth_token=None, case_token=None):
-        # Instantiate new record parser
-
-        self.enrollment_record_parser = self.enrollment_record_parser_service()
 
         self.authenticate_user(auth_token)
+
+        self.validate_records(case_token, data, data_format)
+
+        if self.errors:
+            self.raise_error_exception()
+
+        self.submit_validated_data()
+
+    def validate_records(self, case_token, data, data_format):
         processed_data = self.extract_dictionaries(data, data_format)
         case_from_token = self.get_case(case_token)
         self.enrolling_agent = self.get_user(processed_data[0].get("user_token"))
-
         # Process all records
+        self.enrollment_record_parser = self.enrollment_record_parser_service()
         self.enrollment_record_parser.process_records(processed_data, case_from_token)
-
         for error in self.enrollment_record_parser.errors:
             self._add_error(error["type"], error["field_name"], error['message'])
 
-        if self.errors:
-            raise TAAFormError(errors=[e.to_json() for e in self.errors])
-
+    def submit_validated_data(self):
         for record in self.get_valid_data():
             # Standardize
             standardized_data = self.enrollment_import_service.standardize_imported_data(record, method='api_import')
-            case = self.case_service.get(standardized_data['case_id'])
 
             # Save
-            enrollment_record = self.save_validated_data(standardized_data, case, record)
+            enrollment_record = self.save_validated_data(standardized_data, record)
 
             # Submit the enrollment
             self.enrollment_submission.submit_imported_enrollment(enrollment_record)
-
         db.session.commit()
 
-    def save_validated_data(self, standardized_data, case, raw_data):
-        agent = case.owner_agent
-        return self.enrollment_service.save_enrollment_data(standardized_data, case, None, agent, received_data=raw_data)
+    def save_validated_data(self, standardized_data, raw_data):
+        case = self.case_service.get(standardized_data['case_id'])
+        return self.enrollment_service.save_enrollment_data(
+            standardized_data,
+            case,
+            None,
+            case.owner_agent,
+            received_data=raw_data,
+        )
+
+    def raise_error_exception(self):
+        raise TAAFormError(errors=[e.to_json() for e in self.errors])
 
     def get_valid_data(self):
         return self.enrollment_record_parser.get_valid_data()
@@ -93,29 +103,6 @@ class EnrollmentProcessor(object):
     def get_errors(self):
         return self.errors
 
-    def _send_email(self, from_email, from_name, to_email, to_name, subject,
-                    body):
-        try:
-            mandrill_flask.send_email(
-                to=[{'email': to_email, 'name': to_name}],
-                from_email=from_email,
-                from_name=from_name,
-                subject=subject,
-                html=body,
-                auto_text=True,
-            )
-        except mandrill.Error as e:
-            print("Exception sending email: %s - %s; to %s"%(e.__class__, e, to_email))
-            return False
-        except requests.exceptions.HTTPError as e:
-            print("Exception sending email: %s - %s; to %s"%(e.__class__, e, to_email))
-            return False
-        except Exception as e:
-            print "Exception sending email: %s - %s"%(e.__class__, e)
-            return False
-
-        return True
-
     def _error_email_body(self):
         if self.is_success():
             return render_template('emails/enrollment_upload_email.html',
@@ -142,9 +129,29 @@ class EnrollmentProcessor(object):
                 body=email_body
                 )
 
-    def process_wizard_enrollment_request(self, case_id, auth_token=None):
-        pass
+    def _send_email(self, from_email, from_name, to_email, to_name, subject,
+                    body):
+        try:
+            mandrill_flask.send_email(
+                to=[{'email': to_email, 'name': to_name}],
+                from_email=from_email,
+                from_name=from_name,
+                subject=subject,
+                html=body,
+                auto_text=True,
+            )
+        except mandrill.Error as e:
+            print("Exception sending email: %s - %s; to %s"%(e.__class__, e, to_email))
+            return False
+        except requests.exceptions.HTTPError as e:
+            print("Exception sending email: %s - %s; to %s"%(e.__class__, e, to_email))
+            return False
+        except Exception as e:
+            print "Exception sending email: %s - %s"%(e.__class__, e)
+            return False
 
+        return True
+    
     def get_case(self, case_token):
         if case_token:
             case = self.case_service.get_case_for_token(case_token)
@@ -164,7 +171,8 @@ class EnrollmentProcessor(object):
             result = self.file_import_service.process_delimited_file_stream(data)
             if result.has_error():
                 raise TAAFormError(result.get_error_message())
-            return result.get_rows()
+            rows = result.get_rows()
+            return rows
         elif data_format == "flat":
             result = self.file_import_service.process_flat_file_stream(data)
             if result.has_error():
