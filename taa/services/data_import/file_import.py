@@ -21,15 +21,15 @@ class FileImportService(object):
         flat_file_header_spec.add_standard_headers()
         return flat_file_header_spec
 
-    def process_flat_file_stream(self, file_obj, spec=None):
+    def process_flat_file_stream(self, file_obj, spec=None, header_spec=None):
         """
         Read in file data according to flat file syntax,
             output as rows of dictionaries.
         If no spec is defined, use default flat_file_spec defined above
         """
-        header_spec=None
         if not spec:
             spec = self.get_flat_file_spec()
+        if not header_spec:
             header_spec = self.get_flat_file_header_spec()
         importer = FlatFileImporter(spec=spec, header_spec=header_spec)
         importer.import_file(file_obj)
@@ -164,6 +164,18 @@ class FlatFileSpec(object):
                 csv_name="RECORD_COUNT",
                 title="Record Count",
                 description="Must match number of record in file"
+            ),
+            FlatFileFieldDefinition(
+                size=64,
+                csv_name="USER_TOKEN",
+                title="User Token",
+                description="The API token representing the uploading user"
+            ),
+            FlatFileFieldDefinition(
+                size=64,
+                csv_name="CASE_TOKEN",
+                title="Case Token",
+                description="The token representing the enrolling case"
             )
         ])
 
@@ -252,7 +264,6 @@ class FlatFileImporter(object):
     def import_file(self, file_obj):
         bytes = file_obj.read()
         file_lines = bytes.splitlines()
-
         if self.header_spec:
             headers = file_lines[0]
             records = file_lines[1:]
@@ -275,10 +286,16 @@ class FlatFileImporter(object):
                 self.errors.append("Line {}: Expected a line {} characters long. Recieved a line {} characters long.".format(i+1, spec_size, len(line)))
                 continue
             lineReader = cStringIO.StringIO(line)
-            data = {}
+            data = {
+                "user_token":self.headers.get("user_token"),
+                "case_token":self.headers.get("case_token")
+            }
             for s in self.spec:
+                if s.csv_name == "user_token" or s.csv_name == "case_token":
+                    continue
                 data[s.csv_name] = lineReader.read(s.size).strip()
             self.data.append(data)
+
 
     def get_data(self):
         return self.data
@@ -304,12 +321,13 @@ class FlatFileImporter(object):
         return bool(self.errors)
 
     def get_errors(self):
-        class FlatFileFormatError(object):
-            def __init__(self, message):
-                self.message = message
-            def to_json(self):
-                return {"type": "flat_file_format_error", "message": self.message}
-        return [HeaderError(message) for message in self.errors]
+        return [FlatFileFormatError(message) for message in self.errors]
 
     def get_error_message(self):
         return "".join("Error {}: {}".format(i, message) for i, message in enumerate(self.errors))
+
+class FlatFileFormatError(object):
+    def __init__(self, message):
+        self.message = message
+    def to_json(self):
+        return {"type": "flat_file_format_error", "message": self.message}

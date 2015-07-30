@@ -7,7 +7,6 @@ from taa import mandrill_flask
 from taa.core import TAAFormError, db
 from taa.services import RequiredFeature
 
-
 class EnrollmentProcessor(object):
 
     api_token_service = RequiredFeature("ApiTokenService")
