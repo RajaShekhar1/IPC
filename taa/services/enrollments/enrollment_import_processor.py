@@ -1,10 +1,11 @@
 from flask import abort, render_template
 
+import requests
 import mandrill
+
 from taa import mandrill_flask
 from taa.core import TAAFormError, db
 from taa.services import RequiredFeature
-
 
 
 class EnrollmentProcessor(object):

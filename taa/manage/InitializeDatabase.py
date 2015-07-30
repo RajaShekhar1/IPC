@@ -28,8 +28,8 @@ class InitializeDatabaseCommand(Command):
 
 
 def init_drop_box():
-    if not api_token_service.find(name="DropBox User").count():
-        token = api_token_service.create_new_token(name="DropBox User", sp_href="", activated=True)
+    if not api_token_service.find(name=u"DropBox User").count():
+        token = api_token_service.create_new_token(name=u"DropBox User", sp_href=u"", activated=True)
         print("The Drop Box API token is {}".format(token))
         db.session.commit()
 

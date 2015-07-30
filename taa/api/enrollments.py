@@ -10,6 +10,7 @@ bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
 case_service = LookupService("CaseService")
 enrollment_import_service = LookupService("EnrollmentImportService")
 
+
 @route(bp, '/', methods=["POST"])
 def submit_data():
     case_token = request.args.get('case_token')
@@ -29,39 +30,4 @@ def submit_data():
     return {
         'num_processed': import_results.get_num_processed(),
         'num_errors': len(import_results.get_errors())
-    }
-
-    # data = request.json
-    # case = case_service.get(data["agent_data"]["case_id"])
-    # # Save enrollment information and updated census data prior to
-    # # DocuSign hand-off
-    # if data['census_record_id']:
-    #     census_record = case_service.get_census_record(
-    #         case, data['census_record_id'])
-    # else:
-    #     census_record = None
-    # agent = agent_service.get_logged_in_agent()
-    # enrollment_application = enrollment_service.save_enrollment_data(
-    #     data, case, census_record, agent)
-    #
-    #
-    # if not data.get('did_decline'):
-    #     # Hand off wizard_results to docusign
-    #     is_error, error_message, redirect = create_envelope_and_get_signing_url(data, census_record, case)
-    #     # Return the redirect url or error
-    #     resp = {'error': is_error,
-    #             'error_message': error_message,
-    #             'redirect': redirect}
-    # else:
-    #     # Declined
-    #     resp = {
-    #         'error': False,
-    #         'error_message': '',
-    #         'redirect': url_for('ds_landing_page',
-    #                             event='decline',
-    #                             name=data['employee']['first'],
-    #                             type=data["agent_data"]["is_in_person"],
-    #                             )
-    #     }
-    #
-    # return resp
+    }, 400 if import_results.is_error() else 200

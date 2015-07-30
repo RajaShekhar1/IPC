@@ -6,6 +6,7 @@ from models import Agent, ApiToken
 
 import uuid
 
+
 class AgentService(DBService):
 
     __model__ = Agent
@@ -70,9 +71,6 @@ class AgentService(DBService):
                 agent_account = account
 
         return agent_account
-
-    #def get_agent_from_stormpath_account(self, stormpath_account_url):
-    #    pass
 
     def get_active_agents(self):
         return self.query(
