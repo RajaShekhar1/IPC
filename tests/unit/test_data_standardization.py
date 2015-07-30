@@ -5,7 +5,7 @@ from hamcrest import assert_that, equal_to, has_entries, contains
 from mock import Mock, sentinel
 
 from taa.services.enrollments.enrollment_import import EnrollmentImportService
-from services.enrollments import EnrollmentRecordParser
+from taa.services.enrollments import EnrollmentRecordParser
 
 
 class TestDataStandardization(TestCase):
