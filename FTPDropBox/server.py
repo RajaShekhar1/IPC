@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler, TLS_FTPHandler
 from pyftpdlib.servers import FTPServer
@@ -6,7 +7,10 @@ import os
 import requests
 import sys
 
-API_URL = ""
+port = ""
+certfile = ""
+upload_url = ""
+user_token = ""
 
 class TAAFileHandler(AbstractedFS):
     def listdir(self, path):
@@ -26,8 +30,6 @@ class TAAFileHandler(AbstractedFS):
 
 class TAAHandler(TLS_FTPHandler):
     def on_file_received(self, filename):
-        url = sys.argv[3]
-        user_token = sys.argv[4]
         _, ext = os.path.splitext(filename)
         if not ext or ext not in [".csv", ".flat", ".json"]:
             data_format = "flat"
@@ -35,21 +37,32 @@ class TAAHandler(TLS_FTPHandler):
             data_format = ext[1:]
         with open(filename, "rb") as f:
             data = f.read()
-        print requests.post("{}?auth_token={}&format={}&email_errors=true".format(url, user_token, data_format), data=data).text
+        print requests.post("{}?auth_token={}&format={}&email_errors=true".format(upload_url, user_token, data_format), data=data).text
         os.remove(filename)
 
 def main():
+    if not len(sys.argv)==5:
+        print("Usage: {} port certfile upload_endpoint user_token".format(sys.argv[0]))
+        return False
+    global port
+    port = sys.argv[1]
+    global certfile
+    certfile = sys.argv[2]
+    global upload_url
+    upload_url = sys.argv[3]
+    global user_token
+    user_token = sys.argv[4]
+
     authorizer = DummyAuthorizer()
     authorizer.add_user("test", "test", ".", perm="elradfmwM")
     authorizer.add_anonymous(os.getcwd())
 
     handler = TAAHandler
-    handler.certfile = sys.argv[2]
+    handler.certfile = certfile
     handler.authorizer = authorizer
     handler.abstracted_fs = TAAFileHandler
     handler.banner = "Take An App - FTP drop box"
 
-    port = sys.argv[1]
     address = ("", port)
     server = FTPServer(address, handler)
 
