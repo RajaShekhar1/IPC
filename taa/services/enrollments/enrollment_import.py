@@ -265,8 +265,8 @@ class EnrollmentRecordParser(object):
     case_service = RequiredFeature("CaseService")
 
     # Case/Record information
-    user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator], flat_file_size=64, description="A token representing the api user")
-    case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator], flat_file_size=64, description="A token representing a case")
+    user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator], flat_file_size=0, description="A token representing the api user")
+    case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator], flat_file_size=0, description="A token representing a case")
     product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [required_validator, product_validator], flat_file_size=5, description="A 5 character string representing the product")
     payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_numbers, [required_validator, payment_mode_validator], flat_file_size=2, description="A two digit number resenting the payment mode")
 

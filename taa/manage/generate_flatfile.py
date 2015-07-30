@@ -33,13 +33,17 @@ class CSVToFlatFileCommand(Command):
         spec is a list of FlatFileFieldSpec objects
         """
         record_count = "{}{}".format(len(data), "".join([" " for i in range(0, 8-len(data))]))
-        header = "TAA_ENROLLMENT  1.0     {}".format(record_count)
+        user_token = "{}{}".format(data[0].get("user_token"), "".join([" " for i in range(0, 64-len(data[0].get("user_token")))]))
+        case_token = "{}{}".format(data[0].get("case_token"), "".join([" " for i in range(0, 64-len(data[0].get("case_token")))]))
+        header = "TAA_ENROLLMENT  1.0     {}{}{}".format(record_count, user_token, case_token)
         records = "\n".join([self.format_flat_file_record(row, spec) for row in data])
         return "{}\n{}".format(header, records)
 
     def format_flat_file_record(self, row, spec):
         row_text = ""
-        for cur_spec in spec:
+        for cur_spec in spec.get_spec():
+            if cur_spec.csv_name == "user_token" or cur_spec.csv_name == "case_token":
+                continue
             current_item = row.get(cur_spec.csv_name)
             if not current_item:
                 current_item = ""
