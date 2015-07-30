@@ -39,21 +39,32 @@ STORMPATH_ENABLE_REGISTRATION = False
 STORMPATH_ENABLE_LOGIN = False
 STORMPATH_ENABLE_FORGOT_PASSWORD = True
 
-# DocuSign credentials
-#DOCUSIGN_INTEGRATOR_KEY = env_get_text('DOCUSIGN_INTEGRATOR_KEY', 'DELM-0d0ee159-7e61-499f-81ec-5c03bec86ec3')
-#DOCUSIGN_API_ACCOUNT_ID = env_get_text('DOCUSIGN_API_ACCOUNT_ID', '5988eb5b-bee1-4825-a078-dcac445a22ce')
-#DOCUSIGN_API_USERNAME = env_get_text('DOCUSIGN_API_USERNAME', 'cb64545b-0bb7-4e77-bb0c-492b02c3dd5b')
-#DOCUSIGN_API_PASSWORD = env_get_text('DOCUSIGN_API_PASSWORD', '12121212')
+# DocuSign credentials - this is a test account.
+DOCUSIGN_INTEGRATOR_KEY = env_get_text('DOCUSIGN_INTEGRATOR_KEY', 'DELM-0d0ee159-7e61-499f-81ec-5c03bec86ec3')
+DOCUSIGN_API_ACCOUNT_ID = env_get_text('DOCUSIGN_API_ACCOUNT_ID', '5988eb5b-bee1-4825-a078-dcac445a22ce')
+DOCUSIGN_API_USERNAME = env_get_text('DOCUSIGN_API_USERNAME', 'cb64545b-0bb7-4e77-bb0c-492b02c3dd5b')
+DOCUSIGN_API_PASSWORD = env_get_text('DOCUSIGN_API_PASSWORD', '12121212')
 # Trailing slash required
-#DOCUSIGN_API_ENDPOINT = env_get_text('DOCUSIGN_API_ENDPOINT', "https://demo.docusign.net/restapi/v2/accounts/%s/"%DOCUSIGN_API_ACCOUNT_ID)
+DOCUSIGN_API_ENDPOINT = env_get_text('DOCUSIGN_API_ENDPOINT', "https://demo.docusign.net/restapi/v2/accounts/%s/"%DOCUSIGN_API_ACCOUNT_ID)
 
-DOCUSIGN_INTEGRATOR_KEY = env_get_text('DOCUSIGN_INTEGRATOR_KEY', 'STAR-0baef057-d5b4-46bd-831f-e8e66f271aa7')
-DOCUSIGN_API_ACCOUNT_ID = env_get_text('DOCUSIGN_API_ACCOUNT_ID', '8271282c-7a4e-4e00-a2e9-878924c316d5')
-DOCUSIGN_API_USERNAME = env_get_text('DOCUSIGN_API_USERNAME', '8dd0f65d-ae78-4026-8d32-81f63818bf16')
-DOCUSIGN_API_PASSWORD = env_get_text('DOCUSIGN_API_PASSWORD', 'edJSzv7Rqc2XNFI3GqM/IrZ9SvM=')
+#DOCUSIGN_INTEGRATOR_KEY = env_get_text('DOCUSIGN_INTEGRATOR_KEY', 'STAR-0baef057-d5b4-46bd-831f-e8e66f271aa7')
+#DOCUSIGN_API_ACCOUNT_ID = env_get_text('DOCUSIGN_API_ACCOUNT_ID', '8271282c-7a4e-4e00-a2e9-878924c316d5')
+#DOCUSIGN_API_USERNAME = env_get_text('DOCUSIGN_API_USERNAME', '8dd0f65d-ae78-4026-8d32-81f63818bf16')
+#DOCUSIGN_API_PASSWORD = env_get_text('DOCUSIGN_API_PASSWORD', 'edJSzv7Rqc2XNFI3GqM/IrZ9SvM=')
 # Trailing slash required
-DOCUSIGN_API_ENDPOINT = env_get_text('DOCUSIGN_API_ENDPOINT', "https://na2.docusign.net/restapi/v2/accounts/%s/"%DOCUSIGN_API_ACCOUNT_ID)
+#DOCUSIGN_API_ENDPOINT = env_get_text('DOCUSIGN_API_ENDPOINT', "https://na2.docusign.net/restapi/v2/accounts/%s/"%DOCUSIGN_API_ACCOUNT_ID)
 
+DOCUSIGN_LIVE_CC_RECIPIENTS = env_get_bool('DOCUSIGN_LIVE_CC_RECIPIENTS', False)
+if DOCUSIGN_LIVE_CC_RECIPIENTS:
+    DOCUSIGN_CC_RECIPIENTS = [
+        ('Archive', 'docusign.transaction.archive@5starenroll.com'),
+        ('New Business Team', 'newbusiness@5starenroll.com'),
+    ]
+else:
+    # Demo recipients
+    DOCUSIGN_CC_RECIPIENTS = [
+        ('Test CC Recipient', 'zach@zachmason.com'),
+    ]
 
 # Email
 EMAIL_SMTP_SERVER = "smtp.mandrillapp.com"

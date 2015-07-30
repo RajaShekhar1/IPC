@@ -92,6 +92,10 @@ class ServiceProxy(object):
     def __setattr__(self, key, value):
         return setattr(services_broker[object.__getattribute__(self, "service_name")], key, value)
 
+    def __call__(self, *args, **kwargs):
+        return services_broker[object.__getattribute__(self, "service_name")](*args, **kwargs)
+
+
 def LookupService(service_name):
     if service_name not in services_broker:
         raise ValueError("Could not find service named '{0}'".format(service_name))
@@ -133,6 +137,7 @@ def initialize_services():
         FileImportService,
     )
     from taa.services.users import UserService
+    from taa.services.docusign import DocuSignService, DocuSignTransport
 
     services_broker.Provide('CaseService', CaseService())
     services_broker.Provide('CaseEnrollmentPeriodsService', CaseEnrollmentPeriodsService())
@@ -162,3 +167,6 @@ def initialize_services():
 
     services_broker.Provide('FileImportService', FileImportService())
     services_broker.Provide('UserService', UserService())
+
+    services_broker.Provide('DocuSignService', DocuSignService())
+    services_broker.Provide('DocuSignTransport', lambda: DocuSignTransport)

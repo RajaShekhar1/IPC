@@ -1,11 +1,11 @@
 # DocuSign API Walkthrough 08 (PYTHON) - Embedded Signing
 import random
 import json
-import httplib2
 from string import ascii_letters
+import decimal
 
+import httplib2
 import flask
-from flask.ext.stormpath import user
 
 from taa import app
 from taa.services.docusign.DocuSign_config import (
@@ -15,123 +15,11 @@ from taa.services.docusign.DocuSign_config import (
     templateClientID,
     get_template_id
 )
-from service import (
-    AgentDocuSignRecipient,
-    EmployeeDocuSignRecipient,
-    get_docusign_transport,
-    create_envelope
-)
-from templates.fpp import FPPTemplate
-from templates.fpp_replacement import FPPReplacementFormTemplate
-from documents.extra_children import ChildAttachmentForm
-from documents.additional_replacement_policies import (
-    AdditionalReplacementPoliciesForm
-)
 from taa.services.products import ProductService
 from taa.services.agents import AgentService
 
 product_service = ProductService()
 agent_service = AgentService()
-
-
-def create_envelope_and_get_signing_url(wizard_data, census_record, case):
-    enrollment_data = EnrollmentDataWrap(wizard_data, census_record, case)
-    # Product code
-    # product = product_service.get(wizard_data['product_data']['id'])
-    productType = wizard_data['product_type']
-    is_fpp = ('fpp' in productType.lower())
-    # If FPP Product, use the new docusign code, otherwise use old path
-    if is_fpp:
-        return create_fpp_envelope_and_fetch_signing_url(enrollment_data, case)
-    else:
-        return old_create_envelope_and_get_signing_url(enrollment_data)
-
-
-def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
-    employee, envelope_result, transport = create_fpp_envelope(enrollment_data, case)
-    redirect_url = fetch_signing_url(employee, enrollment_data, envelope_result, transport)
-
-    return False, None, redirect_url
-
-
-def get_signing_agent(case):
-    if agent_service.get_logged_in_agent():
-        signing_agent = agent_service.get_logged_in_agent()
-    else:
-        signing_agent = case.owner_agent
-    return signing_agent
-
-
-def create_fpp_envelope(enrollment_data, case):
-    employee, recipients = create_envelope_recipients(case, enrollment_data)
-    components = create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer=True)
-    transport = get_docusign_transport()
-    envelope_result = create_envelope(
-        email_subject="Signature needed: {} for {} ({})".format(
-            enrollment_data.get_product_code(),
-            enrollment_data.get_employee_name(),
-            enrollment_data.get_employer_name()),
-        components=components,
-        docusign_transport=transport,
-    )
-    return employee, envelope_result, transport
-
-
-def create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer):
-    # Build the components (sections) needed for signing
-    components = []
-
-    # Main form
-    fpp_form = FPPTemplate(recipients, enrollment_data, should_use_docusign_renderer)
-    components.append(fpp_form)
-
-    # Additional Children
-    if fpp_form.is_child_attachment_form_needed():
-        child_attachment_form = ChildAttachmentForm(recipients, enrollment_data)
-        for i, child in enumerate(fpp_form.get_attachment_children()):
-            child.update(dict(
-                coverage=format(enrollment_data['child_coverages'][i + 2]['face_value'], ',.0f'),
-                premium=format(enrollment_data['child_coverages'][i + 2]['premium'], '.2f')
-            ))
-            child_attachment_form.add_child(child)
-        components.append(child_attachment_form)
-
-    # Replacement Form
-    if fpp_form.is_replacement_form_needed():
-        replacement_form = FPPReplacementFormTemplate(recipients,
-                                                      enrollment_data,
-                                                      should_use_docusign_renderer)
-        components.append(replacement_form)
-
-    # Additional replacement policies form
-    if fpp_form.is_additional_replacment_policy_attachment_needed():
-        components.append(AdditionalReplacementPoliciesForm(recipients,
-                                                            enrollment_data))
-    return components
-
-
-def create_envelope_recipients(case, enrollment_data):
-    signing_agent = get_signing_agent(case)
-    agent = AgentDocuSignRecipient(name=signing_agent.name(),
-                                   email=signing_agent.email)
-    employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
-                                         email=enrollment_data.get_employee_email())
-    recipients = [
-        agent,
-        employee,
-        # TODO Check if BCC's needed here
-    ]
-    return employee, recipients
-
-
-def fetch_signing_url(employee, enrollment_data, envelope_result, transport):
-    redirect_url = envelope_result.get_signing_url(
-        employee,
-        callback_url=build_callback_url(
-            enrollment_data, enrollment_data.get_session_type()),
-        docusign_transport=transport
-    )
-    return redirect_url
 
 
 def generate_SOHRadios(prefix, soh_questions):
@@ -366,20 +254,20 @@ class EnrollmentDataWrap(object):
         return self.format_money(self.get_employee_premium())
 
     def get_employee_premium(self):
-        return self.data['employee_coverage']['premium']
+        return decimal.Decimal(self.data['employee_coverage']['premium'])
 
     def did_spouse_select_coverage(self):
         return (self.data['spouse_coverage'] and
                 self.data['spouse_coverage']['face_value'])
 
     def get_spouse_coverage(self):
-        return format(self.data['spouse_coverage']['face_value'], ',.0f')
+        return format(decimal.Decimal(self.data['spouse_coverage']['face_value']), ',.0f')
 
     def get_formatted_spouse_premium(self):
         return self.format_money(self.get_spouse_premium())
 
     def get_spouse_premium(self):
-        return self.data['spouse_coverage']['premium']
+        return decimal.Decimal(self.data['spouse_coverage']['premium'])
 
     def format_money(self, amount):
         return '%.2f' % amount

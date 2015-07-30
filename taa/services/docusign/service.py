@@ -2,6 +2,7 @@ import json
 from urlparse import urljoin
 import base64
 import StringIO
+from io import BytesIO
 from collections import defaultdict
 
 import requests
@@ -9,39 +10,154 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate
 from PyPDF2 import PdfFileReader
 
-from taa.services import RequiredFeature
+from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, old_create_envelope_and_get_signing_url, \
+    agent_service, build_callback_url
+from taa.services import RequiredFeature, LookupService
 
 from taa import app
 
 
-#
-#  - Create an envelope for signing
-#  - Add either templates or documents to the envelope
-#     - Create a server template for signing
-#        - provide tabs
-#        - provide recipients
-#     - Attach a document as a PDF
-#        - provide tabs
-#        - provide recipients
+class DocuSignService(object):
 
-# create local document for signing
-#   - BaseDocument
-#       - ChildrenAttachment
-#       -
+    def create_fpp_envelope(self, enrollment_data, case):
+        employee, recipients = self.create_envelope_recipients(case, enrollment_data)
+        components = self.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer=True)
+        transport = get_docusign_transport()
+        envelope_result = create_envelope(
+            email_subject="Signature needed: {} for {} ({})".format(
+                enrollment_data.get_product_code(),
+                enrollment_data.get_employee_name(),
+                enrollment_data.get_employer_name()),
+            components=components,
+            docusign_transport=transport,
+        )
+        return employee, envelope_result, transport
+
+    def create_envelope(self, email_subject, components):
+        docusign_transport = get_docusign_transport()
+        data = {
+            "accountID": docusign_transport.api_account_id,
+            "status": "sent",
+            "emailSubject": email_subject,
+            "compositeTemplates": [
+                component.generate_composite_template() for component in components],
+        }
+
+        result = docusign_transport.post("envelopes", data)
+
+        return DocusignEnvelope(result['uri'])
+
+    def create_envelope_recipients(self, case, enrollment_data):
+        signing_agent = get_signing_agent(case)
+        agent = AgentDocuSignRecipient(name=signing_agent.name(),
+                                       email=signing_agent.email)
+        employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
+                                             email=enrollment_data.get_employee_email())
+        recipients = [
+            agent,
+            employee,
+            # TODO Check if BCC's needed here
+        ]
+        return employee, recipients
+
+    def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
+        from taa.services.docusign.templates.fpp import FPPTemplate
+        from taa.services.docusign.templates.fpp_replacement import FPPReplacementFormTemplate
+
+        # Build the components (sections) needed for signing
+        components = []
+
+        # Main form
+        fpp_form = FPPTemplate(recipients, enrollment_data, should_use_docusign_renderer)
+        components.append(fpp_form)
+
+        # Additional Children
+        if fpp_form.is_child_attachment_form_needed():
+            child_attachment_form = ChildAttachmentForm(recipients, enrollment_data)
+            for i, child in enumerate(fpp_form.get_attachment_children()):
+                child.update(dict(
+                    coverage=format(enrollment_data['child_coverages'][i + 2]['face_value'], ',.0f'),
+                    premium=format(enrollment_data['child_coverages'][i + 2]['premium'], '.2f')
+                ))
+                child_attachment_form.add_child(child)
+            components.append(child_attachment_form)
+
+        # Replacement Form
+        if fpp_form.is_replacement_form_needed():
+            replacement_form = FPPReplacementFormTemplate(recipients,
+                                                          enrollment_data,
+                                                          should_use_docusign_renderer)
+            components.append(replacement_form)
+
+        # Additional replacement policies form
+        if fpp_form.is_additional_replacment_policy_attachment_needed():
+            from taa.services.docusign.documents.additional_replacement_policies import AdditionalReplacementPoliciesForm
+            components.append(AdditionalReplacementPoliciesForm(recipients,
+                                                                enrollment_data))
+        return components
+
+    def get_signing_agent(self, case):
+        if agent_service.get_logged_in_agent():
+            signing_agent = agent_service.get_logged_in_agent()
+        else:
+            signing_agent = case.owner_agent
+        return signing_agent
+
 
 def create_envelope(email_subject, components, docusign_transport):
+    docusign_service = LookupService('DocuSignService')
+    return docusign_service.create_envelope(email_subject, components)
 
-    data = {
-        "accountID" : docusign_transport.api_account_id,
-        "status" : "sent",
-        "emailSubject": email_subject,
-        "compositeTemplates": [
-            component.generate_composite_template() for component in components],
-    }
 
-    result = docusign_transport.post("envelopes", data)
+def create_envelope_recipients(case, enrollment_data):
+    docusign_service = LookupService('DocuSignService')
+    return docusign_service.create_envelope_recipients(case, enrollment_data)
 
-    return DocusignEnvelope(result['uri'])
+
+def create_fpp_envelope(enrollment_data, case):
+    docusign_service = LookupService('DocuSignService')
+    return docusign_service.create_fpp_envelope(enrollment_data, case)
+
+
+def create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer):
+    docusign_service = LookupService('DocuSignService')
+    return docusign_service.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer)
+
+
+def create_envelope_and_get_signing_url(wizard_data, census_record, case):
+    enrollment_data = EnrollmentDataWrap(wizard_data, census_record, case)
+    # Product code
+    # product = product_service.get(wizard_data['product_data']['id'])
+    productType = wizard_data['product_type']
+    is_fpp = ('fpp' in productType.lower())
+    # If FPP Product, use the new docusign code, otherwise use old path
+    if is_fpp:
+        return create_fpp_envelope_and_fetch_signing_url(enrollment_data, case)
+    else:
+        return old_create_envelope_and_get_signing_url(enrollment_data)
+
+
+def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
+    employee, envelope_result, transport = create_fpp_envelope(enrollment_data, case)
+    redirect_url = fetch_signing_url(employee, enrollment_data, envelope_result, transport)
+
+    return False, None, redirect_url
+
+
+def get_signing_agent(case):
+    docusign_service = LookupService('DocuSignService')
+    return docusign_service.get_signing_agent(case)
+
+
+def fetch_signing_url(employee, enrollment_data, envelope_result, transport):
+    redirect_url = envelope_result.get_signing_url(
+        employee,
+        callback_url=build_callback_url(
+            enrollment_data, enrollment_data.get_session_type()),
+        docusign_transport=transport
+    )
+    return redirect_url
+
 
 class DocusignEnvelope(object):
     def __init__(self, uri):
@@ -64,13 +180,15 @@ class DocusignEnvelope(object):
         return result['url']
 
 def get_docusign_transport():
-    return DocuSignTransport(
+    transport_service = LookupService('DocuSignTransport')
+    return transport_service(
         app.config['DOCUSIGN_INTEGRATOR_KEY'],
         app.config['DOCUSIGN_API_ACCOUNT_ID'],
         app.config['DOCUSIGN_API_USERNAME'],
         app.config['DOCUSIGN_API_PASSWORD'],
         app.config['DOCUSIGN_API_ENDPOINT'],
     )
+
 
 class DocuSignTransport(object):
     def __init__(self, integrator_key, api_account_id, api_username, api_password, api_endpoint):
@@ -121,13 +239,13 @@ response:
 
 # Envelope Recipient
 class DocuSignRecipient(object):
-    def __init__(self, name, email, cc_only=False, role_name=None, _exclude_from_envelope=False):
+    def __init__(self, name, email, cc_only=False, role_name=None, exclude_from_envelope=False):
         self.name = name
         self.email = email
         self.cc_only = cc_only
         self.role_name = role_name
 
-        self._exclude_from_envelope = _exclude_from_envelope
+        self._exclude_from_envelope = exclude_from_envelope
 
     def is_carbon_copy(self):
         return self.cc_only
@@ -170,7 +288,10 @@ class AgentDocuSignRecipient(DocuSignRecipient):
     def is_agent(self):
         return True
 
-
+class CarbonCopyRecipient(DocuSignRecipient):
+    def is_employee(self): return False
+    def is_agent(self): return False
+    def is_carbon_copy(self): return True
 
 
 
@@ -297,7 +418,7 @@ class DocuSignEnvelopeComponent(object):
                 documentId="1",
                 pages=str(num_pages),
                 fileExtension="pdf",
-                documentBase64=pdf_bytes,
+                documentBase64=base64.standard_b64encode(pdf_bytes),
             ),
             inlineTemplates=[dict(
                 sequence="1",
@@ -351,7 +472,7 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
         )
 
     def get_num_pages(self, pdf_bytes):
-        reader = PdfFileReader(pdf_bytes)
+        reader = PdfFileReader(BytesIO(pdf_bytes))
         num_pages = reader.getNumPages()
         return num_pages
 
@@ -412,6 +533,7 @@ class BasePDFDoc(DocuSignEnvelopeComponent):
 
 
 
+
 if __name__ == "__main__":
     # Test drive the code
 
@@ -440,4 +562,3 @@ if __name__ == "__main__":
     url = envelope_result.get_signing_url(employee, callback_url='https://5starenroll.com', docusign_transport=transport)
 
     print(url)
-

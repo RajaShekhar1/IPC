@@ -16,7 +16,7 @@ from taa.models import db
 from taa.old_model.States import get_states
 from taa.services.products.states import get_all_states
 from taa.services.products import get_payment_modes, is_payment_mode_changeable
-from taa.services.docusign.docusign_envelope import create_envelope_and_get_signing_url
+from services.docusign.service import create_envelope_and_get_signing_url
 from taa.services import LookupService
 
 product_service = LookupService('ProductService')
