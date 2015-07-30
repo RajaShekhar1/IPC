@@ -2,12 +2,13 @@ import json
 import urllib
 from StringIO import StringIO
 
+from mock import Mock
 from behave import use_step_matcher, given, then, when, step
 from hamcrest import assert_that, equal_to, has_item, greater_than
 
 from taa.core import db
 from taa.models import EnrollmentApplication
-from taa.services import LookupService
+from taa.services import LookupService, services_broker
 from tests.db_util import create_case, create_user_in_groups
 
 use_step_matcher("parse")
@@ -64,9 +65,24 @@ def step_impl(context, auth_token, case_token):
     if param_text:
         param_text = '?' + param_text
 
+    # Stub out docusign transmission so we aren't actually sending anything to them for this set of tests.
+    mock_docusign_transport()
+
     # Make request
     context.resp = context.app.post("/enrollments{}".format(param_text),
                                     data=context.data)
+
+
+def mock_docusign_transport():
+    class MockDocuSignTransport(object):
+        def __getitem__(self, item): return None
+
+        def __call__(self, *args): pass
+
+    mock_transport = Mock(spec=MockDocuSignTransport)
+    mock_docusign_result = {'uri': 'http://example.com'}
+    mock_transport.return_value.post.return_value = mock_docusign_result
+    services_broker.Provide("DocuSignTransport", lambda: mock_transport)
 
 
 @step(u"I should see a {status_code:d} response")
