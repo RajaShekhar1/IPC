@@ -3,7 +3,6 @@ import cStringIO
 
 from flask import render_template
 
-from taa import app
 from taa.services.enrollments import EnrollmentRecordParser
 
 
@@ -221,9 +220,43 @@ class FlatFileDocumentation(object):
         return output.getvalue()
 
     def toHTML(self, filename=None):
+<<<<<<< Updated upstream
         header_rows = []
         distanceRead = 1
-
+=======
+        template = """\
+<html>
+<head>
+<body style="font-family:sans-serif;">
+<h1 style="text-align:center;">5Star Flat File Syntax Documentation</h1>
+<p>
+TAA supports importing enrollment data via a flat-file import service. Interested 3rd party integrators can upload
+correctly formatted files to our secure FTP drop box, and TAA will process the file once it passes basic validation.
+</p>
+<h3>FTPS DropBox Configuration</h3>
+<p>
+    To connect to our secure FTPS enrollment import drop box, you must have the following information:
+    <br>
+    <ul>
+        <li>Your TAA authentication token. This will be provided to you by a TAA administrator.</li>
+        <li>An enrollment case token. This will be provided to you by a TAA administrator.</li>
+        <li>The IP address of the FTPS drop box: {ip_address}</li>
+        <li>The user name and password to access the drop box. This will be provided by a TAA administrator.</li>
+    </ul>
+</p>
+<h2>Header Field Definition</h2>
+<table>
+{headers}
+</table>
+<h2>Enrollment Record Field Definition</h2>
+<table>
+{rows}
+</table>
+</body>
+</html>
+"""
+        header_table_rows = ""
+>>>>>>> Stashed changes
         if self.header_spec:
             distanceRead = 1
             for s in self.header_spec.get_spec():
@@ -235,8 +268,7 @@ class FlatFileDocumentation(object):
             record_rows.append([s.csv_name, distanceRead, distanceRead+s.size-1, s.size, s.description])
             distanceRead += s.size
 
-        with app.test_request_context('/'):
-            template = render_template("documentation/simple_documentation.html",
+        template = render_template("documentation/simple_documentation.html",
                                     headers=header_rows,
                                     records=record_rows,
                                     fieldnames=self.fieldnames)

@@ -1,7 +1,24 @@
 <html>
 <body style="font-family:sans-serif;">
   <h1 style="text-align:center;">5Star Flat File Syntax Documentation</h1>
-  <h2>Headers</h2>
+
+  <p>
+  TAA supports importing enrollment data via a flat-file import service. Interested 3rd party integrators can upload
+  correctly formatted files to our secure FTP drop box, and TAA will process the file once it passes basic validation.
+  </p>
+  <h3>FTPS DropBox Configuration</h3>
+  <p>
+      To connect to our secure FTPS enrollment import drop box, you must have the following information:
+      <br>
+      <ul>
+          <li>Your TAA authentication token. This will be provided to you by a TAA administrator.</li>
+          <li>An enrollment case token. This will be provided to you by a TAA administrator.</li>
+          <li>The IP address of the FTPS drop box: {ip_address}</li>
+          <li>The user name and password to access the drop box. This will be provided by a TAA administrator.</li>
+      </ul>
+  </p>
+
+  <h2>Header Field Definition</h2>
   <table>
     <tr style='background:rgba(200,50,45,.2);'>
       {% for fn in fieldnames %}
@@ -16,7 +33,7 @@
       </tr>
     {% endfor %}
   </table>
-  <h2>Rows</h2>
+  <h2>Enrollment Record Field Definition</h2>
   <table>
     <tr style='background:rgba(200,50,45,.2);'>
       {% for fn in fieldnames %}
