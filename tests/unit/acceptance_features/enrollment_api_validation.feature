@@ -273,61 +273,6 @@ Feature: Validate an enrollment record submitted via API.
     When I submit the file to the Enrollment API
     Then I should see a success response
 
-  Scenario: The user does not submit answers for the questions required for the product.
-    Given The product 'FPPTI' has the following health questions
-      | applicant | question                   |
-      | employee  | How are you feeling today? |
-    And I prepare an enrollment file with basic valid enrollment data
-    When I submit the file to the Enrollment API
-    Then I should see the following errors in the response
-      | error_type        | error_field   |
-      | invalid_questions | emp_questions |
-
-  Scenario: The user submits the wrong number of employee questions for the product.
-    Given The product 'FPPTI' has the following health questions
-      | applicant | question                   |
-      | employee  | How are you feeling today? |
-    And I prepare an enrollment file with basic valid enrollment data
-    And I add the following enrollment data columns
-      | emp_question_1_answer | emp_question_2_answer |
-      | Y                     | Y                     |
-    When I submit the file to the Enrollment API
-    Then I should see the following errors in the response
-      | error_type        | error_field   |
-      | invalid_questions | emp_questions |
-
-  Scenario: The user submits the wrong number of spouse questions for the product.
-    Given The product 'FPPTI' has the following health questions
-      | applicant | question                   |
-      | spouse    | How are you feeling today? |
-      | spouse    | Another question           |
-    And I prepare an enrollment file with basic valid enrollment data
-    And I add valid spouse enrollment data
-    And I add the following enrollment data columns
-      | sp_question_1_answer |
-      | Y                    |
-    When I submit the file to the Enrollment API
-    Then I should see the following errors in the response
-      | error_type        | error_field  |
-      | invalid_questions | sp_questions |
-
-  Scenario: The user submits the wrong number of child questions for the product.
-    Given The product 'FPPTI' has the following health questions
-      | applicant | question                   |
-      | child     | How are you feeling today? |
-      | child     | Another question           |
-    And I prepare an enrollment file with basic valid enrollment data
-    And I add valid child enrollment data
-    And I add a valid second child enrollment data
-    And I add the following enrollment data columns
-      # Should have a full set of answers for each child.
-      | ch1_question_1_answer | ch2_question_1_answer |
-      | Y                     | N                     |
-    When I submit the file to the Enrollment API
-    Then I should see the following errors in the response
-      | error_type        | error_field  |
-      | invalid_questions | ch1_questions |
-
  Scenario: It should accept all optional fields in addition to the basic data and not ignore these columns.
    Given I prepare an enrollment file with basic valid enrollment data
    And I add valid spouse enrollment data

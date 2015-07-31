@@ -342,7 +342,6 @@ class EnrollmentRecordParser(object):
             validation_tests = [
                 lambda: self.validate_record(record),
                 lambda: self.validate_statecode(record),
-                lambda: self.validate_questions(record),
                 lambda: self.validate_case(record, case),
             ]
             is_valid = True
@@ -479,57 +478,9 @@ class EnrollmentRecordParser(object):
                                         field_name=self.get_field_by_dict_key(key).dict_key_name,
                                         data=record)
 
-    def validate_questions(self, record):
-        is_valid = True
-
-        for applicant_abbr, applicant_type in [("emp", "employee"), ("sp", "spouse"), ("ch", "child")]:
-            required_count = self.product_service.get_num_health_questions(
-                record.get("product_code"),
-                record['signed_at_state'],
-                applicant_type
-            )
-
-            if applicant_type == "employee":
-                is_valid = self._add_error_if_wrong_question_count(record, required_count, applicant_abbr)
-            elif applicant_type == "spouse":
-                if not self._does_record_have_spouse(record):
-                    continue
-                is_valid = self._add_error_if_wrong_question_count(record, required_count, applicant_abbr)
-            else:
-                valid_child_nums = [n for n in range(1, self.MAX_CHILDREN + 1)
-                                    if self._does_record_have_child(record, n)
-                ]
-                for num in valid_child_nums:
-                    child_prefix = "{}{}".format(applicant_abbr, num)
-                    is_valid = self._add_error_if_wrong_question_count(record, required_count, child_prefix)
-
-        return is_valid
 
     def _does_record_have_spouse(self, record):
         return record.get("sp_first")
 
     def _does_record_have_child(self, record, num):
         return record.get("ch{}_first".format(num))
-
-    def _add_error_if_wrong_question_count(self, record, required_count, applicant_prefix):
-        if self._count_valid_questions(record, applicant_prefix) is not required_count:
-            self.error_record_field(type="invalid_questions",
-                                    message="Incorrect number of questions supplied; {} should have {} questions".format(applicant_prefix, required_count),
-                                    field_name="{}_questions".format(applicant_prefix),
-                                    data=record)
-            return False
-
-        return True
-
-    def _count_valid_questions(self, record, applicant_prefix):
-        actual_count = 0
-        for q_num in range(1, self.MAX_QUESTIONS + 1):
-            question = record.get("{}_question_{}_answer".format(applicant_prefix, q_num))
-            if not question:
-                # If there isn't a question here, we have reached the number of questions for this person
-                break
-
-            # Otherwise, add this question to the count
-            actual_count += 1
-
-        return actual_count
