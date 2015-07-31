@@ -1,0 +1,35 @@
+<html>
+<body style="font-family:sans-serif;">
+  <h1 style="text-align:center;">5Star Flat File Syntax Documentation</h1>
+  <h2>Headers</h2>
+  <table>
+    <tr style='background:rgba(200,50,45,.2);'>
+      {% for fn in fieldnames %}
+      <th style='color:#fff;text-align:left;padding:0px 10px;'>{{fn}}</th>
+      {% endfor %}
+    </tr>
+    {% for row in headers %}
+      <tr>
+        {% for field in row %}
+          <td>{{field}}</td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </table>
+  <h2>Rows</h2>
+  <table>
+    <tr style='background:rgba(200,50,45,.2);'>
+      {% for fn in fieldnames %}
+        <th style='color:#fff;text-align:left;padding:0px 10px;'>{{fn}}</th>
+      {% endfor %}
+    </tr>
+    {% for row in records %}
+      <tr>
+        {% for field in row %}
+          <td>{{field}}</td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

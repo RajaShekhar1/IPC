@@ -19,7 +19,6 @@ from taa.services.users.UserService import search_stormpath_accounts, get_stormp
 agent_service = LookupService('AgentService')
 api_token_service = LookupService('ApiTokenService')
 
-
 #  14-Jun-17 WSD
 @app.route('/admin', methods = ['GET', 'POST'])
 @groups_required(['admins', 'home_office'], all=False)

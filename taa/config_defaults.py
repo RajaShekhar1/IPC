@@ -4,7 +4,7 @@ import os
 def parse_bool(val):
     if isinstance(val, bool):
         return val
-    return val.lower() in ["true", "1", "yes"] if val else False 
+    return val.lower() in ["true", "1", "yes"] if val else False
 
 def env_get_bool(env_name, default_val=None):
     return parse_bool(os.environ.get(env_name, default_val))
@@ -16,7 +16,7 @@ def env_get_int(env_name, default_val=None):
     val = os.environ.get(env_name, default_val)
     return int(val) if val is not None else None
 
-# production should have DEBUG=False 
+# production should have DEBUG=False
 DEBUG = env_get_bool('DEBUG', True)
 ASSETS_DEBUG = env_get_bool('ASSETS_DEBUG', True)
 ASSETS_AUTO_BUILD = env_get_bool('ASSETS_AUTO_BUILD', True)
@@ -63,7 +63,7 @@ if DOCUSIGN_LIVE_CC_RECIPIENTS:
 else:
     # Demo recipients
     DOCUSIGN_CC_RECIPIENTS = [
-        ('Test CC Recipient', 'zach@zachmason.com'),
+        ('Test CC Recipient', 'cdurbin@delmarsd.com'),
     ]
 
 # Email
@@ -96,4 +96,3 @@ SQLALCHEMY_ECHO = env_get_bool('SQLALCHEMY_ECHO', True)
 
 # File uploads
 MAX_CONTENT_LENGTH = 16777216
-

@@ -145,10 +145,15 @@ function observe_census_record_form_submit() {
   });
 }
 
+function handle_enrollment_upload_success(data, modal) {
+    window.enrollment_api_panel.num_records(data.data.num_processed);
+    show_success_panel($(modal));
+}
+
 function handle_enrollment_upload_error(err, modal) {
   if (err.status >= 400 && err.status < 500) {
-    var errors = $.parseJSON(err.responseText);
-    window.enrollment_api_panel.error_records(errors);
+    var data = $.parseJSON(err.responseText).data;
+    window.enrollment_api_panel.error_records(data.errors);
     show_error_panel($(modal));
   } else {
     alert("Sorry, there was a problem communicating with the server.");
@@ -167,17 +172,18 @@ function observe_enrollment_upload_form_submit() {
       return false;
     }
     // Add the file upload to the request.
-    form_data.append('csv-file', files[0], files[0].name);
-    form_data.append('upload_type', $("input[name=upload_type]:checked").val());
-
-    send_file_data("POST", urls.get_submit_enrollment_records_url(), form_data, function(data) {
-      console.log(data);
-    }, function(err) {
+    form_data.append('api-upload-file', files[0], files[0].name);
+    file_extension = files[0].name.split(".").slice(-1)[0];
+    form_data.append('case_token', window.case_settings.case_token);
+    form_data.append('auth_token', window.enrollment_api_panel.user_token);
+    form_data.append('email_errors', false);
+    form_data.append('format', file_extension);
+    send_file_data("POST", urls.get_submit_enrollment_records_url(), form_data, function success(data) {
+      handle_enrollment_upload_success(data, form);
+    }, function error(err) {
       handle_enrollment_upload_error(err, form);
     }, false);
-
     show_loading_panel($(this));
-
     return false;
   });
 }

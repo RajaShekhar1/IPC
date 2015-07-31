@@ -55,7 +55,7 @@ var urls = (function urls() {
       return '/in-person-enrollment';
     },
     get_submit_enrollment_records_url: function() {
-      return '/submit-enrollment-records';
+      return '/enrollments';
     }
   }
 })();
