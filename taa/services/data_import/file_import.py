@@ -5,19 +5,81 @@ from flask import render_template
 
 from taa import app
 from taa.services.enrollments import EnrollmentRecordParser
+from taa.services.validators import (
+    required_validator,
+    birthdate_validator,
+    coverage_validator,
+    premium_validator,
+    payment_mode_validator,
+    gender_validator,
+    enrollment_type_validator,
+    zip_validator,
 
+    email_validator, ssn_validator, state_validator, timestamp_validator, question_answered_validator,
+    replaced_or_financing_validator)
+from taa.services.preprocessors import preprocess_date
 
 class FileImportService(object):
     def get_flat_file_spec(self):
         flat_file_spec = FlatFileSpec("record")
         for field in EnrollmentRecordParser.all_fields:
-            flat_file_spec.add_to_spec(FlatFileFieldDefinition(
-                size = field.flat_file_size,
-                csv_name = field.dict_key_name,
-                title = field.title,
-                description = field.description
-            ))
+            if field.flat_file_size > 0:
+                flat_file_spec.add_to_spec(FlatFileFieldDefinition(
+                    size=field.flat_file_size,
+                    csv_name=field.dict_key_name,
+                    title=field.title,
+                    description=field.description,
+                    is_required=(required_validator in field.validators),
+                    format=self.get_data_format(field),
+                ))
         return flat_file_spec
+
+    def get_data_format(self, field):
+        format_str = ""
+        if field.preprocessor is preprocess_date:
+            format_str += "Date format is YYYY-MM-DD"
+
+        if timestamp_validator in field.validators:
+            # Override date preprocessor format string
+            format_str = "Timestamp format is YYYY-MM-DDTHH:MM:SS"
+
+        if birthdate_validator in field.validators:
+            format_str += "; Date must not be future."
+
+        if coverage_validator in field.validators:
+            format_str = "A positive integer, only digits. If no coverage selected, leave blank."
+
+        if premium_validator in field.validators:
+            format_str = "'NNN.NN', where N is a digit. No currency sign. Premium is modal. If no coverage selected, leave blank."
+
+        if gender_validator in field.validators:
+            format_str = "Either 'M' or 'F'"
+
+        if payment_mode_validator in field.validators:
+            format_str = "Must be either '52', '26', '24', or '12'"
+
+        if enrollment_type_validator in field.validators:
+            format_str = "'A' for Enroller-Assisted enrollment, 'S' for self-enrollment"
+
+        if zip_validator in field.validators:
+            format_str = "5 or more digits"
+
+        if email_validator in field.validators:
+            format_str = "If provided, must resemble an email address, including an '@' symbol."
+
+        if ssn_validator in field.validators:
+            format_str = "NNNNNNNNN (9 digits with no dashes)"
+
+        if state_validator in field.validators:
+            format_str = "2 character state code"
+
+        if question_answered_validator in field.validators:
+            format_str = "'Y' or 'N' if provided"
+
+        if replaced_or_financing_validator in field.validators:
+            format_str = "'R' if replaced or 'F' if financing"
+
+        return format_str
 
     def get_flat_file_header_spec(self):
         flat_file_header_spec = FlatFileSpec("header")
@@ -124,11 +186,13 @@ for assistance."""
 
 
 class FlatFileFieldDefinition(object):
-    def __init__(self, size, csv_name, title, description):
+    def __init__(self, size, csv_name, title, description, format="", is_required=False):
         self.size = size
         self.csv_name = csv_name
         self.title = title
         self.description = description
+        self.format = format
+        self.is_required = is_required
 
 
 class FlatFileSpec(object):
@@ -138,7 +202,7 @@ class FlatFileSpec(object):
 
     def add_to_spec(self, definition):
         if isinstance(definition, list):
-            self.spec+=definition
+            self.spec += definition
         else:
             self.spec.append(definition)
 
@@ -151,36 +215,46 @@ class FlatFileSpec(object):
     def add_standard_headers(self):
         self.add_to_spec([
             FlatFileFieldDefinition(
-                size=16,
+                size=14,
                 csv_name="FILE_TYPE",
                 title="File Type",
-                description="Must be TAA_ENROLLMENT"
+                description="Must be TAA_ENROLLMENT",
+                format="",
+                is_required=True,
             ),
             FlatFileFieldDefinition(
                 size=8,
                 csv_name="VERSION",
                 title="Version Number",
-                description="Must be 1.0"
+                description="Must be 1.0",
+                format="N.N",
+                is_required=True,
             ),
             FlatFileFieldDefinition(
                 size=8,
                 csv_name="RECORD_COUNT",
                 title="Record Count",
-                description="Must match number of record in file"
+                description="Must match number of records in the file",
+                format="A positive integer",
+                is_required=True,
             ),
             FlatFileFieldDefinition(
                 size=64,
                 csv_name="USER_TOKEN",
                 title="User Token",
-                description="The API token representing the uploading user"
+                description="The API token authenticating the uploader",
+                format="",
+                is_required=True,
             ),
             FlatFileFieldDefinition(
                 size=64,
                 csv_name="CASE_TOKEN",
                 title="Case Token",
-                description="The token representing the enrolling case"
+                description="The token identifying the TAA enrollment case",
+                is_required=True,
             )
         ])
+
 
 class FlatFileDocumentation(object):
 
@@ -202,7 +276,8 @@ class FlatFileDocumentation(object):
         )
         return docs.toPDF(filename)
 
-    fieldnames = ["Field", "From", "To", "Length", "Description"]
+    fieldnames = ["Field Name", "From", "To", "Size", "Required", "Description", "Data Format"]
+
     def __init__(self, row_spec, header_spec=None):
         self.header_spec = header_spec
         self.row_spec = row_spec
@@ -213,7 +288,13 @@ class FlatFileDocumentation(object):
         writer.writeheader()
         distanceRead = 1
         for s in self.row_spec:
-            writer.writerow({"Field":s.csv_name, "From":distanceRead, "To":distanceRead+s.size-1, "Length":s.size, "Description": s.description})
+            writer.writerow({"Field Name":s.csv_name,
+                             "From":distanceRead,
+                             "To":distanceRead+s.size-1,
+                             "Size":s.size,
+                             "Required": "Yes" if s.is_required else "No",
+                             "Data Format": s.format,
+                             "Description": s.description})
             distanceRead += s.size
         if filename:
             with open(filename, "w+") as f:
@@ -222,17 +303,16 @@ class FlatFileDocumentation(object):
 
     def toHTML(self, filename=None):
         header_rows = []
-        distanceRead = 1
 
         if self.header_spec:
             distanceRead = 1
             for s in self.header_spec.get_spec():
-                header_rows.append([s.csv_name, distanceRead, distanceRead+s.size-1, s.size, s.description])
+                header_rows.append([s.csv_name, distanceRead, distanceRead+s.size-1, s.size, "Yes" if s.is_required else "No", s.description, s.format])
                 distanceRead += s.size
         record_rows = []
         distanceRead = 1
         for s in self.row_spec.get_spec():
-            record_rows.append([s.csv_name, distanceRead, distanceRead+s.size-1, s.size, s.description])
+            record_rows.append([s.csv_name, distanceRead, distanceRead+s.size-1, s.size, "Yes" if s.is_required else "No", s.description, s.format])
             distanceRead += s.size
 
         with app.test_request_context('/'):
@@ -280,7 +360,7 @@ class FlatFileImporter(object):
         if self.has_headers():
             header_spec_size = reduce(lambda acc, spec: acc + spec.size, self.header_spec, 0)
             if header_spec_size != len(headers):
-                self.errors.append("Expected a header line {} characters long. Recieved a line {} characters long.".format(header_spec_size, len(headers)))
+                self.errors.append("Expected a header line {} characters long. Received a line {} characters long.".format(header_spec_size, len(headers)))
             else:
                 lineReader = cStringIO.StringIO(headers)
                 for s in self.header_spec:
@@ -290,7 +370,7 @@ class FlatFileImporter(object):
         spec_size = reduce(lambda acc, spec: acc + spec.size, self.spec, 0)
         for i, line in enumerate(records):
             if spec_size != len(line):
-                self.errors.append("Line {}: Expected a line {} characters long. Recieved a line {} characters long.".format(i+1, spec_size, len(line)))
+                self.errors.append("Line {}: Expected a line {} characters long. Received a line {} characters long.".format(i+1, spec_size, len(line)))
                 continue
             lineReader = cStringIO.StringIO(line)
             data = {
@@ -302,7 +382,6 @@ class FlatFileImporter(object):
                     continue
                 data[s.csv_name] = lineReader.read(s.size).strip()
             self.data.append(data)
-
 
     def get_data(self):
         return self.data
@@ -333,8 +412,10 @@ class FlatFileImporter(object):
     def get_error_message(self):
         return "".join("Error {}: {}".format(i, message) for i, message in enumerate(self.errors))
 
+
 class FlatFileFormatError(object):
     def __init__(self, message):
         self.message = message
+
     def to_json(self):
         return {"type": "flat_file_format_error", "message": self.message}

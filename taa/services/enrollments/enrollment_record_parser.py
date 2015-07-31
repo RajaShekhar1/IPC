@@ -1,7 +1,9 @@
 from taa.services.preprocessors import preprocess_date
 from taa.services.validators import required_validator, api_token_validator, case_token_validator, product_validator, \
     payment_mode_validator, gender_validator, ssn_validator, birthdate_validator, coverage_validator, premium_validator, \
-    state_validator, zip_validator, question_answered_validator, RequiredIfAnyInGroupValidator
+    state_validator, zip_validator, question_answered_validator, RequiredIfAnyInGroupValidator, \
+    enrollment_type_validator, email_validator, height_validator, weight_validator, replaced_or_financing_validator, \
+    timestamp_validator
 from taa.services import RequiredFeature
 from taa.services.cases.census_import import preprocess_string, preprocess_numbers, preprocess_zip
 
@@ -54,88 +56,90 @@ class EnrollmentRecordParser(object):
     case_service = RequiredFeature("CaseService")
 
     # Case/Record information
-    user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator], flat_file_size=0, description="A token representing the api user")
-    case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator], flat_file_size=0, description="A token representing a case")
-    product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [required_validator, product_validator], flat_file_size=5, description="A 5 character string representing the product")
+    user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator], flat_file_size=0, description="A token representing the API user")
+    case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator], flat_file_size=0, description="A token identifying the TAA enrollment case")
+    product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [required_validator, product_validator], flat_file_size=8, description="A string specifying the product name")
     payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_numbers, [required_validator, payment_mode_validator], flat_file_size=2, description="A two digit number resenting the payment mode")
-    enrollment_type = EnrollmentRecordField("enrollment_type", "enrollment_type", preprocess_string, [required_validator], flat_file_size=1, description="'A' for Enroller-Assisted enrollment, 'S' for self-enrollment")
+    enrollment_type = EnrollmentRecordField("enrollment_type", "enrollment_type", preprocess_string, [required_validator, enrollment_type_validator], flat_file_size=1, description="How the application was taken")
 
     # Employee Information
     emp_first = EnrollmentRecordField("emp_first", "employee_first", preprocess_string, [required_validator], flat_file_size=14, description="Employee first name")
     emp_last = EnrollmentRecordField("emp_last", "employee_last", preprocess_string, [required_validator], flat_file_size=20, description="Employee last name")
-    emp_gender = EnrollmentRecordField("emp_gender", "employee_gender", preprocess_string, [required_validator, gender_validator], flat_file_size=1, description="Employee gender, either 'M' or 'F'")
-    emp_ssn = EnrollmentRecordField("emp_ssn", "employee_ssn", preprocess_numbers, [required_validator, ssn_validator], flat_file_size=9, description="Employee SSN, format NNNNNNNNN")
-    emp_birthdate = EnrollmentRecordField("emp_birthdate", "employee_birthdate", preprocess_date, [required_validator, birthdate_validator], flat_file_size=10, description="Employee Birthday, format YYYY-MM-DD")
-    emp_coverage = EnrollmentRecordField("emp_coverage", "employee_coverage", preprocess_string, [required_validator, coverage_validator], flat_file_size=6, description="Employee Coverage, format NNNNNN")
-    emp_premium = EnrollmentRecordField("emp_premium", "employee_premium", preprocess_string, [required_validator, premium_validator], flat_file_size=6, description="Employee Premium, format NN.NNN")
+    emp_gender = EnrollmentRecordField("emp_gender", "employee_gender", preprocess_string, [required_validator, gender_validator], flat_file_size=1, description="Employee gender")
+    emp_ssn = EnrollmentRecordField("emp_ssn", "employee_ssn", preprocess_numbers, [required_validator, ssn_validator], flat_file_size=9, description="Employee SSN")
+    emp_birthdate = EnrollmentRecordField("emp_birthdate", "employee_birthdate", preprocess_date, [required_validator, birthdate_validator], flat_file_size=10, description="Employee Birthday")
+    emp_coverage = EnrollmentRecordField("emp_coverage", "employee_coverage", preprocess_string, [required_validator, coverage_validator], flat_file_size=6, description="Employee Coverage")
+    emp_premium = EnrollmentRecordField("emp_premium", "employee_premium", preprocess_string, [required_validator, premium_validator], flat_file_size=6, description="Employee Premium")
     emp_street = EnrollmentRecordField("emp_street", "employee_street", preprocess_string, [required_validator], flat_file_size=29, description="Employee street address")
     emp_street2 = EnrollmentRecordField("emp_street2", "employee_street2", preprocess_string, [], flat_file_size=29, description="Employee street address 2")
     emp_city = EnrollmentRecordField("emp_city", "employee_city", preprocess_string, [required_validator], flat_file_size=14, description="Employee city")
     emp_state = EnrollmentRecordField("emp_state", "employee_state", preprocess_string, [required_validator, state_validator], flat_file_size=2, description="2 character employee statecode")
     emp_zipcode = EnrollmentRecordField("emp_zipcode", "employee_zipcode", preprocess_zip, [required_validator, zip_validator], flat_file_size=9, description="Employee zipcode, up to 9 characters")
-    emp_phone = EnrollmentRecordField("emp_phone", "employee_phone", preprocess_string, [], flat_file_size=10, description="Employee phone number, format NNNNNNNNNN")
-    emp_pin = EnrollmentRecordField("emp_pin", "employee_pin", preprocess_numbers, [required_validator], flat_file_size=15, description="Employee pin, format NNNNNNNNNNNNNNN")
-    emp_date_of_hire = EnrollmentRecordField("emp_date_of_hire", "employee_date_of_hire", preprocess_date, [required_validator], flat_file_size=10, description="")
+    emp_phone = EnrollmentRecordField("emp_phone", "employee_phone", preprocess_string, [], flat_file_size=10, description="Employee phone number")
+    emp_pin = EnrollmentRecordField("emp_pin", "employee_pin", preprocess_numbers, [], flat_file_size=15, description="Employee pin, if provided.")
+    emp_date_of_hire = EnrollmentRecordField("emp_date_of_hire", "employee_date_of_hire", preprocess_date, [required_validator], flat_file_size=10, description="Date of Hire")
 
     # Spouse Information
     sp_first = EnrollmentRecordField("sp_first", "spouse_first", preprocess_string, [], flat_file_size=14, description="Spouse first name")
     sp_last = EnrollmentRecordField("sp_last", "spouse_last", preprocess_string, [], flat_file_size=20, description="Spouse last name")
-    sp_birthdate = EnrollmentRecordField("sp_birthdate", "spouse_birthdate", preprocess_date, [birthdate_validator], flat_file_size=10, description="Spouse birthdate, format YYYY-MM-DD")
-    sp_gender = EnrollmentRecordField("sp_gender", "spouse_gender", preprocess_string, [gender_validator], flat_file_size=1)
-    sp_ssn = EnrollmentRecordField("sp_ssn", "spouse_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="")
+    sp_birthdate = EnrollmentRecordField("sp_birthdate", "spouse_birthdate", preprocess_date, [birthdate_validator], flat_file_size=10, description="Spouse birthdate")
+    sp_gender = EnrollmentRecordField("sp_gender", "spouse_gender", preprocess_string, [gender_validator], flat_file_size=1, description="Spouse Gender")
+    sp_ssn = EnrollmentRecordField("sp_ssn", "spouse_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="Spouse SSN")
     sp_street = EnrollmentRecordField("sp_street", "spouse_street", preprocess_string, [], flat_file_size=29, description="Spouse street address")
     sp_street2 = EnrollmentRecordField("sp_street2", "spouse_street2", preprocess_string, [], flat_file_size=29, description="Spouse street address 2")
     sp_city = EnrollmentRecordField("sp_city", "spouse_city", preprocess_string, [], flat_file_size=14, description="Spouse city")
     sp_state = EnrollmentRecordField("sp_state", "spouse_state", preprocess_string, [state_validator], flat_file_size=2, description="2 character Spouse statecode")
-    sp_zipcode = EnrollmentRecordField("sp_zipcode", "spouse_zipcode", preprocess_zip, [zip_validator], flat_file_size=9, description="Spouse zipcode, up to 9 characters")
-    sp_phone = EnrollmentRecordField("sp_phone", "spouse_phone", preprocess_string, [], flat_file_size=10, description="Spouse phone number, format NNNNNNNNNN")
-    sp_coverage = EnrollmentRecordField("sp_coverage", "spouse_coverage", preprocess_string, [coverage_validator], flat_file_size=6, description="")
-    sp_premium = EnrollmentRecordField("sp_premium", "spouse_premium", preprocess_string, [premium_validator], flat_file_size=6, description="")
+    sp_zipcode = EnrollmentRecordField("sp_zipcode", "spouse_zipcode", preprocess_zip, [zip_validator], flat_file_size=9, description="Spouse zipcode")
+    sp_phone = EnrollmentRecordField("sp_phone", "spouse_phone", preprocess_string, [], flat_file_size=10, description="Spouse phone number")
+    sp_coverage = EnrollmentRecordField("sp_coverage", "spouse_coverage", preprocess_string, [coverage_validator], flat_file_size=6, description="Spouse coverage")
+    sp_premium = EnrollmentRecordField("sp_premium", "spouse_premium", preprocess_string, [premium_validator], flat_file_size=6, description="Spouse premium")
 
     # Optional Fields
-    actively_at_work = EnrollmentRecordField("actively_at_work", "actively_at_work", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
-    emp_email = EnrollmentRecordField("emp_email", "employee_email", preprocess_string, [], flat_file_size=40, description="")
-    emp_height_inches = EnrollmentRecordField("emp_height_inches", "employee_height_inches", preprocess_numbers, [], flat_file_size=2, description="")
-    emp_weight_pounds = EnrollmentRecordField("emp_weight_pounds", "employee_weight_pounds", preprocess_numbers, [], flat_file_size=3, description="")
-    emp_smoker = EnrollmentRecordField("emp_smoker", "employee_smoker", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
-    existing_insurance = EnrollmentRecordField("existing_insurance", "existing_insurance", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
-    replacing_insurance = EnrollmentRecordField("replacing_insurance", "replacing_insurance", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
-    sp_treated_6_months = EnrollmentRecordField("sp_treated_6_months", "sp_treated_6_months", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
-    sp_disabled_6_months = EnrollmentRecordField("sp_disabled_6_months", "sp_disabled_6_months", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
-    replacement_read_aloud = EnrollmentRecordField("replacement_read_aloud", "replacement_read_aloud", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
-    replacement_is_terminating = EnrollmentRecordField("replacement_is_terminating", "replacement_is_terminating", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
-    replacement_using_funds = EnrollmentRecordField("replacement_using_funds", "replacement_using_funds", preprocess_string, [question_answered_validator], flat_file_size=1, description="")
-    replacement_policy1_name = EnrollmentRecordField("replacement_policy1_name", "replacement_policy1_name", preprocess_string, [], flat_file_size=20, description="")
-    replacement_policy1_number = EnrollmentRecordField("replacement_policy1_number", "replacement_policy1_number", preprocess_string, [], flat_file_size=10, description="")
-    replacement_policy1_insured = EnrollmentRecordField("replacement_policy1_insured", "replacement_policy1_insured", preprocess_string, [], flat_file_size=20, description="")
-    replacement_policy1_replaced_or_financing = EnrollmentRecordField("replacement_policy1_replaced_or_financing", "replacement_policy1_replaced_or_financing", preprocess_string, [], flat_file_size=1, description="")
-    replacement_policy1_reason = EnrollmentRecordField("replacement_policy1_reason", "replacement_policy1_reason", preprocess_string, [], flat_file_size=70, description="")
-    emp_bene_name = EnrollmentRecordField("emp_bene_name", "employee_bene_name", preprocess_string, [], flat_file_size=40, description="")
-    emp_bene_birthdate = EnrollmentRecordField("emp_bene_birthdate", "employee_bene_birthdate", preprocess_date, [birthdate_validator], flat_file_size=8, description="")
-    emp_bene_relationship = EnrollmentRecordField("emp_bene_relationship", "employee_bene_relationship", preprocess_string, [], flat_file_size=15, description="")
-    emp_bene_ssn = EnrollmentRecordField("emp_bene_ssn", "employee_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="")
-    sp_bene_name = EnrollmentRecordField("sp_bene_name", "spouse_bene_name", preprocess_string, [], flat_file_size=40, description="")
-    sp_bene_birthdate = EnrollmentRecordField("sp_bene_birthdate", "spouse_bene_birthdate", preprocess_date, [], flat_file_size=8, description="")
-    sp_bene_relationship = EnrollmentRecordField("sp_bene_relationship", "spouse_bene_relationship", preprocess_string, [], flat_file_size=15, description="")
-    sp_bene_ssn = EnrollmentRecordField("sp_bene_ssn", "spouse_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="")
-    emp_cont_bene_name = EnrollmentRecordField("emp_cont_bene_name", "employee_cont_bene_name", preprocess_string, [], flat_file_size=40, description="")
-    emp_cont_bene_birthdate = EnrollmentRecordField("emp_cont_bene_birthdate", "employee_cont_bene_birthdate", preprocess_date, [birthdate_validator], flat_file_size=8, description="")
-    emp_cont_bene_relationship = EnrollmentRecordField("emp_cont_bene_relationship", "employee_cont_bene_relationship", preprocess_string, [], flat_file_size=15, description="")
-    emp_cont_bene_ssn = EnrollmentRecordField("emp_cont_bene_ssn", "employee_cont_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="")
-    sp_cont_bene_name = EnrollmentRecordField("sp_cont_bene_name", "spouse_cont_bene_name", preprocess_string, [], flat_file_size=40, description="")
-    sp_cont_bene_birthdate = EnrollmentRecordField("sp_cont_bene_birthdate", "spouse_cont_bene_birthdate", preprocess_date, [birthdate_validator], flat_file_size=8, description="")
-    sp_cont_bene_relationship = EnrollmentRecordField("sp_cont_bene_relationship", "spouse_cont_bene_relationship", preprocess_string, [], flat_file_size=15, description="")
-    sp_cont_bene_ssn = EnrollmentRecordField("sp_cont_bene_ssn", "spouse_cont_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="")
+    actively_at_work = EnrollmentRecordField("actively_at_work", "actively_at_work", preprocess_string, [question_answered_validator], flat_file_size=1, description="Is the Employee actively at work?")
+    emp_email = EnrollmentRecordField("emp_email", "employee_email", preprocess_string, [email_validator], flat_file_size=40, description="Employee email address")
+    emp_height_inches = EnrollmentRecordField("emp_height_inches", "employee_height_inches", preprocess_numbers, [height_validator], flat_file_size=2, description="Employee height in inches")
+    emp_weight_pounds = EnrollmentRecordField("emp_weight_pounds", "employee_weight_pounds", preprocess_numbers, [weight_validator], flat_file_size=3, description="Employee weight in pounds")
+    emp_smoker = EnrollmentRecordField("emp_smoker", "employee_smoker", preprocess_string, [question_answered_validator], flat_file_size=1, description="Is employee a tobacco user")
+
+    sp_email = EnrollmentRecordField("sp_email", "spouse_email", preprocess_string, [email_validator], flat_file_size=40, description="Spouse email address")
+    sp_height_inches = EnrollmentRecordField("sp_height_inches", "spouse_height_inches", preprocess_numbers, [height_validator], flat_file_size=2, description="Spouse height in inches")
+    sp_weight_pounds = EnrollmentRecordField("sp_weight_pounds", "spouse_weight_pounds", preprocess_numbers, [weight_validator], flat_file_size=3, description="Spouse weight in pounds")
+    sp_smoker = EnrollmentRecordField("sp_smoker", "spouse_smoker", preprocess_string, [question_answered_validator], flat_file_size=1, description="Is spouse a tobacco user")
+
+    existing_insurance = EnrollmentRecordField("existing_insurance", "existing_insurance", preprocess_string, [question_answered_validator], flat_file_size=1, description="Does anyone on this application have any existing life insurance or annuity contracts?")
+    replacing_insurance = EnrollmentRecordField("replacing_insurance", "replacing_insurance", preprocess_string, [question_answered_validator], flat_file_size=1, description="Will the coverage applied for replace any existing life insurance or annuities?")
+    sp_treated_6_months = EnrollmentRecordField("sp_treated_6_months", "sp_treated_6_months", preprocess_string, [question_answered_validator], flat_file_size=1, description="During the prior 6 months, other than for routine medical care, has spouse been diagnosed or treated by a member of the medical profession in a hospital or any other medical facility?")
+    sp_disabled_6_months = EnrollmentRecordField("sp_disabled_6_months", "sp_disabled_6_months", preprocess_string, [question_answered_validator], flat_file_size=1, description="Has spouse been disabled in the prior 6 months or received disability payments?")
+    replacement_read_aloud = EnrollmentRecordField("replacement_read_aloud", "replacement_read_aloud", preprocess_string, [question_answered_validator], flat_file_size=1, description="Should replacement notice be read aloud")
+    replacement_is_terminating = EnrollmentRecordField("replacement_is_terminating", "replacement_is_terminating", preprocess_string, [question_answered_validator], flat_file_size=1, description="Are you considering discontinuing making premium payments, surrendering, forfeiting, assigning to the insurer, or otherwise terminating your existing policy or contract?")
+    replacement_using_funds = EnrollmentRecordField("replacement_using_funds", "replacement_using_funds", preprocess_string, [question_answered_validator], flat_file_size=1, description="Are you considering using funds from your existing policies or contracts to pay premiums due on the new policy or contract?")
+
+    emp_bene_name = EnrollmentRecordField("emp_bene_name", "employee_bene_name", preprocess_string, [], flat_file_size=40, description="Employee primary beneficiary name")
+    emp_bene_birthdate = EnrollmentRecordField("emp_bene_birthdate", "employee_bene_birthdate", preprocess_date, [birthdate_validator], flat_file_size=8, description="Employee primary beneficiary birthdate")
+    emp_bene_relationship = EnrollmentRecordField("emp_bene_relationship", "employee_bene_relationship", preprocess_string, [], flat_file_size=15, description="Employee primary beneficiary relationship")
+    emp_bene_ssn = EnrollmentRecordField("emp_bene_ssn", "employee_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="Employee primary beneficiary SSN")
+    sp_bene_name = EnrollmentRecordField("sp_bene_name", "spouse_bene_name", preprocess_string, [], flat_file_size=40, description="Spouse primary beneficiary name")
+    sp_bene_birthdate = EnrollmentRecordField("sp_bene_birthdate", "spouse_bene_birthdate", preprocess_date, [], flat_file_size=8, description="Spouse primary beneficiary birthdate")
+    sp_bene_relationship = EnrollmentRecordField("sp_bene_relationship", "spouse_bene_relationship", preprocess_string, [], flat_file_size=15, description="Spouse primary beneficiary relationship")
+    sp_bene_ssn = EnrollmentRecordField("sp_bene_ssn", "spouse_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="Spouse primary beneficiary SSN")
+    emp_cont_bene_name = EnrollmentRecordField("emp_cont_bene_name", "employee_cont_bene_name", preprocess_string, [], flat_file_size=40, description="Employee contingent beneficiary name")
+    emp_cont_bene_birthdate = EnrollmentRecordField("emp_cont_bene_birthdate", "employee_cont_bene_birthdate", preprocess_date, [birthdate_validator], flat_file_size=8, description="Employee contingent beneficiary birthdate")
+    emp_cont_bene_relationship = EnrollmentRecordField("emp_cont_bene_relationship", "employee_cont_bene_relationship", preprocess_string, [], flat_file_size=15, description="Employee contingent beneficiary relationship")
+    emp_cont_bene_ssn = EnrollmentRecordField("emp_cont_bene_ssn", "employee_cont_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="Employee contingent beneficiary SSN")
+    sp_cont_bene_name = EnrollmentRecordField("sp_cont_bene_name", "spouse_cont_bene_name", preprocess_string, [], flat_file_size=40, description="Spouse contingent beneficiary name")
+    sp_cont_bene_birthdate = EnrollmentRecordField("sp_cont_bene_birthdate", "spouse_cont_bene_birthdate", preprocess_date, [birthdate_validator], flat_file_size=8, description="Spouse contingent beneficiary birthdate")
+    sp_cont_bene_relationship = EnrollmentRecordField("sp_cont_bene_relationship", "spouse_cont_bene_relationship", preprocess_string, [], flat_file_size=15, description="Spouse contingent beneficiary relationship")
+    sp_cont_bene_ssn = EnrollmentRecordField("sp_cont_bene_ssn", "spouse_cont_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="Spouse contingent beneficiary SSN")
 
     # Signing Information
-    emp_sig_txt = EnrollmentRecordField("emp_sig_txt", "employee_sig_txt", preprocess_string, [required_validator], flat_file_size=70, description="")
-    application_date = EnrollmentRecordField("application_date", "application_date", preprocess_date, [required_validator], flat_file_size=8, description="")
-    time_stamp = EnrollmentRecordField("time_stamp", "time_stamp", preprocess_date, [required_validator], flat_file_size=19, description="Format:  YYYY-MM-DDThh-mm-ss")
-    signed_at_city = EnrollmentRecordField("signed_at_city", "signed_at_city", preprocess_string, [required_validator], flat_file_size=15, description="")
-    signed_at_state = EnrollmentRecordField("signed_at_state", "signed_at_state", preprocess_string, [required_validator, state_validator], flat_file_size=2, description="")
-    agent_name = EnrollmentRecordField("agent_name", "agent_name", preprocess_string, [required_validator], flat_file_size=15, description="")
-    agent_code = EnrollmentRecordField("agent_code", "agent_code", preprocess_string, [required_validator], flat_file_size=8, description="")
-    agent_sig_txt = EnrollmentRecordField("agent_sig_txt", "agent_sig_txt", preprocess_string, [required_validator], flat_file_size=70, description="")
+    emp_sig_txt = EnrollmentRecordField("emp_sig_txt", "employee_sig_txt", preprocess_string, [required_validator], flat_file_size=70, description="Signature line for employee")
+    application_date = EnrollmentRecordField("application_date", "application_date", preprocess_date, [required_validator], flat_file_size=8, description="Date of the application")
+    time_stamp = EnrollmentRecordField("time_stamp", "time_stamp", preprocess_date, [required_validator, timestamp_validator], flat_file_size=19, description="Time the application was received.")
+    signed_at_city = EnrollmentRecordField("signed_at_city", "signed_at_city", preprocess_string, [required_validator], flat_file_size=15, description="City where the application was signed")
+    signed_at_state = EnrollmentRecordField("signed_at_state", "signed_at_state", preprocess_string, [required_validator, state_validator], flat_file_size=2, description="State in which the enrollment was signed")
+    agent_name = EnrollmentRecordField("agent_name", "agent_name", preprocess_string, [required_validator], flat_file_size=15, description="Agent signing name")
+    agent_code = EnrollmentRecordField("agent_code", "agent_code", preprocess_string, [required_validator], flat_file_size=8, description="Agent code as provided")
+    agent_sig_txt = EnrollmentRecordField("agent_sig_txt", "agent_sig_txt", preprocess_string, [required_validator], flat_file_size=70, description="Signature line for agent")
 
     # All spouse data is required if any spouse data is given
     spouse_fields = [sp_first, sp_last, sp_birthdate, sp_ssn]
@@ -221,18 +225,11 @@ class EnrollmentRecordParser(object):
         sp_state,
         sp_zipcode,
         sp_phone,
-        existing_insurance,
-        replacing_insurance,
-        sp_treated_6_months,
-        sp_disabled_6_months,
-        replacement_read_aloud,
-        replacement_is_terminating,
-        replacement_using_funds,
-        replacement_policy1_name,
-        replacement_policy1_number,
-        replacement_policy1_insured,
-        replacement_policy1_replaced_or_financing,
-        replacement_policy1_reason,
+        sp_email,
+        sp_height_inches,
+        sp_weight_pounds,
+        sp_smoker,
+
         emp_bene_name,
         emp_bene_birthdate,
         emp_bene_relationship,
@@ -262,35 +259,56 @@ class EnrollmentRecordParser(object):
         agent_sig_txt
     ]
 
+    # Replacement info
+    all_fields += [
+        existing_insurance,
+        replacing_insurance,
+        sp_treated_6_months,
+        sp_disabled_6_months,
+        replacement_read_aloud,
+        replacement_is_terminating,
+        replacement_using_funds,
+    ]
+
+    MAX_POLICIES = 4
+    for num in range(1, MAX_POLICIES + 1):
+        all_fields += [
+            EnrollmentRecordField("replacement_policy{}_name".format(num), "replacement_policy{}_name".format(num), preprocess_string, [], flat_file_size=20, description="Name of policy company"),
+            EnrollmentRecordField("replacement_policy{}_number".format(num), "replacement_policy{}_number".format(num), preprocess_string, [], flat_file_size=16, description="Policy Number or ID"),
+            EnrollmentRecordField("replacement_policy{}_insured".format(num), "replacement_policy{}_insured".format(num), preprocess_string, [], flat_file_size=20, description="Insured name on policy"),
+            EnrollmentRecordField("replacement_policy{}_replaced_or_financing".format(num), "replacement_policy{}_replaced_or_financing".format(num), preprocess_string, [replaced_or_financing_validator], flat_file_size=1, description="Funds coming from replaced or financing"),
+            EnrollmentRecordField("replacement_policy{}_reason".format(num), "replacement_policy{}_reason".format(num), preprocess_string, [], flat_file_size=70, description="Reason for replacing policy"),
+        ]
+
     # Child data
     MAX_CHILDREN = 6
     for num in range(1, MAX_CHILDREN + 1):
         child_first = EnrollmentRecordField('ch{}_first'.format(num),
                                         'child{}_first'.format(num),
-                                        preprocess_string, [], flat_file_size=14, description="")
+                                        preprocess_string, [], flat_file_size=14, description="Child first name")
         child_last = EnrollmentRecordField('ch{}_last'.format(num),
                                        'child{}_last'.format(num),
-                                       preprocess_string, [], flat_file_size=20, description="")
+                                       preprocess_string, [], flat_file_size=20, description="Child last name")
         child_birthdate = EnrollmentRecordField('ch{}_birthdate'.format(num),
                                             'child{}_birthdate'.format(num),
                                             preprocess_date,
-                                            [birthdate_validator], flat_file_size=8, description="")
+                                            [birthdate_validator], flat_file_size=8, description="Child birthdate")
         child_gender = EnrollmentRecordField('ch{}_gender'.format(num),
                                             'child{}_gender'.format(num),
                                             preprocess_string,
-                                            [gender_validator], flat_file_size=1, description="")
+                                            [gender_validator], flat_file_size=1, description="Child gender")
         child_ssn = EnrollmentRecordField('ch{}_ssn'.format(num),
                                             'child{}_ssn'.format(num),
                                             preprocess_numbers,
-                                            [ssn_validator], flat_file_size=9, description="")
+                                            [ssn_validator], flat_file_size=9, description="Child SSN")
         child_coverage = EnrollmentRecordField('ch{}_coverage'.format(num),
                                             'child{}_coverage'.format(num),
                                             preprocess_string,
-                                            [coverage_validator], flat_file_size=6, description="")
+                                            [coverage_validator], flat_file_size=6, description="Child coverage")
         child_premium = EnrollmentRecordField('ch{}_premium'.format(num),
                                             'child{}_premium'.format(num),
                                             preprocess_string,
-                                            [premium_validator], flat_file_size=6, description="")
+                                            [premium_validator], flat_file_size=6, description="Child premium")
 
         child_premium.add_validator(RequiredIfAnyInGroupValidator([child_coverage],
                                         "child_premium is required if child_coverage is provided")
@@ -306,7 +324,7 @@ class EnrollmentRecordParser(object):
                                             "{}_question_{}_answer".format(db_prefix, q_num),
                                             preprocess_string,
                                             [question_answered_validator],
-                                            flat_file_size=1, description=""
+                                            flat_file_size=1, description="{} Answer to Statement of Health Question".format(db_prefix.capitalize())
                                             )
             all_fields += [question]
 
@@ -317,7 +335,7 @@ class EnrollmentRecordParser(object):
                                                 "child{}_question_{}_answer".format(num, q_num),
                                                 preprocess_string,
                                                 [question_answered_validator],
-                                                flat_file_size=1, description=""
+                                                flat_file_size=1, description="Child Answer to Statement of Health Question"
                                                 )
             all_fields += [ch_question]
     def __init__(self):

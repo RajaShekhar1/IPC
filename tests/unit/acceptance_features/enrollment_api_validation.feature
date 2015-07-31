@@ -153,18 +153,21 @@ Feature: Validate an enrollment record submitted via API.
       | missing_data | <column_name> |
 
     Examples:
-      | column_name   |
-      | user_token    |
-      | case_token    |
-      | product_code  |
-      | emp_first     |
-      | emp_last      |
-      | emp_ssn       |
-      | emp_birthdate |
-      | payment_mode  |
-      | agent_name    |
-      | agent_code    |
-      | emp_pin       |
+      | column_name      |
+      | user_token       |
+      | case_token       |
+      | product_code     |
+      | emp_first        |
+      | emp_last         |
+      | emp_ssn          |
+      | emp_birthdate    |
+      | payment_mode     |
+      | agent_name       |
+      | agent_code       |
+      | agent_sig_txt    |
+      | emp_sig_txt      |
+      | application_date |
+      | time_stamp       |
 
 
   Scenario: User submits spouse data with the enrollment.
@@ -374,7 +377,6 @@ Feature: Validate an enrollment record submitted via API.
      | actively_at_work                          |
      # Additional employee data
      | emp_email                                 |
-     | emp_date_of_hire                          |
      | emp_height_inches                         |
      | emp_weight_pounds                         |
      | emp_smoker                                |
@@ -385,6 +387,10 @@ Feature: Validate an enrollment record submitted via API.
      | sp_state                                  |
      | sp_zipcode                                |
      | sp_phone                                  |
+     | sp_email                                 |
+     | sp_height_inches                         |
+     | sp_weight_pounds                         |
+     | sp_smoker                                |
      # Other questions
      | existing_insurance                        |
      | replacing_insurance                       |
@@ -419,7 +425,6 @@ Feature: Validate an enrollment record submitted via API.
 
 
 
-## TODO: well-formed email address
 ## TODO: question Y / N / GI handling?
 ## TODO: Other boolean questions (actively at work) required? and Y/N validation
 

@@ -1,6 +1,10 @@
 <html>
+<head>
+  <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+</head>
 <body style="font-family:sans-serif;">
-  <h1 style="text-align:center;">5Star Flat File Syntax Documentation</h1>
+  <div class="container">
+  <h1 style="text-align:center;">5Star Flat File and FTP Import Documentation</h1>
 
   <p>
   TAA supports importing enrollment data via a flat-file import service. Interested 3rd party integrators can upload
@@ -13,16 +17,43 @@
       <ul>
           <li>Your TAA authentication token. This will be provided to you by a TAA administrator.</li>
           <li>An enrollment case token. This will be provided to you by a TAA administrator.</li>
-          <li>The IP address of the FTPS drop box: {ip_address}</li>
+          <li>The IP address of the FTPS drop box: <strong>{{ ip_address }}</strong></li>
           <li>The user name and password to access the drop box. This will be provided by a TAA administrator.</li>
       </ul>
+      <br>
+      Connect to the FTPS server using port 21. There will be a warning about the self-signed certificate that you may ignore.
+      <p>
+      To transmit a flat file with enrollment data, first ensure the filename ends with the extension ".flat" and that
+        the contents conform to the specifications detailed below.
+        Transmit the file to the FTP server using any standard FTPS client. The file may appear briefly on the remote listing, but
+        do not expect to see previously uploaded files in the remote directory listing.
+      </p>
+      <p>
+        A single email notification will be sent confirming either successful processing or an error condition and
+        the reason(s) for the error condition. However, if the file is not well-formed, no email will be sent.
+        The status email will be sent to the email address associated with your Authentication token.
+      </p>
   </p>
 
-  <h2>Header Field Definition</h2>
-  <table>
-    <tr style='background:rgba(200,50,45,.2);'>
+  <h2>Flat File Specification</h2>
+  <p>
+    The TAA system accepts a flat-file enrollment format consisting of UTF-8 encoded text characters.
+    The content of the file is:<br>
+    <ul>
+      <li>One line of header fields</li>
+      <li>One line of record fields for each enrollment record being transmitted</li>
+    </ul>
+    <br>
+    Each field has a particular size and data type restrictions given in the tables below.
+    If a given data value is smaller than the prescribed size, the field must be padded with whitespace characters.
+    The size given is a character count.
+  </p>
+
+  <h3>Header Field Definition</h3>
+  <table class="table table-bordered table-striped">
+    <tr>
       {% for fn in fieldnames %}
-      <th style='color:#fff;text-align:left;padding:0px 10px;'>{{fn}}</th>
+      <th style='text-align:left;padding:3px 10px;'>{{fn}}</th>
       {% endfor %}
     </tr>
     {% for row in headers %}
@@ -33,11 +64,11 @@
       </tr>
     {% endfor %}
   </table>
-  <h2>Enrollment Record Field Definition</h2>
-  <table>
-    <tr style='background:rgba(200,50,45,.2);'>
+  <h3>Enrollment Record Field Definition</h3>
+  <table class="table table-bordered table-striped">
+    <tr>
       {% for fn in fieldnames %}
-        <th style='color:#fff;text-align:left;padding:0px 10px;'>{{fn}}</th>
+        <th style='text-align:left;padding:0px 10px;'>{{fn}}</th>
       {% endfor %}
     </tr>
     {% for row in records %}
@@ -48,5 +79,6 @@
       </tr>
     {% endfor %}
   </table>
+  </div>
 </body>
 </html>

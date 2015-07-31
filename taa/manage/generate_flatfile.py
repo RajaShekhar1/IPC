@@ -35,7 +35,7 @@ class CSVToFlatFileCommand(Command):
         record_count = "{}{}".format(len(data), "".join([" " for i in range(0, 8-len(data))]))
         user_token = "{}{}".format(data[0].get("user_token"), "".join([" " for i in range(0, 64-len(data[0].get("user_token")))]))
         case_token = "{}{}".format(data[0].get("case_token"), "".join([" " for i in range(0, 64-len(data[0].get("case_token")))]))
-        header = "TAA_ENROLLMENT  1.0     {}{}{}".format(record_count, user_token, case_token)
+        header = "TAA_ENROLLMENT1.0     {}{}{}".format(record_count, user_token, case_token)
         records = "\n".join([self.format_flat_file_record(row, spec) for row in data])
         return "{}\n{}".format(header, records)
 

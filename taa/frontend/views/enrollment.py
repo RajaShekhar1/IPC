@@ -405,7 +405,7 @@ def Flat_file_Documentation():
         os.path.join(app.root_path, 'frontend', 'static'),
         'pdfs/documentation/flat_file_documentation.pdf')
 
-@app.route('/documentation.html')
+@app.route('/flat_file_documentation.html')
 def Flat_file_Documentation_Html():
     from taa.services.data_import.file_import import FlatFileDocumentation
     documentation = FlatFileDocumentation.generate_html_docs()

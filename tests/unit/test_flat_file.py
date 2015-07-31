@@ -40,8 +40,8 @@ class TestFlatFile(TestCase):
             ),
         ])
 
-        self.headers_single = "TAA_ENROLLMENT  1.0     1       e471d02990094e95b76ea096f0814783                                CASE-123                                                        "
-        self.headers = "TAA_ENROLLMENT  1.0     2       e471d02990094e95b76ea096f0814783                                CASE-123                                                        "
+        self.headers_single = "TAA_ENROLLMENT1.0     1       e471d02990094e95b76ea096f0814783                                CASE-123                                                        "
+        self.headers = "TAA_ENROLLMENT1.0     2       e471d02990094e95b76ea096f0814783                                CASE-123                                                        "
 
     def test_it_should_return_a_dictionary_from_a_single_field(self):
         file_obj = cStringIO.StringIO("{}\nJoe     ".format(self.headers_single))
@@ -63,7 +63,7 @@ class TestFlatFile(TestCase):
         file_obj = cStringIO.StringIO("{}\nJoe    Y".format(self.headers_single))
         result = self.file_import_service.process_flat_file_stream(file_obj, spec=self.simple_spec)
         expected = [
-            "Line 1: Expected a line 9 characters long. Recieved a line 8 characters long."
+            "Line 1: Expected a line 9 characters long. Received a line 8 characters long."
         ]
         assert_that([error.message for error in result.get_errors()], equal_to(expected), [error.message for error in result.get_errors()])
 
@@ -71,7 +71,7 @@ class TestFlatFile(TestCase):
         file_obj = cStringIO.StringIO("{}\nJoe    Y\nJohn    N".format(self.headers))
         result = self.file_import_service.process_flat_file_stream(file_obj, spec=self.simple_spec)
         expected = [
-            "Line 1: Expected a line 9 characters long. Recieved a line 8 characters long.",
+            "Line 1: Expected a line 9 characters long. Received a line 8 characters long.",
         ]
         assert_that([error.message for error in result.get_errors()], equal_to(expected), [error.message for error in result.get_errors()])
 
@@ -85,8 +85,8 @@ class TestFlatFile(TestCase):
         file_obj = cStringIO.StringIO("{}\nJoe    Y\nJohn     N".format(self.headers))
         result = self.file_import_service.process_flat_file_stream(file_obj, spec=self.simple_spec)
         expected = [
-            "Line 1: Expected a line 9 characters long. Recieved a line 8 characters long.",
-            "Line 2: Expected a line 9 characters long. Recieved a line 10 characters long."
+            "Line 1: Expected a line 9 characters long. Received a line 8 characters long.",
+            "Line 2: Expected a line 9 characters long. Received a line 10 characters long."
         ]
         assert_that([error.message for error in result.get_errors()], equal_to(expected), [error.message for error in result.get_errors()])
 
@@ -102,9 +102,9 @@ class TestFlatFile(TestCase):
     def test_it_should_generate_basic_documentation(self):
         documentation = FlatFileDocumentation(self.simple_spec.get_spec())
         expected = """\
-Field,From,To,Length,Description
-emp_first,1,8,8,
-actively_at_work,9,9,1,
+Field Name,From,To,Size,Required,Description,Data Format
+emp_first,1,8,8,No,,
+actively_at_work,9,9,1,No,,
 """
         assert_that(documentation.toCSV(), equal_to(expected))
 

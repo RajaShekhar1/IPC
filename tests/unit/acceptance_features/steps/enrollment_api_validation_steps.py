@@ -187,6 +187,7 @@ def step_impl(context):
         sp_height_inches="65",
         sp_weight_pounds="130",
         sp_smoker="N",
+        sp_email="spouse@spouse.com",
         sp_street="Other st",
         sp_street2="",
         sp_city="Chicago",
@@ -252,7 +253,7 @@ def step_impl(context):
 
 @then(u'I should see a success response')
 def step_impl(context):
-    assert_that(len(context.errors), equal_to(0))
+    assert_that(len(context.errors), equal_to(0), "Errors in response: {}".format(context.errors))
 
 
 @then(u'I should see the following errors in the response')
@@ -262,7 +263,7 @@ def step_impl(context):
                      for e in context.errors]
 
     assert_that(actual_errors, has_items(*expected_errors))
-    assert_that(len(context.errors), greater_than_or_equal_to(1))
+    #assert_that(len(context.errors), greater_than_or_equal_to(1))
 
 
 @then("the parsed record should include the following attributes")

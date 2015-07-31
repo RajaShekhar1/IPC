@@ -91,14 +91,24 @@ def birthdate_validator(field, record):
     if not date:
         # Allow blank unless combined with required validator
         return True, None, None
-    else:
-        pass
+
     if not isinstance(date, datetime):
         return False, "invalid_date", "Invalid date"
     if date > datetime.now():
         # The preprocessor currently keeps this from happening, but I will leave
         #  it in here in case that changes
         return False, "invalid_date", "Future date is not allowed for a birthday"
+    return True, None, None
+
+
+def timestamp_validator(field, record):
+    date = field.get_column_from_record(record)
+    if not date:
+        return True, None, None
+
+    if not isinstance(date, datetime):
+        return False, "invalid_timestamp", "Invalid timestamp"
+
     return True, None, None
 
 
@@ -162,3 +172,48 @@ def question_answered_validator(field, record):
         if answer.upper() not in ["Y", "N"]:
             return False, "invalid_question", "Questions must be answered with Y or N"
         return True, None, None
+
+def replaced_or_financing_validator(field, record):
+    val = field.get_column_from_record(record)
+
+    # Optional field
+    if not val:
+        return True, None, None
+
+    if val.lower() not in 'rf':
+        return False, "invalid_replaced_or_financing", "Policy financing must be 'R' or 'F' , got '{}'".format(val)
+    return True, None, None
+
+def enrollment_type_validator(field, record):
+    val = field.get_column_from_record(record)
+    if val.lower() not in 'as':
+        return False, "invalid_enrollment_type", "Enrollment type must be 'A' or 'S' , got '{}'".format(val)
+    return True, None, None
+
+def height_validator(field, record):
+    val = field.get_column_from_record(record)
+    if not val.strip():
+        return True, None, None
+
+    try:
+        val = int(val)
+    except:
+        return False, "invalid_height", "Invalid height: positive integer expected, received '{}'".format(val)
+
+    if val < 0 or val > 99:
+        return False, "invalid_height", "Invalid height: integer must be between 0 and 99, received '{}'".format(val)
+    return True, None, None
+
+def weight_validator(field, record):
+    val = field.get_column_from_record(record)
+    if not val.strip():
+        return True, None, None
+
+    try:
+        val = int(val)
+    except:
+        return False, "invalid_weight", "Invalid weight: positive integer expected, received '{}'".format(val)
+
+    if val < 0 or val > 999:
+        return False, "invalid_weight", "Invalid weight: integer must be between 0 and 999, received '{}'".format(val)
+    return True, None, None

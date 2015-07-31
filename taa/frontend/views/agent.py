@@ -241,6 +241,7 @@ def edit_census_record(case_id, census_record_id):
         vars['can_edit_case'] = True
     return render_template('agent/census_record.html', **vars)
 
+
 def format_enroll_data(enrollment_data, product_number):
     if enrollment_data["product_{}_name".format(product_number)]:
         data = dict(
@@ -256,6 +257,7 @@ def format_enroll_data(enrollment_data, product_number):
 
     return data
 
+
 def get_coverage_for_product(enrollment_data, product_number, coverage_type):
     if coverage_type == "emp":
         coverage_label = "Employee"
@@ -269,11 +271,13 @@ def get_coverage_for_product(enrollment_data, product_number, coverage_type):
         coverage=enrollment_data["product_{}_{}_coverage".format(product_number, coverage_type)],
     )
 
+
 def calc_total(enrollment_data, product_number, x, y):
     premium = enrollment_data["product_{}_{}_annual_premium".format(product_number, y)]
     if not premium:
         return x
     return x + premium
+
 
 @app.route('/sample-census-upload.csv')
 def sample_upload_csv():
@@ -281,6 +285,7 @@ def sample_upload_csv():
                                'sample_census_upload.csv')
     return send_file(sample_path, as_attachment=True,
                      attachment_filename='sample_census_upload.csv')
+
 
 @app.route('/manage-case/<int:case_id>/self-enrollment')
 @app.route('/enrollment-case/<int:case_id>/self-enrollment')
@@ -302,6 +307,7 @@ def edit_self_enroll_setup(case_id=None):
         vars['setup'] = case.self_enrollment_setup
     return render_template('agent/self_enrollment_setup.html', **vars)
 
+
 @app.route('/batch-info/<int:case_id>/preview/<batch_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def view_batch_email_preview(case_id, batch_id=None):
@@ -317,6 +323,8 @@ def view_batch_email_preview(case_id, batch_id=None):
             company_name=case.company_name,
             products = case.products
         )
+
+
 @app.route('/batch-info/<int:case_id>/logs/<batch_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def view_batch_email_logs(case_id, batch_id=None):
@@ -332,6 +340,8 @@ def view_batch_email_logs(case_id, batch_id=None):
             "agent/email_logs.html",
             batch_emails=email_logs,
         )
+
+
 def build_fake_email_greeting(setup):
     salutation = ''
     if setup.email_greeting_salutation:
