@@ -103,11 +103,11 @@ actively_at_work,9,9,1,
 """
         assert_that(documentation.toCSV(), equal_to(expected))
 
-    def test_it_should_generate_a_flat_file_spec_based_on_enrollment_records(self):
-        documentation = FlatFileDocumentation(
-                            header_spec=self.file_import_service.get_flat_file_header_spec(),
-                            row_spec=self.file_import_service.get_flat_file_spec()
-                        )
+    def test_it_should_generate_html_docs(self):
+        documentation = FlatFileDocumentation.generate_html_docs()
+        from hamcrest import starts_with
+        assert_that(documentation, starts_with('<html>'))
+
         # documentation.toCSV("documentation.csv")
-        documentation.toHTML("documentation.html")
+        #documentation.toHTML("documentation.html")
         # documentation.toPDF("documentation.pdf")

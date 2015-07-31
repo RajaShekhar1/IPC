@@ -11,6 +11,7 @@ from taa.manage.sync_agents import SyncAgentsCommand
 from taa.assets import init_app as init_assets
 from taa.manage.database import ResetDataCommand
 from taa.manage.generate_flatfile import CSVToFlatFileCommand
+from taa.manage.generate_flatfile_docs import GenFlatFileDocsCommand
 
 manager = Manager(app)
 manager.add_command('initialize_db', InitializeDatabaseCommand())
@@ -23,6 +24,7 @@ manager.add_command("scramble_data", ScrambleDataCommand())
 manager.add_command("import_docusign", DocusignImportCommand())
 manager.add_command("clear_and_reset_database", ResetDataCommand())
 manager.add_command("csv_to_flatfile", CSVToFlatFileCommand())
+manager.add_command("gen_flatfile_docs", GenFlatFileDocsCommand())
 
 if __name__ == "__main__":
     manager.run()

@@ -180,6 +180,16 @@ class FlatFileSpec(object):
         ])
 
 class FlatFileDocumentation(object):
+
+    @staticmethod
+    def generate_html_docs():
+        file_import_service = FileImportService()
+        docs = FlatFileDocumentation(
+            header_spec=file_import_service.get_flat_file_header_spec(),
+            row_spec=file_import_service.get_flat_file_spec(),
+        )
+        return docs.toHTML()
+
     fieldnames = ["Field", "From", "To", "Length", "Description"]
     def __init__(self, row_spec, header_spec=None):
         self.header_spec = header_spec
@@ -198,8 +208,8 @@ class FlatFileDocumentation(object):
                 f.write(output.getvalue())
         return output.getvalue()
 
-    def toHTML(self, filename = None):
-        template = """
+    def toHTML(self, filename=None):
+        template = """\
 <html>
 <head>
 <body style="font-family:sans-serif;">
