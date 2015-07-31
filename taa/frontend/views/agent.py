@@ -21,6 +21,7 @@ from taa.services.agents import AgentService
 from taa.services.products import ProductService, get_all_states
 from taa.services.products import get_payment_modes
 from taa.services.docusign.DocuSign_config import sessionUserApprovedForDocusign
+from taa.services import LookupService
 
 case_service = CaseService()
 agent_service = AgentService()
@@ -67,6 +68,7 @@ def manage_cases():
 @app.route('/enrollment-case/<case_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def manage_case(case_id):
+    api_token_service = LookupService('ApiTokenService')
     case = case_service.get_if_allowed(case_id)
     vars = {'case': case, 'can_edit_case': False}
 
@@ -157,6 +159,8 @@ Please follow the instructions carefully on the next page, stepping through the 
     vars['generic_link'] = self_enrollment_link_service.get_generic_link(request.url_root, case)
 
     vars["current_user_groups"] = [g.group.name for g in current_user.group_memberships]
+
+    vars["current_user_token"] = api_token_service.get_token_by_sp_href(current_user.href)
 
     return render_template('agent/case.html', **vars)
 

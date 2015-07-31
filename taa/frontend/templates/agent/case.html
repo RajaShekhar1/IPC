@@ -1197,7 +1197,7 @@ style="display: none;" data-bind="visible: true">
                                 <h4>
                                   Select Enrollment CSV File:
                                 </h4>
-                                <input type="file" id="csv-file-input-enrollment" name="csv-file" accept="text/csv,.csv">
+                                <input type="file" id="csv-file-input-enrollment" name="csv-file" accept="text/csv,.csv,.flat">
                               </div>
                             </div>
 
@@ -1211,7 +1211,11 @@ style="display: none;" data-bind="visible: true">
                             </div>
                           </div>
                           <div class="success-panel modal-panel" style="display: none;">
-                            <h3 class="header lighter green">File Processed Successfully</h3>
+                            <h3 class="col-sm-10 col-sm-offset-1 header lighter green">File Processed Successfully</h3>
+                            <div class="col-sm-10 col-sm-offset-1 alert alert-success">
+                              Added <span data-bind="text: num_records"></span> record(s).
+                            </div>
+                            <div class="clearfix"></div>
                             </div>
                             <div class="error-panel modal-panel" style="display: none;">
                               <h3 class="col-sm-10 col-sm-offset-1 header lighter red">
@@ -1288,7 +1292,7 @@ style="display: none;" data-bind="visible: true">
                   window.modal_bindings = new SendEmailsModalViewModel(window.case_settings, settings);
                   window.case_enrollment = new CaseEnrollmentsViewModel({{ case |tojson|safe }});
 
-                  window.enrollment_api_panel = new EnrollmentAPIPanel({{ case |tojson|safe }});
+                  window.enrollment_api_panel = new EnrollmentAPIPanel("{{ current_user_token.api_token |safe }}");
 
                   //Apply all knockout bindings
                   ko.applyBindings(window.case_settings, $(".content")[0]);

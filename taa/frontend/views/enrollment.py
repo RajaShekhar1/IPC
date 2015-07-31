@@ -312,23 +312,6 @@ def submit_wizard_data():
     db.session.commit()
     return data
 
-
-@app.route('/submit-enrollment-records', methods=["POST"])
-def submit_enrollment_records():
-    file = request.files["csv-file"]
-    if not file:
-        return "No File Submitted!"
-
-    import_service = LookupService("EnrollmentImportService")
-    result = import_service.process_enrollment_data(data=StringIO(file.read()), data_format='csv')
-
-    if result.is_success():
-        return Response(json.dumps(data), status=200, mimetype='application/json')
-    else:
-        errors = [{"type": e.get_type(), "fields": e.get_fields(), "message": e.get_message()} for e in response.get_errors()]
-        return Response(json.dumps(errors), status=400, mimetype='application/json')
-
-
 @app.route('/application_completed', methods=['GET'])
 def ds_landing_page():
     """
