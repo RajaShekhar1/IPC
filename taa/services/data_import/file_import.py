@@ -1,6 +1,8 @@
 import csv
 import cStringIO
 
+from flask import render_template
+
 from taa.services.enrollments import EnrollmentRecordParser
 
 
@@ -190,6 +192,15 @@ class FlatFileDocumentation(object):
         )
         return docs.toHTML()
 
+    @staticmethod
+    def generate_pdf_docs(filename):
+        file_import_service = FileImportService()
+        docs = FlatFileDocumentation(
+            header_spec=file_import_service.get_flat_file_header_spec(),
+            row_spec=file_import_service.get_flat_file_spec(),
+        )
+        return docs.toPDF(filename)
+
     fieldnames = ["Field", "From", "To", "Length", "Description"]
     def __init__(self, row_spec, header_spec=None):
         self.header_spec = header_spec
@@ -209,46 +220,29 @@ class FlatFileDocumentation(object):
         return output.getvalue()
 
     def toHTML(self, filename=None):
-        template = """\
-<html>
-<head>
-<body style="font-family:sans-serif;">
-<h1 style="text-align:center;">5Star Flat File Syntax Documentation</h1>
-<h2>Headers</h2>
-<table>
-{}
-</table>
-<h2>Rows</h2>
-<table>
-{}
-</table>
-</body>
-</html>
-"""
-        header_table_rows = ""
+        header_rows = []
+        distanceRead = 1
         if self.header_spec:
-            header_table_headers = "".join(["<th style='color:#fff;text-align:left;padding:0px 10px;'>{}</th>".format(fn) for fn in self.fieldnames])
-            header_table_rows = "<tr style='background:rgba(200,50,45,.2);'>{}</tr>\n".format(header_table_headers)
             distanceRead = 1
             for s in self.header_spec.get_spec():
-                columns = ["<td>{}</td>".format(n) for n in [s.csv_name, distanceRead, distanceRead+s.size-1, s.size, s.description]]
-                header_table_rows+="<tr>{}</tr>\n".format("".join(columns))
+                header_rows.append([s.csv_name, distanceRead, distanceRead+s.size-1, s.size, s.description])
                 distanceRead += s.size
-
-        table_headers = "".join(["<th style='color:#fff;text-align:left;padding:0px 10px;'>{}</th>".format(fn) for fn in self.fieldnames])
-        table_rows = "<tr style='background:rgba(200,50,45,.2);'>{}</tr>\n".format(table_headers)
+        record_rows = []
         distanceRead = 1
-
         for s in self.row_spec.get_spec():
-            columns = ["<td>{}</td>".format(n) for n in [s.csv_name, distanceRead, distanceRead+s.size-1, s.size, s.description]]
-            table_rows+="<tr>{}</tr>\n".format("".join(columns))
+            record_rows.append([s.csv_name, distanceRead, distanceRead+s.size-1, s.size, s.description])
             distanceRead += s.size
+
+        template = render_template("documentation/simple_documentation.html",
+                                    headers=header_rows,
+                                    records=record_rows,
+                                    fieldnames=self.fieldnames)
 
         if filename:
             with open(filename, "w+") as f:
-                f.write(template.format(header_table_rows, table_rows))
+                f.write(template)
 
-        return template.format(header_table_rows, table_rows)
+        return template
 
     def toPDF(self, filename):
         """

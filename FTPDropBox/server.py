@@ -51,7 +51,7 @@ def main():
     global upload_url
     upload_url = sys.argv[3]
     global user_token
-    user_token = sys.argv[4]
+    user_token = sys.argv[4]sh
 
     authorizer = DummyAuthorizer()
     authorizer.add_user("test", "test", ".", perm="elradfmwM")

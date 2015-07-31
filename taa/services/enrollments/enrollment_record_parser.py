@@ -300,32 +300,26 @@ class EnrollmentRecordParser(object):
                                     )
         all_fields += [child_first, child_last, child_birthdate, child_gender, child_ssn, child_coverage, child_premium]
 
-    for q_num in range(1, MAX_QUESTIONS + 1):
-        questions = []
-        emp_question = EnrollmentRecordField("emp_question_{}_answer".format(q_num),
-                                             "employee_question_{}_answer".format(q_num),
-                                             preprocess_string,
-                                             [question_answered_validator],
-                                             flat_file_size=1, description=""
-                                             )
-        sp_question = EnrollmentRecordField("sp_question_{}_answer".format(q_num),
-                                            "spouse_question_{}_answer".format(q_num),
+    for prefix, db_prefix in [("emp", "employee"), ("sp", "spouse")]:
+        for q_num in range(1, MAX_QUESTIONS + 1):
+            question = EnrollmentRecordField("{}_question_{}_answer".format(prefix, q_num),
+                                            "{}_question_{}_answer".format(db_prefix, q_num),
                                             preprocess_string,
                                             [question_answered_validator],
                                             flat_file_size=1, description=""
                                             )
-        for num in range(1, MAX_CHILDREN + 1):
+            all_fields += [question]
+
+    # Add child questions
+    for num in range(1, MAX_CHILDREN + 1):
+        for q_num in range(1, MAX_QUESTIONS + 1):
             ch_question = EnrollmentRecordField("ch{}_question_{}_answer".format(num, q_num),
                                                 "child{}_question_{}_answer".format(num, q_num),
                                                 preprocess_string,
                                                 [question_answered_validator],
                                                 flat_file_size=1, description=""
                                                 )
-            questions += [ch_question]
-        questions += [emp_question, sp_question]
-        all_fields += questions
-
-
+            all_fields += [ch_question]
     def __init__(self):
         self.errors = []
         self.valid_data = []
