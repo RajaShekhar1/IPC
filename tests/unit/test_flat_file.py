@@ -1,8 +1,14 @@
 from unittest2 import TestCase
 import csv, cStringIO
-from hamcrest import assert_that, equal_to
+from hamcrest import assert_that, equal_to, starts_with
 
-from taa.services.data_import.file_import import FlatFileImporter, FlatFileDocumentation, FlatFileFieldDefinition, FileImportService, FlatFileSpec, FlatFileFormatError
+from taa.services.data_import.file_import import (
+    FileImportService,
+    FlatFileDocumentation,
+    FlatFileFieldDefinition,
+    FlatFileSpec
+)
+
 
 class TestFlatFile(TestCase):
     def setUp(self):
@@ -84,7 +90,6 @@ class TestFlatFile(TestCase):
         ]
         assert_that([error.message for error in result.get_errors()], equal_to(expected), [error.message for error in result.get_errors()])
 
-
     def test_it_should_parse_multiple_records(self):
         file_obj = cStringIO.StringIO("{}\nJoe     Y\r\nJohn    N".format(self.headers))
         result = self.file_import_service.process_flat_file_stream(file_obj, spec=self.simple_spec)
@@ -105,9 +110,6 @@ actively_at_work,9,9,1,
 
     def test_it_should_generate_html_docs(self):
         documentation = FlatFileDocumentation.generate_html_docs()
-        from hamcrest import starts_with
+
         assert_that(documentation, starts_with('<html>'))
 
-        # documentation.toCSV("documentation.csv")
-        #documentation.toHTML("documentation.html")
-        # documentation.toPDF("documentation.pdf")
