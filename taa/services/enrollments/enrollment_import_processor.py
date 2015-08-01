@@ -44,7 +44,7 @@ class EnrollmentProcessor(object):
         self.enrollment_record_parser = self.enrollment_record_parser_service()
         self.enrollment_record_parser.process_records(self.processed_data, case_from_token)
         for error in self.enrollment_record_parser.errors:
-            self._add_error(error["type"], error["field_name"], error['message'])
+            self._add_error(error["type"], error["field_name"], error['message'], error['record'], error['record_num'])
 
     def submit_validated_data(self):
         for record in self.get_valid_data():
@@ -87,8 +87,8 @@ class EnrollmentProcessor(object):
     def get_num_processed(self):
         return len(self.processed_data)
 
-    def _add_error(self, type, fields, message):
-        error = EnrollmentImportError(type, fields, message)
+    def _add_error(self, type, fields, message, record, record_num):
+        error = EnrollmentImportError(type, fields, message, record, record_num)
         self.errors.append(error)
         return error
 
@@ -201,10 +201,12 @@ class EnrollmentProcessor(object):
 
 
 class EnrollmentImportError(object):
-    def __init__(self, type, fields, message):
+    def __init__(self, type, fields, message, record, record_num):
         self.type = type
         self.fields = [fields]
         self.message = message
+        self.record = record
+        self.record_num = record_num
 
     def get_type(self):
         return self.type
@@ -221,4 +223,4 @@ class EnrollmentImportError(object):
         return "Error with column: {}".format(self.type)
 
     def to_json(self):
-        return {'type':self.type, 'message': self.get_message(), 'fields':self.fields}
+        return {'type':self.type, 'message': self.get_message(), 'fields':self.fields, 'record_num':self.record_num}

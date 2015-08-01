@@ -253,7 +253,7 @@ def step_impl(context):
 
 @then(u'I should see a success response')
 def step_impl(context):
-    assert_that(len(context.errors), equal_to(0), "Errors in response: {}".format(context.errors))
+    assert_that(len(context.errors), equal_to(0), "Expected no errors, but got: {}".format(context.errors))
 
 
 @then(u'I should see the following errors in the response')

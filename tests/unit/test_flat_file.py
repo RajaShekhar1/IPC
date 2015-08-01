@@ -75,11 +75,12 @@ class TestFlatFile(TestCase):
         ]
         assert_that([error.message for error in result.get_errors()], equal_to(expected), [error.message for error in result.get_errors()])
 
-    def test_it_should_submit_a_flat_file_for_testing(self):
-        with open("tests/data/minimal_data.flat", "r+") as f:
-            result = self.file_import_service.process_flat_file_stream(f)
-        # this needs an actual test written
-        assert_that(result.has_error(), equal_to(False), [error.message for error in result.get_errors()])
+    # Removing this test - don't want to rely on an external file for these unit tests
+    #def test_it_should_submit_a_flat_file_for_testing(self):
+    #    with open("tests/data/minimal_data.flat", "r+") as f:
+    #        result = self.file_import_service.process_flat_file_stream(f)
+
+    #    assert_that(result.has_error(), equal_to(False), [error.message for error in result.get_errors()])
 
     def test_it_should_return_an_error_when_multiple_lines_are_too_short(self):
         file_obj = cStringIO.StringIO("{}\nJoe    Y\nJohn     N".format(self.headers))

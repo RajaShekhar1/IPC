@@ -19,6 +19,7 @@ from taa.services.validators import (
     replaced_or_financing_validator)
 from taa.services.preprocessors import preprocess_date
 
+
 class FileImportService(object):
     def get_flat_file_spec(self):
         flat_file_spec = FlatFileSpec("record")

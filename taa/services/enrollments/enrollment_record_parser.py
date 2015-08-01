@@ -68,8 +68,8 @@ class EnrollmentRecordParser(object):
     emp_gender = EnrollmentRecordField("emp_gender", "employee_gender", preprocess_string, [required_validator, gender_validator], flat_file_size=1, description="Employee gender")
     emp_ssn = EnrollmentRecordField("emp_ssn", "employee_ssn", preprocess_numbers, [required_validator, ssn_validator], flat_file_size=9, description="Employee SSN")
     emp_birthdate = EnrollmentRecordField("emp_birthdate", "employee_birthdate", preprocess_date, [required_validator, birthdate_validator], flat_file_size=10, description="Employee Birthday")
-    emp_coverage = EnrollmentRecordField("emp_coverage", "employee_coverage", preprocess_string, [required_validator, coverage_validator], flat_file_size=6, description="Employee Coverage")
-    emp_premium = EnrollmentRecordField("emp_premium", "employee_premium", preprocess_string, [required_validator, premium_validator], flat_file_size=6, description="Employee Premium")
+    emp_coverage = EnrollmentRecordField("emp_coverage", "employee_coverage", preprocess_string, [coverage_validator], flat_file_size=6, description="Employee Coverage")
+    emp_premium = EnrollmentRecordField("emp_premium", "employee_premium", preprocess_string, [premium_validator], flat_file_size=6, description="Employee Premium")
     emp_street = EnrollmentRecordField("emp_street", "employee_street", preprocess_string, [required_validator], flat_file_size=29, description="Employee street address")
     emp_street2 = EnrollmentRecordField("emp_street2", "employee_street2", preprocess_string, [], flat_file_size=29, description="Employee street address 2")
     emp_city = EnrollmentRecordField("emp_city", "employee_city", preprocess_string, [required_validator], flat_file_size=14, description="Employee city")
@@ -167,13 +167,6 @@ class EnrollmentRecordParser(object):
                             "{} is required if {} is provided".format(field.dict_key_name, group.dict_key_name))
                             )
 
-    sp_premium.add_validator(
-            RequiredIfAnyInGroupValidator(
-                [sp_coverage],
-                "Spouse premium is required if spouse coverage is provided"
-            )
-        )
-
     all_fields = [
         # Case data
         user_token,
@@ -197,6 +190,7 @@ class EnrollmentRecordParser(object):
         emp_zipcode,
         emp_phone,
         emp_date_of_hire,
+        actively_at_work,
 
         # Spouse data
         sp_first,
@@ -214,17 +208,10 @@ class EnrollmentRecordParser(object):
         sp_premium,
 
         # Optional fields
-        actively_at_work,
         emp_email,
         emp_height_inches,
         emp_weight_pounds,
         emp_smoker,
-        sp_street,
-        sp_street2,
-        sp_city,
-        sp_state,
-        sp_zipcode,
-        sp_phone,
         sp_email,
         sp_height_inches,
         sp_weight_pounds,
@@ -341,8 +328,11 @@ class EnrollmentRecordParser(object):
     def __init__(self):
         self.errors = []
         self.valid_data = []
+        self.current_record_number = 0
 
     def process_records(self, records, case):
+
+        self.current_record_number = 0
 
         self.validate_data_keys(records)
         # Don't do any more processing if missing important data_keys
@@ -351,9 +341,12 @@ class EnrollmentRecordParser(object):
 
         preprocessed_records = (self.preprocess_record(record) for record in records)
         for record in preprocessed_records:
+            self.current_record_number += 1
+
             validation_tests = [
                 lambda: self.validate_record(record),
                 lambda: self.validate_statecode(record),
+                lambda: self.validate_coverage_selected(record),
                 lambda: self.validate_case(record, case),
             ]
             is_valid = True
@@ -402,6 +395,17 @@ class EnrollmentRecordParser(object):
             return False
         return True
 
+    def validate_coverage_selected(self, record):
+        if record['emp_coverage'] or record.get('sp_coverage'):
+            return True
+
+        for num in range(1, self.MAX_CHILDREN + 1):
+            if record.get('ch{}_coverage'.format(num)):
+                return True
+
+        self.error_record_field("missing_data", "At least one applicant must select coverage", "emp_coverage", record)
+        return False
+
     def preprocess_record(self, record):
         data = {}
         for key in record:
@@ -429,7 +433,8 @@ class EnrollmentRecordParser(object):
         self.errors.append(dict(
             type=type,
             message=message,
-            records=[data],
+            record=data,
+            record_num=self.current_record_number,
             field_name=field_name,
         ))
 

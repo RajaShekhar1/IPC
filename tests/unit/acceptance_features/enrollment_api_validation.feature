@@ -237,6 +237,26 @@ Feature: Validate an enrollment record submitted via API.
       | ' '       | ch2_coverage | missing_data |
       | ' '       | ch2_premium  | missing_data |
 
+  Scenario: It should allow adding just spouse coverage (without employee coverage)
+    Given I prepare an enrollment file with basic valid enrollment data
+    And I substitute ' ' for the column 'emp_coverage'
+    And I substitute ' ' for the column 'emp_premium'
+    And I add valid spouse enrollment data
+    When I submit the file to the Enrollment API
+    Then I should see a success response
+
+  Scenario: It should have an error if no one selects any coverage
+    Given I prepare an enrollment file with basic valid enrollment data
+    And I substitute ' ' for the column 'emp_coverage'
+    And I substitute ' ' for the column 'emp_premium'
+    And I add valid spouse enrollment data
+    And I substitute ' ' for the column 'sp_coverage'
+    And I substitute ' ' for the column 'sp_premium'
+    When I submit the file to the Enrollment API
+    Then I should see the following errors in the response
+      | error_type   | error_field  |
+      | missing_data | emp_coverage |
+
   Scenario: It should detect invalid combinations of products and states
     Given I prepare an enrollment file with basic valid enrollment data
     Given 'IN' is not a valid state for the 'FPPTI' product

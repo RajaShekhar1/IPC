@@ -81,8 +81,8 @@ def gender_validator(field, record):
     if not gender:
         # Allow blank unless combined with required validator
         return True, None, None
-    if gender not in ['m', 'f', '', ' ', None]:
-        return False, "invalid_gender", "Gender must be 'Male' or 'Female'"
+    if gender.lower() not in ['m', 'f', '', ' ', None]:
+        return False, "invalid_gender", "Gender must be 'M' or 'F'"
     return True, None, None
 
 

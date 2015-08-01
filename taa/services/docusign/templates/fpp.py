@@ -60,7 +60,7 @@ class FPPTemplate(DocuSignServerTemplate):
 
         if recipient.is_agent():
             tabs = self.make_agent_tabs()
-        else:
+        elif recipient.is_employee():
 
             lists_of_tabs = [
                 self.make_employer_tabs(),
@@ -74,6 +74,8 @@ class FPPTemplate(DocuSignServerTemplate):
             tabs = []
             for tab_list in lists_of_tabs:
                 tabs.extend(tab_list)
+        else:
+            tabs = []
 
         return tabs
 
@@ -194,8 +196,8 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignTextTab(child_prefix + "Name", child_data['first'] + " " + child_data['last']),
             DocuSignTextTab(child_prefix + "DOB", child_data['birthdate']),
             DocuSignTextTab(child_prefix + "SSN", self.format_ssn(child_data['ssn'])),
-            DocuSignTextTab(child_prefix + "Coverage", format(child_coverage["face_value"], ",.0f") if child_coverage else ""),
-            DocuSignTextTab(child_prefix + "Premium", format(child_coverage["premium"], ",.2f") if child_coverage else ""),
+            DocuSignTextTab(child_prefix + "Coverage", format(Decimal(unicode(child_coverage["face_value"])), ",.0f") if child_coverage else ""),
+            DocuSignTextTab(child_prefix + "Premium", format(Decimal(unicode(child_coverage["premium"])), ",.2f") if child_coverage else ""),
             DocuSignRadioTab(child_prefix + "Gender", child_data["gender"]),
         ]
 
@@ -218,7 +220,7 @@ class FPPTemplate(DocuSignServerTemplate):
         ]
 
         # Totals
-        total_children_coverage = sum(child_coverage.get('premium', 0) for child_coverage in self.data["child_coverages"])
+        total_children_coverage = sum(Decimal(unicode(child_coverage.get('premium', '0.00'))) for child_coverage in self.data["child_coverages"])
         total = Decimal('0.00')
         if self.data.did_employee_select_coverage():
             total += self.data.get_employee_premium()
@@ -425,8 +427,9 @@ class FPPTemplate(DocuSignServerTemplate):
         ]
 
         if data.get('height'):
-            height_ft = "%s" % int(data['height'] / 12.0)
-            height_in = "%s" % int(data['height'] % 12.0)
+            height_total_inches = int(data['height'])
+            height_ft = "%s" % int(height_total_inches / 12.0)
+            height_in = "%s" % int(height_total_inches % 12.0)
 
             tabs += [
                 DocuSignTextTab(prefix + 'HeightFt', height_ft),

@@ -65,11 +65,11 @@ class CaseService(DBService):
 
     def get_case_for_token(self, token):
         query = self.query()
-        query = query.filter(Case.case_token==token)
+        query = query.filter(Case.case_token.ilike(token))
         return query.first()
 
     def is_valid_case_token(self, token):
-        return bool(self.get_case_for_token(token))
+        return bool(self.get_case_for_token(token.strip()))
 
     def get_products_for_case(self, case):
         # Return the sorted list of products for this case

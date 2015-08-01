@@ -28,10 +28,8 @@ class EnrollmentImportService(object):
 
     def standardize_imported_data(self, data, method='api_import'):
 
-        def valOrBlank(val):
-            if not val:
-                return ""
-            return val
+        def val_or_blank(name):
+            return data.get(name, '')
 
         out_data = {
             "employee": {},
@@ -47,40 +45,44 @@ class EnrollmentImportService(object):
         state = data.get("signed_at_state")
 
         def build_beneficiary_data(prefix, out_prefix):
-            out_data["{}_beneficiary".format(out_prefix)] = valOrBlank(data.get("{}_bene_relationship".format(prefix)))
-            out_data["{}_beneficiary_name".format(out_prefix)] = valOrBlank(data.get("{}_bene_name".format(prefix)))
-            out_data["{}_beneficiary_ssn".format(out_prefix)] = valOrBlank(data.get("{}_bene_ssn".format(prefix)))
-            out_data["{}_beneficiary_birthdate".format(out_prefix)] = valOrBlank(data.get("{}_bene_birthdate".format(prefix)))
-            out_data["{}_beneficiary_relationship".format(out_prefix)] = valOrBlank(data.get("{}_bene_relationship".format(prefix)))
+            out_data["{}_beneficiary".format(out_prefix)] = val_or_blank("{}_bene_relationship".format(prefix))
+            out_data["{}_beneficiary_name".format(out_prefix)] = val_or_blank("{}_bene_name".format(prefix))
+            out_data["{}_beneficiary_ssn".format(out_prefix)] = val_or_blank("{}_bene_ssn".format(prefix))
+            out_data["{}_beneficiary_birthdate".format(out_prefix)] = val_or_blank("{}_bene_birthdate".format(prefix))
+            out_data["{}_beneficiary_relationship".format(out_prefix)] = val_or_blank("{}_bene_relationship".format(prefix))
+
+        def standardize_answer(answer):
+            answers = dict(Y="Yes", N="No", y="Yes", n="No")
+            return answers.get(answer)
 
         def build_person(prefix):
             genders = dict(m="male", M="male", f="female", F="female")
             base_dict = dict(
-                first=valOrBlank(data.get("{}_first".format(prefix))),
-                last=valOrBlank(data.get("{}_last".format(prefix))),
-                birthdate=valOrBlank(data.get("{}_birthdate".format(prefix))),
-                ssn=valOrBlank(data.get("{}_ssn".format(prefix))),
-                gender=genders.get(data.get("{}_gender".format(prefix))),
-                phone=valOrBlank(data.get("{}_phone".format(prefix))),
-                email=valOrBlank(data.get("{}_email".format(prefix))),
-                address1=valOrBlank(data.get("{}_street".format(prefix))),
-                address2=valOrBlank(data.get("{}_street2".format(prefix))),
-                city=valOrBlank(data.get("{}_city".format(prefix))),
-                state=valOrBlank(data.get("{}_state".format(prefix))),
-                zip=valOrBlank(data.get("{}_zipcode".format(prefix))),
-                height=valOrBlank(data.get("{}_height_inches".format(prefix))),
-                weight=valOrBlank(data.get("{}_weight_pounds".format(prefix))),
-                is_smoker=data.get("{}_smoker".format(prefix)) in ["Y", "y"],
+                first=val_or_blank("{}_first".format(prefix)),
+                last=val_or_blank("{}_last".format(prefix)),
+                birthdate=val_or_blank("{}_birthdate".format(prefix)),
+                ssn=val_or_blank("{}_ssn".format(prefix)),
+                gender=genders.get(val_or_blank("{}_gender".format(prefix))),
+                phone=val_or_blank("{}_phone".format(prefix)),
+                email=val_or_blank("{}_email".format(prefix)),
+                address1=val_or_blank("{}_street".format(prefix)),
+                address2=val_or_blank("{}_street2".format(prefix)),
+                city=val_or_blank("{}_city".format(prefix)),
+                state=val_or_blank("{}_state".format(prefix)),
+                zip=val_or_blank("{}_zipcode".format(prefix)),
+                height=val_or_blank("{}_height_inches".format(prefix)),
+                weight=val_or_blank("{}_weight_pounds".format(prefix)),
+                is_smoker=val_or_blank("{}_smoker".format(prefix)) in ["Y", "y"],
                 soh_questions=[]
             )
-            answers = dict(Y="Yes", N="No", y="Yes", n="No")
+
             questions = self.soh_service.get_health_questions(product, state)
             for q_num in range(1, len(questions)+1):
                 answer = data.get("{}_question_{}_answer".format(prefix, q_num))
                 if answer:
                     base_dict["soh_questions"].append(dict(
                         question=questions[q_num-1].question,
-                        answer=answers.get(answer)
+                        answer=standardize_answer(answer)
                     ))
             return base_dict
 
@@ -104,8 +106,9 @@ class EnrollmentImportService(object):
 
         out_data["is_employee_actively_at_work"] = data.get("actively_at_work") in ["Y","y"]
 
-        out_data["has_spouse_been_treated_6_months"] = data.get("sp_treated_6_months") in ["Y","y"]
-        out_data["has_spouse_been_disabled_6_months"] = data.get("sp_disabled_6_months") in ["Y","y"]
+        # These two are like the health question answers
+        out_data["has_spouse_been_treated_6_months"] = standardize_answer(data.get("sp_treated_6_months"))
+        out_data["has_spouse_been_disabled_6_months"] = standardize_answer(data.get("sp_disabled_6_months"))
 
         if data.get("replacement_policy1_name"):
             out_data["replacement_policies"].append(dict(
@@ -118,7 +121,9 @@ class EnrollmentImportService(object):
 
         emp_address = (data.get("emp_street"), data.get("emp_street2"), data.get("emp_city"), data.get("emp_state"), data.get("emp_zipcode"))
         sp_address = (data.get("sp_street"), data.get("sp_street2"), data.get("sp_city"), data.get("sp_state"), data.get("sp_zipcode"))
-        out_data["is_spouse_address_same_as_employee"] = emp_address == sp_address
+        out_data["is_spouse_address_same_as_employee"] = (emp_address == sp_address)
+
+        out_data["is_spouse_email_same_as_employee"] = (data.get('emp_email') == data.get('sp_email'))
 
         out_data["employee"].update(build_person("emp"))
         out_data["spouse"].update(build_person("sp"))
@@ -140,10 +145,8 @@ class EnrollmentImportService(object):
                     )
                 )
 
-
-
         # identityToken is date of hire
-        out_data['identityToken'] = data.get('emp_date_of_hire', '')
+        out_data['identityToken'] = val_or_blank('emp_date_of_hire')
         out_data['identityType'] = 'Date of Hire'
 
         # Source / method of the enrollment.
