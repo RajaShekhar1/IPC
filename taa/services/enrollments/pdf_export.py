@@ -41,31 +41,23 @@ class ImagedFormGeneratorService(object):
         for tab_value in enrollment_tabs:
             if isinstance(tab_value, DocuSignTextTab):
                 label = tab_value.name
-                text = tab_value.value
 
-                tab_defs = filter(lambda x: x.label == label, tab_definitions)
-                if not tab_defs:
-                    continue
-                tab_def = tab_defs[0]
+                for tab_def in filter(lambda x: x.label == label, tab_definitions):
+                    page = tab_def.page
+                    if page not in tab_pages:
+                        tab_pages[page] = []
+                    tab_pages[page].append((tab_def, tab_value))
 
-                page = tab_def.page
-                if page not in tab_pages:
-                    tab_pages[page] = []
-                tab_pages[page].append((tab_def, tab_value))
             elif isinstance(tab_value, DocuSignRadioTab):
                 label = tab_value.group_name
                 value = tab_value.value
-                tab_defs = filter(
-                    lambda x: x.label == '{}.{}'.format(label,
-                                                        value), tab_definitions)
-                if not tab_defs:
-                    continue
-                tab_def = tab_defs[0]
-
-                page = tab_def.page
-                if page not in tab_pages:
-                    tab_pages[page] = []
-                tab_pages[page].append((tab_def, tab_value))
+                for tab_def in filter(
+                        lambda x: x.label == '{}.{}'.format(label,
+                                                            value), tab_definitions):
+                    page = tab_def.page
+                    if page not in tab_pages:
+                        tab_pages[page] = []
+                    tab_pages[page].append((tab_def, tab_value))
 
         for page in sorted(tab_pages):
             for tab_def, tab_value in tab_pages[page]:
