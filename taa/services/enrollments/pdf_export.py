@@ -27,66 +27,93 @@ class ImagedFormGeneratorService(object):
     merge_pdfs = RequiredFeature('merge_pdfs')
 
     def generate_form_pdf(self, template_id, enrollment_tabs, path=None):
-
         # Get a new FormPDFRenderer
         self.pdf_renderer = self.pdf_renderer_service()
+        template = self.validate_template(template_id)
 
+        self.tab_pages = {}
+        self._match_tab_values_to_defs(enrollment_tabs, template_id)
+
+        self.render_tabs()
+
+        return self.combine_pdfs(path, template)
+
+    def validate_template(self, template_id):
         template = self.tab_repository.get_template(template_id)
         if not template:
             raise Exception("Template ID '{}' not found".format(template_id))
+        return template
 
+    def _match_tab_values_to_defs(self, enrollment_tabs, template_id):
         tab_definitions = self.tab_repository.get_tabs_for_template(template_id)
 
-        tab_pages = {}
         for tab_value in enrollment_tabs:
-            if isinstance(tab_value, DocuSignTextTab):
-                label = tab_value.name
+            self._match_tab_value_to_def(tab_definitions, tab_value)
 
-                for tab_def in filter(lambda x: x.label == label, tab_definitions):
-                    page = tab_def.page
-                    if page not in tab_pages:
-                        tab_pages[page] = []
-                    tab_pages[page].append((tab_def, tab_value))
+    def _match_tab_value_to_def(self, tab_definitions, tab_value):
+        if isinstance(tab_value, DocuSignTextTab):
+            self.match_text_tab(tab_definitions, tab_value)
+        elif isinstance(tab_value, DocuSignRadioTab):
+            self._match_radio_tab(tab_definitions, tab_value)
 
-            elif isinstance(tab_value, DocuSignRadioTab):
-                label = tab_value.group_name
-                value = tab_value.value
-                for tab_def in filter(
-                        lambda x: x.label == '{}.{}'.format(label,
-                                                            value), tab_definitions):
-                    page = tab_def.page
-                    if page not in tab_pages:
-                        tab_pages[page] = []
-                    tab_pages[page].append((tab_def, tab_value))
+    def _match_radio_tab(self, tab_definitions, tab_value):
+        label = tab_value.group_name
+        value = tab_value.value
+        for tab_def in filter(
+                lambda x: x.label == '{}.{}'.format(label, value), tab_definitions):
+            self._add_to_tab_pages(tab_def, tab_value)
 
-        for page in sorted(tab_pages):
-            for tab_def, tab_value in tab_pages[page]:
-                if isinstance(tab_value, DocuSignTextTab):
-                    text = tab_value.value
-                    font = tab_def.font
-                    fontsize = tab_def.font_size
-                    is_bold = tab_def.is_bold
-                    is_italic = tab_def.is_italic
-                    fontcolor = tab_def.font_color
-                    # Special case for SignHere and DateSigned tabs
-                    if (tab_def.type_ == 'SignHere' or
-                            tab_def.type_ == 'DateSigned'):
-                        fontcolor = 'Green'
-                    self.pdf_renderer.draw_text(text=text, x=tab_def.x,
-                                                y=tab_def.y,
-                                                width=tab_def.width,
-                                                font=font, fontsize=fontsize,
-                                                is_bold=is_bold,
-                                                is_italic=is_italic,
-                                                fontcolor=fontcolor)
-                elif isinstance(tab_value, DocuSignRadioTab):
-                    self.pdf_renderer.draw_radio_checkmark(x=tab_def.x,
-                                                           y=tab_def.y)
+    def match_text_tab(self, tab_definitions, tab_value):
+        label = tab_value.name
+        for tab_def in filter(lambda x: x.label == label, tab_definitions):
+            self._add_to_tab_pages(tab_def, tab_value)
+
+    def _add_to_tab_pages(self, tab_def, tab_value):
+        page = tab_def.page
+        if page not in self.tab_pages:
+            self.tab_pages[page] = []
+        self.tab_pages[page].append((tab_def, tab_value))
+
+    def render_tabs(self):
+        for page in sorted(self.tab_pages):
+            for tab_def, tab_value in self.tab_pages[page]:
+                self.render_tab(tab_def, tab_value)
             self.pdf_renderer.next_page()
 
+    def render_tab(self, tab_def, tab_value):
+        if isinstance(tab_value, DocuSignTextTab):
+            self.render_text_tab(tab_def, tab_value)
+        elif isinstance(tab_value, DocuSignRadioTab):
+            self.render_radio_tab(tab_def)
+
+    def render_radio_tab(self, tab_def):
+        self.pdf_renderer.draw_radio_checkmark(x=tab_def.x,
+                                               y=tab_def.y)
+
+    def render_text_tab(self, tab_def, tab_value):
+        text = tab_value.value
+        font = tab_def.font
+        fontsize = tab_def.font_size
+        is_bold = tab_def.is_bold
+        is_italic = tab_def.is_italic
+        fontcolor = tab_def.font_color
+        # Special case for SignHere and DateSigned tabs
+        if (tab_def.type_ == 'SignHere' or
+                    tab_def.type_ == 'DateSigned'):
+            fontcolor = 'Green'
+        self.pdf_renderer.draw_text(text=text, x=tab_def.x,
+                                    y=tab_def.y,
+                                    width=tab_def.width,
+                                    font=font, fontsize=fontsize,
+                                    is_bold=is_bold,
+                                    is_italic=is_italic,
+                                    fontcolor=fontcolor)
+
+    def combine_pdfs(self, path, template):
         overlay_pdf = self.pdf_renderer.get_pdf_bytes()
         base_pdf = BytesIO(template.data)
-        return self.merge_pdfs(base_pdf, overlay_pdf, path)
+        merged_pdf = self.merge_pdfs(base_pdf, overlay_pdf, path)
+        return merged_pdf
 
 
 class FormTemplateTabRepository(object):
