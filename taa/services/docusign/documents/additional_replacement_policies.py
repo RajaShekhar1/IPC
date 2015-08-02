@@ -102,9 +102,8 @@ class AdditionalReplacementPoliciesForm(BasePDFDoc):
     def draw_signature_line(self):
         return create_signature_line(self.page_width, self.sig_coords, self.get_signer_recipients())
 
-
     def generate_tabs(self, recipient):
-        tabs = []
+        tabs = super(AdditionalReplacementPoliciesForm, self).generate_tabs(recipient)
 
         if self.is_recipient_signer(recipient):
             # Add a signature tab to the last page

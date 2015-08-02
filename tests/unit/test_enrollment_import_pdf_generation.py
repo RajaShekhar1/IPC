@@ -82,7 +82,7 @@ class TestEnrollmentImportFormGeneration(unittest2.TestCase):
 
 
 class FakeTabDef(object):
-    def __init__(self, label, x, y, name=None, width=None, font=None, font_size=None, is_bold=None, is_italic=None, font_color=None, page=1, type_=None):
+    def __init__(self, label, x, y, name=None, width=None, font=None, font_size=None, is_bold=None, is_italic=None, font_color=None, page=1, type_=None, recipient_role=None):
         self.label = label
         self.name = name
         self.x = x
@@ -95,3 +95,4 @@ class FakeTabDef(object):
         self.font_color = font_color
         self.page = page
         self.type_ = type_
+        self.recipient_role = recipient_role

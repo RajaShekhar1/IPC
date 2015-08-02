@@ -27,14 +27,16 @@ class ImagedFormGeneratorService(object):
     merge_pdfs = RequiredFeature('merge_pdfs')
 
     def generate_form_pdf(self, template_id, enrollment_tabs, path=None):
+
         # Get a new FormPDFRenderer
         self.pdf_renderer = self.pdf_renderer_service()
         template = self.validate_template(template_id)
+        tab_definitions = self.tab_repository.get_tabs_for_template(template_id)
 
         self.tab_pages = {}
-        self._match_tab_values_to_defs(enrollment_tabs, template_id)
-
-        self.render_tabs()
+        self._match_tab_values_to_defs(enrollment_tabs, tab_definitions)
+        self._add_signature_tabs(enrollment_tabs, tab_definitions)
+        self._render_tabs()
 
         return self.combine_pdfs(path, template)
 
@@ -44,15 +46,13 @@ class ImagedFormGeneratorService(object):
             raise Exception("Template ID '{}' not found".format(template_id))
         return template
 
-    def _match_tab_values_to_defs(self, enrollment_tabs, template_id):
-        tab_definitions = self.tab_repository.get_tabs_for_template(template_id)
-
+    def _match_tab_values_to_defs(self, enrollment_tabs, tab_definitions):
         for tab_value in enrollment_tabs:
             self._match_tab_value_to_def(tab_definitions, tab_value)
 
     def _match_tab_value_to_def(self, tab_definitions, tab_value):
         if isinstance(tab_value, DocuSignTextTab):
-            self.match_text_tab(tab_definitions, tab_value)
+            self._match_text_tab(tab_definitions, tab_value)
         elif isinstance(tab_value, DocuSignRadioTab):
             self._match_radio_tab(tab_definitions, tab_value)
 
@@ -63,7 +63,7 @@ class ImagedFormGeneratorService(object):
                 lambda x: x.label == '{}.{}'.format(label, value), tab_definitions):
             self._add_to_tab_pages(tab_def, tab_value)
 
-    def match_text_tab(self, tab_definitions, tab_value):
+    def _match_text_tab(self, tab_definitions, tab_value):
         label = tab_value.name
         for tab_def in filter(lambda x: x.label == label, tab_definitions):
             self._add_to_tab_pages(tab_def, tab_value)
@@ -74,46 +74,77 @@ class ImagedFormGeneratorService(object):
             self.tab_pages[page] = []
         self.tab_pages[page].append((tab_def, tab_value))
 
-    def render_tabs(self):
+    def _render_tabs(self):
         for page in sorted(self.tab_pages):
             for tab_def, tab_value in self.tab_pages[page]:
-                self.render_tab(tab_def, tab_value)
+                self._render_tab(tab_def, tab_value)
             self.pdf_renderer.next_page()
 
-    def render_tab(self, tab_def, tab_value):
+    def _render_tab(self, tab_def, tab_value):
         if isinstance(tab_value, DocuSignTextTab):
-            self.render_text_tab(tab_def, tab_value)
+            self._render_text_tab(tab_def, text=tab_value.value)
         elif isinstance(tab_value, DocuSignRadioTab):
-            self.render_radio_tab(tab_def)
+            self._render_radio_tab(tab_def)
 
-    def render_radio_tab(self, tab_def):
-        self.pdf_renderer.draw_radio_checkmark(x=tab_def.x,
-                                               y=tab_def.y)
+    def _render_text_tab(self, tab_def, text):
 
-    def render_text_tab(self, tab_def, tab_value):
-        text = tab_value.value
         font = tab_def.font
         fontsize = tab_def.font_size
         is_bold = tab_def.is_bold
         is_italic = tab_def.is_italic
         fontcolor = tab_def.font_color
+        y = tab_def.y
+        x = tab_def.x
+
         # Special case for SignHere and DateSigned tabs
-        if (tab_def.type_ == 'SignHere' or
-                    tab_def.type_ == 'DateSigned'):
-            fontcolor = 'Green'
+        #if (tab_def.type_ == 'SignHere' or
+        #            tab_def.type_ == 'DateSigned'):
+        #    fontcolor = 'Green'
+        if tab_def.type_ == 'SignHere':
+            y += 35
         self.pdf_renderer.draw_text(text=text, x=tab_def.x,
-                                    y=tab_def.y,
+                                    y=y,
                                     width=tab_def.width,
                                     font=font, fontsize=fontsize,
                                     is_bold=is_bold,
                                     is_italic=is_italic,
                                     fontcolor=fontcolor)
 
+    def _render_radio_tab(self, tab_def):
+        self.pdf_renderer.draw_radio_checkmark(x=tab_def.x,
+                                               y=tab_def.y)
+
     def combine_pdfs(self, path, template):
         overlay_pdf = self.pdf_renderer.get_pdf_bytes()
         base_pdf = BytesIO(template.data)
         merged_pdf = self.merge_pdfs(base_pdf, overlay_pdf, path)
         return merged_pdf
+
+    def _add_signature_tabs(self, enrollment_tabs, tab_definitions):
+
+        def is_tab_for_role_and_type(role, type_):
+            def f(t):
+                return t.recipient_role == role and t.type_ == type_
+            return f
+
+        for recip_role in ['Employee', 'Agent']:
+            for tab_type in ['SignHere', 'DateSigned']:
+                tab_value_label = "{}{}".format(tab_type, recip_role)
+                tab_values = filter(lambda t: t.name == tab_value_label, enrollment_tabs)
+                tab_defs = filter(is_tab_for_role_and_type(recip_role, tab_type), tab_definitions)
+
+                if tab_values and tab_defs:
+                    for tab_def in tab_defs:
+                        self._add_to_tab_pages(tab_def, tab_values[0])
+
+        # TODO: Convert our own sig tabs (not in template defs) to text,
+        # for example, on the additional child form employee sig line
+
+class SignatureData(object):
+    def __init__(self, line_text=None, date_signed=None, initials=None):
+        self.line_text = line_text
+        self.date_signed = date_signed
+        self.initials = initials
 
 
 class FormTemplateTabRepository(object):
@@ -176,32 +207,17 @@ class FormPDFRenderer(object):
                   is_bold=False, is_italic=False, fontcolor=None):
         text = str(text)
 
-        # Determine font to use
-        font = font or DEFAULT_FONT
-        if is_bold and is_italic:
-            font += '-BoldOblique'
-        elif is_bold:
-            font += '-Bold'
-        elif is_italic:
-            font += '-Oblique'
-        font = FONTMAP.get(font, DEFAULT_FONT)
-        fontsize = fontsize or 10
-        # Set font color if specified
-        if fontcolor is not None:
-            self.c.saveState()
-            self.c.setFillColor(COLORMAP.get(fontcolor, DEFAULT_COLOR))
-        self.c.setFont(font, fontsize)
-        # Ensure text fits in width if specified
-        if width is not None and len(text) > 0:
-            lines = simpleSplit(text, self.c._fontname, self.c._fontsize, width)
-            text = lines[0]
-        self.c.drawString(*self._translate(x, y), text=text)
-        if fontcolor is not None:
-            self.c.restoreState()
+        self.set_color(fontcolor)
+        self.set_font(font, fontsize, is_bold, is_italic)
+        text = self.ensure_text_fits(text, width)
+
+        self._render_string(text, x, y)
+
+        self.reset_font_color(fontcolor)
 
     def draw_radio_checkmark(self, x, y):
         self.c.setFont('LucidaConsole', 10)
-        self.c.drawString(*self._translate(x, y), text="X")
+        self._render_string("X", x, y)
 
     def next_page(self):
         self.c.showPage()
@@ -214,6 +230,42 @@ class FormPDFRenderer(object):
             pdf = self.buf.getvalue()
             self.buf.close()
             return pdf
+
+    def ensure_text_fits(self, text, width):
+        # Ensure text fits in width if specified
+        if width is not None and len(text) > 0:
+            lines = simpleSplit(text, self.c._fontname, self.c._fontsize, width)
+            text = lines[0]
+        return text
+
+    def set_font(self, font, fontsize, is_bold, is_italic):
+        fontmap_font = self.lookup_font(font, is_bold, is_italic)
+        fontsize = fontsize or 10
+        self.c.setFont(fontmap_font, fontsize)
+
+    def set_color(self, fontcolor):
+        self.c.saveState()
+        # Set font color if specified
+        if fontcolor is not None:
+            self.c.setFillColor(COLORMAP.get(fontcolor, DEFAULT_COLOR))
+
+    def reset_font_color(self, fontcolor):
+        self.c.restoreState()
+
+    def lookup_font(self, font, is_bold, is_italic):
+        # Determine font to use
+        font = font or DEFAULT_FONT
+        if is_bold and is_italic:
+            font += '-BoldOblique'
+        elif is_bold:
+            font += '-Bold'
+        elif is_italic:
+            font += '-Oblique'
+        font = FONTMAP.get(font, DEFAULT_FONT)
+        return font
+
+    def _render_string(self, text, x, y):
+        self.c.drawString(*self._translate(x, y), text=text)
 
     def _initialize(self):
         self.buf = BytesIO()

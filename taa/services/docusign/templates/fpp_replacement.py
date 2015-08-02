@@ -16,11 +16,12 @@ class FPPReplacementFormTemplate(DocuSignServerTemplate):
         self.data = enrollment_data
 
     def generate_tabs(self, recipient):
+        tabs = super(FPPReplacementFormTemplate, self).generate_tabs(recipient)
 
         if not recipient.is_employee():
-            return []
+            return tabs
 
-        tabs = [
+        tabs += [
             DocuSignRadioTab('read_aloud', 'yes' if self.data['replacement_read_aloud'] else 'no'),
             DocuSignRadioTab('considering_terminating_existing', 'yes' if self.data['replacement_is_terminating'] else 'no'),
             DocuSignRadioTab('considering_using_funds', 'yes' if self.data['replacement_using_funds'] else 'no'),

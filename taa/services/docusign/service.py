@@ -279,12 +279,14 @@ class DocuSignRecipient(object):
     def should_exclude_from_envelope(self):
         return self._exclude_from_envelope
 
+
 class EmployeeDocuSignRecipient(DocuSignRecipient):
     def is_employee(self):
         return True
 
     def is_required(self):
         return True
+
 
 class AgentDocuSignRecipient(DocuSignRecipient):
     def is_employee(self):
@@ -293,20 +295,21 @@ class AgentDocuSignRecipient(DocuSignRecipient):
     def is_agent(self):
         return True
 
+
 class CarbonCopyRecipient(DocuSignRecipient):
     def is_employee(self): return False
     def is_agent(self): return False
     def is_carbon_copy(self): return True
 
 
-
 # Tabs
 class DocuSignTab(object):
     pass
 
+
 class DocuSignRadioTab(DocuSignTab):
     def __init__(self, group_name, value, is_selected=True):
-        self.group_name = group_name
+        self.group_name = self.name = group_name
         self.value = value
         self.is_selected = is_selected
 
@@ -326,6 +329,7 @@ class DocuSignRadioTab(DocuSignTab):
             value=str(self.value),
         ))
 
+
 class DocuSignTextTab(DocuSignTab):
     def __init__(self, name, value):
         self.name = name
@@ -336,6 +340,9 @@ class DocuSignTextTab(DocuSignTab):
             tabs['textTabs'] = []
 
         tabs['textTabs'].append(dict(tabLabel=self.name, value=self.value))
+
+class DocuSignPreSignedTextTab(DocuSignTextTab):
+    pass
 
 class DocuSignSigTab(DocuSignTab):
     def __init__(self, x, y, document_id, page_number):
@@ -410,7 +417,20 @@ class DocuSignEnvelopeComponent(object):
 
     def generate_tabs(self, recipient):
         """Returns list of our own internal tab representation"""
-        raise NotImplementedError("Override")
+
+        # Inject any signature data that has been passed from the enrollment.
+        tabs = []
+        if self.data.get('emp_sig_txt'):
+            tabs += [DocuSignPreSignedTextTab("SignHereEmployee", self.data.get('emp_sig_txt'))]
+        if self.data.get('agent_sig_txt'):
+            tabs += [DocuSignPreSignedTextTab("SignHereAgent", self.data.get('agent_sig_txt'))]
+        if self.data.get('application_date'):
+            tabs += [
+                DocuSignPreSignedTextTab("DateSignedEmployee", self.data.get('application_date')),
+                DocuSignPreSignedTextTab("DateSignedAgent", self.data.get('application_date')),
+            ]
+
+        return tabs
 
     def is_recipient_signer(self, recipient):
         raise NotImplementedError("Override")
@@ -468,7 +488,10 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
         tabs = []
         for recipient in self.recipients:
             tabs += self.generate_tabs(recipient)
-        pdf_bytes = self.pdf_generator_service.generate_form_pdf(self.template_id, tabs)
+        pdf_bytes = self.pdf_generator_service.generate_form_pdf(
+            self.template_id,
+            tabs,
+        )
         num_pages = self.get_num_pages(pdf_bytes)
         pdf_base64 = base64.standard_b64encode(pdf_bytes)
         return self.make_inline_doc_repr(
@@ -483,7 +506,7 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
         return num_pages
 
     def generate_tabs(self, recipient):
-        return []
+        return super(DocuSignServerTemplate, self).generate_tabs(recipient)
 
     def is_recipient_signer(self, recipient):
         return recipient.is_employee() or recipient.is_agent()

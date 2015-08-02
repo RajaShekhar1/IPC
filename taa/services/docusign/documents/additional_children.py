@@ -159,7 +159,7 @@ class ChildAttachmentForm(BasePDFDoc):
 
 
     def generate_tabs(self, recipient):
-        tabs = []
+        tabs = super(ChildAttachmentForm, self).generate_tabs(recipient)
 
         if self.is_recipient_signer(recipient):
             # Add a signature tab to the last page

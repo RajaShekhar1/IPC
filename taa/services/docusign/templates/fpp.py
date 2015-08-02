@@ -57,9 +57,10 @@ class FPPTemplate(DocuSignServerTemplate):
         return self.data.get_covered_children()[2:] if len(self.data.get_covered_children()) > 2 else []
 
     def generate_tabs(self, recipient):
+        tabs = super(FPPTemplate, self).generate_tabs(recipient)
 
         if recipient.is_agent():
-            tabs = self.make_agent_tabs()
+            tabs += self.make_agent_tabs()
         elif recipient.is_employee():
 
             lists_of_tabs = [
@@ -71,11 +72,8 @@ class FPPTemplate(DocuSignServerTemplate):
                 self.make_children_tabs(),
                 self.make_general_tabs(),
             ]
-            tabs = []
             for tab_list in lists_of_tabs:
                 tabs.extend(tab_list)
-        else:
-            tabs = []
 
         return tabs
 

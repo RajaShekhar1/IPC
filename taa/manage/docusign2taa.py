@@ -18,8 +18,6 @@ from taa.services.enrollments import ImagedFormGeneratorService
 from taa.services.enrollments.models import FormTemplate, FormTemplateTabs
 
 
-
-
 class DocusignImportCommand(Command):
     """Imports DocuSign XML templates to the database"""
     option_list = (
@@ -93,7 +91,7 @@ class DocusignImportCommand(Command):
                 label = '{}.{}'.format(tab['label'], tab['name'])
             else:
                 label = tab['label']
-            newtab = FormTemplateTabs(
+            new_tab = FormTemplateTabs(
                 template=new,
                 page=tab['page'],
                 x=tab['x'],
@@ -110,8 +108,9 @@ class DocusignImportCommand(Command):
                 font=tab['font'],
                 font_size=tab['font_size'],
                 font_color=tab['font_color'],
+                recipient_role=tab['recipient_role'],
             )
-            db.session.add(newtab)
+            db.session.add(new_tab)
         db.session.commit()
 
 
@@ -159,6 +158,7 @@ class DocusignDocument(object):
     def _parse_envelope(self):
         env = self._xpath('Envelope')
         docs = self._xpath('Documents', root=env)
+        recipient_roles = {}
         doclist = {}
         for doc in self._xpath('Document', root=docs, multi=True):
             id_ = self._xpath('ID', root=doc).text
@@ -169,10 +169,20 @@ class DocusignDocument(object):
                                                      root=doc).text.strip()),
                 'tabs': [],
             }
+
+        recipients = self._xpath('Recipients', root=env)
+        for recip in self._xpath('Recipient', root=recipients, multi=True):
+            recip_id = int(self._xpath('ID', root=recip).text)
+            role = self._xpath('RoleName', root=recip).text
+            recipient_roles[recip_id] = role
+
         tabs = self._xpath('Tabs', root=env)
         for tab in self._xpath('Tab', root=tabs, multi=True):
             id_ = self._xpath('DocumentID', root=tab).text
             doc = doclist[id_]
+            recip_id = int(self._xpath('RecipientID', root=tab).text)
+            recip_role = recipient_roles.get(recip_id, '')
+
             data = {
                 'page': int(self._xpath('PageNumber', root=tab).text),
                 'x': int(self._xpath('XPosition', root=tab).text),
@@ -199,6 +209,7 @@ class DocusignDocument(object):
                                       lambda x: int(''.join([c for c in x
                                                              if c.isdigit()]))),
                 'font_color': self._get_or_none('FontColor', root=tab),
+                'recipient_role':recip_role
             }
             doc['tabs'].append(data)
         return doclist
