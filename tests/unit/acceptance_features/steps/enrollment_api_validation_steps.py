@@ -129,7 +129,6 @@ def step_impl(context):
         emp_state='IN',
         emp_zipcode='47999',
         emp_phone='',
-        emp_pin='12341234',
         emp_date_of_hire="2012-01-01",
         emp_sig_txt='esign by Joe Johnson',
         application_date='2015-06-01',
@@ -138,7 +137,9 @@ def step_impl(context):
         signed_at_state='MI',
         agent_name='Andy Agent',
         agent_code='26CODE',
-        agent_sig_txt='esign by Andy Agent'
+        agent_sig_txt='esign by Andy Agent',
+        existing_insurance='N',
+        replacing_insurance='N',
     )
 
 @given(u"I add valid spouse enrollment data")

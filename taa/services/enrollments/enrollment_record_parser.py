@@ -76,7 +76,6 @@ class EnrollmentRecordParser(object):
     emp_state = EnrollmentRecordField("emp_state", "employee_state", preprocess_string, [required_validator, state_validator], flat_file_size=2, description="2 character employee statecode")
     emp_zipcode = EnrollmentRecordField("emp_zipcode", "employee_zipcode", preprocess_zip, [required_validator, zip_validator], flat_file_size=9, description="Employee zipcode, up to 9 characters")
     emp_phone = EnrollmentRecordField("emp_phone", "employee_phone", preprocess_string, [], flat_file_size=10, description="Employee phone number")
-    emp_pin = EnrollmentRecordField("emp_pin", "employee_pin", preprocess_numbers, [], flat_file_size=15, description="Employee pin, if provided.")
     emp_date_of_hire = EnrollmentRecordField("emp_date_of_hire", "employee_date_of_hire", preprocess_date, [required_validator], flat_file_size=10, description="Date of Hire")
 
     # Spouse Information
@@ -106,8 +105,8 @@ class EnrollmentRecordParser(object):
     sp_weight_pounds = EnrollmentRecordField("sp_weight_pounds", "spouse_weight_pounds", preprocess_numbers, [weight_validator], flat_file_size=3, description="Spouse weight in pounds")
     sp_smoker = EnrollmentRecordField("sp_smoker", "spouse_smoker", preprocess_string, [question_answered_validator], flat_file_size=1, description="Is spouse a tobacco user")
 
-    existing_insurance = EnrollmentRecordField("existing_insurance", "existing_insurance", preprocess_string, [question_answered_validator], flat_file_size=1, description="Does anyone on this application have any existing life insurance or annuity contracts?")
-    replacing_insurance = EnrollmentRecordField("replacing_insurance", "replacing_insurance", preprocess_string, [question_answered_validator], flat_file_size=1, description="Will the coverage applied for replace any existing life insurance or annuities?")
+    existing_insurance = EnrollmentRecordField("existing_insurance", "existing_insurance", preprocess_string, [required_validator, question_answered_validator], flat_file_size=1, description="Does anyone on this application have any existing life insurance or annuity contracts?")
+    replacing_insurance = EnrollmentRecordField("replacing_insurance", "replacing_insurance", preprocess_string, [required_validator, question_answered_validator], flat_file_size=1, description="Will the coverage applied for replace any existing life insurance or annuities?")
     sp_treated_6_months = EnrollmentRecordField("sp_treated_6_months", "sp_treated_6_months", preprocess_string, [question_answered_validator], flat_file_size=1, description="During the prior 6 months, other than for routine medical care, has spouse been diagnosed or treated by a member of the medical profession in a hospital or any other medical facility?")
     sp_disabled_6_months = EnrollmentRecordField("sp_disabled_6_months", "sp_disabled_6_months", preprocess_string, [question_answered_validator], flat_file_size=1, description="Has spouse been disabled in the prior 6 months or received disability payments?")
     replacement_read_aloud = EnrollmentRecordField("replacement_read_aloud", "replacement_read_aloud", preprocess_string, [question_answered_validator], flat_file_size=1, description="Should replacement notice be read aloud")
@@ -235,7 +234,6 @@ class EnrollmentRecordParser(object):
         sp_cont_bene_ssn,
 
         # Signing data
-        emp_pin,
         emp_sig_txt,
         application_date,
         time_stamp,
@@ -467,7 +465,6 @@ class EnrollmentRecordParser(object):
             "emp_city",
             "emp_state",
             "emp_zipcode",
-            "emp_pin",
             "emp_date_of_hire",
             "emp_sig_txt",
             "application_date",
@@ -476,7 +473,9 @@ class EnrollmentRecordParser(object):
             "signed_at_state",
             "agent_name",
             "agent_code",
-            "agent_sig_txt"
+            "agent_sig_txt",
+            "existing_insurance",
+            "replacing_insurance",
         ]
         return {d for d in required_data_keys if d not in record}
 
