@@ -399,6 +399,8 @@ class FPPTemplate(DocuSignServerTemplate):
         for i, soh_question in enumerate(q for q in soh_questions if not q.get('is_spouse_only')):
             if soh_question['answer'] and soh_question['answer'].lower() == "no":
                 radio_tabs.append(DocuSignRadioTab(prefix + "SOH" + str(i+1), "no"))
+            elif soh_question['answer'] and soh_question['answer'].lower() == "yes":
+                radio_tabs.append(DocuSignRadioTab(prefix + "SOH" + str(i+1), "yes"))
 
         return radio_tabs
 
