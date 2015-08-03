@@ -37,13 +37,15 @@ class TAAHandler(TLS_FTPHandler):
         else:
             data_format = ext[1:]
 
-        with open(filename, "rb") as f:
+        path = os.path.join('files', filename)
+
+        with open(path, "rb") as f:
             data = f.read()
 
         url = "{}?auth_token={}&format={}&email_errors=true".format(self.upload_url, self.auth_token, data_format)
         print
         print requests.post(url, data=data).text
-        os.remove(filename)
+        os.remove(path)
 
 
 access_credentials = [
