@@ -45,7 +45,6 @@ class TAAHandler(TLS_FTPHandler):
         print requests.post(url, data=data).text
         os.remove(filename)
 
-
 access_credentials = [
     ('taa-enroller', 'F19K7z49459G'),
 ]

@@ -23,7 +23,7 @@ class EnrollmentImportService(object):
             )
         except TAAFormError:
             if email_errors:
-                processor.send_errors_email()
+                processor.send_status_email()
         return processor
 
     def standardize_imported_data(self, data, method='api_import'):
@@ -187,5 +187,3 @@ class EnrollmentImportService(object):
             face_value=int(face_value) if face_value else None,
             premium=Decimal(premium) if premium else None,
         )
-
-
