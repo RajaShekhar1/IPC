@@ -104,17 +104,17 @@ class EnrollmentProcessor(object):
     def _status_email_body(self):
         if self.is_success():
             return render_template('emails/enrollment_upload_email.html',
-                                   errors=[]
+                                   errors=[],
+                                   num_processed=self.get_num_processed()
                                    )
         else:
             errors = [{"type": e.get_type(), "fields": e.get_fields(), "message": e.get_message()} for e in self.get_errors()]
             return render_template('emails/enrollment_upload_email.html',
-                                   errors=errors
+                                   errors=errors,
+                                   num_processed=self.get_num_processed()
                                    )
 
     def send_status_email(self):
-        import ipdb; ipdb.set_trace()
-        
         status_email = self.get_status_email()
         if not status_email:
             return
@@ -140,14 +140,14 @@ class EnrollmentProcessor(object):
         if not user:
             return None
 
-        return user.name
+        return user.full_name
 
     def get_status_user(self):
         """Who to send errors to. Pull it from the auth_token"""
         if not self.processed_data:
             return None
 
-        return self.get_user(self.processed_data[0].get('auth_token'))
+        return self.get_user(self.processed_data[0].get('user_token'))
 
     def _send_email(self, from_email, from_name, to_email, to_name, subject,
                     body):

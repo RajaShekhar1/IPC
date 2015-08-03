@@ -22,8 +22,9 @@ class EnrollmentImportService(object):
                 auth_token=auth_token
             )
         except TAAFormError:
-            if email_errors:
-                processor.send_status_email()
+            pass    
+        if email_errors:
+            processor.send_status_email()
         return processor
 
     def standardize_imported_data(self, data, method='api_import'):
