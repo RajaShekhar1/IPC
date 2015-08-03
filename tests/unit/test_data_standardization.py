@@ -260,6 +260,38 @@ class TestDataStandardization(TestCase):
         }
         assert_that(output, has_entries(expected))
 
+    def test_it_should_add_beneficiaries(self):
+        output = self.import_service.standardize_imported_data(self.init_data)
+        expected = {
+            'employee_beneficiary': 'other',
+            'spouse_beneficiary': 'other',
+            'employee_beneficiary_name': self.init_data['emp_bene_name'],
+            'employee_beneficiary_dob': self.init_data['emp_bene_birthdate'],
+            'employee_beneficiary_ssn': self.init_data['emp_bene_ssn'],
+            'employee_beneficiary_relationship': self.init_data['emp_bene_relationship'],
+            'spouse_beneficiary_name': self.init_data['sp_bene_name'],
+            'spouse_beneficiary_dob': self.init_data['sp_bene_birthdate'],
+            'spouse_beneficiary_ssn': self.init_data['sp_bene_ssn'],
+            'spouse_beneficiary_relationship': self.init_data['sp_bene_relationship'],
+
+            'employee_contingent_beneficiary_type': 'other',
+            'employee_contingent_beneficiary': {
+                'name':self.init_data['emp_cont_bene_name'],
+                'relationship': self.init_data['emp_cont_bene_relationship'],
+                'ssn': self.init_data['emp_cont_bene_ssn'],
+                'date_of_birth': self.init_data['emp_cont_bene_birthdate'],
+            },
+            'spouse_contingent_beneficiary_type': 'other',
+            'spouse_contingent_beneficiary': {
+                'name':self.init_data['sp_cont_bene_name'],
+                'relationship': self.init_data['sp_cont_bene_relationship'],
+                'ssn': self.init_data['sp_cont_bene_ssn'],
+                'date_of_birth': self.init_data['sp_cont_bene_birthdate'],
+            },
+
+        }
+        assert_that(output, has_entries(expected))
+
     def get_mock_product_service(self):
         mock_product_service = Mock()
         self.mock_product = Mock()

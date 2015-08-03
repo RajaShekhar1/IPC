@@ -168,6 +168,9 @@ class EnrollmentDataWrap(object):
             return self.get_employee_email()
 
     def get_agent_signing_name(self):
+        if self.data['is_third_party']:
+            return self.data['agent_name']
+
         if not flask.has_request_context():
             return '(TEST)'
 
@@ -186,6 +189,9 @@ class EnrollmentDataWrap(object):
         return agent_user.custom_data['signing_name']
 
     def get_agent_code(self):
+        if self.data['is_third_party']:
+            return self.data['agent_code']
+
         if not flask.has_request_context():
             return '(TEST)'
 

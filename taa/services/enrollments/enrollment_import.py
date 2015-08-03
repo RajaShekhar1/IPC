@@ -45,11 +45,18 @@ class EnrollmentImportService(object):
         state = data.get("signed_at_state")
 
         def build_beneficiary_data(prefix, out_prefix):
-            out_data["{}_beneficiary".format(out_prefix)] = val_or_blank("{}_bene_relationship".format(prefix))
             out_data["{}_beneficiary_name".format(out_prefix)] = val_or_blank("{}_bene_name".format(prefix))
             out_data["{}_beneficiary_ssn".format(out_prefix)] = val_or_blank("{}_bene_ssn".format(prefix))
-            out_data["{}_beneficiary_birthdate".format(out_prefix)] = val_or_blank("{}_bene_birthdate".format(prefix))
+            out_data["{}_beneficiary_dob".format(out_prefix)] = val_or_blank("{}_bene_birthdate".format(prefix))
             out_data["{}_beneficiary_relationship".format(out_prefix)] = val_or_blank("{}_bene_relationship".format(prefix))
+
+        def build_contingent_beneficiary_data(prefix, out_prefix):
+            out_data["{}_contingent_beneficiary".format(out_prefix)] = {
+                'name': val_or_blank("{}_cont_bene_name".format(prefix)),
+                'ssn': val_or_blank("{}_cont_bene_ssn".format(prefix)),
+                'date_of_birth': val_or_blank("{}_cont_bene_birthdate".format(prefix)),
+                'relationship':val_or_blank("{}_cont_bene_relationship".format(prefix)),
+            }
 
         def standardize_answer(answer):
             answers = dict(Y="Yes", N="No", y="Yes", n="No")
@@ -128,8 +135,16 @@ class EnrollmentImportService(object):
         out_data["employee"].update(build_person("emp"))
         out_data["spouse"].update(build_person("sp"))
 
+        # Beneficiaries
+        out_data['employee_beneficiary'] = 'other'
+        out_data['spouse_beneficiary'] = 'other'
         build_beneficiary_data("emp", "employee")
         build_beneficiary_data("sp", "spouse")
+
+        out_data['employee_contingent_beneficiary_type'] = 'other'
+        out_data['spouse_contingent_beneficiary_type'] = 'other'
+        build_contingent_beneficiary_data("emp", "employee")
+        build_contingent_beneficiary_data("sp", "spouse")
 
         out_data["employee_coverage"] = self.format_coverage(data.get("emp_coverage"), data.get("emp_premium"))
         out_data["spouse_coverage"] = self.format_coverage(data.get("sp_coverage"), data.get("sp_premium"))
