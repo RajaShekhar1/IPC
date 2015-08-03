@@ -116,7 +116,6 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignTextTab('group_number', self.data.case.group_number if self.data.case.group_number else "")
         ]
 
-
     def make_employee_tabs(self):
 
         ee_tabs_list = []
@@ -130,8 +129,6 @@ class FPPTemplate(DocuSignServerTemplate):
             ee_tabs_list += self.generate_SOH_GI_tabs("ee", self.data['employee']['soh_questions'])
 
         return ee_tabs_list
-
-
 
     def make_spouse_tabs(self):
 
@@ -168,7 +165,6 @@ class FPPTemplate(DocuSignServerTemplate):
             sp_tabs_list += self.generate_SOH_GI_tabs("sp", self.data['spouse']['soh_questions'])
 
         return sp_tabs_list
-
 
     def make_children_tabs(self):
         tabs = []
@@ -335,7 +331,6 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignTextTab('eeEmailPart2', ee_email_part_2),
             DocuSignRadioTab('actively_at_work', "yes" if self.data['is_employee_actively_at_work'] else "no"),
         ]
-
 
     def make_contact_tabs(self, prefix, data):
 

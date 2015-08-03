@@ -350,6 +350,7 @@ class DocuSignSigTab(DocuSignTab):
         self.y = y
         self.document_id = document_id
         self.page_number = page_number
+        self.name = "SignHere"
 
     def add_to_tabs(self, tabs):
         if 'signHereTabs' not in tabs:
@@ -421,9 +422,9 @@ class DocuSignEnvelopeComponent(object):
         # Inject any signature data that has been passed from the enrollment.
         tabs = []
         if self.data.get('emp_sig_txt'):
-            tabs += [DocuSignPreSignedTextTab("SignHereEmployee", self.data.get('emp_sig_txt'))]
+            tabs += [DocuSignPreSignedTextTab("SignHereEmployee", self.data.get_employee_esignature())]
         if self.data.get('agent_sig_txt'):
-            tabs += [DocuSignPreSignedTextTab("SignHereAgent", self.data.get('agent_sig_txt'))]
+            tabs += [DocuSignPreSignedTextTab("SignHereAgent", self.data.get_agent_esignature())]
         if self.data.get('application_date'):
             tabs += [
                 DocuSignPreSignedTextTab("DateSignedEmployee", self.data.get('application_date')),
@@ -516,6 +517,9 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
 
 
 class BasePDFDoc(DocuSignEnvelopeComponent):
+
+    pdf_generator_service = RequiredFeature("ImagedFormGeneratorService")
+
     def __init__(self, recipients):
         DocuSignEnvelopeComponent.__init__(self, recipients)
 
@@ -545,10 +549,23 @@ class BasePDFDoc(DocuSignEnvelopeComponent):
         # Generate the PDF
         self.generate()
 
+        pdf_bytes = self.get_pdf_bytes()
+
+        tabs = []
+        for r in self.recipients:
+            tabs += self.generate_tabs(r)
+
+        pdf_bytes = self.pdf_generator_service.generate_overlay_pdf_from_tabs(
+            tabs,
+            # Sig tabs will be auto-generated
+            [],
+            pdf_bytes,
+        )
+
         # Output DocuSign representation
         return self.make_inline_doc_repr(
             num_pages=self.get_num_pages(),
-            pdf_base64=base64.standard_b64encode(self.get_pdf_bytes()),
+            pdf_base64=base64.standard_b64encode(pdf_bytes),
             recipients=self.generate_recipients()
         )
 
@@ -558,8 +575,6 @@ class BasePDFDoc(DocuSignEnvelopeComponent):
         else:
             # Assume we are still drawing and need the current number of pages.
             return self._doc.page
-
-
 
 
 if __name__ == "__main__":

@@ -298,6 +298,19 @@ class EnrollmentDataWrap(object):
                 covered_children.append(child)
         return covered_children
 
+    def get_employee_esignature(self):
+        return self.data.get('emp_sig_txt', '')
+
+    def has_employee_esigned(self):
+        return bool(self.get_employee_esignature())
+
+    def get_agent_esignature(self):
+        return self.data.get('agent_sig_txt', '')
+
+    def has_agent_esigned(self):
+        return bool(self.get_agent_esignature())
+
+
 def old_create_envelope_and_get_signing_url(enrollment_data):
     # return is_error(bool), error_message, and redirectURL
     product = product_service.get(enrollment_data['product_data']['id'])

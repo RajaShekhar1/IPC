@@ -11,7 +11,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 
 from .models import db
 from taa.services import RequiredFeature
-from taa.services.docusign.service import DocuSignTextTab, DocuSignRadioTab
+from taa.services.docusign.service import DocuSignTextTab, DocuSignRadioTab, DocuSignSigTab
 from taa.services.enrollments.models import FormTemplate, FormTemplateTabs
 
 
@@ -28,17 +28,24 @@ class ImagedFormGeneratorService(object):
 
     def generate_form_pdf(self, template_id, enrollment_tabs, path=None):
 
-        # Get a new FormPDFRenderer
-        self.pdf_renderer = self.pdf_renderer_service()
         template = self.validate_template(template_id)
         tab_definitions = self.tab_repository.get_tabs_for_template(template_id)
+
+        return self.generate_overlay_pdf_from_tabs(
+            enrollment_tabs,
+            tab_definitions,
+            template.data,
+        )
+
+    def generate_overlay_pdf_from_tabs(self, enrollment_tabs, tab_definitions, base_pdf_bytes):
+        # Get a new FormPDFRenderer
+        self.pdf_renderer = self.pdf_renderer_service()
 
         self.tab_pages = {}
         self._match_tab_values_to_defs(enrollment_tabs, tab_definitions)
         self._add_signature_tabs(enrollment_tabs, tab_definitions)
         self._render_tabs()
-
-        return self.combine_pdfs(path, template)
+        return self.combine_pdfs(base_pdf_bytes)
 
     def validate_template(self, template_id):
         template = self.tab_repository.get_template(template_id)
@@ -114,10 +121,10 @@ class ImagedFormGeneratorService(object):
         self.pdf_renderer.draw_radio_checkmark(x=tab_def.x,
                                                y=tab_def.y)
 
-    def combine_pdfs(self, path, template):
+    def combine_pdfs(self, base_pdf_bytes):
         overlay_pdf = self.pdf_renderer.get_pdf_bytes()
-        base_pdf = BytesIO(template.data)
-        merged_pdf = self.merge_pdfs(base_pdf, overlay_pdf, path)
+        base_pdf = BytesIO(base_pdf_bytes)
+        merged_pdf = self.merge_pdfs(base_pdf, overlay_pdf)
         return merged_pdf
 
     def _add_signature_tabs(self, enrollment_tabs, tab_definitions):
@@ -127,6 +134,22 @@ class ImagedFormGeneratorService(object):
                 return t.recipient_role == role and t.type_ == type_
             return f
 
+        # TODO: Convert our own sig tabs (not in template defs) to text,
+        #for example, on the additional child form employee sig line
+        custom_sig_tabs = filter(lambda t: isinstance(t, DocuSignSigTab), enrollment_tabs)
+        
+        for tab in custom_sig_tabs:
+            # Create an ad-hoc tab definition
+            tab_def = FormTemplateTabs(
+                page=tab.page_number,
+                x=tab.x,
+                y=tab.y,
+                type_="SignHere",
+                recipient_role="Employee",
+            )
+            tab_definitions.append(tab_def)
+
+        # Match up any eSignatures to proper signature definitions.
         for recip_role in ['Employee', 'Agent']:
             for tab_type in ['SignHere', 'DateSigned']:
                 tab_value_label = "{}{}".format(tab_type, recip_role)
@@ -137,14 +160,7 @@ class ImagedFormGeneratorService(object):
                     for tab_def in tab_defs:
                         self._add_to_tab_pages(tab_def, tab_values[0])
 
-        # TODO: Convert our own sig tabs (not in template defs) to text,
-        # for example, on the additional child form employee sig line
 
-class SignatureData(object):
-    def __init__(self, line_text=None, date_signed=None, initials=None):
-        self.line_text = line_text
-        self.date_signed = date_signed
-        self.initials = initials
 
 
 class FormTemplateTabRepository(object):
