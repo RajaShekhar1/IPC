@@ -85,7 +85,7 @@ class FPPTemplate(DocuSignServerTemplate):
 
     def make_general_tabs(self):
         tabs = [
-            DocuSignRadioTab('enrollType', "self" if self.data.is_self_enroll() else "assist"),
+            DocuSignRadioTab('enrollType', "assist" if self.data.is_enrollment_type_agent_assisted() else "self"),
             DocuSignRadioTab('productType', "FPPTI" if self.data['product_type'] == "FPP-Gov" else self.data['product_type']),
             DocuSignRadioTab('existingIns', 'yes' if self.data["existing_insurance"] else 'no'),
             DocuSignRadioTab('existingInsAgent', 'yes' if self.data['existing_insurance'] else 'no'),

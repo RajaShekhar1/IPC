@@ -144,6 +144,15 @@ class EnrollmentDataWrap(object):
             return False
         return not self.data['agent_data']['is_in_person']
 
+    def is_enrollment_type_agent_assisted(self):
+        """
+        For checkbox on the top of the FPP form. For imports, pass data through, otherwise use self_enroll.
+        """
+        if self.data.get('enrollment_type'):
+            return self.data['enrollment_type'].lower() == 'a'
+
+        return not self.is_self_enroll()
+
     def is_import(self):
         return bool(self.data.get("is_third_party"))
 
