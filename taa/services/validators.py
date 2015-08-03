@@ -1,6 +1,6 @@
 from taa.services import LookupService
 import re
-from datetime import datetime
+from datetime import datetime, date as datetime_date
 
 from taa.services.products.payment_modes import is_payment_mode
 
@@ -87,14 +87,18 @@ def gender_validator(field, record):
 
 
 def birthdate_validator(field, record):
-    date = field.get_column_from_record(record)
-    if not date:
+    val = field.get_column_from_record(record)
+    if not val:
         # Allow blank unless combined with required validator
         return True, None, None
 
-    if not isinstance(date, datetime):
+    if isinstance(val, datetime):
+        val = val.date()
+
+    if not isinstance(val, datetime_date):
         return False, "invalid_date", "Invalid date"
-    if date > datetime.now():
+
+    if val > datetime.today().date():
         # The preprocessor currently keeps this from happening, but I will leave
         #  it in here in case that changes
         return False, "invalid_date", "Future date is not allowed for a birthday"
