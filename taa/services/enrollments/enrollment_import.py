@@ -22,6 +22,7 @@ class EnrollmentImportService(object):
                 auth_token=auth_token,
             )
         except TAAFormError:
+            #TODO: There might be some logic needed here
             pass
         if should_email_status:
             processor.send_status_email()
