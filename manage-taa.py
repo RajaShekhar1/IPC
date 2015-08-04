@@ -2,7 +2,7 @@ from flask_script import Manager
 from flask_assets import ManageAssets
 
 from taa import app
-from taa.manage import InitializeDatabaseCommand
+from taa.manage import InitializeDatabaseCommand, GetDropBoxTokenCommand
 from taa.manage.check_case_tokens import CheckCaseTokensCommand
 from taa.manage.docusign2taa import DocusignImportCommand
 from taa.manage.init_brochures import InitProductBrochures
@@ -25,6 +25,7 @@ manager.add_command("import_docusign", DocusignImportCommand())
 manager.add_command("clear_and_reset_database", ResetDataCommand())
 manager.add_command("csv_to_flatfile", CSVToFlatFileCommand())
 manager.add_command("gen_flatfile_docs", GenFlatFileDocsCommand())
+manager.add_command("get_dropbox_token", GetDropBoxTokenCommand())
 
 if __name__ == "__main__":
     manager.run()
