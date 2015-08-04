@@ -1,5 +1,6 @@
 import json
 
+import taa.tasks as tasks
 from taa.config_defaults import DOCUSIGN_CC_RECIPIENTS
 from taa.services import RequiredFeature
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
@@ -7,10 +8,23 @@ from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSi
 
 
 class EnrollmentSubmissionService(object):
+    enrollment_application_service = RequiredFeature('EnrollmentApplicationService')
+
     def submit_imported_enrollment(self, enrollment_record):
 
+        # Schedule a task to process this enrollment record
+        tasks.submit_enrollment_import.delay(enrollment_record.id)
+
+    def process_import_submission(self, enrollment_record_id):
+        """
+        Actually processes the enrollment
+        """
+        enrollment = self.enrollment_application_service.get(enrollment_record_id)
+        if not enrollment:
+            raise Exception("Tried to process a non-existent enrollment with id {}".format(enrollment_record_id))
+
         processor = EnrollmentSubmissionProcessor()
-        processor.submit_to_docusign(enrollment_record)
+        processor.submit_to_docusign(enrollment)
 
         return processor
 
