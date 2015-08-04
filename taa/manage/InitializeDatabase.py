@@ -33,6 +33,22 @@ def init_drop_box():
         print("The Drop Box API token is {}".format(token))
         db.session.commit()
 
+def get_drop_box_token():
+    user = api_token_service.find(name=u"DropBox User").first()
+    if user:
+        return user.api_token
+    else:
+        return None
+
+
+class GetDropBoxTokenCommand(Command):
+    """
+    Retrieve the API Token for the DropBox to use when sending files to the application server.
+    """
+    def run(self):
+        print(get_drop_box_token())
+
+
 def init_basic_data():
     product_data = [
         dict(

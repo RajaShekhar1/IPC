@@ -231,7 +231,7 @@ class FlatFileSpec(object):
                 size=8,
                 csv_name="VERSION",
                 title="Version Number",
-                description="Must be {}".formt(FlatFileSpec.FLAT_FILE_VERSION),
+                description="Must be {}".format(FlatFileSpec.FLAT_FILE_VERSION),
                 format="N.N",
                 is_required=True,
             ),
