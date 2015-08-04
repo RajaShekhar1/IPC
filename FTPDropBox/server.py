@@ -100,7 +100,6 @@ class TAAHandler(TLS_FTPHandler):
             data_format = "csv"
         return data_format
 
-
 access_credentials = [
     ('taa-enroller', 'F19K7z49459G'),
 ]

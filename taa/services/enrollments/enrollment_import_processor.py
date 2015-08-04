@@ -101,52 +101,53 @@ class EnrollmentProcessor(object):
     def get_errors(self):
         return self.errors
 
-    def _error_email_body(self):
+    def _status_email_body(self):
         if self.is_success():
             return render_template('emails/enrollment_upload_email.html',
-                                   errors=[]
+                                   errors=[],
+                                   num_processed=self.get_num_processed()
                                    )
         else:
             errors = [{"type": e.get_type(), "fields": e.get_fields(), "message": e.get_message()} for e in self.get_errors()]
             return render_template('emails/enrollment_upload_email.html',
-                                   errors=errors
+                                   errors=errors,
+                                   num_processed=self.get_num_processed()
                                    )
 
-    def send_errors_email(self):
-
-        error_email = self.get_error_email()
-        if not error_email or not self.get_errors():
+    def send_status_email(self):
+        status_email = self.get_status_email()
+        if not status_email:
             return
 
         self._send_email(
             from_email="support@5Starenroll.com",
             from_name="5Star Enrollment",
-            to_email=error_email,
-            to_name=self.get_error_email_name(),
-            subject="Errors importing records to 5Star Enrollment",
-            body=self._error_email_body()
+            to_email=status_email,
+            to_name=self.get_status_email_name(),
+            subject="Your recent record submission to 5Star Enrollment",
+            body=self._status_email_body()
             )
 
-    def get_error_email(self):
-        user = self.get_error_user()
+    def get_status_email(self):
+        user = self.get_status_user()
         if not user:
             return None
 
         return user.email
 
-    def get_error_email_name(self):
-        user = self.get_error_user()
+    def get_status_email_name(self):
+        user = self.get_status_user()
         if not user:
             return None
 
-        return user.name
+        return user.full_name
 
-    def get_error_user(self):
+    def get_status_user(self):
         """Who to send errors to. Pull it from the auth_token"""
         if not self.processed_data:
             return None
 
-        return self.get_user(self.processed_data[0].get('auth_token'))
+        return self.get_user(self.processed_data[0].get('user_token'))
 
     def _send_email(self, from_email, from_name, to_email, to_name, subject,
                     body):
@@ -170,7 +171,7 @@ class EnrollmentProcessor(object):
             return False
 
         return True
-    
+
     def get_case(self, case_token):
         if case_token:
             case = self.case_service.get_case_for_token(case_token)

@@ -16,7 +16,7 @@ def submit_data():
     case_token = request.args.get('case_token') or request.form.get('case_token')
     auth_token = request.args.get('auth_token') or request.form.get('auth_token')
     email_errors = bool(request.args.get('email_errors')) or bool(request.form.get('email_errors'))
-    data_format = request.args.get('format') or request.form.get('format', 'json')
+    data_format = request.args.get('format') or request.form.get('format', 'flat')
     if request.data:
         data = StringIO(request.data)
     elif request.files['api-upload-file']:
