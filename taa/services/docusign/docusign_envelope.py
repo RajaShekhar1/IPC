@@ -447,7 +447,7 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
     elif enrollment_data['spouse_owner'] == 'employee':
         spouseOtherOwnerName = '{} {}'.format(
             enrollment_data['employee']['first'],
-            enrollment_data['employee']['last']),
+            enrollment_data['employee']['last'])
         spouseOtherOwnerSSN = enrollment_data['employee']['ssn']
     else:
         spouseOtherOwnerName = ''
@@ -733,6 +733,7 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
         print(requestBodyStr)
         print("Error generating Docusign envelope, status is: {}".format(
             status))
+        import ipdb; ipdb.set_trace()
         return True, "Error generating Docusign envelope", None
     data = json.loads(content)
 
