@@ -177,6 +177,7 @@ function observe_enrollment_upload_form_submit() {
     form_data.append('case_token', window.case_settings.case_token);
     form_data.append('auth_token', window.enrollment_api_panel.user_token);
     form_data.append('email_errors', false);
+    form_data.append('upload_source', 'api');
     form_data.append('format', file_extension);
     send_file_data("POST", urls.get_submit_enrollment_records_url(), form_data, function success(data) {
       handle_enrollment_upload_success(data, form);

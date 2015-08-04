@@ -5,30 +5,29 @@ from taa.services.products.payment_modes import get_payment_modes
 from taa.services import RequiredFeature
 from taa.services.enrollments.enrollment_import_processor import EnrollmentProcessor
 
-
 class EnrollmentImportService(object):
     case_service = RequiredFeature("CaseService")
     file_import_service = RequiredFeature("FileImportService")
     product_service = RequiredFeature("ProductService")
     soh_service = RequiredFeature("StatementOfHealthQuestionService")
 
-    def process_enrollment_data(self, data, data_format, case_token=None, auth_token=None, email_errors=False):
+    def process_enrollment_data(self, data, data_format, data_source, case_token=None, auth_token=None, should_email_status=False):
         processor = EnrollmentProcessor()
         try:
             processor.process_enrollment_import_request(
                 data,
                 data_format,
+                data_source=data_source,
                 case_token=case_token,
-                auth_token=auth_token
+                auth_token=auth_token,
             )
         except TAAFormError:
-            pass    
-        if email_errors:
+            pass
+        if should_email_status:
             processor.send_status_email()
         return processor
 
     def standardize_imported_data(self, data, method='api_import'):
-
         def val_or_blank(name):
             return data.get(name, '')
 
