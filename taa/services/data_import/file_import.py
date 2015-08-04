@@ -197,6 +197,10 @@ class FlatFileFieldDefinition(object):
 
 
 class FlatFileSpec(object):
+
+    FLAT_FILE_TYPE = u'TAA_ENROLLMENT'
+    FLAT_FILE_VERSION = u'1.0'
+
     def __init__(self, type_name):
         self.spec = []
         self.type = type_name
@@ -219,7 +223,7 @@ class FlatFileSpec(object):
                 size=14,
                 csv_name="FILE_TYPE",
                 title="File Type",
-                description="Must be TAA_ENROLLMENT",
+                description="Must be {}".format(FlatFileSpec.FLAT_FILE_TYPE),
                 format="",
                 is_required=True,
             ),
@@ -227,7 +231,7 @@ class FlatFileSpec(object):
                 size=8,
                 csv_name="VERSION",
                 title="Version Number",
-                description="Must be 1.0",
+                description="Must be {}".formt(FlatFileSpec.FLAT_FILE_VERSION),
                 format="N.N",
                 is_required=True,
             ),
@@ -391,13 +395,13 @@ class FlatFileImporter(object):
         return self.headers
 
     def validate_headers(self):
-        if not self.headers["file_type"]=="TAA_ENROLLMENT":
-            expected = "TAA_ENROLLMENT"
+        if not self.headers["file_type"] == FlatFileSpec.FLAT_FILE_TYPE:
+            expected = FlatFileSpec.FLAT_FILE_TYPE
             self.errors.append("Expected FILE_TYPE header to be {} but got {}".format(expected, self.headers["file_type"]))
-        if not self.headers["version"]=="1.0":
-            expected = "1.0"
+        if not self.headers["version"] == FlatFileSpec.FLAT_FILE_VERSION:
+            expected = FlatFileSpec.FLAT_FILE_VERSION
             self.errors.append("Expected VERSION header to be {} but got {}".format(expected, self.headers["version"]))
-        if not int(self.headers["record_count"])==self.record_count:
+        if not int(self.headers["record_count"]) == self.record_count:
             expected = self.record_count
             self.errors.append("Expected RECORD_COUNT header to be {} but got {}".format(expected, self.headers["record_count"]))
 

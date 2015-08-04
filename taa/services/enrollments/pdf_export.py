@@ -137,7 +137,7 @@ class ImagedFormGeneratorService(object):
         # TODO: Convert our own sig tabs (not in template defs) to text,
         #for example, on the additional child form employee sig line
         custom_sig_tabs = filter(lambda t: isinstance(t, DocuSignSigTab), enrollment_tabs)
-        
+
         for tab in custom_sig_tabs:
             # Create an ad-hoc tab definition
             tab_def = FormTemplateTabs(

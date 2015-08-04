@@ -40,8 +40,8 @@ class TestFlatFile(TestCase):
             ),
         ])
 
-        self.headers_single = "TAA_ENROLLMENT1.0     1       e471d02990094e95b76ea096f0814783                                CASE-123                                                        "
-        self.headers = "TAA_ENROLLMENT1.0     2       e471d02990094e95b76ea096f0814783                                CASE-123                                                        "
+        self.headers_single = "{}{}     1       e471d02990094e95b76ea096f0814783                                CASE-123                                                        ".format(FlatFileSpec.FLAT_FILE_TYPE, FlatFileSpec.FLAT_FILE_VERSION)
+        self.headers = "{}{}     2       e471d02990094e95b76ea096f0814783                                CASE-123                                                        ".format(FlatFileSpec.FLAT_FILE_TYPE, FlatFileSpec.FLAT_FILE_VERSION)
 
     def test_it_should_return_a_dictionary_from_a_single_field(self):
         file_obj = cStringIO.StringIO("{}\nJoe     ".format(self.headers_single))
