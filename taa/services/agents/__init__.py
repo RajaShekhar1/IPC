@@ -9,7 +9,6 @@ import uuid
 
 
 class AgentService(DBService):
-
     user_service = RequiredFeature("UserService")
 
     __model__ = Agent
@@ -54,8 +53,17 @@ class AgentService(DBService):
     def is_user_admin(self, user):
         return 'admins' in self.get_user_groupnames(user)
 
+    def is_user_enrollment_importer(self, user):
+        return 'enrollment_importers' in self.get_user_groupnames(user)
+
     def is_user_home_office(self, user):
         return 'home_office' in self.get_user_groupnames(user)
+
+    def is_user_third_party(self, user):
+        return not any([self.is_user_home_office(user), self.is_user_admin(user), self.is_user_agent(user)])
+
+    def is_user_third_party_enroller(self, user):
+        return self.is_user_third_party(user) and self.is_user_enrollment_importer(user)
 
     def can_manage_all_cases(self, user):
         return self.is_user_admin(user) or self.is_user_home_office(user)

@@ -9,7 +9,6 @@ class UserService(object):
     def can_current_user_submit_enrollments(self):
         pass
 
-
     def get_stormpath_user_by_href(self, href):
         agent_account = None
         for account in search_stormpath_accounts():

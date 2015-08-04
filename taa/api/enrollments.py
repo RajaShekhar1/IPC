@@ -12,7 +12,7 @@ enrollment_import_service = LookupService("EnrollmentImportService")
 
 
 @route(bp, '/', methods=["POST"])
-def submit_data():
+def submit_data():    
     case_token = request.args.get('case_token') or request.form.get('case_token')
     auth_token = request.args.get('auth_token') or request.form.get('auth_token')
     should_email_status = bool(request.args.get('should_email_status')) or bool(request.form.get('should_email_status'))

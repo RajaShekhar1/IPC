@@ -8,6 +8,9 @@ from taa.core import TAAFormError, db, DBService
 from taa.services import RequiredFeature
 from taa.services.enrollments.models import EnrollmentLog
 
+
+_DEBUG=True
+
 class EnrollmentProcessor(object):
     api_token_service = RequiredFeature("ApiTokenService")
     case_service = RequiredFeature("CaseService")
@@ -48,6 +51,8 @@ class EnrollmentProcessor(object):
             self._add_error(error["type"], error["field_name"], error['message'], error['record'], error['record_num'])
 
     def log_request(self, data, data_source, auth_token, case_token):
+        if _DEBUG:
+            return
         if data_source == "dropbox":
             source = EnrollmentLog.SUBMIT_SOURCE_DROPBOX
         else:
@@ -148,7 +153,7 @@ class EnrollmentProcessor(object):
             email_subject = "Your recent submission to 5Star Enrollment failed."
         else:
             email_subject = "Your recent submission to 5Star Enrollment succeeded."
-        
+
         self._send_email(
             from_email="support@5Starenroll.com",
             from_name="5Star Enrollment",

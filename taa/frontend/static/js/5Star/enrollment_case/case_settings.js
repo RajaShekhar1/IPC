@@ -162,6 +162,7 @@ function handle_enrollment_upload_error(err, modal) {
 }
 
 function observe_enrollment_upload_form_submit() {
+  console.log("here");
   $("#enrollment-csv-form").on("submit", function() {
     var form = this;
     var file_select = $(this).find("input[type=file]").get(0);
@@ -174,7 +175,9 @@ function observe_enrollment_upload_form_submit() {
     // Add the file upload to the request.
     form_data.append('api-upload-file', files[0], files[0].name);
     file_extension = files[0].name.split(".").slice(-1)[0];
-    form_data.append('case_token', window.case_settings.case_token);
+    if (window.case_settings) {
+      form_data.append('case_token', window.case_settings.case_token);
+    }
     form_data.append('auth_token', window.enrollment_api_panel.user_token);
     form_data.append('email_errors', false);
     form_data.append('upload_source', 'api');
@@ -220,6 +223,18 @@ function init_settings_fields() {
     moveOnSelect: false,
     nonSelectedListLabel: 'Available Agents:',
     selectedListLabel: 'Case Visible to Agents:'
+  });
+}
+
+function init_enrollment_import_fields() {
+  $('#csv-file-input-enrollment').ace_file_input({
+    no_file:'No File ...',
+    btn_choose:'Choose File',
+    btn_change:'Change File',
+    droppable:false,
+    onchange:null,
+    thumbnail:false,
+    whitelist:'csv'
   });
 }
 
