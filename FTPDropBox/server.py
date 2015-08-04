@@ -79,7 +79,7 @@ class TAAHandler(TLS_FTPHandler):
         self.post_api_request(data, data_format)
 
     def post_api_request(self, data, data_format):
-        url = "{}?auth_token={}&format={}&email_errors=true".format(self.upload_url, self.auth_token, data_format)
+        url = "{}?auth_token={}&format={}&email_errors=true&upload_source=dropbox".format(self.upload_url, self.auth_token, data_format)
         print
         print requests.post(url, data=data).text
 
