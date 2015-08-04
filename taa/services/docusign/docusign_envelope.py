@@ -140,7 +140,7 @@ class EnrollmentDataWrap(object):
         return self.data.get(key, default)
 
     def is_self_enroll(self):
-        if self.data["is_third_party"]:
+        if self.data.get("is_third_party"):
             return False
         return not self.data['agent_data']['is_in_person']
 
@@ -157,7 +157,7 @@ class EnrollmentDataWrap(object):
         return bool(self.data.get("is_third_party"))
 
     def get_session_type(self):
-        if self.data["is_third_party"]:
+        if self.data.get("is_third_party"):
             return 'thirdparty'
         elif self.data['agent_data']['is_in_person']:
             return 'inperson'
@@ -177,7 +177,7 @@ class EnrollmentDataWrap(object):
             return self.get_employee_email()
 
     def get_agent_signing_name(self):
-        if self.data['is_third_party']:
+        if self.data.get('is_third_party'):
             return self.data['agent_name']
 
         if not flask.has_request_context():
@@ -198,7 +198,7 @@ class EnrollmentDataWrap(object):
         return agent_user.custom_data['signing_name']
 
     def get_agent_code(self):
-        if self.data['is_third_party']:
+        if self.data.get('is_third_party'):
             return self.data['agent_code']
 
         if not flask.has_request_context():
