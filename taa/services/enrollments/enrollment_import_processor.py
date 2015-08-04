@@ -3,13 +3,10 @@ from flask import abort, render_template
 import requests
 import mandrill
 
-from taa import mandrill_flask
+from taa import mandrill_flask, app
 from taa.core import TAAFormError, db, DBService
 from taa.services import RequiredFeature
 from taa.services.enrollments.models import EnrollmentLog
-
-
-_DEBUG=True
 
 class EnrollmentProcessor(object):
     api_token_service = RequiredFeature("ApiTokenService")
@@ -51,15 +48,13 @@ class EnrollmentProcessor(object):
             self._add_error(error["type"], error["field_name"], error['message'], error['record'], error['record_num'])
 
     def log_request(self, data, data_source, auth_token, case_token):
-        if _DEBUG:
-            return
         if data_source == "dropbox":
             source = EnrollmentLog.SUBMIT_SOURCE_DROPBOX
         else:
             source = EnrollmentLog.SUBMIT_SOURCE_API
         enrollment_log_service = EnrollmentLogService()
         matching_data_hash = enrollment_log_service.lookup_hash(data.getvalue())
-        if matching_data_hash and not self.errors:
+        if matching_data_hash and not self.errors and not app.config.get('ALLOW_DUPLICATE_SUBMISSION'):
             self._add_error("duplicate_upload", "", "This upload was previously uploaded on {}".format(matching_data_hash.timestamp), [], 0)
             return
         enrollment_log_service.create_new_log(

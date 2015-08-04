@@ -30,6 +30,8 @@ class EnrollmentImportService(object):
 
     def standardize_imported_data(self, data, method='api_import'):
         def val_or_blank(name):
+            if data.get(name) is None:
+                return ''
             return data.get(name, '')
 
         out_data = {

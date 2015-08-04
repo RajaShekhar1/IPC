@@ -18,6 +18,7 @@ def env_get_int(env_name, default_val=None):
 
 # production should have DEBUG=False
 DEBUG = env_get_bool('DEBUG', True)
+ALLOW_DUPLICATE_SUBMISSION = env_get_bool('ALLOW_DUPLICATE_SUBMISSION', True)
 ASSETS_DEBUG = env_get_bool('ASSETS_DEBUG', True)
 ASSETS_AUTO_BUILD = env_get_bool('ASSETS_AUTO_BUILD', True)
 SECRET_KEY = env_get_text('SECRET_KEY', 'sSYpq8m5vL68/1VKLQwst6II0PjAIP0cYQ31mzdA')

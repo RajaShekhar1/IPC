@@ -260,17 +260,17 @@ class FPPTemplate(DocuSignServerTemplate):
                 prefix=short_prefix+"Cont",
                 name=spouse_data["first"] + " " + spouse_data["last"],
                 relationship="Spouse",
-                dob=spouse_data.get("birthdate"),
-                ssn=spouse_data.get("ssn"),
+                dob=spouse_data.get("birthdate", ''),
+                ssn=spouse_data.get("ssn", ''),
             )
         elif contingent_type_key in self.data and self.data[contingent_type_key] == 'other':
 
             beneficiary_data = self.data['{}_contingent_beneficiary'.format(long_prefix)]
             tabs += self.make_beneficiary_tabs(prefix='{}Cont'.format(short_prefix),
-                                       name=beneficiary_data.get('name'),
-                                       relationship=beneficiary_data.get('relationship'),
-                                       ssn=beneficiary_data.get('ssn'),
-                                       dob=beneficiary_data.get('date_of_birth'),
+                                       name=beneficiary_data.get('name', ''),
+                                       relationship=beneficiary_data.get('relationship', ''),
+                                       ssn=beneficiary_data.get('ssn', ''),
+                                       dob=beneficiary_data.get('date_of_birth', ''),
             )
 
         return tabs
@@ -289,10 +289,10 @@ class FPPTemplate(DocuSignServerTemplate):
         else:
             return self.make_beneficiary_tabs(
                 prefix = short_prefix,
-                name = self.data["{}_beneficiary_name".format(long_prefix)],
-                relationship = self.data["{}_beneficiary_relationship".format(long_prefix)],
-                dob = self.data.get("{}_beneficiary_dob".format(long_prefix)),
-                ssn = self.data.get("{}_beneficiary_ssn".format(long_prefix)),
+                name = self.data.get("{}_beneficiary_name".format(long_prefix), ''),
+                relationship = self.data.get("{}_beneficiary_relationship".format(long_prefix), ''),
+                dob = self.data.get("{}_beneficiary_dob".format(long_prefix), ''),
+                ssn = self.data.get("{}_beneficiary_ssn".format(long_prefix), ''),
             )
 
     def make_payment_mode_tabs(self):
