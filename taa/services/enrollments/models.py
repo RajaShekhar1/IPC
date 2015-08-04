@@ -6,6 +6,27 @@ from taa import db
 from taa.helpers import JsonSerializable
 from taa.services.cases import CaseCensus
 
+class EnrollmentLogSerializer(JsonSerializable):
+    pass
+
+class EnrollmentLog(EnrollmentLogSerializer, db.Model):
+    __tablename__ = 'enrollment_api_logs'
+    id = db.Column(db.Integer, primary_key=True)
+
+    #Submission sources
+    SUBMIT_SOURCE_DROPBOX = u'dropbox'
+    SUBMIT_SOURCE_LOGGED_IN_WIZARD = u'logged_in_wizard'
+    SUBMIT_SOURCE_SELF_ENROLL_WIZARD = u'self_enroll_wizard'
+    SUBMIT_SOURCE_API = u'api'
+    source = db.Column(db.Unicode(32), nullable=False)
+
+    timestamp = db.Column(db.DateTime, server_default='NOW')
+    auth_token = db.Column(db.Unicode(64))
+    case_token = db.Column(db.Unicode(64))
+    num_processed = db.Column(db.Integer)
+    num_errors = db.Column(db.Integer)
+    log_hash = db.Column(db.Unicode(64))
+
 
 class EnrollmentSerializer(JsonSerializable):
     __json_hidden__ = ['census_record', 'case']

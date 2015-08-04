@@ -15,8 +15,9 @@ enrollment_import_service = LookupService("EnrollmentImportService")
 def submit_data():
     case_token = request.args.get('case_token') or request.form.get('case_token')
     auth_token = request.args.get('auth_token') or request.form.get('auth_token')
-    email_errors = bool(request.args.get('email_errors')) or bool(request.form.get('email_errors'))
+    should_email_status = bool(request.args.get('should_email_status')) or bool(request.form.get('should_email_status'))
     data_format = request.args.get('format') or request.form.get('format', 'flat')
+    upload_source = request.args.get('upload_source') or request.form.get('upload_source', 'api')
     if request.data:
         data = StringIO(request.data)
     elif request.files['api-upload-file']:
@@ -27,7 +28,8 @@ def submit_data():
         data_format,
         case_token=case_token,
         auth_token=auth_token,
-        email_errors=email_errors
+        should_email_status=should_email_status,
+        data_source=upload_source
     )
 
     return {

@@ -4,11 +4,11 @@ import requests
 import mandrill
 
 from taa import mandrill_flask
-from taa.core import TAAFormError, db
+from taa.core import TAAFormError, db, DBService
 from taa.services import RequiredFeature
+from taa.services.enrollments.models import EnrollmentLog
 
 class EnrollmentProcessor(object):
-
     api_token_service = RequiredFeature("ApiTokenService")
     case_service = RequiredFeature("CaseService")
 
@@ -26,11 +26,12 @@ class EnrollmentProcessor(object):
         self.enrolling_agent = None
         self.processed_data = []
 
-    def process_enrollment_import_request(self, data, data_format, auth_token=None, case_token=None):
-
+    def process_enrollment_import_request(self, data, data_format, data_source=None, auth_token=None, case_token=None):
         self.authenticate_user(auth_token)
 
         self.validate_records(case_token, data, data_format)
+
+        self.log_request(data, data_source, auth_token, case_token)
 
         if self.errors:
             self.raise_error_exception()
@@ -45,6 +46,25 @@ class EnrollmentProcessor(object):
         self.enrollment_record_parser.process_records(self.processed_data, case_from_token)
         for error in self.enrollment_record_parser.errors:
             self._add_error(error["type"], error["field_name"], error['message'], error['record'], error['record_num'])
+
+    def log_request(self, data, data_source, auth_token, case_token):
+        if data_source == "dropbox":
+            source = EnrollmentLog.SUBMIT_SOURCE_DROPBOX
+        else:
+            source = EnrollmentLog.SUBMIT_SOURCE_API
+        enrollment_log_service = EnrollmentLogService()
+        matching_data_hash = enrollment_log_service.lookup_hash(data.getvalue())
+        if matching_data_hash and not self.errors:
+            self._add_error("duplicate_upload", "", "This upload was previously uploaded on {}".format(matching_data_hash.timestamp), [], 0)
+            return
+        enrollment_log_service.create_new_log(
+            source = source,
+            num_processed = self.get_num_processed(),
+            num_errors = len(self.errors),
+            hash_data = data.getvalue(),
+            auth_token = auth_token,
+            case_token = case_token
+        )
 
     def submit_validated_data(self):
         for record in self.get_valid_data():
@@ -102,16 +122,21 @@ class EnrollmentProcessor(object):
         return self.errors
 
     def _status_email_body(self):
+        from datetime import datetime
         if self.is_success():
             return render_template('emails/enrollment_upload_email.html',
                                    errors=[],
-                                   num_processed=self.get_num_processed()
+                                   num_processed=self.get_num_processed(),
+                                   user=self.get_status_email_name(),
+                                   timestamp=datetime.now()
                                    )
         else:
             errors = [{"type": e.get_type(), "fields": e.get_fields(), "message": e.get_message()} for e in self.get_errors()]
             return render_template('emails/enrollment_upload_email.html',
                                    errors=errors,
-                                   num_processed=self.get_num_processed()
+                                   num_processed=self.get_num_processed(),
+                                   user=self.get_status_email_name(),
+                                   timestamp=datetime.now()
                                    )
 
     def send_status_email(self):
@@ -119,12 +144,17 @@ class EnrollmentProcessor(object):
         if not status_email:
             return
 
+        if self.errors:
+            email_subject = "Your recent submission to 5Star Enrollment failed."
+        else:
+            email_subject = "Your recent submission to 5Star Enrollment succeeded."
+        
         self._send_email(
             from_email="support@5Starenroll.com",
             from_name="5Star Enrollment",
             to_email=status_email,
             to_name=self.get_status_email_name(),
-            subject="Your recent record submission to 5Star Enrollment",
+            subject=email_subject,
             body=self._status_email_body()
             )
 
@@ -199,6 +229,8 @@ class EnrollmentProcessor(object):
                 self.errors += result.get_errors()
                 raise TAAFormError(result.get_error_message())
             return result.get_data()
+        elif data_format == "json":
+            return
 
 
 class EnrollmentImportError(object):
@@ -225,3 +257,31 @@ class EnrollmentImportError(object):
 
     def to_json(self):
         return {'type':self.type, 'message': self.get_message(), 'fields':self.fields, 'record_num':self.record_num}
+
+class EnrollmentLogService(DBService):
+    __model__ = EnrollmentLog
+
+    def __init__(self):
+        pass
+
+    def create_new_log(self, source, num_processed, num_errors, hash_data, auth_token=None, case_token=None):
+        self.create(**dict(
+            source=source,
+            auth_token=auth_token,
+            case_token=case_token,
+            num_processed=num_processed,
+            num_errors=num_errors,
+            log_hash=self.generate_hash(hash_data)
+        ))
+        db.session.commit()
+
+    def lookup_hash(self, hash_data):
+        search_hash = self.generate_hash(hash_data)
+        return db.session.query(EnrollmentLog
+        ).filter_by(log_hash=search_hash
+        ).first()
+
+    def generate_hash(self, data):
+        import hashlib
+        new_hash = hashlib.md5(data).hexdigest()
+        return new_hash

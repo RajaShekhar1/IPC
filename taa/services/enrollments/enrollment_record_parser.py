@@ -7,7 +7,6 @@ from taa.services.validators import required_validator, api_token_validator, cas
 from taa.services import RequiredFeature
 from taa.services.cases.census_import import preprocess_string, preprocess_numbers, preprocess_zip
 
-
 class EnrollmentRecordField():
     def __init__(self, dict_key_name, database_name, preprocessor, validators,
                  post_processors=None, description="", title="", flat_file_size=0):
