@@ -2811,9 +2811,12 @@ var questions = [];
 var general_questions_by_id = {};
 ko.bindingHandlers.flagBtn = {
     init: function(element, value_accessor) {
-        
+
         var val = ko.unwrap(value_accessor());
-        
+
+        // for testing purpose, mark each element with a CSS class and yes or no value
+        $(element).addClass("flagBtn").addClass("val_"+val.val);
+
         var btn_group;
         if (val.applicant) {
             var applicant = val.applicant;
