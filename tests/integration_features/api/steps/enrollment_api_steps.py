@@ -66,7 +66,8 @@ def step_impl(context, auth_token, case_token):
         param_text = '?' + param_text
 
     # Stub out docusign transmission so we aren't actually sending anything to them for this set of tests.
-    mock_docusign_transport()
+    #mock_docusign_transport()
+    mock_submission_service()
 
     # Make request
     context.resp = context.app.post("/enrollments{}".format(param_text),
@@ -83,6 +84,18 @@ def mock_docusign_transport():
     mock_docusign_result = {'uri': 'http://example.com'}
     mock_transport.return_value.post.return_value = mock_docusign_result
     services_broker.Provide("DocuSignTransport", lambda: mock_transport)
+
+def mock_submission_service():
+    #class MockDocuSignTransport(object):
+    #    def __getitem__(self, item): return None
+    #
+    #    def __call__(self, *args): pass
+
+    #mock_transport = Mock(spec=MockDocuSignTransport)
+    #mock_docusign_result = {'uri': 'http://example.com'}
+    #mock_transport.return_value.post.return_value = mock_docusign_result
+    services_broker.Provide("EnrollmentSubmissionService", lambda: Mock())
+
 
 
 @step(u"I should see a {status_code:d} response")
