@@ -6,7 +6,7 @@ from flask_stormpath import current_user, groups_required, login_required
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
-from taa.services.cases import CaseService, SelfEnrollmentSetup
+from taa.services.cases import CaseService, SelfEnrollmentSetup, RiderService
 from taa.services.cases.forms import (
     CensusRecordForm,
     NewCaseForm,
@@ -19,6 +19,7 @@ from taa.services import LookupService
 bp = Blueprint('cases', __name__, url_prefix='/cases')
 
 case_service = LookupService('CaseService')
+rider_service = RiderService()
 agent_service = LookupService('AgentService')
 product_service = LookupService('ProductService')
 self_enrollment_email_service = LookupService('SelfEnrollmentEmailService')
@@ -114,8 +115,15 @@ def update_case(case_id):
                     *data['partner_agents'])])
         # Update case table (these keys must be removed for the main case
         # update)
+        riders = data["riders"]
+        selected_riders = []
+        for rider in riders:
+            if rider.get('selected'):
+                selected_riders.append(rider.get('code'))
+        case_service.update_riders(case, [rider_service.get_rider_by_code(rc) for rc in selected_riders])
         del data['products']
         del data['partner_agents']
+        del data['riders']
         return case_service.update(case, **data)
     raise TAAFormError(form.errors)
 

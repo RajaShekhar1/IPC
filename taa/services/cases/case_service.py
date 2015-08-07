@@ -25,6 +25,7 @@ class CaseService(DBService):
     census_records = RequiredFeature('CensusRecordService')
     enrollment_periods = RequiredFeature('CaseEnrollmentPeriodsService')
     self_enrollment = RequiredFeature('SelfEnrollmentService')
+    rider_service = RequiredFeature('RiderService')
 
     def __init__(self, *args, **kwargs):
         super(CaseService, self).__init__(*args, **kwargs)
@@ -74,6 +75,16 @@ class CaseService(DBService):
     def get_products_for_case(self, case):
         # Return the sorted list of products for this case
         return sorted(case.products, cmp=lambda x, y: cmp(x.name, y.name))
+
+    def get_rider_codes(self):
+        return self.case_riders.split(",")
+
+    def get_case_level_riders(self):
+        return rider_service.case_level_riders() 
+
+    def update_riders(self, case, riders):
+        case.case_riders = ','.join([r.code for r in riders])
+        db.session.flush()
 
     def update_products(self, case, products):
         case.products = products
@@ -393,3 +404,29 @@ class CaseService(DBService):
         })
 
         return case
+
+class Rider(object):
+    def __init__(self, name, code, enrollment_level=False):
+        self.name = name
+        self.code = code
+        self.enrollment_level = enrollment_level
+
+class RiderService(object):
+    default_riders = [
+        Rider("Disability Waiver of Premium", "WP"),
+        Rider("Auto Increase Rider", "AIR"), 
+        Rider("Chronic Illness Rider", "CHR", True) 
+    ]
+
+    def __init__(self):
+        pass
+
+    def valid_rider_code(self, code):
+        return code in [r.code for r in self.default_riders]
+    
+    def get_rider_by_code(self, code):
+        return [r for r in self.default_riders if r.code==code][0]
+
+    def case_level_riders(self):
+        return [r for r in self.default_riders if not r.enrollment_level]
+
