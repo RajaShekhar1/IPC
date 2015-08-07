@@ -73,11 +73,14 @@ def create_agent(first, last, agent_code, email, activated=True):
     return agent
 
 
-def create_case(company_name='Test Case', case_token='CASE-123123'):
-
-    agent = create_agent(first='TEST', last='AGENT',
-                         agent_code='26AGENT',
-                         email='test-case-owner@delmarsd.com')
+def create_case(company_name='Test Case', case_token='CASE-123123', product_codes=None, agent=None):
+    """
+    Creates an actively-enrolling case with the given parameters.
+    """
+    if not agent:
+        agent = create_agent(first='TEST', last='AGENT',
+                             agent_code='26AGENT',
+                             email='test-case-owner@delmarsd.com')
     case = case_service.create_new_case(**dict(
         company_name=company_name,
         group_number="GRP-NUM-EX123",
@@ -91,8 +94,11 @@ def create_case(company_name='Test Case', case_token='CASE-123123'):
         is_self_enrollment=False,
         case_token=case_token,
     ))
-    FPPTI = product_service.search(by_code='FPPTI')[0]
-    case.products.append(FPPTI)
+    if not product_codes:
+        product_codes = ['FPPTI']
+    for code in product_codes:
+        product = product_service.search(by_code=code)[0]
+        case.products.append(product)
 
     periods = [dict(period_type=CaseOpenEnrollmentPeriod.PERIOD_TYPE, start_date='2000-01-01', end_date=None)]
     case_service.update_enrollment_periods(case, periods)

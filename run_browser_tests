@@ -5,5 +5,5 @@ export SERVER_PORT=5050
 export PORT=$SERVER_PORT
 python run_server.py &
 SERVER_ID=$!
-behave tests/integration_features/browser
+behave tests/integration_features/browser/test_wizard_enrollment_fpp_inperson.feature
 kill $SERVER_ID

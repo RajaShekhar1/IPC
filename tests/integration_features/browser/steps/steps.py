@@ -18,6 +18,11 @@ def step_impl(context, case_name):
     context.case = create_case(company_name=case_name)
 
 
+@given("I have a case that is actively enrolling named '{company_name}' with products")
+def step_impl(context, company_name):
+    product_codes = [r[0] for r in context.table.rows]
+    context.case = create_case(agent=context.agent, company_name=company_name, product_codes=product_codes)
+
 @step("I have an agent '{agent_name}'")
 def step_impl(context, agent_name):
     """
@@ -54,6 +59,17 @@ def step_impl(context, agent_name):
     login_page.login_as_agent(context.agent)
 
 
+@step("I have logged in as an agent")
+def step_impl(context):
+    """
+    We don't care about which agent, just create one and log in
+    """
+    context.execute_steps(u"""
+    Given I have an agent 'Agent Bob'
+    And I log in as 'Agent Bob'
+    """)
+
+
 @step("I navigate to the enrollment page for '{case_name}'")
 def step_impl(context, case_name):
     """
@@ -81,3 +97,99 @@ def step_impl(context):
     did_load = wizard_page.wait_until_loaded()
     assert_that(did_load, equal_to(True))
 
+
+
+@step("I begin a new empty enrollment for the case '{case_name}'")
+def step_impl(context, case_name):
+    """
+    :type context behave.runner.Context
+    """
+    context.execute_steps(u"""
+        When I navigate to the enrollment page for '{}'
+        And I add a new enrollment with '{}' as the SSN
+        """.format(case_name, '123121234')
+    )
+
+
+@when("I enter the following information into the wizard step 1")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    wizard_page = WizardPage(context)
+    did_load = wizard_page.wait_until_loaded()
+    assert_that(did_load, equal_to(True))
+
+    data = dict(zip(context.table[0].headings, context.table[0].cells))
+    wizard_page.fill_out_step1_data(**data)
+    if data.get('emp_coverage'):
+        if data['emp_coverage'].isdigit():
+            wizard_page.select_custom_coverage('employee', data['emp_coverage'])
+        else:
+            wizard_page.select_recommended_coverage(data['emp_coverage'])
+
+    wizard_page.click_next()
+
+@step("I select 'No' for every question on step 2 of the wizard")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    wizard_page = WizardPage(context)
+    did_load = wizard_page.wait_until_step_2_loaded()
+    assert_that(did_load, equal_to(True))
+
+    wizard_page.select_no_for_all_questions()
+    wizard_page.click_next()
+
+
+@step("I enter the following data for step 3 of the wizard")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    wizard_page = WizardPage(context)
+    did_load = wizard_page.wait_until_loaded()
+    assert_that(did_load, equal_to(True))
+
+    data = dict(zip(context.table[0].headings, context.table[0].cells))
+    wizard_page.fill_out_step3_data(**data)
+    if data.get('emp_coverage'):
+        if data['emp_coverage'].isdigit():
+            wizard_page.select_custom_coverage('employee', data['emp_coverage'])
+        else:
+            wizard_page.select_recommended_coverage(data['emp_coverage'])
+
+    wizard_page.click_next()
+
+
+@step("I enter nothing for step 4 of the wizard")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    pass
+
+
+@step("I enter the following for step 5 of the wizard")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    pass
+
+
+@step("I enter the following for step 6 of the wizard")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    pass
+
+
+@then("I should be redirected to the DocuSign website\.")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    pass
