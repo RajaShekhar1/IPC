@@ -506,7 +506,10 @@
         </div>
     <br />
     <br />
-    <div class="row">
+    <div class="col-sm-3">
+      <h5>Riders</h5>
+    </div>
+    <div class="row col-sm-9">
       {# Riders #}
       <div class="col-sm-12">
         <div class="form-group col-xs-12 col-sm-1"></div>
@@ -2023,6 +2026,7 @@
                     <th class="center">Age</th>
                     <th class="center">Coverage</th>
                     <th class="center"><span data-bind="text: $root.payment_mode_text"></span> Premium</th>
+                    <th class="center">Additional Riders</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -2032,11 +2036,12 @@
                     <td data-bind="text:get_age"></td>
                     <td data-bind="html:display_selected_coverage"></td>
                     <td data-bind="text:display_premium"></td>
-
+                    <td data-bind="text:display_riders"></td>
                 </tr>
                 <!--/ko-->
 
                 <tr class="success">
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td><span class="text-primary bigger-110">Total</span></td>
@@ -2048,8 +2053,6 @@
             <div class="space-10"></div>
 
             <form class="form-horizontal" id="step6-form">
-
-
                 <div id="inPersonSignerToken">
                     <h4 class="green">Employee Identification</h4>
                     <!--ko if: !insurance_product.should_use_date_of_hire_for_identity()-->

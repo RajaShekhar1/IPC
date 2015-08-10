@@ -2252,6 +2252,12 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
         return self.selected_coverage().format_premium();
     });
 
+    self.display_riders = ko.computed(function() {
+      console.log(self.applicant_type);
+      // return self.root.selected_coverage();
+      return "$";
+    });
+
     self.get_existing_coverage_amount_for_product = function(product_id) {
         return parseFloat(self.get_existing_coverage_amount_by_product()[product_id]);
     };
@@ -2481,7 +2487,7 @@ function BenefitsPackage(root, name) {
         }
         return benefits;
     };
-    
+
     self.get_total_premium = ko.computed(function() {
         var benefits = self.get_package_benefits();
         
