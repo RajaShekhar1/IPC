@@ -430,3 +430,5 @@ class RiderService(object):
     def case_level_riders(self):
         return [r for r in self.default_riders if not r.enrollment_level]
 
+    def enrollment_level_riders(self):
+        return [r for r in self.default_riders if r.enrollment_level]

@@ -656,6 +656,27 @@ function WizardUI(defaults) {
             }, 0);
         }
     });
+
+    self.riders = ko.observable({
+      emp: [],
+      sp: []
+    });
+
+    self.case_riders = [];
+
+    self.selected_riders = ko.observable({
+      emp:ko.observableArray([]),
+      sp:ko.observableArray([]),
+    });
+
+    self.toggle_selected_riders = function(rider, prefix) {
+      selected_riders = self.selected_riders()[prefix];
+      if(selected_riders.indexOf(rider) == -1) {
+        selected_riders.push(rider);
+      } else {
+        selected_riders.splice(selected_riders.indexOf(rider), 1);
+      }
+    }
     
     self.show_updated_rates = function(resp) {
         var data = resp.data;
@@ -670,7 +691,12 @@ function WizardUI(defaults) {
             self.recommendations.better.set_recommendations(data.recommendations['better']);
             self.recommendations.best.set_recommendations(data.recommendations['best']);
         }
-        
+
+        self.riders({
+          emp: data.emp_rider_rates,
+          sp: data.sp_rider_rates
+        });
+
         // Update selection with new data
         if (self.selected_plan().is_valid()) {
             self.apply_selected_customization();
@@ -3797,4 +3823,9 @@ function ReplacementPolicy() {
             replacement_reason: self.replacement_reason()
         };
     };
+}
+
+function init_case_riders(riders) {
+  window.ui.selected_riders()["emp"](riders);
+  window.ui.selected_riders()["sp"](riders);
 }
