@@ -140,6 +140,16 @@ style="display: none;" data-bind="visible: true">
                           </div>
                         </div>
 
+                        <div class="form-group" data-bind="visible: single_product().base_product_type != 'Group CI'">
+                          <label class="col-md-3 control-label" for="caseRiders">Riders</label>
+                          <div class="col-md-9" data-bind="foreach: {data: riders, as: 'rider'}">
+                            <label>
+                              <input type="checkbox" class="ace ace-switch ace-switch-4 btn-flat" data-bind="checked: rider.selected, value:rider.code" name="riders" /> 
+                              <span class="lbl" data-bind="text: rider.description"></span>
+                            </label><br />
+                          </div>
+                        </div>
+
                       </div>
                       <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
                         <h3 class="header lighter blue">Enrollment Periods</h3>
@@ -1269,7 +1279,8 @@ style="display: none;" data-bind="visible: true">
                     default_page_text: "{{ default_page_text|replace('\n', '\\n')|safe }}",
                     all_states: {{ all_states | tojson | safe }},
                     product_state_mapping: {{ product_state_mapping |tojson|safe }},
-                    payment_modes: {{ payment_modes | tojson | safe }}
+                    payment_modes: {{ payment_modes | tojson | safe }},
+                    riders: {{ riders | tojson | safe }}
                   };
 
 

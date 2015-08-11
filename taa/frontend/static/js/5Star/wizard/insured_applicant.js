@@ -146,8 +146,15 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
   self.display_selected_coverage = ko.computed(function() {
     return self.selected_coverage().format_face_value();
   });
+
   self.display_premium = ko.computed(function() {
     return self.selected_coverage().format_premium();
+  });
+
+  self.display_riders = ko.computed(function() {
+    console.log(self.applicant_type);
+    // return self.root.selected_coverage();
+    return "$";
   });
 
   self.get_existing_coverage_amount_for_product = function(product_id) {

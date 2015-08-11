@@ -111,6 +111,18 @@ def get_product_rates(product_id):
         payment_mode=payment_mode
     )
 
+    # Rider rates
+    emp_rider_rates = dict(
+            WP=10*int(payment_mode)/52,
+            AIR=6*int(payment_mode)/52,
+            CHR=5*int(payment_mode)/52
+            )
+    sp_rider_rates = dict(
+            WP=10*int(payment_mode)/52,
+            AIR=6*int(payment_mode)/52,
+            CHR=5*int(payment_mode)/52
+            )
+
     # Return rates and recommendations
     rates = product_service.get_rates(product, demographics)
     recommendations = product_service.get_recommendations(
@@ -120,5 +132,7 @@ def get_product_rates(product_id):
         employee_rates=rates['employee'],
         spouse_rates=rates.get('spouse'),
         children_rates=rates.get('children'),
-        recommendations=recommendations
+        recommendations=recommendations,
+        emp_rider_rates=emp_rider_rates,
+        sp_rider_rates=sp_rider_rates
     )

@@ -77,6 +77,9 @@ class ProductService(DBService):
                and statecode in self.get_product_states(products)[products[0].id]
         )
 
+    def get_riders_for_product(self, product_code):
+        pass
+
     def get_num_health_questions(self, product_code, statecode, applicant_type):
         products = self.get_products_by_codes([product_code])
         if not products:

@@ -593,6 +593,27 @@ function WizardUI(defaults) {
     }
   });
 
+  self.riders = ko.observable({
+    emp: [],
+    sp: []
+  });
+
+  self.case_riders = [];
+
+  self.selected_riders = ko.observable({
+    emp: ko.observableArray([]),
+    sp: ko.observableArray([])
+  });
+
+  self.toggle_selected_riders = function(rider, prefix) {
+    selected_riders = self.selected_riders()[prefix];
+    if (selected_riders.indexOf(rider) == -1) {
+      selected_riders.push(rider);
+    } else {
+      selected_riders.splice(selected_riders.indexOf(rider), 1);
+    }
+  };
+
   self.show_updated_rates = function(resp) {
     var data = resp.data;
     self.insurance_product.parse_benefit_options('employee', self.employee(), data.employee_rates);

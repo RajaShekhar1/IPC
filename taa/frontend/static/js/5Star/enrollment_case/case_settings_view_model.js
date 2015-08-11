@@ -139,6 +139,10 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     return (self.payment_mode()) ? parseInt(self.payment_mode().mode) : null;
   });
 
+  // Get Rider information
+  self.rider_choices = settings.riders;
+  self.riders = ko.observable(self.rider_choices)
+
   // Self-enrollment
   self.is_self_enrollment = ko.observable(case_data.is_self_enrollment);
   self.is_self_enrollment.subscribe(function() {
@@ -436,7 +440,8 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
       situs_state: self.selected_statecode() ? self.selected_statecode() : "",
       payment_mode: self.selected_payment_mode() ? self.selected_payment_mode() : null,
       agent_id: self.owner_agent_id(),
-      is_self_enrollment: self.is_self_enrollment()
+      is_self_enrollment: self.is_self_enrollment(),
+      riders: self.riders()
     }
   };
 
