@@ -423,8 +423,11 @@ class DocuSignEnvelopeComponent(object):
         tabs = []
         if self.data.get('emp_sig_txt'):
             tabs += [DocuSignPreSignedTextTab("SignHereEmployee", self.data.get_employee_esignature())]
+            tabs += [DocuSignPreSignedTextTab("InitialHereEmployee", self.data.get_employee_initials())]
         if self.data.get('agent_sig_txt'):
             tabs += [DocuSignPreSignedTextTab("SignHereAgent", self.data.get_agent_esignature())]
+            tabs += [DocuSignPreSignedTextTab("InitialHereAgent", self.data.get_agent_initials())]
+
         if self.data.get('application_date'):
             tabs += [
                 DocuSignPreSignedTextTab("DateSignedEmployee", self.data.get('application_date')),

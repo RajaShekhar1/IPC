@@ -301,6 +301,9 @@ class EnrollmentDataWrap(object):
     def get_employee_esignature(self):
         return self.data.get('emp_sig_txt', '')
 
+    def get_employee_initials(self):
+        return self.data.get('emp_initials_txt', '')
+
     def has_employee_esigned(self):
         return bool(self.get_employee_esignature())
 
@@ -310,6 +313,8 @@ class EnrollmentDataWrap(object):
     def has_agent_esigned(self):
         return bool(self.get_agent_esignature())
 
+    def get_agent_initials(self):
+        return self.data.get('agent_initials_txt', '')
 
 def old_create_envelope_and_get_signing_url(enrollment_data):
     # return is_error(bool), error_message, and redirectURL

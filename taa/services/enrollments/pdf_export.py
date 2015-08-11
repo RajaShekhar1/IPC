@@ -128,16 +128,32 @@ class ImagedFormGeneratorService(object):
         return merged_pdf
 
     def _add_signature_tabs(self, enrollment_tabs, tab_definitions):
+        self.add_custom_signature_tabs(enrollment_tabs, tab_definitions)
+        self.match_signatures_to_defs(enrollment_tabs, tab_definitions)
+
+    def match_signatures_to_defs(self, enrollment_tabs, tab_definitions):
+        """
+        Match up any eSignatures to proper signature definitions
+        """
 
         def is_tab_for_role_and_type(role, type_):
+            """returns a filter function for tab defs matching both recipient role and tab type"""
             def f(t):
                 return t.recipient_role == role and t.type_ == type_
             return f
 
-        # TODO: Convert our own sig tabs (not in template defs) to text,
-        #for example, on the additional child form employee sig line
-        custom_sig_tabs = filter(lambda t: isinstance(t, DocuSignSigTab), enrollment_tabs)
+        for recip_role in ['Employee', 'Agent']:
+            for tab_type in ['SignHere', 'DateSigned', 'InitialHere']:
+                tab_value_label = "{}{}".format(tab_type, recip_role)
+                tab_values = filter(lambda t: t.name == tab_value_label, enrollment_tabs)
+                tab_defs = filter(is_tab_for_role_and_type(recip_role, tab_type), tab_definitions)
 
+                if tab_values and tab_defs:
+                    for tab_def in tab_defs:
+                        self._add_to_tab_pages(tab_def, tab_values[0])
+
+    def add_custom_signature_tabs(self, enrollment_tabs, tab_definitions):
+        custom_sig_tabs = filter(lambda t: isinstance(t, DocuSignSigTab), enrollment_tabs)
         for tab in custom_sig_tabs:
             # Create an ad-hoc tab definition
             tab_def = FormTemplateTabs(
@@ -148,19 +164,6 @@ class ImagedFormGeneratorService(object):
                 recipient_role="Employee",
             )
             tab_definitions.append(tab_def)
-
-        # Match up any eSignatures to proper signature definitions.
-        for recip_role in ['Employee', 'Agent']:
-            for tab_type in ['SignHere', 'DateSigned']:
-                tab_value_label = "{}{}".format(tab_type, recip_role)
-                tab_values = filter(lambda t: t.name == tab_value_label, enrollment_tabs)
-                tab_defs = filter(is_tab_for_role_and_type(recip_role, tab_type), tab_definitions)
-
-                if tab_values and tab_defs:
-                    for tab_def in tab_defs:
-                        self._add_to_tab_pages(tab_def, tab_values[0])
-
-
 
 
 class FormTemplateTabRepository(object):

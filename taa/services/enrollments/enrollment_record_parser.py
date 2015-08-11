@@ -3,7 +3,7 @@ from taa.services.validators import required_validator, api_token_validator, cas
     payment_mode_validator, gender_validator, ssn_validator, birthdate_validator, coverage_validator, premium_validator, \
     state_validator, zip_validator, question_answered_validator, RequiredIfAnyInGroupValidator, \
     enrollment_type_validator, email_validator, height_validator, weight_validator, replaced_or_financing_validator, \
-    timestamp_validator
+    timestamp_validator, initials_validator
 from taa.services import RequiredFeature
 from taa.services.cases.census_import import preprocess_string, preprocess_numbers, preprocess_zip
 
@@ -138,6 +138,8 @@ class EnrollmentRecordParser(object):
     agent_name = EnrollmentRecordField("agent_name", "agent_name", preprocess_string, [required_validator], flat_file_size=15, description="Agent signing name")
     agent_code = EnrollmentRecordField("agent_code", "agent_code", preprocess_string, [required_validator], flat_file_size=8, description="Agent code as provided")
     agent_sig_txt = EnrollmentRecordField("agent_sig_txt", "agent_sig_txt", preprocess_string, [required_validator], flat_file_size=70, description="Signature line for agent")
+    emp_initials_txt = EnrollmentRecordField("emp_initials_txt", "employee_initials_txt", preprocess_string, [initials_validator], flat_file_size=3, description="Initials text for employee")
+    agent_initials_txt = EnrollmentRecordField("agent_initials_txt", "agent_initials_txt", preprocess_string, [initials_validator], flat_file_size=3, description="Initials text for agent")
 
     # All spouse data is required if any spouse data is given
     spouse_fields = [sp_first, sp_last, sp_birthdate, sp_ssn]
@@ -240,7 +242,9 @@ class EnrollmentRecordParser(object):
         signed_at_state,
         agent_name,
         agent_code,
-        agent_sig_txt
+        agent_sig_txt,
+        emp_initials_txt,
+        agent_initials_txt,
     ]
 
     # Replacement info
@@ -322,6 +326,7 @@ class EnrollmentRecordParser(object):
                                                 flat_file_size=1, description="Child Answer to Statement of Health Question"
                                                 )
             all_fields += [ch_question]
+
     def __init__(self):
         self.errors = []
         self.valid_data = []
