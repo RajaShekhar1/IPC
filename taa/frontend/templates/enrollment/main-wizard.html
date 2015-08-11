@@ -247,7 +247,7 @@
 
     <div data-bind="slideDownIf: should_include_children">
         <!--ko foreach: {data: children, afterAdd: rendered_child, beforeRemove: removing_child} -->
-            <div class="">
+            <div data-bind="attr: {'class':'child-'+$index()}">
                 <div class="row">
                     <label class="text-right control-label col-xs-12 col-sm-2 no-padding-right"
                         data-bind="attr: {for: 'child-first-'+$index()}">
