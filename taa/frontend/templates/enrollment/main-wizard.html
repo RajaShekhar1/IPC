@@ -528,9 +528,9 @@
               <!--/ko-->
               {% endfor %}
               {% for rider in enrollment_riders %}
-              <li><input type="checkbox" data-bind="click: toggle_selected_riders('{{rider.code}}', 'emp')" /></li>
+              <li><input type="checkbox" autocomplete="off" data-bind="click: toggle_selected_riders('{{rider.code}}', 'emp')" /></li>
               <!--ko if: should_include_spouse_in_table-->
-              <li><input type="checkbox" data-bind="click: toggle_selected_riders('{{rider.code}}', 'sp')" /></li>
+              <li><input type="checkbox" autocomplete="off" data-bind="click: toggle_selected_riders('{{rider.code}}', 'sp')" /></li>
               <!--/ko-->
               {% endfor %}
             </ul>
@@ -2019,14 +2019,14 @@
         <div id="CoverageSummary">
             <h4 class="green center">Summary of Benefits</h4>
 
-            <table class="center confirm-table table table-striped table-hover" data-bind="with: selected_plan">
+            <table class="center confirm-table table table-hover" data-bind="with: selected_plan">
                 <thead>
-                <tr>
+                <tr class="table-striped">
                     <th class="center">Name</th>
                     <th class="center">Age</th>
                     <th class="center">Coverage</th>
-                    <th class="center"><span data-bind="text: $root.payment_mode_text"></span> Premium</th>
                     <th class="center">Additional Riders</th>
+                    <th class="center"><span data-bind="text: $root.payment_mode_text"></span> Premium</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -2035,11 +2035,19 @@
                     <td data-bind="text: name"></td>
                     <td data-bind="text:get_age"></td>
                     <td data-bind="html:display_selected_coverage"></td>
+                    <td></td>
                     <td data-bind="text:display_premium"></td>
-                    <td data-bind="text:display_riders"></td>
                 </tr>
+                  <!--ko foreach: {data: get_selected_riders($data), as: 'rider'} -->
+                    <tr>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                      <td data-bind="text: rider.name"></td>
+                      <td data-bind="text:display_riders(rider.code)"></td>
+                    </tr>
+                  <!--/ko-->
                 <!--/ko-->
-
                 <tr class="success">
                     <td></td>
                     <td></td>
@@ -2392,7 +2400,8 @@
     <script type="text/javascript">
         jQuery(function ($) {
             //enrollment_wizard.init({{ wizard_data|tojson|safe }});
-            init_case_riders({{ case_rider_codes | tojson | safe}})
+            init_case_riders({{ case_riders | tojson | safe}})
+            init_enrollment_riders({{ enrollment_riders | tojson | safe}})
         });
     </script>
 {% endblock %}

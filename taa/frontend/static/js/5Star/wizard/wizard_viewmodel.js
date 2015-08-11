@@ -598,21 +598,37 @@ function WizardUI(defaults) {
     sp: []
   });
 
-  self.case_riders = [];
+  self.case_riders = ko.observableArray();
 
   self.selected_riders = ko.observable({
     emp: ko.observableArray([]),
     sp: ko.observableArray([])
   });
 
-  self.toggle_selected_riders = function(rider, prefix) {
+  self.enrollment_riders = ko.observableArray();
+
+  self.get_selected_riders = ko.computed(function(person) {
+    console.log(person);
+    return self.selected_riders().emp()
+  });
+
+  function get_rider_by_code(code) {
+    for(var i = 0; i < self.enrollment_riders.length; i++) {
+      if(code == self.enrollment_riders[i].code) {
+        return self.enrollment_riders[i];
+      }
+    }
+  }
+
+  self.toggle_selected_riders = function(rider_code, prefix) {
+    rider = get_rider_by_code(rider_code);
     selected_riders = self.selected_riders()[prefix];
-    if (selected_riders.indexOf(rider) == -1) {
+    if(selected_riders.indexOf(rider) == -1) {
       selected_riders.push(rider);
     } else {
       selected_riders.splice(selected_riders.indexOf(rider), 1);
     }
-  };
+  }
 
   self.show_updated_rates = function(resp) {
     var data = resp.data;

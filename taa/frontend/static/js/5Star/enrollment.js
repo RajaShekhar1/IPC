@@ -69,3 +69,14 @@ function ajax_post(url, data, on_success, on_error, is_json) {
     $.ajax(url, options);
 }
 
+
+function init_case_riders(riders) {
+  window.ui.selected_riders()["emp"](riders);
+  window.ui.selected_riders()["sp"](riders);
+  window.ui.case_riders = riders;
+}
+
+function init_enrollment_riders(riders) {
+  window.ui.enrollment_riders = riders;
+}
+
