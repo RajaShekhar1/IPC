@@ -405,17 +405,20 @@ class CaseService(DBService):
 
         return case
 
+
 class Rider(object):
     def __init__(self, name, code, enrollment_level=False):
         self.name = name
         self.code = code
         self.enrollment_level = enrollment_level
+
     def to_json(self):
         return dict(
                 name=self.name,
                 code=self.code,
                 enrollment_level=self.enrollment_level
                 )
+
 
 class RiderService(object):
     default_riders = [
@@ -438,3 +441,29 @@ class RiderService(object):
 
     def enrollment_level_riders(self):
         return [r for r in self.default_riders if r.enrollment_level]
+
+    def get_rider_info_for_case(self, case):
+        """Returns all the riders that a case can potentially have at the group level, with current selections."""
+        return [{
+                'selected': self.is_rider_selected_for_case(rider, case),
+                'description': rider.name,
+                'code': rider.code
+                }
+                for rider in self.case_level_riders()
+        ]
+
+    def is_rider_selected_for_case(self, rider, case):
+        return case.case_riders and rider.code in case.case_riders.split(",")
+
+    def get_selected_case_riders(self, case):
+        return [r
+                for r in self.case_level_riders()
+                if self.is_rider_selected_for_case(r, case)
+        ]
+
+    def get_selected_case_rider_info(self, case):
+        return [r.to_json() for r in self.get_selected_case_riders(case)]
+
+    def get_enrollment_rider_info(self):
+        return [r.to_json() for r in self.enrollment_level_riders()]
+
