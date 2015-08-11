@@ -57,12 +57,21 @@ def get_template_id(product_type, state):
     Templates are either State specific, the generic template applying to a group of states, or else not-
     available for a given state.  So, look for specific states first, then if generic, otherwise fail.
     """
+    if 'demo' in DOCUSIGN_API_ENDPOINT.lower():
+        return {'FPPTI':'857F9448-88B2-4DA1-AFCB-8F5B354E137F',
+                'FPPCI':'857F9448-88B2-4DA1-AFCB-8F5B354E137F',
+                'FPP-Gov':'857F9448-88B2-4DA1-AFCB-8F5B354E137F',
+                'Group CI':'8A95ABEA-707C-4C69-9929-7CCDD8173ED6'}.get(product_type)
 
     return ProductFormService().get_application_form_template_id(product_type, state)
 
 
 def get_replacement_template_id(product_type, state):
+    if 'demo' in DOCUSIGN_API_ENDPOINT.lower():
+        return {'MI':'D11AA8C9-F1AA-43ED-A31E-0EC4F85CDF65',
+                'IL':'33CF1C42-0205-460E-B1A4-25EE5A736AB2',
+                'IN':'8D3FBE45-124C-4E12-9BAC-85839E9FF826',
+                }.get(state, 'BE949002-A716-43F1-9F5C-08A561FD1B82')
+
     return ProductFormService().get_replacement_template_id(product_type, state)
-    #return "7286ACB9-8B08-43BB-99EB-C7A37B8B8F2A"
-    #return "3E0CF882-8678-4476-A6B3-D60AA4111C85"
 
