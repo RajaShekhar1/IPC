@@ -410,6 +410,12 @@ class Rider(object):
         self.name = name
         self.code = code
         self.enrollment_level = enrollment_level
+    def to_json(self):
+        return dict(
+                name=self.name,
+                code=self.code,
+                enrollment_level=self.enrollment_level
+                )
 
 class RiderService(object):
     default_riders = [

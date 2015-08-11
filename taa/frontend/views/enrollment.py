@@ -138,8 +138,8 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     for product in products:
         spouse_questions[product.id] = StatementOfHealthQuestionService().get_spouse_questions(product, state)
 
-    case_riders = [rider_service.get_rider_by_code(r) for r in case.case_riders.split(",")] 
-    enrollment_riders = rider_service.enrollment_level_riders() 
+    case_riders = [rider_service.get_rider_by_code(r).to_json() for r in case.case_riders.split(",")] 
+    enrollment_riders = [r.to_json() for r in rider_service.enrollment_level_riders()]
 
     wizard_data = {
         'state': state if state != 'XX' else None,
@@ -168,7 +168,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         states=get_states(),
         nav_menu=get_nav_menu(),
         case_riders=case_riders,
-        case_rider_codes=[r.code for r in case_riders],
+        case_rider_codes=[r.get('code') for r in case_riders],
         enrollment_riders=enrollment_riders
     )
 
