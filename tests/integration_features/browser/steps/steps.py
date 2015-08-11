@@ -1,7 +1,7 @@
 
-
+import time
 from behave import *
-from hamcrest import assert_that, equal_to
+from hamcrest import assert_that, equal_to, contains_string
 use_step_matcher("parse")
 
 from taa import db
@@ -120,7 +120,7 @@ def step_impl(context):
     did_load = wizard_page.wait_until_loaded()
     assert_that(did_load, equal_to(True))
 
-    data = dict(zip(context.table[0].headings, context.table[0].cells))
+    data = get_data_from_first_row_of_table(context)
     wizard_page.fill_out_step1_data(**data)
     if data.get('emp_coverage'):
         if data['emp_coverage'].isdigit():
@@ -149,17 +149,10 @@ def step_impl(context):
     :type context behave.runner.Context
     """
     wizard_page = WizardPage(context)
-    did_load = wizard_page.wait_until_loaded()
+    did_load = wizard_page.wait_until_step_3_loaded()
     assert_that(did_load, equal_to(True))
 
-    data = dict(zip(context.table[0].headings, context.table[0].cells))
-    wizard_page.fill_out_step3_data(**data)
-    if data.get('emp_coverage'):
-        if data['emp_coverage'].isdigit():
-            wizard_page.select_custom_coverage('employee', data['emp_coverage'])
-        else:
-            wizard_page.select_recommended_coverage(data['emp_coverage'])
-
+    wizard_page.fill_out_step3_data(**(get_data_from_first_row_of_table(context)))
     wizard_page.click_next()
 
 
@@ -168,28 +161,62 @@ def step_impl(context):
     """
     :type context behave.runner.Context
     """
-    pass
+    wizard_page = WizardPage(context)
+    did_load = wizard_page.wait_until_step_4_loaded()
+    assert_that(did_load, equal_to(True))
 
+    wizard_page.click_next()
+
+
+@step("I enter the following data for step 4 of the wizard")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    wizard_page = WizardPage(context)
+    did_load = wizard_page.wait_until_step_4_loaded()
+    assert_that(did_load, equal_to(True))
+
+    wizard_page.fill_out_step_4_data(**get_data_from_first_row_of_table(context))
+
+    wizard_page.click_next()
 
 @step("I enter the following for step 5 of the wizard")
 def step_impl(context):
     """
     :type context behave.runner.Context
     """
-    pass
+    wizard_page = WizardPage(context)
+    did_load = wizard_page.wait_until_step_5_loaded()
+    assert_that(did_load, equal_to(True))
 
+    wizard_page.fill_out_step_5_data(**get_data_from_first_row_of_table(context))
+    wizard_page.click_next()
 
 @step("I enter the following for step 6 of the wizard")
 def step_impl(context):
     """
     :type context behave.runner.Context
     """
-    pass
+    wizard_page = WizardPage(context)
+    did_load = wizard_page.wait_until_step_6_loaded()
+    assert_that(did_load, equal_to(True))
+
+    wizard_page.fill_out_step_6_data(**get_data_from_first_row_of_table(context))
+    wizard_page.click_next()
 
 
-@then("I should be redirected to the DocuSign website\.")
+@then("I should be redirected to the DocuSign website")
 def step_impl(context):
     """
     :type context behave.runner.Context
     """
-    pass
+    wizard_page = WizardPage(context)
+    did_redirect = wizard_page.wait_until_docusign_redirect()
+    time.sleep(2)
+    assert_that(did_redirect, equal_to(True))
+
+
+def get_data_from_first_row_of_table(context):
+    return dict(zip(context.table[0].headings, context.table[0].cells))
+
