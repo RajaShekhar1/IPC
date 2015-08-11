@@ -257,14 +257,14 @@ function WizardUI(defaults) {
 
   // Beneficiaries
   self.employee_beneficiary_type = ko.observable("spouse");
-  self.employee_other_beneficiary = ko.observable(new Beneficiary());
+  self.employee_other_beneficiary = ko.observable(new beneficiary.Beneficiary());
   self.employee_contingent_beneficiary_type = ko.observable("none");
-  self.employee_contingent_beneficiary = ko.observable(new Beneficiary());
+  self.employee_contingent_beneficiary = ko.observable(new beneficiary.Beneficiary());
 
   self.spouse_beneficiary_type = ko.observable("spouse");
-  self.spouse_other_beneficiary = ko.observable(new Beneficiary());
+  self.spouse_other_beneficiary = ko.observable(new beneficiary.Beneficiary());
   self.spouse_contingent_beneficiary_type = ko.observable("none");
-  self.spouse_contingent_beneficiary = ko.observable(new Beneficiary());
+  self.spouse_contingent_beneficiary = ko.observable(new beneficiary.Beneficiary());
 
   self.is_employee_beneficiary_info_required = function () {
     return !self.did_select_spouse_coverage() || $("#eeBeneOther").is(':checked')

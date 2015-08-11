@@ -2038,15 +2038,15 @@
                     <td></td>
                     <td data-bind="text:display_premium"></td>
                 </tr>
-                  <!--ko foreach: {data: get_selected_riders($data), as: 'rider'} -->
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td data-bind="text: rider.name"></td>
-                      <td data-bind="text:display_riders(rider.code)"></td>
-                    </tr>
-                  <!--/ko-->
+{#                  <!--ko foreach: {data: get_selected_riders($data), as: 'rider'} -->#}
+{#                    <tr>#}
+{#                      <td></td>#}
+{#                      <td></td>#}
+{#                      <td></td>#}
+{#                      <td data-bind="text: rider.name"></td>#}
+{#                      <td data-bind="text:display_riders(rider.code)"></td>#}
+{#                    </tr>#}
+{#                  <!--/ko-->#}
                 <!--/ko-->
                 <tr class="success">
                     <td></td>
@@ -2399,9 +2399,9 @@
 {% block page_js %}
     <script type="text/javascript">
         jQuery(function ($) {
-            //enrollment_wizard.init({{ wizard_data|tojson|safe }});
-            init_case_riders({{ case_riders | tojson | safe}})
-            init_enrollment_riders({{ enrollment_riders | tojson | safe}})
+            enrollment_wizard.init({{ wizard_data|tojson|safe }});
+            init_case_riders({{ case_riders | tojson | safe}});
+            init_enrollment_riders({{ enrollment_riders | tojson | safe}});
         });
     </script>
 {% endblock %}
