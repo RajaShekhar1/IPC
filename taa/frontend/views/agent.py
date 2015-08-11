@@ -163,21 +163,7 @@ Please follow the instructions carefully on the next page, stepping through the 
 
     vars["current_user_token"] = api_token_service.get_token_by_sp_href(current_user.href)
 
-    default_riders = rider_service.case_level_riders()
-    case_riders = []
-    for rider in default_riders:
-        if case.case_riders and rider.code in case.case_riders.split(","):
-            case_riders.append({
-                    'selected':True,
-                    'description': rider.name,
-                    'code':rider.code
-                    })
-        else:
-            case_riders.append({
-                    'selected':False,
-                    'description': rider.name,
-                    'code':rider.code
-            })
+    case_riders = rider_service.get_rider_info_for_case(case)
 
     vars['riders'] = case_riders
 
