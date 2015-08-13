@@ -664,6 +664,7 @@ function WizardUI(defaults) {
 
 
     self.case_riders = ko.observableArray();
+    self.enrollment_riders = ko.observableArray();
 
     self.selected_riders = {
       emp:ko.observableArray(),
@@ -680,7 +681,6 @@ function WizardUI(defaults) {
         });
       })();
 
-    self.enrollment_riders = ko.observableArray();
 
     function get_rider_by_code(code) {
       for(var i = 0; i < self.enrollment_riders.length; i++) {
@@ -705,6 +705,19 @@ function WizardUI(defaults) {
       return [];
     });
 
+    self.is_rider_checked = function(rider_code, prefix) {
+      if(!rider_code || !prefix) {
+        return;
+      }
+      var rider = get_rider_by_code(rider_code);
+      if(!rider) {
+        return;
+      }
+      var per_person_riders = self.selected_riders[prefix]();
+      var rider_index = per_person_riders.indexOf(rider);
+      return rider_index === -1;
+    } 
+
     self.toggle_selected_riders = function(rider_code, prefix) {
       if(!rider_code || !prefix) {
         return;
@@ -715,14 +728,12 @@ function WizardUI(defaults) {
       }
       var per_person_riders = self.selected_riders[prefix]();
       var rider_index = per_person_riders.indexOf(rider);
-      console.log("Adding rider", rider, "for", prefix, "who has", per_person_riders);
       if(rider_index === -1) {
         per_person_riders.push(rider);
       } else {
         per_person_riders.splice(rider_index, 1);
       }
       self.selected_riders[prefix](per_person_riders);
-      console.log(prefix, "riders are now", per_person_riders, self.selected_riders[prefix]());
     }
     
     self.show_updated_rates = function(resp) {
@@ -3905,8 +3916,8 @@ function ReplacementPolicy() {
 function init_case_riders(riders) {
   window.ui.selected_riders["emp"](riders.slice());
   window.ui.selected_riders["sp"](riders.slice());
-  window.ui.case_riders = riders;
+  window.ui.case_riders(riders);
 }
 function init_enrollment_riders(riders) {
-  window.ui.enrollment_riders = riders;
+  window.ui.enrollment_riders(riders);
 }
