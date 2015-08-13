@@ -670,8 +670,17 @@ function WizardUI(defaults) {
       sp:ko.observableArray([]),
     });
 
-    self.enrollment_riders = ko.observableArray();
+    self.selected_riders.serialize_data = function() {
+      var serialized = {};
+      for(var key in self.selected_riders()) {
+        if(self.selected_riders().hasOwnProperty(key)) {
+          serialized[key] = self.selected_riders()[key]();
+        }
+      }
+      return serialized;
+    }
 
+    self.enrollment_riders = ko.observableArray();
 
     function get_rider_by_code(code) {
       for(var i = 0; i < self.enrollment_riders.length; i++) {
@@ -691,7 +700,7 @@ function WizardUI(defaults) {
       if(person.applicant_type==="employee") {
         return self.selected_riders()['emp']();
       } else if(person.applicant_type==="spouse") {
-        return self.seelcted_riders()['sp']();
+        return self.selected_riders()['sp']();
       } 
       return [];
     });
@@ -2286,9 +2295,9 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
       if(person=="employee") {
         rider_amount = window.ui.riders()['emp'][rider_code];
       } else if(person==spouse) {
-        rider_amount= window.ui.riders()['emp'][rider_code];
+        rider_amount = window.ui.riders()['sp'][rider_code];
       } 
-      return "$"+rider_amount;
+      return "$"+rider_amount.toFixed(2);
     }
 
     self.get_existing_coverage_amount_for_product = function(product_id) {
@@ -2521,6 +2530,17 @@ function BenefitsPackage(root, name) {
         return benefits;
     };
 
+    self.get_total_riders = ko.computed(function() {
+        total_rider_amount = 0;
+        if(window.ui) {
+          var riders = window.ui.get_selected_riders();
+          for(var i=0; i<riders.length; i++) {
+            total_rider_amount += window.ui.riders()['emp'][riders[i].code];
+          }
+        }
+        return total_rider_amount;
+    });
+
     self.get_total_premium = ko.computed(function() {
         var benefits = self.get_package_benefits();
         
@@ -2531,8 +2551,13 @@ function BenefitsPackage(root, name) {
                 total += this.premium;
             }
         });
+        // If total rider premium is greater than zero, add it
+        if(self.get_total_riders() > 0.0) {
+          total += self.get_total_riders();
+        }
         return total;
     });
+
     
     self.formatted_total_premium = ko.computed(function() {
         if (self.get_total_premium() > 0.0) {
@@ -2560,8 +2585,6 @@ function BenefitsPackage(root, name) {
     
     self.get_all_people = ko.computed(function() {
         var employee = root.employee();
-        
-        
         var people = [employee];
         if (root.should_include_spouse_in_table()) {
             var spouse = root.spouse();
@@ -3355,6 +3378,8 @@ function init_validation() {
         wizard_results.replacement_is_terminating = ui.replacement_is_terminating();
         wizard_results.replacement_using_funds = ui.replacement_using_funds();
         wizard_results.replacement_policies = _.invoke(ui.replacement_policies(), "serialize");
+        
+        wizard_results.rider_data = window.ui.selected_riders.serialize_data();
 
         // Send to server
         ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function (resp) {
