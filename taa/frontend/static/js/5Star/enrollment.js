@@ -672,10 +672,6 @@ function WizardUI(defaults) {
 
     self.enrollment_riders = ko.observableArray();
 
-    self.get_selected_riders = ko.computed(function(person) {
-      console.log(person);
-      return self.selected_riders().emp()
-    });
 
     function get_rider_by_code(code) {
       for(var i = 0; i < self.enrollment_riders.length; i++) {
@@ -684,6 +680,21 @@ function WizardUI(defaults) {
         }
       }
     }
+
+    self.current_person = ko.observable();
+
+    self.get_selected_riders = ko.computed(function() {
+      var person = self.current_person();
+      if(!person) { 
+        return [];
+      }
+      if(person.applicant_type==="employee") {
+        return self.selected_riders()['emp']();
+      } else if(person.applicant_type==="spouse") {
+        return self.seelcted_riders()['sp']();
+      } 
+      return [];
+    });
 
     self.toggle_selected_riders = function(rider_code, prefix) {
       rider = get_rider_by_code(rider_code);
@@ -2269,11 +2280,16 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
         return self.selected_coverage().format_premium();
     });
 
-    self.display_riders = ko.computed(function() {
-      console.log(self.applicant_type);
-      // return self.root.selected_coverage();
-      return "$";
-    });
+    self.display_riders = function(rider_code) {
+      var person = window.ui.current_person().applicant_type;
+      var rider_amount;
+      if(person=="employee") {
+        rider_amount = window.ui.riders()['emp'][rider_code];
+      } else if(person==spouse) {
+        rider_amount= window.ui.riders()['emp'][rider_code];
+      } 
+      return "$"+rider_amount;
+    }
 
     self.get_existing_coverage_amount_for_product = function(product_id) {
         return parseFloat(self.get_existing_coverage_amount_by_product()[product_id]);

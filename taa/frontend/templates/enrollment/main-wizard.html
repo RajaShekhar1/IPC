@@ -2038,13 +2038,14 @@
                     <td></td>
                     <td data-bind="text:display_premium"></td>
                 </tr>
-                  <!--ko foreach: {data: get_selected_riders($data), as: 'rider'} -->
+                <!--ko if: $root.current_person($data) --><!-- /ko -->
+                  <!--ko foreach: {data: $root.get_selected_riders, as: 'rider'} -->
                     <tr>
                       <td></td>
                       <td></td>
                       <td></td>
                       <td data-bind="text: rider.name"></td>
-                      <td data-bind="text:display_riders(rider.code)"></td>
+                      <td data-bind="text:$parent.display_riders()"></td>
                     </tr>
                   <!--/ko-->
                 <!--/ko-->
