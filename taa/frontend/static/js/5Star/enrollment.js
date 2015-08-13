@@ -665,20 +665,20 @@ function WizardUI(defaults) {
 
     self.case_riders = ko.observableArray();
 
-    self.selected_riders = ko.observable({
-      emp:ko.observableArray([]),
-      sp:ko.observableArray([]),
-    });
+    self.selected_riders = {
+      emp:ko.observableArray(),
+      sp:ko.observableArray()
+    };
 
-    self.selected_riders.serialize_data = function() {
-      var serialized = {};
-      for(var key in self.selected_riders()) {
-        if(self.selected_riders().hasOwnProperty(key)) {
-          serialized[key] = self.selected_riders()[key]();
-        }
-      }
-      return serialized;
-    }
+    self.selected_riders.serialize_data = (function() {
+        var selected = self.selected_riders;
+        return ko.computed(function() {
+          return {
+            emp: selected.emp(),
+            sp: selected.sp(),
+          }
+        });
+      })();
 
     self.enrollment_riders = ko.observableArray();
 
@@ -698,21 +698,31 @@ function WizardUI(defaults) {
         return [];
       }
       if(person.applicant_type==="employee") {
-        return self.selected_riders()['emp']();
+        return self.selected_riders['emp']();
       } else if(person.applicant_type==="spouse") {
-        return self.selected_riders()['sp']();
+        return self.selected_riders['sp']();
       } 
       return [];
     });
 
     self.toggle_selected_riders = function(rider_code, prefix) {
-      rider = get_rider_by_code(rider_code);
-      selected_riders = self.selected_riders()[prefix];
-      if(selected_riders.indexOf(rider) == -1) {
-        selected_riders.push(rider);
-      } else {
-        selected_riders.splice(selected_riders.indexOf(rider), 1);
+      if(!rider_code || !prefix) {
+        return;
       }
+      var rider = get_rider_by_code(rider_code);
+      if(!rider) {
+        return;
+      }
+      var per_person_riders = self.selected_riders[prefix]();
+      var rider_index = per_person_riders.indexOf(rider);
+      console.log("Adding rider", rider, "for", prefix, "who has", per_person_riders);
+      if(rider_index === -1) {
+        per_person_riders.push(rider);
+      } else {
+        per_person_riders.splice(rider_index, 1);
+      }
+      self.selected_riders[prefix](per_person_riders);
+      console.log(prefix, "riders are now", per_person_riders, self.selected_riders[prefix]());
     }
     
     self.show_updated_rates = function(resp) {
@@ -2292,9 +2302,9 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
     self.display_riders = function(rider_code) {
       var person = window.ui.current_person().applicant_type;
       var rider_amount;
-      if(person=="employee") {
+      if(person==="employee") {
         rider_amount = window.ui.riders()['emp'][rider_code];
-      } else if(person==spouse) {
+      } else if(person==="spouse") {
         rider_amount = window.ui.riders()['sp'][rider_code];
       } 
       return "$"+rider_amount.toFixed(2);
@@ -2811,9 +2821,12 @@ var questions = [];
 var general_questions_by_id = {};
 ko.bindingHandlers.flagBtn = {
     init: function(element, value_accessor) {
-        
+
         var val = ko.unwrap(value_accessor());
-        
+
+        // for testing purpose, mark each element with a CSS class and yes or no value
+        $(element).addClass("flagBtn").addClass("val_"+val.val);
+
         var btn_group;
         if (val.applicant) {
             var applicant = val.applicant;
@@ -3890,8 +3903,8 @@ function ReplacementPolicy() {
 }
 
 function init_case_riders(riders) {
-  window.ui.selected_riders()["emp"](riders);
-  window.ui.selected_riders()["sp"](riders);
+  window.ui.selected_riders["emp"](riders.slice());
+  window.ui.selected_riders["sp"](riders.slice());
   window.ui.case_riders = riders;
 }
 function init_enrollment_riders(riders) {

@@ -14,12 +14,30 @@ class PageBase(object):
         self.http_scheme = http_scheme
         self.hostname = hostname
 
-    def lookup(self, css_selector, root_element=None):
-        WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, css_selector)))
+    def lookup(self, css_selector, root_element=None, wait=True, none_if_missing=False):
+        if wait:
+            WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, css_selector)))
 
         if not root_element:
             root_element = self.browser
-        return root_element.find_element(by=By.CSS_SELECTOR, value=css_selector)
+
+        try:
+            el = root_element.find_element(by=By.CSS_SELECTOR, value=css_selector)
+        except NoSuchElementException:
+            if none_if_missing:
+                el = None
+            else:
+                raise
+
+        return el
+
+    def lookup_multiple(self, css_selector, root_element=None, wait=True):
+        if wait:
+            WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, css_selector)))
+
+        if not root_element:
+            root_element = self.browser
+        return root_element.find_elements_by_css_selector(css_selector)
 
     def navigate(self):
         self.browser.get(self.get_url())

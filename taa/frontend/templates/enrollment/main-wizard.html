@@ -247,7 +247,7 @@
 
     <div data-bind="slideDownIf: should_include_children">
         <!--ko foreach: {data: children, afterAdd: rendered_child, beforeRemove: removing_child} -->
-            <div class="">
+            <div data-bind="attr: {'class':'child-'+$index()}">
                 <div class="row">
                     <label class="text-right control-label col-xs-12 col-sm-2 no-padding-right"
                         data-bind="attr: {for: 'child-first-'+$index()}">
@@ -359,7 +359,7 @@
                 </div>
             </div>
 
-            <div class="col-xs-8 col-sm-9 pricing-span-body">
+            <div class="col-xs-8 col-sm-9 pricing-span-body good">
                 {# Good #}
                 <div class="pricing-span">
                     <div class="widget-box pricing-box-small">
@@ -384,7 +384,7 @@
                 </div>
 
                 {# Better #}
-                <div class="pricing-span">
+                <div class="pricing-span better">
                     <div class="widget-box pricing-box-small">
                         <div class="widget-header center header-color-orange no-padding">
                             <h5 class="bigger lighter">Better</h5>
@@ -408,7 +408,7 @@
                 </div>
 
                 {# Best #}
-                <div class="pricing-span">
+                <div class="pricing-span best">
                     <div class="widget-box pricing-box-small">
                         <div class="widget-header center header-color-best no-padding">
                             <h5 class="bigger lighter">Best</h5>
@@ -443,7 +443,7 @@
                                 <ul class="list-unstyled list-striped pricing-table">
                                     <li>
                                         <!--ko if: employee().is_valid()-->
-                                        <select data-bind="
+                                        <select class="emp-coverage" data-bind="
                                   options: insurance_product.get_coverage_options_for_applicant('employee'),
                                   optionsCaption: '',
                                   optionsText: BenefitOption.display_benefit_option,
@@ -455,7 +455,7 @@
                                     </li>
                                     <!--ko if: should_include_spouse_in_table-->
                                     <li>
-                                        <select data-bind="
+                                        <select class="sp-coverage" data-bind="
                                   options: insurance_product.get_coverage_options_for_applicant('spouse'),
                                   optionsCaption: '',
                                   optionsText: BenefitOption.display_benefit_option,
@@ -467,7 +467,7 @@
                                     <!--/ko-->
                                     <!--ko if: should_include_children_in_table-->
                                     <li>
-                                        <select data-bind="
+                                        <select class="ch-coverage" data-bind="
                                   options: insurance_product.get_coverage_options_for_applicant('children'),
                                   optionsCaption: '',
                                   optionsText: BenefitOption.display_benefit_option,
