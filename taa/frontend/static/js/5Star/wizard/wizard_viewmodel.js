@@ -1,22 +1,63 @@
 var wizard_viewmodel = (function() {
+
+  function WizardProductSelection(root, product) {
+    var self = this;
+    self.root = root;
+    self.insurance_product = product;
+
+    // End of step 1, option to decline coverage for all products and skip to the end
+    self.did_decline = ko.observable(false);
+
+    // Group the selected options for this product into a 'BenefitsPackage' which has
+    //  the individual choices for employee, spouse, and children
+    self.selected_plan = ko.observable(new NullBenefitsPackage(self));
+
+    // SOH Questions (depends on product and selected plan)
+    var questions = process_spouse_question_data(self, defaults.spouse_questions, self.insurance_product.product_data);
+    var soh_questions = process_health_question_data(self, defaults.health_questions, self.insurance_product.product_data);
+    $.merge(questions, soh_questions);
+    self.health_questions = ko.observableArray(questions);
+
+
+    // Which, if any, of the good, better, best recommended plans was chosen (even if customized)
+    self.selected_recommendation = ko.observable(null);
+
+
+    self.get_replacement_paragraphs = function() {
+      var paragraph_map = self.insurance_product.get_replacement_paragraphs();
+      var paragraphs = paragraph_map[self.root.enrollState];
+      if (!paragraphs) {
+        return [];
+      }
+      return paragraphs;
+    };
+  }
+
 // Root model of the Benefits wizard User Interface
 function WizardUI(defaults) {
   var self = this;
 
   self.defaults = defaults;
   self.case_id = defaults.case_id;
-  self.insurance_product = build_product(self, defaults.products);
 
-  // Confirmation checkboxes for step 6
-  self.disclaimer_notice_confirmed = ko.observable(false);
-  self.payroll_deductions_confirmed = ko.observable(false);
 
-  // End of step 1, option to decline coverage for all products and skip to the end
-  self.did_decline = ko.observable(false);
+  self.products_offerred = wizard_products.build_products(self, defaults.products);
+  self.insurance_product = self.products_offerred[0];
+  self.product_selection = _.map(self.products_offerred, function(p) {
+    return new WizardProductSelection(self, p);
+  });
+
+  self.did_select_any_fpp_product = ko.pureComputed(function() {
+      return _.find(self.product_selection, function(ps) {return ps.insurance_product.is_fpp_product();});
+  });
 
   // Type of enrollment
   self.is_in_person_application = ko.observable('is_in_person' in defaults && defaults.is_in_person);
   self.is_self_enroll = ko.pureComputed(function() {return !self.is_in_person_application()});
+
+  // Confirmation checkboxes for step 6
+  self.disclaimer_notice_confirmed = ko.observable(false);
+  self.payroll_deductions_confirmed = ko.observable(false);
 
   self.identityToken = ko.observable("");
   self.identityType = ko.observable("");
@@ -36,7 +77,7 @@ function WizardUI(defaults) {
     'WI', 'WV', 'MI'];
 
   self.is_NAIC_OR_MI = function() {
-    return self.insurance_product.is_fpp_product() && _.contains(self.NAIC_AND_MI, self.enrollState);
+    return self.did_select_any_fpp_product() && _.contains(self.NAIC_AND_MI, self.enrollState);
   };
 
   self.is_KY_OR_KS = function() {
@@ -87,7 +128,7 @@ function WizardUI(defaults) {
   self.select_replacing_insurance = function() {
     self.replacing_insurance(true);
 
-    if (!self.insurance_product.is_fpp_product() || self.is_KY_OR_KS()) {
+    if (!self.did_select_any_fpp_product() || self.is_KY_OR_KS()) {
       self.show_warning_modal("Replacement Notice", default_warning_body);
     }
   };
@@ -98,7 +139,7 @@ function WizardUI(defaults) {
   });
 
   self.should_show_replacement_form = ko.computed(function() {
-    if (!self.insurance_product.is_fpp_product()) {
+    if (!self.did_select_any_fpp_product()) {
       return false;
     }
 
@@ -141,14 +182,7 @@ function WizardUI(defaults) {
     return self.replacement_using_funds() || self.replacement_is_terminating();
   });
 
-  self.get_replacement_paragraphs = ko.computed(function() {
-    var paragraph_map = self.insurance_product.get_replacement_paragraphs();
-    var paragraphs = paragraph_map[self.enrollState];
-    if (!paragraphs) {
-      return [];
-    }
-    return paragraphs;
-  });
+
 
   self.replacement_policies = ko.observableArray([new ReplacementPolicy()]);
 
@@ -162,7 +196,7 @@ function WizardUI(defaults) {
 
   self.is_replacement_form_required = ko.computed(function() {
     return (
-        self.insurance_product.is_fpp_product() &&
+        self.did_select_any_fpp_product() &&
         (self.existing_insurance() || self.replacing_insurance())
     );
   });
@@ -175,27 +209,11 @@ function WizardUI(defaults) {
   self.spouse_other_owner_name = ko.observable("");
   self.spouse_other_owner_ssn = ko.observable("");
 
-
-  // Group the selected options for this product into a 'BenefitsPackage' which has
-  //  the individual choices for employee, spouse, and children
-  self.selected_plan = ko.observable(new NullBenefitsPackage(self));
-
-  // SOH Questions (depends on product and selected plan)
-  var questions = process_spouse_question_data(self, defaults.spouse_questions, self.insurance_product.product_data);
-  var soh_questions = process_health_question_data(self, defaults.health_questions, self.insurance_product.product_data);
-  $.merge(questions, soh_questions);
-  self.health_questions = ko.observableArray(questions);
-
-
-  // Which, if any, of the good, better, best recommended plans was chosen (even if customized)
-  self.selected_recommendation = ko.observable(null);
-
   // Employee
   self.employee = ko.observable(new InsuredApplicant(
       InsuredApplicant.EmployeeType,
       self.defaults.employee_data || {},
-      self.selected_plan,
-      self.health_questions
+      self.product_selection
   ));
 
   // Extended questions for step 1
@@ -503,7 +521,6 @@ function WizardUI(defaults) {
   self.build_rate_parameters = function() {
 
     return {
-      //product_type: self.insurance_product.product_type,
       employee: self.employee().serialize_data(),
       spouse: self.should_include_spouse_in_table()? self.spouse().serialize_data() : null,
       num_children: self.children().length,

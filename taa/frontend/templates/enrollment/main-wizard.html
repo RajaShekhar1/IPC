@@ -336,6 +336,7 @@
         </div>        
         
         <div class="row" data-bind="visible: !is_rate_table_loading()">
+            <!--ko foreach: {data: selected_products, as: 'current_product'}-->
             <div class="col-xs-4 col-sm-3 pricing-span-header">
                 <div class="widget-box transparent">
                     <div class="widget-header">
@@ -490,12 +491,12 @@
                         <div class="widget-header center header-color-green">
                             <h5 class="bigger lighter">Selected Plan</h5>
                             <br>
-                            <small data-bind="text: selected_plan().name"></small>
+                            <small data-bind="text: selected_plan[current_product]().name"></small>
                         </div>
 
                         <div class="widget-body">
                             <div class="widget-main no-padding"
-                                 data-bind="template: {name: 'recommendations_template', data: selected_plan}">
+                                 data-bind="template: {name: 'recommendations_template', data: selected_plan[current_product]}">
                             </div>
                         </div>
                     </div>
@@ -503,6 +504,7 @@
                 
                 
             </div>
+            <!--/ko-->
         </div>
     <br />
     <br />
@@ -820,10 +822,13 @@
                 </div>
             </div>
 
-            <div data-bind="visible: health_questions().length > 0 && do_any_health_questions_need_answering()">
+            {# Loop through each product that we have selected and show its questions #}
+            <!--ko foreach: {data: $root.selected_products, as: 'current_product'} -->
+            {# Only show questions if there are some for this product. #}
+            <div data-bind="visible: $root.health_questions().length > 0 && $root.do_any_health_questions_need_answering()">
                 <h3 class="lighter block green">Please answer each question below</h3>
 
-                <div class="hidden-xs hidden-sm" data-bind="with: selected_plan">
+                <div class="hidden-xs hidden-sm" data-bind="with: $root.selected_plan[current_product]">
     
                     <div class="row">
                         <div class="col-sm-6">
@@ -848,7 +853,7 @@
     
                     <table class="table table-striped">
                         <tbody>
-                    <!--ko if: $root.insurance_product.is_fpp_product()-->
+                    <!--ko if: current_product.is_fpp_product()-->
 
                         <tr>
                             <td>
@@ -989,11 +994,11 @@
                     </table>
                 </div>
                 
-                <div class="visible-xs visible-sm" data-bind="with: selected_plan">
+                <div class="visible-xs visible-sm" data-bind="with: $root.selected_plan[current_product]">
     
                     <table class="table table-striped" >
                         <tbody>
-                            <!--ko if: $root.insurance_product.is_fpp_product()-->
+                            <!--ko if: current_product.is_fpp_product()-->
                                 <tr>
                                     <td>
                                         <div class="row">
@@ -1135,7 +1140,8 @@
                 
                 
             </div>
-            <div id="health_questions_error" class="error has-error pull-right"></div>
+            <!--/ko-->
+          <div id="health_questions_error" class="error has-error pull-right"></div>
         </div>
 
 
@@ -2019,7 +2025,8 @@
         <div id="CoverageSummary">
             <h4 class="green center">Summary of Benefits</h4>
 
-            <table class="center confirm-table table table-hover" data-bind="with: selected_plan">
+            <!--ko foreach: {data: selected_products, as: 'current_product'}-->
+            <table class="center confirm-table table table-hover" data-bind="with: selected_plan[current_product]">
                 <thead>
                 <tr class="table-striped">
                     <th class="center">Name</th>
@@ -2057,7 +2064,7 @@
                 </tr>
                 </tbody>
             </table>
-
+            <!--/ko-->
             <div class="space-10"></div>
 
             <form class="form-horizontal" id="step6-form">

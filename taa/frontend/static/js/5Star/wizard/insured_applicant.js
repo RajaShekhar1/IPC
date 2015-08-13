@@ -1,6 +1,6 @@
 // Main ViewModel for all applicants
 var _applicant_count = 0;
-function InsuredApplicant(applicant_type, options, selected_plan, product_health_questions) {
+function InsuredApplicant(applicant_type, options, product_selection) {
   var self = this;
 
   var defaults = {
