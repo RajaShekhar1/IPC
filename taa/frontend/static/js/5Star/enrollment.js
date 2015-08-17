@@ -683,27 +683,31 @@ function WizardUI(defaults) {
 
 
     function get_rider_by_code(code) {
-      for(var i = 0; i < self.enrollment_riders.length; i++) {
-        if(code == self.enrollment_riders[i].code) {
-          return self.enrollment_riders[i];
+      console.log(code);
+      for(var i = 0; i < self.enrollment_riders().length; i++) {
+        if(code == self.enrollment_riders()[i].code) {
+          return self.enrollment_riders()[i];
         }
       }
     }
 
     self.current_person = ko.observable();
 
-    self.get_selected_riders = ko.computed(function() {
-      var person = self.current_person();
+    self.get_selected_riders = function(person) {
+      self.current_person(person);
+      if(person.applicant_type) {
+        person = person.applicant_type;
+      }
       if(!person) { 
         return [];
       }
-      if(person.applicant_type==="employee") {
+      if(person==="employee") {
         return self.selected_riders['emp']();
-      } else if(person.applicant_type==="spouse") {
+      } else if(person==="spouse") {
         return self.selected_riders['sp']();
       } 
       return [];
-    });
+    };
 
     self.is_rider_checked = function(rider_code, prefix) {
       if(!rider_code || !prefix) {
@@ -718,7 +722,10 @@ function WizardUI(defaults) {
       return rider_index === -1;
     } 
 
-    self.toggle_selected_riders = function(rider_code, prefix) {
+    self.toggle_selected_riders = function(rider_code, prefix, element) {
+      if(!$(element).is(":checked") && self.is_rider_checked(rider_code, prefix)) {
+        return;
+      }
       if(!rider_code || !prefix) {
         return;
       }
@@ -797,6 +804,18 @@ function WizardUI(defaults) {
         var rec = self.selected_plan().children_recommendation();
         return (rec.is_valid() && rec.recommended_benefit.is_valid());
     });
+    self.did_person_select_coverage = function(person) {
+      if(person.applicant_type) {
+       person = person.applicant_type;
+      }
+      if(person=="employee") {
+        return self.did_select_employee_coverage();
+      }
+      if(person=="spouse") {
+        return self.did_select_spouse_coverage();
+      }
+      return false;
+    }
 
 
 
@@ -2310,9 +2329,12 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
         return self.selected_coverage().format_premium();
     });
 
-    self.display_riders = function(rider_code) {
-      var person = window.ui.current_person().applicant_type;
-      var rider_amount;
+    self.display_riders = function(rider_code, person) {
+      person = person.applicant_type;
+      if(!person) {
+        return;
+      }
+      var rider_amount = 0;
       if(person==="employee") {
         rider_amount = window.ui.riders()['emp'][rider_code];
       } else if(person==="spouse") {
@@ -2495,7 +2517,6 @@ function BenefitsPackage(root, name) {
     self.children_recommendation = ko.observable(new NullRecommendation());
     
     self.set_recommendations = function(recommendations) {
-        
         if (root.employee().is_valid()) {
             self.employee_recommendation(self.build_recommendation(self.root.employee(), recommendations['employee']));
         } else {
@@ -2551,16 +2572,6 @@ function BenefitsPackage(root, name) {
         return benefits;
     };
 
-    self.get_total_riders = ko.computed(function() {
-        total_rider_amount = 0;
-        if(window.ui) {
-          var riders = window.ui.get_selected_riders();
-          for(var i=0; i<riders.length; i++) {
-            total_rider_amount += window.ui.riders()['emp'][riders[i].code];
-          }
-        }
-        return total_rider_amount;
-    });
 
     self.get_total_premium = ko.computed(function() {
         var benefits = self.get_package_benefits();
@@ -2572,14 +2583,9 @@ function BenefitsPackage(root, name) {
                 total += this.premium;
             }
         });
-        // If total rider premium is greater than zero, add it
-        if(self.get_total_riders() > 0.0) {
-          total += self.get_total_riders();
-        }
         return total;
     });
 
-    
     self.formatted_total_premium = ko.computed(function() {
         if (self.get_total_premium() > 0.0) {
             return format_premium_value(self.get_total_premium());
@@ -2588,8 +2594,8 @@ function BenefitsPackage(root, name) {
         }
     });
     
-    self.is_valid = function() {return true};
     
+    self.is_valid = function() {return true};
     
     self.did_select_employee_coverage = ko.computed(function() {
         return self.employee_recommendation().recommended_benefit.is_valid(); 
@@ -2603,6 +2609,49 @@ function BenefitsPackage(root, name) {
         return self.children_recommendation().recommended_benefit.is_valid(); 
     });
     
+    self.did_person_select_coverage = function(person) {
+      if(person.applicant_type) {
+       person = person.applicant_type;
+      }
+      if(person=="employee") {
+        return self.did_select_employee_coverage();
+      }
+      if(person=="spouse") {
+        return self.did_select_spouse_coverage();
+      }
+      return false;
+    }
+
+    self.get_total_riders = ko.computed(function() {
+        total_rider_amount = 0;
+        if(window.ui) {
+          var people = ['employee', 'spouse'];
+          var people_short = ['emp', 'sp']
+          for(var j=0; j<people.length; j++) {
+            if(!self.did_person_select_coverage(people[j])) {
+              continue;
+            }
+            var riders = window.ui.get_selected_riders(people[j]);
+            for(var i=0; i<riders.length; i++) {
+              total_rider_amount += window.ui.riders()[people_short[j]][riders[i].code];
+            }
+          }
+        }
+        return total_rider_amount;
+    });
+
+    self.formatted_total_premium_with_riders = ko.computed(function() {
+        if (self.get_total_premium() > 0.0) {
+            var riders = 0;
+            if(self.get_total_riders() > 0.0) {
+              riders = self.get_total_riders();
+            }
+            var premium = self.get_total_premium();
+            return format_premium_value(premium+riders);
+        } else {
+            return "";
+        }
+    });
     
     self.get_all_people = ko.computed(function() {
         var employee = root.employee();
@@ -2730,6 +2779,7 @@ function NullBenefitsPackage(root) {
     self.children_recommendation = ko.observable(new NullRecommendation());
     self.get_total_premium = function() { return null; };
     self.formatted_total_premium = function() { return ""; };
+    self.formatted_total_premium_with_riders = function() { return ""; };
     self.is_valid = function () {return false};
     self.get_all_people = function() {return [];};
     self.get_all_covered_people = function() {return [];};
@@ -2742,6 +2792,7 @@ function NullBenefitsPackage(root) {
     self.did_select_employee_coverage = function() { return false;};
     self.did_select_spouse_coverage = function() { return false;};
     self.did_select_children_coverage = function() { return false; };
+    self.did_person_select_coverage = function(person) { return false;};
     self.get_covered_children = function() { return [];}};
     
 
@@ -3406,6 +3457,8 @@ function init_validation() {
         wizard_results.rider_data = window.ui.selected_riders.serialize_data();
 
         // Send to server
+        console.log(wizard_results);
+        return;
         ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function (resp) {
             if (resp.error) {
                 bootbox.dialog({
@@ -3920,4 +3973,17 @@ function init_case_riders(riders) {
 }
 function init_enrollment_riders(riders) {
   window.ui.enrollment_riders(riders);
+}
+
+var cycleStringify = function(obj) {
+  seen = [];
+  return JSON.stringify(obj, function(key, val) {
+    if (val != null && typeof val == "object") {
+      if (seen.indexOf(val) >= 0) {
+        return;
+      }
+      seen.push(val);
+    }
+    return val;
+  });
 }
