@@ -65,6 +65,19 @@ function BenefitsPackage(root, name) {
         return benefits;
     };
 
+    self.get_total_riders = ko.computed(function() {
+        total_rider_amount = 0;
+        if(window.ui) {
+          var riders = window.ui.get_selected_riders();
+          for(var i=0; i<riders.length; i++) {
+            total_rider_amount += window.ui.riders()['emp'][riders[i].code];
+          }
+        }
+
+        return total_rider_amount;
+    });
+
+
     self.get_total_premium = ko.computed(function() {
         var benefits = self.get_package_benefits();
 
@@ -75,6 +88,11 @@ function BenefitsPackage(root, name) {
                 total += this.premium;
             }
         });
+
+        // If total rider premium is greater than zero, add it
+        if(self.get_total_riders() > 0.0) {
+          total += self.get_total_riders();
+        }
         return total;
     });
 

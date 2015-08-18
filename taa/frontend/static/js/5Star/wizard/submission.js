@@ -95,6 +95,8 @@ function submit_application() {
   wizard_results.replacement_using_funds = ui.replacement_using_funds();
   wizard_results.replacement_policies = _.invoke(ui.replacement_policies(), "serialize");
 
+  wizard_results.rider_data = window.ui.selected_riders.serialize_data();
+
   // Send to server
   ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function (resp) {
     if (resp.error) {

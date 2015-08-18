@@ -151,11 +151,16 @@ function InsuredApplicant(applicant_type, options, product_selection) {
     return self.selected_coverage().format_premium();
   });
 
-  self.display_riders = ko.computed(function() {
-    console.log(self.applicant_type);
-    // return self.root.selected_coverage();
-    return "$";
-  });
+  self.display_riders = function(rider_code) {
+    var person = window.ui.current_person().applicant_type;
+    var rider_amount;
+    if(person==="employee") {
+      rider_amount = window.ui.riders()['emp'][rider_code];
+    } else if(person==="spouse") {
+      rider_amount = window.ui.riders()['sp'][rider_code];
+    }
+    return "$"+rider_amount.toFixed(2);
+  }
 
   self.get_existing_coverage_amount_for_product = function(product_id) {
     return parseFloat(self.get_existing_coverage_amount_by_product()[product_id]);

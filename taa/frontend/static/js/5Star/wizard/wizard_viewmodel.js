@@ -615,19 +615,25 @@ function WizardUI(defaults) {
     sp: []
   });
 
+
   self.case_riders = ko.observableArray();
-
-  self.selected_riders = ko.observable({
-    emp: ko.observableArray([]),
-    sp: ko.observableArray([])
-  });
-
   self.enrollment_riders = ko.observableArray();
 
-  self.get_selected_riders = ko.computed(function(person) {
-    console.log(person);
-    return self.selected_riders().emp()
-  });
+  self.selected_riders = {
+    emp:ko.observableArray(),
+    sp:ko.observableArray()
+  };
+
+  self.selected_riders.serialize_data = (function() {
+      var selected = self.selected_riders;
+      return ko.computed(function() {
+        return {
+          emp: selected.emp(),
+          sp: selected.sp(),
+        }
+      });
+    })();
+
 
   function get_rider_by_code(code) {
     for(var i = 0; i < self.enrollment_riders.length; i++) {
@@ -637,14 +643,50 @@ function WizardUI(defaults) {
     }
   }
 
-  self.toggle_selected_riders = function(rider_code, prefix) {
-    rider = get_rider_by_code(rider_code);
-    selected_riders = self.selected_riders()[prefix];
-    if(selected_riders.indexOf(rider) == -1) {
-      selected_riders.push(rider);
-    } else {
-      selected_riders.splice(selected_riders.indexOf(rider), 1);
+  self.current_person = ko.observable();
+
+  self.get_selected_riders = ko.computed(function() {
+    var person = self.current_person();
+    if(!person) {
+      return [];
     }
+    if(person.applicant_type==="employee") {
+      return self.selected_riders['emp']();
+    } else if(person.applicant_type==="spouse") {
+      return self.selected_riders['sp']();
+    }
+    return [];
+  });
+
+  self.is_rider_checked = function(rider_code, prefix) {
+    if(!rider_code || !prefix) {
+      return;
+    }
+    var rider = get_rider_by_code(rider_code);
+    if(!rider) {
+      return;
+    }
+    var per_person_riders = self.selected_riders[prefix]();
+    var rider_index = per_person_riders.indexOf(rider);
+    return rider_index === -1;
+  }
+
+  self.toggle_selected_riders = function(rider_code, prefix) {
+    if(!rider_code || !prefix) {
+      return;
+    }
+    var rider = get_rider_by_code(rider_code);
+    if(!rider) {
+      return;
+    }
+    var per_person_riders = self.selected_riders[prefix]();
+    var rider_index = per_person_riders.indexOf(rider);
+    if(rider_index === -1) {
+      per_person_riders.push(rider);
+    } else {
+      per_person_riders.splice(rider_index, 1);
+    }
+    self.selected_riders[prefix](per_person_riders);
   }
 
   self.show_updated_rates = function(resp) {
