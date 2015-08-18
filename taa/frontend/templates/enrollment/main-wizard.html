@@ -4,2341 +4,234 @@
 {% block title %} - Employee Application {% endblock %}
 
 {% block page_css %}
-    <link href="{{ url_for('static', filename='css/five_star.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/five_star.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% block navbar %}
-    {% if wizard_data.is_in_person %}
-        {{ super() }}
-    {% else %}
-        <!-- replace with non-navigable header -->
-        {% set header_title = 'Application Enrollment' %}
-        {% set nonav_logo = logopath %}
-        {% include "nonav-navbar.html" %}
-    {% endif %}
+  {% if wizard_data.is_in_person %}
+    {{ super() }}
+  {% else %}
+    <!-- replace with non-navigable header -->
+    {% set header_title = 'Application Enrollment' %}
+    {% set nonav_logo = logopath %}
+    {% include "nonav-navbar.html" %}
+  {% endif %}
 {% endblock %}
 
 
 {% block content %}
 
-    <div class="page-content" 
-        {# Prevent flash of unstyled content #}
-        style="display: none;" data-bind="visible: true">
+  <div class="page-content"
+          {# Prevent flash of unstyled content #}
+       style="display: none;" data-bind="visible: true">
 
     <div class="row">
-    <div class="col-xs-12">
-    <!-- PAGE CONTENT BEGINS -->
+      <div class="col-xs-12">
+        <!-- PAGE CONTENT BEGINS -->
+        <div class="row-fluid">
+          <div class="span12">
+            <div class="widget-box">
+              <div class="widget-header widget-header-blue widget-header-flat">
+                <h4 class="lighter">5Star Life Enrollment:&nbsp;&nbsp;<span
+                        data-bind="text: defaults.company_name"></span></h4>
 
-
-    <div class="row-fluid">
-    <div class="span12">
-    <div class="widget-box">
-    <div class="widget-header widget-header-blue widget-header-flat">
-        <h4 class="lighter">5Star Life Enrollment:&nbsp;&nbsp;<span data-bind="text: defaults.company_name"></span></h4>
-
-        <!--ko if: was_state_provided-->
-        <div class="grey smaller-80 pull-right" data-bind="visible: was_state_provided">
-            <p>enrollment in <span data-bind="text: enrollCity"></span>, <span data-bind="text: enrollState"></span>&nbsp;&nbsp;
-            </p>
-        </div>
-        <!--/ko-->
-    </div>
-
-    <div class="widget-body">
-    <div class="widget-main">
-    <div id="fuelux-wizard" class="row-fluid" data-target="#step-container">
-        <ul class="wizard-steps">
-            <li data-target="#step1" class="active">
-                <span class="step">1</span>
-                <span class="title">Benefit Selection</span>
-            </li>
-
-            <li data-target="#step2">
-                <span class="step">2</span>
-                <span class="title">Qualification</span>
-            </li>
-
-            <li data-target="#step3">
-                <span class="step">3</span>
-                <span class="title">Employee Info</span>
-            </li>
-
-            <li data-target="#step4">
-                <span class="step">4</span>
-                <span class="title">Spouse/Children Info</span>
-            </li>
-
-            <li data-target="#step5">
-                <span class="step">5</span>
-                <span class="title">Beneficiaries</span>
-            </li>
-
-            <li data-target="#step6">
-                <span class="step">6</span>
-                <span class="title">Confirmation</span>
-            </li>
-        </ul>
-    </div>
-
-    <hr/>
-
-    <div class="step-content row-fluid position-relative" id="step-container">
-
-
-    <!-- ------------------------------ STEP 1 ------------------------------ -->
-
-    <form class="" id="step1-form">
-
-    <div class="step-pane active" id="step1">
-
-    <!-- logic for choosing state here only makes sense later for self-enroll, and states are not general states as for address, but function of product_type
-
-		      <!==ko if: !was_state_provided==>
-		      <div class="form-group">
-			<label class="" for="enrollmentState">Select state for this enrollment</label>
-			<select id="enrollmentState" class="select1"
-				data-bind="value: state"
-				>
-			  <option value="">&nbsp;</option>
-			  {% for state in states %}
-			  <option value="{{state['code']}}">{{state["name"]}}</option>
-			  {% endfor %}
-			</select>
-		      </div>
-		      <div class="space-2"></div>
-		      <!==/ko==>
-		      -->
-
-    <h4 class="lighter block green">Initial information required to select a benefit plan</h4>
-    
-    {# Employee Section #}
-    <div>
-        <div class="row">
-            <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="eeBenefitFName">
-                Employee
-            </label> 
-            
-            <div class="form-group col-xs-12 col-sm-10">
-                <input type="text" style="width: 45%" id="eeBenefitFName" name="eeBenefitFName"
-                       data-bind="value: employee().first" placeholder="First Name" >
-                <input type="text" style="width: 45%" id="eeBenefitLName" name="eeBenefitLName"
-                       data-bind="value: employee().last" placeholder="Last Name">
-            </div>
-        </div>
-        
-        <div class="row">
-            <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-                <label style="margin-right: 1em;" for="eeDOB">
-                    Date of Birth
-                </label>
-
-                <input class="input-mask-date" name="eeBenefitDOB"
-                       data-bind="value: employee().birthdate" type="text" id="eeDOB"
-                       placeholder="DD/MM/YYYY">
-            </div>
-            
-            <div class="col-xs-12 visible-xs">&nbsp;</div>
-            
-            <div class="form-group col-xs-12 col-sm-4">
-                <div class="">
-                        <label style="margin-right: 3em;">
-                            <input type="checkbox" class="ace" data-bind="checked: should_show_spouse">
-                            <span class="lbl padding-8 is_married">Married</span>
-                        </label>
-
-                        <label>
-                            <input type="checkbox" class="ace" data-bind="checked: should_include_children"> 
-                            <span class="lbl padding-8 include_children">Include Children</span>
-                        </label>
+                <!--ko if: was_state_provided-->
+                <div class="grey smaller-80 pull-right" data-bind="visible: was_state_provided">
+                  <p>enrollment in <span data-bind="text: enrollCity"></span>, <span
+                          data-bind="text: enrollState"></span>&nbsp;&nbsp;
+                  </p>
                 </div>
-            </div>
-        </div>
-        
-        <div data-bind="template: {name: 'extended-questions-template', data: employee}"></div>
-    </div>
-    
-    
-    {# Spouse Section #}
-    <div data-bind="slideDownIf: should_show_spouse">
-        <div class="row">
-            <label class="col-xs-12 col-sm-2 no-padding-right text-right" for="spFName">
-                Spouse
-            </label>
+                <!--/ko-->
+              </div>
 
-            <div class="form-group col-xs-12 col-sm-10">
-                <input type="text" style="width: 45%" id="spFName" name="spFName"
-                       data-bind="value: spouse().first" placeholder="First Name" >
-                <input type="text" style="width: 45%" id="spLName" name="spLName"
-                       data-bind="value: spouse().last" placeholder="Last Name">
-            </div>
-        </div>
-        
-        <div class="row">
-            
-            <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-                <label style="margin-right: 1em;" for="spDOB">
-                    Date of Birth
-                </label>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="fuelux-wizard" class="row-fluid" data-target="#step-container">
+                    <ul class="wizard-steps">
+                      <li data-target="#step1" class="active">
+                        <span class="step">1</span>
+                        <span class="title">Benefit Selection</span>
+                      </li>
 
-                <input class="input-mask-date" name="spDOB"
-                       data-bind="value: spouse().birthdate" type="text" id="spDOB"
-                       placeholder="DD/MM/YYYY">
-            </div>
-            
-        </div>
-        
-        <div data-bind="template: {name: 'extended-questions-template', data: spouse}"></div>
-    </div>
+                      <li data-target="#step2">
+                        <span class="step">2</span>
+                        <span class="title">Qualification</span>
+                      </li>
 
-    
-    <!-- template for extended questions -->
-    <script type="text/html" id="extended-questions-template">
-        <!--ko if: $root.should_show_extended_questions() -->
-        <div class="row">
-            <!--ko if: $root.should_show_gender() -->
-            <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-                <div class="">
-                    <label style="margin-right: 1em;">
-                        <input type="radio" value="male" class="ace"
-                               data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
-                        <span class="lbl"> Male</span>
-                    </label>
-                    <label>
-                        <input type="radio" value="female" class="ace"
-                               data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
-                        <span class="lbl"> Female</span>
-                    </label>
+                      <li data-target="#step3">
+                        <span class="step">3</span>
+                        <span class="title">Employee Info</span>
+                      </li>
+
+                      <li data-target="#step4">
+                        <span class="step">4</span>
+                        <span class="title">Spouse/Children Info</span>
+                      </li>
+
+                      <li data-target="#step5">
+                        <span class="step">5</span>
+                        <span class="title">Beneficiaries</span>
+                      </li>
+
+                      <li data-target="#step6">
+                        <span class="step">6</span>
+                        <span class="title">Confirmation</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <hr/>
+
+                  <div class="step-content row-fluid position-relative" id="step-container">
+                    {% include "main-wizard-step-1.html" %}
+                    {% include 'main-wizard-step-2.html' %}
+                    {% include 'main-wizard-step-3.html' %}
+                    {% include 'main-wizard-step-4.html' %}
+                    {% include 'main-wizard-step-5.html' %}
+                    {% include 'main-wizard-step-6.html' %}
+                  </div>
+
+                  <hr/>
+                  <div class="row-fluid wizard-actions">
+                    <button class="btn btn-default btn-xs pull-left"
+                            data-bind="click: exit_application, visible: is_in_person_application">
+                      Cancel
+                    </button>
+
+                    <button class="btn btn-prev">
+                      <i class="icon-arrow-left"></i>
+                      Prev
+                    </button>
+
+                    <button class="btn btn-success btn-next" data-last="I agree to this coverage and am ready to sign ">
+                      Next
+                      <i class="icon-arrow-right icon-on-right"></i>
+                    </button>
+                  </div>
+                  <!-- /Wizard actions -->
                 </div>
+                <!-- /widget-main -->
+              </div>
+              <!-- /widget-body -->
             </div>
-            <!--/ko-->
-            <!--ko if: $root.should_show_smoker() -->
-            <div class="form-group col-xs-12 col-sm-5">
-                <label style="margin-right: 1em;">
-                    <input type="radio" class="ace"
-                           data-bind="checked: is_smoker, checkedValue: false, attr: {name: 'tobacco-'+$data._id}">
-                    <span class="lbl"> Non-Smoker</span>
-                </label>
-                <label>
-                    <input type="radio" class="ace"
-                           data-bind="checked: is_smoker, checkedValue: true, attr: {name: 'tobacco-'+$data._id}">
-                    <span class="lbl"> Smoker</span>
-                </label>
-            </div>
-            <!--/ko-->
-        </div>
-        <div class="row">
-            <!--ko if: $root.should_show_height() -->
-            <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-                <height-select class="height" params="value: height, name_suffix: $data._id+''"></height-select>
-            </div>
-            <!--/ko-->
-            <!--ko if: $root.should_show_weight() -->
-            <div class="form-group col-sm-4">
-                <label class="">
-                    Weight: <input type="number" class="text-right"
-                                   data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
-                </label>
-            </div>
-            <!--/ko-->
-        </div>
-        <!--/ko-->
-    </script>
-    
-
-    <div data-bind="slideDownIf: should_include_children">
-        <!--ko foreach: {data: children, afterAdd: rendered_child, beforeRemove: removing_child} -->
-            <div data-bind="attr: {'class':'child-'+$index()}">
-                <div class="row">
-                    <label class="text-right control-label col-xs-12 col-sm-2 no-padding-right"
-                        data-bind="attr: {for: 'child-first-'+$index()}">
-                        Child <span data-bind="text: $index() + 1"></span>
-                    </label>
-                    
-                    <div class="form-group col-xs-12 col-sm-10">
-                        <input type="text"  style="width: 45%" class="child_first"
-                           data-bind="value: first, attr: {id: 'child-first-'+$index()}"
-                           placeholder="First Name"/>
-                
-                        <input type="text"  style="width: 45%" class="child_last" data-bind="value: last"
-                               placeholder="Last Name"/>
-
-                        <div class="pull-right">
-                            <button type="button" class="btn btn-xs btn-danger" data-bind="click: $root.remove_child">
-                                <i class="icon icon-minus"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-                        <label style="margin-right: 1em;" data-bind="attr: {for: 'child-dob-'+$index()}">
-                            Date of Birth
-                        </label>
-                        
-                        <input class="input-mask-date child_birthdate" data-bind="
-                            value: birthdate, 
-                            event: {change: $root.update_rate_table},
-                            attr: {id: 'child-dob-'+$index()}
-                            " type="text" placeholder="DD/MM/YYYY">
-                    </div>
-                    
-                </div>
-            </div>    
-        <!--/ko-->
-
-        <div class="row" id="addChildBtn">
-            <div class="col-xs-12 col-sm-offset-1 col-sm-2">
-                <button class="btn btn-default btn-sm" type="button" data-bind="click: add_child">
-                    Add Child
-                </button>
-            </div>
+            <!-- /widget-box -->
+          </div>
         </div>
 
-    </div>
 
-    {# Payment Mode Selection #}
-    <div style="margin-top: 1.5em;">
-        <div class="row">
-            <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="paymentMode">
-                Payment Mode
-            </label>
+        <div id="actively_at_work_modal" class="modal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="lighter block blue center">Actively at work</h3>
+              </div>
 
-            <div class="form-group col-xs-12 col-sm-10">
-                <select name="paymentMode" id="paymentMode" data-bind="value: payment_mode, options: payment_mode_choices, optionsValue: 'mode', optionsText: 'name', optionsCaption: '(Select Payment Mode)'"></select>
+              <div class="modal-body">
+                "Actively at work" means that you are an eligible employee/member of the employee/affiliation through
+                which you are applying for this individual insurance; you are able to work and to perform the normal
+                activities of a person of like age and gender; and you are not confined in a hospital, at home or
+                elsewhere due to injury or sickness on the date you signed this application.
+              </div>
+
+              <div class="modal-footer">
+                <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
+              </div>
             </div>
+          </div>
         </div>
-    </div>
 
-    {# Show Rates Button #}
-    <div class="row" data-bind="visible: !is_recommended_table_visible()">
-        <div class="align-center">
-            <button type="button" class="btn btn-primary btn-lg show-rates"
-                    data-bind="click: show_recommendations_table">
-                Show Rates
-            </button>
+        <div id="modal-disabled-definition" class="modal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="lighter block blue center">Disabled</h3>
+              </div>
+
+              <div class="modal-body">
+                "Disabled" means that a person is unable to work, to attend school, or to perform the normal activities
+                of a person of like age and gender or that a person is confined in a hospital, at home or elsewhere due
+                to injury or sickness.
+              </div>
+
+              <div class="modal-footer">
+                <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
+              </div>
+            </div>
+          </div>
         </div>
-    </div>
 
-    {# Rates/Recommended Coverage and Selected Plan Table #}
-    <div class="center recommended-coverage-table" data-bind="slideDownIf: is_recommended_table_visible,
-            css: {'ci-recommendations': insurance_product.has_critical_illness_coverages}">
-        
-        <h3 class="header smaller red">Recommended Coverage 
-            
-        </h3>
-        <div class="center">
-            <div data-bind="visible: is_rate_table_loading">
-                <i class="icon-spinner icon-spin grey bigger-125"></i>   
-                Loading Rates and Recommended Coverages...
-                <br>
+
+        <!-- ------------------------------ Modal Disclaimer ------------------------------ -->
+
+        <div id="modal-disclaimer" class="modal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="lighter block blue center">Accelerated Benefit Disclosure Facts</h3>
+              </div>
+
+              <div class="modal-body">
+                {#                {% set base_product_code = wizard_data['products'][0].get_base_product_code() %}#}
+                {#                    <iframe src="{%#}
+                {#        if base_product_code=='FPPTI' or base_product_code == 'FPP-Gov' %}#}
+                {#	       {% if wizard_data['state']=='TX' %}#}
+                {#	         {{ url_for ('FPPTI_disclosure_TX') }}#}
+                {#	       {% elif wizard_data['state']=='KS' %}#}
+                {#	         {{ url_for ('FPPTI_disclosure_KS') }}#}
+                {#	       {% elif wizard_data['state']=='VA' %}#}
+                {#	         {{ url_for ('FPPTI_disclosure_VA') }}	    #}
+                {#	       {% elif wizard_data['state']=='OR' %}#}
+                {#	         {{ url_for ('FPPTI_disclosure_OR') }}#}
+                {#	       {% else %}#}
+                {#	         {{ url_for ('FPPTI_disclosure_generic') }}#}
+                {#	       {% endif %}#}
+                {#	    {% elif base_product_code=='FPPCI' %}#}
+                {#	       {% if wizard_data['state']=='KS' %}#}
+                {#	         {{ url_for ('FPPCI_disclosure_KS') }}#}
+                {#	       {% elif wizard_data['state']=='VA' %}#}
+                {#	         {{ url_for ('FPPCI_disclosure_VA') }}	    #}
+                {#	       {% elif wizard_data['state']=='OR' %}#}
+                {#	         {{ url_for ('FPPCI_disclosure_OR') }}#}
+                {#	       {% else %}#}
+                {#	         {{ url_for ('FPPCI_disclosure_generic') }}#}
+                {#	       {% endif %}#}
+                {#        {% elif base_product_code == 'Group CI' %}#}
+                {#           {% if wizard_data['state'] == 'KS' %}#}
+                {#               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-KS.pdf') }}#}
+                {#           {% elif wizard_data['state'] == 'OR' %}#}
+                {#               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-OR.pdf') }}#}
+                {#           {% elif wizard_data['state'] == 'VA' %}#}
+                {#               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-VA.pdf') }}#}
+                {#           {% else %}#}
+                {#               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508 (Generic).pdf') }}#}
+                {#           {% endif %}#}
+                {#	    {% else %}#}
+                {#	       {{ url_for ('FPPTI_disclosure_generic') }}#}
+                {#	    {% endif %}"#}
+                {#                            style="zoom:1.0" width="100%" height="500" frameborder="0"></iframe>#}
+              </div>
+
+              <div class="modal-footer">
+                <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
+              </div>
             </div>
-        </div>        
-        
-        <div class="row" data-bind="visible: !is_rate_table_loading()">
-            <!--ko foreach: {data: selected_products, as: 'current_product'}-->
-            <div class="col-xs-4 col-sm-3 pricing-span-header">
-                <div class="widget-box transparent">
-                    <div class="widget-header">
-                        <h5 class="bigger lighter"></h5>
-                    </div>
-
-                    {# Names of Individuals to Be Covered #}
-                    <div class="widget-body">
-                        <div class="widget-main no-padding">
-                            <ul class="list-unstyled list-striped js">
-                                <li data-bind="text: employee().name()"></li>
-                                <!--ko if: should_include_spouse_in_table-->
-                                <li data-bind="text: show_spouse_name()"></li>
-                                <!--/ko-->
-                                <!--ko if: should_include_children_in_table-->
-                                <li data-bind="text: show_children_names()"></li>
-                                <!--/ko-->
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xs-8 col-sm-9 pricing-span-body good">
-                {# Good #}
-                <div class="pricing-span">
-                    <div class="widget-box pricing-box-small">
-                        <div class="widget-header center header-color-red3 no-padding">
-                            <h5 class="bigger lighter">Good</h5>
-                        </div>
-
-                        <div class="widget-body">
-                            <div class="widget-main no-padding" data-bind="
-                            template: {name: 'recommendations_template', data: recommendations.good},
-                            click: function() {$root.select_recommended_benefit(recommendations.good)}
-                            ">
-                            </div>
-
-                            <div data-bind="click: function() {$root.select_recommended_benefit(recommendations.good)}">
-                                <a class="btn btn-block btn-sm btn-danger">
-                                    <span>Select</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {# Better #}
-                <div class="pricing-span better">
-                    <div class="widget-box pricing-box-small">
-                        <div class="widget-header center header-color-orange no-padding">
-                            <h5 class="bigger lighter">Better</h5>
-                        </div>
-
-                        <div class="widget-body">
-                            <div class="widget-main no-padding" data-bind="
-                            template: {name: 'recommendations_template', data: recommendations.better},
-                            click: function() {$root.select_recommended_benefit(recommendations.better)}
-                            ">
-                            </div>
-
-                            <div>
-                                <a data-bind="click: function() {$root.select_recommended_benefit(recommendations.better)}"
-                                   class="btn btn-block btn-sm btn-warning">
-                                    <span>Select</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {# Best #}
-                <div class="pricing-span best">
-                    <div class="widget-box pricing-box-small">
-                        <div class="widget-header center header-color-best no-padding">
-                            <h5 class="bigger lighter">Best</h5>
-                        </div>
-
-                        <div class="widget-body"
-                             data-bind="click: function() {$root.select_recommended_benefit(recommendations.best)}">
-                            <div class="widget-main no-padding" data-bind="
-                            template: {name: 'recommendations_template', data: recommendations.best}
-                            ">
-                            </div>
-
-                            <div>
-                                <a
-                                    class="btn btn-block btn-sm btn-primary">
-                                    <span>Select</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {# Customize #}
-                <div class="pricing-span">
-                    <div class="widget-box pricing-box-small pricing-box-small-no-hover customize">
-                        <div class="widget-header center header-color-grey no-padding">
-                            <h5 class="bigger lighter">Customize</h5>
-                        </div>
-
-                        <div class="widget-body">
-                            <div class="widget-main no-padding">
-                                <ul class="list-unstyled list-striped pricing-table">
-                                    <li>
-                                        <!--ko if: employee().is_valid()-->
-                                        <select class="emp-coverage" data-bind="
-                                  options: insurance_product.get_coverage_options_for_applicant('employee'),
-                                  optionsCaption: '',
-                                  optionsText: BenefitOption.display_benefit_option,
-                                  value: employee().selected_custom_option,
-                                  event: {change: apply_selected_customization}
-                                  ">
-                                        </select>
-                                        <!--/ko-->
-                                    </li>
-                                    <!--ko if: should_include_spouse_in_table-->
-                                    <li>
-                                        <select class="sp-coverage" data-bind="
-                                  options: insurance_product.get_coverage_options_for_applicant('spouse'),
-                                  optionsCaption: '',
-                                  optionsText: BenefitOption.display_benefit_option,
-                                  value: spouse().selected_custom_option,
-                                  event: {change: apply_selected_customization}
-                                  ">
-                                        </select>
-                                    </li>
-                                    <!--/ko-->
-                                    <!--ko if: should_include_children_in_table-->
-                                    <li>
-                                        <select class="ch-coverage" data-bind="
-                                  options: insurance_product.get_coverage_options_for_applicant('children'),
-                                  optionsCaption: '',
-                                  optionsText: BenefitOption.display_benefit_option,
-                                  value: child_benefits().selected_custom_option,
-                                  event: {change: apply_selected_customization}
-                                  ">
-                                        </select>
-                                    </li>
-                                    <!--/ko-->
-
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {# Selected Plan #}
-                <div class="pricing-span">
-                    <div class="widget-box pricing-box-small pricing-box-small-no-hover">
-                        <div class="widget-header center header-color-green">
-                            <h5 class="bigger lighter">Selected Plan</h5>
-                            <br>
-                            <small data-bind="text: selected_plan[current_product]().name"></small>
-                        </div>
-
-                        <div class="widget-body">
-                            <div class="widget-main no-padding"
-                                 data-bind="template: {name: 'recommendations_template', data: selected_plan[current_product]}">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                
-            </div>
-            <!--/ko-->
+          </div>
         </div>
-    <br />
-    <br />
-    <div class="col-sm-3">
-      <h5>Riders</h5>
-    </div>
-    <div class="row col-sm-9">
-      {# Riders #}
-      <div class="col-sm-12">
-        <div class="form-group col-xs-12 col-sm-1"></div>
-        <div class="form-group col-xs-12 col-sm-4"><strong>Rider Name</strong></div>
-        <div class="form-group col-xs-12 col-sm-4"><strong>Description</strong></div>
-        <div class="form-group col-xs-12 col-sm-3"><strong>Amount</strong></div>
+
+        <!-- PAGE CONTENT ENDS -->
       </div>
-      <div data-bind="visible: employee().name()">
-        <div class="form-group col-xs-12 col-sm-1">
-          <div class="">
-            <ul class="list-unstyled list-striped js">
-              <!--ko foreach: case_riders -->
-                <li><input type="checkbox" checked=checked disabled=disabled /></li>
-                <!--ko if: $root.should_include_spouse_in_table -->
-                  <li><input type="checkbox" checked=checked disabled=disabled /></li>
-                <!--/ko-->
-              <!--/ko-->
-              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
-              <li><input type="checkbox" autocomplete="off" data-bind="click: $root.toggle_selected_riders(rider.code, 'emp'), checked: $root.selected_riders['emp'], checkedValue: $data" /></li>
-              <!--ko if: $root.should_include_spouse_in_table-->
-              <li><input type="checkbox" autocomplete="off" data-bind="click: $root.toggle_selected_riders(rider.code, 'sp')" /></li>
-              <!--/ko-->
-              <!--/ko-->
-            </ul>
-          </div>
-        </div>
-        <div class="form-group col-xs-12 col-sm-4">
-          <div class="">
-            <ul class="list-unstyled list-striped js">
-              <!--ko foreach: {data: case_riders, as: 'rider'} -->
-                <li data-bind="text: rider.name+' for '+$root.employee().name()"></li>
-                <!--ko if: $root.should_include_spouse_in_table-->
-                  <li data-bind="text: rider.name+' for '+$root.show_spouse_name()"></li>
-                <!--/ko-->
-              <!--/ko-->
-              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
-              <li data-bind="text: rider.name+' for '+$root.employee().name()"></li>
-              <!--ko if: $root.should_include_spouse_in_table-->
-              <li data-bind="text: rider.name+' for '+$root.show_spouse_name()"></li>
-              <!--/ko-->
-              <!--/ko-->
-            </ul>
-          </div>
-        </div>
-        <div class="form-group col-xs-12 col-sm-4">
-          <div class="">
-            <ul class="list-unstyled list-striped js">
-              <!--ko foreach: {data: case_riders, as: 'rider'} -->
-              <li data-bind="text: rider.name"></li>
-              <!--ko if: $root.should_include_spouse_in_table-->
-              <li data-bind="text: rider.name"></li>
-              <!--/ko-->
-              <!--/ko-->
-              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
-              <li data-bind="text: rider.name"></li>
-              <!--ko if: $root.should_include_spouse_in_table-->
-              <li data-bind="text: rider.name"></li>
-              <!--/ko-->
-              <!--/ko-->
-            </ul>
-          </div>
-        </div>
-        <div class="form-group col-xs-12 col-sm-3">
-          <div class="">
-            <ul class="list-unstyled list-striped js">
-              <!--ko foreach: {data: case_riders, as: 'rider'} -->
-              <li data-bind="text: '$'+$root.riders()['emp'][rider.code]"></li>
-              <!--ko if: $root.should_include_spouse_in_table-->
-              <li data-bind="text: '$'+$root.riders()['sp'][rider.code]"></li>
-              <!--/ko-->
-              <!--/ko-->
-              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
-              <li data-bind="text: '$'+$root.riders()['emp'][rider.code]"></li>
-              <!--ko if: $root.should_include_spouse_in_table-->
-              <li data-bind="text: '$'+$root.riders()['sp'][rider.code]"></li>
-              <!--/ko-->
-              <!--/ko-->
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-    </div>
-
-    <div class="row">
-        <div class="col-xs-12 text-center red" data-bind="if: can_decline">
-            <div class="decline-option">
-                <label><input type="checkbox" data-bind="checked: did_decline"> I decline to enroll in any of the 5Star products at this time</label>
-            </div>
-        </div>
-    </div>
-    
-    
-    <div id="benefit_required" class="error pull-right" data-bind="visible: is_selection_error_visible">
-        You must select a benefit option before advancing.
-    </div>
-
-    <!-- /div -->
-    </div>
-    </form>
-
-    {# Payment Estimate Banner #}
-    <script type="text/html" id="recommendations_template">
-        <ul class="list-unstyled list-striped pricing-table">
-            <li data-bind="template: {name: employee_recommendation().is_valid() ? 'recommendation_template' : 'blank_template', 
-                                    data: employee_recommendation}">
-            </li>
-            <!--ko if: $root.should_include_spouse_in_table-->
-            <li data-bind="template: {name: spouse_recommendation().is_valid() ? 'recommendation_template' : 'blank_template', 
-                            data: spouse_recommendation}"></li>
-            <!--/ko-->
-            <!--ko if: $root.should_include_children_in_table-->
-            <li data-bind="template: {name: children_recommendation().is_valid()? 'recommendation_template': 'blank_template', 
-                            data: children_recommendation}"></li>
-            <!--/ko-->
-
-        </ul>
-        <div class="price" data-bind="visible: get_total_premium() > 0.0">
-          <span class="label label-lg label-inverse arrowed-in arrowed-in-right">
-            <span data-bind="text: formatted_total_premium()"></span>
-            <small>
-                <span data-bind="text: $root.payment_mode_text_lower()">(NA)</span>
-            </small>
-          </span>
-        </div>
-    </script>
-
-    <script type="text/html" id="recommendation_template">
-        <strong data-bind="html: format_face_value()"></strong>
-        <div data-bind="html: format_premium_option()"></div>
-    </script>
-
-    <script type="text/html" id="blank_template">
-    </script>
-
-    <!-- ------------------------------ New step 2 ------------------------------ -->
-    <form class="form-horizontal" id="questions-form">
-        <div class="step-pane" id="step2">
-            <div data-bind="visible: should_show_other_insurance_questions">
-                <h3 class="lighter block green">Other Insurance</h3>
-    
-                <div class="row form-group">
-                    <div class="col-xs-12 col-sm-9">
-                        <span class="bigger-120">Does anyone on this application have any existing life insurance or annuity contracts?</span><br>
-                        <span id="existing_warning_text" style="display: none;" class=" bigger-120">If yes, and you live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV please complete and sign the Notice: Replacement of Life Insurance and Annuity. The Notice must be <span
-                            class="text-warning bigger-120">presented</span> and <span
-                            class="text-warning bigger-120">read</span> to you by your agent at the time he/she takes your application.</span>
-                    </div>
-                    <div class="col-xs-12 col-sm-3 btn-group no-padding-right">
-                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                            question: new GlobalSOHQuestion('existing_insurance'), 
-                            val: 'Yes', 
-                            highlight: $root.get_has_existing_question_highlight(),
-                            onclick: $root.select_has_existing_insurance
-                            }">
-                            Yes
-                        </button>
-                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                            question: new GlobalSOHQuestion('existing_insurance'), 
-                            val: 'No', 
-                            highlight: 'checkmark',
-                            onclick: window.reset_existing_insurance_warning
-                            }">
-                            No
-                        </button>
-                    </div>
-                </div>
-    
-                <div class="row form-group">
-                    <div class="col-xs-12 col-sm-9">
-                        <span class="bigger-120">Will the coverage applied for replace any existing life insurance or annuities?</span><br>
-                        <span id="replacement_warning_text" style="display: none;" class="bigger-120"><br>If yes, and you do not live in the above listed states, you will need to complete and sign the applicable state-specific Notice: Replacement of Life Insurance and Annuity, obtainable from your agent or enrollment professional.<br><br> <span
-                            class="text-danger bigger-130">You cannot proceed with this online enrollment, and must enroll via paper forms with your agent or enrollment professional.</span></span>
-                    </div>
-                    <div class="col-xs-12 col-sm-3 btn-group no-padding-right" data-toggle="buttons">
-                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                            question: new GlobalSOHQuestion('replace_insurance'), 
-                            val: 'Yes', 
-                            highlight: $root.get_replacing_question_highlight(),
-                            onclick: $root.select_replacing_insurance
-                            }">
-                            Yes
-                        </button>
-                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                            question: new GlobalSOHQuestion('replace_insurance'), 
-                            val: 'No', 
-                            highlight: 'checkmark',
-                            onclick: window.reset_replacement_insurance_warning
-                            }">
-                            No
-                        </button>
-                    </div>
-                </div>
-            
-            </div>
-
-            <div data-bind="slideDownIf: should_show_NAIC_replacement_notice">
-                <div class="row">
-                    <div class="col-xs-12">
-                        Your enrollment professional has a copy of the "IMPORTANT NOTICE: REPLACEMENT OF LIFE INSURANCE OR ANNUITY" available upon request.
-                    </div>
-                </div>
-            </div>
-            
-            <br>
-
-            <div data-bind="slideDownIf: should_show_replacement_form">
-                <div class="modal-header">
-                    <div class="form-group row">
-                        <div class="col-xs-12 col-sm-9">
-                            <small>I want this notice read aloud to me
-                                &nbsp;&nbsp;
-                                <label class="blue">
-                                    <input name="replacement_read_aloud" value="Y" type="radio" class="inline ace"
-                                           data-bind="checked: replacement_read_aloud, checkedValue: true, disable: is_self_enroll()"/>
-                                    <span class="lbl"> Y &nbsp; </span>
-                                </label>
-
-                                <label class="blue">
-                                    <input name="replacement_read_aloud" value="N" type="radio" class="inline ace"
-                                           data-bind="checked: replacement_read_aloud, checkedValue: false, disable: is_self_enroll()"/>
-                                    <span class="lbl"> N</span>
-                                </label>
-                            </small>
-
-                        </div>
-
-                    </div>
-                    <h3 class="lighter block blue center">NOTICE OF REPLACEMENT OF LIFE INSURANCE OR ANNUITIES</h3>
-                </div>
-
-                <div class="modal-body">
-
-                    <!--ko foreach: get_replacement_paragraphs()-->
-                        <p data-bind="html: $data"></p>
-                    <!--/ko-->
-
-                    <div class="row">
-                        <div class="col-xs-12 col-sm-11 col-sm-offset-1">
-                            <div class="row">
-                                <div class="form-group col-xs-12">
-                                    1. Are you considering discontinuing making premium payments, surrendering, forfeiting, assigning to the insurer, or otherwise terminating your existing policy or contract?
-                                    <input type="radio" class="replacement-question inline ace" name="replacement_is_terminating" value="Y" data-bind='checked: replacement_is_terminating, checkedValue: true'> <span class="lbl"> Y</span>
-                                    <input type="radio" class="replacement-question inline ace" name="replacement_is_terminating" value="N" data-bind='checked: replacement_is_terminating, checkedValue: false'> <span class="lbl"> N</span>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="form-group col-xs-12">
-                                    2. Are you considering using funds from your existing policies or contracts to pay premiums due on the new policy or contract?
-                                    <input type="radio" class="replacement-question inline ace" name="replacement_using_funds" value="Y" data-bind='checked: replacement_using_funds, checkedValue: true'> <span class="lbl"> Y</span>
-                                    <input type="radio" class="replacement-question inline ace" name="replacement_using_funds" value="N" data-bind='checked: replacement_using_funds, checkedValue: false'> <span class="lbl"> N</span>
-                                </div>
-                            </div>
-
-                            <div data-bind="slideDownIf: should_show_replacement_details_form">
-                                <strong> Please list each existing policy or contract you are contemplating replacing (include the name of the insurer, the insured, and the contract number if available) and whether each policy will be replaced or used as a source of financing:</strong>
-                                <!--ko foreach: replacement_policies-->
-                                <div class="row">
-                                    <div class="col-sm-6 col-md-3 form-group">
-                                        <label>Insurer Name</label><br>
-                                        <input type="text" class="replacement-details-input" data-bind="value: name, attr: {name: 'policy-name-'+$index()}">
-                                    </div>
-                                    <div class="col-sm-6 col-md-3 form-group">
-                                        <label>Contract or Policy #</label><br>
-                                        <input type="text" class="replacement-details-input" data-bind="value: policy_number, attr: {name: 'policy-number-'+$index()}">
-                                    </div>
-                                    <div class="col-sm-6 col-md-3 form-group">
-                                        <label>Insured</label><br>
-                                        <input type="text" class="replacement-details-input" data-bind="value: insured, attr: {name: 'insured-'+$index()}">
-                                    </div>
-                                    <div class="col-sm-6 col-md-3 form-group">
-                                        <br>
-                                        <label>
-                                            <input type="radio" value="replaced" class="replacement-details-input inline ace"
-                                                   data-bind="checked: replaced_or_financing, checkedValue: 'replaced', attr: {name: 'replaced_or_financing-'+$index()}"> <span class="lbl">Replaced</span>
-                                        </label>
-
-                                        <label>
-                                            <input type="radio" name="replaced_or_financing" value="financing" class="replacement-details-input inline ace"
-                                                   data-bind="checked: replaced_or_financing, checkedValue: 'financing', attr: {name: 'replaced_or_financing-'+$index()}"> <span class="lbl">Financing</span>
-                                        </label>
-
-                                        <div class="pull-right" data-bind="if: $root.replacement_policies().length > 1" >
-                                            <button class="btn btn-xs btn-danger" data-bind="click: $root.remove_replacement_policy">
-                                                <i class="icon icon-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                </div>
-                                <div class="row">
-                                    <div class="col-sm-12 form-group">
-                                        <p>The existing policy or contract is being replaced because:
-                                            <input type="text" class="col-xs-12" data-bind="value: replacement_reason">
-                                        </p>
-                                    </div>
-                                </div>
-                                <!--/ko-->
-                                <br>
-                                <button class="btn btn-success btn-sm" data-bind="click: add_replacement_policy">Add Another Policy</button>
-                            </div>
-
-
-
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            {# Loop through each product that we have selected and show its questions #}
-            <!--ko foreach: {data: $root.selected_products, as: 'current_product'} -->
-            {# Only show questions if there are some for this product. #}
-            <div data-bind="visible: $root.health_questions().length > 0 && $root.do_any_health_questions_need_answering()">
-                <h3 class="lighter block green">Please answer each question below</h3>
-
-                <div class="hidden-xs hidden-sm" data-bind="with: $root.selected_plan[current_product]">
-    
-                    <div class="row">
-                        <div class="col-sm-6">
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="row">
-                                
-                                <div class="col-sm-3 text-center" data-bind="if: $root.did_select_employee_coverage">
-                                    <span data-bind="text: $root.employee().name"></span>
-                                </div>
-                                <div class="col-sm-3 text-center" data-bind="if: $root.did_select_spouse_coverage">
-                                    <span data-bind="text: $root.spouse().name"></span>
-                                </div>
-                                <!--ko foreach: get_covered_children -->
-                                    <div class="col-sm-3 text-center">
-                                        <span data-bind="text: $data.name"></span>
-                                    </div>
-                                <!--/ko-->
-                            </div>
-                        </div>
-                    </div>
-    
-                    <table class="table table-striped">
-                        <tbody>
-                    <!--ko if: current_product.is_fpp_product()-->
-
-                        <tr>
-                            <td>
-                                <div class="row">
-                                    <div class="col-xs-12 col-sm-6">
-                                        Is <span data-bind="text:$root.employee().name"></span> <a href="#actively_at_work_modal" data-toggle="modal">actively at work?</a>
-                                    </div>
-                                    <div class="col-xs-12 col-sm-6">
-
-                                        <div class="row">
-                                            <div class="col-sm-3 btn-group no-padding-right">
-
-                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: new NonHealthQuestion('actively_at_work'),
-                                                      is_required: true,
-                                                      val: 'Yes',
-                                                      highlight: 'checkmark',
-                                                      onclick: function() {$root.is_employee_actively_at_work(true)},
-                                                      is_selected: $root.is_employee_actively_at_work() === true
-                                                      }">
-                                                    {# onclick: show_yes_dialogue_employee #}
-                                                    Yes
-                                                </button>
-                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: new NonHealthQuestion('actively_at_work'),
-                                                      is_required: true,
-                                                      val: 'No',
-                                                      highlight: 'checkmark',
-                                                      onclick: function() {$root.is_employee_actively_at_work(false)},
-                                                      is_selected: $root.is_employee_actively_at_work() === false
-                                                      }">
-                                                    No
-                                                </button>
-                                            </div>
-                                            <div class="col-sm-3 btn-group no-padding-right" data-bind="if: did_select_spouse_coverage"></div>
-
-
-                                        </div>
-                                    </div>
-
-
-                                </div>
-                            </td>
-
-
-                        </tr>
-                    <!--/ko-->
-
-                    <!--ko foreach: $root.health_questions-->
-                        <tr data-bind="visible: does_any_applicant_need_to_answer">
-                            <td>
-                                <div class="row">
-                                    <div class="col-xs-12 col-sm-6" data-bind="html: get_question_text()">
-                                    </div>
-                                    <div class="col-xs-12 col-sm-6">
-
-                                        <div class="row">
-                                            <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
-                                                <!--ko if: does_employee_need_to_answer-->
-                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $data,
-                                                      applicant: $root.employee(),
-                                                      is_required: does_employee_need_to_answer,
-                                                      val: 'Yes',
-                                                      highlight: $data.get_yes_highlight(),
-                                                      onclick: show_yes_dialogue_employee
-                                                      }">
-                                                    Yes
-                                                </button>
-                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $data,
-                                                      applicant: $root.employee(),
-                                                      is_required: does_employee_need_to_answer,
-                                                      val: 'No',
-                                                      highlight: 'checkmark'
-                                                      }">
-                                                    No
-                                                </button>
-                                                <!--/ko-->
-                                            </div>
-                                            <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
-                                                <!--ko if: does_spouse_need_to_answer -->
-                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $data,
-                                                      applicant: $root.spouse(),
-                                                      is_required: does_spouse_need_to_answer,
-                                                      val: 'Yes',
-                                                      highlight: $data.get_yes_highlight(),
-                                                      onclick: show_yes_dialogue_spouse
-                                                      }">
-                                                    Yes
-                                                </button>
-                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $data,
-                                                      applicant: $root.spouse(),
-                                                      is_required: does_spouse_need_to_answer,
-                                                      val: 'No',
-                                                      highlight: 'checkmark'
-                                                      }">
-                                                    No
-                                                </button>
-                                                <!--/ko-->
-                                            </div>
-                                            <!--ko foreach: {data: $parent.get_covered_children, as: 'child'} -->
-                                            <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
-                                                <!--ko if: $parent.does_child_need_to_answer(child) -->
-                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $parentContext.$data,
-                                                      applicant: $data,
-                                                      is_required: function() {return $parent.does_child_need_to_answer(child)},
-                                                      val: 'Yes',
-                                                      highlight: 'stop',
-                                                      onclick: function() {$parent.show_yes_dialogue_child(child)}
-                                                      }">
-                                                    Yes
-                                                </button>
-                                                <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $parentContext.$data,
-                                                      applicant: $data,
-                                                      is_required: $parent.does_child_need_to_answer(child),
-                                                      val: 'No',
-                                                      highlight: 'checkmark'
-                                                      }">
-                                                    No
-                                                </button>
-                                                <!--/ko-->
-                                            </div>
-                                            <!--/ko-->
-                                        </div>
-                                    </div>
-
-
-                                </div>
-                            </td>
-                        </tr>
-                    <!--/ko-->
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div class="visible-xs visible-sm" data-bind="with: $root.selected_plan[current_product]">
-    
-                    <table class="table table-striped" >
-                        <tbody>
-                            <!--ko if: current_product.is_fpp_product()-->
-                                <tr>
-                                    <td>
-                                        <div class="row">
-                                            <div class="col-xs-12 col-sm-6">
-                                                Is <span data-bind="text:$root.employee().name"></span> <a href="#actively_at_work_modal" data-toggle="modal">actively at work?</a>
-                                            </div>
-
-                                            <div class="col-xs-12 col-sm-6">
-                                                <div class="person-answer-small row">
-                                                    <div class="col-xs-3 col-xs-offset-2" data-bind="text: $root.employee().name()"></div>
-                                                    <div class="col-xs-7 btn-group">
-
-                                                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                              question: new NonHealthQuestion('actively_at_work'),
-                                                              is_required: true,
-                                                              val: 'Yes',
-                                                              highlight: 'checkmark',
-                                                              onclick: function() {$root.is_employee_actively_at_work(true)}
-                                                              }">
-                                                            {# onclick: show_yes_dialogue_employee #}
-                                                            Yes
-                                                        </button>
-                                                        <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                              question: new NonHealthQuestion('actively_at_work'),
-                                                              is_required: true,
-                                                              val: 'No',
-                                                              highlight: 'checkmark',
-                                                              onclick: function() {$root.is_employee_actively_at_work(false)}
-                                                              }">
-                                                            No
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <!--/ko-->
-
-                            <!--ko foreach: $root.health_questions-->
-                            <tr data-bind="visible: does_any_applicant_need_to_answer">
-                                <td>
-                                    <div class="row">
-                                        <div class="col-xs-12 col-sm-6" data-bind="html: get_question_text()">
-                                        </div>
-                                        <div class="col-xs-12 col-sm-6">
-                                            
-                                            <!--ko if: does_employee_need_to_answer-->
-                                            <div class="person-answer-small row">
-                                                <div class="col-xs-3 col-xs-offset-2" data-bind="text: $root.employee().name()"></div>
-                                                <div class="col-xs-7 btn-group" data-toggle="buttons">
-                                                    <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                          question: $data, 
-                                                          applicant: $root.employee(),
-                                                          is_required: does_employee_need_to_answer,
-                                                          val: 'Yes', 
-                                                          highlight: $data.get_yes_highlight(),
-                                                          onclick: show_yes_dialogue_employee
-                                                          }">
-                                                        Yes
-                                                    </button>
-                                                    <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                          question: $data,
-                                                          applicant: $root.employee(),
-                                                          is_required: does_employee_need_to_answer,
-                                                          val: 'No', 
-                                                          highlight: 'checkmark'
-                                                          }">
-                                                        No
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <!--/ko-->
-                                            <!--ko if: does_spouse_need_to_answer-->
-                                            <div class="person-answer-small row">
-                                                <div class="col-xs-3 col-xs-offset-2" data-bind="text: $root.spouse().name()"></div>
-                                                <div class="col-xs-7 btn-group" data-toggle="buttons">
-                                                    <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                          question: $data, 
-                                                          applicant: $root.spouse(),
-                                                          is_required: does_spouse_need_to_answer,
-                                                          val: 'Yes', 
-                                                          highlight: $data.get_yes_highlight(),
-                                                          onclick: show_yes_dialogue_spouse
-                                                          }">
-                                                        Yes
-                                                    </button>
-                                                    <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                          question: $data,
-                                                          applicant: $root.spouse(),
-                                                          is_required: does_spouse_need_to_answer,
-                                                          val: 'No', 
-                                                          highlight: 'checkmark'
-                                                          }">
-                                                        No
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <!--/ko-->
-                                            
-                                            <!--ko foreach: {data: $parent.get_covered_children, as: 'child'} -->
-                                                <!--ko if: $parent.does_child_need_to_answer(child) -->
-                                                    <div class="person-answer-small row">
-                                                        <div class="col-xs-3 col-xs-offset-2" data-bind="text: name"></div>
-                                                        <div class="col-xs-7 btn-group" data-toggle="buttons">
-                                                            <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                                  question: $parentContext.$data, 
-                                                                  applicant: $data,
-                                                                  is_required: function() {return $parent.does_child_need_to_answer(child)},
-                                                                  val: 'Yes', 
-                                                                  highlight: 'stop',
-                                                                  onclick: function() {$parent.show_yes_dialogue_child(child)}
-                                                                  }">
-                                                                Yes
-                                                            </button>
-                                                            <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                                  question: $parentContext.$data,
-                                                                  applicant: $data,
-                                                                  is_required: $parent.does_child_need_to_answer(child),
-                                                                  val: 'No', 
-                                                                  highlight: 'checkmark'
-                                                                  }">
-                                                                No
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                <!--/ko-->
-                                            <!--/ko-->
-                                            
-                                            
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <!--/ko-->
-                        </tbody>
-                    </table>
-                </div>
-                
-                
-            </div>
-            <!--/ko-->
-          <div id="health_questions_error" class="error has-error pull-right"></div>
-        </div>
-
-
-    </form>
-
-
-    <!-- ------------------------------ STEP 3 ------------------------------ -->
-    <form class="form-horizontal" id="step3-form">
-
-        <div class="step-pane" id="step3">
-            <h3 class="lighter block green">Employee information</h3>
-
-            <div class="form-group">
-                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="companyName">Company Name</label>
-
-                <div class="col-xs-12 col-sm-9">
-                    <div class="clearfix">
-                        <input readonly="" type="text" id="companyName" name="companyName" class="col-xs-12 col-sm-9"
-                               data-bind="value: company_name"/>
-                    </div>
-                </div>
-            </div>
-
-            <div class="space-2"></div>
-
-            <div class="row form-group">
-                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeFName2">
-                    Employee Name
-                </label>
-
-                <div class="col-xs-12 col-sm-9">
-                    <input type="text" id="eeFName2" name="eeFName2"
-                           data-bind="value: employee().first" placeholder="First Name"/>
-                    <input type="text" id="eeLName2" name="eeLName2"
-                           data-bind="value: employee().last" placeholder="Last Name"/>
-                </div>
-            </div>
-
-            <div class="space-2"></div>
-
-            <div class="form-group">
-                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eessn">
-                    Employee SSN
-                </label>
-
-                <div class="col-xs-12 col-sm-5">
-                    <input type="text" id="eessn" name="eessn" class="col-xs-12 col-sm-5 input-mask-ssn"
-                           data-bind="value: employee().ssn"/>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-xs-12 col-sm-3 no-padding-right">Gender</label>
-
-                <div class="col-xs-12 col-sm-9">
-                    <label class="blue">
-                        <input name="eeGender" value="male" type="radio" class="inline ace"
-                               data-bind="checked: employee().gender"/>
-                        <span class="lbl"> Male &nbsp;&nbsp;&nbsp; </span>
-                    </label>
-
-                    <label class="blue">
-                        <input name="eeGender" value="female" type="radio" class="inline ace"
-                               data-bind="checked: employee().gender"/>
-                        <span class="lbl"> Female</span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="space-2"></div>
-            <div class="clearfix"></div>
-
-            <div class="form-group">
-                <label class="clearfix control-label col-xs-12 col-sm-3 no-padding-right" for="eeStreet1">Street
-                    1</label>
-
-                <div class="col-xs-12 col-sm-9">
-                    <div class="clearfix">
-                        <input type="text" id="eeStreet1" name="eeStreet1" class="col-xs-12 col-sm-9"
-                               data-bind="value: employee().address1"/>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeStreet2">Street 2</label>
-
-                <div class="col-xs-12 col-sm-9">
-                    <div class="clearfix">
-                        <input type="text" id="eeStreet2" name="eeStreet2" class="col-xs-12 col-sm-9"
-                               data-bind="value: employee().address2"/>
-                    </div>
-                </div>
-            </div>
-
-            <div class="space-2"></div>
-
-            <div class="form-group">
-                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeCity">City, ST Zip</label>
-
-                <div class="col-xs-12 col-sm-9">
-                    <input type="text" id="eeCity" name="eeCity" placeholder="City" data-bind="value: employee().city"/>
-
-                    <select id="eeState" name="eeState" class="select1"
-                            data-bind="value: employee().state">
-                        <option value="">&nbsp;</option>
-                        {% for state in states %}
-                            <option value="{{ state['code'] }}">{{ state['name'] }}</option>
-                        {% endfor %}
-                    </select>
-
-                    <input type="text" id="eeZip" name="eeZip" class="input-mask-zip" placeholder="zip"
-                           data-bind="value: employee().zip"/>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="email">Email Address:</label>
-
-                <div class="col-xs-12 col-sm-9">
-                    <div class="input-group">
-		<span class="input-group-addon">
-		  <i class="icon-envelope"></i>
-		</span>
-
-                        <input type="email" name="email" id="email" class="col-xs-12 col-sm-6"
-                               data-bind="value: employee().email"/>
-                    </div>
-                </div>
-            </div>
-
-            <div class="space-2"></div>
-
-            <div class="form-group">
-                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="phone">Daytime Phone:</label>
-
-                <div class="col-xs-12 col-sm-9">
-                    <div class="input-group">
-            <span class="input-group-addon">
-              <i class="icon-phone"></i>
-            </span>
-
-                        <input type="tel" id="phone" name="phone" data-bind="value: employee().phone"/>
-                    </div>
-                </div>
-            </div>
-
-            <div class="space-2"></div>
-
-            <div class="form-group">
-                <label class="control-label col-xs-12 col-sm-3 no-padding-right">Policy Owner</label>
-
-                <div class="col-xs-12 col-sm-9">
-                    <label class="blue">
-                        <input name="eeOwner" value="self" type="radio" class="inline ace" id="eeOwner-self" checked=""
-                               data-bind="checked: policy_owner"/>
-                        <span class="lbl"> Self &nbsp;&nbsp;&nbsp;</span>
-                    </label>
-
-                    <label class="blue">
-                        <input name="eeOwner" value="other" type="radio" class="inline ace" id="eeOwner-other"
-                               data-bind="checked: policy_owner"/>
-                        <span class="lbl"> Other</span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="hide col-sm-offset-2" id="eeOtherOwner">
-                <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerName">Other
-                        owner </label>
-
-                    <div class="col-xs-12 col-sm-9">
-                        <input type="text" id="eeOtherOwnerName" name="eeOtherOwnerName" class="col-xs-12 col-sm-4"
-                               placeholder="Full Name"
-                               data-bind="value: other_owner_name"/>
-                    </div>
-                </div>
-                <div class="space-2"></div>
-                <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerSSN">Owners's
-                        SSN </label>
-
-                    <div class="col-xs-12 col-sm-9">
-                        <input type="text" id="eeOtherOwnerSSN" name="eeOtherOwnerSSN"
-                               class="col-xs-12 col-sm-4 input-mask-ssn"
-                               data-bind="value: other_owner_ssn"/>
-                    </div>
-                </div>
-            </div>
-
-
-        </div>
-    </form>
-
-    <!-- ------------------------------ STEP 4 ------------------------------ -->
-
-    <form class="form-horizontal" id="step4-form">
-
-
-        <div class="step-pane" id="step4">
-
-            <div id="noSpouseNoChildrenBlock"
-                 data-bind="visible: !did_select_spouse_coverage() && !did_select_children_coverage()">
-                <h4 class="green center">
-                    This step does not apply - no spouse or children have been selected for coverage in this
-                    application.
-                </h4>
-            </div>
-
-            <div id="SpouseInfoBlock" data-bind="visible: did_select_spouse_coverage()">
-                <h3 class="lighter block green">Spouse information</h3>
-
-                <div class="row form-group">
-                    <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="spFName2">
-                        Spouse Name
-                    </label>
-
-                    <div class="col-xs-12 col-sm-10">
-                        <input type="text" id="spFName2" data-bind="value: spouse().first" placeholder="First Name"/>
-                        <input type="text" id="spLName2" data-bind="value: spouse().last" placeholder="Last Name"/>
-                    </div>
-                </div>
-
-                <div class="row form-group">
-                    <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="spssn">
-                        SSN
-                    </label>
-
-                    <div class="col-xs-12 col-sm-10">
-                        <input type="text" id="spssn" name="spssn" class="col-xs-12 col-sm-5 input-mask-ssn"
-                               data-bind="value: spouse().ssn" >
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-2 no-padding-right">Gender</label>
-
-                    <div class="col-xs-12 col-sm-10">
-                        <label class="blue">
-                            <input name="spGender" value="male" type="radio" class="inline ace"
-                                   data-bind="checked: spouse().gender"/>
-                            <span class="lbl"> Male &nbsp;&nbsp;&nbsp; </span>
-                        </label>
-
-                        <label class="blue">
-                            <input name="spGender" value="female" type="radio" class="inline ace"
-                                   data-bind="checked: spouse().gender"/>
-                            <span class="lbl"> Female</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="space-2"></div>
-                <div class="clearfix"></div>
-
-                <div>
-                    <div class="form-group">
-
-                        <label class="control-label col-xs-12 col-sm-2 no-padding-right">Mailing Address</label>
-                        <div class="col-xs-12 col-sm-9">
-                            <label>
-                                <input type="checkbox" class="ace" data-bind="checked: is_spouse_address_same_as_employee">
-                                <span class="lbl padding-8">same as Employee</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div data-bind="slideDownIf: !is_spouse_address_same_as_employee()">
-                        <div class="form-group">
-                            <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spStreet1">Street 1</label>
-
-                            <div class="col-xs-12 col-sm-9">
-                                <div class="clearfix">
-                                    <input type="text" id="spStreet1" name="spStreet1" class="col-xs-12 col-sm-9"
-                                           data-bind="value: spouse().address1"/>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spStreet2">Street 2</label>
-
-                            <div class="col-xs-12 col-sm-9">
-                                <div class="clearfix">
-                                    <input type="text" id="spStreet2" name="spStreet2" class="col-xs-12 col-sm-9"
-                                           data-bind="value: spouse().address2"/>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="space-2"></div>
-
-                        <div class="form-group">
-                            <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeCity">City, ST Zip</label>
-
-                            <div class="col-xs-12 col-sm-9">
-                                <input type="text" id="spCity" name="spCity" placeholder="City" data-bind="value: spouse().city"/>
-
-                                <select id="spState" name="spState" class="select1"
-                                        data-bind="value: spouse().state">
-                                    <option value="">&nbsp;</option>
-                                    {% for state in states %}
-                                        <option value="{{ state['code'] }}">{{ state['name'] }}</option>
-                                    {% endfor %}
-                                </select>
-
-                                <input type="text" id="spZip" name="spZip" class="input-mask-zip" placeholder="zip"
-                                       data-bind="value: spouse().zip"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="spEmail">Email Address:</label>
-                    <div class="col-xs-12 col-sm-9">
-                        <label>
-                            <input type="checkbox" class="ace" data-bind="checked: is_spouse_email_same_as_employee">
-                            <span class="lbl padding-8">same as Employee</span>
-                        </label>
-                    </div>
-
-                    <div data-bind="slideDownIf: !is_spouse_email_same_as_employee()">
-                        <div class="col-xs-12 col-sm-3 no-padding-right"></div>
-                        <div class="col-xs-12 col-sm-9">
-                            <div class="input-group">
-                                <span class="input-group-addon">
-                                  <i class="icon-envelope"></i>
-                                </span>
-
-                                <input type="email" name="spEmail" id="spEmail" class="col-xs-12 col-sm-6"
-                                       data-bind="value: spouse().email"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-2"></div>
-
-                <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-2 no-padding-right">Spouse Policy Owner</label>
-
-                    <div class="col-xs-12 col-sm-10">
-                        <label class="blue">
-                            <input name="spOwner" value="employee" type="radio" class="inline ace" id="spOwner-employee"
-                                   checked="" data-bind="checked: spouse_policy_owner"/>
-                            <span class="lbl"> Employee (<span data-bind="text: employee().first"></span>)&nbsp;&nbsp;&nbsp;</span>
-                        </label>
-
-                        <label class="blue">
-                            <input name="spOwner" value="self" type="radio" class="inline ace" id="spOwner-self"
-                                   checked="" data-bind="checked: spouse_policy_owner"/>
-                            <span class="lbl"> Self (<span data-bind="text: spouse().first"></span>) &nbsp;&nbsp;&nbsp;</span>
-                        </label>
-
-                        <label class="blue">
-                            <input name="spOwner" value="other" type="radio" class="inline ace" id="spOwner-other"
-                                   data-bind="checked: spouse_policy_owner"/>
-                            <span class="lbl"> Other</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="hide col-sm-offset-2" id="spOtherOwner">
-                    <div class="form-group">
-                        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spOtherOwnerName">Other
-                            owner of spouse policy</label>
-
-                        <div class="col-xs-12 col-sm-9">
-                            <input type="text" id="spOtherOwnerName" name="spOtherOwnerName" class="col-xs-12 col-sm-4"
-                                   placeholder="Full Name" data-bind="value: spouse_other_owner_name"/>
-                        </div>
-                    </div>
-
-                    <div class="space-2"></div>
-                    <div class="form-group">
-                        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spOtherOwnerSSN">Owners's
-                            SSN </label>
-
-                        <div class="col-xs-12 col-sm-9">
-                            <input type="text" id="spOtherOwnerSSN" name="spOtherOwnerSSN"
-                                   class="col-xs-12 col-sm-4 input-mask-ssn" data-bind="value: spouse_other_owner_ssn"/>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-            <!-- .SpouseInfoBlock -->
-
-            <div id="ChildrenInfoBlock" data-bind="visible: did_select_children_coverage()">
-                <h3 class="lighter block green">Children information</h3>
-
-                {# Loop through the children #}
-                <ul class="list-unstyled" data-bind="foreach: {data: get_valid_children}">
-                    <li>
-                        <div class="row form-group">
-                            <label class="control-label col-xs-12 col-sm-2 no-padding-right"
-                                   data-bind="attr: {for: 'child-first-'+$index()}">
-                                Child <span data-bind="text: $index() + 1"></span>:
-                            </label>
-
-                            <div class="col-xs-12 col-sm-6">
-                                <input type="text" data-bind="value: first, attr: {id: 'child-first-'+$index()}"
-                                       placeholder="First Name"/>
-                                <input type="text" data-bind="value: last" placeholder="Last Name"/>
-                            </div>
-                        </div>
-
-                        <div class="row form-group">
-                            <label class="control-label col-xs-12 col-sm-2 no-padding-right"
-                                   data-bind="attr: {for: 'child-ssn-'+$index()}">
-                                SSN
-                            </label>
-
-                            <div class="col-xs-12 col-sm-9">
-                                <input type="text" class="col-xs-12 col-sm-5" data-bind="value: ssn, maskedInput: '999-99-9999',
-										attr: {id: 'child-ssn-'+$index()}
-										"/>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="control-label col-xs-12 col-sm-2 no-padding-right"
-                                   data-bind="attr: {for: 'child-gender-'+$index()}">
-                                Gender
-                            </label>
-
-                            <div class="col-xs-12 col-sm-10">
-                                <label class="blue">
-                                    <input value="male" type="radio" class="inline ace" data-bind="checked: gender, 
-										  attr: {name: 'child-gender-'+$index()}"/>
-                                    <span class="lbl"> Male &nbsp;&nbsp;&nbsp; </span>
-                                </label>
-
-                                <label class="blue">
-                                    <input value="female" type="radio" class="inline ace" data-bind="checked: gender, 
-										  attr: {name: 'child-gender-'+$index()}"/>
-                                    <span class="lbl"> Female</span>
-                                </label>
-                            </div>
-                        </div>
-
-
-                    </li>
-                </ul>
-
-                <div class="space-2"></div>
-	    
-	     <span class="text-primary bigger-110 ">
-	       <i class="icon-info-sign"></i>
-	       Employee will be the Owner of any child policy(ies)
-	     </span>
-
-            </div>
-            <!-- .ChildrenInfoBlock -->
-
-        </div>
-        <!-- step3 -->
-    </form>
-
-    <!-- ------------------------------ STEP 5 ------------------------------ -->
-
-    <form class="" id="step5-form">
-
-        <div class="step-pane" id="step5">
-            
-            <div data-bind="visible: insurance_product.should_show_step_5()">
-
-                <div id="eeBeneficiaryBlock" data-bind="visible: did_select_employee_coverage()">
-                    <h3 class="lighter block green">
-                        Employee Beneficiary
-                    </h3>
-
-                    <div class="row form-group" id="eeHasSpouseAsBeneficiaryOption"
-                         data-bind="visible: should_include_spouse_in_table()">
-                        <label class="control-label col-xs-12 col-sm-5 no-padding-right">
-                            <span data-bind="visible: insurance_product.should_show_contingent_beneficiary()">
-                                Primary
-                            </span>
-                            Beneficiary of Employee Coverage is
-                        </label>
-    
-                        <div class="col-xs-12 col-sm-7">
-                            <label class="blue">
-                                <input name="eeBeneficiary" id="eeBeneSpouse" value="spouse" type="radio" class="inline ace"
-                                       data-bind="checked: employee_beneficiary_type"/>
-                                <span class="lbl"> Spouse (<span data-bind="text: spouse().first"></span>)&nbsp;&nbsp;&nbsp; </span>
-                            </label>
-    
-                            <label class="blue">
-                                <input name="eeBeneficiary" id="eeBeneOther" value="other" type="radio" class="inline ace"
-                                       data-bind="checked: employee_beneficiary_type"/>
-                                <span class="lbl"> Someone else</span>
-                            </label>
-                        </div>
-    
-                    </div>
-    
-                    <div id="eeBeneficiaryOther"
-                         data-bind="visible: !should_include_spouse_in_table() || employee_beneficiary_type() == 'other'">
-                        <div class="row">
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherName">
-                                    Beneficiary
-                                </label>
-    
-                                <div class="col-xs-12 col-sm-9 form-group">
-                                    <input type="text" id="eeBeneOtherName" name="eeBeneOtherName" placeholder="Full Name"
-                                           data-bind="value: employee_other_beneficiary().name"/>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherRelation">
-                                    Relationship
-                                </label>
-    
-                                <div class="col-xs-12 col-sm-9 form-group">
-                                    <input type="text" id="eeBeneOtherRelation" name="eeBeneOtherRelation"
-                                           placeholder="Relationship" data-bind="value: employee_other_beneficiary().relationship"/>
-                                </div>
-                            </div>
-                        </div>
-    
-                        <div class="row">
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherSSN">
-                                    SSN
-                                </label>
-    
-                                <div class="col-xs-10 col-sm-9 form-group">
-                                    <input type="text" id="eeBeneOtherSSN" name="eeBeneOtherSSN" class="input-mask-ssn"
-                                           data-bind="value: employee_other_beneficiary().ssn"/>
-                                </div>
-                            </div>
-    
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherDOB">
-                                    DOB
-                                </label>
-    
-                                <div class="col-xs-10 col-sm-9 form-group">
-                                    <input class="input-mask-date" name="eeBeneOtherDOB"
-                                           data-bind="value: employee_other_beneficiary().date_of_birth"
-                                           type="text" id="eeBeneOtherDOB" placeholder="DD/MM/YYYY"/>
-                                </div>
-                            </div>
-                        </div>
-
-                        {#
-                        <div class="row">
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-12 no-padding-right">
-                                    <input type="checkbox" id="eeBeneOtherEntity" name="eeBeneOtherEntity"
-                                           data-bind="checked: employee_other_beneficiary().is_nonperson_entity"/>
-                                    beneficiary is an estate, trust, or other non-person entity
-                                </label>
-                            </div>
-                        </div>
-                        #}
-                    </div>
-                    <!-- /eeBeneficiaryOther -->
-                </div>
-                <!-- /eeBeneficiaryBlock -->
-
-                {# Employee contingent beneficiary #}
-                <div id="eeContingentBeneficiaryBlock"
-                     data-bind="visible: did_select_employee_coverage() && insurance_product.should_show_contingent_beneficiary()">
-
-                    <div class="row form-group">
-                        <label class="control-label col-xs-12 col-sm-5 no-padding-right">Contingent Beneficiary of Employee Coverage
-                            is </label>
-
-                        <div class="col-xs-12 col-sm-7">
-                            <label class="blue">
-                                <input name="eeContBeneficiary" value="none" type="radio" class="inline ace"
-                                       data-bind="checked: employee_contingent_beneficiary_type"/>
-                                <span class="lbl"> None &nbsp;&nbsp;&nbsp; </span>
-                            </label>
-                            <label class="blue" data-bind="visible: should_include_spouse_in_table()">
-                                <input name="eeContBeneficiary" value="spouse" type="radio" class="inline ace"
-                                       data-bind="checked: employee_contingent_beneficiary_type"/>
-                                <span class="lbl"> Spouse (<span data-bind="text: spouse().first"></span>)&nbsp;&nbsp;&nbsp; </span>
-                            </label>
-
-                            <label class="blue">
-                                <input name="eeContBeneficiary" value="other" type="radio" class="inline ace"
-                                       data-bind="checked: employee_contingent_beneficiary_type"/>
-                                <span class="lbl"> Someone else</span>
-                            </label>
-                        </div>
-
-                    </div>
-
-                    <div id="eeContingentBeneficiaryOther"
-                         data-bind="visible: employee_contingent_beneficiary_type() == 'other'">
-                        <div class="row">
-                            <div class="col-sm-12 col-md-6">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeContBeneOtherName">
-                                    Beneficiary
-                                </label>
-
-                                <div class="col-xs-12 col-sm-9 form-group">
-                                    <input type="text" id="eeContBeneOtherName" name="eeContBeneOtherName" placeholder="Full Name"
-                                           data-bind="value: employee_contingent_beneficiary().name"/>
-                                </div>
-                            </div>
-
-
-                            <div class="col-sm-12 col-md-6">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeContBeneOtherRelation">
-                                    Relationship
-                                </label>
-
-                                <div class="col-xs-12 col-sm-9 form-group">
-                                    <input type="text" id="eeContBeneOtherRelation" name="eeContBeneOtherRelation"
-                                           placeholder="Relationship" data-bind="value: employee_contingent_beneficiary().relationship"/>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeContBeneOtherSSN">
-                                    SSN
-                                </label>
-
-                                <div class="col-xs-10 col-sm-9">
-                                    <input type="text" id="eeContBeneOtherSSN" name="eeContBeneOtherSSN" class="input-mask-ssn"
-                                           data-bind="value: employee_contingent_beneficiary().ssn"/>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeContBeneOtherDOB">
-                                    DOB
-                                </label>
-
-                                <div class="col-xs-10 col-sm-9">
-                                    <input class="input-mask-date" name="eeContBeneOtherDOB"
-                                           data-bind="value: employee_contingent_beneficiary().date_of_birth"
-                                           type="text" id="eeContBeneOtherDOB" placeholder="DD/MM/YYYY"/>
-                                </div>
-                            </div>
-                        </div>
-                        {#
-                        <div class="row">
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-12 no-padding-right">
-                                    <input type="checkbox" id="eeContBeneOtherEntity" name="eeContBeneOtherEntity"
-                                           data-bind="checked: employee_contingent_beneficiary().is_nonperson_entity"/>
-                                    beneficiary is an estate, trust, or other non-person entity
-                                </label>
-                            </div>
-                        </div>
-                        #}
-                    </div>
-                    <!-- /eeContBeneficiaryOther -->
-                </div>
-
-                <div id="spBeneficiaryBlock" data-bind="visible: did_select_spouse_coverage()">
-                    <h3 class="lighter block green">
-                        Spouse Beneficiary
-                    </h3>
-    
-                    <div class="row form-group">
-                        <label class="control-label col-xs-12 col-sm-5 no-padding-right">
-                            <span data-bind="visible: insurance_product.should_show_contingent_beneficiary()">
-                                Primary
-                            </span>
-                            Beneficiary of Spouse Coverage is
-                        </label>
-    
-                        <div class="col-xs-12 col-sm-7">
-                            <label class="blue">
-                                <input name="spBeneficiary" id="spBeneSpouse" value="spouse" type="radio"
-                                       class="inline ace" checked="" data-bind="checked: spouse_beneficiary_type"/>
-                                <span class="lbl"> Employee (<span data-bind="text: employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
-                            </label>
-    
-                            <label class="blue">
-                                <input name="spBeneficiary" id="spBeneOther" value="other" type="radio" class="inline ace"
-                                       data-bind="checked: spouse_beneficiary_type"/>
-                                <span class="lbl"> Someone else</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div id="spBeneficiaryOther"
-                         data-bind="visible: did_select_spouse_coverage() && spouse_beneficiary_type() == 'other'">
-                        <div class="row">
-                            <div class="col-sm-12 col-md-6">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherName">
-                                    Beneficiary
-                                </label>
-    
-                                <div class="col-xs-12 col-sm-9 form-group">
-                                    <input type="text" id="spBeneOtherName" name="spBeneOtherName" placeholder="Full Name"
-                                           data-bind="value: spouse_other_beneficiary().name"/>
-                                </div>
-                            </div>
-    
-    
-                            <div class="col-sm-12 col-md-6">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherRelation">
-                                    Relationship
-                                </label>
-    
-                                <div class="col-xs-12 col-sm-9 form-group">
-                                    <input type="text" id="spBeneOtherRelation" name="spBeneOtherRelation"
-                                           placeholder="Relationship" data-bind="value: spouse_other_beneficiary().relationship"/>
-                                </div>
-                            </div>
-                        </div>
-    
-                        <div class="row">
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherSSN">
-                                    SSN
-                                </label>
-    
-                                <div class="col-xs-10 col-sm-9">
-                                    <input type="text" id="spBeneOtherSSN" name="spBeneOtherSSN" class="input-mask-ssn"
-                                           data-bind="value: spouse_other_beneficiary().ssn"/>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherDOB">
-                                    DOB
-                                </label>
-    
-                                <div class="col-xs-10 col-sm-9">
-                                    <input class="input-mask-date" name="spBeneOtherDOB"
-                                           data-bind="value: spouse_other_beneficiary().date_of_birth"
-                                           type="text" id="spBeneOtherDOB" placeholder="DD/MM/YYYY"/>
-                                </div>
-                            </div>
-                        </div>
-                        {#
-                        <div class="row">
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-12 no-padding-right">
-                                    <input type="checkbox" id="spBeneOtherEntity" name="spBeneOtherEntity"
-                                           data-bind="checked: spouse_other_beneficiary().is_nonperson_entity"/>
-                                    beneficiary is an estate, trust, or other non-person entity
-                                </label>
-                            </div>
-                        </div>
-                        #}
-                    </div>
-                    <!-- /spBeneficiaryOther -->
-                </div>
-                <!-- /spBeneficiaryBlock -->
-
-                <div id="spContBeneficiaryBlock" data-bind="visible: did_select_spouse_coverage() && insurance_product.should_show_contingent_beneficiary()">
-                    <div class="row form-group">
-                        <label class="control-label col-xs-12 col-sm-5 no-padding-right">
-                            Contingent Beneficiary of Spouse Coverage is
-                        </label>
-
-                        <div class="col-xs-12 col-sm-7">
-                            <label class="blue">
-                                <input name="spContBeneficiary" id="spBeneSpouse" value="none" type="radio"
-                                       class="inline ace" checked="" data-bind="checked: spouse_contingent_beneficiary_type" />
-                                <span class="lbl"> None &nbsp;&nbsp;&nbsp; </span>
-                            </label>
-
-                            <label class="blue">
-                                <input name="spContBeneficiary" id="spBeneSpouse" value="spouse" type="radio"
-                                       class="inline ace" checked="" data-bind="checked: spouse_contingent_beneficiary_type"/>
-                                <span class="lbl"> Employee (<span data-bind="text: employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
-                            </label>
-
-                            <label class="blue">
-                                <input name="spContBeneficiary" id="spBeneOther" value="other" type="radio" class="inline ace"
-                                       data-bind="checked: spouse_contingent_beneficiary_type"/>
-                                <span class="lbl"> Someone else</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div id="spContBeneficiaryOther"
-                         data-bind="visible: did_select_spouse_coverage() && spouse_contingent_beneficiary_type() == 'other'">
-                        <div class="row">
-                            <div class="col-sm-12 col-md-6">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spContBeneOtherName">
-                                    Beneficiary
-                                </label>
-
-                                <div class="col-xs-12 col-sm-9 form-group">
-                                    <input type="text" id="spContBeneOtherName" name="spContBeneOtherName" placeholder="Full Name"
-                                           data-bind="value: spouse_contingent_beneficiary().name"/>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-12 col-md-6">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spContBeneOtherRelation">
-                                    Relationship
-                                </label>
-
-                                <div class="col-xs-12 col-sm-9 form-group">
-                                    <input type="text" id="spContBeneOtherRelation" name="spContBeneOtherRelation"
-                                           placeholder="Relationship" data-bind="value: spouse_contingent_beneficiary().relationship"/>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row ">
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spContBeneOtherSSN">
-                                    SSN
-                                </label>
-
-                                <div class="col-xs-10 col-sm-9">
-                                    <input type="text" id="spContBeneOtherSSN" name="spContBeneOtherSSN" class="input-mask-ssn"
-                                           data-bind="value: spouse_contingent_beneficiary().ssn"/>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spContBeneOtherDOB">
-                                    DOB
-                                </label>
-
-                                <div class="col-xs-10 col-sm-9">
-                                    <input class="input-mask-date" name="spContBeneOtherDOB"
-                                           data-bind="value: spouse_contingent_beneficiary().date_of_birth"
-                                           type="text" id="spContBeneOtherDOB" placeholder="DD/MM/YYYY"/>
-                                </div>
-                            </div>
-                        </div>
-                        {#
-                        <div class="row">
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-12 no-padding-right">
-                                    <input type="checkbox" id="spContBeneOtherEntity" name="spContBeneOtherEntity"
-                                           data-bind="checked: spouse_contingent_beneficiary().is_nonperson_entity"/>
-                                    beneficiary is an estate, trust, or other non-person entity
-                                </label>
-                            </div>
-                        </div>
-                         #}
-                    </div>
-                    <!-- /spContBeneficiaryOther -->
-                </div>
-                <!-- /spContBeneficiaryBlock -->
-
-                <div id="onlyChildCoverageBeneficiaryStmt" data-bind="visible: did_select_children_coverage()">
-                    <h3 class="lighter block green">Child Beneficiary</h3>
-                    <span class="text-primary bigger-110 center">
-                      <i class="icon-info-sign"></i>
-                      Beneficiary of Child coverage will be designated as the Employee unless otherwise noted via separate written communication with 5Star's Administrative office.
-                    </span>
-                </div>
-
-                <div class="error" data-bind="visible: has_contingent_beneficiary_error()">
-                    Spouse cannot be both primary and contingent beneficiary.
-                </div>
-            </div>
-            
-            <div data-bind="visible: !insurance_product.should_show_step_5()">
-                <h4 class="green center">
-                    This step does not apply for this product.
-                </h4>
-            </div>
-
-        </div>
-    </form>
-
-    <!-- ------------------------------ STEP 6 ------------------------------ -->
-
-    <div class="step-pane" id="step6">
-        <h3 class="green">Confirmation</h3>
-
-        Please review your Summary of Coverage below, and click "I agree..." below to be taken to application for
-        signing.
-        <div class="space-10"></div>
-
-        <div id="CoverageSummary">
-            <h4 class="green center">Summary of Benefits</h4>
-
-            <!--ko foreach: {data: selected_products, as: 'current_product'}-->
-            <table class="center confirm-table table table-hover" data-bind="with: selected_plan[current_product]">
-                <thead>
-                <tr class="table-striped">
-                    <th class="center">Name</th>
-                    <th class="center">Age</th>
-                    <th class="center">Coverage</th>
-                    <th class="center">Additional Riders</th>
-                    <th class="center"><span data-bind="text: $root.payment_mode_text"></span> Premium</th>
-                </tr>
-                </thead>
-                <tbody>
-                <!--ko foreach: get_all_people -->
-                <tr>
-                    <td data-bind="text: name"></td>
-                    <td data-bind="text:get_age"></td>
-                    <td data-bind="html:display_selected_coverage"></td>
-                    <td></td>
-                    <td data-bind="text:display_premium"></td>
-                </tr>
-                <!--ko if: $root.current_person($data) --><!-- /ko -->
-                  <!--ko foreach: {data: $root.get_selected_riders, as: 'rider'} -->
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td data-bind="text: rider.name"></td>
-                      <td data-bind="text:$parent.display_riders(rider.code)"></td>
-                    </tr>
-                  <!--/ko-->
-                <!--/ko-->
-                <tr class="success">
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td><span class="text-primary bigger-110">Total</span></td>
-                    <td><span class="text-primary bigger-110" data-bind="text: formatted_total_premium()"></span></td>
-                </tr>
-                </tbody>
-            </table>
-
-            <div class="space-10"></div>
-
-            <form class="form-horizontal" id="step6-form">
-                <div id="inPersonSignerToken">
-                    <h4 class="green">Employee Identification</h4>
-                    <!--ko if: !insurance_product.should_use_date_of_hire_for_identity()-->
-                        <div class="row">
-                            <div class="col-xs-12">
-                                <p>As identity confirmation, please enter either your Date of Hire, your Employee Number, or
-                                    your current Driver's License number.</p>
-                            </div>
-                        </div>
-
-                        <div class="row form-group">
-                            <div class="hidden-xs col-sm-12">
-                                <div class="col-sm-1">
-                                </div>
-
-                                <label class="" for="tokenType">My</label>
-                                <select id="tokenType" class="select1" placeholder="Select one..."
-                                        data-bind="value: identityType">
-                                    <option value="" disabled="disabled">Select one...</option>
-                                    <option value="Date of Hire">Date of Hire</option>
-                                    <option value="Employee Num">Employee #</option>
-                                    <option value="Driver's License Num">Driver's License #</option>
-                                </select>
-                                <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>
-                                <input type="text" id="ConfirmationToken" name="ConfirmationToken"
-                                       data-bind="value: identityToken"/>
-                            </div>
-                            <!-- /.hidden-xs -->
-
-                            <div class="col-xs-12 hidden-sm hidden-md hidden-lg">
-                                <div class="col-xs-1">
-                                </div>
-                                <div class="col-xs-11">
-                                    <label class="" for="tokenType">My</label>
-                                    <select id="tokenType" name="tokenType" class="select1"
-                                            data-bind="value: identityType">
-                                        <option value="">Select one...</option>
-                                        <option value="Date of Hire">"Date of Hire"</option>
-                                        <option value="Employee Num">"Employee #"</option>
-                                        <option value="Driver's License Num">"Driver's License #"</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-xs-12  hidden-sm hidden-md hidden-lg">
-                                <div class="col-xs-12">
-                                    <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>
-                                    <input type="text" id="ConfirmationToken" name="ConfirmationToken"
-                                           data-bind="value: identityToken"/>
-                                </div>
-                            </div>
-                            <!-- /.hidden-sm -->
-
-                        </div>
-                        <!-- /.form-group -->
-                    <!--/ko-->
-                    <!--ko if: insurance_product.should_use_date_of_hire_for_identity() -->
-                        <div class="row">
-                            <div class="col-xs-12">
-                                <p>As identity confirmation, please enter your Date of Hire:</p>
-                            </div>
-                        </div>
-
-                        <div class="row form-group">
-                            <div class="hidden-xs col-sm-12">
-                                <div class="col-sm-1">
-                                </div>
-
-                                <input type="text" class="input-mask-date"  id="ConfirmationToken" name="ConfirmationToken"
-                                       data-bind="value: identityToken" >
-                            </div>
-                            <!-- /.hidden-xs -->
-
-                            <div class="col-xs-12  hidden-sm hidden-md hidden-lg">
-                                <div class="col-xs-12">
-                                    <input type="text" class="input-mask-date" id="ConfirmationToken" name="ConfirmationToken"
-                                           data-bind="value: identityToken" >
-                                </div>
-                            </div>
-                            <!-- /.hidden-sm -->
-
-                        </div>
-                    <!--/ko-->
-                </div>
-                <!-- /inPersonSignerToken -->
-
-                <div class="space-2"></div>
-                <div class="col-xs-12">
-                    <label class="control-label col-xs-12 col-sm-5 col-md-4 col-lg-3 no-padding-right" for="enrollCity">I
-                        am making this application from</label>
-
-                    <div class="col-xs-12 col-sm-7 col-md-8 col-lg-9">
-                        <input type="text" id="enrollCity" name="enrollCity" placeholder="City"
-                               data-bind="value: enrollCity"/>,&nbsp<span data-bind="text: enrollState"></span>
-                    </div>
-                </div>
-                <!-- /signing Location -->
-
-            </form>
-            <!-- /step6 form -->
-        </div>
-        <!-- /CoverageSummary -->
-
-        <br>
-        <br>
-
-        <!--ko if: insurance_product.should_confirm_disclosure_notice() -->
-        <div id="disclaimerNotice">
-            <div class="form-group">
-                <br>
-                <label class="control-label col-xs-12 col-sm-12 no-padding-right">
-                    <input type="checkbox" id="confirmDisclaimer" name="confirmDisclaimer"
-                           data-bind="checked: disclaimer_notice_confirmed"/> I acknowledge the related <a
-                    href="#modal-disclaimer" data-toggle="modal">Accelerated Benefit Disclosure</a>
-                </label>
-            </div>
-        </div>
-        <!--/ko-->
-
-        <!--ko if: insurance_product.should_confirm_payroll_deduction() -->
-        <div class="form-group">
-            <br>
-            <label class="control-label col-xs-12 col-sm-12 no-padding-right">
-                <input type="checkbox" id="confirmPayrollDeductions" name="confirmPayrollDeductions"
-                       data-bind="checked: payroll_deductions_confirmed"/> I certify I have authorized my employer to make payroll deduction of premiums for myself and my family members.</a>
-            </label>
-        </div>
-        <!--/ko-->
-
-
-    </div>
-    <!-- /Step6 -->
-    </div>
-    <!-- /Wizard step container -->
-
-    <hr/>
-    <div class="row-fluid wizard-actions">
-        <button class="btn btn-default btn-xs pull-left" data-bind="click: exit_application, visible: is_in_person_application">
-            Cancel 
-        </button>
-        
-        <button class="btn btn-prev">
-            <i class="icon-arrow-left"></i>
-            Prev
-        </button>
-
-        <button class="btn btn-success btn-next" data-last="I agree to this coverage and am ready to sign ">
-            Next
-            <i class="icon-arrow-right icon-on-right"></i>
-        </button>
-    </div>
-    <!-- /Wizard actions -->
-    </div>
-    <!-- /widget-main -->
-    </div>
-    <!-- /widget-body -->
-    </div>
-    <!-- /widget-box -->
-    </div>
-    </div>
-
-
-    <div id="actively_at_work_modal" class="modal">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="lighter block blue center">Actively at work</h3>
-                </div>
-
-                <div class="modal-body">
-                    "Actively at work" means that you are an eligible employee/member of the employee/affiliation through which you are applying for this individual insurance; you are able to work and to perform the normal activities of a person of like age and gender; and you are not confined in a hospital, at home or elsewhere due to injury or sickness on the date you signed this application.
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-disabled-definition" class="modal">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="lighter block blue center">Disabled</h3>
-                </div>
-
-                <div class="modal-body">
-                    "Disabled" means that a person is unable to work, to attend school, or to perform the normal activities of a person of like age and gender or that a person is confined in a hospital, at home or elsewhere due to injury or sickness.
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-
-    <!-- ------------------------------ Modal Disclaimer ------------------------------ -->
-
-    <div id="modal-disclaimer" class="modal">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="lighter block blue center">Accelerated Benefit Disclosure Facts</h3>
-                </div>
-
-                <div class="modal-body">
-{#                {% set base_product_code = wizard_data['products'][0].get_base_product_code() %}#}
-{#                    <iframe src="{%#}
-{#        if base_product_code=='FPPTI' or base_product_code == 'FPP-Gov' %}#}
-{#	       {% if wizard_data['state']=='TX' %}#}
-{#	         {{ url_for ('FPPTI_disclosure_TX') }}#}
-{#	       {% elif wizard_data['state']=='KS' %}#}
-{#	         {{ url_for ('FPPTI_disclosure_KS') }}#}
-{#	       {% elif wizard_data['state']=='VA' %}#}
-{#	         {{ url_for ('FPPTI_disclosure_VA') }}	    #}
-{#	       {% elif wizard_data['state']=='OR' %}#}
-{#	         {{ url_for ('FPPTI_disclosure_OR') }}#}
-{#	       {% else %}#}
-{#	         {{ url_for ('FPPTI_disclosure_generic') }}#}
-{#	       {% endif %}#}
-{#	    {% elif base_product_code=='FPPCI' %}#}
-{#	       {% if wizard_data['state']=='KS' %}#}
-{#	         {{ url_for ('FPPCI_disclosure_KS') }}#}
-{#	       {% elif wizard_data['state']=='VA' %}#}
-{#	         {{ url_for ('FPPCI_disclosure_VA') }}	    #}
-{#	       {% elif wizard_data['state']=='OR' %}#}
-{#	         {{ url_for ('FPPCI_disclosure_OR') }}#}
-{#	       {% else %}#}
-{#	         {{ url_for ('FPPCI_disclosure_generic') }}#}
-{#	       {% endif %}#}
-{#        {% elif base_product_code == 'Group CI' %}#}
-{#           {% if wizard_data['state'] == 'KS' %}#}
-{#               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-KS.pdf') }}#}
-{#           {% elif wizard_data['state'] == 'OR' %}#}
-{#               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-OR.pdf') }}#}
-{#           {% elif wizard_data['state'] == 'VA' %}#}
-{#               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-VA.pdf') }}#}
-{#           {% else %}#}
-{#               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508 (Generic).pdf') }}#}
-{#           {% endif %}#}
-{#	    {% else %}#}
-{#	       {{ url_for ('FPPTI_disclosure_generic') }}#}
-{#	    {% endif %}"#}
-                            style="zoom:1.0" width="100%" height="500" frameborder="0"></iframe>
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- PAGE CONTENT ENDS -->
-    </div>
-    <!-- /.col -->
+      <!-- /.col -->
     </div>
     <!-- /.row -->
-    </div><!-- /.page-content -->
+  </div><!-- /.page-content -->
 
 
-    <div id="health_modal" class="modal fade">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">
+  <div id="health_modal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">
 	  
                   <span id="modal_text_existing_warning_title" style="display: none;">
                     Existing Insurance Notice</span>
@@ -2347,70 +240,66 @@
                   <span id="modal_text_replacement_title" style="display: none;">
                     Statement of Health Response</span>
 
-                    </h4>
-                </div>
-                <div class="modal-body">
-                    <p>
-
-                        <span id="modal_text_existing_warning" style="display: none;" class="bigger-120">If yes, and you live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV please complete and sign the Notice: Replacement of Life Insurance and Annuity. The Notice must be <span
-                            class="text-danger bigger-130">presented</span> and <span class="text-danger bigger-130">read</span> to you by your agent at the time he/she takes your application. </span>
-
-                        <span id="modal_text_existing_warning_remote" style="display: none;" class="bigger-120">STOP:  since you are enrolling remotely via email but your response requires the <span
-                            class="oblique">Notice: Replacement of Life Insurance and Annuity</span> to be presented and read to you by your agent, you will not be permitted to continue with this online application. </span>
-
-                        <span id="modal_text_replacement_warning" style="display: none;" class="bigger-120">If yes, and you do not live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV, you must complete and sign the applicable state-specific Notice: Replacement of Life Insurance and Annuity, obtainable from your agent or enrollment professional.<br> <span
-                            class="text-danger bigger-130">You cannot proceed with this online enrollment, and must enroll via paper forms with your agent or enrollment professional.</span></span>
-
-                        <span id="modal_text_soh_warning" style="display: none;" class="bigger-120">A "yes" response to this question disqualifies this person from obtaining coverage.  You may proceed with this application after removing that individual from the coverage selection (in Step 1) before proceeding.</span>
-
-
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <!-- *** need to route to a proper landing page
-                        <button type="button" class="btn btn-warning" data-dismiss="modal">Exit Site</button>
-                    -->
-                </div>
-            </div>
-            <!-- /.modal-content -->
+          </h4>
         </div>
-        <!-- /.modal-dialog -->
-    </div>
+        <div class="modal-body">
+          <p>
+            <span id="modal_text_existing_warning" style="display: none;" class="bigger-120">If yes, and you live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV please complete and sign the Notice: Replacement of Life Insurance and Annuity. The Notice must be <span
+                    class="text-danger bigger-130">presented</span> and <span
+                    class="text-danger bigger-130">read</span> to you by your agent at the time he/she takes your application. </span>
 
-    <div id="warning_modal" class="modal fade">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">
-                      <span data-bind="text: warning_modal_title"></span>
-                    </h4>
-                </div>
-                <div class="modal-body">
-                    <p>
-                        <span class="bigger-120" data-bind="text: warning_modal_body"></span>
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-            <!-- /.modal-content -->
+            <span id="modal_text_existing_warning_remote" style="display: none;" class="bigger-120">STOP:  since you are enrolling remotely via email but your response requires the <span
+                    class="oblique">Notice: Replacement of Life Insurance and Annuity</span> to be presented and read to you by your agent, you will not be permitted to continue with this online application. </span>
+
+            <span id="modal_text_replacement_warning" style="display: none;" class="bigger-120">If yes, and you do not live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV, you must complete and sign the applicable state-specific Notice: Replacement of Life Insurance and Annuity, obtainable from your agent or enrollment professional.<br> <span
+                    class="text-danger bigger-130">You cannot proceed with this online enrollment, and must enroll via paper forms with your agent or enrollment professional.</span></span>
+
+            <span id="modal_text_soh_warning" style="display: none;" class="bigger-120">A "yes" response to this question disqualifies this person from obtaining coverage.  You may proceed with this application after removing that individual from the coverage selection (in Step 1) before proceeding.</span>
+
+          </p>
         </div>
-        <!-- /.modal-dialog -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      <!-- /.modal-content -->
     </div>
+    <!-- /.modal-dialog -->
+  </div>
+
+  <div id="warning_modal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">
+            <span data-bind="text: warning_modal_title"></span>
+          </h4>
+        </div>
+        <div class="modal-body">
+          <p>
+            <span class="bigger-120" data-bind="text: warning_modal_body"></span>
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+  </div>
 
 
 {% endblock %}
 
 {% block page_js %}
-    <script type="text/javascript">
-        jQuery(function ($) {
-            enrollment_wizard.init({{ wizard_data|tojson|safe }});
-            init_case_riders({{ case_riders | tojson | safe}});
-            init_enrollment_riders({{ enrollment_riders | tojson | safe}});
-        });
-    </script>
+  <script type="text/javascript">
+    jQuery(function ($) {
+      enrollment_wizard.init({{ wizard_data|tojson|safe }});
+      init_case_riders({{ case_riders | tojson | safe}});
+      init_enrollment_riders({{ enrollment_riders | tojson | safe}});
+    });
+  </script>
 {% endblock %}
 
