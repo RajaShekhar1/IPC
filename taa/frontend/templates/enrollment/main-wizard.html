@@ -523,72 +523,72 @@
         <div class="form-group col-xs-12 col-sm-1">
           <div class="">
             <ul class="list-unstyled list-striped js">
-              {% for rider in case_riders %}
-              <li><input type="checkbox" checked=checked disabled=disabled /></li>
-              <!--ko if: should_include_spouse_in_table-->
-              <li><input type="checkbox" checked=checked disabled=disabled /></li>
+              <!--ko foreach: case_riders -->
+                <li><input type="checkbox" checked=checked disabled=disabled /></li>
+                <!--ko if: $root.should_include_spouse_in_table -->
+                  <li><input type="checkbox" checked=checked disabled=disabled /></li>
+                <!--/ko-->
               <!--/ko-->
-              {% endfor %}
-              {% for rider in enrollment_riders %}
-              <li><input type="checkbox" autocomplete="off" data-bind="click: toggle_selected_riders('{{rider.code}}', 'emp')" /></li>
-              <!--ko if: should_include_spouse_in_table-->
-              <li><input type="checkbox" autocomplete="off" data-bind="click: toggle_selected_riders('{{rider.code}}', 'sp')" /></li>
+              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
+              <li><input type="checkbox" autocomplete="off" data-bind="click: $root.toggle_selected_riders(rider.code, 'emp'), checked: $root.selected_riders['emp'], checkedValue: $data" /></li>
+              <!--ko if: $root.should_include_spouse_in_table-->
+              <li><input type="checkbox" autocomplete="off" data-bind="click: $root.toggle_selected_riders(rider.code, 'sp')" /></li>
               <!--/ko-->
-              {% endfor %}
+              <!--/ko-->
             </ul>
           </div>
         </div>
         <div class="form-group col-xs-12 col-sm-4">
           <div class="">
             <ul class="list-unstyled list-striped js">
-              {% for rider in case_riders %}
-              <li data-bind="text: '{{rider.name}} for '+employee().name()"></li>
-              <!--ko if: should_include_spouse_in_table-->
-              <li data-bind="text: '{{rider.name}} for '+show_spouse_name()"></li>
+              <!--ko foreach: {data: case_riders, as: 'rider'} -->
+                <li data-bind="text: rider.name+' for '+$root.employee().name()"></li>
+                <!--ko if: $root.should_include_spouse_in_table-->
+                  <li data-bind="text: rider.name+' for '+$root.show_spouse_name()"></li>
+                <!--/ko-->
               <!--/ko-->
-              {% endfor %}
-              {% for rider in enrollment_riders %}
-              <li data-bind="text: '{{rider.name}} for '+employee().name()"></li>
-              <!--ko if: should_include_spouse_in_table-->
-              <li data-bind="text: '{{rider.name}} for '+show_spouse_name()"></li>
+              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
+              <li data-bind="text: rider.name+' for '+$root.employee().name()"></li>
+              <!--ko if: $root.should_include_spouse_in_table-->
+              <li data-bind="text: rider.name+' for '+$root.show_spouse_name()"></li>
               <!--/ko-->
-              {% endfor %}
+              <!--/ko-->
             </ul>
           </div>
         </div>
         <div class="form-group col-xs-12 col-sm-4">
           <div class="">
             <ul class="list-unstyled list-striped js">
-              {% for rider in case_riders %}
-              <li data-bind="text: '{{rider.name}}'"></li>
-              <!--ko if: should_include_spouse_in_table-->
-              <li data-bind="text: '{{rider.name}}'"></li>
+              <!--ko foreach: {data: case_riders, as: 'rider'} -->
+              <li data-bind="text: rider.name"></li>
+              <!--ko if: $root.should_include_spouse_in_table-->
+              <li data-bind="text: rider.name"></li>
               <!--/ko-->
-              {% endfor %}
-              {% for rider in enrollment_riders %}
-              <li data-bind="text: '{{rider.name}}'"></li>
-              <!--ko if: should_include_spouse_in_table-->
-              <li data-bind="text: '{{rider.name}}'"></li>
               <!--/ko-->
-              {% endfor %}
+              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
+              <li data-bind="text: rider.name"></li>
+              <!--ko if: $root.should_include_spouse_in_table-->
+              <li data-bind="text: rider.name"></li>
+              <!--/ko-->
+              <!--/ko-->
             </ul>
           </div>
         </div>
         <div class="form-group col-xs-12 col-sm-3">
           <div class="">
             <ul class="list-unstyled list-striped js">
-              {% for rider in case_riders %}
-              <li data-bind="text: '$'+riders()['emp']['{{rider.code}}']"></li>
-              <!--ko if: should_include_spouse_in_table-->
-              <li data-bind="text: '$'+riders()['sp']['{{rider.code}}']"></li>
+              <!--ko foreach: {data: case_riders, as: 'rider'} -->
+              <li data-bind="text: '$'+$root.riders()['emp'][rider.code]"></li>
+              <!--ko if: $root.should_include_spouse_in_table-->
+              <li data-bind="text: '$'+$root.riders()['sp'][rider.code]"></li>
               <!--/ko-->
-              {% endfor %}
-              {% for rider in enrollment_riders %}
-              <li data-bind="text: '$'+riders()['emp']['{{rider.code}}']"></li>
-              <!--ko if: should_include_spouse_in_table-->
-              <li data-bind="text: '$'+riders()['sp']['{{rider.code}}']"></li>
               <!--/ko-->
-              {% endfor %}
+              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
+              <li data-bind="text: '$'+$root.riders()['emp'][rider.code]"></li>
+              <!--ko if: $root.should_include_spouse_in_table-->
+              <li data-bind="text: '$'+$root.riders()['sp'][rider.code]"></li>
+              <!--/ko-->
+              <!--/ko-->
             </ul>
           </div>
         </div>
@@ -2045,15 +2045,16 @@
                     <td></td>
                     <td data-bind="text:display_premium"></td>
                 </tr>
-{#                  <!--ko foreach: {data: get_selected_riders($data), as: 'rider'} -->#}
-{#                    <tr>#}
-{#                      <td></td>#}
-{#                      <td></td>#}
-{#                      <td></td>#}
-{#                      <td data-bind="text: rider.name"></td>#}
-{#                      <td data-bind="text:display_riders(rider.code)"></td>#}
-{#                    </tr>#}
-{#                  <!--/ko-->#}
+                <!--ko if: $root.current_person($data) --><!-- /ko -->
+                  <!--ko foreach: {data: $root.get_selected_riders, as: 'rider'} -->
+                    <tr>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                      <td data-bind="text: rider.name"></td>
+                      <td data-bind="text:$parent.display_riders(rider.code)"></td>
+                    </tr>
+                  <!--/ko-->
                 <!--/ko-->
                 <tr class="success">
                     <td></td>
@@ -2064,7 +2065,7 @@
                 </tr>
                 </tbody>
             </table>
-            <!--/ko-->
+
             <div class="space-10"></div>
 
             <form class="form-horizontal" id="step6-form">

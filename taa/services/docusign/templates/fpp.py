@@ -94,7 +94,6 @@ class FPPTemplate(DocuSignServerTemplate):
         ]
 
         for (prefix_short, prefix_long) in {("ee", "employee"), ("sp", "spouse")}:
-
             if prefix_short == 'ee' or (prefix_short == 'sp' and self.data.did_spouse_select_coverage()):
                 tabs.append(DocuSignRadioTab(prefix_short + "Gender", self.data[prefix_long]["gender"]))
 
@@ -107,7 +106,6 @@ class FPPTemplate(DocuSignServerTemplate):
                     or (prefix_short == "sp" and self.data.did_spouse_select_coverage())):
 
                 tabs.append(DocuSignRadioTab(prefix_short + "Owner", self.data[prefix_long + "_owner"]))
-
         return tabs
 
     def make_employer_tabs(self):
@@ -314,7 +312,17 @@ class FPPTemplate(DocuSignServerTemplate):
             spouse_owner_notice = "SPOUSE POLICY OWNER: {}, {}".format(self.data['spName'], self.data['spSSN'])
         else:
             spouse_owner_notice = ""
-
+        rider_tabs = []
+        for rider_person in self.data['rider_data']:
+            riders = self.data['rider_data'].get(rider_person)
+            if rider_person == "emp" and self.data.did_employee_select_coverage():
+                for rider in riders: 
+                    tab_name = 'ee_rider_{}'.format(rider.get('code'))
+                    rider_tabs.append(DocuSignRadioTab(tab_name, 'yes'))
+            if rider_person == "sp" and self.data.did_spouse_select_coverage():    
+                for rider in riders: 
+                    tab_name = 'sp_rider_{}'.format(rider.get('code'))
+                    rider_tabs.append(DocuSignRadioTab(tab_name, 'yes'))
         return [
             DocuSignTextTab('eeEnrollCityState', self.data["enrollCity"] + ", " + self.data["enrollState"]),
             DocuSignTextTab('eeEnrollCity', self.data['enrollCity']),
@@ -330,7 +338,7 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignTextTab('eeEmailPart1', ee_email_part_1),
             DocuSignTextTab('eeEmailPart2', ee_email_part_2),
             DocuSignRadioTab('actively_at_work', "yes" if self.data['is_employee_actively_at_work'] else "no"),
-        ]
+        ] + rider_tabs
 
     def make_contact_tabs(self, prefix, data):
 
