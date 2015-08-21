@@ -64,7 +64,7 @@ if DOCUSIGN_LIVE_CC_RECIPIENTS:
 else:
     # Demo recipients
     DOCUSIGN_CC_RECIPIENTS = [
-        ('Test CC Recipient', 'cdurbin@delmarsd.com'),
+        ('Test CC Recipient', 'zmason@delmarsd.com'),
     ]
 
 # Email
