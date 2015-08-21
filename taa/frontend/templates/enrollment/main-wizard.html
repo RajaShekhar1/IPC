@@ -33,15 +33,13 @@
             <div class="widget-box">
               <div class="widget-header widget-header-blue widget-header-flat">
                 <h4 class="lighter">5Star Life Enrollment:&nbsp;&nbsp;<span
-                        data-bind="text: defaults.company_name"></span></h4>
+                        data-bind="text: enrollment_case.company_name"></span></h4>
 
-                <!--ko if: was_state_provided-->
-                <div class="grey smaller-80 pull-right" data-bind="visible: was_state_provided">
-                  <p>enrollment in <span data-bind="text: enrollCity"></span>, <span
-                          data-bind="text: enrollState"></span>&nbsp;&nbsp;
+                <div class="grey smaller-80 pull-right">
+                  <p>enrollment in <span data-bind="text: enrollment_case.situs_city"></span>, <span
+                          data-bind="text: enrollment_case.situs_state"></span>&nbsp;&nbsp;
                   </p>
                 </div>
-                <!--/ko-->
               </div>
 
               <div class="widget-body">
@@ -83,12 +81,12 @@
                   <hr/>
 
                   <div class="step-content row-fluid position-relative" id="step-container">
-                    {% include "main-wizard-step-1.html" %}
-                    {% include 'main-wizard-step-2.html' %}
-                    {% include 'main-wizard-step-3.html' %}
-                    {% include 'main-wizard-step-4.html' %}
-                    {% include 'main-wizard-step-5.html' %}
-                    {% include 'main-wizard-step-6.html' %}
+                    {% include "enrollment/main-wizard-step-1.html" %}
+{#                    {% include 'main-wizard-step-2.html' %}#}
+{#                    {% include 'main-wizard-step-3.html' %}#}
+{#                    {% include 'main-wizard-step-4.html' %}#}
+{#                    {% include 'main-wizard-step-5.html' %}#}
+{#                    {% include 'main-wizard-step-6.html' %}#}
                   </div>
 
                   <hr/>
@@ -296,9 +294,54 @@
 {% block page_js %}
   <script type="text/javascript">
     jQuery(function ($) {
-      enrollment_wizard.init({{ wizard_data|tojson|safe }});
-      init_case_riders({{ case_riders | tojson | safe}});
-      init_enrollment_riders({{ enrollment_riders | tojson | safe}});
+
+      var test_wizard_data = {
+        enrollment_type: "inperson",
+        case: {
+          id: 1,
+          situs_state: 'IL',
+          situs_city: 'Chicago',
+          company_name: "DelMar Software Development, LLC",
+          group_riders: [],
+          payment_mode: 52
+        },
+        applicants: [
+          {
+            type: wizard_applicant.Applicant.EmployeeType,
+            first: "Joe",
+            last: "Johnson",
+            gender: "male",
+            birthdate: "1990-01-22"
+          },
+          {
+            type: wizard_applicant.Applicant.SpouseType,
+            first: "Jane",
+            last: "Johnson",
+            gender: "female",
+            birthdate: "1989-11-11"
+          }
+        ],
+        products: [
+          {
+            code: 'FPPTI',
+            base_product_type: 'FPPTI',
+            soh_questions: [{'question': 'Have you had a heart attack in the last 5 years?'}]
+          }
+        ],
+        payment_modes: [
+          {'frequency': 52, 'label': 'Weekly'},
+          {'frequency': 26, 'label': 'Biweekly'},
+          {'frequency': 24, 'label': 'Semimonthly'},
+          {'frequency': 12, 'label': 'Monthly'}
+        ],
+        beneficiaries: []
+      };
+      window.vm = new wizard_viewmodel.WizardVM(test_wizard_data);
+      ko.applyBindings(window.vm);
+      //var actual_wizard_data = {{ wizard_data|tojson|safe }};
+{#      enrollment_wizard.init(test_wizard_data);#}
+{#      init_case_riders({{ case_riders | tojson | safe}});#}
+{#      init_enrollment_riders({{ enrollment_riders | tojson | safe}});#}
     });
   </script>
 {% endblock %}

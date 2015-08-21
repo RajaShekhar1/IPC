@@ -17,13 +17,13 @@ function build_product(root, product_data) {
 
   var base_type = product_data.base_product_type;
   var base_product;
-  if (base_type == "FPPTI") {
+  if (base_type === "FPPTI") {
     base_product = new FPPTIProduct(product_data);
-  } else if (base_type == "FPPCI") {
+  } else if (base_type === "FPPCI") {
     base_product = new FPPCIProduct(product_data);
-  } else if (base_type == "Group CI") {
+  } else if (base_type === "Group CI") {
     base_product = new GroupCIProduct(root, product_data);
-  } else if (base_type == "FPP-Gov") {
+  } else if (base_type === "FPP-Gov") {
     base_product = new FPPGovProduct(product_data);
   } else {
     // default product?

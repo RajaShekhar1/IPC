@@ -2,24 +2,6 @@
 
   <div class="step-pane active" id="step1">
 
-    <!-- logic for choosing state here only makes sense later for self-enroll, and states are not general states as for address, but function of product_type
-
-        <!==ko if: !was_state_provided==>
-        <div class="form-group">
-    <label class="" for="enrollmentState">Select state for this enrollment</label>
-    <select id="enrollmentState" class="select1"
-      data-bind="value: state"
-      >
-      <option value="">&nbsp;</option>
-      {% for state in states %}
-      <option value="{{state['code']}}">{{state["name"]}}</option>
-      {% endfor %}
-    </select>
-        </div>
-        <div class="space-2"></div>
-        <!==/ko==>
-        -->
-
     <h4 class="lighter block green">Initial information required to select a benefit plan</h4>
 
     {# Employee Section #}
@@ -102,7 +84,7 @@
     </div>
 
 
-    <!-- template for extended questions -->
+    {# template for extended questions  #}
     <script type="text/html" id="extended-questions-template">
       <!--ko if: $root.should_show_extended_questions() -->
       <div class="row">
@@ -155,7 +137,7 @@
       <!--/ko-->
     </script>
 
-
+    {# Children Data #}
     <div data-bind="slideDownIf: should_include_children">
       <!--ko foreach: {data: children, afterAdd: rendered_child, beforeRemove: removing_child} -->
       <div data-bind="attr: {'class':'child-'+$index()}">
@@ -209,7 +191,7 @@
     </div>
 
     {# Payment Mode Selection #}
-    <div style="margin-top: 1.5em;">
+    <div style="margin-top: 1.5em;" data-bind="visible: can_change_payment_mode">
       <div class="row">
         <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="paymentMode">
           Payment Mode
@@ -217,39 +199,40 @@
 
         <div class="form-group col-xs-12 col-sm-10">
           <select name="paymentMode" id="paymentMode"
-                  data-bind="value: payment_mode, options: payment_mode_choices, optionsValue: 'mode', optionsText: 'name', optionsCaption: '(Select Payment Mode)'"></select>
+                  data-bind="value: payment_mode, options: payment_modes, optionsValue: 'frequency', optionsText: 'label', optionsCaption: '(Select Payment Mode)'"></select>
         </div>
       </div>
     </div>
 
     {# Show Rates Button #}
-    <div class="row" data-bind="visible: !is_recommended_table_visible()">
+    <div class="row" data-bind="visible: !is_coverage_selection_visible()">
       <div class="align-center">
         <button type="button" class="btn btn-primary btn-lg show-rates"
-                data-bind="click: show_recommendations_table">
+                data-bind="click: show_coverage_selection_table">
           Show Rates
         </button>
       </div>
     </div>
 
-    {# Rates/Recommended Coverage and Selected Plan Table #}
-    <div class="center recommended-coverage-table" data-bind="slideDownIf: is_recommended_table_visible,
-          css: {'ci-recommendations': insurance_product.has_critical_illness_coverages}">
+    {#  Rates/Recommended Coverage and Selected Plan Table #}
+    <div class="center recommended-coverage-table" data-bind="slideDownIf: is_coverage_selection_visible,
+          css: {'ci-recommendations': should_show_critical_illness_styling}">
+
+
+      <div class="center">
+        <div data-bind="visible: is_rate_table_loading">
+          <i class="icon-spinner icon-spin grey bigger-125"></i>
+          Loading Coverage Selection ...
+          <br>
+        </div>
+      </div>
 
       <h3 class="header smaller red">Recommended Coverage
 
       </h3>
 
-      <div class="center">
-        <div data-bind="visible: is_rate_table_loading">
-          <i class="icon-spinner icon-spin grey bigger-125"></i>
-          Loading Rates and Recommended Coverages...
-          <br>
-        </div>
-      </div>
-
       <div class="row" data-bind="visible: !is_rate_table_loading()">
-        <!--ko foreach: {data: selected_products, as: 'current_product'}-->
+
         <div class="col-xs-4 col-sm-3 pricing-span-header">
           <div class="widget-box transparent">
             <div class="widget-header">
@@ -273,9 +256,10 @@
           </div>
         </div>
 
-        <div class="col-xs-8 col-sm-9 pricing-span-body good">
-          {# Good #}
-          <div class="pricing-span">
+        {# Good #}
+        <div class="col-xs-8 col-sm-9 pricing-span-body">
+
+          <div class="pricing-span good">
             <div class="widget-box pricing-box-small">
               <div class="widget-header center header-color-red3 no-padding">
                 <h5 class="bigger lighter">Good</h5>
@@ -404,132 +388,135 @@
               <div class="widget-header center header-color-green">
                 <h5 class="bigger lighter">Selected Plan</h5>
                 <br>
-                <small data-bind="text: selected_plan[current_product]().name"></small>
+                              <small data-bind="text: selected_plan[current_product]().name"></small>
+                <small data-bind="text: 'Current Product Name'"></small>
               </div>
 
               <div class="widget-body">
                 <div class="widget-main no-padding"
-                     data-bind="template: {name: 'recommendations_template', data: selected_plan[current_product]}">
+                     data-bind="template: {name: 'recommendations_template', data: selected_plan}">
                 </div>
               </div>
             </div>
           </div>
 
+        </div>
 
-        </div>
-        <!--/ko-->
-      </div>
-      <br/>
-      <br/>
-
-      <div class="col-sm-3">
-        <h5>Riders</h5>
-      </div>
-      <div class="row col-sm-9">
-        {# Riders #}
-        <div class="col-sm-12">
-          <div class="form-group col-xs-12 col-sm-1"></div>
-          <div class="form-group col-xs-12 col-sm-4"><strong>Rider Name</strong></div>
-          <div class="form-group col-xs-12 col-sm-4"><strong>Description</strong></div>
-          <div class="form-group col-xs-12 col-sm-3"><strong>Amount</strong></div>
-        </div>
-        <div data-bind="visible: employee().name()">
-          <div class="form-group col-xs-12 col-sm-1">
-            <div class="">
-              <ul class="list-unstyled list-striped js">
-                <!--ko foreach: case_riders -->
-                <li><input type="checkbox" checked=checked disabled=disabled/></li>
-                <!--ko if: $root.should_include_spouse_in_table -->
-                <li><input type="checkbox" checked=checked disabled=disabled/></li>
-                <!--/ko-->
-                <!--/ko-->
-                <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
-                <li><input type="checkbox" autocomplete="off"
-                           data-bind="click: $root.toggle_selected_riders(rider.code, 'emp'), checked: $root.selected_riders['emp'], checkedValue: $data"/>
-                </li>
-                <!--ko if: $root.should_include_spouse_in_table-->
-                <li><input type="checkbox" autocomplete="off"
-                           data-bind="click: $root.toggle_selected_riders(rider.code, 'sp')"/></li>
-                <!--/ko-->
-                <!--/ko-->
-              </ul>
-            </div>
-          </div>
-          <div class="form-group col-xs-12 col-sm-4">
-            <div class="">
-              <ul class="list-unstyled list-striped js">
-                <!--ko foreach: {data: case_riders, as: 'rider'} -->
-                <li data-bind="text: rider.name+' for '+$root.employee().name()"></li>
-                <!--ko if: $root.should_include_spouse_in_table-->
-                <li data-bind="text: rider.name+' for '+$root.show_spouse_name()"></li>
-                <!--/ko-->
-                <!--/ko-->
-                <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
-                <li data-bind="text: rider.name+' for '+$root.employee().name()"></li>
-                <!--ko if: $root.should_include_spouse_in_table-->
-                <li data-bind="text: rider.name+' for '+$root.show_spouse_name()"></li>
-                <!--/ko-->
-                <!--/ko-->
-              </ul>
-            </div>
-          </div>
-          <div class="form-group col-xs-12 col-sm-4">
-            <div class="">
-              <ul class="list-unstyled list-striped js">
-                <!--ko foreach: {data: case_riders, as: 'rider'} -->
-                <li data-bind="text: rider.name"></li>
-                <!--ko if: $root.should_include_spouse_in_table-->
-                <li data-bind="text: rider.name"></li>
-                <!--/ko-->
-                <!--/ko-->
-                <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
-                <li data-bind="text: rider.name"></li>
-                <!--ko if: $root.should_include_spouse_in_table-->
-                <li data-bind="text: rider.name"></li>
-                <!--/ko-->
-                <!--/ko-->
-              </ul>
-            </div>
-          </div>
-          <div class="form-group col-xs-12 col-sm-3">
-            <div class="">
-              <ul class="list-unstyled list-striped js">
-                <!--ko foreach: {data: case_riders, as: 'rider'} -->
-                <li data-bind="text: '$'+$root.riders()['emp'][rider.code]"></li>
-                <!--ko if: $root.should_include_spouse_in_table-->
-                <li data-bind="text: '$'+$root.riders()['sp'][rider.code]"></li>
-                <!--/ko-->
-                <!--/ko-->
-                <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
-                <li data-bind="text: '$'+$root.riders()['emp'][rider.code]"></li>
-                <!--ko if: $root.should_include_spouse_in_table-->
-                <li data-bind="text: '$'+$root.riders()['sp'][rider.code]"></li>
-                <!--/ko-->
-                <!--/ko-->
-              </ul>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
-    <div class="row">
-      <div class="col-xs-12 text-center red" data-bind="if: can_decline">
-        <div class="decline-option">
-          <label><input type="checkbox" data-bind="checked: did_decline"> I decline to enroll in any of the 5Star
-            products at this time</label>
-        </div>
-      </div>
-    </div>
+    <br/>
+    <br/>
 
-
-    <div id="benefit_required" class="error pull-right" data-bind="visible: is_selection_error_visible">
-      You must select a benefit option before advancing.
-    </div>
-
-    <!-- /div -->
+    {# Riders #}
+{#    <div class="col-sm-3">#}
+{#      <h5>Riders</h5>#}
+{#    </div>#}
+{#    <div class="row col-sm-9">#}
+{##}
+{#      <div class="col-sm-12">#}
+{#        <div class="form-group col-xs-12 col-sm-1"></div>#}
+{#        <div class="form-group col-xs-12 col-sm-4"><strong>Rider Name</strong></div>#}
+{#        <div class="form-group col-xs-12 col-sm-4"><strong>Description</strong></div>#}
+{#        <div class="form-group col-xs-12 col-sm-3"><strong>Amount</strong></div>#}
+{#      </div>#}
+{#      <div data-bind="visible: employee().name()">#}
+{#        <div class="form-group col-xs-12 col-sm-1">#}
+{#          <div class="">#}
+{#            <ul class="list-unstyled list-striped js">#}
+{#              <!--ko foreach: case_riders -->#}
+{#              <li><input type="checkbox" checked=checked disabled=disabled/></li>#}
+{#              <!--ko if: $root.should_include_spouse_in_table -->#}
+{#              <li><input type="checkbox" checked=checked disabled=disabled/></li>#}
+{#              <!--/ko-->#}
+{#              <!--/ko-->#}
+{#              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->#}
+{#              <li><input type="checkbox" autocomplete="off"#}
+{#                         data-bind="click: $root.toggle_selected_riders(rider.code, 'emp'), checked: $root.selected_riders['emp'], checkedValue: $data"/>#}
+{#              </li>#}
+{#              <!--ko if: $root.should_include_spouse_in_table-->#}
+{#              <li><input type="checkbox" autocomplete="off"#}
+{#                         data-bind="click: $root.toggle_selected_riders(rider.code, 'sp')"/></li>#}
+{#              <!--/ko-->#}
+{#              <!--/ko-->#}
+{#            </ul>#}
+{#          </div>#}
+{#        </div>#}
+{#        <div class="form-group col-xs-12 col-sm-4">#}
+{#          <div class="">#}
+{#            <ul class="list-unstyled list-striped js">#}
+{#              <!--ko foreach: {data: case_riders, as: 'rider'} -->#}
+{#              <li data-bind="text: rider.name+' for '+$root.employee().name()"></li>#}
+{#              <!--ko if: $root.should_include_spouse_in_table-->#}
+{#              <li data-bind="text: rider.name+' for '+$root.show_spouse_name()"></li>#}
+{#              <!--/ko-->#}
+{#              <!--/ko-->#}
+{#              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->#}
+{#              <li data-bind="text: rider.name+' for '+$root.employee().name()"></li>#}
+{#              <!--ko if: $root.should_include_spouse_in_table-->#}
+{#              <li data-bind="text: rider.name+' for '+$root.show_spouse_name()"></li>#}
+{#              <!--/ko-->#}
+{#              <!--/ko-->#}
+{#            </ul>#}
+{#          </div>#}
+{#        </div>#}
+{#        <div class="form-group col-xs-12 col-sm-4">#}
+{#          <div class="">#}
+{#            <ul class="list-unstyled list-striped js">#}
+{#              <!--ko foreach: {data: case_riders, as: 'rider'} -->#}
+{#              <li data-bind="text: rider.name"></li>#}
+{#              <!--ko if: $root.should_include_spouse_in_table-->#}
+{#              <li data-bind="text: rider.name"></li>#}
+{#              <!--/ko-->#}
+{#              <!--/ko-->#}
+{#              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->#}
+{#              <li data-bind="text: rider.name"></li>#}
+{#              <!--ko if: $root.should_include_spouse_in_table-->#}
+{#              <li data-bind="text: rider.name"></li>#}
+{#              <!--/ko-->#}
+{#              <!--/ko-->#}
+{#            </ul>#}
+{#          </div>#}
+{#        </div>#}
+{#        <div class="form-group col-xs-12 col-sm-3">#}
+{#          <div class="">#}
+{#            <ul class="list-unstyled list-striped js">#}
+{#              <!--ko foreach: {data: case_riders, as: 'rider'} -->#}
+{#              <li data-bind="text: '$'+$root.riders()['emp'][rider.code]"></li>#}
+{#              <!--ko if: $root.should_include_spouse_in_table-->#}
+{#              <li data-bind="text: '$'+$root.riders()['sp'][rider.code]"></li>#}
+{#              <!--/ko-->#}
+{#              <!--/ko-->#}
+{#              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->#}
+{#              <li data-bind="text: '$'+$root.riders()['emp'][rider.code]"></li>#}
+{#              <!--ko if: $root.should_include_spouse_in_table-->#}
+{#              <li data-bind="text: '$'+$root.riders()['sp'][rider.code]"></li>#}
+{#              <!--/ko-->#}
+{#              <!--/ko-->#}
+{#            </ul>#}
+{#          </div>#}
+{#        </div>#}
+{#      </div>#}
+{#    </div>#}
   </div>
+
+  {# Decline any products option #}
+  <div class="row">
+    <div class="col-xs-12 text-center red" data-bind="if: can_decline">
+      <div class="decline-option">
+        <label><input type="checkbox" data-bind="checked: did_decline"> I decline to enroll in any of the 5Star
+          products at this time</label>
+      </div>
+    </div>
+  </div>
+
+  {# Error message #}
+  <div id="benefit_required" class="error pull-right" data-bind="visible: is_selection_error_visible">
+    You must select a benefit option before advancing.
+  </div>
+
 </form>
+
 
 {# Payment Estimate Banner #}
 <script type="text/html" id="recommendations_template">
@@ -557,10 +544,12 @@
   </div>
 </script>
 
+
 <script type="text/html" id="recommendation_template">
   <strong data-bind="html: format_face_value()"></strong>
   <div data-bind="html: format_premium_option()"></div>
 </script>
+
 
 <script type="text/html" id="blank_template">
 </script>

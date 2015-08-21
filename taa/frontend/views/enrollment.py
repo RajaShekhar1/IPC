@@ -70,6 +70,9 @@ def test_wizard():
         # Payment mode is set on case and cannot be changed
         payment_mode_choices = get_payment_modes(single=payment_mode)
 
+    case_riders = [] #rider_service.get_selected_case_rider_info(case)
+    enrollment_riders = [] # rider_service.get_enrollment_rider_info()
+
     return render_template(
         'enrollment/main-wizard.html',
         wizard_data={
@@ -82,9 +85,12 @@ def test_wizard():
             'health_questions':soh_questions,
             'spouse_questions':spouse_questions,
             'is_in_person': True,
+            'selected_riders':[],
         },
         states=get_states(),
         nav_menu=get_nav_menu(),
+        case_riders=case_riders,
+        enrollment_riders=enrollment_riders,
     )
 
 @app.route('/in-person-enrollment', methods=['POST'])

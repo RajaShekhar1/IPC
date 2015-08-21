@@ -1,6 +1,422 @@
 var wizard_viewmodel = (function() {
 
-  function WizardProductSelection(root, product) {
+
+  function CoverageVM(available_products, applicants) {
+    this.available_products = available_products;
+    this.applicants = applicants;
+
+    this.coverage_selections = ko.observableArray([]);
+  }
+
+  function ApplicantCoverageSelectionVM(applicant, product) {
+    this.applicant = applicant;
+    this.product = product;
+
+    this.coverage_option = ko.observable(new NullBenefitOption());
+    this.riders = ko.observableArray();
+    this.beneficiaries = ko.observableArray([]);
+
+  }
+
+  function WizardVM(options) {
+    var self = this;
+    self.enrollment_case = options.case;
+    self.products = wizard_products.build_products(self, options.products);
+
+    self.is_in_person_application = (options.enrollment_type === "inperson");
+
+    init_applicants();
+
+    init_jquery_validator();
+
+    self.coverage_vm = new CoverageVM(self.products, self.applicant_list);
+
+    // Step 1 ViewModel observables
+    var should_show_spouse_initially = self.spouse().any_valid_field();
+    self.should_show_spouse = ko.observable(should_show_spouse_initially);
+
+    var should_show_children_initially = false;
+    self.should_include_children = ko.observable(should_show_children_initially);
+
+    self.add_child = function() {
+      var child = wizard_applicant.create_applicant(
+          {
+            last: self.employee().last(),
+            type: wizard_applicant.Applicant.ChildType
+          }
+      );
+      self.applicant_list.add_applicant(child);
+    };
+
+    self.remove_child = function(child) {
+      self.applicant_list.remove_applicant(child);
+
+      // Uncheck the show children switch if this is the last child.
+      if (self.children().length === 0) {
+        self.should_include_children(false);
+      }
+    };
+
+    // callbacks for animation on children list changes
+    self.rendered_child = function(element) {
+      $(element).hide().slideDown(400);
+    };
+    self.removing_child = function(element) {
+      $(element).slideUp(function() {$(element).remove();});
+    };
+
+
+
+    self.update_rate_table = function() {
+
+    };
+
+    self.is_rate_table_loading = ko.observable(false);
+
+
+    self.should_include_spouse_in_table = ko.computed(function() {
+      return self.should_show_spouse() && self.spouse().is_valid() ;
+          //&& self.is_spouse_valid_for_product();
+    });
+    self.show_spouse_name = ko.computed(function() {
+      return (self.should_include_spouse_in_table()) ? self.spouse().name() : "";
+    });
+    self.should_include_children_in_table = ko.computed(function() {
+      return (self.should_include_children()
+          && self.applicant_list.has_valid_children()
+          && self.are_children_ages_valid()
+      );
+    });
+
+    // Payment mode
+    self.payment_modes = _.map(options.payment_modes || [], function(pm){
+      return payment_mode.create_payment_mode(pm);
+    });
+
+    var initial_payment_mode = null;
+    if (options.case && options.case.payment_mode >= 0) {
+      // initialize to the right payment mode
+      initial_payment_mode = _.find(self.payment_modes, function(pm) {
+        return pm.frequency === options.case.payment_mode;
+      }) || null;
+    }
+    self.payment_mode = ko.observable(initial_payment_mode);
+
+    self.can_change_payment_mode = ko.computed(function() {
+      // -1 is the sentinel for whether the user can select.
+      return (options.case.payment_mode === -1 ||
+              // If not specified on case, allow user to change
+              !options.case.payment_mode);
+    });
+    self.is_payment_mode_valid = ko.pureComputed(function(){
+      return (
+          (!self.can_change_payment_mode())
+          || (self.can_change_payment_mode() && self.payment_mode() !== null)
+      );
+    });
+
+    // Recommendations table visibility
+    self.has_show_rates_been_clicked = ko.observable(false);
+    self.can_display_rates_table = ko.computed(function() {
+      return (self.applicant_list.has_valid_employee()
+              // && product validation
+            && self.is_payment_mode_valid()
+      );
+    });
+
+    // User indicates he is ready to show the coverage selection options.
+    self.show_coverage_selection_table = function() {
+
+      var valid_form = true;
+
+      // Trigger the jQuery validator. This test allows jasmine tests to work without DOM node present for form.
+      if (self.validator) {
+        valid_form = self.validator.form();
+      }
+
+      if (valid_form) {
+        self.has_show_rates_been_clicked(true);
+      }
+    };
+
+    self.is_coverage_selection_visible = ko.pureComputed(function() {
+      return (self.has_show_rates_been_clicked() && self.can_display_rates_table());
+    });
+
+    self.should_display_show_rates_button = ko.pureComputed(function() {
+      return !self.is_coverage_selection_visible();
+    });
+
+    self.should_show_critical_illness_styling = function() {
+      // insurance_product.has_critical_illness_coverages
+      return false;
+    };
+
+    // Extended questions for step 1
+    self.should_show_extended_questions = function() {
+      return (
+          any_product('requires_gender') ||
+          any_product('requires_height') ||
+          any_product('requires_weight') ||
+          any_product('requires_is_smoker')
+      );
+    };
+    var any_product = function(method_name) {
+      return _.any(_.invoke(self.products, 'requires_gender'));
+    };
+
+    // validation helpers
+    function min_emp_age() {
+      return _.min(_.invoke(self.products, 'min_emp_age'));
+    }
+    function min_sp_age() {
+      return _.min(_.invoke(self.products, 'min_sp_age'));
+    }
+    function min_ch_age() {
+      return _.min(_.invoke(self.products, 'min_child_age'));
+    }
+    function max_emp_age() {
+      return _.max(_.invoke(self.products, 'max_emp_age'));
+    }
+    function max_sp_age() {
+      return _.max(_.invoke(self.products, 'max_sp_age'));
+    }
+    function max_ch_age() {
+      return _.max(_.invoke(self.products, 'max_child_age'));
+    }
+
+    // Can the applicant globally decline coverage?
+    self.can_decline = ko.computed(function() {
+      /*
+      // Can not decline if any applicant has applied for coverage already
+      return (!_.any(self.applicant_list.applicants(), function(applicant) {
+        return applicant.get_existing_coverage_amount_for_product(self.insurance_product.product_data.id);
+      }));
+      */
+      return true;
+    });
+
+    // Globally decline coverage
+    self.did_decline = ko.observable(false);
+
+    // Did they select coverage?
+    self.is_selection_error_visible = ko.observable(false);
+
+
+    self.exit_application = function() {
+
+    };
+
+
+    // STEP 2 stuff
+    self.warning_modal_title = ko.observable("");
+    self.warning_modal_body = ko.observable("");
+    self.show_warning_modal = function(title, body) {
+      self.warning_modal_title(title);
+      self.warning_modal_body(body);
+      $("#warning_modal").modal('show');
+    };
+
+
+    function init_applicants() {
+      var initial_applicant_list = _.map(options.applicants || [], function (applicant_data) {
+        return wizard_applicant.create_applicant(applicant_data);
+      });
+      self.applicant_list = new wizard_applicant.ApplicantList(initial_applicant_list);
+
+      // Applicant shortcuts
+      self.employee = function() {
+        return self.applicant_list.get_employee();
+      };
+
+      self.spouse = function() {
+        return self.applicant_list.get_spouse();
+      };
+
+      self.children = ko.computed(function() {
+        return self.applicant_list.get_children();
+      });
+
+      self.children_group = new wizard_applicant.ApplicantGroup(
+          {type: wizard_applicant.Applicant.ChildType},
+          self.children
+      );
+
+    }
+
+    function init_jquery_validator() {
+      // jquery form validator
+      $.validator.addMethod("minAge", function(val, element, params) {
+        var age = wizard_applicant.age_for_date(val);
+        return (age !== "" && age >= params);
+      }, "Must be at least {0} years old for this product");
+
+      $.validator.addMethod("maxAge", function(val, element, params) {
+        var age = wizard_applicant.age_for_date(val);
+        return (age !== "" && age <= params);
+      }, "Must be no more than {0} years old for this product");
+
+
+      // Height and Weight limits for Group CI
+      var limit_error_lookup = {
+        employee_height:self.employee().height_error,
+        employee_weight:self.employee().weight_error,
+        spouse_height:self.spouse().height_error,
+        spouse_weight:self.spouse().weight_error
+      };
+
+      $.validator.addMethod("empHeightLimit", function(val, el, params) {
+        return self.employee().height_error() == null;
+      }, "The height or weight entered is outside the limits for this product.");
+      $.validator.addMethod("empWeightLimit", function(val, el, params) {
+        return self.employee().weight_error() == null;
+      }, "The height or weight entered is outside the limits for this product.");
+      $.validator.addMethod("spHeightLimit", function(val, el, params) {
+        return self.spouse().height_error() == null;
+      }, "The height or weight entered is outside the limits for this product.");
+      $.validator.addMethod("spWeightLimit", function(val, el, params) {
+        return self.spouse().weight_error() == null;
+      }, "The height or weight entered is outside the limits for this product.");
+
+      function any_valid_spouse_field() {
+        //return self.should_include_spouse_in_table(); //self.should_show_spouse();
+        return self.spouse().any_valid_field();
+      }
+      self.validator = $("#step1-form").validate({
+        highlight: wizard_validate_highlight,
+        success: wizard_validate_success,
+        errorPlacement: wizard_error_placement,
+        errorElement: 'div',
+        errorClass: 'help-block',
+        //focusInvalid: false,
+        rules: {
+          eeBenefitFName: "required",
+          eeBenefitLName: "required",
+          eeBenefitDOB: {
+            required: true,
+            date: true,
+            minAge: min_emp_age(),
+            maxAge: max_emp_age()
+          },
+          'tobacco-0': {
+            required: true
+          },
+          'gender-0': "required",
+          spFName: {
+            required: {
+              depends: any_valid_spouse_field
+            }
+          },
+          spLName: {
+            required: { depends: any_valid_spouse_field }
+          },
+          spDOB: {
+            required: {depends: any_valid_spouse_field},
+            date: {depends: any_valid_spouse_field},
+            minAge: {
+              param: min_sp_age(),
+              depends: any_valid_spouse_field
+            },
+            maxAge: {
+              param: max_sp_age(),
+              depends: any_valid_spouse_field
+            }
+          },
+          'tobacco-1': {required: {depends: any_valid_spouse_field }},
+          'gender-1': {required: {depends: any_valid_spouse_field }},
+          'weight_0': {
+            required: true,
+            empWeightLimit: true
+          },
+          'weight_1': {
+            required: { depends: any_valid_spouse_field },
+            spWeightLimit: true
+          },
+          'height_feet_0': {
+            required: true,
+            empHeightLimit: true
+          },
+          'height_inches_0': {
+            required: true,
+            empHeightLimit: true
+          },
+          'height_feet_1': {
+            required: { depends: any_valid_spouse_field },
+            spHeightLimit: true
+          },
+          'height_inches_1': {
+            required: { depends: any_valid_spouse_field },
+            spHeightLimit: true
+          },
+          paymentMode: {
+            required: true
+          },
+          debug: true
+        },
+        groups: {
+          emp_height: "height_feet_0 height_inches_0",
+          sp_height: "height_feet_1 height_inches_1"
+        }
+      });
+
+
+      function is_child_name_required(element) {
+        return true;
+      }
+      function is_child_field_required(element) {
+        if ($(element).attr("id") === "child-first-0" ||
+            $(element).attr("id") === "child-last-0" ||
+            $(element).attr("id") === "child-dob-0"
+        ) {
+          // Treat the first child as always required if
+          // the children checkbox is checked
+          return self.should_include_children();
+        }
+
+        var child = ko.dataFor(element);
+        if (!child) {
+          return false;
+        }
+
+        return child.any_valid_field();
+      }
+
+      $.validator.addClassRules("child_birthdate",
+          {
+            required: {
+              depends: is_child_field_required
+            },
+            date: {
+              depends: is_child_field_required
+            },
+            minAge: {
+              param: min_ch_age(),
+              depends: is_child_field_required
+            },
+            maxAge: {
+              param: max_ch_age(),
+              depends: is_child_field_required
+            }
+          }
+      );
+
+      $.validator.addClassRules("child_first",  {
+            required: {
+              depends: is_child_name_required
+            }
+          }
+      );
+      $.validator.addClassRules("child_last",  {
+            required: {
+              depends: is_child_name_required
+            }
+          }
+      );
+    }
+
+  }
+
+  function ApplicantProductSelection(root, product) {
     var self = this;
     self.root = root;
     self.insurance_product = product;
@@ -43,8 +459,41 @@ function WizardUI(defaults) {
 
   self.products_offerred = wizard_products.build_products(self, defaults.products);
   self.insurance_product = self.products_offerred[0];
-  self.product_selection = _.map(self.products_offerred, function(p) {
+
+  /*self.product_selection = _.map(self.products_offerred, function(p) {
     return new WizardProductSelection(self, p);
+  });
+  */
+
+  self.did_decline = ko.observable(false);
+
+  // Group the selected options for this product into a 'BenefitsPackage' which has
+  //  the individual choices for employee, spouse, and children
+  self.selected_plan = ko.observable(new NullBenefitsPackage(self));
+
+  // SOH Questions (depends on product and selected plan)
+  var questions = process_spouse_question_data(self, defaults.spouse_questions, self.insurance_product.product_data);
+  var soh_questions = process_health_question_data(self, defaults.health_questions, self.insurance_product.product_data);
+  $.merge(questions, soh_questions);
+  self.health_questions = ko.observableArray(questions);
+
+
+  // Which, if any, of the good, better, best recommended plans was chosen (even if customized)
+  self.selected_recommendation = ko.observable(null);
+
+
+  self.get_replacement_paragraphs = function() {
+    var paragraph_map = self.insurance_product.get_replacement_paragraphs();
+    var paragraphs = paragraph_map[self.root.enrollState];
+    if (!paragraphs) {
+      return [];
+    }
+    return paragraphs;
+  };
+
+
+  self.selected_benefits = ko.computed(function() {
+    return [];
   });
 
   self.did_select_any_fpp_product = ko.pureComputed(function() {
@@ -210,8 +659,8 @@ function WizardUI(defaults) {
   self.spouse_other_owner_ssn = ko.observable("");
 
   // Employee
-  self.employee = ko.observable(new InsuredApplicant(
-      InsuredApplicant.EmployeeType,
+  self.employee = ko.observable(new Applicant(
+      Applicant.EmployeeType,
       self.defaults.employee_data || {},
       self.product_selection
   ));
@@ -237,8 +686,8 @@ function WizardUI(defaults) {
     spouse_data.last = self.employee().last();
   }
 
-  self.spouse = ko.observable(new InsuredApplicant(
-      InsuredApplicant.SpouseType,
+  self.spouse = ko.observable(new Applicant(
+      Applicant.SpouseType,
       spouse_data,
       self.selected_plan,
       self.health_questions
@@ -298,8 +747,8 @@ function WizardUI(defaults) {
   if (self.defaults.children_data.length == 0) {
     self.children = ko.observableArray([
       // Start with two blank child entries
-      new InsuredApplicant(InsuredApplicant.ChildType, {last: self.employee().last() || ""}, self.selected_plan, self.health_questions),
-      new InsuredApplicant(InsuredApplicant.ChildType, {last: self.employee().last() || ""}, self.selected_plan, self.health_questions)
+      new Applicant(Applicant.ChildType, {last: self.employee().last() || ""}, self.selected_plan, self.health_questions),
+      new Applicant(Applicant.ChildType, {last: self.employee().last() || ""}, self.selected_plan, self.health_questions)
     ]);
   } else {
     self.children = ko.observableArray($.map(self.defaults.children_data, function(child_data) {
@@ -307,7 +756,7 @@ function WizardUI(defaults) {
       if (!child_data.last) {
         child_data.last = self.employee().last();
       }
-      return new InsuredApplicant(InsuredApplicant.ChildType, child_data, self.selected_plan, self.health_questions);
+      return new Applicant(Applicant.ChildType, child_data, self.selected_plan, self.health_questions);
     }));
   }
 
@@ -342,7 +791,7 @@ function WizardUI(defaults) {
 
 
   self.add_child = function() {
-    var child_insured_applicant = new InsuredApplicant(InsuredApplicant.ChildType, {last: self.employee().last() || ""}, self.selected_plan, self.health_questions);
+    var child_insured_applicant = new wizard_applicant.Applicant(wizard_applicant.Applicant.ChildType, {last: self.employee().last() || ""}, self.selected_plan, self.health_questions);
     self.children.push(child_insured_applicant);
 
     // Re-apply date mask to children (also ssn for step 4)
@@ -387,7 +836,7 @@ function WizardUI(defaults) {
 
   // Store the actual benefits for children here, rather
   //  than on each child since the benefits are the same
-  self.child_benefits = ko.observable(new InsuredApplicant(InsuredApplicant.ChildType, {}, self.selected_plan, self.health_questions));
+  self.child_benefits = ko.observable(new Applicant(Applicant.ChildType, {}, self.selected_plan, self.health_questions));
   self.get_children_options = ko.computed(function() {
     if (!self.should_include_children_in_table()) {
       return [];
@@ -650,9 +1099,9 @@ function WizardUI(defaults) {
     if(!person) {
       return [];
     }
-    if(person.applicant_type==="employee") {
+    if(person.type===wizard_applicant.Applicant.EmployeeType) {
       return self.selected_riders['emp']();
-    } else if(person.applicant_type==="spouse") {
+    } else if(person.type===wizard_applicant.Applicant.SpouseType) {
       return self.selected_riders['sp']();
     }
     return [];
@@ -669,7 +1118,7 @@ function WizardUI(defaults) {
     var per_person_riders = self.selected_riders[prefix]();
     var rider_index = per_person_riders.indexOf(rider);
     return rider_index === -1;
-  }
+  };
 
   self.toggle_selected_riders = function(rider_code, prefix) {
     if(!rider_code || !prefix) {
@@ -687,7 +1136,7 @@ function WizardUI(defaults) {
       per_person_riders.splice(rider_index, 1);
     }
     self.selected_riders[prefix](per_person_riders);
-  }
+  };
 
   self.show_updated_rates = function(resp) {
     var data = resp.data;
@@ -731,41 +1180,41 @@ function WizardUI(defaults) {
     var element = $(event.target);
     element.blur();
   };
-
+  //
   // accessors for selected plan
   self.did_select_employee_coverage = ko.computed(function() {
-    var rec = self.selected_plan().employee_recommendation();
-    return (rec.is_valid() && rec.recommended_benefit.is_valid());
+  //  var rec = self.selected_plan().employee_recommendation();
+  //  return (rec.is_valid() && rec.recommended_benefit.is_valid());
   });
   self.did_select_spouse_coverage = ko.computed(function() {
-    var rec = self.selected_plan().spouse_recommendation();
-    return (rec.is_valid() && rec.recommended_benefit.is_valid());
+  //  var rec = self.selected_plan().spouse_recommendation();
+  //  return (rec.is_valid() && rec.recommended_benefit.is_valid());
   });
   self.did_select_children_coverage = ko.computed(function() {
-    var rec = self.selected_plan().children_recommendation();
-    return (rec.is_valid() && rec.recommended_benefit.is_valid());
+  //  var rec = self.selected_plan().children_recommendation();
+  //  return (rec.is_valid() && rec.recommended_benefit.is_valid());
   });
 
-
-
+  //
+  //
   self.has_contingent_beneficiary_error = ko.computed(function() {
-    var employee_beneficiary_error = (
-        self.employee_contingent_beneficiary_type() === 'spouse' &&
-        self.employee_beneficiary_type() === 'spouse'
-    );
-    var spouse_beneficiary_error = (
-        self.did_select_spouse_coverage() &&
-        self.insurance_product.should_show_contingent_beneficiary() &&
-        self.spouse_contingent_beneficiary_type() === 'spouse' &&
-        self.spouse_beneficiary_type() === 'spouse'
-    );
-    return (
-        self.insurance_product.should_show_contingent_beneficiary()
-        && (
-            employee_beneficiary_error
-            || spouse_beneficiary_error
-        )
-    );
+  //  var employee_beneficiary_error = (
+  //      self.employee_contingent_beneficiary_type() === 'spouse' &&
+  //      self.employee_beneficiary_type() === 'spouse'
+  //  );
+  //  var spouse_beneficiary_error = (
+  //      self.did_select_spouse_coverage() &&
+  //      self.insurance_product.should_show_contingent_beneficiary() &&
+  //      self.spouse_contingent_beneficiary_type() === 'spouse' &&
+  //      self.spouse_beneficiary_type() === 'spouse'
+  //  );
+  //  return (
+  //      self.insurance_product.should_show_contingent_beneficiary()
+  //      && (
+  //          employee_beneficiary_error
+  //          || spouse_beneficiary_error
+  //      )
+  //  );
   });
 
 
@@ -781,177 +1230,10 @@ function WizardUI(defaults) {
   };
 
 
-  // jquery form validator
-  $.validator.addMethod("minAge", function(val, element, params) {
-    var age = age_for_date(val);
-    return (age !== "" && age >= params);
-  }, "Must be at least {0} years old for this product");
-
-  $.validator.addMethod("maxAge", function(val, element, params) {
-    var age = age_for_date(val);
-    return (age !== "" && age <= params);
-  }, "Must be no more than {0} years old for this product");
-
-
-  // Height and Weight limits for Group CI
-
-  var limit_error_lookup = {
-    employee_height:self.employee().height_error,
-    employee_weight:self.employee().weight_error,
-    spouse_height:self.spouse().height_error,
-    spouse_weight:self.spouse().weight_error
-  };
-
-  $.validator.addMethod("empHeightLimit", function(val, el, params) {
-    return self.employee().height_error() == null;
-  }, "The height or weight entered is outside the limits for this product.");
-  $.validator.addMethod("empWeightLimit", function(val, el, params) {
-    return self.employee().weight_error() == null;
-  }, "The height or weight entered is outside the limits for this product.");
-  $.validator.addMethod("spHeightLimit", function(val, el, params) {
-    return self.spouse().height_error() == null;
-  }, "The height or weight entered is outside the limits for this product.");
-  $.validator.addMethod("spWeightLimit", function(val, el, params) {
-    return self.spouse().weight_error() == null;
-  }, "The height or weight entered is outside the limits for this product.");
-
-  function any_valid_spouse_field() {
-    //return self.should_include_spouse_in_table(); //self.should_show_spouse();
-    return self.spouse().any_valid_field();
-  }
-  self.validator = $("#step1-form").validate({
-    highlight: wizard_validate_highlight,
-    success: wizard_validate_success,
-    errorPlacement: wizard_error_placement,
-    errorElement: 'div',
-    errorClass: 'help-block',
-    //focusInvalid: false,
-    rules: {
-      eeBenefitFName: "required",
-      eeBenefitLName: "required",
-      eeBenefitDOB: {
-        required: true,
-        date: true,
-        minAge: self.insurance_product.min_emp_age(),
-        maxAge: self.insurance_product.max_emp_age()
-      },
-      'tobacco-0': {
-        required: true
-      },
-      'gender-0': "required",
-      spFName: {
-        required: {
-          depends: any_valid_spouse_field
-        }
-      },
-      spLName: {
-        required: { depends: any_valid_spouse_field }
-      },
-      spDOB: {
-        required: {depends: any_valid_spouse_field},
-        date: {depends: any_valid_spouse_field},
-        minAge: {
-          param: self.insurance_product.min_sp_age(),
-          depends: any_valid_spouse_field
-        },
-        maxAge: {
-          param: self.insurance_product.max_sp_age(),
-          depends: any_valid_spouse_field
-        }
-      },
-      'tobacco-1': {required: {depends: any_valid_spouse_field }},
-      'gender-1': {required: {depends: any_valid_spouse_field }},
-      'weight_0': {
-        required: true,
-        empWeightLimit: true
-      },
-      'weight_1': {
-        required: { depends: any_valid_spouse_field },
-        spWeightLimit: true
-      },
-      'height_feet_0': {
-        required: true,
-        empHeightLimit: true
-      },
-      'height_inches_0': {
-        required: true,
-        empHeightLimit: true
-      },
-      'height_feet_1': {
-        required: { depends: any_valid_spouse_field },
-        spHeightLimit: true
-      },
-      'height_inches_1': {
-        required: { depends: any_valid_spouse_field },
-        spHeightLimit: true
-      },
-      paymentMode: {
-        required: true
-      },
-      debug: true
-    },
-    groups: {
-      emp_height: "height_feet_0 height_inches_0",
-      sp_height: "height_feet_1 height_inches_1"
-    }
-  });
-
-
-  function is_child_name_required(element) {
-    return true;
-  }
-  function is_child_field_required(element) {
-    if ($(element).attr("id") === "child-first-0" ||
-        $(element).attr("id") === "child-last-0" ||
-        $(element).attr("id") === "child-dob-0"
-    ) {
-      // Treat the first child as always required if
-      // the children checkbox is checked
-      return self.should_include_children();
-    }
-
-    var child = ko.dataFor(element);
-    if (!child) {
-      return false;
-    }
-
-    return child.any_valid_field();
-  }
-
-  $.validator.addClassRules("child_birthdate",
-      {
-        required: {
-          depends: is_child_field_required
-        },
-        date: {
-          depends: is_child_field_required
-        },
-        minAge: {
-          param: self.insurance_product.min_child_age(),
-          depends: is_child_field_required
-        },
-        maxAge: {
-          param: self.insurance_product.max_child_age(),
-          depends: is_child_field_required
-        }
-      }
-  );
-
-  $.validator.addClassRules("child_first",  {
-        required: {
-          depends: is_child_name_required
-        }
-      }
-  );
-  $.validator.addClassRules("child_last",  {
-        required: {
-          depends: is_child_name_required
-        }
-      }
-  );
 
 
 
+  //
   self.is_form_valid = ko.computed(function() {
 
     return (
@@ -971,39 +1253,39 @@ function WizardUI(defaults) {
   // Statement of Health questions
   // A computed observable list of applicants who have selected coverage
   self.get_covered_applicants = ko.computed(function() {
-    if (!self.selected_plan()) {
-      return [];
-    } else {
-      return self.selected_plan().get_all_covered_people();
-    }
+  //  if (!self.selected_plan()) {
+  //    return [];
+  //  } else {
+  //    return self.selected_plan().get_all_covered_people();
+  //  }
   });
-
+  //
   self.get_all_applicants = ko.computed(function() {
-    var people = [self.employee()];
-    if (self.should_include_spouse_in_table()) {
-      people.push(self.spouse());
-    }
-    _.each(self.get_valid_children(), function(child) {
-      people.push(child);
-    });
-
-    return people;
+  //  var people = [self.employee()];
+  //  if (self.should_include_spouse_in_table()) {
+  //    people.push(self.spouse());
+  //  }
+  //  _.each(self.get_valid_children(), function(child) {
+  //    people.push(child);
+  //  });
+  //
+  //  return people;
   });
 
   self.do_any_health_questions_need_answering = ko.computed(function() {
-    if (self.health_questions().length == 0) {
-      return false;
-    }
-    return _.any(self.health_questions(), function(question) {
-      return question.does_any_applicant_need_to_answer();
-    })
-  }, null, {deferEvaluation: true});
-
-
-  self.should_show_other_insurance_questions = ko.computed(function() {
-    return (
-        self.insurance_product.product_type != "Group CI"
-    );
+  //  if (self.health_questions().length == 0) {
+  //    return false;
+  //  }
+  //  return _.any(self.health_questions(), function(question) {
+  //    return question.does_any_applicant_need_to_answer();
+  //  })
+  //}, null, {deferEvaluation: true});
+  //
+  //
+  //self.should_show_other_insurance_questions = ko.computed(function() {
+  //  return (
+  //      self.insurance_product.product_type != "Group CI"
+  //  );
   });
 
   // Decline info box
@@ -1088,5 +1370,5 @@ function WizardUI(defaults) {
     });
   };
 }
-  return {WizardUI: WizardUI}
+  return {WizardUI: WizardUI, WizardVM: WizardVM}
 })();

@@ -29,15 +29,15 @@
         <td data-bind="text:display_premium"></td>
       </tr>
       <!--ko if: $root.current_person($data) --><!-- /ko -->
-      <!--ko foreach: {data: $root.get_selected_riders, as: 'rider'} -->
-      <tr>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td data-bind="text: rider.name"></td>
-        <td data-bind="text:$parent.display_riders(rider.code)"></td>
-      </tr>
-      <!--/ko-->
+        <!--ko foreach: {data: $root.get_selected_riders, as: 'rider'} -->
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td data-bind="text: rider.name"></td>
+            <td data-bind="text:$parent.display_riders(rider.code)"></td>
+          </tr>
+        <!--/ko-->
       <!--/ko-->
       <tr class="success">
         <td></td>

@@ -116,7 +116,7 @@ var StandardHealthQuestion = function(question, selected_plan) {
   // A viewmodel that keeps track of which applicants need to answer which health questions
   var self = this;
 
-  // should be an observableArray of InsuredApplicant objects
+  // should be an observableArray of Applicant objects
   self.selected_plan = selected_plan;
 
   // Simple object with .question_text and .label
