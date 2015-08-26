@@ -1,5 +1,5 @@
 
-function init_validation() {
+function init_validation(ui) {
   $(document).on('change', 'input:radio[id^="eeOwner-"]', function () {
     var other = $('#eeOtherOwner');
     var inp = $('#eeOtherOwnerName').get(0);
@@ -42,17 +42,15 @@ function init_validation() {
     }
   });
 
-
-
   $('[data-rel=tooltip]').tooltip();
 
   var validation_debug = false;
-  $('#fuelux-wizard').ace_wizard().on('change', function (e, info) {
+  $('#enrollment-wizard').ace_wizard().on('actionclicked.fu.wizard', function (e, info) {
     if (validation_debug) {
       return true;
     }
 
-    if (info.step == 1) {
+    if (info.step === 1) {
 
       // Clear step2 health question error when we attempt to validate step 1
       $("#health_questions_error").html("");
@@ -60,16 +58,18 @@ function init_validation() {
       // Check for "Decline all coverage" and bail out of the wizard if it is checked
       if (ui.did_decline()) {
         submit_decline();
-        return false;
+        e.preventDefault();
+        return;
       }
 
       // trigger jquery validation
-      var is_valid = window.ui.validator.form();
+      var is_valid = ui.validator.form();
 
-      if (!window.ui.is_form_valid()) {
+      if (!ui.is_form_valid()) {
 
-        window.ui.show_no_selection_error();
-        return false;
+        ui.show_no_selection_error();
+        e.preventDefault();
+        return;
       }
 
       var current_product_id = ui.insurance_product.product_data.id;
@@ -114,7 +114,9 @@ function init_validation() {
       });
 
 
-      return is_valid;
+      if (!is_valid) {
+        e.preventDefault();
+      }
     }
     if (info.step == 2 && info.direction == 'next') {
       var is_valid = true;
@@ -145,45 +147,51 @@ function init_validation() {
       is_valid &=  are_health_questions_valid();
       if (!is_valid) {
         $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");
-        return false;
+        e.preventDefault();
+        return;
       } else {
         $("#health_questions_error").html("");
-        return true;
+        return;
       }
     }
     if (info.step == 3 && info.direction == 'next') {
-      if (!$('#step3-form').valid()) return false;
+      if (!$('#step3-form').valid()) {
+        e.preventDefault();
+        return;
+      }
     }
     if (info.step == 4 && info.direction == 'next') {
-      if (!$('#step4-form').valid()) return false;
+      if (!$('#step4-form').valid()) {
+        e.preventDefault();
+        return;
+      }
     }
     if (info.step == 5 && info.direction == 'next') {
-      var skip_for_now = false;
-      if (skip_for_now) {
-        return true;
-      }
       if (!$('#step5-form').valid()) {
-        return false;
+        e.preventDefault();
+        return;
       }
 
-      if (window.ui.has_contingent_beneficiary_error()) {
-        return false;
+      if (ui.has_contingent_beneficiary_error()) {
+        e.preventDefault();
+        return;
       }
 
     }
     if (info.step == 6 && info.direction == 'next') {
-      if (!$('#step6-form').valid()) return false;
+      if (!$('#step6-form').valid()) {
+        e.preventDefault();
+        return;
+      }
     }
 
-    return true;
-
-  }).on('finished', function (e) {
+  }).on('finished.fu.wizard', function (e) {
 
     if (!$('#step6-form').valid()) return false;
 
     // jQuery validator rule should be handling this, but it's not, so force a popup here
-    if (window.ui.insurance_product.should_confirm_disclosure_notice()
-        && !window.ui.disclaimer_notice_confirmed()
+    if (ui.insurance_product.should_confirm_disclosure_notice()
+        && !ui.disclaimer_notice_confirmed()
     ) {
       bootbox.dialog({
         message: "Please confirm that you have received the disclosure notice.",
@@ -197,8 +205,8 @@ function init_validation() {
       return false;
     }
 
-    if (window.ui.insurance_product.should_confirm_payroll_deduction()
-        && !window.ui.payroll_deductions_confirmed()) {
+    if (ui.insurance_product.should_confirm_payroll_deduction()
+        && !ui.payroll_deductions_confirmed()) {
       bootbox.dialog({
         message: "Please confirm that you agree to payroll deductions by your employer.",
         buttons: {
@@ -213,7 +221,7 @@ function init_validation() {
 
     submit_application();
 
-  }).on('stepclick', function (e) {
+  }).on('stepclick.fu.wizard', function (e) {
     return true; //return false;//prevent clicking on steps
   });
 
@@ -401,7 +409,7 @@ function init_validation() {
           depends: function(element) {
             return (
                 ui.insurance_product.should_show_contingent_beneficiary() &&
-                window.ui.employee_contingent_beneficiary_type() === "other"
+                ui.employee_contingent_beneficiary_type() === "other"
             )
           }
         }
@@ -411,7 +419,7 @@ function init_validation() {
           depends: function(element) {
             return (
                 ui.insurance_product.should_show_contingent_beneficiary() &&
-                window.ui.employee_contingent_beneficiary_type() === "other"
+                ui.employee_contingent_beneficiary_type() === "other"
             )
           }
         }
@@ -420,14 +428,14 @@ function init_validation() {
       spBeneOtherName: {
         required: {
           depends: function(element) {
-            return (window.ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
+            return (ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
           }
         }
       },
       spBeneOtherRelation: {
         required: {
           depends: function(element) {
-            return (window.ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
+            return (ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
           }
         }
       },

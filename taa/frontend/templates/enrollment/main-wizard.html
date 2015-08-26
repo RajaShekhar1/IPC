@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_ace_latest.html" %}
 {% set active_page = 'nav_enroll' -%}
 
 {% block title %} - Employee Application {% endblock %}
@@ -44,53 +44,55 @@
 
               <div class="widget-body">
                 <div class="widget-main">
-                  <div id="fuelux-wizard" class="row-fluid" data-target="#step-container">
-                    <ul class="wizard-steps">
-                      <li data-target="#step1" class="active">
+
+                  <div id="enrollment-wizard">
+                    <ul class="steps">
+                      <li data-step="1" class="active">
                         <span class="step">1</span>
                         <span class="title">Benefit Selection</span>
                       </li>
 
-                      <li data-target="#step2">
+                      <li data-step="2">
                         <span class="step">2</span>
                         <span class="title">Qualification</span>
                       </li>
 
-                      <li data-target="#step3">
+                      <li data-step="3">
                         <span class="step">3</span>
                         <span class="title">Employee Info</span>
                       </li>
 
-                      <li data-target="#step4">
+                      <li data-step="4">
                         <span class="step">4</span>
                         <span class="title">Spouse/Children Info</span>
                       </li>
 
-                      <li data-target="#step5">
+                      <li data-step="5">
                         <span class="step">5</span>
                         <span class="title">Beneficiaries</span>
                       </li>
 
-                      <li data-target="#step6">
+                      <li data-step="6">
                         <span class="step">6</span>
                         <span class="title">Confirmation</span>
                       </li>
                     </ul>
-                  </div>
 
-                  <hr/>
+                    <hr/>
 
-                  <div class="step-content row-fluid position-relative" id="step-container">
+                    <div class="step-content">
                     {% include "enrollment/main-wizard-step-1.html" %}
 {#                    {% include 'main-wizard-step-2.html' %}#}
 {#                    {% include 'main-wizard-step-3.html' %}#}
 {#                    {% include 'main-wizard-step-4.html' %}#}
 {#                    {% include 'main-wizard-step-5.html' %}#}
 {#                    {% include 'main-wizard-step-6.html' %}#}
+                    </div>
+
                   </div>
 
                   <hr/>
-                  <div class="row-fluid wizard-actions">
+                  <div class="wizard-actions">
                     <button class="btn btn-default btn-xs pull-left"
                             data-bind="click: exit_application, visible: is_in_person_application">
                       Cancel
@@ -297,7 +299,7 @@
 
       var test_wizard_data = {
         enrollment_type: "inperson",
-        case: {
+        case_data: {
           id: 1,
           situs_state: 'IL',
           situs_city: 'Chicago',
@@ -323,16 +325,25 @@
         ],
         products: [
           {
+            id: 1,
             code: 'FPPTI',
+            name: "Family Protection Plan: Terminal Illness",
             base_product_type: 'FPPTI',
             soh_questions: [{'question': 'Have you had a heart attack in the last 5 years?'}]
+          },
+          {
+            id: 2,
+            code: 'FPPCI',
+            name: "Family Protection Plan: Critical Illness",
+            base_product_type: 'FPPCI',
+            soh_questions: [{'question': 'Have you had a stroke in the last 5 years?'}]
           }
         ],
         payment_modes: [
-          {'frequency': 52, 'label': 'Weekly'},
-          {'frequency': 26, 'label': 'Biweekly'},
-          {'frequency': 24, 'label': 'Semimonthly'},
-          {'frequency': 12, 'label': 'Monthly'}
+          {frequency: 52, label: 'Weekly'},
+          {frequency: 26, label: 'Biweekly'},
+          {frequency: 24, label: 'Semimonthly'},
+          {frequency: 12, label: 'Monthly'}
         ],
         beneficiaries: []
       };

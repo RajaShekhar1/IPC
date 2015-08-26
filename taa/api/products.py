@@ -83,7 +83,7 @@ def delete_product(product_id):
 
 # Rates and recommendations for a product given key demographic data
 @route(bp, '/<product_id>/rates', methods=['POST'])
-# TODO: This is unauthenticated right now to accomodate self-enroll use case.
+# TODO: This is unauthenticated right now to accommodate self-enroll use case.
 # @groups_required(read_product_rate_groups, all=False)
 def get_product_rates(product_id):
     # product = product_service.get_if_allowed(product_id)
@@ -128,7 +128,7 @@ def get_product_rates(product_id):
     recommendations = product_service.get_recommendations(
         product, demographics)
     return dict(
-        success=True,
+        product_id=product.id,
         employee_rates=rates['employee'],
         spouse_rates=rates.get('spouse'),
         children_rates=rates.get('children'),

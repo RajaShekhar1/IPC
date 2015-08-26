@@ -76,6 +76,12 @@ describe("Applicant ViewModel", function() {
     expect(applicant.is_valid()).toEqual(false);
   });
 
+  it("should be able to format its name", function() {
+    var applicant = wizard_applicant.create_applicant(test_data);
+
+    expect(applicant.name()).toEqual(test_data.first);
+  });
+
   it("should not be valid if birthdate is blank", function() {
     test_data.birthdate = "";
 

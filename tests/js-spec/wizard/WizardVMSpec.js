@@ -6,7 +6,7 @@ describe("Wizard ViewModel", function() {
   beforeEach(function() {
     // set test_data to a valid set of data.
     test_data = {
-      case: {
+      case_data: {
         id: 1,
         situs_state: 'IL',
         situs_city: 'Chicago',
@@ -90,11 +90,11 @@ describe("Wizard ViewModel", function() {
     expect(wizard.should_show_spouse()).toEqual(true);
   });
 
-  it("should create an empty ApplicantGroup if no child data is provided", function() {
-    test_data.applicants = [];
+  // Moving the children group to the product coverage, as this will be more flexible since we can do this
+  // on a product-by-product basis.
+  it("should add two empty children to the form by default", function() {
     var wizard = create_wizard(test_data);
-    expect(wizard.children_group.type).toEqual(wizard_applicant.Applicant.ChildType);
-    expect(wizard.children_group.applicants()).toEqual([]);
+    expect(wizard.applicant_list.get_children().length).toEqual(2);
   });
 
   it("should not show children by default if no children data", function() {
@@ -111,7 +111,8 @@ describe("Wizard ViewModel", function() {
     var child = wizard.children()[0];
     wizard.remove_child(child);
 
-    expect(wizard.children().length).toEqual(0);
+    // The wizard adds an extra blank child, so it will still be there when we remove this child
+    expect(wizard.children().length).toEqual(1);
   });
 
   it("should set should_include_children to false when the last child is removed", function() {
@@ -143,7 +144,7 @@ describe("Wizard ViewModel", function() {
 
   it("should allow the payment mode to be changed if the setting is user selects", function() {
     // "User selects" is -1
-    test_data.case.payment_mode = -1;
+    test_data.case_data.payment_mode = -1;
 
     var wizard = create_wizard(test_data);
 
@@ -151,14 +152,14 @@ describe("Wizard ViewModel", function() {
   });
 
   it("should allow the payment mode to be changed if the payment mode is not set", function() {
-    test_data.case.payment_mode = null;
+    test_data.case_data.payment_mode = null;
 
     var wizard = create_wizard(test_data);
     expect(wizard.can_change_payment_mode()).toEqual(true);
   });
 
   it("should not allow the payment mode to be changed if the payment mode is already set", function() {
-    test_data.case.payment_mode = 52;
+    test_data.case_data.payment_mode = 52;
 
     var wizard = create_wizard(test_data);
     expect(wizard.can_change_payment_mode()).toEqual(false);
@@ -170,7 +171,7 @@ describe("Wizard ViewModel", function() {
   });
 
   it("should have a valid payment mode if the case has a default selected", function() {
-    test_data.case.payment_mode = 52;
+    test_data.case_data.payment_mode = 52;
     var wizard = create_wizard(test_data);
     expect(wizard.is_payment_mode_valid()).toEqual(true);
   });
@@ -221,6 +222,57 @@ describe("Wizard ViewModel", function() {
 
   xit("should not allow a user to decline a product if he has previously taken coverage for that product", function() {
 
+  });
+
+  it("should show the names of the valid applicants in the coverage selection table", function() {
+    var ch1 = {first: 'Jack', last: 'Johnson', birthdate: '2000-01-01', type: wizard_applicant.Applicant.ChildType};
+    var ch2 = {first: 'Jill', last: 'Johnson', birthdate: '2002-11-01', type: wizard_applicant.Applicant.ChildType};
+    test_data.applicants.push(ch1);
+    test_data.applicants.push(ch2);
+    var wizard = create_wizard(test_data);
+    var offered_product_vm = wizard.product_coverage_viewmodels()[0];
+
+    var emp_coverage_selection = offered_product_vm.get_coverage_for_applicant(wizard.applicant_list.get_employee());
+    var spouse_coverage_selection = offered_product_vm.get_coverage_for_applicant(wizard.applicant_list.get_spouse());
+    var children_coverage_selection = offered_product_vm.get_coverage_for_applicant(wizard.applicant_list.get_children_group());
+
+    expect(emp_coverage_selection.format_name()).toEqual(wizard.employee().name());
+    expect(spouse_coverage_selection.format_name()).toEqual(wizard.spouse().name());
+    expect(children_coverage_selection.format_name()).toEqual(ch1.first + ", "+ch2.first);
+  });
+
+  it("should show that an applicant has not selected coverage for a given product", function() {
+    var wizard = create_wizard(test_data);
+
+    var offered_product_vm = wizard.product_coverage_viewmodels()[0];
+
+    var applicant_coverage_selection = offered_product_vm.get_coverage_for_applicant(wizard.applicant_list.get_employee());
+    expect(applicant_coverage_selection.has_selected_coverage()).toEqual(false);
+  });
+
+  it("should show an applicant's coverage level after selecting a specific coverage for an applicant", function() {
+    var wizard = create_wizard(test_data);
+    var offered_product_vm = wizard.product_coverage_viewmodels()[0];
+    var emp_selected_cov = offered_product_vm.get_coverage_for_applicant(wizard.applicant_list.get_employee());
+
+    var option = new BenefitOption({coverage: 10000, premium: 3.59});
+    emp_selected_cov.select_custom_coverage(option);
+
+    expect(emp_selected_cov.has_selected_coverage()).toEqual(true);
+    expect(emp_selected_cov.get_selected_coverage()).toBe(option);
+  });
+
+  it("should allow the user to select a recommended set of coverages for all applicants on a product", function() {
+    var wizard = create_wizard(test_data);
+    var offered_product_vm = wizard.product_coverage_viewmodels()[0];
+    var recommendations = [
+      {name: 'good', coverages: {employee: new BenefitOption({coverage: 10000, premium: 3.59}), spouse: new NullBenefitOption(), children: new NullBenefitOption()}}
+    ];
+
+    offered_product_vm.select_recommended_coverage(recommendations[0].coverages);
+
+    var emp_selected_cov = offered_product_vm.get_coverage_for_applicant(wizard.applicant_list.get_employee());
+    expect(emp_selected_cov.get_selected_coverage()).toBe(recommendations[0].coverages.employee);
   });
 
 });

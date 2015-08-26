@@ -226,13 +226,18 @@ var wizard_applicant = (function () {
   var ApplicantGroup = function(options, applicants) {
     var self = this;
     self.type = options.type;
-    // applicants should be an observableArray
+    // applicants should be an observable list of children.
     self.applicants = applicants;
 
     self._id = _applicant_count++;
     self.is_valid = ko.computed(function () {
       return _.all(self.applicants(), function(applicant) {return applicant.is_valid();});
     });
+
+    self.name = ko.pureComputed(function() {
+      return _.invoke(self.applicants(), "name").join(", ");
+    });
+
     self.any_valid_field = function() {
       return _.any(self.applicants(), function(applicant) {return applicant.any_valid_field();});
     };
@@ -247,6 +252,7 @@ var wizard_applicant = (function () {
   var ApplicantList = function(initial_list) {
     this.applicants = ko.observableArray(initial_list || []);
     this.children = ko.pureComputed(this.get_children, this);
+    this._children_group = null;
 
     // Create a default employee and spouse
     if (this.get_employee() === undefined) {
@@ -272,6 +278,13 @@ var wizard_applicant = (function () {
       return _.filter(this.applicants(), function(a) {return a.type === Applicant.ChildType;});
     },
 
+    get_children_group: function() {
+      if (this._children_group === null) {
+        this._children_group = new ApplicantGroup({type: Applicant.ChildType}, this.children);
+      }
+      return this._children_group;
+    },
+
     has_valid_employee: function() {
       return this.get_employee() && this.get_employee().is_valid();
     },
@@ -282,6 +295,10 @@ var wizard_applicant = (function () {
 
     has_valid_children: function() {
       return _.any(this.get_children(), function(c) {return c.is_valid();});
+    },
+
+    get_valid_children: function() {
+      return _.filter(this.get_children(), function(c) {return c.is_valid();});
     },
 
     add_applicant: function(applicant) {
