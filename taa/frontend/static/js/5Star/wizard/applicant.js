@@ -235,7 +235,10 @@ var wizard_applicant = (function () {
     });
 
     self.name = ko.pureComputed(function() {
-      return _.invoke(self.applicants(), "name").join(", ");
+      var non_empty_name_applicants = _.filter(self.applicants(), function(applicant) {
+        return $.trim(applicant.name()) !== "";
+      });
+      return _.invoke(non_empty_name_applicants, "name").join(", ");
     });
 
     self.any_valid_field = function() {
@@ -249,10 +252,14 @@ var wizard_applicant = (function () {
     };
   };
 
-  var ApplicantList = function(initial_list) {
+  var ApplicantList = function(initial_list, should_show_spouse, should_show_children) {
     this.applicants = ko.observableArray(initial_list || []);
     this.children = ko.pureComputed(this.get_children, this);
     this._children_group = null;
+
+    this.should_show_spouse = should_show_spouse;
+    this.should_show_children = should_show_children;
+    this.get_valid_applicants_for_coverage = ko.pureComputed(this._get_valid_applicants_for_coverage, this);
 
     // Create a default employee and spouse
     if (this.get_employee() === undefined) {
@@ -266,6 +273,19 @@ var wizard_applicant = (function () {
     }
   };
   ApplicantList.prototype = {
+    _get_valid_applicants_for_coverage: function() {
+      var applicants = [];
+      if (this.has_valid_employee()) {
+        applicants.push(this.get_employee());
+      }
+      if (this.should_show_spouse() && this.has_valid_spouse()) {
+        applicants.push(this.get_spouse());
+      }
+      if (this.should_show_children() && this.has_valid_children()) {
+        applicants.push(this.get_children_group());
+      }
+      return applicants;
+    },
     get_employee: function() {
       return this._find_applicant_by_type(Applicant.EmployeeType);
     },

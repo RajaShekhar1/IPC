@@ -6,6 +6,9 @@ var payment_mode = (function() {
   PaymentMode.prototype = {
     serialize: function() {
       return this.frequency;
+    },
+    display_lowercase: function() {
+      return this.label.toLowerCase();
     }
   };
   return {

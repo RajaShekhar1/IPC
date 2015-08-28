@@ -157,7 +157,7 @@
 
           <div class="pull-right">
             <button type="button" class="btn btn-xs btn-danger" data-bind="click: $root.remove_child">
-              <i class="icon icon-minus"></i>
+              <i class="ace-icon glyphicon-minus"></i>
             </button>
           </div>
         </div>
@@ -191,7 +191,7 @@
   </div>
 
   {# Payment Mode Selection #}
-  <div style="margin-top: 1.5em;" data-bind="visible: can_change_payment_mode">
+  <div style="margin-top: 1.5em;" data-bind="visible: coverage_vm.can_change_payment_mode">
     <div class="row">
       <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="paymentMode">
         Payment Mode
@@ -200,8 +200,8 @@
       <div class="form-group col-xs-12 col-sm-10">
         <select name="paymentMode" id="paymentMode"
                 data-bind="
-                value: payment_mode,
-                options: payment_modes,
+                value: coverage_vm.payment_mode,
+                options: coverage_vm.payment_modes,
                 optionsText: 'label',
                 optionsCaption: '(Select Payment Mode)'"></select>
       </div>
@@ -233,22 +233,40 @@
 
     <div data-bind="visible: !is_rate_table_loading(), with: coverage_vm">
 
-      <div class="fuelux" data-bind="if: has_multiple_products">
+      <div data-bind="if: has_multiple_products">
+        <div class="row">
+          <div class="col-xs-1">
+            <button type="button" class="btn btn-default"  data-bind="click: go_to_previous_product">
+              <span class="ace-icon glyphicon glyphicon-chevron-left"></span>
+            </button>
+          </div>
 
-        <div id="#multi-product-wizard" class="wizard" data-bind="wizard: {}">
-          <ul class="steps" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">
-            <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">
-              <span class="step" data-bind="text: $index() + 1"></span>
-              <span class="title" data-bind="text: product_coverage.format_product_name()"></span>
-            </li>
-          </ul>
 
-          <div class="step-content" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">
-            <div class="step-pane" data-bind="
-            template: {name: product_coverage.get_coverage_selection_template(), data: product_coverage},
-            css: {active: $index() === 0}">
+          <div class="col-xs-10 wizard" data-bind="wizard: multiproduct_wizard_widget">
+            <ul class="steps" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">
+              <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">
+                <span class="step" data-bind="text: $index() + 1"></span>
+                <span class="title" data-bind="text: product_coverage.format_product_name()"></span>
+              </li>
+            </ul>
+
+            <div class="step-content" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">
+              <div class="step-pane" data-bind="
+              template: {name: product_coverage.get_coverage_selection_template(), data: product_coverage},
+              css: {active: $index() === 0}">
+              </div>
             </div>
           </div>
+
+          <div class="col-xs-1">
+            <button type="button" class="btn btn-default"  data-bind="click: go_to_next_product">
+              <span class="ace-icon glyphicon glyphicon-chevron-right"></span>
+            </button>
+          </div>
+        </div>
+
+         Summary table for multi-product enrollments.
+        <div data-bind="template: 'multi-product-selected-coverage-table'">
         </div>
 
       </div>
@@ -404,22 +422,34 @@
     </div>
 
     <div class="col-xs-8 col-sm-9 pricing-span-body">
-      <!--ko foreach: {data: available_recommendations, as: 'recommendation'} -->
-        <div class="pricing-span good">
-          <div class="widget-box pricing-box-small">
-            <div class="widget-header center header-color-red3 no-padding">
-              <h5 class="bigger lighter" data-bind="text: recommendation.name"></h5>
+      <!--ko foreach: {data: available_recommendations, as: 'recommendation_set'} -->
+        <div class="pricing-span"  data-bind="css: {
+              'good': recommendation_set.name === 'good',
+              'better': recommendation_set.name === 'better',
+              'best': recommendation_set.name === 'best'
+            }">
+          <div class="widget-box pricing-box-small" data-bind="css: {
+              'widget-color-red3': recommendation_set.name === 'good',
+              'widget-color-orange': recommendation_set.name === 'better',
+              'widget-color-blue': recommendation_set.name === 'best'
+            }">
+            <div class="widget-header center no-padding">
+              <h5 class="bigger lighter" data-bind="text: recommendation_set.name"></h5>
             </div>
 
             <div class="widget-body">
               <div class="widget-main no-padding" data-bind="
-                    template: {name: 'recommendations_template', data: recommendation},
-                    click: select_recommended_coverage(recommendation.coverages)
+                    template: {name: 'recommendations_template', data: recommendation_set},
+                    click: function() {$parent.select_recommended_coverage(recommendation_set);}
                     ">
               </div>
 
-              <div data-bind="click: select_recommended_coverage(recommendation.coverages)">
-                <a class="btn btn-block btn-sm btn-danger">
+              <div data-bind="click: function() {$parent.select_recommended_coverage(recommendation_set);}">
+                <a class="btn btn-block btn-sm btn-danger" data-bind="css: {
+                  'btn-danger': recommendation_set.name === 'good',
+                  'btn-warning': recommendation_set.name === 'better',
+                  'btn-primary': recommendation_set.name === 'best'
+                }">
                   <span>Select</span>
                 </a>
               </div>
@@ -427,106 +457,33 @@
           </div>
         </div>
       <!--/ko-->
-      {# Better #}
-{#      <div class="pricing-span better">#}
-{#        <div class="widget-box pricing-box-small">#}
-{#          <div class="widget-header center header-color-orange no-padding">#}
-{#            <h5 class="bigger lighter">Better</h5>#}
-{#          </div>#}
-{##}
-{#          <div class="widget-body">#}
-{#            <div class="widget-main no-padding" data-bind="#}
-{#                  template: {name: 'recommendations_template', data: recommendations.better},#}
-{#                  click: function() {$root.select_recommended_benefit(recommendations.better)}#}
-{#                  ">#}
-{#            </div>#}
-{##}
-{#            <div>#}
-{#              <a data-bind="click: function() {$root.select_recommended_benefit(recommendations.better)}"#}
-{#                 class="btn btn-block btn-sm btn-warning">#}
-{#                <span>Select</span>#}
-{#              </a>#}
-{#            </div>#}
-{#          </div>#}
-{#        </div>#}
-{#      </div>#}
-
-      {# Best #}
-{#      <div class="pricing-span best">#}
-{#        <div class="widget-box pricing-box-small">#}
-{#          <div class="widget-header center header-color-best no-padding">#}
-{#            <h5 class="bigger lighter">Best</h5>#}
-{#          </div>#}
-{##}
-{#          <div class="widget-body"#}
-{#               data-bind="click: function() {$root.select_recommended_benefit(recommendations.best)}">#}
-{#            <div class="widget-main no-padding" data-bind="#}
-{#                  template: {name: 'recommendations_template', data: recommendations.best}#}
-{#                  ">#}
-{#            </div>#}
-{##}
-{#            <div>#}
-{#              <a#}
-{#                      class="btn btn-block btn-sm btn-primary">#}
-{#                <span>Select</span>#}
-{#              </a>#}
-{#            </div>#}
-{#          </div>#}
-{#        </div>#}
-{#      </div>#}
 
       {# Customize #}
-{#      <div class="pricing-span">#}
-{#        <div class="widget-box pricing-box-small pricing-box-small-no-hover customize">#}
-{#          <div class="widget-header center header-color-grey no-padding">#}
-{#            <h5 class="bigger lighter">Customize</h5>#}
-{#          </div>#}
-{##}
-{#          <div class="widget-body">#}
-{#            <div class="widget-main no-padding">#}
-{#              <ul class="list-unstyled list-striped pricing-table">#}
-{#                <li>#}
-{#                  <!--ko if: employee().is_valid()-->#}
-{#                  <select class="emp-coverage" data-bind="#}
-{#                        options: insurance_product.get_coverage_options_for_applicant('employee'),#}
-{#                        optionsCaption: '',#}
-{#                        optionsText: BenefitOption.display_benefit_option,#}
-{#                        value: employee().selected_custom_option,#}
-{#                        event: {change: apply_selected_customization}#}
-{#                        ">#}
-{#                  </select>#}
-{#                  <!--/ko-->#}
-{#                </li>#}
-{#                <!--ko if: should_include_spouse_in_table-->#}
-{#                <li>#}
-{#                  <select class="sp-coverage" data-bind="#}
-{#                        options: insurance_product.get_coverage_options_for_applicant('spouse'),#}
-{#                        optionsCaption: '',#}
-{#                        optionsText: BenefitOption.display_benefit_option,#}
-{#                        value: spouse().selected_custom_option,#}
-{#                        event: {change: apply_selected_customization}#}
-{#                        ">#}
-{#                  </select>#}
-{#                </li>#}
-{#                <!--/ko-->#}
-{#                <!--ko if: should_include_children_in_table-->#}
-{#                <li>#}
-{#                  <select class="ch-coverage" data-bind="#}
-{#                        options: insurance_product.get_coverage_options_for_applicant('children'),#}
-{#                        optionsCaption: '',#}
-{#                        optionsText: BenefitOption.display_benefit_option,#}
-{#                        value: child_benefits().selected_custom_option,#}
-{#                        event: {change: apply_selected_customization}#}
-{#                        ">#}
-{#                  </select>#}
-{#                </li>#}
-{#                <!--/ko-->#}
-{##}
-{#              </ul>#}
-{#            </div>#}
-{#          </div>#}
-{#        </div>#}
-{#      </div>#}
+      <div class="pricing-span">
+        <div class="widget-box pricing-box-small pricing-box-small-no-hover customize">
+          <div class="widget-header center header-color-grey no-padding">
+            <h5 class="bigger lighter">Customize</h5>
+          </div>
+
+          <div class="widget-body">
+            <div class="widget-main no-padding">
+              <ul class="list-unstyled list-striped pricing-table" data-bind="
+                foreach: { data: applicant_coverage_selections, as: 'applicant_coverage'}">
+                  <li>
+                    <select class="emp-coverage" data-bind="
+                          options: applicant_coverage.get_coverage_options,
+                          optionsCaption: '',
+                          optionsText: CoverageOption.display_benefit_option,
+                          value: customized_coverage_option
+                          ">
+                      {# event: {change: apply_selected_customization} #}
+                    </select>
+                  </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {# Selected Plan #}
 {#      <div class="pricing-span">#}
@@ -552,11 +509,52 @@
 </script>
 
 
-{# Payment Estimate Banner #}
+<script type="text/html" id="multi-product-selected-coverage-table">
+
+  <table class="table table-striped table-responsive" data-bind="with: coverage_summary_vm">
+    <thead>
+      <tr>
+        <th></th>
+        <!--ko foreach: {data: product_names}-->
+          <th data-bind="text: $data"></th>
+        <!--/ko-->
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!--ko foreach: {data: valid_applicants, as: 'applicant'} -->
+
+        <tr>
+          <td data-bind="text: applicant.name"></td>
+          <!--ko foreach: {data: $parent.product_coverages, as: 'product'} -->
+            <td data-bind="with: $parents[2].get_applicant_coverage_option_for_product(applicant, product)">
+              <strong data-bind="html: format_face_value()"></strong>
+              <div data-bind="html: format_premium_option()"></div>
+            </td>
+          <!--/ko-->
+{#          <td data-bind="text: $parent.format_total_premium_for_applicant(applicant)"></td>#}
+            <td>Applicant total</td>
+        </tr>
+      <!--/ko-->
+      {# Totals #}
+      <tr>
+        <td>{# Name has no total #}</td>
+        <!--ko foreach: {data: $parent.products, as: 'product'} -->
+{#          <td data-bind="text: $parent.format_total_premium_for_product(product)"></td>#}
+            <td>Product total</td>
+        <!--/ko-->
+        <td>GRAND TOTAL</td>
+      </tr>
+    </tbody>
+  </table>
+
+</script>
+
+{# Recommendation table column #}
 <script type="text/html" id="recommendations_template">
-  <ul class="list-unstyled list-striped pricing-table" data-bind="foreach: {data: $parents[1].get_applicant_recommendations(recommendation), as: 'applicant_recommendation'}">
-    <li data-bind="template: {name: applicant_recommendation.is_valid() ? 'recommend_coverage_option_template' : 'blank_template',
-                                  data: applicant_recommendation}">
+  <ul class="list-unstyled list-striped pricing-table" data-bind="foreach: {data: $parents[1].applicant_coverage_selections(), as: 'applicant_coverage'}">
+    <li data-bind="template: {name: 'recommend_coverage_option_template',
+                                  data: applicant_coverage}">
     </li>
 {#    <!--ko if: $root.should_include_spouse_in_table-->#}
 {#    <li data-bind="template: {name: spouse_recommendation().is_valid() ? 'recommend_coverage_option_template' : 'blank_template',#}
@@ -572,15 +570,15 @@
         <span class="label label-lg label-inverse arrowed-in arrowed-in-right">
           <span data-bind="text: formatted_total_premium()"></span>
           <small>
-            <span data-bind="text: $root.payment_mode_text_lower()">(NA)</span>
+            <span data-bind="text: formatted_payment_mode()"></span>
           </small>
         </span>
   </div>
 </script>
 
 <script type="text/html" id="recommend_coverage_option_template">
-  <strong data-bind="html: format_face_value()"></strong>
-  <div data-bind="html: format_premium_option()"></div>
+  <strong data-bind="html: applicant_coverage.format_recommendation_coverage(recommendation_set)"></strong>
+  <div data-bind="html: applicant_coverage.format_recommendation_premium(recommendation_set)"></div>
 </script>
 
 

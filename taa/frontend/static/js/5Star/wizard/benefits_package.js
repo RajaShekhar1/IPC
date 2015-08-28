@@ -35,7 +35,7 @@ function BenefitsPackage(root, name) {
 
   self.get_recommended_benefit = function (applicant, recommended_val) {
     if (recommended_val == null || recommended_val == "") {
-      return new NullBenefitOption();
+      return new NullCoverageOption();
     } else {
       var applicant_type;
       if (applicant == root.employee()) {

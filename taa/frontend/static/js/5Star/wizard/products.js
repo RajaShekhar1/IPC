@@ -115,7 +115,7 @@ Product.prototype = {
   },
 
   find_recommended_coverage_benefit: function (applicant_type, desired_face_value) {
-    var benefit = new NullBenefitOption({});
+    var benefit = new NullCoverageOption({});
     $.each(this.all_coverage_options[applicant_type](), function () {
       if (this.face_value == desired_face_value) {
         benefit = this;
@@ -141,7 +141,7 @@ Product.prototype = {
 
   parse_benefit_options: function (applicant_type, applicant, rates) {
     var self = this;
-    var all_options = [new NullBenefitOption()];
+    var all_options = [new NullCoverageOption()];
 
     if (rates.bypremium) {
       var by_premium_options = $.map(rates.bypremium, function (rate) {
@@ -167,7 +167,7 @@ Product.prototype = {
       $.merge(all_options, by_face_options);
     }
 
-    self.all_coverage_options[applicant_type](all_options);
+    return all_options;
   },
 
   should_show_step_5: function () {
@@ -386,7 +386,7 @@ function GroupCIProduct(root, product_data) {
 
 
       // $5,000 to $100,000
-      var valid_options = [new NullBenefitOption()];
+      var valid_options = [new NullCoverageOption()];
       var rate_choices = [];
       $.each(rates.byface, function () {
         var rate = this;
@@ -415,19 +415,19 @@ function GroupCIProduct(root, product_data) {
         }
       });
       self.spouse_options_for_demographics($.merge(
-          [new NullBenefitOption()],
+          [new NullCoverageOption()],
           $.map(demographic_spouse_rates, convert_rate_to_benefit_option)
       ));
       self.all_spouse_rate_options($.merge(
-          [new NullBenefitOption()],
+          [new NullCoverageOption()],
           $.map(all_spouse_rates, convert_rate_to_benefit_option)
       ));
-      var sp_options = [new NullBenefitOption()];
+      var sp_options = [new NullCoverageOption()];
       $.merge(sp_options, $.map(demographic_spouse_rates, convert_rate_to_benefit_option));
       self.all_coverage_options.spouse(sp_options);
     }
     if (applicant_type == "children" && rates.byface !== undefined) {
-      var ch_options = [new NullBenefitOption()];
+      var ch_options = [new NullCoverageOption()];
       $.merge(ch_options, $.map(rates.byface, convert_rate_to_benefit_option));
       self.all_posible_children_options(ch_options);
       self.all_coverage_options.children(ch_options);

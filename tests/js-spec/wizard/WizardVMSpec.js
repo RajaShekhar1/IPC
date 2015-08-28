@@ -148,32 +148,32 @@ describe("Wizard ViewModel", function() {
 
     var wizard = create_wizard(test_data);
 
-    expect(wizard.can_change_payment_mode()).toEqual(true);
+    expect(wizard.coverage_vm.can_change_payment_mode()).toEqual(true);
   });
 
   it("should allow the payment mode to be changed if the payment mode is not set", function() {
     test_data.case_data.payment_mode = null;
 
     var wizard = create_wizard(test_data);
-    expect(wizard.can_change_payment_mode()).toEqual(true);
+    expect(wizard.coverage_vm.can_change_payment_mode()).toEqual(true);
   });
 
   it("should not allow the payment mode to be changed if the payment mode is already set", function() {
     test_data.case_data.payment_mode = 52;
 
     var wizard = create_wizard(test_data);
-    expect(wizard.can_change_payment_mode()).toEqual(false);
+    expect(wizard.coverage_vm.can_change_payment_mode()).toEqual(false);
   });
 
   it("should get the available payment modes from the input options", function() {
     var wizard = create_wizard(test_data);
-    expect(wizard.payment_modes.length).toBe(test_data.payment_modes.length);
+    expect(wizard.coverage_vm.payment_modes.length).toBe(test_data.payment_modes.length);
   });
 
   it("should have a valid payment mode if the case has a default selected", function() {
     test_data.case_data.payment_mode = 52;
     var wizard = create_wizard(test_data);
-    expect(wizard.is_payment_mode_valid()).toEqual(true);
+    expect(wizard.coverage_vm.is_payment_mode_valid()).toEqual(true);
   });
 
   it("should not show the recommendation table initially", function() {
@@ -255,7 +255,7 @@ describe("Wizard ViewModel", function() {
     var offered_product_vm = wizard.product_coverage_viewmodels()[0];
     var emp_selected_cov = offered_product_vm.get_coverage_for_applicant(wizard.applicant_list.get_employee());
 
-    var option = new BenefitOption({coverage: 10000, premium: 3.59});
+    var option = new CoverageOption({coverage: 10000, premium: 3.59});
     emp_selected_cov.select_custom_coverage(option);
 
     expect(emp_selected_cov.has_selected_coverage()).toEqual(true);
@@ -266,7 +266,7 @@ describe("Wizard ViewModel", function() {
     var wizard = create_wizard(test_data);
     var offered_product_vm = wizard.product_coverage_viewmodels()[0];
     var recommendations = [
-      {name: 'good', coverages: {employee: new BenefitOption({coverage: 10000, premium: 3.59}), spouse: new NullBenefitOption(), children: new NullBenefitOption()}}
+      {name: 'good', coverages: {employee: 10000, spouse: null, children: null}}
     ];
 
     offered_product_vm.select_recommended_coverage(recommendations[0].coverages);
