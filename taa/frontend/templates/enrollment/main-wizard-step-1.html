@@ -236,36 +236,37 @@
       <div data-bind="if: has_multiple_products">
         <div class="row">
           <div class="col-xs-1">
-            <button type="button" class="btn btn-default"  data-bind="click: go_to_previous_product">
+            <button type="button" class="btn btn-default"  data-bind="click: go_to_previous_product,
+                    visible: previous_product() !== null">
               <span class="ace-icon glyphicon glyphicon-chevron-left"></span>
             </button>
           </div>
 
 
-          <div class="col-xs-10 wizard" data-bind="wizard: multiproduct_wizard_widget">
-            <ul class="steps" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">
-              <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">
-                <span class="step" data-bind="text: $index() + 1"></span>
-                <span class="title" data-bind="text: product_coverage.format_product_name()"></span>
-              </li>
-            </ul>
+          <div class="col-xs-10 ">
+            <h3 data-bind="text: current_product().format_product_name()"></h3>
+{#            <ul class="list-unstyled" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">#}
+{#              <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">#}
+{#                <span class="step" data-bind="text: $index() + 1"></span>#}
+{#                <span class="title" data-bind="text: product_coverage.format_product_name()"></span>#}
+{#              </li>#}
+{#            </ul>#}
 
-            <div class="step-content" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">
-              <div class="step-pane" data-bind="
-              template: {name: product_coverage.get_coverage_selection_template(), data: product_coverage},
-              css: {active: $index() === 0}">
-              </div>
+            <div class="" data-bind="
+              template: {name: current_product().get_coverage_selection_template(), data: current_product()}
+              ">
             </div>
           </div>
 
           <div class="col-xs-1">
-            <button type="button" class="btn btn-default"  data-bind="click: go_to_next_product">
+            <button type="button" class="btn btn-default"  data-bind="click: go_to_next_product,
+                      visible: next_product() !== null">
               <span class="ace-icon glyphicon glyphicon-chevron-right"></span>
             </button>
           </div>
         </div>
 
-         Summary table for multi-product enrollments.
+        {# Summary table for multi-product enrollments. #}
         <div data-bind="template: 'multi-product-selected-coverage-table'">
         </div>
 
@@ -377,7 +378,7 @@
 
 
     {# Decline any products option #}
-    <div class="row">
+    <div class="row" data-bind="visible: !coverage_vm.has_multiple_products()">
       <div class="col-xs-12 text-center red" data-bind="if: can_decline">
         <div class="decline-option">
           <label><input type="checkbox" data-bind="checked: did_decline"> I decline to enroll in any of the 5Star
@@ -516,9 +517,9 @@
       <tr>
         <th></th>
         <!--ko foreach: {data: product_names}-->
-          <th data-bind="text: $data"></th>
+          <th class="text-center" data-bind="text: $data"></th>
         <!--/ko-->
-        <th>Total</th>
+        <th class="text-center">Total</th>
       </tr>
     </thead>
     <tbody>
@@ -532,19 +533,19 @@
               <div data-bind="html: format_premium_option()"></div>
             </td>
           <!--/ko-->
-{#          <td data-bind="text: $parent.format_total_premium_for_applicant(applicant)"></td>#}
-            <td>Applicant total</td>
+          <td data-bind="text: $parents[1].format_total_premium_for_applicant(applicant)"></td>
         </tr>
       <!--/ko-->
       {# Totals #}
-      <tr>
-        <td>{# Name has no total #}</td>
-        <!--ko foreach: {data: $parent.products, as: 'product'} -->
-{#          <td data-bind="text: $parent.format_total_premium_for_product(product)"></td>#}
-            <td>Product total</td>
-        <!--/ko-->
-        <td>GRAND TOTAL</td>
-      </tr>
+      <tfoot>
+        <tr>
+          <th class="text-center">Totals: </th>
+          <!--ko foreach: {data: $parent.products, as: 'product'} -->
+            <th  class="text-center" data-bind="text: $parents[1].format_total_premium_for_product(product)"></th>
+          <!--/ko-->
+          <th class="text-center" data-bind="text: $parent.format_grand_total_premium()"></th>
+        </tr>
+      </tfoot>
     </tbody>
   </table>
 

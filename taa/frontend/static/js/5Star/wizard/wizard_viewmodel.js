@@ -70,7 +70,7 @@ var wizard_viewmodel = (function() {
     }, this);
 
     function val_or_null(array, index) {
-      if (index >= 0 && index < index.length) {
+      if (index >= 0 && index < array.length) {
         return array[index];
       }
       return null;
@@ -113,9 +113,20 @@ var wizard_viewmodel = (function() {
         var matching_applicant_coverage = _.find(pcov.applicant_coverage_selections.peek(), function(app_cov) {
           return app_cov.applicant === applicant;
         });
+        if (!matching_applicant_coverage) {
+          return format_premium_value(0.0);
+        }
         applicant_total += matching_applicant_coverage.coverage_option().premium;
       });
       return format_premium_value(applicant_total);
+    },
+
+    format_grand_total_premium: function() {
+      var grand_total = 0.0;
+      _.each(this.product_coverage_viewmodels(), function(pcov) {
+        grand_total += pcov.get_total_premium();
+      });
+      return format_premium_value(grand_total);
     },
 
     get_product_coverage: function(product) {
@@ -125,10 +136,15 @@ var wizard_viewmodel = (function() {
     },
 
     go_to_next_product: function() {
-      this.multiproduct_wizard_widget().wizard('next');
+      if (this.next_product()) {
+        this.current_product(this.next_product());
+      }
     },
     go_to_previous_product: function() {
-      this.multiproduct_wizard_widget().wizard('previous');
+      if (this.previous_product()) {
+        this.current_product(this.previous_product());
+      }
+
     }
   };
 
