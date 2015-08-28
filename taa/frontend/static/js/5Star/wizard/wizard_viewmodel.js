@@ -110,6 +110,10 @@ var wizard_viewmodel = (function() {
     format_total_premium_for_applicant: function(applicant) {
       var applicant_total = 0.0;
       _.each(this.product_coverage_viewmodels(), function(pcov) {
+        if (pcov.did_decline()) {
+          // continue
+          return true;
+        }
         var matching_applicant_coverage = _.find(pcov.applicant_coverage_selections.peek(), function(app_cov) {
           return app_cov.applicant === applicant;
         });
@@ -124,6 +128,10 @@ var wizard_viewmodel = (function() {
     format_grand_total_premium: function() {
       var grand_total = 0.0;
       _.each(this.product_coverage_viewmodels(), function(pcov) {
+        if (pcov.did_decline()) {
+          // continue
+          return true;
+        }
         grand_total += pcov.get_total_premium();
       });
       return format_premium_value(grand_total);
@@ -158,6 +166,7 @@ var wizard_viewmodel = (function() {
     self.should_include_spouse = should_include_spouse;
     self.should_include_children = should_include_children;
 
+    self.did_decline = ko.observable(false);
     self.available_recommendations = product_rates_service.get_product_recommendations(self.product, payment_mode);
     self.selected_recommendation = ko.observable(null);
 
@@ -230,6 +239,9 @@ var wizard_viewmodel = (function() {
 
     get_total_premium: function() {
       var total = 0.0;
+      if (this.did_decline()) {
+        return total;
+      }
       _.each(this.applicant_coverage_selections(), function(applicant_coverage) {
         total += applicant_coverage.coverage_option().premium;
       }, this);

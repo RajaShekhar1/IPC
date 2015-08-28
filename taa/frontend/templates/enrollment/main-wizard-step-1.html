@@ -244,17 +244,20 @@
 
 
           <div class="col-xs-10 ">
-            <h3 data-bind="text: current_product().format_product_name()"></h3>
-{#            <ul class="list-unstyled" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">#}
-{#              <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">#}
-{#                <span class="step" data-bind="text: $index() + 1"></span>#}
-{#                <span class="title" data-bind="text: product_coverage.format_product_name()"></span>#}
-{#              </li>#}
-{#            </ul>#}
 
-            <div class="" data-bind="
-              template: {name: current_product().get_coverage_selection_template(), data: current_product()}
-              ">
+            <h3 data-bind="text: current_product().format_product_name()"></h3>
+            <div  data-bind="slideDownIf: !current_product().did_decline()">
+  {#            <ul class="list-unstyled" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">#}
+  {#              <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">#}
+  {#                <span class="step" data-bind="text: $index() + 1"></span>#}
+  {#                <span class="title" data-bind="text: product_coverage.format_product_name()"></span>#}
+  {#              </li>#}
+  {#            </ul>#}
+
+              <div class="" data-bind="
+                template: {name: current_product().get_coverage_selection_template(), data: current_product()}
+                ">
+              </div>
             </div>
           </div>
 
@@ -263,6 +266,17 @@
                       visible: next_product() !== null">
               <span class="ace-icon glyphicon glyphicon-chevron-right"></span>
             </button>
+          </div>
+        </div>
+
+        {# Decline option for product #}
+        <div class="row">
+          <div class="col-xs-12 text-center red">
+            <div class="decline-option">
+              <label><input type="checkbox" data-bind="checked: current_product().did_decline"> I decline to enroll in
+                <span data-bind="text: current_product().format_product_name()"></span> at this time
+              </label>
+            </div>
           </div>
         </div>
 
@@ -527,11 +541,18 @@
 
         <tr>
           <td data-bind="text: applicant.name"></td>
-          <!--ko foreach: {data: $parent.product_coverages, as: 'product'} -->
+          <!--ko foreach: {data: $parent.product_coverages, as: 'product_coverage'} -->
+            <!--ko if: product_coverage.did_decline-->
+              <td>
+                <strong>Declined</strong>
+              </td>
+            <!--/ko-->
+            <!--ko if: !product_coverage.did_decline()-->
             <td data-bind="with: $parents[2].get_applicant_coverage_option_for_product(applicant, product)">
               <strong data-bind="html: format_face_value()"></strong>
               <div data-bind="html: format_premium_option()"></div>
             </td>
+            <!--/ko-->
           <!--/ko-->
           <td data-bind="text: $parents[1].format_total_premium_for_applicant(applicant)"></td>
         </tr>
