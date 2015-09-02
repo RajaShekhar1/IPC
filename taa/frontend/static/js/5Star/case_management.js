@@ -1,5 +1,5 @@
 var case_management = (function() {
-
+    var testing;
     var loading_html = "<span class='icon-spinner icon-spin grey bigger-200'></span> <span class='bigger-175'> Loading data...</span>";
 
     function refresh_census_table(case_id, url, table_selector, loading_selector, init_callback, no_data_cb, success_callback) {
