@@ -5,6 +5,7 @@ from taa.core import TAAFormError
 from taa.api import route
 from taa.helpers import get_posted_data
 from taa.services.products import ProductService
+from taa.services.cases import RiderService
 from taa.services.products.forms import NewProductForm, EditProductForm
 
 bp = Blueprint('products', __name__, url_prefix='/products')
@@ -13,7 +14,7 @@ write_product_groups = ['home_office', 'admins']
 read_product_rate_groups = ['agents', 'home_office', 'admins']
 
 product_service = ProductService()
-
+rider_service = RiderService()
 
 @route(bp, '/', methods=['GET'])
 @login_required
@@ -111,17 +112,10 @@ def get_product_rates(product_id):
         payment_mode=payment_mode
     )
 
-    # Rider rates
-    emp_rider_rates = dict(
-            WP=10*int(payment_mode)/52,
-            AIR=6*int(payment_mode)/52,
-            CHR=5*int(payment_mode)/52
-            )
-    sp_rider_rates = dict(
-            WP=10*int(payment_mode)/52,
-            AIR=6*int(payment_mode)/52,
-            CHR=5*int(payment_mode)/52
-            )
+    #Rider Rates
+    rider_rates = rider_service.get_rider_rates(payment_mode)
+    emp_rider_rates = rider_rates['emp']
+    sp_rider_rates = rider_rates['sp']
 
     # Return rates and recommendations
     rates = product_service.get_rates(product, demographics)

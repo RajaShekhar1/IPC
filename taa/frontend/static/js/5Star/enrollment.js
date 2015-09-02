@@ -3457,8 +3457,6 @@ function init_validation() {
         wizard_results.rider_data = window.ui.selected_riders.serialize_data();
 
         // Send to server
-        console.log(wizard_results);
-        return;
         ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function (resp) {
             if (resp.error) {
                 bootbox.dialog({
