@@ -76,11 +76,15 @@ def manage_case(case_id):
         agent_name = agent.name()
         agent_id = agent.id
         agent_email = agent.email
-        vars['can_edit_case'] = (agent is case_service.get_case_owner(case))
+        is_agent_case_owner = agent is case_service.get_case_owner(case)
+        vars['can_edit_case'] = (is_agent_case_owner)
+        vars['can_download_enrollments'] = (is_agent_case_owner or case.can_partner_agent_download_enrollments())
     else:
+        # Admin or home office
         products = product_service.get_all_enrollable_products()
         vars['is_admin'] = True
         vars['can_edit_case'] = True
+        vars['can_download_enrollments'] = True
         vars['active_agents'] = agent_service.get_active_agents()
         vars['header_title'] = 'Home Office'
         agent_name = ""
