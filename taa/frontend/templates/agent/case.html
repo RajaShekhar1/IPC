@@ -216,6 +216,15 @@ style="display: none;" data-bind="visible: true">
                     </div>
                   </div>
                 </div>
+
+                <div class="row">
+                  <div class="form-group">
+                    <label class="col-xs-12 control-label">
+                      <input type="checkbox" class="ace" data-bind="checked: restrict_download_enrollments_to_owner">
+                      <span class="lbl"> Restrict Enrollment Downloads to Case Owning Agent only</span>
+                    </label>
+                  </div>
+                </div>
               </div>
 
               {% endif %}
@@ -473,10 +482,12 @@ style="display: none;" data-bind="visible: true">
             <i class="ace-icon fa fa-upload"></i>
             Upload Census
           </button>
-          <a data-bind="visible: has_census_data() && can_edit_case" href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
+          {% if can_download_enrollments %}
+          <a data-bind="visible: can_download_enrollments" href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
             <i class="ace-icon glyphicon glyphicon-download-alt"></i>
             Download Census
           </a>
+          {% endif %}
           <a  id="add-to-census-btn" class="btn btn-primary pull-right" data-bind="visible: is_active">
             <i class="ace-icon glyphicon glyphicon-plus"></i>
             New Enrollment
@@ -1452,6 +1463,22 @@ style="display: none;" data-bind="visible: true">
                     });
                     self.is_active = ko.observable(case_data.active);
                     self.owner_agent_id = ko.observable(case_data.agent_id || "");
+
+                    var should_restrict_downloads = false;
+                    if (case_data.can_partners_download_enrollments === false) {
+                      should_restrict_downloads = true;
+                    }
+                    self.restrict_download_enrollments_to_owner = ko.observable(should_restrict_downloads);
+                    self.can_partners_download_enrollments = ko.pureComputed(function() {
+                      return !self.restrict_download_enrollments_to_owner();
+                    });
+
+                    self.can_download_enrollments = ko.pureComputed(function() {
+                      // We don't even show the button if the user is restricted from downloading,
+                      // this is just so we don't show the button if we don't have data.
+                      return self.has_census_data();
+                    });
+
                     self.partner_agents = ko.observable(
                       (case_data.partner_agents)? _.map(_.pluck(case_data.partner_agents, "id"), function(id) {return id+""}) : []);
 
@@ -1600,7 +1627,7 @@ style="display: none;" data-bind="visible: true">
                       if (self.can_edit_case) {
                         var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
                           self.enrollment_periods, self.situs_city, self.situs_state, self.payment_mode,
-                          self.is_active, self.owner_agent_id, self.is_self_enrollment
+                          self.is_active, self.owner_agent_id, self.can_partners_download_enrollments, self.is_self_enrollment
                         ];
                         _.each(self.enrollment_periods(), function(p) {
                           fields.push(p.start_date);
@@ -1792,6 +1819,7 @@ style="display: none;" data-bind="visible: true">
                             situs_state: self.selected_statecode() ? self.selected_statecode() : "",
                             payment_mode: self.selected_payment_mode() ? self.selected_payment_mode() : null,
                             agent_id: self.owner_agent_id(),
+                            can_partners_download_enrollments: self.can_partners_download_enrollments(),
                             is_self_enrollment: self.is_self_enrollment()
                           }
                         };
