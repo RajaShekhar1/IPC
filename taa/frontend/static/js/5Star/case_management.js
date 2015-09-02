@@ -36,7 +36,7 @@ var case_management = (function() {
             "aaSorting": [[ 3, "asc" ]]
           };
 
-        // Show loading
+        // Show loading icon
         loading.html(loading_html);
 
         // Clear table if it exists
@@ -216,12 +216,10 @@ var case_management = (function() {
         ctn.insertBefore(table);
     }
 
-
     return {
         refresh_census_table: refresh_census_table,
         refresh_enrollments_table: refresh_enrollments_table,
         init_alphabet_search: init_alphabet_search,
         init_status_filter: init_status_filter
-
     };
 })();
