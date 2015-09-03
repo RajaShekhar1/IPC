@@ -221,7 +221,7 @@ style="display: none;" data-bind="visible: true">
                   <div class="form-group">
                     <label class="col-xs-12 control-label">
                       <input type="checkbox" class="ace" data-bind="checked: restrict_download_enrollments_to_owner">
-                      <span class="lbl"> Restrict Enrollment Downloads to Case Owning Agent only</span>
+                      <span class="lbl"> Restrict Enrollment and Census Downloads to Case Owning Agent only</span>
                     </label>
                   </div>
                 </div>
@@ -634,6 +634,7 @@ style="display: none;" data-bind="visible: true">
           <div class="widget-header">
             <div class="row">
               <div class="col-xs-6"><h4 class="bigger-150">Enrollment Records</h4></div>
+              {% if can_download_enrollments %}
               <div class="col-xs-6">
 
                 <a href="{{ url_for('cases.enrollment_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
@@ -641,6 +642,7 @@ style="display: none;" data-bind="visible: true">
                   Download Enrollments
                 </a>
               </div>
+              {% endif %}
             </div>
           </div>
           <div class="widget-body">
