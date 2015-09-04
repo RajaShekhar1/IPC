@@ -164,7 +164,8 @@ class CaseService(DBService):
     def get_census_records(self, case, offset=None, num_records=None,
                            search_text=None, text_columns=None,
                            sorting=None, sort_desc=False, include_enrolled=True,
-                           filter_ssn=None, filter_birthdate=None):
+                           filter_ssn=None, filter_birthdate=None,
+                           filter_agent=None):
         from taa.services.enrollments.models import EnrollmentApplication
         query = self.census_records.find(case_id=case.id)
 
@@ -187,12 +188,18 @@ class CaseService(DBService):
                     ).joinedload('product')
             )
 
+        if filter_agent:
+            # Only show enrolled census records where this agent was the enrolling agent.
+            query = query.join('enrollment_applications'
+                               ).filter(EnrollmentApplication.agent_id == filter_agent.id)
+
         if filter_ssn:
             query = query.filter(CaseCensus.employee_ssn ==
                                  filter_ssn.replace('-', ''))
         if filter_birthdate:
             bd = dateutil.parser.parse(filter_birthdate)
             query = query.filter(CaseCensus.employee_birthdate == bd)
+
         if sorting:
             sort_col = getattr(CaseCensus, sorting)
             if sort_desc:
@@ -371,6 +378,19 @@ class CaseService(DBService):
         })
 
         return case
+
+    def is_agent_case_owner(self, agent, case):
+        return agent is self.get_case_owner(case)
+
+    def can_agent_edit_case(self, agent, case):
+        return self.is_agent_case_owner(agent, case)
+
+    def is_agent_allowed_to_view_full_census(self, agent, case):
+        # Either we own the case, or we are a partner agent with no restrictions turned on.
+        return self.is_agent_case_owner(agent, case) or case.can_partner_agent_download_enrollments()
+
+    def is_agent_restricted_to_own_enrollments(self, agent, case):
+        return not self.is_agent_allowed_to_view_full_census(agent, case)
 
 
 class CaseEnrollmentPeriodsService(DBService):
