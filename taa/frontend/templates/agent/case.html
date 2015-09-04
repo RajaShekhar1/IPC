@@ -43,13 +43,14 @@ style="display: none;" data-bind="visible: true">
           Email History
         </a>
       </li>
-
+      {% if can_view_report_tab %}
       <li>
         <a href="#reports">
           <i class="blue ace-icon fa fa-bar-chart-o bigger-120"></i>
           Enrollment Reports
         </a>
       </li>
+      {% endif %}
     </ul>
 
     <div class="tab-content">
@@ -221,7 +222,7 @@ style="display: none;" data-bind="visible: true">
                   <div class="form-group">
                     <label class="col-xs-12 control-label">
                       <input type="checkbox" class="ace" data-bind="checked: restrict_download_enrollments_to_owner">
-                      <span class="lbl"> Restrict Enrollment and Census Downloads to Case Owning Agent only</span>
+                      <span class="lbl"> Restrict Partner Agent access to his/her own enrollments</span>
                     </label>
                   </div>
                 </div>
@@ -596,7 +597,7 @@ style="display: none;" data-bind="visible: true">
 
 </div>
 </div>
-
+{% if can_view_report_tab %}
 <div id="reports" class="tab-pane fade">
   <div class="row">
     <div class="col-xs-12">
@@ -682,6 +683,7 @@ style="display: none;" data-bind="visible: true">
 </div>
 </div>
 </div>
+{% endif %}
 </div>
 </div>
 
