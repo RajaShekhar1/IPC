@@ -96,6 +96,21 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   });
   self.is_active = ko.observable(case_data.active);
   self.owner_agent_id = ko.observable(case_data.agent_id || "");
+  var should_restrict_downloads = false;
+  if (case_data.can_partners_download_enrollments === false) {
+    should_restrict_downloads = true;
+  }
+  self.restrict_download_enrollments_to_owner = ko.observable(should_restrict_downloads);
+  self.can_partners_download_enrollments = ko.pureComputed(function() {
+    return !self.restrict_download_enrollments_to_owner();
+  });
+
+  self.can_download_enrollments = ko.pureComputed(function() {
+    // We don't even show the button if the user is restricted from downloading,
+    // this is just so we don't show the button if we don't have data.
+    return self.has_census_data();
+  });
+
   self.partner_agents = ko.observable(
       (case_data.partner_agents)? _.map(_.pluck(case_data.partner_agents, "id"), function(id) {return id+""}) : []);
 
@@ -244,7 +259,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   if (self.can_edit_case) {
     var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
       self.enrollment_periods, self.situs_city, self.situs_state, self.payment_mode,
-      self.is_active, self.owner_agent_id, self.is_self_enrollment
+      self.is_active, self.owner_agent_id, self.can_partners_download_enrollments, self.is_self_enrollment
     ];
     _.each(self.enrollment_periods(), function(p) {
       fields.push(p.start_date);
@@ -436,6 +451,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
       situs_state: self.selected_statecode() ? self.selected_statecode() : "",
       payment_mode: self.selected_payment_mode() ? self.selected_payment_mode() : null,
       agent_id: self.owner_agent_id(),
+      can_partners_download_enrollments: self.can_partners_download_enrollments(),
       is_self_enrollment: self.is_self_enrollment()
     }
   };

@@ -75,14 +75,20 @@ def manage_case(case_id):
     agent = agent_service.get_logged_in_agent()
     if agent:
         products = product_service.get_products_for_agent(agent)
+        is_agent_case_owner = case_service.is_agent_case_owner(agent, case)
+        vars['can_edit_case'] = case_service.can_agent_edit_case(agent, case)
+        vars['can_download_enrollments'] = case_service.is_agent_allowed_to_view_full_census(agent, case)
+        vars['can_view_report_tab'] = case_service.is_agent_allowed_to_view_full_census(agent, case)
         agent_name = agent.name()
         agent_id = agent.id
         agent_email = agent.email
-        vars['can_edit_case'] = (agent is case_service.get_case_owner(case))
     else:
+        # Admin or home office
         products = product_service.get_all_enrollable_products()
         vars['is_admin'] = True
         vars['can_edit_case'] = True
+        vars['can_download_enrollments'] = True
+        vars['can_view_report_tab'] = True
         vars['active_agents'] = agent_service.get_active_agents()
         vars['header_title'] = 'Home Office'
         agent_name = ""
