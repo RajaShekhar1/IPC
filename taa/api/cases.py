@@ -236,13 +236,18 @@ def enrollment_record(case_id, census_id):
 @login_required
 @groups_required(api_groups, all=False)
 def census_records(case_id):
+    case = case_service.get_if_allowed(case_id)
+
     # Extract search parameters
     args = {
         'filter_ssn': request.args.get('filter_ssn'),
         'filter_birthdate': request.args.get('filter_birthdate'),
     }
-    data = case_service.get_census_records(case_service.get_if_allowed(case_id),
-                                           **args)
+    # Restrict if needed and not checking for SSN duplicates
+    if is_current_user_restricted_to_own_enrollments(case) and not args['filter_ssn']:
+        args['filter_agent'] = agent_service.get_logged_in_agent()
+
+    data = case_service.get_census_records(case, **args)
 
     if request.args.get('format') == 'csv':
         body = case_service.export_census_records(data)
@@ -255,6 +260,12 @@ def census_records(case_id):
         return make_response(body, 200, headers)
 
     return data
+
+def is_current_user_restricted_to_own_enrollments(case):
+    if agent_service.is_user_agent(current_user):
+        return case_service.is_agent_restricted_to_own_enrollments(agent_service.get_logged_in_agent(), case)
+    return False
+
 
 
 @route(bp, '/<case_id>/census_records', methods=['POST'])
