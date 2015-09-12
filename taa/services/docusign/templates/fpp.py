@@ -311,7 +311,7 @@ class FPPTemplate(DocuSignServerTemplate):
             spouse_owner_notice = "SPOUSE POLICY OWNER: {}, {}".format(self.data['spouse_other_owner_name'], self.data['spouse_other_owner_ssn'])
         elif self.data['spouse_owner'] == "self":
             # Spouse data
-            spouse_owner_notice = "SPOUSE POLICY OWNER: {}, {}".format(self.data['spName'], self.data['spSSN'])
+            spouse_owner_notice = "SPOUSE POLICY OWNER: {}, {}".format(self.data.get_spouse_name(), self.data['spSSN'])
         else:
             spouse_owner_notice = ""
 

@@ -236,6 +236,10 @@ class EnrollmentDataWrap(object):
         return '{} {}'.format(self.data['employee']['first'],
                               self.data['employee']['last'])
 
+    def get_spouse_name(self):
+        return '{} {}'.format(self.data['spouse']['first'],
+                              self.data['spouse']['last'])
+
     def get_employee_email(self):
         emailTo = self.data['employee']['email']
         if not emailTo:
