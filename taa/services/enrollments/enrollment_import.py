@@ -11,7 +11,7 @@ class EnrollmentImportService(object):
     product_service = RequiredFeature("ProductService")
     soh_service = RequiredFeature("StatementOfHealthQuestionService")
 
-    def process_enrollment_data(self, data, data_format, data_source, case_token=None, auth_token=None, should_email_status=False):
+    def process_enrollment_data(self, data, data_format, data_source, case_token=None, auth_token=None, user_href=None):
         processor = EnrollmentProcessor()
         try:
             processor.process_enrollment_import_request(
@@ -24,8 +24,9 @@ class EnrollmentImportService(object):
         except TAAFormError:
             #TODO: There might be some logic needed here
             pass
-        if should_email_status:
-            processor.send_status_email()
+
+        if user_href:
+            processor.send_status_email(user_href)
         return processor
 
     def standardize_imported_data(self, data, method='api_import'):

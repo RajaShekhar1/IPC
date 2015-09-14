@@ -1,0 +1,28 @@
+<h3>FTPS DropBox Configuration</h3>
+<p>
+    To connect to our secure FTPS enrollment import drop box, you must have the following information:
+    <br>
+    <ul>
+        <li>Your TAA authentication token. This will be provided to you by a TAA administrator.</li>
+        <li>An enrollment case token. This will be provided to you by a TAA administrator.</li>
+        <li>The IP address of the FTPS drop box: <strong>{{ ip_address }}</strong></li>
+        <li>The user name and password used to access all 5Star TAA sites. This will be provided by a TAA administrator.</li>
+    </ul>
+    <br>
+    Connect to the FTPS server using port 21. There will be a warning about the self-signed certificate that you may ignore.
+    <br>
+    <br>
+    The server will ask for a username and password. Use your 5Star TAA system username and password provided by your TAA administrator.
+
+    <p>
+    To transmit an enrollment file, first ensure the filename ends with the extension ".flat" for flat files or ".csv" for delimited files, and that
+      the contents conform to the specifications detailed below.
+      Transmit the file to the FTP server using any standard FTPS client. The file may appear briefly on the remote listing, but
+      do not expect to see previously uploaded files in the remote directory listing.
+    </p>
+    <p>
+      A single email notification will be sent confirming either successful processing or an error condition and
+      the reason(s) for the error condition.
+      The status email will be sent to the email address associated with your 5Star TAA system account.
+    </p>
+</p>

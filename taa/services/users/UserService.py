@@ -6,22 +6,21 @@ from taa.services import LookupService
 class UserService(object):
     "Deals with authentication, authorization, and some StormPath abstraction"
 
-    def can_current_user_submit_enrollments(self):
-        pass
+    ENROLLMENT_IMPORT_GROUP = u'enrollment_importers'
 
     def get_stormpath_user_by_href(self, href):
-        agent_account = None
+        user_account = None
         for account in search_stormpath_accounts():
             if account.href == href:
-                agent_account = account
-        return agent_account
+                user_account = account
+        return user_account
 
     def search_stormpath_accounts(self, filter_email=None, filter_href=None):
         """
         The flask-stormpath extension has some strange caching issues when using the
         manager to query. Use the stormpath library directly here.
         """
-        sp_app = get_stormpath_application()
+        sp_app = self.get_stormpath_application()
 
         params = {}
 
@@ -34,6 +33,15 @@ class UserService(object):
             return [a for a in sp_app.accounts.search(params)]
         else:
             return [a for a in sp_app.accounts]
+
+    def can_user_submit_enrollments(self, account):
+        return self.ENROLLMENT_IMPORT_GROUP in self.get_user_groupnames(account)
+
+    def get_user_groupnames(self, user):
+        if hasattr(user, 'groups'):
+            return {g.name for g in user.groups}
+        else:
+            return set()
 
     def get_stormpath_application(self):
         app_name = app.config['STORMPATH_APPLICATION']

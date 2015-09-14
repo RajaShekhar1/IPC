@@ -121,27 +121,30 @@ class EnrollmentProcessor(object):
     def get_errors(self):
         return self.errors
 
-    def _status_email_body(self):
+    def _status_email_body(self, user_name):
         from datetime import datetime
         if self.is_success():
             return render_template('emails/enrollment_upload_email.html',
                                    errors=[],
                                    num_processed=self.get_num_processed(),
-                                   user=self.get_status_email_name(),
+                                   user=user_name,
                                    timestamp=datetime.now()
                                    )
         else:
-            errors = [{"type": e.get_type(), "fields": e.get_fields(), "message": e.get_message()} for e in self.get_errors()]
+            errors = [{"type": e.get_type(),
+                       "fields": e.get_fields(),
+                       "message": e.get_message(),
+                       "record_num": e.record_num,
+                       } for e in self.get_errors()]
             return render_template('emails/enrollment_upload_email.html',
                                    errors=errors,
                                    num_processed=self.get_num_processed(),
-                                   user=self.get_status_email_name(),
+                                   user=user_name,
                                    timestamp=datetime.now()
                                    )
 
-    def send_status_email(self):
-        status_email = self.get_status_email()
-        if not status_email:
+    def send_status_email(self, user_href=None):
+        if not user_href:
             return
 
         if self.errors:
@@ -149,35 +152,34 @@ class EnrollmentProcessor(object):
         else:
             email_subject = "Your recent submission to 5Star Enrollment succeeded."
 
+        user_name = self.get_status_email_name(user_href)
+
         self._send_email(
             from_email="support@5Starenroll.com",
             from_name="5Star Enrollment",
-            to_email=status_email,
-            to_name=self.get_status_email_name(),
+            to_email=self.get_status_email(user_href),
+            to_name=user_name,
             subject=email_subject,
-            body=self._status_email_body()
+            body=self._status_email_body(user_name)
             )
 
-    def get_status_email(self):
-        user = self.get_status_user()
+    def get_status_email(self, user_href):
+        user = self.get_status_user(user_href)
         if not user:
             return None
 
         return user.email
 
-    def get_status_email_name(self):
-        user = self.get_status_user()
+    def get_status_email_name(self, user_href):
+        user = self.get_status_user(user_href)
         if not user:
             return None
 
         return user.full_name
 
-    def get_status_user(self):
+    def get_status_user(self, user_href):
         """Who to send errors to. Pull it from the auth_token"""
-        if not self.processed_data:
-            return None
-
-        return self.get_user(self.processed_data[0].get('user_token'))
+        return self.user_service.get_stormpath_user_by_href(user_href)
 
     def _send_email(self, from_email, from_name, to_email, to_name, subject,
                     body):

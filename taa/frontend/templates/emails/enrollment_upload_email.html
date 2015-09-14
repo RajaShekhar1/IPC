@@ -6,87 +6,87 @@
 </head>
 <body>
 
-  <div style="margin:10px;font-family:arial,helvetica,sans-serif">
+<div style="margin:10px;font-family:arial,helvetica,sans-serif">
 
-    <table border="0" cellspacing="0" cellpadding="15" width="600" st
-    yle="border:1px solid rgb(204,204,204);margin:10px;border-collapse:collapse">
+  <table border="0" cellspacing="0" cellpadding="15" width="600" st
+         yle="border:1px solid rgb(204,204,204);margin:10px;border-collapse:collapse">
     <tbody>
-      <tr>
+    <tr>
 
-        <td style="line-height:42px">
-          <table border="0" cellspacing="0" cellpadding="0" width="100%">
-            <tbody>
-              <tr>
-                <td style="color:rgb(51,51,51);font-size:16px;font-family:arial">
-                </td>
-                <td><img style="border:none" valign="top" align="right"
-                  src="https://demo.docusign.net/Member/Image.aspx?i=logo&amp;l=ffcca32c-f6a4-48f4-b83e-987b49a6a131"
-                  alt="Company Logo"></td>
-                </tr>
-              </tbody>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td style="background-color:rgb(244,244,244)">
-            <table border="0" cellspacing="0" cellpadding="0" width="100%">
-              <tbody>
-                <tr>
-                  <td style="font-size:16px;color:rgb(30,76,161);font-family:arial;font-weight:bold">
-                    From:
-                  </td>
-                  <td></td>
-                  <td>
-                    <div style="font-size:16px;color:rgb(0,0,1);font-family:arial;font-weight:bold">5Star Enrollment
-                    </div>
-                    <div style="font-size:16px;color:rgb(119,119,119);font-family:arial">
-                      5Star Life Insurance Company
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <p style="font-size:14px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">{{user}},</p>
-            {% if errors %}
-              <p style="font-size:14px;margin-bottom:1em;padding-bottom:1em;border-bottom-color:rgb(205,205,205);border-bottom-width:1px;border-bottom-style:solid;color:rgb(119,119,119);font-family:arial">
-                The enrollment upload you submitted at {{timestamp}} failed.</p>
-                <br />
-                <strong align="center" style="display:block;width:100%;text-align:center;font-weight:bold;">Errors</strong>
-              </tr>
-              {% for error in errors %}
-              <tr>
-                <td align="center"
-                style="background-color:#ff7566;border-top-color:#ff4339;border-top-style:solid;border-top-width:1px;border-bottom-color:#ff4339;border-bottom-style:solid;border-bottom-width:1px">
-                      <strong style="font-weight:bold;">{{error.type}}: {{", ".join(error.fields)}}</strong><br />
-                      {{error.message}}
-                </td>
-              </tr>
-              {% endfor %}
-            {% else %}
-              <p style="font-size:14px;margin-bottom:1em;padding-bottom:1em;border-bottom-color:rgb(205,205,205);border-bottom-width:1px;border-bottom-style:solid;color:rgb(119,119,119);font-family:arial">
-                The enrollment upload you submitted at {{timestamp}} completed successfully.</p>
-                <br />
-              </tr>
-              <tr>
-                <td align="center"
-                style="background-color:#59BF6B;border-top-color:#5FCC72;border-top-style:solid;border-top-width:1px;border-bottom-color:#5FCC72;border-bottom-style:solid;border-bottom-width:1px">
-                      <strong style="font-weight:bold;">Processed {{num_processed}} record(s).</strong><br />
-                </td>
-              </tr>
-            {% endif %}
-            <tr>
-              <td align="center"
-              style="background-color:rgb(244,244,244);border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;border-bottom-color:rgb(204,204,204);border-bottom-style:solid;border-bottom-width:1px">
-
-              <a style="font-size:16px;color:rgb(0,0,1);background-color:rgb(255,196,35);border:1px solid rgb(231,178,54);border-top-left-radius:5px;border-top-right-radius:5px;border-bottom-right-radius:5px;border-bottom-left-radius:5px;display:inline-block;font-family:arial;font-weight:bold;line-height:40px;min-height:40px;width:250px;text-align:center;text-decoration:none"
-              href="http://5StarEnroll.com/"
-              target="_blank">Go to case management</a></td>
-            </tr>
+      <td style="line-height:42px">
+        <table border="0" cellspacing="0" cellpadding="0" width="100%">
+          <tbody>
+          <tr>
+            <td style="color:rgb(51,51,51);font-size:16px;font-family:arial">
+            </td>
+            <td><img style="border:none" valign="top" align="right"
+                     src="https://demo.docusign.net/Member/Image.aspx?i=logo&amp;l=ffcca32c-f6a4-48f4-b83e-987b49a6a131"
+                     alt="Company Logo"></td>
+          </tr>
           </tbody>
         </table>
-        <span><span><span></span></span></span></div>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:rgb(244,244,244)">
+        <table border="0" cellspacing="0" cellpadding="0" width="100%">
+          <tbody>
+          <tr>
+            <td style="font-size:16px;color:rgb(30,76,161);font-family:arial;font-weight:bold">
+              From:
+            </td>
+            <td></td>
+            <td>
+              <div style="font-size:16px;color:rgb(0,0,1);font-family:arial;font-weight:bold">5Star Enrollment
+              </div>
+              <div style="font-size:16px;color:rgb(119,119,119);font-family:arial">
+                5Star Life Insurance Company
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+        <p style="font-size:14px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">{{ user }},</p>
+        {% if errors %}
+          <p style="font-size:14px;margin-bottom:1em;padding-bottom:1em;border-bottom-color:rgb(205,205,205);border-bottom-width:1px;border-bottom-style:solid;color:rgb(119,119,119);font-family:arial">
+            The enrollment upload you submitted at {{ timestamp }} failed.</p>
+          <br/>
+          <strong align="center" style="display:block;width:100%;text-align:center;font-weight:bold;">Errors</strong>
+          </tr>
+          {% for error in errors %}
+            <tr>
+              <td align="center"
+                  style="background-color:#ff7566;border-top-color:#ff4339;border-top-style:solid;border-top-width:1px;border-bottom-color:#ff4339;border-bottom-style:solid;border-bottom-width:1px">
+                In record #{{ error.record_num }}<br>
+                <strong style="font-weight:bold;">{{ error.type }}: {{ ", ".join(error.fields) }}</strong><br/>
+                {{ error.message }}
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <p style="font-size:14px;margin-bottom:1em;padding-bottom:1em;border-bottom-color:rgb(205,205,205);border-bottom-width:1px;border-bottom-style:solid;color:rgb(119,119,119);font-family:arial">
+            The enrollment upload you submitted at {{ timestamp }} completed successfully.</p>
+          <br/>
+          </tr>
+          <tr>
+            <td align="center"
+                style="background-color:#59BF6B;border-top-color:#5FCC72;border-top-style:solid;border-top-width:1px;border-bottom-color:#5FCC72;border-bottom-style:solid;border-bottom-width:1px">
+              <strong style="font-weight:bold;">Processed {{ num_processed }} record(s).</strong><br/>
+            </td>
+          </tr>
+        {% endif %}
+{#    <tr>#}
+{#      <td align="center"#}
+{#          style="background-color:rgb(244,244,244);border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;border-bottom-color:rgb(204,204,204);border-bottom-style:solid;border-bottom-width:1px">#}
+{##}
+{#        <a style="font-size:16px;color:rgb(0,0,1);background-color:rgb(255,196,35);border:1px solid rgb(231,178,54);border-top-left-radius:5px;border-top-right-radius:5px;border-bottom-right-radius:5px;border-bottom-left-radius:5px;display:inline-block;font-family:arial;font-weight:bold;line-height:40px;min-height:40px;width:250px;text-align:center;text-decoration:none"#}
+{#           href="http://5StarEnroll.com/"#}
+{#           target="_blank">Go to case management</a></td>#}
+{#    </tr>#}
+    </tbody>
+  </table>
+  <span><span><span></span></span></span></div>
 
-      </div><br></div>
-    </div>
-  </body>
-  </html>
+<br>
+</body>
+</html>

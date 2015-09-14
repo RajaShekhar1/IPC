@@ -241,12 +241,12 @@ class EnrollmentDataWrap(object):
                               self.data['spouse']['last'])
 
     def get_employee_email(self):
-        emailTo = self.data['employee']['email']
-        if not emailTo:
+        email_to = self.data['employee']['email']
+        if not email_to:
             # fallback email if none was entered - just need a unique address
             name = self.data['employee']['first']+ '.' + self.data['employee']['last']
-            emailTo = '{}.{}@5StarEnroll.com'.format(name, self.random_email_id(name))
-        return emailTo
+            email_to = '{}.{}@5StarEnroll.com'.format(name, self.random_email_id(name))
+        return email_to
 
     def get_employee_email_parts(self):
         if '@' not in self.get_employee_email():

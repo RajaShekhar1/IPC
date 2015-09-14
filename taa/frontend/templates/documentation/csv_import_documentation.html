@@ -1,0 +1,47 @@
+<html>
+<head>
+  <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+</head>
+<body style="font-family:sans-serif;">
+  <div class="container">
+  <h1 style="text-align:center;">5Star Delimited Enrollment File and FTP Import Documentation</h1>
+
+  <p>
+  TAA supports importing enrollment data via a Comma or Tab-delimited import service. Interested 3rd party integrators can upload
+  correctly formatted files to our secure FTP drop box, and TAA will process the file once it passes basic validation.
+  </p>
+  {% include "documentation/_dropbox_documentation.html" %}
+
+  <h2>Delimited File Specification</h2>
+  <p>
+    The TAA system accepts well-formed tab and comma-separated files consisting of UTF-8 encoded text characters.
+    The first line of the file contains the headers, and each subsequent line represents an enrollment to be imported.
+    <br>
+    <br>
+    Each field has a particular data type restrictions given in the tables below.
+    <br>
+    If a field is not listed as required, it does not need to be present in the headers or data rows.
+    <br>
+    <br>
+    The 'user_token' and 'case_token' fields should be the same in each row.
+  </p>
+
+
+  <h3>Enrollment Record Field Definition</h3>
+  <table class="table table-bordered table-striped">
+    <tr>
+      {% for fn in fieldnames %}
+        <th style='text-align:left;padding:0px 10px;'>{{fn}}</th>
+      {% endfor %}
+    </tr>
+    {% for row in records %}
+      <tr>
+        {% for field in row %}
+          <td>{{field}}</td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </table>
+  </div>
+</body>
+</html>

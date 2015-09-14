@@ -10,30 +10,7 @@
   TAA supports importing enrollment data via a flat-file import service. Interested 3rd party integrators can upload
   correctly formatted files to our secure FTP drop box, and TAA will process the file once it passes basic validation.
   </p>
-  <h3>FTPS DropBox Configuration</h3>
-  <p>
-      To connect to our secure FTPS enrollment import drop box, you must have the following information:
-      <br>
-      <ul>
-          <li>Your TAA authentication token. This will be provided to you by a TAA administrator.</li>
-          <li>An enrollment case token. This will be provided to you by a TAA administrator.</li>
-          <li>The IP address of the FTPS drop box: <strong>{{ ip_address }}</strong></li>
-          <li>The user name and password to access the drop box. This will be provided by a TAA administrator.</li>
-      </ul>
-      <br>
-      Connect to the FTPS server using port 21. There will be a warning about the self-signed certificate that you may ignore.
-      <p>
-      To transmit a flat file with enrollment data, first ensure the filename ends with the extension ".flat" and that
-        the contents conform to the specifications detailed below.
-        Transmit the file to the FTP server using any standard FTPS client. The file may appear briefly on the remote listing, but
-        do not expect to see previously uploaded files in the remote directory listing.
-      </p>
-      <p>
-        A single email notification will be sent confirming either successful processing or an error condition and
-        the reason(s) for the error condition. However, if the file is not well-formed, no email will be sent.
-        The status email will be sent to the email address associated with your Authentication token.
-      </p>
-  </p>
+  {% include "documentation/_dropbox_documentation.html" %}
 
   <h2>Flat File Specification</h2>
   <p>

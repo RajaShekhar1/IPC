@@ -26,6 +26,8 @@ class EnrollmentSubmissionService(object):
         processor = EnrollmentSubmissionProcessor()
         processor.submit_to_docusign(enrollment)
 
+        # Mark as done
+
         return processor
 
 

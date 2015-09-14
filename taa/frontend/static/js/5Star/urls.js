@@ -59,6 +59,9 @@ var urls = (function urls() {
     },
     get_flat_file_documentation_url: function() {
       return "/flat_file_documentation.html";
+    },
+    get_csv_import_documentation_url: function() {
+      return "/delimited_file_import_documentation.html";
     }
   }
 })();

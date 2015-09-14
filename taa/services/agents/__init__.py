@@ -69,10 +69,7 @@ class AgentService(DBService):
         return self.is_user_admin(user) or self.is_user_home_office(user)
 
     def get_user_groupnames(self, user):
-        if hasattr(user, 'groups'):
-            return {g.name for g in user.groups}
-        else:
-            return set()
+        return self.user_service.get_user_groupnames(user)
 
     def get_agent_stormpath_account(self, agent):
         return self.user_service.get_stormpath_user_by_href(agent.stormpath_url)
