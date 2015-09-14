@@ -1,4 +1,6 @@
 from stormpath.client import Client as SPClient
+from flask_stormpath import current_user
+
 from taa import app
 from taa.services import LookupService
 
@@ -33,6 +35,9 @@ class UserService(object):
             return [a for a in sp_app.accounts.search(params)]
         else:
             return [a for a in sp_app.accounts]
+
+    def can_current_user_submit_enrollments(self):
+        return self.can_user_submit_enrollments(current_user)
 
     def can_user_submit_enrollments(self, account):
         return self.ENROLLMENT_IMPORT_GROUP in self.get_user_groupnames(account)
