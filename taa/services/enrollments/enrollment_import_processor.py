@@ -8,6 +8,7 @@ from taa.core import TAAFormError, db, DBService
 from taa.services import RequiredFeature
 from taa.services.enrollments.models import EnrollmentLog
 
+
 class EnrollmentProcessor(object):
     api_token_service = RequiredFeature("ApiTokenService")
     case_service = RequiredFeature("CaseService")
@@ -47,13 +48,15 @@ class EnrollmentProcessor(object):
         for error in self.enrollment_record_parser.errors:
             self._add_error(error["type"], error["field_name"], error['message'], error['record'], error['record_num'])
 
-    def log_request(self, data, data_source, auth_token, case_token):
+    def log_request(self, file_obj, data_source, auth_token, case_token):
         if data_source == "dropbox":
             source = EnrollmentLog.SUBMIT_SOURCE_DROPBOX
         else:
             source = EnrollmentLog.SUBMIT_SOURCE_API
+
+        data = file_obj.read()
         enrollment_log_service = EnrollmentLogService()
-        matching_data_hash = enrollment_log_service.lookup_hash(data.getvalue())
+        matching_data_hash = enrollment_log_service.lookup_hash(data)
         if matching_data_hash and not self.errors and not app.config.get('ALLOW_DUPLICATE_SUBMISSION'):
             self._add_error("duplicate_upload", "", "This upload was previously uploaded on {}".format(matching_data_hash.timestamp), [], 0)
             return
@@ -61,7 +64,7 @@ class EnrollmentProcessor(object):
             source = source,
             num_processed = self.get_num_processed(),
             num_errors = len(self.errors),
-            hash_data = data.getvalue(),
+            hash_data = data,
             auth_token = auth_token,
             case_token = case_token
         )
@@ -259,6 +262,7 @@ class EnrollmentImportError(object):
 
     def to_json(self):
         return {'type':self.type, 'message': self.get_message(), 'fields':self.fields, 'record_num':self.record_num}
+
 
 class EnrollmentLogService(DBService):
     __model__ = EnrollmentLog

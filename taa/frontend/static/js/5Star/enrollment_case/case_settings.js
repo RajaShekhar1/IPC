@@ -162,7 +162,7 @@ function handle_enrollment_upload_error(err, modal) {
 }
 
 function observe_enrollment_upload_form_submit() {
-  console.log("here");
+
   $("#enrollment-csv-form").on("submit", function() {
     var form = this;
     var file_select = $(this).find("input[type=file]").get(0);

@@ -30,8 +30,9 @@
                 <label class="text-right col-sm-3 control-label">Upload Enrollment Records</label>
 
                 <div class="col-sm-9">
-                  <button type="button" id="csv-upload-btn" class="btn btn-default" data-toggle="modal"
-                          data-target="#enrollment-csv-modal">Upload comma/tab delimited or flat-file
+                  <button type="button" id="csv-upload-btn" class="btn btn-default"
+                          data-bind="click: show_enrollment_upload_modal">
+                    Upload comma/tab delimited or flat-file
                   </button>
                 </div>
               </div>
@@ -123,7 +124,11 @@
   <script>
     var EnrollmentUploadVM = function() {
       var self = this;
-
+      self.show_enrollment_upload_modal = function() {
+        var el = $("#enrollment-csv-modal");
+        show_form_panel(el);
+        el.modal("show");
+      };
     };
     window.vm = new EnrollmentUploadVM();
     ko.applyBindings(window.vm, $("#import-page")[0]);
