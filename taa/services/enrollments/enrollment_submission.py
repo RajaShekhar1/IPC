@@ -1,34 +1,70 @@
+from datetime import datetime
 import json
+import traceback
 
 import taa.tasks as tasks
+from taa import db
 from taa.config_defaults import DOCUSIGN_CC_RECIPIENTS
 from taa.services import RequiredFeature
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
 from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient, CarbonCopyRecipient
+from taa.services.enrollments.models import EnrollmentImportBatchItem
 
 
 class EnrollmentSubmissionService(object):
     enrollment_application_service = RequiredFeature('EnrollmentApplicationService')
+    enrollment_batch_service = RequiredFeature('EnrollmentImportBatchService')
 
-    def submit_imported_enrollment(self, enrollment_record):
+    def submit_import_enrollments(self, enrollment_batch):
 
         # Schedule a task to process this enrollment record
-        tasks.submit_enrollment_import.delay(enrollment_record.id)
+        tasks.process_enrollment_upload.delay(enrollment_batch.id)
 
-    def process_import_submission(self, enrollment_record_id):
+    def process_import_submission_batch(self, enrollment_batch_id):
         """
-        Actually processes the enrollment
+        Process a whole enrollment upload file. Each record should be checked
+         to see if it was successfully imported already.
         """
-        enrollment = self.enrollment_application_service.get(enrollment_record_id)
-        if not enrollment:
-            raise Exception("Tried to process a non-existent enrollment with id {}".format(enrollment_record_id))
 
-        processor = EnrollmentSubmissionProcessor()
-        processor.submit_to_docusign(enrollment)
+        enrollment_batch = self.enrollment_batch_service.get(enrollment_batch_id)
+        if not enrollment_batch:
+            raise ValueError("No enrollment import batch exists with id {}".format(enrollment_batch_id))
+        
+        for batch_item in self.enrollment_batch_service.get_records_needing_submission(enrollment_batch):
+            self.process_and_update_status(batch_item)
 
-        # Mark as done
 
-        return processor
+    def process_and_update_status(self, batch_item):
+        try:
+            self.process_import_submission(batch_item)
+        except Exception as exc:
+            self._mark_item_error(batch_item, exc)
+
+    def process_import_submission(self, batch_item):
+        """
+        Submit the enrollment and mark as complete
+        """
+        self._mark_item_processing(batch_item)
+
+        EnrollmentSubmissionProcessor().submit_to_docusign(batch_item.enrollment_record)
+
+        self._mark_item_success(batch_item)
+
+    def _mark_item_processing(self, batch_item):
+        batch_item.processed_time = datetime.now()
+        batch_item.status = EnrollmentImportBatchItem.STATUS_PROCESSING
+        db.session.commit()
+
+    def _mark_item_success(self, batch_item):
+        batch_item.processed_time = datetime.now()
+        batch_item.status = EnrollmentImportBatchItem.STATUS_SUCCESS
+        db.session.commit()
+
+    def _mark_item_error(self, batch_item, exc):
+        batch_item.status = EnrollmentImportBatchItem.STATUS_ERROR
+        batch_item.error_message = traceback.format_exc()
+        batch_item.processed_time = datetime.now()
+        db.session.commit()
 
 
 class EnrollmentSubmissionProcessor(object):

@@ -1,6 +1,7 @@
 from StringIO import StringIO
 
-from flask import Blueprint, request
+from flask import Blueprint, request, abort
+from flask_stormpath import login_required, groups_required
 
 from taa.api import route
 from taa.services import LookupService
@@ -9,6 +10,7 @@ from taa.services import LookupService
 bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
 case_service = LookupService("CaseService")
 enrollment_import_service = LookupService("EnrollmentImportService")
+enrollment_import_batch_service = LookupService("EnrollmentImportBatchService")
 
 
 @route(bp, '/', methods=["POST"])
@@ -39,3 +41,21 @@ def submit_data():
         'num_errors': len(import_results.get_errors()),
         'errors': [error.to_json() for error in import_results.get_errors()][:20]
     }, 400 if import_results.is_error() else 200
+
+
+@route(bp, '/import_batches', methods=['GET'])
+@login_required
+@groups_required(['admins'])
+def get_batches():
+    return enrollment_import_batch_service.all()
+
+
+@route(bp, '/import_batches/<batch_id>', methods=['GET'])
+@login_required
+@groups_required(['admins'])
+def get_batch_items(batch_id):
+    batch = enrollment_import_batch_service.get(batch_id)
+    if not batch:
+        abort(404)
+
+    return [item for item in enrollment_import_batch_service.get_batch_items(batch)]

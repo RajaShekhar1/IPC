@@ -1,12 +1,13 @@
-from flask import abort, render_template
+import hashlib
 
-import requests
+from flask import abort, render_template
 import mandrill
+import requests
 
 from taa import mandrill_flask, app
 from taa.core import TAAFormError, db, DBService
 from taa.services import RequiredFeature
-from taa.services.enrollments.models import EnrollmentLog
+from taa.services.enrollments.models import EnrollmentImportBatch, EnrollmentImportBatchItem
 
 
 class EnrollmentProcessor(object):
@@ -28,16 +29,17 @@ class EnrollmentProcessor(object):
         self.processed_data = []
 
     def process_enrollment_import_request(self, data, data_format, data_source=None, auth_token=None, case_token=None):
+
         self.authenticate_user(auth_token)
-
         self.validate_records(case_token, data, data_format)
-
-        self.log_request(data, data_source, auth_token, case_token)
+        enrollment_batch = self.create_enrollment_batch(data, data_source, auth_token, case_token)
 
         if self.errors:
             self.raise_error_exception()
 
-        self.submit_validated_data()
+        # Add records to batch and queue for submission
+        self.add_enrollments_to_batch(enrollment_batch)
+        self.enrollment_submission.submit_import_enrollments(enrollment_batch)
 
     def validate_records(self, case_token, data, data_format):
         self.processed_data = self.extract_dictionaries(data, data_format)
@@ -48,19 +50,20 @@ class EnrollmentProcessor(object):
         for error in self.enrollment_record_parser.errors:
             self._add_error(error["type"], error["field_name"], error['message'], error['record'], error['record_num'])
 
-    def log_request(self, file_obj, data_source, auth_token, case_token):
+    def create_enrollment_batch(self, file_obj, data_source, auth_token, case_token):
         if data_source == "dropbox":
-            source = EnrollmentLog.SUBMIT_SOURCE_DROPBOX
+            source = EnrollmentImportBatch.SUBMIT_SOURCE_DROPBOX
         else:
-            source = EnrollmentLog.SUBMIT_SOURCE_API
+            source = EnrollmentImportBatch.SUBMIT_SOURCE_API
 
         data = file_obj.read()
-        enrollment_log_service = EnrollmentLogService()
-        matching_data_hash = enrollment_log_service.lookup_hash(data)
+        enrollment_batch_service = EnrollmentImportBatchService()
+        matching_data_hash = enrollment_batch_service.lookup_hash(data)
         if matching_data_hash and not self.errors and not app.config.get('ALLOW_DUPLICATE_SUBMISSION'):
             self._add_error("duplicate_upload", "", "This upload was previously uploaded on {}".format(matching_data_hash.timestamp), [], 0)
-            return
-        enrollment_log_service.create_new_log(
+            return None
+
+        return enrollment_batch_service.create_new_batch(
             source = source,
             num_processed = self.get_num_processed(),
             num_errors = len(self.errors),
@@ -69,17 +72,21 @@ class EnrollmentProcessor(object):
             case_token = case_token
         )
 
-    def submit_validated_data(self):
+    def add_enrollments_to_batch(self, enrollment_batch):
+        enrollment_records = self.generate_enrollment_records()
+        EnrollmentImportBatchService().add_enrollments_to_batch(enrollment_batch, enrollment_records)
+
+    def generate_enrollment_records(self):
+        enrollment_records = []
         for record in self.get_valid_data():
-            # Standardize
+            # Standardize the data
             standardized_data = self.enrollment_import_service.standardize_imported_data(record, method='api_import')
 
             # Save
             enrollment_record = self.save_validated_data(standardized_data, record)
+            enrollment_records.append(enrollment_record)
 
-            # Submit the enrollment
-            self.enrollment_submission.submit_imported_enrollment(enrollment_record)
-        db.session.commit()
+        return enrollment_records
 
     def save_validated_data(self, standardized_data, raw_data):
         case = self.case_service.get(standardized_data['case_id'])
@@ -264,14 +271,22 @@ class EnrollmentImportError(object):
         return {'type':self.type, 'message': self.get_message(), 'fields':self.fields, 'record_num':self.record_num}
 
 
-class EnrollmentLogService(DBService):
-    __model__ = EnrollmentLog
+class EnrollmentImportBatchService(DBService):
+    __model__ = EnrollmentImportBatch
 
-    def __init__(self):
-        pass
+    def get_batch_items(self, batch):
+        return db.session.query(EnrollmentImportBatchItem).with_parent(batch
+                        ).order_by(db.desc(EnrollmentImportBatchItem.processed_time)
+                        )
 
-    def create_new_log(self, source, num_processed, num_errors, hash_data, auth_token=None, case_token=None):
-        self.create(**dict(
+    def get_records_needing_submission(self, batch):
+        return db.session.query(EnrollmentImportBatchItem
+                 ).with_parent(batch
+                 ).filter(EnrollmentImportBatchItem.status != EnrollmentImportBatchItem.STATUS_SUCCESS
+                 )
+
+    def create_new_batch(self, source, num_processed, num_errors, hash_data, auth_token=None, case_token=None):
+        return self.create(**dict(
             source=source,
             auth_token=auth_token,
             case_token=case_token,
@@ -279,15 +294,32 @@ class EnrollmentLogService(DBService):
             num_errors=num_errors,
             log_hash=self.generate_hash(hash_data)
         ))
+
+    def add_enrollments_to_batch(self, batch, enrollment_records):
+        for record in enrollment_records:
+            EnrollmentImportBatchItemService().create_batch_item(batch, record)
+
         db.session.commit()
 
     def lookup_hash(self, hash_data):
         search_hash = self.generate_hash(hash_data)
-        return db.session.query(EnrollmentLog
+        return db.session.query(EnrollmentImportBatch
         ).filter_by(log_hash=search_hash
         ).first()
 
     def generate_hash(self, data):
-        import hashlib
         new_hash = hashlib.md5(data).hexdigest()
         return new_hash
+
+
+class EnrollmentImportBatchItemService(DBService):
+    __model__ = EnrollmentImportBatchItem
+
+    def create_batch_item(self, batch, enrollment_record):
+        return self.create(**dict(
+            enrollment_batch=batch,
+            enrollment_record=enrollment_record,
+            status=self.__model__.STATUS_QUEUED,
+
+        ))
+

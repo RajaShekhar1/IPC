@@ -47,13 +47,24 @@ def _update_log(email_log, success):
         email_log.status = SelfEnrollmentEmailLog.STATUS_FAILURE
     db.session.commit()
 
+FIVE_MINUTES = 5 * 60
 
-@app.task
-def submit_enrollment_import(enrollment_application_id):
-    """
-    Takes a validated enrollment application import and submits it to DocuSign or Dell
-    """
+@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+def process_enrollment_upload(task, enrollment_import_log_id):
+    #try:
     submission_service = LookupService("EnrollmentSubmissionService")
-    submission_service.process_import_submission(enrollment_application_id)
+    submission_service.process_import_submission_batch(enrollment_import_log_id)
+    #except Exception as exc:
+    #    task.retry(exc=exc)
 
-
+# @app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+# def submit_enrollment_import(task, enrollment_application_id):
+#     """
+#     Takes a validated enrollment application import and submits it to DocuSign or Dell.
+#     """
+#     try:
+#         submission_service = LookupService("EnrollmentSubmissionService")
+#         submission_service.process_import_submission(enrollment_application_id)
+#     except Exception as exc:
+#         task.retry(exc=exc)
+#
