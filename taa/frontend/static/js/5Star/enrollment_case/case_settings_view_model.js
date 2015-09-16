@@ -624,6 +624,12 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     });
   }
 
+  self.show_upload_enrollment_form = function() {
+    var el = $("#enrollment-csv-modal");
+    reset_upload_modal(el);
+    el.modal("show");
+  };
+
 
   self.has_unsaved_data = ko.computed(function() {
     return self.is_data_dirty();
@@ -735,7 +741,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     this.get("#api", function() {
       self.exit_print_mode();
       api_tab.tab('show');
-    })
+    });
 
 
     this.get("#print", function() {

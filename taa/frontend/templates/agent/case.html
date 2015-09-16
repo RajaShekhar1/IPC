@@ -626,7 +626,8 @@ style="display: none;" data-bind="visible: true">
             <div class="row">
               <label class="text-right col-sm-3 control-label">Upload Enrollment Records</label>
               <div class="col-sm-9">
-                <button type="button" id="csv-upload-btn" class="btn btn-default" data-toggle="modal" data-target="#enrollment-csv-modal">Upload comma/tab delimited or flat-file</button>
+                <button type="button" id="csv-upload-btn" class="btn btn-default"
+                        data-bind="click: show_upload_enrollment_form">Upload comma/tab delimited or flat-file</button>
               </div>
             </div>
           </div>
@@ -1119,13 +1120,15 @@ style="display: none;" data-bind="visible: true">
                         <div class="success-panel modal-panel" style="display: none;">
                           <h3 class="header lighter green">File Processed Successfully</h3>
                           <!--ko if: num_data_records() > 0 -->
-                          <h4><span data-bind="text: num_data_records"></span>
-                            record<span data-bind="visible: num_data_records() > 1">s</span>
-                            added or updated.</h4>
-                            <!--/ko-->
-                            <!--ko if: num_data_records() == 0 -->
+                            <h4>
+                              <span data-bind="text: num_data_records"></span>
+                              record<span data-bind="visible: num_data_records() > 1">s</span>
+                              added or updated.
+                            </h4>
+                          <!--/ko-->
+                          <!--ko if: num_data_records() == 0 -->
                             <h4>No new data was added to the census.</h4>
-                            <!--/ko-->
+                          <!--/ko-->
                           </div>
                           <div class="error-panel modal-panel" style="display: none;">
                             <h3 class="header lighter red">
@@ -1258,9 +1261,10 @@ style="display: none;" data-bind="visible: true">
                             <button type="button" class="btn btn-primary back-btn">
                               <i class="glyphicon glyphicon-chevron-left"></i> Back
                             </button>
-                            <div class="success-buttons buttons-panel" style="display: none;">
-                              <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
-                            </div>
+
+                          </div>
+                          <div class="success-buttons buttons-panel" style="display: none;">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
                           </div>
                         </div>
                         <!-- /.modal-content -->
