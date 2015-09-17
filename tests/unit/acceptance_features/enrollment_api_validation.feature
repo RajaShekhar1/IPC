@@ -25,8 +25,8 @@ Feature: Validate an enrollment record submitted via API.
       |  emp_sig_txt  | application_date | time_stamp          | signed_at_city | signed_at_state |
       |  esign by Joe | 2015-01-01       | 2015-01-01 10:01:00 | Lansing        | MI              |
     And I add the following enrollment data columns
-      | agent_name | agent_code | agent_sig_txt       | existing_insurance | replacing_insurance |
-      | Andy Agent | 26ABC      | esign by Andy Agent | N                  | N                   |
+      | agent_name | agent_code | agent_sig_txt       | existing_insurance | replacing_insurance | actively_at_work |
+      | Andy Agent | 26ABC      | esign by Andy Agent | N                  | N                   | Y                |
 
     When I submit the file to the Enrollment API
     Then I should see a success response
@@ -39,6 +39,7 @@ Feature: Validate an enrollment record submitted via API.
     Then I should see the following errors in the response
       | error_type     | error_field         |
       | missing_header | user_token          |
+      | missing_header | actively_at_work    |
       | missing_header | case_token          |
       | missing_header | product_code        |
       | missing_header | payment_mode        |
@@ -302,8 +303,8 @@ Feature: Validate an enrollment record submitted via API.
    And I add valid spouse enrollment data
    And I add valid child enrollment data
    And I add the following enrollment data columns
-     | actively_at_work | emp_email     | emp_height_inches | emp_weight_pounds | emp_smoker |
-     | Y                | joe@gmail.com | 70                | 150               | N          |
+     | emp_email     | emp_height_inches | emp_weight_pounds | emp_smoker |
+     | joe@gmail.com | 70                | 150               | N          |
    And I add the following enrollment data columns
      | sp_height_inches | sp_weight_pounds | sp_smoker |
      | 65               | 130              | N         |
@@ -338,8 +339,6 @@ Feature: Validate an enrollment record submitted via API.
    Then I should see a success response
    And the parsed record should include the following attributes
      | attribute_name                            |
-     # Misc form questions
-     | actively_at_work                          |
      # Additional employee data
      | emp_email                                 |
      | emp_date_of_hire                          |
@@ -394,8 +393,6 @@ Feature: Validate an enrollment record submitted via API.
    Then I should see a success response
    And the parsed record should include the following attributes
      | attribute_name                            |
-     # Misc form questions
-     | actively_at_work                          |
      # Additional employee data
      | emp_email                                 |
      | emp_height_inches                         |
@@ -447,7 +444,6 @@ Feature: Validate an enrollment record submitted via API.
 
 
 ## TODO: question Y / N / GI handling?
-## TODO: Other boolean questions (actively at work) required? and Y/N validation
 
 ## TODO: handle multiple records
 ## TODO: show the record number that an error refers to
