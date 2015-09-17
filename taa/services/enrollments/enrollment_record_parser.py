@@ -55,8 +55,8 @@ class EnrollmentRecordParser(object):
     case_service = RequiredFeature("CaseService")
 
     # Case/Record information
-    user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator], flat_file_size=0, description="A token representing the API user")
-    case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator], flat_file_size=0, description="A token identifying the TAA enrollment case")
+    user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator], flat_file_size=0, description="A API token authenticating the uploader")
+    case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator], flat_file_size=0, description="A token identifying the enrollment case")
     product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [required_validator, product_validator], flat_file_size=8, description="A string specifying the product being enrolled.")
     payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_numbers, [required_validator, payment_mode_validator], flat_file_size=2, description="A two digit number resenting the payment mode")
     enrollment_type = EnrollmentRecordField("enrollment_type", "enrollment_type", preprocess_string, [required_validator, enrollment_type_validator], flat_file_size=1, description="How the application was taken")
@@ -480,6 +480,7 @@ class EnrollmentRecordParser(object):
             "agent_sig_txt",
             "existing_insurance",
             "replacing_insurance",
+            "actively_at_work",
         ]
         return {d for d in required_data_keys if d not in record}
 

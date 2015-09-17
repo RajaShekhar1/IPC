@@ -40,11 +40,15 @@ class TestFlatFile(TestCase):
             ),
         ])
 
-        self.headers_single = "{}{}     1       e471d02990094e95b76ea096f0814783                                CASE-123                                                        ".format(FlatFileSpec.FLAT_FILE_TYPE, FlatFileSpec.FLAT_FILE_VERSION)
-        self.headers = "{}{}     2       e471d02990094e95b76ea096f0814783                                CASE-123                                                        ".format(FlatFileSpec.FLAT_FILE_TYPE, FlatFileSpec.FLAT_FILE_VERSION)
+        self.user_token = 'e471d02990094e95b76ea096f0814783'
+        self.case_token = 'CASE-123'
+        self.user_token_padded = self.user_token + " "*(64 - len(self.user_token))
+        self.case_token_padded = self.case_token + " "*(64 - len(self.case_token))
+        self.headers = "{}{}{}{}".format(FlatFileSpec.FLAT_FILE_TYPE, FlatFileSpec.FLAT_FILE_VERSION + " "*(8-len(FlatFileSpec.FLAT_FILE_VERSION)),
+                                                self.user_token_padded, self.case_token_padded)
 
     def test_it_should_return_a_dictionary_from_a_single_field(self):
-        file_obj = cStringIO.StringIO("{}\nJoe     ".format(self.headers_single))
+        file_obj = cStringIO.StringIO("{}\nJoe     ".format(self.headers))
         result = self.file_import_service.process_flat_file_stream(file_obj, spec=self.single_spec)
         expected = [
             {'user_token': 'e471d02990094e95b76ea096f0814783', 'case_token': 'CASE-123', 'emp_first': "Joe"}
@@ -52,7 +56,7 @@ class TestFlatFile(TestCase):
         assert_that(result.get_data(), equal_to(expected))
 
     def test_it_should_parse_multiple_columns(self):
-        file_obj = cStringIO.StringIO("{}\nJoe     Y".format(self.headers_single))
+        file_obj = cStringIO.StringIO("{}\nJoe     Y".format(self.headers))
         result = self.file_import_service.process_flat_file_stream(file_obj, spec=self.simple_spec)
         expected = [
             {'user_token': 'e471d02990094e95b76ea096f0814783', 'case_token': 'CASE-123', 'emp_first': "Joe", 'actively_at_work':'Y'},
@@ -60,7 +64,7 @@ class TestFlatFile(TestCase):
         assert_that(result.get_data(), equal_to(expected))
 
     def test_it_should_return_an_error_when_a_line_is_too_short(self):
-        file_obj = cStringIO.StringIO("{}\nJoe    Y".format(self.headers_single))
+        file_obj = cStringIO.StringIO("{}\nJoe    Y".format(self.headers))
         result = self.file_import_service.process_flat_file_stream(file_obj, spec=self.simple_spec)
         expected = [
             "Line 1: Expected a line 9 characters long. Received a line 8 characters long."

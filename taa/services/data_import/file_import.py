@@ -321,14 +321,6 @@ class FlatFileSpec(object):
                 is_required=True,
             ),
             FlatFileFieldDefinition(
-                size=8,
-                csv_name="RECORD_COUNT",
-                title="Record Count",
-                description="Must match number of records in the file",
-                format="A positive integer",
-                is_required=True,
-            ),
-            FlatFileFieldDefinition(
                 size=64,
                 csv_name="USER_TOKEN",
                 title="User Token",
@@ -340,7 +332,7 @@ class FlatFileSpec(object):
                 size=64,
                 csv_name="CASE_TOKEN",
                 title="Case Token",
-                description="The token identifying the TAA enrollment case",
+                description="The token identifying the enrollment case",
                 is_required=True,
             )
         ])
@@ -486,9 +478,6 @@ class FlatFileImporter(object):
         if not self.headers["version"] == FlatFileSpec.FLAT_FILE_VERSION:
             expected = FlatFileSpec.FLAT_FILE_VERSION
             self.errors.append("Expected VERSION header to be {} but got {}".format(expected, self.headers["version"]))
-        if not int(self.headers["record_count"]) == self.record_count:
-            expected = self.record_count
-            self.errors.append("Expected RECORD_COUNT header to be {} but got {}".format(expected, self.headers["record_count"]))
 
     def has_headers(self):
         return self.header_spec is not None
