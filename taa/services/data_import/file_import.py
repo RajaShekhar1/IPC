@@ -16,7 +16,7 @@ from taa.services.validators import (
     zip_validator,
 
     email_validator, ssn_validator, state_validator, timestamp_validator, question_answered_validator,
-    replaced_or_financing_validator, initials_validator)
+    replaced_or_financing_validator, initials_validator, product_validator)
 from taa.services.preprocessors import preprocess_date
 
 
@@ -96,6 +96,9 @@ class FileImportService(object):
 
         if initials_validator in field.validators:
             format_str = "Must be either 2 or 3 characters long"
+
+        if product_validator in field.validators:
+            format_str = "Either 'FPPTI' or 'FPPCI'"
 
         return format_str
 
