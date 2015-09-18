@@ -56,6 +56,7 @@ class EnrollmentProcessor(object):
         else:
             source = EnrollmentImportBatch.SUBMIT_SOURCE_API
 
+        file_obj.seek(0)
         data = file_obj.read()
         enrollment_batch_service = EnrollmentImportBatchService()
         matching_data_hash = enrollment_batch_service.lookup_hash(data)
@@ -314,6 +315,7 @@ class EnrollmentImportBatchService(DBService):
         db.session.commit()
 
     def lookup_hash(self, hash_data):
+
         search_hash = self.generate_hash(hash_data)
         return db.session.query(EnrollmentImportBatch
         ).filter_by(log_hash=search_hash
