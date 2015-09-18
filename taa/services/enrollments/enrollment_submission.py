@@ -32,16 +32,22 @@ class EnrollmentSubmissionService(object):
         enrollment_batch = self.enrollment_batch_service.get(enrollment_batch_id)
         if not enrollment_batch:
             raise ValueError("No enrollment import batch exists with id {}".format(enrollment_batch_id))
-        
-        for batch_item in self.enrollment_batch_service.get_records_needing_submission(enrollment_batch):
-            self.process_and_update_status(batch_item)
 
+        errors = []
+        for batch_item in self.enrollment_batch_service.get_records_needing_submission(enrollment_batch):
+            is_successful, err = self.process_and_update_status(batch_item)
+            if not is_successful:
+                errors.append(err)
+
+        return errors
 
     def process_and_update_status(self, batch_item):
         try:
             self.process_import_submission(batch_item)
+            return True, ""
         except Exception as exc:
             self._mark_item_error(batch_item, exc)
+            return False, batch_item.error_message
 
     def process_import_submission(self, batch_item):
         """

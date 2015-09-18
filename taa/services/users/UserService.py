@@ -59,6 +59,11 @@ class UserService(object):
 
         raise Exception('The configured stormpath application "%s" could not be found'%app_name)
 
+    def get_admin_users(self):
+        sp_app = self.get_stormpath_application()
+        admin_group = [g for g in sp_app.groups if g.name == "admins"][0]
+        return [u for u in admin_group.accounts]
+
 
 def search_stormpath_accounts(filter_email=None, filter_href=None):
     user_service = LookupService('UserService')
