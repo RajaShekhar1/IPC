@@ -194,9 +194,9 @@ class WizardPage(PageBase):
         btn = self.lookup(self.NEXT_BTN)
         btn.click()
 
-    def wait_until_condition(self, condition):
+    def wait_until_condition(self, condition, timeout=10):
         try:
-            WebDriverWait(self.browser, 10).until(condition)
+            WebDriverWait(self.browser, timeout).until(condition)
         except TimeoutException:
             return False
 
@@ -218,7 +218,7 @@ class WizardPage(PageBase):
         return self.wait_until_condition(EC.visibility_of_element_located((By.CSS_SELECTOR, "#step6")))
 
     def wait_until_docusign_redirect(self):
-        return self.wait_until_condition(lambda browser: "docusign" in browser.current_url)
+        return self.wait_until_condition(lambda browser: "docusign" in browser.current_url, timeout=20)
 
     def get_all_no_buttons(self):
         return self.lookup_multiple("button.flagBtn.val_No")
