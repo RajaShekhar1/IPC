@@ -528,7 +528,6 @@ class BasePDFDoc(DocuSignEnvelopeComponent):
 
         self.page_width, self.page_height = letter
         self._pdf_data = StringIO.StringIO()
-        #self._canvas = Canvas(self._pdf_data, pagesize=letter)
         self._doc = SimpleDocTemplate(self._pdf_data, pagesize=letter)
 
         # Use this to record the last page before generating document.
@@ -564,7 +563,6 @@ class BasePDFDoc(DocuSignEnvelopeComponent):
             [],
             pdf_bytes,
         )
-
         # Output DocuSign representation
         return self.make_inline_doc_repr(
             num_pages=self.get_num_pages(),

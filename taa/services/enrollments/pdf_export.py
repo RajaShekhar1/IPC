@@ -8,6 +8,7 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfbase.ttfonts import TTFont
+from PyPDF2 import PdfFileReader
 
 from .models import db
 from taa.services import RequiredFeature
@@ -42,10 +43,18 @@ class ImagedFormGeneratorService(object):
         self.pdf_renderer = self.pdf_renderer_service()
 
         self.tab_pages = {}
+        self._initialize_tab_pages(base_pdf_bytes)
         self._match_tab_values_to_defs(enrollment_tabs, tab_definitions)
         self._add_signature_tabs(enrollment_tabs, tab_definitions)
         self._render_tabs()
         return self.combine_pdfs(base_pdf_bytes)
+
+    def _initialize_tab_pages(self, base_pdf_bytes):
+        # Ensure there is a page for each page of the base pdf
+        pdf_reader = PdfFileReader(BytesIO(base_pdf_bytes))
+        num_pages = pdf_reader.getNumPages()
+        for p in range(num_pages):
+            self.tab_pages[p] = []
 
     def validate_template(self, template_id):
         template = self.tab_repository.get_template(template_id)
@@ -82,6 +91,7 @@ class ImagedFormGeneratorService(object):
         self.tab_pages[page].append((tab_def, tab_value))
 
     def _render_tabs(self):
+
         for page in sorted(self.tab_pages):
             for tab_def, tab_value in self.tab_pages[page]:
                 self._render_tab(tab_def, tab_value)
