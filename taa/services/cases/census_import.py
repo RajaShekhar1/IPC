@@ -480,7 +480,7 @@ class CensusRecordParser(object):
             }
 
     def _process_file_stream(self, file_data):
-        result = self.file_import_service.process_file_stream(file_data)
+        result = self.file_import_service.process_delimited_file_stream(file_data)
         if result.has_error():
             self.error_message(
                 message=result.get_error_message(),
