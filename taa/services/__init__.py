@@ -157,6 +157,7 @@ def initialize_services():
     services_broker.Provide('EnrollmentApplicationCoverageService', EnrollmentApplicationCoverageService())
     services_broker.Provide('EnrollmentImportService', EnrollmentImportService())
     services_broker.Provide('EnrollmentImportBatchService', EnrollmentImportBatchService())
+    services_broker.Provide('EnrollmentImportBatchItemService', EnrollmentImportBatchItemService())
     services_broker.Provide('EnrollmentSubmissionService', EnrollmentSubmissionService())
     services_broker.Provide('EnrollmentRecordParser', lambda: EnrollmentRecordParser)
     services_broker.Provide('SelfEnrollmentEmailService', SelfEnrollmentEmailService())

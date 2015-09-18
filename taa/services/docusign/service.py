@@ -24,7 +24,7 @@ class DocuSignService(object):
         employee, recipients = self.create_envelope_recipients(case, enrollment_data)
         components = self.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer=True)
         transport = get_docusign_transport()
-        envelope_result = create_envelope(
+        envelope_result = self.create_envelope(
             email_subject="Signature needed: {} for {} ({})".format(
                 enrollment_data.get_product_code(),
                 enrollment_data.get_employee_name(),
@@ -489,13 +489,7 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
         }
 
     def generate_inline_pdfs(self):
-        tabs = []
-        for recipient in self.recipients:
-            tabs += self.generate_tabs(recipient)
-        pdf_bytes = self.pdf_generator_service.generate_form_pdf(
-            self.template_id,
-            tabs,
-        )
+        pdf_bytes = self.generate_pdf_bytes()
         num_pages = self.get_num_pages(pdf_bytes)
         pdf_base64 = base64.standard_b64encode(pdf_bytes)
         return self.make_inline_doc_repr(
@@ -503,6 +497,16 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
             pdf_base64=pdf_base64,
             recipients=self.generate_recipients()
         )
+
+    def generate_pdf_bytes(self):
+        tabs = []
+        for recipient in self.recipients:
+            tabs += self.generate_tabs(recipient)
+        pdf_bytes = self.pdf_generator_service.generate_form_pdf(
+            self.template_id,
+            tabs,
+        )
+        return pdf_bytes
 
     def get_num_pages(self, pdf_bytes):
         reader = PdfFileReader(BytesIO(pdf_bytes))
@@ -549,26 +553,32 @@ class BasePDFDoc(DocuSignEnvelopeComponent):
     def generate_composite_template(self):
 
         # Generate the PDF
-        self.generate()
+        pdf_bytes = self.generate_pdf_bytes()
 
-        pdf_bytes = self.get_pdf_bytes()
-
-        tabs = []
-        for r in self.recipients:
-            tabs += self.generate_tabs(r)
-
-        pdf_bytes = self.pdf_generator_service.generate_overlay_pdf_from_tabs(
-            tabs,
-            # Sig tabs will be auto-generated
-            [],
-            pdf_bytes,
-        )
         # Output DocuSign representation
         return self.make_inline_doc_repr(
             num_pages=self.get_num_pages(),
             pdf_base64=base64.standard_b64encode(pdf_bytes),
             recipients=self.generate_recipients()
         )
+
+    def generate_pdf_bytes(self):
+
+        # Do any drawing necessary to create the base PDF
+        self.generate()
+        pdf_bytes = self.get_pdf_bytes()
+
+        # Add any tabs needed and merge them onto this PDF
+        tabs = []
+        for r in self.recipients:
+            tabs += self.generate_tabs(r)
+        pdf_bytes = self.pdf_generator_service.generate_overlay_pdf_from_tabs(
+            tabs,
+            # Sig tabs will be auto-generated
+            [],
+            pdf_bytes,
+        )
+        return pdf_bytes
 
     def get_num_pages(self):
         if self._num_pages:

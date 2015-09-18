@@ -1,6 +1,9 @@
 from datetime import datetime
+from io import BytesIO
 import json
 import traceback
+
+from PyPDF2 import PdfFileReader, PdfFileWriter
 
 import taa.tasks as tasks
 from taa import db
@@ -50,6 +53,23 @@ class EnrollmentSubmissionService(object):
 
         self._mark_item_success(batch_item)
 
+    def render_enrollment_pdf(self, enrollment_record):
+        """
+        Used for previewing and testing.
+        """
+        submission_processor = EnrollmentSubmissionProcessor()
+        components, data_wrap = submission_processor.generate_envelope_components(enrollment_record)
+        pdfs = [c.generate_pdf_bytes() for c in components]
+
+        writer = PdfFileWriter()
+        for pdf in pdfs:
+            reader = PdfFileReader(BytesIO(pdf))
+            writer.appendPagesFromReader(reader)
+
+        output = BytesIO()
+        writer.write(output)
+        return output.getvalue()
+
     def _mark_item_processing(self, batch_item):
         batch_item.processed_time = datetime.now()
         batch_item.status = EnrollmentImportBatchItem.STATUS_PROCESSING
@@ -74,15 +94,7 @@ class EnrollmentSubmissionProcessor(object):
 
     def submit_to_docusign(self, enrollment_record):
 
-        data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data),
-                                       census_record=enrollment_record.census_record,
-                                       case=enrollment_record.case)
-        recipients = self._create_import_recipients(enrollment_record.case, data_wrap)
-        components = self.docusign_service.create_fpp_envelope_components(
-            data_wrap,
-            recipients,
-            should_use_docusign_renderer=False
-        )
+        components, data_wrap = self.generate_envelope_components(enrollment_record)
 
         # Generate envelope
         envelope = self.docusign_service.create_envelope(
@@ -92,6 +104,18 @@ class EnrollmentSubmissionProcessor(object):
                 data_wrap.get_employer_name()),
             components=components
         )
+
+    def generate_envelope_components(self, enrollment_record):
+        data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data),
+                                       census_record=enrollment_record.census_record,
+                                       case=enrollment_record.case)
+        recipients = self._create_import_recipients(enrollment_record.case, data_wrap)
+        components = self.docusign_service.create_fpp_envelope_components(
+            data_wrap,
+            recipients,
+            should_use_docusign_renderer=False
+        )
+        return components, data_wrap
 
     def _create_import_recipients(self, case, enrollment_data):
 

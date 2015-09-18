@@ -54,7 +54,8 @@ class ImagedFormGeneratorService(object):
         pdf_reader = PdfFileReader(BytesIO(base_pdf_bytes))
         num_pages = pdf_reader.getNumPages()
         for p in range(num_pages):
-            self.tab_pages[p] = []
+            # Use 1-indexed page numbers to match the tabs
+            self.tab_pages[p+1] = []
 
     def validate_template(self, template_id):
         template = self.tab_repository.get_template(template_id)
@@ -85,13 +86,12 @@ class ImagedFormGeneratorService(object):
             self._add_to_tab_pages(tab_def, tab_value)
 
     def _add_to_tab_pages(self, tab_def, tab_value):
-        page = tab_def.page
+        page = int(tab_def.page)
         if page not in self.tab_pages:
             self.tab_pages[page] = []
         self.tab_pages[page].append((tab_def, tab_value))
 
     def _render_tabs(self):
-
         for page in sorted(self.tab_pages):
             for tab_def, tab_value in self.tab_pages[page]:
                 self._render_tab(tab_def, tab_value)
@@ -119,7 +119,10 @@ class ImagedFormGeneratorService(object):
         #    fontcolor = 'Green'
         if tab_def.type_ == 'SignHere':
             y += 35
-        self.pdf_renderer.draw_text(text=text, x=tab_def.x,
+            x -= 5
+            fontsize = 8
+
+        self.pdf_renderer.draw_text(text=text, x=x,
                                     y=y,
                                     width=tab_def.width,
                                     font=font, fontsize=fontsize,

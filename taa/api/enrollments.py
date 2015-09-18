@@ -1,6 +1,6 @@
 from StringIO import StringIO
 
-from flask import Blueprint, request, abort
+from flask import Blueprint, request, abort, make_response
 from flask_stormpath import login_required, groups_required
 
 from taa.api import route
@@ -11,7 +11,8 @@ bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
 case_service = LookupService("CaseService")
 enrollment_import_service = LookupService("EnrollmentImportService")
 enrollment_import_batch_service = LookupService("EnrollmentImportBatchService")
-
+enrollment_import_batch_item_service = LookupService("EnrollmentImportBatchItemService")
+enrollment_submission_service = LookupService("EnrollmentSubmissionService")
 
 @route(bp, '/', methods=["POST"])
 def submit_data():    
@@ -59,3 +60,18 @@ def get_batch_items(batch_id):
         abort(404)
 
     return [item for item in enrollment_import_batch_service.get_batch_items(batch)]
+
+@route(bp, '/import_batches/<batch_id>/<item_id>/pdf', methods=['GET'])
+@login_required
+@groups_required(['admins'])
+def render_batch_item_pdf(batch_id, item_id):
+    item = enrollment_import_batch_item_service.get(item_id)
+    if not item:
+        abort(404)
+
+    binary_pdf = enrollment_submission_service.render_enrollment_pdf(item.enrollment_record)
+
+    response = make_response(binary_pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'inline; filename=%s.pdf' % 'enrollment_{}'.format(item.enrollment_record_id)
+    return response
