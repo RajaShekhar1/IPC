@@ -141,8 +141,8 @@ def create_envelope_and_get_signing_url(wizard_data, census_record, case):
 
 
 def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
-    employee, envelope_result, transport = create_fpp_envelope(enrollment_data, case)
-    redirect_url = fetch_signing_url(employee, enrollment_data, envelope_result, transport)
+    employee, envelope_result = create_fpp_envelope(enrollment_data, case)
+    redirect_url = fetch_signing_url(employee, enrollment_data, envelope_result)
 
     return False, None, redirect_url
 
@@ -152,12 +152,12 @@ def get_signing_agent(case):
     return docusign_service.get_signing_agent(case)
 
 
-def fetch_signing_url(employee, enrollment_data, envelope_result, transport):
+def fetch_signing_url(employee, enrollment_data, envelope_result):
     redirect_url = envelope_result.get_signing_url(
         employee,
         callback_url=build_callback_url(
             enrollment_data, enrollment_data.get_session_type()),
-        docusign_transport=transport
+        docusign_transport=get_docusign_transport()
     )
     return redirect_url
 
