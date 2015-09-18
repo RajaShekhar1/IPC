@@ -47,7 +47,7 @@ Now populate the initial data needed to run the site:
     python manage-taa.py initialize_db
     python manage-taa.py sync_agents
     python manage-taa.py add_brochure_links
-    python manage-taa.py docusign_import -f taa/services/enrollments/docusign_xml_templates/demo
+    python manage-taa.py import_docusign -f taa/services/enrollments/docusign_xml_templates/demo
 
 To run the site, do the following:
     
