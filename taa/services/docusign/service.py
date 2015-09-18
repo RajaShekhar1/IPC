@@ -30,7 +30,7 @@ class DocuSignService(object):
                 enrollment_data.get_employer_name()),
             components=components,
         )
-        return employee, envelope_result, transport
+        return employee, envelope_result
 
     def create_envelope(self, email_subject, components):
         docusign_transport = get_docusign_transport()
