@@ -23,14 +23,12 @@ class DocuSignService(object):
     def create_fpp_envelope(self, enrollment_data, case):
         employee, recipients = self.create_envelope_recipients(case, enrollment_data)
         components = self.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer=True)
-        transport = get_docusign_transport()
         envelope_result = self.create_envelope(
             email_subject="Signature needed: {} for {} ({})".format(
                 enrollment_data.get_product_code(),
                 enrollment_data.get_employee_name(),
                 enrollment_data.get_employer_name()),
             components=components,
-            docusign_transport=transport,
         )
         return employee, envelope_result, transport
 
@@ -109,7 +107,7 @@ class DocuSignService(object):
         return signing_agent
 
 
-def create_envelope(email_subject, components, docusign_transport):
+def create_envelope(email_subject, components):
     docusign_service = LookupService('DocuSignService')
     return docusign_service.create_envelope(email_subject, components)
 
