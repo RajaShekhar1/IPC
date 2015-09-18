@@ -50,6 +50,9 @@ class ImagedFormGeneratorService(object):
         return self.combine_pdfs(base_pdf_bytes)
 
     def _initialize_tab_pages(self, base_pdf_bytes):
+        if not base_pdf_bytes:
+            return
+        
         # Ensure there is a page for each page of the base pdf
         pdf_reader = PdfFileReader(BytesIO(base_pdf_bytes))
         num_pages = pdf_reader.getNumPages()
