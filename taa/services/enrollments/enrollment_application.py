@@ -422,6 +422,7 @@ class EnrollmentApplicationService(DBService):
         return row
 
 
+
 def export_string(val):
     return val.strip()
 

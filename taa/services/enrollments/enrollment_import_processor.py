@@ -90,10 +90,14 @@ class EnrollmentProcessor(object):
 
     def save_validated_data(self, standardized_data, raw_data):
         case = self.case_service.get(standardized_data['case_id'])
+
+        # We want to merge multiple enrollments to a single "person" in the census data via SSN match.
+        census_record = self.find_matching_census_record(case, standardized_data)
+
         return self.enrollment_service.save_enrollment_data(
             standardized_data,
             case,
-            None,
+            census_record,
             case.owner_agent,
             received_data=raw_data,
         )
@@ -243,6 +247,14 @@ class EnrollmentProcessor(object):
             return result.get_data()
         elif data_format == "json":
             return
+
+    def find_matching_census_record(self, case, data):
+        emp_ssn = data['employee']['ssn']
+        matching = self.case_service.get_census_records(case, filter_ssn=emp_ssn)
+        if matching:
+            return matching[0]
+        else:
+            return None
 
 
 class EnrollmentImportError(object):
