@@ -15,7 +15,7 @@ and set up a virtual environment for python:
 
     sudo apt-get update
     sudo apt-get upgrade -y
-    sudo apt-get install -y python-dev python-pip postgresql-9.3 postgresql-client-9.3 postgresql-server-dev-9.3 nginx php5-fpm phppgadmin php5-pgsql git rabbitmq-server
+    sudo apt-get install -y python-dev python-pip postgresql-9.3 postgresql-client-9.3 postgresql-server-dev-9.3 git rabbitmq-server
     wget -qO- https://toolbelt.heroku.com/install-ubuntu.sh | sh
     sudo pip install virtualenv
     virtualenv ~/env
