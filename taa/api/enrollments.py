@@ -13,6 +13,7 @@ enrollment_import_service = LookupService("EnrollmentImportService")
 enrollment_import_batch_service = LookupService("EnrollmentImportBatchService")
 enrollment_import_batch_item_service = LookupService("EnrollmentImportBatchItemService")
 enrollment_submission_service = LookupService("EnrollmentSubmissionService")
+enrollment_application_service = LookupService("EnrollmentApplicationService")
 
 @route(bp, '/', methods=["POST"])
 def submit_data():    
@@ -60,6 +61,17 @@ def get_batch_items(batch_id):
         abort(404)
 
     return [item for item in enrollment_import_batch_service.get_batch_items(batch)]
+
+
+# For convenience, allow lookup of enrollment records without case id for admin only
+#  (if this is opened up to other users, add case permission checking)
+@route(bp, '/records/<int:enrollment_record_id>')
+@login_required
+@groups_required(['admins'])
+def get_individual_enrollment_record(enrollment_record_id):
+    return enrollment_application_service.get_or_404(enrollment_record_id)
+
+
 
 @route(bp, '/import_batches/<batch_id>/<item_id>/pdf', methods=['GET'])
 @login_required
