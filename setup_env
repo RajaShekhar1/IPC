@@ -1,0 +1,19 @@
+#!/bin/bash -e
+
+BASEDIR=`dirname $0`/..
+ENV_BIN=$BASEDIR/taa_env/bin
+
+if [ ! -d "$BASEDIR/taa_env" ]; then
+    virtualenv -q $BASEDIR/taa_env 
+    echo "Virtualenv created."
+fi
+
+$ENV_BIN/pip install -r requirements.txt
+echo "Requirements installed."
+
+$ENV_BIN/alembic upgrade head
+$ENV_BIN/python manage-taa.py initialize_db
+$ENV_BIN/python manage-taa.py sync_agents
+$ENV_BIN/python manage-taa.py add_brochure_links
+$ENV_BIN/python manage-taa.py check_case_tokens
+$ENV_BIN/python manage-taa.py import_docusign -f taa/services/enrollments/docusign_xml_templates 

@@ -26,22 +26,21 @@
           </h3>
         </div>
       </div>
-
-      <div class="row">
       {% if enrollment_data %}
-          <div class="col-xs-12 table-responsive">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>Product</th>
-                  <th>Status</th>
-                  <th>Coverage For</th>
-                  <th>Face Amount</th>
-                  <th>Annual Premium</th>
-              </thead>
-              <tbody>
-                {% for product in enrollment_data %}
+        <div class="col-xs-12 table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Product</th>
+                <th>Status</th>
+                <th>Coverage For</th>
+                <th>Face Amount</th>
+                <th>Annual Premium</th>
+            </thead>
+            <tbody>
+              {% for product in enrollment_data %}
+                {% if product %}
                   <tr style="background:rgba(50,50,50,.1)">
                     <td><strong data-bind="text: moment('{{ product.time }}').format('MM/DD/YYYY hh:mma')"></strong></td>
                     <td><strong>{{product.product_name}}</strong></td>
@@ -56,6 +55,7 @@
                       <td><strong>{{product.total}}</strong></td>
                     {% endif %}
                   </tr>
+
                   {% if product.status != 'declined'%}
                     {% for coverage in product.coverage %}
                       <tr>
@@ -68,10 +68,11 @@
                       </tr>
                     {% endfor %}
                   {% endif %}
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       {% else %}
           <div class="text-center col-xs-12">
             <p>No enrollments</p>

@@ -15,7 +15,7 @@ and set up a virtual environment for python:
 
     sudo apt-get update
     sudo apt-get upgrade -y
-    sudo apt-get install -y python-dev python-pip postgresql-9.3 postgresql-client-9.3 postgresql-server-dev-9.3 nginx php5-fpm phppgadmin php5-pgsql git rabbitmq-server
+    sudo apt-get install -y python-dev python-pip postgresql-9.3 postgresql-client-9.3 postgresql-server-dev-9.3 git rabbitmq-server
     wget -qO- https://toolbelt.heroku.com/install-ubuntu.sh | sh
     sudo pip install virtualenv
     virtualenv ~/env
@@ -30,6 +30,7 @@ To allow deploying to heroku directly from the VM, you need to add the SSH key t
 Now create the database:
 
     sudo -u postgres createdb -T template0 -E utf-8 taa
+    sudo -u postgres createdb -T template0 -E utf-8 taa-test
     sudo adduser taa
     <type password that matches config file (DATABASE_URI)>
     sudo -u postgres psql template1
@@ -45,6 +46,8 @@ Now populate the initial data needed to run the site:
     
     python manage-taa.py initialize_db
     python manage-taa.py sync_agents
+    python manage-taa.py add_brochure_links
+    python manage-taa.py import_docusign -f taa/services/enrollments/docusign_xml_templates/demo
 
 To run the site, do the following:
     
@@ -67,7 +70,27 @@ set pdb breakpoints with pdb.set\_trace().
 Running tests
 -------------------
 
-[pytest](https://pytest.org/latest/index.html) is used for testing. To run the tests, ensure you are in the parent TAA directory and install the `taa` app in editable mode:
+There three stages of tests: commit tests (fast, unit-level tests), integration tests (with database or external service),
+and end-to-end tests (with browser control). 
+
+The commit and integration tests should be run frequently, and should be passing before merging into master.
+
+To run commit tests, perform the following:
+
+    ./run_commit_tests
+
+This will run some [behave](http://pythonhosted.org/behave/) tests along with plain vanilla unit tests using the nose test runner.
+
+To run the integration tests, make sure you have created a test database named taa-test and run:
+
+    ./run_integration_tests
+    
+To run the browser tests, make sure firefox is installed using apt-get. For a headless run, also install Xvfb.
+ 
+    ./run_browser_tests
+
+[pytest](https://pytest.org/latest/index.html) is an alternative test runner. To run the tests using pytest, 
+ensure you are in the parent TAA directory and install the `taa` app in editable mode:
 
     pip install -e .
 

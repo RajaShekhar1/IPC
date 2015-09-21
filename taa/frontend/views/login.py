@@ -20,6 +20,7 @@ from .nav import get_nav_menu
 from taa.old_model.Registration import TAA_RegistrationForm, TAA_LoginForm
 from taa.old_model.Enrollment import NotifyAdminEmail
 from taa.services.agents import AgentService
+from taa.services import RequiredFeature, LookupService
 
 @app.route("/user_register", methods=['GET', 'POST'])
 def register_taa():
@@ -32,15 +33,15 @@ def register_taa():
     form = TAA_RegistrationForm()
 
     data = form.data
-    
+
     if form.validate_on_submit():
         fail = False
 
         # Iterate through all fields, grabbing the necessary form data and
         # flashing error messages if required.
-        
+
         data = form.data
-        
+
         if data['password'] != data['repassword']:
             fail = True
             flash("Passwords don't match.")
@@ -67,10 +68,10 @@ def register_taa():
                         'activated': False,
                     },
                 )
-                
+
                 # Add to the agents group
                 account.add_group("agents")
-                
+
                 # If successfully created account, notify admin of registration
                 #try:
                 NotifyAdminEmail().send_registration_notice(data['given_name'] + " " + data['surname'])
@@ -95,6 +96,7 @@ def confirmRegistration():
 
 @app.route('/login', methods = ['GET', 'POST'])
 def login():
+    agent_service = LookupService("AgentService")
     """
     Log in an existing Stormpath user.
     """
@@ -115,35 +117,38 @@ def login():
 
             print "LOGIN: %s %s, (%s  activated=%s)" % (account.given_name, account.surname, account.email, account.custom_data.get('activated'))
             account_groups = [g.name for g in account.groups]
-            is_agent = 'agents' in account_groups
-            is_home_office = 'home_office' in account_groups
-            is_admin = 'admins' in account_groups
+            is_agent = agent_service.is_user_agent(account)
+            is_home_office = agent_service.is_user_home_office(account)
+            is_admin = agent_service.is_user_admin(account)
+            is_third_party_enroller = agent_service.is_user_third_party_enroller(account)
             print "Is ADMIN: %s, GROUPS: %s"%(is_admin, account_groups)
-            if is_admin or is_home_office or (is_agent and account.custom_data.get('activated')):
-                login_user(account, remember=True) 
+            if is_admin or is_home_office or (is_agent and account.custom_data.get('activated')) or is_third_party_enroller:
+                login_user(account, remember=True)
                 session['username'] = user.given_name + " " + user.surname
                 session['headername'] = session['username']
 
-                if is_agent and user.custom_data.get('agency') and user.custom_data['agency'].strip(): 
+                if is_agent and user.custom_data.get('agency') and user.custom_data['agency'].strip():
                     session['headername'] += ", " + user.custom_data['agency']
                 elif is_admin:
                     session['headername'] += ', Global Administrator'
                 elif is_home_office:
-                    session['headername'] += ', Home Office Administrator' 
-                
+                    session['headername'] += ', Home Office Administrator'
+
                 session['active_case'] = {
                     'company_name': "",
                     'situs_state': "",
                     'situs_city': "",
                     'product_code': ""
                 }
-                
+
                 if is_agent:
                     AgentService().ensure_agent_in_database(user)
-                
+
                 if is_admin:
                     return redirect(request.args.get('next') or url_for('admin'))
                 elif is_agent:
+                    return redirect(request.args.get('next') or url_for('home'))
+                elif is_third_party_enroller:
                     return redirect(request.args.get('next') or url_for('home'))
                 else:
                     # Home office
@@ -157,7 +162,7 @@ def login():
                 flash(err.message['message'])
             else:
                 flash(err.message)
-                
+
     return render_template('user_account/login.html',
                            form = form,
                            nav_menu=get_nav_menu(),
@@ -175,6 +180,5 @@ def taa_logout():
         print "LOGOUT: ", user.email
     except:
         print "LOGOUT: <error on accessing user object>"
-            
+
     return redirect('logout')
-    

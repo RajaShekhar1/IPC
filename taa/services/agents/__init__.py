@@ -1,10 +1,15 @@
 
 from flask_stormpath import current_user
 
+from taa.services import RequiredFeature
 from taa.core import DBService, db
-from models import Agent
+from models import Agent, ApiToken
+
+import uuid
+
 
 class AgentService(DBService):
+    user_service = RequiredFeature("UserService")
 
     __model__ = Agent
 
@@ -48,33 +53,61 @@ class AgentService(DBService):
     def is_user_admin(self, user):
         return 'admins' in self.get_user_groupnames(user)
 
+    def is_user_enrollment_importer(self, user):
+        return 'enrollment_importers' in self.get_user_groupnames(user)
+
     def is_user_home_office(self, user):
         return 'home_office' in self.get_user_groupnames(user)
+
+    def is_user_third_party(self, user):
+        return not any([self.is_user_home_office(user), self.is_user_admin(user), self.is_user_agent(user)])
+
+    def is_user_third_party_enroller(self, user):
+        return self.is_user_third_party(user) and self.is_user_enrollment_importer(user)
 
     def can_manage_all_cases(self, user):
         return self.is_user_admin(user) or self.is_user_home_office(user)
 
     def get_user_groupnames(self, user):
-        if hasattr(user, 'groups'):
-            return {g.name for g in user.groups}
-        else:
-            return set()
+        return self.user_service.get_user_groupnames(user)
 
     def get_agent_stormpath_account(self, agent):
-
-        from taa.frontend.views.admin import search_stormpath_accounts
-        agent_account = None
-        for account in search_stormpath_accounts():
-            if account.href == agent.stormpath_url:
-                agent_account = account
-
-        return agent_account
-
-    #def get_agent_from_stormpath_account(self, stormpath_account_url):
-    #    pass
+        return self.user_service.get_stormpath_user_by_href(agent.stormpath_url)
 
     def get_active_agents(self):
         return self.query(
             ).filter(Agent.activated == True
             ).order_by(Agent.last, Agent.first
             ).all()
+
+
+class ApiTokenService(DBService):
+    __model__ = ApiToken
+
+    user_service = RequiredFeature("UserService")
+
+    def get_token_by_sp_href(self, sp_href):
+        "Does a given user's StormPath href have an associated API auth token?"
+        return self.find(stormpath_url=sp_href).first()
+
+    def get_sp_user_by_token(self, token):
+        token_row = self.get_row_by_token(token)
+        if not token_row:
+            return None
+        else:
+            return self.user_service.get_stormpath_user_by_href(token_row.stormpath_url)
+
+    def is_valid_token(self, token):
+        return bool(self.get_row_by_token(token))
+
+    def get_row_by_token(self, token):
+        return self.find(api_token=token, activated=True).first()
+
+    def create_new_token(self, name, sp_href, activated=False):
+        new_token = self.create(**dict(
+            api_token=uuid.uuid4().hex,
+            name=name,
+            stormpath_url=sp_href,
+            activated=activated
+        ))
+        return new_token

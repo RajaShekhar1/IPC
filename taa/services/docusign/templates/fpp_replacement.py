@@ -5,22 +5,23 @@ from taa.services.docusign.DocuSign_config import get_replacement_template_id
 
 
 class FPPReplacementFormTemplate(DocuSignServerTemplate):
-    def __init__(self, recipients, enrollment_data):
+    def __init__(self, recipients, enrollment_data, should_use_docusign_renderer):
 
         product_type = enrollment_data["product_type"]
-        state = enrollment_data["agent_data"]["state"]
+        state = enrollment_data["enrollState"]
         template_id = get_replacement_template_id(product_type, state)
 
-        DocuSignServerTemplate.__init__(self, template_id, recipients)
+        DocuSignServerTemplate.__init__(self, template_id, recipients, should_use_docusign_renderer)
 
         self.data = enrollment_data
 
     def generate_tabs(self, recipient):
+        tabs = super(FPPReplacementFormTemplate, self).generate_tabs(recipient)
 
         if not recipient.is_employee():
-            return {}
+            return tabs
 
-        tabs = [
+        tabs += [
             DocuSignRadioTab('read_aloud', 'yes' if self.data['replacement_read_aloud'] else 'no'),
             DocuSignRadioTab('considering_terminating_existing', 'yes' if self.data['replacement_is_terminating'] else 'no'),
             DocuSignRadioTab('considering_using_funds', 'yes' if self.data['replacement_using_funds'] else 'no'),
@@ -49,9 +50,4 @@ class FPPReplacementFormTemplate(DocuSignServerTemplate):
         elif len(self.data['replacement_policies']) > 1:
             tabs.append(DocuSignTextTab('additionalPoliciesNotice', 'SEE ATTACHED'))
 
-        # Format tabs for docusign
-        ds_tabs = {}
-        for tab in tabs:
-            tab.add_to_tabs(ds_tabs)
-
-        return ds_tabs
+        return tabs

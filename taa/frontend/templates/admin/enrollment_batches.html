@@ -1,0 +1,32 @@
+{% extends "base_ace_latest.html" %}
+
+
+{% block content %}
+<div class="container">
+  <h4>Enrollment Import Batches</h4>
+  <!--ko foreach: {data: import_batches, as: 'import_batch'} -->
+  <div class="row">
+    <div class="col-xs-12">
+      <span data-bind="text: import_batch.name"></span>
+    </div>
+  </div>
+  <!--/ko-->
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+  function ImportBatchVM() {
+    this.import_batches = ko.observableArray([]);
+
+    $.get("/enrollments/import_batches").success(function(data) {
+      this.import_batches(data);
+    }.bind(this));
+  }
+
+  $(document).ready(function() {
+    window.vm = new ImportBatchVM();
+    ko.applyBindings(window.vm);
+  });
+</script>
+{% endblock %}

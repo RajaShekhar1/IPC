@@ -68,6 +68,7 @@ class Case(CaseSerializer, db.Model):
                                    nullable=False)
     self_enrollment_setup = db.relationship('SelfEnrollmentSetup',
                                             uselist=False, backref='case')
+    case_token = db.Column(db.String(64), nullable=True)
 
     def get_product_names(self):
         return ','.join(p.name for p in self.products)

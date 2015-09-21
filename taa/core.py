@@ -1,6 +1,6 @@
 """ 
 Core Application classes and objects
- 
+
 """
 
 from taa import db
@@ -22,7 +22,7 @@ class DBService(object):
     """A :class:`DBService` instance encapsulates common SQLAlchemy model
         operations in the context of a :class:`Flask` application.
         """
-    
+
     # The model class we are wrapping
     __model__ = None
 
@@ -38,7 +38,7 @@ class DBService(object):
         if not rv and raise_error:
             raise ValueError('%s is not of type %s' % (model, self.__model__))
         return rv
-    
+
     def _preprocess_params(self, kwargs):
         """Returns a preprocessed dictionary of parameters. Used by default
         before creating a new instance or updating an existing instance.
@@ -126,14 +126,14 @@ class DBService(object):
         model = self.update_without_save(model, **kwargs)
         self.save(model)
         return model
-    
+
     def update_without_save(self, model, **kwargs):
         self._isinstance(model)
         for k, v in self._preprocess_params(kwargs).items():
             setattr(model, k, v)
-        
+
         return model
-    
+
     def delete(self, model):
         """Immediately deletes the specified model instance.
 

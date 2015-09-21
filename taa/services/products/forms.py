@@ -1,5 +1,4 @@
 import locale
-locale.setlocale( locale.LC_ALL, '' )
 
 from flask_wtf import Form
 from wtforms.fields import (

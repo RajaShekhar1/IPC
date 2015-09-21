@@ -1,8 +1,11 @@
 import decimal
 
+from sqlalchemy.dialects.postgresql import JSON
+
 from taa import db
 from taa.helpers import JsonSerializable
 from taa.services.cases import CaseCensus
+
 
 
 class EnrollmentSerializer(JsonSerializable):
@@ -61,6 +64,10 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     spouse_beneficiary_relationship = db.Column(db.UnicodeText)
     spouse_beneficiary_birthdate = db.Column(db.UnicodeText)
     spouse_beneficiary_ssn = db.Column(db.Unicode(16))
+
+    # Save the raw data that we receive
+    received_data = db.Column(JSON(none_as_null=False))
+    standardized_data = db.Column(JSON(none_as_null=False))
 
     def get_signature_time_as_int(self):
         'useful for sorting'
@@ -258,3 +265,98 @@ CaseCensus.sent_email_count = db.column_property(
             )).\
             correlate_except(SelfEnrollmentEmailLog)
 )
+
+
+class EnrollmentImportBatchSerializer(JsonSerializable):
+    __json_hidden__ = ['batch_items']
+
+
+class EnrollmentImportBatch(EnrollmentImportBatchSerializer, db.Model):
+    """
+    Records an attempt to submit a batch of enrollments.
+    """
+    __tablename__ = 'enrollment_import_batches'
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Submission sources
+    SUBMIT_SOURCE_DROPBOX = u'dropbox'
+    SUBMIT_SOURCE_LOGGED_IN_WIZARD = u'logged_in_wizard'
+    SUBMIT_SOURCE_SELF_ENROLL_WIZARD = u'self_enroll_wizard'
+    SUBMIT_SOURCE_API = u'api'
+    source = db.Column(db.Unicode(32), nullable=False)
+
+    timestamp = db.Column(db.DateTime, server_default='NOW')
+    auth_token = db.Column(db.Unicode(64))
+    case_token = db.Column(db.Unicode(64))
+    num_processed = db.Column(db.Integer)
+    num_errors = db.Column(db.Integer)
+    log_hash = db.Column(db.Unicode(64))
+
+
+class EnrollmentImportBatchItemSerializer(JsonSerializable):
+    __json_hidden__ = ["enrollment_record", "enrollment_batch"]
+
+
+class EnrollmentImportBatchItem(EnrollmentImportBatchItemSerializer, db.Model):
+    """
+    Records the ID and status of each enrollment as part of an import request.
+    """
+    __tablename__ = 'enrollment_import_batch_items'
+
+    id = db.Column(db.Integer, primary_key=True)
+    enrollment_batch_id = db.Column(db.Integer, db.ForeignKey('enrollment_import_batches.id'))
+    enrollment_batch = db.relationship('EnrollmentImportBatch', backref='batch_items')
+    enrollment_record_id = db.Column(db.Integer, db.ForeignKey('enrollment_applications.id'))
+    enrollment_record = db.relationship('EnrollmentApplication')
+
+    STATUS_QUEUED = u'queued'
+    STATUS_PROCESSING = u'processing'
+    STATUS_ERROR = u'error'
+    STATUS_SUCCESS = u'success'
+
+    status = db.Column(db.Unicode(32))
+    error_message = db.Column(db.UnicodeText)
+    processed_time = db.Column(db.DateTime, server_default='NOW')
+
+
+class FormTemplate(db.Model):
+    """
+    Stores the DocuSign-compatible XML data for generating PDFs of enrollment applications.
+    """
+    __tablename__ = 'form_templates'
+
+    id = db.Column(db.Integer, primary_key=True)
+    template_id = db.Column(db.Unicode, nullable=False)
+    data = db.Column(db.LargeBinary)
+    name = db.Column(db.Unicode)
+    description = db.Column(db.Unicode)
+    pages = db.Column(db.Integer, nullable=False)
+    modified_at = db.Column(db.DateTime)
+
+
+class FormTemplateTabs(db.Model):
+    """
+    The "tabs" are placeholders for applicant data on the enrollment PDF.
+    """
+    __tablename__ = 'form_template_tabs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    form_template_id = db.Column(db.Integer, db.ForeignKey('form_templates.id'),
+                                 nullable=False)
+    template = db.relationship('FormTemplate', backref='tabs')
+    page = db.Column(db.Integer, nullable=False)
+    x = db.Column(db.Integer, nullable=False)
+    y = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.Unicode)
+    type_ = db.Column(db.Unicode)
+    label = db.Column(db.Unicode)
+    is_bold = db.Column(db.Boolean, server_default='FALSE')
+    is_italic = db.Column(db.Boolean, server_default='FALSE')
+    is_underline = db.Column(db.Boolean, server_default='FALSE')
+    custom_type = db.Column(db.Unicode)
+    width = db.Column(db.Integer)
+    height = db.Column(db.Integer)
+    font = db.Column(db.Unicode)
+    font_size = db.Column(db.Integer)
+    font_color = db.Column(db.Unicode)
+    recipient_role = db.Column(db.Unicode)

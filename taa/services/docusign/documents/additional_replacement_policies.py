@@ -11,7 +11,7 @@ from reportlab.graphics.renderPDF import Drawing
 from taa.services.docusign.service import (
     BasePDFDoc,
     DocuSignSigTab,
-)
+    DocuSignTextTab)
 
 from utils import style, bold_style2, NumberedCanvas, create_attachment_header, create_signature_line
 
@@ -102,9 +102,8 @@ class AdditionalReplacementPoliciesForm(BasePDFDoc):
     def draw_signature_line(self):
         return create_signature_line(self.page_width, self.sig_coords, self.get_signer_recipients())
 
-
     def generate_tabs(self, recipient):
-        tabs = {}
+        tabs = super(AdditionalReplacementPoliciesForm, self).generate_tabs(recipient)
 
         if self.is_recipient_signer(recipient):
             # Add a signature tab to the last page
@@ -115,7 +114,14 @@ class AdditionalReplacementPoliciesForm(BasePDFDoc):
             pix_y = (self.page_height - pdf_y)
             #print("Converted %s, %s to %s %s"%(pdf_x, pdf_y, pix_x, pix_y))
             tab = DocuSignSigTab(x=pix_x, y=pix_y, document_id="1", page_number=str(self.get_num_pages()))
-            tab.add_to_tabs(tabs)
+            tabs.append(tab)
+
+            # In case this is an enrollment import, also add a text signature
+            if recipient.is_employee() and self.data.has_employee_esigned():
+                tabs.append(DocuSignTextTab("SignHereEmployee", self.data.get_employee_esignature()))
+            if recipient.is_agent() and self.data.has_agent_esigned():
+                tabs.append(DocuSignTextTab("SignHereAgent", self.data.get_agent_esignature()))
+
 
         return tabs
 

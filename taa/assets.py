@@ -132,12 +132,15 @@ js_vendor_latest = Bundle(
 #js_main = Bundle("coffee/*.coffee", filters="coffeescript", output="js/main.js")
 js_main = Bundle(
     js_vendor,
-    Bundle("js/5Star/*.js",
+    Bundle("js/5Star/*/*.js", "js/5Star/*.js",
+           filters="rjsmin",
+           output='generated_assets/app.min.js'),
+    Bundle("js/5Star/**/*.js",
            filters="rjsmin",
            output='generated_assets/app.min.js'),
     output='generated_assets/all-js-legacy.min.js'
 )
-taa_app = Bundle("js/5Star/*.js", filters="rjsmin", output='generated_assets/taa-app.min.js')
+taa_app = Bundle("js/5Star/*/*.js", "js/5Star/*.js", filters="rjsmin", output='generated_assets/taa-app.min.js')
 
 
 def init_app(app):

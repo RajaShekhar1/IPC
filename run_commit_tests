@@ -1,0 +1,3 @@
+#!/bin/sh -e
+behave tests/unit/acceptance_features
+nosetests -c nose.cfg --with-xunit
