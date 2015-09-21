@@ -66,6 +66,9 @@ class EnrollmentImportService(object):
             answers = dict(Y="Yes", N="No", y="Yes", n="No")
             return answers.get(answer)
 
+        def bool_from_answer(answer):
+            return str(answer).lower() in ['y', 'yes']
+
         def build_person(prefix):
             genders = dict(m="male", M="male", f="female", F="female")
             base_dict = dict(
@@ -83,7 +86,7 @@ class EnrollmentImportService(object):
                 zip=val_or_blank("{}_zipcode".format(prefix)),
                 height=val_or_blank("{}_height_inches".format(prefix)),
                 weight=val_or_blank("{}_weight_pounds".format(prefix)),
-                is_smoker=val_or_blank("{}_smoker".format(prefix)) in ["Y", "y"],
+                is_smoker=bool_from_answer("{}_smoker".format(prefix)),
                 soh_questions=[]
             )
 
@@ -109,13 +112,13 @@ class EnrollmentImportService(object):
         out_data["payment_mode"] = int(data["payment_mode"])
         out_data["payment_mode_text"] = get_payment_modes(single=int(data["payment_mode"]))[0].get("name").lower()
 
-        out_data["existing_insurance"] = data.get("existing_insurance") in ["Y","y"]
-        out_data["replacing_insurance"] = data.get("replacing_insurance") in ["Y","y"]
-        out_data["replacement_read_aloud"] = data.get("replacement_read_aloud") in ["Y","y"]
-        out_data["replacement_is_terminating"] = data.get("replacement_is_terminating") in ["Y","y"]
-        out_data["replacement_using_funds"] = data.get("replacement_using_funds") in ["Y","y"]
+        out_data["existing_insurance"] = bool_from_answer(data.get("existing_insurance"))
+        out_data["replacing_insurance"] = bool_from_answer(data.get("replacing_insurance"))
+        out_data["replacement_read_aloud"] = bool_from_answer(data.get("replacement_read_aloud"))
+        out_data["replacement_is_terminating"] = bool_from_answer(data.get("replacement_is_terminating"))
+        out_data["replacement_using_funds"] = bool_from_answer(data.get("replacement_using_funds"))
 
-        out_data["is_employee_actively_at_work"] = data.get("actively_at_work") in ["Y","y"]
+        out_data["is_employee_actively_at_work"] = bool_from_answer(data.get("actively_at_work"))
 
         # These two are like the health question answers
         out_data["has_spouse_been_treated_6_months"] = standardize_answer(data.get("sp_treated_6_months"))
@@ -183,6 +186,10 @@ class EnrollmentImportService(object):
 
         # Product
         out_data['product_data'] = {'id': product.id}
+
+        # Initials
+        out_data['emp_initials_txt'] = val_or_blank(data.get('emp_initials_txt'))
+        out_data['agent_initials_txt'] = val_or_blank(data.get('agent_initials_txt'))
 
         return out_data
 
