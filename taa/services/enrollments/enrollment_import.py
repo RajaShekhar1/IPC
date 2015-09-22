@@ -49,10 +49,11 @@ class EnrollmentImportService(object):
         state = data.get("signed_at_state")
 
         def build_beneficiary_data(prefix, out_prefix):
-            out_data["{}_beneficiary_name".format(out_prefix)] = val_or_blank("{}_bene_name".format(prefix))
-            out_data["{}_beneficiary_ssn".format(out_prefix)] = val_or_blank("{}_bene_ssn".format(prefix))
-            out_data["{}_beneficiary_dob".format(out_prefix)] = val_or_blank("{}_bene_birthdate".format(prefix))
-            out_data["{}_beneficiary_relationship".format(out_prefix)] = val_or_blank("{}_bene_relationship".format(prefix))
+            for num in range(1, enrollment_record_parser.MAX_BENEFICIARY_COUNT+1):
+                out_data["{}_beneficiary_name{}".format(out_prefix, i)] = val_or_blank("{}_bene_name{}".format(prefix, i))
+                out_data["{}_beneficiary_ssn{}".format(out_prefix, i)] = val_or_blank("{}_bene_ssn{}".format(prefix, i))
+                out_data["{}_beneficiary_dob{}".format(out_prefix, i)] = val_or_blank("{}_bene_birthdate{}".format(prefix, i))
+                out_data["{}_beneficiary_relationship{}".format(out_prefix, i)] = val_or_blank("{}_bene_relationship{}".format(prefix, i))
 
         def build_contingent_beneficiary_data(prefix, out_prefix):
             out_data["{}_contingent_beneficiary".format(out_prefix)] = {
