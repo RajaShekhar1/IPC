@@ -48,8 +48,9 @@ class EnrollmentImportService(object):
         product = products[0]
         state = data.get("signed_at_state")
 
+        from taa.services.enrollments import EnrollmentRecordParser
         def build_beneficiary_data(prefix, out_prefix):
-            for num in range(1, enrollment_record_parser.MAX_BENEFICIARY_COUNT+1):
+            for i in range(1, EnrollmentRecordParser.MAX_BENEFICIARY_COUNT+1):
                 out_data["{}_beneficiary_name{}".format(out_prefix, i)] = val_or_blank("{}_bene_name{}".format(prefix, i))
                 out_data["{}_beneficiary_ssn{}".format(out_prefix, i)] = val_or_blank("{}_bene_ssn{}".format(prefix, i))
                 out_data["{}_beneficiary_dob{}".format(out_prefix, i)] = val_or_blank("{}_bene_birthdate{}".format(prefix, i))
@@ -154,7 +155,6 @@ class EnrollmentImportService(object):
         out_data["employee_coverage"] = self.format_coverage(data.get("emp_coverage"), data.get("emp_premium"))
         out_data["spouse_coverage"] = self.format_coverage(data.get("sp_coverage"), data.get("sp_premium"))
 
-        from taa.services.enrollments import EnrollmentRecordParser
         for num in range(1, EnrollmentRecordParser.MAX_CHILDREN + 1):
             if data.get("ch{}_first".format(num)):
                 out_data["children"].append(build_person("ch{}".format(num)))
