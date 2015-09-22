@@ -62,6 +62,14 @@ def get_batch_items(batch_id):
 
     return [item for item in enrollment_import_batch_service.get_batch_items(batch)]
 
+@route(bp, '/import_batches/<batch_id>/reprocess', methods=['POST'])
+@login_required
+@groups_required(['admins'])
+def reprocess_batch(batch_id):
+    batch = enrollment_import_batch_service.get(batch_id)
+
+    # Enqueue the batch for processing
+    enrollment_submission_service.submit_import_enrollments(batch)
 
 # For convenience, allow lookup of enrollment records without case id for admin only
 #  (if this is opened up to other users, add case permission checking)
