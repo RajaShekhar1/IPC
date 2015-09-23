@@ -226,7 +226,55 @@ class EnrollmentRecordParser(object):
         replacement_using_funds,
     ]
 
+    #Add an optional beneficiary field for backwards support
 
+    emp_bene_name = EnrollmentRecordField("emp_bene_name", "employee_bene_name", preprocess_string, [], flat_file_size=40, description="Employee primary beneficiary name")
+
+    emp_bene_birthdate = EnrollmentRecordField("emp_bene_birthdate", "employee_bene_birthdate", preprocess_date, [birthdate_validator], flat_file_size=8, description="Employee primary beneficiary birthdate")
+
+    emp_bene_relationship = EnrollmentRecordField("emp_bene_relationship", "employee_bene_relationship", preprocess_string, [], flat_file_size=15, description="Employee primary beneficiary relationship")
+
+    emp_bene_ssn = EnrollmentRecordField("emp_bene_ssn", "employee_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="Employee primary beneficiary SSN")
+
+    emp_bene_percentage = EnrollmentRecordField("emp_bene_percentage", "employee_bene_percentage", preprocess_numbers, [], flat_file_size=3, description="Employee primary beneficiary percentage")
+
+    emp_cont_bene_name = EnrollmentRecordField("emp_cont_bene_name", "employee_cont_bene_name", preprocess_string, [], flat_file_size=40, description="Employee contingent beneficiary name")
+
+    emp_cont_bene_birthdate = EnrollmentRecordField("emp_cont_bene_birthdate", "employee_cont_bene_birthdate", preprocess_date, [birthdate_validator], flat_file_size=8, description="Employee contingent beneficiary birthdate")
+
+    emp_cont_bene_relationship = EnrollmentRecordField("emp_cont_bene_relationship", "employee_cont_bene_relationship", preprocess_string, [], flat_file_size=15, description="Employee contingent beneficiary relationship")
+
+    emp_cont_bene_ssn = EnrollmentRecordField("emp_cont_bene_ssn", "employee_cont_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="Employee contingent beneficiary SSN")
+
+    emp_cont_bene_percentage = EnrollmentRecordField("emp_cont_bene_percentage", "employee_cont_bene_percentage", preprocess_numbers, [], flat_file_size=3, description="Employee contingent beneficiary percentage")
+
+        # Spouse Beneficiary Information
+    sp_cont_bene_name = EnrollmentRecordField("sp_cont_bene_name", "spouse_cont_bene_name", preprocess_string, [], flat_file_size=40, description="Spouse contingent beneficiary name")
+
+    sp_cont_bene_birthdate = EnrollmentRecordField("sp_cont_bene_birthdate", "spouse_cont_bene_birthdate", preprocess_date, [birthdate_validator], flat_file_size=8, description="Spouse contingent beneficiary birthdate")
+
+    sp_cont_bene_relationship = EnrollmentRecordField("sp_cont_bene_relationship", "spouse_cont_bene_relationship", preprocess_string, [], flat_file_size=15, description="Spouse contingent beneficiary relationship")
+
+    sp_cont_bene_ssn = EnrollmentRecordField("sp_cont_bene_ssn", "spouse_cont_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="Spouse contingent beneficiary SSN")
+
+    sp_cont_bene_percentage = EnrollmentRecordField("sp_cont_bene_percentage", "spouse_cont_bene_percentage", preprocess_numbers, [], flat_file_size=3, description="Spouse primary beneficiary percentage")
+
+    sp_bene_name = EnrollmentRecordField("sp_bene_name", "spouse_bene_name", preprocess_string, [], flat_file_size=40, description="Spouse primary beneficiary name")
+
+    sp_bene_birthdate = EnrollmentRecordField("sp_bene_birthdate", "spouse_bene_birthdate", preprocess_date, [], flat_file_size=8, description="Spouse primary beneficiary birthdate")
+
+    sp_bene_relationship = EnrollmentRecordField("sp_bene_relationship", "spouse_bene_relationship", preprocess_string, [], flat_file_size=15, description="Spouse primary beneficiary relationship")
+
+    sp_bene_ssn = EnrollmentRecordField("sp_bene_ssn", "spouse_bene_ssn", preprocess_numbers, [ssn_validator], flat_file_size=9, description="Spouse primary beneficiary SSN")
+
+    sp_bene_percentage = EnrollmentRecordField("sp_bene_percentage", "spouse_bene_percentage", preprocess_numbers, [], flat_file_size=3, description="Spouse primary beneficiary percentage")
+
+    #Add all beneficiary data to the parser
+    all_fields += [ emp_bene_name, emp_bene_birthdate, emp_bene_relationship, emp_bene_ssn, sp_bene_name, sp_bene_birthdate, sp_bene_relationship, sp_bene_ssn, emp_cont_bene_name, emp_cont_bene_birthdate, emp_cont_bene_relationship, emp_cont_bene_ssn, sp_cont_bene_name, sp_cont_bene_birthdate, sp_cont_bene_relationship, sp_cont_bene_ssn ]
+
+
+
+    #New "N" beneficiary style
 
     MAX_BENEFICIARY_COUNT = 10
 
