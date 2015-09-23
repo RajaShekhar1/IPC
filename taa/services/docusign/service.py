@@ -65,7 +65,7 @@ class DocuSignService(object):
         from taa.services.docusign.documents.additional_children import ChildAttachmentForm
         from taa.services.docusign.documents.additional_replacement_policies import AdditionalReplacementPoliciesForm
 
-        # Build the components (sections) needed for signing
+        # Build the components (different PDFs) needed for signing
         components = []
 
         # Main form
@@ -85,6 +85,10 @@ class DocuSignService(object):
                 ))
                 child_attachment_form.add_child(child)
             components.append(child_attachment_form)
+
+        # Percentage/Multiple beneficiaries
+        #if fpp_form.is_beneficiary_attachment_required():
+        #    pass
 
         # Replacement Form
         if fpp_form.is_replacement_form_needed():

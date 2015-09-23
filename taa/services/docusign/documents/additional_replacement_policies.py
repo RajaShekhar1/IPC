@@ -1,22 +1,14 @@
-import re
 
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle, _baseFontNameB
-from reportlab.lib.units import inch, mm
-from reportlab.pdfgen.canvas import Canvas
-from reportlab.graphics.shapes import Line, String
+from reportlab.platypus import Paragraph, Table, TableStyle
+from reportlab.lib.units import inch
 from reportlab.lib import colors
-from reportlab.graphics.renderPDF import Drawing
 
-from taa.services.docusign.service import (
-    BasePDFDoc,
-    DocuSignSigTab,
-    DocuSignTextTab)
-
-from utils import style, bold_style2, NumberedCanvas, create_attachment_header, create_signature_line
+from PDFAttachment import PDFAttachment
+from taa.services.docusign.service import BasePDFDoc
+from utils import style, bold_style2, NumberedCanvas, create_attachment_header
 
 
-class AdditionalReplacementPoliciesForm(BasePDFDoc):
+class AdditionalReplacementPoliciesForm(PDFAttachment):
     def __init__(self, recipients, enrollment_data):
         BasePDFDoc.__init__(self, recipients)
 
@@ -42,9 +34,6 @@ class AdditionalReplacementPoliciesForm(BasePDFDoc):
         # Generate the document using reportlab's PLATYPUS layout api.
         self._doc.build(flowables, canvasmaker=NumberedCanvas)
 
-    def get_spacer(self, size=.2 * inch):
-        return Spacer(0, size)
-
     def draw_header(self):
         return create_attachment_header(u"<u>Supplemental Form:  Additional Replacement Policies</u>", self.data)
 
@@ -56,14 +45,7 @@ class AdditionalReplacementPoliciesForm(BasePDFDoc):
 
         table_style = TableStyle([
             # Put a box around each cell
-             ('GRID', (0,0), (-1,-1), 0.25, colors.black),
-            # Align first column
-            # ('ALIGN', (0,1), (0,-1), 'CENTER'),
-            # Align Gender col
-            # ('ALIGN', (3,1), (3,-1), 'CENTER'),
-            # Right-Align money columns
-            # ('ALIGN', (5,1), (5,-1), 'RIGHT'),
-            # ('ALIGN', (6,1), (6,-1), 'RIGHT'),
+            ('GRID', (0,0), (-1,-1), 0.25, colors.black),
         ])
 
         table_data = []
@@ -98,39 +80,6 @@ class AdditionalReplacementPoliciesForm(BasePDFDoc):
         ]
 
         return flowables
-
-    def draw_signature_line(self):
-        return create_signature_line(self.page_width, self.sig_coords, self.get_signer_recipients())
-
-    def generate_tabs(self, recipient):
-        tabs = super(AdditionalReplacementPoliciesForm, self).generate_tabs(recipient)
-
-        if self.is_recipient_signer(recipient):
-            # Add a signature tab to the last page
-
-            pdf_x, pdf_y = self.sig_coords[recipient.name]
-            pix_x = pdf_x
-
-            pix_y = (self.page_height - pdf_y)
-            #print("Converted %s, %s to %s %s"%(pdf_x, pdf_y, pix_x, pix_y))
-            tab = DocuSignSigTab(x=pix_x, y=pix_y, document_id="1", page_number=str(self.get_num_pages()))
-            tabs.append(tab)
-
-            # In case this is an enrollment import, also add a text signature
-            if recipient.is_employee() and self.data.has_employee_esigned():
-                tabs.append(DocuSignTextTab("SignHereEmployee", self.data.get_employee_esignature()))
-            if recipient.is_agent() and self.data.has_agent_esigned():
-                tabs.append(DocuSignTextTab("SignHereAgent", self.data.get_agent_esignature()))
-
-
-        return tabs
-
-    def is_recipient_signer(self, recipient):
-        return recipient.is_employee() # or recipient.is_agent()
-
-    def get_signer_recipients(self):
-        return [r for r in self.recipients if r.is_employee()]
-
 
 
 
