@@ -17,9 +17,11 @@ from taa.services.docusign.DocuSign_config import (
 )
 from taa.services.products import ProductService
 from taa.services.agents import AgentService
+from taa.services.cases import RiderService
 
 product_service = ProductService()
 agent_service = AgentService()
+rider_service = RiderService()
 
 
 def generate_SOHRadios(prefix, soh_questions):
@@ -273,10 +275,18 @@ class EnrollmentDataWrap(object):
         return format(self.data['employee_coverage']['face_value'], ',.0f')
 
     def get_formatted_employee_premium(self):
-        return self.format_money(self.get_employee_premium())
+        return self.format_money(self.get_employee_premium() + self.get_employee_riders());
 
     def get_employee_premium(self):
         return decimal.Decimal(self.data['employee_coverage']['premium'])
+
+    def get_employee_riders(self):
+        total_riders = 0
+        payment_mode = self.data['payment_mode']
+        rider_rates = rider_service.get_rider_rates(payment_mode)
+        for rider in self.data['rider_data']['emp']:
+            total_riders += rider_rates['emp'][rider.get('code')] 
+        return decimal.Decimal(total_riders)
 
     def did_spouse_select_coverage(self):
         return (self.data['spouse_coverage'] and
@@ -286,10 +296,18 @@ class EnrollmentDataWrap(object):
         return format(decimal.Decimal(self.data['spouse_coverage']['face_value']), ',.0f')
 
     def get_formatted_spouse_premium(self):
-        return self.format_money(self.get_spouse_premium())
+        return self.format_money(self.get_spouse_premium() + self.get_spouse_riders())
 
     def get_spouse_premium(self):
         return decimal.Decimal(self.data['spouse_coverage']['premium'])
+
+    def get_spouse_riders(self):
+        total_riders = 0
+        payment_mode = self.data['payment_mode']
+        rider_rates = rider_service.get_rider_rates(payment_mode)
+        for rider in self.data['rider_data']['sp']:
+            total_riders += rider_rates['sp'][rider.get('code')] 
+        return decimal.Decimal(total_riders)
 
     def format_money(self, amount):
         return '%.2f' % amount

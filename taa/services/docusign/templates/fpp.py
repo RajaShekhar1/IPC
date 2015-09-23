@@ -16,7 +16,7 @@ class FPPTemplate(DocuSignServerTemplate):
         template_id = get_template_id(product_type, state)
 
         DocuSignServerTemplate.__init__(self, template_id, recipients, use_docusign_renderer)
-
+            
         self.data = enrollment_data
 
     def is_child_attachment_form_needed(self):

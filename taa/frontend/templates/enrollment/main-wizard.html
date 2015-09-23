@@ -528,9 +528,9 @@
                 <!--/ko-->
               <!--/ko-->
               <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
-              <li><input type="checkbox" autocomplete="off" data-bind="click: $root.toggle_selected_riders(rider.code, 'emp'), checked: $root.selected_riders['emp'], checkedValue: $data" /></li>
+              <li><input type="checkbox" autocomplete="off" data-bind="click: $root.toggle_selected_riders(rider.code, 'emp', $element)" /></li>
               <!--ko if: $root.should_include_spouse_in_table-->
-              <li><input type="checkbox" autocomplete="off" data-bind="click: $root.toggle_selected_riders(rider.code, 'sp')" /></li>
+              <li><input type="checkbox" autocomplete="off" data-bind="click: $root.toggle_selected_riders(rider.code, 'sp', $element)" /></li>
               <!--/ko-->
               <!--/ko-->
             </ul>
@@ -546,9 +546,9 @@
                 <!--/ko-->
               <!--/ko-->
               <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
-              <li data-bind="text: rider.name+' for '+$root.employee().name()"></li>
+              <li data-bind="text: rider.name+' for '+$parent.employee().name()"></li>
               <!--ko if: $root.should_include_spouse_in_table-->
-              <li data-bind="text: rider.name+' for '+$root.show_spouse_name()"></li>
+              <li data-bind="text: rider.name+' for '+$parent.show_spouse_name()"></li>
               <!--/ko-->
               <!--/ko-->
             </ul>
@@ -2038,14 +2038,13 @@
                     <td></td>
                     <td data-bind="text:display_premium"></td>
                 </tr>
-                <!--ko if: $root.current_person($data) --><!-- /ko -->
-                  <!--ko foreach: {data: $root.get_selected_riders, as: 'rider'} -->
-                    <tr>
+                  <!--ko foreach: {data: $root.get_selected_riders($data), as: 'rider'} -->
+                    <tr data-bind="if: $root.did_person_select_coverage($parent)">
                       <td></td>
                       <td></td>
                       <td></td>
                       <td data-bind="text: rider.name"></td>
-                      <td data-bind="text:$parent.display_riders(rider.code)"></td>
+                      <td data-bind="text:$parent.display_riders(rider.code, $parent)"></td>
                     </tr>
                   <!--/ko-->
                 <!--/ko-->
@@ -2054,7 +2053,7 @@
                     <td></td>
                     <td></td>
                     <td><span class="text-primary bigger-110">Total</span></td>
-                    <td><span class="text-primary bigger-110" data-bind="text: formatted_total_premium()"></span></td>
+                    <td><span class="text-primary bigger-110" data-bind="text: formatted_total_premium_with_riders()"></span></td>
                 </tr>
                 </tbody>
             </table>
