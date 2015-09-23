@@ -1,9 +1,7 @@
 
 from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.units import inch
-from reportlab.graphics.shapes import Line, String
 from reportlab.lib import colors
-from reportlab.lib.colors import black
 
 from utils import style, bold_style2, NumberedCanvas, create_attachment_header, create_signature_line
 from taa.services.docusign.service import (

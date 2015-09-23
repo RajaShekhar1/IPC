@@ -409,13 +409,19 @@ def FPPCI_disclosure_VA():
 
 #Public flat file documenation endpoints
 @app.route('/flat_file_documentation.pdf')
-def Flat_file_Documentation():
+def flat_file_documentation():
     return send_from_directory(
         os.path.join(app.root_path, 'frontend', 'static'),
         'pdfs/documentation/flat_file_documentation.pdf')
 
 @app.route('/flat_file_documentation.html')
-def Flat_file_Documentation_Html():
+def flat_file_documentation_html():
     from taa.services.data_import.file_import import FlatFileDocumentation
     documentation = FlatFileDocumentation.generate_html_docs()
+    return Response(documentation)
+
+@app.route('/delimited_file_import_documentation.html')
+def delimited_file_documentation_html():
+    from taa.services.data_import.file_import import CSVFileDocumentation
+    documentation = CSVFileDocumentation.generate_html_docs()
     return Response(documentation)

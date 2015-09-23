@@ -236,13 +236,20 @@ class EnrollmentDataWrap(object):
         return '{} {}'.format(self.data['employee']['first'],
                               self.data['employee']['last'])
 
+    def get_spouse_name(self):
+        return '{} {}'.format(self.data['spouse']['first'],
+                              self.data['spouse']['last'])
+
+    def get_spouse_ssn(self):
+        return self.data['spouse']['ssn']
+
     def get_employee_email(self):
-        emailTo = self.data['employee']['email']
-        if not emailTo:
+        email_to = self.data['employee']['email']
+        if not email_to:
             # fallback email if none was entered - just need a unique address
             name = self.data['employee']['first']+ '.' + self.data['employee']['last']
-            emailTo = '{}.{}@5StarEnroll.com'.format(name, self.random_email_id(name))
-        return emailTo
+            email_to = '{}.{}@5StarEnroll.com'.format(name, self.random_email_id(name))
+        return email_to
 
     def get_employee_email_parts(self):
         if '@' not in self.get_employee_email():
@@ -301,6 +308,9 @@ class EnrollmentDataWrap(object):
     def get_employee_esignature(self):
         return self.data.get('emp_sig_txt', '')
 
+    def get_employee_initials(self):
+        return self.data.get('emp_initials_txt', '')
+
     def has_employee_esigned(self):
         return bool(self.get_employee_esignature())
 
@@ -310,6 +320,8 @@ class EnrollmentDataWrap(object):
     def has_agent_esigned(self):
         return bool(self.get_agent_esignature())
 
+    def get_agent_initials(self):
+        return self.data.get('agent_initials_txt', '')
 
 def old_create_envelope_and_get_signing_url(enrollment_data):
     # return is_error(bool), error_message, and redirectURL
@@ -733,7 +745,6 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
         print(requestBodyStr)
         print("Error generating Docusign envelope, status is: {}".format(
             status))
-        import ipdb; ipdb.set_trace()
         return True, "Error generating Docusign envelope", None
     data = json.loads(content)
 

@@ -1,8 +1,9 @@
 # Celery tasks
 
 import celery
+from taa.services.users import UserService
 
-from taa import db
+from taa import db, mandrill_flask, app as taa_app
 from taa.services import LookupService
 from taa.services.enrollments import SelfEnrollmentEmailLog
 
@@ -48,12 +49,40 @@ def _update_log(email_log, success):
     db.session.commit()
 
 
-@app.task
-def submit_enrollment_import(enrollment_application_id):
-    """
-    Takes a validated enrollment application import and submits it to DocuSign or Dell
-    """
-    submission_service = LookupService("EnrollmentSubmissionService")
-    submission_service.process_import_submission(enrollment_application_id)
+FIVE_MINUTES = 5 * 60
 
+
+@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+def process_enrollment_upload(task, batch_id):
+    #try:
+    submission_service = LookupService("EnrollmentSubmissionService")
+    errors = submission_service.process_import_submission_batch(batch_id)
+    if errors:
+        send_admin_error_email(batch_id, errors)
+        # Go ahead and attempt to reprocess
+        task.retry(exc=Exception(errors[0]))
+    #except Exception as exc:
+    #    task.retry(exc=exc)
+
+
+def send_admin_error_email(batch_id, errors):
+    try:
+        tracebacks = '\n<br>'.join([err for err in errors])
+        body = "Error processing submission batch {}. <br><br>Tracebacks: <br><br>{}".format(
+            batch_id, tracebacks.replace('<br>', '\n')
+        )
+
+        # Get stormpath admins
+        for account in UserService().get_admin_users():
+            mandrill_flask.send_email(
+                to=[{'email': account.email, 'name': account.full_name}],
+                from_email="errors@5StarEnroll.com",
+                from_name="TAA Error {}".format(taa_app.config['HOSTNAME']),
+                subject="5Star Import Error ({})".format(taa_app.config['HOSTNAME']),
+                html=body,
+                auto_text=True,
+            )
+    except Exception:
+        # Swallow this
+        pass
 

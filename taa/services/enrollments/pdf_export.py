@@ -8,6 +8,7 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfbase.ttfonts import TTFont
+from PyPDF2 import PdfFileReader
 
 from .models import db
 from taa.services import RequiredFeature
@@ -42,10 +43,22 @@ class ImagedFormGeneratorService(object):
         self.pdf_renderer = self.pdf_renderer_service()
 
         self.tab_pages = {}
+        self._initialize_tab_pages(base_pdf_bytes)
         self._match_tab_values_to_defs(enrollment_tabs, tab_definitions)
         self._add_signature_tabs(enrollment_tabs, tab_definitions)
         self._render_tabs()
         return self.combine_pdfs(base_pdf_bytes)
+
+    def _initialize_tab_pages(self, base_pdf_bytes):
+        if not base_pdf_bytes:
+            return
+
+        # Ensure there is a page for each page of the base pdf
+        pdf_reader = PdfFileReader(BytesIO(base_pdf_bytes))
+        num_pages = pdf_reader.getNumPages()
+        for p in range(num_pages):
+            # Use 1-indexed page numbers to match the tabs
+            self.tab_pages[p+1] = []
 
     def validate_template(self, template_id):
         template = self.tab_repository.get_template(template_id)
@@ -76,7 +89,7 @@ class ImagedFormGeneratorService(object):
             self._add_to_tab_pages(tab_def, tab_value)
 
     def _add_to_tab_pages(self, tab_def, tab_value):
-        page = tab_def.page
+        page = int(tab_def.page)
         if page not in self.tab_pages:
             self.tab_pages[page] = []
         self.tab_pages[page].append((tab_def, tab_value))
@@ -109,7 +122,10 @@ class ImagedFormGeneratorService(object):
         #    fontcolor = 'Green'
         if tab_def.type_ == 'SignHere':
             y += 35
-        self.pdf_renderer.draw_text(text=text, x=tab_def.x,
+            x -= 5
+            fontsize = 8
+
+        self.pdf_renderer.draw_text(text=text, x=x,
                                     y=y,
                                     width=tab_def.width,
                                     font=font, fontsize=fontsize,
@@ -128,16 +144,32 @@ class ImagedFormGeneratorService(object):
         return merged_pdf
 
     def _add_signature_tabs(self, enrollment_tabs, tab_definitions):
+        self.add_custom_signature_tabs(enrollment_tabs, tab_definitions)
+        self.match_signatures_to_defs(enrollment_tabs, tab_definitions)
+
+    def match_signatures_to_defs(self, enrollment_tabs, tab_definitions):
+        """
+        Match up any eSignatures to proper signature definitions
+        """
 
         def is_tab_for_role_and_type(role, type_):
+            """returns a filter function for tab defs matching both recipient role and tab type"""
             def f(t):
                 return t.recipient_role == role and t.type_ == type_
             return f
 
-        # TODO: Convert our own sig tabs (not in template defs) to text,
-        #for example, on the additional child form employee sig line
-        custom_sig_tabs = filter(lambda t: isinstance(t, DocuSignSigTab), enrollment_tabs)
+        for recip_role in ['Employee', 'Agent']:
+            for tab_type in ['SignHere', 'DateSigned', 'InitialHere']:
+                tab_value_label = "{}{}".format(tab_type, recip_role)
+                tab_values = filter(lambda t: t.name == tab_value_label, enrollment_tabs)
+                tab_defs = filter(is_tab_for_role_and_type(recip_role, tab_type), tab_definitions)
 
+                if tab_values and tab_defs:
+                    for tab_def in tab_defs:
+                        self._add_to_tab_pages(tab_def, tab_values[0])
+
+    def add_custom_signature_tabs(self, enrollment_tabs, tab_definitions):
+        custom_sig_tabs = filter(lambda t: isinstance(t, DocuSignSigTab), enrollment_tabs)
         for tab in custom_sig_tabs:
             # Create an ad-hoc tab definition
             tab_def = FormTemplateTabs(
@@ -148,19 +180,6 @@ class ImagedFormGeneratorService(object):
                 recipient_role="Employee",
             )
             tab_definitions.append(tab_def)
-
-        # Match up any eSignatures to proper signature definitions.
-        for recip_role in ['Employee', 'Agent']:
-            for tab_type in ['SignHere', 'DateSigned']:
-                tab_value_label = "{}{}".format(tab_type, recip_role)
-                tab_values = filter(lambda t: t.name == tab_value_label, enrollment_tabs)
-                tab_defs = filter(is_tab_for_role_and_type(recip_role, tab_type), tab_definitions)
-
-                if tab_values and tab_defs:
-                    for tab_def in tab_defs:
-                        self._add_to_tab_pages(tab_def, tab_values[0])
-
-
 
 
 class FormTemplateTabRepository(object):

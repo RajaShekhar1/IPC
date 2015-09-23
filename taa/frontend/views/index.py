@@ -45,7 +45,7 @@ def home():
         vars = {}
         vars["current_user_token"] = api_token_service.get_token_by_sp_href(current_user.href)
         vars["nav_menu"] = get_nav_menu()
-        return render_template('enrollment_importer.html', **vars)
+        return render_template('enrollment/enrollment_importer.html', **vars)
     else:
         raise Exception('unknown type for user "%s"'%current_user)
 

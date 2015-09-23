@@ -168,6 +168,14 @@ def state_validator(field, record):
         return False, "invalid_state", "Invalid US State. Must be two-letter abbreviation, got '{}'.".format(state)
     return True, None, None
 
+def initials_validator(field, record):
+    val = field.get_column_from_record(record)
+    if not val:
+        return True, None, None
+
+    if not (len(val) == 2 or len(val) == 3):
+        return False, "invalid_initials", "Initials must be two or three characters if provided"
+    return True, None, None
 
 def question_answered_validator(field, record):
         answer = field.get_column_from_record(record)

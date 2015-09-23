@@ -6,26 +6,6 @@ from taa import db
 from taa.helpers import JsonSerializable
 from taa.services.cases import CaseCensus
 
-class EnrollmentLogSerializer(JsonSerializable):
-    pass
-
-class EnrollmentLog(EnrollmentLogSerializer, db.Model):
-    __tablename__ = 'enrollment_api_logs'
-    id = db.Column(db.Integer, primary_key=True)
-
-    #Submission sources
-    SUBMIT_SOURCE_DROPBOX = u'dropbox'
-    SUBMIT_SOURCE_LOGGED_IN_WIZARD = u'logged_in_wizard'
-    SUBMIT_SOURCE_SELF_ENROLL_WIZARD = u'self_enroll_wizard'
-    SUBMIT_SOURCE_API = u'api'
-    source = db.Column(db.Unicode(32), nullable=False)
-
-    timestamp = db.Column(db.DateTime, server_default='NOW')
-    auth_token = db.Column(db.Unicode(64))
-    case_token = db.Column(db.Unicode(64))
-    num_processed = db.Column(db.Integer)
-    num_errors = db.Column(db.Integer)
-    log_hash = db.Column(db.Unicode(64))
 
 
 class EnrollmentSerializer(JsonSerializable):
@@ -287,7 +267,62 @@ CaseCensus.sent_email_count = db.column_property(
 )
 
 
+class EnrollmentImportBatchSerializer(JsonSerializable):
+    __json_hidden__ = ['batch_items']
+
+
+class EnrollmentImportBatch(EnrollmentImportBatchSerializer, db.Model):
+    """
+    Records an attempt to submit a batch of enrollments.
+    """
+    __tablename__ = 'enrollment_import_batches'
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Submission sources
+    SUBMIT_SOURCE_DROPBOX = u'dropbox'
+    SUBMIT_SOURCE_LOGGED_IN_WIZARD = u'logged_in_wizard'
+    SUBMIT_SOURCE_SELF_ENROLL_WIZARD = u'self_enroll_wizard'
+    SUBMIT_SOURCE_API = u'api'
+    source = db.Column(db.Unicode(32), nullable=False)
+
+    timestamp = db.Column(db.DateTime, server_default='NOW')
+    auth_token = db.Column(db.Unicode(64))
+    case_token = db.Column(db.Unicode(64))
+    num_processed = db.Column(db.Integer)
+    num_errors = db.Column(db.Integer)
+    log_hash = db.Column(db.Unicode(64))
+
+
+class EnrollmentImportBatchItemSerializer(JsonSerializable):
+    __json_hidden__ = ["enrollment_record", "enrollment_batch"]
+
+
+class EnrollmentImportBatchItem(EnrollmentImportBatchItemSerializer, db.Model):
+    """
+    Records the ID and status of each enrollment as part of an import request.
+    """
+    __tablename__ = 'enrollment_import_batch_items'
+
+    id = db.Column(db.Integer, primary_key=True)
+    enrollment_batch_id = db.Column(db.Integer, db.ForeignKey('enrollment_import_batches.id'))
+    enrollment_batch = db.relationship('EnrollmentImportBatch', backref='batch_items')
+    enrollment_record_id = db.Column(db.Integer, db.ForeignKey('enrollment_applications.id'))
+    enrollment_record = db.relationship('EnrollmentApplication')
+
+    STATUS_QUEUED = u'queued'
+    STATUS_PROCESSING = u'processing'
+    STATUS_ERROR = u'error'
+    STATUS_SUCCESS = u'success'
+
+    status = db.Column(db.Unicode(32))
+    error_message = db.Column(db.UnicodeText)
+    processed_time = db.Column(db.DateTime, server_default='NOW')
+
+
 class FormTemplate(db.Model):
+    """
+    Stores the DocuSign-compatible XML data for generating PDFs of enrollment applications.
+    """
     __tablename__ = 'form_templates'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -300,6 +335,9 @@ class FormTemplate(db.Model):
 
 
 class FormTemplateTabs(db.Model):
+    """
+    The "tabs" are placeholders for applicant data on the enrollment PDF.
+    """
     __tablename__ = 'form_template_tabs'
 
     id = db.Column(db.Integer, primary_key=True)

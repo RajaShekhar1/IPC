@@ -50,6 +50,10 @@ class Case(CaseSerializer, db.Model):
     active = db.Column(db.Boolean, default=False)
     created_date = db.Column(db.DateTime)
     enrollment_period_type = db.Column(db.String(16), nullable=True)
+    # Note: this flag is used for a few other restrictions now, and has a
+    # broader meaning that a partner agent can view census data for only
+    # records he has enrolled.
+    can_partners_download_enrollments = db.Column(db.Boolean, default=True)
     OPEN_ENROLLMENT_TYPE = u'open'
     ANNUAL_ENROLLMENT_TYPE = u'annual'
     # This relationship defines what products are explicitly enabled for
@@ -100,6 +104,14 @@ class Case(CaseSerializer, db.Model):
 
     def format_created_date(self):
         return self.created_date.strftime('%m/%d/%Y')
+
+    def can_partner_agent_download_enrollments(self):
+        if self.can_partners_download_enrollments is None:
+            return True
+        else:
+            return self.can_partners_download_enrollments
+
+
 
 
 class PeriodSerializer(JsonSerializable):

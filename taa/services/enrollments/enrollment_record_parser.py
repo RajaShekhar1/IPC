@@ -3,7 +3,7 @@ from taa.services.validators import required_validator, api_token_validator, cas
     payment_mode_validator, gender_validator, ssn_validator, birthdate_validator, coverage_validator, premium_validator, \
     state_validator, zip_validator, question_answered_validator, RequiredIfAnyInGroupValidator, \
     enrollment_type_validator, email_validator, height_validator, weight_validator, replaced_or_financing_validator, \
-    timestamp_validator
+    timestamp_validator, initials_validator
 from taa.services import RequiredFeature
 from taa.services.cases.census_import import preprocess_string, preprocess_numbers, preprocess_zip
 
@@ -55,9 +55,9 @@ class EnrollmentRecordParser(object):
     case_service = RequiredFeature("CaseService")
 
     # Case/Record information
-    user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator], flat_file_size=0, description="A token representing the API user")
-    case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator], flat_file_size=0, description="A token identifying the TAA enrollment case")
-    product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [required_validator, product_validator], flat_file_size=8, description="A string specifying the product name")
+    user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator], flat_file_size=0, description="A API token authenticating the uploader")
+    case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator], flat_file_size=0, description="A token identifying the enrollment case")
+    product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [required_validator, product_validator], flat_file_size=8, description="A string specifying the product being enrolled.")
     payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_numbers, [required_validator, payment_mode_validator], flat_file_size=2, description="A two digit number resenting the payment mode")
     enrollment_type = EnrollmentRecordField("enrollment_type", "enrollment_type", preprocess_string, [required_validator, enrollment_type_validator], flat_file_size=1, description="How the application was taken")
 
@@ -66,7 +66,7 @@ class EnrollmentRecordParser(object):
     emp_last = EnrollmentRecordField("emp_last", "employee_last", preprocess_string, [required_validator], flat_file_size=20, description="Employee last name")
     emp_gender = EnrollmentRecordField("emp_gender", "employee_gender", preprocess_string, [required_validator, gender_validator], flat_file_size=1, description="Employee gender")
     emp_ssn = EnrollmentRecordField("emp_ssn", "employee_ssn", preprocess_numbers, [required_validator, ssn_validator], flat_file_size=9, description="Employee SSN")
-    emp_birthdate = EnrollmentRecordField("emp_birthdate", "employee_birthdate", preprocess_date, [required_validator, birthdate_validator], flat_file_size=10, description="Employee Birthday")
+    emp_birthdate = EnrollmentRecordField("emp_birthdate", "employee_birthdate", preprocess_date, [required_validator, birthdate_validator], flat_file_size=10, description="Employee Birthdate")
     emp_coverage = EnrollmentRecordField("emp_coverage", "employee_coverage", preprocess_string, [coverage_validator], flat_file_size=6, description="Employee Coverage")
     emp_premium = EnrollmentRecordField("emp_premium", "employee_premium", preprocess_string, [premium_validator], flat_file_size=6, description="Employee Premium")
     emp_street = EnrollmentRecordField("emp_street", "employee_street", preprocess_string, [required_validator], flat_file_size=29, description="Employee street address")
@@ -93,7 +93,7 @@ class EnrollmentRecordParser(object):
     sp_premium = EnrollmentRecordField("sp_premium", "spouse_premium", preprocess_string, [premium_validator], flat_file_size=6, description="Spouse premium")
 
     # Optional Fields
-    actively_at_work = EnrollmentRecordField("actively_at_work", "actively_at_work", preprocess_string, [question_answered_validator], flat_file_size=1, description="Is the Employee actively at work?")
+    actively_at_work = EnrollmentRecordField("actively_at_work", "actively_at_work", preprocess_string, [question_answered_validator, required_validator], flat_file_size=1, description="Is the Employee actively at work?")
     emp_email = EnrollmentRecordField("emp_email", "employee_email", preprocess_string, [email_validator], flat_file_size=40, description="Employee email address")
     emp_height_inches = EnrollmentRecordField("emp_height_inches", "employee_height_inches", preprocess_numbers, [height_validator], flat_file_size=2, description="Employee height in inches")
     emp_weight_pounds = EnrollmentRecordField("emp_weight_pounds", "employee_weight_pounds", preprocess_numbers, [weight_validator], flat_file_size=3, description="Employee weight in pounds")
@@ -138,6 +138,8 @@ class EnrollmentRecordParser(object):
     agent_name = EnrollmentRecordField("agent_name", "agent_name", preprocess_string, [required_validator], flat_file_size=15, description="Agent signing name")
     agent_code = EnrollmentRecordField("agent_code", "agent_code", preprocess_string, [required_validator], flat_file_size=8, description="Agent code as provided")
     agent_sig_txt = EnrollmentRecordField("agent_sig_txt", "agent_sig_txt", preprocess_string, [required_validator], flat_file_size=70, description="Signature line for agent")
+    emp_initials_txt = EnrollmentRecordField("emp_initials_txt", "employee_initials_txt", preprocess_string, [initials_validator], flat_file_size=3, description="Initials text for employee")
+    agent_initials_txt = EnrollmentRecordField("agent_initials_txt", "agent_initials_txt", preprocess_string, [initials_validator], flat_file_size=3, description="Initials text for agent")
 
     # All spouse data is required if any spouse data is given
     spouse_fields = [sp_first, sp_last, sp_birthdate, sp_ssn]
@@ -240,7 +242,9 @@ class EnrollmentRecordParser(object):
         signed_at_state,
         agent_name,
         agent_code,
-        agent_sig_txt
+        agent_sig_txt,
+        emp_initials_txt,
+        agent_initials_txt,
     ]
 
     # Replacement info
@@ -322,6 +326,7 @@ class EnrollmentRecordParser(object):
                                                 flat_file_size=1, description="Child Answer to Statement of Health Question"
                                                 )
             all_fields += [ch_question]
+
     def __init__(self):
         self.errors = []
         self.valid_data = []
@@ -475,6 +480,7 @@ class EnrollmentRecordParser(object):
             "agent_sig_txt",
             "existing_insurance",
             "replacing_insurance",
+            "actively_at_work",
         ]
         return {d for d in required_data_keys if d not in record}
 

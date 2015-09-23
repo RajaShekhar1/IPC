@@ -41,18 +41,19 @@ style="display: none;" data-bind="visible: true">
           Email History
         </a>
       </li>
-
+      {% if can_view_report_tab %}
       <li>
         <a href="#reports">
           <i class="blue ace-icon fa fa-bar-chart-o bigger-120"></i>
           Enrollment Reports
         </a>
       </li>
+      {% endif %}
       {% if "enrollment_importers" in current_user_groups %}
       <li data-bind="visible: true">
         <a href="#api">
           <i class="purple ace-icon fa fa-bolt bigger-120"></i>
-          API
+          Import Enrollments
         </a>
       </li>
       {% endif %}
@@ -232,6 +233,15 @@ style="display: none;" data-bind="visible: true">
                         </div>
                       </div>
                     </div>
+
+                <div class="row">
+                  <div class="form-group">
+                    <label class="col-xs-12 control-label">
+                      <input type="checkbox" class="ace" data-bind="checked: restrict_download_enrollments_to_owner">
+                      <span class="lbl"> Restrict Partner Agent access to his/her own enrollments</span>
+                    </label>
+                  </div>
+                </div>
                   </div>
 
                   {% endif %}
@@ -489,10 +499,12 @@ style="display: none;" data-bind="visible: true">
             <i class="ace-icon fa fa-upload"></i>
             Upload Census
           </button>
-          <a data-bind="visible: has_census_data() && can_edit_case" href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
+          {% if can_download_enrollments %}
+          <a data-bind="visible: can_download_enrollments" href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
             <i class="ace-icon glyphicon glyphicon-download-alt"></i>
             Download Census
           </a>
+          {% endif %}
           <a  id="add-to-census-btn" class="btn btn-primary pull-right" data-bind="visible: is_active">
             <i class="ace-icon glyphicon glyphicon-plus"></i>
             New Enrollment
@@ -601,7 +613,7 @@ style="display: none;" data-bind="visible: true">
 
 </div>
 </div>
-
+{% if can_view_report_tab %}
 <div id="api" class="tab-pane fade">
   <div class="row">
     <div class="col-xs-12">
@@ -617,14 +629,16 @@ style="display: none;" data-bind="visible: true">
               <label class="text-right col-sm-3 control-label">Case Token</label>
               <div class="col-sm-7">
                 <strong data-bind="text: case_settings.case_token"></strong><br />
-                <a data-bind="attr: {href: urls.get_flat_file_documentation_url()}">Read the API Documentation</a>
-              </div>
+                <a target="_blank" data-bind="attr: {href: urls.get_flat_file_documentation_url()}">Flat-File Import Documentation</a><br>
+                <a target="_blank" data-bind="attr: {href: urls.get_csv_import_documentation_url()}">CSV Import Documentation</a>
+                </div>
             </div>
             <br /><br />
             <div class="row">
               <label class="text-right col-sm-3 control-label">Upload Enrollment Records</label>
               <div class="col-sm-9">
-                <button type="button" id="csv-upload-btn" class="btn btn-default" data-toggle="modal" data-target="#enrollment-csv-modal">Upload comma/tab delimited or flat-file</button>
+                <button type="button" id="csv-upload-btn" class="btn btn-default"
+                        data-bind="click: show_upload_enrollment_form">Upload comma/tab delimited or flat-file</button>
               </div>
             </div>
           </div>
@@ -671,6 +685,7 @@ style="display: none;" data-bind="visible: true">
             <div class="widget-header">
               <div class="row">
                 <div class="col-xs-6"><h4 class="bigger-150">Enrollment Records</h4></div>
+              {% if can_download_enrollments %}
                 <div class="col-xs-6">
 
                   <a href="{{ url_for('cases.enrollment_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
@@ -678,6 +693,7 @@ style="display: none;" data-bind="visible: true">
                     Download Enrollments
                   </a>
                 </div>
+              {% endif %}
               </div>
             </div>
             <div class="widget-body">
@@ -717,6 +733,7 @@ style="display: none;" data-bind="visible: true">
   </div>
 </div>
 </div>
+{% endif %}
 </div>
 </div>
 
@@ -1114,13 +1131,15 @@ style="display: none;" data-bind="visible: true">
                         <div class="success-panel modal-panel" style="display: none;">
                           <h3 class="header lighter green">File Processed Successfully</h3>
                           <!--ko if: num_data_records() > 0 -->
-                          <h4><span data-bind="text: num_data_records"></span>
-                            record<span data-bind="visible: num_data_records() > 1">s</span>
-                            added or updated.</h4>
-                            <!--/ko-->
-                            <!--ko if: num_data_records() == 0 -->
+                            <h4>
+                              <span data-bind="text: num_data_records"></span>
+                              record<span data-bind="visible: num_data_records() > 1">s</span>
+                              added or updated.
+                            </h4>
+                          <!--/ko-->
+                          <!--ko if: num_data_records() == 0 -->
                             <h4>No new data was added to the census.</h4>
-                            <!--/ko-->
+                          <!--/ko-->
                           </div>
                           <div class="error-panel modal-panel" style="display: none;">
                             <h3 class="header lighter red">
@@ -1251,12 +1270,12 @@ style="display: none;" data-bind="visible: true">
                           <div class="error-buttons buttons-panel" style="display: none;">
                             <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                             <button type="button" class="btn btn-primary back-btn">
-                              <i class="glyphicon glyphicon-chevron-left"></i> Back</button>
-                            </div>
-                            <div class="success-buttons buttons-panel" style="display: none;">
-                              <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
-                            </div>
+                              <i class="glyphicon glyphicon-chevron-left"></i> Back
+                            </button>
 
+                          </div>
+                          <div class="success-buttons buttons-panel" style="display: none;">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
                           </div>
                         </div>
                         <!-- /.modal-content -->

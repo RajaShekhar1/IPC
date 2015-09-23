@@ -140,6 +140,7 @@ def step_impl(context):
         agent_sig_txt='esign by Andy Agent',
         existing_insurance='N',
         replacing_insurance='N',
+        actively_at_work='Y',
     )
 
 @given(u"I add valid spouse enrollment data")

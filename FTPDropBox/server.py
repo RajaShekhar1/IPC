@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import pyftpdlib
-from pyftpdlib.authorizers import DummyAuthorizer
+from pyftpdlib.authorizers import DummyAuthorizer, AuthenticationFailed
 from pyftpdlib.handlers import TLS_FTPHandler
 from pyftpdlib.servers import FTPServer
 from pyftpdlib.filesystems import AbstractedFS, FilesystemError
@@ -10,7 +10,9 @@ import sys
 from io import BytesIO
 from StringIO import StringIO
 from taa.services.data_import.file_import import FlatFileSpec
+from taa.services.users.UserService import UserService
 
+from stormpath.error import Error as StormpathError
 
 class TAAFileHandler(AbstractedFS):
     def listdir(self, path):
@@ -79,7 +81,9 @@ class TAAHandler(TLS_FTPHandler):
         self.post_api_request(data, data_format)
 
     def post_api_request(self, data, data_format):
-        url = "{}?auth_token={}&format={}&email_errors=true&upload_source=dropbox".format(self.upload_url, self.auth_token, data_format)
+        user_href = self.authorizer.get_user_href(self.username)
+        url = "{}?auth_token={}&format={}&user_href={}&upload_source=dropbox".format(
+            self.upload_url, self.auth_token, data_format, user_href)
         print
         print requests.post(url, data=data).text
 
@@ -100,18 +104,106 @@ class TAAHandler(TLS_FTPHandler):
             data_format = "csv"
         return data_format
 
-access_credentials = [
-    ('taa-enroller', 'F19K7z49459G'),
-]
+
+
+class StormPathAuthorizer(object):
+    """
+    Use the stormpath account service to validate that the user
+    is authorized to upload enrollment import files, and access the user's email address.
+    """
+
+    def __init__(self, stormpath_application):
+        self.stormpath_application = stormpath_application
+        self.user_table = {}
+
+    def validate_authentication(self, username, password, handler):
+        """Raises AuthenticationFailed if supplied username and
+        password don't match the stored credentials, else return
+        None.
+        """
+        if username == 'anonymous':
+            msg = "Anonymous access not allowed."
+            raise AuthenticationFailed(msg)
+        try:
+            account = self.stormpath_application.authenticate_account(username, password).account
+        except StormpathError as err:
+            msg = err.message['message'] if hasattr(err, 'message') and err.message and err.message.get('message') else ''
+            raise AuthenticationFailed("Authentication failed: {}".format(msg))
+
+        # TODO: Validate user group
+        if not UserService().can_user_submit_enrollments(account):
+            raise AuthenticationFailed("Authorization failed: you are not authorized to upload enrollment files.")
+
+        self.user_table[username] = account
+
+    def get_user_href(self, username):
+        return self.user_table[username].href
+
+    def get_home_dir(self, username):
+        """Return the user's home directory.
+        Since this is called during authentication (PASS),
+        AuthenticationFailed can be freely raised by subclasses in case
+        the provided username no longer exists.
+        """
+        return ''
+
+    def impersonate_user(self, username, password):
+        """Impersonate another user (noop).
+
+        It is always called before accessing the filesystem.
+        By default it does nothing.  The subclass overriding this
+        method is expected to provide a mechanism to change the
+        current user.
+        """
+
+    def terminate_impersonation(self, username):
+        """Terminate impersonation (noop).
+
+        It is always called after having accessed the filesystem.
+        By default it does nothing.  The subclass overriding this
+        method is expected to provide a mechanism to switch back
+        to the original user.
+        """
+
+    all_user_perms = "elrw"
+    def has_perm(self, username, perm, path=None):
+        """Whether the user has permission over path (an absolute
+        pathname of a file or a directory).
+
+        Expected perm argument is one of the following letters:
+        "elradfmwM".
+        """
+        if username in self.user_table:
+            return perm in self.all_user_perms
+        else:
+            return False
+
+    def get_perms(self, username):
+        """Return current user permissions."""
+        if username in self.user_table:
+            return self.all_user_perms
+        else:
+            return ""
+
+    def get_msg_login(self, username):
+        """Return the user's login message."""
+        return "Welcome to the 5Star Take-An-App Enrollment Import DropBox"
+
+    def get_msg_quit(self, username):
+        """Return the user's quitting message."""
+        return "Goodbye"
+
+
+
 
 
 def main(port, certfile, upload_url, auth_token):
 
     # Users have "list" and "put" permissions only.
-    authorizer = DummyAuthorizer()
-    for username, passwd in access_credentials:
-        authorizer.add_user(username, passwd, ".", perm="lw")
-    authorizer.add_anonymous(os.getcwd())
+    from stormpath.client import Client as SPClient
+
+    stormpath_app = UserService().get_stormpath_application()
+    authorizer = StormPathAuthorizer(stormpath_app)
 
     handler = TAAHandler
 

@@ -16,23 +16,37 @@ from taa.services.validators import (
     zip_validator,
 
     email_validator, ssn_validator, state_validator, timestamp_validator, question_answered_validator,
-    replaced_or_financing_validator)
+    replaced_or_financing_validator, initials_validator, product_validator)
 from taa.services.preprocessors import preprocess_date
 
 
 class FileImportService(object):
     def get_flat_file_spec(self):
+        return self._get_enrollment_spec(include_headers=False)
+
+    def get_flat_file_header_spec(self):
+        flat_file_header_spec = FlatFileSpec("header")
+        flat_file_header_spec.add_standard_headers()
+        return flat_file_header_spec
+
+    def get_csv_spec(self):
+        return self._get_enrollment_spec(include_headers=True)
+
+    def _get_enrollment_spec(self, include_headers):
         flat_file_spec = FlatFileSpec("record")
         for field in EnrollmentRecordParser.all_fields:
-            if field.flat_file_size > 0:
-                flat_file_spec.add_to_spec(FlatFileFieldDefinition(
-                    size=field.flat_file_size,
-                    csv_name=field.dict_key_name,
-                    title=field.title,
-                    description=field.description,
-                    is_required=(required_validator in field.validators),
-                    format=self.get_data_format(field),
-                ))
+            is_header_field = field.flat_file_size == 0
+            if is_header_field and not include_headers:
+                continue
+
+            flat_file_spec.add_to_spec(FlatFileFieldDefinition(
+                size=field.flat_file_size,
+                csv_name=field.dict_key_name,
+                title=field.title,
+                description=field.description,
+                is_required=(required_validator in field.validators),
+                format=self.get_data_format(field),
+            ))
         return flat_file_spec
 
     def get_data_format(self, field):
@@ -80,12 +94,13 @@ class FileImportService(object):
         if replaced_or_financing_validator in field.validators:
             format_str = "'R' if replaced or 'F' if financing"
 
-        return format_str
+        if initials_validator in field.validators:
+            format_str = "Must be either 2 or 3 characters long"
 
-    def get_flat_file_header_spec(self):
-        flat_file_header_spec = FlatFileSpec("header")
-        flat_file_header_spec.add_standard_headers()
-        return flat_file_header_spec
+        if product_validator in field.validators:
+            format_str = "Either 'FPPTI' or 'FPPCI'"
+
+        return format_str
 
     def process_flat_file_stream(self, file_obj, spec=None, header_spec=None):
         """
@@ -111,6 +126,7 @@ class FileImportService(object):
         importer = CSVFileImporter()
         importer.import_file(file_obj)
         return importer
+
 
 
 class CSVFileImporter(object):
@@ -186,6 +202,75 @@ for assistance."""
         return self.error
 
 
+class CSVFileDocumentation(object):
+    @staticmethod
+    def generate_html_docs():
+        file_import_service = FileImportService()
+        docs = CSVFileDocumentation(
+            row_spec=file_import_service.get_csv_spec(),
+        )
+        return docs.toHTML()
+
+    @staticmethod
+    def generate_pdf_docs(filename):
+        file_import_service = FileImportService()
+        docs = CSVFileDocumentation(
+            row_spec=file_import_service.get_csv_spec(),
+        )
+        return docs.toPDF(filename)
+
+    fieldnames = ["Field Name", "Required", "Description", "Data Format"]
+
+    def __init__(self, row_spec):
+        self.row_spec = row_spec
+
+    def toCSV(self, filename = None):
+        output = cStringIO.StringIO()
+        writer = csv.DictWriter(output, fieldnames=self.fieldnames, lineterminator="\n")
+        writer.writeheader()
+        distanceRead = 1
+        for s in self.row_spec:
+            writer.writerow({"Field Name":s.csv_name,
+                             "From":distanceRead,
+                             "To":distanceRead+s.size-1,
+                             "Size":s.size,
+                             "Required": "Yes" if s.is_required else "No",
+                             "Data Format": s.format,
+                             "Description": s.description})
+            distanceRead += s.size
+        if filename:
+            with open(filename, "w+") as f:
+                f.write(output.getvalue())
+        return output.getvalue()
+
+    def toHTML(self, filename=None):
+        header_rows = []
+
+        record_rows = []
+        for s in self.row_spec.get_spec():
+            record_rows.append([s.csv_name, "Yes" if s.is_required else "No", s.description, s.format])
+
+        with app.test_request_context('/'):
+            template = render_template("documentation/csv_import_documentation.html",
+                                    headers=header_rows,
+                                    records=record_rows,
+                                    fieldnames=self.fieldnames)
+
+        if filename:
+            with open(filename, "w+") as f:
+                f.write(template)
+
+        return template
+
+    def toPDF(self, filename):
+        """
+        Takes a file name and converts the html output from toHTML() to a PDF using PDFKit. It saves the PDF to the given file name
+        """
+        import pdfkit
+        html = self.toHTML()
+        pdfkit.from_string(html, filename)
+
+
 class FlatFileFieldDefinition(object):
     def __init__(self, size, csv_name, title, description, format="", is_required=False):
         self.size = size
@@ -236,14 +321,6 @@ class FlatFileSpec(object):
                 is_required=True,
             ),
             FlatFileFieldDefinition(
-                size=8,
-                csv_name="RECORD_COUNT",
-                title="Record Count",
-                description="Must match number of records in the file",
-                format="A positive integer",
-                is_required=True,
-            ),
-            FlatFileFieldDefinition(
                 size=64,
                 csv_name="USER_TOKEN",
                 title="User Token",
@@ -255,7 +332,7 @@ class FlatFileSpec(object):
                 size=64,
                 csv_name="CASE_TOKEN",
                 title="Case Token",
-                description="The token identifying the TAA enrollment case",
+                description="The token identifying the enrollment case",
                 is_required=True,
             )
         ])
@@ -321,7 +398,7 @@ class FlatFileDocumentation(object):
             distanceRead += s.size
 
         with app.test_request_context('/'):
-            template = render_template("documentation/simple_documentation.html",
+            template = render_template("documentation/flat_file_import_documentation.html",
                                     headers=header_rows,
                                     records=record_rows,
                                     fieldnames=self.fieldnames)
@@ -401,9 +478,6 @@ class FlatFileImporter(object):
         if not self.headers["version"] == FlatFileSpec.FLAT_FILE_VERSION:
             expected = FlatFileSpec.FLAT_FILE_VERSION
             self.errors.append("Expected VERSION header to be {} but got {}".format(expected, self.headers["version"]))
-        if not int(self.headers["record_count"]) == self.record_count:
-            expected = self.record_count
-            self.errors.append("Expected RECORD_COUNT header to be {} but got {}".format(expected, self.headers["record_count"]))
 
     def has_headers(self):
         return self.header_spec is not None
