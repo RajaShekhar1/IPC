@@ -7,20 +7,26 @@
   <h1 style="text-align:center;">5Star Flat File and FTP Import Documentation</h1>
 
   <p>
-  TAA supports importing enrollment data via a flat-file import service. Interested 3rd party integrators can upload
-  correctly formatted files to our secure FTP drop box, and TAA will process the file once it passes basic validation.
+  5StarEnroll supports importing enrollment data via a flat-file import service.
+    Authorized 3rd party integrators can upload
+  correctly formatted files to our secure FTP drop box, and 5StarEnroll will process the file once it passes a validation check.
   </p>
+  <p>
+    Please contact us at <a href="mailto:support@5starenroll.com">support@5starenroll.com</a> if you have any questions.
+  </p>
+
   {% include "documentation/_dropbox_documentation.html" %}
 
   <h2>Flat File Specification</h2>
   <p>
-    The TAA system accepts a flat-file enrollment format consisting of UTF-8 encoded text characters.
-    The content of the file is:<br>
-    <ul>
-      <li>One line of header fields</li>
-      <li>One line of record fields for each enrollment record being transmitted</li>
-    </ul>
-    <br>
+    The 5StarEnroll system accepts a flat-file enrollment format consisting of UTF-8 encoded text characters.
+    The content of the file is:
+  </p>
+  <ul>
+    <li>One line of header fields</li>
+    <li>One line of record fields for each enrollment record being transmitted</li>
+  </ul>
+  <p>
     Each field has a particular size and data type restrictions given in the tables below.
     If a given data value is smaller than the prescribed size, the field must be padded with whitespace characters.
     The size given is a character count.

@@ -56,6 +56,7 @@ class EnrollmentProcessor(object):
         else:
             source = EnrollmentImportBatch.SUBMIT_SOURCE_API
 
+        file_obj.seek(0)
         data = file_obj.read()
         enrollment_batch_service = EnrollmentImportBatchService()
         matching_data_hash = enrollment_batch_service.lookup_hash(data)
@@ -90,10 +91,14 @@ class EnrollmentProcessor(object):
 
     def save_validated_data(self, standardized_data, raw_data):
         case = self.case_service.get(standardized_data['case_id'])
+
+        # We want to merge multiple enrollments to a single "person" in the census data via SSN match.
+        census_record = self.find_matching_census_record(case, standardized_data)
+
         return self.enrollment_service.save_enrollment_data(
             standardized_data,
             case,
-            None,
+            census_record,
             case.owner_agent,
             received_data=raw_data,
         )
@@ -244,6 +249,14 @@ class EnrollmentProcessor(object):
         elif data_format == "json":
             return
 
+    def find_matching_census_record(self, case, data):
+        emp_ssn = data['employee']['ssn']
+        matching = self.case_service.get_census_records(case, filter_ssn=emp_ssn)
+        if matching:
+            return matching[0]
+        else:
+            return None
+
 
 class EnrollmentImportError(object):
     def __init__(self, type, fields, message, record, record_num):
@@ -302,6 +315,7 @@ class EnrollmentImportBatchService(DBService):
         db.session.commit()
 
     def lookup_hash(self, hash_data):
+
         search_hash = self.generate_hash(hash_data)
         return db.session.query(EnrollmentImportBatch
         ).filter_by(log_hash=search_hash

@@ -177,3 +177,8 @@ def updateUser():
                            token=token,
                            nav_menu=get_nav_menu()
     )
+
+@app.route('/enrollment-import-batches', methods = ['GET'])
+@groups_required(['admins'])
+def view_import_batches():
+    return render_template('admin/enrollment_batches.html', nav_menu=get_nav_menu())

@@ -240,6 +240,9 @@ class EnrollmentDataWrap(object):
         return '{} {}'.format(self.data['spouse']['first'],
                               self.data['spouse']['last'])
 
+    def get_spouse_ssn(self):
+        return self.data['spouse']['ssn']
+
     def get_employee_email(self):
         email_to = self.data['employee']['email']
         if not email_to:
@@ -742,7 +745,6 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
         print(requestBodyStr)
         print("Error generating Docusign envelope, status is: {}".format(
             status))
-        import ipdb; ipdb.set_trace()
         return True, "Error generating Docusign envelope", None
     data = json.loads(content)
 
