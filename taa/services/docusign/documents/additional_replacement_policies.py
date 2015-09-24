@@ -85,32 +85,37 @@ class AdditionalReplacementPoliciesForm(PDFAttachment):
 
 if __name__ == "__main__":
     # Test drive the code
-
-    from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient
-    from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
-
-    agent = AgentDocuSignRecipient(name="Zachary Mason", email="zmason@delmarsd.com")
-    employee = EmployeeDocuSignRecipient(name="Joe Tester", email="zach@zachmason.com")
-    test_recipients = [
-        agent,
-        employee,
-    ]
-
-    form = AdditionalReplacementPoliciesForm(test_recipients, enrollment_data=EnrollmentDataWrap(dict(
-        agent_data=dict(company_name="DelMar SD"),
-        employee=dict(first="Test", last="Employee", ssn="123-12-1234")
-    ), None, None), additional_policies=[dict(
-        name="Test Policy",
-        policy_number="123415",
-        insured="Joe Johnson",
-        replaced_or_financing="R",
-        replacement_reason="Testing Reason ntahoensuthansoe hunsao a oeunaoenu hane unaoe a asoe unaeu",
-        )])
-
-    form.generate()
-    f = open('test.pdf', 'w+')
-    f.write(form._pdf_data.getvalue())
-    f.close()
-    print("Wrote PDF to test.pdf")
-
-    print("%s pages in document."%form.get_num_pages())
+    pass
+    # from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient
+    # from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
+    # from mock import Mock
+    #
+    # case = Mock(company_name='DelMar SD')
+    # agent = AgentDocuSignRecipient(name="Zachary Mason", email="zmason@delmarsd.com")
+    # employee = EmployeeDocuSignRecipient(name="Joe Tester", email="zach@zachmason.com")
+    # test_recipients = [
+    #     agent,
+    #     employee,
+    # ]
+    #
+    # form = AdditionalReplacementPoliciesForm(test_recipients, enrollment_data=EnrollmentDataWrap(dict(
+    #     agent_data=dict(company_name="DelMar SD"),
+    #     employee=dict(first="Test", last="Employee", ssn="123-12-1234"),
+    #     replacement_policies=[
+    #         dict(
+    #             name="Test Policy",
+    #             policy_number="123415",
+    #             insured="Joe Johnson",
+    #             replaced_or_financing="R",
+    #             replacement_reason="Testing Reason ntahoensuthansoe hunsao a oeunaoenu hane unaoe a asoe unaeu",
+    #         )
+    #     ]
+    # ), None, case))
+    #
+    # form.generate()
+    # f = open('test.pdf', 'w+')
+    # f.write(form._pdf_data.getvalue())
+    # f.close()
+    # print("Wrote PDF to test.pdf")
+    #
+    # print("%s pages in document."%form.get_num_pages())

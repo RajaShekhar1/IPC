@@ -142,57 +142,59 @@ class ChildAttachmentForm(PDFAttachment):
 
 if __name__ == "__main__":
     # Test drive the code
-
-    from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient
-    from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
-
-    agent = AgentDocuSignRecipient(name="Zachary Mason", email="zmason@delmarsd.com")
-    employee = EmployeeDocuSignRecipient(name="Joe Tester", email="zach@zachmason.com")
-    test_recipients = [
-        agent,
-        employee,
-    ]
-
-    child_attachment_form = ChildAttachmentForm(test_recipients, enrollment_data=EnrollmentDataWrap(dict(
-        agent_data=dict(company_name="DelMar SD"),
-        employee=dict(first="Test", last="Employee", ssn="123-12-1234")
-    ), None, None))
-
-    child_attachment_form.add_child(dict(
-        first="Joe",
-        last="Johnson",
-        birthdate="12/01/2010",
-        gender="male",
-        ssn='123-12-1234',
-        soh_questions=[dict(question="Have you ever eaten a lollipop?", answer="no")],
-        coverage=10000,
-        premium='10.50')
-    )
-    child_attachment_form.add_child(dict(
-        first="Susie",
-        last="Johnson",
-        birthdate="12/01/2012",
-        gender="female",
-        ssn='111-12-2222',
-        soh_questions=[dict(question="Have you ever eaten a lollipop?", answer="no")],
-        coverage=10000,
-        premium='10.50')
-    )
-    child_attachment_form.add_child(dict(
-        first="Christy",
-        last="Johnson",
-        birthdate="12/01/2014",
-        gender="female",
-        ssn='444-12-4321',
-        soh_questions=[dict(question="Have you ever eaten a lollipop?", answer="GI")],
-        coverage=10000,
-        premium='5.25')
-    )
-
-    child_attachment_form.generate()
-    f = open('test.pdf', 'w+')
-    f.write(child_attachment_form._pdf_data.getvalue())
-    f.close()
-    print("Wrote PDF to test.pdf")
-
-    print("%s pages in document."%child_attachment_form.get_num_pages())
+    pass
+    # from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient
+    # from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
+    # from mock import Mock
+    #
+    # case = Mock(company_name='DelMar SD')
+    # agent = AgentDocuSignRecipient(name="Zachary Mason", email="zmason@delmarsd.com")
+    # employee = EmployeeDocuSignRecipient(name="Joe Tester", email="zach@zachmason.com")
+    # test_recipients = [
+    #     agent,
+    #     employee,
+    # ]
+    #
+    # child_attachment_form = ChildAttachmentForm(test_recipients, enrollment_data=EnrollmentDataWrap(dict(
+    #     agent_data=dict(company_name="DelMar SD"),
+    #     employee=dict(first="Test", last="Employee", ssn="123-12-1234")
+    # ), None, case))
+    #
+    # child_attachment_form.add_child(dict(
+    #     first="Joe",
+    #     last="Johnson",
+    #     birthdate="12/01/2010",
+    #     gender="male",
+    #     ssn='123-12-1234',
+    #     soh_questions=[dict(question="Have you ever eaten a lollipop?", answer="no")],
+    #     coverage=10000,
+    #     premium='10.50')
+    # )
+    # child_attachment_form.add_child(dict(
+    #     first="Susie",
+    #     last="Johnson",
+    #     birthdate="12/01/2012",
+    #     gender="female",
+    #     ssn='111-12-2222',
+    #     soh_questions=[dict(question="Have you ever eaten a lollipop?", answer="no")],
+    #     coverage=10000,
+    #     premium='10.50')
+    # )
+    # child_attachment_form.add_child(dict(
+    #     first="Christy",
+    #     last="Johnson",
+    #     birthdate="12/01/2014",
+    #     gender="female",
+    #     ssn='444-12-4321',
+    #     soh_questions=[dict(question="Have you ever eaten a lollipop?", answer="GI")],
+    #     coverage=10000,
+    #     premium='5.25')
+    # )
+    #
+    # child_attachment_form.generate()
+    # f = open('test.pdf', 'w+')
+    # f.write(child_attachment_form._pdf_data.getvalue())
+    # f.close()
+    # print("Wrote PDF to test.pdf")
+    #
+    # print("%s pages in document."%child_attachment_form.get_num_pages())
