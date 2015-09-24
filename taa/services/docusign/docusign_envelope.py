@@ -1,6 +1,7 @@
 # DocuSign API Walkthrough 08 (PYTHON) - Embedded Signing
 import random
 import json
+import re
 from string import ascii_letters
 import decimal
 
@@ -247,9 +248,17 @@ class EnrollmentDataWrap(object):
         email_to = self.data['employee']['email']
         if not email_to:
             # fallback email if none was entered - just need a unique address
-            name = self.data['employee']['first']+ '.' + self.data['employee']['last']
+            name = self._sanitize_email_str(self.data['employee']['first']) + '.' + self._sanitize_email_str(self.data['employee']['last'])
             email_to = '{}.{}@5StarEnroll.com'.format(name, self.random_email_id(name))
+
         return email_to
+
+    invalid_email_chars = re.compile(r'[^a-zA-Z0-9!#$%&\'*+\/=?^_`{|}~\.-]')
+
+    def _sanitize_email_str(self, val):
+        return val
+        # Replace invalid characters with empty string
+        return self.invalid_email_chars.sub('', val)
 
     def get_employee_email_parts(self):
         if '@' not in self.get_employee_email():
