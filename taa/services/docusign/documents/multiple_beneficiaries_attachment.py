@@ -67,7 +67,11 @@ class MultipleBeneficiariesAttachment(PDFAttachment):
     def draw_beneficiaries_table(self, table):
         flowables = []
 
-        beneficiary_data = self.beneficiaries[table['key']]
+        if self.beneficiaries.get(table['key']):
+            beneficiary_data = self.beneficiaries[table['key']]
+        else:
+            return flowables
+
         beneficiary_heading = table['heading']
         beneficiary_subheading = table['subheading']
 
