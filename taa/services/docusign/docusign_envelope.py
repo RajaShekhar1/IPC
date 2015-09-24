@@ -323,6 +323,20 @@ class EnrollmentDataWrap(object):
     def get_agent_initials(self):
         return self.data.get('agent_initials_txt', '')
 
+    def get_beneficiary_data(self):
+        bene_data = {
+            'employee_primary':[],
+
+        }
+
+        self.data['emp_bene1_name']
+
+        return bene_data
+
+    def has_multiple_beneficiaries(self):
+        """ Return True if any of the beneficiaries are not at 100% """
+        return False
+
 def old_create_envelope_and_get_signing_url(enrollment_data):
     # return is_error(bool), error_message, and redirectURL
     product = product_service.get(enrollment_data['product_data']['id'])

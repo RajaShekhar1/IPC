@@ -30,6 +30,9 @@ class EnrollmentImportService(object):
         return processor
 
     def standardize_imported_data(self, data, method='api_import'):
+        #import pdb
+        #pdb.set_trace()
+
         def val_or_blank(name):
             if data.get(name) is None:
                 return ''
