@@ -12,10 +12,10 @@ from PDFAttachment import PDFAttachment
 
 
 class MultipleBeneficiariesAttachment(PDFAttachment):
-    def __init__(self, recipients, enrollment_data, beneficiaries):
+    def __init__(self, recipients, enrollment_data):
         PDFAttachment.__init__(self, recipients, enrollment_data)
 
-        self.beneficiaries = beneficiaries
+        self.beneficiaries = enrollment_data.get_beneficiary_data()
 
     def generate(self):
         flowables = []

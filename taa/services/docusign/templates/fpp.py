@@ -22,6 +22,9 @@ class FPPTemplate(DocuSignServerTemplate):
     def is_child_attachment_form_needed(self):
         return self.data.get_num_covered_children() > 2
 
+    def is_beneficiary_attachment_needed(self):
+        return self.data.has_multiple_beneficiaries()
+
     def is_replacement_form_needed(self):
         """
         Implement the slightly complicated rules dictating whether or not the replacement form

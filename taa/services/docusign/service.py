@@ -63,6 +63,7 @@ class DocuSignService(object):
         from taa.services.docusign.templates.fpp import FPPTemplate
         from taa.services.docusign.templates.fpp_replacement import FPPReplacementFormTemplate
         from taa.services.docusign.documents.additional_children import ChildAttachmentForm
+        from taa.services.docusign.documents.multiple_beneficiaries_attachment import MultipleBeneficiariesAttachment
         from taa.services.docusign.documents.additional_replacement_policies import AdditionalReplacementPoliciesForm
 
         # Build the components (different PDFs) needed for signing
@@ -87,8 +88,8 @@ class DocuSignService(object):
             components.append(child_attachment_form)
 
         # Percentage/Multiple beneficiaries
-        #if fpp_form.is_beneficiary_attachment_required():
-        #    pass
+        if fpp_form.is_beneficiary_attachment_needed():
+            components.append(MultipleBeneficiariesAttachment(recipients, enrollment_data))
 
         # Replacement Form
         if fpp_form.is_replacement_form_needed():
