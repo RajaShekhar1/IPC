@@ -54,18 +54,18 @@ class EnrollmentImportService(object):
         from taa.services.enrollments import EnrollmentRecordParser
         def build_beneficiary_data(prefix, out_prefix):
             if data.get("{}_bene_name".format(prefix)):
-                out_data["{}_beneficiary_name{}".format(out_prefix, 1)] = val_or_blank("{}_bene_name".format(prefix))
-                out_data["{}_beneficiary_ssn{}".format(out_prefix, 1)] = val_or_blank("{}_bene_ssn".format(prefix))
-                out_data["{}_beneficiary_dob{}".format(out_prefix, 1)] = val_or_blank("{}_bene_birthdate".format(prefix))
-                out_data["{}_beneficiary_relationship{}".format(out_prefix, 1)] = val_or_blank("{}_bene_relationship".format(prefix))
-                out_data["{}_beneficiary_percentage{}".format(out_prefix, 1)] = 100
+                out_data["{}_beneficiary{}_name".format(out_prefix, 1)] = val_or_blank("{}_bene_name".format(prefix))
+                out_data["{}_beneficiary{}_ssn".format(out_prefix, 1)] = val_or_blank("{}_bene_ssn".format(prefix))
+                out_data["{}_beneficiary{}_dob".format(out_prefix, 1)] = val_or_blank("{}_bene_birthdate".format(prefix))
+                out_data["{}_beneficiary{}_relationship".format(out_prefix, 1)] = val_or_blank("{}_bene_relationship".format(prefix))
+                out_data["{}_beneficiary{}_percentage".format(out_prefix, 1)] = 100
             else:
                 for i in range(1, EnrollmentRecordParser.MAX_BENEFICIARY_COUNT+1):
-                    out_data["{}_beneficiary_name{}".format(out_prefix, i)] = val_or_blank("{}_bene_name{}".format(prefix, i))
-                    out_data["{}_beneficiary_ssn{}".format(out_prefix, i)] = val_or_blank("{}_bene_ssn{}".format(prefix, i))
-                    out_data["{}_beneficiary_dob{}".format(out_prefix, i)] = val_or_blank("{}_bene_birthdate{}".format(prefix, i))
-                    out_data["{}_beneficiary_relationship{}".format(out_prefix, i)] = val_or_blank("{}_bene_relationship{}".format(prefix, i))
-                    out_data["{}_beneficiary_percentage{}".format(out_prefix, i)] = val_or_blank("{}_bene_percentage{}".format(prefix, i))
+                    out_data["{}_beneficiary{}_name".format(out_prefix, i)] = val_or_blank("{}_bene{}_name".format(prefix, i))
+                    out_data["{}_beneficiary{}_ssn".format(out_prefix, i)] = val_or_blank("{}_bene{}_ssn".format(prefix, i))
+                    out_data["{}_beneficiary{}_dob".format(out_prefix, i)] = val_or_blank("{}_bene{}_birthdate".format(prefix, i))
+                    out_data["{}_beneficiary{}_relationship".format(out_prefix, i)] = val_or_blank("{}_bene{}_relationship".format(prefix, i))
+                    out_data["{}_beneficiary{}_percentage".format(out_prefix, i)] = val_or_blank("{}_bene{}_percentage".format(prefix, i))
 
         def build_contingent_beneficiary_data(prefix, out_prefix):
             out_data["{}_contingent_beneficiary".format(out_prefix)] = {

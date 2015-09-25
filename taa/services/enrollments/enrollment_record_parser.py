@@ -272,48 +272,48 @@ class EnrollmentRecordParser(object):
 
     for num in range(1, MAX_BENEFICIARY_COUNT+1):
 
-        emp_bene_name = EnrollmentRecordField("emp_bene_name{}".format(num), "employee_bene_name{}".format(num), preprocess_string, [], flat_file_size=40, description="Employee primary beneficiary name")
+        emp_bene_name = EnrollmentRecordField("emp_bene{}_name".format(num), "employee_bene{}_name".format(num), preprocess_string, [], flat_file_size=40, description="Employee primary beneficiary name")
 
-        emp_bene_birthdate = EnrollmentRecordField("emp_bene_birthdate{}".format(num), "employee_bene_birthdate{}".format(num), preprocess_date, [birthdate_validator], flat_file_size=8, description="Employee primary beneficiary birthdate")
+        emp_bene_birthdate = EnrollmentRecordField("emp_bene{}_birthdate".format(num), "employee_bene{}_birthdate".format(num), preprocess_date, [birthdate_validator], flat_file_size=8, description="Employee primary beneficiary birthdate")
 
-        emp_bene_relationship = EnrollmentRecordField("emp_bene_relationship{}".format(num), "employee_bene_relationship{}".format(num), preprocess_string, [], flat_file_size=15, description="Employee primary beneficiary relationship")
+        emp_bene_relationship = EnrollmentRecordField("emp_bene{}_relationship".format(num), "employee_bene{}_relationship".format(num), preprocess_string, [], flat_file_size=15, description="Employee primary beneficiary relationship")
 
-        emp_bene_ssn = EnrollmentRecordField("emp_bene_ssn{}".format(num), "employee_bene_ssn{}".format(num), preprocess_numbers, [ssn_validator], flat_file_size=9, description="Employee primary beneficiary SSN")
+        emp_bene_ssn = EnrollmentRecordField("emp_bene{}_ssn".format(num), "employee_bene{}_ssn".format(num), preprocess_numbers, [ssn_validator], flat_file_size=9, description="Employee primary beneficiary SSN")
 
-        emp_bene_percentage = EnrollmentRecordField("emp_bene_percentage{}".format(num), "employee_bene_percentage{}".format(num), preprocess_numbers, [], flat_file_size=3, description="Employee primary beneficiary percentage")
+        emp_bene_percentage = EnrollmentRecordField("emp_bene{}_percentage".format(num), "employee_bene{}_percentage".format(num), preprocess_numbers, [], flat_file_size=3, description="Employee primary beneficiary percentage")
 
-        emp_cont_bene_name = EnrollmentRecordField("emp_cont_bene_name{}".format(num), "employee_cont_bene_name{}".format(num), preprocess_string, [], flat_file_size=40, description="Employee contingent beneficiary name")
+        emp_cont_bene_name = EnrollmentRecordField("emp_cont_bene{}_name".format(num), "employee_cont_bene{}_name".format(num), preprocess_string, [], flat_file_size=40, description="Employee contingent beneficiary name")
 
-        emp_cont_bene_birthdate = EnrollmentRecordField("emp_cont_bene_birthdate{}".format(num), "employee_cont_bene_birthdate{}".format(num), preprocess_date, [birthdate_validator], flat_file_size=8, description="Employee contingent beneficiary birthdate")
-        emp_cont_bene_relationship = EnrollmentRecordField("emp_cont_bene_relationship{}".format(num), "employee_cont_bene_relationship{}".format(num), preprocess_string, [], flat_file_size=15, description="Employee contingent beneficiary relationship")
+        emp_cont_bene_birthdate = EnrollmentRecordField("emp_cont_bene{}_birthdate".format(num), "employee_cont_bene{}_birthdate".format(num), preprocess_date, [birthdate_validator], flat_file_size=8, description="Employee contingent beneficiary birthdate")
+        emp_cont_bene_relationship = EnrollmentRecordField("emp_cont_bene{}_relationship".format(num), "employee_cont_bene{}_relationship".format(num), preprocess_string, [], flat_file_size=15, description="Employee contingent beneficiary relationship")
 
-        emp_cont_bene_ssn = EnrollmentRecordField("emp_cont_bene_ssn{}".format(num), "employee_cont_bene_ssn{}".format(num), preprocess_numbers, [ssn_validator], flat_file_size=9, description="Employee contingent beneficiary SSN")
+        emp_cont_bene_ssn = EnrollmentRecordField("emp_cont_bene{}_ssn".format(num), "employee_cont_bene{}_ssn".format(num), preprocess_numbers, [ssn_validator], flat_file_size=9, description="Employee contingent beneficiary SSN")
 
-        emp_cont_bene_percentage = EnrollmentRecordField("emp_cont_bene_percentage{}".format(num), "employee_cont_bene_percentage{}".format(num), preprocess_numbers, [], flat_file_size=3, description="Employee contingent beneficiary percentage")
+        emp_cont_bene_percentage = EnrollmentRecordField("emp_cont_bene{}_percentage".format(num), "employee_cont_bene{}_percentage".format(num), preprocess_numbers, [], flat_file_size=3, description="Employee contingent beneficiary percentage")
 
         # Spouse Beneficiary Information
-        sp_cont_bene_name = EnrollmentRecordField("sp_cont_bene_name{}".format(num), "spouse_cont_bene_name{}".format(num), preprocess_string, [], flat_file_size=40, description="Spouse contingent beneficiary name")
+        sp_bene_name = EnrollmentRecordField("sp_bene{}_name".format(num), "spouse_bene{}_name".format(num), preprocess_string, [], flat_file_size=40, description="Spouse primary beneficiary name")
 
-        sp_cont_bene_birthdate = EnrollmentRecordField("sp_cont_bene_birthdate{}".format(num), "spouse_cont_bene_birthdate{}".format(num), preprocess_date, [birthdate_validator], flat_file_size=8, description="Spouse contingent beneficiary birthdate")
+        sp_bene_birthdate = EnrollmentRecordField("sp_bene{}_birthdate".format(num), "spouse_bene{}_birthdate".format(num), preprocess_date, [], flat_file_size=8, description="Spouse primary beneficiary birthdate")
 
-        sp_cont_bene_relationship = EnrollmentRecordField("sp_cont_bene_relationship{}".format(num), "spouse_cont_bene_relationship{}".format(num), preprocess_string, [], flat_file_size=15, description="Spouse contingent beneficiary relationship")
+        sp_bene_relationship = EnrollmentRecordField("sp_bene{}_relationship".format(num), "spouse_bene{}_relationship".format(num), preprocess_string, [], flat_file_size=15, description="Spouse primary beneficiary relationship")
 
-        sp_cont_bene_ssn = EnrollmentRecordField("sp_cont_bene_ssn{}".format(num), "spouse_cont_bene_ssn{}".format(num), preprocess_numbers, [ssn_validator], flat_file_size=9, description="Spouse contingent beneficiary SSN")
+        sp_bene_ssn = EnrollmentRecordField("sp_bene{}_ssn".format(num), "spouse_bene{}_ssn".format(num), preprocess_numbers, [ssn_validator], flat_file_size=9, description="Spouse primary beneficiary SSN")
 
-        sp_cont_bene_percentage = EnrollmentRecordField("sp_cont_bene_percentage{}".format(num), "spouse_cont_bene_percentage{}".format(num), preprocess_numbers, [], flat_file_size=3, description="Spouse primary beneficiary percentage")
+        sp_bene_percentage = EnrollmentRecordField("sp_bene{}_percentage".format(num), "spouse_bene{}_percentage".format(num), preprocess_numbers, [], flat_file_size=3, description="Spouse primary beneficiary percentage")
 
-        sp_bene_name = EnrollmentRecordField("sp_bene_name{}".format(num), "spouse_bene_name{}".format(num), preprocess_string, [], flat_file_size=40, description="Spouse primary beneficiary name")
+        sp_cont_bene_name = EnrollmentRecordField("sp_cont_bene{}_name".format(num), "spouse_cont_bene{}_name".format(num), preprocess_string, [], flat_file_size=40, description="Spouse contingent beneficiary name")
 
-        sp_bene_birthdate = EnrollmentRecordField("sp_bene_birthdate{}".format(num), "spouse_bene_birthdate{}".format(num), preprocess_date, [], flat_file_size=8, description="Spouse primary beneficiary birthdate")
+        sp_cont_bene_birthdate = EnrollmentRecordField("sp_cont_bene{}_birthdate".format(num), "spouse_cont_bene{}_birthdate".format(num), preprocess_date, [birthdate_validator], flat_file_size=8, description="Spouse contingent beneficiary birthdate")
 
-        sp_bene_relationship = EnrollmentRecordField("sp_bene_relationship{}".format(num), "spouse_bene_relationship{}".format(num), preprocess_string, [], flat_file_size=15, description="Spouse primary beneficiary relationship")
+        sp_cont_bene_relationship = EnrollmentRecordField("sp_cont_bene{}_relationship".format(num), "spouse_cont_bene{}_relationship".format(num), preprocess_string, [], flat_file_size=15, description="Spouse contingent beneficiary relationship")
 
-        sp_bene_ssn = EnrollmentRecordField("sp_bene_ssn{}".format(num), "spouse_bene_ssn{}".format(num), preprocess_numbers, [ssn_validator], flat_file_size=9, description="Spouse primary beneficiary SSN")
+        sp_cont_bene_ssn = EnrollmentRecordField("sp_cont_bene{}_ssn".format(num), "spouse_cont_bene{}_ssn".format(num), preprocess_numbers, [ssn_validator], flat_file_size=9, description="Spouse contingent beneficiary SSN")
 
-        sp_bene_percentage = EnrollmentRecordField("sp_bene_percentage{}".format(num), "spouse_bene_percentage{}".format(num), preprocess_numbers, [], flat_file_size=3, description="Spouse primary beneficiary percentage")
+        sp_cont_bene_percentage = EnrollmentRecordField("sp_cont_bene{}_percentage".format(num), "spouse_cont_bene{}_percentage".format(num), preprocess_numbers, [], flat_file_size=3, description="Spouse primary beneficiary percentage")
 
         #Add all beneficiary data to the parser
-        all_fields += [ emp_bene_name, emp_bene_birthdate, emp_bene_relationship, emp_bene_ssn, sp_bene_name, sp_bene_birthdate, sp_bene_relationship, sp_bene_ssn, emp_cont_bene_name, emp_cont_bene_birthdate, emp_cont_bene_relationship, emp_cont_bene_ssn, sp_cont_bene_name, sp_cont_bene_birthdate, sp_cont_bene_relationship, sp_cont_bene_ssn ]
+        all_fields += [ emp_bene_name, emp_bene_birthdate, emp_bene_relationship, emp_bene_ssn, emp_bene_percentage, sp_bene_name, sp_bene_birthdate, sp_bene_relationship, sp_bene_ssn, sp_bene_percentage, emp_cont_bene_name, emp_cont_bene_birthdate, emp_cont_bene_relationship, emp_cont_bene_ssn, emp_cont_bene_percentage, sp_cont_bene_name, sp_cont_bene_birthdate, sp_cont_bene_relationship, sp_cont_bene_ssn, sp_cont_bene_percentage ]
 
     MAX_POLICIES = 4
     for num in range(1, MAX_POLICIES + 1):

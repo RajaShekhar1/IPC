@@ -265,14 +265,14 @@ class TestDataStandardization(TestCase):
         expected = {
             'employee_beneficiary': 'other',
             'spouse_beneficiary': 'other',
-            'employee_beneficiary_name': self.init_data['emp_bene_name'],
-            'employee_beneficiary_dob': self.init_data['emp_bene_birthdate'],
-            'employee_beneficiary_ssn': self.init_data['emp_bene_ssn'],
-            'employee_beneficiary_relationship': self.init_data['emp_bene_relationship'],
-            'spouse_beneficiary_name': self.init_data['sp_bene_name'],
-            'spouse_beneficiary_dob': self.init_data['sp_bene_birthdate'],
-            'spouse_beneficiary_ssn': self.init_data['sp_bene_ssn'],
-            'spouse_beneficiary_relationship': self.init_data['sp_bene_relationship'],
+            'employee_beneficiary1_name': self.init_data['emp_bene_name'],
+            'employee_beneficiary1_dob': self.init_data['emp_bene_birthdate'],
+            'employee_beneficiary1_ssn': self.init_data['emp_bene_ssn'],
+            'employee_beneficiary1_relationship': self.init_data['emp_bene_relationship'],
+            'spouse_beneficiary1_name': self.init_data['sp_bene_name'],
+            'spouse_beneficiary1_dob': self.init_data['sp_bene_birthdate'],
+            'spouse_beneficiary1_ssn': self.init_data['sp_bene_ssn'],
+            'spouse_beneficiary1_relationship': self.init_data['sp_bene_relationship'],
 
             'employee_contingent_beneficiary_type': 'other',
             'employee_contingent_beneficiary': {
