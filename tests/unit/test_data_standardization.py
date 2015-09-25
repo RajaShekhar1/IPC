@@ -123,6 +123,53 @@ class TestDataStandardization(TestCase):
             sp_cont_bene_ssn="121-12-1112"
         )
 
+        self.nbene_data = dict(
+            user_token='ABC',
+            case_token='XYZ',
+            product_code='FPPTI',
+            payment_mode='52',
+            emp_bene1_name="Emp. Prim. Bene",
+            emp_bene1_relationship="Brother",
+            emp_bene1_birthdate="1990-10-10",
+            emp_bene1_ssn="555-55-5555",
+            emp_bene1_percentage="60",
+            emp_bene2_name="Emp. Prim. Bene2",
+            emp_bene2_relationship="Brother2",
+            emp_bene2_birthdate="1990-10-12",
+            emp_bene2_ssn="555-55-5552",
+            emp_bene2_percentage="40",
+            sp_bene1_name="Sp prim bene",
+            sp_bene1_relationship="daughter",
+            sp_bene1_birthdate="1980-11-11",
+            sp_bene1_ssn="111-11-1112",
+            sp_bene1_percentage="60",
+            sp_bene2_name="Sp prim bene2",
+            sp_bene2_relationship="daughter2",
+            sp_bene2_birthdate="1980-11-12",
+            sp_bene2_ssn="111-11-1113",
+            sp_bene2_percentage="40",
+            emp_cont_bene1_name="Emp. Cont. Bene ",
+            emp_cont_bene1_relationship="Relative",
+            emp_cont_bene1_birthdate="1989-01-10",
+            emp_cont_bene1_ssn="666-55-5555",
+            emp_cont_bene1_percentage="60",
+            emp_cont_bene2_name="Emp. Cont. Bene2",
+            emp_cont_bene2_relationship="Relative2",
+            emp_cont_bene2_birthdate="1989-01-12",
+            emp_cont_bene2_ssn="666-55-5552",
+            emp_cont_bene2_percentage="40",
+            sp_cont_bene1_name="Sp cont bene",
+            sp_cont_bene1_relationship="friend",
+            sp_cont_bene1_birthdate="1985-11-12",
+            sp_cont_bene1_ssn="121-12-1112",
+            sp_cont_bene1_percentage="60",
+            sp_cont_bene2_name="Sp cont bene2",
+            sp_cont_bene2_relationship="friend2",
+            sp_cont_bene2_birthdate="1985-11-12",
+            sp_cont_bene2_ssn="121-12-1113",
+            sp_cont_bene2_percentage="40",
+        )
+
     def test_it_should_standardize_required_main_data(self):
         output = self.import_service.standardize_imported_data(self.init_data)
         expected = {
@@ -261,34 +308,65 @@ class TestDataStandardization(TestCase):
         assert_that(output, has_entries(expected))
 
     def test_it_should_add_beneficiaries(self):
+        input = self.nbene_data
+        output = self.import_service.standardize_imported_data(input)
+        expected = {
+            'employee_beneficiary': 'other',
+            'spouse_beneficiary': 'other',
+            'employee_beneficiary1_name': input['emp_bene1_name'],
+            'employee_beneficiary1_relationship': input['emp_bene1_relationship'],
+            'employee_beneficiary1_dob': input['emp_bene1_birthdate'],
+            'employee_beneficiary1_ssn': input['emp_bene1_ssn'],
+            'employee_beneficiary1_percentage': input['emp_bene1_percentage'],
+            'spouse_beneficiary1_name': input['sp_bene1_name'],
+            'spouse_beneficiary1_relationship': input['sp_bene1_relationship'],
+            'spouse_beneficiary1_dob': input['sp_bene1_birthdate'],
+            'spouse_beneficiary1_ssn': input['sp_bene1_ssn'],
+            'spouse_beneficiary1_percentage': input['sp_bene1_percentage'],
+
+            'employee_contingent_beneficiary_type': 'other',
+            'spouse_contingent_beneficiary_type': 'other',
+            'employee_contingent_beneficiary1_name': input['emp_cont_bene1_name'],
+            'employee_contingent_beneficiary1_relationship': input['emp_cont_bene1_relationship'],
+            'employee_contingent_beneficiary1_dob': input['emp_cont_bene1_birthdate'],
+            'employee_contingent_beneficiary1_ssn': input['emp_cont_bene1_ssn'],
+            'employee_contingent_beneficiary1_percentage': input['emp_cont_bene1_percentage'],
+            'spouse_contingent_beneficiary1_name': input['sp_cont_bene1_name'],
+            'spouse_contingent_beneficiary1_relationship': input['sp_cont_bene1_relationship'],
+            'spouse_contingent_beneficiary1_dob': input['sp_cont_bene1_birthdate'],
+            'spouse_contingent_beneficiary1_ssn': input['sp_cont_bene1_ssn'],
+            'spouse_contingent_beneficiary1_percentage': input['sp_cont_bene1_percentage'],
+        }
+        assert_that(output, has_entries(expected))
+
+    def test_it_should_add_beneficiaries_legacy(self):
         output = self.import_service.standardize_imported_data(self.init_data)
         expected = {
             'employee_beneficiary': 'other',
             'spouse_beneficiary': 'other',
             'employee_beneficiary1_name': self.init_data['emp_bene_name'],
+            'employee_beneficiary1_relationship': self.init_data['emp_bene_relationship'],
             'employee_beneficiary1_dob': self.init_data['emp_bene_birthdate'],
             'employee_beneficiary1_ssn': self.init_data['emp_bene_ssn'],
-            'employee_beneficiary1_relationship': self.init_data['emp_bene_relationship'],
+            'employee_beneficiary1_percentage': 100,
             'spouse_beneficiary1_name': self.init_data['sp_bene_name'],
+            'spouse_beneficiary1_relationship': self.init_data['sp_bene_relationship'],
             'spouse_beneficiary1_dob': self.init_data['sp_bene_birthdate'],
             'spouse_beneficiary1_ssn': self.init_data['sp_bene_ssn'],
-            'spouse_beneficiary1_relationship': self.init_data['sp_bene_relationship'],
+            'spouse_beneficiary1_percentage': 100,
 
             'employee_contingent_beneficiary_type': 'other',
-            'employee_contingent_beneficiary': {
-                'name':self.init_data['emp_cont_bene_name'],
-                'relationship': self.init_data['emp_cont_bene_relationship'],
-                'ssn': self.init_data['emp_cont_bene_ssn'],
-                'date_of_birth': self.init_data['emp_cont_bene_birthdate'],
-            },
             'spouse_contingent_beneficiary_type': 'other',
-            'spouse_contingent_beneficiary': {
-                'name':self.init_data['sp_cont_bene_name'],
-                'relationship': self.init_data['sp_cont_bene_relationship'],
-                'ssn': self.init_data['sp_cont_bene_ssn'],
-                'date_of_birth': self.init_data['sp_cont_bene_birthdate'],
-            },
-
+            'employee_contingent_beneficiary1_name': self.init_data['emp_cont_bene_name'],
+            'employee_contingent_beneficiary1_relationship': self.init_data['emp_cont_bene_relationship'],
+            'employee_contingent_beneficiary1_dob': self.init_data['emp_cont_bene_birthdate'],
+            'employee_contingent_beneficiary1_ssn': self.init_data['emp_cont_bene_ssn'],
+            'employee_contingent_beneficiary1_percentage': 100,
+            'spouse_contingent_beneficiary1_name': self.init_data['sp_cont_bene_name'],
+            'spouse_contingent_beneficiary1_relationship': self.init_data['sp_cont_bene_relationship'],
+            'spouse_contingent_beneficiary1_dob': self.init_data['sp_cont_bene_birthdate'],
+            'spouse_contingent_beneficiary1_ssn': self.init_data['sp_cont_bene_ssn'],
+            'spouse_contingent_beneficiary1_percentage': 100,
         }
         assert_that(output, has_entries(expected))
 

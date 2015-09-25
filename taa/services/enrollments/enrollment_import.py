@@ -55,25 +55,17 @@ class EnrollmentImportService(object):
         def build_beneficiary_data(prefix, out_prefix):
             if data.get("{}_bene_name".format(prefix)):
                 out_data["{}_beneficiary{}_name".format(out_prefix, 1)] = val_or_blank("{}_bene_name".format(prefix))
-                out_data["{}_beneficiary{}_ssn".format(out_prefix, 1)] = val_or_blank("{}_bene_ssn".format(prefix))
-                out_data["{}_beneficiary{}_dob".format(out_prefix, 1)] = val_or_blank("{}_bene_birthdate".format(prefix))
                 out_data["{}_beneficiary{}_relationship".format(out_prefix, 1)] = val_or_blank("{}_bene_relationship".format(prefix))
+                out_data["{}_beneficiary{}_dob".format(out_prefix, 1)] = val_or_blank("{}_bene_birthdate".format(prefix))
+                out_data["{}_beneficiary{}_ssn".format(out_prefix, 1)] = val_or_blank("{}_bene_ssn".format(prefix))
                 out_data["{}_beneficiary{}_percentage".format(out_prefix, 1)] = 100
             else:
                 for i in range(1, EnrollmentRecordParser.MAX_BENEFICIARY_COUNT+1):
                     out_data["{}_beneficiary{}_name".format(out_prefix, i)] = val_or_blank("{}_bene{}_name".format(prefix, i))
-                    out_data["{}_beneficiary{}_ssn".format(out_prefix, i)] = val_or_blank("{}_bene{}_ssn".format(prefix, i))
-                    out_data["{}_beneficiary{}_dob".format(out_prefix, i)] = val_or_blank("{}_bene{}_birthdate".format(prefix, i))
                     out_data["{}_beneficiary{}_relationship".format(out_prefix, i)] = val_or_blank("{}_bene{}_relationship".format(prefix, i))
+                    out_data["{}_beneficiary{}_dob".format(out_prefix, i)] = val_or_blank("{}_bene{}_birthdate".format(prefix, i))
+                    out_data["{}_beneficiary{}_ssn".format(out_prefix, i)] = val_or_blank("{}_bene{}_ssn".format(prefix, i))
                     out_data["{}_beneficiary{}_percentage".format(out_prefix, i)] = val_or_blank("{}_bene{}_percentage".format(prefix, i))
-
-        def build_contingent_beneficiary_data(prefix, out_prefix):
-            out_data["{}_contingent_beneficiary".format(out_prefix)] = {
-                'name': val_or_blank("{}_cont_bene_name".format(prefix)),
-                'ssn': val_or_blank("{}_cont_bene_ssn".format(prefix)),
-                'date_of_birth': val_or_blank("{}_cont_bene_birthdate".format(prefix)),
-                'relationship':val_or_blank("{}_cont_bene_relationship".format(prefix)),
-            }
 
         def standardize_answer(answer):
             answers = dict(Y="Yes", N="No", y="Yes", n="No")
@@ -158,13 +150,12 @@ class EnrollmentImportService(object):
         # Beneficiaries
         out_data['employee_beneficiary'] = 'other'
         out_data['spouse_beneficiary'] = 'other'
-        build_beneficiary_data("emp", "employee")
-        build_beneficiary_data("sp", "spouse")
-
         out_data['employee_contingent_beneficiary_type'] = 'other'
         out_data['spouse_contingent_beneficiary_type'] = 'other'
-        build_contingent_beneficiary_data("emp", "employee")
-        build_contingent_beneficiary_data("sp", "spouse")
+        build_beneficiary_data("emp", "employee")
+        build_beneficiary_data("sp", "spouse")
+        build_beneficiary_data("emp_cont", "employee_contingent")
+        build_beneficiary_data("sp_cont", "spouse_contingent")
 
         out_data["employee_coverage"] = self.format_coverage(data.get("emp_coverage"), data.get("emp_premium"))
         out_data["spouse_coverage"] = self.format_coverage(data.get("sp_coverage"), data.get("sp_premium"))
