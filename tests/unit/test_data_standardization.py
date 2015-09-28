@@ -123,11 +123,13 @@ class TestDataStandardization(TestCase):
             sp_cont_bene_ssn="121-12-1112"
         )
 
-        self.nbene_data = dict(
-            user_token='ABC',
-            case_token='XYZ',
-            product_code='FPPTI',
-            payment_mode='52',
+        # Create a different version of the data with new beneficiary format.
+        self.nbene_data = self.init_data.copy()
+        for key in self.nbene_data.keys():
+            if 'bene' in key:
+                del self.nbene_data[key]
+
+        self.nbene_data.update(dict(
             emp_bene1_name="Emp. Prim. Bene",
             emp_bene1_relationship="Brother",
             emp_bene1_birthdate="1990-10-10",
@@ -168,7 +170,7 @@ class TestDataStandardization(TestCase):
             sp_cont_bene2_birthdate="1985-11-12",
             sp_cont_bene2_ssn="121-12-1113",
             sp_cont_bene2_percentage="40",
-        )
+        ))
 
     def test_it_should_standardize_required_main_data(self):
         output = self.import_service.standardize_imported_data(self.init_data)
@@ -370,9 +372,47 @@ class TestDataStandardization(TestCase):
         }
         assert_that(output, has_entries(expected))
 
+
+    def test_it_standardizes_wizard_contingent_beneficiaries(self):
+        self.wizard_data = {
+            'employee_contingent_beneficiary_type': 'other',
+            'spouse_contingent_beneficiary_type': 'other',
+            'employee_contingent_beneficiary': dict(
+                name='Joe',
+                relationship='Friend',
+                date_of_birth='12/12/2012',
+                ssn='123-12-1234',
+            ),
+            'spouse_contingent_beneficiary': dict(
+                name='Jane',
+                relationship='Friend2',
+                date_of_birth='11/11/2011',
+                ssn='333-22-1234',
+            ),
+        }
+        input_emp_cont = self.wizard_data['employee_contingent_beneficiary']
+        input_sp_cont = self.wizard_data['spouse_contingent_beneficiary']
+
+        expected = {
+            'employee_contingent_beneficiary1_name': input_emp_cont['name'],
+            'employee_contingent_beneficiary1_relationship': input_emp_cont['relationship'],
+            'employee_contingent_beneficiary1_dob': input_emp_cont['date_of_birth'],
+            'employee_contingent_beneficiary1_ssn': input_emp_cont['ssn'],
+
+            'spouse_contingent_beneficiary1_name': input_sp_cont['name'],
+            'spouse_contingent_beneficiary1_relationship': input_sp_cont['relationship'],
+            'spouse_contingent_beneficiary1_dob': input_sp_cont['date_of_birth'],
+            'spouse_contingent_beneficiary1_ssn': input_sp_cont['ssn'],
+        }
+
+        output = self.import_service.standardize_wizard_data(self.wizard_data)
+
+        assert_that(output, has_entries(expected))
+
     def get_mock_product_service(self):
         mock_product_service = Mock()
         self.mock_product = Mock()
+        self.mock_product.get_base_product_code.return_value = 'FPPTI'
         mock_product_service.get_products_by_codes.return_value = [self.mock_product]
         return mock_product_service
 

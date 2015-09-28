@@ -2,7 +2,8 @@ from decimal import Decimal
 
 from taa.core import TAAFormError
 from taa.services.products.payment_modes import get_payment_modes
-from taa.services import RequiredFeature
+from taa.services import RequiredFeature, LookupService
+from taa.services.enrollments.enrollment_record_parser import EnrollmentRecordParser
 from taa.services.enrollments.enrollment_import_processor import EnrollmentProcessor
 
 class EnrollmentImportService(object):
@@ -30,13 +31,10 @@ class EnrollmentImportService(object):
         return processor
 
     def standardize_imported_data(self, data, method='api_import'):
-        #import pdb
-        #pdb.set_trace()
 
-        def val_or_blank(name):
-            if data.get(name) is None:
-                return ''
-            return data.get(name, '')
+        from taa.services.enrollments import EnrollmentRecordParser
+
+
 
         out_data = {
             "employee": {},
@@ -50,60 +48,6 @@ class EnrollmentImportService(object):
         products = self.product_service.get_products_by_codes([code])
         product = products[0]
         state = data.get("signed_at_state")
-
-        from taa.services.enrollments import EnrollmentRecordParser
-        def build_beneficiary_data(prefix, out_prefix):
-            if data.get("{}_bene_name".format(prefix)):
-                out_data["{}_beneficiary{}_name".format(out_prefix, 1)] = val_or_blank("{}_bene_name".format(prefix))
-                out_data["{}_beneficiary{}_relationship".format(out_prefix, 1)] = val_or_blank("{}_bene_relationship".format(prefix))
-                out_data["{}_beneficiary{}_dob".format(out_prefix, 1)] = val_or_blank("{}_bene_birthdate".format(prefix))
-                out_data["{}_beneficiary{}_ssn".format(out_prefix, 1)] = val_or_blank("{}_bene_ssn".format(prefix))
-                out_data["{}_beneficiary{}_percentage".format(out_prefix, 1)] = 100
-            else:
-                for i in range(1, EnrollmentRecordParser.MAX_BENEFICIARY_COUNT+1):
-                    out_data["{}_beneficiary{}_name".format(out_prefix, i)] = val_or_blank("{}_bene{}_name".format(prefix, i))
-                    out_data["{}_beneficiary{}_relationship".format(out_prefix, i)] = val_or_blank("{}_bene{}_relationship".format(prefix, i))
-                    out_data["{}_beneficiary{}_dob".format(out_prefix, i)] = val_or_blank("{}_bene{}_birthdate".format(prefix, i))
-                    out_data["{}_beneficiary{}_ssn".format(out_prefix, i)] = val_or_blank("{}_bene{}_ssn".format(prefix, i))
-                    out_data["{}_beneficiary{}_percentage".format(out_prefix, i)] = val_or_blank("{}_bene{}_percentage".format(prefix, i))
-
-        def standardize_answer(answer):
-            answers = dict(Y="Yes", N="No", y="Yes", n="No")
-            return answers.get(answer)
-
-        def bool_from_answer(answer):
-            return str(answer).lower() in ['y', 'yes']
-
-        def build_person(prefix):
-            genders = dict(m="male", M="male", f="female", F="female")
-            base_dict = dict(
-                first=val_or_blank("{}_first".format(prefix)),
-                last=val_or_blank("{}_last".format(prefix)),
-                birthdate=val_or_blank("{}_birthdate".format(prefix)),
-                ssn=val_or_blank("{}_ssn".format(prefix)),
-                gender=genders.get(val_or_blank("{}_gender".format(prefix))),
-                phone=val_or_blank("{}_phone".format(prefix)),
-                email=val_or_blank("{}_email".format(prefix)),
-                address1=val_or_blank("{}_street".format(prefix)),
-                address2=val_or_blank("{}_street2".format(prefix)),
-                city=val_or_blank("{}_city".format(prefix)),
-                state=val_or_blank("{}_state".format(prefix)),
-                zip=val_or_blank("{}_zipcode".format(prefix)),
-                height=val_or_blank("{}_height_inches".format(prefix)),
-                weight=val_or_blank("{}_weight_pounds".format(prefix)),
-                is_smoker=bool_from_answer("{}_smoker".format(prefix)),
-                soh_questions=[]
-            )
-
-            questions = self.soh_service.get_health_questions(product, state)
-            for q_num in range(1, len(questions)+1):
-                answer = data.get("{}_question_{}_answer".format(prefix, q_num))
-                if answer:
-                    base_dict["soh_questions"].append(dict(
-                        question=questions[q_num-1].question,
-                        answer=standardize_answer(answer)
-                    ))
-            return base_dict
 
         # Pass through all the original data to start
         out_data.update(data)
@@ -129,40 +73,39 @@ class EnrollmentImportService(object):
         out_data["has_spouse_been_treated_6_months"] = standardize_answer(data.get("sp_treated_6_months"))
         out_data["has_spouse_been_disabled_6_months"] = standardize_answer(data.get("sp_disabled_6_months"))
 
-        if data.get("replacement_policy1_name"):
-            out_data["replacement_policies"].append(dict(
-                name=data.get("replacement_policy1_name"),
-                policy_number=data.get("replacement_policy1_number"),
-                insured=data.get("replacement_policy1_insured"),
-                replaced_or_financing=data.get("replacement_policy1_replaced_or_financing"),
-                replacement_reason=data.get("replacement_policy1_reason")
-            ))
+        for i in range(1, EnrollmentRecordParser.MAX_POLICIES):
+            if data.get("replacement_policy{}_name".format(i)):
+                out_data["replacement_policies"].append(dict(
+                    name=data.get("replacement_policy{}_name".format(i)),
+                    policy_number=data.get("replacement_policy{}_number".format(i)),
+                    insured=data.get("replacement_policy{}_insured".format(i)),
+                    replaced_or_financing=data.get("replacement_policy{}_replaced_or_financing".format(i)),
+                    replacement_reason=data.get("replacement_policy{}_reason".format(i))
+                ))
 
-        emp_address = (data.get("emp_street"), data.get("emp_street2"), data.get("emp_city"), data.get("emp_state"), data.get("emp_zipcode"))
-        sp_address = (data.get("sp_street"), data.get("sp_street2"), data.get("sp_city"), data.get("sp_state"), data.get("sp_zipcode"))
-        out_data["is_spouse_address_same_as_employee"] = (emp_address == sp_address)
+        out_data["is_spouse_address_same_as_employee"] = self.do_addresses_match(data)
 
         out_data["is_spouse_email_same_as_employee"] = (data.get('emp_email') == data.get('sp_email'))
 
-        out_data["employee"].update(build_person("emp"))
-        out_data["spouse"].update(build_person("sp"))
+        out_data["employee"].update(build_person(data, "emp", product, state, self.soh_service))
+        out_data["spouse"].update(build_person(data, "sp", product, state, self.soh_service))
 
         # Beneficiaries
         out_data['employee_beneficiary'] = 'other'
         out_data['spouse_beneficiary'] = 'other'
         out_data['employee_contingent_beneficiary_type'] = 'other'
         out_data['spouse_contingent_beneficiary_type'] = 'other'
-        build_beneficiary_data("emp", "employee")
-        build_beneficiary_data("sp", "spouse")
-        build_beneficiary_data("emp_cont", "employee_contingent")
-        build_beneficiary_data("sp_cont", "spouse_contingent")
+        out_data.update(build_beneficiary_data(data, "employee", "emp"))
+        out_data.update(build_beneficiary_data(data, "spouse", "sp"))
+        out_data.update(build_beneficiary_data(data, "employee_contingent", "emp_cont"))
+        out_data.update(build_beneficiary_data(data, "spouse_contingent", "sp_cont"))
 
         out_data["employee_coverage"] = self.format_coverage(data.get("emp_coverage"), data.get("emp_premium"))
         out_data["spouse_coverage"] = self.format_coverage(data.get("sp_coverage"), data.get("sp_premium"))
 
         for num in range(1, EnrollmentRecordParser.MAX_CHILDREN + 1):
             if data.get("ch{}_first".format(num)):
-                out_data["children"].append(build_person("ch{}".format(num)))
+                out_data["children"].append(build_person(data, "ch{}".format(num), product, state, self.soh_service))
                 out_data["child_coverages"].append(
                     self.format_coverage(
                         face_value=data.get("ch{}_coverage".format(num)),
@@ -171,7 +114,7 @@ class EnrollmentImportService(object):
                 )
 
         # identityToken is date of hire
-        out_data['identityToken'] = val_or_blank('emp_date_of_hire')
+        out_data['identityToken'] = val_or_blank(data, 'emp_date_of_hire')
         out_data['identityType'] = 'Date of Hire'
 
         # Source / method of the enrollment.
@@ -191,13 +134,146 @@ class EnrollmentImportService(object):
         out_data['product_data'] = {'id': product.id}
 
         # Initials
-        out_data['emp_initials_txt'] = val_or_blank(data.get('emp_initials_txt'))
-        out_data['agent_initials_txt'] = val_or_blank(data.get('agent_initials_txt'))
+        out_data['emp_initials_txt'] = val_or_blank(data, data.get('emp_initials_txt'))
+        out_data['agent_initials_txt'] = val_or_blank(data, data.get('agent_initials_txt'))
 
         return out_data
+
+    def do_addresses_match(self, data):
+        emp_address = (data.get("emp_street"), data.get("emp_street2"), data.get("emp_city"), data.get("emp_state"),
+                       data.get("emp_zipcode"))
+        sp_address = (data.get("sp_street"), data.get("sp_street2"), data.get("sp_city"), data.get("sp_state"),
+                      data.get("sp_zipcode"))
+        return (emp_address == sp_address)
 
     def format_coverage(self, face_value, premium):
         return dict(
             face_value=int(face_value) if face_value else None,
             premium=Decimal(premium) if premium else None,
         )
+
+    def standardize_wizard_data(self, wizard_data):
+        output = wizard_data.copy()
+
+        # Update beneficiary data to new format
+        output.update(
+            standardize_legacy_beneficiaries(wizard_data, "employee", "emp")
+        )
+        output.update(
+            standardize_legacy_beneficiaries(wizard_data, "spouse", "sp")
+        )
+        output.update(
+            standardize_wizard_contingent_beneficiaries(wizard_data, "employee_contingent")
+        )
+        output.update(
+            standardize_wizard_contingent_beneficiaries(wizard_data, "spouse_contingent")
+        )
+
+        return output
+
+
+# Utility function for cleaning up data.
+def val_or_blank(data, name):
+    if data.get(name) is None:
+        return ''
+    return data.get(name, '')
+
+
+def build_beneficiary_data(data, out_prefix, prefix):
+
+
+    if data.get("{}_bene_name".format(prefix)):
+        return standardize_legacy_beneficiaries(data, out_prefix, prefix)
+    else:
+        return standardize_multi_beneficiaries(data, out_prefix, prefix)
+
+
+def standardize_legacy_beneficiaries(data, out_prefix, prefix):
+    out_data = {}
+
+    # Legacy format with only one beneficiary per type at 100%
+    out_data["{}_beneficiary1_name".format(out_prefix)] = val_or_blank(data, "{}_bene_name".format(prefix))
+    out_data["{}_beneficiary1_relationship".format(out_prefix)] = val_or_blank(data,
+                                                                                   "{}_bene_relationship".format(
+                                                                                       prefix))
+    out_data["{}_beneficiary1_dob".format(out_prefix)] = val_or_blank(data, "{}_bene_birthdate".format(prefix))
+    out_data["{}_beneficiary1_ssn".format(out_prefix)] = val_or_blank(data, "{}_bene_ssn".format(prefix))
+    out_data["{}_beneficiary1_percentage".format(out_prefix)] = 100
+
+    return out_data
+
+
+def standardize_wizard_contingent_beneficiaries(data, out_prefix):
+    out_data = {}
+
+    bene_data = data.get("{}_beneficiary".format(out_prefix))
+    if not bene_data:
+        return {}
+
+    # Wizard contingent beneficiaries are in a different input format
+    out_data["{}_beneficiary1_name".format(out_prefix)] = bene_data['name']
+    out_data["{}_beneficiary1_relationship".format(out_prefix)] = bene_data['relationship']
+    out_data["{}_beneficiary1_dob".format(out_prefix)] = bene_data['date_of_birth']
+    out_data["{}_beneficiary1_ssn".format(out_prefix)] = bene_data['ssn']
+    # For consistency, put a percentage in too.
+    out_data["{}_beneficiary1_percentage".format(out_prefix)] = 100
+
+    return out_data
+
+def standardize_multi_beneficiaries(data, out_prefix, prefix):
+    out_data = {}
+    # Multiple beneficiaries allowed with percentages provided
+    for i in range(1, EnrollmentRecordParser.MAX_BENEFICIARY_COUNT + 1):
+        out_data["{}_beneficiary{}_name".format(out_prefix, i)] = val_or_blank(data,
+                                                                               "{}_bene{}_name".format(prefix, i))
+        out_data["{}_beneficiary{}_relationship".format(out_prefix, i)] = val_or_blank(data,
+                                                                                       "{}_bene{}_relationship".format(
+                                                                                           prefix, i))
+        out_data["{}_beneficiary{}_dob".format(out_prefix, i)] = val_or_blank(data,
+                                                                              "{}_bene{}_birthdate".format(prefix,
+                                                                                                           i))
+        out_data["{}_beneficiary{}_ssn".format(out_prefix, i)] = val_or_blank(data,
+                                                                              "{}_bene{}_ssn".format(prefix, i))
+        out_data["{}_beneficiary{}_percentage".format(out_prefix, i)] = val_or_blank(data,
+                                                                                     "{}_bene{}_percentage".format(
+                                                                                         prefix, i))
+    return out_data
+
+
+def standardize_answer(answer):
+    answers = dict(Y="Yes", N="No", y="Yes", n="No")
+    return answers.get(answer)
+
+def bool_from_answer(answer):
+    return str(answer).lower() in ['y', 'yes']
+
+def build_person(data, prefix, product, state, soh_service):
+    genders = dict(m="male", M="male", f="female", F="female")
+    base_dict = dict(
+        first=val_or_blank(data, "{}_first".format(prefix)),
+        last=val_or_blank(data, "{}_last".format(prefix)),
+        birthdate=val_or_blank(data, "{}_birthdate".format(prefix)),
+        ssn=val_or_blank(data, "{}_ssn".format(prefix)),
+        gender=genders.get(val_or_blank(data, "{}_gender".format(prefix))),
+        phone=val_or_blank(data, "{}_phone".format(prefix)),
+        email=val_or_blank(data, "{}_email".format(prefix)),
+        address1=val_or_blank(data, "{}_street".format(prefix)),
+        address2=val_or_blank(data, "{}_street2".format(prefix)),
+        city=val_or_blank(data, "{}_city".format(prefix)),
+        state=val_or_blank(data, "{}_state".format(prefix)),
+        zip=val_or_blank(data, "{}_zipcode".format(prefix)),
+        height=val_or_blank(data, "{}_height_inches".format(prefix)),
+        weight=val_or_blank(data, "{}_weight_pounds".format(prefix)),
+        is_smoker=bool_from_answer("{}_smoker".format(prefix)),
+        soh_questions=[]
+    )
+
+    questions = soh_service.get_health_questions(product, state)
+    for q_num in range(1, len(questions)+1):
+        answer = data.get("{}_question_{}_answer".format(prefix, q_num))
+        if answer:
+            base_dict["soh_questions"].append(dict(
+                question=questions[q_num-1].question,
+                answer=standardize_answer(answer)
+            ))
+    return base_dict

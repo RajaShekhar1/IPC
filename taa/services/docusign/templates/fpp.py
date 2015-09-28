@@ -250,12 +250,19 @@ class FPPTemplate(DocuSignServerTemplate):
         tabs = []
 
         if ((long_prefix == "employee" and not self.data.did_employee_select_coverage()) or
-            (long_prefix == "spouse" and not self.data.did_spouse_select_coverage())):
+                (long_prefix == "spouse" and not self.data.did_spouse_select_coverage())):
+            return tabs
+
+
+        if self.data.has_multiple_beneficiaries():
+            # All beneficiary data is attached to a separate document in this case.
+            tabs.append(DocuSignTextTab('eeBene_notice', 'SEE ATTACHED'))
+            tabs.append(DocuSignTextTab('spBene_notice', 'SEE ATTACHED'))
             return tabs
 
         tabs += self.make_old_style_beneficiary_tabs(short_prefix, long_prefix)
 
-        # Contingent
+        # Contingent Beneficiaries are in slightly different format
         contingent_type_key = '{}_contingent_beneficiary_type'.format(long_prefix)
         if contingent_type_key in self.data and self.data[contingent_type_key] == 'spouse':
             spouse_data = self.data["employee"] if long_prefix == "spouse" else self.data["spouse"]
@@ -267,13 +274,17 @@ class FPPTemplate(DocuSignServerTemplate):
                 ssn=spouse_data.get("ssn", ''),
             )
         elif contingent_type_key in self.data and self.data[contingent_type_key] == 'other':
+            key_prefix = '{}_contingent_beneficiary1'.format(long_prefix)
+            bene_name = self.data['{}_name'.format(key_prefix)]
+            bene_rel = self.data[key_prefix+'_relationship']
+            bene_ssn = self.data[key_prefix+'_ssn']
+            bene_dob = self.data[key_prefix+'_dob']
 
-            beneficiary_data = self.data['{}_contingent_beneficiary'.format(long_prefix)]
             tabs += self.make_beneficiary_tabs(prefix='{}Cont'.format(short_prefix),
-                                       name=beneficiary_data.get('name', ''),
-                                       relationship=beneficiary_data.get('relationship', ''),
-                                       ssn=beneficiary_data.get('ssn', ''),
-                                       dob=beneficiary_data.get('date_of_birth', ''),
+                                       name=bene_name,
+                                       relationship=bene_rel,
+                                       ssn=bene_ssn,
+                                       dob=bene_dob,
             )
 
         return tabs
@@ -292,10 +303,10 @@ class FPPTemplate(DocuSignServerTemplate):
         else:
             return self.make_beneficiary_tabs(
                 prefix = short_prefix,
-                name = self.data.get("{}_beneficiary_name".format(long_prefix), ''),
-                relationship = self.data.get("{}_beneficiary_relationship".format(long_prefix), ''),
-                dob = self.data.get("{}_beneficiary_dob".format(long_prefix), ''),
-                ssn = self.data.get("{}_beneficiary_ssn".format(long_prefix), ''),
+                name = self.data.get("{}_beneficiary1_name".format(long_prefix), ''),
+                relationship = self.data.get("{}_beneficiary1_relationship".format(long_prefix), ''),
+                dob = self.data.get("{}_beneficiary1_dob".format(long_prefix), ''),
+                ssn = self.data.get("{}_beneficiary1_ssn".format(long_prefix), ''),
             )
 
     def make_payment_mode_tabs(self):
