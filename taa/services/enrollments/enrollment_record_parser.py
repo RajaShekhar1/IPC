@@ -391,14 +391,18 @@ class EnrollmentRecordParser(object):
 
     def process_records(self, records, case):
 
+        # Reset record count before validation so we track which row has an error.
         self.current_record_number = 0
 
-        self.validate_data_keys(records)
         # Don't do any more processing if missing important data_keys
+        self.validate_data_keys(records)
         if self.errors:
             return
 
+        # Run the preprocessors
         preprocessed_records = (self.preprocess_record(record) for record in records)
+
+        # Run each of the validators, and some whole-record validation tests.
         for record in preprocessed_records:
             self.current_record_number += 1
 
@@ -407,12 +411,14 @@ class EnrollmentRecordParser(object):
                 lambda: self.validate_statecode(record),
                 lambda: self.validate_coverage_selected(record),
                 lambda: self.validate_case(record, case),
+                lambda: self.validate_beneficiaries(record),
             ]
             is_valid = True
             for test in validation_tests:
                 if not test():
                     is_valid = False
                     break
+
             if is_valid:
                 self.postprocess_record(record)
                 self.valid_data.append(record)
@@ -444,6 +450,66 @@ class EnrollmentRecordParser(object):
         record['case_id'] = case.id
 
         return True
+
+    def validate_beneficiaries(self, record):
+        is_valid = True
+
+        for key_template in ['emp_bene{}', 'emp_cont_bene{}', 'sp_bene{}', 'sp_cont_bene{}']:
+            if not self.validate_beneficiary_class(key_template, record):
+                is_valid = False
+
+        return is_valid
+
+
+    def validate_beneficiary_class(self, key_template, record):
+
+        if not self._has_multiple_beneficiaries(key_template, record):
+            # Nothing to validate
+            return True
+
+        is_valid = True
+
+        # Validate percentages
+        total = self._sum_bene_percentages(key_template, record)
+        if total != 100:
+            self.error_record_field("invalid_beneficiary_percentages",
+                                    "Beneficiary percentages do not sum to 100 (sum to {})".format(total),
+                                    key_template.format(1) +"_percentage",
+                                    record)
+            is_valid = False
+
+        return is_valid
+
+    def _has_multiple_beneficiaries(self, key_template, record):
+        # For this class of beneficiary, is there data for more than one person?
+        bene_count = 0
+        for i in range(1, self.MAX_BENEFICIARY_COUNT):
+            if self._does_record_have_beneficiary(i, key_template, record):
+                bene_count += 1
+
+        return bene_count > 1
+
+    def _does_record_have_beneficiary(self, num, key_template, record):
+        has_bene = False
+        for attr in ['name', 'relationship', 'birthdate', 'ssn', 'percentage']:
+            if record.get(key_template.format(num) + "_" + attr):
+                has_bene = True
+        return has_bene
+
+    def _sum_bene_percentages(self, key_template, record):
+        total = 0
+        for i in range(1 , self.MAX_BENEFICIARY_COUNT):
+            if self._does_record_have_beneficiary(i, key_template, record):
+                val = record.get(key_template.format(i) + '_percentage', 0)
+                try:
+                    total += int(val)
+                except ValueError:
+                    # This should only happen with a blank field, since we've done blank-or-int validation on the column already.
+                    #  Passing here is same effect as adding 0 to the total.
+                    pass
+
+        return total
+
 
     def validate_statecode(self, record):
         if not self.product_service.is_valid_statecode_for_product(record.get("product_code"), record.get("signed_at_state")):
