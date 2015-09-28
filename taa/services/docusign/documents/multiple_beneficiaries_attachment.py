@@ -31,7 +31,7 @@ class MultipleBeneficiariesAttachment(PDFAttachment):
         self._doc.build(flowables, canvasmaker=NumberedCanvas)
 
     def draw_header(self):
-        return create_attachment_header(u"PUT HEADER HERE", self.data)
+        return create_attachment_header(u"Supplemental Form: Beneficiary Information", self.data)
 
     def draw_beneficiaries_tables(self):
         flowables = []
