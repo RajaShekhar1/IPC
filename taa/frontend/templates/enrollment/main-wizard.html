@@ -526,7 +526,8 @@
                   <li data-bind="if:rider.enrollment_level" ><input type="checkbox" data-bind="click: $root.toggle_selected_riders(rider.code, 'emp', $element)"/></li>
                   <li data-bind="if:!rider.enrollment_level"><input type="checkbox" checked=checked disabled=disabled /></li>
                 <!--ko if: $root.should_include_spouse_in_table -->
-                  <li><input type="checkbox" checked=checked disabled=disabled /></li>
+                  <li data-bind="if:rider.enrollment_level" ><input type="checkbox" data-bind="click: $root.toggle_selected_riders(rider.code, 'sp', $element)"/></li>
+                  <li data-bind="if:!rider.enrollment_level"><input type="checkbox" checked=checked disabled=disabled /></li>
                 <!--/ko-->
               <!--/ko-->
             </ul>

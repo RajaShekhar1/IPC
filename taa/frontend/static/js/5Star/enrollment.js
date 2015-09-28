@@ -3967,7 +3967,7 @@ function init_riders(riders) {
     var rider = riders[i];
     if(!rider.enrollment_level) {
       window.ui.selected_riders["emp"](riders[i]);
-      window.ui.selected_riders["sp"](rider[i]);
+      window.ui.selected_riders["sp"](riders[i]);
     }
   }
   window.ui.all_riders(riders);
