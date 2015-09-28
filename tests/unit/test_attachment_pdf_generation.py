@@ -13,19 +13,17 @@ class TestPDFAttachments(TestCase):
     they don't crash. There is no validation of the data in the PDF.
     """
     def test_n_beneficiaries_with_single_employee_beneficiary_data(self):
-        beneficiaries = {'employee_primary':[
-            dict(
-                name="John Doe",
-                ssn='123-123-1234',
-                relationship='Friend',
-                birthdate='1990-01-01',
-                percentage=100,
-            ),
-        ]}
+        self.test_enrollment_data.update(dict(
+            emp_bene1_name="John Doe",
+            emp_bene1_ssn='123-123-1234',
+            emp_bene1_relationship='Friend',
+            emp_bene1_birthdate='1990-01-01',
+            emp_bene1_percentage=100,
+        ))
 
         attachment = MultipleBeneficiariesAttachment(self.test_recipients,
                                                      EnrollmentDataWrap(self.test_enrollment_data, None, self.case),
-                                                     beneficiaries)
+                                                     )
 
         attachment.generate()
         bytes = attachment._pdf_data.getvalue()
@@ -33,26 +31,22 @@ class TestPDFAttachments(TestCase):
         self.assertGreater(bytes, 0, "The attachment form did not generate any bytes")
 
     def test_n_beneficiaries_with_multiple_employee_beneficiary_data(self):
-        beneficiaries = {'employee_primary':[
-            dict(
-                name="John Doe",
-                ssn='123-123-1234',
-                relationship='Friend',
-                birthdate='1990-01-01',
-                percentage=100,
-            ),
-            dict(
-                name="Bob Bobson",
-                ssn='453-34-3453',
-                relationship='Another Friend',
-                birthdate='1995-01-01',
-                percentage=50,
-            ),
-        ]}
+        self.test_enrollment_data.update(dict(
+            emp_bene1_name="John Doe",
+            emp_bene1_ssn='123-123-1234',
+            emp_bene1_relationship='Friend',
+            emp_bene1_birthdate='1990-01-01',
+            emp_bene1_percentage=100,
+
+            emp_bene2_name="Bob Bobson",
+            emp_bene2_ssn='453-34-3453',
+            emp_bene2_relationship='Another Friend',
+            emp_bene2_birthdate='1995-01-01',
+            emp_bene2_percentage=50,
+        ))
 
         attachment = MultipleBeneficiariesAttachment(self.test_recipients,
                                                      EnrollmentDataWrap(self.test_enrollment_data, None, self.case),
-                                                     beneficiaries,
                                                      )
 
         attachment.generate()
@@ -61,29 +55,35 @@ class TestPDFAttachments(TestCase):
         self.assertGreater(bytes, 0, "The attachment form did not generate any bytes")
 
     def test_n_beneficiaries_with_other_beneficiary_data(self):
-        beneficiaries = {'employee_primary':[
-            dict(
-                name="John Doe",
-                ssn='123-123-1234',
-                relationship='Friend',
-                birthdate='1990-01-01',
-                percentage=100,
-            ),
-            dict(
-                name="Bob Bobson",
-                ssn='453-34-3453',
-                relationship='Another Friend',
-                birthdate='1995-01-01',
-                percentage=50,
-            ),
-        ],
-        "employee_contingent":[dict(name="Bob", ssn='123-22-1234', relationship="son", percentage=100, birthdate='')],
-        "spouse_primary":[dict(name="Bob", ssn="", relationship="Mom", percentage=100, birthdate='')],
-        "spouse_contingent":[dict(name="Joe", ssn="", relationship="random", percentage=100, birthdate='')]}
+        self.test_enrollment_data.update(dict(
+            emp_bene1_name="John Doe",
+            emp_bene1_ssn='123-123-1234',
+            emp_bene1_relationship='Friend',
+            emp_bene1_birthdate='1990-01-01',
+            emp_bene1_percentage=100,
+
+            emp_cont_bene1_name="John Doe",
+            emp_cont_bene1_ssn='123-123-1234',
+            emp_cont_bene1_relationship='Friend',
+            emp_cont_bene1_birthdate='1990-01-01',
+            emp_cont_bene1_percentage=100,
+
+
+            sp_bene1_name="John Doe",
+            sp_bene1_ssn='123-123-1234',
+            sp_bene1_relationship='Friend',
+            sp_bene1_birthdate='1990-01-01',
+            sp_bene1_percentage=100,
+
+            sp_cont_bene1_name="John Doe",
+            sp_cont_bene1_ssn='123-123-1234',
+            sp_cont_bene1_relationship='Friend',
+            sp_cont_bene1_birthdate='1990-01-01',
+            sp_cont_bene1_percentage=100,
+        ))
 
         attachment = MultipleBeneficiariesAttachment(self.test_recipients,
                                                      EnrollmentDataWrap(self.test_enrollment_data, None, self.case),
-                                                     beneficiaries,
                                                      )
 
         attachment.generate()

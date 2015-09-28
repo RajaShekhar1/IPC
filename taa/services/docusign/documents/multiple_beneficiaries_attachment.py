@@ -12,10 +12,10 @@ from PDFAttachment import PDFAttachment
 
 
 class MultipleBeneficiariesAttachment(PDFAttachment):
-    def __init__(self, recipients, enrollment_data, beneficiaries):
+    def __init__(self, recipients, enrollment_data):
         PDFAttachment.__init__(self, recipients, enrollment_data)
 
-        self.beneficiaries = beneficiaries
+        self.beneficiaries = enrollment_data.get_beneficiary_data()
 
     def generate(self):
         flowables = []
@@ -31,7 +31,7 @@ class MultipleBeneficiariesAttachment(PDFAttachment):
         self._doc.build(flowables, canvasmaker=NumberedCanvas)
 
     def draw_header(self):
-        return create_attachment_header(u"Supplemental Form: Beneficiary Information", self.data)
+        return create_attachment_header(u"Supplemental Form:  Beneficiary Information", self.data)
 
     def draw_beneficiaries_tables(self):
         flowables = []
@@ -147,92 +147,74 @@ if __name__ == '__main__':
         agent,
         employee,
     ]
+    data_test = dict(agent_data=dict(company_name="DelMar SD"),
+        employee=dict(first="Test", last="Employee", ssn="123-12-1234"),
+        emp_bene1_name="John Doe",
+        emp_bene1_ssn='123-123-1234',
+        emp_bene1_relationship='Friend',
+        emp_bene1_birthdate='1990-01-01',
+        emp_bene1_percentage=100,
 
-    beneficiaries = {
-        'employee_primary':[
-            dict(
-                name="John Doe",
-                ssn='123-123-1234',
-                relationship='Friend',
-                birthdate='1990-01-01',
-                percentage=100,
-            ),
-            dict(
-                name="Frank Doe",
-                ssn='123-123-1234',
-                relationship=None,
-                birthdate='1940-01-01',
-                percentage=10,
-            ),
-        ],
-        'employee_contingent':[
-            dict(
-                name="Jimmy Doe",
-                ssn='123-123-1234',
-                relationship='Child',
-                birthdate='1940-01-01',
-                percentage=34,
-            ),
-            dict(
-                name="Suzie Doe",
-                ssn='123-123-1234',
-                relationship='Child',
-                birthdate='1940-01-01',
-                percentage=33,
-            ),
-            dict(
-                name="Frank Doe Jr",
-                ssn='123-123-1234',
-                relationship='Child',
-                birthdate='1940-01-01',
-                percentage=33,
-            ),
-        ],
-        'spouse_primary':[
-            dict(
-                name="Jane Doe",
-                ssn='123-123-1234',
-                relationship='Spouse',
-                birthdate='1940-01-01',
-                percentage=10,
-            ),
-            dict(
-                name="Janet Doe",
-                ssn='123-123-1234',
-                relationship='Mother',
-                birthdate='1940-01-01',
-                percentage=10,
-            ),
-        ],
-        'spouse_contingent':[
-            dict(
-                name="Jimmy Doe",
-                ssn='123-123-1234',
-                relationship='Child',
-                birthdate='1940-01-01',
-                percentage=34,
-            ),
-            dict(
-                name="Suzie Doe",
-                ssn='123-123-1234',
-                relationship='Child',
-                birthdate='1940-01-01',
-                percentage=33,
-            ),
-            dict(
-                name="Frank Doe Jr",
-                ssn='123-123-1234',
-                relationship='Child',
-                birthdate='1940-01-01',
-                percentage=33,
-            ),
-        ],
-    }
+        emp_bene2_name="Frank Doe",
+        emp_bene2_ssn='123-123-1234',
+        emp_bene2_relationship=None,
+        emp_bene2_birthdate='1940-01-01',
+        emp_bene2_percentage=10,
+
+        emp_cont_bene1_name="Jimmy Doe",
+        emp_cont_bene1_ssn='123-123-1234',
+        emp_cont_bene1_relationship='Child',
+        emp_cont_bene1_birthdate='1940-01-01',
+        emp_cont_bene1_percentage=34,
+
+
+        emp_cont_bene2_name="Suzie Doe",
+        emp_cont_bene2_ssn='123-123-1234',
+        emp_cont_bene2_relationship='Child',
+        emp_cont_bene2_birthdate='1940-01-01',
+        emp_cont_bene2_percentage=33,
+
+        emp_cont_bene3_name="Frank Doe Jr",
+        emp_cont_bene3_ssn='123-123-1234',
+        emp_cont_bene3_relationship='Child',
+        emp_cont_bene3_birthdate='1940-01-01',
+        emp_cont_bene3_percentage=33,
+
+        sp_bene1_name="Jane Doe",
+        sp_bene1_ssn='123-123-1234',
+        sp_bene1_relationship='Spouse',
+        sp_bene1_birthdate='1940-01-01',
+        sp_bene1_percentage=10,
+
+        sp_bene2_name="Janet Doe",
+        sp_bene2_ssn='123-123-1234',
+        sp_bene2_relationship='Mother',
+        sp_bene2_birthdate='1940-01-01',
+        sp_bene2_percentage=10,
+
+        sp_cont_bene1_name="Jimmy Doe",
+        sp_cont_bene1_ssn='123-123-1234',
+        sp_cont_bene1_relationship='Child',
+        sp_cont_bene1_birthdate='1940-01-01',
+        sp_cont_bene1_percentage=34,
+
+        sp_cont_bene2_name="Suzie Doe",
+        sp_cont_bene2_ssn='123-123-1234',
+        sp_cont_bene2_relationship='Child',
+        sp_cont_bene2_birthdate='1940-01-01',
+        sp_cont_bene2_percentage=33,
+
+        sp_cont_bene3_name="Frank Doe Jr",
+        sp_cont_bene3_ssn='123-123-1234',
+        sp_cont_bene3_relationship='Child',
+        sp_cont_bene3_birthdate='1940-01-01',
+        sp_cont_bene3_percentage=33,
+    )
 
     attachment = MultipleBeneficiariesAttachment(test_recipients,
-                                                 EnrollmentDataWrap(dict(agent_data=dict(company_name="DelMar SD"),
-        employee=dict(first="Test", last="Employee", ssn="123-12-1234")), None, case),
-                                                 beneficiaries)
+                                                 EnrollmentDataWrap(data_test, None, case),
+    )
+
     attachment.generate()
     bytes = attachment._pdf_data.getvalue()
 

@@ -442,18 +442,34 @@ Feature: Validate an enrollment record submitted via API.
      | sp_cont_bene_ssn                          |
 
 
+  Scenario: It should allow multi-beneficiaries with percentages
+    Given I prepare an enrollment file with basic valid enrollment data
+    And I add the following enrollment data columns
+      | emp_bene1_name | emp_bene1_birthdate | emp_bene1_relationship | emp_bene1_ssn | emp_bene1_percentage |
+      | Juan           | 1990-10-10          | Brother 1              | 555-55-5555   | 50                   |
+    And I add the following enrollment data columns
+      | emp_bene2_name | emp_bene2_birthdate | emp_bene2_relationship | emp_bene2_ssn | emp_bene2_percentage |
+      | Ron            | 1991-10-10          | Brother  2             | 555-55-5555   | 50                   |
+    When I submit the file to the Enrollment API
+    Then I should see a success response
 
-## TODO: question Y / N / GI handling?
 
-## TODO: handle multiple records
-## TODO: show the record number that an error refers to
-#Scenario: The user submits multiple enrollment records.
-  #  Given I prepare an enrollment file with basic valid enrollment data
-  #  And I add an additional valid record
-  #  When I submit the file to the Enrollment API
-  #  Then I should see a success response
+  Scenario: It should ensure that multi-beneficiary percentages add to 100
+    Given I prepare an enrollment file with basic valid enrollment data
+    And I add the following enrollment data columns
+      | emp_bene1_name | emp_bene1_birthdate | emp_bene1_relationship | emp_bene1_ssn | emp_bene1_percentage |
+      | Juan           | 1990-10-10          | Brother 1              | 555-55-5555   | 50                   |
+    And I add the following enrollment data columns
+      | emp_bene2_name | emp_bene2_birthdate | emp_bene2_relationship | emp_bene2_ssn | emp_bene2_percentage |
+      | Ron            | 1991-10-10          | Brother  2             | 555-55-5555   | 50                   |
+    And I add the following enrollment data columns
+      | emp_bene3_name | emp_bene3_birthdate | emp_bene3_relationship | emp_bene3_ssn | emp_bene3_percentage |
+      | Jon            | 1992-10-10          | Brother    3           | 555-55-5555   | 50                   |
+    When I submit the file to the Enrollment API
+    Then I should see the following errors in the response
+      | error_type                      | error_field          |
+      | invalid_beneficiary_percentages | emp_bene1_percentage |
 
-  #Scenario: It should show which record caused the error when submitting
 
 # TODO: check that the case is currently enrolling
 # TODO: check that the case is enrolling the submitted product

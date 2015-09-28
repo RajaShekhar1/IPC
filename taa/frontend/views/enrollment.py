@@ -283,10 +283,15 @@ def submit_wizard_data():
     if (agent is None and session.get('is_self_enroll') is not None):
         agent = case.owner_agent
 
+    # Standardize the wizard data for submission processing
+    standardized_data = enrollment_import_service.standardize_wizard_data(wizard_results)
+
     # Create and save the enrollment data. Creates a census record if this is a generic link, and in
     #   either case updates the census record with the latest enrollment data.
     enrollment_application = enrollment_service.save_enrollment_data(
-        wizard_results, case, census_record, agent)
+        standardized_data, case, census_record, agent,
+        received_data=wizard_results,
+    )
 
     if not wizard_results.get('did_decline'):
         # Hand off wizard_results to docusign

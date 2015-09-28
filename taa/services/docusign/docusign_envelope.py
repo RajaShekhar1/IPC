@@ -332,6 +332,62 @@ class EnrollmentDataWrap(object):
     def get_agent_initials(self):
         return self.data.get('agent_initials_txt', '')
 
+    def get_beneficiary_data(self):
+        bene_data = {
+            'employee_primary':[],
+            'employee_contingent':[],
+            'spouse_primary':[],
+            'spouse_contingent':[],
+        }
+
+        from taa.services.enrollments import EnrollmentRecordParser
+        for num in range(1, EnrollmentRecordParser.MAX_BENEFICIARY_COUNT+1):
+            if self.data.get("emp_bene{}_name".format(num)):
+                bene_data['employee_primary'] += [
+                    self.get_beneficiary_dict("emp_bene{}".format(num))
+                ]
+            if self.data.get("emp_cont_bene{}_name".format(num)):
+                bene_data['employee_contingent'] += [
+                    self.get_beneficiary_dict("emp_cont_bene{}".format(num))
+                ]
+            if self.data.get("sp_bene{}_name".format(num)):
+                bene_data['spouse_primary'] += [
+                    self.get_beneficiary_dict("sp_bene{}".format(num))
+                ]
+            if self.data.get("sp_cont_bene{}_name".format(num)):
+                bene_data['spouse_contingent'] += [
+                    self.get_beneficiary_dict("sp_cont_bene{}".format(num))
+                ]
+
+        return bene_data
+
+    def get_beneficiary_dict(self, prefix):
+        bd = self.data["%s_birthdate" % prefix]
+        #try:
+        #    bd = dateutil.parser.parse(bd).strftime('%F')
+        #except Exception:
+        #    pass
+
+        bene_dict = dict(
+            name=self.data["%s_name" % prefix],
+            ssn=self.data["%s_ssn" % prefix],
+            relationship=self.data["%s_relationship" % prefix],
+            birthdate=bd,
+            percentage=self.data["%s_percentage" % prefix],
+        )
+
+        return bene_dict
+
+    def has_multiple_beneficiaries(self):
+        """returns True if any of the beneficiaries are not at 100%"""
+        bene_pattern = re.compile('_bene\d+_percentage$')
+
+        for key, value in self.data.iteritems():
+            if bene_pattern.search(key) and value and value.isdigit() and int(value) < 100:
+                return True
+
+        return False
+
 def old_create_envelope_and_get_signing_url(enrollment_data):
     # return is_error(bool), error_message, and redirectURL
     product = product_service.get(enrollment_data['product_data']['id'])
