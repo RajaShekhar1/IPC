@@ -663,8 +663,7 @@ function WizardUI(defaults) {
     });
 
 
-    self.case_riders = ko.observableArray();
-    self.enrollment_riders = ko.observableArray();
+    self.all_riders = ko.observableArray();
 
     self.selected_riders = {
       emp:ko.observableArray(),
@@ -683,10 +682,9 @@ function WizardUI(defaults) {
 
 
     function get_rider_by_code(code) {
-      console.log(code);
-      for(var i = 0; i < self.enrollment_riders().length; i++) {
-        if(code == self.enrollment_riders()[i].code) {
-          return self.enrollment_riders()[i];
+      for(var i = 0; i < self.all_riders().length; i++) {
+        if(code == self.all_riders()[i].code) {
+          return self.all_riders()[i];
         }
       }
     }
@@ -3964,13 +3962,15 @@ function ReplacementPolicy() {
     };
 }
 
-function init_case_riders(riders) {
-  window.ui.selected_riders["emp"](riders.slice());
-  window.ui.selected_riders["sp"](riders.slice());
-  window.ui.case_riders(riders);
-}
-function init_enrollment_riders(riders) {
-  window.ui.enrollment_riders(riders);
+function init_riders(riders) {
+  for(var i = 0; i<riders.length; i++) {
+    var rider = riders[i];
+    if(!rider.enrollment_level) {
+      window.ui.selected_riders["emp"](riders[i]);
+      window.ui.selected_riders["sp"](rider[i]);
+    }
+  }
+  window.ui.all_riders(riders);
 }
 
 var cycleStringify = function(obj) {

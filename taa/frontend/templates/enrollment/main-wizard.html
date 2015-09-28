@@ -506,6 +506,7 @@
         </div>
     <br />
     <br />
+    <div data-bind="if:$root.selected_plan().is_valid()"  >
     <div class="col-sm-3">
       <h5>Riders</h5>
     </div>
@@ -520,18 +521,13 @@
       <div data-bind="visible: employee().name()">
         <div class="form-group col-xs-12 col-sm-1">
           <div class="">
-            <ul class="list-unstyled list-striped js">
-              <!--ko foreach: case_riders -->
-                <li><input type="checkbox" checked=checked disabled=disabled /></li>
+            <ul class="list-unstyled list-striped js" >
+              <!--ko foreach: {data: all_riders, as: 'rider'} -->
+                  <li data-bind="if:rider.enrollment_level" ><input type="checkbox" data-bind="click: $root.toggle_selected_riders(rider.code, 'emp', $element)"/></li>
+                  <li data-bind="if:!rider.enrollment_level"><input type="checkbox" checked=checked disabled=disabled /></li>
                 <!--ko if: $root.should_include_spouse_in_table -->
                   <li><input type="checkbox" checked=checked disabled=disabled /></li>
                 <!--/ko-->
-              <!--/ko-->
-              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
-              <li><input type="checkbox" autocomplete="off" data-bind="click: $root.toggle_selected_riders(rider.code, 'emp', $element)" /></li>
-              <!--ko if: $root.should_include_spouse_in_table-->
-              <li><input type="checkbox" autocomplete="off" data-bind="click: $root.toggle_selected_riders(rider.code, 'sp', $element)" /></li>
-              <!--/ko-->
               <!--/ko-->
             </ul>
           </div>
@@ -539,31 +535,19 @@
         <div class="form-group col-xs-12 col-sm-4">
           <div class="">
             <ul class="list-unstyled list-striped js">
-              <!--ko foreach: {data: case_riders, as: 'rider'} -->
+              <!--ko foreach: {data: all_riders, as: 'rider'} -->
                 <li data-bind="text: rider.name+' for '+$root.employee().name()"></li>
                 <!--ko if: $root.should_include_spouse_in_table-->
                   <li data-bind="text: rider.name+' for '+$root.show_spouse_name()"></li>
                 <!--/ko-->
               <!--/ko-->
-              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
-              <li data-bind="text: rider.name+' for '+$parent.employee().name()"></li>
-              <!--ko if: $root.should_include_spouse_in_table-->
-              <li data-bind="text: rider.name+' for '+$parent.show_spouse_name()"></li>
-              <!--/ko-->
-              <!--/ko-->
             </ul>
           </div>
         </div>
         <div class="form-group col-xs-12 col-sm-4">
           <div class="">
             <ul class="list-unstyled list-striped js">
-              <!--ko foreach: {data: case_riders, as: 'rider'} -->
-              <li data-bind="text: rider.name"></li>
-              <!--ko if: $root.should_include_spouse_in_table-->
-              <li data-bind="text: rider.name"></li>
-              <!--/ko-->
-              <!--/ko-->
-              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
+              <!--ko foreach: {data: all_riders, as: 'rider'} -->
               <li data-bind="text: rider.name"></li>
               <!--ko if: $root.should_include_spouse_in_table-->
               <li data-bind="text: rider.name"></li>
@@ -575,13 +559,7 @@
         <div class="form-group col-xs-12 col-sm-3">
           <div class="">
             <ul class="list-unstyled list-striped js">
-              <!--ko foreach: {data: case_riders, as: 'rider'} -->
-              <li data-bind="text: '$'+$root.riders()['emp'][rider.code]"></li>
-              <!--ko if: $root.should_include_spouse_in_table-->
-              <li data-bind="text: '$'+$root.riders()['sp'][rider.code]"></li>
-              <!--/ko-->
-              <!--/ko-->
-              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->
+              <!--ko foreach: {data: all_riders, as: 'rider'} -->
               <li data-bind="text: '$'+$root.riders()['emp'][rider.code]"></li>
               <!--ko if: $root.should_include_spouse_in_table-->
               <li data-bind="text: '$'+$root.riders()['sp'][rider.code]"></li>
@@ -591,6 +569,7 @@
           </div>
         </div>
       </div>
+    </div>
     </div>
     </div>
 
@@ -2402,8 +2381,7 @@
 
             // rate calculations, recommendations code
             init_rate_form({{ wizard_data|tojson|safe }});
-            init_case_riders({{ case_riders | tojson | safe}})
-            init_enrollment_riders({{ enrollment_riders | tojson | safe}})
+            init_riders({{ case_riders | tojson | safe}})
 
             init_validation();
         });

@@ -440,9 +440,9 @@ class Rider(object):
 
 class RiderService(object):
     default_riders = [
-        Rider("Disability Waiver of Premium", "WP"),
-        Rider("Auto Increase Rider", "AIR"), 
-        Rider("Chronic Illness Rider", "CHR", True) 
+        # Rider("Disability Waiver of Premium", "WP"),
+        Rider("Auto Increase Rider", "AIR", True), 
+        # Rider("Chronic Illness Rider", "CHR", True) 
     ]
 
     def __init__(self):
@@ -465,9 +465,10 @@ class RiderService(object):
         return [{
                 'selected': self.is_rider_selected_for_case(rider, case),
                 'description': rider.name,
-                'code': rider.code
+                'code': rider.code,
+                'enrollment_level': rider.enrollment_level
                 }
-                for rider in self.case_level_riders()
+                for rider in self.default_riders
         ]
 
     def is_rider_selected_for_case(self, rider, case):
@@ -475,7 +476,7 @@ class RiderService(object):
 
     def get_selected_case_riders(self, case):
         return [r
-                for r in self.case_level_riders()
+                for r in self.default_riders
                 if self.is_rider_selected_for_case(r, case)
         ]
 

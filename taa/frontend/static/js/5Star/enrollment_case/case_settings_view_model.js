@@ -457,7 +457,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
       agent_id: self.owner_agent_id(),
       can_partners_download_enrollments: self.can_partners_download_enrollments(),
       is_self_enrollment: self.is_self_enrollment(),
-      riders: self.riders()
+      riders: self.riders(),
     }
   };
 

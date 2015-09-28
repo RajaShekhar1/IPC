@@ -86,7 +86,7 @@ CELERY_ACKS_LATE = True
 
 # Database
 DATABASE_NAME = env_get_text('DATABASE_NAME', 'taa')
-SQLALCHEMY_DATABASE_URI = env_get_text('DATABASE_URL', "postgresql://taa:fQj9lJTFbOQUBYo@localhost/{}".format(DATABASE_NAME))
+SQLALCHEMY_DATABASE_URI = env_get_text('DATABASE_URL', "postgresql://taa:test@localhost/{}".format(DATABASE_NAME))
 SQLALCHEMY_ECHO = env_get_bool('SQLALCHEMY_ECHO', True)
 
 # File uploads
