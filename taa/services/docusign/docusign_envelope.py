@@ -394,6 +394,7 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
 
     # Product code
     productType = enrollment_data['product_type']
+    is_fpp_gov = product.is_fpp_gov
     enrollmentState = enrollment_data['agent_data']['state']
 
     recipName = enrollment_data.get_employee_name()
@@ -582,7 +583,7 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
                     'selected': 'True',
                     # FPPTI or FPPCI
                     'value':
-                        'FPPTI' if productType == 'FPP-Gov' else productType
+                        'FPPTI' if is_fpp_gov else productType
                 }
             ]
         }

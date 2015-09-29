@@ -41,6 +41,7 @@ class Product(ProductJsonSerializable, db.Model):
     name = db.Column(db.String, nullable=False)
     brochure_url = db.Column(db.Unicode(2000))
     brochure_name = db.Column(db.Unicode(256))
+    is_fpp_gov = db.Column(db.Boolean, nullable=False, server_default='FALSE')
 
     # Boolean that controls whether on not this can be enrolled by agents
     visible_to_agents = db.Column(db.Boolean, nullable=False, server_default='True')

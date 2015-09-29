@@ -71,7 +71,19 @@ def init_basic_data():
         ),
         dict(
             code=u"FPP-Gov",
-            name=u"FPP-Gov",
+            name=u"FPP-White",
+            product_type=u"base",
+            visible_to_agents=False,
+        ),
+        dict(
+            code=u"FPPTIB",
+            name=u"FPP-Blue",
+            product_type=u"base",
+            visible_to_agents=False,
+        ),
+        dict(
+            code=u"FPPTIY",
+            name=u"FPP-Gray",
             product_type=u"base",
             visible_to_agents=False,
         ),
