@@ -21,7 +21,7 @@
 
 {% block content %}
 
-    <div class="page-content" 
+    <div class="page-content"
         {# Prevent flash of unstyled content #}
         style="display: none;" data-bind="visible: true">
 
@@ -110,14 +110,14 @@
 		      -->
 
     <h4 class="lighter block green">Initial information required to select a benefit plan</h4>
-    
+
     {# Employee Section #}
     <div>
         <div class="row">
             <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="eeBenefitFName">
                 Employee
-            </label> 
-            
+            </label>
+
             <div class="form-group col-xs-12 col-sm-10">
                 <input type="text" style="width: 45%" id="eeBenefitFName" name="eeBenefitFName"
                        data-bind="value: employee().first" placeholder="First Name" >
@@ -125,7 +125,7 @@
                        data-bind="value: employee().last" placeholder="Last Name">
             </div>
         </div>
-        
+
         <div class="row">
             <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
                 <label style="margin-right: 1em;" for="eeDOB">
@@ -136,9 +136,9 @@
                        data-bind="value: employee().birthdate" type="text" id="eeDOB"
                        placeholder="DD/MM/YYYY">
             </div>
-            
+
             <div class="col-xs-12 visible-xs">&nbsp;</div>
-            
+
             <div class="form-group col-xs-12 col-sm-4">
                 <div class="">
                         <label style="margin-right: 3em;">
@@ -147,18 +147,18 @@
                         </label>
 
                         <label>
-                            <input type="checkbox" class="ace" data-bind="checked: should_include_children"> 
+                            <input type="checkbox" class="ace" data-bind="checked: should_include_children">
                             <span class="lbl padding-8 include_children">Include Children</span>
                         </label>
                 </div>
             </div>
 
         </div>
-        
+
         <div data-bind="template: {name: 'extended-questions-template', data: employee}"></div>
     </div>
-    
-    
+
+
     {# Spouse Section #}
     <div data-bind="slideDownIf: should_show_spouse">
         <div class="row">
@@ -173,9 +173,9 @@
                        data-bind="value: spouse().last" placeholder="Last Name">
             </div>
         </div>
-        
+
         <div class="row">
-            
+
             <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
                 <label style="margin-right: 1em;" for="spDOB">
                     Date of Birth
@@ -185,13 +185,13 @@
                        data-bind="value: spouse().birthdate" type="text" id="spDOB"
                        placeholder="DD/MM/YYYY">
             </div>
-            
+
         </div>
-        
+
         <div data-bind="template: {name: 'extended-questions-template', data: spouse}"></div>
     </div>
 
-    
+
     <!-- template for extended questions -->
     <script type="text/html" id="extended-questions-template">
         <!--ko if: $root.should_show_extended_questions() -->
@@ -244,7 +244,7 @@
         </div>
         <!--/ko-->
     </script>
-    
+
 
     <div data-bind="slideDownIf: should_include_children">
         <!--ko foreach: {data: children, afterAdd: rendered_child, beforeRemove: removing_child} -->
@@ -254,12 +254,12 @@
                         data-bind="attr: {for: 'child-first-'+$index()}">
                         Child <span data-bind="text: $index() + 1"></span>
                     </label>
-                    
+
                     <div class="form-group col-xs-12 col-sm-10">
                         <input type="text"  style="width: 45%" class="child_first"
                            data-bind="value: first, attr: {id: 'child-first-'+$index()}"
                            placeholder="First Name"/>
-                
+
                         <input type="text"  style="width: 45%" class="child_last" data-bind="value: last"
                                placeholder="Last Name"/>
 
@@ -270,22 +270,22 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
                         <label style="margin-right: 1em;" data-bind="attr: {for: 'child-dob-'+$index()}">
                             Date of Birth
                         </label>
-                        
+
                         <input class="input-mask-date child_birthdate" data-bind="
-                            value: birthdate, 
+                            value: birthdate,
                             event: {change: $root.update_rate_table},
                             attr: {id: 'child-dob-'+$index()}
                             " type="text" placeholder="DD/MM/YYYY">
                     </div>
-                    
+
                 </div>
-            </div>    
+            </div>
         <!--/ko-->
 
         <div class="row" id="addChildBtn">
@@ -324,18 +324,18 @@
     {# Rates/Recommended Coverage and Selected Plan Table #}
     <div class="center recommended-coverage-table" data-bind="slideDownIf: is_recommended_table_visible,
             css: {'ci-recommendations': insurance_product.has_critical_illness_coverages}">
-        
-        <h3 class="header smaller red">Recommended Coverage 
-            
+
+        <h3 class="header smaller red">Recommended Coverage
+
         </h3>
         <div class="center">
             <div data-bind="visible: is_rate_table_loading">
-                <i class="icon-spinner icon-spin grey bigger-125"></i>   
+                <i class="icon-spinner icon-spin grey bigger-125"></i>
                 Loading Rates and Recommended Coverages...
                 <br>
             </div>
-        </div>        
-        
+        </div>
+
         <div class="row" data-bind="visible: !is_rate_table_loading()">
             <div class="col-xs-4 col-sm-3 pricing-span-header">
                 <div class="widget-box transparent">
@@ -501,12 +501,12 @@
                         </div>
                     </div>
                 </div>
-                
-                
+
+
             </div>
         </div>
     </div>
-    
+
     <div class="row">
         <div class="col-xs-12 text-center red" data-bind="if: can_decline">
             <div class="decline-option">
@@ -514,8 +514,8 @@
             </div>
         </div>
     </div>
-    
-    
+
+
     <div id="benefit_required" class="error pull-right" data-bind="visible: is_selection_error_visible">
         You must select a benefit option before advancing.
     </div>
@@ -527,15 +527,15 @@
     {# Payment Estimate Banner #}
     <script type="text/html" id="recommendations_template">
         <ul class="list-unstyled list-striped pricing-table">
-            <li data-bind="template: {name: employee_recommendation().is_valid() ? 'recommendation_template' : 'blank_template', 
+            <li data-bind="template: {name: employee_recommendation().is_valid() ? 'recommendation_template' : 'blank_template',
                                     data: employee_recommendation}">
             </li>
             <!--ko if: $root.should_include_spouse_in_table-->
-            <li data-bind="template: {name: spouse_recommendation().is_valid() ? 'recommendation_template' : 'blank_template', 
+            <li data-bind="template: {name: spouse_recommendation().is_valid() ? 'recommendation_template' : 'blank_template',
                             data: spouse_recommendation}"></li>
             <!--/ko-->
             <!--ko if: $root.should_include_children_in_table-->
-            <li data-bind="template: {name: children_recommendation().is_valid()? 'recommendation_template': 'blank_template', 
+            <li data-bind="template: {name: children_recommendation().is_valid()? 'recommendation_template': 'blank_template',
                             data: children_recommendation}"></li>
             <!--/ko-->
 
@@ -563,7 +563,7 @@
         <div class="step-pane" id="step2">
             <div data-bind="visible: should_show_other_insurance_questions">
                 <h3 class="lighter block green">Other Insurance</h3>
-    
+
                 <div class="row form-group">
                     <div class="col-xs-12 col-sm-9">
                         <span class="bigger-120">Does anyone on this application have any existing life insurance or annuity contracts?</span><br>
@@ -573,16 +573,16 @@
                     </div>
                     <div class="col-xs-12 col-sm-3 btn-group no-padding-right">
                         <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                            question: new GlobalSOHQuestion('existing_insurance'), 
-                            val: 'Yes', 
+                            question: new GlobalSOHQuestion('existing_insurance'),
+                            val: 'Yes',
                             highlight: $root.get_has_existing_question_highlight(),
                             onclick: $root.select_has_existing_insurance
                             }">
                             Yes
                         </button>
                         <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                            question: new GlobalSOHQuestion('existing_insurance'), 
-                            val: 'No', 
+                            question: new GlobalSOHQuestion('existing_insurance'),
+                            val: 'No',
                             highlight: 'checkmark',
                             onclick: window.reset_existing_insurance_warning
                             }">
@@ -590,7 +590,7 @@
                         </button>
                     </div>
                 </div>
-    
+
                 <div class="row form-group">
                     <div class="col-xs-12 col-sm-9">
                         <span class="bigger-120">Will the coverage applied for replace any existing life insurance or annuities?</span><br>
@@ -599,16 +599,16 @@
                     </div>
                     <div class="col-xs-12 col-sm-3 btn-group no-padding-right" data-toggle="buttons">
                         <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                            question: new GlobalSOHQuestion('replace_insurance'), 
-                            val: 'Yes', 
+                            question: new GlobalSOHQuestion('replace_insurance'),
+                            val: 'Yes',
                             highlight: $root.get_replacing_question_highlight(),
                             onclick: $root.select_replacing_insurance
                             }">
                             Yes
                         </button>
                         <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                            question: new GlobalSOHQuestion('replace_insurance'), 
-                            val: 'No', 
+                            question: new GlobalSOHQuestion('replace_insurance'),
+                            val: 'No',
                             highlight: 'checkmark',
                             onclick: window.reset_replacement_insurance_warning
                             }">
@@ -616,7 +616,7 @@
                         </button>
                     </div>
                 </div>
-            
+
             </div>
 
             <div data-bind="slideDownIf: should_show_NAIC_replacement_notice">
@@ -626,7 +626,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <br>
 
             <div data-bind="slideDownIf: should_show_replacement_form">
@@ -737,13 +737,13 @@
                 <h3 class="lighter block green">Please answer each question below</h3>
 
                 <div class="hidden-xs hidden-sm" data-bind="with: selected_plan">
-    
+
                     <div class="row">
                         <div class="col-sm-6">
                         </div>
                         <div class="col-sm-6">
                             <div class="row">
-                                
+
                                 <div class="col-sm-3 text-center" data-bind="if: $root.did_select_employee_coverage">
                                     <span data-bind="text: $root.employee().name"></span>
                                 </div>
@@ -758,7 +758,7 @@
                             </div>
                         </div>
                     </div>
-    
+
                     <table class="table table-striped">
                         <tbody>
                     <!--ko if: $root.insurance_product.is_fpp_product()-->
@@ -901,9 +901,9 @@
                         </tbody>
                     </table>
                 </div>
-                
+
                 <div class="visible-xs visible-sm" data-bind="with: selected_plan">
-    
+
                     <table class="table table-striped" >
                         <tbody>
                             <!--ko if: $root.insurance_product.is_fpp_product()-->
@@ -953,16 +953,16 @@
                                         <div class="col-xs-12 col-sm-6" data-bind="html: get_question_text()">
                                         </div>
                                         <div class="col-xs-12 col-sm-6">
-                                            
+
                                             <!--ko if: does_employee_need_to_answer-->
                                             <div class="person-answer-small row">
                                                 <div class="col-xs-3 col-xs-offset-2" data-bind="text: $root.employee().name()"></div>
                                                 <div class="col-xs-7 btn-group" data-toggle="buttons">
                                                     <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                          question: $data, 
+                                                          question: $data,
                                                           applicant: $root.employee(),
                                                           is_required: does_employee_need_to_answer,
-                                                          val: 'Yes', 
+                                                          val: 'Yes',
                                                           highlight: $data.get_yes_highlight(),
                                                           onclick: show_yes_dialogue_employee
                                                           }">
@@ -972,7 +972,7 @@
                                                           question: $data,
                                                           applicant: $root.employee(),
                                                           is_required: does_employee_need_to_answer,
-                                                          val: 'No', 
+                                                          val: 'No',
                                                           highlight: 'checkmark'
                                                           }">
                                                         No
@@ -985,10 +985,10 @@
                                                 <div class="col-xs-3 col-xs-offset-2" data-bind="text: $root.spouse().name()"></div>
                                                 <div class="col-xs-7 btn-group" data-toggle="buttons">
                                                     <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                          question: $data, 
+                                                          question: $data,
                                                           applicant: $root.spouse(),
                                                           is_required: does_spouse_need_to_answer,
-                                                          val: 'Yes', 
+                                                          val: 'Yes',
                                                           highlight: $data.get_yes_highlight(),
                                                           onclick: show_yes_dialogue_spouse
                                                           }">
@@ -998,7 +998,7 @@
                                                           question: $data,
                                                           applicant: $root.spouse(),
                                                           is_required: does_spouse_need_to_answer,
-                                                          val: 'No', 
+                                                          val: 'No',
                                                           highlight: 'checkmark'
                                                           }">
                                                         No
@@ -1006,17 +1006,17 @@
                                                 </div>
                                             </div>
                                             <!--/ko-->
-                                            
+
                                             <!--ko foreach: {data: $parent.get_covered_children, as: 'child'} -->
                                                 <!--ko if: $parent.does_child_need_to_answer(child) -->
                                                     <div class="person-answer-small row">
                                                         <div class="col-xs-3 col-xs-offset-2" data-bind="text: name"></div>
                                                         <div class="col-xs-7 btn-group" data-toggle="buttons">
                                                             <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                                  question: $parentContext.$data, 
+                                                                  question: $parentContext.$data,
                                                                   applicant: $data,
                                                                   is_required: function() {return $parent.does_child_need_to_answer(child)},
-                                                                  val: 'Yes', 
+                                                                  val: 'Yes',
                                                                   highlight: 'stop',
                                                                   onclick: function() {$parent.show_yes_dialogue_child(child)}
                                                                   }">
@@ -1026,7 +1026,7 @@
                                                                   question: $parentContext.$data,
                                                                   applicant: $data,
                                                                   is_required: $parent.does_child_need_to_answer(child),
-                                                                  val: 'No', 
+                                                                  val: 'No',
                                                                   highlight: 'checkmark'
                                                                   }">
                                                                 No
@@ -1035,8 +1035,8 @@
                                                     </div>
                                                 <!--/ko-->
                                             <!--/ko-->
-                                            
-                                            
+
+
                                         </div>
                                     </div>
                                 </td>
@@ -1045,8 +1045,8 @@
                         </tbody>
                     </table>
                 </div>
-                
-                
+
+
             </div>
             <div id="health_questions_error" class="error has-error pull-right"></div>
         </div>
@@ -1479,13 +1479,13 @@
 
                             <div class="col-xs-12 col-sm-10">
                                 <label class="blue">
-                                    <input value="male" type="radio" class="inline ace" data-bind="checked: gender, 
+                                    <input value="male" type="radio" class="inline ace" data-bind="checked: gender,
 										  attr: {name: 'child-gender-'+$index()}"/>
                                     <span class="lbl"> Male &nbsp;&nbsp;&nbsp; </span>
                                 </label>
 
                                 <label class="blue">
-                                    <input value="female" type="radio" class="inline ace" data-bind="checked: gender, 
+                                    <input value="female" type="radio" class="inline ace" data-bind="checked: gender,
 										  attr: {name: 'child-gender-'+$index()}"/>
                                     <span class="lbl"> Female</span>
                                 </label>
@@ -1497,7 +1497,7 @@
                 </ul>
 
                 <div class="space-2"></div>
-	    
+
 	     <span class="text-primary bigger-110 ">
 	       <i class="icon-info-sign"></i>
 	       Employee will be the Owner of any child policy(ies)
@@ -1515,7 +1515,7 @@
     <form class="" id="step5-form">
 
         <div class="step-pane" id="step5">
-            
+
             <div data-bind="visible: insurance_product.should_show_step_5()">
 
                 <div id="eeBeneficiaryBlock" data-bind="visible: did_select_employee_coverage()">
@@ -1531,23 +1531,23 @@
                             </span>
                             Beneficiary of Employee Coverage is
                         </label>
-    
+
                         <div class="col-xs-12 col-sm-7">
                             <label class="blue">
                                 <input name="eeBeneficiary" id="eeBeneSpouse" value="spouse" type="radio" class="inline ace"
                                        data-bind="checked: employee_beneficiary_type"/>
                                 <span class="lbl"> Spouse (<span data-bind="text: spouse().first"></span>)&nbsp;&nbsp;&nbsp; </span>
                             </label>
-    
+
                             <label class="blue">
                                 <input name="eeBeneficiary" id="eeBeneOther" value="other" type="radio" class="inline ace"
                                        data-bind="checked: employee_beneficiary_type"/>
                                 <span class="lbl"> Someone else</span>
                             </label>
                         </div>
-    
+
                     </div>
-    
+
                     <div id="eeBeneficiaryOther"
                          data-bind="visible: !should_include_spouse_in_table() || employee_beneficiary_type() == 'other'">
                         <div class="row">
@@ -1555,7 +1555,7 @@
                                 <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherName">
                                     Beneficiary
                                 </label>
-    
+
                                 <div class="col-xs-12 col-sm-9 form-group">
                                     <input type="text" id="eeBeneOtherName" name="eeBeneOtherName" placeholder="Full Name"
                                            data-bind="value: employee_other_beneficiary().name"/>
@@ -1566,31 +1566,31 @@
                                 <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherRelation">
                                     Relationship
                                 </label>
-    
+
                                 <div class="col-xs-12 col-sm-9 form-group">
                                     <input type="text" id="eeBeneOtherRelation" name="eeBeneOtherRelation"
                                            placeholder="Relationship" data-bind="value: employee_other_beneficiary().relationship"/>
                                 </div>
                             </div>
                         </div>
-    
+
                         <div class="row">
                             <div class="col-sm-12 col-md-6 form-group">
                                 <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherSSN">
                                     SSN
                                 </label>
-    
+
                                 <div class="col-xs-10 col-sm-9 form-group">
                                     <input type="text" id="eeBeneOtherSSN" name="eeBeneOtherSSN" class="input-mask-ssn"
                                            data-bind="value: employee_other_beneficiary().ssn"/>
                                 </div>
                             </div>
-    
+
                             <div class="col-sm-12 col-md-6 form-group">
                                 <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherDOB">
                                     DOB
                                 </label>
-    
+
                                 <div class="col-xs-10 col-sm-9 form-group">
                                     <input class="input-mask-date" name="eeBeneOtherDOB"
                                            data-bind="value: employee_other_beneficiary().date_of_birth"
@@ -1714,7 +1714,7 @@
                     <h3 class="lighter block green">
                         Spouse Beneficiary
                     </h3>
-    
+
                     <div class="row form-group">
                         <label class="control-label col-xs-12 col-sm-5 no-padding-right">
                             <span data-bind="visible: insurance_product.should_show_contingent_beneficiary()">
@@ -1722,14 +1722,14 @@
                             </span>
                             Beneficiary of Spouse Coverage is
                         </label>
-    
+
                         <div class="col-xs-12 col-sm-7">
                             <label class="blue">
                                 <input name="spBeneficiary" id="spBeneSpouse" value="spouse" type="radio"
                                        class="inline ace" checked="" data-bind="checked: spouse_beneficiary_type"/>
                                 <span class="lbl"> Employee (<span data-bind="text: employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
                             </label>
-    
+
                             <label class="blue">
                                 <input name="spBeneficiary" id="spBeneOther" value="other" type="radio" class="inline ace"
                                        data-bind="checked: spouse_beneficiary_type"/>
@@ -1745,32 +1745,32 @@
                                 <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherName">
                                     Beneficiary
                                 </label>
-    
+
                                 <div class="col-xs-12 col-sm-9 form-group">
                                     <input type="text" id="spBeneOtherName" name="spBeneOtherName" placeholder="Full Name"
                                            data-bind="value: spouse_other_beneficiary().name"/>
                                 </div>
                             </div>
-    
-    
+
+
                             <div class="col-sm-12 col-md-6">
                                 <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherRelation">
                                     Relationship
                                 </label>
-    
+
                                 <div class="col-xs-12 col-sm-9 form-group">
                                     <input type="text" id="spBeneOtherRelation" name="spBeneOtherRelation"
                                            placeholder="Relationship" data-bind="value: spouse_other_beneficiary().relationship"/>
                                 </div>
                             </div>
                         </div>
-    
+
                         <div class="row">
                             <div class="col-sm-12 col-md-6 form-group">
                                 <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherSSN">
                                     SSN
                                 </label>
-    
+
                                 <div class="col-xs-10 col-sm-9">
                                     <input type="text" id="spBeneOtherSSN" name="spBeneOtherSSN" class="input-mask-ssn"
                                            data-bind="value: spouse_other_beneficiary().ssn"/>
@@ -1781,7 +1781,7 @@
                                 <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherDOB">
                                     DOB
                                 </label>
-    
+
                                 <div class="col-xs-10 col-sm-9">
                                     <input class="input-mask-date" name="spBeneOtherDOB"
                                            data-bind="value: spouse_other_beneficiary().date_of_birth"
@@ -1910,7 +1910,7 @@
                     Spouse cannot be both primary and contingent beneficiary.
                 </div>
             </div>
-            
+
             <div data-bind="visible: !insurance_product.should_show_step_5()">
                 <h4 class="green center">
                     This step does not apply for this product.
@@ -2103,9 +2103,9 @@
     <hr/>
     <div class="row-fluid wizard-actions">
         <button class="btn btn-default btn-xs pull-left" data-bind="click: exit_application, visible: is_in_person_application">
-            Cancel 
+            Cancel
         </button>
-        
+
         <button class="btn btn-prev">
             <i class="icon-arrow-left"></i>
             Prev
@@ -2176,14 +2176,15 @@
 
                 <div class="modal-body">
                 {% set base_product_code = wizard_data['products'][0].get_base_product_code() %}
+                {% set is_fpp_gov = wizard_data['products'][0].is_fpp_gov %}
                     <iframe src="{%
-        if base_product_code=='FPPTI' or base_product_code == 'FPP-Gov' %}
+        if base_product_code=='FPPTI' or is_fpp_gov %}
 	       {% if wizard_data['state']=='TX' %}
 	         {{ url_for ('FPPTI_disclosure_TX') }}
 	       {% elif wizard_data['state']=='KS' %}
 	         {{ url_for ('FPPTI_disclosure_KS') }}
 	       {% elif wizard_data['state']=='VA' %}
-	         {{ url_for ('FPPTI_disclosure_VA') }}	    
+	         {{ url_for ('FPPTI_disclosure_VA') }}
 	       {% elif wizard_data['state']=='OR' %}
 	         {{ url_for ('FPPTI_disclosure_OR') }}
 	       {% else %}
@@ -2193,7 +2194,7 @@
 	       {% if wizard_data['state']=='KS' %}
 	         {{ url_for ('FPPCI_disclosure_KS') }}
 	       {% elif wizard_data['state']=='VA' %}
-	         {{ url_for ('FPPCI_disclosure_VA') }}	    
+	         {{ url_for ('FPPCI_disclosure_VA') }}
 	       {% elif wizard_data['state']=='OR' %}
 	         {{ url_for ('FPPCI_disclosure_OR') }}
 	       {% else %}
@@ -2236,7 +2237,7 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                     <h4 class="modal-title">
-	  
+
                   <span id="modal_text_existing_warning_title" style="display: none;">
                     Existing Insurance Notice</span>
                   <span id="modal_text_replacement_title" style="display: none;">

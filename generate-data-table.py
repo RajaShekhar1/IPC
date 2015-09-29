@@ -34,14 +34,16 @@ FPPCI:
         python generate-data-table.py premium 52/12 0 taa/services/products/data_files/FPPCI-bypremium.csv \
                 taa/services/products/data_files/FPPCI-bypremium-monthly.csv
 
-FPP-Gov:
+FPP-White (FPP-Gov), FPP-Blue, FPP-Gray:
     By face:
-        python generate-data-table.py coverage 2 2 taa/services/products/data_files/FPPGOV-byface.csv \
-                taa/services/products/data_files/FPPGOV-byface-biweekly.csv
-        python generate-data-table.py coverage 52/24 2 taa/services/products/data_files/FPPGOV-byface.csv \
-                taa/services/products/data_files/FPPGOV-byface-semimonthly.csv
-        python generate-data-table.py coverage 52/12 2 taa/services/products/data_files/FPPGOV-byface.csv \
-                taa/services/products/data_files/FPPGOV-byface-monthly.csv
+        for COLOR in 'FPPGOV' 'FPPTIY' 'FPPTIB'; do
+            python generate-data-table.py coverage 2 2 taa/services/products/data_files/$COLOR-byface.csv \
+                    taa/services/products/data_files/$COLOR-byface-biweekly.csv
+            python generate-data-table.py coverage 52/24 2 taa/services/products/data_files/$COLOR-byface.csv \
+                    taa/services/products/data_files/$COLOR-byface-semimonthly.csv
+            python generate-data-table.py coverage 52/12 2 taa/services/products/data_files/$COLOR-byface.csv \
+                    taa/services/products/data_files/$COLOR-byface-monthly.csv
+        done
 
 FPPTI:
     By face:
