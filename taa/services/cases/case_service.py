@@ -351,6 +351,8 @@ class CaseService(DBService):
     def delete_case(self, case):
         from taa.services.agents import AgentService
         from taa.services.enrollments import EnrollmentApplicationService
+        from taa.services.enrollments import SelfEnrollmentEmailService
+        emails_service = SelfEnrollmentEmailService()
         enrollments_service = EnrollmentApplicationService()
         agent_service = AgentService()
 
@@ -363,6 +365,10 @@ class CaseService(DBService):
             self.delete_census_record(record)
 
         self.enrollment_periods.remove_all_for_case(case)
+
+        # remove all email batch records
+        emails_service.delete_batches_for_case(case)
+
         return self.delete(case)
 
     def does_case_have_enrollments(self, case):
