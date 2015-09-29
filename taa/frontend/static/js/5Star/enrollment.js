@@ -19,7 +19,8 @@ if (typeof Object.create != 'function') {
     })();
 }
 
-function init_rate_form(data) {
+function init_rate_form(data, rider_data) {
+    data.riders = rider_data;
 
     var ui = new WizardUI(data);
     
@@ -657,90 +658,105 @@ function WizardUI(defaults) {
         }
     });
 
-    self.riders = ko.observable({
+
+    // Available riders not tied to applicant.
+    self.all_riders = ko.observableArray(defaults.riders);
+
+    // ViewModel for a rider option on the wizard.
+    function ApplicantRiderOptionVM(root, rider, applicant) {
+        var self = this;
+        self.root = root;
+        self.rider = rider;
+        self.applicant = applicant;
+
+        self.is_selected = ko.observable(false);
+
+        self.is_visible = ko.computed(function() {
+            return self.applicant.has_selected_valid_coverage();
+        });
+
+        self.format_rider_name = function() {
+            return self.rider.name;
+        };
+
+        self.format_applicant_name = function() {
+            return self.applicant.name();
+        };
+
+        self.has_rider_modal = function() {
+            return (self.rider.code === "AIR");
+        };
+
+        self.show_rider_info = function() {
+            // TODO: show rider popup modal info
+            alert("Clicked rider "+ self.rider.code + " for " + self.applicant.name());
+        };
+
+        self.format_premium = function() {
+            if (self.rider.code === "AIR") {
+                return "No initial premium charge";
+            } else {
+                // TODO: lookup rider rate in table.
+                return "$TODO";
+            }
+        };
+
+    }
+
+    // Build the rider viewmodels
+    self.rider_options = [];
+    _.each([self.employee(), self.spouse()], function(applicant) {
+        _.each(self.all_riders(), function(rider) {
+            var vm = new ApplicantRiderOptionVM(self, rider, applicant);
+            self.rider_options.push(vm);
+        });
+    });
+
+    self.visible_rider_options = ko.computed(function() {
+        return _.select(self.rider_options, function(option) {return option.is_visible()});
+    });
+
+    // Currently selected riders. Only Employee and spouse can have riders.
+    self.selected_riders = ko.computed(function() {
+        var selected_emp_riders = _.select(self.visible_rider_options(), function(option) {
+           return option.applicant === self.employee() && option.is_selected();
+        });
+
+        var selected_sp_riders = _.select(self.visible_rider_options(), function(option) {
+           return option.applicant === self.spouse() && option.is_selected() ;
+        });
+
+        return {
+            emp: _.pluck(selected_emp_riders, 'rider'),
+            sp: _.pluck(selected_sp_riders, 'rider')
+        };
+    });
+
+    self.selected_riders.serialize_data = ko.computed(function () {
+        return {
+            emp: self.selected_riders().emp,
+            sp: self.selected_riders().sp
+        };
+    });
+
+    self.get_selected_riders = function(person) {
+      if (person.applicant_type === "employee") {
+        return self.selected_riders().emp;
+      } else if (person.applicant_type === "spouse") {
+        return self.selected_riders().sp;
+      } 
+      return [];
+    };
+
+
+    // Rider rates are filled in when the rate lookup is performed for product rates lookup.
+    // Note: not used as of Oct 1st since group riders are not enabled yet.
+    self.rider_rates = ko.observable({
       emp: [],
       sp: []
     });
 
 
-    self.all_riders = ko.observableArray();
-
-    self.selected_riders = {
-      emp:ko.observableArray(),
-      sp:ko.observableArray()
-    };
-
-    self.selected_riders.serialize_data = (function() {
-        var selected = self.selected_riders;
-        return ko.computed(function() {
-          return {
-            emp: selected.emp(),
-            sp: selected.sp(),
-          }
-        });
-      })();
-
-
-    function get_rider_by_code(code) {
-      for(var i = 0; i < self.all_riders().length; i++) {
-        if(code == self.all_riders()[i].code) {
-          return self.all_riders()[i];
-        }
-      }
-    }
-
-    self.current_person = ko.observable();
-
-    self.get_selected_riders = function(person) {
-      self.current_person(person);
-      if(person.applicant_type) {
-        person = person.applicant_type;
-      }
-      if(!person) { 
-        return [];
-      }
-      if(person==="employee") {
-        return self.selected_riders['emp']();
-      } else if(person==="spouse") {
-        return self.selected_riders['sp']();
-      } 
-      return [];
-    };
-
-    self.is_rider_checked = function(rider_code, prefix) {
-      if(!rider_code || !prefix) {
-        return;
-      }
-      var rider = get_rider_by_code(rider_code);
-      if(!rider) {
-        return;
-      }
-      var per_person_riders = self.selected_riders[prefix]();
-      var rider_index = per_person_riders.indexOf(rider);
-      return rider_index === -1;
-    } 
-
-    self.toggle_selected_riders = function(rider_code, prefix, element) {
-      if(!$(element).is(":checked") && self.is_rider_checked(rider_code, prefix)) {
-        return;
-      }
-      if(!rider_code || !prefix) {
-        return;
-      }
-      var rider = get_rider_by_code(rider_code);
-      if(!rider) {
-        return;
-      }
-      var per_person_riders = self.selected_riders[prefix]();
-      var rider_index = per_person_riders.indexOf(rider);
-      if(rider_index === -1) {
-        per_person_riders.push(rider);
-      } else {
-        per_person_riders.splice(rider_index, 1);
-      }
-      self.selected_riders[prefix](per_person_riders);
-    }
-    
     self.show_updated_rates = function(resp) {
         var data = resp.data;
         self.insurance_product.parse_benefit_options('employee', self.employee(), data.employee_rates);
@@ -755,7 +771,7 @@ function WizardUI(defaults) {
             self.recommendations.best.set_recommendations(data.recommendations['best']);
         }
 
-        self.riders({
+        self.rider_rates({
           emp: data.emp_rider_rates,
           sp: data.sp_rider_rates
         });
@@ -2319,6 +2335,10 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
         }
         throw "Bad applicant type for applicant: "+self.applicant_type;
     });
+
+    self.has_selected_valid_coverage = ko.computed(function() {
+        return self.selected_coverage().is_valid();
+    });
     
     self.display_selected_coverage = ko.computed(function() {
         return self.selected_coverage().format_face_value();
@@ -2334,12 +2354,12 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
       }
       var rider_amount = 0;
       if(person==="employee") {
-        rider_amount = window.ui.riders()['emp'][rider_code];
+        rider_amount = window.ui.rider_rates()['emp'][rider_code];
       } else if(person==="spouse") {
-        rider_amount = window.ui.riders()['sp'][rider_code];
+        rider_amount = window.ui.rider_rates()['sp'][rider_code];
       } 
       return "$"+rider_amount.toFixed(2);
-    }
+    };
 
     self.get_existing_coverage_amount_for_product = function(product_id) {
         return parseFloat(self.get_existing_coverage_amount_by_product()[product_id]);
@@ -2618,7 +2638,7 @@ function BenefitsPackage(root, name) {
         return self.did_select_spouse_coverage();
       }
       return false;
-    }
+    };
 
     self.get_total_riders = ko.computed(function() {
         total_rider_amount = 0;
@@ -2631,7 +2651,7 @@ function BenefitsPackage(root, name) {
             }
             var riders = window.ui.get_selected_riders(people[j]);
             for(var i=0; i<riders.length; i++) {
-              total_rider_amount += window.ui.riders()[people_short[j]][riders[i].code];
+              total_rider_amount += window.ui.rider_rates()[people_short[j]][riders[i].code];
             }
           }
         }
@@ -3962,16 +3982,17 @@ function ReplacementPolicy() {
     };
 }
 
-function init_riders(riders) {
-  for(var i = 0; i<riders.length; i++) {
-    var rider = riders[i];
-    if(!rider.enrollment_level) {
-      window.ui.selected_riders["emp"](riders[i]);
-      window.ui.selected_riders["sp"](riders[i]);
-    }
-  }
-  window.ui.all_riders(riders);
-}
+// This code was adding group riders to the auto-selected riders. Will need this functionality when we add them back in.
+//
+//function init_riders(riders) {
+//  for(var i = 0; i<riders.length; i++) {
+//    var rider = riders[i];
+//    if (!rider.enrollment_level) {
+//      window.ui.selected_riders["emp"](riders[i]);
+//      window.ui.selected_riders["sp"](riders[i]);
+//    }
+//  }
+//}
 
 var cycleStringify = function(obj) {
   seen = [];

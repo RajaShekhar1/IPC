@@ -488,12 +488,12 @@ class RiderService(object):
     def get_rider_rates(self, payment_mode):        
         emp_rider_rates = dict(
             WP=10*int(payment_mode)/52,
-            AIR=6*int(payment_mode)/52,
+            AIR=0*int(payment_mode)/52,
             CHR=5*int(payment_mode)/52
             )
         sp_rider_rates = dict(
             WP=10*int(payment_mode)/52,
-            AIR=6*int(payment_mode)/52,
+            AIR=0*int(payment_mode)/52,
             CHR=5*int(payment_mode)/52
             )
         return dict(emp=emp_rider_rates, sp=sp_rider_rates)

@@ -506,72 +506,41 @@
         </div>
     <br />
     <br />
-    <div data-bind="if:$root.selected_plan().is_valid()"  >
-    <div class="col-sm-3">
-      <h5>Riders</h5>
-    </div>
-    <div class="row col-sm-9">
-      {# Riders #}
-      <div class="col-sm-12">
-        <div class="form-group col-xs-12 col-sm-1"></div>
-        <div class="form-group col-xs-12 col-sm-4"><strong>Rider Name</strong></div>
-        <div class="form-group col-xs-12 col-sm-4"><strong>Description</strong></div>
-        <div class="form-group col-xs-12 col-sm-3"><strong>Amount</strong></div>
+
+    {# Riders Selection #}
+    <div class="row" data-bind="if: visible_rider_options().length > 0"  >
+
+      <div class="col-sm-3">
+        <h5>Riders</h5>
       </div>
-      <div data-bind="visible: employee().name()">
-        <div class="form-group col-xs-12 col-sm-1">
-          <div class="">
-            <ul class="list-unstyled list-striped js" >
-              <!--ko foreach: {data: all_riders, as: 'rider'} -->
-                  <li data-bind="if:rider.enrollment_level" ><input type="checkbox" data-bind="click: $root.toggle_selected_riders(rider.code, 'emp', $element)"/></li>
-                  <li data-bind="if:!rider.enrollment_level"><input type="checkbox" checked=checked disabled=disabled /></li>
-                <!--ko if: $root.should_include_spouse_in_table -->
-                  <li data-bind="if:rider.enrollment_level" ><input type="checkbox" data-bind="click: $root.toggle_selected_riders(rider.code, 'sp', $element)"/></li>
-                  <li data-bind="if:!rider.enrollment_level"><input type="checkbox" checked=checked disabled=disabled /></li>
-                <!--/ko-->
-              <!--/ko-->
-            </ul>
-          </div>
-        </div>
-        <div class="form-group col-xs-12 col-sm-4">
-          <div class="">
-            <ul class="list-unstyled list-striped js">
-              <!--ko foreach: {data: all_riders, as: 'rider'} -->
-                <li data-bind="text: rider.name+' for '+$root.employee().name()"></li>
-                <!--ko if: $root.should_include_spouse_in_table-->
-                  <li data-bind="text: rider.name+' for '+$root.show_spouse_name()"></li>
-                <!--/ko-->
-              <!--/ko-->
-            </ul>
-          </div>
-        </div>
-        <div class="form-group col-xs-12 col-sm-4">
-          <div class="">
-            <ul class="list-unstyled list-striped js">
-              <!--ko foreach: {data: all_riders, as: 'rider'} -->
-              <li data-bind="text: rider.name"></li>
-              <!--ko if: $root.should_include_spouse_in_table-->
-              <li data-bind="text: rider.name"></li>
-              <!--/ko-->
-              <!--/ko-->
-            </ul>
-          </div>
-        </div>
-        <div class="form-group col-xs-12 col-sm-3">
-          <div class="">
-            <ul class="list-unstyled list-striped js">
-              <!--ko foreach: {data: all_riders, as: 'rider'} -->
-              <li data-bind="text: '$'+$root.riders()['emp'][rider.code]"></li>
-              <!--ko if: $root.should_include_spouse_in_table-->
-              <li data-bind="text: '$'+$root.riders()['sp'][rider.code]"></li>
-              <!--/ko-->
-              <!--/ko-->
-            </ul>
-          </div>
-        </div>
+      <div class="row col-sm-9">
+
+        <table class="table table-striped table-bordered">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Rider</th>
+              <th>Premium</th>
+            </tr>
+          </thead>
+          <tbody data-bind="foreach: visible_rider_options">
+            <tr>
+              <td><input type="checkbox" data-bind="checked: is_selected"></td>
+              <td>
+                <span data-bind="if: has_rider_modal">
+                  <a data-bind="click: show_rider_info, html: format_rider_name()"></a>
+                </span>
+                <span data-bind="if: !has_rider_modal()">
+                  <span data-bind="html: format_rider_name()"></span>
+                </span>
+                 for
+                <span data-bind='text: format_applicant_name()'></span>
+              </td>
+              <td data-bind="html: format_premium()"></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </div>
-    </div>
     </div>
 
     <div class="row">
@@ -587,7 +556,7 @@
         You must select a benefit option before advancing.
     </div>
 
-    <!-- /div -->
+    </div>
     </div>
     </form>
 
@@ -2001,40 +1970,40 @@
 
             <table class="center confirm-table table table-hover" data-bind="with: selected_plan">
                 <thead>
-                <tr class="table-striped">
-                    <th class="center">Name</th>
-                    <th class="center">Age</th>
-                    <th class="center">Coverage</th>
-                    <th class="center">Additional Riders</th>
-                    <th class="center"><span data-bind="text: $root.payment_mode_text"></span> Premium</th>
-                </tr>
+                  <tr class="table-striped">
+                      <th class="center">Name</th>
+                      <th class="center">Age</th>
+                      <th class="center">Coverage</th>
+                      <th class="center">Additional Riders</th>
+                      <th class="center"><span data-bind="text: $root.payment_mode_text"></span> Premium</th>
+                  </tr>
                 </thead>
                 <tbody>
-                <!--ko foreach: get_all_people -->
-                <tr>
-                    <td data-bind="text: name"></td>
-                    <td data-bind="text:get_age"></td>
-                    <td data-bind="html:display_selected_coverage"></td>
-                    <td></td>
-                    <td data-bind="text:display_premium"></td>
-                </tr>
-                  <!--ko foreach: {data: $root.get_selected_riders($data), as: 'rider'} -->
-                    <tr data-bind="if: $root.did_person_select_coverage($parent)">
+                  <!--ko foreach: get_all_people -->
+                  <tr>
+                      <td data-bind="text: name"></td>
+                      <td data-bind="text:get_age"></td>
+                      <td data-bind="html:display_selected_coverage"></td>
                       <td></td>
-                      <td></td>
-                      <td></td>
-                      <td data-bind="text: rider.name"></td>
-                      <td data-bind="text:$parent.display_riders(rider.code, $parent)"></td>
-                    </tr>
+                      <td data-bind="text:display_premium"></td>
+                  </tr>
+                    <!--ko foreach: {data: $root.get_selected_riders($data), as: 'rider'} -->
+                      <tr data-bind="if: $root.did_person_select_coverage($parent)">
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td data-bind="text: rider.name"></td>
+                        <td data-bind="text:$parent.display_riders(rider.code, $parent)"></td>
+                      </tr>
+                    <!--/ko-->
                   <!--/ko-->
-                <!--/ko-->
-                <tr class="success">
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td><span class="text-primary bigger-110">Total</span></td>
-                    <td><span class="text-primary bigger-110" data-bind="text: formatted_total_premium_with_riders()"></span></td>
-                </tr>
+                  <tr class="success">
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                      <td><span class="text-primary bigger-110">Total</span></td>
+                      <td><span class="text-primary bigger-110" data-bind="text: formatted_total_premium_with_riders()"></span></td>
+                  </tr>
                 </tbody>
             </table>
 
@@ -2381,8 +2350,7 @@
         jQuery(function ($) {
 
             // rate calculations, recommendations code
-            init_rate_form({{ wizard_data|tojson|safe }});
-            init_riders({{ case_riders | tojson | safe}})
+            init_rate_form({{ wizard_data|tojson|safe }}, {{ case_riders | tojson | safe}});
 
             init_validation();
         });

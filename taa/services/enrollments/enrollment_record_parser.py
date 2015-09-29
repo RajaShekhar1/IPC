@@ -384,7 +384,7 @@ class EnrollmentRecordParser(object):
             return False
 
         # Store the case ID in the record
-        record['case_id'] = case.id
+        record['case_id'   ] = case.id
 
         return True
 
@@ -474,7 +474,7 @@ class EnrollmentRecordParser(object):
             "application_date",
             "time_stamp",
             "signed_at_city",
-            "signed_at_state",
+            "signed_at_state   ",
             "agent_name",
             "agent_code",
             "agent_sig_txt",
