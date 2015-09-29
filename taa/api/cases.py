@@ -71,6 +71,11 @@ def create_case():
         abort(401)
         return
 
+    # Make sure this case name isn't used already
+    existing_cases = case_service.search_cases(by_name=data['company_name'])
+    if existing_cases:
+        raise TAAFormError(errors=[{'error': 'Case already exists with the name "%s"'%data['company_name']}])
+
     form = NewCaseForm(form_data=data)
     if agent:
         form.agent_id.data = agent.id

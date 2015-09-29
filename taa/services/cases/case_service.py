@@ -49,7 +49,8 @@ class CaseService(DBService):
         query = self.query()
         if by_name:
             query = query.filter(Case.company_name.ilike(by_name))
-        if by_agent:
+
+        if by_agent and not by_name:
             # Right now, an agent can 'see' a given case if he is either
             # the owner or a 'partner' agent, which is an explicitly maintained
             # list by the HO admin.
