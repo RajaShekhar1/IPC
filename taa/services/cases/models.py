@@ -230,7 +230,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True)
     case = db.relationship('Case', backref=db.backref('census_records'))
-    upload_date = db.Column(db.DateTime, server_default='NOW')
+    upload_date = db.Column(db.DateTime, server_default=db.func.now())
     is_uploaded_census = db.Column(db.Boolean, server_default='TRUE')
     # Employee
     employee_ssn = db.Column(db.String(9))
