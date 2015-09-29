@@ -76,6 +76,9 @@ class Product(ProductJsonSerializable, db.Model):
     def is_fpp(self):
         return self.get_base_product_code().lower().startswith('fpp')
 
+    def is_base_fpp_gov(self):
+        return self.get_base_product().is_fpp_gov if self.get_base_product() else self.is_fpp_gov
+
     def format_type(self):
         if self.is_guaranteed_issue():
             return self.base_product.name if self.base_product else '(Not Selected)'
@@ -124,6 +127,9 @@ product_agents = db.Table('product_agents', db.metadata,
 
 class CustomProductSerializer(ProductJsonSerializable):
     __json_hidden__ = ['cases', 'customized_products', 'base_product']
+    __json_modifiers__ = {
+        'is_fpp_gov': lambda _, p: p.is_base_fpp_gov()
+    }
 
 class CustomGuaranteeIssueProduct(CustomProductSerializer, Product):
     __tablename__ = "products_custom_guaranteed_issue"
