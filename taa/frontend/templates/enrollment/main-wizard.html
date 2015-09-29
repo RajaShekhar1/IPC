@@ -2176,7 +2176,7 @@
 
                 <div class="modal-body">
                 {% set base_product_code = wizard_data['products'][0].get_base_product_code() %}
-                {% set is_fpp_gov = wizard_data['products'][0].is_fpp_gov %}
+                {% set is_fpp_gov = wizard_data['products'][0].is_base_fpp_gov() %}
                     <iframe src="{%
         if base_product_code=='FPPTI' or is_fpp_gov %}
 	       {% if wizard_data['state']=='TX' %}
