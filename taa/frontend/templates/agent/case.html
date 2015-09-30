@@ -975,6 +975,20 @@
                     <input type="text" id="add-census-ssn-input" name="ssn" data-bind="value: ssn, maskedInput: '999-99-9999', valueUpdate: 'afterkeydown'">
                     <div data-bind="text: ssn.error" class="error"></div>
                   </div>
+
+                            <div class="form-group">
+                              <label>Enrollment City:</label>
+                              <input type='text' data-bind="value: case_settings.enrollment_city_override">
+
+                            </div>
+                            <div class="form-group">
+                                <label>Enrollment State:</label>
+                                <limited-state-select params="limiter: case_settings.state_product_override_limiter"></limited-state-select>
+                              
+                            </div>
+
+
+
                 </div>
               </div>
             </form>
