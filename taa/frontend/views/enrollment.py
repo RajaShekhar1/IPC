@@ -276,7 +276,7 @@ def submit_wizard_data():
 
     wizard_results = data['wizard_results']
     print("[ENROLLMENT SUBMITTED]")
-    # for troubledshooting..   print("[ENROLLMENT SUBMITTED]: (case {}) {}".format(case_id, wizard_results))
+
     # Save enrollment information and updated census data prior to
     # DocuSign hand-off
     if session.get('enrolling_census_record_id'):
@@ -292,35 +292,41 @@ def submit_wizard_data():
     if (agent is None and session.get('is_self_enroll') is not None):
         agent = case.owner_agent
 
-    # Standardize the wizard data for submission processing
-    standardized_data = enrollment_import_service.standardize_wizard_data(wizard_results)
+    try:
+        # Standardize the wizard data for submission processing
+        standardized_data = enrollment_import_service.standardize_wizard_data(wizard_results)
 
-    # Create and save the enrollment data. Creates a census record if this is a generic link, and in
-    #   either case updates the census record with the latest enrollment data.
-    enrollment_application = enrollment_service.save_enrollment_data(
-        standardized_data, case, census_record, agent,
-        received_data=wizard_results,
-    )
+        # Create and save the enrollment data. Creates a census record if this is a generic link, and in
+        #   either case updates the census record with the latest enrollment data.
+        enrollment_application = enrollment_service.save_enrollment_data(
+            standardized_data, case, census_record, agent,
+            received_data=wizard_results,
+        )
 
-    if not wizard_results.get('did_decline'):
-        # Hand off wizard_results to docusign
-        is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results, census_record, case)
-        # Return the redirect url or error
-        resp = {'error': is_error,
-                'error_message': error_message,
-                'redirect': redirect}
-    else:
-        # Declined
-        resp = {
-            'error': False,
-            'error_message': '',
-            'redirect': url_for('ds_landing_page',
-                                event='decline',
-                                name=wizard_results['employee']['first'],
-                                type='inperson' if wizard_results["agent_data"]["is_in_person"] else 'email',
-                                )
-        }
+        if not wizard_results.get('did_decline'):
+            # Hand off wizard_results to docusign
+            is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results, census_record, case)
+            # Return the redirect url or error
+            resp = {'error': is_error,
+                    'error_message': error_message,
+                    'redirect': redirect}
+        else:
+            # Declined
+            resp = {
+                'error': False,
+                'error_message': '',
+                'redirect': url_for('ds_landing_page',
+                                    event='decline',
+                                    name=wizard_results['employee']['first'],
+                                    type='inperson' if wizard_results["agent_data"]["is_in_person"] else 'email',
+                                    )
+            }
+    except Exception:
+        print("[ENROLLMENT SUBMISSION ERROR]: (case {}) {}".format(case_id, wizard_results))
+        raise
+
     data = jsonify(**resp)
+    
     # Need to manually commit all changes since this doesn't go through the API
     # right now
     db.session.commit()
