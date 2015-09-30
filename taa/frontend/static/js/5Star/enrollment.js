@@ -664,7 +664,7 @@ function WizardUI(defaults) {
     self.all_riders = ko.observableArray(defaults.riders);
 
 	// Currently shown rider
-	self.shown_rider = ko.observable(null);
+    self.shown_rider = ko.observable(null);
 
     // ViewModel for a rider option on the wizard.
     function ApplicantRiderOptionVM(root, rider, applicant) {
@@ -722,8 +722,9 @@ function WizardUI(defaults) {
 
 		self.format_coverage_for_policy = function() {
 			var coverage = 0;
-			for (year in self.get_policy_years()) {
-				coverage += self.get_coverage_for_year(year);
+            var years = self.get_policy_years();
+			for (i = 0; i < years.length; i++) {
+				coverage += self.get_coverage_for_year(years[i]);
 			}
 			return format_face_value(coverage);
 		}
@@ -740,7 +741,7 @@ function WizardUI(defaults) {
 				return selected_coverage + additional_coverage;
 			}
 
-			var total_coverage_last_year = get_total_coverage_for_year(n - 1);
+			var total_coverage_last_year = self.get_total_coverage_for_year(n - 1);
 			return additional_coverage + total_coverage_last_year;
 		}
 
@@ -801,7 +802,7 @@ function WizardUI(defaults) {
 				70: '839'
 			};
 
-			return _coverage_values[n];
+			return parseInt(_coverage_values[n]);
 		}
 
         self.format_premium = function() {
