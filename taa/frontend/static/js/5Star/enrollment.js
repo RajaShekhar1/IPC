@@ -19,7 +19,8 @@ if (typeof Object.create != 'function') {
     })();
 }
 
-function init_rate_form(data) {
+function init_rate_form(data, rider_data) {
+    data.riders = rider_data;
 
     var ui = new WizardUI(data);
 
@@ -658,6 +659,217 @@ function WizardUI(defaults) {
         }
     });
 
+
+    // Available riders not tied to applicant.
+    self.all_riders = ko.observableArray(defaults.riders);
+
+    // Currently shown rider
+    self.shown_rider = ko.observable(null);
+
+    // ViewModel for a rider option on the wizard.
+    function ApplicantRiderOptionVM(root, rider, applicant) {
+        var self = this;
+        self.root = root;
+        self.rider = rider;
+        self.applicant = applicant;
+
+        self.is_selected = ko.observable(false);
+
+        self.is_visible = ko.computed(function () {
+            return self.applicant.has_selected_valid_coverage();
+        });
+
+        self.format_rider_name = function () {
+            return self.rider.name;
+        };
+
+        self.format_applicant_name = function () {
+            return self.applicant.name();
+        };
+
+        self.has_rider_modal = function () {
+            return (self.rider.code === "AIR");
+        };
+
+        self.show_rider_info = function () {
+            self.root.shown_rider(self);
+            $("#modal-auto-increase-rider").modal('show');
+        };
+
+        self.get_policy_years = function () {
+            var policy_years = [];
+            for (year = 2; year <= 6; year++) {
+                if (self.get_age_for_policy_year(year) <= 70) {
+                    policy_years.push(year);
+                }
+            }
+            return policy_years;
+        };
+
+        self.get_age_for_policy_year = function (n) {
+            return self.applicant.get_age() + n - 1;
+        };
+
+        self.format_coverage_for_year = function (n) {
+            var coverage = self.get_coverage_for_year(n);
+            return format_face_value(coverage);
+        };
+
+        self.format_total_coverage_for_year = function (n) {
+            var coverage = self.get_total_coverage_for_year(n);
+            return format_face_value(coverage);
+        };
+
+        self.format_coverage_for_policy = function () {
+            var coverage = 0;
+            var years = self.get_policy_years();
+            for (i = 0; i < years.length; i++) {
+                coverage += self.get_coverage_for_year(years[i]);
+            }
+            return format_face_value(coverage);
+        };
+
+        self.get_coverage_for_year = function (n) {
+            var age = self.get_age_for_policy_year(n);
+            return self.get_coverage_for_applicant_age(age);
+        };
+
+        self.get_total_coverage_for_year = function (n) {
+            var additional_coverage = self.get_coverage_for_year(n);
+            if (n == 2) {
+                var selected_coverage = self.applicant.selected_coverage().face_value;
+                return selected_coverage + additional_coverage;
+            }
+
+            var total_coverage_last_year = self.get_total_coverage_for_year(n - 1);
+            return additional_coverage + total_coverage_last_year;
+        };
+
+        self.get_coverage_for_applicant_age = function (n) {
+            var _coverage_values = {
+                18: '15339',
+                19: '15339',
+                20: '15339',
+                21: '15339',
+                22: '15339',
+                23: '15339',
+                24: '15339',
+                25: '15339',
+                26: '15249',
+                27: '14986',
+                28: '14566',
+                29: '13978',
+                30: '13299',
+                31: '12621',
+                32: '11954',
+                33: '11280',
+                34: '10612',
+                35: '9962',
+                36: '9336',
+                37: '8739',
+                38: '8176',
+                39: '7636',
+                40: '7123',
+                41: '6624',
+                42: '6154',
+                43: '5727',
+                44: '5339',
+                45: '4986',
+                46: '4668',
+                47: '4381',
+                48: '4117',
+                49: '3869',
+                50: '3629',
+                51: '3390',
+                52: '3152',
+                53: '2920',
+                54: '2698',
+                55: '2495',
+                56: '2311',
+                57: '2147',
+                58: '2002',
+                59: '1871',
+                60: '1751',
+                61: '1641',
+                62: '1540',
+                63: '1445',
+                64: '1353',
+                65: '1264',
+                66: '1174',
+                67: '1085',
+                68: '999',
+                69: '917',
+                70: '839'
+            };
+
+            return parseInt(_coverage_values[n]);
+        };
+
+        self.format_premium = function () {
+            if (self.rider.code === "AIR") {
+                return "No initial premium charge";
+            } else {
+                // TODO: lookup rider rate in table.
+                return "$TODO";
+            }
+        };
+
+    }
+
+    // Build the rider viewmodels
+    self.rider_options = [];
+    _.each([self.employee(), self.spouse()], function(applicant) {
+        _.each(self.all_riders(), function(rider) {
+            var vm = new ApplicantRiderOptionVM(self, rider, applicant);
+            self.rider_options.push(vm);
+        });
+    });
+
+    self.visible_rider_options = ko.computed(function() {
+        return _.select(self.rider_options, function(option) {return option.is_visible()});
+    });
+
+    // Currently selected riders. Only Employee and spouse can have riders.
+    self.selected_riders = ko.computed(function() {
+        var selected_emp_riders = _.select(self.visible_rider_options(), function(option) {
+           return option.applicant === self.employee() && option.is_selected();
+        });
+
+        var selected_sp_riders = _.select(self.visible_rider_options(), function(option) {
+           return option.applicant === self.spouse() && option.is_selected() ;
+        });
+
+        return {
+            emp: _.pluck(selected_emp_riders, 'rider'),
+            sp: _.pluck(selected_sp_riders, 'rider')
+        };
+    });
+
+    self.selected_riders.serialize_data = ko.computed(function () {
+        return {
+            emp: self.selected_riders().emp,
+            sp: self.selected_riders().sp
+        };
+    });
+
+    self.get_selected_riders = function(person) {
+      if (person.applicant_type === "employee") {
+        return self.selected_riders().emp;
+      } else if (person.applicant_type === "spouse") {
+        return self.selected_riders().sp;
+      } 
+      return [];
+    };
+
+
+    // Rider rates are filled in when the rate lookup is performed for product rates lookup.
+    // Note: not used as of Oct 1st since group riders are not enabled yet.
+    self.rider_rates = ko.observable({
+      emp: [],
+      sp: []
+    });
+
+
     self.show_updated_rates = function(resp) {
         var data = resp.data;
         self.insurance_product.parse_benefit_options('employee', self.employee(), data.employee_rates);
@@ -671,6 +883,11 @@ function WizardUI(defaults) {
             self.recommendations.better.set_recommendations(data.recommendations['better']);
             self.recommendations.best.set_recommendations(data.recommendations['best']);
         }
+
+        self.rider_rates({
+          emp: data.emp_rider_rates,
+          sp: data.sp_rider_rates
+        });
 
         // Update selection with new data
         if (self.selected_plan().is_valid()) {
@@ -714,6 +931,18 @@ function WizardUI(defaults) {
         var rec = self.selected_plan().children_recommendation();
         return (rec.is_valid() && rec.recommended_benefit.is_valid());
     });
+    self.did_person_select_coverage = function(person) {
+      if(person.applicant_type) {
+       person = person.applicant_type;
+      }
+      if(person=="employee") {
+        return self.did_select_employee_coverage();
+      }
+      if(person=="spouse") {
+        return self.did_select_spouse_coverage();
+      }
+      return false;
+    };
 
 
 
@@ -2220,12 +2449,30 @@ function InsuredApplicant(applicant_type, options, selected_plan, product_health
         throw "Bad applicant type for applicant: "+self.applicant_type;
     });
 
+    self.has_selected_valid_coverage = ko.computed(function() {
+        return self.selected_coverage().is_valid();
+    });
+    
     self.display_selected_coverage = ko.computed(function() {
         return self.selected_coverage().format_face_value();
     });
     self.display_premium = ko.computed(function() {
         return self.selected_coverage().format_premium();
     });
+
+    self.display_riders = function(rider_code, person) {
+      person = person.applicant_type;
+      if(!person) {
+        return;
+      }
+      var rider_amount = 0;
+      if(person==="employee") {
+        rider_amount = window.ui.rider_rates()['emp'][rider_code];
+      } else if(person==="spouse") {
+        rider_amount = window.ui.rider_rates()['sp'][rider_code];
+      } 
+      return "$"+rider_amount.toFixed(2);
+    };
 
     self.get_existing_coverage_amount_for_product = function(product_id) {
         return parseFloat(self.get_existing_coverage_amount_by_product()[product_id]);
@@ -2457,6 +2704,7 @@ function BenefitsPackage(root, name) {
         return benefits;
     };
 
+
     self.get_total_premium = ko.computed(function() {
         var benefits = self.get_package_benefits();
 
@@ -2478,8 +2726,8 @@ function BenefitsPackage(root, name) {
         }
     });
 
-    self.is_valid = function() {return true};
 
+    self.is_valid = function() {return true};
 
     self.did_select_employee_coverage = ko.computed(function() {
         return self.employee_recommendation().recommended_benefit.is_valid();
@@ -2493,11 +2741,52 @@ function BenefitsPackage(root, name) {
         return self.children_recommendation().recommended_benefit.is_valid();
     });
 
+    self.did_person_select_coverage = function(person) {
+      if(person.applicant_type) {
+       person = person.applicant_type;
+      }
+      if(person=="employee") {
+        return self.did_select_employee_coverage();
+      }
+      if(person=="spouse") {
+        return self.did_select_spouse_coverage();
+      }
+      return false;
+    };
 
+    self.get_total_riders = ko.computed(function() {
+        total_rider_amount = 0;
+        if(window.ui) {
+          var people = ['employee', 'spouse'];
+          var people_short = ['emp', 'sp']
+          for(var j=0; j<people.length; j++) {
+            if(!self.did_person_select_coverage(people[j])) {
+              continue;
+            }
+            var riders = window.ui.get_selected_riders(people[j]);
+            for(var i=0; i<riders.length; i++) {
+              total_rider_amount += window.ui.rider_rates()[people_short[j]][riders[i].code];
+            }
+          }
+        }
+        return total_rider_amount;
+    });
+
+    self.formatted_total_premium_with_riders = ko.computed(function() {
+        if (self.get_total_premium() > 0.0) {
+            var riders = 0;
+            if(self.get_total_riders() > 0.0) {
+              riders = self.get_total_riders();
+            }
+            var premium = self.get_total_premium();
+            return format_premium_value(premium+riders);
+        } else {
+            return "";
+        }
+    });
+    
     self.get_all_people = ko.computed(function() {
         var employee = root.employee();
-
-
         var people = [employee];
         if (root.should_include_spouse_in_table()) {
             var spouse = root.spouse();
@@ -2622,6 +2911,7 @@ function NullBenefitsPackage(root) {
     self.children_recommendation = ko.observable(new NullRecommendation());
     self.get_total_premium = function() { return null; };
     self.formatted_total_premium = function() { return ""; };
+    self.formatted_total_premium_with_riders = function() { return ""; };
     self.is_valid = function () {return false};
     self.get_all_people = function() {return [];};
     self.get_all_covered_people = function() {return [];};
@@ -2634,6 +2924,7 @@ function NullBenefitsPackage(root) {
     self.did_select_employee_coverage = function() { return false;};
     self.did_select_spouse_coverage = function() { return false;};
     self.did_select_children_coverage = function() { return false; };
+    self.did_person_select_coverage = function(person) { return false;};
     self.get_covered_children = function() { return [];}};
 
 
@@ -3294,6 +3585,8 @@ function init_validation() {
         wizard_results.replacement_is_terminating = ui.replacement_is_terminating();
         wizard_results.replacement_using_funds = ui.replacement_using_funds();
         wizard_results.replacement_policies = _.invoke(ui.replacement_policies(), "serialize");
+        
+        wizard_results.rider_data = window.ui.selected_riders.serialize_data();
 
         // Send to server
         ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function (resp) {
@@ -3801,4 +4094,29 @@ function ReplacementPolicy() {
             replacement_reason: self.replacement_reason()
         };
     };
+}
+
+// This code was adding group riders to the auto-selected riders. Will need this functionality when we add them back in.
+//
+//function init_riders(riders) {
+//  for(var i = 0; i<riders.length; i++) {
+//    var rider = riders[i];
+//    if (!rider.enrollment_level) {
+//      window.ui.selected_riders["emp"](riders[i]);
+//      window.ui.selected_riders["sp"](riders[i]);
+//    }
+//  }
+//}
+
+var cycleStringify = function(obj) {
+  seen = [];
+  return JSON.stringify(obj, function(key, val) {
+    if (val != null && typeof val == "object") {
+      if (seen.indexOf(val) >= 0) {
+        return;
+      }
+      seen.push(val);
+    }
+    return val;
+  });
 }

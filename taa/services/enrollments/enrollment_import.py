@@ -33,8 +33,8 @@ class EnrollmentImportService(object):
     def standardize_imported_data(self, data, method='api_import'):
 
         from taa.services.enrollments import EnrollmentRecordParser
-
-
+        from taa.services.cases import RiderService
+        rider_service = RiderService()
 
         out_data = {
             "employee": {},
@@ -136,6 +136,17 @@ class EnrollmentImportService(object):
         # Initials
         out_data['emp_initials_txt'] = val_or_blank(data, data.get('emp_initials_txt'))
         out_data['agent_initials_txt'] = val_or_blank(data, data.get('agent_initials_txt'))
+        out_data['rider_data'] = {
+            'emp': [],
+            'sp': []
+        }
+
+        import ipdb; ipdb.set_trace()
+        for prefix, long_prefix in [('emp', 'employee'), ('sp', 'spouse')]:
+            for rider in RiderService.default_riders:
+                has_rider = data.get('{}_rider_{}'.format(prefix, rider.code.lower()))
+                if(has_rider):
+                    out_data['rider_data'][prefix].append(rider.to_json())
 
         return out_data
 

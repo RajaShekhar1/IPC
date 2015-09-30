@@ -152,7 +152,6 @@
                         </label>
                 </div>
             </div>
-
         </div>
 
         <div data-bind="template: {name: 'extended-questions-template', data: employee}"></div>
@@ -505,6 +504,43 @@
 
             </div>
         </div>
+    <br />
+    <br />
+
+    {# Riders Selection #}
+    <div class="row" data-bind="if: visible_rider_options().length > 0"  >
+
+      <div class="col-sm-3">
+        <h5>Riders</h5>
+      </div>
+      <div class="row col-sm-9">
+
+        <table class="table table-striped table-bordered">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Rider</th>
+              <th>Premium</th>
+            </tr>
+          </thead>
+          <tbody data-bind="foreach: visible_rider_options">
+            <tr>
+              <td><input type="checkbox" data-bind="checked: is_selected"></td>
+              <td>
+                <span data-bind="if: has_rider_modal">
+                  <a data-bind="click: show_rider_info, html: format_rider_name()"></a>
+                </span>
+                <span data-bind="if: !has_rider_modal()">
+                  <span data-bind="html: format_rider_name()"></span>
+                </span>
+                 for
+                <span data-bind='text: format_applicant_name()'></span>
+              </td>
+              <td data-bind="html: format_premium()"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <div class="row">
@@ -520,7 +556,7 @@
         You must select a benefit option before advancing.
     </div>
 
-    <!-- /div -->
+    </div>
     </div>
     </form>
 
@@ -1932,40 +1968,48 @@
         <div id="CoverageSummary">
             <h4 class="green center">Summary of Benefits</h4>
 
-            <table class="center confirm-table table table-striped table-hover" data-bind="with: selected_plan">
+            <table class="center confirm-table table table-hover" data-bind="with: selected_plan">
                 <thead>
-                <tr>
-                    <th class="center">Name</th>
-                    <th class="center">Age</th>
-                    <th class="center">Coverage</th>
-                    <th class="center"><span data-bind="text: $root.payment_mode_text"></span> Premium</th>
-                </tr>
+                  <tr class="table-striped">
+                      <th class="center">Name</th>
+                      <th class="center">Age</th>
+                      <th class="center">Coverage</th>
+                      <th class="center">Additional Riders</th>
+                      <th class="center"><span data-bind="text: $root.payment_mode_text"></span> Premium</th>
+                  </tr>
                 </thead>
                 <tbody>
-                <!--ko foreach: get_all_people -->
-                <tr>
-                    <td data-bind="text: name"></td>
-                    <td data-bind="text:get_age"></td>
-                    <td data-bind="html:display_selected_coverage"></td>
-                    <td data-bind="text:display_premium"></td>
-
-                </tr>
-                <!--/ko-->
-
-                <tr class="success">
-                    <td></td>
-                    <td></td>
-                    <td><span class="text-primary bigger-110">Total</span></td>
-                    <td><span class="text-primary bigger-110" data-bind="text: formatted_total_premium()"></span></td>
-                </tr>
+                  <!--ko foreach: get_all_people -->
+                  <tr>
+                      <td data-bind="text: name"></td>
+                      <td data-bind="text:get_age"></td>
+                      <td data-bind="html:display_selected_coverage"></td>
+                      <td></td>
+                      <td data-bind="text:display_premium"></td>
+                  </tr>
+                    <!--ko foreach: {data: $root.get_selected_riders($data), as: 'rider'} -->
+                      <tr data-bind="if: $root.did_person_select_coverage($parent)">
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td data-bind="text: rider.name"></td>
+                        <td data-bind="text:$parent.display_riders(rider.code, $parent)"></td>
+                      </tr>
+                    <!--/ko-->
+                  <!--/ko-->
+                  <tr class="success">
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                      <td><span class="text-primary bigger-110">Total</span></td>
+                      <td><span class="text-primary bigger-110" data-bind="text: formatted_total_premium_with_riders()"></span></td>
+                  </tr>
                 </tbody>
             </table>
 
             <div class="space-10"></div>
 
             <form class="form-horizontal" id="step6-form">
-
-
                 <div id="inPersonSignerToken">
                     <h4 class="green">Employee Identification</h4>
                     <!--ko if: !insurance_product.should_use_date_of_hire_for_identity()-->
@@ -2126,6 +2170,53 @@
     </div>
     </div>
 
+    <div id="modal-auto-increase-rider" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="lighter block blue center">What is an Automatic Increase Benefit?</h3>
+                </div>
+
+                <div class="modal-body">
+                    To make your Family Protection Plan even more valuable, you have an additional benefit that makes your coverage more robust and responsive to your growing coverage needs.  This optional add-on ("rider") incrementally increases your coverage by the amount of insurance that $1 in weekly premium purchases at your attained age over a 5 consecutive year period.  It starts on your first policy anniversary, and a $1/week premium increase is automatically approved with no further health qualification.  A demonstration of how this increasing benefit works is shown below.
+
+                    <div class="space-10"></div>
+
+                    <!--ko if: shown_rider() != null -->
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th class="center">Policy Year</th>
+                                <th class="center">Age</th>
+                                <th class="center">Additional Coverage</th>
+                                <th class="center">Total Coverage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!--ko foreach: {data: shown_rider().get_policy_years(), as: 'year'} -->
+                            <tr>
+                                <td class="center" data-bind="text: year"></td>
+                                <td class="center" data-bind="text: $root.shown_rider().get_age_for_policy_year(year)"></td>
+                                <td class="center" data-bind="text: $root.shown_rider().format_coverage_for_year(year)"></td>
+                                <td class="center" data-bind="text: $root.shown_rider().format_total_coverage_for_year(year)"></td>
+                            </tr>
+                            <!--/ko-->
+                        </tbody>
+                    </table>
+
+                    Total <span data-bind="text: shown_rider().get_policy_years().length"></span> year increase of <span data-bind="text: shown_rider().format_coverage_for_policy()"></span> coverage for $5/week additional premium.
+                    <!--/ko-->
+                    <br>
+                    <br>
+                    See <a href="http://5starlifeinsurance.com/FPP_Auto_Increase_Rider" target="blank">this flyer</a> and your policy certificate for more details.
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="actively_at_work_modal" class="modal">
         <div class="modal-dialog">
@@ -2307,7 +2398,7 @@
         jQuery(function ($) {
 
             // rate calculations, recommendations code
-            init_rate_form({{ wizard_data|tojson|safe }});
+            init_rate_form({{ wizard_data|tojson|safe }}, {{ case_riders | tojson | safe}});
 
             init_validation();
         });

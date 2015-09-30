@@ -69,6 +69,7 @@ class Case(CaseSerializer, db.Model):
     self_enrollment_setup = db.relationship('SelfEnrollmentSetup',
                                             uselist=False, backref='case')
     case_token = db.Column(db.String(64), nullable=True)
+    case_riders = db.Column(db.String(64), nullable=True)
 
     def get_product_names(self):
         return ','.join(p.name for p in self.products)
@@ -78,6 +79,7 @@ class Case(CaseSerializer, db.Model):
             return self.owner_agent.name()
         else:
             return "(No Owner)"
+    
 
     def format_location(self):
         if not self.situs_city and not self.situs_state:

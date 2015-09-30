@@ -154,6 +154,18 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     return (self.payment_mode()) ? parseInt(self.payment_mode().mode) : null;
   });
 
+  // Get Rider information
+  self.rider_choices = settings.riders;
+  // self.riders = ko.observable(self.rider_choices)
+  
+  self.riders = ko.computed(function() {
+    // Show only riders allowed for this product; depends on the product selected.
+    return _.reject(self.rider_choices, function(rider) {
+      var current_product_name = self.single_product().base_product_type;
+      return rider.restrict_to.indexOf(current_product_name) === -1;
+    });
+  });
+
   // Self-enrollment
   self.is_self_enrollment = ko.observable(case_data.is_self_enrollment);
   self.is_self_enrollment.subscribe(function() {
@@ -259,7 +271,8 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   if (self.can_edit_case) {
     var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
       self.enrollment_periods, self.situs_city, self.situs_state, self.payment_mode,
-      self.is_active, self.owner_agent_id, self.can_partners_download_enrollments, self.is_self_enrollment
+      self.is_active, self.owner_agent_id, self.can_partners_download_enrollments, self.is_self_enrollment,
+        self.riders
     ];
     _.each(self.enrollment_periods(), function(p) {
       fields.push(p.start_date);
@@ -455,7 +468,8 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
       payment_mode: self.selected_payment_mode() ? self.selected_payment_mode() : null,
       agent_id: self.owner_agent_id(),
       can_partners_download_enrollments: self.can_partners_download_enrollments(),
-      is_self_enrollment: self.is_self_enrollment()
+      is_self_enrollment: self.is_self_enrollment(),
+      riders: self.riders(),
     }
   };
 
