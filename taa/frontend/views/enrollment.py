@@ -18,10 +18,12 @@ from taa.services.products.states import get_all_states
 from taa.services.products import get_payment_modes, is_payment_mode_changeable
 from taa.services.docusign.service import create_envelope_and_get_signing_url
 from taa.services import LookupService
+from taa.services.cases import RiderService
 
 product_service = LookupService('ProductService')
 product_form_service = LookupService('ProductFormService')
 case_service = LookupService('CaseService')
+rider_service = RiderService()
 agent_service = LookupService('AgentService')
 enrollment_service = LookupService('EnrollmentApplicationService')
 self_enrollment_service = LookupService('SelfEnrollmentService')
@@ -136,6 +138,9 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     for product in products:
         spouse_questions[product.id] = StatementOfHealthQuestionService().get_spouse_questions(product, state)
 
+    case_riders = rider_service.get_selected_case_rider_info(case)
+    enrollment_riders = rider_service.get_enrollment_rider_info()
+
     wizard_data = {
         'state': state if state != 'XX' else None,
         'enroll_city': city,
@@ -151,6 +156,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         'payment_mode_choices': payment_mode_choices,
         'payment_mode': payment_mode,
         'case_id': case.id,
+        'selected_riders': []
     }
 
     # Commit any changes made (none right now)
@@ -161,6 +167,9 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         wizard_data=wizard_data,
         states=get_states(),
         nav_menu=get_nav_menu(),
+        case_riders=case_riders,
+        case_rider_codes=[r.get('code') for r in case_riders],
+        enrollment_riders=enrollment_riders
     )
 
 # Self Enrollment Landing Page
@@ -283,10 +292,15 @@ def submit_wizard_data():
     if (agent is None and session.get('is_self_enroll') is not None):
         agent = case.owner_agent
 
+    # Standardize the wizard data for submission processing
+    standardized_data = enrollment_import_service.standardize_wizard_data(wizard_results)
+
     # Create and save the enrollment data. Creates a census record if this is a generic link, and in
     #   either case updates the census record with the latest enrollment data.
     enrollment_application = enrollment_service.save_enrollment_data(
-        wizard_results, case, census_record, agent)
+        standardized_data, case, census_record, agent,
+        received_data=wizard_results,
+    )
 
     if not wizard_results.get('did_decline'):
         # Hand off wizard_results to docusign

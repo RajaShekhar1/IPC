@@ -10,7 +10,7 @@ from taa import app, db
 from nav import get_nav_menu
 from taa.api.cases import census_records
 from taa.services.docusign.docu_console import console_url
-from taa.services.cases import CaseService, SelfEnrollmentSetup
+from taa.services.cases import CaseService, SelfEnrollmentSetup, RiderService
 from taa.services.cases.forms import (CensusRecordForm,
                                       NewCaseEnrollmentPeriodForm,
                                       SelfEnrollmentSetupForm,
@@ -24,6 +24,7 @@ from taa.services.docusign.DocuSign_config import sessionUserApprovedForDocusign
 from taa.services import LookupService
 
 case_service = CaseService()
+rider_service = RiderService()
 agent_service = AgentService()
 product_service = ProductService()
 enrollment_service = EnrollmentApplicationService()
@@ -167,6 +168,10 @@ Please follow the instructions carefully on the next page, stepping through the 
     vars["current_user_groups"] = [g.group.name for g in current_user.group_memberships]
 
     vars["current_user_token"] = api_token_service.get_token_by_sp_href(current_user.href)
+
+    case_riders = rider_service.get_rider_info_for_case(case)
+
+    vars['riders'] = case_riders
 
     return render_template('agent/case.html', **vars)
 

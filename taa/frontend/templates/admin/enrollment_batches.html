@@ -8,14 +8,20 @@
     <table class="table table-striped">
       <tr>
         <th>ID</th>
-        <th>Num Processed</th>
-        <th>Num Errors</th>
+        <th>Stormpath User</th>
+        <th>Case ID</th>
+        <th>Timestamp</th>
+        <th>Processed Records</th>
+        <th>Validation Errors</th>
         <th></th>
       </tr>
     <!--ko foreach: {data: import_batches, as: 'import_batch'} -->
       <tr>
         <td data-bind="text: import_batch.id">
         </td>
+        <td data-bind="text: import_batch.user_name"></td>
+        <td><a target="_blank" data-bind="text: import_batch.case_id, attr: {href: '/enrollment-case/'+import_batch.case_id+'#reports'}"></a></td>
+        <td data-bind="text: import_batch.format_time()"></td>
         <td data-bind="text: import_batch.num_processed">
         </td>
         <td data-bind="text: import_batch.num_errors">
@@ -61,7 +67,7 @@
 
 {% block page_js %}
 <script>
-  function ImportBatchVM() {
+  function ImportBatchesVM() {
     var self = this;
 
     self.import_batches = ko.observableArray([]);
@@ -103,7 +109,8 @@
 
     self.fetch_all_batches = function() {
       $.get("/enrollments/import_batches").success(function(result) {
-        self.import_batches(result.data);
+        var batches = _.map(result.data, function(batch_data) { return new ImportBatchVM(batch_data);});
+        self.import_batches(batches);
       });
     };
 
@@ -111,8 +118,23 @@
     self.fetch_all_batches();
   }
 
+  var ImportBatchVM = function(batch_data) {
+    var self = this;
+
+    self.id = batch_data.id;
+    self.user_name = batch_data.user_name;
+    self.case_id = batch_data.case_id;
+    self.num_processed = batch_data.num_processed;
+    self.num_errors = batch_data.num_errors;
+
+    self.format_time = function() {
+      return moment.utc(batch_data.timestamp).local().format("ddd MMM Do YYYY h:mm:ss a");
+    }
+  };
+
+
   $(document).ready(function() {
-    window.vm = new ImportBatchVM();
+    window.vm = new ImportBatchesVM();
     ko.applyBindings(window.vm);
   });
 </script>

@@ -48,7 +48,7 @@ def downgrade():
     op.create_table('enrollment_api_logs',
     sa.Column('id', sa.INTEGER(), nullable=False),
     sa.Column('source', sa.VARCHAR(length=32), autoincrement=False, nullable=False),
-    sa.Column('timestamp', postgresql.TIMESTAMP(), server_default=sa.text(u"'2015-09-04 15:37:50.817641'::timestamp without time zone"), autoincrement=False, nullable=True),
+    sa.Column('timestamp', postgresql.TIMESTAMP(), server_default="NOW", autoincrement=False, nullable=True),
     sa.Column('auth_token', sa.VARCHAR(length=64), autoincrement=False, nullable=True),
     sa.Column('case_token', sa.VARCHAR(length=64), autoincrement=False, nullable=True),
     sa.Column('num_processed', sa.INTEGER(), autoincrement=False, nullable=True),
@@ -63,7 +63,7 @@ def downgrade():
     sa.Column('enrollment_record_id', sa.INTEGER(), autoincrement=False, nullable=True),
     sa.Column('status', sa.VARCHAR(length=32), autoincrement=False, nullable=True),
     sa.Column('error_message', sa.TEXT(), autoincrement=False, nullable=True),
-    sa.Column('processed_time', postgresql.TIMESTAMP(), server_default=sa.text(u"'2015-09-14 17:26:35.776656'::timestamp without time zone"), autoincrement=False, nullable=True),
+    sa.Column('processed_time', postgresql.TIMESTAMP(), server_default="NOW", autoincrement=False, nullable=True),
     sa.ForeignKeyConstraint(['enrollment_log_id'], [u'enrollment_api_logs.id'], name=u'enrollment_api_log_items_enrollment_log_id_fkey'),
     sa.PrimaryKeyConstraint('id')
     )

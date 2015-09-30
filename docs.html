@@ -1,0 +1,6634 @@
+<html>
+<head>
+  <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+</head>
+<body style="font-family:sans-serif;">
+  <div class="container">
+  <h1 style="text-align:center;">5Star Flat File and FTP Import Documentation</h1>
+
+  <p>
+  TAA supports importing enrollment data via a flat-file import service. Interested 3rd party integrators can upload
+  correctly formatted files to our secure FTP drop box, and TAA will process the file once it passes basic validation.
+  </p>
+  <h3>FTPS DropBox Configuration</h3>
+<p>
+    To connect to our secure FTPS enrollment import drop box, you must have the following information:
+    <br>
+    <ul>
+        <li>Your TAA authentication token. This will be provided to you by a TAA administrator.</li>
+        <li>An enrollment case token. This will be provided to you by a TAA administrator.</li>
+        <li>The IP address of the FTPS drop box: <strong></strong></li>
+        <li>The user name and password used to access all 5Star TAA sites. This will be provided by a TAA administrator.</li>
+    </ul>
+    <br>
+    Connect to the FTPS server using port 21. There will be a warning about the self-signed certificate that you may ignore.
+    <br>
+    <br>
+    The server will ask for a username and password. Use your 5Star TAA system username and password provided by your TAA administrator.
+
+    <p>
+    To transmit an enrollment file, first ensure the filename ends with the extension ".flat" for flat files or ".csv" for delimited files, and that
+      the contents conform to the specifications detailed below.
+      Transmit the file to the FTP server using any standard FTPS client. The file may appear briefly on the remote listing, but
+      do not expect to see previously uploaded files in the remote directory listing.
+    </p>
+    <p>
+      A single email notification will be sent confirming either successful processing or an error condition and
+      the reason(s) for the error condition.
+      The status email will be sent to the email address associated with your 5Star TAA system account.
+    </p>
+</p>
+
+  <h2>Flat File Specification</h2>
+  <p>
+    The TAA system accepts a flat-file enrollment format consisting of UTF-8 encoded text characters.
+    The content of the file is:<br>
+    <ul>
+      <li>One line of header fields</li>
+      <li>One line of record fields for each enrollment record being transmitted</li>
+    </ul>
+    <br>
+    Each field has a particular size and data type restrictions given in the tables below.
+    If a given data value is smaller than the prescribed size, the field must be padded with whitespace characters.
+    The size given is a character count.
+  </p>
+
+  <h3>Header Field Definition</h3>
+  <table class="table table-bordered table-striped">
+    <tr>
+      
+      <th style='text-align:left;padding:3px 10px;'>Field Name</th>
+      
+      <th style='text-align:left;padding:3px 10px;'>From</th>
+      
+      <th style='text-align:left;padding:3px 10px;'>To</th>
+      
+      <th style='text-align:left;padding:3px 10px;'>Size</th>
+      
+      <th style='text-align:left;padding:3px 10px;'>Required</th>
+      
+      <th style='text-align:left;padding:3px 10px;'>Description</th>
+      
+      <th style='text-align:left;padding:3px 10px;'>Data Format</th>
+      
+    </tr>
+    
+      <tr>
+        
+          <td>FILE_TYPE</td>
+        
+          <td>1</td>
+        
+          <td>14</td>
+        
+          <td>14</td>
+        
+          <td>Yes</td>
+        
+          <td>Must be TAA_ENROLLMENT</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>VERSION</td>
+        
+          <td>15</td>
+        
+          <td>22</td>
+        
+          <td>8</td>
+        
+          <td>Yes</td>
+        
+          <td>Must be 1.0</td>
+        
+          <td>N.N</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>RECORD_COUNT</td>
+        
+          <td>23</td>
+        
+          <td>30</td>
+        
+          <td>8</td>
+        
+          <td>Yes</td>
+        
+          <td>Must match number of records in the file</td>
+        
+          <td>A positive integer</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>USER_TOKEN</td>
+        
+          <td>31</td>
+        
+          <td>94</td>
+        
+          <td>64</td>
+        
+          <td>Yes</td>
+        
+          <td>The API token authenticating the uploader</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>CASE_TOKEN</td>
+        
+          <td>95</td>
+        
+          <td>158</td>
+        
+          <td>64</td>
+        
+          <td>Yes</td>
+        
+          <td>The token identifying the TAA enrollment case</td>
+        
+          <td></td>
+        
+      </tr>
+    
+  </table>
+  <h3>Enrollment Record Field Definition</h3>
+  <table class="table table-bordered table-striped">
+    <tr>
+      
+        <th style='text-align:left;padding:0px 10px;'>Field Name</th>
+      
+        <th style='text-align:left;padding:0px 10px;'>From</th>
+      
+        <th style='text-align:left;padding:0px 10px;'>To</th>
+      
+        <th style='text-align:left;padding:0px 10px;'>Size</th>
+      
+        <th style='text-align:left;padding:0px 10px;'>Required</th>
+      
+        <th style='text-align:left;padding:0px 10px;'>Description</th>
+      
+        <th style='text-align:left;padding:0px 10px;'>Data Format</th>
+      
+    </tr>
+    
+      <tr>
+        
+          <td>product_code</td>
+        
+          <td>1</td>
+        
+          <td>8</td>
+        
+          <td>8</td>
+        
+          <td>Yes</td>
+        
+          <td>A string specifying the product name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>payment_mode</td>
+        
+          <td>9</td>
+        
+          <td>10</td>
+        
+          <td>2</td>
+        
+          <td>Yes</td>
+        
+          <td>A two digit number resenting the payment mode</td>
+        
+          <td>Must be either &#39;52&#39;, &#39;26&#39;, &#39;24&#39;, or &#39;12&#39;</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>enrollment_type</td>
+        
+          <td>11</td>
+        
+          <td>11</td>
+        
+          <td>1</td>
+        
+          <td>Yes</td>
+        
+          <td>How the application was taken</td>
+        
+          <td>&#39;A&#39; for Enroller-Assisted enrollment, &#39;S&#39; for self-enrollment</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_first</td>
+        
+          <td>12</td>
+        
+          <td>25</td>
+        
+          <td>14</td>
+        
+          <td>Yes</td>
+        
+          <td>Employee first name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_last</td>
+        
+          <td>26</td>
+        
+          <td>45</td>
+        
+          <td>20</td>
+        
+          <td>Yes</td>
+        
+          <td>Employee last name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_gender</td>
+        
+          <td>46</td>
+        
+          <td>46</td>
+        
+          <td>1</td>
+        
+          <td>Yes</td>
+        
+          <td>Employee gender</td>
+        
+          <td>Either &#39;M&#39; or &#39;F&#39;</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_ssn</td>
+        
+          <td>47</td>
+        
+          <td>55</td>
+        
+          <td>9</td>
+        
+          <td>Yes</td>
+        
+          <td>Employee SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_birthdate</td>
+        
+          <td>56</td>
+        
+          <td>65</td>
+        
+          <td>10</td>
+        
+          <td>Yes</td>
+        
+          <td>Employee Birthday</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_coverage</td>
+        
+          <td>66</td>
+        
+          <td>71</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Employee Coverage</td>
+        
+          <td>A positive integer, only digits. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_premium</td>
+        
+          <td>72</td>
+        
+          <td>77</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Employee Premium</td>
+        
+          <td>&#39;NNN.NN&#39;, where N is a digit. No currency sign. Premium is modal. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_street</td>
+        
+          <td>78</td>
+        
+          <td>106</td>
+        
+          <td>29</td>
+        
+          <td>Yes</td>
+        
+          <td>Employee street address</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_street2</td>
+        
+          <td>107</td>
+        
+          <td>135</td>
+        
+          <td>29</td>
+        
+          <td>No</td>
+        
+          <td>Employee street address 2</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_city</td>
+        
+          <td>136</td>
+        
+          <td>149</td>
+        
+          <td>14</td>
+        
+          <td>Yes</td>
+        
+          <td>Employee city</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_state</td>
+        
+          <td>150</td>
+        
+          <td>151</td>
+        
+          <td>2</td>
+        
+          <td>Yes</td>
+        
+          <td>2 character employee statecode</td>
+        
+          <td>2 character state code</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_zipcode</td>
+        
+          <td>152</td>
+        
+          <td>160</td>
+        
+          <td>9</td>
+        
+          <td>Yes</td>
+        
+          <td>Employee zipcode, up to 9 characters</td>
+        
+          <td>5 or more digits</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_phone</td>
+        
+          <td>161</td>
+        
+          <td>170</td>
+        
+          <td>10</td>
+        
+          <td>No</td>
+        
+          <td>Employee phone number</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_date_of_hire</td>
+        
+          <td>171</td>
+        
+          <td>180</td>
+        
+          <td>10</td>
+        
+          <td>Yes</td>
+        
+          <td>Date of Hire</td>
+        
+          <td>Date format is YYYY-MM-DD</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>actively_at_work</td>
+        
+          <td>181</td>
+        
+          <td>181</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Is the Employee actively at work?</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_first</td>
+        
+          <td>182</td>
+        
+          <td>195</td>
+        
+          <td>14</td>
+        
+          <td>No</td>
+        
+          <td>Spouse first name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_last</td>
+        
+          <td>196</td>
+        
+          <td>215</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Spouse last name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_birthdate</td>
+        
+          <td>216</td>
+        
+          <td>225</td>
+        
+          <td>10</td>
+        
+          <td>No</td>
+        
+          <td>Spouse birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_gender</td>
+        
+          <td>226</td>
+        
+          <td>226</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Spouse Gender</td>
+        
+          <td>Either &#39;M&#39; or &#39;F&#39;</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_street</td>
+        
+          <td>227</td>
+        
+          <td>255</td>
+        
+          <td>29</td>
+        
+          <td>No</td>
+        
+          <td>Spouse street address</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_street2</td>
+        
+          <td>256</td>
+        
+          <td>284</td>
+        
+          <td>29</td>
+        
+          <td>No</td>
+        
+          <td>Spouse street address 2</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_city</td>
+        
+          <td>285</td>
+        
+          <td>298</td>
+        
+          <td>14</td>
+        
+          <td>No</td>
+        
+          <td>Spouse city</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_state</td>
+        
+          <td>299</td>
+        
+          <td>300</td>
+        
+          <td>2</td>
+        
+          <td>No</td>
+        
+          <td>2 character Spouse statecode</td>
+        
+          <td>2 character state code</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_zipcode</td>
+        
+          <td>301</td>
+        
+          <td>309</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse zipcode</td>
+        
+          <td>5 or more digits</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_phone</td>
+        
+          <td>310</td>
+        
+          <td>319</td>
+        
+          <td>10</td>
+        
+          <td>No</td>
+        
+          <td>Spouse phone number</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_ssn</td>
+        
+          <td>320</td>
+        
+          <td>328</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_coverage</td>
+        
+          <td>329</td>
+        
+          <td>334</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Spouse coverage</td>
+        
+          <td>A positive integer, only digits. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_premium</td>
+        
+          <td>335</td>
+        
+          <td>340</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Spouse premium</td>
+        
+          <td>&#39;NNN.NN&#39;, where N is a digit. No currency sign. Premium is modal. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_email</td>
+        
+          <td>341</td>
+        
+          <td>380</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee email address</td>
+        
+          <td>If provided, must resemble an email address, including an &#39;@&#39; symbol.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_height_inches</td>
+        
+          <td>381</td>
+        
+          <td>382</td>
+        
+          <td>2</td>
+        
+          <td>No</td>
+        
+          <td>Employee height in inches</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_weight_pounds</td>
+        
+          <td>383</td>
+        
+          <td>385</td>
+        
+          <td>3</td>
+        
+          <td>No</td>
+        
+          <td>Employee weight in pounds</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_smoker</td>
+        
+          <td>386</td>
+        
+          <td>386</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Is employee a tobacco user</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_email</td>
+        
+          <td>387</td>
+        
+          <td>426</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse email address</td>
+        
+          <td>If provided, must resemble an email address, including an &#39;@&#39; symbol.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_height_inches</td>
+        
+          <td>427</td>
+        
+          <td>428</td>
+        
+          <td>2</td>
+        
+          <td>No</td>
+        
+          <td>Spouse height in inches</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_weight_pounds</td>
+        
+          <td>429</td>
+        
+          <td>431</td>
+        
+          <td>3</td>
+        
+          <td>No</td>
+        
+          <td>Spouse weight in pounds</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_smoker</td>
+        
+          <td>432</td>
+        
+          <td>432</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Is spouse a tobacco user</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_sig_txt</td>
+        
+          <td>433</td>
+        
+          <td>502</td>
+        
+          <td>70</td>
+        
+          <td>Yes</td>
+        
+          <td>Signature line for employee</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>application_date</td>
+        
+          <td>503</td>
+        
+          <td>510</td>
+        
+          <td>8</td>
+        
+          <td>Yes</td>
+        
+          <td>Date of the application</td>
+        
+          <td>Date format is YYYY-MM-DD</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>time_stamp</td>
+        
+          <td>511</td>
+        
+          <td>529</td>
+        
+          <td>19</td>
+        
+          <td>Yes</td>
+        
+          <td>Time the application was received.</td>
+        
+          <td>Timestamp format is YYYY-MM-DDTHH:MM:SS</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>signed_at_city</td>
+        
+          <td>530</td>
+        
+          <td>544</td>
+        
+          <td>15</td>
+        
+          <td>Yes</td>
+        
+          <td>City where the application was signed</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>signed_at_state</td>
+        
+          <td>545</td>
+        
+          <td>546</td>
+        
+          <td>2</td>
+        
+          <td>Yes</td>
+        
+          <td>State in which the enrollment was signed</td>
+        
+          <td>2 character state code</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>agent_name</td>
+        
+          <td>547</td>
+        
+          <td>561</td>
+        
+          <td>15</td>
+        
+          <td>Yes</td>
+        
+          <td>Agent signing name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>agent_code</td>
+        
+          <td>562</td>
+        
+          <td>569</td>
+        
+          <td>8</td>
+        
+          <td>Yes</td>
+        
+          <td>Agent code as provided</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>agent_sig_txt</td>
+        
+          <td>570</td>
+        
+          <td>639</td>
+        
+          <td>70</td>
+        
+          <td>Yes</td>
+        
+          <td>Signature line for agent</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_initials_txt</td>
+        
+          <td>640</td>
+        
+          <td>642</td>
+        
+          <td>3</td>
+        
+          <td>No</td>
+        
+          <td>Initials text for employee</td>
+        
+          <td>Must be either 2 or 3 characters long</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>agent_initials_txt</td>
+        
+          <td>643</td>
+        
+          <td>645</td>
+        
+          <td>3</td>
+        
+          <td>No</td>
+        
+          <td>Initials text for agent</td>
+        
+          <td>Must be either 2 or 3 characters long</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>existing_insurance</td>
+        
+          <td>646</td>
+        
+          <td>646</td>
+        
+          <td>1</td>
+        
+          <td>Yes</td>
+        
+          <td>Does anyone on this application have any existing life insurance or annuity contracts?</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacing_insurance</td>
+        
+          <td>647</td>
+        
+          <td>647</td>
+        
+          <td>1</td>
+        
+          <td>Yes</td>
+        
+          <td>Will the coverage applied for replace any existing life insurance or annuities?</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_treated_6_months</td>
+        
+          <td>648</td>
+        
+          <td>648</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>During the prior 6 months, other than for routine medical care, has spouse been diagnosed or treated by a member of the medical profession in a hospital or any other medical facility?</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_disabled_6_months</td>
+        
+          <td>649</td>
+        
+          <td>649</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Has spouse been disabled in the prior 6 months or received disability payments?</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_read_aloud</td>
+        
+          <td>650</td>
+        
+          <td>650</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Should replacement notice be read aloud</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_is_terminating</td>
+        
+          <td>651</td>
+        
+          <td>651</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Are you considering discontinuing making premium payments, surrendering, forfeiting, assigning to the insurer, or otherwise terminating your existing policy or contract?</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_using_funds</td>
+        
+          <td>652</td>
+        
+          <td>652</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Are you considering using funds from your existing policies or contracts to pay premiums due on the new policy or contract?</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_name1</td>
+        
+          <td>653</td>
+        
+          <td>692</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_birthdate1</td>
+        
+          <td>693</td>
+        
+          <td>700</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_relationship1</td>
+        
+          <td>701</td>
+        
+          <td>715</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_ssn1</td>
+        
+          <td>716</td>
+        
+          <td>724</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_name1</td>
+        
+          <td>725</td>
+        
+          <td>764</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_birthdate1</td>
+        
+          <td>765</td>
+        
+          <td>772</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_relationship1</td>
+        
+          <td>773</td>
+        
+          <td>787</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_ssn1</td>
+        
+          <td>788</td>
+        
+          <td>796</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_name1</td>
+        
+          <td>797</td>
+        
+          <td>836</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_birthdate1</td>
+        
+          <td>837</td>
+        
+          <td>844</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_relationship1</td>
+        
+          <td>845</td>
+        
+          <td>859</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_ssn1</td>
+        
+          <td>860</td>
+        
+          <td>868</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_name1</td>
+        
+          <td>869</td>
+        
+          <td>908</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_birthdate1</td>
+        
+          <td>909</td>
+        
+          <td>916</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_relationship1</td>
+        
+          <td>917</td>
+        
+          <td>931</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_ssn1</td>
+        
+          <td>932</td>
+        
+          <td>940</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_name2</td>
+        
+          <td>941</td>
+        
+          <td>980</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_birthdate2</td>
+        
+          <td>981</td>
+        
+          <td>988</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_relationship2</td>
+        
+          <td>989</td>
+        
+          <td>1003</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_ssn2</td>
+        
+          <td>1004</td>
+        
+          <td>1012</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_name2</td>
+        
+          <td>1013</td>
+        
+          <td>1052</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_birthdate2</td>
+        
+          <td>1053</td>
+        
+          <td>1060</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_relationship2</td>
+        
+          <td>1061</td>
+        
+          <td>1075</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_ssn2</td>
+        
+          <td>1076</td>
+        
+          <td>1084</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_name2</td>
+        
+          <td>1085</td>
+        
+          <td>1124</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_birthdate2</td>
+        
+          <td>1125</td>
+        
+          <td>1132</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_relationship2</td>
+        
+          <td>1133</td>
+        
+          <td>1147</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_ssn2</td>
+        
+          <td>1148</td>
+        
+          <td>1156</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_name2</td>
+        
+          <td>1157</td>
+        
+          <td>1196</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_birthdate2</td>
+        
+          <td>1197</td>
+        
+          <td>1204</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_relationship2</td>
+        
+          <td>1205</td>
+        
+          <td>1219</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_ssn2</td>
+        
+          <td>1220</td>
+        
+          <td>1228</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_name3</td>
+        
+          <td>1229</td>
+        
+          <td>1268</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_birthdate3</td>
+        
+          <td>1269</td>
+        
+          <td>1276</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_relationship3</td>
+        
+          <td>1277</td>
+        
+          <td>1291</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_ssn3</td>
+        
+          <td>1292</td>
+        
+          <td>1300</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_name3</td>
+        
+          <td>1301</td>
+        
+          <td>1340</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_birthdate3</td>
+        
+          <td>1341</td>
+        
+          <td>1348</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_relationship3</td>
+        
+          <td>1349</td>
+        
+          <td>1363</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_ssn3</td>
+        
+          <td>1364</td>
+        
+          <td>1372</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_name3</td>
+        
+          <td>1373</td>
+        
+          <td>1412</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_birthdate3</td>
+        
+          <td>1413</td>
+        
+          <td>1420</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_relationship3</td>
+        
+          <td>1421</td>
+        
+          <td>1435</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_ssn3</td>
+        
+          <td>1436</td>
+        
+          <td>1444</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_name3</td>
+        
+          <td>1445</td>
+        
+          <td>1484</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_birthdate3</td>
+        
+          <td>1485</td>
+        
+          <td>1492</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_relationship3</td>
+        
+          <td>1493</td>
+        
+          <td>1507</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_ssn3</td>
+        
+          <td>1508</td>
+        
+          <td>1516</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_name4</td>
+        
+          <td>1517</td>
+        
+          <td>1556</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_birthdate4</td>
+        
+          <td>1557</td>
+        
+          <td>1564</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_relationship4</td>
+        
+          <td>1565</td>
+        
+          <td>1579</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_ssn4</td>
+        
+          <td>1580</td>
+        
+          <td>1588</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_name4</td>
+        
+          <td>1589</td>
+        
+          <td>1628</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_birthdate4</td>
+        
+          <td>1629</td>
+        
+          <td>1636</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_relationship4</td>
+        
+          <td>1637</td>
+        
+          <td>1651</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_ssn4</td>
+        
+          <td>1652</td>
+        
+          <td>1660</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_name4</td>
+        
+          <td>1661</td>
+        
+          <td>1700</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_birthdate4</td>
+        
+          <td>1701</td>
+        
+          <td>1708</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_relationship4</td>
+        
+          <td>1709</td>
+        
+          <td>1723</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_ssn4</td>
+        
+          <td>1724</td>
+        
+          <td>1732</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_name4</td>
+        
+          <td>1733</td>
+        
+          <td>1772</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_birthdate4</td>
+        
+          <td>1773</td>
+        
+          <td>1780</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_relationship4</td>
+        
+          <td>1781</td>
+        
+          <td>1795</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_ssn4</td>
+        
+          <td>1796</td>
+        
+          <td>1804</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_name5</td>
+        
+          <td>1805</td>
+        
+          <td>1844</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_birthdate5</td>
+        
+          <td>1845</td>
+        
+          <td>1852</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_relationship5</td>
+        
+          <td>1853</td>
+        
+          <td>1867</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_ssn5</td>
+        
+          <td>1868</td>
+        
+          <td>1876</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_name5</td>
+        
+          <td>1877</td>
+        
+          <td>1916</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_birthdate5</td>
+        
+          <td>1917</td>
+        
+          <td>1924</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_relationship5</td>
+        
+          <td>1925</td>
+        
+          <td>1939</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_ssn5</td>
+        
+          <td>1940</td>
+        
+          <td>1948</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_name5</td>
+        
+          <td>1949</td>
+        
+          <td>1988</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_birthdate5</td>
+        
+          <td>1989</td>
+        
+          <td>1996</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_relationship5</td>
+        
+          <td>1997</td>
+        
+          <td>2011</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_ssn5</td>
+        
+          <td>2012</td>
+        
+          <td>2020</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_name5</td>
+        
+          <td>2021</td>
+        
+          <td>2060</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_birthdate5</td>
+        
+          <td>2061</td>
+        
+          <td>2068</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_relationship5</td>
+        
+          <td>2069</td>
+        
+          <td>2083</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_ssn5</td>
+        
+          <td>2084</td>
+        
+          <td>2092</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_name6</td>
+        
+          <td>2093</td>
+        
+          <td>2132</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_birthdate6</td>
+        
+          <td>2133</td>
+        
+          <td>2140</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_relationship6</td>
+        
+          <td>2141</td>
+        
+          <td>2155</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_ssn6</td>
+        
+          <td>2156</td>
+        
+          <td>2164</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_name6</td>
+        
+          <td>2165</td>
+        
+          <td>2204</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_birthdate6</td>
+        
+          <td>2205</td>
+        
+          <td>2212</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_relationship6</td>
+        
+          <td>2213</td>
+        
+          <td>2227</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_ssn6</td>
+        
+          <td>2228</td>
+        
+          <td>2236</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_name6</td>
+        
+          <td>2237</td>
+        
+          <td>2276</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_birthdate6</td>
+        
+          <td>2277</td>
+        
+          <td>2284</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_relationship6</td>
+        
+          <td>2285</td>
+        
+          <td>2299</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_ssn6</td>
+        
+          <td>2300</td>
+        
+          <td>2308</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_name6</td>
+        
+          <td>2309</td>
+        
+          <td>2348</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_birthdate6</td>
+        
+          <td>2349</td>
+        
+          <td>2356</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_relationship6</td>
+        
+          <td>2357</td>
+        
+          <td>2371</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_ssn6</td>
+        
+          <td>2372</td>
+        
+          <td>2380</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_name7</td>
+        
+          <td>2381</td>
+        
+          <td>2420</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_birthdate7</td>
+        
+          <td>2421</td>
+        
+          <td>2428</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_relationship7</td>
+        
+          <td>2429</td>
+        
+          <td>2443</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_ssn7</td>
+        
+          <td>2444</td>
+        
+          <td>2452</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_name7</td>
+        
+          <td>2453</td>
+        
+          <td>2492</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_birthdate7</td>
+        
+          <td>2493</td>
+        
+          <td>2500</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_relationship7</td>
+        
+          <td>2501</td>
+        
+          <td>2515</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_ssn7</td>
+        
+          <td>2516</td>
+        
+          <td>2524</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_name7</td>
+        
+          <td>2525</td>
+        
+          <td>2564</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_birthdate7</td>
+        
+          <td>2565</td>
+        
+          <td>2572</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_relationship7</td>
+        
+          <td>2573</td>
+        
+          <td>2587</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_ssn7</td>
+        
+          <td>2588</td>
+        
+          <td>2596</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_name7</td>
+        
+          <td>2597</td>
+        
+          <td>2636</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_birthdate7</td>
+        
+          <td>2637</td>
+        
+          <td>2644</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_relationship7</td>
+        
+          <td>2645</td>
+        
+          <td>2659</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_ssn7</td>
+        
+          <td>2660</td>
+        
+          <td>2668</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_name8</td>
+        
+          <td>2669</td>
+        
+          <td>2708</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_birthdate8</td>
+        
+          <td>2709</td>
+        
+          <td>2716</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_relationship8</td>
+        
+          <td>2717</td>
+        
+          <td>2731</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_ssn8</td>
+        
+          <td>2732</td>
+        
+          <td>2740</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_name8</td>
+        
+          <td>2741</td>
+        
+          <td>2780</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_birthdate8</td>
+        
+          <td>2781</td>
+        
+          <td>2788</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_relationship8</td>
+        
+          <td>2789</td>
+        
+          <td>2803</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_ssn8</td>
+        
+          <td>2804</td>
+        
+          <td>2812</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_name8</td>
+        
+          <td>2813</td>
+        
+          <td>2852</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_birthdate8</td>
+        
+          <td>2853</td>
+        
+          <td>2860</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_relationship8</td>
+        
+          <td>2861</td>
+        
+          <td>2875</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_ssn8</td>
+        
+          <td>2876</td>
+        
+          <td>2884</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_name8</td>
+        
+          <td>2885</td>
+        
+          <td>2924</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_birthdate8</td>
+        
+          <td>2925</td>
+        
+          <td>2932</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_relationship8</td>
+        
+          <td>2933</td>
+        
+          <td>2947</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_ssn8</td>
+        
+          <td>2948</td>
+        
+          <td>2956</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_name9</td>
+        
+          <td>2957</td>
+        
+          <td>2996</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_birthdate9</td>
+        
+          <td>2997</td>
+        
+          <td>3004</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_relationship9</td>
+        
+          <td>3005</td>
+        
+          <td>3019</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_ssn9</td>
+        
+          <td>3020</td>
+        
+          <td>3028</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_name9</td>
+        
+          <td>3029</td>
+        
+          <td>3068</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_birthdate9</td>
+        
+          <td>3069</td>
+        
+          <td>3076</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_relationship9</td>
+        
+          <td>3077</td>
+        
+          <td>3091</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_ssn9</td>
+        
+          <td>3092</td>
+        
+          <td>3100</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_name9</td>
+        
+          <td>3101</td>
+        
+          <td>3140</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_birthdate9</td>
+        
+          <td>3141</td>
+        
+          <td>3148</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_relationship9</td>
+        
+          <td>3149</td>
+        
+          <td>3163</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_ssn9</td>
+        
+          <td>3164</td>
+        
+          <td>3172</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_name9</td>
+        
+          <td>3173</td>
+        
+          <td>3212</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_birthdate9</td>
+        
+          <td>3213</td>
+        
+          <td>3220</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_relationship9</td>
+        
+          <td>3221</td>
+        
+          <td>3235</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_ssn9</td>
+        
+          <td>3236</td>
+        
+          <td>3244</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_name10</td>
+        
+          <td>3245</td>
+        
+          <td>3284</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_birthdate10</td>
+        
+          <td>3285</td>
+        
+          <td>3292</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_relationship10</td>
+        
+          <td>3293</td>
+        
+          <td>3307</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_bene_ssn10</td>
+        
+          <td>3308</td>
+        
+          <td>3316</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_name10</td>
+        
+          <td>3317</td>
+        
+          <td>3356</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_birthdate10</td>
+        
+          <td>3357</td>
+        
+          <td>3364</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_relationship10</td>
+        
+          <td>3365</td>
+        
+          <td>3379</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_bene_ssn10</td>
+        
+          <td>3380</td>
+        
+          <td>3388</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse primary beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_name10</td>
+        
+          <td>3389</td>
+        
+          <td>3428</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_birthdate10</td>
+        
+          <td>3429</td>
+        
+          <td>3436</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_relationship10</td>
+        
+          <td>3437</td>
+        
+          <td>3451</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_cont_bene_ssn10</td>
+        
+          <td>3452</td>
+        
+          <td>3460</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Employee contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_name10</td>
+        
+          <td>3461</td>
+        
+          <td>3500</td>
+        
+          <td>40</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_birthdate10</td>
+        
+          <td>3501</td>
+        
+          <td>3508</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_relationship10</td>
+        
+          <td>3509</td>
+        
+          <td>3523</td>
+        
+          <td>15</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary relationship</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_cont_bene_ssn10</td>
+        
+          <td>3524</td>
+        
+          <td>3532</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Spouse contingent beneficiary SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy1_name</td>
+        
+          <td>3533</td>
+        
+          <td>3552</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Name of policy company</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy1_number</td>
+        
+          <td>3553</td>
+        
+          <td>3568</td>
+        
+          <td>16</td>
+        
+          <td>No</td>
+        
+          <td>Policy Number or ID</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy1_insured</td>
+        
+          <td>3569</td>
+        
+          <td>3588</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Insured name on policy</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy1_replaced_or_financing</td>
+        
+          <td>3589</td>
+        
+          <td>3589</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Funds coming from replaced or financing</td>
+        
+          <td>&#39;R&#39; if replaced or &#39;F&#39; if financing</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy1_reason</td>
+        
+          <td>3590</td>
+        
+          <td>3659</td>
+        
+          <td>70</td>
+        
+          <td>No</td>
+        
+          <td>Reason for replacing policy</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy2_name</td>
+        
+          <td>3660</td>
+        
+          <td>3679</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Name of policy company</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy2_number</td>
+        
+          <td>3680</td>
+        
+          <td>3695</td>
+        
+          <td>16</td>
+        
+          <td>No</td>
+        
+          <td>Policy Number or ID</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy2_insured</td>
+        
+          <td>3696</td>
+        
+          <td>3715</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Insured name on policy</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy2_replaced_or_financing</td>
+        
+          <td>3716</td>
+        
+          <td>3716</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Funds coming from replaced or financing</td>
+        
+          <td>&#39;R&#39; if replaced or &#39;F&#39; if financing</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy2_reason</td>
+        
+          <td>3717</td>
+        
+          <td>3786</td>
+        
+          <td>70</td>
+        
+          <td>No</td>
+        
+          <td>Reason for replacing policy</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy3_name</td>
+        
+          <td>3787</td>
+        
+          <td>3806</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Name of policy company</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy3_number</td>
+        
+          <td>3807</td>
+        
+          <td>3822</td>
+        
+          <td>16</td>
+        
+          <td>No</td>
+        
+          <td>Policy Number or ID</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy3_insured</td>
+        
+          <td>3823</td>
+        
+          <td>3842</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Insured name on policy</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy3_replaced_or_financing</td>
+        
+          <td>3843</td>
+        
+          <td>3843</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Funds coming from replaced or financing</td>
+        
+          <td>&#39;R&#39; if replaced or &#39;F&#39; if financing</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy3_reason</td>
+        
+          <td>3844</td>
+        
+          <td>3913</td>
+        
+          <td>70</td>
+        
+          <td>No</td>
+        
+          <td>Reason for replacing policy</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy4_name</td>
+        
+          <td>3914</td>
+        
+          <td>3933</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Name of policy company</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy4_number</td>
+        
+          <td>3934</td>
+        
+          <td>3949</td>
+        
+          <td>16</td>
+        
+          <td>No</td>
+        
+          <td>Policy Number or ID</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy4_insured</td>
+        
+          <td>3950</td>
+        
+          <td>3969</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Insured name on policy</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy4_replaced_or_financing</td>
+        
+          <td>3970</td>
+        
+          <td>3970</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Funds coming from replaced or financing</td>
+        
+          <td>&#39;R&#39; if replaced or &#39;F&#39; if financing</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>replacement_policy4_reason</td>
+        
+          <td>3971</td>
+        
+          <td>4040</td>
+        
+          <td>70</td>
+        
+          <td>No</td>
+        
+          <td>Reason for replacing policy</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_first</td>
+        
+          <td>4041</td>
+        
+          <td>4054</td>
+        
+          <td>14</td>
+        
+          <td>No</td>
+        
+          <td>Child first name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_last</td>
+        
+          <td>4055</td>
+        
+          <td>4074</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Child last name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_birthdate</td>
+        
+          <td>4075</td>
+        
+          <td>4082</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Child birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_gender</td>
+        
+          <td>4083</td>
+        
+          <td>4083</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child gender</td>
+        
+          <td>Either &#39;M&#39; or &#39;F&#39;</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_ssn</td>
+        
+          <td>4084</td>
+        
+          <td>4092</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Child SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_coverage</td>
+        
+          <td>4093</td>
+        
+          <td>4098</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Child coverage</td>
+        
+          <td>A positive integer, only digits. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_premium</td>
+        
+          <td>4099</td>
+        
+          <td>4104</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Child premium</td>
+        
+          <td>&#39;NNN.NN&#39;, where N is a digit. No currency sign. Premium is modal. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_first</td>
+        
+          <td>4105</td>
+        
+          <td>4118</td>
+        
+          <td>14</td>
+        
+          <td>No</td>
+        
+          <td>Child first name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_last</td>
+        
+          <td>4119</td>
+        
+          <td>4138</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Child last name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_birthdate</td>
+        
+          <td>4139</td>
+        
+          <td>4146</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Child birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_gender</td>
+        
+          <td>4147</td>
+        
+          <td>4147</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child gender</td>
+        
+          <td>Either &#39;M&#39; or &#39;F&#39;</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_ssn</td>
+        
+          <td>4148</td>
+        
+          <td>4156</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Child SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_coverage</td>
+        
+          <td>4157</td>
+        
+          <td>4162</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Child coverage</td>
+        
+          <td>A positive integer, only digits. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_premium</td>
+        
+          <td>4163</td>
+        
+          <td>4168</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Child premium</td>
+        
+          <td>&#39;NNN.NN&#39;, where N is a digit. No currency sign. Premium is modal. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_first</td>
+        
+          <td>4169</td>
+        
+          <td>4182</td>
+        
+          <td>14</td>
+        
+          <td>No</td>
+        
+          <td>Child first name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_last</td>
+        
+          <td>4183</td>
+        
+          <td>4202</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Child last name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_birthdate</td>
+        
+          <td>4203</td>
+        
+          <td>4210</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Child birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_gender</td>
+        
+          <td>4211</td>
+        
+          <td>4211</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child gender</td>
+        
+          <td>Either &#39;M&#39; or &#39;F&#39;</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_ssn</td>
+        
+          <td>4212</td>
+        
+          <td>4220</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Child SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_coverage</td>
+        
+          <td>4221</td>
+        
+          <td>4226</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Child coverage</td>
+        
+          <td>A positive integer, only digits. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_premium</td>
+        
+          <td>4227</td>
+        
+          <td>4232</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Child premium</td>
+        
+          <td>&#39;NNN.NN&#39;, where N is a digit. No currency sign. Premium is modal. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_first</td>
+        
+          <td>4233</td>
+        
+          <td>4246</td>
+        
+          <td>14</td>
+        
+          <td>No</td>
+        
+          <td>Child first name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_last</td>
+        
+          <td>4247</td>
+        
+          <td>4266</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Child last name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_birthdate</td>
+        
+          <td>4267</td>
+        
+          <td>4274</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Child birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_gender</td>
+        
+          <td>4275</td>
+        
+          <td>4275</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child gender</td>
+        
+          <td>Either &#39;M&#39; or &#39;F&#39;</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_ssn</td>
+        
+          <td>4276</td>
+        
+          <td>4284</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Child SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_coverage</td>
+        
+          <td>4285</td>
+        
+          <td>4290</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Child coverage</td>
+        
+          <td>A positive integer, only digits. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_premium</td>
+        
+          <td>4291</td>
+        
+          <td>4296</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Child premium</td>
+        
+          <td>&#39;NNN.NN&#39;, where N is a digit. No currency sign. Premium is modal. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_first</td>
+        
+          <td>4297</td>
+        
+          <td>4310</td>
+        
+          <td>14</td>
+        
+          <td>No</td>
+        
+          <td>Child first name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_last</td>
+        
+          <td>4311</td>
+        
+          <td>4330</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Child last name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_birthdate</td>
+        
+          <td>4331</td>
+        
+          <td>4338</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Child birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_gender</td>
+        
+          <td>4339</td>
+        
+          <td>4339</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child gender</td>
+        
+          <td>Either &#39;M&#39; or &#39;F&#39;</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_ssn</td>
+        
+          <td>4340</td>
+        
+          <td>4348</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Child SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_coverage</td>
+        
+          <td>4349</td>
+        
+          <td>4354</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Child coverage</td>
+        
+          <td>A positive integer, only digits. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_premium</td>
+        
+          <td>4355</td>
+        
+          <td>4360</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Child premium</td>
+        
+          <td>&#39;NNN.NN&#39;, where N is a digit. No currency sign. Premium is modal. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_first</td>
+        
+          <td>4361</td>
+        
+          <td>4374</td>
+        
+          <td>14</td>
+        
+          <td>No</td>
+        
+          <td>Child first name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_last</td>
+        
+          <td>4375</td>
+        
+          <td>4394</td>
+        
+          <td>20</td>
+        
+          <td>No</td>
+        
+          <td>Child last name</td>
+        
+          <td></td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_birthdate</td>
+        
+          <td>4395</td>
+        
+          <td>4402</td>
+        
+          <td>8</td>
+        
+          <td>No</td>
+        
+          <td>Child birthdate</td>
+        
+          <td>Date format is YYYY-MM-DD; Date must not be future.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_gender</td>
+        
+          <td>4403</td>
+        
+          <td>4403</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child gender</td>
+        
+          <td>Either &#39;M&#39; or &#39;F&#39;</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_ssn</td>
+        
+          <td>4404</td>
+        
+          <td>4412</td>
+        
+          <td>9</td>
+        
+          <td>No</td>
+        
+          <td>Child SSN</td>
+        
+          <td>NNNNNNNNN (9 digits with no dashes)</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_coverage</td>
+        
+          <td>4413</td>
+        
+          <td>4418</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Child coverage</td>
+        
+          <td>A positive integer, only digits. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_premium</td>
+        
+          <td>4419</td>
+        
+          <td>4424</td>
+        
+          <td>6</td>
+        
+          <td>No</td>
+        
+          <td>Child premium</td>
+        
+          <td>&#39;NNN.NN&#39;, where N is a digit. No currency sign. Premium is modal. If no coverage selected, leave blank.</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_question_1_answer</td>
+        
+          <td>4425</td>
+        
+          <td>4425</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Employee Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_question_2_answer</td>
+        
+          <td>4426</td>
+        
+          <td>4426</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Employee Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_question_3_answer</td>
+        
+          <td>4427</td>
+        
+          <td>4427</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Employee Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_question_4_answer</td>
+        
+          <td>4428</td>
+        
+          <td>4428</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Employee Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_question_5_answer</td>
+        
+          <td>4429</td>
+        
+          <td>4429</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Employee Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_question_6_answer</td>
+        
+          <td>4430</td>
+        
+          <td>4430</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Employee Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_question_7_answer</td>
+        
+          <td>4431</td>
+        
+          <td>4431</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Employee Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_question_8_answer</td>
+        
+          <td>4432</td>
+        
+          <td>4432</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Employee Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_question_9_answer</td>
+        
+          <td>4433</td>
+        
+          <td>4433</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Employee Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>emp_question_10_answer</td>
+        
+          <td>4434</td>
+        
+          <td>4434</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Employee Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_question_1_answer</td>
+        
+          <td>4435</td>
+        
+          <td>4435</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Spouse Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_question_2_answer</td>
+        
+          <td>4436</td>
+        
+          <td>4436</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Spouse Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_question_3_answer</td>
+        
+          <td>4437</td>
+        
+          <td>4437</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Spouse Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_question_4_answer</td>
+        
+          <td>4438</td>
+        
+          <td>4438</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Spouse Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_question_5_answer</td>
+        
+          <td>4439</td>
+        
+          <td>4439</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Spouse Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_question_6_answer</td>
+        
+          <td>4440</td>
+        
+          <td>4440</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Spouse Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_question_7_answer</td>
+        
+          <td>4441</td>
+        
+          <td>4441</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Spouse Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_question_8_answer</td>
+        
+          <td>4442</td>
+        
+          <td>4442</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Spouse Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_question_9_answer</td>
+        
+          <td>4443</td>
+        
+          <td>4443</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Spouse Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>sp_question_10_answer</td>
+        
+          <td>4444</td>
+        
+          <td>4444</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Spouse Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_question_1_answer</td>
+        
+          <td>4445</td>
+        
+          <td>4445</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_question_2_answer</td>
+        
+          <td>4446</td>
+        
+          <td>4446</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_question_3_answer</td>
+        
+          <td>4447</td>
+        
+          <td>4447</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_question_4_answer</td>
+        
+          <td>4448</td>
+        
+          <td>4448</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_question_5_answer</td>
+        
+          <td>4449</td>
+        
+          <td>4449</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_question_6_answer</td>
+        
+          <td>4450</td>
+        
+          <td>4450</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_question_7_answer</td>
+        
+          <td>4451</td>
+        
+          <td>4451</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_question_8_answer</td>
+        
+          <td>4452</td>
+        
+          <td>4452</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_question_9_answer</td>
+        
+          <td>4453</td>
+        
+          <td>4453</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch1_question_10_answer</td>
+        
+          <td>4454</td>
+        
+          <td>4454</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_question_1_answer</td>
+        
+          <td>4455</td>
+        
+          <td>4455</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_question_2_answer</td>
+        
+          <td>4456</td>
+        
+          <td>4456</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_question_3_answer</td>
+        
+          <td>4457</td>
+        
+          <td>4457</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_question_4_answer</td>
+        
+          <td>4458</td>
+        
+          <td>4458</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_question_5_answer</td>
+        
+          <td>4459</td>
+        
+          <td>4459</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_question_6_answer</td>
+        
+          <td>4460</td>
+        
+          <td>4460</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_question_7_answer</td>
+        
+          <td>4461</td>
+        
+          <td>4461</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_question_8_answer</td>
+        
+          <td>4462</td>
+        
+          <td>4462</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_question_9_answer</td>
+        
+          <td>4463</td>
+        
+          <td>4463</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch2_question_10_answer</td>
+        
+          <td>4464</td>
+        
+          <td>4464</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_question_1_answer</td>
+        
+          <td>4465</td>
+        
+          <td>4465</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_question_2_answer</td>
+        
+          <td>4466</td>
+        
+          <td>4466</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_question_3_answer</td>
+        
+          <td>4467</td>
+        
+          <td>4467</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_question_4_answer</td>
+        
+          <td>4468</td>
+        
+          <td>4468</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_question_5_answer</td>
+        
+          <td>4469</td>
+        
+          <td>4469</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_question_6_answer</td>
+        
+          <td>4470</td>
+        
+          <td>4470</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_question_7_answer</td>
+        
+          <td>4471</td>
+        
+          <td>4471</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_question_8_answer</td>
+        
+          <td>4472</td>
+        
+          <td>4472</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_question_9_answer</td>
+        
+          <td>4473</td>
+        
+          <td>4473</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch3_question_10_answer</td>
+        
+          <td>4474</td>
+        
+          <td>4474</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_question_1_answer</td>
+        
+          <td>4475</td>
+        
+          <td>4475</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_question_2_answer</td>
+        
+          <td>4476</td>
+        
+          <td>4476</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_question_3_answer</td>
+        
+          <td>4477</td>
+        
+          <td>4477</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_question_4_answer</td>
+        
+          <td>4478</td>
+        
+          <td>4478</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_question_5_answer</td>
+        
+          <td>4479</td>
+        
+          <td>4479</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_question_6_answer</td>
+        
+          <td>4480</td>
+        
+          <td>4480</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_question_7_answer</td>
+        
+          <td>4481</td>
+        
+          <td>4481</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_question_8_answer</td>
+        
+          <td>4482</td>
+        
+          <td>4482</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_question_9_answer</td>
+        
+          <td>4483</td>
+        
+          <td>4483</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch4_question_10_answer</td>
+        
+          <td>4484</td>
+        
+          <td>4484</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_question_1_answer</td>
+        
+          <td>4485</td>
+        
+          <td>4485</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_question_2_answer</td>
+        
+          <td>4486</td>
+        
+          <td>4486</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_question_3_answer</td>
+        
+          <td>4487</td>
+        
+          <td>4487</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_question_4_answer</td>
+        
+          <td>4488</td>
+        
+          <td>4488</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_question_5_answer</td>
+        
+          <td>4489</td>
+        
+          <td>4489</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_question_6_answer</td>
+        
+          <td>4490</td>
+        
+          <td>4490</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_question_7_answer</td>
+        
+          <td>4491</td>
+        
+          <td>4491</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_question_8_answer</td>
+        
+          <td>4492</td>
+        
+          <td>4492</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_question_9_answer</td>
+        
+          <td>4493</td>
+        
+          <td>4493</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch5_question_10_answer</td>
+        
+          <td>4494</td>
+        
+          <td>4494</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_question_1_answer</td>
+        
+          <td>4495</td>
+        
+          <td>4495</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_question_2_answer</td>
+        
+          <td>4496</td>
+        
+          <td>4496</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_question_3_answer</td>
+        
+          <td>4497</td>
+        
+          <td>4497</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_question_4_answer</td>
+        
+          <td>4498</td>
+        
+          <td>4498</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_question_5_answer</td>
+        
+          <td>4499</td>
+        
+          <td>4499</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_question_6_answer</td>
+        
+          <td>4500</td>
+        
+          <td>4500</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_question_7_answer</td>
+        
+          <td>4501</td>
+        
+          <td>4501</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_question_8_answer</td>
+        
+          <td>4502</td>
+        
+          <td>4502</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_question_9_answer</td>
+        
+          <td>4503</td>
+        
+          <td>4503</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+      <tr>
+        
+          <td>ch6_question_10_answer</td>
+        
+          <td>4504</td>
+        
+          <td>4504</td>
+        
+          <td>1</td>
+        
+          <td>No</td>
+        
+          <td>Child Answer to Statement of Health Question</td>
+        
+          <td>&#39;Y&#39; or &#39;N&#39; if provided</td>
+        
+      </tr>
+    
+  </table>
+  </div>
+</body>
+</html>
