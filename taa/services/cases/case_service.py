@@ -432,23 +432,25 @@ class CaseService(DBService):
         return not self.is_agent_allowed_to_view_full_census(agent, case)
 
 class Rider(object):
-    def __init__(self, name, code, enrollment_level=False):
+    def __init__(self, name, code, enrollment_level=False, restrict_to=[]):
         self.name = name
         self.code = code
         self.enrollment_level = enrollment_level
+        self.restrict_to = restrict_to
 
     def to_json(self):
         return dict(
                 name=self.name,
                 code=self.code,
-                enrollment_level=self.enrollment_level
+                enrollment_level=self.enrollment_level,
+                restrict_to=self.restrict_to
                 )
 
 
 class RiderService(object):
     default_riders = [
         # Rider("Disability Waiver of Premium", "WP"),
-        Rider("Automatic Increase Rider", "AIR", True), 
+        Rider("Automatic Increase Rider", "AIR", True, ["FPPTI"]), 
         # Rider("Chronic Illness Rider", "CHR", True) 
     ]
 
@@ -473,7 +475,8 @@ class RiderService(object):
                 'selected': self.is_rider_selected_for_case(rider, case),
                 'description': rider.name,
                 'code': rider.code,
-                'enrollment_level': rider.enrollment_level
+                'enrollment_level': rider.enrollment_level,
+                'restrict_to': rider.restrict_to
                 }
                 for rider in self.default_riders
         ]

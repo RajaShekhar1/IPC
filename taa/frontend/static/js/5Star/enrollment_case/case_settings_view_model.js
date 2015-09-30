@@ -156,7 +156,14 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
 
   // Get Rider information
   self.rider_choices = settings.riders;
-  self.riders = ko.observable(self.rider_choices)
+  // self.riders = ko.observable(self.rider_choices)
+  
+  self.riders = ko.computed(function() {
+    return _.reject(self.rider_choices, function(rider) {
+      var current_product_name = self.single_product().base_product_type;
+      return rider.restrict_to.indexOf(current_product_name) === -1;
+    });
+  });
 
   // Self-enrollment
   self.is_self_enrollment = ko.observable(case_data.is_self_enrollment);
