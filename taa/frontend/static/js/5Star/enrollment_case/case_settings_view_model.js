@@ -358,9 +358,9 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     }
   });
 
-  self.get_form_error = ko.computed(function() {
+  self.get_form_error = ko.pureComputed(function() {
     if (self.company_name.is_unique !== undefined &&
-        !self.company_name.is_unique()) {
+        self.company_name.is_unique() === false) {
       return "The name '"+self.company_name()+"' is already used."
     }
     return "";
@@ -368,7 +368,8 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
 
   self.check_unique_name = function(current_value, callback) {
     $.get(urls.get_cases_api_url(case_data.id), {by_name: current_value}, function(result) {
-      var is_unique = (result.data.length == 0 || current_value == case_data.company_name);
+      // Must have either 0 cases with this name, or 1 (the current case)
+      var is_unique = (result.data.length === 0 || current_value === case_data.company_name);
       callback(is_unique);
     }, "json");
 
@@ -382,14 +383,16 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     // hide missing date errors
     _.invoke(self.annual_enrollment_periods(), "error", "");
 
+
+    // all other errors
+    var errors = {};
+
     // unique name error
     var unique_name_error = self.get_form_error();
     if (unique_name_error !== "") {
       add_case_error(errors, "company_name", unique_name_error);
     }
 
-    // all other errors
-    var errors = {};
     if ($.trim(self.company_name()) == "") {
       add_case_error(errors, "company_name", "Company name is required.");
     }

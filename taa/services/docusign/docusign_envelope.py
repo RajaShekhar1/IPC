@@ -599,8 +599,7 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
                 {
                     'selected': 'True',
                     # FPPTI or FPPCI
-                    'value':
-                        'FPPTI' if productType == 'FPP-Gov' else productType
+                    'value': productType
                 }
             ]
         }

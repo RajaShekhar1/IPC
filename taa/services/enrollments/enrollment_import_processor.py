@@ -1,3 +1,4 @@
+from datetime import datetime
 import hashlib
 
 from flask import abort, render_template
@@ -305,7 +306,8 @@ class EnrollmentImportBatchService(DBService):
             case_token=case_token,
             num_processed=num_processed,
             num_errors=num_errors,
-            log_hash=self.generate_hash(hash_data)
+            log_hash=self.generate_hash(hash_data),
+            timestamp=datetime.now()
         ))
 
     def add_enrollments_to_batch(self, batch, enrollment_records):

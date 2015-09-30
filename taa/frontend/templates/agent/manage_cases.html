@@ -74,30 +74,44 @@
                 <h4 class="modal-title">Add New Case</h4>
             </div>
             <div class="modal-body">
-                
-                <div class="form-group">
-                    <label class="col-md-3 control-label" for="company_name">Company Name</label>
-                    <div class="col-md-8">
-                        <input type="text" class="form-control" id="company_name" name="company_name" placeholder="Company Name"
-                            minlength="1" required data-bind="textInput: company_name, uniqueNameValidation: {
-                                remoteMethod: check_unique_name, uniqueObservable: company_name
-                            }">
-                    </div>
-                    <div class="col-md-1">
-                        <div class="icon-spinner text-warning bigger-125" data-bind="visible: company_name.is_checking"></div>
-                        <div class="icon icon-check-sign green bigger-125" data-bind="visible: company_name.is_unique() && !company_name.is_checking()"></div>
-                    </div>
+                <div data-bind="visible: is_form_panel">
+                  <div class="form-group">
+                      <label class="col-md-3 control-label" for="company_name">Company Name</label>
+                      <div class="col-md-8">
+                          <input type="text" class="form-control" id="company_name" name="company_name" placeholder="Company Name"
+                              minlength="1" required data-bind="textInput: company_name, uniqueNameValidation: {
+                                  remoteMethod: check_unique_name, uniqueObservable: rate_limited_company_name
+                              }">
+                      </div>
+                      <div class="col-md-1">
+                          <div data-bind="visible: rate_limited_company_name.is_checking">
+                            <i class="ace-icon fa fa-spinner fa-spin text-warning bigger-125"></i>
+                          </div>
+                          <div data-bind="visible: rate_limited_company_name.is_unique() && !rate_limited_company_name.is_checking()">
+                            <i class="ace-icon glyphicon glyphicon-ok bigger-125 text-success"></i>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="row">
+                      <div class="col-md-8 col-md-offset-3">
+                          <div class="error" data-bind="visible: rate_limited_company_name.has_been_checked, text: get_form_error"></div>
+                      </div>
+                  </div>
                 </div>
-                <div class="row"> 
-                    <div class="col-md-8 col-md-offset-3">
-                        <div class="error" data-bind="visible: company_name.has_been_checked, text: get_form_error"></div>
-                    </div>
+
+                <div data-bind="visible: is_loading_panel">
+                  <div class="text-center">
+                    <span class="ace-icon fa fa-spinner fa-spin" style="font-size: 3em;"></span>
+                    <br>
+                    Creating case "<span data-bind="text: company_name"></span>"
+                  </div>
                 </div>
             </div>
                 
             <div class="modal-footer">
+
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" data-bind="click: create_case" class="btn btn-primary">Add Case</button>
+                <button type="button" data-bind="click: create_case, enable: can_submit, visible: is_form_panel" class="btn btn-primary">Add Case</button>
             </div>
         </div>
         <!-- /.modal-content -->
@@ -121,22 +135,43 @@
         
         function ManageCasesPage() {
             var self = this;
-            
-            self.company_name = ko.observable(null).extend({ rateLimit: 500 });
-            
+
+            var FORM_PANEL = "form";
+            var LOADING_PANEL = "loading";
+
+            self.company_name = ko.observable(null);
+
+            self.rate_limited_company_name = ko.pureComputed(function() {
+              return self.company_name();
+            }).extend({ rateLimit: 300 });
+
+            self.panel = ko.observable("form");
+
+            self.can_submit = ko.pureComputed(function() {
+              // Since this depends on the non-rate-limited value and compares it to the rate-limited value,
+              // we will disable the button as soon as it is changed to something that hasn't been validated as unique.
+              return self.rate_limited_company_name.is_unique() && self.rate_limited_company_name.unique_value === self.company_name();
+            });
+
+            self.is_form_panel = ko.pureComputed(function() {
+              return self.panel() === FORM_PANEL;
+            });
+
+            self.is_loading_panel = ko.pureComputed(function() {
+              return self.panel() === LOADING_PANEL;
+            });
+
             self.check_unique_name = function(current_value, callback) {
-                
                 $.get("{{ url_for("cases.get_cases") }}", {by_name: current_value}, function(result) {
                     var is_unique = (result.data.length == 0);
                     callback(is_unique);
                 }, "json");
-            
             };
             
             self.get_form_error = ko.computed(function() {
                 if ($.trim(self.company_name()) == "") {
                     return "Company name is required.";
-                } else if (!self.company_name.is_unique()) {
+                } else if (!self.rate_limited_company_name.is_unique()) {
                     return "The name '"+self.company_name()+"' is already used."
                 }
                 return "";
@@ -144,12 +179,18 @@
             
             self.create_case = function() {
                 
-                if (!new_case_form.valid()) {
+                if (!new_case_form.valid() || !self.can_submit()) {
+                  return false;
                 }
-                errors = self.get_form_error();
+
+                var errors = self.get_form_error();
                 if (errors) {
                     return false;
                 }
+
+                // Show loading panel
+                self.panel(LOADING_PANEL);
+
                 var data = {
                     company_name: $("#company_name").val()
                 };
@@ -161,12 +202,11 @@
                     data: JSON.stringify(data),
                     dataType:'json',
                     success: function(results) {
-                        //var created_case = new Case(results.data);
-                        //self.managed_cases.push(created_case);
-                        window.location.href = "{{ url_for("manage_case", case_id="") }}"+results.data.id;
+                        window.location.href = "{{ url_for("manage_case", case_id="") }}" + results.data.id;
                     },
                     error: function(xhr) {
-                        console.log(xhr.responseJSON.errors);
+                      self.panel(FORM_PANEL);
+                      alert("There was a problem communicating with the server.");
                     }
                 });
             };

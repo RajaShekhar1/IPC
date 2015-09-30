@@ -25,8 +25,14 @@ def init_brochures():
         dict(product='Group CI',
              link='http://5starlifeinsurance.com/wp-content/uploads/2015/03/Group-Critical-Illness-Employee-Weekly-Bi-weekly-brochure.pdf',
              brochure_name='Group Critical Illness'),
-        # Gov is same as TI
+        # White (FPP-Gov), Blue, Gray are same as TI
         dict(product='FPP-Gov',
+             link='http://5starlifeinsurance.com/wp-content/uploads/2015/02/5Star-Life-FPP-TI-brochure.pdf',
+             brochure_name='Family Protection Plan with Terminal Illness Benefit'),
+        dict(product='FPPTIY',
+             link='http://5starlifeinsurance.com/wp-content/uploads/2015/02/5Star-Life-FPP-TI-brochure.pdf',
+             brochure_name='Family Protection Plan with Terminal Illness Benefit'),
+        dict(product='FPPTIB',
              link='http://5starlifeinsurance.com/wp-content/uploads/2015/02/5Star-Life-FPP-TI-brochure.pdf',
              brochure_name='Family Protection Plan with Terminal Illness Benefit'),
     ]
