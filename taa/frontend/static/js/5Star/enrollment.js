@@ -699,7 +699,7 @@ function WizardUI(defaults) {
 		self.get_policy_years = function() {
 			var policy_years = [];
 			for (year = 2; year <= 6; year++) {
-				if (self.get_age_for_policy_year(year) < 70) {
+				if (self.get_age_for_policy_year(year) <= 70) {
 					policy_years.push(year);
 				}
 			}
