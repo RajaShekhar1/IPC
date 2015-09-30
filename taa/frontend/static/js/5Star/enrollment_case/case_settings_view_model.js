@@ -271,13 +271,13 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   if (self.can_edit_case) {
     var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
       self.enrollment_periods, self.situs_city, self.situs_state, self.payment_mode,
-      self.is_active, self.owner_agent_id, self.can_partners_download_enrollments, self.is_self_enrollment,
-        self.riders
+      self.is_active, self.owner_agent_id, self.can_partners_download_enrollments, self.is_self_enrollment
     ];
     _.each(self.enrollment_periods(), function(p) {
       fields.push(p.start_date);
       fields.push(p.end_date);
     });
+
     $.each(fields, function() {
       var field = this;
       field.subscribe(function() {
