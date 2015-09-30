@@ -320,8 +320,8 @@ class EnrollmentRecordParser(object):
     for prefix, long_prefix in [('emp', 'employee'), ('sp', 'spouse')]:
         for rider in RiderService.default_riders:
             all_fields += [EnrollmentRecordField("{}_rider_{}".format(prefix, rider.code.lower()), "{}_rider_{}".format(long_prefix, rider.code.lower()), preprocess_string, [question_answered_validator], flat_file_size=1, description="Is the {} rider included for {}?".format(rider.code, long_prefix))]
-        all_fields += [EnrollmentRecordField("{}_rider_other".format(prefix), "{}_rider_other".format(long_prefix), preprocess_string, [question_answered_validator], flat_file_size=1, description="Is there another rider included for {}?".format(long_prefix)),
-                EnrollmentRecordField("{}_rider_other_text".format(prefix), "{}_rider_other_text".format(long_prefix), preprocess_string, [], flat_file_size=10, description="What is the other rider code for {}?".format(long_prefix))]
+        # Uncomment to add 'Other' rider and 'Other' rider text
+        # all_fields += [EnrollmentRecordField("{}_rider_other".format(prefix), "{}_rider_other".format(long_prefix), preprocess_string, [question_answered_validator], flat_file_size=1, description="Is there another rider included for {}?".format(long_prefix)), EnrollmentRecordField("{}_rider_other_text".format(prefix), "{}_rider_other_text".format(long_prefix), preprocess_string, [], flat_file_size=10, description="What is the other rider code for {}?".format(long_prefix))]
 
     MAX_POLICIES = 4
     for num in range(1, MAX_POLICIES + 1):
@@ -605,7 +605,7 @@ class EnrollmentRecordParser(object):
             "application_date",
             "time_stamp",
             "signed_at_city",
-            "signed_at_state   ",
+            "signed_at_state",
             "agent_name",
             "agent_code",
             "agent_sig_txt",

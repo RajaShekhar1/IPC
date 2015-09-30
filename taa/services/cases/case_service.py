@@ -448,7 +448,7 @@ class Rider(object):
 class RiderService(object):
     default_riders = [
         # Rider("Disability Waiver of Premium", "WP"),
-        Rider("Auto Increase Rider", "AIR", True), 
+        Rider("Automatic Increase Rider", "AIR", True), 
         # Rider("Chronic Illness Rider", "CHR", True) 
     ]
 
