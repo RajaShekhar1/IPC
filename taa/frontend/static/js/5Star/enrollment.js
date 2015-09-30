@@ -703,7 +703,7 @@ function WizardUI(defaults) {
 				}
 			}
 			return policy_years;
-		});
+		};
 
 		self.get_age_for_policy_year = function(n) {
 			return self.applicant.get_age() + n - 1;
@@ -721,7 +721,7 @@ function WizardUI(defaults) {
 
 		self.format_coverage_for_policy = function() {
 			var coverage = 0;
-			foreach (year in self.get_policy_years()) {
+			for (year in self.get_policy_years()) {
 				coverage += self.get_coverage_for_year(year);
 			}
 			return format_face_value(coverage);
