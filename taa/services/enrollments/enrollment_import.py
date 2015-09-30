@@ -141,7 +141,6 @@ class EnrollmentImportService(object):
             'sp': []
         }
 
-        import ipdb; ipdb.set_trace()
         for prefix, long_prefix in [('emp', 'employee'), ('sp', 'spouse')]:
             for rider in RiderService.default_riders:
                 has_rider = data.get('{}_rider_{}'.format(prefix, rider.code.lower()))
