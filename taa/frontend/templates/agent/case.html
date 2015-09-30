@@ -511,7 +511,7 @@ style="display: none;" data-bind="visible: true">
 
         <div class="row" data-bind='visible: is_active'>
           <div class="col-xs-12">
-            <label>Enrollment City: <input type='text' data-bind="value: enrollment_city_override"></label>
+            <label>nnrollment City: <input type='text' data-bind="value: enrollment_city_override"></label>
             <label>Enrollment State: <limited-state-select params="limiter: state_product_override_limiter"></limited-state-select></label>
           </div>
         </div>
@@ -916,7 +916,13 @@ style="display: none;" data-bind="visible: true">
                   </div>
                   <div class="clearfix"></div>
                 </div>
-
+                <div class="col-xs-12">
+                  <label>Enrollment City: <input type='text' data-bind="value: case_settings.enrollment_city_override"></label>
+                  <label>Enrollment State: <limited-state-select params="limiter: case_settings.state_product_override_limiter"></limited-state-select></label>
+                </div>
+              </div>
+            </form>
+          </div>
                 <div class="modal-footer">
                   <div class="form-buttons buttons-panel">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
