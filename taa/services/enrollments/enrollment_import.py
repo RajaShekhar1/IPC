@@ -221,10 +221,10 @@ def standardize_wizard_contingent_beneficiaries(data, out_prefix):
         return {}
 
     # Wizard contingent beneficiaries are in a different input format
-    out_data["{}_beneficiary1_name".format(out_prefix)] = bene_data['name']
-    out_data["{}_beneficiary1_relationship".format(out_prefix)] = bene_data['relationship']
-    out_data["{}_beneficiary1_dob".format(out_prefix)] = bene_data['date_of_birth']
-    out_data["{}_beneficiary1_ssn".format(out_prefix)] = bene_data['ssn']
+    out_data["{}_beneficiary1_name".format(out_prefix)] = bene_data.get('name', '')
+    out_data["{}_beneficiary1_relationship".format(out_prefix)] = bene_data.get('relationship', '')
+    out_data["{}_beneficiary1_dob".format(out_prefix)] = bene_data.get('date_of_birth', '')
+    out_data["{}_beneficiary1_ssn".format(out_prefix)] = bene_data.get('ssn', '')
     # For consistency, put a percentage in too.
     out_data["{}_beneficiary1_percentage".format(out_prefix)] = 100
 
