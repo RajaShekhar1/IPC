@@ -2178,33 +2178,33 @@
                 </div>
 
                 <div class="modal-body">
-                    To make your Family Protection Plan even more valuable, you have an additional benefit that makes your coverage more robust and responsive to your growing coverage needs.  This optional add-on ("rider") incrementally increases your coverage by the amount of insurance that $1 in weekly premium purchases at your attained age over a 5 consecutive year period.  It starts on your first policy anniversary, and a $1/week premium increase is automatically approved with no further health qualification.  A demonstration of how this increasing benefit works is shown below.
+                    <!--ko with: $root.shown_rider -->
+                      To make your Family Protection Plan even more valuable, you have an additional benefit that makes your coverage more robust and responsive to your growing coverage needs.  This optional add-on ("rider") incrementally increases your coverage by the amount of insurance that $1 in weekly premium purchases at your attained age over a <span data-bind="text: get_policy_years().length"></span> consecutive year period.  It starts on your first policy anniversary, and a $1/week premium increase is automatically approved with no further health qualification.  A demonstration of how this increasing benefit works is shown below.
 
-                    <div class="space-10"></div>
+                      <div class="space-10"></div>
 
-                    <!--ko if: shown_rider() != null -->
-                    <table class="table table-bordered table-striped">
-                        <thead>
-                            <tr>
-                                <th class="center">Policy Year</th>
-                                <th class="center">Age</th>
-                                <th class="center">Additional Coverage</th>
-                                <th class="center">Total Coverage</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!--ko foreach: {data: shown_rider().get_policy_years(), as: 'year'} -->
-                            <tr>
-                                <td class="center" data-bind="text: year"></td>
-                                <td class="center" data-bind="text: $root.shown_rider().get_age_for_policy_year(year)"></td>
-                                <td class="center" data-bind="text: $root.shown_rider().format_coverage_for_year(year)"></td>
-                                <td class="center" data-bind="text: $root.shown_rider().format_total_coverage_for_year(year)"></td>
-                            </tr>
-                            <!--/ko-->
-                        </tbody>
-                    </table>
+                      <table class="table table-bordered table-striped">
+                          <thead>
+                              <tr>
+                                  <th class="center">Policy Year</th>
+                                  <th class="center">Age</th>
+                                  <th class="center">Additional Coverage</th>
+                                  <th class="center">Total Coverage</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              <!--ko foreach: {data: get_policy_years(), as: 'year'} -->
+                              <tr>
+                                  <td class="center" data-bind="text: year"></td>
+                                  <td class="center" data-bind="text: $parent.get_age_for_policy_year(year)"></td>
+                                  <td class="center" data-bind="text: $parent.format_coverage_for_year(year)"></td>
+                                  <td class="center" data-bind="text: $parent.format_total_coverage_for_year(year)"></td>
+                              </tr>
+                              <!--/ko-->
+                          </tbody>
+                      </table>
 
-                    Total <span data-bind="text: shown_rider().get_policy_years().length"></span> year increase of <span data-bind="text: shown_rider().format_coverage_for_policy()"></span> coverage for $5/week additional premium.
+                      Total <span data-bind="text: get_policy_years().length"></span> year increase of <span data-bind="text: format_coverage_for_policy()"></span> coverage for $<span data-bind="text: get_policy_years().length"></span>/week additional premium.
                     <!--/ko-->
                     <br>
                     <br>
