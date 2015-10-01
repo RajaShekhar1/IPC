@@ -77,24 +77,14 @@
                 <div data-bind="visible: is_form_panel">
                   <div class="form-group">
                       <label class="col-md-3 control-label" for="company_name">Company Name</label>
-                      <div class="col-md-8">
+                      <div class="col-md-9">
                           <input type="text" class="form-control" id="company_name" name="company_name" placeholder="Company Name"
-                              minlength="1" required data-bind="textInput: company_name, uniqueNameValidation: {
-                                  remoteMethod: check_unique_name, uniqueObservable: rate_limited_company_name
-                              }">
-                      </div>
-                      <div class="col-md-1">
-                          <div data-bind="visible: rate_limited_company_name.is_checking">
-                            <i class="ace-icon fa fa-spinner fa-spin text-warning bigger-125"></i>
-                          </div>
-                          <div data-bind="visible: rate_limited_company_name.is_unique() && !rate_limited_company_name.is_checking()">
-                            <i class="ace-icon glyphicon glyphicon-ok bigger-125 text-success"></i>
-                          </div>
+                              minlength="1" required data-bind="textInput: company_name">
                       </div>
                   </div>
                   <div class="row">
                       <div class="col-md-8 col-md-offset-3">
-                          <div class="error" data-bind="visible: rate_limited_company_name.has_been_checked, text: get_form_error"></div>
+                          <div class="error" data-bind="text: get_form_error"></div>
                       </div>
                   </div>
                 </div>
@@ -141,16 +131,15 @@
 
             self.company_name = ko.observable(null);
 
-            self.rate_limited_company_name = ko.pureComputed(function() {
-              return self.company_name();
-            }).extend({ rateLimit: 300 });
-
             self.panel = ko.observable("form");
+
+            self.error_msg = ko.observable(null);
+            self.has_submitted = ko.observable(false);
 
             self.can_submit = ko.pureComputed(function() {
               // Since this depends on the non-rate-limited value and compares it to the rate-limited value,
               // we will disable the button as soon as it is changed to something that hasn't been validated as unique.
-              return self.rate_limited_company_name.is_unique() && self.rate_limited_company_name.unique_value === self.company_name();
+              return $.trim(self.company_name()) !== "";
             });
 
             self.is_form_panel = ko.pureComputed(function() {
@@ -169,32 +158,30 @@
             };
             
             self.get_form_error = ko.computed(function() {
-                if ($.trim(self.company_name()) == "") {
+                if ($.trim(self.company_name()) === "" && self.has_submitted()) {
                     return "Company name is required.";
-                } else if (!self.rate_limited_company_name.is_unique()) {
-                    return "The name '"+self.company_name()+"' is already used."
+                } else if (self.error_msg()) {
+                    return self.error_msg();
                 }
                 return "";
             });
             
             self.create_case = function() {
-                
-                if (!new_case_form.valid() || !self.can_submit()) {
-                  return false;
-                }
 
-                var errors = self.get_form_error();
-                if (errors) {
-                    return false;
+                self.has_submitted(true);
+
+                if (!self.can_submit()) {
+                  return false;
                 }
 
                 // Show loading panel
                 self.panel(LOADING_PANEL);
+                self.error_msg(null);
 
                 var data = {
                     company_name: $("#company_name").val()
                 };
-                
+
                 $.ajax("{{ url_for("cases.create_case") }}", {
                     type: 'POST',
                     processData: false,
@@ -206,7 +193,19 @@
                     },
                     error: function(xhr) {
                       self.panel(FORM_PANEL);
-                      alert("There was a problem communicating with the server.");
+
+                      var data, err_msg;
+                      try {
+                        data = JSON.parse(xhr.responseText);
+                        err_msg = data.errors[0].error;
+                      } catch(e) {
+                        err_msg = null;
+                      }
+                      if (!err_msg) {
+                        self.error_message = "There was a problem communicating with the server.";
+                        return;
+                      }
+                      self.error_msg(err_msg);
                     }
                 });
             };

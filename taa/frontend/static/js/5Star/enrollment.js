@@ -669,6 +669,8 @@ function WizardUI(defaults) {
     // ViewModel for a rider option on the wizard.
     function ApplicantRiderOptionVM(root, rider, applicant) {
         var self = this;
+        self.MAX_COVERAGE = 150000;
+
         self.root = root;
         self.rider = rider;
         self.applicant = applicant;
@@ -676,7 +678,7 @@ function WizardUI(defaults) {
         self.is_selected = ko.observable(false);
 
         self.is_visible = ko.computed(function () {
-            return self.applicant.has_selected_valid_coverage();
+            return self.applicant.has_selected_valid_coverage() && self.get_policy_years().length > 0;
         });
 
         self.format_rider_name = function () {
@@ -698,8 +700,10 @@ function WizardUI(defaults) {
 
         self.get_policy_years = function () {
             var policy_years = [];
-            for (year = 2; year <= 6; year++) {
-                if (self.get_age_for_policy_year(year) <= 70) {
+
+            for (var year = 2; year <= 6; year++) {
+                if (self.get_age_for_policy_year(year) <= 70
+                        && self.get_total_coverage_for_year(year) < self.MAX_COVERAGE) {
                     policy_years.push(year);
                 }
             }
