@@ -142,7 +142,7 @@
                           </div>
 
                           <span data-bind="if: single_product()">
-                          <div class="form-group" data-bind="visible: single_product().base_product_type != 'Group CI'">
+                          <div class="form-group" data-bind="visible: riders().length > 0">
                             <label class="col-md-3 control-label" for="caseRiders">Riders</label>
                             <div class="col-md-9" data-bind="foreach: {data: riders, as: 'rider'}">
                               <label>

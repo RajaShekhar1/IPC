@@ -161,6 +161,9 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   self.riders = ko.computed(function() {
     // Show only riders allowed for this product; depends on the product selected.
     return _.reject(self.rider_choices, function(rider) {
+      if (!self.single_product()) {
+        return false;
+      }
       var current_product_name = self.single_product().base_product_type;
       return rider.restrict_to.indexOf(current_product_name) === -1;
     });
