@@ -258,7 +258,6 @@ class EnrollmentDataWrap(object):
     invalid_email_chars = re.compile(r'[^a-zA-Z0-9!#$%&\'*+\/=?^_`{|}~\.-]')
 
     def _sanitize_email_str(self, val):
-        return val
         # Replace invalid characters with empty string
         return self.invalid_email_chars.sub('', val)
 
