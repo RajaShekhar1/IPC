@@ -511,7 +511,7 @@
     <div class="row" data-bind="if: visible_rider_options().length > 0"  >
 
       <div class="col-sm-3">
-        <h5>Riders</h5>
+        <h5>Additional Benefits</h5>
       </div>
       <div class="row col-sm-9">
 
@@ -519,7 +519,7 @@
           <thead>
             <tr>
               <th></th>
-              <th>Rider</th>
+              <th>Add these benefits?</th>
               <th>Premium</th>
             </tr>
           </thead>
@@ -1970,40 +1970,40 @@
 
             <table class="center confirm-table table table-hover" data-bind="with: selected_plan">
                 <thead>
-                  <tr class="table-striped">
-                      <th class="center">Name</th>
-                      <th class="center">Age</th>
-                      <th class="center">Coverage</th>
-                      <th class="center">Additional Riders</th>
-                      <th class="center"><span data-bind="text: $root.payment_mode_text"></span> Premium</th>
-                  </tr>
+                    <tr class="table-striped">
+                        <th class="center">Name</th>
+                        <th class="center">Age</th>
+                        <th class="center">Coverage</th>
+                        <th class="center">Additional Benefits</th>
+                        <th class="center"><span data-bind="text: $root.payment_mode_text"></span> Premium</th>
+                    </tr>
                 </thead>
                 <tbody>
-                  <!--ko foreach: get_all_people -->
-                  <tr>
-                      <td data-bind="text: name"></td>
-                      <td data-bind="text:get_age"></td>
-                      <td data-bind="html:display_selected_coverage"></td>
-                      <td></td>
-                      <td data-bind="text:display_premium"></td>
-                  </tr>
-                    <!--ko foreach: {data: $root.get_selected_riders($data), as: 'rider'} -->
-                      <tr data-bind="if: $root.did_person_select_coverage($parent)">
+                    <!--ko foreach: get_all_people -->
+                    <tr>
+                        <td data-bind="text: name"></td>
+                        <td data-bind="text:get_age"></td>
+                        <td data-bind="html:display_selected_coverage"></td>
                         <td></td>
-                        <td></td>
-                        <td></td>
-                        <td data-bind="text: rider.name"></td>
-                        <td data-bind="text:$parent.display_riders(rider.code, $parent)"></td>
-                      </tr>
+                        <td data-bind="text:display_premium"></td>
+                    </tr>
+                      <!--ko foreach: {data: $root.get_selected_riders($data), as: 'rider'} -->
+                        <tr data-bind="if: $root.did_person_select_coverage($parent)">
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                          <td data-bind="text: rider.name"></td>
+                          <td data-bind="text:$parent.display_riders(rider.code, $parent)"></td>
+                        </tr>
+                      <!--/ko-->
                     <!--/ko-->
-                  <!--/ko-->
-                  <tr class="success">
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td><span class="text-primary bigger-110">Total</span></td>
-                      <td><span class="text-primary bigger-110" data-bind="text: formatted_total_premium_with_riders()"></span></td>
-                  </tr>
+                    <tr class="success">
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td><span class="text-primary bigger-110">Total</span></td>
+                        <td><span class="text-primary bigger-110" data-bind="text: formatted_total_premium_with_riders()"></span></td>
+                    </tr>
                 </tbody>
             </table>
 
