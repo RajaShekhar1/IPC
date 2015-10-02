@@ -52,16 +52,19 @@ def manage_cases():
     if agent:
         user_cases = case_service.get_agent_cases(agent)
         header_title = ''
+        can_create_case = False
     else:
         # Admin or home office user
         user_cases = case_service.all()
         header_title = 'Home Office'
+        can_create_case = True
 
     vars = {
         'agent_cases': user_cases,
         'all_states': get_all_states(),
         'nav_menu': get_nav_menu(),
         'header_title': header_title,
+        'can_create_case': can_create_case
     }
     return render_template('agent/manage_cases.html', **vars)
 
@@ -77,7 +80,8 @@ def manage_case(case_id):
     if agent:
         products = product_service.get_products_for_agent(agent)
         is_agent_case_owner = case_service.is_agent_case_owner(agent, case)
-        vars['can_edit_case'] = case_service.can_agent_edit_case(agent, case)
+        # No agents can edit cases anymore
+        vars['can_edit_case'] = False
         vars['can_download_enrollments'] = case_service.is_agent_allowed_to_view_full_census(agent, case)
         vars['can_view_report_tab'] = case_service.is_agent_allowed_to_view_full_census(agent, case)
         agent_name = agent.name()
