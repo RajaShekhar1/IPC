@@ -167,10 +167,10 @@ class EnrollmentImportService(object):
 
         # Update beneficiary data to new format
         output.update(
-            standardize_legacy_beneficiaries(wizard_data, "employee", "emp")
+            standardize_wizard_beneficiaries(wizard_data, "employee")
         )
         output.update(
-            standardize_legacy_beneficiaries(wizard_data, "spouse", "sp")
+            standardize_wizard_beneficiaries(wizard_data, "spouse")
         )
         output.update(
             standardize_wizard_contingent_beneficiaries(wizard_data, "employee_contingent")
@@ -178,7 +178,6 @@ class EnrollmentImportService(object):
         output.update(
             standardize_wizard_contingent_beneficiaries(wizard_data, "spouse_contingent")
         )
-
         return output
 
 
@@ -212,6 +211,19 @@ def standardize_legacy_beneficiaries(data, out_prefix, prefix):
 
     return out_data
 
+
+def standardize_wizard_beneficiaries(data, out_prefix):
+    out_data = {}
+
+    # Wizard contingent beneficiaries are in a different input format
+    out_data["{}_beneficiary1_name".format(out_prefix)] = data.get('{}_beneficiary_name'.format(out_prefix), '')
+    out_data["{}_beneficiary1_relationship".format(out_prefix)] = data.get('{}_beneficiary_relationship'.format(out_prefix), '')
+    out_data["{}_beneficiary1_dob".format(out_prefix)] = data.get('{}_beneficiary_dob'.format(out_prefix), '')
+    out_data["{}_beneficiary1_ssn".format(out_prefix)] = data.get('{}_beneficiary_ssn'.format(out_prefix), '')
+
+    # For consistency, put a percentage in too.
+    out_data["{}_beneficiary1_percentage".format(out_prefix)] = 100
+    return out_data
 
 def standardize_wizard_contingent_beneficiaries(data, out_prefix):
     out_data = {}
