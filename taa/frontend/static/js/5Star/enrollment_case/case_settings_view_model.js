@@ -71,25 +71,70 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   self.situs_city = ko.observable(case_data.situs_city);
 
   self.state_choices = settings.all_states;
-  self.situs_state = ko.observable(_.find(self.state_choices, function(c) {
-    return c.statecode == case_data.situs_state;
-  }));
+  self.situs_state = ko.observable(get_state_from_statecode(case_data.situs_state));
+
+  function get_state_from_statecode(statecode) {
+    return _.find(self.state_choices, function(c) {
+      return c.statecode == statecode;
+    })
+  }
 
   // Overrides for city state when doing an in-person enrollment.
-  self.enrollment_city_override = ko.observable(self.situs_city());
-  self.enrollment_state_override = ko.observable(self.situs_state());
+  //
+  // Keep a session-storage copy of the last used override (for this case)
+  self.enrollment_city_override = ko.observable(get_storage_or_default('enrollment_city_override.'+self.case_id, self.situs_city()));
+  self.enrollment_state_override = ko.observable(get_default_state_override());
+
+  // Return empty string rather than null or undefined for city and state
   self.get_enrollment_city_override = ko.pureComputed(function() {
     if (!self.enrollment_city_override()) {
       return "";
     }
     return self.enrollment_city_override();
   });
+
   self.get_enrollment_state_override = ko.pureComputed(function() {
     if (!self.enrollment_state_override()) {
       return "";
     }
     return self.enrollment_state_override().statecode;
   });
+
+  // Save to session storage whenever the override values change
+  set_storage_from_observable('enrollment_city_override.'+self.case_id, self.enrollment_city_override);
+
+  // Note: saving just the statecode here, not the state object
+  set_storage_from_observable('enrollment_state_override.'+self.case_id, self.get_enrollment_state_override);
+
+
+  function get_default_state_override() {
+
+    var case_default_statecode = (self.situs_state()) ? self.situs_state().statecode : "";
+
+    // Use the default statecode unless we have session storage value for this case
+    var statecode = get_storage_or_default('enrollment_state_override.'+self.case_id, case_default_statecode);
+
+    // Lookup the state for this statecode
+    if (!statecode || !get_state_from_statecode(statecode)) {
+      return get_state_from_statecode(case_default_statecode);
+    } else {
+     return get_state_from_statecode(statecode);
+    }
+  }
+
+
+  function get_storage_or_default(key, default_val) {
+    if (window.sessionStorage.getItem(key)) {
+      return window.sessionStorage.getItem(key);
+    }
+
+    return default_val;
+  }
+  function set_storage_from_observable(key, observable) {
+    observable.subscribe(function(new_val) {
+      window.sessionStorage.setItem(key, new_val);
+    });
+  }
 
   // Reset the overrides when the case values change
   self.situs_city.subscribe(function(new_val) {
