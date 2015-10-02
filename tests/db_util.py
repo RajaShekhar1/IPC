@@ -73,7 +73,7 @@ def create_agent(first, last, agent_code, email, activated=True):
     return agent
 
 
-def create_case(company_name='Test Case', case_token='CASE-123123', product_codes=None, agent=None):
+def create_case(company_name='Test Case', case_token='CASE-123123', product_codes=None, agent=None, case_id=None):
     """
     Creates an actively-enrolling case with the given parameters.
     """
@@ -81,7 +81,7 @@ def create_case(company_name='Test Case', case_token='CASE-123123', product_code
         agent = create_agent(first='TEST', last='AGENT',
                              agent_code='26AGENT',
                              email='test-case-owner@delmarsd.com')
-    case = case_service.create_new_case(**dict(
+    data = dict(
         company_name=company_name,
         group_number="GRP-NUM-EX123",
         situs_state='MI',
@@ -93,7 +93,11 @@ def create_case(company_name='Test Case', case_token='CASE-123123', product_code
         payment_mode=payment_modes.MODE_MONTHLY,
         is_self_enrollment=False,
         case_token=case_token,
-    ))
+    )
+    if case_id:
+        data['id'] = case_id
+
+    case = case_service.create_new_case(**data)
     if not product_codes:
         product_codes = ['FPPTI']
     for code in product_codes:

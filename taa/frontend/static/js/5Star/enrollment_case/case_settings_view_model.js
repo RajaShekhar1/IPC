@@ -91,6 +91,14 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     return self.enrollment_state_override().statecode;
   });
 
+  // Reset the overrides when the case values change
+  self.situs_city.subscribe(function(new_val) {
+    self.enrollment_city_override(new_val)
+  });
+  self.situs_state.subscribe(function(new_val) {
+    self.enrollment_state_override(new_val);
+  });
+
   self.selected_statecode = ko.pureComputed(function(){
     return (self.situs_state()) ? self.situs_state().statecode : null;
   });
