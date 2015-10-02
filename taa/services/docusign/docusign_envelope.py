@@ -405,6 +405,9 @@ class EnrollmentDataWrap(object):
 
         return False
 
+    def should_include_bank_draft(self):
+        return self.case.include_bank_draft_form
+
 def old_create_envelope_and_get_signing_url(enrollment_data):
     # return is_error(bool), error_message, and redirectURL
     product = product_service.get(enrollment_data['product_data']['id'])

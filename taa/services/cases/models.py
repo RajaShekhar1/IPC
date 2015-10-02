@@ -71,6 +71,8 @@ class Case(CaseSerializer, db.Model):
     case_token = db.Column(db.String(64), nullable=True)
     case_riders = db.Column(db.String(64), nullable=True)
 
+    include_bank_draft_form = db.Column(db.Boolean, nullable=False, server_default='FALSE')
+
     def get_product_names(self):
         return ','.join(p.name for p in self.products)
 

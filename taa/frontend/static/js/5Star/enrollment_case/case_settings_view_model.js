@@ -136,6 +136,9 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     });
   }
 
+
+  self.include_bank_draft_form = ko.observable(case_data.include_bank_draft_form);
+
   // Reset the overrides when the case values change
   self.situs_city.subscribe(function(new_val) {
     self.enrollment_city_override(new_val)
@@ -526,6 +529,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
       can_partners_download_enrollments: self.can_partners_download_enrollments(),
       is_self_enrollment: self.is_self_enrollment(),
       riders: self.riders(),
+      include_bank_draft_form: self.include_bank_draft_form()
     }
   };
 

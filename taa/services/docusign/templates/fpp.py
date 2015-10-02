@@ -56,6 +56,9 @@ class FPPTemplate(DocuSignServerTemplate):
     def is_additional_replacment_policy_attachment_needed(self):
         return len(self.data['replacement_policies']) > 1
 
+    def should_include_bank_draft(self):
+        return self.data.should_include_bank_draft()
+
     def get_attachment_children(self):
         return self.data.get_covered_children()[2:] if len(self.data.get_covered_children()) > 2 else []
 
