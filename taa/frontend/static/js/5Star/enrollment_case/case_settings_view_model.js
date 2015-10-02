@@ -71,24 +71,77 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   self.situs_city = ko.observable(case_data.situs_city);
 
   self.state_choices = settings.all_states;
-  self.situs_state = ko.observable(_.find(self.state_choices, function(c) {
-    return c.statecode == case_data.situs_state;
-  }));
+  self.situs_state = ko.observable(get_state_from_statecode(case_data.situs_state));
+
+  function get_state_from_statecode(statecode) {
+    return _.find(self.state_choices, function(c) {
+      return c.statecode == statecode;
+    })
+  }
 
   // Overrides for city state when doing an in-person enrollment.
-  self.enrollment_city_override = ko.observable(self.situs_city());
-  self.enrollment_state_override = ko.observable(self.situs_state());
+  //
+  // Keep a session-storage copy of the last used override (for this case)
+  self.enrollment_city_override = ko.observable(get_storage_or_default('enrollment_city_override.'+self.case_id, self.situs_city()));
+  self.enrollment_state_override = ko.observable(get_default_state_override());
+
+  // Return empty string rather than null or undefined for city and state
   self.get_enrollment_city_override = ko.pureComputed(function() {
     if (!self.enrollment_city_override()) {
       return "";
     }
     return self.enrollment_city_override();
   });
+
   self.get_enrollment_state_override = ko.pureComputed(function() {
     if (!self.enrollment_state_override()) {
       return "";
     }
     return self.enrollment_state_override().statecode;
+  });
+
+  // Save to session storage whenever the override values change
+  set_storage_from_observable('enrollment_city_override.'+self.case_id, self.enrollment_city_override);
+
+  // Note: saving just the statecode here, not the state object
+  set_storage_from_observable('enrollment_state_override.'+self.case_id, self.get_enrollment_state_override);
+
+
+  function get_default_state_override() {
+
+    var case_default_statecode = (self.situs_state()) ? self.situs_state().statecode : "";
+
+    // Use the default statecode unless we have session storage value for this case
+    var statecode = get_storage_or_default('enrollment_state_override.'+self.case_id, case_default_statecode);
+
+    // Lookup the state for this statecode
+    if (!statecode || !get_state_from_statecode(statecode)) {
+      return get_state_from_statecode(case_default_statecode);
+    } else {
+     return get_state_from_statecode(statecode);
+    }
+  }
+
+
+  function get_storage_or_default(key, default_val) {
+    if (window.sessionStorage.getItem(key)) {
+      return window.sessionStorage.getItem(key);
+    }
+
+    return default_val;
+  }
+  function set_storage_from_observable(key, observable) {
+    observable.subscribe(function(new_val) {
+      window.sessionStorage.setItem(key, new_val);
+    });
+  }
+
+  // Reset the overrides when the case values change
+  self.situs_city.subscribe(function(new_val) {
+    self.enrollment_city_override(new_val)
+  });
+  self.situs_state.subscribe(function(new_val) {
+    self.enrollment_state_override(new_val);
   });
 
   self.selected_statecode = ko.pureComputed(function(){
@@ -152,6 +205,21 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   }));
   self.selected_payment_mode = ko.pureComputed(function(){
     return (self.payment_mode()) ? parseInt(self.payment_mode().mode) : null;
+  });
+
+  // Get Rider information
+  self.rider_choices = settings.riders;
+  // self.riders = ko.observable(self.rider_choices)
+  
+  self.riders = ko.computed(function() {
+    // Show only riders allowed for this product; depends on the product selected.
+    return _.reject(self.rider_choices, function(rider) {
+      if (!self.single_product()) {
+        return false;
+      }
+      var current_product_name = self.single_product().base_product_type;
+      return rider.restrict_to.indexOf(current_product_name) === -1;
+    });
   });
 
   // Self-enrollment
@@ -265,6 +333,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
       fields.push(p.start_date);
       fields.push(p.end_date);
     });
+
     $.each(fields, function() {
       var field = this;
       field.subscribe(function() {
@@ -354,9 +423,9 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     }
   });
 
-  self.get_form_error = ko.computed(function() {
+  self.get_form_error = ko.pureComputed(function() {
     if (self.company_name.is_unique !== undefined &&
-        !self.company_name.is_unique()) {
+        self.company_name.is_unique() === false) {
       return "The name '"+self.company_name()+"' is already used."
     }
     return "";
@@ -364,7 +433,8 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
 
   self.check_unique_name = function(current_value, callback) {
     $.get(urls.get_cases_api_url(case_data.id), {by_name: current_value}, function(result) {
-      var is_unique = (result.data.length == 0 || current_value == case_data.company_name);
+      // Must have either 0 cases with this name, or 1 (the current case)
+      var is_unique = (result.data.length === 0 || current_value === case_data.company_name);
       callback(is_unique);
     }, "json");
 
@@ -378,14 +448,16 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     // hide missing date errors
     _.invoke(self.annual_enrollment_periods(), "error", "");
 
+
+    // all other errors
+    var errors = {};
+
     // unique name error
     var unique_name_error = self.get_form_error();
     if (unique_name_error !== "") {
       add_case_error(errors, "company_name", unique_name_error);
     }
 
-    // all other errors
-    var errors = {};
     if ($.trim(self.company_name()) == "") {
       add_case_error(errors, "company_name", "Company name is required.");
     }
@@ -452,7 +524,8 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
       payment_mode: self.selected_payment_mode() ? self.selected_payment_mode() : null,
       agent_id: self.owner_agent_id(),
       can_partners_download_enrollments: self.can_partners_download_enrollments(),
-      is_self_enrollment: self.is_self_enrollment()
+      is_self_enrollment: self.is_self_enrollment(),
+      riders: self.riders(),
     }
   };
 

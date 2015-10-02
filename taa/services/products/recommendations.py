@@ -48,6 +48,10 @@ def init_from_data_files():
                 build(os.path.join(DATA_DIR, 'FPPCI_suggested_rates.csv')),
             'FPP-Gov':
                 build(os.path.join(DATA_DIR, 'FPPGOV_suggested_rates.csv')),
+            'FPPTIB':
+                build(os.path.join(DATA_DIR, 'FPPGOV_suggested_rates.csv')),
+            'FPPTIY':
+                build(os.path.join(DATA_DIR, 'FPPGOV_suggested_rates.csv')),
             'FPPTI':
                 build(os.path.join(DATA_DIR, 'FPPTI_suggested_rates.csv')),
             ('Group CI', 'nonsmoker'):

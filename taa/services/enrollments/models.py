@@ -1,11 +1,12 @@
 import decimal
 
 from sqlalchemy.dialects.postgresql import JSON
+from taa.services.agents import ApiTokenService
 
 from taa import db
 from taa.helpers import JsonSerializable
-from taa.services.cases import CaseCensus
-
+from taa.services.cases import CaseCensus, CaseService
+from taa.services.users import UserService
 
 
 class EnrollmentSerializer(JsonSerializable):
@@ -26,7 +27,7 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
                                     backref=db.backref(
                                         'enrollment_applications',
                                         lazy='joined'))
-    signature_time = db.Column(db.DateTime, server_default='NOW')
+    signature_time = db.Column(db.DateTime)
     signature_city = db.Column(db.UnicodeText)
     signature_state = db.Column(db.Unicode(2))
     identity_token = db.Column(db.UnicodeText)
@@ -266,10 +267,31 @@ CaseCensus.sent_email_count = db.column_property(
             correlate_except(SelfEnrollmentEmailLog)
 )
 
+def get_batch_case_id(batch):
+    token = batch.case_token
+    case = CaseService().get_case_for_token(token)
+    if not case:
+        return None
+    else:
+        return case.id
+
+def get_batch_user(batch):
+    auth_token = batch.auth_token
+    if not auth_token:
+        return None
+
+    api_token = ApiTokenService().find(api_token=auth_token).first()
+    if not api_token:
+        return None
+
+    return api_token.stormpath_url
 
 class EnrollmentImportBatchSerializer(JsonSerializable):
     __json_hidden__ = ['batch_items']
-
+    __json_add__ = {
+        'case_id': get_batch_case_id,
+        'user_name': get_batch_user,
+    }
 
 class EnrollmentImportBatch(EnrollmentImportBatchSerializer, db.Model):
     """
@@ -285,7 +307,7 @@ class EnrollmentImportBatch(EnrollmentImportBatchSerializer, db.Model):
     SUBMIT_SOURCE_API = u'api'
     source = db.Column(db.Unicode(32), nullable=False)
 
-    timestamp = db.Column(db.DateTime, server_default='NOW')
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
     auth_token = db.Column(db.Unicode(64))
     case_token = db.Column(db.Unicode(64))
     num_processed = db.Column(db.Integer)
@@ -316,7 +338,7 @@ class EnrollmentImportBatchItem(EnrollmentImportBatchItemSerializer, db.Model):
 
     status = db.Column(db.Unicode(32))
     error_message = db.Column(db.UnicodeText)
-    processed_time = db.Column(db.DateTime, server_default='NOW')
+    processed_time = db.Column(db.DateTime, server_default=db.func.now())
 
 
 class FormTemplate(db.Model):

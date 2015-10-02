@@ -41,6 +41,7 @@ class Product(ProductJsonSerializable, db.Model):
     name = db.Column(db.String, nullable=False)
     brochure_url = db.Column(db.Unicode(2000))
     brochure_name = db.Column(db.Unicode(256))
+    is_fpp_gov = db.Column(db.Boolean, nullable=False, server_default='FALSE')
 
     # Boolean that controls whether on not this can be enrolled by agents
     visible_to_agents = db.Column(db.Boolean, nullable=False, server_default='True')
@@ -74,6 +75,9 @@ class Product(ProductJsonSerializable, db.Model):
 
     def is_fpp(self):
         return self.get_base_product_code().lower().startswith('fpp')
+
+    def is_base_fpp_gov(self):
+        return self.get_base_product().is_fpp_gov if self.get_base_product() else self.is_fpp_gov
 
     def format_type(self):
         if self.is_guaranteed_issue():
@@ -123,6 +127,9 @@ product_agents = db.Table('product_agents', db.metadata,
 
 class CustomProductSerializer(ProductJsonSerializable):
     __json_hidden__ = ['cases', 'customized_products', 'base_product']
+    __json_modifiers__ = {
+        'is_fpp_gov': lambda _, p: p.is_base_fpp_gov()
+    }
 
 class CustomGuaranteeIssueProduct(CustomProductSerializer, Product):
     __tablename__ = "products_custom_guaranteed_issue"
