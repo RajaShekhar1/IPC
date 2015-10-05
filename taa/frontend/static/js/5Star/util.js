@@ -294,15 +294,18 @@ ko.bindingHandlers.uniqueNameValidation = {
     tracked_observable.has_been_checked = ko.observable(false);
     tracked_observable.is_checking = ko.observable(false);
     tracked_observable.is_unique = ko.observable(null);
+    tracked_observable.unique_value = null;
 
     // Subscribe to changes
     tracked_observable.subscribe(function (current_value) {
       // Reset tracking vars
+      tracked_observable.is_unique(null);
       tracked_observable.is_checking(true);
       tracked_observable.has_been_checked(false);
 
       // Check uniqueness on server
       remoteInvocation(current_value, function (is_unique) {
+        tracked_observable.unique_value = current_value;
         tracked_observable.is_unique(is_unique);
         tracked_observable.is_checking(false);
         tracked_observable.has_been_checked(true);

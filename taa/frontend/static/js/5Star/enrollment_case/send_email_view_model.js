@@ -69,7 +69,7 @@ var SendEmailsModalViewModel = function SendEmailsModalViewModel(case_settings_v
 
     function send_emails(data) {
       $.ajax({
-        url: urls.get_case_email_self_enrollment_batches_url()+ '?send_type=' + self.send_type(),
+        url: urls.get_case_email_self_enrollment_batches_url(self.case_settings_vm.case_id)+ '?send_type=' + self.send_type(),
         method: 'POST',
         dataType: 'json',
         success: function(results) {

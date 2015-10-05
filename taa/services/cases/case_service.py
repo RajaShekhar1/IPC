@@ -50,7 +50,8 @@ class CaseService(DBService):
         query = self.query()
         if by_name:
             query = query.filter(Case.company_name.ilike(by_name))
-        if by_agent:
+
+        if by_agent and not by_name:
             # Right now, an agent can 'see' a given case if he is either
             # the owner or a 'partner' agent, which is an explicitly maintained
             # list by the HO admin.
@@ -187,7 +188,8 @@ class CaseService(DBService):
     def get_census_records(self, case, offset=None, num_records=None,
                            search_text=None, text_columns=None,
                            sorting=None, sort_desc=False, include_enrolled=True,
-                           filter_ssn=None, filter_birthdate=None):
+                           filter_ssn=None, filter_birthdate=None,
+                           filter_agent=None):
         from taa.services.enrollments.models import EnrollmentApplication
         query = self.census_records.find(case_id=case.id)
 
@@ -209,6 +211,11 @@ class CaseService(DBService):
                     ).subqueryload('coverages'
                     ).joinedload('product')
             )
+
+        if filter_agent:
+            # Only show enrolled census records where this agent was the enrolling agent.
+            query = query.join('enrollment_applications'
+                               ).filter(EnrollmentApplication.agent_id == filter_agent.id)
 
         if filter_ssn:
             query = query.filter(CaseCensus.employee_ssn ==
@@ -345,6 +352,8 @@ class CaseService(DBService):
     def delete_case(self, case):
         from taa.services.agents import AgentService
         from taa.services.enrollments import EnrollmentApplicationService
+        from taa.services.enrollments import SelfEnrollmentEmailService
+        emails_service = SelfEnrollmentEmailService()
         enrollments_service = EnrollmentApplicationService()
         agent_service = AgentService()
 
@@ -357,6 +366,10 @@ class CaseService(DBService):
             self.delete_census_record(record)
 
         self.enrollment_periods.remove_all_for_case(case)
+
+        # remove all email batch records
+        emails_service.delete_batches_for_case(case)
+
         return self.delete(case)
 
     def does_case_have_enrollments(self, case):
@@ -385,7 +398,7 @@ class CaseService(DBService):
 
         if agent_service.can_manage_all_cases(current_user):
             return True
-        if is_case_owner:
+        if self.is_agent_case_owner(logged_in_agent, case):
             return True
 
         return False
@@ -405,26 +418,40 @@ class CaseService(DBService):
 
         return case
 
+    def is_agent_case_owner(self, agent, case):
+        return agent is self.get_case_owner(case)
+
+    def can_agent_edit_case(self, agent, case):
+        return self.is_agent_case_owner(agent, case)
+
+    def is_agent_allowed_to_view_full_census(self, agent, case):
+        # Either we own the case, or we are a partner agent with no restrictions turned on.
+        return self.is_agent_case_owner(agent, case) or case.can_partner_agent_download_enrollments()
+
+    def is_agent_restricted_to_own_enrollments(self, agent, case):
+        return not self.is_agent_allowed_to_view_full_census(agent, case)
 
 class Rider(object):
-    def __init__(self, name, code, enrollment_level=False):
+    def __init__(self, name, code, enrollment_level=False, restrict_to=[]):
         self.name = name
         self.code = code
         self.enrollment_level = enrollment_level
+        self.restrict_to = restrict_to
 
     def to_json(self):
         return dict(
                 name=self.name,
                 code=self.code,
-                enrollment_level=self.enrollment_level
+                enrollment_level=self.enrollment_level,
+                restrict_to=self.restrict_to
                 )
 
 
 class RiderService(object):
     default_riders = [
-        Rider("Disability Waiver of Premium", "WP"),
-        Rider("Auto Increase Rider", "AIR"), 
-        Rider("Chronic Illness Rider", "CHR", True) 
+        # Rider("Disability Waiver of Premium", "WP"),
+        Rider("Automatic Increase Rider", "AIR", True, ["FPPTI"]), 
+        # Rider("Chronic Illness Rider", "CHR", True) 
     ]
 
     def __init__(self):
@@ -447,9 +474,11 @@ class RiderService(object):
         return [{
                 'selected': self.is_rider_selected_for_case(rider, case),
                 'description': rider.name,
-                'code': rider.code
+                'code': rider.code,
+                'enrollment_level': rider.enrollment_level,
+                'restrict_to': rider.restrict_to
                 }
-                for rider in self.case_level_riders()
+                for rider in self.default_riders
         ]
 
     def is_rider_selected_for_case(self, rider, case):
@@ -457,7 +486,7 @@ class RiderService(object):
 
     def get_selected_case_riders(self, case):
         return [r
-                for r in self.case_level_riders()
+                for r in self.default_riders
                 if self.is_rider_selected_for_case(r, case)
         ]
 
@@ -466,4 +495,15 @@ class RiderService(object):
 
     def get_enrollment_rider_info(self):
         return [r.to_json() for r in self.enrollment_level_riders()]
-
+    def get_rider_rates(self, payment_mode):        
+        emp_rider_rates = dict(
+            WP=10*int(payment_mode)/52,
+            AIR=0*int(payment_mode)/52,
+            CHR=5*int(payment_mode)/52
+            )
+        sp_rider_rates = dict(
+            WP=10*int(payment_mode)/52,
+            AIR=0*int(payment_mode)/52,
+            CHR=5*int(payment_mode)/52
+            )
+        return dict(emp=emp_rider_rates, sp=sp_rider_rates)

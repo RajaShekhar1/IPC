@@ -33,10 +33,10 @@ class CSVToFlatFileCommand(Command):
         data is a list of dictionaries
         spec is a list of FlatFileFieldSpec objects
         """
-        record_count = "{}{}".format(len(data), "".join([" " for i in range(0, 8-len(data))]))
-        user_token = "{}{}".format(data[0].get("user_token"), "".join([" " for i in range(0, 64-len(data[0].get("user_token")))]))
-        case_token = "{}{}".format(data[0].get("case_token"), "".join([" " for i in range(0, 64-len(data[0].get("case_token")))]))
-        header = "{}{}     {}{}{}".format(FlatFileSpec.FLAT_FILE_TYPE, FlatFileSpec.FLAT_FILE_VERSION, record_count, user_token, case_token)
+
+        user_token = data[0].get("user_token").ljust(64)
+        case_token = data[0].get("case_token").ljust(64)
+        header = "{}{}{}{}".format(FlatFileSpec.FLAT_FILE_TYPE, FlatFileSpec.FLAT_FILE_VERSION.ljust(8), user_token, case_token)
         records = "\n".join([self.format_flat_file_record(row, spec) for row in data])
         return "{}\n{}".format(header, records)
 

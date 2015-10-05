@@ -26,6 +26,12 @@ class SelfEnrollmentEmailService(DBService):
     self_enrollment_batch_service = RequiredFeature('SelfEnrollmentEmailBatchService')
     self_enrollment_link_service = RequiredFeature('SelfEnrollmentLinkService')
 
+    def delete_batches_for_case(self, case):
+        for batch in case.batches:
+            for log in batch.email_logs:
+                self.delete(log)
+            db.session.delete(batch)
+
     def get_batches_for_case(self, case):
         return db.session.query(SelfEnrollmentEmailBatch
         ).filter(SelfEnrollmentEmailBatch.case_id==case.id

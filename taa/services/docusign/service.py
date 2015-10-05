@@ -23,16 +23,14 @@ class DocuSignService(object):
     def create_fpp_envelope(self, enrollment_data, case):
         employee, recipients = self.create_envelope_recipients(case, enrollment_data)
         components = self.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer=True)
-        transport = get_docusign_transport()
-        envelope_result = create_envelope(
+        envelope_result = self.create_envelope(
             email_subject="Signature needed: {} for {} ({})".format(
                 enrollment_data.get_product_code(),
                 enrollment_data.get_employee_name(),
                 enrollment_data.get_employer_name()),
             components=components,
-            docusign_transport=transport,
         )
-        return employee, envelope_result, transport
+        return employee, envelope_result
 
     def create_envelope(self, email_subject, components):
         docusign_transport = get_docusign_transport()
@@ -65,9 +63,10 @@ class DocuSignService(object):
         from taa.services.docusign.templates.fpp import FPPTemplate
         from taa.services.docusign.templates.fpp_replacement import FPPReplacementFormTemplate
         from taa.services.docusign.documents.additional_children import ChildAttachmentForm
+        from taa.services.docusign.documents.multiple_beneficiaries_attachment import MultipleBeneficiariesAttachment
         from taa.services.docusign.documents.additional_replacement_policies import AdditionalReplacementPoliciesForm
 
-        # Build the components (sections) needed for signing
+        # Build the components (different PDFs) needed for signing
         components = []
 
         # Main form
@@ -87,6 +86,10 @@ class DocuSignService(object):
                 ))
                 child_attachment_form.add_child(child)
             components.append(child_attachment_form)
+
+        # Percentage/Multiple beneficiaries
+        if fpp_form.is_beneficiary_attachment_needed():
+            components.append(MultipleBeneficiariesAttachment(recipients, enrollment_data))
 
         # Replacement Form
         if fpp_form.is_replacement_form_needed():
@@ -109,7 +112,7 @@ class DocuSignService(object):
         return signing_agent
 
 
-def create_envelope(email_subject, components, docusign_transport):
+def create_envelope(email_subject, components):
     docusign_service = LookupService('DocuSignService')
     return docusign_service.create_envelope(email_subject, components)
 
@@ -143,8 +146,8 @@ def create_envelope_and_get_signing_url(wizard_data, census_record, case):
 
 
 def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
-    employee, envelope_result, transport = create_fpp_envelope(enrollment_data, case)
-    redirect_url = fetch_signing_url(employee, enrollment_data, envelope_result, transport)
+    employee, envelope_result = create_fpp_envelope(enrollment_data, case)
+    redirect_url = fetch_signing_url(employee, enrollment_data, envelope_result)
 
     return False, None, redirect_url
 
@@ -154,12 +157,12 @@ def get_signing_agent(case):
     return docusign_service.get_signing_agent(case)
 
 
-def fetch_signing_url(employee, enrollment_data, envelope_result, transport):
+def fetch_signing_url(employee, enrollment_data, envelope_result):
     redirect_url = envelope_result.get_signing_url(
         employee,
         callback_url=build_callback_url(
             enrollment_data, enrollment_data.get_session_type()),
-        docusign_transport=transport
+        docusign_transport=get_docusign_transport()
     )
     return redirect_url
 
@@ -489,13 +492,7 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
         }
 
     def generate_inline_pdfs(self):
-        tabs = []
-        for recipient in self.recipients:
-            tabs += self.generate_tabs(recipient)
-        pdf_bytes = self.pdf_generator_service.generate_form_pdf(
-            self.template_id,
-            tabs,
-        )
+        pdf_bytes = self.generate_pdf_bytes()
         num_pages = self.get_num_pages(pdf_bytes)
         pdf_base64 = base64.standard_b64encode(pdf_bytes)
         return self.make_inline_doc_repr(
@@ -503,6 +500,16 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
             pdf_base64=pdf_base64,
             recipients=self.generate_recipients()
         )
+
+    def generate_pdf_bytes(self):
+        tabs = []
+        for recipient in self.recipients:
+            tabs += self.generate_tabs(recipient)
+        pdf_bytes = self.pdf_generator_service.generate_form_pdf(
+            self.template_id,
+            tabs,
+        )
+        return pdf_bytes
 
     def get_num_pages(self, pdf_bytes):
         reader = PdfFileReader(BytesIO(pdf_bytes))
@@ -528,7 +535,6 @@ class BasePDFDoc(DocuSignEnvelopeComponent):
 
         self.page_width, self.page_height = letter
         self._pdf_data = StringIO.StringIO()
-        #self._canvas = Canvas(self._pdf_data, pagesize=letter)
         self._doc = SimpleDocTemplate(self._pdf_data, pagesize=letter)
 
         # Use this to record the last page before generating document.
@@ -550,20 +556,7 @@ class BasePDFDoc(DocuSignEnvelopeComponent):
     def generate_composite_template(self):
 
         # Generate the PDF
-        self.generate()
-
-        pdf_bytes = self.get_pdf_bytes()
-
-        tabs = []
-        for r in self.recipients:
-            tabs += self.generate_tabs(r)
-
-        pdf_bytes = self.pdf_generator_service.generate_overlay_pdf_from_tabs(
-            tabs,
-            # Sig tabs will be auto-generated
-            [],
-            pdf_bytes,
-        )
+        pdf_bytes = self.generate_pdf_bytes()
 
         # Output DocuSign representation
         return self.make_inline_doc_repr(
@@ -571,6 +564,24 @@ class BasePDFDoc(DocuSignEnvelopeComponent):
             pdf_base64=base64.standard_b64encode(pdf_bytes),
             recipients=self.generate_recipients()
         )
+
+    def generate_pdf_bytes(self):
+
+        # Do any drawing necessary to create the base PDF
+        self.generate()
+        pdf_bytes = self.get_pdf_bytes()
+
+        # Add any tabs needed and merge them onto this PDF
+        tabs = []
+        for r in self.recipients:
+            tabs += self.generate_tabs(r)
+        pdf_bytes = self.pdf_generator_service.generate_overlay_pdf_from_tabs(
+            tabs,
+            # Sig tabs will be auto-generated
+            [],
+            pdf_bytes,
+        )
+        return pdf_bytes
 
     def get_num_pages(self):
         if self._num_pages:

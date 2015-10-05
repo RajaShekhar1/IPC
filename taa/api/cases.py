@@ -72,12 +72,16 @@ def create_case():
         abort(401)
         return
 
+    # Make sure this case name isn't used already
+    existing_cases = case_service.search_cases(by_name=data['company_name'])
+    if existing_cases:
+        raise TAAFormError(errors=[{'error': 'Case already exists with the name "%s"'%data['company_name']}])
+
     form = NewCaseForm(form_data=data)
     if agent:
         form.agent_id.data = agent.id
     if form.validate_on_submit():
         data['created_date'] = datetime.now()
-        data['case_token'] = case_service.generate_token()
         return case_service.create_new_case(**data)
 
     raise TAAFormError(form.errors)
@@ -237,13 +241,18 @@ def enrollment_record(case_id, census_id):
 @login_required
 @groups_required(api_groups, all=False)
 def census_records(case_id):
+    case = case_service.get_if_allowed(case_id)
+
     # Extract search parameters
     args = {
         'filter_ssn': request.args.get('filter_ssn'),
         'filter_birthdate': request.args.get('filter_birthdate'),
     }
-    data = case_service.get_census_records(case_service.get_if_allowed(case_id),
-                                           **args)
+    # Restrict if needed and not checking for SSN duplicates
+    if is_current_user_restricted_to_own_enrollments(case) and not args['filter_ssn']:
+        args['filter_agent'] = agent_service.get_logged_in_agent()
+
+    data = case_service.get_census_records(case, **args)
 
     if request.args.get('format') == 'csv':
         body = case_service.export_census_records(data)
@@ -256,6 +265,12 @@ def census_records(case_id):
         return make_response(body, 200, headers)
 
     return data
+
+def is_current_user_restricted_to_own_enrollments(case):
+    if agent_service.is_user_agent(current_user):
+        return case_service.is_agent_restricted_to_own_enrollments(agent_service.get_logged_in_agent(), case)
+    return False
+
 
 
 @route(bp, '/<case_id>/census_records', methods=['POST'])

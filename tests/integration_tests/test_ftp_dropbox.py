@@ -9,15 +9,14 @@ from unittest2 import TestCase
 from ftplib import FTP_TLS
 from hamcrest import assert_that, starts_with, equal_to
 
-from FTPDropBox.server import access_credentials
-
 
 class TestFTPDropBox(TestCase):
     def setUp(self):
         self.test_host = 'localhost'
         self.test_port = 5021
-        self.test_user = access_credentials[0][0]
-        self.test_passwd = access_credentials[0][1]
+        # These are stormpath now
+        self.test_user = 'agent@zachmason.com'
+        self.test_passwd = '12121212'
         self.test_user_token = 'USER-ABC123'
         self.test_http_port = 8088
         self.test_endpoint = 'http://localhost:%s/enrollments'%self.test_http_port
@@ -46,7 +45,7 @@ class TestFTPDropBox(TestCase):
         self.http_pipe = Popen(http_cmd.split(), stdout=PIPE)
 
         # Give the server a second to start up
-        time.sleep(1)
+        time.sleep(3)
 
     def tearDown(self):
         # Kill both subprocesses after each test.

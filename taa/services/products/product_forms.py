@@ -238,7 +238,7 @@ def get_product_application_forms():
                 is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC),
         ],
 
-        # FPP-Gov is handled below by copying FPP-TI
+        # FPP-White (FPP-Gov), FPP-Blue, and FPP-Gray are handled below by copying FPP-TI
 
         'Group CI': [
 
@@ -336,8 +336,10 @@ def get_product_application_forms():
 
     }
 
-    # FPP-Gov uses FPPTI forms
+    # FPP-White (FPP-Gov), FPP-Blue, and FPP-Gray use FPPTI forms
     app_forms['FPP-Gov'] = app_forms['FPPTI']
+    app_forms['FPPTIY'] = app_forms['FPPTI']
+    app_forms['FPPTIB'] = app_forms['FPPTI']
 
     return app_forms
 
@@ -624,7 +626,7 @@ We are required by law to notify your existing company that you may be replacing
 """.split('\n')
 )
 
-# blank template to gracefully fail if in one of these states until we determine application logic to not require replacement for these states 
+# blank template to gracefully fail if in one of these states until we determine application logic to not require replacement for these states
 empty_fpp_replacement_form = ReplacementForm(
     statecodes=['CT', 'DC', 'ND', 'VI'],
     docusign_template_id='0F15241A-B176-4E5B-9E59-0809053994DC',
@@ -633,7 +635,7 @@ Your state does not require completion of a replacement certificate.  Please sel
 """.split('\n')
 )
 
-# blank template to gracefully fail if in one of these states until we determine application logic to not allow replacement for these states 
+# blank template to gracefully fail if in one of these states until we determine application logic to not allow replacement for these states
 NoNo_fpp_replacement_form = ReplacementForm(
     statecodes=['KS', 'KY'],
     docusign_template_id='0F15241A-B176-4E5B-9E59-0809053994DC',
@@ -698,4 +700,6 @@ def get_replacement_forms():
         'FPPTI':fpp_forms,
         'FPPCI':fpp_forms,
         'FPP-Gov': fpp_forms,
+        'FPPTIB': fpp_forms,
+        'FPPTIY': fpp_forms,
     }

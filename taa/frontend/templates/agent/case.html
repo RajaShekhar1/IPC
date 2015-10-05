@@ -8,717 +8,735 @@
 <flash-messages params="messages: flash_messages"></flash-messages>
 
 <div class="row main-container"
-{# Prevent flash of unstyled content #}
-style="display: none;" data-bind="visible: true">
-<ul class="breadcrumb col-xs-12">
-  <li><a href="{{ url_for('index') }}"><i class="ace-icon fa fa-home"></i> Home</a></li>
-  <li><a href="{{ url_for('manage_cases') }}"><i class="ace-icon fa fa-briefcase"></i> Enrollment Cases</a></li>
-  <li class="active" data-bind="text: company_name"></li>
-</ul>
+     {# Prevent flash of unstyled content #}
+     style="display: none;" data-bind="visible: true">
+  <ul class="breadcrumb col-xs-12">
+    <li><a href="{{ url_for('index') }}"><i class="ace-icon fa fa-home"></i> Home</a></li>
+    <li><a href="{{ url_for('manage_cases') }}"><i class="ace-icon fa fa-briefcase"></i> Enrollment Cases</a></li>
+    <li class="active" data-bind="text: company_name"></li>
+  </ul>
 
-<div class="col-xs-12 ">
-  <h3 class="header header-light blue" data-bind="text: company_name"></h3>
-</div>
+  <div class="col-xs-12 ">
+    <h3 class="header header-light blue" data-bind="text: company_name"></h3>
+  </div>
 
-<div class="col-xs-12">
-  <div class="tabbable">
-    <ul class="nav nav-tabs" id="case-nav-tabs">
-      <li class="active">
-        <a href="#setup">
-          <i class="green ace-icon fa fa-cog bigger-120"></i>
-          Case Setup
-        </a>
-      </li>
-      <li class="">
-        <a href="#enrollment">
-          <i class="orange ace-icon fa fa-user bigger-120"></i>
-          Enrollment
-        </a>
-      </li>
-      <li class="" data-bind="visible: email_batches().length > 0">
-        <a href="#history">
-          <i class="orange ace-icon fa fa-clock-o bigger-120"></i>
-          Email History
-        </a>
-      </li>
+  <div class="col-xs-12">
+    <div class="tabbable">
+      <ul class="nav nav-tabs" id="case-nav-tabs">
+        <li class="active">
+          <a href="#setup">
+            <i class="green ace-icon fa fa-cog bigger-120"></i>
+            Case Setup
+          </a>
+        </li>
+        <li class="">
+          <a href="#enrollment">
+            <i class="orange ace-icon fa fa-user bigger-120"></i>
+            Enrollment
+          </a>
+        </li>
+        <li class="" data-bind="visible: email_batches().length > 0">
+          <a href="#history">
+            <i class="orange ace-icon fa fa-clock-o bigger-120"></i>
+            Email History
+          </a>
+        </li>
+        {% if can_view_report_tab %}
+        <li>
+          <a href="#reports">
+            <i class="blue ace-icon fa fa-bar-chart-o bigger-120"></i>
+            Enrollment Reports
+          </a>
+        </li>
+        {% endif %}
+        {% if "enrollment_importers" in current_user_groups %}
+        <li data-bind="visible: true">
+          <a href="#api">
+            <i class="purple ace-icon fa fa-bolt bigger-120"></i>
+            Import Enrollments
+          </a>
+        </li>
+        {% endif %}
+      </ul>
 
-      <li>
-        <a href="#reports">
-          <i class="blue ace-icon fa fa-bar-chart-o bigger-120"></i>
-          Enrollment Reports
-        </a>
-      </li>
-      {% if "enrollment_importers" in current_user_groups %}
-      <li data-bind="visible: true">
-        <a href="#api">
-          <i class="purple ace-icon fa fa-bolt bigger-120"></i>
-          Import Enrollments
-        </a>
-      </li>
-      {% endif %}
-    </ul>
+      <div class="tab-content">
+        <div id="setup" class="tab-pane fade in active">
+          <div class="row">
 
-    <div class="tab-content">
-      <div id="setup" class="tab-pane fade in active">
-        <div class="row">
+            <div class="col-md-12 case-setup-section">
+              <form class="form-horizontal case_setup" data-bind="submit: save_settings">
 
-          <div class="col-md-12 case-setup-section">
-            <form class="form-horizontal case_setup" data-bind="submit: save_settings">
+                <div class="widget-box">
+                  <div class="widget-header">
+                    <div class="row">
+                      <h3 class="col-xs-6">Main Settings</h3>
+                      <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
+                        <label style="margin-right: 15px;">
+                          {{ case_setup_form.active(class_="ace ace-switch ace-switch-6", **{'data-bind': 'checked: is_active'})|safe }}
+                          <span class="lbl padding-16"  data-bind="text: switch_label">Case is Active</span>
+                        </label>
+                      </h3>
+                    </div>
+                  </div>
+                  <div class="widget-body">
+                    <div class="widget-main">
+                      <div class="row">
+                        <div class="col-md-5 col-xs-12">
+                          <h3 class="header lighter blue">Settings</h3>
 
+                          <div class="form-group">
+                            <label class="col-md-3 control-label" for="company_name">Company Name</label>
+                            <div class="col-md-8">
+                              {{ case_setup_form.company_name(**{
+                              'data-bind': "textInput: company_name, uniqueNameValidation: {remoteMethod: check_unique_name, uniqueObservable: company_name}",
+                              'minlength':'1',
+                              })
+                              }}
+
+                              <div class="row">
+                                <div class="col-md-12">
+                                  <div class="error" data-bind="visible: company_name.has_been_checked, text: get_form_error"></div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="col-md-1">
+                              <div class="ace-icon fa fa-spinner text-warning bigger-125" data-bind="visible: company_name.is_checking"></div>
+                              <div class="ace-icon fa fa-check green bigger-125" data-bind="visible: company_name.is_unique() && !company_name.is_checking()"></div>
+                            </div>
+                          </div>
+
+                          <div class="form-group">
+                            <label class="col-md-3 control-label" for="groupNumber">Group Number: </label>
+                            <div class="col-md-9">
+                              <input id="groupNumber" type="text" data-bind="value: group_number">
+                            </div>
+                          </div>
+
+                          {# Restore multi-product selection when multi-product enrollment is working
+                          {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsValue: "id", optionsText: "name", selectedOptions: products, multiSelect: {
+                          observed: products,
+                          options: {nonSelectedText: "No Products Selected", numberDisplayed: 3}
+                          }'}) }}
+                          #}
+                          <div class="form-group">
+                            <label class="col-md-3 control-label" for="productID">Product</label>
+                            <div class="col-md-9">
+                              <limited-product-select params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-product-select>
+                            </div>
+                          </div>
+
+                          {{ render_field_with_errors(case_setup_form.situs_city, **{'data-bind':'value: situs_city'}) }}
+
+                          <div class="form-group">
+                            <label class="col-md-3 control-label" for="enrollmentState">State</label>
+                            <div class="col-md-9">
+                              <limited-state-select params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-state-select>
+                            </div>
+                          </div>
+
+                          <div class="form-group">
+                            <label class="col-md-3 control-label" for="paymentMode">Payment</label>
+                            <div class="col-md-9">
+                              <select id="paymentMode" name="paymentMode" data-bind="value: payment_mode, options: payment_mode_choices, optionsText: 'name', optionsCaption: '(Select Payment Type)'"></select>
+                            </div>
+                          </div>
+
+                          <span data-bind="if: single_product()">
+                          <div class="form-group" data-bind="visible: riders().length > 0">
+                            <label class="col-md-3 control-label" for="caseRiders">Riders</label>
+                            <div class="col-md-9" data-bind="foreach: {data: riders, as: 'rider'}">
+                              <label>
+                                <input type="checkbox" class="ace ace-switch ace-switch-4 btn-flat" data-bind="checked: rider.selected, value:rider.code" name="riders" /> 
+                                <span class="lbl" data-bind="text: '&nbsp;&nbsp;'+rider.description"></span>
+                              </label><br />
+                            </div>
+                          </div>
+                        </span>
+                        </div>
+                        <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
+                          <h3 class="header lighter blue">Enrollment Periods</h3>
+
+                          <div>
+                            <div class="panel form-group">
+                              <div class="panel-heading">
+                                <label>
+                                  <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="open">
+                                  <span class="lbl padding-8">Enrollment Period with End Date</span>
+                                </label>
+                              </div>
+                              <div class="panel-body"
+                                   data-bind="slideDownIf: is_open_enrollment">
+                                <div class="row">
+                                  <div class="col-md-6">
+                                    <label>
+                                      Start Date:
+                                      <input data-bind="value: get_open_enrollment_period().start_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
+                                    </label>
+                                  </div>
+                                  <div class="col-md-6">
+                                    <label>
+                                      End Date:
+                                      <input data-bind="value: get_open_enrollment_period().end_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_end_date">
+                                    </label>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="panel form-group">
+                              <div class="panel-heading">
+                                <label>
+                                  <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="annual">
+                                  <span class="lbl padding-8">Annual Periods</span>
+                                </label>
+                              </div>
+                              <div class="panel-body"
+                                   data-bind="slideDownIf: is_annual_enrollment()">
+                                <!--ko foreach: annual_enrollment_periods-->
+                                <div class="row">
+                                  <div class="col-md-6">
+                                    <label class="">
+                                      Start Date:
+                                      <input type="text" data-bind="value: start_date" class="input-mask-month-day" placeholder="MM/DD">
+                                    </label>
+                                  </div>
+                                  <div class="col-md-6">
+                                    <label class="">
+                                      End Date:
+                                      <input type="text" data-bind="value: end_date" class="input-mask-month-day" placeholder="MM/DD">
+                                    </label>
+                                  </div>
+                                </div>
+                                <div class="error" data-bind="text: error, visible: error() != ''"></div>
+                                <!--/ko-->
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                      <div class="row">
+                        {% if is_admin %}
+                        <div class="col-md-6">
+                          <div class="row">
+                            <div class="form-group">
+                              <label class="col-md-3 control-label" for="owner_agent">Owner Agent</label>
+                              <div class="col-md-9">
+                                <select id="owner_agent" name="agent_id" data-bind="value: owner_agent_id">
+                                  <option value="">(No Owner)</option>
+                                  {% for agent in active_agents %}
+                                  <option value="{{ agent.id }}"
+                                          {%-if agent.id == case.agent_id -%}
+                                          selected="selected"
+                                          {%- endif -%}
+                                          >{{ agent.name() }}</option>
+                                  {% endfor %}
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="row">
+                            <div class="form-group">
+                              <label class="col-xs-12 control-label">
+                                <input type="checkbox" class="ace" data-bind="checked: restrict_download_enrollments_to_owner">
+                                <span class="lbl"> Restrict Partner Agent access to his/her own enrollments</span>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        {% endif %}
+
+                        {% if not case_has_enrollments %}
+                        <div class="col-sm-offset-1 col-sm-3">
+                          <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="click: delete_case">
+                            Delete Case
+                          </button>
+                        </div>
+                        {% endif %}
+                        {% if case_has_enrollments and not is_admin %}
+                        <div class="col-sm-offset-1 col-sm-3">
+                          <div class="tooltip-wrapper tooltip-error"
+                               data-rel="tooltip" style="display: inline-block;"
+                                                  title="Cannot delete a case with posted enrollments. Instead mark the case as ‘inactive’">
+                            <button type="button" disabled="disabled"
+                                                  class="btn btn-danger btn-xs pull-left tooltip-error">
+                              Delete Case
+                            </button>
+                          </div>
+
+                        </div>
+                        {% endif %}
+                        {% if case_has_enrollments and is_admin %}
+                        <div class="col-sm-offset-1 col-sm-3">
+                          <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="
+                          click: delete_case_with_enrollments
+                          ">Delete Case</button>
+                        </div>
+                        {% endif %}
+
+                      </div>
+                      <div class="row">
+                        <div class="col-sm-12">
+                          <h4 class="header lighter blue">Partner Agents</h4>
+                          <div class="row">
+                            <div class="col-sm-10 col-md-offset-1">
+                              {% if is_admin %}
+                              <select data-bind="selectedOptions: partner_agents"
+                                      multiple="multiple" class="form-control"
+                                                          id="partner-agents"
+                                                          size="10" style="min-height: 8em;">
+                                {% for agent in active_agents %}
+                                <option value="{{ agent.id }}"
+                                        {%-if agent in case.partner_agents -%}
+                                        selected="selected"
+                                        {%- endif -%}
+                                        >{{ agent.name() }}</option>
+                                {% endfor %}
+                              </select>
+                              {% else %}
+                              <div class="text partner_agents">
+                                {% if case.partner_agents|count > 1 %}
+                                <ul class="partner-agents">
+                                  {% if case.owner_agent is not none %}
+                                  <li class="owner-agent">
+                                    {{ case.owner_agent.name() }}
+                                    <span class="text-muted">(<em>owner</em>)</span>
+                                  </li>
+                                  {% endif -%}
+                                  {% for agent in case.partner_agents %}
+                                  {% if agent != case.owner_agent %}
+                                  <li class="partner-agent">
+                                    {{ agent.name() }}
+                                  </li>
+                                  {% endif %}
+                                  {% endfor %}
+                                </ul>
+                                {% else %}
+                                <em>None</em>
+                                {% endif %}
+                              </div>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="widget-toolbox clearfix padding-8">
+
+                      <button class="btn btn-primary btn-md pull-right" data-bind="
+                      disable: !can_edit_case,
+                      click: save_settings,
+                      css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}
+                      ">Save</button>
+                    </div>
+                  </div>
+                </div>
+
+              </form>
+              <br>
+              <br>
+
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12 self-enrollment-section">
+              <form class="form-horizontal" id="edit-self-enrollment-form">
+                <div class="widget-box">
+                  <div class="widget-header">
+                    <div class="row">
+                      <h3 class="col-xs-6">Self-enrollment Settings</h3>
+
+                      <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
+                        <label>
+                          {{ case_setup_form.is_self_enrollment(class_="ace ace-switch btn-empty", **{'data-bind': 'checked: is_self_enrollment'})|safe }}
+                          <span class="lbl"></span>
+                        </label>
+                      </h3>
+                    </div>
+                  </div>
+                  <div class="widget-body">
+                    <div class="widget-main">
+                      <div class="row">
+                        <div class="col-xs-12">
+
+                          <div class="panel form-group">
+                            <div class="panel-body" data-bind="slideDownIf: !is_self_enrollment()">
+                              <p>Self-enrollment is not currently active.</p>
+                            </div>
+                            <div class="panel-body" data-bind="slideDownIf: is_self_enrollment()">
+
+                              <div class="self-enrollment-setup">
+
+                                <div id="save-success" class="alert alert-block alert-success" style="display: none;">
+                                  <strong><i class="ace-icon fa fa-check"></i></strong>
+                                  Successfully saved self-enrollment settings.
+                                </div>
+
+                                <div id="save-fail" class="alert alert-danger" style="display: none;">
+                                  <strong><i class="ace-icon fa fa-exclamation-triangle"></i></strong>
+                                  Failed to save self-enrollment settings.
+                                </div>
+
+                                <div class="row">
+                                  <div class="col-xs-12">
+
+                                    <div class="label label-danger" data-bind="visible: !is_active()">
+                                      <em>NOTE</em>: Case is currently not active. Self-enrollment links will not work unless the case is active.
+                                    </div>
+
+                                    <h3 class="header lighter blue">Self-enrollment type</h3>
+                                    <div class="form-group self-enroll self-enroll-type">
+                                      {{ render_field_with_errors(form.self_enrollment_type, **{'data-bind': 'value: self_enrollment_type'}) }}
+                                    </div>
+
+
+                                    <h3 class="header lighter blue">Enrolling Agent</h3>
+
+                                    <div class="form-group self-enroll self-enroll-agent">
+                                      <div class="col-sm-3 control-label">Signing agent for self-enrolled apps</div>
+                                      <div class="col-sm-9">
+                                        {% if not case_owner %}
+                                        <p class="form-control">Owner agent for this case</p>
+                                        {% elif case_owner and case_agents|length == 1 %}
+                                        <p class="form-control">{{ case_owner.name() }}</p>
+                                        {% else %}
+                                        <select data-bind="value: enrolling_agent_id" class="">
+                                          {% for agent in case_agents %}
+                                          <option value="{{ agent.id }}">{{ agent.name() }}</option>
+                                          {% endfor %}
+                                        </select>
+                                        {% endif %}
+                                      </div>
+                                    </div>
+
+                                    <h3 class="header lighter blue">Enrollment Email</h3>
+                                    <div class="form-group self-enroll">
+                                      <div class="col-sm-3 control-label">Generic enrollment link</div>
+                                      <div class="col-sm-9">
+                                        <div class="">
+                                          <p class="well well-sm">
+                                          <strong><a target="_blank" href="{{ generic_link }}">{{ generic_link }}</a></strong>
+                                          </p>
+                                          <p class="alert alert-info">
+                                          You must send the generic enrollment link through your usual email program.
+                                          </p>
+                                        </div>
+
+                                      </div>
+                                    </div>
+
+                                    {% include "agent/self_enroll_email_settings.html" %}
+
+
+                                    <h3 class="header lighter blue">Landing Page</h3>
+                                    <div class="form-group self-enroll self-enroll-landing-page">
+                                      {{ render_field_with_errors(form.page_title, default="Welcome to your Benefit Enrollment", **{"data-bind": "value:landing.page_title"}) }}
+                                      {{ render_field_with_errors(form.page_text, class_='wysiwyg-editor', style="font-size:1em;", default=default_page_text, **{"data-bind": "wysiwyg: {type:'full', value: landing.page_text}"}) }}
+                                      <div class="row">
+                                        <div class="col-sm-9 col-sm-offset-3">
+                                          <a id="reset-page-text" class="btn btn-xs pull-right">Reset to default message</a>
+                                        </div>
+                                        <div class="col-sm-9 col-sm-offset-3">
+                                          {% include "enrollment/self_enrollment_product_list.html" -%}
+                                        </div>
+                                      </div>
+                                      <br><br>
+                                      <div class="row">
+                                        <div class="col-sm-3 control-label">Disclaimer</div>
+                                        <div class="col-sm-9">
+                                          {% include "enrollment/self_enrollment_disclaimer.html" -%}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <hr>
+
+
+                                <div class="self-enroll-email-confirm">
+                                </div>
+
+                              </div>
+                              </ul>
+                            </div>
+                          </div>
+
+                        </div>
+                      </div>
+                    </div>
+                    <div class="widget-toolbox clearfix padding-8">
+                      <div class="pull-right clearfix">
+                        <button type="submit" class="btn btn-primary" data-bind="visible: is_self_enrollment,
+                        disable: !can_edit_case,
+                        click: save_settings,
+                        css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}">Save</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+
+            </div>
+
+
+          </div>
+        </div>
+
+        <div id="enrollment" class="tab-pane fade">
+          <div class="row" {# Prevent flash of unstyled content #}
+               style="display: none;" data-bind="visible: true"
+                                      >
+                                      <div class="col-xs-12">
+                                        <div class="widget-box">
+                                          <div class="widget-header">
+                                            <div class="row">
+                                              <div class="col-md-4"><h4 class="bigger-150">Case Census</h4></div>
+                                              <div class="col-md-8">
+
+                                                <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal"
+                                                                                                                                             data-bind="visible: can_edit_case">
+                                                  <i class="ace-icon fa fa-upload"></i>
+                                                  Upload Census
+                                                </button>
+                                                {% if can_download_enrollments %}
+                                                <a data-bind="visible: can_download_enrollments" href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
+                                                  <i class="ace-icon glyphicon glyphicon-download-alt"></i>
+                                                  Download Census
+                                                </a>
+                                                {% endif %}
+                                                <a  id="add-to-census-btn" class="btn btn-primary pull-right" data-bind="visible: is_active">
+                                                  <i class="ace-icon glyphicon glyphicon-plus"></i>
+                                                  New Enrollment
+                                                </a>
+                                                <button data-bind="visible: is_self_enrollment() && is_active() && has_census_data() && self_enrollment_type() == 'case-targeted'" type="button" class="btn btn-warning pull-right" data-toggle="modal" data-target="#email-target-links-modal" >
+                                                  <i class="ace-icon fa fa-envelope"></i>
+                                                  Email Enroll
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                          <div class="widget-body">
+                                            <div class="widget-main">
+
+                                              <div class="row" data-bind='visible: is_active'>
+                                                <div class="col-xs-12">
+                                                  <label>Enrollment City: <input type='text' data-bind="value: enrollment_city_override"></label>
+                                                  <label>Enrollment State: <limited-state-select params="limiter: state_product_override_limiter"></limited-state-select></label>
+                                                </div>
+                                              </div>
+
+                                              <h4 class="no-census-header text-center lighter" data-bind="visible: census_data().length == 0" style="display: none;">No Census Data</h4>
+
+                                              <div class="table-responsive" data-bind="visible: census_data().length > 0">
+                                                <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive">
+                                                  <thead>
+                                                    <tr>
+                                                      <th></th>
+                                                      <th>Status</th>
+                                                      <th>First</th>
+                                                      <th>Last</th>
+                                                      <th>DOB</th>
+                                                      <th>Email</th>
+                                                    </tr>
+                                                  </thead>
+                                                  <tbody>
+                                                    {#
+                                                    Don't load this on the page anymore,
+                                                    we load from the server using ajax at run time (helps with performance, needs to be able to reload anyway)
+                                                    #}
+                                                  </tbody>
+                                                </table>
+
+                                              </div>
+                                              <div id="census-table-loading" class="text-center bigger-125"></div>
+                                            </div>
+                                          </div>
+
+                                        </div>
+
+                                      </div>
+
+          </div>
+        </div>
+
+        <div id="history" class="tab-pane fade">
+          <div class="row" {# Prevent flash of unstyled content #}
+               style="display: none;" data-bind="visible: true"
+                                      >
+                                      <div class="col-xs-12">
+                                        <div class="widget-box">
+                                          <div class="widget-header">
+                                            <div class="row">
+                                              <div class="col-md-4"><h4 class="bigger-150">Enrollment Email History</h4></div>
+                                              <div class="col-md-8">
+                                              </div>
+                                            </div>
+                                          </div>
+                                          <div class="widget-body">
+                                            <div class="widget-main">
+                                              <div class="row" data-bind="visible: email_batches().length > 0">
+                                                <div class="accordion-style1 panel-group col-sm-10 col-offset-sm-1" id="accordion">
+                                                  <!-- ko foreach : { data: email_batches } -->
+                                                  <div class="panel panel-default">
+                                                    <div class="panel-heading">
+                                                      <h4 class="panel-title">
+                                                        <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion" data-bind="attr: {href: '#collapse'+id}, click: $parent.load_logs">
+                                                          <i data-icon-show="ace-icon fa fa-angle-right" data-icon-hide="ace-icon fa fa-angle-down" class="bigger-110 ace-icon fa fa-angle-right"></i>
+                                                          Sent <span data-bind="text: email_count"></span> emails <span data-bind="text: moment(sent_date).calendar().toLowerCase()"></span>
+                                                        </a>
+                                                      </h4>
+                                                    </div>
+                                                    <div data-bind="attr: {id: 'collapse'+id}" class="panel-collapse collapse">
+                                                      <div class="panel-body">
+                                                        <button data-bind="click: $parent.batch_preview" class="btn btn-primary pull-right">Preview Email</button>
+                                                        <div data-bind="attr: {id: 'log'+id}">
+
+                                                        </div>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                  <!-- /ko -->
+                                                </div>
+                                              </div>
+                                              <div class="row" data-bind="visible: email_batches().length <= 0">
+                                                <div class="col-sm-10 col-sm-offset-1">
+                                                  No emails sent.
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                        </div>
+
+                                      </div>
+
+          </div>
+        </div>
+        {% if can_view_report_tab %}
+        <div id="api" class="tab-pane fade">
+          <div class="row">
+            <div class="col-xs-12">
               <div class="widget-box">
                 <div class="widget-header">
                   <div class="row">
-                    <h3 class="col-xs-6">Main Settings</h3>
-                    <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
-                      <label style="margin-right: 15px;">
-                        {{ case_setup_form.active(class_="ace ace-switch ace-switch-6", **{'data-bind': 'checked: is_active'})|safe }}
-                        <span class="lbl padding-16"  data-bind="text: switch_label">Case is Active</span>
-                      </label>
+                    <h3 class="col-xs-12">Import File</h3>
+                  </div>
+                </div>
+                <div class="widget-body">
+                  <div class="widget-main">
+                    <div class="row">
+                      <label class="text-right col-sm-3 control-label">Case Token</label>
+                      <div class="col-sm-7">
+                        <strong data-bind="text: case_settings.case_token"></strong><br />
+                        <a target="_blank" data-bind="attr: {href: urls.get_flat_file_documentation_url()}">Flat-File Import Documentation</a><br>
+                        <a target="_blank" data-bind="attr: {href: urls.get_csv_import_documentation_url()}">CSV Import Documentation</a>
+                      </div>
+                    </div>
+                    <br /><br />
+                    <div class="row">
+                      <label class="text-right col-sm-3 control-label">Upload Enrollment Records</label>
+                      <div class="col-sm-9">
+                        <button type="button" id="csv-upload-btn" class="btn btn-default"
+                                                                  data-bind="click: show_upload_enrollment_form">Upload comma/tab delimited or flat-file</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="reports" class="tab-pane fade">
+          <div class="row">
+            <div class="col-xs-12">
+
+              {# Report #}
+              <div class="widget-box">
+                <div class="widget-header">
+                  <div class="row">
+                    <h3 class="col-xs-10">Report
+                    </h3>
+                    <h3 class="col-xs-2 text-center">
+                      <small data-bind="visible: report_viewmodel() && report_viewmodel().any_enrollments()">
+                        <a href="#print"><i class="ace-icon glyphicon glyphicon-print"></i> Print</a>
+                      </small>
                     </h3>
                   </div>
                 </div>
                 <div class="widget-body">
                   <div class="widget-main">
                     <div class="row">
-                      <div class="col-md-5 col-xs-12">
-                        <h3 class="header lighter blue">Settings</h3>
-
-                        <div class="form-group">
-                          <label class="col-md-3 control-label" for="company_name">Company Name</label>
-                          <div class="col-md-8">
-                            {{ case_setup_form.company_name(**{
-                              'data-bind': "textInput: company_name, uniqueNameValidation: {remoteMethod: check_unique_name, uniqueObservable: company_name}",
-                              'minlength':'1',
-                            })
-                          }}
-
-                          <div class="row">
-                            <div class="col-md-12">
-                              <div class="error" data-bind="visible: company_name.has_been_checked, text: get_form_error"></div>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-1">
-                          <div class="ace-icon fa fa-spinner text-warning bigger-125" data-bind="visible: company_name.is_checking"></div>
-                          <div class="ace-icon fa fa-check green bigger-125" data-bind="visible: company_name.is_unique() && !company_name.is_checking()"></div>
-                        </div>
-                      </div>
-
-                      <div class="form-group">
-                        <label class="col-md-3 control-label" for="groupNumber">Group Number: </label>
-                        <div class="col-md-9">
-                          <input id="groupNumber" type="text" data-bind="value: group_number">
-                        </div>
-                      </div>
-
-                      {# Restore multi-product selection when multi-product enrollment is working
-                        {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsValue: "id", optionsText: "name", selectedOptions: products, multiSelect: {
-                          observed: products,
-                          options: {nonSelectedText: "No Products Selected", numberDisplayed: 3}
-                        }'}) }}
-                        #}
-                        <div class="form-group">
-                          <label class="col-md-3 control-label" for="productID">Product</label>
-                          <div class="col-md-9">
-                            <limited-product-select params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-product-select>
-                          </div>
-                        </div>
-
-                        {{ render_field_with_errors(case_setup_form.situs_city, **{'data-bind':'value: situs_city'}) }}
-
-                        <div class="form-group">
-                          <label class="col-md-3 control-label" for="enrollmentState">State</label>
-                          <div class="col-md-9">
-                            <limited-state-select params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-state-select>
-                          </div>
-                        </div>
-
-                        <div class="form-group">
-                          <label class="col-md-3 control-label" for="paymentMode">Payment</label>
-                          <div class="col-md-9">
-                            <select id="paymentMode" name="paymentMode" data-bind="value: payment_mode, options: payment_mode_choices, optionsText: 'name', optionsCaption: '(Select Payment Type)'"></select>
-                          </div>
-                        </div>
-
-                        <div class="form-group" data-bind="visible: single_product().base_product_type != 'Group CI'">
-                          <label class="col-md-3 control-label" for="caseRiders">Riders</label>
-                          <div class="col-md-9" data-bind="foreach: {data: riders, as: 'rider'}">
-                            <label>
-                              <input type="checkbox" class="ace ace-switch ace-switch-4 btn-flat" data-bind="checked: rider.selected, value:rider.code" name="riders" /> 
-                              <span class="lbl" data-bind="text: rider.description"></span>
-                            </label><br />
-                          </div>
-                        </div>
-
-                      </div>
-                      <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
-                        <h3 class="header lighter blue">Enrollment Periods</h3>
-
-                        <div>
-                          <div class="panel form-group">
-                            <div class="panel-heading">
-                              <label>
-                                <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="open">
-                                <span class="lbl padding-8">Enrollment Period with End Date</span>
-                              </label>
-                            </div>
-                            <div class="panel-body"
-                            data-bind="slideDownIf: is_open_enrollment">
-                            <div class="row">
-                              <div class="col-md-6">
-                                <label>
-                                  Start Date:
-                                  <input data-bind="value: get_open_enrollment_period().start_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
-                                </label>
-                              </div>
-                              <div class="col-md-6">
-                                <label>
-                                  End Date:
-                                  <input data-bind="value: get_open_enrollment_period().end_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_end_date">
-                                </label>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="panel form-group">
-                          <div class="panel-heading">
-                            <label>
-                              <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="annual">
-                              <span class="lbl padding-8">Annual Periods</span>
-                            </label>
-                          </div>
-                          <div class="panel-body"
-                          data-bind="slideDownIf: is_annual_enrollment()">
-                          <!--ko foreach: annual_enrollment_periods-->
-                          <div class="row">
-                            <div class="col-md-6">
-                              <label class="">
-                                Start Date:
-                                <input type="text" data-bind="value: start_date" class="input-mask-month-day" placeholder="MM/DD">
-                              </label>
-                            </div>
-                            <div class="col-md-6">
-                              <label class="">
-                                End Date:
-                                <input type="text" data-bind="value: end_date" class="input-mask-month-day" placeholder="MM/DD">
-                              </label>
-                            </div>
-                          </div>
-                          <div class="error" data-bind="text: error, visible: error() != ''"></div>
-                          <!--/ko-->
-                        </div>
+                      <div class="col-xs-12">
+                        <case-report params="settings_viewmodel: $root"></case-report>
                       </div>
                     </div>
                   </div>
-
-                </div>
-                <div class="row">
-                  {% if is_admin %}
-                  <div class="col-md-6">
-                    <div class="row">
-                      <div class="form-group">
-                        <label class="col-md-3 control-label" for="owner_agent">Owner Agent</label>
-                        <div class="col-md-9">
-                          <select id="owner_agent" name="agent_id" data-bind="value: owner_agent_id">
-                            <option value="">(No Owner)</option>
-                            {% for agent in active_agents %}
-                            <option value="{{ agent.id }}"
-                            {%-if agent.id == case.agent_id -%}
-                            selected="selected"
-                            {%- endif -%}
-                            >{{ agent.name() }}</option>
-                            {% endfor %}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {% endif %}
-
-                  {% if not case_has_enrollments %}
-                  <div class="col-sm-offset-1 col-sm-3">
-                    <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="click: delete_case">
-                      Delete Case
-                    </button>
-                  </div>
-                  {% endif %}
-                  {% if case_has_enrollments and not is_admin %}
-                  <div class="col-sm-offset-1 col-sm-3">
-                    <div class="tooltip-wrapper tooltip-error"
-                    data-rel="tooltip" style="display: inline-block;"
-                    title="Cannot delete a case with posted enrollments. Instead mark the case as ‘inactive’">
-                    <button type="button" disabled="disabled"
-                    class="btn btn-danger btn-xs pull-left tooltip-error">
-                    Delete Case
-                  </button>
-                </div>
-
-              </div>
-              {% endif %}
-              {% if case_has_enrollments and is_admin %}
-              <div class="col-sm-offset-1 col-sm-3">
-                <button type="button" class="btn btn-danger btn-xs pull-left" data-bind="
-                click: delete_case_with_enrollments
-                ">Delete Case</button>
-              </div>
-              {% endif %}
-
-            </div>
-            <div class="row">
-              <div class="col-sm-12">
-                <h4 class="header lighter blue">Partner Agents</h4>
-                <div class="row">
-                  <div class="col-sm-10 col-md-offset-1">
-                    {% if is_admin %}
-                    <select data-bind="selectedOptions: partner_agents"
-                    multiple="multiple" class="form-control"
-                    id="partner-agents"
-                    size="10" style="min-height: 8em;">
-                    {% for agent in active_agents %}
-                    <option value="{{ agent.id }}"
-                    {%-if agent in case.partner_agents -%}
-                    selected="selected"
-                    {%- endif -%}
-                    >{{ agent.name() }}</option>
-                    {% endfor %}
-                  </select>
-                  {% else %}
-                  <div class="text partner_agents">
-                    {% if case.partner_agents|count > 1 %}
-                    <ul class="partner-agents">
-                      {% if case.owner_agent is not none %}
-                      <li class="owner-agent">
-                        {{ case.owner_agent.name() }}
-                        <span class="text-muted">(<em>owner</em>)</span>
-                      </li>
-                      {% endif -%}
-                      {% for agent in case.partner_agents %}
-                      {% if agent != case.owner_agent %}
-                      <li class="partner-agent">
-                        {{ agent.name() }}
-                      </li>
-                      {% endif %}
-                      {% endfor %}
-                    </ul>
-                    {% else %}
-                    <em>None</em>
-                    {% endif %}
-                  </div>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="widget-toolbox clearfix padding-8">
-
-          <button class="btn btn-primary btn-md pull-right" data-bind="
-          disable: !can_edit_case,
-          click: save_settings,
-          css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}
-          ">Save</button>
-        </div>
-      </div>
-    </div>
-
-  </form>
-  <br>
-  <br>
-
-</div>
-</div>
-
-<div class="row">
-  <div class="col-md-12 self-enrollment-section">
-    <form class="form-horizontal" id="edit-self-enrollment-form">
-      <div class="widget-box">
-        <div class="widget-header">
-          <div class="row">
-            <h3 class="col-xs-6">Self-enrollment Settings</h3>
-
-            <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
-              <label>
-                {{ case_setup_form.is_self_enrollment(class_="ace ace-switch btn-empty", **{'data-bind': 'checked: is_self_enrollment'})|safe }}
-                <span class="lbl"></span>
-              </label>
-            </h3>
-          </div>
-        </div>
-        <div class="widget-body">
-          <div class="widget-main">
-            <div class="row">
-              <div class="col-xs-12">
-
-                <div class="panel form-group">
-                  <div class="panel-body" data-bind="slideDownIf: !is_self_enrollment()">
-                    <p>Self-enrollment is not currently active.</p>
-                  </div>
-                  <div class="panel-body" data-bind="slideDownIf: is_self_enrollment()">
-
-                    <div class="self-enrollment-setup">
-
-                      <div id="save-success" class="alert alert-block alert-success" style="display: none;">
-                        <strong><i class="ace-icon fa fa-check"></i></strong>
-                        Successfully saved self-enrollment settings.
-                      </div>
-
-                      <div id="save-fail" class="alert alert-danger" style="display: none;">
-                        <strong><i class="ace-icon fa fa-exclamation-triangle"></i></strong>
-                        Failed to save self-enrollment settings.
-                      </div>
-
-                      <div class="row">
-                        <div class="col-xs-12">
-
-                          <div class="label label-danger" data-bind="visible: !is_active()">
-                            <em>NOTE</em>: Case is currently not active. Self-enrollment links will not work unless the case is active.
-                          </div>
-
-                          <h3 class="header lighter blue">Self-enrollment type</h3>
-                          <div class="form-group self-enroll self-enroll-type">
-                            {{ render_field_with_errors(form.self_enrollment_type, **{'data-bind': 'value: self_enrollment_type'}) }}
-                          </div>
-
-
-                          <h3 class="header lighter blue">Enrolling Agent</h3>
-
-                          <div class="form-group self-enroll self-enroll-agent">
-                            <div class="col-sm-3 control-label">Signing agent for self-enrolled apps</div>
-                            <div class="col-sm-9">
-                              {% if not case_owner %}
-                              <p class="form-control">Owner agent for this case</p>
-                              {% elif case_owner and case_agents|length == 1 %}
-                              <p class="form-control">{{ case_owner.name() }}</p>
-                              {% else %}
-                              <select data-bind="value: enrolling_agent_id" class="">
-                                {% for agent in case_agents %}
-                                <option value="{{ agent.id }}">{{ agent.name() }}</option>
-                                {% endfor %}
-                              </select>
-                              {% endif %}
-                            </div>
-                          </div>
-
-                          <h3 class="header lighter blue">Enrollment Email</h3>
-                          <div class="form-group self-enroll">
-                            <div class="col-sm-3 control-label">Generic enrollment link</div>
-                            <div class="col-sm-9">
-                              <div class="">
-                                <p class="well well-sm">
-                                  <strong><a target="_blank" href="{{ generic_link }}">{{ generic_link }}</a></strong>
-                                </p>
-                                <p class="alert alert-info">
-                                  You must send the generic enrollment link through your usual email program.
-                                </p>
-                              </div>
-
-                            </div>
-                          </div>
-
-                          {% include "agent/self_enroll_email_settings.html" %}
-
-
-                          <h3 class="header lighter blue">Landing Page</h3>
-                          <div class="form-group self-enroll self-enroll-landing-page">
-                            {{ render_field_with_errors(form.page_title, default="Welcome to your Benefit Enrollment", **{"data-bind": "value:landing.page_title"}) }}
-                            {{ render_field_with_errors(form.page_text, class_='wysiwyg-editor', style="font-size:1em;", default=default_page_text, **{"data-bind": "wysiwyg: {type:'full', value: landing.page_text}"}) }}
-                            <div class="row">
-                              <div class="col-sm-9 col-sm-offset-3">
-                                <a id="reset-page-text" class="btn btn-xs pull-right">Reset to default message</a>
-                              </div>
-                              <div class="col-sm-9 col-sm-offset-3">
-                                {% include "enrollment/self_enrollment_product_list.html" -%}
-                              </div>
-                            </div>
-                            <br><br>
-                            <div class="row">
-                              <div class="col-sm-3 control-label">Disclaimer</div>
-                              <div class="col-sm-9">
-                                {% include "enrollment/self_enrollment_disclaimer.html" -%}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <hr>
-
-
-                      <div class="self-enroll-email-confirm">
-                      </div>
-
-                    </div>
-                  </ul>
                 </div>
               </div>
 
-            </div>
-          </div>
-        </div>
-        <div class="widget-toolbox clearfix padding-8">
-          <div class="pull-right clearfix">
-            <button type="submit" class="btn btn-primary" data-bind="visible: is_self_enrollment,
-            disable: !can_edit_case,
-            click: save_settings,
-            css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}">Save</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </form>
+              {# Enrollments #}
+              <div class="row" {# Prevent flash of unstyled content #}
+                   style="display: none;" data-bind="visible: true"
+                                          >
+                                          <div class="col-xs-12">
+                                            <div class="widget-box" data-bind="visible: report_viewmodel() && report_viewmodel().any_enrollments()">
+                                              <div class="widget-header">
+                                                <div class="row">
+                                                  <div class="col-xs-6"><h4 class="bigger-150">Enrollment Records</h4></div>
+                                                  {% if can_download_enrollments %}
+                                                  <div class="col-xs-6">
 
-</div>
+                                                    <a href="{{ url_for('cases.enrollment_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
+                                                      <i class="ace-icon glyphicon glyphicon-download-alt"></i>
+                                                      Download Enrollments
+                                                    </a>
+                                                  </div>
+                                                  {% endif %}
+                                                </div>
+                                              </div>
+                                              <div class="widget-body">
+                                                <div class="widget-main">
+                                                  <div style="width: 100%; padding-left: -10px;">
+                                                    <div class="table-responsive">
+                                                      <table id="enrollment-records-table"
+                                                             class="table table-bordered table-hover no-wrap dt-responsive">
+                                                        <thead>
+                                                          <tr>
+                                                            <th class="min-breakII">Date</th>
+                                                            <th>First</th>
+                                                            <th>Last</th>
+                                                            <th class="min-breakII">DOB</th>
+                                                            <th class="min-breakI">Email</th>
+                                                            <th class="min-breakV">Status</th>
+                                                            <th>Total Premium</th>
+                                                          </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                          {#
+                                                          Don't load this on the page anymore,
+                                                          we load from the server at run time for page speed
+                                                          #}
+                                                        </tbody>
+                                                      </table>
+                                                    </div>
+                                                  </div>
+                                                  <div id="enrollment-table-loading" class="text-center bigger-125"></div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
 
-
-</div>
-</div>
-
-<div id="enrollment" class="tab-pane fade">
-  <div class="row" {# Prevent flash of unstyled content #}
-  style="display: none;" data-bind="visible: true"
-  >
-  <div class="col-xs-12">
-    <div class="widget-box">
-      <div class="widget-header">
-        <div class="row">
-          <div class="col-md-4"><h4 class="bigger-150">Case Census</h4></div>
-          <div class="col-md-8">
-
-            <button type="button" id="upload-btn" class="btn btn-success pull-right" data-toggle="modal" data-target="#census-upload-modal"
-            data-bind="visible: can_edit_case">
-            <i class="ace-icon fa fa-upload"></i>
-            Upload Census
-          </button>
-          <a data-bind="visible: has_census_data() && can_edit_case" href="{{ url_for('cases.census_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
-            <i class="ace-icon glyphicon glyphicon-download-alt"></i>
-            Download Census
-          </a>
-          <a  id="add-to-census-btn" class="btn btn-primary pull-right" data-bind="visible: is_active">
-            <i class="ace-icon glyphicon glyphicon-plus"></i>
-            New Enrollment
-          </a>
-          <button data-bind="visible: is_self_enrollment() && is_active() && has_census_data() && self_enrollment_type() == 'case-targeted'" type="button" class="btn btn-warning pull-right" data-toggle="modal" data-target="#email-target-links-modal" >
-            <i class="ace-icon fa fa-envelope"></i>
-            Email Enroll
-          </button>
-        </div>
-      </div>
-    </div>
-    <div class="widget-body">
-      <div class="widget-main">
-
-        <div class="row" data-bind='visible: is_active'>
-          <div class="col-xs-12">
-            <label>Enrollment City: <input type='text' data-bind="value: enrollment_city_override"></label>
-            <label>Enrollment State: <limited-state-select params="limiter: state_product_override_limiter"></limited-state-select></label>
-          </div>
-        </div>
-
-        <h4 class="no-census-header text-center lighter" data-bind="visible: census_data().length == 0" style="display: none;">No Census Data</h4>
-
-        <div class="table-responsive" data-bind="visible: census_data().length > 0">
-          <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive">
-            <thead>
-              <tr>
-                <th></th>
-                <th>Status</th>
-                <th>First</th>
-                <th>Last</th>
-                <th>DOB</th>
-                <th>Email</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#
-                Don't load this on the page anymore,
-                we load from the server using ajax at run time (helps with performance, needs to be able to reload anyway)
-                #}
-              </tbody>
-            </table>
-
-          </div>
-          <div id="census-table-loading" class="text-center bigger-125"></div>
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-</div>
-
-<div id="history" class="tab-pane fade">
-  <div class="row" {# Prevent flash of unstyled content #}
-  style="display: none;" data-bind="visible: true"
-  >
-  <div class="col-xs-12">
-    <div class="widget-box">
-      <div class="widget-header">
-        <div class="row">
-          <div class="col-md-4"><h4 class="bigger-150">Enrollment Email History</h4></div>
-          <div class="col-md-8">
-          </div>
-        </div>
-      </div>
-      <div class="widget-body">
-        <div class="widget-main">
-          <div class="row" data-bind="visible: email_batches().length > 0">
-            <div class="accordion-style1 panel-group col-sm-10 col-offset-sm-1" id="accordion">
-              <!-- ko foreach : { data: email_batches } -->
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion" data-bind="attr: {href: '#collapse'+id}, click: $parent.load_logs">
-                      <i data-icon-show="ace-icon fa fa-angle-right" data-icon-hide="ace-icon fa fa-angle-down" class="bigger-110 ace-icon fa fa-angle-right"></i>
-                      Sent <span data-bind="text: email_count"></span> emails <span data-bind="text: moment(sent_date).calendar().toLowerCase()"></span>
-                    </a>
-                  </h4>
-                </div>
-                <div data-bind="attr: {id: 'collapse'+id}" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    <button data-bind="click: $parent.batch_preview" class="btn btn-primary pull-right">Preview Email</button>
-                    <div data-bind="attr: {id: 'log'+id}">
-
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <!-- /ko -->
-            </div>
-          </div>
-          <div class="row" data-bind="visible: email_batches().length <= 0">
-            <div class="col-sm-10 col-sm-offset-1">
-              No emails sent.
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-</div>
-
-<div id="api" class="tab-pane fade">
-  <div class="row">
-    <div class="col-xs-12">
-      <div class="widget-box">
-        <div class="widget-header">
-          <div class="row">
-            <h3 class="col-xs-12">Import File</h3>
-          </div>
-        </div>
-        <div class="widget-body">
-          <div class="widget-main">
-            <div class="row">
-              <label class="text-right col-sm-3 control-label">Case Token</label>
-              <div class="col-sm-7">
-                <strong data-bind="text: case_settings.case_token"></strong><br />
-                <a data-bind="attr: {href: urls.get_flat_file_documentation_url()}">Read the API Documentation</a>
-              </div>
-            </div>
-            <br /><br />
-            <div class="row">
-              <label class="text-right col-sm-3 control-label">Upload Enrollment Records</label>
-              <div class="col-sm-9">
-                <button type="button" id="csv-upload-btn" class="btn btn-default" data-toggle="modal" data-target="#enrollment-csv-modal">Upload comma/tab delimited or flat-file</button>
               </div>
             </div>
           </div>
         </div>
       </div>
+      {% endif %}
     </div>
   </div>
-</div>
-
-  <div id="reports" class="tab-pane fade">
-    <div class="row">
-      <div class="col-xs-12">
-
-        {# Report #}
-        <div class="widget-box">
-          <div class="widget-header">
-            <div class="row">
-              <h3 class="col-xs-10">Report
-              </h3>
-              <h3 class="col-xs-2 text-center">
-                <small data-bind="visible: report_viewmodel() && report_viewmodel().any_enrollments()">
-                  <a href="#print"><i class="ace-icon glyphicon glyphicon-print"></i> Print</a>
-                </small>
-              </h3>
-            </div>
-          </div>
-          <div class="widget-body">
-            <div class="widget-main">
-              <div class="row">
-                <div class="col-xs-12">
-                  <case-report params="settings_viewmodel: $root"></case-report>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {# Enrollments #}
-        <div class="row" {# Prevent flash of unstyled content #}
-        style="display: none;" data-bind="visible: true"
-        >
-        <div class="col-xs-12">
-          <div class="widget-box" data-bind="visible: report_viewmodel() && report_viewmodel().any_enrollments()">
-            <div class="widget-header">
-              <div class="row">
-                <div class="col-xs-6"><h4 class="bigger-150">Enrollment Records</h4></div>
-                <div class="col-xs-6">
-
-                  <a href="{{ url_for('cases.enrollment_records', case_id=case.id) }}?format=csv" target="_blank" id="export-btn" class="btn btn-default pull-right">
-                    <i class="ace-icon glyphicon glyphicon-download-alt"></i>
-                    Download Enrollments
-                  </a>
-                </div>
-              </div>
-            </div>
-            <div class="widget-body">
-              <div class="widget-main">
-                <div style="width: 100%; padding-left: -10px;">
-                  <div class="table-responsive">
-                    <table id="enrollment-records-table"
-                    class="table table-bordered table-hover no-wrap dt-responsive">
-                    <thead>
-                      <tr>
-                        <th class="min-breakII">Date</th>
-                        <th>First</th>
-                        <th>Last</th>
-                        <th class="min-breakII">DOB</th>
-                        <th class="min-breakI">Email</th>
-                        <th class="min-breakV">Status</th>
-                        <th>Total Premium</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {#
-                        Don't load this on the page anymore,
-                        we load from the server at run time for page speed
-                        #}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                <div id="enrollment-table-loading" class="text-center bigger-125"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</div>
-</div>
-</div>
-</div>
 
 
 </div>
@@ -729,43 +747,43 @@ style="display: none;" data-bind="visible: true">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal"><span
-          aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-          <h4 class="modal-title">Delete Case and All Enrollment Data</h4>
-        </div>
-        <div class="modal-body">
-          <div class="form-panel modal-panel">
-            <div class="row">
-              <div class="col-xs-12">
-                <p>
-                  This case has enrollments that have been processed.
-                  Deleting the case will permanently remove all associated enrollment and census records;
-                  they will not be retrievable. Are you sure you want to permanently remove all enrollment
-                  and census records?
-                </p>
-                <br>
-                <label>
-                  Type DELETE in the following box for confirmation:
-                  <input data-bind="textInput: delete_confirmation_text">
-                </label>
-              </div>
+                                            aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title">Delete Case and All Enrollment Data</h4>
+      </div>
+      <div class="modal-body">
+        <div class="form-panel modal-panel">
+          <div class="row">
+            <div class="col-xs-12">
+              <p>
+              This case has enrollments that have been processed.
+              Deleting the case will permanently remove all associated enrollment and census records;
+              they will not be retrievable. Are you sure you want to permanently remove all enrollment
+              and census records?
+              </p>
+              <br>
+              <label>
+                Type DELETE in the following box for confirmation:
+                <input data-bind="textInput: delete_confirmation_text">
+              </label>
             </div>
           </div>
         </div>
+      </div>
 
-        <div class="modal-footer">
-          <div class="form-buttons buttons-panel">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-            <button class="btn btn-danger"
-            data-bind="enable: is_delete_text_valid, click: remote_delete">PERMANENT DELETE</button>
-          </div>
+      <div class="modal-footer">
+        <div class="form-buttons buttons-panel">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button class="btn btn-danger"
+                  data-bind="enable: is_delete_text_valid, click: remote_delete">PERMANENT DELETE</button>
         </div>
       </div>
     </div>
   </div>
+</div>
 
 
-  <script type="text/html" id="case-report-template">
-    <div data-bind="visible: is_loading">
+<script type="text/html" id="case-report-template">
+<div data-bind="visible: is_loading">
       <div class="loading">Loading Report...</div>
     </div>
     <div class="report-wrap" data-bind="visible: !is_loading()">
@@ -852,475 +870,491 @@ style="display: none;" data-bind="visible: true">
         <!--/ko-->
         <!--/ko-->
       </div>
-    </script>
+</script>
 
-    <loading-modal params="options: loading_modal"></loading-modal>
+<loading-modal params="options: loading_modal"></loading-modal>
 
 
-    {% endblock %}
+{% endblock %}
 
-    {% block modals %}
-    {{ super() }}
-    <div class="modals">
-      {# Send targeted email modal #}
-      <form id="send-emails-form" method="POST" enctype="multipart/form-data">
-        <div id="email-target-links-modal" class="modal fade">
-          <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-              <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span
-                  aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                  <h4 class="modal-title">Email Census Self-Enroll</h4>
+{% block modals %}
+{{ super() }}
+<div class="modals">
+  {# Send targeted email modal #}
+  <form id="send-emails-form" method="POST" enctype="multipart/form-data">
+    <div id="email-target-links-modal" class="modal fade">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span
+                                                aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title">Email Census Self-Enroll</h4>
+          </div>
+          <div class="modal-body">
+            <div class="form-panel modal-panel form-horizontal">
+              <div class="form-group">
+                <div class="control-label col-sm-3">
+                  <label>Send To</label>
                 </div>
-                <div class="modal-body">
-                  <div class="form-panel modal-panel form-horizontal">
-                    <div class="form-group">
-                      <div class="control-label col-sm-3">
-                        <label>Send To</label>
-                      </div>
-                      <div class="col-sm-9">
-                        <select class="form-control" data-bind="value: send_type" name="send_type">
-                          <option data-bind="text: numbers.not_sent()+' employees who have not been sent a link'" value="not-sent"></option>
-                          <option data-bind="text: numbers.not_enrolled()+' employees who have neither enrolled nor declined'" value='not-enrolled'></option>
-                          <option data-bind="text: numbers.declined()+' employees who have declined'" value='declined'></option>
-                        </select>
-                      </div>
-                    </div>
-                    {% include "agent/self_enroll_email_settings.html" %}
-                    <br />
-                    <br />
-                    <ul class="list-unstyled row" data-bind="foreach: errors">
-                      <li class="alert alert-danger" data-bind="text: $data"></li>
-                    </ul>
-                  </div>
-                  <div class="loading-panel modal-panel" style="display: none;">
-                    <div class="text-center">
-                      <h4>Sending enrollment emails...</h4>
-                      <i class="icon-spinner icon-spin grey bigger-200"></i>
-                    </div>
-                  </div>
-                  <div class="success-panel modal-panel" style="display: none;">
-                    <h3 class="header lighter green">Emails Scheduled for Delivery</h3>
-                    <div id="email-status-wrap"></div>
-                  </div>
-                  <div class="error-panel modal-panel" style="display: none;">
-                    <h3 class="header lighter red">Emails Failed to Send</h3>
-                    <div id="email-error"></div>
-                  </div>
-                  <div class="clearfix"></div>
+                <div class="col-sm-9">
+                  <select class="form-control" data-bind="value: send_type" name="send_type">
+                    <option data-bind="text: numbers.not_sent()+' employees who have not been sent a link'" value="not-sent"></option>
+                    <option data-bind="text: numbers.not_enrolled()+' employees who have neither enrolled nor declined'" value='not-enrolled'></option>
+                    <option data-bind="text: numbers.declined()+' employees who have declined'" value='declined'></option>
+                  </select>
                 </div>
-
-                <div class="modal-footer">
-                  <div class="form-buttons buttons-panel">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    <button type="submit" data-bind="click: send_emails" class="btn btn-primary">Send Now</button>
-                  </div>
-                  <div class="processing-buttons buttons-panel" style="display: none;">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                  </div>
-                  <div class="error-buttons buttons-panel" style="display: none;">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary back-btn">
-                      <i class="glyphicon glyphicon-chevron-left"></i> Back</button>
-                    </div>
-                    <div class="success-buttons buttons-panel" style="display: none;">
-                      <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
-                    </div>
-
-                  </div>
-                </div>
-                <!-- /.modal-content -->
               </div>
-              <!-- /.modal-dialog -->
+              {% include "agent/self_enroll_email_settings.html" %}
+              <br />
+              <br />
+              <ul class="list-unstyled row" data-bind="foreach: errors">
+                <li class="alert alert-danger" data-bind="text: $data"></li>
+              </ul>
             </div>
-          </form>
+            <div class="loading-panel modal-panel" style="display: none;">
+              <div class="text-center">
+                <h4>Sending enrollment emails...</h4>
+                <i class="icon-spinner icon-spin grey bigger-200"></i>
+              </div>
+            </div>
+            <div class="success-panel modal-panel" style="display: none;">
+              <h3 class="header lighter green">Emails Scheduled for Delivery</h3>
+              <div id="email-status-wrap"></div>
+            </div>
+            <div class="error-panel modal-panel" style="display: none;">
+              <h3 class="header lighter red">Emails Failed to Send</h3>
+              <div id="email-error"></div>
+            </div>
+            <div class="clearfix"></div>
+          </div>
+
+          <div class="modal-footer">
+            <div class="form-buttons buttons-panel">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button type="submit" data-bind="click: send_emails" class="btn btn-primary">Send Now</button>
+            </div>
+            <div class="processing-buttons buttons-panel" style="display: none;">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+            <div class="error-buttons buttons-panel" style="display: none;">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary back-btn">
+                <i class="glyphicon glyphicon-chevron-left"></i> Back</button>
+            </div>
+            <div class="success-buttons buttons-panel" style="display: none;">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
+            </div>
+
+          </div>
+        </div>
+        <!-- /.modal-content -->
+      </div>
+      <!-- /.modal-dialog -->
+    </div>
+  </form>
 
 
-          {# Confirm that an employee is not in the census using SSN. #}
-          <div id="add-to-census-modal" class="modal fade">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal"><span
-                    aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                    <h4 class="modal-title">New Enrollment</h4>
+  {# Confirm that an employee is not in the census using SSN. #}
+  <div id="add-to-census-modal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span
+                                              aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title">New Enrollment</h4>
+        </div>
+        <div class="modal-body">
+          <div class="form-panel modal-panel" data-bind="if: add_form_showing">
+            <form data-bind="submit: find_matches">
+              <div class="row">
+                <div class="col-xs-12 ">
+                  <div class="form-group">
+                    <label for="add-census-ssn-input">
+                      Employee SSN:
+                    </label>
+                    <input type="text" id="add-census-ssn-input" name="ssn" data-bind="value: ssn, maskedInput: '999-99-9999', valueUpdate: 'afterkeydown'">
+                    <div data-bind="text: ssn.error" class="error"></div>
                   </div>
-                  <div class="modal-body">
-                    <div class="form-panel modal-panel" data-bind="if: add_form_showing">
-                      <form data-bind="submit: find_matches">
-                        <div class="row">
-                          <div class="col-xs-12 ">
+
                             <div class="form-group">
-                              <label for="add-census-ssn-input">
-                                Employee SSN:
-                              </label>
-                              <input type="text" id="add-census-ssn-input" name="ssn" data-bind="value: ssn, maskedInput: '999-99-9999', valueUpdate: 'afterkeydown'">
-                              <div data-bind="text: ssn.error" class="error"></div>
+                              <label>Enrollment City:</label>
+                              <input type='text' data-bind="value: case_settings.enrollment_city_override">
+
                             </div>
-                          </div>
-                        </div>
-                      </form>
-                    </div>
+                            <div class="form-group">
+                                <label>Enrollment State:</label>
+                                <limited-state-select params="limiter: case_settings.state_product_override_limiter"></limited-state-select>
+                              
+                            </div>
 
-                    <div class="loading-panel modal-panel" data-bind="if: is_loading">
-                      <div class="text-center">
-                        <h4 data-bind="text: loading_message"></h4>
-                        <i class="icon-spinner icon-spin grey bigger-200"></i>
-                      </div>
-                    </div>
 
-                    <div class="no-matches-panel modal-panel" data-bind="if: no_matches_found">
-                      <h3 class="header lighter green">No employee with that SSN was found.</h3>
-                      <p>Click 'Begin Enrollment' to create new employee</p>
-                    </div>
-                    <div class="one-match-panel modal-panel" data-bind="if: one_match_found">
-                      <h3 class="header lighter green">We found a matching employee record:</h3>
-                      <strong>
-                        <span data-bind="text: matched_employee().first"></span>
-                        <span data-bind="text: matched_employee().last"></span>,
-                        Birthdate: <span data-bind="text: matched_employee().formatted_birthdate()"></span>
-                      </strong>
-                    </div>
-                    <div class="error-panel modal-panel" data-bind="if: multiple_matches_found">
-                      <h3 class="header lighter">
-                        Matched Employees:
-                      </h3>
 
-                      <div class="row">
-                        <div class="col-md-12" style="width: 100%; overflow: auto;">
-                          <div class="table-responsive">
-                            <table class="table table-bordered upload-error-table">
-                              <thead>
-                                <tr>
-                                  <th></th>
-                                  <th>First</th>
-                                  <th>Last</th>
-                                  <th>Birthdate</th>
-                                </tr>
-                              </thead>
-                              <tbody data-bind="foreach: {data: matched_employees, as: 'employee'}">
-                                <tr>
-                                  <td><input type="radio" name="selected_match" data-bind="checked: $parent.selected_employee, checkedValue: employee.id"></td>
-                                  <td data-bind="text: employee.first"></td>
-                                  <td data-bind="text: employee.last"></td>
-                                  <td data-bind="text: employee.formatted_birthdate()"></td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                          <div class="error" data-bind="matched_employees.error"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="modal-footer">
-                    <div class="success-buttons buttons-panel" data-bind="">
-                      <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                      <button type="submit" class="btn btn-primary"
-                      data-bind="click: find_matches, visible: current_panel() == PANEL_FORM">Next</button>
-                      <button type="button" class="btn btn-success"
-                      data-bind="click: add_to_census, visible: no_matches_found">Begin Enrollment</button>
-
-                      <button type="button" class="btn btn-success"
-                      data-bind="click: enroll_from_match, visible: one_match_found">Enroll this employee</button>
-                      <button type="button" class="btn btn-warning"
-                      data-bind="click: add_to_census, visible: one_match_found">Enroll new employee</button>
-
-                      <button type="button" class="btn btn-success"
-                      data-bind="click: enroll_from_match, visible: multiple_matches_found">Enroll selected employee</button>
-                      <button type="button" class="btn btn-warning"
-                      data-bind="click: add_to_census, visible: multiple_matches_found">Enroll new employee</button>
-                    </div>
-
-                  </div>
                 </div>
-                <!-- /.modal-content -->
               </div>
-              <!-- /.modal-dialog -->
+            </form>
+          </div>
+
+          <div class="loading-panel modal-panel" data-bind="if: is_loading">
+            <div class="text-center">
+              <h4 data-bind="text: loading_message"></h4>
+              <i class="icon-spinner icon-spin grey bigger-200"></i>
+            </div>
+          </div>
+
+          <div class="no-matches-panel modal-panel" data-bind="if: no_matches_found">
+            <h3 class="header lighter green">No employee with that SSN was found.</h3>
+            <p>Click 'Begin Enrollment' to create new employee</p>
+          </div>
+          <div class="one-match-panel modal-panel" data-bind="if: one_match_found">
+            <h3 class="header lighter green">We found a matching employee record:</h3>
+            <strong>
+              <span data-bind="text: matched_employee().first"></span>
+              <span data-bind="text: matched_employee().last"></span>,
+              Birthdate: <span data-bind="text: matched_employee().formatted_birthdate()"></span>
+            </strong>
+          </div>
+          <div class="error-panel modal-panel" data-bind="if: multiple_matches_found">
+            <h3 class="header lighter">
+              Matched Employees:
+            </h3>
+
+            <div class="row">
+              <div class="col-md-12" style="width: 100%; overflow: auto;">
+                <div class="table-responsive">
+                  <table class="table table-bordered upload-error-table">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>First</th>
+                        <th>Last</th>
+                        <th>Birthdate</th>
+                      </tr>
+                    </thead>
+                    <tbody data-bind="foreach: {data: matched_employees, as: 'employee'}">
+                      <tr>
+                        <td><input type="radio" name="selected_match" data-bind="checked: $parent.selected_employee, checkedValue: employee.id"></td>
+                        <td data-bind="text: employee.first"></td>
+                        <td data-bind="text: employee.last"></td>
+                        <td data-bind="text: employee.formatted_birthdate()"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="error" data-bind="matched_employees.error"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="success-buttons buttons-panel" data-bind="">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary"
+                                  data-bind="click: find_matches, visible: current_panel() == PANEL_FORM">Next</button>
+            <button type="button" class="btn btn-success"
+                                  data-bind="click: add_to_census, visible: no_matches_found">Begin Enrollment</button>
+
+            <button type="button" class="btn btn-success"
+                                  data-bind="click: enroll_from_match, visible: one_match_found">Enroll this employee</button>
+            <button type="button" class="btn btn-warning"
+                                  data-bind="click: add_to_census, visible: one_match_found">Enroll new employee</button>
+
+            <button type="button" class="btn btn-success"
+                                  data-bind="click: enroll_from_match, visible: multiple_matches_found">Enroll selected employee</button>
+            <button type="button" class="btn btn-warning"
+                                  data-bind="click: add_to_census, visible: multiple_matches_found">Enroll new employee</button>
+          </div>
+
+        </div>
+      </div>
+      <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+  </div>
+
+  {# Upload census data modal. This is in the footer so I can bind two KO controllers more easily for now. #}
+  <form id="census-record-form" method="POST" enctype="multipart/form-data">
+    <div id="census-upload-modal" class="modal fade">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span
+                                                aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title">Upload Census Data</h4>
+          </div>
+          <div class="modal-body">
+            <div class="form-panel modal-panel">
+              <div class="row">
+                <div class="col-xs-12 ">
+                  <h4>
+                    Select Census CSV File:
+                  </h4>
+                  <p class="offset-by-twelve">Download an <a href="{{ url_for("sample_upload_csv") }}">example census data file</a> for formatting reference.</p>
+                  <input type="file" id="csv-file-input" name="csv-file" accept="text/csv,.csv">
+                </div>
+              </div>
+
+              <br>
+
+              <div class="row">
+                <div class="col-xs-12">
+                  <div class="form-group">
+                    <label>
+                      <input type="radio" class="ace" name="upload_type" value="merge-skip" checked="1">
+                      <span class="lbl"> Add New Records</span>
+                    </label>
+                    <div class="row">
+                      <p class="col-xs-10 col-xs-offset-1">
+                      This option adds new records to any existing employee records without updating any existing data.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label>
+                      <input type="radio" class="ace" name="upload_type" value="merge-replace">
+                      <span class="lbl"> Add With Update</span>
+                    </label>
+                    <div class="row">
+                      <p class="col-xs-10 col-xs-offset-1">
+                      This option adds new records to any existing employee records and also updates existing records whose SSN match the uploaded data.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label>
+                      <input type="radio" class="ace" name="upload_type" value="replace">
+                      <span class="lbl"> Replace Existing Census</span>
+                    </label>
+                    <div class="row">
+                      <p class="col-xs-10 col-xs-offset-1">
+                      This option first removes all existing employee records in this case, then adds the new uploaded data.
+                      </p>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+            <div class="loading-panel modal-panel" style="display: none;">
+              <div class="text-center">
+                <h4>Uploading and processing...</h4>
+                <i class="icon-spinner icon-spin grey bigger-200"></i>
+              </div>
+            </div>
+            <div class="success-panel modal-panel" style="display: none;">
+              <h3 class="header lighter green">File Processed Successfully</h3>
+              <!--ko if: num_data_records() > 0 -->
+              <h4>
+                <span data-bind="text: num_data_records"></span>
+                record<span data-bind="visible: num_data_records() > 1">s</span>
+                added or updated.
+              </h4>
+              <!--/ko-->
+              <!--ko if: num_data_records() == 0 -->
+              <h4>No new data was added to the census.</h4>
+              <!--/ko-->
+            </div>
+            <div class="error-panel modal-panel" style="display: none;">
+              <h3 class="header lighter red">
+                Bad or Missing Data
+                <span data-bind="visible: error_records().length >= 20"
+                      class="smaller-75 pull-right">First 20 Errors Displayed</span>
+              </h3>
+
+              <div class="row">
+                <div class="col-md-12" style="width: 100%; overflow: auto;">
+                  <!--ko foreach: {data: error_records, as: 'error_record'}-->
+                  <div data-bind="if: error_record.message && error_record.records.length == 0">
+                    <div class="error" data-bind="text: error_record.message"></div>
+                  </div>
+                  <div class="table-responsive">
+                    <table data-bind="if: error_record.records.length > 0"
+                           class="table table-bordered upload-error-table">
+                      <thead>
+                        <tr>
+                          <th>Record #</th>
+                          <!--ko foreach: error_record.headers-->
+                          <th data-bind="text: $data"></th>
+                          <!--/ko-->
+                        </tr>
+                      </thead>
+                      <tbody data-bind="foreach: {data: error_record.records, as: 'data_record'}">
+                        <tr>
+                          <td data-bind="text: error_record.line_number"></td>
+                          <!--ko foreach: {data: error_record.headers, as: 'header'} -->
+                          <td data-bind="css: {error: error_record.field_name == header}, attr: {title: error_record.message}"
+                              data-toggle="tooltip">
+                            <div data-bind="text: data_record[header]"></div>
+                          </td>
+                          <!--/ko-->
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <!--/ko-->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <div class="form-buttons buttons-panel">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+            <div class="processing-buttons buttons-panel" style="display: none;">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+            <div class="error-buttons buttons-panel" style="display: none;">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary back-btn">
+                <i class="glyphicon glyphicon-chevron-left"></i> Back</button>
+            </div>
+            <div class="success-buttons buttons-panel" style="display: none;">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
             </div>
 
-            {# Upload census data modal. This is in the footer so I can bind two KO controllers more easily for now. #}
-            <form id="census-record-form" method="POST" enctype="multipart/form-data">
-              <div id="census-upload-modal" class="modal fade">
-                <div class="modal-dialog modal-lg">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <button type="button" class="close" data-dismiss="modal"><span
-                        aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                        <h4 class="modal-title">Upload Census Data</h4>
-                      </div>
-                      <div class="modal-body">
-                        <div class="form-panel modal-panel">
-                          <div class="row">
-                            <div class="col-xs-12 ">
-                              <h4>
-                                Select Census CSV File:
-                              </h4>
-                              <p class="offset-by-twelve">Download an <a href="{{ url_for("sample_upload_csv") }}">example census data file</a> for formatting reference.</p>
-                              <input type="file" id="csv-file-input" name="csv-file" accept="text/csv,.csv">
-                            </div>
-                          </div>
+          </div>
+        </div>
+        <!-- /.modal-content -->
+      </div>
+      <!-- /.modal-dialog -->
+    </div>
+  </form>
 
-                          <br>
-
-                          <div class="row">
-                            <div class="col-xs-12">
-                              <div class="form-group">
-                                <label>
-                                  <input type="radio" class="ace" name="upload_type" value="merge-skip" checked="1">
-                                  <span class="lbl"> Add New Records</span>
-                                </label>
-                                <div class="row">
-                                  <p class="col-xs-10 col-xs-offset-1">
-                                    This option adds new records to any existing employee records without updating any existing data.
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div class="form-group">
-                                <label>
-                                  <input type="radio" class="ace" name="upload_type" value="merge-replace">
-                                  <span class="lbl"> Add With Update</span>
-                                </label>
-                                <div class="row">
-                                  <p class="col-xs-10 col-xs-offset-1">
-                                    This option adds new records to any existing employee records and also updates existing records whose SSN match the uploaded data.
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div class="form-group">
-                                <label>
-                                  <input type="radio" class="ace" name="upload_type" value="replace">
-                                  <span class="lbl"> Replace Existing Census</span>
-                                </label>
-                                <div class="row">
-                                  <p class="col-xs-10 col-xs-offset-1">
-                                    This option first removes all existing employee records in this case, then adds the new uploaded data.
-                                  </p>
-                                </div>
-                              </div>
-
-                            </div>
-                          </div>
-                        </div>
-                        <div class="loading-panel modal-panel" style="display: none;">
-                          <div class="text-center">
-                            <h4>Uploading and processing...</h4>
-                            <i class="icon-spinner icon-spin grey bigger-200"></i>
-                          </div>
-                        </div>
-                        <div class="success-panel modal-panel" style="display: none;">
-                          <h3 class="header lighter green">File Processed Successfully</h3>
-                          <!--ko if: num_data_records() > 0 -->
-                          <h4><span data-bind="text: num_data_records"></span>
-                            record<span data-bind="visible: num_data_records() > 1">s</span>
-                            added or updated.</h4>
-                            <!--/ko-->
-                            <!--ko if: num_data_records() == 0 -->
-                            <h4>No new data was added to the census.</h4>
-                            <!--/ko-->
-                          </div>
-                          <div class="error-panel modal-panel" style="display: none;">
-                            <h3 class="header lighter red">
-                              Bad or Missing Data
-                              <span data-bind="visible: error_records().length >= 20"
-                                class="smaller-75 pull-right">First 20 Errors Displayed</span>
-                              </h3>
-
-                              <div class="row">
-                                <div class="col-md-12" style="width: 100%; overflow: auto;">
-                                  <!--ko foreach: {data: error_records, as: 'error_record'}-->
-                                  <div data-bind="if: error_record.message && error_record.records.length == 0">
-                                    <div class="error" data-bind="text: error_record.message"></div>
-                                  </div>
-                                  <div class="table-responsive">
-                                    <table data-bind="if: error_record.records.length > 0"
-                                      class="table table-bordered upload-error-table">
-                                      <thead>
-                                        <tr>
-                                          <th>Record #</th>
-                                          <!--ko foreach: error_record.headers-->
-                                          <th data-bind="text: $data"></th>
-                                          <!--/ko-->
-                                        </tr>
-                                      </thead>
-                                      <tbody data-bind="foreach: {data: error_record.records, as: 'data_record'}">
-                                        <tr>
-                                          <td data-bind="text: error_record.line_number"></td>
-                                          <!--ko foreach: {data: error_record.headers, as: 'header'} -->
-                                          <td data-bind="css: {error: error_record.field_name == header}, attr: {title: error_record.message}"
-                                          data-toggle="tooltip">
-                                          <div data-bind="text: data_record[header]"></div>
-                                        </td>
-                                        <!--/ko-->
-                                      </tr>
-                                    </tbody>
-                                  </table>
-                                </div>
-                                <!--/ko-->
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="modal-footer">
-                          <div class="form-buttons buttons-panel">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Submit</button>
-                          </div>
-                          <div class="processing-buttons buttons-panel" style="display: none;">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                          </div>
-                          <div class="error-buttons buttons-panel" style="display: none;">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary back-btn">
-                              <i class="glyphicon glyphicon-chevron-left"></i> Back</button>
-                            </div>
-                            <div class="success-buttons buttons-panel" style="display: none;">
-                              <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
-                            </div>
-
-                          </div>
-                        </div>
-                        <!-- /.modal-content -->
-                      </div>
-                      <!-- /.modal-dialog -->
-                    </div>
-                  </form>
-
-                  {# Upload CSV file for api tab #}
-                  <form id="enrollment-csv-form" method="POST" enctype="multipart/form-data">
-                    <div id="enrollment-csv-modal" class="modal fade">
-                      <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal"><span
-                              aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                            <h4 class="modal-title">Upload Enrollment Data</h4>
-                          </div>
-                          <div class="modal-body">
-                          <div class="form-panel modal-panel">
-                            <div class="row">
-                              <div class="col-xs-12 ">
-                                <h4>
-                                  Select Enrollment File:
-                                </h4>
-                                <input type="file" id="csv-file-input-enrollment" name="csv-file" accept="text/csv,.csv,.flat">
-                              </div>
-                            </div>
-
-                            <br>
-                            </div>
-                          </div>
-                          <div class="loading-panel modal-panel" style="display: none;">
-                            <div class="text-center">
-                              <h4>Uploading and processing...</h4>
-                              <i class="icon-spinner icon-spin grey bigger-200"></i>
-                            </div>
-                          </div>
-                          <div class="success-panel modal-panel" style="display: none;">
-                            <h3 class="col-sm-10 col-sm-offset-1 header lighter green">File Processed Successfully</h3>
-                            <div class="col-sm-10 col-sm-offset-1 alert alert-success">
-                              Added <span data-bind="text: num_records"></span> record(s).
-                            </div>
-                            <div class="clearfix"></div>
-                            </div>
-                            <div class="error-panel modal-panel" style="display: none;">
-                              <h3 class="col-sm-10 col-sm-offset-1 header lighter red">
-                                Bad or Missing Data
-                                <span data-bind="visible: error_records().length >= 20"
-                                  class="smaller-75 pull-right">First 20 Errors Displayed</span>
-                              </h3>
-                              <!--ko foreach: {data: error_records, as: 'error_record'}-->
-                                <div class="col-sm-10 col-sm-offset-1 alert alert-danger" data-bind="text: $parent.display_error(error_record)"></div>
-                              <!--/ko-->
-                              <div class="clearfix"></div>
-                            </div>
-                          </div>
-
-                        <div class="modal-footer">
-                          <div class="form-buttons buttons-panel">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Submit</button>
-                          </div>
-                          <div class="processing-buttons buttons-panel" style="display: none;">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                          </div>
-                          <div class="error-buttons buttons-panel" style="display: none;">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary back-btn">
-                              <i class="glyphicon glyphicon-chevron-left"></i> Back</button>
-                            </div>
-                            <div class="success-buttons buttons-panel" style="display: none;">
-                              <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
-                            </div>
-
-                          </div>
-                        </div>
-                        <!-- /.modal-content -->
-                      </div>
-                      <!-- /.modal-dialog -->
-                    </div>
-                  </form>
+  {# Upload CSV file for api tab #}
+  <form id="enrollment-csv-form" method="POST" enctype="multipart/form-data">
+    <div id="enrollment-csv-modal" class="modal fade">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span
+                                                aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title">Upload Enrollment Data</h4>
+          </div>
+          <div class="modal-body">
+            <div class="form-panel modal-panel">
+              <div class="row">
+                <div class="col-xs-12 ">
+                  <h4>
+                    Select Enrollment File:
+                  </h4>
+                  <input type="file" id="csv-file-input-enrollment" name="csv-file" accept="text/csv,.csv,.flat">
                 </div>
-                {% endblock %}
+              </div>
 
-                {% block page_js %}
-                <script>
-                window.case_id = {{ case.id }};
+              <br>
+            </div>
+          </div>
+          <div class="loading-panel modal-panel" style="display: none;">
+            <div class="text-center">
+              <h4>Uploading and processing...</h4>
+              <i class="icon-spinner icon-spin grey bigger-200"></i>
+            </div>
+          </div>
+          <div class="success-panel modal-panel" style="display: none;">
+            <h3 class="col-sm-10 col-sm-offset-1 header lighter green">File Processed Successfully</h3>
+            <div class="col-sm-10 col-sm-offset-1 alert alert-success">
+              Added <span data-bind="text: num_records"></span> record(s).
+            </div>
+            <div class="clearfix"></div>
+          </div>
+          <div class="error-panel modal-panel" style="display: none;">
+            <h3 class="col-sm-10 col-sm-offset-1 header lighter red">
+              Bad or Missing Data
+              <span data-bind="visible: error_records().length >= 20"
+                    class="smaller-75 pull-right">First 20 Errors Displayed</span>
+            </h3>
+            <!--ko foreach: {data: error_records, as: 'error_record'}-->
+            <div class="col-sm-10 col-sm-offset-1 alert alert-danger" data-bind="text: $parent.display_error(error_record)"></div>
+            <!--/ko-->
+            <div class="clearfix"></div>
+          </div>
+        </div>
 
-                $(document).ready(function() {
-                  // Initialize settings viewmodel
-                  var settings = {
-                    default_email_message: "{{ default_email_message|replace('\n', '\\n')|safe }}",
-                    default_email_subject: "{{ default_email_subject|replace('\n', '\\n')|safe }}",
-                    default_page_text: "{{ default_page_text|replace('\n', '\\n')|safe }}",
-                    all_states: {{ all_states | tojson | safe }},
-                    product_state_mapping: {{ product_state_mapping |tojson|safe }},
-                    payment_modes: {{ payment_modes | tojson | safe }},
-                    riders: {{ riders | tojson | safe }}
-                  };
+        <div class="modal-footer">
+          <div class="form-buttons buttons-panel">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+          <div class="processing-buttons buttons-panel" style="display: none;">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          </div>
+          <div class="error-buttons buttons-panel" style="display: none;">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary back-btn">
+              <i class="glyphicon glyphicon-chevron-left"></i> Back
+            </button>
+
+          </div>
+          <div class="success-buttons buttons-panel" style="display: none;">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
+          </div>
+        </div>
+        <!-- /.modal-content -->
+      </div>
+      <!-- /.modal-dialog -->
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+window.case_id = {{ case.id }};
+
+$(document).ready(function() {
+  // Initialize settings viewmodel
+  var settings = {
+    default_email_message: "{{ default_email_message|replace('\n', '\\n')|safe }}",
+    default_email_subject: "{{ default_email_subject|replace('\n', '\\n')|safe }}",
+    default_page_text: "{{ default_page_text|replace('\n', '\\n')|safe }}",
+    all_states: {{ all_states | tojson | safe }},
+    product_state_mapping: {{ product_state_mapping |tojson|safe }},
+    payment_modes: {{ payment_modes | tojson | safe }},
+    riders: {{ riders | tojson | safe }},
+  };
 
 
-                  //TODO: this might be better as a component
-                  var CensusErrorsPanel = function CaseErrorsPanel() {
-                    var self = this;
-                    self.error_records = ko.observableArray([]);
-                    self.num_data_records = ko.observable(0);
-                  };
+  //TODO: this might be better as a component
+  var CensusErrorsPanel = function CaseErrorsPanel() {
+    var self = this;
+    self.error_records = ko.observableArray([]);
+    self.num_data_records = ko.observable(0);
+  };
 
-                  window.case_settings = new CaseSettingsPanel(
-                    {{ case |tojson|safe }},
-                    {{ product_choices |tojson|safe }},
-                    {{ 'true' if can_edit_case else 'false'}},
-                    settings
-                  );
+  window.case_settings = new CaseSettingsPanel(
+      {{ case |tojson|safe }},
+      {{ product_choices |tojson|safe }},
+      {{ 'true' if can_edit_case else 'false'}},
+      settings
+      );
 
-                  //Initialize new View Models for knockout
-                  window.census_errors_panel = new CensusErrorsPanel();
-                  window.modal_bindings = new SendEmailsModalViewModel(window.case_settings, settings);
-                  window.case_enrollment = new CaseEnrollmentsViewModel({{ case |tojson|safe }});
+  //Initialize new View Models for knockout
+  window.census_errors_panel = new CensusErrorsPanel();
+  window.modal_bindings = new SendEmailsModalViewModel(window.case_settings, settings);
+  window.case_enrollment = new CaseEnrollmentsViewModel({{ case |tojson|safe }});
 
-                  window.enrollment_api_panel = new EnrollmentAPIPanel("{{ current_user_token.api_token |safe }}");
+  window.enrollment_api_panel = new EnrollmentAPIPanel("{{ current_user_token.api_token |safe }}");
 
-                  //Apply all knockout bindings
-                  ko.applyBindings(window.case_settings, $(".content")[0]);
-                  ko.applyBindings(census_errors_panel, $("#census-upload-modal")[0]);
-                  ko.applyBindings(window.enrollment_api_panel, $("#enrollment-csv-modal")[0]);
-                  ko.applyBindings(window.modal_bindings, $(".modals #email-target-links-modal")[0]);
+  //Apply all knockout bindings
+  ko.applyBindings(window.case_settings, $(".content")[0]);
+  ko.applyBindings(census_errors_panel, $("#census-upload-modal")[0]);
+  ko.applyBindings(window.enrollment_api_panel, $("#enrollment-csv-modal")[0]);
+  ko.applyBindings(window.modal_bindings, $(".modals #email-target-links-modal")[0]);
 
-                  // Self-enrollment settings
-                  apply_default_values(settings);
-                  handle_url_hashs();
-                  init_settings_fields();
-                  observe_census_record_form_submit();
-                  observe_enrollment_upload_form_submit();
-                  observe_settings_events(settings);
+  // Self-enrollment settings
+  apply_default_values(settings);
+  handle_url_hashs();
+  init_settings_fields();
+  observe_census_record_form_submit();
+  observe_enrollment_upload_form_submit();
+  observe_settings_events(settings);
 
-                  // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change.
-                  window.case_settings.is_data_dirty(false);
-                });
-                </script>
-                {% endblock %}
+  // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change.
+  window.case_settings.is_data_dirty(false);
+});
+</script>
+{% endblock %}

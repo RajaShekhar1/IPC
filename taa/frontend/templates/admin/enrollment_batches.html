@@ -1,0 +1,141 @@
+{% extends "base_ace_latest.html" %}
+
+
+{% block content %}
+<div class="container">
+  <h4>Enrollment Import Batches</h4>
+  <div style="height: 20em; overflow-y: auto">
+    <table class="table table-striped">
+      <tr>
+        <th>ID</th>
+        <th>Stormpath User</th>
+        <th>Case ID</th>
+        <th>Timestamp</th>
+        <th>Processed Records</th>
+        <th>Validation Errors</th>
+        <th></th>
+      </tr>
+    <!--ko foreach: {data: import_batches, as: 'import_batch'} -->
+      <tr>
+        <td data-bind="text: import_batch.id">
+        </td>
+        <td data-bind="text: import_batch.user_name"></td>
+        <td><a target="_blank" data-bind="text: import_batch.case_id, attr: {href: '/enrollment-case/'+import_batch.case_id+'#reports'}"></a></td>
+        <td data-bind="text: import_batch.format_time()"></td>
+        <td data-bind="text: import_batch.num_processed">
+        </td>
+        <td data-bind="text: import_batch.num_errors">
+        </td>
+        <td><button type="button" data-bind="click: $parent.select_batch">View Batch</button></td>
+      </tr>
+    <!--/ko-->
+    </table>
+  </div>
+
+  <div data-bind="if: selected_batch">
+    <h3>Selected Batch (<span data-bind="text: selected_batch().id"></span>):</h3>
+
+
+    <!--ko if: selected_batch_records() === null -->
+    (Loading...)
+    <!--/ko-->
+    <!--ko if: selected_batch_records() !== null -->
+
+      <button data-bind="click: reprocess_selected_batch" class="btn btn-success pull-right">Reprocess Batch</button>
+
+      <!--ko foreach: selected_batch_records()-->
+      <div class="row">
+        <div class="col-xs-12">
+          ID: <span data-bind="text: id"></span>
+          Status: <span data-bind="text: status"></span>
+          <br>
+          <div data-bind="if: error_message">
+            <h3>Last Error Message:</h3>
+            <pre class="error" data-bind="text: error_message"></pre>
+          </div>
+          <div data-bind="if: $data.status === 'success'">
+            <a target="_blank" data-bind="attr: {href: $parent.get_pdf_link($data)}" class="btn btn-default">View PDF</a>
+          </div>
+        </div>
+      </div>
+      <!--/ko-->
+    <!--/ko-->
+
+  </div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+  function ImportBatchesVM() {
+    var self = this;
+
+    self.import_batches = ko.observableArray([]);
+    self.selected_batch = ko.observable(null);
+    self.selected_batch_records = ko.observableArray(null);
+    self.select_batch = function(batch) {
+      self.selected_batch(batch);
+      // Load new records
+      self.selected_batch_records(null);
+      self.fetch_batch_records(batch);
+    };
+
+    self.reprocess_selected_batch = function() {
+      if (self.selected_batch() === null) {
+        return;
+      }
+      if (!confirm("Are you sure you want to submit this batch for reprocessing?")) {
+        return;
+      }
+
+      $.post("/enrollments/import_batches/"+self.selected_batch().id+"/reprocess").success(function() {
+        alert("Submitted batch "+self.selected_batch().id+" for reprocessing");
+        self.selected_batch(null);
+        self.selected_batch_records(null);
+        self.fetch_all_batches();
+
+      }).error(function() {alert("Error resubmitting batch.")});
+    };
+
+    self.get_pdf_link = function(record) {
+      return "/enrollments/import_batches/"+self.selected_batch().id+"/"+record.id+"/pdf";
+    };
+
+    self.fetch_batch_records = function(batch) {
+      $.get("/enrollments/import_batches/"+batch.id).success(function(result) {
+        self.selected_batch_records(result.data);
+      });
+    };
+
+    self.fetch_all_batches = function() {
+      $.get("/enrollments/import_batches").success(function(result) {
+        var batches = _.map(result.data, function(batch_data) { return new ImportBatchVM(batch_data);});
+        self.import_batches(batches);
+      });
+    };
+
+    // Load all the batch data
+    self.fetch_all_batches();
+  }
+
+  var ImportBatchVM = function(batch_data) {
+    var self = this;
+
+    self.id = batch_data.id;
+    self.user_name = batch_data.user_name;
+    self.case_id = batch_data.case_id;
+    self.num_processed = batch_data.num_processed;
+    self.num_errors = batch_data.num_errors;
+
+    self.format_time = function() {
+      return moment.utc(batch_data.timestamp).local().format("ddd MMM Do YYYY h:mm:ss a");
+    }
+  };
+
+
+  $(document).ready(function() {
+    window.vm = new ImportBatchesVM();
+    ko.applyBindings(window.vm);
+  });
+</script>
+{% endblock %}

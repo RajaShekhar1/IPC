@@ -52,16 +52,19 @@ def manage_cases():
     if agent:
         user_cases = case_service.get_agent_cases(agent)
         header_title = ''
+        can_create_case = False
     else:
         # Admin or home office user
         user_cases = case_service.all()
         header_title = 'Home Office'
+        can_create_case = True
 
     vars = {
         'agent_cases': user_cases,
         'all_states': get_all_states(),
         'nav_menu': get_nav_menu(),
         'header_title': header_title,
+        'can_create_case': can_create_case
     }
     return render_template('agent/manage_cases.html', **vars)
 
@@ -76,14 +79,21 @@ def manage_case(case_id):
     agent = agent_service.get_logged_in_agent()
     if agent:
         products = product_service.get_products_for_agent(agent)
+        is_agent_case_owner = case_service.is_agent_case_owner(agent, case)
+        # No agents can edit cases anymore
+        vars['can_edit_case'] = False
+        vars['can_download_enrollments'] = case_service.is_agent_allowed_to_view_full_census(agent, case)
+        vars['can_view_report_tab'] = case_service.is_agent_allowed_to_view_full_census(agent, case)
         agent_name = agent.name()
         agent_id = agent.id
         agent_email = agent.email
-        vars['can_edit_case'] = (agent is case_service.get_case_owner(case))
     else:
+        # Admin or home office
         products = product_service.get_all_enrollable_products()
         vars['is_admin'] = True
         vars['can_edit_case'] = True
+        vars['can_download_enrollments'] = True
+        vars['can_view_report_tab'] = True
         vars['active_agents'] = agent_service.get_active_agents()
         vars['header_title'] = 'Home Office'
         agent_name = ""
@@ -189,44 +199,11 @@ def edit_census_record(case_id, census_record_id):
 
     is_admin = agent_service.can_manage_all_cases(current_user)
 
-    enrollment_data=enrollment_service.get_enrollment_data(census_record)
+    enrollment_records = enrollment_service.get_enrollment_records_for_census(census_record.case, census_record.id)
 
-    def format_enroll_data(i):
-        def get_coverage(j):
-            if j == "emp":
-                who="Employee"
-            elif j == "sp":
-                who="Spouse"
-            else:
-                who="Child"
-            return dict(
-                who=who,
-                annual_premium=enrollment_data["product_{}_{}_annual_premium".format(i, j)],
-                coverage=enrollment_data["product_{}_{}_coverage".format(i, j)],
-            )
-
-        def calc_total(x, y):
-            premium = enrollment_data["product_{}_{}_annual_premium".format(i, y)]
-            if not premium:
-                return x
-            return x + premium
-
-        if enrollment_data["product_{}_name".format(i)]:
-            data = dict(
-                product_name=enrollment_data["product_{}_name".format(i)],
-                time=enrollment_data["signature_time"],
-                coverage=[get_coverage(j) for j in ["emp","sp","ch"]],
-                status=enrollment_data["application_status"],
-                total=reduce(calc_total, ["emp","sp","ch"], 0)
-            )
-        else:
-            data = None
-        return data
-
-    if enrollment_data:
-        enroll_data = [format_enroll_data(i) for i in range(1, 6+1)]
-    else:
-        enroll_data = []
+    enroll_data = []
+    for enrollment_data in enrollment_records:
+        enroll_data += [format_enroll_data(enrollment_data, product_num) for product_num in range(1, 6+1)]
 
     vars = dict(
         case=case,

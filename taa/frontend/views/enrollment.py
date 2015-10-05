@@ -330,7 +330,7 @@ def submit_wizard_data():
 
     wizard_results = data['wizard_results']
     print("[ENROLLMENT SUBMITTED]")
-    # for troubledshooting..   print("[ENROLLMENT SUBMITTED]: (case {}) {}".format(case_id, wizard_results))
+
     # Save enrollment information and updated census data prior to
     # DocuSign hand-off
     if session.get('enrolling_census_record_id'):
@@ -346,30 +346,41 @@ def submit_wizard_data():
     if (agent is None and session.get('is_self_enroll') is not None):
         agent = case.owner_agent
 
-    # Create and save the enrollment data. Creates a census record if this is a generic link, and in
-    #   either case updates the census record with the latest enrollment data.
-    enrollment_application = enrollment_service.save_enrollment_data(
-        wizard_results, case, census_record, agent)
+    try:
+        # Standardize the wizard data for submission processing
+        standardized_data = enrollment_import_service.standardize_wizard_data(wizard_results)
 
-    if not wizard_results.get('did_decline'):
-        # Hand off wizard_results to docusign
-        is_error, error_message, redirect = create_envelope_and_get_signing_url(wizard_results, census_record, case)
-        # Return the redirect url or error
-        resp = {'error': is_error,
-                'error_message': error_message,
-                'redirect': redirect}
-    else:
-        # Declined
-        resp = {
-            'error': False,
-            'error_message': '',
-            'redirect': url_for('ds_landing_page',
-                                event='decline',
-                                name=wizard_results['employee']['first'],
-                                type='inperson' if wizard_results["agent_data"]["is_in_person"] else 'email',
-                                )
-        }
+        # Create and save the enrollment data. Creates a census record if this is a generic link, and in
+        #   either case updates the census record with the latest enrollment data.
+        enrollment_application = enrollment_service.save_enrollment_data(
+            standardized_data, case, census_record, agent,
+            received_data=wizard_results,
+        )
+
+        if not standardized_data.get('did_decline'):
+            # Hand off wizard_results to docusign
+            is_error, error_message, redirect = create_envelope_and_get_signing_url(standardized_data, census_record, case)
+            # Return the redirect url or error
+            resp = {'error': is_error,
+                    'error_message': error_message,
+                    'redirect': redirect}
+        else:
+            # Declined
+            resp = {
+                'error': False,
+                'error_message': '',
+                'redirect': url_for('ds_landing_page',
+                                    event='decline',
+                                    name=wizard_results['employee']['first'],
+                                    type='inperson' if wizard_results["agent_data"]["is_in_person"] else 'email',
+                                    )
+            }
+    except Exception:
+        print("[ENROLLMENT SUBMISSION ERROR]: (case {}) {}".format(case_id, wizard_results))
+        raise
+
     data = jsonify(**resp)
+    
     # Need to manually commit all changes since this doesn't go through the API
     # right now
     db.session.commit()
@@ -463,13 +474,19 @@ def FPPCI_disclosure_VA():
 
 #Public flat file documenation endpoints
 @app.route('/flat_file_documentation.pdf')
-def Flat_file_Documentation():
+def flat_file_documentation():
     return send_from_directory(
         os.path.join(app.root_path, 'frontend', 'static'),
         'pdfs/documentation/flat_file_documentation.pdf')
 
 @app.route('/flat_file_documentation.html')
-def Flat_file_Documentation_Html():
+def flat_file_documentation_html():
     from taa.services.data_import.file_import import FlatFileDocumentation
     documentation = FlatFileDocumentation.generate_html_docs()
+    return Response(documentation)
+
+@app.route('/delimited_file_import_documentation.html')
+def delimited_file_documentation_html():
+    from taa.services.data_import.file_import import CSVFileDocumentation
+    documentation = CSVFileDocumentation.generate_html_docs()
     return Response(documentation)

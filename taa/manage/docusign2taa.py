@@ -40,7 +40,7 @@ class DocusignImportCommand(Command):
         return [
             os.path.join(dirname, fname)
             for fname in os.listdir(dirname)
-            if not fname.startswith('.')
+            if not fname.startswith('.') and not os.path.isdir(os.path.join(dirname, fname))
         ]
 
     def import_xml_file(self, filename, safe):

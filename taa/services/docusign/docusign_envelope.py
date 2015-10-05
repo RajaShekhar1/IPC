@@ -1,6 +1,7 @@
 # DocuSign API Walkthrough 08 (PYTHON) - Embedded Signing
 import random
 import json
+import re
 from string import ascii_letters
 import decimal
 
@@ -17,9 +18,11 @@ from taa.services.docusign.DocuSign_config import (
 )
 from taa.services.products import ProductService
 from taa.services.agents import AgentService
+from taa.services.cases import RiderService
 
 product_service = ProductService()
 agent_service = AgentService()
+rider_service = RiderService()
 
 
 def generate_SOHRadios(prefix, soh_questions):
@@ -236,13 +239,27 @@ class EnrollmentDataWrap(object):
         return '{} {}'.format(self.data['employee']['first'],
                               self.data['employee']['last'])
 
+    def get_spouse_name(self):
+        return '{} {}'.format(self.data['spouse']['first'],
+                              self.data['spouse']['last'])
+
+    def get_spouse_ssn(self):
+        return self.data['spouse']['ssn']
+
     def get_employee_email(self):
-        emailTo = self.data['employee']['email']
-        if not emailTo:
+        email_to = self.data['employee']['email']
+        if not email_to:
             # fallback email if none was entered - just need a unique address
-            name = self.data['employee']['first']+ '.' + self.data['employee']['last']
-            emailTo = '{}.{}@5StarEnroll.com'.format(name, self.random_email_id(name))
-        return emailTo
+            name = self._sanitize_email_str(self.data['employee']['first']) + '.' + self._sanitize_email_str(self.data['employee']['last'])
+            email_to = '{}.{}@5StarEnroll.com'.format(name, self.random_email_id(name))
+
+        return email_to
+
+    invalid_email_chars = re.compile(r'[^a-zA-Z0-9!#$%&\'*+\/=?^_`{|}~\.-]')
+
+    def _sanitize_email_str(self, val):
+        # Replace invalid characters with empty string
+        return self.invalid_email_chars.sub('', val)
 
     def get_employee_email_parts(self):
         if '@' not in self.get_employee_email():
@@ -266,10 +283,18 @@ class EnrollmentDataWrap(object):
         return format(self.data['employee_coverage']['face_value'], ',.0f')
 
     def get_formatted_employee_premium(self):
-        return self.format_money(self.get_employee_premium())
+        return self.format_money(self.get_employee_premium() + self.get_employee_riders());
 
     def get_employee_premium(self):
         return decimal.Decimal(self.data['employee_coverage']['premium'])
+
+    def get_employee_riders(self):
+        total_riders = 0
+        payment_mode = self.data['payment_mode']
+        rider_rates = rider_service.get_rider_rates(payment_mode)
+        for rider in self.data['rider_data']['emp']:
+            total_riders += rider_rates['emp'][rider.get('code')] 
+        return decimal.Decimal(total_riders)
 
     def did_spouse_select_coverage(self):
         return (self.data['spouse_coverage'] and
@@ -279,10 +304,18 @@ class EnrollmentDataWrap(object):
         return format(decimal.Decimal(self.data['spouse_coverage']['face_value']), ',.0f')
 
     def get_formatted_spouse_premium(self):
-        return self.format_money(self.get_spouse_premium())
+        return self.format_money(self.get_spouse_premium() + self.get_spouse_riders())
 
     def get_spouse_premium(self):
         return decimal.Decimal(self.data['spouse_coverage']['premium'])
+
+    def get_spouse_riders(self):
+        total_riders = 0
+        payment_mode = self.data['payment_mode']
+        rider_rates = rider_service.get_rider_rates(payment_mode)
+        for rider in self.data['rider_data']['sp']:
+            total_riders += rider_rates['sp'][rider.get('code')] 
+        return decimal.Decimal(total_riders)
 
     def format_money(self, amount):
         return '%.2f' % amount
@@ -315,6 +348,62 @@ class EnrollmentDataWrap(object):
 
     def get_agent_initials(self):
         return self.data.get('agent_initials_txt', '')
+
+    def get_beneficiary_data(self):
+        bene_data = {
+            'employee_primary':[],
+            'employee_contingent':[],
+            'spouse_primary':[],
+            'spouse_contingent':[],
+        }
+
+        from taa.services.enrollments import EnrollmentRecordParser
+        for num in range(1, EnrollmentRecordParser.MAX_BENEFICIARY_COUNT+1):
+            if self.data.get("emp_bene{}_name".format(num)):
+                bene_data['employee_primary'] += [
+                    self.get_beneficiary_dict("emp_bene{}".format(num))
+                ]
+            if self.data.get("emp_cont_bene{}_name".format(num)):
+                bene_data['employee_contingent'] += [
+                    self.get_beneficiary_dict("emp_cont_bene{}".format(num))
+                ]
+            if self.data.get("sp_bene{}_name".format(num)):
+                bene_data['spouse_primary'] += [
+                    self.get_beneficiary_dict("sp_bene{}".format(num))
+                ]
+            if self.data.get("sp_cont_bene{}_name".format(num)):
+                bene_data['spouse_contingent'] += [
+                    self.get_beneficiary_dict("sp_cont_bene{}".format(num))
+                ]
+
+        return bene_data
+
+    def get_beneficiary_dict(self, prefix):
+        bd = self.data["%s_birthdate" % prefix]
+        #try:
+        #    bd = dateutil.parser.parse(bd).strftime('%F')
+        #except Exception:
+        #    pass
+
+        bene_dict = dict(
+            name=self.data["%s_name" % prefix],
+            ssn=self.data["%s_ssn" % prefix],
+            relationship=self.data["%s_relationship" % prefix],
+            birthdate=bd,
+            percentage=self.data["%s_percentage" % prefix],
+        )
+
+        return bene_dict
+
+    def has_multiple_beneficiaries(self):
+        """returns True if any of the beneficiaries are not at 100%"""
+        bene_pattern = re.compile('_bene\d+_percentage$')
+
+        for key, value in self.data.iteritems():
+            if bene_pattern.search(key) and value and value.isdigit() and int(value) < 100:
+                return True
+
+        return False
 
 def old_create_envelope_and_get_signing_url(enrollment_data):
     # return is_error(bool), error_message, and redirectURL
@@ -509,8 +598,7 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
                 {
                     'selected': 'True',
                     # FPPTI or FPPCI
-                    'value':
-                        'FPPTI' if productType == 'FPP-Gov' else productType
+                    'value': productType
                 }
             ]
         }
@@ -738,7 +826,6 @@ def old_create_envelope_and_get_signing_url(enrollment_data):
         print(requestBodyStr)
         print("Error generating Docusign envelope, status is: {}".format(
             status))
-        import ipdb; ipdb.set_trace()
         return True, "Error generating Docusign envelope", None
     data = json.loads(content)
 

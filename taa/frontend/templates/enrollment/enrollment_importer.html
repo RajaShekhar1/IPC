@@ -1,45 +1,58 @@
 {% extends "base.html" %}
 {% from "form_macros.html" import render_simple_widget %}
 {% set active_page = 'nav_home' -%}
-{% block title %} - Home{% endblock %}
+{% block title %} - Import Enrellments{% endblock %}
 
 {% block content %}
-<div class="row" id="importer_panel">
-  <div class="col-xs-12">
-    <div class="widget-box">
-      <div class="widget-header">
-        <div class="row">
-          <h3 class="col-xs-12">Import File</h3>
-        </div>
-      </div>
-      <div class="widget-body">
-        <div class="widget-main">
-          <div class="row">
-            <label class="text-right col-sm-3 control-label">API Auth Token</label>
-            <div class="col-sm-7">
-              <strong>{{ current_user_token.api_token |safe }}</strong><br />
-              <a data-bind="attr: {href: urls.get_flat_file_documentation_url()}">Read the API Documentation</a>
+  <div id="import-page">
+    <div class="row" id="importer_panel">
+      <div class="col-xs-12">
+        <div class="widget-box">
+          <div class="widget-header">
+            <div class="row">
+              <h3 class="col-xs-12">Import Enrollments</h3>
             </div>
           </div>
-          <br /><br />
-          <div class="row">
-            <label class="text-right col-sm-3 control-label">Upload Enrollment Records</label>
-            <div class="col-sm-9">
-              <button type="button" id="csv-upload-btn" class="btn btn-default" data-toggle="modal" data-target="#enrollment-csv-modal">Upload comma/tab delimited or flat-file</button>
+          <div class="widget-body">
+            <div class="widget-main">
+              <div class="row">
+                <label class="text-right col-sm-3 control-label">API Authentication Token</label>
+
+                <div class="col-sm-7">
+                  <strong>{{ current_user_token.api_token |safe }}</strong><br/>
+                  <a target="_blank" data-bind="attr: {href: urls.get_flat_file_documentation_url()}">Flat-File Import Documentation</a><br>
+                  <a target="_blank" data-bind="attr: {href: urls.get_csv_import_documentation_url()}">CSV Import Documentation</a>
+                </div>
+              </div>
+              <br/><br/>
+
+              <div class="row">
+                <label class="text-right col-sm-3 control-label">Upload Enrollment Records</label>
+
+                <div class="col-sm-9">
+                  <button type="button" id="csv-upload-btn" class="btn btn-default"
+                          data-bind="click: show_enrollment_upload_modal">
+                    Upload comma/tab delimited or flat-file
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
   </div>
-</div>
-<form id="enrollment-csv-form" method="POST" enctype="multipart/form-data">
-  <div id="enrollment-csv-modal" class="modal fade">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal"><span
-            aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+{% endblock %}
+
+{% block modals %}
+  <form id="enrollment-csv-form" method="POST" enctype="multipart/form-data">
+    <div id="enrollment-csv-modal" class="modal fade">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span
+                    aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
             <h4 class="modal-title">Upload Enrollment Data</h4>
           </div>
           <div class="modal-body">
@@ -49,7 +62,7 @@
                   <h4>
                     Select Enrollment File:
                   </h4>
-                  <input type="file" id="csv-file-input-enrollment" name="csv-file" accept="text/csv,.csv,.flat" />
+                  <input type="file" id="csv-file-input-enrollment" name="csv-file" accept="text/csv,.csv,.flat"/>
                 </div>
               </div>
               <br>
@@ -62,19 +75,21 @@
             </div>
           </div>
           <div class="success-panel modal-panel" style="display: none;">
-            <h3 class="col-sm-10 col-sm-offset-1 header lighter green">File Processed Successfully</h3>
+            <h3 class="col-sm-10 col-sm-offset-1 header lighter green">File Uploaded Successfully</h3>
+
             <div class="col-sm-10 col-sm-offset-1 alert alert-success">
-              Added <span data-bind="text: num_records"></span> record(s).
+              <span data-bind="text: num_records"></span> record(s) validated and submitted for processing. <br>
             </div>
             <div class="clearfix"></div>
           </div>
           <div class="error-panel modal-panel" style="display: none;">
             <h3 class="col-sm-10 col-sm-offset-1 header lighter red">
               Bad or Missing Data <span data-bind="visible: error_records().length >= 20"
-                class="smaller-75 pull-right">First 20 Errors Displayed</span>
+                                        class="smaller-75 pull-right">First 20 Errors Displayed</span>
             </h3>
             <!--ko foreach: {data: error_records, as: 'error_record'}-->
-              <div class="col-sm-10 col-sm-offset-1 alert alert-danger" data-bind="text: $parent.display_error(error_record)"></div>
+            <div class="col-sm-10 col-sm-offset-1 alert alert-danger"
+                 data-bind="text: $parent.display_error(error_record)"></div>
             <!--/ko-->
             <div class="clearfix"></div>
           </div>
@@ -96,17 +111,27 @@
               <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
             </div>
 
-            </div>
           </div>
-          <!-- /.modal-content -->
         </div>
-        <!-- /.modal-dialog -->
+        <!-- /.modal-content -->
       </div>
-    </form>
-    {% endblock %}
+      <!-- /.modal-dialog -->
+    </div>
+  </form>
+{% endblock %}
 
-    {% block page_js %}
-    <script>
+{% block page_js %}
+  <script>
+    var EnrollmentUploadVM = function() {
+      var self = this;
+      self.show_enrollment_upload_modal = function() {
+        var el = $("#enrollment-csv-modal");
+        show_form_panel(el);
+        el.modal("show");
+      };
+    };
+    window.vm = new EnrollmentUploadVM();
+    ko.applyBindings(window.vm, $("#import-page")[0]);
     window.enrollment_api_panel = new EnrollmentAPIPanel("{{ current_user_token.api_token |safe }}");
     ko.applyBindings(window.enrollment_api_panel, $("#enrollment-csv-modal")[0])
     init_enrollment_import_fields();
@@ -115,5 +140,5 @@
     $(".back-btn").on("click", function() {
       show_form_panel($(this).parents(".modal"));
     });
-    </script>
-    {% endblock %}
+  </script>
+{% endblock %}

@@ -25,6 +25,7 @@ class EnrollmentApplicationService(DBService):
     coverages_service = RequiredFeature('EnrollmentApplicationCoverageService')
     case_service = RequiredFeature('CaseService')
     product_service = RequiredFeature('ProductService')
+    batch_item_service = RequiredFeature('EnrollmentImportBatchItemService')
 
     def save_enrollment_data(self, data, case, census_record, agent, received_data=None):
         """
@@ -51,8 +52,14 @@ class EnrollmentApplicationService(DBService):
 
     def delete_enrollment_data(self, census_record):
         for enrollment_application in census_record.enrollment_applications:
+            # Remove coverage data
             for coverage in enrollment_application.coverages:
                 self.coverages_service.delete(coverage)
+
+            # Remove any import batch data
+            self.batch_item_service.delete_for_enrollment(enrollment_application)
+
+            # Remove the application data
             self.delete(enrollment_application)
 
     def _create_enrollment(self, census_record, data, agent, received_data=None):
@@ -420,6 +427,7 @@ class EnrollmentApplicationService(DBService):
         # Add census record export
         row += self.case_service.census_records.get_csv_row_from_dict(record)
         return row
+
 
 
 def export_string(val):

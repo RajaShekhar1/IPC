@@ -1,12 +1,15 @@
-from flask import abort, render_template
+from datetime import datetime
+import hashlib
 
-import requests
+from flask import abort, render_template
 import mandrill
+import requests
 
 from taa import mandrill_flask, app
 from taa.core import TAAFormError, db, DBService
 from taa.services import RequiredFeature
-from taa.services.enrollments.models import EnrollmentLog
+from taa.services.enrollments.models import EnrollmentImportBatch, EnrollmentImportBatchItem
+
 
 class EnrollmentProcessor(object):
     api_token_service = RequiredFeature("ApiTokenService")
@@ -27,16 +30,17 @@ class EnrollmentProcessor(object):
         self.processed_data = []
 
     def process_enrollment_import_request(self, data, data_format, data_source=None, auth_token=None, case_token=None):
+
         self.authenticate_user(auth_token)
-
         self.validate_records(case_token, data, data_format)
-
-        self.log_request(data, data_source, auth_token, case_token)
+        enrollment_batch = self.create_enrollment_batch(data, data_source, auth_token, case_token)
 
         if self.errors:
             self.raise_error_exception()
 
-        self.submit_validated_data()
+        # Add records to batch and queue for submission
+        self.add_enrollments_to_batch(enrollment_batch)
+        self.enrollment_submission.submit_import_enrollments(enrollment_batch)
 
     def validate_records(self, case_token, data, data_format):
         self.processed_data = self.extract_dictionaries(data, data_format)
@@ -47,43 +51,55 @@ class EnrollmentProcessor(object):
         for error in self.enrollment_record_parser.errors:
             self._add_error(error["type"], error["field_name"], error['message'], error['record'], error['record_num'])
 
-    def log_request(self, data, data_source, auth_token, case_token):
+    def create_enrollment_batch(self, file_obj, data_source, auth_token, case_token):
         if data_source == "dropbox":
-            source = EnrollmentLog.SUBMIT_SOURCE_DROPBOX
+            source = EnrollmentImportBatch.SUBMIT_SOURCE_DROPBOX
         else:
-            source = EnrollmentLog.SUBMIT_SOURCE_API
-        enrollment_log_service = EnrollmentLogService()
-        matching_data_hash = enrollment_log_service.lookup_hash(data.getvalue())
+            source = EnrollmentImportBatch.SUBMIT_SOURCE_API
+
+        file_obj.seek(0)
+        data = file_obj.read()
+        enrollment_batch_service = EnrollmentImportBatchService()
+        matching_data_hash = enrollment_batch_service.lookup_hash(data)
         if matching_data_hash and not self.errors and not app.config.get('ALLOW_DUPLICATE_SUBMISSION'):
             self._add_error("duplicate_upload", "", "This upload was previously uploaded on {}".format(matching_data_hash.timestamp), [], 0)
-            return
-        enrollment_log_service.create_new_log(
+            return None
+
+        return enrollment_batch_service.create_new_batch(
             source = source,
             num_processed = self.get_num_processed(),
             num_errors = len(self.errors),
-            hash_data = data.getvalue(),
+            hash_data = data,
             auth_token = auth_token,
             case_token = case_token
         )
 
-    def submit_validated_data(self):
+    def add_enrollments_to_batch(self, enrollment_batch):
+        enrollment_records = self.generate_enrollment_records()
+        EnrollmentImportBatchService().add_enrollments_to_batch(enrollment_batch, enrollment_records)
+
+    def generate_enrollment_records(self):
+        enrollment_records = []
         for record in self.get_valid_data():
-            # Standardize
+            # Standardize the data
             standardized_data = self.enrollment_import_service.standardize_imported_data(record, method='api_import')
 
             # Save
             enrollment_record = self.save_validated_data(standardized_data, record)
+            enrollment_records.append(enrollment_record)
 
-            # Submit the enrollment
-            self.enrollment_submission.submit_imported_enrollment(enrollment_record)
-        db.session.commit()
+        return enrollment_records
 
     def save_validated_data(self, standardized_data, raw_data):
         case = self.case_service.get(standardized_data['case_id'])
+
+        # We want to merge multiple enrollments to a single "person" in the census data via SSN match.
+        census_record = self.find_matching_census_record(case, standardized_data)
+
         return self.enrollment_service.save_enrollment_data(
             standardized_data,
             case,
-            None,
+            census_record,
             case.owner_agent,
             received_data=raw_data,
         )
@@ -121,27 +137,30 @@ class EnrollmentProcessor(object):
     def get_errors(self):
         return self.errors
 
-    def _status_email_body(self):
+    def _status_email_body(self, user_name):
         from datetime import datetime
         if self.is_success():
             return render_template('emails/enrollment_upload_email.html',
                                    errors=[],
                                    num_processed=self.get_num_processed(),
-                                   user=self.get_status_email_name(),
+                                   user=user_name,
                                    timestamp=datetime.now()
                                    )
         else:
-            errors = [{"type": e.get_type(), "fields": e.get_fields(), "message": e.get_message()} for e in self.get_errors()]
+            errors = [{"type": e.get_type(),
+                       "fields": e.get_fields(),
+                       "message": e.get_message(),
+                       "record_num": e.record_num,
+                       } for e in self.get_errors()]
             return render_template('emails/enrollment_upload_email.html',
                                    errors=errors,
                                    num_processed=self.get_num_processed(),
-                                   user=self.get_status_email_name(),
+                                   user=user_name,
                                    timestamp=datetime.now()
                                    )
 
-    def send_status_email(self):
-        status_email = self.get_status_email()
-        if not status_email:
+    def send_status_email(self, user_href=None):
+        if not user_href:
             return
 
         if self.errors:
@@ -149,35 +168,34 @@ class EnrollmentProcessor(object):
         else:
             email_subject = "Your recent submission to 5Star Enrollment succeeded."
 
+        user_name = self.get_status_email_name(user_href)
+
         self._send_email(
             from_email="support@5Starenroll.com",
             from_name="5Star Enrollment",
-            to_email=status_email,
-            to_name=self.get_status_email_name(),
+            to_email=self.get_status_email(user_href),
+            to_name=user_name,
             subject=email_subject,
-            body=self._status_email_body()
+            body=self._status_email_body(user_name)
             )
 
-    def get_status_email(self):
-        user = self.get_status_user()
+    def get_status_email(self, user_href):
+        user = self.get_status_user(user_href)
         if not user:
             return None
 
         return user.email
 
-    def get_status_email_name(self):
-        user = self.get_status_user()
+    def get_status_email_name(self, user_href):
+        user = self.get_status_user(user_href)
         if not user:
             return None
 
         return user.full_name
 
-    def get_status_user(self):
+    def get_status_user(self, user_href):
         """Who to send errors to. Pull it from the auth_token"""
-        if not self.processed_data:
-            return None
-
-        return self.get_user(self.processed_data[0].get('user_token'))
+        return self.user_service.get_stormpath_user_by_href(user_href)
 
     def _send_email(self, from_email, from_name, to_email, to_name, subject,
                     body):
@@ -232,6 +250,14 @@ class EnrollmentProcessor(object):
         elif data_format == "json":
             return
 
+    def find_matching_census_record(self, case, data):
+        emp_ssn = data['employee']['ssn']
+        matching = self.case_service.get_census_records(case, filter_ssn=emp_ssn)
+        if matching:
+            return matching[0]
+        else:
+            return None
+
 
 class EnrollmentImportError(object):
     def __init__(self, type, fields, message, record, record_num):
@@ -258,30 +284,64 @@ class EnrollmentImportError(object):
     def to_json(self):
         return {'type':self.type, 'message': self.get_message(), 'fields':self.fields, 'record_num':self.record_num}
 
-class EnrollmentLogService(DBService):
-    __model__ = EnrollmentLog
 
-    def __init__(self):
-        pass
+class EnrollmentImportBatchService(DBService):
+    __model__ = EnrollmentImportBatch
 
-    def create_new_log(self, source, num_processed, num_errors, hash_data, auth_token=None, case_token=None):
-        self.create(**dict(
+    def get_batch_items(self, batch):
+        return db.session.query(EnrollmentImportBatchItem).with_parent(batch
+                        ).order_by(db.desc(EnrollmentImportBatchItem.processed_time)
+                        )
+
+    def get_records_needing_submission(self, batch):
+        return db.session.query(EnrollmentImportBatchItem
+                 ).with_parent(batch
+                 ).filter(EnrollmentImportBatchItem.status != EnrollmentImportBatchItem.STATUS_SUCCESS
+                 )
+
+    def create_new_batch(self, source, num_processed, num_errors, hash_data, auth_token=None, case_token=None):
+        return self.create(**dict(
             source=source,
             auth_token=auth_token,
             case_token=case_token,
             num_processed=num_processed,
             num_errors=num_errors,
-            log_hash=self.generate_hash(hash_data)
+            log_hash=self.generate_hash(hash_data),
+            timestamp=datetime.now()
         ))
+
+    def add_enrollments_to_batch(self, batch, enrollment_records):
+        for record in enrollment_records:
+            EnrollmentImportBatchItemService().create_batch_item(batch, record)
+
         db.session.commit()
 
     def lookup_hash(self, hash_data):
+
         search_hash = self.generate_hash(hash_data)
-        return db.session.query(EnrollmentLog
+        return db.session.query(EnrollmentImportBatch
         ).filter_by(log_hash=search_hash
         ).first()
 
     def generate_hash(self, data):
-        import hashlib
         new_hash = hashlib.md5(data).hexdigest()
         return new_hash
+
+
+class EnrollmentImportBatchItemService(DBService):
+    __model__ = EnrollmentImportBatchItem
+
+    def create_batch_item(self, batch, enrollment_record):
+        return self.create(**dict(
+            enrollment_batch=batch,
+            enrollment_record=enrollment_record,
+            status=self.__model__.STATUS_QUEUED,
+
+        ))
+
+    def delete_for_enrollment(self, enrollment_application):
+        batch_item = self.first(enrollment_record_id=enrollment_application.id)
+        if not batch_item:
+            return
+
+        return self.delete(batch_item)

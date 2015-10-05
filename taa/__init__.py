@@ -36,7 +36,7 @@ def create_app(bind=None):
     # Exception error handling
     #   (Import after the mandrill import line for dependency correctness)
     from .errors import init_exception_emails
-    init_exception_emails(app, ['zmason@delmarsd.com', 'jkayser@delmarsd.com'])
+    init_exception_emails(app, ['zmason@delmarsd.com', 'bdavis@thumbprintcpm.com'])
 
     # Init compression (only active if debug is False)
     Compress(app)
