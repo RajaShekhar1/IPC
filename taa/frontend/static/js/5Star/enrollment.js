@@ -71,7 +71,9 @@ function WizardUI(defaults) {
 
     self.defaults = defaults;
     self.case_id = defaults.case_id;
+    self.record_id = defaults.record_id;
     self.insurance_product = build_product(self, defaults.products);
+    self.account_href = defaults.account_href;
 
     // Confirmation checkboxes for step 6
     self.disclaimer_notice_confirmed = ko.observable(false);
@@ -912,7 +914,7 @@ function WizardUI(defaults) {
                 self.validator.form();
             });
         } else {
-            handle_remote_error();
+            handle_remote_error(resp);
         }
     };
 
@@ -3252,8 +3254,54 @@ function format_premium_value(val) {
 
 
 
-function handle_remote_error() {
-    alert("Sorry, an error occurred communicating with the server.");
+function handle_remote_error(request) {
+    if (request.status == 401) {
+        if (ui.account_href != null) {
+            prompt_login();
+        } else {
+            // The user wasn't logged in, so just restart our session
+            login_reauth(null, null);
+        }
+    }
+    else {
+        alert("Sorry, an error occurred communicating with the server.");
+    }
+}
+
+function prompt_login() {
+    bootbox.confirm({
+        message: "Please type your password to login again: <input id='password' class='form-control' placeholder='Password' type='password'/>",
+        title: "Login",
+        buttons: {
+            "cancel": { "label": "Cancel"},
+            "confirm": {
+                "label": "Login",
+                "className": "width-35 pull-right btn btn-primary"
+            }
+        },
+        callback: function(result) {
+            if (result == true) {
+                login_reauth(ui.account_href, $('#password').val());
+            }
+        }});
+}
+
+function login_reauth(account_href, password) {
+    var post_data = {
+        "account_href": account_href,
+        "password": password,
+        "success_message": "You were re-authenticated successfully.  Please continue with the application.",
+        "session_data": {
+            "is_self_enroll": ui.is_self_enroll(),
+            "active_case_id": ui.case_id,
+            "enrolling_census_record_id": ui.record_id
+        }
+    }
+
+    ajax_post('/reauth', post_data, function(reauth_response)
+    {
+        bootbox.alert(reauth_response.message);
+    }, null, true);
 }
 
 function ajax_post(url, data, on_success, on_error, is_json) {

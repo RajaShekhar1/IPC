@@ -1,6 +1,7 @@
 
 from flask import (
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -20,6 +21,7 @@ from .nav import get_nav_menu
 from taa.old_model.Registration import TAA_RegistrationForm, TAA_LoginForm
 from taa.old_model.Enrollment import NotifyAdminEmail
 from taa.services.agents import AgentService
+from taa.services.users import UserService
 from taa.services import RequiredFeature, LookupService
 
 @app.route("/user_register", methods=['GET', 'POST'])
@@ -123,23 +125,7 @@ def login():
             is_third_party_enroller = agent_service.is_user_third_party_enroller(account)
             print "Is ADMIN: %s, GROUPS: %s"%(is_admin, account_groups)
             if is_admin or is_home_office or (is_agent and account.custom_data.get('activated')) or is_third_party_enroller:
-                login_user(account, remember=True)
-                session['username'] = user.given_name + " " + user.surname
-                session['headername'] = session['username']
-
-                if is_agent and user.custom_data.get('agency') and user.custom_data['agency'].strip():
-                    session['headername'] += ", " + user.custom_data['agency']
-                elif is_admin:
-                    session['headername'] += ', Global Administrator'
-                elif is_home_office:
-                    session['headername'] += ', Home Office Administrator'
-
-                session['active_case'] = {
-                    'company_name': "",
-                    'situs_state': "",
-                    'situs_city': "",
-                    'product_code': ""
-                }
+                do_login(account)
 
                 if is_agent:
                     AgentService().ensure_agent_in_database(user)
@@ -167,6 +153,74 @@ def login():
                            form = form,
                            nav_menu=get_nav_menu(),
     )
+
+def do_login(account):
+    agent_service = LookupService("AgentService")
+    is_agent = agent_service.is_user_agent(account)
+    is_admin = agent_service.is_user_admin(account)
+
+    login_user(account, remember=True)
+    session['username'] = user.given_name + " " + user.surname
+    session['headername'] = session['username']
+
+    if is_agent and user.custom_data.get('agency') and user.custom_data['agency'].strip():
+        session['headername'] += ", " + user.custom_data['agency']
+    elif is_admin:
+        session['headername'] += ', Global Administrator'
+    elif is_home_office:
+        session['headername'] += ', Home Office Administrator'
+
+    session['active_case'] = {
+        'company_name': "",
+        'situs_state': "",
+        'situs_city': "",
+        'product_code': ""
+    }
+
+@app.route('/reauth', methods = ['POST'])
+def reauth():
+    user_service = LookupService("UserService")
+
+    is_error = False
+    error_message = None
+
+    data = request.json
+    account_href = data.get('account_href')
+    password = data.get('password')
+    session_data = data.get('session_data')
+    success_message = data.get('success_message')
+
+    try:
+        if account_href is not None:
+            user_from_href = user_service.get_stormpath_user_by_href(account_href)
+            if user_from_href is not None:
+                account = User.from_login(user_from_href.email, password)
+                do_login(account)
+            else:
+                is_error = True
+                error_message = "Could not login."
+
+        if is_error is False:
+            # Set optional session values
+            session['is_self_enroll'] = session_data.get('is_self_enroll')
+            session['active_case_id'] = session_data.get('active_case_id')
+            session['enrolling_census_record_id'] = session_data.get('enrolling_census_record_id')
+
+    except StormpathError, err:
+        is_error = True
+        if 'message' in err.message:
+            error_message = err.message['message']
+        else:
+            error_message = err.message
+
+    resp = {
+        'error': is_error,
+        'message': error_message or success_message,
+    }
+
+    data = jsonify(**resp)
+
+    return data
 
 @app.route("/exit")
 def taa_logout():
