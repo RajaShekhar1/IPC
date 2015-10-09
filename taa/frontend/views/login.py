@@ -157,6 +157,7 @@ def login():
 def do_login(account):
     agent_service = LookupService("AgentService")
     is_agent = agent_service.is_user_agent(account)
+    is_home_office = agent_service.is_user_home_office(account)
     is_admin = agent_service.is_user_admin(account)
 
     login_user(account, remember=True)
