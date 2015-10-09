@@ -111,8 +111,6 @@ def in_person_enrollment():
             'enrollmentState': enrollment_state_override,
         })
 
-
-
 def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False):
 
     # Defaults for session enrollment variables.
@@ -206,6 +204,8 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         'payment_mode_choices': payment_mode_choices,
         'payment_mode': payment_mode,
         'case_id': case.id,
+        'record_id': record_id,
+        'account_href': current_user.get_id(),
         'selected_riders': []
     }
 
@@ -320,6 +320,9 @@ def self_enrollment2():
 
 @app.route('/submit-wizard-data', methods=['POST'])
 def submit_wizard_data():
+    if session.get('active_case_id') is None:
+        abort(401)
+
     data = request.json
 
     if 'active_case_id' not in session:

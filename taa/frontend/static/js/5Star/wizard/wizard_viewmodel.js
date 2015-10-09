@@ -835,5 +835,58 @@ var wizard_viewmodel = (function() {
   }
 
 
+  // TODO:  Will need to expose this function to the other modules, integrate Barrett's reauth mechanism below
+  function handle_remote_error(request) {
+      if (request.status == 401) {
+          if (ui.account_href != null) {
+              prompt_login();
+          } else {
+              // The user wasn't logged in, so just restart our session
+              login_reauth(null, null);
+          }
+      }
+      else {
+          alert("Sorry, an error occurred communicating with the server.");
+      }
+  }
+
+  function prompt_login() {
+      bootbox.confirm({
+          message: "Please type your password to login again: <input id='password' class='form-control' placeholder='Password' type='password'/>",
+          title: "Login",
+          buttons: {
+              "cancel": { "label": "Cancel"},
+              "confirm": {
+                  "label": "Login",
+                  "className": "width-35 pull-right btn btn-primary"
+              }
+          },
+          callback: function(result) {
+              if (result == true) {
+                  login_reauth(ui.account_href, $('#password').val());
+              }
+          }});
+  }
+
+  function login_reauth(account_href, password) {
+      var post_data = {
+          "account_href": account_href,
+          "password": password,
+          "success_message": "You were re-authenticated successfully.  Please continue with the application.",
+          "session_data": {
+              "is_self_enroll": ui.is_self_enroll(),
+              "active_case_id": ui.case_id,
+              "enrolling_census_record_id": ui.record_id
+          }
+      }
+
+      ajax_post('/reauth', post_data, function(reauth_response)
+      {
+          bootbox.alert(reauth_response.message);
+      }, null, true);
+  }
+
+
+
   return {WizardVM: WizardVM}
 })();
