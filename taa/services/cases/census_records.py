@@ -3,11 +3,14 @@ import csv
 
 from taa.core import DBService
 from taa.core import db
+from taa.services import RequiredFeature
 from models import CaseCensus
 from census_import import CensusRecordParser
 
 class CensusRecordService(DBService):
     __model__ = CaseCensus
+
+    self_enrollment_link_service = RequiredFeature("SelfEnrollmentLinkService")
 
     def _preprocess_params(self, kwargs):
         """
@@ -194,3 +197,21 @@ class CensusRecordService(DBService):
     def strip_ssn(self, ssn):
         return ssn.strip().replace('-','') if ssn else ''
 
+    def serialize_with_tokens(self, case, census_records, url_root):
+        # Return record_id, ssn, and self-enroll token. If self-enroll token does not exist, generate it.
+        out = []
+        for record in census_records:
+
+            # Get previously generated link if available
+            link = self.self_enrollment_link_service.get_for_census_record(record)
+            if link is None:
+                # Otherwise generate one
+                link = self.self_enrollment_link_service.generate_link(url_root, case, record)
+
+            out.append(dict(
+                id=record.id,
+                ssn=record.employee_ssn,
+                self_enroll_url=link.url if link else None,
+            ))
+
+        return out

@@ -248,7 +248,7 @@ def census_records(case_id):
         'filter_ssn': request.args.get('filter_ssn'),
         'filter_birthdate': request.args.get('filter_birthdate'),
     }
-    # Restrict if needed and not checking for SSN duplicates
+    # Restrict access if needed and if not checking for SSN duplicates
     if is_current_user_restricted_to_own_enrollments(case) and not args['filter_ssn']:
         args['filter_agent'] = agent_service.get_logged_in_agent()
 
@@ -271,6 +271,18 @@ def is_current_user_restricted_to_own_enrollments(case):
         return case_service.is_agent_restricted_to_own_enrollments(agent_service.get_logged_in_agent(), case)
     return False
 
+
+# Census Records - lookup self-enroll link debug API for Bill to get SSNs with self-enroll links.
+@route(bp, '/<case_id>/census_records/tokens', methods=['GET'])
+@login_required
+@groups_required(['admins'], all=False)
+def census_record_links(case_id):
+    case = case_service.get_if_allowed(case_id)
+    data = case_service.get_census_records(case)
+
+    # Custom serialization
+    census_record_service = LookupService('CensusRecordService')
+    return census_record_service.serialize_with_tokens(case, data, request.url_root)
 
 
 @route(bp, '/<case_id>/census_records', methods=['POST'])

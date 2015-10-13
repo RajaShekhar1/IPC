@@ -225,7 +225,6 @@ class CensusRecordSerializer(JsonSerializable):
         email_logs = SelfEnrollmentEmailService().get_for_census_record(self)
         return any(email.status == SelfEnrollmentEmailLog.STATUS_SUCCESS for email in email_logs)
 
-
 class CaseCensus(CensusRecordSerializer, db.Model):
     __tablename__ = 'case_census'
 
