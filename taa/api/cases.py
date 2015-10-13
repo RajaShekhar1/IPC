@@ -273,7 +273,7 @@ def is_current_user_restricted_to_own_enrollments(case):
 
 
 # Census Records - lookup self-enroll link debug API for Bill to get SSNs with self-enroll links.
-@route(bp, '/<case_id>/census_records/tokens', methods=['GET'])
+@route(bp, '/<case_id>/census_records/links', methods=['GET'])
 @login_required
 @groups_required(['admins'], all=False)
 def census_record_links(case_id):
