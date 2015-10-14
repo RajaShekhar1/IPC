@@ -283,7 +283,7 @@ class EnrollmentDataWrap(object):
         return format(self.data['employee_coverage']['face_value'], ',.0f')
 
     def get_formatted_employee_premium(self):
-        return self.format_money(self.get_employee_premium() + self.get_employee_riders());
+        return self.format_money(self.get_employee_premium() + self.get_employee_riders())
 
     def get_employee_premium(self):
         return decimal.Decimal(self.data['employee_coverage']['premium'])
@@ -319,6 +319,21 @@ class EnrollmentDataWrap(object):
 
     def format_money(self, amount):
         return '%.2f' % amount
+
+    def get_total_children_premium(self):
+        return sum(decimal.Decimal(unicode(child_coverage.get('premium', '0.00')))
+                   for child_coverage in self.data["child_coverages"])
+
+    def get_total_modal_premium(self):
+        total = decimal.Decimal('0.00')
+        if self.did_employee_select_coverage():
+            total += self.get_employee_premium()
+        if self.did_spouse_select_coverage():
+            total += self.get_spouse_premium()
+        if self.get_total_children_premium() > 0.0:
+            total += self.get_total_children_premium()
+
+        return total
 
     def get_num_covered_children(self):
         return len(self.get_covered_children())
@@ -404,6 +419,9 @@ class EnrollmentDataWrap(object):
                 return True
 
         return False
+
+    def should_include_bank_draft(self):
+        return self.case.include_bank_draft_form
 
 def old_create_envelope_and_get_signing_url(enrollment_data):
     # return is_error(bool), error_message, and redirectURL

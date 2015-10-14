@@ -57,7 +57,7 @@ def get_template_id(product_type, state):
     Templates are either State specific, the generic template applying to a group of states, or else not-
     available for a given state.  So, look for specific states first, then if generic, otherwise fail.
     """
-    if 'demo' in DOCUSIGN_API_ENDPOINT.lower():
+    if should_use_demo_account():
         return {'FPPTI':'857F9448-88B2-4DA1-AFCB-8F5B354E137F',
                 'FPPCI':'857F9448-88B2-4DA1-AFCB-8F5B354E137F',
                 'FPP-Gov':'857F9448-88B2-4DA1-AFCB-8F5B354E137F',
@@ -69,7 +69,7 @@ def get_template_id(product_type, state):
 
 
 def get_replacement_template_id(product_type, state):
-    if 'demo' in DOCUSIGN_API_ENDPOINT.lower():
+    if should_use_demo_account():
         return {'MI':'D11AA8C9-F1AA-43ED-A31E-0EC4F85CDF65',
                 'IL':'33CF1C42-0205-460E-B1A4-25EE5A736AB2',
                 'IN':'8D3FBE45-124C-4E12-9BAC-85839E9FF826',
@@ -77,3 +77,13 @@ def get_replacement_template_id(product_type, state):
 
     return ProductFormService().get_replacement_template_id(product_type, state)
 
+
+def get_bank_draft_template_id(product_type, state):
+    if should_use_demo_account():
+        return '02990C98-52E7-4BCC-92FF-02A29526625B'
+    else:
+        return 'BA8F7F9C-1CF9-497A-B904-1C9DE2362589'
+
+
+def should_use_demo_account():
+    return 'demo' in DOCUSIGN_API_ENDPOINT.lower()
