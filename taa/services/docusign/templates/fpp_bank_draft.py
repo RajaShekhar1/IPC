@@ -32,11 +32,11 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
             DocuSignTextTab('eeCity', employee_data.get('city', '')),
             DocuSignTextTab('eeState', employee_data.get('state', '')),
             DocuSignTextTab('eeZip', employee_data.get('zip', '')),
+            DocuSignTextTab('MonthlyPremium', self.get_monthly_premium())
         ]
 
         return tabs
 
     def get_monthly_premium(self):
-        # Look up the premium for this product using monthly payment mode
-        product = self.data.get_product()
-
+        # For now, just add the premiums, since we know they are monthly payment mode.
+        return self.data.format_money(self.data.get_total_modal_premium())

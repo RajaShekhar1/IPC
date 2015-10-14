@@ -218,14 +218,8 @@ class FPPTemplate(DocuSignServerTemplate):
         ]
 
         # Totals
-        total_children_coverage = sum(Decimal(unicode(child_coverage.get('premium', '0.00'))) for child_coverage in self.data["child_coverages"])
-        total = Decimal('0.00')
-        if self.data.did_employee_select_coverage():
-            total += self.data.get_employee_premium()
-        if self.data.did_spouse_select_coverage():
-            total += self.data.get_spouse_premium()
-        if total_children_coverage > 0.0:
-            total += total_children_coverage
+        total_children_coverage = self.data.get_total_children_premium()
+        total = self.data.get_total_modal_premium()
 
         if total_children_coverage > 0.0:
             formatted_children_total = format(total_children_coverage, ".2f")
