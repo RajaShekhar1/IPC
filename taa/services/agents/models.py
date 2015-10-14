@@ -4,7 +4,7 @@ from taa.helpers import JsonSerializable
 
 
 class AgentJsonSerializable(JsonSerializable):
-    __json_public__ = ['id', 'first', 'last', 'email']
+    __json_public__ = ['id', 'first', 'last']
     __json_hidden__ = ['partner_cases']
 
 class Agent(AgentJsonSerializable, db.Model):
