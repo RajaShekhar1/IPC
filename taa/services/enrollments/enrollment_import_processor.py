@@ -339,3 +339,9 @@ class EnrollmentImportBatchItemService(DBService):
 
         ))
 
+    def delete_for_enrollment(self, enrollment_application):
+        batch_item = self.first(enrollment_record_id=enrollment_application.id)
+        if not batch_item:
+            return
+
+        return self.delete(batch_item)

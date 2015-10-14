@@ -183,9 +183,12 @@ def update_case_enrollment_periods(case_id):
 @login_required
 @groups_required(api_groups, all=False)
 def enrollment_report(case_id):
-    from taa.services.enrollments import EnrollmentApplicationService
-    return EnrollmentApplicationService().get_enrollment_report(
-        case_service.get_if_allowed(case_id))
+    case = case_service.get_if_allowed(case_id)
+
+    # TODO: might need to restrict data to certain users who have access to case.
+    #  not too important since no sensitive data exposed here.
+
+    return enrollment_application_service.get_enrollment_report(case)
 
 
 @route(bp, '/<case_id>/enrollment_records', methods=['GET'])
@@ -197,11 +200,12 @@ def enrollment_records(case_id):
 
     format=json|csv (json by default)
     """
-    from taa.services.enrollments import EnrollmentApplicationService
-    enrollment_service = EnrollmentApplicationService()
-    data = enrollment_service.get_all_enrollment_records(case_service.get_if_allowed(case_id))
+    case = case_service.get_if_allowed(case_id)
+    census_records = case_service.get_current_user_census_records(case)
+    data = enrollment_application_service.get_enrollment_records_for_census_records(census_records)
+
     if request.args.get('format') == 'csv':
-        body = enrollment_service.export_enrollment_data(data)
+        body = enrollment_application_service.export_enrollment_data(data)
         date_str = datetime.now().strftime('%Y-%m-%d')
         headers = {
             'Content-Type': 'text/csv',
@@ -219,12 +223,10 @@ def enrollment_record(case_id, census_id):
 
     format=json|csv (json by default)
     """
-    from taa.services.enrollments import EnrollmentApplicationService
-    enrollment_service = EnrollmentApplicationService()
-    data = enrollment_service.get_enrollment_records_for_census(
+    data = enrollment_application_service.get_enrollment_records_for_census(
         case_service.get_if_allowed(case_id), census_id)
     if request.args.get('format') == 'csv':
-        body = enrollment_service.export_enrollment_data(data)
+        body = enrollment_application_service.export_enrollment_data(data)
         date_str = datetime.now().strftime('%Y-%m-%d')
         headers = {
             'Content-Type': 'text/csv',
@@ -248,8 +250,8 @@ def census_records(case_id):
         'filter_ssn': request.args.get('filter_ssn'),
         'filter_birthdate': request.args.get('filter_birthdate'),
     }
-    # Restrict if needed and not checking for SSN duplicates
-    if is_current_user_restricted_to_own_enrollments(case) and not args['filter_ssn']:
+    # Restrict access if needed and if not checking for SSN duplicates
+    if case_service.is_current_user_restricted_to_own_enrollments(case) and not args['filter_ssn']:
         args['filter_agent'] = agent_service.get_logged_in_agent()
 
     data = case_service.get_census_records(case, **args)
@@ -266,11 +268,20 @@ def census_records(case_id):
 
     return data
 
-def is_current_user_restricted_to_own_enrollments(case):
-    if agent_service.is_user_agent(current_user):
-        return case_service.is_agent_restricted_to_own_enrollments(agent_service.get_logged_in_agent(), case)
-    return False
 
+
+
+# Census Records - lookup self-enroll link debug API for Bill to get SSNs with self-enroll links.
+@route(bp, '/<case_id>/census_records/links', methods=['GET'])
+@login_required
+@groups_required(['admins'], all=False)
+def census_record_links(case_id):
+    case = case_service.get_if_allowed(case_id)
+    data = case_service.get_census_records(case)
+
+    # Custom serialization
+    census_record_service = LookupService('CensusRecordService')
+    return census_record_service.serialize_with_tokens(case, data, request.url_root)
 
 
 @route(bp, '/<case_id>/census_records', methods=['POST'])
@@ -282,11 +293,15 @@ def post_census_records(case_id):
     data = get_posted_data()
     file_obj = request.files.get('csv-file')
     if not file_obj:
+        ## TODO: create the ad-hoc record after an enrollment, not before.
         # Attempt to process an ad-hoc post. Currently only SSN is required, and anyone who can
         #  view / enroll the case can do this
         return case_service.create_ad_hoc_census_record(case, ssn=data['ssn'])
 
-    # Case upload - must be able to edit case settings
+    # Case upload - must be able to edit case settings.
+    # Note: This is after the case above where an ad-hoc record is created since that is one
+    #  situation currently that unprivileged users can create records.
+    #
     if not case_service.can_current_user_edit_case(case):
         abort(401)
         return
@@ -325,7 +340,7 @@ def update_census_record(case_id, census_record_id):
     if not case_service.can_current_user_edit_case(case):
         abort(401)
         return
-    census_record = case_service.get_census_record(case, census_record_id)
+    census_record = case_service.get_record_if_allowed(census_record_id)
     form = CensusRecordForm()
     if form.validate_on_submit():
         return case_service.update_census_record(census_record, form.data)
@@ -340,7 +355,7 @@ def delete_census_record(case_id, census_record_id):
     if not case_service.can_current_user_edit_case(case):
         abort(401)
         return
-    census_record = case_service.get_census_record(case, census_record_id)
+    census_record = case_service.get_record_if_allowed(census_record_id)
     case_service.delete_census_record(census_record)
     return None, 204
 
