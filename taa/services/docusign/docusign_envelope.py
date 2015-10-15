@@ -235,6 +235,9 @@ class EnrollmentDataWrap(object):
     def get_product_code(self):
         return self.data['product_type']
 
+    def get_product(self):
+        return product_service.get(self.data['product_data']['id'])
+
     def get_employee_name(self):
         return '{} {}'.format(self.data['employee']['first'],
                               self.data['employee']['last'])
