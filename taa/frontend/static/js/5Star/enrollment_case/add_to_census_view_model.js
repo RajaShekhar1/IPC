@@ -1,4 +1,4 @@
-/* AddToCensusViewModel */
+
 var AddToCensusViewModel = function AddToCensusViewModel(case_id) {
   var self = this;
 
@@ -103,16 +103,8 @@ var AddToCensusViewModel = function AddToCensusViewModel(case_id) {
   });
 
   self.add_to_census = function() {
-    self.loading_message("Adding employee to census...");
-    self.current_panel(self.PANEL_LOADING);
-    ajax_post("/cases/"+self.case_id()+"/census_records",
-    {ssn: self.ssn()},
-    function(resp) {
-      // Go to enrollment
-      self.enroll_from_record(resp.data.id);
-    }, function(resp) {
-      bootbox.alert("There was a problem adding a record to the census");
-    });
+    // Go to enrollment without a census record.
+    self.enroll_without_record();
   };
 
   self.enroll_from_match = function() {
@@ -130,14 +122,28 @@ var AddToCensusViewModel = function AddToCensusViewModel(case_id) {
   };
 
   self.enroll_from_record = function(id) {
+    self._submit_enrollment({record_id: id});
+  };
+
+  self.enroll_without_record = function() {
+    self._submit_enrollment({});
+  };
+
+  self._submit_enrollment = function(options) {
+    var data = {
+      case_id: self.case_id(),
+      enrollment_city: window.case_settings.get_enrollment_city_override(),
+      enrollment_state: window.case_settings.get_enrollment_state_override()
+    };
+    if (options.record_id) {
+      data.record_id = options.record_id;
+    } else {
+      data.ssn = self.ssn();
+    }
+
     self.loading_message("Loading Enrollment Application...");
     self.current_panel(self.PANEL_LOADING);
 
-    submit_to_url(urls.get_in_person_enrollment_url(), {
-      record_id: id,
-      enrollment_city: window.case_settings.get_enrollment_city_override(),
-      enrollment_state: window.case_settings.get_enrollment_state_override()
-    });
+    submit_to_url(urls.get_in_person_enrollment_url(), data);
   }
 };
-/* END: AddToCensusViewModel */

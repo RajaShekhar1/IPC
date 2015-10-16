@@ -1,5 +1,4 @@
 
-/* CaseEnrollmentsViewModel */
 var CaseEnrollmentsViewModel = function(case_data) {
   var self = this;
 
@@ -21,4 +20,3 @@ var CaseEnrollmentsViewModel = function(case_data) {
     });
   });
 };
-/* END: CaseEnrollmentsViewModel */
