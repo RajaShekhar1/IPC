@@ -56,6 +56,9 @@ class FPPTemplate(DocuSignServerTemplate):
     def is_additional_replacment_policy_attachment_needed(self):
         return len(self.data['replacement_policies']) > 1
 
+    def should_include_bank_draft(self):
+        return self.data.should_include_bank_draft()
+
     def get_attachment_children(self):
         return self.data.get_covered_children()[2:] if len(self.data.get_covered_children()) > 2 else []
 
@@ -215,14 +218,8 @@ class FPPTemplate(DocuSignServerTemplate):
         ]
 
         # Totals
-        total_children_coverage = sum(Decimal(unicode(child_coverage.get('premium', '0.00'))) for child_coverage in self.data["child_coverages"])
-        total = Decimal('0.00')
-        if self.data.did_employee_select_coverage():
-            total += self.data.get_employee_premium()
-        if self.data.did_spouse_select_coverage():
-            total += self.data.get_spouse_premium()
-        if total_children_coverage > 0.0:
-            total += total_children_coverage
+        total_children_coverage = self.data.get_total_children_premium()
+        total = self.data.get_total_modal_premium()
 
         if total_children_coverage > 0.0:
             formatted_children_total = format(total_children_coverage, ".2f")

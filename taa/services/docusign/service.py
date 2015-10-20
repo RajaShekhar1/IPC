@@ -62,6 +62,7 @@ class DocuSignService(object):
     def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
         from taa.services.docusign.templates.fpp import FPPTemplate
         from taa.services.docusign.templates.fpp_replacement import FPPReplacementFormTemplate
+        from taa.services.docusign.templates.fpp_bank_draft import FPPBankDraftFormTemplate
         from taa.services.docusign.documents.additional_children import ChildAttachmentForm
         from taa.services.docusign.documents.multiple_beneficiaries_attachment import MultipleBeneficiariesAttachment
         from taa.services.docusign.documents.additional_replacement_policies import AdditionalReplacementPoliciesForm
@@ -102,6 +103,11 @@ class DocuSignService(object):
         if fpp_form.is_additional_replacment_policy_attachment_needed():
             components.append(AdditionalReplacementPoliciesForm(recipients,
                                                                 enrollment_data))
+
+
+        if fpp_form.should_include_bank_draft():
+            components.append(FPPBankDraftFormTemplate(recipients, enrollment_data, should_use_docusign_renderer))
+
         return components
 
     def get_signing_agent(self, case):

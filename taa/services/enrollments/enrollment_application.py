@@ -209,11 +209,16 @@ class EnrollmentApplicationService(DBService):
 
     def get_all_enrollment_records(self, case):
         """
+        """
+        census_records = self.case_service.get_census_records(case)
+        return self.get_enrollment_records_for_census_records(census_records)
+
+    def get_enrollment_records_for_census_records(self, census_records):
+        """
         Does not do any combining data.
         Includes census data for each enrollment, so the same employee in the
         census will show up multiple times, once for each enrollment.
         """
-        census_records = self.case_service.get_census_records(case)
         data = []
         for census_record in census_records:
             # Export only records with enrollments

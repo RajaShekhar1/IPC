@@ -16,7 +16,7 @@ enrollment_submission_service = LookupService("EnrollmentSubmissionService")
 enrollment_application_service = LookupService("EnrollmentApplicationService")
 
 @route(bp, '/', methods=["POST"])
-def submit_data():    
+def submit_enrollments():
     case_token = request.args.get('case_token') or request.form.get('case_token')
     auth_token = request.args.get('auth_token') or request.form.get('auth_token')
     user_href = request.args.get('user_href') or request.form.get('user_href')
