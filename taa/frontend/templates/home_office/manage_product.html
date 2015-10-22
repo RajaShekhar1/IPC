@@ -364,8 +364,9 @@
         self.gi_criteria = ko.observableArray($.map(custom_product.gi_criteria, function(c) {
           return new GICriterionViewModel(c);
         }));
-        
-        // 
+
+        self.should_limit_rates_to_gi = ko.observable(custom_product.should_limit_rates_to_gi);
+
         self.base_product_id.subscribe(function(new_id) {
           if (self.gi_criteria().length == 0) {
             return;
@@ -429,6 +430,7 @@
             name: self.name(),
             base_product_id: self.base_product_id(),
             gi_criteria: $.map(self.gi_criteria(), function(c) {return c.serialize()}),
+            should_limit_rates_to_gi: self.should_limit_rates_to_gi(),
             statement_of_health_bypass_type: self.statement_of_health_bypass_type(),
             bypassed_questions: self.bypassed_questions(),
             agents: self.agents()
