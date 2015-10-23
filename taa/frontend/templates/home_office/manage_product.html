@@ -4,279 +4,283 @@
 {% block title %} - Manage Products{% endblock %}
 
 {% block content %}
-    
-    <div class="row">
-        <div class="col-md-12">
-            <form class="form-horizontal product-setup" data-bind="submit: save_settings">
-                    
-                <div class="widget-box">
-                    <div class="widget-header">
-                        <div class="row">
-                            <h3 class="col-xs-6">Product: {{ product.name }}</h3>
-                        </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <form class="form-horizontal product-setup" data-bind="submit: save_settings">
+
+        <div class="widget-box">
+          <div class="widget-header">
+            <div class="row">
+              <h3 class="col-xs-6">Product: {{ product.name }}</h3>
+            </div>
+          </div>
+          <div class="widget-body">
+            <div class="widget-main">
+              <div class="row">
+                <div class="col-md-12 col-xs-12">
+                  <h4 class="header lighter">Settings</h4>
+
+                  <div class="form-group">
+                    <div class="col-md-2 control-label"><label for="product-name">Name</label></div>
+                    <div class="col-md-6">
+                      <input id="product-name" class="form-control" data-bind='value: product().name, enable: product.editable'>
                     </div>
-                    <div class="widget-body">
-                        <div class="widget-main">  
-                            <div class="row">
-                                <div class="col-md-12 col-xs-12">
-                                    <h4 class="header lighter">Settings</h4>
-                                    
-                                    <div class="form-group">
-                                        <div class="col-md-2 control-label"><label for="product-name">Name</label></div>
-                                        <div class="col-md-6">
-                                            <input id="product-name" class="form-control" data-bind='value: product().name, enable: product.editable'>
-                                        </div>
-                                    </div>
-                                
-                                    {% if is_base_product %}
-                                    
-                                        <div class="form-group">
-                                            
-                                            <div class="col-md-2 control-label"></div>
-                                        
-                                            <div class="col-md-6">
-                                                <label for="product-name">   
-                                                    <input type="checkbox" class="" disabled="disabled" data-bind='checked: !product().is_visible_to_agents'> 
-                                                    Only Available as GI Base
-                                                </label>
-                                                
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                    
-                                    {% if is_gi_product %}
-                                        <div class="form-group">
-                                            <div class="col-md-2 control-label"><label for="base-product-sel">Base Product</label></div>
-                                            <div class="col-md-6">
-                                                <select id="base-product-sel" name="base_product_id" class="form-control" data-bind='value: product().base_product_id, 
+                  </div>
+
+                  {% if is_base_product %}
+
+                    <div class="form-group">
+
+                      <div class="col-md-2 control-label"></div>
+
+                      <div class="col-md-6">
+                        <label for="product-name">
+                          <input type="checkbox" class="" disabled="disabled" data-bind='checked: !product().is_visible_to_agents'>
+                          Only Available as GI Base
+                        </label>
+
+                      </div>
+                    </div>
+                  {% endif %}
+
+                  {% if is_gi_product %}
+                    <div class="form-group">
+                      <div class="col-md-2 control-label"><label for="base-product-sel">Base Product</label></div>
+                      <div class="col-md-6">
+                        <select id="base-product-sel" name="base_product_id" class="form-control" data-bind='value: product().base_product_id,
                                                     options: base_product_options,
                                                     optionsValue: "id",
                                                     optionsText: "name",
                                                     optionsCaption: ""'>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        
-                                        <h4 class="header lighter">Guarantee Issue Criteria</h4>
-                                        
-                                        <table class="table table-striped table-bordered table-responsive" data-bind="visible: product().gi_criteria().length > 0">
-                                            <thead>
-                                                <tr>
-                                                    <th>Applicant</th>
-                                                    <th>Criteria</th>
-                                                    <th>Guaranteed Issue Amount</th>
-                                                    <th></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody data-bind="foreach: product().gi_criteria">
-                                                <tr>
-                                                    <td data-bind="text: applicant_type()"></td>
-                                                    <td data-bind="html: display_criteria"></td>
-                                                    <td data-bind="text: guarantee_issue_amount()"></td>
-                                                    <td><a class="btn" 
-                                                           data-bind="click: $parent.product().remove_criterion">remove</a></td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                        
-                                        <button class="btn btn-default" 
-                                                data-bind="visible: !should_show_criteria_form(), click: show_criteria_form">Add Criteria</button>
-                                        <div style="display: none;" data-bind="slideDownIf: should_show_criteria_form, with: new_criterion">
-                                            
-                                            <div class="form-group">
-                                                <label class="col-md-3 control-label" for="applicant_type">Applicant</label>
-                                                <div class="col-md-9">
-                                                    <select id="applicant_type" data-bind="value: applicant_type, options: $parent.applicant_options"></select>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="form-group">
-                                                <label class="col-md-3 control-label">Guarantee Issue Amount</label>
-                                                <div class="col-md-9">
-                                                    <select data-bind="value: guarantee_issue_amount, options: $parent.issue_amount_options"></select>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="form-group" data-bind="visible: $parent.should_show_height_and_weight">
-                                                <div class="col-md-3 control-label"><label>Height</label></div>
-                                                <div class="col-md-9">
-                                                    <div class="criteria-select">
-                                                            Minimum: 
-                                                            <height-select params="value: height_min"></height-select>
-                                                            Maximum: 
-                                                            <height-select params="value: height_max"></height-select>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="form-group" data-bind="visible: $parent.should_show_height_and_weight">
-                                                <div class="col-md-3 control-label"><label>Weight</label></div>
-                                                <div class="col-md-9">
-                                                    <div class="criteria-select">
-                                                            Minimum: 
-                                                            {{ product_form.criteria_weight_min(**{'data-bind':'value: weight_min'}) | safe }} 
-                                                            Maximum: 
-                                                            {{ product_form.criteria_weight_max(**{'data-bind':'value: weight_max'}) | safe }} 
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="form-group">
-                                                <div class="col-md-3 control-label"><label>Age</label></div>
-                                                <div class="col-md-9">
-                                                    <div class="criteria-select">
-                                                            Minimum: 
-                                                            {{ product_form.criteria_age_min(**{'data-bind':'value: age_min'}) | safe }} 
-                                                            Maximum: 
-                                                            {{ product_form.criteria_age_max(**{'data-bind':'value: age_max'}) | safe }} 
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <button class="btn btn-default" data-bind="click: $root.add_new_criteria">Save Criteria</button>
-                                        </div>
-                                        
-                                        <h4 class="header lighter">When GI and criteria met</h4>
-                                        <div class="form-group">       
-                                            <div class="col-md-9">
-                                                
-                                                <div class="soh_options">
-                                                    <!--ko foreach: product().soh_category_options -->
-                                                        <div class="row">
-                                                            <label class="col-md-offset-1">
-                                                                <input type="checkbox" 
-                                                                       class="ace ace-switch ace-switch-3 padding-10" 
-                                                                    data-bind="value: label, checked: is_required"
-                                                                    >
-                                                                <span class="lbl" 
-                                                                    data-lbl="&nbsp;Required&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ignored"></span>
-                                                                <span data-bind="text: label" style="line-height: 23px; vertical-align: top;"></span>
-                                                            </label>
-                                                        </div>
-                                                    <!--/ko-->
-                                                </div>
-                                                
-                                            </div>
-                                        </div>
-                                    
-                                        <h4 class="header lighter">Assign to Agents</h4>
-                                        <div class="row">
-                                            <div class="col-sm-10 col-md-offset-1">
-                                                <select data-bind="options: available_agents, 
-                                                            optionsText: 'name',
-                                                            selectedOptions: product().agents" 
-                                                        multiple="multiple" class="form-control" id="assigned-agents" 
-                                                        size="10" style="min-height: 8em;">
-                                                    
-                                                </select>
-                                            </div>
-                                        </div>
-                                    
-                                    {% endif %}   
-                                    {% if is_base_product %}
-                                        <!--ko if: product().is_visible_to_agents -->
-                                        <h4 class="header lighter">Restrict from Agents</h4>
-                                        <div class="row">
-                                            <div class="col-sm-10 col-md-offset-1">
-                                                <select data-bind="options: available_agents, 
-                                                            optionsText: 'name',
-                                                            selectedOptions: product().restricted_agents" 
-                                                        multiple="multiple" class="form-control" id="restricted-agents" 
-                                                        size="10" style="min-height: 8em;">
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <!--/ko-->
-                                    {% endif %}
-                                </div>
-                            </div>
-                        
-                            <br>
-                        
-                            {% if cases_using_product %}
-                                <h4 class="header lighter">Cases Using Product</h4>
-                                <table class="table bordered">
-                                <thead><tr>
-                                    <th>Company</th>
-                                    <th>Location</th>
-                                    <th>Owner Agent</th>
-                                    <th>Active</th>
-                                    <th>Created</th>
-                                    
-                                </tr></thead>
-                                {% for case in cases_using_product %}
-                                    <tr>
-                                        <td>{{ case.company_name }}</td>
-                                        <td>{{ case.format_location() }}</td>
-                                        <td>{{ case.format_owner_name() }}</td>
-                                        <td>{{ case.format_is_active() }}</td>
-                                        <td>{{ case.format_created_date() }}</td>
-                                    </tr>
-                                {% endfor %}
-                                </table>
-                            {% endif %}
-                            
-                            <br>
-                            {% if is_gi_product %}
-                            <div class="row">
-                                <div class="col-xs-12">
-                                    <button class="btn btn-danger btn-xs" data-bind="click: delete_product">Delete Product</button>
-                                </div>
-                            </div>
-                            {% endif %}
-                            
-                        
-                        
-                        
-                        
-                        </div>
-                        <div class="widget-toolbox clearfix padding-8">
-                            <div class="clearfix">
-                                <button type="submit" class="btn-primary btn-sm pull-right">Save</button>
-                            </div>
-                            <div class="clearfix">
-                                <div class="pull-right submit-message"></div>
-                            </div>
-                        </div>
+                        </select>
+                      </div>
                     </div>
+
+                    <h4 class="header lighter">Guarantee Issue Criteria
+                      <label class="pull-right">
+                        <input type="checkbox" data-bind="checked: product().should_limit_rates_to_gi, enable: product().can_limit_rates_to_gi"> Restrict available rates to GI levels
+                      </label>
+                    </h4>
+
+                    <table class="table table-striped table-bordered table-responsive" data-bind="visible: product().gi_criteria().length > 0">
+                      <thead>
+                      <tr>
+                        <th>Applicant</th>
+                        <th>Criteria</th>
+                        <th>Guaranteed Issue Amount</th>
+                        <th></th>
+                      </tr>
+                      </thead>
+                      <tbody data-bind="foreach: product().gi_criteria">
+                      <tr>
+                        <td data-bind="text: applicant_type()"></td>
+                        <td data-bind="html: display_criteria"></td>
+                        <td data-bind="text: guarantee_issue_amount()"></td>
+                        <td><a class="btn"
+                               data-bind="click: $parent.product().remove_criterion">remove</a></td>
+                      </tr>
+                      </tbody>
+                    </table>
+
+                    <button class="btn btn-default"
+                            data-bind="visible: !should_show_criteria_form(), click: show_criteria_form">Add Criteria</button>
+                    <div style="display: none;" data-bind="slideDownIf: should_show_criteria_form, with: new_criterion">
+
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="applicant_type">Applicant</label>
+                        <div class="col-md-9">
+                          <select id="applicant_type" data-bind="value: applicant_type, options: $parent.applicant_options"></select>
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="col-md-3 control-label">Guarantee Issue Amount</label>
+                        <div class="col-md-9">
+                          <select data-bind="value: guarantee_issue_amount, options: $parent.issue_amount_options"></select>
+                        </div>
+                      </div>
+
+                      <div class="form-group" data-bind="visible: $parent.should_show_height_and_weight">
+                        <div class="col-md-3 control-label"><label>Height</label></div>
+                        <div class="col-md-9">
+                          <div class="criteria-select">
+                            Minimum:
+                            <height-select params="value: height_min"></height-select>
+                            Maximum:
+                            <height-select params="value: height_max"></height-select>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="form-group" data-bind="visible: $parent.should_show_height_and_weight">
+                        <div class="col-md-3 control-label"><label>Weight</label></div>
+                        <div class="col-md-9">
+                          <div class="criteria-select">
+                            Minimum:
+                            {{ product_form.criteria_weight_min(**{'data-bind':'value: weight_min'}) | safe }}
+                            Maximum:
+                            {{ product_form.criteria_weight_max(**{'data-bind':'value: weight_max'}) | safe }}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <div class="col-md-3 control-label"><label>Age</label></div>
+                        <div class="col-md-9">
+                          <div class="criteria-select">
+                            Minimum:
+                            {{ product_form.criteria_age_min(**{'data-bind':'value: age_min'}) | safe }}
+                            Maximum:
+                            {{ product_form.criteria_age_max(**{'data-bind':'value: age_max'}) | safe }}
+                          </div>
+                        </div>
+                      </div>
+
+                      <button class="btn btn-default" data-bind="click: $root.add_new_criteria">Save Criteria</button>
+                    </div>
+
+                    <h4 class="header lighter">When GI and criteria met</h4>
+                    <div class="form-group">
+                      <div class="col-md-9">
+
+                        <div class="soh_options">
+                          <!--ko foreach: product().soh_category_options -->
+                          <div class="row">
+                            <label class="col-md-offset-1">
+                              <input type="checkbox"
+                                     class="ace ace-switch ace-switch-3 padding-10"
+                                     data-bind="value: label, checked: is_required"
+                                      >
+                                                                <span class="lbl"
+                                                                      data-lbl="&nbsp;Required&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ignored"></span>
+                              <span data-bind="text: label" style="line-height: 23px; vertical-align: top;"></span>
+                            </label>
+                          </div>
+                          <!--/ko-->
+                        </div>
+
+                      </div>
+                    </div>
+
+                    <h4 class="header lighter">Assign to Agents</h4>
+                    <div class="row">
+                      <div class="col-sm-10 col-md-offset-1">
+                        <select data-bind="options: available_agents,
+                                                            optionsText: 'name',
+                                                            selectedOptions: product().agents"
+                                multiple="multiple" class="form-control" id="assigned-agents"
+                                size="10" style="min-height: 8em;">
+
+                        </select>
+                      </div>
+                    </div>
+
+                  {% endif %}
+                  {% if is_base_product %}
+                    <!--ko if: product().is_visible_to_agents -->
+                    <h4 class="header lighter">Restrict from Agents</h4>
+                    <div class="row">
+                      <div class="col-sm-10 col-md-offset-1">
+                        <select data-bind="options: available_agents,
+                                                            optionsText: 'name',
+                                                            selectedOptions: product().restricted_agents"
+                                multiple="multiple" class="form-control" id="restricted-agents"
+                                size="10" style="min-height: 8em;">
+                        </select>
+                      </div>
+                    </div>
+                    <!--/ko-->
+                  {% endif %}
                 </div>
-                
-            </form> 
-            
+              </div>
+
+              <br>
+
+              {% if cases_using_product %}
+                <h4 class="header lighter">Cases Using Product</h4>
+                <table class="table bordered">
+                  <thead><tr>
+                    <th>Company</th>
+                    <th>Location</th>
+                    <th>Owner Agent</th>
+                    <th>Active</th>
+                    <th>Created</th>
+
+                  </tr></thead>
+                  {% for case in cases_using_product %}
+                    <tr>
+                      <td>{{ case.company_name }}</td>
+                      <td>{{ case.format_location() }}</td>
+                      <td>{{ case.format_owner_name() }}</td>
+                      <td>{{ case.format_is_active() }}</td>
+                      <td>{{ case.format_created_date() }}</td>
+                    </tr>
+                  {% endfor %}
+                </table>
+              {% endif %}
+
+              <br>
+              {% if is_gi_product %}
+                <div class="row">
+                  <div class="col-xs-12">
+                    <button class="btn btn-danger btn-xs" data-bind="click: delete_product">Delete Product</button>
+                  </div>
+                </div>
+              {% endif %}
+
+
+
+
+
+            </div>
+            <div class="widget-toolbox clearfix padding-8">
+              <div class="clearfix">
+                <button type="submit" class="btn-primary btn-sm pull-right">Save</button>
+              </div>
+              <div class="clearfix">
+                <div class="pull-right submit-message"></div>
+              </div>
+            </div>
+          </div>
         </div>
+
+      </form>
+
     </div>
-    
-    
+  </div>
+
+
 {% endblock %}
 
 {% block modals %}
-    {{ super() }}
-    
-    {# Loading modal #}
-    <!--ko component: {name: 'loading-modal', params: {options: loading_modal}} -->
-    <!--/ko-->
+  {{ super() }}
+
+  {# Loading modal #}
+  <!--ko component: {name: 'loading-modal', params: {options: loading_modal}} -->
+  <!--/ko-->
 {% endblock %}
 
 {% block page_js %}
-<script>
-$(function() {
-    
-    var Agent = function(agent) {
+  <script>
+    $(function() {
+
+      var Agent = function(agent) {
         var self = this;
         self.id = agent.id;
         self.name = agent.first + " " + agent.last;
-    };
-    
-    var GICriterionViewModel = function(criterion) {
+      };
+
+      var GICriterionViewModel = function(criterion) {
         var self = this;
         var defaults = {
-            applicant_type: null,
-            product_id: null,
-            guarantee_issue_amount: null,
-            height_min: null,
-            height_max: null,
-            weight_min: null,
-            weight_max: null,
-            age_min: null,
-            age_max: null
+          applicant_type: null,
+          product_id: null,
+          guarantee_issue_amount: null,
+          height_min: null,
+          height_max: null,
+          weight_min: null,
+          weight_max: null,
+          age_min: null,
+          age_max: null
         };
         var settings = $.extend({}, defaults, criterion);
         
@@ -291,66 +295,66 @@ $(function() {
         self.age_max = ko.observable(settings.age_max);
         
         self.na_or_val = function(val) {
-            return (val === "-1" || val === null) ? "(N/A)" : val;
+          return (val === "-1" || val === null) ? "(N/A)" : val;
         };
         
         self.display_criteria = ko.computed(function() {
-            var criteria_descs = [];
-            if (parseInt(self.age_min()) > 0 || parseInt(self.age_max()) > 0) {
-                criteria_descs.push(("Age between "+self.na_or_val(self.age_min())+" and " +
+          var criteria_descs = [];
+          if (parseInt(self.age_min()) > 0 || parseInt(self.age_max()) > 0) {
+            criteria_descs.push(("Age between "+self.na_or_val(self.age_min())+" and " +
                     self.na_or_val(self.age_max())
-                ));
-            }
-            if (parseInt(self.height_min()) > 0 || parseInt(self.height_max()) > 0) {
-                criteria_descs.push(("Height between "+self.na_or_val(self.height_min())+" and " +
+            ));
+          }
+          if (parseInt(self.height_min()) > 0 || parseInt(self.height_max()) > 0) {
+            criteria_descs.push(("Height between "+self.na_or_val(self.height_min())+" and " +
                     self.na_or_val(self.height_max())
-                ));
-            }
-            if (parseInt(self.weight_min()) > 0 || parseInt(self.weight_max()) > 0) {
-                criteria_descs.push(("Weight between "+self.na_or_val(self.weight_min())+" and " +
+            ));
+          }
+          if (parseInt(self.weight_min()) > 0 || parseInt(self.weight_max()) > 0) {
+            criteria_descs.push(("Weight between "+self.na_or_val(self.weight_min())+" and " +
                     self.na_or_val(self.weight_max())
-                ));
-            }
-            
-            return criteria_descs.join("<br>");
+            ));
+          }
+
+          return criteria_descs.join("<br>");
         });
         
         self.should_product_show_height_and_weight = function(product) {
-            return (product.does_use_height_and_weight() && self.applicant_type() !== "Child");
+          return (product.does_use_height_and_weight() && self.applicant_type() !== "Child");
         };
         
         self.serialize = function() {
-            return {
-                applicant_type: self.applicant_type(),
-                product_id: self.product_id(),
-                guarantee_issue_amount: self.serialize_limit(self.guarantee_issue_amount()),
-                height_min: self.serialize_limit(self.height_min()),
-                height_max: self.serialize_limit(self.height_max()),
-                weight_min: self.serialize_limit(self.weight_min()),
-                weight_max: self.serialize_limit(self.weight_max()),
-                age_min: self.serialize_limit(self.age_min()),
-                age_max: self.serialize_limit(self.age_max())
-            };
+          return {
+            applicant_type: self.applicant_type(),
+            product_id: self.product_id(),
+            guarantee_issue_amount: self.serialize_limit(self.guarantee_issue_amount()),
+            height_min: self.serialize_limit(self.height_min()),
+            height_max: self.serialize_limit(self.height_max()),
+            weight_min: self.serialize_limit(self.weight_min()),
+            weight_max: self.serialize_limit(self.weight_max()),
+            age_min: self.serialize_limit(self.age_min()),
+            age_max: self.serialize_limit(self.age_max())
+          };
         };
         
         self.serialize_limit = function(val) {
-            if (val == "-1" || val === null) {
-                return null;
-            } else {
-                // Strip any commas for large numbers
-                val = (val + "").replace(/,/, "");
-                return parseInt(val);
-            }
+          if (val == "-1" || val === null) {
+            return null;
+          } else {
+            // Strip any commas for large numbers
+            val = (val + "").replace(/,/, "");
+            return parseInt(val);
+          }
         }
-    };
-    
-    var SOHCategoryOptionViewModel = function(label, is_required) {
+      };
+
+      var SOHCategoryOptionViewModel = function(label, is_required) {
         var self = this;
         self.label = label;
         self.is_required = ko.observable(is_required);
-    };
+      };
 
-    var CustomProductViewModel = function(custom_product, available_agents, soh_options, editor) {
+      var CustomProductViewModel = function(custom_product, available_agents, soh_options, editor) {
         var self = this;
         self.editor = editor;
         
@@ -358,20 +362,33 @@ $(function() {
         self.name = ko.observable(custom_product.name);
         self.base_product_id = ko.observable(custom_product.base_product_id);
         self.gi_criteria = ko.observableArray($.map(custom_product.gi_criteria, function(c) {
-            return new GICriterionViewModel(c); 
+          return new GICriterionViewModel(c);
         }));
-        
-        // 
-        self.base_product_id.subscribe(function(new_id) {   
-            if (self.gi_criteria().length == 0) {
-                return;
-            }
-            
-            bootbox.alert("By changing the base product, all criteria will be removed.");
-            
-            self.gi_criteria([]);
-            
-            editor.new_criterion(null);
+
+        self.should_limit_rates_to_gi = ko.observable(custom_product.should_limit_rates_to_gi);
+        self.can_limit_rates_to_gi = ko.pureComputed(function() {
+          // We only allow this to be checked if not derived from Group CI
+          if (!self.base_product_id()) {
+            return false;
+          }
+          var base_product = _.find(editor.base_product_options, function(p) {return p.id === self.base_product_id()});
+          // TODO: This is a bit fragile, but is a workaround for now.
+          return base_product.name != "Group Critical Illness";
+        });
+
+        self.base_product_id.subscribe(function(new_id) {
+
+          // Always reset the rate limit checkbox since some products don't allow this.
+          self.should_limit_rates_to_gi(false);
+
+          if (self.gi_criteria().length == 0) {
+            return;
+          }
+
+          bootbox.alert("By changing the base product, all criteria will be removed.");
+
+          self.gi_criteria([]);
+          editor.new_criterion(null);
         });
         
         // Legacy: used to have a radio bound to this
@@ -380,59 +397,60 @@ $(function() {
         // select bypassed_questions from soh_options
         var bypassed_labels = _.pluck(custom_product.bypassed_soh_questions, "question_type_label");
         self.soh_category_options = ko.computed(function() {
-            var category_choices = soh_options[self.base_product_id()];
-            return _.map(category_choices, function(o) {
-                var is_required = !_.contains(bypassed_labels, o);
-                return new SOHCategoryOptionViewModel(o, is_required);
-            });
-        });
-        /*self.soh_category_options = _.map(soh_options, function(o) {
+          var category_choices = soh_options[self.base_product_id()];
+          return _.map(category_choices, function(o) {
             var is_required = !_.contains(bypassed_labels, o);
             return new SOHCategoryOptionViewModel(o, is_required);
+          });
         });
-        */
+        /*self.soh_category_options = _.map(soh_options, function(o) {
+         var is_required = !_.contains(bypassed_labels, o);
+         return new SOHCategoryOptionViewModel(o, is_required);
+         });
+         */
         self.bypassed_questions = ko.computed(function() {
-            return _.map(_.filter(self.soh_category_options(),
-                             function(o) {
-                                 return o.is_required() == false;
-                             }), 
-                    function(o) {
-                        return o.label;
-                    });
+          return _.map(_.filter(self.soh_category_options(),
+                          function(o) {
+                            return o.is_required() == false;
+                          }),
+                  function(o) {
+                    return o.label;
+                  });
         });
         
         // Select from available agents
         var available_by_id = {};
         $.each(available_agents, function() {
-            available_by_id[this.id] = this; 
+          available_by_id[this.id] = this;
         });
         var assigned_agents = [];
         $.each(custom_product.agents, function() {
-            var agent = this;
-            if (agent.id in available_by_id) {
-                assigned_agents.push(available_by_id[agent.id]);
-            }
+          var agent = this;
+          if (agent.id in available_by_id) {
+            assigned_agents.push(available_by_id[agent.id]);
+          }
         });
         self.agents = ko.observableArray(assigned_agents);
         
         self.remove_criterion = function(c) {
-            self.gi_criteria.remove(c);
+          self.gi_criteria.remove(c);
         };
         
         self.serialize = function() {
-            return {
-                id: self.id(),
-                name: self.name(),
-                base_product_id: self.base_product_id(),
-                gi_criteria: $.map(self.gi_criteria(), function(c) {return c.serialize()}),
-                statement_of_health_bypass_type: self.statement_of_health_bypass_type(),
-                bypassed_questions: self.bypassed_questions(),
-                agents: self.agents()
-            }
+          return {
+            id: self.id(),
+            name: self.name(),
+            base_product_id: self.base_product_id(),
+            gi_criteria: $.map(self.gi_criteria(), function(c) {return c.serialize()}),
+            should_limit_rates_to_gi: self.should_limit_rates_to_gi(),
+            statement_of_health_bypass_type: self.statement_of_health_bypass_type(),
+            bypassed_questions: self.bypassed_questions(),
+            agents: self.agents()
+          }
         }
-    };
-    
-    var BaseProductViewModel = function(base_product, available_agents) {
+      };
+
+      var BaseProductViewModel = function(base_product, available_agents) {
         var self = this;
         self.id = base_product.id;
         self.name = base_product.name;
@@ -441,27 +459,27 @@ $(function() {
         var available_by_id = _.indexBy(available_agents, 'id');
         var restricted_agents = [];
         $.each(base_product.restricted_agents, function() {
-            var agent = this;
-            if (agent.id in available_by_id) {
-                restricted_agents.push(available_by_id[agent.id]);
-            }
+          var agent = this;
+          if (agent.id in available_by_id) {
+            restricted_agents.push(available_by_id[agent.id]);
+          }
         });
         self.restricted_agents = ko.observableArray(restricted_agents);
         
         self.does_use_height_and_weight = function() {
-            return base_product.code === "Group CI";   
+          return base_product.code === "Group CI";
         };
         
         self.serialize = function() {
-            return {
-                id: self.id,
-                name: self.name,
-                restricted_agents: self.restricted_agents()
-            }
+          return {
+            id: self.id,
+            name: self.name,
+            restricted_agents: self.restricted_agents()
+          }
         }
-    };
-    
-    var CustomProductEditor = function(custom_product, base_product_options, available_agents, soh_options_map) {
+      };
+
+      var CustomProductEditor = function(custom_product, base_product_options, available_agents, soh_options_map) {
         var self = this;
         
         self.available_agents = $.map(available_agents, function(a){return new Agent(a)}) || [];
@@ -476,38 +494,38 @@ $(function() {
         self.issue_amount_options = [];
         // Populate issue amount options
         for (var i = 1000; i <= 150000; i += 1000) {
-            var amount = numberWithCommas(i);
-            self.issue_amount_options.push(amount);
+          var amount = numberWithCommas(i);
+          self.issue_amount_options.push(amount);
         }
         
         self.should_show_criteria_form = ko.observable(false);
         self.show_criteria_form = function() {
-            self.new_criterion(new GICriterionViewModel({product_id: self.product().id()}));
-            self.should_show_criteria_form(true);  
+          self.new_criterion(new GICriterionViewModel({product_id: self.product().id()}));
+          self.should_show_criteria_form(true);
         };
         self.add_new_criteria = function() {
-            self.product().gi_criteria.push(self.new_criterion());
-            
-            // keep it sorted by applicant, mins
-            self.sort_criteria();
-            
-            self.new_criterion(null);
-            self.should_show_criteria_form(false);  
+          self.product().gi_criteria.push(self.new_criterion());
+
+          // keep it sorted by applicant, mins
+          self.sort_criteria();
+
+          self.new_criterion(null);
+          self.should_show_criteria_form(false);
         };
         
         self.sort_criteria = function() {
-            self.product().gi_criteria.sort(function(x, y){
-                if (x.applicant_type() === y.applicant_type()) {
-                    return 0;
-                } else {
-                    
-                    var applicant_ordering = {"Employee":1, "Spouse": 2, "Child": 3};
-                    var xo = applicant_ordering[x.applicant_type()];
-                    var yo = applicant_ordering[y.applicant_type()];
-                    
-                    return xo - yo; 
-                }
-            });
+          self.product().gi_criteria.sort(function(x, y){
+            if (x.applicant_type() === y.applicant_type()) {
+              return 0;
+            } else {
+
+              var applicant_ordering = {"Employee":1, "Spouse": 2, "Child": 3};
+              var xo = applicant_ordering[x.applicant_type()];
+              var yo = applicant_ordering[y.applicant_type()];
+
+              return xo - yo;
+            }
+          });
         };
         
         self.new_criterion = ko.observable(null);
@@ -516,75 +534,75 @@ $(function() {
         
         
         self.should_show_height_and_weight = ko.computed(function() {
-            var current_product = self.base_products_by_id[self.product().base_product_id()];
-            if (!current_product) {
-                return false;
-            }
-            
-            if (!self.new_criterion()) {
-                return false;
-            }
-            
-            return self.new_criterion().should_product_show_height_and_weight(current_product);
+          var current_product = self.base_products_by_id[self.product().base_product_id()];
+          if (!current_product) {
+            return false;
+          }
+
+          if (!self.new_criterion()) {
+            return false;
+          }
+
+          return self.new_criterion().should_product_show_height_and_weight(current_product);
         });
         
         // Communicate with the loading modal component
         self.loading_modal = ko.observable(null);
         
         self.save_settings = function() {
-            var form_data = self.product().serialize();
-            
-            var settings_request = send_json_data(
-                "PUT", 
-                "{{ url_for("products.update_product", product_id=product.id) }}",
-                form_data
-            );
-            
-            self.loading_modal({message: "Saving Product...", title: "Please wait"});
-            
-            var on_success = function(case_xhr, periods_xhr) {
-                location.href = "{{ url_for("manage_custom_products") }}";
-                //self.loading_modal(null);
-            };
-            var on_failure = function(case_xhr, periods_xhr) {
-                var resp = case_xhr.responseJSON;
-                self.loading_modal(null);
-                if (resp && resp.errors) {
-                    show_all_errors(resp.errors);
-                    bootbox.alert("Please fix the problems indicated on the page and try again.");
-                } else {
-                    bootbox.alert("There was a problem saving the data.");
-                }
-            };
-            $.when(settings_request//, agents_request
-                ).then(on_success, on_failure);
-            
-            hide_all_errors();
-            return false; 
+          var form_data = self.product().serialize();
+
+          var settings_request = send_json_data(
+                  "PUT",
+                  "{{ url_for("products.update_product", product_id=product.id) }}",
+                  form_data
+          );
+
+          self.loading_modal({message: "Saving Product...", title: "Please wait"});
+
+          var on_success = function(case_xhr, periods_xhr) {
+            location.href = "{{ url_for("manage_custom_products") }}";
+            //self.loading_modal(null);
+          };
+          var on_failure = function(case_xhr, periods_xhr) {
+            var resp = case_xhr.responseJSON;
+            self.loading_modal(null);
+            if (resp && resp.errors) {
+              show_all_errors(resp.errors);
+              bootbox.alert("Please fix the problems indicated on the page and try again.");
+            } else {
+              bootbox.alert("There was a problem saving the data.");
+            }
+          };
+          $.when(settings_request//, agents_request
+          ).then(on_success, on_failure);
+
+          hide_all_errors();
+          return false;
         };
         
         self.delete_product = function() {
-            bootbox.confirm("Are you sure you want to delete '"+self.product().name()+"'? This cannot be undone.", function(result) {
-                if (!result) return;
-                
-                $.when(send_json_data(
-                        "DELETE", 
-                        "{{ url_for("products.delete_product", product_id=product.id) }}",
-                        {}
-                    )
-                ).then(function(case_xhr, periods_xhr) {
-                    bootbox.alert("Product was deleted successfully.", function() {
-                        window.location.href = "{{ url_for("manage_custom_products") }}";
-                    });
-                    
-                }, function(case_xhr, periods_xhr) {
-                    bootbox.alert("Sorry, the product could not be deleted.");
-                });
-            })
-        };
-    };
+          bootbox.confirm("Are you sure you want to delete '"+self.product().name()+"'? This cannot be undone.", function(result) {
+            if (!result) return;
 
-    var BaseProductEditor = function(product, available_agents) {
+            $.when(send_json_data(
+                            "DELETE",
+                            "{{ url_for("products.delete_product", product_id=product.id) }}",
+                            {}
+                    )
+            ).then(function(case_xhr, periods_xhr) {
+                      bootbox.alert("Product was deleted successfully.", function() {
+                        window.location.href = "{{ url_for("manage_custom_products") }}";
+                      });
+
+                    }, function(case_xhr, periods_xhr) {
+                      bootbox.alert("Sorry, the product could not be deleted.");
+                    });
+          })
+        };
+      };
+
+      var BaseProductEditor = function(product, available_agents) {
         var self = this;
         
         self.available_agents = $.map(available_agents, function(a){return new Agent(a)}) || [];
@@ -596,57 +614,57 @@ $(function() {
         self.loading_modal = ko.observable(null);
         
         self.save_settings = function() {
-            var form_data = self.product().serialize();
-            
-            var settings_request = send_json_data(
-                "PUT", 
-                "{{ url_for("products.update_product", product_id=product.id) }}",
-                form_data
-            );
-            
-            var on_success = function(case_xhr, periods_xhr) {
-                alert("Saved");
-            };
-            var on_failure = function(case_xhr, periods_xhr) {
-                var resp = case_xhr.responseJSON;
-                if (resp && resp.errors) {
-                    show_all_errors(resp.errors);
-                } else {
-                    alert("There was a problem saving the data.");
-                }
-            };
-            $.when(settings_request
-                ).then(on_success, on_failure);
-            
-            hide_all_errors();
-            return false; 
-        };
-    };
+          var form_data = self.product().serialize();
 
-    {% if is_gi_product %}
-        window.ui = new CustomProductEditor({{ product |tojson|safe }}, {{ base_product_options |tojson|safe }}, {{ available_agents |tojson|safe }}, 
-            {{ statement_of_health_options |tojson|safe }});
-    {% else %}
+          var settings_request = send_json_data(
+                  "PUT",
+                  "{{ url_for("products.update_product", product_id=product.id) }}",
+                  form_data
+          );
+
+          var on_success = function(case_xhr, periods_xhr) {
+            alert("Saved");
+          };
+          var on_failure = function(case_xhr, periods_xhr) {
+            var resp = case_xhr.responseJSON;
+            if (resp && resp.errors) {
+              show_all_errors(resp.errors);
+            } else {
+              alert("There was a problem saving the data.");
+            }
+          };
+          $.when(settings_request
+          ).then(on_success, on_failure);
+
+          hide_all_errors();
+          return false;
+        };
+      };
+
+      {% if is_gi_product %}
+        window.ui = new CustomProductEditor({{ product |tojson|safe }}, {{ base_product_options |tojson|safe }}, {{ available_agents |tojson|safe }},
+                {{ statement_of_health_options |tojson|safe }});
+      {% else %}
         window.ui = new BaseProductEditor({{ product |tojson|safe }}, {{ available_agents |tojson|safe }});
-    {% endif %}
-    ko.applyBindings(window.ui, document.body);
-    // Multi-list demo
-    $('#assigned-agents').bootstrapDualListbox({
+      {% endif %}
+      ko.applyBindings(window.ui, document.body);
+      // Multi-list demo
+      $('#assigned-agents').bootstrapDualListbox({
         infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',
         showFilterInputs: true,
         moveOnSelect: false,
         nonSelectedListLabel: 'Available Agents:',
         selectedListLabel: 'Product Visible to Agents:'
-    });
+      });
 
-    $('#restricted-agents').bootstrapDualListbox({
+      $('#restricted-agents').bootstrapDualListbox({
         infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',
         showFilterInputs: true,
         moveOnSelect: false,
         nonSelectedListLabel: 'Available Agents:',
         selectedListLabel: 'Product Not Visible to Agents:'
+      });
+
     });
-    
-});
-</script>
+  </script>
 {% endblock %}
