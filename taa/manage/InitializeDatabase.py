@@ -74,18 +74,21 @@ def init_basic_data():
             name=u"FPP-White",
             product_type=u"base",
             visible_to_agents=False,
+            is_fpp_gov=True,
         ),
         dict(
             code=u"FPPTIB",
             name=u"FPP-Blue",
             product_type=u"base",
             visible_to_agents=False,
+            is_fpp_gov=True,
         ),
         dict(
             code=u"FPPTIY",
             name=u"FPP-Gray",
             product_type=u"base",
             visible_to_agents=False,
+            is_fpp_gov=True,
         ),
     ]
     for product in product_data:
@@ -93,4 +96,8 @@ def init_basic_data():
         if not product_service.find(code=product['code']).first():
             product_service.create(**product)
             #print("Product '{}' created successfully".format(product['code']))
+        else:
+            p = product_service.find(code=product['code']).first()
+            product_service.update(p, **product)
+
     db.session.commit()

@@ -59,7 +59,7 @@
 
                     <h4 class="header lighter">Guarantee Issue Criteria
                       <label class="pull-right">
-                        <input type="checkbox" data-bind="checked: product().should_limit_rates_to_gi"> Restrict available rates to GI levels
+                        <input type="checkbox" data-bind="checked: product().should_limit_rates_to_gi, enable: product().can_limit_rates_to_gi"> Restrict available rates to GI levels
                       </label>
                     </h4>
 
@@ -366,8 +366,21 @@
         }));
 
         self.should_limit_rates_to_gi = ko.observable(custom_product.should_limit_rates_to_gi);
+        self.can_limit_rates_to_gi = ko.pureComputed(function() {
+          // We only allow this to be checked if not derived from Group CI
+          if (!self.base_product_id()) {
+            return false;
+          }
+          var base_product = _.find(editor.base_product_options, function(p) {return p.id === self.base_product_id()});
+          // TODO: This is a bit fragile, but is a workaround for now.
+          return base_product.name != "Group Critical Illness";
+        });
 
         self.base_product_id.subscribe(function(new_id) {
+
+          // Always reset the rate limit checkbox since some products don't allow this.
+          self.should_limit_rates_to_gi(false);
+
           if (self.gi_criteria().length == 0) {
             return;
           }
@@ -375,7 +388,6 @@
           bootbox.alert("By changing the base product, all criteria will be removed.");
 
           self.gi_criteria([]);
-
           editor.new_criterion(null);
         });
         

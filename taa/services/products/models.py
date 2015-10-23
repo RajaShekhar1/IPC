@@ -120,6 +120,9 @@ class Product(ProductJsonSerializable, db.Model):
 
         return None
 
+    def are_rates_limited_to_GI(self):
+        "Custom GI products can override this, but base products show all rates."
+        return False
 
 # Relate custom products to agents - who can see these products
 product_agents = db.Table('product_agents', db.metadata,
@@ -159,6 +162,10 @@ class CustomGuaranteeIssueProduct(CustomProductSerializer, Product):
 
     def is_base_product(self):
         return False
+
+    def are_rates_limited_to_GI(self):
+        "A setting that restricts rates to GI levels."
+        return self.should_limit_rates_to_gi
 
 
 class BypassedSOHSerializer(JsonSerializable):
