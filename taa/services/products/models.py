@@ -5,6 +5,7 @@ from taa.helpers import JsonSerializable
 from taa.services.products.product_forms import ProductFormService
 product_form_service = ProductFormService()
 
+
 class ProductJsonSerializable(JsonSerializable):
     __json_hidden__ = ['cases', 'customized_products']
 
@@ -119,11 +120,16 @@ class Product(ProductJsonSerializable, db.Model):
 
         return None
 
+    def are_rates_limited_to_GI(self):
+        "Custom GI products can override this, but base products show all rates."
+        return False
+
 # Relate custom products to agents - who can see these products
 product_agents = db.Table('product_agents', db.metadata,
     db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True),
     db.Column('agent_id', db.Integer, db.ForeignKey('agents.id'), primary_key=True),
 )
+
 
 class CustomProductSerializer(ProductJsonSerializable):
     __json_hidden__ = ['cases', 'customized_products', 'base_product']
@@ -131,12 +137,14 @@ class CustomProductSerializer(ProductJsonSerializable):
         'is_fpp_gov': lambda _, p: p.is_base_fpp_gov()
     }
 
+
 class CustomGuaranteeIssueProduct(CustomProductSerializer, Product):
     __tablename__ = "products_custom_guaranteed_issue"
 
     id = db.Column(db.Integer, db.ForeignKey('products.id'), primary_key=True)
     base_product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
     statement_of_health_bypass_type = db.Column(db.String(32))
+    should_limit_rates_to_gi = db.Column(db.Boolean, nullable=False, server_default=db.text('FALSE'))
 
     __mapper_args__ = {'polymorphic_identity': u'GI',
                        'inherit_condition': id == Product.id}
@@ -155,8 +163,14 @@ class CustomGuaranteeIssueProduct(CustomProductSerializer, Product):
     def is_base_product(self):
         return False
 
+    def are_rates_limited_to_GI(self):
+        "A setting that restricts rates to GI levels."
+        return self.should_limit_rates_to_gi
+
+
 class BypassedSOHSerializer(JsonSerializable):
     __json_hidden__ = ['product']
+
 
 class BypassedStatementOfHealthQuestion(BypassedSOHSerializer, db.Model):
     __tablename__ = "products_gi_bypass_questions"
@@ -166,8 +180,10 @@ class BypassedStatementOfHealthQuestion(BypassedSOHSerializer, db.Model):
     product = db.relationship("Product", backref=db.backref('bypassed_soh_questions'))
     question_type_label = db.Column(db.Unicode)
 
+
 class GICriteriaSerializer(JsonSerializable):
     __json_hidden__ = ['product']
+
 
 class GuaranteeIssueCriteria(GICriteriaSerializer, db.Model):
     __tablename__ = "products_gi_criteria"

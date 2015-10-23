@@ -13,9 +13,19 @@ DATA_DIR = 'taa/services/products/data_files'
 TYPE_COVERAGE = 'coverage'
 TYPE_PREMIUM = 'premium'
 
+# These must match (case insensitive) the values of applicant type on GI Criteria objects.
+APPLICANT_TYPE_EMPLOYEE = 'employee'
+APPLICANT_TYPE_SPOUSE = 'spouse'
+APPLICANT_TYPE_CHILDREN = 'child'
+
+# Global used to cache the rates after being loaded from files
 rates = None
 
+
 def get_rates(product, **demographics):
+    '''
+    Public Rates interface
+    '''
 
     # Initialize rates if None
     global rates
@@ -24,6 +34,7 @@ def get_rates(product, **demographics):
         initialize_rates_from_files(rates)
 
     product_code = product.get_base_product_code()
+
     # Check employee eligibility
     limit_errors = []
     if not is_eligible(product_code, demographics['employee_gender'],
@@ -37,6 +48,7 @@ def get_rates(product, **demographics):
                  error='This height/weight combination is outside the range '
                        'for this product.')
         ]
+
     # Check spouse eligibility if required
     if demographics.get('spouse_age') is not None and not is_eligible(
             product_code, demographics['spouse_gender'],
@@ -49,18 +61,32 @@ def get_rates(product, **demographics):
                  error='This height/weight combination is outside the range '
                        'for this product.'),
             ]
+
     # If any height/weight errors, raise an API exception
     if limit_errors:
         raise TAAFormError(errors=limit_errors)
+
+    # We use a different method if the product rates are supposed to be limited by GI settings
+    if product.are_rates_limited_to_GI():
+        rate_calc = GILimitedRatesDecorator(rates, product)
+    else:
+        rate_calc = rates
+
     return {
-        'employee': rates.get(product_code, demographics.get('payment_mode'),
+        'employee': rate_calc.get(product_code, demographics.get('payment_mode'),
                               demographics['employee_age'],
-                              demographics.get('employee_smoker')),
-        'spouse': rates.get(product_code, demographics.get('payment_mode'),
+                              demographics.get('employee_smoker'),
+                              applicant_type=APPLICANT_TYPE_EMPLOYEE,
+                              height=demographics.get('employee_height'),
+                              weight=demographics.get('employee_weight')),
+        'spouse': rate_calc.get(product_code, demographics.get('payment_mode'),
                             demographics.get('spouse_age'),
-                            demographics.get('spouse_smoker')),
-        'children': rates.get(product_code, demographics.get('payment_mode'),
-                              age=None)
+                            demographics.get('spouse_smoker'),
+                              applicant_type=APPLICANT_TYPE_SPOUSE,
+                              height=demographics.get('spouse_height'),
+                              weight=demographics.get('spouse_weight')),
+        'children': rate_calc.get(product_code, demographics.get('payment_mode'), age=None,
+                              applicant_type=APPLICANT_TYPE_CHILDREN)
     }
 
 
@@ -145,18 +171,13 @@ class Rates(object):
         product_key = Rates._get_product_key(product_code, smoker)
         self._init_dict(product_key, payment_mode, type_)
         for line in reader:
-            for index, key in enumerate(
-                    itertools.product([floatify(line[0])], header[1:]), start=1):
-
+            for index, key in enumerate(itertools.product([floatify(line[0])], header[1:]), start=1):
                 self._rates[product_key][payment_mode][type_][key] = {
-                    TYPE_PREMIUM:
-                        floatify(line[index]) if type_ == TYPE_COVERAGE
-                        else key[1],
-                    TYPE_COVERAGE:
-                        floatify(line[index]) if type_ == TYPE_PREMIUM else key[1]
+                    TYPE_PREMIUM: floatify(line[index]) if type_ == TYPE_COVERAGE else key[1],
+                    TYPE_COVERAGE: floatify(line[index]) if type_ == TYPE_PREMIUM else key[1]
                 }
 
-    def get(self, product_code, payment_mode, age, smoker=None):
+    def get(self, product_code, payment_mode, age, smoker=None, applicant_type=None, height=None, weight=None):
         result = {}
         if age is None:
             # Children rates/premiums are indexed with age as -1
@@ -179,6 +200,68 @@ class Rates(object):
         result['byface'] = result.pop(TYPE_COVERAGE)
         result['bypremium'] = result.pop(TYPE_PREMIUM)
         return result
+
+
+class GILimitedRatesDecorator(Rates):
+    def __init__(self, rates, product):
+        self._wrapped_rates = rates
+        self.product = product
+
+    def get(self, product_code, payment_mode, age, smoker=None, applicant_type=None, height=None, weight=None):
+        """
+        Don't allow any rates that are above GI levels, and
+        don't use any rates if no criteria defined for a given applicant.
+        """
+
+        rates = self._wrapped_rates.get(
+            product_code,
+            payment_mode,
+            age,
+            smoker=smoker,
+            applicant_type=applicant_type,
+            height=height,
+            weight=weight,
+        )
+
+        # Get the GI limit for the criteria
+        limit = self.get_GI_limit(applicant_type, age, smoker, height, weight)
+        def filter_coverage_by_limit(rate):
+            return rate['coverage'] <= limit
+
+        if not limit:
+            # We don't allow enrollment for this applicant type
+            return {'bypremium': [], 'byface': []}
+        else:
+            rates['bypremium'] = filter(filter_coverage_by_limit, rates['bypremium'])
+            rates['byface'] = filter(filter_coverage_by_limit, rates['byface'])
+            return rates
+
+    def get_GI_limit(self, applicant_type, age, smoker, height, weight):
+
+        gi_criteria = self.product.gi_criteria
+        criteria_for_applicant = filter(lambda c: c.applicant_type.lower() == applicant_type,
+                                        gi_criteria)
+
+        def filter_criteria_min_max(property_min, property_max, value):
+            def _f(criteria):
+                if not getattr(criteria, property_min) or not getattr(criteria, property_max):
+                    # If not specified, we can keep this GI criteria
+                    return True
+                else:
+                    return value >= getattr(criteria, property_min) and value <= getattr(criteria, property_max)
+
+        filter_age = filter_criteria_min_max('age_min', 'age_max', age)
+        filter_height = filter_criteria_min_max('height_min', 'height_max', height)
+        filter_weight = filter_criteria_min_max('weight_min', 'weight_max', weight)
+
+        for func in [filter_age, filter_height, filter_weight]:
+            criteria_for_applicant = filter(func, criteria_for_applicant)
+
+        if not criteria_for_applicant:
+            return None
+
+        # Use the highest number that is allowed for this applicant
+        return max(criteria_for_applicant, key=lambda c: c.guarantee_issue_amount).guarantee_issue_amount
 
 
 # If a product is not in this dict, there are no limits on eligibility
