@@ -1529,6 +1529,10 @@ Product.prototype = {
 
     get_replacement_paragraphs: function() {
         return [];
+    },
+    should_allow_grandchildren: function() {
+        // All FPP products may include grandchildren
+        return this.is_fpp_product();
     }
 
 };
