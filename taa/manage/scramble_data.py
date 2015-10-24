@@ -55,6 +55,9 @@ class ScrambleDataCommand(Command):
             return new_ssn
 
         def scramble_date(date):
+            if not date:
+                return None
+
             if not isinstance(date, datetime.date):
                 date = datetime.datetime.strptime(date, '%m/%d/%Y')
             new_month = random.randrange(1,13)
