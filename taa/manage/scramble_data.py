@@ -59,7 +59,11 @@ class ScrambleDataCommand(Command):
                 return None
 
             if not isinstance(date, datetime.date):
-                date = datetime.datetime.strptime(date, '%m/%d/%Y')
+                try:
+                    date = datetime.datetime.strptime(date, '%m/%d/%Y')
+                except ValueError:
+                    return None
+
             new_month = random.randrange(1,13)
             days_in_month = calendar.monthrange(date.year, new_month)
             new_day = random.randrange(1, days_in_month[1]+1)
