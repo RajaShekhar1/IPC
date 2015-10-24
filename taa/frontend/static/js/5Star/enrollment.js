@@ -1529,6 +1529,10 @@ Product.prototype = {
 
     get_replacement_paragraphs: function() {
         return [];
+    },
+    should_allow_grandchildren: function() {
+        // All FPP products may include grandchildren
+        return this.is_fpp_product();
     }
 
 };
@@ -3254,13 +3258,13 @@ function format_premium_value(val) {
 
 
 
-function handle_remote_error(request) {
+function handle_remote_error(request, retry_callback) {
     if (request.status == 401) {
         if (ui.account_href != null) {
-            prompt_login();
+            prompt_login(retry_callback);
         } else {
             // The user wasn't logged in, so just restart our session
-            login_reauth(null, null);
+            login_reauth(null, null, retry_callback);
         }
     }
     else {
@@ -3268,10 +3272,10 @@ function handle_remote_error(request) {
     }
 }
 
-function prompt_login() {
+function prompt_login(callback) {
     bootbox.confirm({
         message: "Please type your password to login again: <input id='password' class='form-control' placeholder='Password' type='password'/>",
-        title: "Login",
+        title: "Session Timed Out, Please Re-Login:",
         buttons: {
             "cancel": { "label": "Cancel"},
             "confirm": {
@@ -3281,12 +3285,12 @@ function prompt_login() {
         },
         callback: function(result) {
             if (result == true) {
-                login_reauth(ui.account_href, $('#password').val());
+                login_reauth(ui.account_href, $('#password').val(), callback);
             }
         }});
 }
 
-function login_reauth(account_href, password) {
+function login_reauth(account_href, password, callback) {
     var post_data = {
         "account_href": account_href,
         "password": password,
@@ -3296,12 +3300,19 @@ function login_reauth(account_href, password) {
             "active_case_id": ui.case_id,
             "enrolling_census_record_id": ui.record_id
         }
-    }
+    };
 
-    ajax_post('/reauth', post_data, function(reauth_response)
-    {
+    ajax_post('/reauth', post_data, function(reauth_response) {
         bootbox.alert(reauth_response.message);
-    }, null, true);
+        if (callback) {
+            callback(true);
+        }
+    }, function() {
+        bootbox.alert("There was a problem reauthenticating. Please try again.");
+        if (callback) {
+            callback(false);
+        }
+    }, true);
 }
 
 function ajax_post(url, data, on_success, on_error, is_json) {
@@ -3640,26 +3651,7 @@ function init_validation() {
         
         wizard_results.rider_data = window.ui.selected_riders.serialize_data();
 
-        // Send to server
-        ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function (resp) {
-            if (resp.error) {
-                bootbox.dialog({
-                    message: "There was a problem generating the application form (" + resp.error + ").  Please contact the enrollment system administrator.",
-                    buttons: {
-                        "success": {
-                            "label": "OK",
-                            "className": "btn-sm btn-primary"
-                        }
-                    }
-                });
-            } else {
-                // Docusign redirect
-                location = resp.redirect
-            }
-
-        }, handle_remote_error, true);
-
-        bootbox.dialog({
+        var please_wait_dialogue = bootbox.dialog({
             //just showing action in the interim while getting routed to the Docusign page... the DS page should redirect probably before there's time to read this
             message: "Generating application form for signature, please wait...",
             buttons: {
@@ -3667,6 +3659,39 @@ function init_validation() {
                     "label": "Close",
                     "className": "btn-sm btn-primary"
                 }
+            }
+        });
+
+        _send_wizard_results(wizard_results);
+    }
+
+    function _send_wizard_results(wizard_results) {
+        // Send to server
+        ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function (resp) {
+          if (resp.error) {
+              bootbox.dialog({
+                  message: "There was a problem generating the application form (" + resp.error + ").  Please contact the enrollment system administrator.",
+                  buttons: {
+                      "success": {
+                          "label": "OK",
+                          "className": "btn-sm btn-primary"
+                      }
+                  }
+              });
+          } else {
+              // Docusign redirect
+              location = resp.redirect
+          }
+        }, function (req) {
+          handle_error_and_retry(req, wizard_results);
+        }, true);
+    }
+
+    function handle_error_and_retry(req, wizard_results) {
+        handle_remote_error(req, function retry_callback(success) {
+            // We allow reauthentication if they have timed out; if successful, submit again immediately.
+            if (success) {
+                _send_wizard_results(wizard_results);
             }
         });
     }

@@ -50,7 +50,6 @@ class ProductService(DBService):
         from taa.services.cases import CaseService, Case
         return CaseService().query().filter(
             Case.products.any(Product.id == product.id)
-            #).filter(Case.active == True
             ).all()
 
     def get_products_by_codes(self, codes):

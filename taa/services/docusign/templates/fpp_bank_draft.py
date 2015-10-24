@@ -1,5 +1,4 @@
-
-
+from datetime import datetime
 from taa.services.docusign.service import DocuSignServerTemplate, DocuSignTextTab, DocuSignRadioTab
 from taa.services.docusign.DocuSign_config import get_bank_draft_template_id
 
@@ -32,7 +31,8 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
             DocuSignTextTab('eeCity', employee_data.get('city', '')),
             DocuSignTextTab('eeState', employee_data.get('state', '')),
             DocuSignTextTab('eeZip', employee_data.get('zip', '')),
-            DocuSignTextTab('MonthlyPremium', self.get_monthly_premium())
+            DocuSignTextTab('MonthlyPremium', self.get_monthly_premium()),
+            DocuSignTextTab('DraftDay', self.get_draft_day()),
         ]
 
         return tabs
@@ -40,3 +40,9 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
     def get_monthly_premium(self):
         # For now, just add the premiums, since we know they are monthly payment mode.
         return self.data.format_money(self.data.get_total_modal_premium())
+
+    def get_draft_day(self):
+        if datetime.today().day <= 28:
+            return datetime.today().day
+        else:
+            return 1

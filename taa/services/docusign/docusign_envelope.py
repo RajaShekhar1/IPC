@@ -226,14 +226,20 @@ class EnrollmentDataWrap(object):
                                 'owner agent.')
         elif self.is_import():
             return self.case.owner_agent
-        else:
+        elif agent_service.get_logged_in_agent():
             return agent_service.get_logged_in_agent()
+        else:
+            # If the logged-in user is not an agent, default to case owner.
+            return self.case.owner_agent
 
     def get_employer_name(self):
         return self.case.company_name
 
     def get_product_code(self):
         return self.data['product_type']
+
+    def get_product(self):
+        return product_service.get(self.data['product_data']['id'])
 
     def get_employee_name(self):
         return '{} {}'.format(self.data['employee']['first'],

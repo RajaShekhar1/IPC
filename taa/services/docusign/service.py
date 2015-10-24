@@ -25,7 +25,7 @@ class DocuSignService(object):
         components = self.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer=True)
         envelope_result = self.create_envelope(
             email_subject="Signature needed: {} for {} ({})".format(
-                enrollment_data.get_product_code(),
+                enrollment_data.get_product().name,
                 enrollment_data.get_employee_name(),
                 enrollment_data.get_employer_name()),
             components=components,
