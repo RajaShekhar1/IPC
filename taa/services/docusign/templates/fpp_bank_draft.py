@@ -1,4 +1,7 @@
 from datetime import datetime
+
+from dateutil.relativedelta import relativedelta
+
 from taa.services.docusign.service import DocuSignServerTemplate, DocuSignTextTab, DocuSignRadioTab
 from taa.services.docusign.DocuSign_config import get_bank_draft_template_id
 
@@ -42,7 +45,18 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
         return self.data.format_money(self.data.get_total_modal_premium())
 
     def get_draft_day(self):
-        if datetime.today().day <= 28:
-            return datetime.today().day
+
+        hire_date = self.data.get_employee_date_of_hire()
+        if not hire_date:
+            # Default to today if we don't have the hire date.
+            hire_date = datetime.today()
+
+        # Use the day 14 days after the hire date as the draft day.
+        draft_date = hire_date + relativedelta(days=14)
+
+        # Default day to the first if not in the range 1 to 28.
+        draft_day_of_month = draft_date.day
+        if draft_day_of_month <= 28:
+            return draft_day_of_month
         else:
             return 1

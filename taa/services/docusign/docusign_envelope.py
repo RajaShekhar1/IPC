@@ -7,6 +7,7 @@ import decimal
 
 import httplib2
 import flask
+from dateutil.parser import parse as dateutil_parse
 
 from taa import app
 from taa.services.docusign.DocuSign_config import (
@@ -280,6 +281,13 @@ class EnrollmentDataWrap(object):
             name = name + '_'
         return name + ''.join([random.choice(chars)
                                for _ in range(token_length)])
+
+    def get_employee_date_of_hire(self):
+        try:
+            # The identityToken is the date_of_hire on FPP products.
+            return dateutil_parse(self.data['identityToken'])
+        except Exception:
+            return None
 
     def did_employee_select_coverage(self):
         return (self.data['employee_coverage'] and
