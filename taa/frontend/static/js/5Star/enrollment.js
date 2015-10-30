@@ -4088,32 +4088,32 @@ function init_validation() {
         errorPlacement: wizard_error_placement
     });
 
+    jQuery.validator.addMethod("hireDate", function(value, element) {
+        return this.optional(element) || moment(value).isValid();
+    }, "Enter a valid date.");
+
     $('#step6-form').validate({
         errorElement: 'div',
         errorClass: 'help-block',
         focusInvalid: false,
         rules: {
             confirmDisclaimer: {required: true},
-	    enrollCity: {required: true},
-	    tokenType: {required: true},
-	    /* required: function(element) {
-		    if (ui.is_in_person_application()) {
-			return true;
-		    } else {
-			return false;
-		    }
-		}
-	    },
-	    */
-	    ConfirmationToken: {required: true}
+            enrollCity: {required: true},
+            tokenType: {required: true},
+            ConfirmationToken: {
+                required: function() {
+                    return ui.insurance_product.should_use_date_of_hire_for_identity();
+                },
+                hireDate: true
+            }
         },
 
         messages: {
             confirmDisclaimer: "please acknowledge that you have received the notice",
-	    enrollCity: "required",
-	    tokenType: "required",
-            ConfirmationToken: "required"
-	},
+	          enrollCity: "required",
+	          tokenType: "required",
+            ConfirmationToken: "Valid date required"
+	      },
 
         highlight: wizard_validate_highlight,
         success: wizard_validate_success,
