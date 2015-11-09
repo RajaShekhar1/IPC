@@ -203,6 +203,7 @@ ko.bindingHandlers.modal = {
   }
 };
 
+
 ko.bindingHandlers.flashMessage = {
   update: function (element, valueAccessor) {
     $(element).html(ko.unwrap(valueAccessor())).delay(5000).hide('fade')
@@ -727,3 +728,59 @@ var StatesLimiterViewModel = function(product_statecode_mapping,
     }
   });
 };
+
+
+
+// Show a special delete modal with custom message and callback.
+ko.components.register('delete-confirm-modal', {
+  viewModel: function (params) {
+    var self = this;
+
+    self.title = params.title;
+    self.message = params.message;
+    self.callback = params.callback;
+    self.modal_observable = params.modal_observable;
+
+    // Built-in behavior has user type "DELETE"
+    self.delete_confirmation_text = ko.observable("");
+    self.is_delete_text_valid = ko.pureComputed(function() {
+      return self.delete_confirmation_text() == "DELETE";
+    });
+
+  },
+  template: '<div data-bind="modal: modal_observable" class="modal fade">\
+    <div class="modal-dialog modal-lg">\
+      <div class="modal-content">\
+        <div class="modal-header">\
+          <button type="button" class="close" data-dismiss="modal"><span\
+                                              aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>\
+          <h4 class="modal-title" data-bind="text: title"></h4>\
+        </div>\
+        <div class="modal-body">\
+          <div class="form-panel modal-panel">\
+            <div class="row">\
+              <div class="col-xs-12">\
+                <p data-bind="text: message">\
+                \
+                </p>\
+                <br>\
+                <label>\
+                  Type DELETE in the following box to confirm this is what you want:\
+                  <input data-bind="textInput: delete_confirmation_text">\
+                </label>\
+              </div>\
+            </div>\
+          </div>\
+        </div>\
+\
+        <div class="modal-footer">\
+          <div class="form-buttons buttons-panel">\
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>\
+            <button class="btn btn-danger"\
+                    data-bind="enable: is_delete_enrollment_modal_showing.is_delete_text_valid, click: do_delete_enrollment_record">PERMANENT DELETE</button>\
+          </div>\
+        </div>\
+      </div>\
+    </div>\
+  </div>'
+});

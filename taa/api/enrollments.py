@@ -73,12 +73,25 @@ def reprocess_batch(batch_id):
 
 # For convenience, allow lookup of enrollment records without case id for admin only
 #  (if this is opened up to other users, add case permission checking)
-@route(bp, '/records/<int:enrollment_record_id>')
+@route(bp, '/records/<int:enrollment_record_id>', methods=['GET'])
 @login_required
 @groups_required(['admins'])
 def get_individual_enrollment_record(enrollment_record_id):
     return enrollment_application_service.get_or_404(enrollment_record_id)
 
+# Admin delete enrollment record
+@route(bp, '/records/<int:enrollment_record_id>', methods=['DELETE'])
+@login_required
+@groups_required(['admins'])
+def delete_individual_enrollment_record(enrollment_record_id):
+    # Return a 404 if not a valid record
+    enrollment_record = enrollment_application_service.get_or_404(enrollment_record_id)
+
+    # Delete the record with associated coverages and batch items
+    enrollment_application_service.delete_enrollment_record(enrollment_record)
+
+    # Return proper DELETE response
+    return None, 204
 
 
 @route(bp, '/import_batches/<batch_id>/<item_id>/pdf', methods=['GET'])

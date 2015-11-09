@@ -37,27 +37,38 @@
                 <th>Coverage For</th>
                 <th>Face Amount</th>
                 <th>Annual Premium</th>
+                <th></th>
             </thead>
             <tbody>
-              {% for product in enrollment_data %}
-                {% if product %}
+              {% for enrollment in enrollment_data %}
+                {% if enrollment %}
                   <tr style="background:rgba(50,50,50,.1)">
-                    <td><strong data-bind="text: moment('{{ product.time }}').format('MM/DD/YYYY hh:mma')"></strong></td>
-                    <td><strong>{{product.product_name}}</strong></td>
-                    <td><strong>{{product.status.capitalize()}}</strong></td>
-                    {% if product.status=='declined'%}
+                    <td><strong data-bind="text: moment('{{ enrollment.time }}').format('MM/DD/YYYY hh:mma')"></strong></td>
+                    <td><strong>{{enrollment.product_name}}</strong></td>
+                    <td><strong>{{enrollment.status.capitalize()}}</strong></td>
+                    {% if enrollment.status=='declined'%}
                       <td><strong>N/A</strong></td>
                       <td><strong>N/A</strong></td>
-                      <td><strong>N/A</strong<td>
+                      <td><strong>N/A</strong></td>
+                      <td>
+                        {% if is_admin %}
+                          <button class="btn btn-danger" data-bind="click: function() {delete_enrollment_record({{ enrollment.id }})}"><i class="ace-icon fa fa-trash-o icon-only"></i></button>
+                        {% endif %}
+                      </td>
                     {% else %}
                       <td></td>
                       <td></td>
-                      <td><strong>{{product.total}}</strong></td>
+                      <td><strong>{{enrollment.total}}</strong></td>
+                      <td>
+                        {% if is_admin %}
+                          <button class="btn btn-danger" data-bind="click: function() {delete_enrollment_record({{ enrollment.id }})}"><i class="ace-icon fa fa-trash-o icon-only"></i></button>
+                        {% endif %}
+                      </td>
                     {% endif %}
                   </tr>
 
-                  {% if product.status != 'declined'%}
-                    {% for coverage in product.coverage %}
+                  {% if enrollment.status != 'declined'%}
+                    {% for coverage in enrollment.coverage %}
                       <tr>
                         <td></td>
                         <td></td>
@@ -65,6 +76,9 @@
                         <td>{{coverage.who}}</td>
                         <td data-bind="text: formatThousand('{{coverage.coverage or 'No Coverage'}}')"></td>
                         <td data-bind="text: formatThousand('{{coverage.annual_premium}}')"></td>
+                        <td>
+
+                        </td>
                       </tr>
                     {% endfor %}
                   {% endif %}
@@ -154,7 +168,7 @@
 
                   {% if can_edit_case %}
                       <div class="pull-left clearfix">
-                          <button type="button" class="btn btn-danger delete">Delete Record</button>
+                          <button type="button" class="btn btn-danger delete" data-bind="click: function() {delete_census_record({{ census_record.id }})}"><i class="ace-icon fa fa-trash-o"></i> Delete Record</button>
                       </div>
                       <div class="pull-right clearfix">
                           <button type="button" class="btn btn-sm" id="go-back">Cancel</button>
@@ -169,6 +183,97 @@
               </div>
           </div>
       </form>
+
+{#  <delete-confirm-modal params="#}
+{#      title: 'Delete Enrollment Data',#}
+{#      message: 'This will permanently delete the selected enrollment data; it will no longer be retrievable.  Are you sure you want to permanently remove this enrollment?',#}
+{#      callback: function() { do_delete_ },#}
+{#      modal_observable: enrollment_to_delete"></delete-confirm-modal>#}
+
+  {# Delete modal for enrollment record #}
+  <div data-bind="with: enrollment_deleter, modal: is_delete_enrollment_modal_showing" class="modal fade">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span
+                                              aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title">Delete Enrollment Data</h4>
+        </div>
+        <div class="modal-body">
+          <div class="form-panel modal-panel">
+            <div class="row">
+              <div class="col-xs-12">
+                <p>
+                This will permanently delete the selected enrollment data; it will no longer be retrievable.
+                   Are you sure you want to permanently remove this enrollment?
+                </p>
+                <br>
+                <label>
+                  Type DELETE in the following box for confirmation:
+                  <input data-bind="textInput: confirmation_text">
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="form-buttons buttons-panel">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button class="btn btn-danger"
+                    data-bind="enable: is_delete_text_valid, click: $parent.do_delete_enrollment_record">PERMANENT DELETE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  {# Delete modal for census record #}
+  <div data-bind="with: record_deleter, modal: is_delete_census_record_modal_showing" class="modal fade">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span
+                                              aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title">Delete Enrollment Data</h4>
+        </div>
+        <div class="modal-body">
+          <div class="form-panel modal-panel">
+            <div class="row">
+              <div class="col-xs-12">
+                <p>
+
+              {% if census_record.enrollment_applications %}
+                  WARNING: This census record has enrollments. Deleting the record will remove all enrollment data associated. Do you still want to delete this census record?
+              {% else %}
+                  Please confirm you want to delete this census record.
+              {% endif %}
+                </p>
+                <br>
+                <label>
+                  Type DELETE in the following box for confirmation:
+                  <input data-bind="textInput: confirmation_text">
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="form-buttons buttons-panel">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button class="btn btn-danger"
+                    data-bind="enable: is_delete_text_valid, click: $parent.do_delete_census_record">PERMANENT DELETE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <loading-modal params="options: loading_options"></loading-modal>
+
   {% endblock %}
 
   {% block page_js %}
@@ -176,14 +281,90 @@
       <script>
 
       $(function() {
-          function CensusRecordViewModel() {
-            var self = this;
-            self.formatThousand = function(amount) {
-              return amount.substr(0, amount.length-3)+amount.substr(amount.length-3).replace("000", "K");
-            }
+
+          function DeleteConfirmationVM(deleted_object_observable) {
+              var self = this;
+
+              self.deleted_object_observable = deleted_object_observable;
+
+              self.confirmation_text = ko.observable("");
+
+              self.is_delete_text_valid = ko.pureComputed(function() {
+                  return self.confirmation_text() === "DELETE";
+              });
+
+              deleted_object_observable.subscribe(function(new_val) {
+                  if (new_val !== null) {
+                    // Clear delete text box
+                    self.confirmation_text("");
+                  }
+              });
           }
 
-          ko.applyBindings(new CensusRecordViewModel());
+          function CensusRecordViewModel() {
+              var self = this;
+              self.formatThousand = function(amount) {
+                  return amount.substr(0, amount.length-3)+amount.substr(amount.length-3).replace("000", "K");
+              };
+
+              self.is_delete_enrollment_modal_showing = ko.observable(false);
+              self.enrollment_to_delete = ko.observable(null);
+              self.enrollment_deleter = new DeleteConfirmationVM(self.enrollment_to_delete);
+              self.loading_options = ko.observable(null);
+
+              self.delete_enrollment_record = function(id) {
+                  // Set the ID
+                  self.enrollment_to_delete(id);
+
+                  // Toggle to ensure we trigger the modal
+                  self.is_delete_enrollment_modal_showing(false);
+                  self.is_delete_enrollment_modal_showing(true);
+              };
+
+              self.do_delete_enrollment_record = function() {
+                  var id = self.enrollment_to_delete();
+
+                  // hide modal, show loading
+                  self.is_delete_enrollment_modal_showing(false);
+                  self.loading_options({message: "Deleting Record, please wait..."});
+
+                  var url = urls.get_delete_enrollment_record_url(id);
+                  $.ajax({method: "DELETE", url: url}).success(function() {
+                    window.location.reload();
+                  }).error(function() {
+                    alert("There was a problem deleting the enrollment record on the server.");
+                    self.loading_options(null);
+                  });
+              };
+
+              self.is_delete_census_record_modal_showing = ko.observable(false);
+              self.record_to_delete = ko.observable(null);
+              self.record_deleter = new DeleteConfirmationVM(self.record_to_delete);
+
+              self.delete_census_record = function(id) {
+                  self.record_to_delete(id);
+
+                  // Toggle the modal
+                  self.is_delete_census_record_modal_showing(false);
+                  self.is_delete_census_record_modal_showing(true);
+              };
+
+              self.do_delete_census_record = function() {
+                  self.is_delete_census_record_modal_showing(false);
+                  self.loading_options({message: "Deleting Record, please wait..."});
+
+                  send_form_data("DELETE", "{{ url_for('cases.delete_census_record', case_id=case.id, census_record_id=census_record.id) }}",
+                      {}, function() {
+                      window.location.href = "{{ url_for('manage_case', case_id=case.id) }}#enrollment";
+                  }, function() {
+                      alert("Sorry, there was a problem deleting this census record");
+                  });
+              }
+          }
+
+          window.vm = new CensusRecordViewModel();
+          ko.applyBindings(window.vm);
+
           $("#go-back").on("click", function() {
               window.location.href = ("{{ url_for("manage_case", case_id=case.id) }}#enrollment")
           });
@@ -201,26 +382,6 @@
               enrollment_city: "{{case.situs_city}}",
               enrollment_state: "{{case.situs_state}}"
             });
-          });
-
-          $("button.delete").on("click", function() {
-              {% if census_record.enrollment_applications  %}
-                  if (!confirm("WARNING: This census record has enrollments. Deleting the record will remove all enrollment data associated. Do you still want to delete this census record?")) {
-                      return;
-                  }
-              {% else %}
-                  if (!confirm("Please confirm you want to delete this census record")) {
-                      return;
-                  }
-              {% endif %}
-
-
-              send_form_data("DELETE", "{{ url_for('cases.delete_census_record', case_id=case.id, census_record_id=census_record.id) }}",
-                  {}, function() {
-                  window.location.href = "{{ url_for('manage_case', case_id=case.id) }}#enrollment";
-              }, function() {
-                  alert("Sorry, there was a problem deleting this census record");
-              });
           });
 
           $("#edit-record-form").on("submit", function() {
