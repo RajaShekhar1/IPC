@@ -323,6 +323,7 @@ def submit_wizard_data():
         agent = case.owner_agent
 
     try:
+        import ipdb; ipdb.set_trace()
         # Standardize the wizard data for submission processing
         standardized_data = enrollment_import_service.standardize_wizard_data(wizard_results)
 

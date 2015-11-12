@@ -37,13 +37,10 @@ class FPPTemplate(DocuSignServerTemplate):
         if self.data['enrollState'] in ['KY', 'KS', 'CT', 'DC', 'ND', 'VI']:
             return False
 
-        # NAIC states and MI have a special rule if the replacement question is 'No'
+        # NAIC states and MI have a special rule to attach the form if the replacement question is 'No'
         from taa.services.products.product_forms import generic_fpp_replacement_form
         if (self.data['enrollState'] in (generic_fpp_replacement_form.statecodes + ['MI'])
                 and not self.data['replacing_insurance']):
-            self.data['replacement_is_terminating'] = False
-            self.data['replacement_using_funds'] = False
-            self.data['replacement_policies'] = []
             return True
 
         # Self-enroll needs to be given the form if the existing question is Yes.
@@ -53,7 +50,7 @@ class FPPTemplate(DocuSignServerTemplate):
         # Otherwise just include form if replacing insurance question is yes.
         return self.data['replacing_insurance']
 
-    def is_additional_replacment_policy_attachment_needed(self):
+    def is_additional_replacement_policy_attachment_needed(self):
         return len(self.data['replacement_policies']) > 1
 
     def should_include_bank_draft(self):
@@ -86,7 +83,7 @@ class FPPTemplate(DocuSignServerTemplate):
     def make_agent_tabs(self):
         return [
             DocuSignRadioTab('existingInsAgent', 'yes' if self.data['existing_insurance'] else 'no'),
-            DocuSignRadioTab('replaceAgent', 'yes' if self.data['replacement_policies'] else 'no'),
+            DocuSignRadioTab('replaceAgent', 'yes' if self.data['replacing_insurance'] else 'no'),
         ]
 
     def make_general_tabs(self):
@@ -95,7 +92,7 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignRadioTab('productType', "FPPTI" if self.data['product_type'] == "FPP-Gov" else self.data['product_type']),
             DocuSignRadioTab('existingIns', 'yes' if self.data["existing_insurance"] else 'no'),
             DocuSignRadioTab('existingInsAgent', 'yes' if self.data['existing_insurance'] else 'no'),
-            DocuSignRadioTab('replaceAgent', 'yes' if self.data['replacement_policies'] else 'no'),
+            DocuSignRadioTab('replaceAgent', 'yes' if self.data['replacing_insurance'] else 'no'),
             DocuSignRadioTab('replace', 'yes' if self.data["replacing_insurance"] else 'no'),
         ]
 

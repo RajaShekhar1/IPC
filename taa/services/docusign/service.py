@@ -100,7 +100,7 @@ class DocuSignService(object):
             components.append(replacement_form)
 
         # Additional replacement policies form
-        if fpp_form.is_additional_replacment_policy_attachment_needed():
+        if fpp_form.is_additional_replacement_policy_attachment_needed():
             components.append(AdditionalReplacementPoliciesForm(recipients,
                                                                 enrollment_data))
 
