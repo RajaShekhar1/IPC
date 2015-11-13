@@ -81,7 +81,6 @@ class Case(CaseSerializer, db.Model):
             return self.owner_agent.name()
         else:
             return "(No Owner)"
-    
 
     def format_location(self):
         if not self.situs_city and not self.situs_state:

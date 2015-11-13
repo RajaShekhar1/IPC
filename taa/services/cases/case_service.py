@@ -60,6 +60,16 @@ class CaseService(DBService):
                 Case.partner_agents.any(Agent.id == by_agent)
                 )
             )
+
+        # Pre-load products, owner agent, and enrollment periods to speed up most subsequent operations
+        query = query.options(
+            db.joinedload('enrollment_periods')
+        ).options(
+            db.joinedload('products')
+        ).options(
+            db.joinedload('owner_agent')
+        )
+
         results = query.all()
         if only_enrolling:
             results = [case for case in results if self.is_enrolling(case)]
@@ -200,9 +210,11 @@ class CaseService(DBService):
             query = query.outerjoin('enrollment_applications').filter(
                 EnrollmentApplication.application_status ==
                 EnrollmentApplication.APPLICATION_STATUS_DECLINED)
-            query = query.options(db.contains_eager(
-                'enrollment_applications').subqueryload(
-                'coverages').joinedload('product'))
+            query = query.options(
+                db.contains_eager('enrollment_applications'
+                                 ).subqueryload('coverages'
+                                 ).joinedload('product')
+            )
         else:
             # Eager load enrollment applications, coverages, and associated
             # products
