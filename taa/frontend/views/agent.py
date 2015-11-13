@@ -49,13 +49,14 @@ def inbox():
 @login_required
 def manage_cases():
     agent = agent_service.get_logged_in_agent()
+
     if agent:
-        user_cases = case_service.get_agent_cases(agent)
+        user_cases = case_service.search_cases(by_agent=agent.id)
         header_title = ''
         can_create_case = False
     else:
         # Admin or home office user
-        user_cases = case_service.all()
+        user_cases = case_service.search_cases()
         header_title = 'Home Office'
         can_create_case = True
 
