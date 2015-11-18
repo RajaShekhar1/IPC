@@ -146,7 +146,12 @@ class EnrollmentDataWrap(object):
     def is_self_enroll(self):
         if self.data.get("is_third_party"):
             return False
-        return not self.data['agent_data']['is_in_person']
+
+        # If wizard and not inperson, it is self-enroll.
+        if self.data.get('agent_data') and not self.data['agent_data']['is_in_person']:
+            return True
+
+        return False
 
     def is_enrollment_type_agent_assisted(self):
         """

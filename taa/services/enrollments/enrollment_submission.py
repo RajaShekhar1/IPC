@@ -126,7 +126,7 @@ class EnrollmentSubmissionProcessor(object):
     def _create_import_recipients(self, case, enrollment_data):
 
         # Exclude both from the envelope, use them only for tab generation purposes
-        signing_agent = self.docusign_service.get_signing_agent(case)
+        signing_agent = enrollment_data.get_signing_agent()
         recipients = [
             AgentDocuSignRecipient(name=signing_agent.name(),
                                   email=signing_agent.email,
