@@ -47,7 +47,7 @@ class DocuSignService(object):
         return DocusignEnvelope(result['uri'])
 
     def create_envelope_recipients(self, case, enrollment_data):
-        signing_agent = get_signing_agent(case)
+        signing_agent = enrollment_data.get_signing_agent()
         agent = AgentDocuSignRecipient(name=signing_agent.name(),
                                        email=signing_agent.email)
         employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
@@ -110,13 +110,6 @@ class DocuSignService(object):
 
         return components
 
-    def get_signing_agent(self, case):
-        if agent_service.get_logged_in_agent():
-            signing_agent = agent_service.get_logged_in_agent()
-        else:
-            signing_agent = case.owner_agent
-        return signing_agent
-
 
 def create_envelope(email_subject, components):
     docusign_service = LookupService('DocuSignService')
@@ -156,11 +149,6 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
     redirect_url = fetch_signing_url(employee, enrollment_data, envelope_result)
 
     return False, None, redirect_url
-
-
-def get_signing_agent(case):
-    docusign_service = LookupService('DocuSignService')
-    return docusign_service.get_signing_agent(case)
 
 
 def fetch_signing_url(employee, enrollment_data, envelope_result):
