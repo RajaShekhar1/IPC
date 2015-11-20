@@ -136,6 +136,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     });
   }
 
+
   // Reset the overrides when the case values change
   self.situs_city.subscribe(function(new_val) {
     self.enrollment_city_override(new_val)
@@ -203,9 +204,24 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   self.payment_mode = ko.observable(_.find(self.payment_mode_choices, function(c) {
     return c.mode == case_data.payment_mode;
   }));
+  // This is just the Integer representation of the payment_mode observable, or null if none is selected.
   self.selected_payment_mode = ko.pureComputed(function(){
     return (self.payment_mode()) ? parseInt(self.payment_mode().mode) : null;
   });
+
+  // Bank Draft Form option
+  self.include_bank_draft_form = ko.observable(case_data.include_bank_draft_form);
+  self.can_include_bank_draft_form = ko.pureComputed(function() {
+    return self.selected_payment_mode() === 12;
+  });
+  // Disable the include_bank_draft_form option if mode is changed.
+  self.can_include_bank_draft_form.subscribe(function(can_include) {
+    if (!can_include) {
+      // disable
+      self.include_bank_draft_form(false);
+    }
+  });
+
 
   // Get Rider information
   self.rider_choices = settings.riders;
@@ -526,6 +542,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
       can_partners_download_enrollments: self.can_partners_download_enrollments(),
       is_self_enrollment: self.is_self_enrollment(),
       riders: self.riders(),
+      include_bank_draft_form: self.include_bank_draft_form()
     }
   };
 

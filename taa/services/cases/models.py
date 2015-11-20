@@ -71,6 +71,8 @@ class Case(CaseSerializer, db.Model):
     case_token = db.Column(db.String(64), nullable=True)
     case_riders = db.Column(db.String(64), nullable=True)
 
+    include_bank_draft_form = db.Column(db.Boolean, nullable=False, server_default='FALSE')
+
     def get_product_names(self):
         return ','.join(p.name for p in self.products)
 
@@ -79,7 +81,6 @@ class Case(CaseSerializer, db.Model):
             return self.owner_agent.name()
         else:
             return "(No Owner)"
-    
 
     def format_location(self):
         if not self.situs_city and not self.situs_state:
@@ -224,7 +225,6 @@ class CensusRecordSerializer(JsonSerializable):
         from taa.services.enrollments import SelfEnrollmentEmailService, SelfEnrollmentEmailLog
         email_logs = SelfEnrollmentEmailService().get_for_census_record(self)
         return any(email.status == SelfEnrollmentEmailLog.STATUS_SUCCESS for email in email_logs)
-
 
 class CaseCensus(CensusRecordSerializer, db.Model):
     __tablename__ = 'case_census'

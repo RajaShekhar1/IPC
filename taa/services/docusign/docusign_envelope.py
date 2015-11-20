@@ -7,6 +7,7 @@ import decimal
 
 import httplib2
 import flask
+from dateutil.parser import parse as dateutil_parse
 
 from taa import app
 from taa.services.docusign.DocuSign_config import (
@@ -145,7 +146,12 @@ class EnrollmentDataWrap(object):
     def is_self_enroll(self):
         if self.data.get("is_third_party"):
             return False
-        return not self.data['agent_data']['is_in_person']
+
+        # If wizard and not inperson, it is self-enroll.
+        if self.data.get('agent_data') and not self.data['agent_data']['is_in_person']:
+            return True
+
+        return False
 
     def is_enrollment_type_agent_assisted(self):
         """
@@ -226,14 +232,20 @@ class EnrollmentDataWrap(object):
                                 'owner agent.')
         elif self.is_import():
             return self.case.owner_agent
-        else:
+        elif agent_service.get_logged_in_agent():
             return agent_service.get_logged_in_agent()
+        else:
+            # If the logged-in user is not an agent, default to case owner.
+            return self.case.owner_agent
 
     def get_employer_name(self):
         return self.case.company_name
 
     def get_product_code(self):
         return self.data['product_type']
+
+    def get_product(self):
+        return product_service.get(self.data['product_data']['id'])
 
     def get_employee_name(self):
         return '{} {}'.format(self.data['employee']['first'],
@@ -275,6 +287,13 @@ class EnrollmentDataWrap(object):
         return name + ''.join([random.choice(chars)
                                for _ in range(token_length)])
 
+    def get_employee_date_of_hire(self):
+        try:
+            # The identityToken is the date_of_hire on FPP products.
+            return dateutil_parse(self.data['identityToken'])
+        except Exception:
+            return None
+
     def did_employee_select_coverage(self):
         return (self.data['employee_coverage'] and
                 self.data['employee_coverage']['face_value'])
@@ -283,7 +302,7 @@ class EnrollmentDataWrap(object):
         return format(self.data['employee_coverage']['face_value'], ',.0f')
 
     def get_formatted_employee_premium(self):
-        return self.format_money(self.get_employee_premium() + self.get_employee_riders());
+        return self.format_money(self.get_employee_premium() + self.get_employee_riders())
 
     def get_employee_premium(self):
         return decimal.Decimal(self.data['employee_coverage']['premium'])
@@ -319,6 +338,21 @@ class EnrollmentDataWrap(object):
 
     def format_money(self, amount):
         return '%.2f' % amount
+
+    def get_total_children_premium(self):
+        return sum(decimal.Decimal(unicode(child_coverage.get('premium', '0.00')))
+                   for child_coverage in self.data["child_coverages"])
+
+    def get_total_modal_premium(self):
+        total = decimal.Decimal('0.00')
+        if self.did_employee_select_coverage():
+            total += self.get_employee_premium()
+        if self.did_spouse_select_coverage():
+            total += self.get_spouse_premium()
+        if self.get_total_children_premium() > 0.0:
+            total += self.get_total_children_premium()
+
+        return total
 
     def get_num_covered_children(self):
         return len(self.get_covered_children())
@@ -404,6 +438,9 @@ class EnrollmentDataWrap(object):
                 return True
 
         return False
+
+    def should_include_bank_draft(self):
+        return self.case.include_bank_draft_form
 
 def old_create_envelope_and_get_signing_url(enrollment_data):
     # return is_error(bool), error_message, and redirectURL

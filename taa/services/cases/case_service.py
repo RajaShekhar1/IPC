@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 from taa.core import DBService
 from taa.core import db
-from taa.services import RequiredFeature
+from taa.services import RequiredFeature, LookupService
 from taa.services.agents.models import Agent
 from models import (Case, CaseCensus, CaseEnrollmentPeriod,
                     CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod,
@@ -60,6 +60,16 @@ class CaseService(DBService):
                 Case.partner_agents.any(Agent.id == by_agent)
                 )
             )
+
+        # Pre-load products, owner agent, and enrollment periods to speed up most subsequent operations
+        query = query.options(
+            db.joinedload('enrollment_periods')
+        ).options(
+            db.joinedload('products')
+        ).options(
+            db.joinedload('owner_agent')
+        )
+
         results = query.all()
         if only_enrolling:
             results = [case for case in results if self.is_enrolling(case)]
@@ -200,9 +210,11 @@ class CaseService(DBService):
             query = query.outerjoin('enrollment_applications').filter(
                 EnrollmentApplication.application_status ==
                 EnrollmentApplication.APPLICATION_STATUS_DECLINED)
-            query = query.options(db.contains_eager(
-                'enrollment_applications').subqueryload(
-                'coverages').joinedload('product'))
+            query = query.options(
+                db.contains_eager('enrollment_applications'
+                                 ).subqueryload('coverages'
+                                 ).joinedload('product')
+            )
         else:
             # Eager load enrollment applications, coverages, and associated
             # products
@@ -237,6 +249,20 @@ class CaseService(DBService):
 
         return query.all()
 
+    def get_current_user_census_records(self, case):
+        if not self.is_current_user_restricted_to_own_enrollments(case):
+            return self.get_census_records(case)
+        else:
+            from taa.services.agents import AgentService
+            agent_service = AgentService()
+            return self.get_census_records(case, filter_agent=agent_service.get_logged_in_agent())
+
+    def is_current_user_restricted_to_own_enrollments(self, case):
+        agent_service = LookupService('AgentService')
+        if agent_service.is_user_agent(current_user):
+            return self.is_agent_restricted_to_own_enrollments(agent_service.get_logged_in_agent(), case)
+        return False
+
     def export_census_records(self, records):
         stream = StringIO.StringIO()
         self.census_records.export_csv(stream, records)
@@ -265,13 +291,33 @@ class CaseService(DBService):
         return record
 
     def get_record_if_allowed(self, census_record_id):
+
         record = self.get_census_record(None, census_record_id)
         if not record:
             abort(404)
+
         # Verify authorization
-        if self.can_current_user_view_case(record.case):
-            return record
-        abort(401)
+        from taa.services.agents import AgentService
+        agent_service = AgentService()
+        current_agent = agent_service.get_logged_in_agent()
+        is_restricted = current_agent and self.is_agent_restricted_to_own_enrollments(current_agent, record.case)
+        did_agent_enroll_record = current_agent and self.did_agent_enroll_record(current_agent, record)
+
+        if not self.can_current_user_view_case(record.case):
+            abort(401)
+        elif (current_agent and is_restricted and not did_agent_enroll_record):
+            abort(401)
+
+        return record
+
+    def did_agent_enroll_record(self, agent, record):
+
+        # As long as there is an enrollment with this agent ID, we consider the agent to have enrolled this record.
+        for enrollment_record in record.enrollment_applications:
+            if enrollment_record.agent_id == agent.id:
+                return True
+
+        return False
 
     def can_current_user_view_case(self, case):
         from taa.services.agents import AgentService

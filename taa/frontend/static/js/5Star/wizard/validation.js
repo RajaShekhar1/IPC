@@ -488,14 +488,19 @@ function init_validation(ui) {
       confirmDisclaimer: {required: true},
       enrollCity: {required: true},
       tokenType: {required: true},
-      ConfirmationToken: {required: true}
+      ConfirmationToken: {
+        required: function() {
+          return ui.insurance_product.should_use_date_of_hire_for_identity();
+        },
+        hireDate: true
+      }
     },
 
     messages: {
       confirmDisclaimer: "please acknowledge that you have received the notice",
       enrollCity: "required",
       tokenType: "required",
-      ConfirmationToken: "required"
+      ConfirmationToken: "Valid date required"
     },
 
     highlight: wizard_validate_highlight,

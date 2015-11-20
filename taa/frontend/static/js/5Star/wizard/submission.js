@@ -97,6 +97,22 @@ function submit_application() {
 
   wizard_results.rider_data = window.ui.selected_riders.serialize_data();
 
+  var please_wait_dialogue = bootbox.dialog({
+    //just showing action in the interim while getting routed to the Docusign page... the DS page should redirect probably before there's time to read this
+    message: "Generating application form for signature, please wait...",
+    buttons: {
+      "success": {
+        "label": "Close",
+        "className": "btn-sm btn-primary"
+      }
+    }
+  });
+
+  _send_wizard_results(wizard_results);
+}
+
+function _send_wizard_results(wizard_results) {
+
   // Send to server
   ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function (resp) {
     if (resp.error) {
@@ -114,16 +130,17 @@ function submit_application() {
       location = resp.redirect
     }
 
-  }, handle_remote_error, true);
+  }, function (req) {
+    handle_error_and_retry(req, wizard_results);
+  }, true);
 
-  bootbox.dialog({
-    //just showing action in the interim while getting routed to the Docusign page... the DS page should redirect probably before there's time to read this
-    message: "Generating application form for signature, please wait...",
-    buttons: {
-      "success": {
-        "label": "Close",
-        "className": "btn-sm btn-primary"
-      }
+}
+
+function handle_error_and_retry(req, wizard_results) {
+  handle_remote_error(req, function retry_callback(success) {
+    // We allow reauthentication if they have timed out; if successful, submit again immediately.
+    if (success) {
+      _send_wizard_results(wizard_results);
     }
   });
 }

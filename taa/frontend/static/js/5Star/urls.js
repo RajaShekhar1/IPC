@@ -57,6 +57,9 @@ var urls = (function urls() {
     get_submit_enrollment_records_url: function() {
       return '/enrollments';
     },
+    get_delete_enrollment_record_url: function(id) {
+      return '/enrollments/records/'+id;
+    },
     get_flat_file_documentation_url: function() {
       return "/flat_file_documentation.html";
     },

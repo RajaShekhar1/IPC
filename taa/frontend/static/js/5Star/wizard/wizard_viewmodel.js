@@ -836,56 +836,79 @@ var wizard_viewmodel = (function() {
 
 
   // TODO:  Will need to expose this function to the other modules, integrate Barrett's reauth mechanism below
-  function handle_remote_error(request) {
-      if (request.status == 401) {
-          if (ui.account_href != null) {
-              prompt_login();
-          } else {
-              // The user wasn't logged in, so just restart our session
-              login_reauth(null, null);
-          }
+  function handle_remote_error(request, retry_callback) {
+    if (request.status == 401) {
+      if (ui.account_href != null) {
+        prompt_login(retry_callback);
+      } else {
+        // The user wasn't logged in, so just restart our session
+        login_reauth(null, null, retry_callback);
       }
-      else {
-          alert("Sorry, an error occurred communicating with the server.");
-      }
+    }
+    else {
+      alert("Sorry, an error occurred communicating with the server.");
+    }
   }
 
-  function prompt_login() {
-      bootbox.confirm({
-          message: "Please type your password to login again: <input id='password' class='form-control' placeholder='Password' type='password'/>",
-          title: "Login",
-          buttons: {
-              "cancel": { "label": "Cancel"},
-              "confirm": {
-                  "label": "Login",
-                  "className": "width-35 pull-right btn btn-primary"
-              }
-          },
-          callback: function(result) {
-              if (result == true) {
-                  login_reauth(ui.account_href, $('#password').val());
-              }
-          }});
+  function prompt_login(callback) {
+    bootbox.confirm({
+      message: "Please type your password to login again: <input id='password' class='form-control' placeholder='Password' type='password'/>",
+      title: "Session Timed Out, Please Re-Login:",
+      buttons: {
+        "cancel": { "label": "Cancel"},
+        "confirm": {
+          "label": "Login",
+          "className": "width-35 pull-right btn btn-primary"
+        }
+      },
+      callback: function(result) {
+        if (result == true) {
+          login_reauth(ui.account_href, $('#password').val(), callback);
+        }
+      }});
   }
 
-  function login_reauth(account_href, password) {
-      var post_data = {
-          "account_href": account_href,
-          "password": password,
-          "success_message": "You were re-authenticated successfully.  Please continue with the application.",
-          "session_data": {
-              "is_self_enroll": ui.is_self_enroll(),
-              "active_case_id": ui.case_id,
-              "enrolling_census_record_id": ui.record_id
-          }
+  function login_reauth(account_href, password, callback) {
+    var post_data = {
+      "account_href": account_href,
+      "password": password,
+      "success_message": "You were re-authenticated successfully.  Please continue with the application.",
+      "session_data": {
+        "is_self_enroll": ui.is_self_enroll(),
+        "active_case_id": ui.case_id,
+        "enrolling_census_record_id": ui.record_id
       }
+    };
 
-      ajax_post('/reauth', post_data, function(reauth_response)
-      {
-          bootbox.alert(reauth_response.message);
-      }, null, true);
+    ajax_post('/reauth', post_data, function(reauth_response) {
+      bootbox.alert(reauth_response.message);
+      if (callback) {
+        callback(true);
+      }
+    }, function() {
+      bootbox.alert("There was a problem reauthenticating. Please try again.");
+      if (callback) {
+        callback(false);
+      }
+    }, true);
   }
 
+  function ajax_post(url, data, on_success, on_error, is_json) {
+    var options = {
+      data: data,
+      error: on_error,
+      success: on_success,
+      // expected return data type
+      dataType: "json",
+      method: "POST"
+    };
+    if (is_json === true) {
+      options.contentType = "application/json; charset=utf-8";
+      options.processData = false;
+      options.data = JSON.stringify(data);
+    }
+    $.ajax(url, options);
+  }
 
 
   return {WizardVM: WizardVM}

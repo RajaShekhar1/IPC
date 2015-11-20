@@ -49,13 +49,14 @@ def inbox():
 @login_required
 def manage_cases():
     agent = agent_service.get_logged_in_agent()
+
     if agent:
-        user_cases = case_service.get_agent_cases(agent)
+        user_cases = case_service.search_cases(by_agent=agent.id)
         header_title = ''
         can_create_case = False
     else:
         # Admin or home office user
-        user_cases = case_service.all()
+        user_cases = case_service.search_cases()
         header_title = 'Home Office'
         can_create_case = True
 
@@ -227,6 +228,7 @@ def edit_census_record(case_id, census_record_id):
 def format_enroll_data(enrollment_data, product_number):
     if enrollment_data["product_{}_name".format(product_number)]:
         data = dict(
+            id=enrollment_data['enrollment_id'],
             product_name=enrollment_data["product_{}_name".format(product_number)],
             time=enrollment_data["signature_time"],
             coverage=[get_coverage_for_product(enrollment_data, product_number, j) for j in ["emp","sp","ch"]],

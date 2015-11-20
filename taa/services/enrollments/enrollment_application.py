@@ -52,15 +52,18 @@ class EnrollmentApplicationService(DBService):
 
     def delete_enrollment_data(self, census_record):
         for enrollment_application in census_record.enrollment_applications:
-            # Remove coverage data
-            for coverage in enrollment_application.coverages:
-                self.coverages_service.delete(coverage)
+            self.delete_enrollment_record(enrollment_application)
 
-            # Remove any import batch data
-            self.batch_item_service.delete_for_enrollment(enrollment_application)
+    def delete_enrollment_record(self, enrollment_application):
+        # Remove coverage data
+        for coverage in enrollment_application.coverages:
+            self.coverages_service.delete(coverage)
 
-            # Remove the application data
-            self.delete(enrollment_application)
+        # Remove any import batch data
+        self.batch_item_service.delete_for_enrollment(enrollment_application)
+
+        # Remove the application data row
+        self.delete(enrollment_application)
 
     def _create_enrollment(self, census_record, data, agent, received_data=None):
         # Link to census record and case, if it exists
@@ -209,11 +212,16 @@ class EnrollmentApplicationService(DBService):
 
     def get_all_enrollment_records(self, case):
         """
+        """
+        census_records = self.case_service.get_census_records(case)
+        return self.get_enrollment_records_for_census_records(census_records)
+
+    def get_enrollment_records_for_census_records(self, census_records):
+        """
         Does not do any combining data.
         Includes census data for each enrollment, so the same employee in the
         census will show up multiple times, once for each enrollment.
         """
-        census_records = self.case_service.get_census_records(case)
         data = []
         for census_record in census_records:
             # Export only records with enrollments
@@ -311,6 +319,8 @@ class EnrollmentApplicationService(DBService):
         enrollment_data = {}
         if not census_record.enrollment_applications or not enrollment:
             return None
+
+        enrollment_data['enrollment_id'] = enrollment.id
 
         # Export data from enrollment
         for col in enrollment_columns:

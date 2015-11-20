@@ -97,18 +97,33 @@ def test_wizard():
 @login_required
 def in_person_enrollment():
     """
-    Agent sitting down with employee for the enrollment wizard. Always done via a case census record.
+    Agent sitting down with employee for the enrollment wizard.
     """
+
     record_id = request.form.get('record_id')
+    if record_id:
+        # Get the case from the record if provided
+        record = case_service.get_census_record(None, record_id)
+        if not record:
+            abort(400, "Invalid census record ID")
+        case = record.case
+    else:
+        # Otherwise the case must be provided explicitly
+        case_id = request.form['case_id']
+        case = case_service.get_if_allowed(case_id)
+
+    ssn = request.form.get('ssn')
     enrollment_city_override = request.form.get('enrollment_city')
     enrollment_state_override = request.form.get('enrollment_state')
 
-    record = case_service.census_records.get(record_id)
-
-    return _setup_enrollment_session(record.case, record_id=int(record_id),
-                                     is_self_enroll=False, data={
+    return _setup_enrollment_session(
+        case,
+        record_id=record_id,
+        is_self_enroll=False,
+        data={
             'enrollmentCity': enrollment_city_override,
             'enrollmentState': enrollment_state_override,
+            'ssn': ssn,
         })
 
 def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False):
@@ -133,8 +148,8 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         # Set in the session that we are currently enrolling from this case and record
         session['enrolling_census_record_id'] = record.id
 
-        override_state = data.get('enrollmentState') if data and data.get('enrollmentState') else None
-        override_city = data.get('enrollmentCity') if data and data.get('enrollmentCity') else None
+        override_state = data.get('enrollmentState') if data.get('enrollmentState') else None
+        override_city = data.get('enrollmentCity') if data.get('enrollmentCity') else None
 
         if is_self_enroll:
             # Data is user-provided enrollment location, and trumps the usual defaults
@@ -154,9 +169,15 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         children_data = record.get_children_data()
 
     else:
-        # Generic case-link enrollment
-        state = data['enrollmentState']
-        city = data['enrollmentCity']
+        # Pull in the generic data from the case rather than from a record.
+        override_state = data.get('enrollmentState') if data.get('enrollmentState') else None
+        override_city = data.get('enrollmentCity') if data.get('enrollmentCity') else None
+
+        data.update(get_case_enrollment_data(case))
+
+        state = override_state if override_state else data['enrollmentState']
+        city = override_city if override_city else data['enrollmentCity']
+
         company_name = data['companyName']
         group_number = data['groupNumber']
         product_id = data['productID']
@@ -166,6 +187,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             first=data['eeFName'],
             last=data['eeLName'],
             email=data['email'],
+            ssn=data.get('ssn', ''),
             state=state,
         )
         spouse_data = None
@@ -301,15 +323,7 @@ def self_enrollment2():
     data = {}
     if not census_record_id:
         # Generic link
-        case = enrollment_setup.case
-        data['enrollmentState'] = enrollment_setup.case.situs_state
-        data['enrollmentCity'] = enrollment_setup.case.situs_city
-        data['companyName'] = enrollment_setup.case.company_name
-        data['groupNumber'] = enrollment_setup.case.group_number
-        data['productID'] = enrollment_setup.case.products[0].id
-        data['eeFName'] = ""
-        data['eeLName'] = ""
-        data['email'] = ""
+        data.update(get_case_enrollment_data(enrollment_setup.case))
 
     if 'enrollmentCity' in request.form:
         data['enrollmentCity'] = request.form['enrollmentCity']
@@ -317,6 +331,19 @@ def self_enrollment2():
         data['enrollmentState'] = request.form['enrollmentState']
 
     return _setup_enrollment_session(enrollment_setup.case, record_id=census_record_id, data=data, is_self_enroll=True)
+
+
+def get_case_enrollment_data(case):
+    data = {}
+    data['enrollmentState'] = case.situs_state
+    data['enrollmentCity'] = case.situs_city
+    data['companyName'] = case.company_name
+    data['groupNumber'] = case.group_number
+    data['productID'] = case.products[0].id
+    data['eeFName'] = ""
+    data['eeLName'] = ""
+    data['email'] = ""
+    return data
 
 @app.route('/submit-wizard-data', methods=['POST'])
 def submit_wizard_data():

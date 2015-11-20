@@ -165,6 +165,13 @@ class EnrollmentImportService(object):
     def standardize_wizard_data(self, wizard_data):
         output = wizard_data.copy()
 
+        # If not replacing insurance, clear any replacement policies / questions provided.
+        #  TODO: do this in the wizard so this isn't necessary to clear these here.
+        if not output.get('replacing_insurance'):
+            output['replacement_is_terminating'] = False
+            output['replacement_using_funds'] = False
+            output['replacement_policies'] = []
+
         # Update beneficiary data to new format
         output.update(
             standardize_wizard_beneficiaries(wizard_data, "employee")

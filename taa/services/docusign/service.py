@@ -25,7 +25,7 @@ class DocuSignService(object):
         components = self.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer=True)
         envelope_result = self.create_envelope(
             email_subject="Signature needed: {} for {} ({})".format(
-                enrollment_data.get_product_code(),
+                enrollment_data.get_product().name,
                 enrollment_data.get_employee_name(),
                 enrollment_data.get_employer_name()),
             components=components,
@@ -47,7 +47,7 @@ class DocuSignService(object):
         return DocusignEnvelope(result['uri'])
 
     def create_envelope_recipients(self, case, enrollment_data):
-        signing_agent = get_signing_agent(case)
+        signing_agent = enrollment_data.get_signing_agent()
         agent = AgentDocuSignRecipient(name=signing_agent.name(),
                                        email=signing_agent.email)
         employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
@@ -62,6 +62,7 @@ class DocuSignService(object):
     def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
         from taa.services.docusign.templates.fpp import FPPTemplate
         from taa.services.docusign.templates.fpp_replacement import FPPReplacementFormTemplate
+        from taa.services.docusign.templates.fpp_bank_draft import FPPBankDraftFormTemplate
         from taa.services.docusign.documents.additional_children import ChildAttachmentForm
         from taa.services.docusign.documents.multiple_beneficiaries_attachment import MultipleBeneficiariesAttachment
         from taa.services.docusign.documents.additional_replacement_policies import AdditionalReplacementPoliciesForm
@@ -99,17 +100,15 @@ class DocuSignService(object):
             components.append(replacement_form)
 
         # Additional replacement policies form
-        if fpp_form.is_additional_replacment_policy_attachment_needed():
+        if fpp_form.is_additional_replacement_policy_attachment_needed():
             components.append(AdditionalReplacementPoliciesForm(recipients,
                                                                 enrollment_data))
-        return components
 
-    def get_signing_agent(self, case):
-        if agent_service.get_logged_in_agent():
-            signing_agent = agent_service.get_logged_in_agent()
-        else:
-            signing_agent = case.owner_agent
-        return signing_agent
+
+        if fpp_form.should_include_bank_draft():
+            components.append(FPPBankDraftFormTemplate(recipients, enrollment_data, should_use_docusign_renderer))
+
+        return components
 
 
 def create_envelope(email_subject, components):
@@ -150,11 +149,6 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
     redirect_url = fetch_signing_url(employee, enrollment_data, envelope_result)
 
     return False, None, redirect_url
-
-
-def get_signing_agent(case):
-    docusign_service = LookupService('DocuSignService')
-    return docusign_service.get_signing_agent(case)
 
 
 def fetch_signing_url(employee, enrollment_data, envelope_result):
