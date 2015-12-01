@@ -267,13 +267,18 @@ CaseCensus.sent_email_count = db.column_property(
             correlate_except(SelfEnrollmentEmailLog)
 )
 
+
 def get_batch_case_id(batch):
     token = batch.case_token
+    if not token:
+        return None
+    
     case = CaseService().get_case_for_token(token)
     if not case:
         return None
     else:
         return case.id
+
 
 def get_batch_user(batch):
     auth_token = batch.auth_token
@@ -285,6 +290,7 @@ def get_batch_user(batch):
         return None
 
     return api_token.stormpath_url
+
 
 class EnrollmentImportBatchSerializer(JsonSerializable):
     __json_hidden__ = ['batch_items']
