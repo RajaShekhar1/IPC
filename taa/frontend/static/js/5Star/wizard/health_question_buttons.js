@@ -71,21 +71,25 @@ ko.bindingHandlers.flagBtn = {
     var btn_group;
     if (val.applicant) {
       var applicant = val.applicant;
+      var product_health_questions = val.product_health_questions;
+      var applicant_coverage = product_health_questions.product_coverage.get_coverage_for_applicant(applicant);
+
       var question_text = val.question.get_question_text();
-      var applicant_health_answer = _.find(applicant.health_questions(), function (soh_answer) {
-        return soh_answer.question.question_text == question_text;
-      });
+      /*var applicant_health_answer = product_health_questions.get_applicant_answer_for_question(applicant, question_text);
 
       btn_group = applicant_health_answer.button_group();
+      */
+      btn_group = null;
       if (!btn_group) {
         btn_group = new QuestionButtonGroup(val.question, val.is_required);
-        applicant_health_answer.button_group(btn_group);
+        //applicant_health_answer.button_group(btn_group);
       }
-      if (applicant_health_answer.answer() == val.val) {
-        btn_group.click_button(val.val);
-      }
+      //if (applicant_health_answer.answer() == val.val) {
+      //  btn_group.click_button(val.val);
+      //}
     } else {
       var group_lookup = general_questions_by_id;
+
       if (val.question.get_question_text() in group_lookup) {
         btn_group = group_lookup[val.question.get_question_text()];
       } else {
@@ -148,7 +152,7 @@ ko.bindingHandlers.flagBtn = {
 };
 
 function handle_existing_insurance_modal() {
-  if (ui.insurance_product.is_fpp_product()) {
+  if (window.vm.did_select_any_fpp_product()) {
 
   } else {
     $("#modal_text_existing_warning_title").show();
@@ -165,17 +169,17 @@ function handle_existing_insurance_modal() {
 
   }
 
-  window.ui.existing_insurance(true);
+  window.vm.existing_insurance(true);
 }
 
 function reset_existing_insurance_warning() {
-  window.ui.existing_insurance(false);
+  window.vm.existing_insurance(false);
   $("#existing_warning_text_remote").hide();
   $("#existing_warning_text").hide();
 }
 
 function handle_replacement_insurance_modal() {
-  if (ui.insurance_product.is_fpp_product()) {
+  if (window.vm.did_select_any_fpp_product()) {
 
   } else {
     $("#modal_text_existing_warning_title").hide();
@@ -191,12 +195,12 @@ function handle_replacement_insurance_modal() {
     $("#replacement_warning_text").show();
   }
 
-  window.ui.replacing_insurance(true);
+  window.vm.replacing_insurance(true);
 
 }
 function reset_replacement_insurance_warning() {
   $("#replacement_warning_text").hide();
-  window.ui.replacing_insurance(false);
+  window.vm.replacing_insurance(false);
 }
 
 
@@ -218,20 +222,20 @@ function are_health_questions_valid() {
   //  should be able to highlight buttons that were missed or something
 
   // this one can be yes or no
-  if (ui.should_show_other_insurance_questions() &&
-      ui.is_in_person_application() &&
+  if (window.vm.should_show_other_insurance_questions() &&
+      window.vm.is_in_person_application() &&
       general_questions_by_id['existing_insurance'].get_val() === null) {
     //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
     return false;
   }
 
-  if (ui.should_show_other_insurance_questions()
+  if (window.vm.should_show_other_insurance_questions()
       && (
-          !ui.insurance_product.is_fpp_product()
+          !window.vm.did_select_any_fpp_product()
           && general_questions_by_id['replace_insurance'].get_val() != "No"
       ) ||
       (
-          ui.insurance_product.is_fpp_product()
+          window.vm.did_select_any_fpp_product()
           && general_questions_by_id['replace_insurance'].get_val() === null
       )
   ) {
@@ -240,40 +244,41 @@ function are_health_questions_valid() {
   }
 
   // fpp form
-  if (ui.insurance_product.is_fpp_product()) {
-    if (ui.is_employee_actively_at_work() === null) {
+  if (window.vm.did_select_any_fpp_product()) {
+    if (window.vm.is_employee_actively_at_work() === null) {
       return false;
     }
   }
 
 
   var valid = true;
-
-  $.each(window.ui.selected_plan().get_all_covered_people(), function () {
-    var covered_person = this;
-    $.each(covered_person.health_questions(), function () {
-      if (this.button_group()
-          && this.button_group().is_required()
-          && (
-            // If a no-op question, but still required, must select yes or no.
-              (this.question.is_ignored
-                  && this.button_group().get_val() === null
-              )
-                // If this is required, must be no.
-              || (!this.question.is_ignored
-                  && this.button_group().get_val() !== "No"
-              )
-          )) {
-        valid = false;
-        // break
-        return false;
-      }
-    });
-    if (!valid) {
-      // break
-      return false;
-    }
-  });
+  // TODO: Fix this so it works for multiproduct!!
+  //
+  //$.each(window.vm.coverage_vm.get_all_covered_people(), function () {
+  //  var covered_person = this;
+  //  $.each(covered_person.health_questions(), function () {
+  //    if (this.button_group()
+  //        && this.button_group().is_required()
+  //        && (
+  //          // If a no-op question, but still required, must select yes or no.
+  //            (this.question.is_ignored
+  //                && this.button_group().get_val() === null
+  //            )
+  //              // If this is required, must be no.
+  //            || (!this.question.is_ignored
+  //                && this.button_group().get_val() !== "No"
+  //            )
+  //        )) {
+  //      valid = false;
+  //      // break
+  //      return false;
+  //    }
+  //  });
+  //  if (!valid) {
+  //    // break
+  //    return false;
+  //  }
+  //});
 
   return valid;
 }

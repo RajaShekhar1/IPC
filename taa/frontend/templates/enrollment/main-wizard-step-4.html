@@ -1,17 +1,17 @@
-<form class="form-horizontal" id="step4-form">
 
+<div class="step-pane" id="step4" data-step="4">
+  <form class="form-horizontal" id="step4-form">
 
-  <div class="step-pane" id="step4">
 
     <div id="noSpouseNoChildrenBlock"
-         data-bind="visible: !did_select_spouse_coverage() && !did_select_children_coverage()">
+         data-bind="visible: !coverage_vm.did_select_spouse_coverage() && !coverage_vm.did_select_children_coverage()">
       <h4 class="green center">
         This step does not apply - no spouse or children have been selected for coverage in this
         application.
       </h4>
     </div>
 
-    <div id="SpouseInfoBlock" data-bind="visible: did_select_spouse_coverage()">
+    <div id="SpouseInfoBlock" data-bind="visible: coverage_vm.did_select_spouse_coverage()">
       <h3 class="lighter block green">Spouse information</h3>
 
       <div class="row form-group">
@@ -193,11 +193,11 @@
     </div>
     <!-- .SpouseInfoBlock -->
 
-    <div id="ChildrenInfoBlock" data-bind="visible: did_select_children_coverage()">
+    <div id="ChildrenInfoBlock" data-bind="visible: coverage_vm.did_select_children_coverage()">
       <h3 class="lighter block green">Children information</h3>
 
       {# Loop through the children #}
-      <ul class="list-unstyled" data-bind="foreach: {data: get_valid_children}">
+      <ul class="list-unstyled" data-bind="foreach: {data: coverage_vm.get_covered_children}">
         <li>
           <div class="row form-group">
             <label class="control-label col-xs-12 col-sm-2 no-padding-right"
@@ -261,6 +261,5 @@
     </div>
     <!-- .ChildrenInfoBlock -->
 
-  </div>
-  <!-- step3 -->
-</form>
+  </form>
+</div>

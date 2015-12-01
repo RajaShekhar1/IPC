@@ -65,15 +65,17 @@ function init_validation(ui) {
       // trigger jquery validation
       var is_valid = ui.validator.form();
 
-      if (!ui.is_form_valid()) {
+      if (!ui.is_coverage_selection_valid()) {
 
         ui.show_no_selection_error();
         e.preventDefault();
         return;
       }
 
-      var current_product_id = ui.insurance_product.product_data.id;
-      var plan = ui.selected_plan();
+      // TODO: Re-implement check for adding on too much coverage.
+
+      //var current_product_id = ui.insurance_product.product_data.id;
+      //var plan = ui.selected_plan();
 
       function validate_coverage_amount(applicant, applicant_type, selected_coverage) {
         var existing_coverage_amount = applicant.get_existing_coverage_amount_for_product(current_product_id);
@@ -103,16 +105,14 @@ function init_validation(ui) {
         return true;
       }
 
-
-      // Check for adding on too much coverage
-      _.each(plan.get_covered_applicants_with_type(), function(val) {
-        var applicant_type = {"Employee":"employee", "Spouse": "spouse", "Child": "children"}[val.type];
-        var can_apply = validate_coverage_amount(val.applicant, applicant_type, val.coverage);
-        if (!can_apply) {
-          is_valid = false;
-        }
-      });
-
+      // Check each applicant for selecting too much product.
+      //_.each(plan.get_covered_applicants_with_type(), function(val) {
+      //  var applicant_type = {"Employee":"employee", "Spouse": "spouse", "Child": "children"}[val.type];
+      //  var can_apply = validate_coverage_amount(val.applicant, applicant_type, val.coverage);
+      //  if (!can_apply) {
+      //    is_valid = false;
+      //  }
+      //});
 
       if (!is_valid) {
         e.preventDefault();
@@ -120,39 +120,40 @@ function init_validation(ui) {
     }
     if (info.step == 2 && info.direction == 'next') {
       var is_valid = true;
-
-      // validate replacement form
-      if (ui.insurance_product.is_fpp_product() &&
-          (ui.should_show_replacement_form())) {
-        is_valid &= $('#questions-form').valid();
-      }
-
-      if (ui.insurance_product.is_fpp_product() &&
-          (ui.replacing_insurance() === null || ui.existing_insurance() === null)) {
-        // These always need to be answered
-        is_valid = false;
-      }
-
-      if (ui.insurance_product.is_fpp_product() && ui.is_KY_OR_KS() && ui.replacing_insurance()) {
-        // Must stop here for these states, no replacements.
-        is_valid = false;
-      }
-      if (ui.insurance_product.is_fpp_product() && ui.is_self_enroll()
-          && (ui.replacement_is_terminating() || ui.replacement_using_funds())) {
-        // can't continue as self-enroll with either of these as a yes.
-        is_valid = false;
-      }
-
-      // validate questions
-      is_valid &=  are_health_questions_valid();
-      if (!is_valid) {
-        $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");
-        e.preventDefault();
-        return;
-      } else {
-        $("#health_questions_error").html("");
-        return;
-      }
+      //
+      //// validate replacement form
+      //if (ui.insurance_product.is_fpp_product() &&
+      //    (ui.should_show_replacement_form())) {
+      //  is_valid &= $('#questions-form').valid();
+      //}
+      //
+      //if (ui.insurance_product.is_fpp_product() &&
+      //    (ui.replacing_insurance() === null || ui.existing_insurance() === null)) {
+      //  // These always need to be answered
+      //  is_valid = false;
+      //}
+      //
+      //if (ui.insurance_product.is_fpp_product() && ui.is_KY_OR_KS() && ui.replacing_insurance()) {
+      //  // Must stop here for these states, no replacements.
+      //  is_valid = false;
+      //}
+      //if (ui.insurance_product.is_fpp_product() && ui.is_self_enroll()
+      //    && (ui.replacement_is_terminating() || ui.replacement_using_funds())) {
+      //  // can't continue as self-enroll with either of these as a yes.
+      //  is_valid = false;
+      //}
+      //
+      //// validate questions
+      //is_valid &=  are_health_questions_valid();
+      //if (!is_valid) {
+      //  $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");
+      //  e.preventDefault();
+      //  return;
+      //} else {
+      //  $("#health_questions_error").html("");
+      //  return;
+      //}
+      return true;
     }
     if (info.step == 3 && info.direction == 'next') {
       if (!$('#step3-form').valid()) {
@@ -190,7 +191,7 @@ function init_validation(ui) {
     if (!$('#step6-form').valid()) return false;
 
     // jQuery validator rule should be handling this, but it's not, so force a popup here
-    if (ui.insurance_product.should_confirm_disclosure_notice()
+    if (ui.should_confirm_disclosure_notice()
         && !ui.disclaimer_notice_confirmed()
     ) {
       bootbox.dialog({
@@ -205,7 +206,7 @@ function init_validation(ui) {
       return false;
     }
 
-    if (ui.insurance_product.should_confirm_payroll_deduction()
+    if (ui.should_confirm_payroll_deduction()
         && !ui.payroll_deductions_confirmed()) {
       bootbox.dialog({
         message: "Please confirm that you agree to payroll deductions by your employer.",
@@ -408,7 +409,7 @@ function init_validation(ui) {
         required: {
           depends: function(element) {
             return (
-                ui.insurance_product.should_show_contingent_beneficiary() &&
+                ui.should_show_contingent_beneficiary() &&
                 ui.employee_contingent_beneficiary_type() === "other"
             )
           }
@@ -418,7 +419,7 @@ function init_validation(ui) {
         required: {
           depends: function(element) {
             return (
-                ui.insurance_product.should_show_contingent_beneficiary() &&
+                ui.should_show_contingent_beneficiary() &&
                 ui.employee_contingent_beneficiary_type() === "other"
             )
           }
@@ -443,7 +444,7 @@ function init_validation(ui) {
         required: {
           depends: function(element) {
             return (
-                ui.insurance_product.should_show_contingent_beneficiary() &&
+                ui.should_show_contingent_beneficiary() &&
                 ui.did_select_spouse_coverage() &&
                 ui.spouse_contingent_beneficiary_type() === "other"
             );
@@ -455,7 +456,7 @@ function init_validation(ui) {
         required: {
           depends: function(element) {
             return (
-                ui.insurance_product.should_show_contingent_beneficiary() &&
+                ui.should_show_contingent_beneficiary() &&
                 ui.did_select_spouse_coverage() &&
                 ui.spouse_contingent_beneficiary_type() === "other"
             );
@@ -490,10 +491,10 @@ function init_validation(ui) {
       tokenType: {required: true},
       ConfirmationToken: {
         required: function() {
-          return ui.insurance_product.should_use_date_of_hire_for_identity();
-        },
-        hireDate: true
-      }
+          return window.vm.should_use_date_of_hire_for_identity();
+        }
+      },
+      hireDate: {required: true}
     },
 
     messages: {

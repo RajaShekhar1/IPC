@@ -49,7 +49,8 @@ def test_wizard():
     #case_id = request.params.get('case_id')
     #case = case_service.get(case_id)
     fppti = product_service.query().filter_by(code='FPPTI').first()
-    products = [fppti]
+    fppci = product_service.query().filter_by(code='FPPCI').first()
+    products = [fppti, fppci]
     state = 'MI'
 
     # Get SOH Questions and other form or product specific questions

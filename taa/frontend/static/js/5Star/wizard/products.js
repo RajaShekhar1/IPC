@@ -170,6 +170,12 @@ Product.prototype = {
     return all_options;
   },
 
+  should_show_other_insurance_questions: function() {
+    // should we show replacement questions
+    // right now it is anything that isn't group CI, which is all FPP products.
+    return this.is_fpp_product();
+  },
+
   should_show_step_5: function () {
     return true;
   },

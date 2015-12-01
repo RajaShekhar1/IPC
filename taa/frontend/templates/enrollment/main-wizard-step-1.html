@@ -219,12 +219,12 @@
     </div>
   </div>
 
-  {# Show Rates Button #}
+  {# Show Coverage Options Button #}
   <div class="row" data-bind="visible: !is_coverage_selection_visible()">
     <div class="align-center">
       <button type="button" class="btn btn-primary btn-lg show-rates"
               data-bind="click: show_coverage_selection_table">
-        Show Rates
+        Show Coverage Options
       </button>
     </div>
   </div>
@@ -245,10 +245,15 @@
     <div data-bind="visible: !is_rate_table_loading(), with: coverage_vm">
 
       <div data-bind="if: has_multiple_products">
+
+        {# Summary table for multi-product enrollments. #}
+        <div data-bind="template: 'multi-product-selected-coverage-table'">
+        </div>
+
         <div class="row">
           <div class="col-xs-1">
             <button type="button" class="btn btn-default"  data-bind="click: go_to_previous_product,
-                    visible: previous_product() !== null">
+                    visible: previous_product() !== null" style="height: 20em;">
               <span class="ace-icon glyphicon glyphicon-chevron-left"></span>
             </button>
           </div>
@@ -274,7 +279,7 @@
 
           <div class="col-xs-1">
             <button type="button" class="btn btn-default"  data-bind="click: go_to_next_product,
-                      visible: next_product() !== null">
+                      visible: next_product() !== null" style="height: 20em;">
               <span class="ace-icon glyphicon glyphicon-chevron-right"></span>
             </button>
           </div>
@@ -291,9 +296,6 @@
           </div>
         </div>
 
-        {# Summary table for multi-product enrollments. #}
-        <div data-bind="template: 'multi-product-selected-coverage-table'">
-        </div>
 
       </div>
 
@@ -414,7 +416,7 @@
 
     {# Error message #}
     <div id="benefit_required" class="error pull-right" data-bind="visible: is_selection_error_visible">
-      You must select a benefit option before advancing.
+      You must select a coverage amount before advancing.
     </div>
   </form>
 
@@ -425,9 +427,9 @@
 
 {# Runs in the context of a ProductCoverageViewModel #}
 <script type="text/html" id="recommendation_coverage_selection">
-  <h3 class="header smaller red">
-    Recommended Coverage for <span data-bind="text: format_product_name()"></span>
-  </h3>
+{#  <h3 class="header smaller red">#}
+{#    Recommended Coverage for <span data-bind="text: format_product_name()"></span>#}
+{#  </h3>#}
   <div class="row">
 
     <div class="col-xs-4 col-sm-3 pricing-span-header">
@@ -569,15 +571,16 @@
         </tr>
       <!--/ko-->
       {# Totals #}
-      <tfoot>
-        <tr>
-          <th class="text-center">Totals: </th>
-          <!--ko foreach: {data: $parent.products, as: 'product'} -->
-            <th  class="text-center" data-bind="text: $parents[1].format_total_premium_for_product(product)"></th>
-          <!--/ko-->
-          <th class="text-center" data-bind="text: $parent.format_grand_total_premium()"></th>
-        </tr>
-      </tfoot>
+    {#        No totals row for now; will need this in step 6 though. #}
+{#      <tfoot>#}
+{#        <tr>#}
+{#          <th class="text-center">Totals: </th>#}
+{#          <!--ko foreach: {data: $parent.products, as: 'product'} -->#}
+{#            <th  class="text-center" data-bind="text: $parents[1].format_total_premium_for_product(product)"></th>#}
+{#          <!--/ko-->#}
+{#          <th class="text-center" data-bind="text: $parent.format_grand_total_premium()"></th>#}
+{#        </tr>#}
+{#      </tfoot>#}
     </tbody>
   </table>
 

@@ -1,18 +1,19 @@
-<form class="" id="step5-form">
 
-  <div class="step-pane" id="step5">
+<div class="step-pane" id="step5" data-step="5">
+  <form class="" id="step5-form">
 
-    <div data-bind="visible: insurance_product.should_show_step_5()">
+    <!--ko foreach: coverage_vm.selected_product_coverages -->
+    <div data-bind="visible: $data.product.should_show_step_5()">
 
       <div id="eeBeneficiaryBlock" data-bind="visible: did_select_employee_coverage()">
         <h3 class="lighter block green">
-          Employee Beneficiary
+          Employee Beneficiary for <span data-bind="text: $data.product.product_data.name"></span>
         </h3>
 
         <div class="row form-group" id="eeHasSpouseAsBeneficiaryOption"
-             data-bind="visible: should_include_spouse_in_table()">
+             data-bind="visible: $root.should_include_spouse_in_table()">
           <label class="control-label col-xs-12 col-sm-5 no-padding-right">
-                            <span data-bind="visible: insurance_product.should_show_contingent_beneficiary()">
+                            <span data-bind="visible: $root.should_show_contingent_beneficiary">
                                 Primary
                             </span>
             Beneficiary of Employee Coverage is
@@ -22,7 +23,7 @@
             <label class="blue">
               <input name="eeBeneficiary" id="eeBeneSpouse" value="spouse" type="radio" class="inline ace"
                      data-bind="checked: employee_beneficiary_type"/>
-              <span class="lbl"> Spouse (<span data-bind="text: spouse().first"></span>)&nbsp;&nbsp;&nbsp; </span>
+              <span class="lbl"> Spouse (<span data-bind="text: $root.spouse().first"></span>)&nbsp;&nbsp;&nbsp; </span>
             </label>
 
             <label class="blue">
@@ -35,7 +36,7 @@
         </div>
 
         <div id="eeBeneficiaryOther"
-             data-bind="visible: !should_include_spouse_in_table() || employee_beneficiary_type() == 'other'">
+             data-bind="visible: !$root.should_include_spouse_in_table() || employee_beneficiary_type() == 'other'">
           <div class="row">
             <div class="col-sm-12 col-md-6 form-group">
               <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherName">
@@ -103,7 +104,7 @@
 
       {# Employee contingent beneficiary #}
       <div id="eeContingentBeneficiaryBlock"
-           data-bind="visible: did_select_employee_coverage() && insurance_product.should_show_contingent_beneficiary()">
+           data-bind="visible: did_select_employee_coverage() && should_show_contingent_beneficiary()">
 
         <div class="row form-group">
           <label class="control-label col-xs-12 col-sm-5 no-padding-right">Contingent Beneficiary of Employee Coverage
@@ -115,10 +116,10 @@
                      data-bind="checked: employee_contingent_beneficiary_type"/>
               <span class="lbl"> None &nbsp;&nbsp;&nbsp; </span>
             </label>
-            <label class="blue" data-bind="visible: should_include_spouse_in_table()">
+            <label class="blue" data-bind="visible: $root.should_include_spouse_in_table()">
               <input name="eeContBeneficiary" value="spouse" type="radio" class="inline ace"
                      data-bind="checked: employee_contingent_beneficiary_type"/>
-              <span class="lbl"> Spouse (<span data-bind="text: spouse().first"></span>)&nbsp;&nbsp;&nbsp; </span>
+              <span class="lbl"> Spouse (<span data-bind="text: $root.spouse().first"></span>)&nbsp;&nbsp;&nbsp; </span>
             </label>
 
             <label class="blue">
@@ -198,12 +199,12 @@
 
       <div id="spBeneficiaryBlock" data-bind="visible: did_select_spouse_coverage()">
         <h3 class="lighter block green">
-          Spouse Beneficiary
+          Spouse Beneficiary for <span data-bind="text: $data.product.product_data.name"></span>
         </h3>
 
         <div class="row form-group">
           <label class="control-label col-xs-12 col-sm-5 no-padding-right">
-                            <span data-bind="visible: insurance_product.should_show_contingent_beneficiary()">
+                            <span data-bind="visible: should_show_contingent_beneficiary()">
                                 Primary
                             </span>
             Beneficiary of Spouse Coverage is
@@ -213,7 +214,7 @@
             <label class="blue">
               <input name="spBeneficiary" id="spBeneSpouse" value="spouse" type="radio"
                      class="inline ace" checked="" data-bind="checked: spouse_beneficiary_type"/>
-              <span class="lbl"> Employee (<span data-bind="text: employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
+              <span class="lbl"> Employee (<span data-bind="text: $root.employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
             </label>
 
             <label class="blue">
@@ -292,7 +293,7 @@
       <!-- /spBeneficiaryBlock -->
 
       <div id="spContBeneficiaryBlock"
-           data-bind="visible: did_select_spouse_coverage() && insurance_product.should_show_contingent_beneficiary()">
+           data-bind="visible: did_select_spouse_coverage() && should_show_contingent_beneficiary()">
         <div class="row form-group">
           <label class="control-label col-xs-12 col-sm-5 no-padding-right">
             Contingent Beneficiary of Spouse Coverage is
@@ -308,7 +309,7 @@
             <label class="blue">
               <input name="spContBeneficiary" id="spBeneSpouse" value="spouse" type="radio"
                      class="inline ace" checked="" data-bind="checked: spouse_contingent_beneficiary_type"/>
-              <span class="lbl"> Employee (<span data-bind="text: employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
+              <span class="lbl"> Employee (<span data-bind="text: $root.employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
             </label>
 
             <label class="blue">
@@ -397,12 +398,13 @@
         Spouse cannot be both primary and contingent beneficiary.
       </div>
     </div>
+    <!--/ko-->
 
-    <div data-bind="visible: !insurance_product.should_show_step_5()">
+    <div data-bind="visible: !should_show_step_5()">
       <h4 class="green center">
         This step does not apply for this product.
       </h4>
     </div>
 
-  </div>
-</form>
+  </form>
+</div>

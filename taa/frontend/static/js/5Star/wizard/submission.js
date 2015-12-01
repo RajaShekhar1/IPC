@@ -1,20 +1,29 @@
 function submit_application() {
   // Massage the agent_data resubmitted so we don't resend all product info.
-  var agent_data =  window.ui.defaults;
+  var agent_data =  window.vm.options;
   delete agent_data['products'];
 
   // Pull out all the data we need for docusign
   var wizard_results = {
-    health_questions: $.map(window.ui.health_questions(), function(q) {return q.question}),
     agent_data: agent_data,
-    enrollCity:  window.ui.enrollCity(),
-    enrollState:  window.ui.enrollState,
-    product_type: window.ui.insurance_product.product_type,
-    payment_mode: window.ui.payment_mode(),
-    payment_mode_text: window.ui.payment_mode_text_lower(),
+    enrollCity:  window.vm.enrollCity(),
+    enrollState:  window.vm.enrollState(),
+    product_type: window.vm.insurance_product.product_type,
+    payment_mode: window.vm.coverage_vm.payment_mode(),
+    payment_mode_text: window.vm.coverage_vm.formatted_payment_mode(),
+    selected_product_coverages: []
+  };
 
-    method: (ui.is_in_person_application()) ? 'in_person': 'self_enroll_email',
-    did_decline: ui.did_decline(),
+  _.each(window.vm.coverage_vm.selected_product_coverages(), function(product_cov) {
+
+  });
+
+  var wizard_results = {
+    health_questions: $.map(window.ui.health_questions(), function(q) {return q.question}),
+
+
+    method: (window.vm.is_in_person_application()) ? 'in_person': 'self_enroll_email',
+    did_decline: window.vm.did_decline(),
 
     identityToken: window.ui.identityToken(),
     identityType: window.ui.identityType(),
