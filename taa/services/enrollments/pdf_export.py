@@ -270,7 +270,11 @@ class FormPDFRenderer(object):
         # Ensure text fits in width if specified
         if width is not None and len(text) > 0:
             lines = simpleSplit(text, self.c._fontname, self.c._fontsize, width)
-            text = lines[0]
+            # Possible to have an empty list returned, so check that lines has an entry here.
+            #  If it doesn't, just leave the text alone as a fallback.
+            if lines:
+                text = lines[0]
+            
         return text
 
     def set_font(self, font, fontsize, is_bold, is_italic):
