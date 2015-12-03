@@ -154,12 +154,12 @@ class FPPTemplate(DocuSignServerTemplate):
             # Special treatment for first two questions (non-health questions)
             if self.data['has_spouse_been_treated_6_months'] in ['Yes', 'No']:
                 sp_tabs_list += [DocuSignRadioTab('spouse_hospital_six_months', self.data['has_spouse_been_treated_6_months'].lower())]
-            elif self.data['has_spouse_been_treated_6_months'].upper() == 'GI':
+            elif str(self.data['has_spouse_been_treated_6_months']).upper() == 'GI':
                 sp_tabs_list += [DocuSignTextTab('spouse_hospital_six_months_gi', 'GI')]
 
             if self.data['has_spouse_been_disabled_6_months'] in ['Yes', 'No']:
                 sp_tabs_list += [DocuSignRadioTab('spouse_disability_six_months', self.data['has_spouse_been_disabled_6_months'].lower())]
-            elif self.data['has_spouse_been_disabled_6_months'].upper() == 'GI':
+            elif str(self.data['has_spouse_been_disabled_6_months']).upper() == 'GI':
                 sp_tabs_list += [DocuSignTextTab('spouse_disability_six_months_gi', 'GI')]
 
             sp_tabs_list += self.generate_SOH_tabs("sp", self.data['spouse']['soh_questions'])

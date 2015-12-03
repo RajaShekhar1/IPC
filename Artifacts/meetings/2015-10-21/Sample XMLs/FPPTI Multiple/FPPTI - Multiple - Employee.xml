@@ -1,0 +1,269 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TXLife>
+  <UserAuthRequest>
+    <UserLoginName>5Star</UserLoginName>
+    <UserPswd>
+      <CryptType>NONE</CryptType>
+    </UserPswd>
+    <VendorApp>
+      <VendorName VendorCode="xxx">VendorName</VendorName>
+      <AppName>appname</AppName>
+    </VendorApp>
+    <OLifEExtension VendorCode="xxx" ExtensionCode="xxxx">
+      <CompanyNumber>67</CompanyNumber>
+      <GroupLifeApplicationCode>New Enrollee</GroupLifeApplicationCode>
+      <EffectiveDate>2015-10-01</EffectiveDate>
+    </OLifEExtension>
+  </UserAuthRequest>
+  <TXLifeRequest PrimaryObjectID="Holding_Primary">
+    <!-- STP Process needs a Unique ID for each xml. Please provide different IDs for Employee , Spouse and Children XMLs -->
+    <TransRefGUID>25D46202-9689-4CD4-9C76-661D24C619A5</TransRefGUID>
+    <TransType tc="103">New Business Submission</TransType>
+    <TransExeDate>2015-10-01</TransExeDate>
+    <TransExeTime>01:01:01</TransExeTime>
+    <OLifE>
+      <SourceInfo>
+        <CreationDate>2015-10-01</CreationDate>
+        <CreationTime>01:01:01</CreationTime>
+        <SourceInfoName>vendorname</SourceInfoName>
+      </SourceInfo>
+      <FinancialStatement>
+        <CommissionCalcInfo>
+          <CommissionCalcActivity>
+            <CommissionDetail>
+              <WritingProducerID>26PQD</WritingProducerID>
+              <SplitPercent>100</SplitPercent>
+            </CommissionDetail>
+          </CommissionCalcActivity>
+        </CommissionCalcInfo>
+      </FinancialStatement>
+      <Holding id="Holding_Primary">
+        <Policy>
+          <ProductCode>Term</ProductCode>
+          <CarrierCode>5STAR</CarrierCode>
+          <PlanName>FPPTI</PlanName>
+          <PolicyStatus tc="12">Proposed</PolicyStatus>
+          <ReplacementIndicator tc="1">True</ReplacementIndicator>
+          <!--The Replacement Type  field is not present in PDF application form however PDF mentions a 'Notice of Replacement' if Replacement indicator is True. if it is a replacement ( Above field ReplacementIndicator is True), vendor needs to specify in next field if it is Internal or External Replacement -->
+          <ReplacementType tc="2">Internal Replacement</ReplacementType>
+          <PaymentMode tc="7">Bi-Weekly</PaymentMode>
+          <PaymentAmt>27.10</PaymentAmt>
+          <PaymentMethod tc="5">Group Bill</PaymentMethod>
+          <Life>
+            <Coverage>
+              <PlanName>FPPTI</PlanName>
+              <IndicatorCode tc="1">Base</IndicatorCode>
+              <CurrentAmt>125000.00</CurrentAmt>
+              <LifeParticipant id="LifeParticipant_PrimaryInsured" PartyID="Party_PrimaryInsured">
+                <LifeParticipantRoleCode tc="1">Primary Insured</LifeParticipantRoleCode>
+              </LifeParticipant>
+              <LifeParticipant id="LifeParticipant_Owner" PartyID="Party_Owner">
+                <LifeParticipantRoleCode tc="18">Owner</LifeParticipantRoleCode>
+              </LifeParticipant>
+              <LifeParticipant id="LifeParticipant_Payor" PartyID="Party_Payor">
+                <LifeParticipantRoleCode tc="12">Payor</LifeParticipantRoleCode>
+              </LifeParticipant>
+              <LifeParticipant id="LifeParticipant_PrimaryAgent" PartyID="Party_PrimaryAgent">
+                <LifeParticipantRoleCode tc="15">Primary Agent</LifeParticipantRoleCode>
+              </LifeParticipant>
+              <LifeParticipant id="LifeParticipant_PrimaryBene_1" DataRep="Partial" PartyID="Party_PrimaryBene_1">
+                <LifeParticipantRoleCode tc="7">Beneficiary - Primary</LifeParticipantRoleCode>
+                <BeneficiaryPercentDistribution>100</BeneficiaryPercentDistribution>
+              </LifeParticipant>
+              <LifeParticipant id="LifeParticipant_ContingentBene_1" DataRep="Partial" PartyID="Party_ContingentBene_1">
+                <LifeParticipantRoleCode tc="9">Beneficiary - Contingent</LifeParticipantRoleCode>
+                <BeneficiaryPercentDistribution>100</BeneficiaryPercentDistribution>
+              </LifeParticipant>
+            </Coverage>
+          </Life>
+          <ApplicationInfo>
+            <SignatureInfo>
+              <SignatureRoleCode tc="18">Owner</SignatureRoleCode>
+              <SignatureCity>Chicago</SignatureCity>
+              <SignatureState tc="17">Illinois</SignatureState>
+              <SignatureOK tc="1">True</SignatureOK>
+              <OLifeExtension>
+                <PIN>12345</PIN>
+              </OLifeExtension>
+            </SignatureInfo>
+            <SignatureInfo>
+              <SignatureRoleCode tc="12">Payor</SignatureRoleCode>
+              <SignatureState tc="17">Illinois</SignatureState>
+              <SignatureOK tc="1">True</SignatureOK>
+            </SignatureInfo>
+            <SignatureInfo>
+              <SignatureRoleCode tc="15">Primary Agent</SignatureRoleCode>
+              <SignatureDate>2015-08-07</SignatureDate>
+              <!-- PDF application form does not have Agent Signature State specified. Value below corresponds to Owner Signature State. Please see if you need to send a different value in next field -->
+              <SignatureState tc="17">Illinois</SignatureState>
+              <SignatureOK tc="1">True</SignatureOK>
+            </SignatureInfo>
+          </ApplicationInfo>
+        </Policy>
+      </Holding>
+      <Party id="Party_PrimaryInsured">
+        <GovtID>999887777</GovtID>
+        <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
+        <Person DataRep="Partial">
+          <FirstName>John</FirstName>
+          <MiddleName></MiddleName>
+          <LastName>Doe</LastName>
+          <Gender tc="1">Male</Gender>
+          <BirthDate>1980-02-02</BirthDate>
+          <!-- PDF Application does not list Smoker Class. Vendor needs to send this info in folllowing field. -->
+          <SmokerStat tc="1">Never used tobacco in any form.</SmokerStat>
+        </Person>
+        <Address>
+          <Line1>123 Main</Line1>
+          <Line2></Line2>
+          <City>Chicago</City>
+          <AddressStateTC tc="17">Illinois</AddressStateTC>
+          <Zip>12345</Zip>
+        </Address>
+        <EMailAddress>
+          <AddrLine>no@thanks.com</AddrLine>
+        </EMailAddress>
+        <Employment>
+          <HireDate>2011-11-11</HireDate>
+          <ActivelyAtWorkInd tc="1">True</ActivelyAtWorkInd>
+          <EmployerName>Test Group 123</EmployerName>
+          <EmployeeID></EmployeeID>
+          <OLifeExtension>
+            <!-- PDF application form does not have Employer Id value. We have put a dummy value in field for example. Vendor needs to send this value in next field -->
+            <EmployerID>A0001</EmployerID>
+          </OLifeExtension>
+        </Employment>
+        <Risk>
+          <OLifeExtension>
+            <Question></Question>
+            <Question>
+              <QuestionNumber>1</QuestionNumber>
+              <Response>1</Response>
+            </Question>
+            <Question>
+              <QuestionNumber>2</QuestionNumber>
+              <Response>1</Response>
+            </Question>
+            <Question>
+              <QuestionNumber>3</QuestionNumber>
+              <Response>1</Response>
+            </Question>
+            <Question>
+              <QuestionNumber>4</QuestionNumber>
+              <Response>1</Response>
+            </Question>
+            <Question>
+              <QuestionNumber>5</QuestionNumber>
+              <Response>1</Response>
+            </Question>
+            <Question>
+              <QuestionNumber>6</QuestionNumber>
+              <Response>1</Response>
+            </Question>
+            <Question>
+              <QuestionNumber>7</QuestionNumber>
+              <Response>1</Response>
+            </Question>
+          </OLifeExtension>
+        </Risk>
+      </Party>
+      <Party id="Party_Owner">
+        <GovtID>999887777</GovtID>
+        <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
+        <Person DataRep="Partial">
+          <FirstName>John</FirstName>
+          <MiddleName></MiddleName>
+          <LastName>Doe</LastName>
+          <BirthDate>1980-02-02</BirthDate>
+        </Person>
+        <Address>
+          <Line1>123 Main</Line1>
+          <Line2></Line2>
+          <City>Chicago</City>
+          <AddressStateTC tc="17">Illinois</AddressStateTC>
+          <Zip>12345</Zip>
+        </Address>
+        <Risk>
+          <ExistingInsuranceInd tc="1">TRUE</ExistingInsuranceInd>
+        </Risk>
+      </Party>
+      <Party id="Party_Payor">
+        <GovtID>999887777</GovtID>
+        <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
+        <Person DataRep="Partial">
+          <FirstName>John</FirstName>
+          <MiddleName></MiddleName>
+          <LastName>Doe</LastName>
+          <BirthDate>1980-02-02</BirthDate>
+        </Person>
+        <Address>
+          <Line1>123 Main</Line1>
+          <Line2></Line2>
+          <City>Chicago</City>
+          <AddressStateTC tc="17">Illinois</AddressStateTC>
+          <Zip>12345</Zip>
+        </Address>
+      </Party>
+      <Party id="Party_PrimaryBene_1">
+        <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
+        <GovtID>666554444</GovtID>
+        <Person DataRep="Partial">
+          <FirstName>Jane</FirstName>
+          <MiddleName></MiddleName>
+          <LastName>Doe</LastName>
+          <BirthDate>1983-03-03</BirthDate>
+        </Person>
+      </Party>
+      <Party id="Party_ContingentBene_1">
+        <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
+        <GovtID>555555555</GovtID>
+        <Person DataRep="Partial">
+          <FirstName>Bobby</FirstName>
+          <MiddleName></MiddleName>
+          <LastName>Doe</LastName>
+          <BirthDate>2005-05-05</BirthDate>
+        </Person>
+        <Organization>
+          <AbbrName></AbbrName>
+        </Organization>
+      </Party>
+      <Party id="Party_PrimaryAgent">
+        <Person DataRep="Partial">
+          <FirstName>Alfred</FirstName>
+          <MiddleName></MiddleName>
+          <LastName>Agent</LastName>
+        </Person>
+        <Producer>
+          <CarrierAppointment>
+            <CompanyProducerID>26PQD</CompanyProducerID>
+          </CarrierAppointment>
+        </Producer>
+        <Risk>
+          <ExistingInsuranceInd tc="1">TRUE</ExistingInsuranceInd>
+        </Risk>
+      </Party>
+      <Relation id="Relation_OwnerToPrimaryInsured" OriginatingObjectID="Party_PrimaryInsured" RelatedObjectID="Party_Owner">
+        <OriginatingObjectType tc="6">Party</OriginatingObjectType>
+        <RelatedObjectType tc="6">Party</RelatedObjectType>
+        <RelationRoleCode tc="168">Self</RelationRoleCode>
+      </Relation>
+      <Relation id="Relation_PrimaryBene1ToPrimaryInsured" OriginatingObjectID="Party_PrimaryInsured" RelatedObjectID="Party_PrimaryBene_1">
+        <OriginatingObjectType tc="6">Party</OriginatingObjectType>
+        <RelatedObjectType tc="6">Party</RelatedObjectType>
+        <RelationRoleCode tc="1">Spouse</RelationRoleCode>
+      </Relation>
+      <Relation id="Relation_ContingentBene1ToPrimaryInsured" OriginatingObjectID="Party_PrimaryInsured" RelatedObjectID="Party_ContingentBene_1">
+        <OriginatingObjectType tc="6">Party</OriginatingObjectType>
+        <RelatedObjectType tc="6">Party</RelatedObjectType>
+        <RelationRoleCode tc="2">Child</RelationRoleCode>
+      </Relation>
+      <FormInstance>
+        <FormName>Application</FormName>
+        <Attachment>
+          <AttachmentData>[encoded file]</AttachmentData>
+          <ImageType tc="1">PDF</ImageType>
+        </Attachment>
+      </FormInstance>
+    </OLifE>
+  </TXLifeRequest>
+</TXLife>
