@@ -262,8 +262,7 @@ class EnrollmentDataWrap(object):
         email_to = self.data['employee']['email']
         if not email_to:
             # fallback email if none was entered - just need a unique address
-            name = self._sanitize_email_str(self.data['employee']['first']) + '.' + self._sanitize_email_str(self.data['employee']['last'])
-            email_to = '{}.{}@5StarEnroll.com'.format(name, self.random_email_id(name))
+            email_to = '{}@5StarEnroll.com'.format(self.random_email_id())
 
         return email_to
 
@@ -279,12 +278,9 @@ class EnrollmentDataWrap(object):
         else:
             return self.get_employee_email().split('@', 1)
 
-    def random_email_id(self, name='', token_length=8):
+    def random_email_id(self, token_length=10):
         chars = 'ABCDEF0123456789'
-        name = filter(lambda x: x in ascii_letters + '.', name)
-        if name != '':
-            name = name + '_'
-        return name + ''.join([random.choice(chars)
+        return ''.join([random.choice(chars)
                                for _ in range(token_length)])
 
     def get_employee_date_of_hire(self):
