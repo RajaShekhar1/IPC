@@ -443,3 +443,92 @@ def initialize_rates_from_files(rates):
                       MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
     rates.from_string("age,10000,20000\n-1,4.98,9.97", 'FPPTI',
                       MODES_BY_NAME['monthly'], TYPE_COVERAGE)
+
+
+
+class Product(object):
+    def __init__(self, code, name):
+        self.code = code
+        self.name = name
+
+base_fppti = Product(code='FPPTI', name='Family Protection Plan: Terminal Illness')
+base_fpptig = Product(code='FPPTIG', name='Family Protection Plan: Terminal Illness')
+base_fpptiw = Product(code='FPPTIW', name='Family Protection Plan: Terminal Illness')
+base_fpptib = Product(code='FPPTIB', name='Family Protection Plan: Terminal Illness')
+base_fpptiy = Product(code='FPPTIY', name='Family Protection Plan: Terminal Illness')
+base_fppci = Product(code='FPPCI', name='Family Protection Plan: Critical Illness')
+
+base_products = [base_fppci, base_fppti, base_fpptib, base_fpptig, base_fpptiw, base_fpptiy]
+
+
+
+class RatePackage(object):
+    pass
+
+class ApplicantType(object):
+    pass
+class EmployeeType(object):
+    def __str__(self):
+        return u'employee'
+class SpouseType(object):
+    def __str__(self):
+        return u'spouse'
+class ChildType(object):
+    def __str__(self):
+        return u'child'
+
+class ApplicantRateQuery(object):
+    def __init__(self, applicant_type, product, product_options, enrollment_state, demographics):
+        self.product = product
+        self.product_options = product_options
+        self.enrollment_state = enrollment_state
+        self.applicant_type = applicant_type
+        self.demographics = demographics
+
+
+class ApplicantDemographic(object):
+    def name(self):
+        pass
+
+    def is_valid(self, value):
+        pass
+
+
+class ApplicantIsSmokerDemographic(ApplicantDemographic):
+    def name(self): return "is_smoker"
+
+
+class ApplicantGenderDemographic(ApplicantDemographic):
+    def name(self): return "gender"
+
+
+class ApplicantWeightDemographic(ApplicantDemographic):
+    def name(self): return "weight"
+
+
+class ApplicantHeightDemographic(ApplicantDemographic):
+    def name(self): return "height"
+
+
+class ApplicantAgeDemographic(ApplicantDemographic):
+    def name(self): return "age"
+
+
+
+
+def get_rates_for_applicant(applicant_type, product, product_options, state, demographics):
+
+    rate_query = ApplicantRateQuery(applicant_type, product, product_options, state, demographics)
+
+    if not product.rate_package.is_eligible(rate_query):
+        raise ValueError("Eligibility requirements not met.")
+
+    if not product.rate_package.has_valid_options(rate_query):
+        raise ValueError("Invalid product options")
+
+    rates = product.rate_package.lookup_rates(rate_query)
+
+
+
+if __name__ == "__main__":
+    pass
