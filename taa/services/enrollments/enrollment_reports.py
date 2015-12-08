@@ -176,7 +176,9 @@ def merge_enrollments(census_record):
     for enrollment in census_record.enrollment_applications:
         all_coverages += enrollment.coverages
     if census_record.enrollment_applications:
-        most_recent_enrollment = max(census_record.enrollment_applications,
+        most_recent_enrollment = max([
+            app for app in census_record.enrollment_applications if app.signature_time
+            ],
                                      key=lambda e: e.signature_time)
     else:
         most_recent_enrollment = None

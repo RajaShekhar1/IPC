@@ -249,10 +249,11 @@ class EnrollmentApplicationService(DBService):
         #        should merge these functions and remove extraneous code
         #        since no other code needs a merged record
         enrollment_data = {}
-        if not census_record.enrollment_applications:
+        enrollments_with_sig_times = [e for e in census_record.enrollment_applications if e.signature_time]
+        if not enrollments_with_sig_times:
             return None
         # Get the most recent enrollment for the generic data
-        enrollment = max(census_record.enrollment_applications,
+        enrollment = max(enrollments_with_sig_times,
                          key=lambda e: e.signature_time)
         # Export data from enrollment
         for col in enrollment_columns:
