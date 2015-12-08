@@ -84,6 +84,9 @@ class EnrollmentApplicationService(DBService):
             agent_name = None
             agent_id = None
 
+        given_sig_time = data.get('time_stamp')
+        signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
+
         # Handle decline coverage case
         if data['did_decline']:
             return self.create(**dict(
@@ -91,7 +94,10 @@ class EnrollmentApplicationService(DBService):
                 census_record_id=census_record_id,
                 application_status=EnrollmentApplication.APPLICATION_STATUS_DECLINED,
                 method=data['method'],
+                # include a timestamp for decline too.
+                signature_time=signature_time,
             ))
+
         if data['employee_beneficiary'] == 'spouse':
             emp_beneficiary_name = '{} {}'.format(data['spouse']['first'],
                                                   data['spouse']['last'])
@@ -117,8 +123,6 @@ class EnrollmentApplicationService(DBService):
             sp_beneficiary_relation = data.get('spouse_beneficiary_relationship')
             sp_beneficiary_dob = data.get('spouse_beneficiary_dob')
 
-        given_sig_time = data.get('time_stamp')
-        signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
         enrollment_data = dict(
             received_data=json.dumps(received_data, cls=JSONEncoder),
             standardized_data=json.dumps(data, cls=JSONEncoder),
@@ -249,10 +253,11 @@ class EnrollmentApplicationService(DBService):
         #        should merge these functions and remove extraneous code
         #        since no other code needs a merged record
         enrollment_data = {}
-        if not census_record.enrollment_applications:
+        enrollments_with_sig_times = [e for e in census_record.enrollment_applications if e.signature_time]
+        if not enrollments_with_sig_times:
             return None
         # Get the most recent enrollment for the generic data
-        enrollment = max(census_record.enrollment_applications,
+        enrollment = max(enrollments_with_sig_times,
                          key=lambda e: e.signature_time)
         # Export data from enrollment
         for col in enrollment_columns:
