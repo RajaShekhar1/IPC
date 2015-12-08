@@ -516,9 +516,9 @@ class ApplicantAgeDemographic(ApplicantDemographic):
 
 
 
-def get_rates_for_applicant(applicant_type, product, product_options, state, demographics):
+def get_rates_for_applicant(applicant_type, product, product_options, state, demographics, mode):
 
-    rate_query = ApplicantRateQuery(applicant_type, product, product_options, state, demographics)
+    rate_query = ApplicantRateQuery(applicant_type, product, product_options, state, demographics, mode)
 
     if not product.rate_package.is_eligible(rate_query):
         raise ValueError("Eligibility requirements not met.")
