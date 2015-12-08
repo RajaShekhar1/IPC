@@ -84,11 +84,17 @@ class EnrollmentApplicationService(DBService):
             agent_name = None
             agent_id = None
 
+        given_sig_time = data.get('time_stamp')
+        signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
+
         # Handle decline coverage case
         if data['did_decline']:
+
             return self.create(**dict(
                 case_id=case_id,
                 census_record_id=census_record_id,
+                # Timestamp for decline
+                signature_time=signature_time,
                 application_status=EnrollmentApplication.APPLICATION_STATUS_DECLINED,
                 method=data['method'],
             ))
@@ -117,8 +123,6 @@ class EnrollmentApplicationService(DBService):
             sp_beneficiary_relation = data.get('spouse_beneficiary_relationship')
             sp_beneficiary_dob = data.get('spouse_beneficiary_dob')
 
-        given_sig_time = data.get('time_stamp')
-        signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
         enrollment_data = dict(
             received_data=json.dumps(received_data, cls=JSONEncoder),
             standardized_data=json.dumps(data, cls=JSONEncoder),
