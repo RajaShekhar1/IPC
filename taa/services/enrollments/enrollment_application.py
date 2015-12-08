@@ -89,15 +89,15 @@ class EnrollmentApplicationService(DBService):
 
         # Handle decline coverage case
         if data['did_decline']:
-
             return self.create(**dict(
                 case_id=case_id,
                 census_record_id=census_record_id,
-                # Timestamp for decline
-                signature_time=signature_time,
                 application_status=EnrollmentApplication.APPLICATION_STATUS_DECLINED,
                 method=data['method'],
+                # include a timestamp for decline too.
+                signature_time=signature_time,
             ))
+
         if data['employee_beneficiary'] == 'spouse':
             emp_beneficiary_name = '{} {}'.format(data['spouse']['first'],
                                                   data['spouse']['last'])
