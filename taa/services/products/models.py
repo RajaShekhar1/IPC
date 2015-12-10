@@ -32,13 +32,14 @@ product_restricted_agents = db.Table('product_restricted_agents', db.metadata,
                                      db.Column('agent_id', db.Integer, db.ForeignKey('agents.id'),
                                                primary_key=True),
 )
+db.Index('ix_product_restricted_agents_agent', product_restricted_agents.c.agent_id)
 
 
 class Product(ProductJsonSerializable, db.Model):
     __tablename__ = 'products'
 
     id = db.Column(db.Integer, primary_key=True)
-    code = db.Column(db.String, nullable=False)
+    code = db.Column(db.String, nullable=False, index=True)
     name = db.Column(db.String, nullable=False)
     brochure_url = db.Column(db.Unicode(2000))
     brochure_name = db.Column(db.Unicode(256))
@@ -129,7 +130,7 @@ product_agents = db.Table('product_agents', db.metadata,
     db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True),
     db.Column('agent_id', db.Integer, db.ForeignKey('agents.id'), primary_key=True),
 )
-
+db.Index('ix_product_agents_agent', product_agents.c.agent_id)
 
 class CustomProductSerializer(ProductJsonSerializable):
     __json_hidden__ = ['cases', 'customized_products', 'base_product']
@@ -176,7 +177,7 @@ class BypassedStatementOfHealthQuestion(BypassedSOHSerializer, db.Model):
     __tablename__ = "products_gi_bypass_questions"
 
     id = db.Column(db.Integer, primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), index=True)
     product = db.relationship("Product", backref=db.backref('bypassed_soh_questions'))
     question_type_label = db.Column(db.Unicode)
 
@@ -191,7 +192,7 @@ class GuaranteeIssueCriteria(GICriteriaSerializer, db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     # Custom product this applies to
-    product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), index=True)
     product = db.relationship('Product', backref=db.backref('gi_criteria'))
 
     # To which applicants does this criteria apply

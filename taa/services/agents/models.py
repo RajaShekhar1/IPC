@@ -11,7 +11,7 @@ class Agent(AgentJsonSerializable, db.Model):
     __tablename__ = 'agents'
 
     id = db.Column(db.Integer, primary_key=True)
-    agent_code = db.Column(db.String(32), nullable=False)
+    agent_code = db.Column(db.String(32), nullable=False, index=True)
     activated = db.Column(db.Boolean, nullable=False)
 
     password = db.Column(db.String)
@@ -20,7 +20,7 @@ class Agent(AgentJsonSerializable, db.Model):
     email = db.Column(db.String)
     phone = db.Column(db.String)
 
-    stormpath_url = db.Column(db.String)
+    stormpath_url = db.Column(db.String, index=True)
 
     def name(self):
         return self.first + " " + self.last
@@ -33,9 +33,9 @@ class ApiToken(AgentJsonSerializable, db.Model):
     __tablename__ = 'api_tokens'
 
     id = db.Column(db.Integer, primary_key=True)
-    api_token = db.Column(db.String(64), nullable=False)
+    api_token = db.Column(db.String(64), nullable=False, index=True)
     activated = db.Column(db.Boolean, nullable=False)
 
     name = db.Column(db.String)
 
-    stormpath_url = db.Column(db.String)
+    stormpath_url = db.Column(db.String, index=True)

@@ -85,12 +85,10 @@ class CaseService(DBService):
         return sorted(case.products, cmp=lambda x, y: cmp(x.name, y.name))
 
     def get_rider_codes(self):
-        return self.case_riders.split(",")
-
-    def get_case_level_riders(self):
-        return rider_service.case_level_riders() 
+        return [] # [c.code for c in self.case_riders.split(",")]
 
     def update_riders(self, case, riders):
+        raise NotImplementedError()
         case.case_riders = ','.join([r.code for r in riders])
         db.session.flush()
 

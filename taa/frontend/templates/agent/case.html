@@ -112,18 +112,18 @@
                             </div>
                           </div>
 
-                          {# Restore multi-product selection when multi-product enrollment is working
+                          {# Restore multi-product selection when multi-product enrollment is working #}
                           {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsValue: "id", optionsText: "name", selectedOptions: products, multiSelect: {
                           observed: products,
                           options: {nonSelectedText: "No Products Selected", numberDisplayed: 3}
                           }'}) }}
-                          #}
-                          <div class="form-group">
-                            <label class="col-md-3 control-label" for="productID">Product</label>
-                            <div class="col-md-9">
-                              <limited-product-select params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-product-select>
-                            </div>
-                          </div>
+{#                          #}
+{#                          <div class="form-group">#}
+{#                            <label class="col-md-3 control-label" for="productID">Product</label>#}
+{#                            <div class="col-md-9">#}
+{#                              <limited-product-select params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-product-select>#}
+{#                            </div>#}
+{#                          </div>#}
 
                           {{ render_field_with_errors(case_setup_form.situs_city, **{'data-bind':'value: situs_city'}) }}
 
@@ -141,7 +141,7 @@
                             </div>
                           </div>
 
-                          <span data-bind="if: single_product()">
+                          <span data-bind="if: products()">
                           <div class="form-group" data-bind="visible: riders().length > 0">
                             <label class="col-md-3 control-label" for="caseRiders">Riders</label>
                             <div class="col-md-9" data-bind="foreach: {data: riders, as: 'rider'}">

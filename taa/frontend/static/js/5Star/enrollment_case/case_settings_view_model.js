@@ -22,14 +22,14 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   self.group_number = ko.observable(case_data.group_number || "");
 
   self.product_choices = ko.observableArray(product_choices);
-  // Get the list of selected products from the product choices
+  // Get the list of initially selected products from the product choices.
   var matched_selected_products = _.filter(self.product_choices(), function(p) {
     return _.contains(_.pluck(case_data.products, "id"), p.id);
   });
   self.products = ko.observableArray(matched_selected_products);
 
   // Until multi-product is working, make a single-product layer on top of the products array
-  self.single_product = ko.computed({
+  /*self.single_product = ko.computed({
     read: function () {
       return (self.products().length > 0) ? self.products()[0]: null;
     },
@@ -42,7 +42,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     },
     owner: self
   });
-
+  */
 
   self.emailSettings = {
     sender_name: ko.observable(case_data.self_enrollment_setup.email_sender_name),
@@ -228,6 +228,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   // self.riders = ko.observable(self.rider_choices)
   
   self.riders = ko.computed(function() {
+    /*
     // Show only riders allowed for this product; depends on the product selected.
     return _.reject(self.rider_choices, function(rider) {
       if (!self.single_product()) {
@@ -236,6 +237,8 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
       var current_product_name = self.single_product().base_product_type;
       return rider.restrict_to.indexOf(current_product_name) === -1;
     });
+    */
+    return self.rider_choices;
   });
 
   // Self-enrollment

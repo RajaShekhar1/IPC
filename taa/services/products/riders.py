@@ -14,6 +14,7 @@ class Rider(object):
                 name=self.name,
                 code=self.code,
                 enrollment_level=self.enrollment_level,
+                restrict_to=[],
                 )
 
 
