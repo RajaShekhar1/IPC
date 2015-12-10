@@ -18,7 +18,7 @@ from taa.services.products.states import get_all_states
 from taa.services.products import get_payment_modes, is_payment_mode_changeable
 from taa.services.docusign.service import create_envelope_and_get_signing_url
 from taa.services import LookupService
-from taa.services.cases import RiderService
+from taa.services.products.riders import RiderService
 
 product_service = LookupService('ProductService')
 product_form_service = LookupService('ProductFormService')

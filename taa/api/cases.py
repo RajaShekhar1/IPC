@@ -6,7 +6,8 @@ from flask_stormpath import current_user, groups_required, login_required
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
-from taa.services.cases import CaseService, SelfEnrollmentSetup, RiderService
+from taa.services.cases import CaseService, SelfEnrollmentSetup
+from taa.services.products.riders import RiderService
 from taa.services.cases.forms import (
     CensusRecordForm,
     NewCaseForm,
@@ -125,7 +126,7 @@ def update_case(case_id):
             for rider in riders:
                 if rider.get('selected'):
                     selected_riders.append(rider.get('code'))
-        case_service.update_riders(case, [rider_service.get_rider_by_code(rc) for rc in selected_riders])
+        case_service.update_riders(case, [rider_service.get_rider_by_code(None, rc) for rc in selected_riders])
         del data['products']
         del data['partner_agents']
         del data['riders']

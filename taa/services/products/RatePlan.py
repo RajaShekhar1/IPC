@@ -7,7 +7,7 @@ try:
 except ImportError:
     from yaml import YamlLoader
 
-from taa.services.cases.case_service import Rider
+from taa.services.products.riders import Rider
 from taa.services.products.rates import DATA_DIR
 
 '''

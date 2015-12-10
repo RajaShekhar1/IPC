@@ -10,7 +10,8 @@ from taa import app, db
 from nav import get_nav_menu
 from taa.api.cases import census_records
 from taa.services.docusign.docu_console import console_url
-from taa.services.cases import CaseService, SelfEnrollmentSetup, RiderService
+from taa.services.cases import CaseService, SelfEnrollmentSetup
+from taa.services.products.riders import RiderService
 from taa.services.cases.forms import (CensusRecordForm,
                                       NewCaseEnrollmentPeriodForm,
                                       SelfEnrollmentSetupForm,

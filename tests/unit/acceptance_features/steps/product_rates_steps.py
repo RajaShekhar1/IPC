@@ -61,7 +61,7 @@ def step_impl(context):
 def format_coverage(coverage):
     "Add dollar sign and thousands separator to coverage integer."
     import locale
-    locale.setlocale(locale.LC_ALL, 'en_US')
+    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
     return '$' + locale.format("%d", coverage, grouping=True)
 
 

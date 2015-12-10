@@ -1,22 +1,19 @@
-import dateutil.parser
-from datetime import datetime, date as datetime_date
-import re
-import csv
-import uuid
 import StringIO
+import uuid
+from datetime import datetime
 
+import dateutil.parser
+import sqlalchemy as sa
 from flask import abort
 from flask_stormpath import current_user
 from sqlalchemy.orm import joinedload
-import sqlalchemy as sa
 
+from models import (Case, CaseCensus, CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod,
+                    SelfEnrollmentSetup)
 from taa.core import DBService
 from taa.core import db
 from taa.services import RequiredFeature, LookupService
 from taa.services.agents.models import Agent
-from models import (Case, CaseCensus, CaseEnrollmentPeriod,
-                    CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod,
-                    SelfEnrollmentSetup)
 
 
 class CaseService(DBService):
@@ -477,79 +474,4 @@ class CaseService(DBService):
     def is_agent_restricted_to_own_enrollments(self, agent, case):
         return not self.is_agent_allowed_to_view_full_census(agent, case)
 
-class Rider(object):
-    def __init__(self, name, code, enrollment_level=False, restrict_to=[]):
-        self.name = name
-        self.code = code
-        self.enrollment_level = enrollment_level
-        self.restrict_to = restrict_to
 
-    def to_json(self):
-        return dict(
-                name=self.name,
-                code=self.code,
-                enrollment_level=self.enrollment_level,
-                restrict_to=self.restrict_to
-                )
-
-
-class RiderService(object):
-    default_riders = [
-        # Rider("Disability Waiver of Premium", "WP"),
-        Rider("Automatic Increase Rider", "AIR", True, ["FPPTI"]), 
-        # Rider("Chronic Illness Rider", "CHR", True) 
-    ]
-
-    def __init__(self):
-        pass
-
-    def valid_rider_code(self, code):
-        return code in [r.code for r in self.default_riders]
-    
-    def get_rider_by_code(self, code):
-        return [r for r in self.default_riders if r.code==code][0]
-
-    def case_level_riders(self):
-        return [r for r in self.default_riders if not r.enrollment_level]
-
-    def enrollment_level_riders(self):
-        return [r for r in self.default_riders if r.enrollment_level]
-
-    def get_rider_info_for_case(self, case):
-        """Returns all the riders that a case can potentially have at the group level, with current selections."""
-        return [{
-                'selected': self.is_rider_selected_for_case(rider, case),
-                'description': rider.name,
-                'code': rider.code,
-                'enrollment_level': rider.enrollment_level,
-                'restrict_to': rider.restrict_to
-                }
-                for rider in self.default_riders
-        ]
-
-    def is_rider_selected_for_case(self, rider, case):
-        return case.case_riders and rider.code in case.case_riders.split(",")
-
-    def get_selected_case_riders(self, case):
-        return [r
-                for r in self.default_riders
-                if self.is_rider_selected_for_case(r, case)
-        ]
-
-    def get_selected_case_rider_info(self, case):
-        return [r.to_json() for r in self.get_selected_case_riders(case)]
-
-    def get_enrollment_rider_info(self):
-        return [r.to_json() for r in self.enrollment_level_riders()]
-    def get_rider_rates(self, payment_mode):        
-        emp_rider_rates = dict(
-            WP=10*int(payment_mode)/52,
-            AIR=0*int(payment_mode)/52,
-            CHR=5*int(payment_mode)/52
-            )
-        sp_rider_rates = dict(
-            WP=10*int(payment_mode)/52,
-            AIR=0*int(payment_mode)/52,
-            CHR=5*int(payment_mode)/52
-            )
-        return dict(emp=emp_rider_rates, sp=sp_rider_rates)

@@ -7,7 +7,6 @@ from taa.services.products.RatePlan import (
     ApplicantQueryOptions,
     ApplicantDemographics,
 
-    ApplicantQueryConstraint,
     ApplicantTypeMatchesConstraint,
     ProductRiderIncludedConstraint,
     AndConstraint,
@@ -15,9 +14,6 @@ from taa.services.products.RatePlan import (
     OrConstraint,
 
     MODE_WEEKLY,
-    MODE_BIWEEKLY,
-    MODE_MONTHLY,
-    MODE_SEMIMONTHLY,
     APPLICANT_EMPLOYEE,
     APPLICANT_CHILD,
     APPLICANT_SPOUSE,
@@ -29,6 +25,43 @@ from taa.services.products.RatePlan import (
 
     AgeRateLookupTable,
 )
+
+'''
+
+From excel, calculate premium from coverage amount (FACE) given different
+ Annual Cost Per Thousand (ACPT) components of the cost.
+IF(
+    ACPT="", "",
+     ROUND(
+        (
+                                 ROUND(ACPT * FACE/1000, 2)
+            + IF(WOP_ACPT <> "", ROUND(WOP_ACPT * FACE/1000, 2), 0)
+            + IF(QOL_ACPT <> "", ROUND(QOL_ACPT * FACE/1000, 2), 0)
+            + IF(POL_FEE <> "", POL_FEE, 0)
+        ) / mode, 2
+     )
+)
+
+From excel, calculate coverage provided given a premium.
+
+=IF(
+    # Ignore these two lines, excel error checking...
+    OR(ACPT="", PREMIUM=""),"",
+    IF(
+      ROUND(((PREMIUM*mode-IF(FIXED_FEE<>"",FIXED_FEE,0))*1000)/ACPT,0)<0,
+      "Check Premium",
+      # Main computation
+      ROUND(
+        (
+            (PREMIUM * mode - IF(FIXED_FEE<>"", FIXED_FEE,0)) * 1000
+        )
+        /
+        (ACPT + IF(WOP_ACPT<>"", WOP_ACPT, 0) + IF(QOL_ACPT<>"", QOL_ACPT, 0)),
+      # Rounding to nearest dollar amount of coverage
+      0)
+    )
+ )
+'''
 
 class TestRatePlan(TestCase):
     def setUp(self):
@@ -192,39 +225,3 @@ class TestRatePlan(TestCase):
         return rate_plan
 
 
-'''
-
-From excel, calculate premium from coverage amount (FACE) given different
- Annual Cost Per Thousand (ACPT) components of the cost.
-IF(
-    ACPT="", "",
-     ROUND(
-        (
-                                 ROUND(ACPT * FACE/1000, 2)
-            + IF(WOP_ACPT <> "", ROUND(WOP_ACPT * FACE/1000, 2), 0)
-            + IF(QOL_ACPT <> "", ROUND(QOL_ACPT * FACE/1000, 2), 0)
-            + IF(POL_FEE <> "", POL_FEE, 0)
-        ) / mode, 2
-     )
-)
-
-From excel, calculate coverage provided given a premium.
-
-=IF(
-    # Ignore these two lines, excel error checking...
-    OR(ACPT="", PREMIUM=""),"",
-    IF(
-      ROUND(((PREMIUM*mode-IF(FIXED_FEE<>"",FIXED_FEE,0))*1000)/ACPT,0)<0,
-      "Check Premium",
-      # Main computation
-      ROUND(
-        (
-            (PREMIUM * mode - IF(FIXED_FEE<>"", FIXED_FEE,0)) * 1000
-        )
-        /
-        (ACPT + IF(WOP_ACPT<>"", WOP_ACPT, 0) + IF(QOL_ACPT<>"", QOL_ACPT, 0)),
-      # Rounding to nearest dollar amount of coverage
-      0)
-    )
- )
-'''

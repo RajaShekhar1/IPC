@@ -33,7 +33,7 @@ class EnrollmentImportService(object):
     def standardize_imported_data(self, data, method='api_import'):
 
         from taa.services.enrollments import EnrollmentRecordParser
-        from taa.services.cases import RiderService
+        from services.products.riders import RiderService
         rider_service = RiderService()
 
         out_data = {

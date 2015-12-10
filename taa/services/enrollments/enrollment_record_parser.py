@@ -315,8 +315,8 @@ class EnrollmentRecordParser(object):
         #Add all beneficiary data to the parser
         all_fields += [ emp_bene_name, emp_bene_birthdate, emp_bene_relationship, emp_bene_ssn, emp_bene_percentage, sp_bene_name, sp_bene_birthdate, sp_bene_relationship, sp_bene_ssn, sp_bene_percentage, emp_cont_bene_name, emp_cont_bene_birthdate, emp_cont_bene_relationship, emp_cont_bene_ssn, emp_cont_bene_percentage, sp_cont_bene_name, sp_cont_bene_birthdate, sp_cont_bene_relationship, sp_cont_bene_ssn, sp_cont_bene_percentage ]
 
-    #Flat File Rider import
-    from taa.services.cases import RiderService
+    # Flat File Rider import
+    from taa.services.products.riders import RiderService
     for prefix, long_prefix in [('emp', 'employee'), ('sp', 'spouse')]:
         for rider in RiderService.default_riders:
             all_fields += [EnrollmentRecordField("{}_rider_{}".format(prefix, rider.code.lower()), "{}_rider_{}".format(long_prefix, rider.code.lower()), preprocess_string, [question_answered_validator], flat_file_size=1, description="Is the {} rider included for {}?".format(rider.code, long_prefix))]

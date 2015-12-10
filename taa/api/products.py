@@ -5,7 +5,7 @@ from taa.core import TAAFormError
 from taa.api import route
 from taa.helpers import get_posted_data
 from taa.services.products import ProductService
-from taa.services.cases import RiderService
+from taa.services.products.riders import RiderService
 from taa.services.products.forms import NewProductForm, EditProductForm
 
 bp = Blueprint('products', __name__, url_prefix='/products')

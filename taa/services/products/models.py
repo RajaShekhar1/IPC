@@ -210,3 +210,5 @@ class GuaranteeIssueCriteria(GICriteriaSerializer, db.Model):
     # Weight criteria in pounds: Exclusive range
     weight_min = db.Column(db.Integer)
     weight_max = db.Column(db.Integer)
+
+

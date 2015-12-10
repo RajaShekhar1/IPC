@@ -19,7 +19,7 @@ from taa.services.docusign.DocuSign_config import (
 )
 from taa.services.products import ProductService
 from taa.services.agents import AgentService
-from taa.services.cases import RiderService
+from taa.services.products.riders import RiderService
 
 product_service = ProductService()
 agent_service = AgentService()
