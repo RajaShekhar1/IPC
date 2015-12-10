@@ -1,97 +1,625 @@
 Feature: Compute rates for products and associated riders.
   5Star/Dell has provided an excel spreadsheet (2015-12-02 folders in Artifacts)
-    that specify how the different riders can be combined with various products
-    and what rates to use. We need to compute the rates data in the same way the
-    spreadsheet does, to the penny. What follows is the acceptance criteria for
-    useful combinations of rates and the expected output of the rates calculator
-    from the TAA system.
+  that specify how the different riders can be combined with various products
+  and what rates to use. We need to compute the rates data in the same way the
+  spreadsheet does, to the penny. What follows is the acceptance criteria for
+  useful combinations of rates and the expected output of the rates calculator
+  from the TAA system.
 
-  Background:
-    Given I have entered the following plan codes into TAA:
-      | Base Product | Applicant Type  | Rider Codes | State   | Plan Code |
-      | FPPTI        | Employee,Spouse |             | DEFAULT | FPPTI     |
-      | FPPTI        | Employee,Spouse |             | UT      | FPPTI UT  |
-      | FPPTI        | Employee,Spouse | AIO         | UT      | FPATI UT  |
-      | FPPTI        | Child           |             | DEFAULT | FPPTID    |
-      | FPP Gov      | Employee,Spouse |             | DEFAULT | FPPTIG    |
-
-  Scenario Outline: : I want to know the Dell FPP Plan code given a base product, applicant type, set of riders, and state
-    Given The applicant type is '<Applicant Type>'
-    And the riders selected are '<Riders>'
-    And the state is '<State>'
-    When I look up the plan code for base product '<Base Product Type>'
-    Then I should see '<Plan Code>'
-
-    Examples: Employee with different base products
-      | Riders | Applicant Type | Base Product Type | State | Plan Code |
-      |        | Employee       | FPPTI             | MI    | FPPTI     |
-      |        | Employee       | FPPTIG            | MI    | FPPTIG    |
-      |        | Employee       | FPPTIW            | MI    | FPPTIW    |
-      |        | Employee       | FPPTIB            | MI    | FPPTIB    |
-      |        | Employee       | FPPTIY            | MI    | FPPTIY    |
-
-    Examples: Spouse with
-
-      | Y   | N    | N    | N  | Employee       | FPATI          | N/A             | FPATW           | FPATB           | FPATY           |
-      | N   | N    | N    | Y  | Employee       | FPPTI          | FPPTIG          | FPPTIW          | FPPTIB          | FPPTIY          |
-      | N   | Y    | N    | N  | Employee       | FPQTI3         | FPQTIG/3        | FPQTIW/3        | FPQTIB/3        | FPQTIY/3        |
-      | N   | N    | Y    | N  | Employee       | FPQTI4         | FPQTIG/4        | FPQTIW/4        | FPQTIB/4        | FPQTIY/4        |
-
-
-
-
-    # Base Product, Applicant Type, List of Rider Codes = Unique Plan Code if entered, otherwise Disallowed
-    Scenario: Lookup without state or riders gets generic code
-    When I look up the plan code for product 'FPPTI', applicant type 'Employee', riders ' ', state ' '
-    Then I should see 'FPPTI'
-
-
-  Scenario: Lookup Spouse enrollment plan codes (they should match employee codes above)
-    Given The applicant type is 'Spouse'
-    Then I should see the following plan codes
-    | AIR | QOL3 | QOL4 | WP |  Code for FPPTI | Code for FPPTIG | Code for FPPTIW | Code for FPPTIB | Code for FPPTIY |
-    | N   | N    | N    | N  |  FPPTI          | FPPTIG          | FPPTIW          | FPPTIB          | FPPTIY          |
-
-  Scenario: Lookup child (Dependent) enrollment plan codes
-    Given The applicant type is 'Employee'
-    Then I should see the following plan codes
-      | N   | N    | N    | N  | Child          | FPPTID         | FPPTIDG         | FPPTIDW         | FPPTIDB         | FPPTIDY         |
-
+#  Background:
+#    Given I have entered the following plan codes into TAA:
+#      | Base Product | Applicant Type  | Rider Codes | State   | Plan Code |
+#      | FPPTI        | Employee,Spouse |             | DEFAULT | FPPTI     |
+#      | FPPTI        | Employee,Spouse |             | UT      | FPPTI UT  |
+#      | FPPTI        | Employee,Spouse | AIO         | UT      | FPATI UT  |
+#      | FPPTI        | Child           |             | DEFAULT | FPPTID    |
+#      | FPP Gov      | Employee,Spouse |             | DEFAULT | FPPTIG    |
 #
-#  Scenario: FPPTI Employee / Spouse premiums by converage with no riders.
-#    Given I want rates for the following product data:
-#      | Product | Mode | WP Rider | QOL Rider | AIR Rider |
-#      | FPPTI   | 52   | N        | N         | N         |
+#  Scenario Outline: : I want to know the Dell FPP Plan code given a base product, applicant type, set of riders, and state
+#    Given The applicant type is '<Applicant Type>'
+#    And the riders selected are '<Riders>'
+#    And the state is '<State>'
+#    When I look up the plan code for base product '<Base Product Type>'
+#    Then I should see '<Plan Code>'
 #
-#    When I lookup premiums by coverage with the above data for the following ages:
-#      | Age |
-#      | 18  |
-#      | 30  |
-#      | 60  |
-#      | 70  |
-#    Then I should see the following premiums:
-#      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
-#      | 18  | $1.65   | 2.30    | $2.63   | $2.96   | $3.61   | $4.26   | $4.91   | $5.56   | $5.89   | $6.22   | $6.87   | $7.52    | $8.17    | $9.15    | $9.48    | $10.13   | $10.78   |
-#      | 30  | $1.75   | $2.50   | $2.88   | $3.26   | $4.01   | $4.76   | $5.51   | $6.26   | $6.64   | $7.02   | $7.77   | $8.52    | $9.27    | $10.40   | $10.78   | $11.53   | $12.28   |
-#      | 60  | $6.71   | $12.42  | $15.28  | $18.13  | $23.85  | $29.56  | $35.27  | $40.98  | $43.84  | $46.69  | $52.40  | $58.12   | $63.83   | $72.39   | $75.25   | $80.96   | $86.67   |
-#      | 70  | $12.92  | $24.85  | $30.81  | $36.77  | $48.69  | $60.62  | $72.54  | $84.46  | $90.42  | $96.38  | $108.31 | $120.23  | $132.15  | $150.04  | $156.00  | $167.92  | $179.85  |
+#    Examples: Employee with different base products
+#      | Riders | Applicant Type | Base Product Type | State | Plan Code |
+#      |        | Employee       | FPPTI             | MI    | FPPTI     |
+#      |        | Employee       | FPPTIG            | MI    | FPPTIG    |
+#      |        | Employee       | FPPTIW            | MI    | FPPTIW    |
+#      |        | Employee       | FPPTIB            | MI    | FPPTIB    |
+#      |        | Employee       | FPPTIY            | MI    | FPPTIY    |
 #
-#  Scenario: FPPTI Employee / Spouse coverages by premiums with no riders.
-#    Given I want rates for the following product data:
-#      | Product | Mode | WP Rider | QOL Rider | AIR Rider |
-#      | FPPTI   | 12   | N        | N         | N         |
+#    Examples: Spouse with
 #
-#    When I lookup coverages by premium with the above data for the following ages:
-#      | Age |
-#      | 18  |
-#      | 30  |
-#      | 60  |
-#      | 70  |
-#    Then I should see the following coverages:
-#      | Age | $10.00  | $15.00  | $20.00  | $25.00  | $30.00  | $35.00   | $40.00   | $45.00   | $50.00   |
-#      | 18  | $20,059 | $37,758 | $55,457 | $73,156 | $90,855 | $108,555 | $126,254 | $143,953 | $161,652 |
-#      | 30  | $17,391 | $32,737 | $48,082 | $63,427 | $78,772 | $94,118  | $109,463 | $124,808 | $140,153 |
-#      | 60  | $2,290  | $4,310  | $6,330  | $8,350  | $10,370 | $12,391  | $14,411  | $16,431  | $18,451  |
-#      | 70  | $1,097  | $2,065  | $3,032  | $4,000  | $4,968  | $5,935   | $6,903   | $7,871   | $8,839   |
+#      | Y   | N    | N    | N  | Employee       | FPATI          | N/A             | FPATW           | FPATB           | FPATY           |
+#      | N   | N    | N    | Y  | Employee       | FPPTI          | FPPTIG          | FPPTIW          | FPPTIB          | FPPTIY          |
+#      | N   | Y    | N    | N  | Employee       | FPQTI3         | FPQTIG/3        | FPQTIW/3        | FPQTIB/3        | FPQTIY/3        |
+#      | N   | N    | Y    | N  | Employee       | FPQTI4         | FPQTIG/4        | FPQTIW/4        | FPQTIB/4        | FPQTIY/4        |
 #
+#
+#
+#
+#    # Base Product, Applicant Type, List of Rider Codes = Unique Plan Code if entered, otherwise Disallowed
+#    Scenario: Lookup without state or riders gets generic code
+#    When I look up the plan code for product 'FPPTI', applicant type 'Employee', riders ' ', state ' '
+#    Then I should see 'FPPTI'
 
+
+#  Scenario: Lookup Spouse enrollment plan codes (they should match employee codes above)
+#    Given The applicant type is 'Spouse'
+#    Then I should see the following plan codes
+#    | AIR | QOL3 | QOL4 | WP |  Code for FPPTI | Code for FPPTIG | Code for FPPTIW | Code for FPPTIB | Code for FPPTIY |
+#    | N   | N    | N    | N  |  FPPTI          | FPPTIG          | FPPTIW          | FPPTIB          | FPPTIY          |
+#
+#  Scenario: Lookup child (Dependent) enrollment plan codes
+#    Given The applicant type is 'Employee'
+#    Then I should see the following plan codes
+#      | N   | N    | N    | N  | Child          | FPPTID         | FPPTIDG         | FPPTIDW         | FPPTIDB         | FPPTIDY         |
+
+
+  Scenario: FPPTI Employee / Spouse WEEKLY premiums by coverage with no riders.
+    Given I want rates for the 'FPPTI' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 52   | N        | N         | N         |
+      | 30  | Employee       | IN    | 52   | N        | N         | N         |
+      | 60  | Employee       | IN    | 52   | N        | N         | N         |
+      | 70  | Employee       | IN    | 52   | N        | N         | N         |
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 18  | $1.65   | 2.30    | $2.63   | $2.96   | $3.61   | $4.26   | $4.91   | $5.56   | $5.89   | $6.22   | $6.87   | $7.52    | $8.17    | $9.15    | $9.48    | $10.13   | $10.78   |
+      | 30  | $1.75   | $2.50   | $2.88   | $3.26   | $4.01   | $4.76   | $5.51   | $6.26   | $6.64   | $7.02   | $7.77   | $8.52    | $9.27    | $10.40   | $10.78   | $11.53   | $12.28   |
+      | 60  | $6.71   | $12.42  | $15.28  | $18.13  | $23.85  | $29.56  | $35.27  | $40.98  | $43.84  | $46.69  | $52.40  | $58.12   | $63.83   | $72.39   | $75.25   | $80.96   | $86.67   |
+      | 70  | $12.92  | $24.85  | $30.81  | $36.77  | $48.69  | $60.62  | $72.54  | $84.46  | $90.42  | $96.38  | $108.31 | $120.23  | $132.15  | $150.04  | $156.00  | $167.92  | $179.85  |
+
+  Scenario: FPPTI Employee / Spouse MONTHLY premiums by coverage with no riders.
+    Given I want rates for the 'FPPTI' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 12   | N        | N         | N         |
+      | 30  | Employee       | IN    | 12   | N        | N         | N         |
+      | 60  | Employee       | IN    | 12   | N        | N         | N         |
+      | 70  | Employee       | IN    | 12   | N        | N         | N         |
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 18  | $7.16   | $9.98   | $11.40  | $12.81  | $15.63  | $18.46  | $21.28  | $24.11  | $25.52  | $26.93  | $29.76  | $32.58   | $35.41   | $39.65   | $41.06   | $43.88   | $46.71   |
+      | 30  | $7.59   | $10.85  | $12.48  | $14.11  | $17.37  | $20.63  | $23.88  | $27.14  | $28.77  | $30.40  | $33.66  | $36.92   | $40.18   | $45.06   | $46.69   | $49.95   | $53.21   |
+      | 60  | $29.08  | $53.83  | $66.21  | $78.58  | $103.33 | $128.08 | $152.83 | $177.58 | $189.96 | $202.33 | $227.08 | $251.83  | $276.58  | $313.71  | $326.08  | $350.83  | $375.58  |
+      | 70  | $56.00  | $107.67 | $133.50 | $159.33 | $211.00 | $262.67 | $314.33 | $366.00 | $391.83 | $417.67 | $469.33 | $521.00  | $572.67  | $650.17  | $676.00  | $727.67  | $779.33  |
+
+  Scenario: FPPTI Child BIWEEKLY premiums by coverage with no riders.
+    Given I want rates for the 'FPPTI' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Child          | IN    | 26   | N        | N         | N         |
+      | 23  | Child          | IN    | 26   | N        | N         | N         |
+      | 24  | Child          | IN    | 26   | N        | N         | N         |
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 18  | $2.30   | $4.60   | $5.75   | $6.90   | $9.20   | $11.50  | $13.80  | $16.10  | $17.25  | $18.40  | $20.70  | $23.00   | $25.30   | $28.75   | $29.90   | $32.20   | $34.50   |
+      | 23  | $2.30   | $4.60   | $5.75   | $6.90   | $9.20   | $11.50  | $13.80  | $16.10  | $17.25  | $18.40  | $20.70  | $23.00   | $25.30   | $28.75   | $29.90   | $32.20   | $34.50   |
+      | 24  | N/A     | N/A     | N/A     | N/A     | N/A     | N/A     | N/A     | N/A     | N/A     | N/A     | N/A     | N/A      | N/A      | N/A      | N/A      | N/A      | N/A      |
+
+
+  Scenario: Lookup monthly COVERAGE by premium amount
+    Given I want rates for the 'FPPTI' product
+    When I lookup coverages by premium with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 12   | N        | N         | N         |
+      | 30  | Employee       | IN    | 12   | N        | N         | N         |
+      | 60  | Employee       | IN    | 12   | N        | N         | N         |
+      | 70  | Employee       | IN    | 12   | N        | N         | N         |
+    Then I should see the following coverages
+      | Age | Mode | $10.00  | $15.00  | $20.00  | $25.00  | $30.00  | $35.00   | $40.00   | $45.00   | $50.00   |
+      | 18  | 12   | $20,059 | $37,758 | $55,457 | $73,156 | $90,855 | $108,555 | $126,254 | $143,953 | $161,652 |
+      | 30  | 12   | $17,391 | $32,737 | $48,082 | $63,427 | $78,772 | $94,118  | $109,463 | $124,808 | $140,153 |
+      | 60  | 12   | $2,290  | $4,310  | $6,330  | $8,350  | $10,370 | $12,391  | $14,411  | $16,431  | $18,451  |
+      | 70  | 12   | $1,097  | $2,065  | $3,032  | $4,000  | $4,968  | $5,935   | $6,903   | $7,871   | $8,839   |
+
+  Scenario: Lookup semimonthly COVERAGE by premium amount for CHILD
+    Given I want rates for the 'FPPTI' product
+    When I lookup coverages by premium with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Child          | IN    | 24   | N        | N         | N         |
+#      | 24  | Employee       | IN    | 24   |
+    Then I should see the following coverages
+      | Age | Mode | $5.00   | $7.50   | $10.00  | $12.50  | $15.00  | $17.50  | $20.00  | $22.50  | $25.00   |
+      | 18  | 24   | $20,067 | $30,100 | $40,134 | $50,167 | $60,201 | $70,234 | $80,268 | $90,301 | $100,334 |
+#      | 24  | 24   | N/A     | N/A     | N/A     | N/A     | N/A     | N/A     | N/A     | N/A     | N/A      |
+
+
+  Scenario: Now check the Waiver of Premium rider by itself.
+    Given I want rates for the 'FPPTI' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 52   | Y        | N         | N         |
+      | 30  | Employee       | IN    | 52   | Y        | N         | N         |
+      | 60  | Employee       | IN    | 52   | Y        | N         | N         |
+      | 70  | Employee       | IN    | 52   | Y        | N         | N         |
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 18  | $1.68   | $2.36   | $2.70   | $3.04   | $3.72   | $4.39   | $5.07   | $5.75   | $6.09   | $6.43   | $7.11   | $7.79    | $8.47    | $9.49    | $9.83    | $10.50   | $11.18   |
+      | 30  | $1.78   | $2.57   | $2.96   | $3.35   | $4.13   | $4.91   | $5.70   | $6.48   | $6.87   | $7.26   | $8.04   | $8.83    | $9.61    | $10.78   | $11.18   | $11.96   | $12.74   |
+      | 60  | $6.71   | $12.42  | $15.28  | $18.13  | $23.85  | $29.56  | $35.27  | $40.98  | $43.84  | $46.69  | $52.40  | $58.12   | $63.83   | $72.39   | $75.25   | $80.96   | $86.67   |
+      | 70  | $12.92  | $24.85  | $30.81  | $36.77  | $48.69  | $60.62  | $72.54  | $84.46  | $90.42  | $96.38  | $108.31 | $120.23  | $132.15  | $150.04  | $156.00  | $167.92  | $179.85  |
+
+
+  Scenario: Check WP rider coverage computation against spreadsheet
+    Given I want rates for the 'FPPTI' product
+    When I lookup coverages by premium with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 12   | Y        | N         | N         |
+      | 60  | Employee       | IN    | 12   | Y        | N         | N         |
+      | 55  | Employee       | IN    | 12   | Y        | N         | N         |
+      | 70  | Employee       | IN    | 12   | Y        | N         | N         |
+    Then I should see the following coverages
+      | Age | Mode | $10.00  | $15.00  | $20.00  | $25.00  | $30.00  | $35.00   | $40.00   | $45.00   | $50.00   |
+      | 18  | 12   | $19,263 | $36,261 | $53,258 | $70,255 | $87,252 | $104,249 | $121,246 | $138,244 | $155,241 |
+      | 55  | 12   | $3,021  | $5,686  | $8,352  | $11,017 | $13,683 | $16,348  | $19,014  | $21,679  | $24,345  |
+      | 60  | 12   | $2,290  | $4,310  | $6,330  | $8,350  | $10,370 | $12,391  | $14,411  | $16,431  | $18,451  |
+      | 70  | 12   | $1,097  | $2,065  | $3,032  | $4,000  | $4,968  | $5,935   | $6,903   | $7,871   | $8,839   |
+
+
+  Scenario: QOL rider by itself. Test every age to try to verify rounding is matching the excel sheet.
+    Given I want rates for the 'FPPTI' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 19  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 20  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 21  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 22  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 23  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 24  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 25  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 26  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 27  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 28  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 29  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 30  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 31  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 32  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 33  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 34  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 35  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 36  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 37  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 38  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 39  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 40  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 41  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 42  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 43  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 44  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 45  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 46  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 47  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 48  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 49  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 50  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 51  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 52  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 53  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 54  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 55  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 56  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 57  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 58  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 59  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 60  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 61  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 62  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 63  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 64  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 65  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 66  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 67  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 68  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 69  | Employee       | IN    | 52   | N        | Y         | N         |
+      | 70  | Employee       | IN    | 52   | N        | Y         | N         |
+
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 18  | $1.68   | $2.36   | $2.70   | $3.04   | $3.72   | $4.39   | $5.07   | $5.75   | $6.09   | $6.43   | $7.11   | $7.79    | $8.47    | $9.49    | $9.83    | $10.50   | $11.18   |
+      | 19  | $1.68   | $2.36   | $2.70   | $3.04   | $3.72   | $4.39   | $5.07   | $5.75   | $6.09   | $6.43   | $7.11   | $7.79    | $8.47    | $9.49    | $9.83    | $10.50   | $11.18   |
+      | 20  | $1.68   | $2.36   | $2.70   | $3.04   | $3.72   | $4.39   | $5.07   | $5.75   | $6.09   | $6.43   | $7.11   | $7.79    | $8.47    | $9.49    | $9.83    | $10.50   | $11.18   |
+      | 21  | $1.68   | $2.36   | $2.70   | $3.04   | $3.72   | $4.39   | $5.07   | $5.75   | $6.09   | $6.43   | $7.11   | $7.79    | $8.47    | $9.49    | $9.83    | $10.50   | $11.18   |
+      | 22  | $1.68   | $2.36   | $2.70   | $3.04   | $3.72   | $4.39   | $5.07   | $5.75   | $6.09   | $6.43   | $7.11   | $7.79    | $8.47    | $9.49    | $9.83    | $10.50   | $11.18   |
+      | 23  | $1.68   | $2.36   | $2.70   | $3.04   | $3.72   | $4.39   | $5.07   | $5.75   | $6.09   | $6.43   | $7.11   | $7.79    | $8.47    | $9.49    | $9.83    | $10.50   | $11.18   |
+      | 24  | $1.68   | $2.36   | $2.70   | $3.04   | $3.72   | $4.39   | $5.07   | $5.75   | $6.09   | $6.43   | $7.11   | $7.79    | $8.47    | $9.49    | $9.83    | $10.50   | $11.18   |
+      | 25  | $1.68   | $2.36   | $2.70   | $3.04   | $3.72   | $4.39   | $5.07   | $5.75   | $6.09   | $6.43   | $7.11   | $7.79    | $8.47    | $9.49    | $9.83    | $10.50   | $11.18   |
+      | 26  | $1.68   | $2.37   | $2.71   | $3.05   | $3.74   | $4.42   | $5.11   | $5.79   | $6.13   | $6.48   | $7.16   | $7.85    | $8.53    | $9.56    | $9.90    | $10.58   | $11.27   |
+      | 27  | $1.70   | $2.40   | $2.75   | $3.09   | $3.79   | $4.49   | $5.19   | $5.89   | $6.24   | $6.58   | $7.28   | $7.98    | $8.68    | $9.73    | $10.08   | $10.77   | $11.47   |
+      | 28  | $1.72   | $2.43   | $2.79   | $3.15   | $3.87   | $4.59   | $5.30   | $6.02   | $6.38   | $6.74   | $7.46   | $8.17    | $8.89    | $9.97    | $10.33   | $11.04   | $11.76   |
+      | 29  | $1.75   | $2.50   | $2.87   | $3.24   | $3.99   | $4.74   | $5.49   | $6.24   | $6.61   | $6.98   | $7.73   | $8.48    | $9.23    | $10.35   | $10.73   | $11.47   | $12.22   |
+      | 30  | $1.79   | $2.57   | $2.97   | $3.36   | $4.15   | $4.93   | $5.72   | $6.51   | $6.90   | $7.29   | $8.08   | $8.87    | $9.65    | $10.83   | $11.23   | $12.01   | $12.80   |
+      | 31  | $1.83   | $2.66   | $3.07   | $3.49   | $4.32   | $5.14   | $5.97   | $6.80   | $7.22   | $7.63   | $8.46   | $9.29    | $10.12   | $11.36   | $11.78   | $12.60   | $13.43   |
+      | 32  | $1.88   | $2.75   | $3.19   | $3.63   | $4.50   | $5.38   | $6.25   | $7.13   | $7.56   | $8.00   | $8.88   | $9.75    | $10.63   | $11.94   | $12.38   | $13.25   | $14.13   |
+      | 33  | $1.93   | $2.85   | $3.31   | $3.78   | $4.70   | $5.63   | $6.55   | $7.48   | $7.94   | $8.40   | $9.33   | $10.25   | $11.18   | $12.56   | $13.03   | $13.95   | $14.88   |
+      | 34  | $1.98   | $2.97   | $3.46   | $3.95   | $4.93   | $5.91   | $6.90   | $7.88   | $8.37   | $8.86   | $9.84   | $10.83   | $11.81   | $13.28   | $13.78   | $14.76   | $15.74   |
+      | 35  | $2.05   | $3.09   | $3.62   | $4.14   | $5.18   | $6.23   | $7.28   | $8.32   | $8.85   | $9.37   | $10.42  | $11.46   | $12.51   | $14.08   | $14.60   | $15.65   | $16.69   |
+      | 36  | $2.12   | $3.23   | $3.79   | $4.35   | $5.47   | $6.59   | $7.70   | $8.82   | $9.38   | $9.94   | $11.06  | $12.17   | $13.29   | $14.97   | $15.53   | $16.64   | $17.76   |
+      | 37  | $2.20   | $3.39   | $3.99   | $4.59   | $5.78   | $6.98   | $8.18   | $9.37   | $9.97   | $10.57  | $11.77  | $12.96   | $14.16   | $15.95   | $16.55   | $17.75   | $18.94   |
+      | 38  | $2.28   | $3.56   | $4.20   | $4.84   | $6.12   | $7.39   | $8.67   | $9.95   | $10.59  | $11.23  | $12.51  | $13.79   | $15.07   | $16.99   | $17.63   | $18.90   | $20.18   |
+      | 39  | $2.37   | $3.74   | $4.43   | $5.11   | $6.48   | $7.86   | $9.23   | $10.60  | $11.28  | $11.97  | $13.34  | $14.71   | $16.08   | $18.14   | $18.83   | $20.20   | $21.57   |
+      | 40  | $2.47   | $3.94   | $4.67   | $5.41   | $6.88   | $8.35   | $9.82   | $11.28  | $12.02  | $12.75  | $14.22  | $15.69   | $17.16   | $19.37   | $20.10   | $21.57   | $23.04   |
+      | 41  | $2.58   | $4.16   | $4.95   | $5.74   | $7.32   | $8.89   | $10.47  | $12.05  | $12.84  | $13.63  | $15.21  | $16.79   | $18.37   | $20.74   | $21.53   | $23.10   | $24.68   |
+      | 42  | $2.70   | $4.40   | $5.25   | $6.10   | $7.80   | $9.50   | $11.20  | $12.90  | $13.75  | $14.60  | $16.30  | $18.00   | $19.70   | $22.25   | $23.10   | $24.80   | $26.50   |
+      | 43  | $2.83   | $4.65   | $5.56   | $6.48   | $8.30   | $10.13  | $11.95  | $13.78  | $14.69  | $15.60  | $17.43  | $19.25   | $21.08   | $23.81   | $24.73   | $26.55   | $28.38   |
+      | 44  | $2.96   | $4.92   | $5.89   | $6.87   | $8.83   | $10.79  | $12.75  | $14.70  | $15.68  | $16.66  | $18.62  | $20.58   | $22.53   | $25.47   | $26.45   | $28.41   | $30.37   |
+      | 45  | $3.09   | $5.19   | $6.24   | $7.28   | $9.38   | $11.47  | $13.57  | $15.66  | $16.71  | $17.75  | $19.85  | $21.94   | $24.04   | $27.18   | $28.23   | $30.32   | $32.41   |
+      | 46  | $3.24   | $5.48   | $6.60   | $7.72   | $9.96   | $12.20  | $14.44  | $16.68  | $17.80  | $18.92  | $21.16  | $23.40   | $25.64   | $29.00   | $30.13   | $32.37   | $34.61   |
+      | 47  | $3.39   | $5.78   | $6.98   | $8.18   | $10.57  | $12.96  | $15.35  | $17.75  | $18.94  | $20.14  | $22.53  | $24.92   | $27.32   | $30.90   | $32.10   | $34.49   | $36.88   |
+      | 48  | $3.55   | $6.10   | $7.37   | $8.64   | $11.19  | $13.74  | $16.29  | $18.84  | $20.11  | $21.38  | $23.93  | $26.48   | $29.03   | $32.85   | $34.13   | $36.67   | $39.22   |
+      | 49  | $3.72   | $6.43   | $7.79   | $9.15   | $11.86  | $14.58  | $17.29  | $20.01  | $21.37  | $22.72  | $25.44  | $28.15   | $30.87   | $34.94   | $36.30   | $39.02   | $41.73   |
+      | 50  | $3.90   | $6.79   | $8.24   | $9.69   | $12.58  | $15.48  | $18.38  | $21.27  | $22.72  | $24.17  | $27.07  | $29.96   | $32.86   | $37.20   | $38.65   | $41.55   | $44.44   |
+      | 51  | $4.10   | $7.20   | $8.75   | $10.30  | $13.40  | $16.50  | $19.60  | $22.70  | $24.25  | $25.80  | $28.90  | $32.00   | $35.10   | $39.75   | $41.30   | $44.40   | $47.50   |
+      | 52  | $4.33   | $7.67   | $9.34   | $11.00  | $14.34  | $17.67  | $21.01  | $24.34  | $26.01  | $27.68  | $31.01  | $34.35   | $37.68   | $42.68   | $44.35   | $47.68   | $51.02   |
+      | 53  | $4.60   | $8.19   | $9.99   | $11.79  | $15.38  | $18.98  | $22.58  | $26.17  | $27.97  | $29.77  | $33.37  | $36.96   | $40.56   | $45.95   | $47.75   | $51.35   | $54.94   |
+      | 54  | $4.89   | $8.78   | $10.72  | $12.67  | $16.55  | $20.44  | $24.33  | $28.22  | $30.16  | $32.11  | $36.00  | $39.88   | $43.77   | $49.61   | $51.55   | $55.44   | $59.33   |
+      | 55  | $5.20   | $9.40   | $11.50  | $13.60  | $17.80  | $22.00  | $26.20  | $30.40  | $32.50  | $34.60  | $38.80  | $43.00   | $47.20   | $53.50   | $55.60   | $59.80   | $64.00   |
+      | 56  | $5.55   | $10.10  | $12.38  | $14.66  | $19.21  | $23.76  | $28.31  | $32.86  | $35.14  | $37.42  | $41.97  | $46.52   | $51.07   | $57.90   | $60.18   | $64.73   | $69.28   |
+      | 57  | $5.92   | $10.83  | $13.29  | $15.75  | $20.67  | $25.59  | $30.50  | $35.42  | $37.88  | $40.34  | $45.26  | $50.17   | $55.09   | $62.47   | $64.93   | $69.84   | $74.76   |
+      | 58  | $6.29   | $11.58  | $14.22  | $16.87  | $22.15  | $27.44  | $32.73  | $38.02  | $40.66  | $43.31  | $48.60  | $53.88   | $59.17   | $67.11   | $69.75   | $75.04   | $80.33   |
+      | 59  | $6.67   | $12.34  | $15.18  | $18.01  | $23.68  | $29.36  | $35.03  | $40.70  | $43.53  | $46.37  | $52.04  | $57.71   | $63.38   | $71.89   | $74.73   | $80.40   | $86.07   |
+      | 60  | $7.07   | $13.14  | $16.18  | $19.21  | $25.28  | $31.36  | $37.43  | $43.50  | $46.53  | $49.57  | $55.64  | $61.71   | $67.78   | $76.89   | $79.93   | $86.00   | $92.07   |
+      | 61  | $7.48   | $13.97  | $17.21  | $20.45  | $26.94  | $33.42  | $39.91  | $46.39  | $49.63  | $52.88  | $59.36  | $65.85   | $72.33   | $82.06   | $85.30   | $91.78   | $98.27   |
+      | 62  | $7.92   | $14.83  | $18.29  | $21.75  | $28.67  | $35.59  | $42.50  | $49.42  | $52.88  | $56.34  | $63.26  | $70.17   | $77.09   | $87.47   | $90.93   | $97.84   | $104.76  |
+      | 63  | $8.38   | $15.76  | $19.45  | $23.14  | $30.52  | $37.89  | $45.27  | $52.65  | $56.34  | $60.03  | $67.41  | $74.79   | $82.17   | $93.24   | $96.93   | $104.30  | $111.68  |
+      | 64  | $8.88   | $16.76  | $20.70  | $24.64  | $32.52  | $40.40  | $48.28  | $56.17  | $60.11  | $64.05  | $71.93  | $79.81   | $87.69   | $99.51   | $103.45  | $111.33  | $119.21  |
+      | 65  | $9.44   | $17.88  | $22.10  | $26.32  | $34.75  | $43.19  | $51.63  | $60.07  | $64.29  | $68.51  | $76.95  | $85.38   | $93.82   | $106.48  | $110.70  | $119.14  | $127.58  |
+      | 66  | $9.52   | $18.03  | $22.29  | $26.55  | $35.06  | $43.58  | $52.09  | $60.61  | $64.87  | $69.12  | $77.64  | $86.15   | $94.67   | $107.44  | $111.70  | $120.22  | $128.73  |
+      | 67  | $10.21  | $19.43  | $24.03  | $28.64  | $37.85  | $47.07  | $56.28  | $65.49  | $70.10  | $74.71  | $83.92  | $93.13   | $102.35  | $116.17  | $120.78  | $129.99  | $139.20  |
+      | 68  | $11.01  | $21.02  | $26.02  | $31.02  | $41.03  | $51.04  | $61.05  | $71.05  | $76.06  | $81.06  | $91.07  | $101.08  | $111.08  | $126.10  | $131.10  | $141.11  | $151.12  |
+      | 69  | $11.91  | $22.82  | $28.27  | $33.72  | $44.63  | $55.54  | $66.45  | $77.35  | $82.81  | $88.26  | $99.17  | $110.08  | $120.98  | $137.35  | $142.80  | $153.71  | $164.62  |
+      | 70  | $12.92  | $24.85  | $30.81  | $36.77  | $48.69  | $60.62  | $72.54  | $84.46  | $90.42  | $96.38  | $108.31 | $120.23  | $132.15  | $150.04  | $156.00  | $167.92  | $179.85  |
+
+  Scenario: QOL + WP. Test every age to try to verify rounding is matching the excel sheet.
+    Given I want rates for the 'FPPTI' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 19  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 20  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 21  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 22  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 23  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 24  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 25  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 26  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 27  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 28  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 29  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 30  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 31  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 32  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 33  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 34  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 35  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 36  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 37  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 38  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 39  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 40  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 41  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 42  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 43  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 44  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 45  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 46  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 47  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 48  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 49  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 50  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 51  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 52  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 53  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 54  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 55  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 56  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 57  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 58  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 59  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 60  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 61  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 62  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 63  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 64  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 65  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 66  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 67  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 68  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 69  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 70  | Employee       | IN    | 52   | Y        | Y         | N         |
+
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 18  | $1.71   | $2.41   | $2.76   | $3.12   | $3.82   | $4.53   | $5.23   | $5.94   | $6.29   | $6.65   | $7.35   | $8.06    | $8.76    | $9.82    | $10.18   | $10.88   | $11.59   |
+      | 19  | $1.71   | $2.41   | $2.76   | $3.12   | $3.82   | $4.53   | $5.23   | $5.94   | $6.29   | $6.65   | $7.35   | $8.06    | $8.76    | $9.82    | $10.18   | $10.88   | $11.59   |
+      | 20  | $1.71   | $2.41   | $2.76   | $3.12   | $3.82   | $4.53   | $5.23   | $5.94   | $6.29   | $6.65   | $7.35   | $8.06    | $8.76    | $9.82    | $10.18   | $10.88   | $11.59   |
+      | 21  | $1.71   | $2.41   | $2.76   | $3.12   | $3.82   | $4.53   | $5.23   | $5.94   | $6.29   | $6.65   | $7.35   | $8.06    | $8.76    | $9.82    | $10.18   | $10.88   | $11.59   |
+      | 22  | $1.71   | $2.41   | $2.76   | $3.12   | $3.82   | $4.53   | $5.23   | $5.94   | $6.29   | $6.65   | $7.35   | $8.06    | $8.76    | $9.82    | $10.18   | $10.88   | $11.59   |
+      | 23  | $1.71   | $2.41   | $2.76   | $3.12   | $3.82   | $4.53   | $5.23   | $5.94   | $6.29   | $6.65   | $7.35   | $8.06    | $8.76    | $9.82    | $10.18   | $10.88   | $11.59   |
+      | 24  | $1.71   | $2.41   | $2.76   | $3.12   | $3.82   | $4.53   | $5.23   | $5.94   | $6.29   | $6.65   | $7.35   | $8.06    | $8.76    | $9.82    | $10.18   | $10.88   | $11.59   |
+      | 25  | $1.71   | $2.41   | $2.76   | $3.12   | $3.82   | $4.53   | $5.23   | $5.94   | $6.29   | $6.65   | $7.35   | $8.06    | $8.76    | $9.82    | $10.18   | $10.88   | $11.59   |
+      | 26  | $1.71   | $2.42   | $2.78   | $3.13   | $3.85   | $4.56   | $5.27   | $5.98   | $6.34   | $6.69   | $7.40   | $8.12    | $8.83    | $9.89    | $10.25   | $10.96   | $11.67   |
+      | 27  | $1.73   | $2.45   | $2.81   | $3.18   | $3.90   | $4.63   | $5.35   | $6.08   | $6.44   | $6.80   | $7.53   | $8.25    | $8.98    | $10.06   | $10.43   | $11.15   | $11.88   |
+      | 28  | $1.74   | $2.49   | $2.86   | $3.23   | $3.98   | $4.72   | $5.47   | $6.21   | $6.58   | $6.95   | $7.70   | $8.44    | $9.19    | $10.30   | $10.68   | $11.42   | $12.16   |
+      | 29  | $1.78   | $2.55   | $2.94   | $3.33   | $4.11   | $4.88   | $5.66   | $6.44   | $6.83   | $7.22   | $7.99   | $8.77    | $9.55    | $10.71   | $11.10   | $11.88   | $12.65   |
+      | 30  | $1.82   | $2.63   | $3.04   | $3.45   | $4.27   | $5.09   | $5.90   | $6.72   | $7.13   | $7.54   | $8.36   | $9.17    | $9.99    | $11.22   | $11.63   | $12.44   | $13.26   |
+      | 31  | $1.86   | $2.72   | $3.15   | $3.58   | $4.44   | $5.30   | $6.16   | $7.02   | $7.45   | $7.88   | $8.74   | $9.60    | $10.46   | $11.75   | $12.18   | $13.03   | $13.89   |
+      | 32  | $1.91   | $2.82   | $3.27   | $3.72   | $4.63   | $5.54   | $6.45   | $7.35   | $7.81   | $8.26   | $9.17   | $10.08   | $10.98   | $12.35   | $12.80   | $13.71   | $14.62   |
+      | 33  | $1.96   | $2.92   | $3.40   | $3.88   | $4.84   | $5.80   | $6.76   | $7.72   | $8.20   | $8.68   | $9.64   | $10.60   | $11.56   | $13.00   | $13.48   | $14.43   | $15.39   |
+      | 34  | $2.02   | $3.04   | $3.55   | $4.06   | $5.08   | $6.11   | $7.13   | $8.15   | $8.66   | $9.17   | $10.19  | $11.21   | $12.23   | $13.76   | $14.28   | $15.30   | $16.32   |
+      | 35  | $2.09   | $3.17   | $3.72   | $4.26   | $5.35   | $6.43   | $7.52   | $8.61   | $9.15   | $9.69   | $10.78  | $11.87   | $12.95   | $14.58   | $15.13   | $16.21   | $17.30   |
+      | 36  | $2.16   | $3.32   | $3.90   | $4.48   | $5.64   | $6.80   | $7.96   | $9.12   | $9.70   | $10.28  | $11.44  | $12.60   | $13.76   | $15.50   | $16.08   | $17.23   | $18.39   |
+      | 37  | $2.24   | $3.48   | $4.11   | $4.73   | $5.97   | $7.21   | $8.45   | $9.70   | $10.32  | $10.94  | $12.18  | $13.42   | $14.67   | $16.53   | $17.15   | $18.39   | $19.63   |
+      | 38  | $2.33   | $3.65   | $4.32   | $4.98   | $6.31   | $7.63   | $8.96   | $10.29  | $10.95  | $11.62  | $12.94  | $14.27   | $15.60   | $17.59   | $18.25   | $19.58   | $20.90   |
+      | 39  | $2.42   | $3.85   | $4.56   | $5.27   | $6.69   | $8.12   | $9.54   | $10.96  | $11.67  | $12.38  | $13.81  | $15.23   | $16.65   | $18.79   | $19.50   | $20.92   | $22.35   |
+      | 40  | $2.53   | $4.05   | $4.81   | $5.58   | $7.10   | $8.63   | $10.15  | $11.68  | $12.44  | $13.20  | $14.73  | $16.25   | $17.78   | $20.06   | $20.83   | $22.35   | $23.88   |
+      | 41  | $2.64   | $4.28   | $5.10   | $5.92   | $7.55   | $9.19   | $10.83  | $12.47  | $13.29  | $14.11  | $15.75  | $17.38   | $19.02   | $21.48   | $22.30   | $23.94   | $25.58   |
+      | 42  | $2.77   | $4.53   | $5.41   | $6.30   | $8.06   | $9.83   | $11.59  | $13.36  | $14.24  | $15.12  | $16.89  | $18.65   | $20.42   | $23.07   | $23.95   | $25.72   | $27.48   |
+      | 43  | $2.89   | $4.79   | $5.74   | $6.68   | $8.58   | $10.47  | $12.37  | $14.26  | $15.21  | $16.15  | $18.05  | $19.94   | $21.84   | $24.68   | $25.63   | $27.52   | $29.41   |
+      | 44  | $3.03   | $5.07   | $6.08   | $7.10   | $9.13   | $11.16  | $13.20  | $15.23  | $16.25  | $17.26  | $19.29  | $21.33   | $23.36   | $26.41   | $27.43   | $29.46   | $31.49   |
+      | 45  | $3.18   | $5.35   | $6.44   | $7.53   | $9.70   | $11.88  | $14.05  | $16.23  | $17.31  | $18.40  | $20.58  | $22.75   | $24.93   | $28.19   | $29.28   | $31.45   | $33.63   |
+      | 46  | $3.37   | $5.74   | $6.92   | $8.11   | $10.48  | $12.85  | $15.22  | $17.58  | $18.77  | $19.95  | $22.32  | $24.69   | $27.06   | $30.62   | $31.80   | $34.17   | $36.54   |
+      | 47  | $3.53   | $6.06   | $7.32   | $8.59   | $11.12  | $13.64  | $16.17  | $18.70  | $19.97  | $21.23  | $23.76  | $26.29   | $28.82   | $32.61   | $33.88   | $36.40   | $38.93   |
+      | 48  | $3.69   | $6.39   | $7.74   | $9.08   | $11.78  | $14.47  | $17.17  | $19.86  | $21.21  | $22.55  | $25.25  | $27.94   | $30.64   | $34.68   | $36.03   | $38.72   | $41.41   |
+      | 49  | $3.87   | $6.74   | $8.18   | $9.61   | $12.48  | $15.36  | $18.23  | $21.10  | $22.53  | $23.97  | $26.84  | $29.71   | $32.58   | $36.89   | $38.33   | $41.20   | $44.07   |
+      | 50  | $4.06   | $7.12   | $8.65   | $10.18  | $13.25  | $16.31  | $19.37  | $22.43  | $23.96  | $25.49  | $28.55  | $31.62   | $34.68   | $39.27   | $40.80   | $43.86   | $46.92   |
+      | 51  | $4.34   | $7.67   | $9.34   | $11.01  | $14.35  | $17.68  | $21.02  | $24.36  | $26.02  | $27.69  | $31.03  | $34.37   | $37.70   | $42.71   | $44.38   | $47.71   | $51.05   |
+      | 52  | $4.59   | $8.18   | $9.97   | $11.77  | $15.35  | $18.94  | $22.53  | $26.12  | $27.91  | $29.71  | $33.30  | $36.88   | $40.47   | $45.86   | $47.65   | $51.24   | $54.83   |
+      | 53  | $4.87   | $8.74   | $10.67  | $12.61  | $16.48  | $20.35  | $24.22  | $28.08  | $30.02  | $31.95  | $35.82  | $39.69   | $43.56   | $49.37   | $51.30   | $55.17   | $59.04   |
+      | 54  | $5.18   | $9.37   | $11.46  | $13.55  | $17.74  | $21.92  | $26.11  | $30.29  | $32.38  | $34.48  | $38.66  | $42.85   | $47.03   | $53.31   | $55.40   | $59.58   | $63.77   |
+      | 55  | $5.52   | $10.04  | $12.30  | $14.56  | $19.08  | $23.61  | $28.13  | $32.65  | $34.91  | $37.17  | $41.69  | $46.21   | $50.73   | $57.51   | $59.78   | $64.30   | $68.82   |
+      | 56  | $5.55   | $10.10  | $12.38  | $14.66  | $19.21  | $23.76  | $28.31  | $32.86  | $35.14  | $37.42  | $41.97  | $46.52   | $51.07   | $57.90   | $60.18   | $64.73   | $69.28   |
+      | 57  | $5.92   | $10.83  | $13.29  | $15.75  | $20.67  | $25.59  | $30.50  | $35.42  | $37.88  | $40.34  | $45.26  | $50.17   | $55.09   | $62.47   | $64.93   | $69.84   | $74.76   |
+      | 58  | $6.29   | $11.58  | $14.22  | $16.87  | $22.15  | $27.44  | $32.73  | $38.02  | $40.66  | $43.31  | $48.60  | $53.88   | $59.17   | $67.11   | $69.75   | $75.04   | $80.33   |
+      | 59  | $6.67   | $12.34  | $15.18  | $18.01  | $23.68  | $29.36  | $35.03  | $40.70  | $43.53  | $46.37  | $52.04  | $57.71   | $63.38   | $71.89   | $74.73   | $80.40   | $86.07   |
+      | 60  | $7.07   | $13.14  | $16.18  | $19.21  | $25.28  | $31.36  | $37.43  | $43.50  | $46.53  | $49.57  | $55.64  | $61.71   | $67.78   | $76.89   | $79.93   | $86.00   | $92.07   |
+      | 61  | $7.48   | $13.97  | $17.21  | $20.45  | $26.94  | $33.42  | $39.91  | $46.39  | $49.63  | $52.88  | $59.36  | $65.85   | $72.33   | $82.06   | $85.30   | $91.78   | $98.27   |
+      | 62  | $7.92   | $14.83  | $18.29  | $21.75  | $28.67  | $35.59  | $42.50  | $49.42  | $52.88  | $56.34  | $63.26  | $70.17   | $77.09   | $87.47   | $90.93   | $97.84   | $104.76  |
+      | 63  | $8.38   | $15.76  | $19.45  | $23.14  | $30.52  | $37.89  | $45.27  | $52.65  | $56.34  | $60.03  | $67.41  | $74.79   | $82.17   | $93.24   | $96.93   | $104.30  | $111.68  |
+      | 64  | $8.88   | $16.76  | $20.70  | $24.64  | $32.52  | $40.40  | $48.28  | $56.17  | $60.11  | $64.05  | $71.93  | $79.81   | $87.69   | $99.51   | $103.45  | $111.33  | $119.21  |
+      | 65  | $9.44   | $17.88  | $22.10  | $26.32  | $34.75  | $43.19  | $51.63  | $60.07  | $64.29  | $68.51  | $76.95  | $85.38   | $93.82   | $106.48  | $110.70  | $119.14  | $127.58  |
+      | 66  | $9.52   | $18.03  | $22.29  | $26.55  | $35.06  | $43.58  | $52.09  | $60.61  | $64.87  | $69.12  | $77.64  | $86.15   | $94.67   | $107.44  | $111.70  | $120.22  | $128.73  |
+      | 67  | $10.21  | $19.43  | $24.03  | $28.64  | $37.85  | $47.07  | $56.28  | $65.49  | $70.10  | $74.71  | $83.92  | $93.13   | $102.35  | $116.17  | $120.78  | $129.99  | $139.20  |
+      | 68  | $11.01  | $21.02  | $26.02  | $31.02  | $41.03  | $51.04  | $61.05  | $71.05  | $76.06  | $81.06  | $91.07  | $101.08  | $111.08  | $126.10  | $131.10  | $141.11  | $151.12  |
+      | 69  | $11.91  | $22.82  | $28.27  | $33.72  | $44.63  | $55.54  | $66.45  | $77.35  | $82.81  | $88.26  | $99.17  | $110.08  | $120.98  | $137.35  | $142.80  | $153.71  | $164.62  |
+      | 70  | $12.92  | $24.85  | $30.81  | $36.77  | $48.69  | $60.62  | $72.54  | $84.46  | $90.42  | $96.38  | $108.31 | $120.23  | $132.15  | $150.04  | $156.00  | $167.92  | $179.85  |
+
+  Scenario: Check WP+QOL rider coverage computation against spreadsheet
+    Given I want rates for the 'FPPTI' product
+    When I lookup coverages by premium with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 19  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 20  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 21  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 22  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 23  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 24  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 25  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 26  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 27  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 28  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 29  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 30  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 31  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 32  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 33  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 34  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 35  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 36  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 37  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 38  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 39  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 40  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 41  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 42  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 43  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 44  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 45  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 46  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 47  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 48  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 49  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 50  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 51  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 52  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 53  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 54  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 55  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 56  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 57  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 58  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 59  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 60  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 61  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 62  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 63  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 64  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 65  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 66  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 67  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 68  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 69  | Employee       | IN    | 12   | Y        | Y         | N         |
+      | 70  | Employee       | IN    | 12   | Y        | Y         | N         |
+    Then I should see the following coverages
+      | Age | Mode | $10.00  | $15.00  | $20.00  | $25.00  | $30.00  | $35.00   | $40.00   | $45.00   | $50.00   |
+      | 18  | 12   | $18,529 | $34,877 | $51,226 | $67,575 | $83,924 | $100,272 | $116,621 | $132,970 | $149,319 |
+      | 19  | 12   | $18,529 | $34,877 | $51,226 | $67,575 | $83,924 | $100,272 | $116,621 | $132,970 | $149,319 |
+      | 20  | 12   | $18,529 | $34,877 | $51,226 | $67,575 | $83,924 | $100,272 | $116,621 | $132,970 | $149,319 |
+      | 21  | 12   | $18,529 | $34,877 | $51,226 | $67,575 | $83,924 | $100,272 | $116,621 | $132,970 | $149,319 |
+      | 22  | 12   | $18,529 | $34,877 | $51,226 | $67,575 | $83,924 | $100,272 | $116,621 | $132,970 | $149,319 |
+      | 23  | 12   | $18,529 | $34,877 | $51,226 | $67,575 | $83,924 | $100,272 | $116,621 | $132,970 | $149,319 |
+      | 24  | 12   | $18,529 | $34,877 | $51,226 | $67,575 | $83,924 | $100,272 | $116,621 | $132,970 | $149,319 |
+      | 25  | 12   | $18,529 | $34,877 | $51,226 | $67,575 | $83,924 | $100,272 | $116,621 | $132,970 | $149,319 |
+      | 26  | 12   | $18,378 | $34,595 | $50,811 | $67,027 | $83,243 | $99,459  | $115,676 | $131,892 | $148,108 |
+      | 27  | 12   | $18,037 | $33,952 | $49,867 | $65,782 | $81,698 | $97,613  | $113,528 | $129,443 | $145,358 |
+      | 28  | 12   | $17,571 | $33,075 | $48,579 | $64,083 | $79,587 | $95,090  | $110,594 | $126,098 | $141,602 |
+      | 29  | 12   | $16,832 | $31,683 | $46,535 | $61,386 | $76,238 | $91,089  | $105,941 | $120,792 | $135,644 |
+      | 30  | 12   | $16,000 | $30,118 | $44,235 | $58,353 | $72,471 | $86,588  | $100,706 | $114,824 | $128,941 |
+      | 31  | 12   | $15,213 | $28,635 | $42,058 | $55,481 | $68,904 | $82,327  | $95,749  | $109,172 | $122,595 |
+      | 32  | 12   | $14,407 | $27,119 | $39,831 | $52,542 | $65,254 | $77,966  | $90,678  | $103,390 | $116,102 |
+      | 33  | 12   | $13,627 | $25,651 | $37,675 | $49,699 | $61,723 | $73,747  | $85,772  | $97,796  | $109,820 |
+      | 34  | 12   | $12,806 | $24,105 | $35,405 | $46,704 | $58,004 | $69,303  | $80,603  | $91,902  | $103,202 |
+      | 35  | 12   | $12,035 | $22,655 | $33,274 | $43,894 | $54,513 | $65,133  | $75,752  | $86,372  | $96,991  |
+      | 36  | 12   | $11,277 | $21,227 | $31,177 | $41,128 | $51,078 | $61,028  | $70,978  | $80,929  | $90,879  |
+      | 37  | 12   | $10,526 | $19,814 | $29,102 | $38,390 | $47,678 | $56,966  | $66,254  | $75,542  | $84,830  |
+      | 38  | 12   | $9,855  | $18,551 | $27,246 | $35,942 | $44,638 | $53,333  | $62,029  | $70,725  | $79,420  |
+      | 39  | 12   | $9,189  | $17,297 | $25,405 | $33,514 | $41,622 | $49,730  | $57,838  | $65,946  | $74,054  |
+      | 40  | 12   | $8,575  | $16,141 | $23,707 | $31,274 | $38,840 | $46,406  | $53,972  | $61,538  | $69,105  |
+      | 41  | 12   | $7,981  | $15,023 | $22,066 | $29,108 | $36,150 | $43,192  | $50,235  | $57,277  | $64,319  |
+      | 42  | 12   | $7,407  | $13,943 | $20,479 | $27,015 | $33,551 | $40,087  | $46,623  | $53,159  | $59,695  |
+      | 43  | 12   | $6,904  | $12,995 | $19,086 | $25,178 | $31,269 | $37,360  | $43,452  | $49,543  | $55,635  |
+      | 44  | 12   | $6,433  | $12,110 | $17,786 | $23,463 | $29,139 | $34,816  | $40,492  | $46,168  | $51,845  |
+      | 45  | 12   | $6,012  | $11,317 | $16,622 | $21,927 | $27,233 | $32,538  | $37,843  | $43,148  | $48,453  |
+      | 46  | 12   | $5,519  | $10,390 | $15,260 | $20,130 | $25,000 | $29,870  | $34,740  | $39,610  | $44,481  |
+      | 47  | 12   | $5,171  | $9,734  | $14,297 | $18,859 | $23,422 | $27,985  | $32,548  | $37,110  | $41,673  |
+      | 48  | 12   | $4,854  | $9,136  | $13,419 | $17,702 | $21,984 | $26,267  | $30,550  | $34,832  | $39,115  |
+      | 49  | 12   | $4,555  | $8,573  | $12,592 | $16,611 | $20,630 | $24,648  | $28,667  | $32,686  | $36,705  |
+      | 50  | 12   | $4,271  | $8,040  | $11,809 | $15,578 | $19,347 | $23,116  | $26,884  | $30,653  | $34,422  |
+      | 51  | 12   | $3,919  | $7,378  | $10,836 | $14,294 | $17,752 | $21,210  | $24,669  | $28,127  | $31,585  |
+      | 52  | 12   | $3,644  | $6,860  | $10,075 | $13,290 | $16,506 | $19,721  | $22,937  | $26,152  | $29,368  |
+      | 53  | 12   | $3,380  | $6,362  | $9,344  | $12,326 | $15,308 | $18,290  | $21,272  | $24,254  | $27,237  |
+      | 54  | 12   | $3,125  | $5,882  | $8,640  | $11,397 | $14,154 | $16,912  | $19,669  | $22,426  | $25,184  |
+      | 55  | 12   | $2,892  | $5,444  | $7,997  | $10,549 | $13,101 | $15,653  | $18,205  | $20,757  | $23,309  |
+      | 56  | 12   | $2,873  | $5,408  | $7,943  | $10,477 | $13,012 | $15,547  | $18,082  | $20,617  | $23,152  |
+      | 57  | 12   | $2,659  | $5,006  | $7,352  | $9,699  | $12,045 | $14,392  | $16,738  | $19,085  | $21,431  |
+      | 58  | 12   | $2,473  | $4,655  | $6,836  | $9,018  | $11,200 | $13,382  | $15,564  | $17,745  | $19,927  |
+      | 59  | 12   | $2,306  | $4,340  | $6,375  | $8,410  | $10,444 | $12,479  | $14,513  | $16,548  | $18,583  |
+      | 60  | 12   | $2,154  | $4,054  | $5,955  | $7,856  | $9,756  | $11,657  | $13,557  | $15,458  | $17,358  |
+      | 61  | 12   | $2,017  | $3,796  | $5,575  | $7,355  | $9,134  | $10,913  | $12,693  | $14,472  | $16,251  |
+      | 62  | 12   | $1,890  | $3,559  | $5,227  | $6,895  | $8,563  | $10,231  | $11,899  | $13,567  | $15,235  |
+      | 63  | 12   | $1,772  | $3,336  | $4,900  | $6,463  | $8,027  | $9,591   | $11,155  | $12,718  | $14,282  |
+      | 64  | 12   | $1,659  | $3,123  | $4,588  | $6,052  | $7,516  | $8,980   | $10,444  | $11,908  | $13,372  |
+      | 65  | 12   | $1,550  | $2,917  | $4,284  | $5,652  | $7,019  | $8,387   | $9,754   | $11,121  | $12,489  |
+      | 66  | 12   | $1,536  | $2,891  | $4,246  | $5,601  | $6,956  | $8,311   | $9,666   | $11,021  | $12,376  |
+      | 67  | 12   | $1,419  | $2,672  | $3,924  | $5,176  | $6,429  | $7,681   | $8,933   | $10,186  | $11,438  |
+      | 68  | 12   | $1,307  | $2,460  | $3,613  | $4,766  | $5,919  | $7,071   | $8,224   | $9,377   | $10,530  |
+      | 69  | 12   | $1,199  | $2,257  | $3,315  | $4,372  | $5,430  | $6,488   | $7,546   | $8,604   | $9,661   |
+      | 70  | 12   | $1,097  | $2,065  | $3,032  | $4,000  | $4,968  | $5,935   | $6,903   | $7,871   | $8,839   |
+
+
+  Scenario: Switch to the FPPCI product, check adult rates.
+    Given I want rates for the 'FPPCI' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 52   | N        | N         | N         |
+      | 30  | Employee       | IN    | 52   | N        | N         | N         |
+      | 60  | Employee       | IN    | 52   | N        | N         | N         |
+      | 70  | Employee       | IN    | 52   | N        | N         | N         |
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 18  | $1.47   | $1.93   | $2.16   | $2.40   | $2.86   | $3.33   | $3.79   | $4.26   | $4.49   | $4.72   | $5.19   | $5.65    | $6.12    | $6.82    | $7.05    | $7.52    | $7.98    |
+      | 30  | $1.69   | $2.38   | $2.73   | $3.08   | $3.77   | $4.46   | $5.15   | $5.85   | $6.19   | $6.54   | $7.23   | $7.92    | $8.62    | $9.65    | $10.00   | $10.69   | $11.38   |
+      | 60  | $7.15   | $13.31  | $16.38  | $19.46  | $25.62  | $31.77  | $37.92  | $44.08  | $47.15  | $50.23  | $56.38  | $62.54   | $68.69   | $77.92   | $81.00   | $87.15   | $93.31   |
+      | 70  | $14.85  | $28.69  | $35.62  | $42.54  | $56.38  | $70.23  | $84.08  | $97.92  | $104.85 | $111.77 | $125.62 | $139.46  | $153.31  | $174.08  | $181.00  | $194.85  | $208.69  |
+
+
+  Scenario: Do coverage computation for CI
+    Given I want rates for the 'FPPCI' product
+    When I lookup coverages by premium with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 12   | N        | N         | N         |
+      | 19  | Employee       | IN    | 12   | N        | N         | N         |
+    Then I should see the following coverages
+      | Age | Mode | $10.00  | $15.00  | $20.00  | $25.00   | $30.00   | $35.00   | $40.00   | $45.00   | $50.00   |
+      | 18  | 12   | $28,099 | $52,893 | $77,686 | $102,479 | $127,273 | $152,066 | $176,860 | $201,653 | $226,446 |
+      | 19  | 12   | $27,642 | $52,033 | $76,423 | $100,813 | $125,203 | $149,593 | $173,984 | $198,374 | $222,764 |
+
+
+  Scenario: FPPCI product with Child rates by coverage
+    Given I want rates for the 'FPPCI' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Child          | IN    | 52   | N        | N         | N         |
+      | 23  | Child          | IN    | 52   | N        | N         | N         |
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 18  | $1.00   | $2.00   | $2.50   | $3.00   | $4.00   | $5.00   | $6.00   | $7.00   | $7.50   | $8.00   | $9.00   | $10.00   | $11.00   | $12.50   | $13.00   | $14.00   | $15.00   |
+      | 23  | $1.00   | $2.00   | $2.50   | $3.00   | $4.00   | $5.00   | $6.00   | $7.00   | $7.50   | $8.00   | $9.00   | $10.00   | $11.00   | $12.50   | $13.00   | $14.00   | $15.00   |
+
+  Scenario: FPPCI product with Child rates by premium
+    Given I want rates for the 'FPPCI' product
+    When I lookup coverages by premium with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Child          | IN    | 12   | N        | N         | N         |
+      | 23  | Child          | IN    | 12   | N        | N         | N         |
+    Then I should see the following coverages
+      | Age | Mode | $10.00  | $15.00  | $20.00  | $25.00  | $30.00  | $35.00  | $40.00  | $45.00   | $50.00   |
+      | 18  | 12   | $23,077 | $34,615 | $46,154 | $57,692 | $69,231 | $80,769 | $92,308 | $103,846 | $115,385 |
+      | 23  | 12   | $23,077 | $34,615 | $46,154 | $57,692 | $69,231 | $80,769 | $92,308 | $103,846 | $115,385 |
+
+  Scenario: FPPCI product + WP Rider
+    Given I want rates for the 'FPPCI' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 52   | Y        | N         | N         |
+      | 30  | Spouse         | IN    | 52   | Y        | N         | N         |
+      | 70  | Employee       | IN    | 52   | Y        | N         | N         |
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 18  | $1.50   | $2.00   | $2.25   | $2.51   | $3.01   | $3.51   | $4.01   | $4.51   | $4.76   | $5.02   | $5.52   | $6.02    | $6.52    | $7.27    | $7.53    | $8.03    | $8.53    |
+      | 30  | $1.73   | $2.47   | $2.83   | $3.20   | $3.93   | $4.66   | $5.40   | $6.13   | $6.50   | $6.86   | $7.59   | $8.33    | $9.06    | $10.16   | $10.53   | $11.26   | $11.99   |
+      | 70  | $14.85  | $28.69  | $35.62  | $42.54  | $56.38  | $70.23  | $84.08  | $97.92  | $104.85 | $111.77 | $125.62 | $139.46  | $153.31  | $174.08  | $181.00  | $194.85  | $208.69  |
+
+
+  Scenario: FPP-Gov product + WP Rider
+    Given I want rates for the 'FPP-Gov' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 52   | Y        | N         | N         |
+      | 70  | Employee       | IN    | 52   | Y        | N         | N         |
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 18  | $1.75   | $2.49   | $2.87   | $3.24   | $3.98   | $4.73   | $5.48   | $6.22   | $6.60   | $6.97   | $7.72   | $8.46    | $9.21    | $10.33   | $10.70   | $11.45   | $12.19   |
+      | 70  | $14.12  | $27.23  | $33.79  | $40.35  | $53.46  | $66.58  | $79.69  | $92.81  | $99.37  | $105.92 | $119.04 | $132.15  | $145.27  | $164.94  | $171.50  | $184.62  | $197.73  |
+
+
+  Scenario: FPPTIY product + WP Rider + QOL
+    Given I want rates for the 'FPPTIY' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 65  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 70  | Employee       | IN    | 52   | Y        | Y         | N         |
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 18  | $1.83   | $2.66   | $3.08   | $3.49   | $4.32   | $5.15   | $5.98   | $6.82   | $7.23   | $7.65   | $8.48   | $9.31    | $10.14   | $11.38   | $11.80   | $12.63   | $13.46   |
+      | 65  | $10.96  | $20.92  | $25.89  | $30.87  | $40.83  | $50.79  | $60.75  | $70.70  | $75.68  | $80.66  | $90.62  | $100.58  | $110.53  | $125.47  | $130.45  | $140.41  | $150.37  |
+      | 70  | $15.21  | $29.42  | $36.52  | $43.62  | $57.83  | $72.04  | $86.25  | $100.45 | $107.56 | $114.66 | $128.87 | $143.08  | $157.28  | $178.60  | $185.70  | $199.91  | $214.12  |
+
+
+  Scenario: FPPTIB product + WP Rider + QOL
+    Given I want rates for the 'FPPTIB' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 70  | Employee       | IN    | 52   | Y        | Y         | N         |
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 18  | $1.95   | $2.90   | $3.38   | $3.86   | $4.81   | $5.76   | $6.71   | $7.66   | $8.14   | $8.62   | $9.57   | $10.52   | $11.47   | $12.90   | $13.38   | $14.33   | $15.28   |
+      | 70  | $17.39  | $33.79  | $41.99  | $50.18  | $66.58  | $82.97  | $99.37  | $115.76 | $123.96 | $132.15 | $148.55 | $164.94  | $181.34  | $205.93  | $214.13  | $230.52  | $246.91  |
+
+  Scenario: FPPTIW product + WP Rider + QOL
+    Given I want rates for the 'FPPTIW' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Employee       | IN    | 52   | Y        | Y         | N         |
+      | 70  | Employee       | IN    | 52   | Y        | Y         | N         |
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 18  | $1.77   | $2.54   | $2.93   | $3.31   | $4.08   | $4.86   | $5.63   | $6.40   | $6.78   | $7.17   | $7.94   | $8.71    | $9.48    | $10.64   | $11.03   | $11.80   | $12.57   |
+      | 70  | $14.12  | $27.23  | $33.79  | $40.35  | $53.46  | $66.58  | $79.69  | $92.81  | $99.37  | $105.92 | $119.04 | $132.15  | $145.27  | $164.94  | $171.50  | $184.62  | $197.73  |
+
+  Scenario: FPPTIB Child
+    Given I want rates for the 'FPPTIB' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 18  | Child          | IN    | 52   | N        | N         | N         |
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 18  | $1.15   | $2.30   | $2.88   | $3.45   | $4.60   | $5.75   | $6.90   | $8.05   | $8.63   | $9.20   | $10.35  | $11.50   | $12.65   | $14.38   | $14.95   | $16.10   | $17.25   |
