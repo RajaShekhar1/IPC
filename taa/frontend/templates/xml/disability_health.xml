@@ -1,0 +1,81 @@
+<DisabilityHealth>
+    <BenefitAmtSick>{{ policy.coverage_amount }}</BenefitAmtSick>
+    <InitialPremAmt>{{ policy.modal_premium_amount }}</InitialPremAmt>
+    {% for rider in riders -%}
+    <Rider>
+        <RiderCode>{{ rider.code }}</RiderCode>
+        <TotAmt>{{ rider.total_amount }}</TotAmt>
+        <NumberOfUnits>{{ rider.units }}</NumberOfUnits>
+        <PaymentAmt>{{ rider.payment_amount }}</PaymentAmt>
+        {% if rider.participant_code == '1' -%}
+            <Participant id="Participant_PrimaryInsured" PartyID="Party_PrimaryInsured"></Participant>
+        {% elif rider.participant_code == '5' -%}
+            <Participant id="Participant_Spouse" PartyID="Party_Spouse"></Participant>
+        {% elif rider.participant_code == '4' -%}
+            <Participant id="Participant_Child{{ rider.child_num }}" PartyID="Party_Child{{ rider.child_num }}"></Participant>
+        {% endif -%}
+    </Rider>
+    {% endfor -%}
+
+    {#            TODO: BEGIN Break into macro#}
+    {% if 1 in policy.participant_codes -%}
+        <LifeParticipant id="LifeParticipant_PrimaryInsured" PartyID="Party_PrimaryInsured">
+            <LifeParticipantRoleCode tc="1">Primary Insured</LifeParticipantRoleCode>
+            <UnderwritingClass tc="1">Standard Risk</UnderwritingClass>
+        </LifeParticipant>
+    {% endif -%}
+    {% if 15 in policy.participant_codes -%}
+        <LifeParticipant id="LifeParticipant_PrimaryAgent" PartyID="Party_PrimaryAgent">
+            <LifeParticipantRoleCode tc="15">Primary Agent</LifeParticipantRoleCode>
+        </LifeParticipant>
+    {% endif -%}
+    {% if 7 in policy.participant_codes -%}
+        <LifeParticipant DataRep="Partial" id="LifeParticipant_PrimaryBene_1" PartyID="Party_PrimaryBene_1">
+            <LifeParticipantRoleCode tc="7">Beneficiary - Primary</LifeParticipantRoleCode>
+            {#                TODO: Fix multi-beneficiary distributions#}
+            <BeneficiaryPercentDistribution>100</BeneficiaryPercentDistribution>
+        </LifeParticipant>
+    {% endif -%}
+    {#              {% if 31 in policy.participant_codes -%}#}
+    {#              <LifeParticipant id="LifeParticipant_SecondaryAddress" DataRep="Partial" PartyID="Party_SecondaryAddress">#}
+    {#                <LifeParticipantRoleCode tc="31">Third Party Recipient</LifeParticipantRoleCode>#}
+    {#              </LifeParticipant>#}
+    {#              {% endif -%}#}
+    {% if 18 in policy.participant_codes -%}
+        <LifeParticipant id="LifeParticipant_Owner" PartyID="Party_Owner">
+            <LifeParticipantRoleCode tc="18">Owner</LifeParticipantRoleCode>
+        </LifeParticipant>
+    {% endif -%}
+    {% if 12 in policy.participant_codes -%}
+        <LifeParticipant id="LifeParticipant_Payor" PartyID="Party_Payor">
+            <LifeParticipantRoleCode tc="12">Payor</LifeParticipantRoleCode>
+        </LifeParticipant>
+    {% endif -%}
+    {% if 7 in policy.participant_codes -%}
+        <LifeParticipant id="LifeParticipant_PrimaryBene_2" DataRep="Partial" PartyID="Party_PrimaryBene_2">
+            <LifeParticipantRoleCode tc="7">Beneficiary - Primary</LifeParticipantRoleCode>
+            {#                TODO: Fix multi-beneficiary distributions#}
+            <BeneficiaryPercentDistribution>100</BeneficiaryPercentDistribution>
+        </LifeParticipant>
+    {% endif -%}
+    {% if 9 in policy.participant_codes -%}
+        <LifeParticipant id="LifeParticipant_ContingentBene_1" DataRep="Partial" PartyID="Party_ContingentBene_1">
+            <LifeParticipantRoleCode tc="9">Beneficiary - Contingent</LifeParticipantRoleCode>
+            {#                TODO: Fix multi-beneficiary distributions#}
+            <BeneficiaryPercentDistribution>100</BeneficiaryPercentDistribution>
+        </LifeParticipant>
+    {% endif -%}
+    {% if 5 in policy.participant_codes -%}
+        <LifeParticipant id="LifeParticipant_Spouse" PartyID="Party_Spouse">
+            <LifeParticipantRoleCode tc="5">Spouse</LifeParticipantRoleCode>
+        </LifeParticipant>
+    {% endif -%}
+    {#              TODO: Support multiple children#}
+    {% if 4 in policy.participant_codes -%}
+        <LifeParticipant id="LifeParticipant_Child_1" PartyID="Party_Child_1">
+            <LifeParticipantRoleCode tc="4">Insured Dependent</LifeParticipantRoleCode>
+        </LifeParticipant>
+    {% endif -%}
+    {#            TODO: END Break into macro#}
+
+</DisabilityHealth>

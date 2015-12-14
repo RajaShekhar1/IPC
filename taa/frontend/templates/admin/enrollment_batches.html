@@ -55,6 +55,7 @@
           </div>
           <div data-bind="if: $data.status === 'success'">
             <a target="_blank" data-bind="attr: {href: $parent.get_pdf_link($data)}" class="btn btn-default">View PDF</a>
+            <a target="_blank" data-bind="attr: {href: $parent.get_xml_link($data)}" class="btn btn-default">View XML (.zip)</a>
           </div>
         </div>
       </div>
@@ -99,6 +100,10 @@
 
     self.get_pdf_link = function(record) {
       return "/enrollments/import_batches/"+self.selected_batch().id+"/"+record.id+"/pdf";
+    };
+
+    self.get_xml_link = function(record) {
+      return "/enrollments/import_batches/"+self.selected_batch().id+"/"+record.id+"/xml";
     };
 
     self.fetch_batch_records = function(batch) {

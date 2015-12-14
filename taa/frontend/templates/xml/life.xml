@@ -1,0 +1,40 @@
+<Life>
+    <Coverage>
+        <PlanName>{{ policy.product_type }}</PlanName>
+        <IndicatorCode tc="{{ policy.indicator_code }}">{{ policy.indicator }}</IndicatorCode>
+        <CurrentAmt>{{ enrollee.coverage.face_value or '0' }}</CurrentAmt>
+        {#
+        <CovOption>
+            <PlanName>Waiver of Premium</PlanName>
+            <OptionAmt>20000.00</OptionAmt>
+        </CovOption>
+        <CovOption>
+            <PlanName>Long Term Care</PlanName>
+            <OptionAmt>20000.00</OptionAmt>
+        </CovOption>
+        #}
+        <LifeParticipant id="LifeParticipant_PrimaryInsured" PartyID="Party_PrimaryInsured">
+            <LifeParticipantRoleCode tc="1">Primary Insured</LifeParticipantRoleCode>
+        </LifeParticipant>
+        <LifeParticipant id="LifeParticipant_Owner" PartyID="Party_Owner">
+            <LifeParticipantRoleCode tc="18">Owner</LifeParticipantRoleCode>
+        </LifeParticipant>
+        <LifeParticipant id="LifeParticipant_Payor" PartyID="Party_Payor">
+            <LifeParticipantRoleCode tc="12">Payor</LifeParticipantRoleCode>
+        </LifeParticipant>
+        <LifeParticipant id="LifeParticipant_PrimaryAgent" PartyID="Party_PrimaryAgent">
+            <LifeParticipantRoleCode tc="15">Primary Agent</LifeParticipantRoleCode>
+        </LifeParticipant>
+        {% if not enrollee.is_child -%}
+        <LifeParticipant id="LifeParticipant_PrimaryBene_1" DataRep="Partial" PartyID="Party_PrimaryBene_1">
+            <LifeParticipantRoleCode tc="7">Beneficiary - Primary</LifeParticipantRoleCode>
+            <BeneficiaryPercentDistribution>100</BeneficiaryPercentDistribution>
+        </LifeParticipant>
+        {% endif -%}
+    </Coverage>
+{#    <Coverage>#}
+{#        <PlanName>FPPAIO</PlanName>#}
+{#        <IndicatorCode tc="2">Rider</IndicatorCode>#}
+{#        <CurrentNumberOfUnits>000</CurrentNumberOfUnits>#}
+{#    </Coverage>#}
+</Life>

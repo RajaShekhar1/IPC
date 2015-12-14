@@ -1,6 +1,8 @@
 from StringIO import StringIO
+from io import BytesIO
+from zipfile import ZipFile
 
-from flask import Blueprint, request, abort, make_response
+from flask import Blueprint, request, abort, make_response, send_file
 from flask_stormpath import login_required, groups_required
 
 from taa.api import route
@@ -108,3 +110,24 @@ def render_batch_item_pdf(batch_id, item_id):
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = 'inline; filename=%s.pdf' % 'enrollment_{}'.format(item.enrollment_record_id)
     return response
+
+
+@route(bp, '/import_batches/<batch_id>/<item_id>/xml', methods=['GET'])
+@login_required
+@groups_required(['admins'])
+def render_batch_item_xml(batch_id, item_id):
+    item = enrollment_import_batch_item_service.get(item_id)
+    if not item:
+        abort(404)
+
+    pdf_bytes = enrollment_submission_service.render_enrollment_pdf(item.enrollment_record)
+    zipstream = BytesIO()
+    with ZipFile(zipstream, 'w') as zip:
+        for form_for in enrollment_submission_service.get_enrollees(item.enrollment_record):
+            xml = enrollment_submission_service.render_enrollment_xml(
+                item.enrollment_record, form_for, pdf_bytes)
+            fn = 'enrollment_{}-{}.xml'.format(item.enrollment_record_id, form_for)
+            zip.writestr(fn, xml.encode('latin-1'))
+    zipstream.seek(0)
+    return send_file(zipstream, attachment_filename='enrollment_{}.zip'.format(
+        item.enrollment_record_id), as_attachment=True)
