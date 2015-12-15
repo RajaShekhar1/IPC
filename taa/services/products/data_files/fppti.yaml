@@ -32,7 +32,6 @@ cost_components:
 
   # AIR Rider has no rate implications, so we don't include it here
 
-
   - name: "Quality of Life Rider"
     type: "ACPT Lookup"
     rate_table: "QLTI"

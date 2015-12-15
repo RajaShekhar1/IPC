@@ -120,16 +120,16 @@ def update_case(case_id):
                     *data['partner_agents'])])
         # Update case table (these keys must be removed for the main case
         # update)
-        selected_riders = []
-        if data['products'] and not 'Group CI' in [p.get('code') for p in data['products']]:
-            riders = data["riders"]
-            for rider in riders:
-                if rider.get('selected'):
-                    selected_riders.append(rider.get('code'))
-        case_service.update_riders(case, [rider_service.get_rider_by_code(None, rc) for rc in selected_riders])
+        # selected_riders = []
+        # if data['products'] and not 'Group CI' in [p.get('code') for p in data['products']]:
+        #     riders = data["riders"]
+        #     for rider in riders:
+        #         if rider.get('selected'):
+        #             selected_riders.append(rider.get('code'))
+        #case_service.update_riders(case, [rider_service.get_rider_by_code(None, rc) for rc in selected_riders])
         del data['products']
         del data['partner_agents']
-        del data['riders']
+        #del data['riders']
         return case_service.update(case, **data)
     raise TAAFormError(form.errors)
 

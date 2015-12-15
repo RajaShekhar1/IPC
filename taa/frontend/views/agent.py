@@ -175,9 +175,7 @@ Please follow the instructions carefully on the next page, stepping through the 
 
     vars["current_user_token"] = api_token_service.get_token_by_sp_href(current_user.href)
 
-    case_riders = rider_service.get_rider_info_for_case(case)
-
-    vars['riders'] = case_riders
+    #vars['riders'] = rider_service.get_rider_info_for_case(case)
 
     return render_template('agent/case.html', **vars)
 

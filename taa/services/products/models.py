@@ -1,8 +1,10 @@
 from collections import defaultdict
 
+
 from taa import db
 from taa.helpers import JsonSerializable
 from taa.services.products.product_forms import ProductFormService
+from taa.services.products.riders import RiderService
 product_form_service = ProductFormService()
 
 
@@ -21,6 +23,9 @@ class ProductJsonSerializable(JsonSerializable):
 
         # Get replacement form text for the wizard
         data['replacement_paragraphs'] = self.get_replacement_paragraphs()
+
+        # Get rider information
+        data['riders'] = RiderService().get_riders_for_product(self)
 
         return data
 

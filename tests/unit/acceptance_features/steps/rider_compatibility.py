@@ -13,12 +13,7 @@ def step_impl(context, product):
 @when("I check the following riders for compatibility")
 def step_impl(context):
     rows = [dict(zip(row.headings, row.cells)) for row in context.table]
-    riders = rows[0]
-    context.riders = [
-        RiderService().get_rider_by_code(context.product, rider_code)
-        for rider_code in riders
-        if riders[rider_code] == 'Y'
-    ]
+    context.riders = [code for code in rows[0] if rows[0][code] == 'Y']
 
     rider_config = RiderConfiguration(context.product)
     context.rider_compatibility = rider_config.check_compatibility(context.riders)

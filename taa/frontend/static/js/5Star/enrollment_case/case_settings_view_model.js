@@ -28,22 +28,6 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   });
   self.products = ko.observableArray(matched_selected_products);
 
-  // Until multi-product is working, make a single-product layer on top of the products array
-  /*self.single_product = ko.computed({
-    read: function () {
-      return (self.products().length > 0) ? self.products()[0]: null;
-    },
-    write: function (value) {
-      if (value !== null && value !== undefined) {
-        self.products([value]);
-      } else {
-        self.products([]);
-      }
-    },
-    owner: self
-  });
-  */
-
   self.emailSettings = {
     sender_name: ko.observable(case_data.self_enrollment_setup.email_sender_name),
     sender_email: ko.observable(case_data.self_enrollment_setup.email_sender_email),
@@ -176,6 +160,15 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
       self.products, self.product_choices
   );
 
+  // Track whether or not we are editing products.
+  self.is_editing_products = ko.observable(false);
+  self.start_editing_products = function() {
+    self.is_editing_products(true);
+  };
+  self.stop_editing_products = function() {
+    self.is_editing_products(false);
+  };
+
   // Limit the states that can be chosen as 'enrolling from state' by the products
   self.state_product_override_limiter = new StatesLimiterViewModel(settings.product_state_mapping,
       self.enrollment_state_override,
@@ -224,9 +217,42 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
 
 
   // Get Rider information
-  self.rider_choices = settings.riders;
+  //self.rider_choices = settings.riders;
   // self.riders = ko.observable(self.rider_choices)
-  
+
+  // cache the instances of the riders here.
+  self._case_rider_configurations_by_product = {};
+
+  self.case_riders = ko.computed(function() {
+    var _case_rider_configs = [];
+    _.each(self.products(), function(product) {
+      if (!_.has(self._case_rider_configurations_by_product, product.id)) {
+        // Instantiate a VM for each rider configuration.
+        self._case_rider_configurations_by_product[product.id] = _.map(product.riders, function(r) {
+          return new CaseRiderConfiguration(self, product, r);
+        });
+      }
+      // Concatenate the riders for this product.
+      _case_rider_configs = _case_rider_configs.concat(self._case_rider_configurations_by_product[product.id]);
+    });
+
+    return _case_rider_configs;
+  });
+
+  self.case_riders_for_product = function(product) {
+    return _.filter(self.case_riders(), function(rider) {return rider.product === product});
+  };
+
+  self.enabled_case_riders = ko.computed(function() {
+    return _.filter(self.case_riders(), function(rider) {
+      return rider.is_selected() === true;
+    });
+  });
+
+  self.enabled_case_riders_for_product = function(product) {
+    return _.filter(self.enabled_case_riders(), function(cr) {return cr.product === product});
+  };
+
   self.riders = ko.computed(function() {
     /*
     // Show only riders allowed for this product; depends on the product selected.
@@ -849,3 +875,4 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   }).run();
 
 };
+

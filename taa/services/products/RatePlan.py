@@ -482,7 +482,3 @@ standard_coverage_options = [
 ]
 
 
-wp_rider = Rider("Disability Waiver of Premium", "WP")
-qol3_rider = Rider("Quality of Life", "QOL3")
-qol4_rider = Rider("Quality of Life", "QOL4")
-air_rider = Rider("Automatic Increase Rider", "AIR")

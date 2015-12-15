@@ -259,7 +259,12 @@ ko.bindingHandlers.multiSelect = {
     //  and an observableArray passed in as the 'observed' key
 
     // hook into observed value so we get updates
-    valueAccessor().observed();
+    valueAccessor().observed.subscribe(function(newVal) {
+      console.log(newVal);
+      $(element).multiselect('deselectAll');
+      $(element).multiselect('select', newVal);
+
+    });
     $(element).multiselect(valueAccessor().options);
   },
   update: function (element, valueAccessor, allBindings, viewModel) {
@@ -552,12 +557,12 @@ ko.components.register('limited-product-select', {
   viewModel: function (params) {
     this.limiter = params.limiter;
     this.is_disabled = ko.observable(params.disabled || false);
+    this.is_mulit_select = params.is_multi_select || false;
   },
-  template: '<select name="productID" id="productID" data-bind="\
-  value: limiter.selected_product, \
+  template: '<select multiple name="productID" id="productID" data-bind="\
+  selectedOptions: limiter.selected_products, \
   options: limiter.available_products,\
   optionsText: \'name\', \
-  optionsCaption: \'(Select Product)\', \
   optionsAfterRender: limiter.disable_product_option_if_invalid,\
   disable: is_disabled\
   "> \
@@ -583,23 +588,23 @@ var ProductStatesLimiterViewModel = function (product_statecode_mapping,
   self.available_products = available_products;
 
   // Until multi-product is working, use a single selected product
-  self.selected_product = ko.computed({
-    read: function () {
-      if (self.selected_products().length > 0) {
-        return self.selected_products()[0];
-      } else {
-        return null;
-      }
-    },
-    write: function (val) {
-      if (val) {
-        self.selected_products([val]);
-      } else {
-        self.selected_products([]);
-      }
-    },
-    owner: self
-  });
+  //self.selected_product = ko.computed({
+  //  read: function () {
+  //    if (self.selected_products().length > 0) {
+  //      return self.selected_products()[0];
+  //    } else {
+  //      return null;
+  //    }
+  //  },
+  //  write: function (val) {
+  //    if (val) {
+  //      self.selected_products([val]);
+  //    } else {
+  //      self.selected_products([]);
+  //    }
+  //  },
+  //  owner: self
+  //});
 
 
   self.is_valid_product_for_state = function (product, state) {

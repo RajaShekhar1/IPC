@@ -112,18 +112,37 @@
                             </div>
                           </div>
 
+
                           {# Restore multi-product selection when multi-product enrollment is working #}
-                          {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsValue: "id", optionsText: "name", selectedOptions: products, multiSelect: {
-                          observed: products,
-                          options: {nonSelectedText: "No Products Selected", numberDisplayed: 3}
-                          }'}) }}
-{#                          #}
-{#                          <div class="form-group">#}
-{#                            <label class="col-md-3 control-label" for="productID">Product</label>#}
-{#                            <div class="col-md-9">#}
-{#                              <limited-product-select params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-product-select>#}
-{#                            </div>#}
-{#                          </div>#}
+{#                          {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsText: "name", optionsValue: "id", selectedOptions: products, multiSelect: {#}
+{#                          observed: selected_product_ids,#}
+{#                          options: {nonSelectedText: "No Products Selected", numberDisplayed: 3}#}
+{#                          }'}) }}#}
+
+                          <div class="form-group">
+                            <label class="col-md-3 control-label" for="productID">Products</label>
+                            <div class="col-md-9">
+                            <!--ko if: !is_editing_products()-->
+                              <!--ko foreach: products -->
+                                 <a data-bind="text: name, click: $parent.start_editing_products" href="#"></a><br>
+                              <!--/ko-->
+                            <!--/ko-->
+                            <!--ko if: is_editing_products-->
+                              <!--ko foreach: product_choices-->
+                                <label>
+                                  <input type="checkbox" data-bind="checked: $parent.products, checkedValue: $data, disable: $root.state_product_limiter.is_product_disabled($data)">
+                                  <span data-bind="text: name"></span>
+                                </label>
+                                <br>
+                              <!--/ko-->
+                              <button class="btn btn-default" data-bind="click: stop_editing_products">Collapse Product Options</button>
+                              {# This multi-select works, but is not as intuitive as a list of checkboxes like above. #}
+                              {#<limited-product-select params="limiter: state_product_limiter, disabled: !can_edit_case, is_multi_select: true"></limited-product-select>#}
+
+                            <!--/ko-->
+                            </div>
+
+                          </div>
 
                           {{ render_field_with_errors(case_setup_form.situs_city, **{'data-bind':'value: situs_city'}) }}
 
@@ -141,17 +160,7 @@
                             </div>
                           </div>
 
-                          <span data-bind="if: products()">
-                          <div class="form-group" data-bind="visible: riders().length > 0">
-                            <label class="col-md-3 control-label" for="caseRiders">Riders</label>
-                            <div class="col-md-9" data-bind="foreach: {data: riders, as: 'rider'}">
-                              <label>
-                                <input type="checkbox" class="ace ace-switch ace-switch-4 btn-flat" data-bind="checked: rider.selected, value:rider.code" name="riders" /> 
-                                <span class="lbl" data-bind="text: '&nbsp;&nbsp;'+rider.description"></span>
-                              </label><br />
-                            </div>
-                          </div>
-                        </span>
+
                         </div>
                         <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
                           <h3 class="header lighter blue">Enrollment Periods</h3>
@@ -287,6 +296,41 @@
                         {% endif %}
 
                       </div>
+
+                      {# Product configuration - riders, rates, etc. #}
+                      <div class="row">
+                        <div class="col-sm-12">
+                          <h4 class="header lighter blue">Product Configuration</h4>
+                          <div class="row">
+                            <div class="col-sm-10 col-md-offset-1">
+                              <!--ko foreach: products-->
+                              <div class="panel panel-default">
+                                <div class="panel-heading panel-title"><span data-bind="text: name"></span></div>
+                                  <div class="panel-body">
+
+                                    {# Riders #}
+                                    <div class="form-group" data-bind="visible: $parent.case_riders_for_product($data).length > 0">
+                                      <h4 class="header lighter blue">Riders</h4>
+                                      <div data-bind="foreach: $parent.case_riders_for_product($data)">
+
+                                        <label>
+                                          <input type="checkbox" class="ace ace-switch ace-switch-4 btn-flat"
+                                                 data-bind="checked: is_selected, enable: can_enable_rider" name="riders" />
+                                          <span class="lbl" data-bind="text: '&nbsp;&nbsp;'+rider.name"></span>
+                                        </label>
+                                        <br />
+                                      </div>
+                                    </div>
+
+                                  </div>
+                              </div>
+                              <!--/ko-->
+                              <div data-bind="if: !products().length">No Products Configured Yet</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       <div class="row">
                         <div class="col-sm-12">
                           <h4 class="header lighter blue">Partner Agents</h4>
@@ -1324,8 +1368,8 @@ $(document).ready(function() {
     default_page_text: "{{ default_page_text|replace('\n', '\\n')|safe }}",
     all_states: {{ all_states | tojson | safe }},
     product_state_mapping: {{ product_state_mapping |tojson|safe }},
-    payment_modes: {{ payment_modes | tojson | safe }},
-    riders: {{ riders | tojson | safe }},
+    payment_modes: {{ payment_modes | tojson | safe }}
+
   };
 
 

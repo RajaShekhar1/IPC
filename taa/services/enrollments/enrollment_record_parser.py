@@ -316,11 +316,12 @@ class EnrollmentRecordParser(object):
         all_fields += [ emp_bene_name, emp_bene_birthdate, emp_bene_relationship, emp_bene_ssn, emp_bene_percentage, sp_bene_name, sp_bene_birthdate, sp_bene_relationship, sp_bene_ssn, sp_bene_percentage, emp_cont_bene_name, emp_cont_bene_birthdate, emp_cont_bene_relationship, emp_cont_bene_ssn, emp_cont_bene_percentage, sp_cont_bene_name, sp_cont_bene_birthdate, sp_cont_bene_relationship, sp_cont_bene_ssn, sp_cont_bene_percentage ]
 
     # Flat File Rider import
-    from taa.services.products.riders import RiderService
-    for prefix, long_prefix in [('emp', 'employee'), ('sp', 'spouse')]:
-        for rider in RiderService.default_riders:
-            all_fields += [EnrollmentRecordField("{}_rider_{}".format(prefix, rider.code.lower()), "{}_rider_{}".format(long_prefix, rider.code.lower()), preprocess_string, [question_answered_validator], flat_file_size=1, description="Is the {} rider included for {}?".format(rider.code, long_prefix))]
-        # Uncomment to add 'Other' rider and 'Other' rider text
+    # TODO: Re-enable this once rider interface has been figured out. Maybe a method get_importable_riders() that loops over all possible riders for all importable products?
+    # from taa.services.products.riders import RiderService
+    # for prefix, long_prefix in [('emp', 'employee'), ('sp', 'spouse')]:
+    #     for rider in RiderService.get_riders_for_product(product_code):
+    #         all_fields += [EnrollmentRecordField("{}_rider_{}".format(prefix, rider.code.lower()), "{}_rider_{}".format(long_prefix, rider.code.lower()), preprocess_string, [question_answered_validator], flat_file_size=1, description="Is the {} rider included for {}?".format(rider.code, long_prefix))]
+    #     # Uncomment to add 'Other' rider and 'Other' rider text
         # all_fields += [EnrollmentRecordField("{}_rider_other".format(prefix), "{}_rider_other".format(long_prefix), preprocess_string, [question_answered_validator], flat_file_size=1, description="Is there another rider included for {}?".format(long_prefix)), EnrollmentRecordField("{}_rider_other_text".format(prefix), "{}_rider_other_text".format(long_prefix), preprocess_string, [], flat_file_size=10, description="What is the other rider code for {}?".format(long_prefix))]
 
     MAX_POLICIES = 4
