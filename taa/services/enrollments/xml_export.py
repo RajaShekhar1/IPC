@@ -152,7 +152,8 @@ def get_variables(data, agents, form_for, pdf_bytes):
     enrollee['smoker_code'] = smoker['code']
     enrollee['smoker'] = smoker['name']
     for q in enrollee['soh_questions']:
-        q['answer'] = YESNO.get(q['answer'])
+        q['answer'] = YESNO.get(q['answer'].lower() if q['answer'] is not None
+                                else None)
 
     vars = {
         'meta': {
