@@ -15,11 +15,13 @@ class Rider(object):
         if not self.compatibility_rules:
             return []
 
+        combinations = set()
         for rule in self.compatibility_rules:
             if 'triggered_if_included_riders' in rule:
-                return rule['triggered_if_included_riders']
+                for rider_code in rule['triggered_if_included_riders']:
+                    combinations.add(rider_code)
 
-        return []
+        return list(combinations)
 
     def to_json(self):
         return dict(
@@ -119,6 +121,8 @@ class RiderConfiguration(object):
             'FPPTIW':StringIO(rider_config_fpp),
             'FPPTIY':StringIO(rider_config_fpp),
             'FPPTIB':StringIO(rider_config_fpp),
+            # This is just so we can serialize products in the process of being created.
+            '':StringIO(rider_config_fpp),
         }
         rider_config_yaml = code_map.get(self.product_code)
         if not rider_config_yaml:
@@ -175,6 +179,9 @@ rider_config_fpp_gov = """
   code: "WP"
   user_facing_name: "Waiver of Premium Benefit"
   is_group_level: false
+  compatibility_rules:
+    - message: "Quality of Life Benefit cannot be combined with Waiver of Premium"
+      triggered_if_included_riders: ["QOL3", "QOL4"]
 
 - name: "Quality of Life 3%"
   code: "QOL3"

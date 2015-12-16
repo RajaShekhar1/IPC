@@ -87,9 +87,9 @@ class CaseService(DBService):
     def get_rider_codes(self):
         return [] # [c.code for c in self.case_riders.split(",")]
 
-    def update_riders(self, case, riders):
-        raise NotImplementedError()
-        case.case_riders = ','.join([r.code for r in riders])
+    def update_product_settings(self, case, product_settings):
+        # TODO: validate the product settings before saving.
+        case.product_settings = product_settings
         db.session.flush()
 
     def update_products(self, case, products):

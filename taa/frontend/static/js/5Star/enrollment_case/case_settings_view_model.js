@@ -229,7 +229,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
       if (!_.has(self._case_rider_configurations_by_product, product.id)) {
         // Instantiate a VM for each rider configuration.
         self._case_rider_configurations_by_product[product.id] = _.map(product.riders, function(r) {
-          return new CaseRiderConfiguration(self, product, r);
+          return new CaseRiderConfiguration(self, product, r, case_data.product_settings);
         });
       }
       // Concatenate the riders for this product.
@@ -571,8 +571,19 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
       can_partners_download_enrollments: self.can_partners_download_enrollments(),
       is_self_enrollment: self.is_self_enrollment(),
       riders: self.riders(),
-      include_bank_draft_form: self.include_bank_draft_form()
+      include_bank_draft_form: self.include_bank_draft_form(),
+      product_settings: self.serialize_product_settings()
     }
+  };
+
+  self.serialize_product_settings = function() {
+    return {
+      riders: self.serialize_riders()
+    }
+  };
+
+  self.serialize_riders = function() {
+    return _.invoke(self.case_riders(), "serialize");
   };
 
   self.serialize_enrollment_periods = function() {

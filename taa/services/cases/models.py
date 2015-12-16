@@ -75,8 +75,8 @@ class Case(CaseSerializer, db.Model):
                                             uselist=False, backref='case')
     case_token = db.Column(db.String(64), nullable=True, index=True)
 
-    # Store settings for the riders for each product as JSON
-    case_rider_settings = db.Column(JSON(none_as_null=False), nullable=True)
+    # Store settings for the products as JSON. Includes rider settings and rate overrides.
+    product_settings = db.Column(JSON(none_as_null=False), nullable=True)
 
     include_bank_draft_form = db.Column(db.Boolean, nullable=False, server_default='FALSE')
 

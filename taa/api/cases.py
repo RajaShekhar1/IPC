@@ -118,19 +118,18 @@ def update_case(case_id):
             case_service.update_partner_agents(
                 case, [a for a in agent_service.get_all(
                     *data['partner_agents'])])
-        # Update case table (these keys must be removed for the main case
-        # update)
-        # selected_riders = []
-        # if data['products'] and not 'Group CI' in [p.get('code') for p in data['products']]:
-        #     riders = data["riders"]
-        #     for rider in riders:
-        #         if rider.get('selected'):
-        #             selected_riders.append(rider.get('code'))
-        #case_service.update_riders(case, [rider_service.get_rider_by_code(None, rc) for rc in selected_riders])
+
+        # Update the product settings
+        case_service.update_product_settings(case, data['product_settings'])
+
+        # Before updating the case table, these keys must be removed for the main case update.
         del data['products']
         del data['partner_agents']
-        #del data['riders']
+        del data['product_settings']
+
+        # Update case table
         return case_service.update(case, **data)
+
     raise TAAFormError(form.errors)
 
 

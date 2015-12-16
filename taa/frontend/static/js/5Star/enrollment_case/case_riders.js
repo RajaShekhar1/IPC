@@ -1,5 +1,5 @@
 
-function CaseRiderConfiguration(case_settings, product, rider) {
+function CaseRiderConfiguration(case_settings, product, rider, initial_product_settings) {
   var self = this;
   self.case_settings = case_settings;
   self.product = product;
@@ -7,7 +7,20 @@ function CaseRiderConfiguration(case_settings, product, rider) {
 
   self.name = rider.name;
   self.code = rider.code;
-  self.is_selected = ko.observable(false);
+
+  self.is_rider_initially_selected = function(initial_product_settings) {
+    if (!initial_product_settings.riders) {
+      return false;
+    }
+
+    return _.any(initial_product_settings.riders, function(r) {
+      return (this.product.base_product_type === r.product_code &&
+          self.serialize().rider_code === r.rider_code &&
+          r.is_selected)
+    });
+  };
+
+  self.is_selected = ko.observable(self.is_rider_initially_selected(initial_product_settings));
 
   self.can_enable_rider = ko.pureComputed(function() {
 
@@ -25,4 +38,13 @@ function CaseRiderConfiguration(case_settings, product, rider) {
 
     return is_enabled;
   });
+
 }
+
+CaseRiderConfiguration.prototype.serialize = function() {
+  return {
+      product_code: this.product.base_product_type,
+      rider_code: this.rider.code,
+      is_selected: this.is_selected()
+    }
+};

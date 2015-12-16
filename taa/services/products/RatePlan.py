@@ -7,7 +7,6 @@ try:
 except ImportError:
     from yaml import YamlLoader
 
-from taa.services.products.riders import Rider
 from taa.services.products.rates import DATA_DIR
 
 '''
@@ -57,8 +56,65 @@ MODE_SEMIMONTHLY = 24
 MODE_MONTHLY = 12
 
 
-class WaiverOfPremiumRider(object):
-    pass
+class ApplicantQuery(object):
+    """
+    Used for querying the system for rates and
+        checking to see if an applicant can apply for a given product configuration (riders, coverage, etc).
+    """
+    def __init__(self, applicant_type, product_options, state, demographics, mode, rate_options):
+        self.applicant_type = applicant_type
+        self.product_options = product_options
+        self.state = state
+        self.demographics = demographics
+        self.mode = mode
+        self.rate_options = rate_options
+
+    def get_applicant_type(self):
+        return self.applicant_type
+
+    def get_age(self):
+        return self.demographics.get_age()
+
+    def get_mode(self):
+        return self.mode
+
+    def get_riders(self):
+        return self.product_options.get('riders', [])
+
+    def get_face_value(self):
+        return self.rate_options.get_requested_coverage()
+
+    def get_selected_premium(self):
+        return self.rate_options.get_requested_premium()
+
+
+class ApplicantQueryOptions(object):
+    def __init__(self, options):
+        self.options = options
+
+    def get_requested_coverage(self):
+        return self.options['by_coverage']
+
+    def get_requested_premium(self):
+        return self.options['by_premium']
+
+
+class CoverageOption(object):
+    def __init__(self, is_by_face, amount):
+        self._is_by_face = is_by_face
+        self.amount = amount
+
+    def is_by_face(self):
+        return self._is_by_face
+
+    def is_by_premium(self):
+        return not self._is_by_face
+
+    def get_face_amount(self):
+        return self.amount
+
+    def get_premium(self):
+        return self.amount
 
 
 class ApplicantQueryConstraint(object):
@@ -94,12 +150,12 @@ class NotConstraint(ApplicantQueryConstraint):
 
 
 class ProductRiderIncludedConstraint(ApplicantQueryConstraint):
-    def __init__(self, rider):
-        self.rider = rider
+    def __init__(self, rider_code):
+        self.rider_code = rider_code
 
     def is_satisfied(self, applicant_query):
         query_riders = applicant_query.get_riders()
-        return self.rider in query_riders or self.rider.code in query_riders
+        return self.rider_code in query_riders
 
 
 class ApplicantTypeMatchesConstraint(ApplicantQueryConstraint):
@@ -196,66 +252,6 @@ class FlatFeeCostComponent(CostComponent):
         # Fixed fee
         return False
 
-class ApplicantQuery(object):
-    """
-    Used for querying the system for rates and
-        checking to see if an applicant can apply for a given product configuration (riders, coverage, etc).
-    """
-    def __init__(self, applicant_type, product_options, state, demographics, mode, rate_options):
-        self.applicant_type = applicant_type
-        self.product_options = product_options
-        self.state = state
-        self.demographics = demographics
-        self.mode = mode
-        self.rate_options = rate_options
-
-    def get_applicant_type(self):
-        return self.applicant_type
-
-    def get_age(self):
-        return self.demographics.get_age()
-
-    def get_mode(self):
-        return self.mode
-
-    def get_riders(self):
-        return self.product_options.get('riders', [])
-
-    def get_face_value(self):
-        return self.rate_options.get_requested_coverage()
-
-    def get_selected_premium(self):
-        return self.rate_options.get_requested_premium()
-
-
-class ApplicantQueryOptions(object):
-    def __init__(self, options):
-        self.options = options
-
-    def get_requested_coverage(self):
-        return self.options['by_coverage']
-
-    def get_requested_premium(self):
-        return self.options['by_premium']
-
-
-class CoverageOption(object):
-    def __init__(self, is_by_face, amount):
-        self._is_by_face = is_by_face
-        self.amount = amount
-
-    def is_by_face(self):
-        return self._is_by_face
-
-    def is_by_premium(self):
-        return not self._is_by_face
-
-    def get_face_amount(self):
-        return self.amount
-
-    def get_premium(self):
-        return self.amount
-
 
 def build_eligibility_constraint(constraint_def):
     """
@@ -293,6 +289,7 @@ def build_eligibility_constraint(constraint_def):
 
 
 def build_rider_constraint(rider_code):
+
     if rider_code == "WP":
         rider = wp_rider
     elif rider_code == "QOL3":

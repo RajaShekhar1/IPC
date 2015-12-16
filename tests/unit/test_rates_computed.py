@@ -203,7 +203,7 @@ class TestRatePlan(TestCase):
         rider_age_table = AgeRateLookupTable({age: rider_acpt})
         rider_constraint = AndConstraint([
             # Rider must be included in the request
-            ProductRiderIncludedConstraint(rider=rider),
+            ProductRiderIncludedConstraint(rider_code=rider),
             # Applicant must be Emp or Spouse
             OrConstraint([
                 ApplicantTypeMatchesConstraint(APPLICANT_EMPLOYEE),
