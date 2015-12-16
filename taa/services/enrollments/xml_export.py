@@ -90,6 +90,8 @@ def generate_xml(data, agents, template, form_for='employee', pdf_bytes=None):
     # vars['enrollee']['employee']['smoker'] = SMOKER_CODES[vars['enrollee']['employee']['smoker_code']]
     # vars['enrollee']['employee']['existing_insurance'] = bool(vars['enrollee']['employee']['existing_insurance'])
     # vars['agent']['existing_insurance'] = bool(vars['agent']['existing_insurance'])
+    if vars['enrollee']['coverage']['face_value'] is None:
+        return None
     return render_template(template, **vars)
 
 

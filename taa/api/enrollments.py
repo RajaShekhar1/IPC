@@ -126,8 +126,9 @@ def render_batch_item_xml(batch_id, item_id):
         for form_for in enrollment_submission_service.get_enrollees(item.enrollment_record):
             xml = enrollment_submission_service.render_enrollment_xml(
                 item.enrollment_record, form_for, pdf_bytes)
-            fn = 'enrollment_{}-{}.xml'.format(item.enrollment_record_id, form_for)
-            zip.writestr(fn, xml.encode('latin-1'))
+            if xml is not None:
+                fn = 'enrollment_{}-{}.xml'.format(item.enrollment_record_id, form_for)
+                zip.writestr(fn, xml.encode('latin-1'))
     zipstream.seek(0)
     return send_file(zipstream, attachment_filename='enrollment_{}.zip'.format(
         item.enrollment_record_id), as_attachment=True)
