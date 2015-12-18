@@ -25,12 +25,18 @@
         <LifeParticipant id="LifeParticipant_PrimaryAgent" PartyID="Party_PrimaryAgent">
             <LifeParticipantRoleCode tc="15">Primary Agent</LifeParticipantRoleCode>
         </LifeParticipant>
-        {% if not enrollee.is_child -%}
-        <LifeParticipant id="LifeParticipant_PrimaryBene_1" DataRep="Partial" PartyID="Party_PrimaryBene_1">
-            <LifeParticipantRoleCode tc="7">Beneficiary - Primary</LifeParticipantRoleCode>
-            <BeneficiaryPercentDistribution>100</BeneficiaryPercentDistribution>
-        </LifeParticipant>
-        {% endif -%}
+        {% for beneficiary in enrollee.beneficiaries.primary -%}
+            <LifeParticipant id="LifeParticipant_PrimaryBene_{{ loop.index }}" DataRep="Partial" PartyID="Party_PrimaryBene_{{ loop.index }}">
+                <LifeParticipantRoleCode tc="7">Beneficiary - Primary</LifeParticipantRoleCode>
+                <BeneficiaryPercentDistribution>{{ beneficiary.percentage }}</BeneficiaryPercentDistribution>
+            </LifeParticipant>
+        {% endfor -%}
+        {% for beneficiary in enrollee.beneficiaries.contingent -%}
+            <LifeParticipant id="LifeParticipant_ContingentBene_{{ loop.index }}" DataRep="Partial" PartyID="Party_ContingentBene_{{ loop.index }}">
+                <LifeParticipantRoleCode tc="9">Beneficiary - Contingent</LifeParticipantRoleCode>
+                <BeneficiaryPercentDistribution>{{ beneficiary.percentage }}</BeneficiaryPercentDistribution>
+            </LifeParticipant>
+        {% endfor -%}
     </Coverage>
 {#    <Coverage>#}
 {#        <PlanName>FPPAIO</PlanName>#}
