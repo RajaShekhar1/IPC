@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
+
 import base64
 import datetime
 import uuid
@@ -236,6 +238,7 @@ def get_variables(data, agents, form_for, pdf_bytes):
                     'first': data['employee']['first'],
                     'last': data['employee']['last'],
                     'percentage': '100',
+                    'relationship': 'father' if data['employee']['gender'].lower() == 'male' else 'mother',
                 }
             ],
             'contingent': []
@@ -249,6 +252,7 @@ def get_variables(data, agents, form_for, pdf_bytes):
                     'first': data[form_for + '_beneficiary1_name'].split(' ', 1)[0],
                     'last': data[form_for + '_beneficiary1_name'].split(' ', 1)[1],
                     'percentage': data[form_for + '_beneficiary1_percentage'],
+                    'relationship': data[form_for + '_beneficiary1_relationship'].lower(),
                 }
             ],
             'contingent': [
@@ -258,9 +262,22 @@ def get_variables(data, agents, form_for, pdf_bytes):
                     'first': data[form_for + '_contingent_beneficiary1_name'].split(' ', 1)[0],
                     'last': data[form_for + '_contingent_beneficiary1_name'].split(' ', 1)[1],
                     'percentage': data[form_for + '_contingent_beneficiary1_percentage'],
+                    'relationship': data[form_for + '_contingent_beneficiary1_relationship'].lower(),
                 }
             ],
         }
+
+    vars['relationships'] = {}
+    owner = 'self' if enrollee['is_employee'] else \
+            'spouse' if enrollee['is_spouse'] else \
+            'child' if enrollee['is_child'] else None
+    vars['relationships']['owner_to_primary'] = RELATIONSHIP_ROLES.get(owner)
+    for type_ in ['primary', 'contingent']:
+        for beneficiary in vars['enrollee']['beneficiaries'][type_]:
+            key = 'owner_to_{}_beneficiary'.format(type_)
+            if key not in vars['relationships']:
+                vars['relationships'][key] = []
+            vars['relationships'][key].append(RELATIONSHIP_ROLES.get(beneficiary['relationship']))
 
     vars['encoded_pdf'] = None if pdf_bytes is None else \
         base64.b64encode(pdf_bytes)

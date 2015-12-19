@@ -232,13 +232,22 @@
             <Relation id="Relation_OwnerToPrimaryInsured" OriginatingObjectID="Party_PrimaryInsured" RelatedObjectID="Party_Owner">
                 <OriginatingObjectType tc="6">Party</OriginatingObjectType>
                 <RelatedObjectType tc="6">Party</RelatedObjectType>
-                <RelationRoleCode tc="168">Self</RelationRoleCode>
+                <RelationRoleCode tc="{{ relationships.owner_to_primary.code }}">{{ relationships.owner_to_primary.name }}</RelationRoleCode>
             </Relation>
-            <Relation id="Relation_PrimaryBene1ToPrimaryInsured" OriginatingObjectID="Party_PrimaryInsured" RelatedObjectID="Party_PrimaryBene_1">
+            {% for beneficiary in relationships.owner_to_primary_beneficiary -%}
+            <Relation id="Relation_PrimaryBene{{ loop.index }}ToPrimaryInsured" OriginatingObjectID="Party_PrimaryInsured" RelatedObjectID="Party_PrimaryBene_{{ loop.index }}">
                 <OriginatingObjectType tc="6">Party</OriginatingObjectType>
                 <RelatedObjectType tc="6">Party</RelatedObjectType>
-                <RelationRoleCode tc="1">Spouse</RelationRoleCode>
+                <RelationRoleCode tc="{{ beneficiary.code }}">{{ beneficiary.name }}</RelationRoleCode>
             </Relation>
+            {% endfor -%}
+            {% for beneficiary in relationships.owner_to_contingent_beneficiary -%}
+            <Relation id="Relation_ContingentBene{{ loop.index }}ToPrimaryInsured" OriginatingObjectID="Party_PrimaryInsured" RelatedObjectID="Party_ContingentBene_{{ loop.index }}">
+                <OriginatingObjectType tc="6">Party</OriginatingObjectType>
+                <RelatedObjectType tc="6">Party</RelatedObjectType>
+                <RelationRoleCode tc="{{ beneficiary.code }}">{{ beneficiary.name }}</RelationRoleCode>
+            </Relation>
+            {% endfor -%}
             <FormInstance>
                 <FormName>Application</FormName>
                 <Attachment>
