@@ -174,7 +174,8 @@ class Rates(object):
             for index, key in enumerate(itertools.product([floatify(line[0])], header[1:]), start=1):
                 self._rates[product_key][payment_mode][type_][key] = {
                     TYPE_PREMIUM: floatify(line[index]) if type_ == TYPE_COVERAGE else key[1],
-                    TYPE_COVERAGE: floatify(line[index]) if type_ == TYPE_PREMIUM else key[1]
+                    TYPE_COVERAGE: floatify(line[index]) if type_ == TYPE_PREMIUM else key[1],
+                    "payment_mode": payment_mode,
                 }
 
     def get(self, product_code, payment_mode, age, smoker=None, applicant_type=None, height=None, weight=None):
@@ -199,6 +200,7 @@ class Rates(object):
         # Rename keys to fit existing API
         result['byface'] = result.pop(TYPE_COVERAGE)
         result['bypremium'] = result.pop(TYPE_PREMIUM)
+
         return result
 
 

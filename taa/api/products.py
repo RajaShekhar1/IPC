@@ -113,14 +113,8 @@ def get_product_rates(product_id):
         statecode=statecode,
     )
 
-    #Rider Rates
-    #rider_rates = rider_service.get_rider_rates(payment_mode)
-    #emp_rider_rates = rider_rates['emp']
-    #sp_rider_rates = rider_rates['sp']
-
     # Return rates and recommendations
     rates = product_service.get_rates(product, demographics, riders=rider_codes)
-
 
     recommendations = product_service.get_recommendations(
         product, demographics

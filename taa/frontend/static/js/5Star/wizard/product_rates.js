@@ -3,9 +3,8 @@ var product_rates_service = (function() {
   // externally visible observable to express when we have finished loading rates.
   var is_loading_rates = ko.observable(false);
 
-  function ProductRatesVM(product, payment_mode) {
+  function ProductRatesVM(product) {
     this.product = product;
-    this.payment_mode = payment_mode;
     this.rates = ko.observableArray([]);
     this.recommendations = ko.observableArray([]);
 
@@ -24,7 +23,6 @@ var product_rates_service = (function() {
     update_rates_data: function(rates_data) {
       this.update_product_rates(rates_data);
       this.update_recommendations(rates_data);
-      // TODO: init rider rates
     },
 
     update_product_rates: function(rates_data) {
@@ -33,31 +31,31 @@ var product_rates_service = (function() {
 
     get_coverage_options_from_api_data: function(rates_data) {
       var rates = [];
-      rates = $.merge(rates, this.create_coverage_options(wizard_applicant.Applicant.EmployeeType, rates_data.employee_rates));
-      rates = $.merge(rates, this.create_coverage_options(wizard_applicant.Applicant.SpouseType, rates_data.spouse_rates));
-      rates = $.merge(rates, this.create_coverage_options(wizard_applicant.Applicant.ChildType, rates_data.children_rates));
+      rates = $.merge(rates, this.create_coverage_options_for_applicant(wizard_applicant.Applicant.EmployeeType, rates_data.employee_rates));
+      rates = $.merge(rates, this.create_coverage_options_for_applicant(wizard_applicant.Applicant.SpouseType, rates_data.spouse_rates));
+      rates = $.merge(rates, this.create_coverage_options_for_applicant(wizard_applicant.Applicant.ChildType, rates_data.children_rates));
       return rates;
     },
 
-    create_coverage_options: function(applicant_type, applicant_rates_data) {
+    create_coverage_options_for_applicant: function(applicant_type, applicant_rates_data) {
       var options = [];
       if (applicant_rates_data.bypremium) {
-        options = $.merge(options, this.create_coverage_options_by_face(false, applicant_type, applicant_rates_data.bypremium));
+        options = $.merge(options, this.create_coverage_options(false, applicant_type, applicant_rates_data.bypremium));
       }
       if (applicant_rates_data.byface) {
-        options = $.merge(options, this.create_coverage_options_by_face(true, applicant_type, applicant_rates_data.byface));
+        options = $.merge(options, this.create_coverage_options(true, applicant_type, applicant_rates_data.byface));
       }
       return options;
     },
 
-    create_coverage_options_by_face: function(is_by_face, applicant_type, options) {
+    create_coverage_options: function(is_by_face, applicant_type, options) {
       return _.map(options, function(data) {
         return new CoverageOption({
           applicant_type: applicant_type,
           is_by_face: is_by_face,
           face_value: data.coverage,
           premium: data.premium,
-          payment_mode: this.payment_mode
+          payment_mode: function() {return payment_mode.create_payment_mode_by_frequency(data.payment_mode)}
         });
       }, this);
     },
@@ -149,7 +147,7 @@ var product_rates_service = (function() {
           return p.product_data.id === product_rates.product_id
         }, this);
 
-        var product_rates_viewmodel = get_or_create_product_rates_viewmodel(product, payment_mode);
+        var product_rates_viewmodel = get_or_create_product_rates_viewmodel(product);
         product_rates_viewmodel.update_rates_data(product_rates);
       }
 
@@ -175,16 +173,16 @@ var product_rates_service = (function() {
     };
   }
 
-  function get_or_create_product_rates_viewmodel(product, payment_mode) {
+  function get_or_create_product_rates_viewmodel(product) {
     if (!(product.product_data.id in rates_by_product_id)) {
-      rates_by_product_id[product.product_data.id] = new ProductRatesVM(product, payment_mode);
+      rates_by_product_id[product.product_data.id] = new ProductRatesVM(product);
     }
     return rates_by_product_id[product.product_data.id];
   }
 
 
   function get_product_recommendations(product, payment_mode) {
-    var rates = get_or_create_product_rates_viewmodel(product, payment_mode);
+    var rates = get_or_create_product_rates_viewmodel(product);
     return rates.recommendations;
   }
 

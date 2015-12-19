@@ -275,6 +275,16 @@ Feature: Compute rates for products and associated riders.
       | 69  | $11.91  | $22.82  | $28.27  | $33.72  | $44.63  | $55.54  | $66.45  | $77.35  | $82.81  | $88.26  | $99.17  | $110.08  | $120.98  | $137.35  | $142.80  | $153.71  | $164.62  |
       | 70  | $12.92  | $24.85  | $30.81  | $36.77  | $48.69  | $60.62  | $72.54  | $84.46  | $90.42  | $96.38  | $108.31 | $120.23  | $132.15  | $150.04  | $156.00  | $167.92  | $179.85  |
 
+  Scenario: QOL rider with AIR enabled (shouldn't change the rate), monthly.
+    Given I want rates for the 'FPPTI' product
+    When I lookup premiums by coverage with the above data for the following ages
+      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+      | 27  | Employee       | IN    | 12   | N        | Y         | Y         |
+    Then I should see the following premiums
+      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+      | 27  | $7.36   | $10.38  | $11.90  | $13.41  | $16.43  | $19.46  | $22.48  | $25.51  | $27.02  | $28.53  | $31.56  | $34.58   | $37.61   | $42.15   | $43.66   | $46.68   | $49.71   |
+
+
   Scenario: QOL + WP. Test every age to try to verify rounding is matching the excel sheet.
     Given I want rates for the 'FPPTI' product
     When I lookup premiums by coverage with the above data for the following ages

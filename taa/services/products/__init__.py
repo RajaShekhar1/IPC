@@ -275,7 +275,7 @@ class ProductService(DBService):
         elif applicant_type == APPLICANT_SPOUSE:
             demographics_age = demographics['spouse_age']
         else:
-            # FIXME: Doesn't matter child age for now, but in future might
+            # FIXME: child age doesn't matter for now, but on future products it might.
             demographics_age = demographics.get('child_age', 0)
 
         return ApplicantQuery(
