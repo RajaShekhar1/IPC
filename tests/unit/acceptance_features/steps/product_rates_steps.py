@@ -89,7 +89,7 @@ def step_impl(context):
 
 def format_premium(premium):
     import locale
-    locale.setlocale(locale.LC_ALL, 'en_US')
+    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
     return '$' + locale.format("%.2f", premium, grouping=True)
 
 

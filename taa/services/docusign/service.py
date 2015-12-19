@@ -11,14 +11,42 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate
 from PyPDF2 import PdfFileReader
 
-from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, old_create_envelope_and_get_signing_url, \
-    agent_service, build_callback_url
+from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callback_url
 from taa.services import RequiredFeature, LookupService
 
 from taa import app
 
 
 class DocuSignService(object):
+    product_service = RequiredFeature('ProductService')
+
+    def create_multiproduct_envelope(self, product_submissions, census_record, case):
+        # Use the first product to get employee and agent data
+        first_product_data = EnrollmentDataWrap(product_submissions[0], census_record, case)
+        employee, recipients = self.create_envelope_recipients(case, first_product_data)
+
+        # Create and combine components of the envelope from each product.
+        components = []
+        for product_submission in product_submissions:
+            # Wrap the submission with an object that knows how to pull out key info.
+            enrollment_data = EnrollmentDataWrap(product_submission, census_record, case)
+            product_id = product_submission['product_id']
+            product = self.product_service.get(product_id)
+            if product.is_fpp():
+                components += self.create_fpp_envelope_components(enrollment_data, recipients,
+                                                                  should_use_docusign_renderer=True)
+            else:
+                components += self.create_group_ci_envelope_components(enrollment_data, recipients,
+                                                                       should_use_docusign_renderer=True)
+
+        envelope_result = self.create_envelope(
+            email_subject="Signature needed: {} ({})".format(
+                #first_product_data.get_product().name,
+                first_product_data.get_employee_name(),
+                first_product_data.get_employer_name()),
+            components=components,
+        )
+        return employee, envelope_result
 
     def create_fpp_envelope(self, enrollment_data, case):
         employee, recipients = self.create_envelope_recipients(case, enrollment_data)
@@ -110,6 +138,33 @@ class DocuSignService(object):
 
         return components
 
+    def create_group_ci_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
+        from taa.services.docusign.templates.group_ci import GroupCITemplate
+        from taa.services.docusign.documents.additional_children import ChildAttachmentForm
+
+        # Build the components (different PDFs) needed for signing
+        components = []
+
+        # Main form
+        form = GroupCITemplate(recipients, enrollment_data, should_use_docusign_renderer)
+        components.append(form)
+
+        # Additional Children
+        # if form.is_child_attachment_form_needed():
+        #     child_attachment_form = ChildAttachmentForm(recipients, enrollment_data)
+        #     for i, child in enumerate(form.get_attachment_children()):
+        #         # The indexing starts with the 3rd child.
+        #         child_index = i + 2
+        #         child_data = enrollment_data['child_coverages'][child_index]
+        #         child.update(dict(
+        #             coverage=format(Decimal(unicode(child_data['face_value'])), ',.0f'),
+        #             premium=format(Decimal(unicode(child_data['premium'])), '.2f')
+        #         ))
+        #         child_attachment_form.add_child(child)
+        #     components.append(child_attachment_form)
+
+        return components
+
 
 def create_envelope(email_subject, components):
     docusign_service = LookupService('DocuSignService')
@@ -131,24 +186,22 @@ def create_fpp_envelope_components(enrollment_data, recipients, should_use_docus
     return docusign_service.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer)
 
 
-def create_envelope_and_get_signing_url(wizard_data, census_record, case):
-    enrollment_data = EnrollmentDataWrap(wizard_data, census_record, case)
-    # Product code
-    # product = product_service.get(wizard_data['product_data']['id'])
-    productType = wizard_data['product_type']
-    is_fpp = ('fpp' in productType.lower())
-    # If FPP Product, use the new docusign code, otherwise use old path
-    if is_fpp:
-        return create_fpp_envelope_and_fetch_signing_url(enrollment_data, case)
-    else:
-        return old_create_envelope_and_get_signing_url(enrollment_data)
-
-
 def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
     employee, envelope_result = create_fpp_envelope(enrollment_data, case)
     redirect_url = fetch_signing_url(employee, enrollment_data, envelope_result)
 
     return False, None, redirect_url
+
+
+def create_multiproduct_envelope_and_fetch_signing_url(wizard_data, census_record, case):
+
+    docusign_service = LookupService('DocuSignService')
+    employee, envelope_result = docusign_service.create_multiproduct_envelope(wizard_data, census_record, case)
+
+    enrollment_data = EnrollmentDataWrap(wizard_data[0], census_record, case)
+    signing_url = fetch_signing_url(employee, enrollment_data, envelope_result)
+
+    return envelope_result, signing_url
 
 
 def fetch_signing_url(employee, enrollment_data, envelope_result):
@@ -180,6 +233,7 @@ class DocusignEnvelope(object):
         result = docusign_transport.post(view_url, data=data)
 
         return result['url']
+
 
 def get_docusign_transport():
     transport_service = LookupService('DocuSignTransport')
@@ -408,7 +462,14 @@ class DocuSignEnvelopeComponent(object):
     def generate_docusign_formatted_tabs(self, recipient):
         # Format tabs for docusign
         ds_tabs = {}
-        for tab in self.generate_tabs(recipient):
+        generated_tabs = self.generate_tabs(recipient)
+
+        # Check to see if
+        if isinstance(generated_tabs, dict):
+            ds_tabs.update(generated_tabs)
+            return ds_tabs
+
+        for tab in generated_tabs:
             tab.add_to_tabs(ds_tabs)
 
         return ds_tabs

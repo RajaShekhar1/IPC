@@ -94,8 +94,9 @@ def get_product_rates(product_id):
     # Pull parameters from the request
     employee = data['employee']
     spouse = data['spouse']
-    num_children = data['num_children']
     payment_mode = data.get('payment_mode')
+    rider_codes = data.get('rider_codes', [])
+    statecode = data.get('statecode', None)
 
     demographics = dict(
         employee_age=employee['age'],
@@ -108,25 +109,30 @@ def get_product_rates(product_id):
         spouse_gender=spouse['gender'] if spouse else None,
         spouse_height=spouse['height'] if spouse else None,
         spouse_weight=spouse['weight'] if spouse else None,
-        num_children=num_children,
-        payment_mode=payment_mode
+        payment_mode=payment_mode,
+        statecode=statecode,
     )
 
     #Rider Rates
-    rider_rates = rider_service.get_rider_rates(payment_mode)
-    emp_rider_rates = rider_rates['emp']
-    sp_rider_rates = rider_rates['sp']
+    #rider_rates = rider_service.get_rider_rates(payment_mode)
+    #emp_rider_rates = rider_rates['emp']
+    #sp_rider_rates = rider_rates['sp']
 
     # Return rates and recommendations
-    rates = product_service.get_rates(product, demographics)
+    rates = product_service.get_rates(product, demographics, riders=rider_codes)
+
+
     recommendations = product_service.get_recommendations(
-        product, demographics)
+        product, demographics
+    )
+
     return dict(
         product_id=product.id,
         employee_rates=rates['employee'],
         spouse_rates=rates.get('spouse'),
         children_rates=rates.get('children'),
         recommendations=recommendations,
-        emp_rider_rates=emp_rider_rates,
-        sp_rider_rates=sp_rider_rates
+        #emp_rider_rates=emp_rider_rates,
+        #sp_rider_rates=sp_rider_rates
     )
+

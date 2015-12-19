@@ -93,10 +93,10 @@ class ApplicantQueryOptions(object):
         self.options = options
 
     def get_requested_coverage(self):
-        return self.options['by_coverage']
+        return self.options.get('by_coverage')
 
     def get_requested_premium(self):
-        return self.options['by_premium']
+        return self.options.get('by_premium')
 
 
 class CoverageOption(object):
@@ -172,7 +172,7 @@ class ApplicantDemographics(object):
         self.age = demographics_object.get('age', None)
 
     def get_age(self):
-        return self.age
+        return int(self.age) if self.age is not None else None
 
 
 class AgeRateLookupTable(object):
@@ -181,7 +181,7 @@ class AgeRateLookupTable(object):
 
     def do_lookup(self, rate_query):
         age = rate_query.get_age()
-        return self._mapping.get(age)
+        return self._mapping.get(int(age))
 
 
 class CostComponent(object):
@@ -289,18 +289,7 @@ def build_eligibility_constraint(constraint_def):
 
 
 def build_rider_constraint(rider_code):
-
-    if rider_code == "WP":
-        rider = wp_rider
-    elif rider_code == "QOL3":
-        rider = qol3_rider
-    elif rider_code == "QOL4":
-        rider = qol4_rider
-    elif rider_code == "AIR":
-        rider = air_rider
-    else:
-        raise ValueError("Unknown rider code '{}'".format(rider_code))
-    return ProductRiderIncludedConstraint(rider)
+    return ProductRiderIncludedConstraint(rider_code)
 
 class RatePlan(object):
     def __init__(self, coverage_options, eligibility_constraint=None):
@@ -358,6 +347,25 @@ class RatePlan(object):
         }
         return mode_options.get(mode, [])
 
+    def get_all_rates_by_premium(self, applicant_query):
+        rates = []
+        for premium in self.get_premium_options(applicant_query.get_mode()):
+            applicant_query.rate_options = ApplicantQueryOptions({'by_premium': premium})
+            rates.append({'coverage': self.calculate_coverage(applicant_query), 'premium': float(premium)})
+
+        return rates
+
+    def get_all_rates_by_coverage(self, applicant_query):
+        rates = []
+
+        # Mutate the query slightly each time through by changing the rate options
+        #  (to get the coverage for the requested premium).
+        for coverage in self.get_coverage_options_by_face(applicant_query):
+            applicant_query.rate_options = ApplicantQueryOptions({'by_coverage': coverage})
+            rates.append({'premium': float(self.calculate_premium(applicant_query)), 'coverage': int(coverage)})
+
+        return rates
+
     def is_eligible(self, applicant_query):
         return self.eligibility_constraint.is_satisfied(applicant_query)
 
@@ -387,6 +395,7 @@ class RatePlan(object):
         Figures out how much coverage is available for a given premium.
         Needs to subtract out fee and rider costs first to determine the premium that is allocated to coverage.
         """
+        #import ipdb; ipdb.set_trace()
         mode = applicant_query.get_mode()
         selected_premium = applicant_query.get_selected_premium()
         fixed_annual_fees = sum([component.compute_annual_premium(applicant_query)
@@ -402,6 +411,11 @@ class RatePlan(object):
             for component in self.cost_components
             if component.does_vary_with_coverage_selection() and component.is_enabled(applicant_query) and component.get_cost_per_thousand(applicant_query)
         ], Decimal('0.00'))
+
+        # Prevent division by zero
+        if denominator == Decimal('0.00'):
+            return None
+
         # Convert to coverage by multiplying ACPT by 1000 and rounding to nearest dollar
         return (numerator * 1000 / denominator).quantize(Decimal('0'), rounding=ROUND_HALF_UP)
 
@@ -417,7 +431,7 @@ class RatePlan(object):
                     # Convert string values to decimal
                     table_mapping = {}
                     for key, val in rate_table_def['table'].iteritems():
-                        table_mapping[key] = Decimal(val)
+                        table_mapping[int(key)] = Decimal(val)
 
                     rate_table = AgeRateLookupTable(table_mapping)
                     rate_tables[rate_table_def['name']] = rate_table

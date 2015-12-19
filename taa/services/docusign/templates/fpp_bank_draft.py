@@ -2,16 +2,15 @@ from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 
-from taa.services.docusign.service import DocuSignServerTemplate, DocuSignTextTab, DocuSignRadioTab
+from taa.services.docusign.service import DocuSignServerTemplate, DocuSignTextTab
 from taa.services.docusign.DocuSign_config import get_bank_draft_template_id
 
 
 class FPPBankDraftFormTemplate(DocuSignServerTemplate):
     def __init__(self, recipients, enrollment_data, should_use_docusign_renderer):
 
-        product_type = enrollment_data["product_type"]
         state = enrollment_data["enrollState"]
-        template_id = get_bank_draft_template_id(product_type, state)
+        template_id = get_bank_draft_template_id(enrollment_data.get_product_code(), state)
 
         DocuSignServerTemplate.__init__(self, template_id, recipients, should_use_docusign_renderer)
 

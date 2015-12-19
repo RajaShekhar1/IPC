@@ -363,7 +363,7 @@ function GroupCIProduct(root, product_data) {
     });
   }
 
-  // overrides the default impl.
+  // Overrides the default implementation for Group CI behavior.
   self.parse_benefit_options = function (applicant_type, applicant, rates) {
     // need to limit spouse benefit options to half the employee's currently selected option.
     var self = this;

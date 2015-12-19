@@ -8,7 +8,6 @@ var product_rates_service = (function() {
     this.payment_mode = payment_mode;
     this.rates = ko.observableArray([]);
     this.recommendations = ko.observableArray([]);
-    this.rider_rates = ko.observableArray([]);
 
     // Rates for each applicant type are derived from the rates observable.
     this.employee_options = ko.pureComputed(this._get_employee_options, this);
@@ -129,13 +128,13 @@ var product_rates_service = (function() {
 
   var rates_by_product_id = {};
 
-  function update_product_rates(products, payment_mode, applicant_list, error_callback) {
+  function update_product_rates(products, payment_mode, applicant_list, error_callback, statecode) {
 
     // Signal we have started updating rates data.
     is_loading_rates(true);
 
     var requests = _.map(products, function(product) {
-      var data = _build_rate_parameters(payment_mode, applicant_list);
+      var data = _build_rate_parameters(payment_mode, applicant_list, statecode);
       return remote_service.get_product_rates(product.product_data.id, data);
     });
 
@@ -161,9 +160,10 @@ var product_rates_service = (function() {
     $.when.apply($, requests).done(process_product_rates).fail(error_callback);
   }
 
-  function _build_rate_parameters(payment_mode, applicant_list) {
+  function _build_rate_parameters(payment_mode, applicant_list, statecode) {
     var params = {
-      payment_mode: payment_mode.frequency
+      payment_mode: payment_mode.frequency,
+      statecode: statecode
     };
     return $.extend({}, params, _build_applicant_parameters(applicant_list));
   }
@@ -171,8 +171,7 @@ var product_rates_service = (function() {
   function _build_applicant_parameters(applicant_list) {
     return {
       employee: applicant_list.get_employee().serialize_data(),
-      spouse: (applicant_list.has_valid_spouse())? applicant_list.get_spouse().serialize_data() : null,
-      num_children: applicant_list.get_valid_children().length
+      spouse: (applicant_list.has_valid_spouse())? applicant_list.get_spouse().serialize_data() : null
     };
   }
 

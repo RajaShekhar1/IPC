@@ -215,11 +215,6 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     }
   });
 
-
-  // Get Rider information
-  //self.rider_choices = settings.riders;
-  // self.riders = ko.observable(self.rider_choices)
-
   // cache the instances of the riders here.
   self._case_rider_configurations_by_product = {};
 
@@ -252,20 +247,6 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   self.enabled_case_riders_for_product = function(product) {
     return _.filter(self.enabled_case_riders(), function(cr) {return cr.product === product});
   };
-
-  self.riders = ko.computed(function() {
-    /*
-    // Show only riders allowed for this product; depends on the product selected.
-    return _.reject(self.rider_choices, function(rider) {
-      if (!self.single_product()) {
-        return false;
-      }
-      var current_product_name = self.single_product().base_product_type;
-      return rider.restrict_to.indexOf(current_product_name) === -1;
-    });
-    */
-    return self.rider_choices;
-  });
 
   // Self-enrollment
   self.is_self_enrollment = ko.observable(case_data.is_self_enrollment);
@@ -570,7 +551,6 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
       agent_id: self.owner_agent_id(),
       can_partners_download_enrollments: self.can_partners_download_enrollments(),
       is_self_enrollment: self.is_self_enrollment(),
-      riders: self.riders(),
       include_bank_draft_form: self.include_bank_draft_form(),
       product_settings: self.serialize_product_settings()
     }

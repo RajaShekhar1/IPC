@@ -9,16 +9,17 @@ from flask import (abort, jsonify, render_template, request,
                    send_from_directory, session, url_for, redirect, Response)
 from flask.ext.stormpath import login_required
 from flask_stormpath import current_user
+from taa.services.enrollments import EnrollmentApplication
 
 from nav import get_nav_menu
 from taa import app
 from taa.models import db
 from taa.old_model.States import get_states
 from taa.services.products.states import get_all_states
-from taa.services.products import get_payment_modes, is_payment_mode_changeable
-from taa.services.docusign.service import create_envelope_and_get_signing_url
-from taa.services import LookupService
+from taa.services.products import get_payment_modes, is_payment_mode_changeable, get_full_payment_modes
+from taa.services.docusign.service import create_multiproduct_envelope_and_fetch_signing_url
 from taa.services.products.riders import RiderService
+from taa.services import LookupService
 
 product_service = LookupService('ProductService')
 product_form_service = LookupService('ProductFormService')
@@ -127,6 +128,7 @@ def in_person_enrollment():
             'ssn': ssn,
         })
 
+
 def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False):
 
     # Defaults for session enrollment variables.
@@ -136,10 +138,10 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     payment_mode = case.payment_mode
     if is_payment_mode_changeable(payment_mode):
         # User can select payment mode
-        payment_mode_choices = get_payment_modes(True)
+        payment_mode_choices = get_full_payment_modes()
     else:
         # Payment mode is set on case and cannot be changed
-        payment_mode_choices = get_payment_modes(single=payment_mode)
+        payment_mode_choices = filter(lambda pm: pm['frequency'] == payment_mode, get_full_payment_modes())
 
     if record_id is not None:
         # Enrolling from a case census record
@@ -209,28 +211,80 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     for product in products:
         spouse_questions[product.id] = StatementOfHealthQuestionService().get_spouse_questions(product, state)
 
-    case_riders = rider_service.get_selected_case_rider_info(case)
-    enrollment_riders = rider_service.get_enrollment_rider_info()
+    #case_riders = rider_service.get_selected_case_rider_info(case)
+    #enrollment_riders = rider_service.get_enrollment_rider_info()
 
-    wizard_data = {
-        'state': state if state != 'XX' else None,
-        'enroll_city': city,
-        'company_name': company_name,
-        'group_number': group_number,
-        'products': products,
-        'employee_data': employee_data,
-        'spouse_data': spouse_data,
-        'children_data': children_data,
-        'is_in_person': not is_self_enroll,
-        'health_questions': soh_questions,
-        'spouse_questions': spouse_questions,
-        'payment_mode_choices': payment_mode_choices,
-        'payment_mode': payment_mode,
-        'case_id': case.id,
-        'record_id': record_id,
-        'account_href': current_user.get_id(),
-        'selected_riders': []
-    }
+    # wizard_data = {
+    #     'state': state if state != 'XX' else None,
+    #     'enroll_city': city,
+    #     'company_name': company_name,
+    #     'group_number': group_number,
+    #     'products': products,
+    #     'employee_data': employee_data,
+    #     'spouse_data': spouse_data,
+    #     'children_data': children_data,
+    #     'is_in_person': not is_self_enroll,
+    #     'health_questions': soh_questions,
+    #     'spouse_questions': spouse_questions,
+    #     'payment_mode_choices': payment_mode_choices,
+    #     'payment_mode': payment_mode,
+    #     'case_id': case.id,
+    #     'record_id': record_id,
+    #     'account_href': current_user.get_id(),
+    #     'selected_riders': []
+    # }
+    #
+
+    # New wizard formatting for multiproduct.
+    applicants = []
+    employee_data['type'] = u'employee'
+    applicants.append(employee_data)
+    if spouse_data:
+        spouse_data['type'] = u'spouse'
+        applicants.append(spouse_data)
+    if children_data:
+        for child in children_data:
+            child['type'] = u'children'
+            applicants.append(child)
+
+    wizard_data = dict(
+        is_in_person=not is_self_enroll,
+        case_data={
+            'id': 1,
+            'situs_state': state if state != 'XX' else None,
+            'situs_city': 'Chicago',
+            'company_name': "DelMar Software Development, LLC",
+            'group_riders': [],
+            'payment_mode': 52
+        },
+        applicants= applicants,
+        products=[serialize_product_for_wizard(p, soh_questions) for p in case.products],
+        # products=[
+        #   {
+        #     id: 1,
+        #     code: 'FPPTI',
+        #     name: "Family Protection Plan: Terminal Illness",
+        #     base_product_type: 'FPPTI',
+        #     soh_questions: [{'question': 'Have you had a heart attack in the last 5 years?'}]
+        #   },
+        #   {
+        #     'id': 2,
+        #     'code': 'FPPCI',
+        #     'name': "Family Protection Plan: Critical Illness",
+        #     'base_product_type': 'FPPCI',
+        #     'soh_questions': [{'question': 'Have you had a stroke in the last 5 years?'}]
+        #   }
+        # ],
+        payment_modes=payment_mode_choices,
+        # payment_modes=[
+        #   {'frequency': 52, 'label': 'Weekly'},
+        #   {'frequency': 26, 'label': 'Biweekly'},
+        #   {'frequency': 24, 'label': 'Semimonthly'},
+        #   {'frequency': 12, 'label': 'Monthly'}
+        # ],
+        beneficiaries=[],
+        spouse_questions=spouse_questions,
+    )
 
     # Commit any changes made (none right now)
     db.session.commit()
@@ -240,10 +294,18 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         wizard_data=wizard_data,
         states=get_states(),
         nav_menu=get_nav_menu(),
-        case_riders=case_riders,
-        case_rider_codes=[r.get('code') for r in case_riders],
-        enrollment_riders=enrollment_riders
     )
+
+
+def serialize_product_for_wizard(product, all_soh_questions):
+    return dict(
+        id=product.id,
+        name=product.name,
+        code=product.get_base_product_code(),
+        base_product_type=product.get_base_product_code(),
+        soh_questions=all_soh_questions.get(product.id, []),
+    )
+
 
 # Self Enrollment Landing Page
 @app.route('/self-enroll/<string:company_name>/<string:uuid>')
@@ -348,17 +410,14 @@ def get_case_enrollment_data(case):
 
 @app.route('/submit-wizard-data', methods=['POST'])
 def submit_wizard_data():
+
     if session.get('active_case_id') is None:
-        abort(401)
-
-    data = request.json
-
-    if 'active_case_id' not in session:
         abort(401)
 
     case_id = session['active_case_id']
     case = case_service.get(case_id)
 
+    data = request.json
     wizard_results = data['wizard_results']
     print("[ENROLLMENT SUBMITTED]")
 
@@ -378,23 +437,28 @@ def submit_wizard_data():
         agent = case.owner_agent
 
     try:
+
         # Standardize the wizard data for submission processing
         standardized_data = enrollment_import_service.standardize_wizard_data(wizard_results)
 
         # Create and save the enrollment data. Creates a census record if this is a generic link, and in
         #   either case updates the census record with the latest enrollment data.
-        enrollment_application = enrollment_service.save_enrollment_data(
+        enrollment_application = enrollment_service.save_multiproduct_enrollment_data(
             standardized_data, case, census_record, agent,
             received_data=wizard_results,
         )
 
-        if not standardized_data.get('did_decline'):
+        if not all(map(lambda data: data.get('did_decline'),  standardized_data)):
             # Hand off wizard_results to docusign
-            is_error, error_message, redirect = create_envelope_and_get_signing_url(standardized_data, census_record, case)
+            envelope_result, signing_url = create_multiproduct_envelope_and_fetch_signing_url(
+                    standardized_data,
+                    census_record,
+                    case
+            )
             # Return the redirect url or error
-            resp = {'error': is_error,
-                    'error_message': error_message,
-                    'redirect': redirect}
+            resp = {'error': False,
+                    'error_message': "",
+                    'redirect': signing_url}
         else:
             # Declined
             resp = {
@@ -403,7 +467,7 @@ def submit_wizard_data():
                 'redirect': url_for('ds_landing_page',
                                     event='decline',
                                     name=wizard_results['employee']['first'],
-                                    type='inperson' if wizard_results["agent_data"]["is_in_person"] else 'email',
+                                    type='inperson' if wizard_results["method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
                                     )
             }
     except Exception:

@@ -1,3 +1,5 @@
+from decimal import Decimal, ROUND_HALF_UP
+
 from unittest2 import TestCase
 
 from taa.services.products.RatePlan import (
@@ -17,8 +19,6 @@ from taa.services.products.RatePlan import (
     APPLICANT_EMPLOYEE,
     APPLICANT_CHILD,
     APPLICANT_SPOUSE,
-
-    WaiverOfPremiumRider,
 
     LookupTableCostComponent,
     FlatFeeCostComponent,
@@ -67,11 +67,17 @@ class TestRatePlan(TestCase):
     def setUp(self):
         pass
 
+    def round_decimal_two_places(self, d):
+        return d.quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
+
+    def round_decimal_zero_places(self, d):
+        return d.quantize(Decimal('0'), rounding=ROUND_HALF_UP)
+
     def test_it_can_compute_basic_modal_premium_for_coverage(self):
 
         TEST_AGE = 27
-        TEST_PREMIUM_ACPT = 3.82
-        TEST_COVERAGE = 10000
+        TEST_PREMIUM_ACPT = Decimal('3.82')
+        TEST_COVERAGE = Decimal('10000')
 
         # Set up a rate plan to reflect these rates
         rate_plan = self._build_rate_plan_for_acpt(TEST_AGE, TEST_PREMIUM_ACPT)
@@ -84,50 +90,50 @@ class TestRatePlan(TestCase):
 
         # Assert
         # Since there is no fee attached, we just look up the ACPT and multiply by 10 (for 10k of coverage)
-        expected_annual = TEST_COVERAGE / 1000 * TEST_PREMIUM_ACPT
-        expected_modal = round(round(expected_annual, 2) / MODE_WEEKLY, 2)
+        expected_annual = TEST_COVERAGE / Decimal('1000') * TEST_PREMIUM_ACPT
+        expected_modal = self.round_decimal_two_places(self.round_decimal_two_places(expected_annual) / MODE_WEEKLY)
         self.assertEqual(premium, expected_modal)
 
     def test_it_can_compute_premium_with_annual_fee(self):
         TEST_AGE = 27
-        TEST_PREMIUM_ACPT = 3.82
-        TEST_FEE = 52.00
-        TEST_COVERAGE = 10000
+        TEST_PREMIUM_ACPT = Decimal('3.82')
+        TEST_FEE = Decimal('52.00')
+        TEST_COVERAGE = Decimal('10000')
 
         rate_plan = self._build_rate_plan_for_acpt(TEST_AGE, TEST_PREMIUM_ACPT, annual_fee=TEST_FEE)
         rate_query = self._build_applicant_query(APPLICANT_EMPLOYEE, TEST_AGE, MODE_WEEKLY, for_coverage=TEST_COVERAGE)
 
         premium = rate_plan.calculate_premium(rate_query)
 
-        expected_annual = round(TEST_COVERAGE / 1000 * TEST_PREMIUM_ACPT, 2) + TEST_FEE
-        expected_modal = round(expected_annual / MODE_WEEKLY, 2)
+        expected_annual = self.round_decimal_two_places(TEST_COVERAGE / Decimal('1000') * TEST_PREMIUM_ACPT) + TEST_FEE
+        expected_modal = self.round_decimal_two_places(expected_annual / MODE_WEEKLY)
         self.assertEqual(premium, expected_modal)
 
     def test_it_can_compute_premium_with_rider_cost_component(self):
         TEST_AGE = 27
-        TEST_PREMIUM_ACPT = 3.82
-        TEST_RIDER_ACPT = 0.14
-        TEST_FEE = 52.00
-        TEST_COVERAGE = 25000
-        WP_RIDER = WaiverOfPremiumRider()
+        TEST_PREMIUM_ACPT = Decimal('3.82')
+        TEST_RIDER_ACPT = Decimal('0.14')
+        TEST_FEE = Decimal('52.00')
+        TEST_COVERAGE = Decimal('25000')
+        WP_RIDER = "WP"
 
         rate_plan = self._build_plan_with_rider(TEST_AGE, TEST_FEE, TEST_PREMIUM_ACPT, TEST_RIDER_ACPT, WP_RIDER)
         rate_query = self._build_applicant_query(APPLICANT_EMPLOYEE, TEST_AGE, MODE_WEEKLY, for_coverage=TEST_COVERAGE, riders=[WP_RIDER])
 
         premium = rate_plan.calculate_premium(rate_query)
 
-        expected_annual = round(TEST_COVERAGE / 1000 * TEST_PREMIUM_ACPT, 2) + round(TEST_COVERAGE / 1000 * TEST_RIDER_ACPT, 2) + TEST_FEE
-        expected_modal = round(expected_annual / MODE_WEEKLY, 2)
+        expected_annual = self.round_decimal_two_places(TEST_COVERAGE / Decimal('1000') * TEST_PREMIUM_ACPT) + self.round_decimal_two_places(TEST_COVERAGE / Decimal('1000') * TEST_RIDER_ACPT) + TEST_FEE
+        expected_modal = self.round_decimal_two_places(expected_annual / MODE_WEEKLY)
         self.assertEqual(premium, expected_modal)
 
     def test_it_can_compute_premium_when_rider_not_selected(self):
         " Build the plan that accepts the rider, but the query does not have the rider selected."
         TEST_AGE = 27
-        TEST_PREMIUM_ACPT = 3.82
-        TEST_RIDER_ACPT = 0.14
-        TEST_FEE = 52.00
-        TEST_COVERAGE = 25000
-        WP_RIDER = WaiverOfPremiumRider()
+        TEST_PREMIUM_ACPT = Decimal('3.82')
+        TEST_RIDER_ACPT = Decimal('0.14')
+        TEST_FEE = Decimal('52.00')
+        TEST_COVERAGE = Decimal('25000')
+        WP_RIDER = "WP"
 
         rate_plan = self._build_plan_with_rider(TEST_AGE, TEST_FEE, TEST_PREMIUM_ACPT, TEST_RIDER_ACPT, WP_RIDER)
 
@@ -137,16 +143,16 @@ class TestRatePlan(TestCase):
 
         premium = rate_plan.calculate_premium(rate_query)
 
-        expected_annual = round(TEST_COVERAGE / 1000 * TEST_PREMIUM_ACPT, 2) + TEST_FEE
-        expected_modal = round(expected_annual / MODE_WEEKLY, 2)
+        expected_annual = self.round_decimal_two_places(TEST_COVERAGE / Decimal('1000') * TEST_PREMIUM_ACPT) + TEST_FEE
+        expected_modal = self.round_decimal_two_places(expected_annual / MODE_WEEKLY)
         self.assertEqual(premium, expected_modal)
 
     def test_that_child_rate_does_not_include_rider_premium(self):
-        TEST_PREMIUM_ACPT = 2.00
+        TEST_PREMIUM_ACPT = Decimal('2.00')
         # Note: Children don't actually have policy fees, but that is not configured in this test.
-        TEST_FEE = 52.00
-        TEST_COVERAGE = 10000
-        rider = WaiverOfPremiumRider()
+        TEST_FEE = Decimal('52.00')
+        TEST_COVERAGE = Decimal('10000')
+        rider = "WP"
         rate_plan = self._build_plan_with_rider(age=18, premium_acpt=TEST_PREMIUM_ACPT, annual_fee=TEST_FEE, rider_acpt=1.00, rider=rider)
 
         # Include the rider in the request
@@ -154,16 +160,16 @@ class TestRatePlan(TestCase):
         premium = rate_plan.calculate_premium(applicant_query)
 
         # Note: Children don't actually have policy fees, but that is not configured in this test.
-        expected_annual = round(TEST_COVERAGE / 1000 * TEST_PREMIUM_ACPT, 2) + TEST_FEE
-        expected_modal = round(expected_annual / MODE_WEEKLY, 2)
+        expected_annual = self.round_decimal_two_places(TEST_COVERAGE / Decimal('1000') * TEST_PREMIUM_ACPT) + TEST_FEE
+        expected_modal = self.round_decimal_two_places(expected_annual / MODE_WEEKLY)
         self.assertEqual(premium, expected_modal)
 
     def test_it_can_compute_coverage_given_a_desired_premium(self):
-        TEST_PREMIUM = 10.00
+        TEST_PREMIUM = Decimal('10.00')
         TEST_MODE = MODE_WEEKLY
-        TEST_PREMIUM_ACPT = 2.00
+        TEST_PREMIUM_ACPT = Decimal('2.00')
         TEST_AGE = 27
-        TEST_FEE = 52.00
+        TEST_FEE = Decimal('52.00')
 
         rate_plan = self._build_rate_plan_for_acpt(TEST_AGE, TEST_PREMIUM_ACPT, annual_fee=TEST_FEE)
         rate_query = self._build_applicant_query(APPLICANT_EMPLOYEE, TEST_AGE, TEST_MODE, for_premium=TEST_PREMIUM)
@@ -171,7 +177,7 @@ class TestRatePlan(TestCase):
         coverage = rate_plan.calculate_coverage(rate_query)
 
         # Should be annualized premium, less fee, divided by ACPT * 1000, rounded to nearest dollar
-        expected_coverage = round((TEST_PREMIUM * TEST_MODE - TEST_FEE) * 1000 / (TEST_PREMIUM_ACPT), 0)
+        expected_coverage = round((TEST_PREMIUM * TEST_MODE - TEST_FEE) * Decimal('1000') / (TEST_PREMIUM_ACPT), 0)
         self.assertEqual(coverage, expected_coverage)
 
 
@@ -215,7 +221,7 @@ class TestRatePlan(TestCase):
         return rate_plan
 
     def _build_rate_plan_for_acpt(self, age, premium_acpt, annual_fee=None, eligibility_constraint=None):
-        rate_plan = RatePlan(eligibility_constraint=eligibility_constraint)
+        rate_plan = RatePlan(coverage_options=[Decimal('10000')], eligibility_constraint=eligibility_constraint)
         acpt_by_age_table = AgeRateLookupTable({age: premium_acpt})
         rate_plan.add_cost_component(LookupTableCostComponent(acpt_by_age_table))
 

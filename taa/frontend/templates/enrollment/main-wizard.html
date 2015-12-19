@@ -344,62 +344,7 @@
   <script type="text/javascript">
     jQuery(function ($) {
 
-      var test_wizard_data = {
-        //enrollment_type: "inperson",
-        is_in_person: true,
-        case_data: {
-          id: 1,
-          situs_state: 'IL',
-          situs_city: 'Chicago',
-          company_name: "DelMar Software Development, LLC",
-          group_riders: [],
-          payment_mode: 52
-        },
-        applicants: [
-          {
-            type: wizard_applicant.Applicant.EmployeeType,
-            first: "Joe",
-            last: "Johnson",
-            gender: "male",
-            birthdate: "1990-01-22",
-            ssn: '123-12-1234'
-          },
-          {
-            type: wizard_applicant.Applicant.SpouseType,
-            first: "Jane",
-            last: "Johnson",
-            gender: "female",
-            birthdate: "1989-11-11",
-            ssn: '333-12-1234'
-          }
-        ],
-        products: [
-          {
-            id: 1,
-            code: 'FPPTI',
-            name: "Family Protection Plan: Terminal Illness",
-            base_product_type: 'FPPTI',
-            soh_questions: [{'question': 'Have you had a heart attack in the last 5 years?'}]
-          },
-          {
-            id: 2,
-            code: 'FPPCI',
-            name: "Family Protection Plan: Critical Illness",
-            base_product_type: 'FPPCI',
-            soh_questions: [{'question': 'Have you had a stroke in the last 5 years?'}]
-          }
-        ],
-        payment_modes: [
-          {frequency: 52, label: 'Weekly'},
-          {frequency: 26, label: 'Biweekly'},
-          {frequency: 24, label: 'Semimonthly'},
-          {frequency: 12, label: 'Monthly'}
-        ],
-        beneficiaries: [],
-        spouse_questions: {{ wizard_data.spouse_questions | tojson }},
-        health_questions: {{ wizard_data.health_questions | tojson }}
-
-      };
+      var test_wizard_data = {{ wizard_data | tojson | safe }};
       window.vm = new wizard_viewmodel.WizardVM(test_wizard_data);
       ko.applyBindings(window.vm);
       //var actual_wizard_data = {{ wizard_data|tojson|safe }};

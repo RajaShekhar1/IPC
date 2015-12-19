@@ -11,9 +11,9 @@ from taa.services.docusign.DocuSign_config import get_template_id
 class FPPTemplate(DocuSignServerTemplate):
     def __init__(self, recipients, enrollment_data, use_docusign_renderer):
 
-        product_type = enrollment_data["product_type"]
+        product_code = enrollment_data.get_product().get_base_product_code()
         state = enrollment_data["enrollState"]
-        template_id = get_template_id(product_type, state)
+        template_id = get_template_id(product_code, state)
 
         DocuSignServerTemplate.__init__(self, template_id, recipients, use_docusign_renderer)
             
@@ -87,9 +87,11 @@ class FPPTemplate(DocuSignServerTemplate):
         ]
 
     def make_general_tabs(self):
+
+
         tabs = [
             DocuSignRadioTab('enrollType', "assist" if self.data.is_enrollment_type_agent_assisted() else "self"),
-            DocuSignRadioTab('productType', "FPPTI" if self.data['product_type'] == "FPP-Gov" else self.data['product_type']),
+            DocuSignRadioTab('productType', self.get_product_type()),
             DocuSignRadioTab('existingIns', 'yes' if self.data["existing_insurance"] else 'no'),
             DocuSignRadioTab('existingInsAgent', 'yes' if self.data['existing_insurance'] else 'no'),
             DocuSignRadioTab('replaceAgent', 'yes' if self.data['replacing_insurance'] else 'no'),
@@ -126,8 +128,8 @@ class FPPTemplate(DocuSignServerTemplate):
         ee_tabs_list += self.make_generic_tabs()
 
         if self.data.did_employee_select_coverage():
-            ee_tabs_list += self.generate_SOH_tabs("ee", self.data['employee']['soh_questions'])
-            ee_tabs_list += self.generate_SOH_GI_tabs("ee", self.data['employee']['soh_questions'])
+            ee_tabs_list += self.generate_SOH_tabs("ee", self.data['employee_soh_questions'])
+            ee_tabs_list += self.generate_SOH_GI_tabs("ee", self.data['employee_soh_questions'])
 
         return ee_tabs_list
 
@@ -151,19 +153,20 @@ class FPPTemplate(DocuSignServerTemplate):
             sp_tabs_list += [DocuSignTextTab('spEmail', self.data['spouse']['email'])]
 
         if self.data.did_spouse_select_coverage():
+            # TODO: Still need this data to be submitted to tabs
             # Special treatment for first two questions (non-health questions)
-            if self.data['has_spouse_been_treated_6_months'] in ['Yes', 'No']:
-                sp_tabs_list += [DocuSignRadioTab('spouse_hospital_six_months', self.data['has_spouse_been_treated_6_months'].lower())]
-            elif str(self.data['has_spouse_been_treated_6_months']).upper() == 'GI':
-                sp_tabs_list += [DocuSignTextTab('spouse_hospital_six_months_gi', 'GI')]
+            # if self.data['has_spouse_been_treated_6_months'] in ['Yes', 'No']:
+            #     sp_tabs_list += [DocuSignRadioTab('spouse_hospital_six_months', self.data['has_spouse_been_treated_6_months'].lower())]
+            # elif str(self.data['has_spouse_been_treated_6_months']).upper() == 'GI':
+            #     sp_tabs_list += [DocuSignTextTab('spouse_hospital_six_months_gi', 'GI')]
+            #
+            # if self.data['has_spouse_been_disabled_6_months'] in ['Yes', 'No']:
+            #     sp_tabs_list += [DocuSignRadioTab('spouse_disability_six_months', self.data['has_spouse_been_disabled_6_months'].lower())]
+            # elif str(self.data['has_spouse_been_disabled_6_months']).upper() == 'GI':
+            #     sp_tabs_list += [DocuSignTextTab('spouse_disability_six_months_gi', 'GI')]
 
-            if self.data['has_spouse_been_disabled_6_months'] in ['Yes', 'No']:
-                sp_tabs_list += [DocuSignRadioTab('spouse_disability_six_months', self.data['has_spouse_been_disabled_6_months'].lower())]
-            elif str(self.data['has_spouse_been_disabled_6_months']).upper() == 'GI':
-                sp_tabs_list += [DocuSignTextTab('spouse_disability_six_months_gi', 'GI')]
-
-            sp_tabs_list += self.generate_SOH_tabs("sp", self.data['spouse']['soh_questions'])
-            sp_tabs_list += self.generate_SOH_GI_tabs("sp", self.data['spouse']['soh_questions'])
+            sp_tabs_list += self.generate_SOH_tabs("sp", self.data['spouse_soh_questions'])
+            sp_tabs_list += self.generate_SOH_GI_tabs("sp", self.data['spouse_soh_questions'])
 
         return sp_tabs_list
 
@@ -175,8 +178,8 @@ class FPPTemplate(DocuSignServerTemplate):
                 continue
 
             tabs += self.add_child_data_tabs(i)
-            tabs += self.generate_SOH_tabs("c%s"%(i+1), self.data["children"][i]['soh_questions'])
-            tabs += self.generate_SOH_GI_tabs("c%s"%(i+1), self.data["children"][i]['soh_questions'])
+            tabs += self.generate_SOH_tabs("c%s"%(i+1), self.data["children_soh_questions"][i])
+            tabs += self.generate_SOH_GI_tabs("c%s"%(i+1), self.data["children_soh_questions"][i])
 
         if self.is_child_attachment_form_needed():
             tabs += [DocuSignTextTab('extra_children_notice', "SEE ATTACHED FOR ADDITIONAL CHILDREN")]
@@ -321,9 +324,9 @@ class FPPTemplate(DocuSignServerTemplate):
                                                                        self.data.get_spouse_ssn())
         else:
             spouse_owner_notice = ""
+
         rider_tabs = []
-        for rider_person in self.data['rider_data']:
-            riders = self.data['rider_data'].get(rider_person)
+        for rider_person, riders in self.data['rider_data'].iteritems():
             if rider_person == "emp" and self.data.did_employee_select_coverage():
                 for rider in riders: 
                     tab_name = 'ee_rider_{}'.format(rider.get('code'))
@@ -452,6 +455,13 @@ class FPPTemplate(DocuSignServerTemplate):
 
         return tabs
 
+    def get_product_type(self):
+        "Usually FPPTI, but can be FPPCI if CI product"
+        product_code = self.data.get_product_code()
+        if product_code == 'FPPCI':
+            return 'FPPCI'
+
+        return "FPPTI"
 
 if __name__ == "__main__":
     from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient, get_docusign_transport, create_envelope

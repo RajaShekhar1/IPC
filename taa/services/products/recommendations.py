@@ -37,12 +37,12 @@ def get_recommendations(product, **demographics):
 
     return lookup(key,
                   demographics['employee_age'],
-                  demographics.get('spouse_age'),
-                  demographics.get('num_children'))
+                  demographics.get('spouse_age')
+                  )
 
 
 
-def lookup(product, employee_age, spouse_age=None, num_children=None):
+def lookup(product, employee_age, spouse_age=None):
     init_from_data_files()
     return RECOMMENDATIONS[product].get(employee_age, DEFAULT_RECOMMENDATIONS)
 

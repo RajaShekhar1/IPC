@@ -7,9 +7,9 @@ from taa.services.docusign.DocuSign_config import get_replacement_template_id
 class FPPReplacementFormTemplate(DocuSignServerTemplate):
     def __init__(self, recipients, enrollment_data, should_use_docusign_renderer):
 
-        product_type = enrollment_data["product_type"]
+        product_code = enrollment_data.get_product_code()
         state = enrollment_data["enrollState"]
-        template_id = get_replacement_template_id(product_type, state)
+        template_id = get_replacement_template_id(product_code, state)
 
         DocuSignServerTemplate.__init__(self, template_id, recipients, should_use_docusign_renderer)
 

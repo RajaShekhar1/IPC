@@ -56,11 +56,12 @@ function init_validation(ui) {
       $("#health_questions_error").html("");
 
       // Check for "Decline all coverage" and bail out of the wizard if it is checked
-      if (ui.did_decline()) {
-        submit_decline();
-        e.preventDefault();
-        return;
-      }
+      // TODO: This is only if we are doing single product.
+      //if (ui.did_decline()) {
+      //  submit_decline();
+      //  e.preventDefault();
+      //  return;
+      //}
 
       // trigger jquery validation
       var is_valid = ui.validator.form();

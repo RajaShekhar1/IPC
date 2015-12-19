@@ -111,7 +111,7 @@ var wizard_viewmodel = (function() {
       var children = [];
       _.each(self.selected_product_coverages(), function(cov) {
         _.each(cov.get_covered_children(), function(child) {
-          if (child in children) {
+          if (_.includes(children, child)) {
             // return means continue here.
             return;
           }
@@ -125,7 +125,7 @@ var wizard_viewmodel = (function() {
     _is_payment_mode_valid: function() {
       return (
           (!this.can_change_payment_mode())
-          || (this.can_change_payment_mode() && this.payment_mode() !== null)
+          || (this.can_change_payment_mode() && this.payment_mode())
       );
     },
     get_applicant_coverage_option_for_product: function(applicant, product) {
@@ -202,6 +202,9 @@ var wizard_viewmodel = (function() {
 
   function ProductCoverageViewModel(product, applicant_list, payment_mode,
                                     should_include_spouse, should_include_children) {
+
+    // ProductCoverageViewModel keeps track of the coverage selections for the applicants for a single product.
+
     var self = this;
 
     self.product = product;
@@ -624,7 +627,8 @@ var wizard_viewmodel = (function() {
           self.products,
           self.coverage_vm.payment_mode(),
           self.applicant_list,
-          self.handle_update_rates_error
+          self.handle_update_rates_error,
+          self.enrollment_case.situs_state
       );
     };
 
@@ -661,7 +665,7 @@ var wizard_viewmodel = (function() {
           self.validator.form();
         });
       } else {
-        handle_remote_error();
+        handle_remote_error(resp, function() {});
       }
     };
 
@@ -697,9 +701,9 @@ var wizard_viewmodel = (function() {
 
       if (valid_form) {
         self.has_show_rates_been_clicked(true);
+        self.update_rate_table();
       }
 
-      self.update_rate_table();
     };
 
     self.is_coverage_selection_visible = ko.pureComputed(function() {
@@ -725,6 +729,12 @@ var wizard_viewmodel = (function() {
           any_product('requires_is_smoker')
       );
     };
+
+    self.should_show_gender = function() {return any_product('requires_gender')};
+    self.should_show_height = function() {return any_product('requires_height')};
+    self.should_show_weight = function() {return any_product('requires_weight')};
+    self.should_show_smoker = function() {return any_product('requires_is_smoker')};
+
     var any_product = function(method_name) {
       return _.any(_.invoke(self.products, method_name));
     };

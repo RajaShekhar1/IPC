@@ -35,11 +35,32 @@ class EnrollmentApplicationService(DBService):
 
         if not census_record:
             census_record = self.case_service.create_ad_hoc_census_record(case=case, data=data)
+        else:
+            # Update the census record data with the new data
+            self.case_service.update_census_record_from_enrollment(census_record, data)
 
-        # Update the census record data with the new data
-        self.case_service.update_census_record_from_enrollment(census_record, data)
+        # Store enrollment data on the enrollment record.
+        enrollment = self._create_enrollment(census_record, data, agent, received_data=received_data)
 
-        # Store extra enrollment data on the enrollment
+        # Save coverages
+        self._save_coverages(enrollment, data)
+
+        return enrollment
+
+    def save_multiproduct_enrollment_data(self, data, case, census_record, agent, received_data=None):
+        """
+        Same idea as save_enrollment_data, but adapted for an enrollment in multiple products.
+        """
+
+        first_product_data = data[0]
+
+        if not census_record:
+            census_record = self.case_service.create_ad_hoc_census_record(case=case, data=first_product_data)
+        else:
+            # Update the census record data with the new data
+            self.case_service.update_census_record_from_enrollment(census_record, first_product_data)
+
+        # Store enrollment data on the enrollment record.
         enrollment = self._create_enrollment(census_record, data, agent, received_data=received_data)
 
         # Save coverages
@@ -65,8 +86,9 @@ class EnrollmentApplicationService(DBService):
         # Remove the application data row
         self.delete(enrollment_application)
 
-    def _create_enrollment(self, census_record, data, agent, received_data=None):
-        # Link to census record and case, if it exists
+    def _create_enrollment(self, census_record, wizard_data, agent, received_data=None):
+
+        # Link to census record and case, if it exists.
         if census_record:
             case_id = census_record.case_id
             census_record_id = census_record.id
@@ -84,19 +106,18 @@ class EnrollmentApplicationService(DBService):
             agent_name = None
             agent_id = None
 
+        # Use the first record in a multiproduct setting to create the main enrollment record.
+        if isinstance(wizard_data, list):
+            data = wizard_data[0]
+            if all(map(lambda d: d['did_decline'], wizard_data)):
+                application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
+            else:
+                application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+        else:
+            data = wizard_data
+
         given_sig_time = data.get('time_stamp')
         signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
-
-        # Handle decline coverage case
-        if data['did_decline']:
-            return self.create(**dict(
-                case_id=case_id,
-                census_record_id=census_record_id,
-                application_status=EnrollmentApplication.APPLICATION_STATUS_DECLINED,
-                method=data['method'],
-                # include a timestamp for decline too.
-                signature_time=signature_time,
-            ))
 
         if data['employee_beneficiary'] == 'spouse':
             emp_beneficiary_name = '{} {}'.format(data['spouse']['first'],
@@ -128,7 +149,7 @@ class EnrollmentApplicationService(DBService):
             standardized_data=json.dumps(data, cls=JSONEncoder),
             case_id=case_id,
             census_record_id=census_record_id,
-            application_status=EnrollmentApplication.APPLICATION_STATUS_ENROLLED,
+            application_status=application_status,
             agent_code=agent_code,
             agent_name=agent_name,
             agent_id=agent_id,
@@ -166,30 +187,35 @@ class EnrollmentApplicationService(DBService):
         )
         return self.create(**enrollment_data)
 
+
     def _strip_ssn(self, ssn):
         return ssn.replace('-', '').strip() if ssn else ''
 
-    def _save_coverages(self, enrollment, data):
-        if data['did_decline']:
-            return
-        product_data = data['product_data']
-        product = self.product_service.get(product_data['id'])
 
-        if data['employee_coverage']:
-            self.coverages_service.create_coverage(
-                enrollment, product, data, data['employee'],
-                data['employee_coverage'],
-                EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE)
-        if data['spouse_coverage']:
-            self.coverages_service.create_coverage(
-                enrollment, product, data, data['spouse'],
-                data['spouse_coverage'],
-                EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
-        if data['child_coverages'] and data['child_coverages'][0]:
-            self.coverages_service.create_coverage(
-                enrollment, product, data, data['children'][0],
-                data['child_coverages'][0],
-                EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
+    def _save_coverages(self, enrollment, all_data):
+        # Create coverage record for each applicant / product combination where coverage was selected.
+        for data in all_data:
+            if data['did_decline']:
+                continue
+
+            product_id = data['product_id']
+            product = self.product_service.get(product_id)
+
+            if data['employee_coverage']:
+                self.coverages_service.create_coverage(
+                    enrollment, product, data, data['employee'],
+                    data['employee_coverage'],
+                    EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE)
+            if data['spouse_coverage']:
+                self.coverages_service.create_coverage(
+                    enrollment, product, data, data['spouse'],
+                    data['spouse_coverage'],
+                    EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
+            if data['child_coverages'] and data['child_coverages'][0]:
+                self.coverages_service.create_coverage(
+                    enrollment, product, data, data['children'][0],
+                    data['child_coverages'][0],
+                    EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
         db.session.flush()
 
     # Reports
