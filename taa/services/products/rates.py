@@ -179,9 +179,13 @@ class Rates(object):
 
     def get(self, product_code, payment_mode, age, smoker=None, applicant_type=None, height=None, weight=None):
         result = {}
-        if age is None:
+        if applicant_type == APPLICANT_TYPE_CHILDREN:
             # Children rates/premiums are indexed with age as -1
             age = -1
+        elif age is None:
+            # Don't return any rate options for this applicant (Emp/Sp) if age is not provided.
+            return {'byface':[], 'bypremium':[]}
+
         product_key = Rates._get_product_key(product_code, smoker)
 
         for type_ in (TYPE_PREMIUM, TYPE_COVERAGE):
