@@ -3,9 +3,11 @@ from taa.services.validators import required_validator, api_token_validator, cas
     payment_mode_validator, gender_validator, ssn_validator, birthdate_validator, coverage_validator, premium_validator, \
     state_validator, zip_validator, question_answered_validator, RequiredIfAnyInGroupValidator, \
     enrollment_type_validator, email_validator, height_validator, weight_validator, replaced_or_financing_validator, \
-    timestamp_validator, initials_validator
+    timestamp_validator, initials_validator, required_if_fpp_validator
 from taa.services import RequiredFeature
-from taa.services.cases.census_import import preprocess_string, preprocess_numbers, preprocess_zip
+from taa.services.cases.census_import import preprocess_string, preprocess_numbers, preprocess_zip, \
+    preprocess_product_code
+
 
 class EnrollmentRecordField():
     def __init__(self, dict_key_name, database_name, preprocessor, validators,
@@ -48,6 +50,7 @@ class EnrollmentRecordField():
         self.validators.append(validator)
 
 
+
 class EnrollmentRecordParser(object):
     MAX_QUESTIONS = 10
 
@@ -57,7 +60,7 @@ class EnrollmentRecordParser(object):
     # Case/Record information
     user_token = EnrollmentRecordField("user_token", "user_token", preprocess_string, [required_validator, api_token_validator], flat_file_size=0, description="A API token authenticating the uploader")
     case_token = EnrollmentRecordField("case_token", "case_token", preprocess_string, [required_validator, case_token_validator], flat_file_size=0, description="A token identifying the enrollment case")
-    product_code = EnrollmentRecordField("product_code", "product_code", preprocess_string, [required_validator, product_validator], flat_file_size=8, description="A string specifying the product being enrolled.")
+    product_code = EnrollmentRecordField("product_code", "product_code", preprocess_product_code, [required_validator, product_validator], flat_file_size=8, description="A string specifying the product being enrolled.")
     payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_numbers, [required_validator, payment_mode_validator], flat_file_size=2, description="A two digit number resenting the payment mode")
     enrollment_type = EnrollmentRecordField("enrollment_type", "enrollment_type", preprocess_string, [required_validator, enrollment_type_validator], flat_file_size=1, description="How the application was taken")
 
@@ -104,8 +107,8 @@ class EnrollmentRecordParser(object):
     sp_weight_pounds = EnrollmentRecordField("sp_weight_pounds", "spouse_weight_pounds", preprocess_numbers, [weight_validator], flat_file_size=3, description="Spouse weight in pounds")
     sp_smoker = EnrollmentRecordField("sp_smoker", "spouse_smoker", preprocess_string, [question_answered_validator], flat_file_size=1, description="Is spouse a tobacco user")
 
-    existing_insurance = EnrollmentRecordField("existing_insurance", "existing_insurance", preprocess_string, [required_validator, question_answered_validator], flat_file_size=1, description="Does anyone on this application have any existing life insurance or annuity contracts?")
-    replacing_insurance = EnrollmentRecordField("replacing_insurance", "replacing_insurance", preprocess_string, [required_validator, question_answered_validator], flat_file_size=1, description="Will the coverage applied for replace any existing life insurance or annuities?")
+    existing_insurance = EnrollmentRecordField("existing_insurance", "existing_insurance", preprocess_string, [required_if_fpp_validator, question_answered_validator], flat_file_size=1, description="Does anyone on this application have any existing life insurance or annuity contracts?")
+    replacing_insurance = EnrollmentRecordField("replacing_insurance", "replacing_insurance", preprocess_string, [required_if_fpp_validator, question_answered_validator], flat_file_size=1, description="Will the coverage applied for replace any existing life insurance or annuities?")
     sp_treated_6_months = EnrollmentRecordField("sp_treated_6_months", "sp_treated_6_months", preprocess_string, [question_answered_validator], flat_file_size=1, description="During the prior 6 months, other than for routine medical care, has spouse been diagnosed or treated by a member of the medical profession in a hospital or any other medical facility?")
     sp_disabled_6_months = EnrollmentRecordField("sp_disabled_6_months", "sp_disabled_6_months", preprocess_string, [question_answered_validator], flat_file_size=1, description="Has spouse been disabled in the prior 6 months or received disability payments?")
     replacement_read_aloud = EnrollmentRecordField("replacement_read_aloud", "replacement_read_aloud", preprocess_string, [question_answered_validator], flat_file_size=1, description="Should replacement notice be read aloud")
@@ -609,8 +612,9 @@ class EnrollmentRecordParser(object):
             "agent_name",
             "agent_code",
             "agent_sig_txt",
-            "existing_insurance",
-            "replacing_insurance",
+            # Remove these since they are only for FPP products.
+            #"existing_insurance",
+            #"replacing_insurance",
             "actively_at_work",
         ]
         return {d for d in required_data_keys if d not in record}

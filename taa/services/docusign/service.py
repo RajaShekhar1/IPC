@@ -74,8 +74,14 @@ class DocuSignService(object):
         fpp_form = FPPTemplate(recipients, enrollment_data, should_use_docusign_renderer)
         components.append(fpp_form)
 
+        # For transitional reasons, Group CI Import is fed through this code. Don't let replacement
+        # forms be generated for Group CI.
+        is_group_ci = enrollment_data.get_product_code() == 'Group CI'
+
         # Additional Children
-        if fpp_form.is_child_attachment_form_needed():
+        # Note - can't attach to group CI in this way, since questions that show up will be FPP
+        #   and also because Group CI has 4 children on form.
+        if fpp_form.is_child_attachment_form_needed() and not is_group_ci:
             child_attachment_form = ChildAttachmentForm(recipients, enrollment_data)
             for i, child in enumerate(fpp_form.get_attachment_children()):
                 # The indexing starts with the 3rd child.
@@ -89,23 +95,25 @@ class DocuSignService(object):
             components.append(child_attachment_form)
 
         # Percentage/Multiple beneficiaries
-        if fpp_form.is_beneficiary_attachment_needed():
+        if fpp_form.is_beneficiary_attachment_needed() and not is_group_ci:
             components.append(MultipleBeneficiariesAttachment(recipients, enrollment_data))
 
         # Replacement Form
-        if fpp_form.is_replacement_form_needed():
+        if fpp_form.is_replacement_form_needed() and not is_group_ci:
             replacement_form = FPPReplacementFormTemplate(recipients,
                                                           enrollment_data,
                                                           should_use_docusign_renderer)
             components.append(replacement_form)
 
         # Additional replacement policies form
-        if fpp_form.is_additional_replacement_policy_attachment_needed():
+        if fpp_form.is_additional_replacement_policy_attachment_needed() and not is_group_ci:
             components.append(AdditionalReplacementPoliciesForm(recipients,
                                                                 enrollment_data))
 
-
-        if fpp_form.should_include_bank_draft():
+        # The second part of this statement is meant to restrict this form
+        # from showing up when importing enrollments until we implement
+        # collecting the Bank Draft data.
+        if fpp_form.should_include_bank_draft() and not enrollment_data.is_import():
             components.append(FPPBankDraftFormTemplate(recipients, enrollment_data, should_use_docusign_renderer))
 
         return components
