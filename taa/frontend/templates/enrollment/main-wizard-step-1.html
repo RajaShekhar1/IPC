@@ -311,98 +311,6 @@
   <br/>
   <br/>
 
-  {# Riders #}
-{#    <div class="col-sm-3">#}
-{#      <h5>Riders</h5>#}
-{#    </div>#}
-{#    <div class="row col-sm-9">#}
-{##}
-{#      <div class="col-sm-12">#}
-{#        <div class="form-group col-xs-12 col-sm-1"></div>#}
-{#        <div class="form-group col-xs-12 col-sm-4"><strong>Rider Name</strong></div>#}
-{#        <div class="form-group col-xs-12 col-sm-4"><strong>Description</strong></div>#}
-{#        <div class="form-group col-xs-12 col-sm-3"><strong>Amount</strong></div>#}
-{#      </div>#}
-{#      <div data-bind="visible: employee().name()">#}
-{#        <div class="form-group col-xs-12 col-sm-1">#}
-{#          <div class="">#}
-{#            <ul class="list-unstyled list-striped js">#}
-{#              <!--ko foreach: case_riders -->#}
-{#              <li><input type="checkbox" checked=checked disabled=disabled/></li>#}
-{#              <!--ko if: $root.should_include_spouse_in_table -->#}
-{#              <li><input type="checkbox" checked=checked disabled=disabled/></li>#}
-{#              <!--/ko-->#}
-{#              <!--/ko-->#}
-{#              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->#}
-{#              <li><input type="checkbox" autocomplete="off"#}
-{#                         data-bind="click: $root.toggle_selected_riders(rider.code, 'emp'), checked: $root.selected_riders['emp'], checkedValue: $data"/>#}
-{#              </li>#}
-{#              <!--ko if: $root.should_include_spouse_in_table-->#}
-{#              <li><input type="checkbox" autocomplete="off"#}
-{#                         data-bind="click: $root.toggle_selected_riders(rider.code, 'sp')"/></li>#}
-{#              <!--/ko-->#}
-{#              <!--/ko-->#}
-{#            </ul>#}
-{#          </div>#}
-{#        </div>#}
-{#        <div class="form-group col-xs-12 col-sm-4">#}
-{#          <div class="">#}
-{#            <ul class="list-unstyled list-striped js">#}
-{#              <!--ko foreach: {data: case_riders, as: 'rider'} -->#}
-{#              <li data-bind="text: rider.name+' for '+$root.employee().name()"></li>#}
-{#              <!--ko if: $root.should_include_spouse_in_table-->#}
-{#              <li data-bind="text: rider.name+' for '+$root.show_spouse_name()"></li>#}
-{#              <!--/ko-->#}
-{#              <!--/ko-->#}
-{#              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->#}
-{#              <li data-bind="text: rider.name+' for '+$root.employee().name()"></li>#}
-{#              <!--ko if: $root.should_include_spouse_in_table-->#}
-{#              <li data-bind="text: rider.name+' for '+$root.show_spouse_name()"></li>#}
-{#              <!--/ko-->#}
-{#              <!--/ko-->#}
-{#            </ul>#}
-{#          </div>#}
-{#        </div>#}
-{#        <div class="form-group col-xs-12 col-sm-4">#}
-{#          <div class="">#}
-{#            <ul class="list-unstyled list-striped js">#}
-{#              <!--ko foreach: {data: case_riders, as: 'rider'} -->#}
-{#              <li data-bind="text: rider.name"></li>#}
-{#              <!--ko if: $root.should_include_spouse_in_table-->#}
-{#              <li data-bind="text: rider.name"></li>#}
-{#              <!--/ko-->#}
-{#              <!--/ko-->#}
-{#              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->#}
-{#              <li data-bind="text: rider.name"></li>#}
-{#              <!--ko if: $root.should_include_spouse_in_table-->#}
-{#              <li data-bind="text: rider.name"></li>#}
-{#              <!--/ko-->#}
-{#              <!--/ko-->#}
-{#            </ul>#}
-{#          </div>#}
-{#        </div>#}
-{#        <div class="form-group col-xs-12 col-sm-3">#}
-{#          <div class="">#}
-{#            <ul class="list-unstyled list-striped js">#}
-{#              <!--ko foreach: {data: case_riders, as: 'rider'} -->#}
-{#              <li data-bind="text: '$'+$root.riders()['emp'][rider.code]"></li>#}
-{#              <!--ko if: $root.should_include_spouse_in_table-->#}
-{#              <li data-bind="text: '$'+$root.riders()['sp'][rider.code]"></li>#}
-{#              <!--/ko-->#}
-{#              <!--/ko-->#}
-{#              <!--ko foreach: {data: enrollment_riders, as: 'rider'} -->#}
-{#              <li data-bind="text: '$'+$root.riders()['emp'][rider.code]"></li>#}
-{#              <!--ko if: $root.should_include_spouse_in_table-->#}
-{#              <li data-bind="text: '$'+$root.riders()['sp'][rider.code]"></li>#}
-{#              <!--/ko-->#}
-{#              <!--/ko-->#}
-{#            </ul>#}
-{#          </div>#}
-{#        </div>#}
-{#      </div>#}
-{#    </div>#}
-
-
 
     {# Decline any products option #}
     <div class="row" data-bind="visible: !coverage_vm.has_multiple_products()">
@@ -533,6 +441,47 @@
 
     </div>
 
+  </div>
+
+  <div data-bind="template: 'riders-template'"></div>
+
+</script>
+
+<script type="text/html" id="riders-template">
+  {# Riders Selection #}
+  <div class="row" data-bind="if: visible_rider_options().length > 0"  >
+
+    <div class="col-sm-3">
+      <h5>Additional Benefits</h5>
+    </div>
+    <div class="row col-sm-9">
+
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Add these benefits?</th>
+            <th>Premium</th>
+          </tr>
+        </thead>
+        <tbody data-bind="foreach: visible_rider_options">
+          <tr>
+            <td><input type="checkbox" data-bind="checked: is_selected"></td>
+            <td>
+              <span data-bind="if: has_rider_modal">
+                <a data-bind="click: show_rider_info, html: format_rider_name()"></a>
+              </span>
+              <span data-bind="if: !has_rider_modal()">
+                <span data-bind="html: format_rider_name()"></span>
+              </span>
+               for
+              <span data-bind='text: format_applicant_name()'></span>
+            </td>
+            <td data-bind="html: format_premium()"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </script>
 
