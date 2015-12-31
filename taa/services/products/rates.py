@@ -403,13 +403,13 @@ def initialize_rates_from_files(rates):
     rates.from_string("age,10000\n-1,3.25", 'Group CI',
                       MODES_BY_NAME['monthly'], TYPE_COVERAGE)
     # FPPCI
-    rates.from_string("age,10000,20000\n-1,1.15,2.30", 'FPPCI',
+    rates.from_string("age,10000,20000\n-1,1.00,2.00", 'FPPCI',
                       MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,2.30,4.60", 'FPPCI',
+    rates.from_string("age,10000,20000\n-1,2.00,4.00", 'FPPCI',
                       MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,2.49,4.98", 'FPPCI',
+    rates.from_string("age,10000,20000\n-1,2.17,4.33", 'FPPCI',
                       MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,4.98,9.97", 'FPPCI',
+    rates.from_string("age,10000,20000\n-1,4.33,8.67", 'FPPCI',
                       MODES_BY_NAME['monthly'], TYPE_COVERAGE)
     # FPP-White (FPP-Gov)
     rates.from_string("age,10000,20000\n-1,1.15,2.30", 'FPP-Gov',
