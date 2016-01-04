@@ -192,6 +192,9 @@ class FPPTemplate(DocuSignServerTemplate):
         child_data = self.data["children"][child_index]
         return [
             DocuSignTextTab(child_prefix + "Name", child_data['first'] + " " + child_data['last']),
+            # For old form and Group CI compatibility, also send separate first and last
+            DocuSignTextTab(child_prefix + "FName", child_data['first']),
+            DocuSignTextTab(child_prefix + "LName", child_data['last']),
             DocuSignTextTab(child_prefix + "DOB", child_data['birthdate']),
             DocuSignTextTab(child_prefix + "SSN", self.format_ssn(child_data['ssn'])),
             DocuSignTextTab(child_prefix + "Coverage", format(Decimal(unicode(child_coverage["face_value"])), ",.0f") if child_coverage else ""),

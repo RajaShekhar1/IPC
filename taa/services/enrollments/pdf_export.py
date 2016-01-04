@@ -29,13 +29,13 @@ class ImagedFormGeneratorService(object):
 
     def generate_form_pdf(self, template_id, enrollment_tabs, path=None):
 
-        template = self.validate_template(template_id)
+        self.template = self.validate_template(template_id)
         tab_definitions = self.tab_repository.get_tabs_for_template(template_id)
 
         return self.generate_overlay_pdf_from_tabs(
             enrollment_tabs,
             tab_definitions,
-            template.data,
+            self.template.data,
         )
 
     def generate_overlay_pdf_from_tabs(self, enrollment_tabs, tab_definitions, base_pdf_bytes):
@@ -117,13 +117,19 @@ class ImagedFormGeneratorService(object):
         x = tab_def.x
 
         # Special case for SignHere and DateSigned tabs
-        #if (tab_def.type_ == 'SignHere' or
-        #            tab_def.type_ == 'DateSigned'):
-        #    fontcolor = 'Green'
         if tab_def.type_ == 'SignHere':
             y += 35
             x -= 5
             fontsize = 8
+
+        # Special case for Group CI form (CIEMP), we need to re-align the text field.
+        if (tab_def.custom_type == 'Text' and
+            self.template.name and
+            "CI EMP" in self.template.name and
+            fontsize == 16
+            ):
+            y += 8
+
 
         self.pdf_renderer.draw_text(text=text, x=x,
                                     y=y,
