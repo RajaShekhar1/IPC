@@ -5,7 +5,7 @@ from yaml import load as yaml_load
 try:
     from yaml import CLoader as YamlLoader
 except ImportError:
-    from yaml import YamlLoader
+    from yaml import Loader as YamlLoader
 
 from taa.services.products.rates import DATA_DIR
 
