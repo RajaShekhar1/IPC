@@ -86,6 +86,7 @@ class EnrollmentApplicationCoverageSerializer(JsonSerializable):
 
 class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
                                     db.Model):
+    __tablename__ = 'enrollment_application_coverage'
     id = db.Column(db.Integer, primary_key=True)
     enrollment_application_id = db.Column(db.Integer,
                                           db.ForeignKey(
