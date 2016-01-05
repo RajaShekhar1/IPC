@@ -9,7 +9,7 @@ function CaseRiderConfiguration(case_settings, product, rider, initial_product_s
   self.code = rider.code;
 
   self.is_rider_initially_selected = function(initial_product_settings) {
-    if (!initial_product_settings.riders) {
+    if (!initial_product_settings || !initial_product_settings.riders) {
       return false;
     }
 

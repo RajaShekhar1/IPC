@@ -351,7 +351,11 @@ class RatePlan(object):
         rates = []
         for premium in self.get_premium_options(applicant_query.get_mode()):
             applicant_query.rate_options = ApplicantQueryOptions({'by_premium': premium})
-            rates.append({'coverage': self.calculate_coverage(applicant_query), 'premium': float(premium)})
+            rates.append({
+                'coverage': self.calculate_coverage(applicant_query),
+                'premium': float(premium),
+                'payment_mode': applicant_query.get_mode(),
+            })
 
         return rates
 
@@ -362,7 +366,11 @@ class RatePlan(object):
         #  (to get the coverage for the requested premium).
         for coverage in self.get_coverage_options_by_face(applicant_query):
             applicant_query.rate_options = ApplicantQueryOptions({'by_coverage': coverage})
-            rates.append({'premium': float(self.calculate_premium(applicant_query)), 'coverage': int(coverage)})
+            rates.append({
+                'premium': float(self.calculate_premium(applicant_query)),
+                'coverage': int(coverage),
+                'payment_mode': applicant_query.get_mode(),
+            })
 
         return rates
 

@@ -26,6 +26,23 @@ def required_validator(field, record, message=None):
     return True, None, None
 
 
+def required_if_fpp_validator(field, record, message=None):
+
+    data = field.get_column_from_record(record)
+    product_code = record.get('product_code', u'')
+    product_service = LookupService("ProductService")
+    # Need to check if product is an FPP product.
+    products = product_service.get_products_by_codes([product_code])
+    if not products:
+        # Don't trigger if there is no matching product.
+        return True, None, None
+
+    product = products[0]
+    if not data and product.is_fpp():
+        message = message if message else "Required Data Missing"
+        return False, "missing_data", message
+    return True, None, None
+
 def ssn_validator(field, record):
     ssn_pattern = re.compile('^\d{9}$')
     ssn = field.get_column_from_record(record)
@@ -53,7 +70,7 @@ def payment_mode_validator(field, record):
 
 def product_validator(field, record):
     product_service = LookupService("ProductService")
-    # Needs a database call to check if product exists
+    # Need to check if product exists.
     product_code = field.get_column_from_record(record)
     if not product_service.is_valid_product_code(product_code):
         return False, "invalid_product", "Product code not found"
@@ -181,7 +198,7 @@ def question_answered_validator(field, record):
         answer = field.get_column_from_record(record)
         if not answer:
             return True, None, None
-        if answer.upper() not in ["Y", "N"]:
+        if answer.upper() not in ["Y", "N", "GI"]:
             return False, "invalid_question", "Questions must be answered with Y or N"
         return True, None, None
 

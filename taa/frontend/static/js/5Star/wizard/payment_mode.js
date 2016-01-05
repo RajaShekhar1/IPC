@@ -11,8 +11,24 @@ var payment_mode = (function() {
       return this.label.toLowerCase();
     }
   };
+
+  var FREQUENCY_LABELS = {
+    12: 'Monthly',
+    24: 'Semimonthly',
+    26: 'Biweekly',
+    52: 'Weekly'
+  };
+
   return {
     create_payment_mode: function(options) {
+      return new PaymentMode(options);
+    },
+
+    create_payment_mode_by_frequency: function(frequency) {
+      var options = {
+        frequency: frequency,
+        label: FREQUENCY_LABELS[frequency]
+      };
       return new PaymentMode(options);
     },
 
