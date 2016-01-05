@@ -1,21 +1,20 @@
-
-import csv
-import datetime
-import dateutil.parser
-from decimal import Decimal
-import json
 import StringIO
-from taa import JSONEncoder
+import datetime
+import json
+from decimal import Decimal
 
-from taa.core import DBService, db
-from models import EnrollmentApplication, EnrollmentApplicationCoverage
+import dateutil.parser
 
-from taa.services import RequiredFeature
 from enrollment_application_coverages import (
     filter_applicant_coverages,
     group_coverages_by_product,
     select_most_recent_coverage,
 )
+from taa.helpers import UnicodeWriter
+from models import EnrollmentApplication, EnrollmentApplicationCoverage
+from taa import JSONEncoder
+from taa.core import DBService, db
+from taa.services import RequiredFeature
 
 
 class EnrollmentApplicationService(DBService):
@@ -417,12 +416,11 @@ class EnrollmentApplicationService(DBService):
 
     def export_enrollment_data(self, data):
         stream = StringIO.StringIO()
-        writer = csv.writer(stream)
+        writer = UnicodeWriter(stream)
         # Write the header row
         writer.writerow(self.get_csv_headers())
         # Write all the data
-        for record in data:
-            writer.writerow(self.get_csv_row(record))
+        writer.writerows(self.get_csv_row(record) for record in data)
         return stream.getvalue()
 
     def get_csv_headers(self):
@@ -442,7 +440,6 @@ class EnrollmentApplicationService(DBService):
         # Add census record export
         row += self.case_service.census_records.get_csv_row_from_dict(record)
         return row
-
 
 
 def export_string(val):

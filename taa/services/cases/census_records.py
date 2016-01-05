@@ -1,6 +1,7 @@
 from datetime import datetime
 import csv
 
+from taa.helpers import UnicodeWriter
 from taa.core import DBService
 from taa.core import db
 from taa.services import RequiredFeature
@@ -27,7 +28,7 @@ class CensusRecordService(DBService):
         return kwargs
 
     def export_csv(self, file, census_records):
-        writer = csv.writer(file)
+        writer = UnicodeWriter(file)
         # Write the header row
         writer.writerow(self.get_csv_headers())
         # Write all the data
