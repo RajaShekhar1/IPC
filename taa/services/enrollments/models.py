@@ -105,6 +105,7 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
     COVERAGE_STATUS_ENROLLED = u'enrolled'
     COVERAGE_STATUS_DECLINED = u'declined'
     coverage_status = db.Column(db.Unicode(32))
+    coverage_selection = db.Column(db.Unicode(32))
     # Additional non-census data
     height_inches = db.Column(db.Integer)
     weight_pounds = db.Column(db.Integer)
@@ -271,7 +272,7 @@ def get_batch_case_id(batch):
     token = batch.case_token
     if not token:
         return None
-    
+
     case = CaseService().get_case_for_token(token)
     if not case:
         return None
