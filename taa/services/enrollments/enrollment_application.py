@@ -10,7 +10,7 @@ from enrollment_application_coverages import (
     group_coverages_by_product,
     select_most_recent_coverage,
 )
-from taa.helpers import UnicodeWriter
+from taa.helpers import UnicodeCsvWriter
 from models import EnrollmentApplication, EnrollmentApplicationCoverage
 from taa import JSONEncoder
 from taa.core import DBService, db
@@ -416,7 +416,7 @@ class EnrollmentApplicationService(DBService):
 
     def export_enrollment_data(self, data):
         stream = StringIO.StringIO()
-        writer = UnicodeWriter(stream)
+        writer = UnicodeCsvWriter(stream)
         # Write the header row
         writer.writerow(self.get_csv_headers())
         # Write all the data

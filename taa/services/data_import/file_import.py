@@ -3,7 +3,7 @@ import cStringIO
 
 from flask import render_template
 
-from taa.helpers import UnicodeWriter
+from taa.helpers import UnicodeCsvWriter
 from taa import app
 from taa.services.enrollments import EnrollmentRecordParser
 from taa.services.validators import (
@@ -191,7 +191,7 @@ for assistance."""
         for row in header_reader:
             header = [col.upper() for col in row]
         io = cStringIO.StringIO()
-        header_writer = UnicodeWriter(io, dialect)
+        header_writer = UnicodeCsvWriter(io, dialect)
         header_writer.writerow(header)
         lines[0] = io.getvalue()
         return lines

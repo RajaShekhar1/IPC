@@ -137,22 +137,32 @@ class SelectFieldWithDisable(SelectField):
             yield (value, label, self.coerce(value) == self.data, disabled)
 
 
-# From https://docs.python.org/2.7/library/csv.html#csv-examples for unicode encoded CSV files.
-class UnicodeWriter:
+# Slightly modified from https://docs.python.org/2.7/library/csv.html#csv-examples for unicode encoded CSV files.
+class UnicodeCsvWriter:
     """
-    A CSV writer which will write rows to CSV file "f",
+    A CSV writer which will write rows to CSV a stream,
     which is encoded in the given encoding.
     """
 
-    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+    def __init__(self, stream, dialect=csv.excel, encoding="utf-8", **kwds):
         # Redirect output to a queue
         self.queue = cStringIO.StringIO()
         self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
-        self.stream = f
+        self.stream = stream
+        self.encoding = encoding
         self.encoder = codecs.getincrementalencoder(encoding)()
 
     def writerow(self, row):
-        self.writer.writerow([s.encode("utf-8") for s in row])
+        # First, ensure all the data has been converted to unicode.
+        unicode_row = []
+        for col in row:
+            if not isinstance(col, unicode):
+                col = unicode(col)
+            unicode_row.append(col)
+
+        # Use the standard CSV writer to get correct formatting.
+        self.writer.writerow([col.encode("utf-8") for col in unicode_row])
+
         # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
         data = data.decode("utf-8")
