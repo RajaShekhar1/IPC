@@ -1,3 +1,4 @@
+import csv
 from StringIO import StringIO
 
 from flask import Blueprint, request, abort, make_response
@@ -107,4 +108,14 @@ def render_batch_item_pdf(batch_id, item_id):
     response = make_response(binary_pdf)
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = 'inline; filename=%s.pdf' % 'enrollment_{}'.format(item.enrollment_record_id)
+    return response
+
+
+@route(bp, '/export/acchi/csv/<from_>/<to_>', methods=['GET'])
+@login_required
+@groups_required(['admins'])
+def export_acc_hi(from_, to_):
+    response = make_response()
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = 'inline; filename=acc-hi_{}~{}.csv'.format(from_, to_)
     return response
