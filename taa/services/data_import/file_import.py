@@ -165,6 +165,11 @@ for assistance."""
         file_obj.seek(0)
         lines = file_obj.read().splitlines()
 
+        if not lines:
+            self.error = "The file is empty or could not be parsed."
+            self.headers = self.rows = []
+            return
+
         # Process headers so they are not case-sensitive.
         preprocessed_lines = self._preprocess_header_row(lines, self.dialect)
 
@@ -182,6 +187,9 @@ for assistance."""
         To get case-insensitive parsing behaviour, we uppercase every column
         in the first line before passing it off to the DictReader
         """
+        if not lines:
+            return lines
+
         header = []
         header_reader = csv.reader([lines[0]], dialect)
         for row in header_reader:

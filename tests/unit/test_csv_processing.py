@@ -20,11 +20,6 @@ val1,val2""")
         self.test_tab_data = StringIO("""\
 TEST_COL1\tTEST_COL2
 val1\tval2""")
-        self.test_bad_row = StringIO("""\
-TEST_COL1,TEST_COL2
-val1,val2
-,,,,""")
-
 
         self.sut = FileImportService()
 
@@ -67,16 +62,6 @@ val1,val2
         importer = self.sut.process_delimited_file_stream(StringIO(""))
 
         assert_that(importer.has_error(), equal_to(True))
-        
-    def test_it_provides_error_line_for_bad_row(self):
-        importer = self.sut.process_delimited_file_stream(self.test_bad_row)
-
-        assert_that(importer.has_error(), equal_to(True))
-
-    def test_it_provides_an_error_message(self):
-        importer = self.sut.process_delimited_file_stream(self.test_bad_row)
-
-        assert_that(importer.get_error_message(), not equal_to(None))
 
     def test_it_uppercases_headers(self):
         test_lowercase_headers = StringIO("""\
