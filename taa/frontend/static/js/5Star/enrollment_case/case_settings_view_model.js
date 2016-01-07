@@ -558,7 +558,29 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     }
   };
 
+  function removeHarmfulEmailTags(message) {
+    var allowedTags = ["br", "span", "strong", "b", "i", "em", "emphasis", "img", "a"]
+    var base = $("<div>"+message+"</div>")[0].childNodes;
+
+    var mapped = Array.prototype.map.call(base, function(elem, a) {
+      if (elem.tagName) {
+        var tagName = elem.tagName.toLowerCase();
+        if (allowedTags.indexOf(tagName) === -1) {
+          elem = $(elem).contents().unwrap()[0]
+        }
+      }
+      return elem;
+    });
+
+    var htmlstr = Array.prototype.reduce.call(base, function(html, node) {
+      return html + ( node.outerHTML || node.nodeValue );
+    }, "");
+
+    return htmlstr;
+  }
+
   self.serialize_self_enroll = function() {
+    self.emailSettings.message(removeHarmfulEmailTags(self.emailSettings.message()));
     var settings = $.extend({}, self.emailSettings, self.landing);
     for(var key in settings) {
       if(settings.hasOwnProperty(key)) {
