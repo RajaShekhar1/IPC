@@ -70,9 +70,6 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     received_data = db.Column(JSON(none_as_null=False))
     standardized_data = db.Column(JSON(none_as_null=False))
 
-    def get_signature_time_as_int(self):
-        'useful for sorting'
-
     def did_enroll(self):
         return self.application_status == self.APPLICATION_STATUS_ENROLLED
 
