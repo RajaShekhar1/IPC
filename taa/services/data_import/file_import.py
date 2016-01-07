@@ -155,19 +155,15 @@ for assistance."""
         return self.dialect
 
     def import_file(self, file_obj):
-
-        bytes = file_obj.read()
-
         # Autodetect CSV dialect
         try:
-            self.dialect = csv.Sniffer().sniff(bytes)
+            self.dialect = csv.Sniffer().sniff(file_obj.readline(), delimiters=[',', '\t'])
         except csv.Error as e:
-            self.error = self.default_error_message
-            self.headers = self.rows = []
-            return
+            self.dialect = None
 
         # To get universal newlines (ie, cross-platform) we use splitlines()
-        lines = bytes.splitlines()
+        file_obj.seek(0)
+        lines = file_obj.read().splitlines()
 
         # Process headers so they are not case-sensitive.
         preprocessed_lines = self._preprocess_header_row(lines, self.dialect)
