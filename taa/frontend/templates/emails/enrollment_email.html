@@ -1,92 +1,99 @@
 <!DOCTYPE html>
 <html>
-<head lang="en">
+  <head lang="en">
     <meta charset="UTF-8">
     <title></title>
-</head>
-<body>
+  </head>
+  <body>
 
-<div style="margin:10px;font-family:arial,helvetica,sans-serif">
+    <div style="margin:10px;font-family:arial,helvetica,sans-serif">
 
-    <table border="0" cellspacing="0" cellpadding="15" width="600" st
-           yle="border:1px solid rgb(204,204,204);margin:10px;border-collapse:collapse">
+      <table border="0" cellspacing="0" cellpadding="15" width="600" style="border:1px solid rgb(204,204,204);margin:10px;border-collapse:collapse">
         <tbody>
-        <tr>
+          <tr>
 
             <td style="line-height:42px">
-                <table border="0" cellspacing="0" cellpadding="0" width="100%">
-                    <tbody>
-                    <tr>
-                        <td style="color:rgb(51,51,51);font-size:16px;font-family:arial">
-                        </td>
-                        <td><img style="border:none" valign="top" align="right"
-                                 src="https://demo.docusign.net/Member/Image.aspx?i=logo&amp;l=ffcca32c-f6a4-48f4-b83e-987b49a6a131"
-                                 alt="Company Logo"></td>
-                    </tr>
-                    </tbody>
-                </table>
+              <table border="0" cellspacing="0" cellpadding="0" width="100%">
+                <tbody>
+                  <tr>
+                    <td style="color:rgb(51,51,51);font-size:16px;font-family:arial">
+                    </td>
+                    <td><img style="border:none" valign="top" align="right"
+                                                              src="https://demo.docusign.net/Member/Image.aspx?i=logo&amp;l=ffcca32c-f6a4-48f4-b83e-987b49a6a131"
+                                                              alt="Company Logo"></td>
+                  </tr>
+                </tbody>
+              </table>
             </td>
-        </tr>
-        <tr>
+          </tr>
+          <tr>
             <td style="background-color:rgb(244,244,244)">
-                <table border="0" cellspacing="0" cellpadding="0" width="100%">
-                    <tbody>
-                    <tr>
-                        <td style="font-size:16px;color:rgb(30,76,161);font-family:arial;font-weight:bold">
-                            From:
-                        </td>
-                        <td></td>
-                        <td>
-                            <div style="font-size:16px;color:rgb(0,0,1);font-family:arial;font-weight:bold">5Star Enrollment
-                            </div>
-                            <div style="font-size:16px;color:rgb(119,119,119);font-family:arial">
+              <table border="0" cellspacing="0" cellpadding="0" width="100%">
+                <tbody>
+                  <tr>
+                    <td style="font-size:16px;color:rgb(30,76,161);font-family:arial;font-weight:bold">
+                      From:
+                    </td>
+                    <td></td>
+                    <td>
+                      <div style="font-size:16px;color:rgb(0,0,1);font-family:arial;font-weight:bold">5Star Enrollment
+                      </div>
+                      <div style="font-size:16px;color:rgb(119,119,119);font-family:arial">
 
-                                5Star Life Insurance Company
-                            </div>
-                            <div style="font-size:16px;color:rgb(119,119,119);font-family:arial">
+                        5Star Life Insurance Company
+                      </div>
+                      <div style="font-size:16px;color:rgb(119,119,119);font-family:arial">
 
-                                and {{ company_name }}
-                            </div>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-                <p style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">{{ greeting }}</p>
+                        and {{ company_name }}
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <p style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">{{ greeting }}</p>
 
-                <p style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">
-                    {{ custom_message | safe }}
-                </p>
+              <p style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119) !important;font-family:arial !important;">
+              {{ custom_message | safe }}
+              </p>
 
-                <div style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">
-                    {% include "enrollment/self_enrollment_product_list.html" %}
-                </div>
+              <div style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">
+                {% include "enrollment/self_enrollment_product_list.html" %}
+              </div>
 
 
-        </tr>
-        <tr>
+          </tr>
+          <tr>
             <td align="center"
                 style="background-color:rgb(244,244,244);border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;">
 
-                <a style="font-size:16px;color:rgb(0,0,1);background-color:rgb(255,196,35);border:1px solid rgb(231,178,54);border-top-left-radius:5px;border-top-right-radius:5px;border-bottom-right-radius:5px;border-bottom-left-radius:5px;display:inline-block;font-family:arial;font-weight:bold;line-height:40px;min-height:40px;width:250px;text-align:center;text-decoration:none"
-                   href="{{enrollment_url}}"
-                   target="_blank">Begin Enrollment</a></td>
+              <a style="font-size:16px;color:rgb(0,0,1);background-color:rgb(255,196,35);border:1px solid rgb(231,178,54);border-top-left-radius:5px;border-top-right-radius:5px;border-bottom-right-radius:5px;border-bottom-left-radius:5px;display:inline-block;font-family:arial;font-weight:bold;line-height:40px;min-height:40px;width:250px;text-align:center;text-decoration:none"
+                 href="{{enrollment_url}}"
+                 target="_blank">Begin Enrollment</a></td>
 
-        </tr>
-        <tr>
+          </tr>
+          <tr>
             <td style="background-color:rgb(244,244,244);border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;border-bottom-color:rgb(204,204,204);border-bottom-style:solid;border-bottom-width:1px">
-                <p style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">
+              <p style="font-size:12px;margin-bottom:1em;color:rgb(119,119,119);font-family:arial">
 
-                    This offer, and any accompanying pages or links, is solely intended for the applicants of {{ company_name }} for insurance benefits. If you are not the intended recipient, you are hereby notified that any use, dissemination, distribution, or copying of the information contained herein is strictly prohibited.
+              This offer, and any accompanying pages or links, is solely intended for the applicants of {{ company_name }} for insurance benefits. If you are not the intended recipient, you are hereby notified that any use, dissemination, distribution, or copying of the information contained herein is strictly prohibited.
 
-                </p>
+              </p>
             </td>
-        </tr>
+          </tr>
 
         </tbody>
-    </table>
-    <span><span><span></span></span></span></div>
+      </table>
+      <span>
+        <span>
+          <span></span>
+        </span>
+      </span>
+    </div>
 
-</div><br></div>
-</div>
-</body>
+    </div>
+    <br>
+    </div>
+
+    </div>
+  </body>
 </html>

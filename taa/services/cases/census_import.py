@@ -153,6 +153,16 @@ def preprocess_string(data, record=None):
         return u''
     return unicode(data).strip()
 
+
+def preprocess_product_code(data, record=None):
+    val = preprocess_string(data, record)
+
+    # Convert CIEMP to Group CI, the internal code for this product.
+    if val == 'CIEMP':
+        return "Group CI"
+
+    return val
+
 def postprocess_spouse_last(field, data, record):
     "Automatically populate a spouse or child last name if blank"
     employee_last = preprocess_string(
