@@ -1380,7 +1380,7 @@ $(document).ready(function() {
     self.num_data_records = ko.observable(0);
   };
 
-  window.case_settings = new CaseSettingsPanel(
+  window.case_settings = new CaseViewModel(
       {{ case |tojson|safe }},
       {{ product_choices |tojson|safe }},
       {{ 'true' if can_edit_case else 'false'}},

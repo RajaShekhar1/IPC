@@ -6,7 +6,6 @@ from taa.services.agents import ApiTokenService
 from taa import db
 from taa.helpers import JsonSerializable
 from taa.services.cases import CaseCensus, CaseService
-from taa.services.users import UserService
 
 
 class EnrollmentSerializer(JsonSerializable):

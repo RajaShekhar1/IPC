@@ -49,7 +49,11 @@ var wizard_viewmodel = (function() {
     this.is_payment_mode_valid = ko.pureComputed(this._is_payment_mode_valid, this);
 
     this.product_coverage_viewmodels = ko.observableArray(_.map(this.products, function(p) {
-      return new ProductCoverageViewModel(p, applicant_list, this.payment_mode,
+      return new ProductCoverageViewModel(
+          p,
+          case_data,
+          applicant_list,
+          this.payment_mode,
           this.should_include_spouse,
           this.should_include_children);
     }, this));
@@ -200,14 +204,15 @@ var wizard_viewmodel = (function() {
   };
 
 
-  function ProductCoverageViewModel(product, applicant_list, payment_mode,
-                                    should_include_spouse, should_include_children) {
+  function ProductCoverageViewModel(product, case_data, payment_mode,
+                                    should_include_spouse, should_include_children, applicant_list) {
 
     // ProductCoverageViewModel keeps track of the coverage selections for the applicants for a single product.
 
     var self = this;
 
     self.product = product;
+    self.case_data = case_data;
     self.applicant_list = applicant_list;
     self.should_include_spouse = should_include_spouse;
     self.should_include_children = should_include_children;
@@ -215,6 +220,62 @@ var wizard_viewmodel = (function() {
     self.did_decline = ko.observable(false);
     self.available_recommendations = product_rates_service.get_product_recommendations(self.product, payment_mode);
     self.selected_recommendation = ko.observable(null);
+
+    // Riders
+
+    // Available riders
+    _.map(product.riders, function(r) {
+          return new CaseRiderConfiguration(self, product, r, case_data.product_settings);
+        });
+    self.all_riders = ko.observableArray(defaults.riders);
+
+    // Currently shown rider
+    self.shown_rider = ko.observable(null);
+
+    // Build the rider viewmodels
+    self.rider_options = [];
+    _.each([self.employee(), self.spouse()], function(applicant) {
+        _.each(self.all_riders(), function(rider) {
+            var vm = new ApplicantRiderOptionVM(self, rider, applicant);
+            self.rider_options.push(vm);
+        });
+    });
+
+    self.visible_rider_options = ko.computed(function() {
+        return _.select(self.rider_options, function(option) {return option.is_visible()});
+    });
+
+    // Currently selected riders. Only Employee and spouse can have riders.
+    self.selected_riders = ko.computed(function() {
+        var selected_emp_riders = _.select(self.visible_rider_options(), function(option) {
+           return option.applicant === self.employee() && option.is_selected();
+        });
+
+        var selected_sp_riders = _.select(self.visible_rider_options(), function(option) {
+           return option.applicant === self.spouse() && option.is_selected() ;
+        });
+
+        return {
+            emp: _.pluck(selected_emp_riders, 'rider'),
+            sp: _.pluck(selected_sp_riders, 'rider')
+        };
+    });
+
+    self.selected_riders.serialize_data = ko.computed(function () {
+        return {
+            emp: self.selected_riders().emp,
+            sp: self.selected_riders().sp
+        };
+    });
+
+    self.get_selected_riders = function(person) {
+      if (person.applicant_type === "employee") {
+        return self.selected_riders().emp;
+      } else if (person.applicant_type === "spouse") {
+        return self.selected_riders().sp;
+      }
+      return [];
+    };
 
 
 
@@ -507,6 +568,160 @@ var wizard_viewmodel = (function() {
 
   }
 
+
+  // ViewModel for a rider option on the wizard.
+  function ApplicantRiderOptionVM(root, rider, applicant) {
+    var self = this;
+    self.MAX_COVERAGE = 150000;
+
+    self.root = root;
+    self.rider = rider;
+    self.applicant = applicant;
+
+    self.is_selected = ko.observable(false);
+
+    self.is_visible = ko.computed(function () {
+        return self.applicant.has_selected_valid_coverage() && self.get_policy_years().length > 0;
+    });
+
+    self.format_rider_name = function () {
+        return self.rider.name;
+    };
+
+    self.format_applicant_name = function () {
+        return self.applicant.name();
+    };
+
+    self.has_rider_modal = function () {
+        return (self.rider.code === "AIR");
+    };
+
+    self.show_rider_info = function () {
+        self.root.shown_rider(self);
+        $("#modal-auto-increase-rider").modal('show');
+    };
+
+    self.get_policy_years = function () {
+        var policy_years = [];
+
+        for (var year = 2; year <= 6; year++) {
+            if (self.get_age_for_policy_year(year) <= 70
+                    && self.get_total_coverage_for_year(year) < self.MAX_COVERAGE) {
+                policy_years.push(year);
+            }
+        }
+        return policy_years;
+    };
+
+    self.get_age_for_policy_year = function (n) {
+        return self.applicant.get_age() + n - 1;
+    };
+
+    self.format_coverage_for_year = function (n) {
+        var coverage = self.get_coverage_for_year(n);
+        return format_face_value(coverage);
+    };
+
+    self.format_total_coverage_for_year = function (n) {
+        var coverage = self.get_total_coverage_for_year(n);
+        return format_face_value(coverage);
+    };
+
+    self.format_coverage_for_policy = function () {
+        var coverage = 0;
+        var years = self.get_policy_years();
+        for (i = 0; i < years.length; i++) {
+            coverage += self.get_coverage_for_year(years[i]);
+        }
+        return format_face_value(coverage);
+    };
+
+    self.get_coverage_for_year = function (n) {
+        var age = self.get_age_for_policy_year(n);
+        return self.get_coverage_for_applicant_age(age);
+    };
+
+    self.get_total_coverage_for_year = function (n) {
+        var additional_coverage = self.get_coverage_for_year(n);
+        if (n == 2) {
+            var selected_coverage = self.applicant.selected_coverage().face_value;
+            return selected_coverage + additional_coverage;
+        }
+
+        var total_coverage_last_year = self.get_total_coverage_for_year(n - 1);
+        return additional_coverage + total_coverage_last_year;
+    };
+
+    self.get_coverage_for_applicant_age = function (n) {
+        var _coverage_values = {
+            18: '15339',
+            19: '15339',
+            20: '15339',
+            21: '15339',
+            22: '15339',
+            23: '15339',
+            24: '15339',
+            25: '15339',
+            26: '15249',
+            27: '14986',
+            28: '14566',
+            29: '13978',
+            30: '13299',
+            31: '12621',
+            32: '11954',
+            33: '11280',
+            34: '10612',
+            35: '9962',
+            36: '9336',
+            37: '8739',
+            38: '8176',
+            39: '7636',
+            40: '7123',
+            41: '6624',
+            42: '6154',
+            43: '5727',
+            44: '5339',
+            45: '4986',
+            46: '4668',
+            47: '4381',
+            48: '4117',
+            49: '3869',
+            50: '3629',
+            51: '3390',
+            52: '3152',
+            53: '2920',
+            54: '2698',
+            55: '2495',
+            56: '2311',
+            57: '2147',
+            58: '2002',
+            59: '1871',
+            60: '1751',
+            61: '1641',
+            62: '1540',
+            63: '1445',
+            64: '1353',
+            65: '1264',
+            66: '1174',
+            67: '1085',
+            68: '999',
+            69: '917',
+            70: '839'
+        };
+
+        return parseInt(_coverage_values[n]);
+    };
+
+    self.format_premium = function () {
+        if (self.rider.code === "AIR") {
+            return "No initial premium charge";
+        } else {
+            // TODO: lookup rider rate in table.
+            return "$TODO";
+        }
+    };
+
+  }
 
 
   // View model for step 2

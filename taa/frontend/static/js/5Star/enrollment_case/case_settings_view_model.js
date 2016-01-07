@@ -1,4 +1,4 @@
-var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, can_edit_case, settings) {
+var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_case, settings) {
   var self = this;
   self.case_id = case_data.id;
   self.case_token = case_data.case_token;
