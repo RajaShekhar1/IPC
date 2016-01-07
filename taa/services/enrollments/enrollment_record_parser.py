@@ -579,7 +579,6 @@ class EnrollmentRecordParser(object):
         return self.valid_data
 
     def _get_missing_data_keys(self, record):
-
         # Do a case-insensitive match on the columns
         for key in record.keys():
             record[key.lower()] = record[key]
