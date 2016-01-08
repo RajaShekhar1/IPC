@@ -189,3 +189,16 @@ class SelfEnrollmentSetupForm(Form):
     use_landing_page = BooleanField('Enabled')
     page_title = StringField('Title', [validators.InputRequired()])
     page_text = EditableField('Message', [validators.InputRequired()])
+
+    def __init__(self, **kwargs):
+        super(self.__class__, self).__init__()
+        if 'case' in kwargs:
+            case = kwargs['case']
+            for product in case.products:
+                if product.code in ['ACC', 'HI']:
+                    # Disallow generic-link self-enrollment cases containing
+                    # these products
+                    if self.CASE_GENERIC in self.self_enrollment_type.choices:
+                        self.self_enrollment_type.choices.remove(
+                                self.CASE_GENERIC)
+                    break

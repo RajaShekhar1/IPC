@@ -314,8 +314,17 @@ def self_enrollment(company_name, uuid):
                                                                                      current_user.is_anonymous())
     case = self_enrollment_link_service.get_case_for_link(uuid)
 
+    is_self_enrollable = True
+    if setup.self_enrollment_type == setup.TYPE_CASE_GENERIC:
+        for product in case.products:
+            if product.code in ['ACC', 'HI']:
+                # Disallow generic-link self-enrollment cases containing
+                # these products
+                is_self_enrollable = False
+                break
+
     vars = {'is_valid': False, 'allowed_states': []}
-    if setup is not None:
+    if setup is not None and is_self_enrollable:
         session['is_self_enroll'] = True
 
         # Store these in session rather than as a form submission for security purposes
@@ -475,7 +484,7 @@ def submit_wizard_data():
         raise
 
     data = jsonify(**resp)
-    
+
     # Need to manually commit all changes since this doesn't go through the API
     # right now
     db.session.commit()
