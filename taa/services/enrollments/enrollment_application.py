@@ -469,6 +469,9 @@ class EnrollmentApplicationService(DBService):
         row += self.case_service.census_records.get_csv_row_from_dict(record)
         return row
 
+    def get_enrollments_by_date(self, from_, to_):
+        return self.__model__.query.filter(self.__model__.signature_time >= from_,
+                                           self.__model__.signature_time <= to_)
 
 
 def export_string(val):
