@@ -66,6 +66,13 @@ class MockProductService(object):
         if self.is_valid_statecode_for_product(product_code, statecode):
             self.valid_statecodes[product_code].remove(statecode)
 
+    def get_products_by_codes(self, codes):
+        class FakeProduct(object):
+            def is_fpp(self):
+                return True
+
+        return [FakeProduct() for code in codes]
+
 
 @given(u"I have an API User named {user_name} with token {user_token}")
 def step_impl(context, user_name, user_token):

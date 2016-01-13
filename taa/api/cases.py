@@ -412,6 +412,7 @@ def get_census_records_for_status(case, status=None):
                 result.append(record)
     return result
 
+
 @route(bp, '/<case_id>/self_enroll_email_batches', methods=['GET'])
 @login_required
 @groups_required(api_groups, all=False)
@@ -419,12 +420,14 @@ def email_self_enrollment_batch_get_all(case_id):
     case = case_service.get_if_allowed(case_id)
     return self_enrollment_email_service.get_batches_for_case(case)
 
+
 @route(bp, '/<case_id>/self_enroll_email_batches/<batch_id>', methods=['GET'])
 @login_required
 @groups_required(api_groups, all=False)
 def email_self_enrollment_batch_get(case_id, batch_id):
     case = case_service.get_if_allowed(case_id)
     return self_enrollment_email_service.get_batch_for_case(case, batch_id)
+
 
 @route(bp, '/<case_id>/self_enroll_email_batches', methods=['POST'])
 @login_required

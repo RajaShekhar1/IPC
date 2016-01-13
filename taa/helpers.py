@@ -1,7 +1,10 @@
+import cStringIO
+import csv
 import datetime
 import json
 from decimal import Decimal
 
+import codecs
 from flask import request
 from flask.json import JSONEncoder as FlaskJSONEncoder
 from wtforms.fields import SelectField
@@ -136,3 +139,44 @@ class SelectFieldWithDisable(SelectField):
     def iter_choices(self):
         for value, label, disabled in self.choices:
             yield (value, label, self.coerce(value) == self.data, disabled)
+
+
+# Slightly modified from https://docs.python.org/2.7/library/csv.html#csv-examples for unicode encoded CSV files.
+class UnicodeCsvWriter:
+    """
+    A CSV writer which will write rows to CSV a stream,
+    which is encoded in the given encoding.
+    """
+
+    def __init__(self, stream, dialect=csv.excel, encoding="utf-8", **kwds):
+        # Redirect output to a queue
+        self.queue = cStringIO.StringIO()
+        self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
+        self.stream = stream
+        self.encoding = encoding
+        self.encoder = codecs.getincrementalencoder(encoding)()
+
+    def writerow(self, row):
+        # First, ensure all the data has been converted to unicode.
+        unicode_row = []
+        for col in row:
+            if not isinstance(col, unicode):
+                col = unicode(col)
+            unicode_row.append(col)
+
+        # Use the standard CSV writer to get correct formatting.
+        self.writer.writerow([col.encode("utf-8") for col in unicode_row])
+
+        # Fetch UTF-8 output from the queue ...
+        data = self.queue.getvalue()
+        data = data.decode("utf-8")
+        # ... and reencode it into the target encoding
+        data = self.encoder.encode(data)
+        # write to the target stream
+        self.stream.write(data)
+        # empty queue
+        self.queue.truncate(0)
+
+    def writerows(self, rows):
+        for row in rows:
+            self.writerow(row)
