@@ -412,7 +412,6 @@
                           optionsText: CoverageOption.display_benefit_option,
                           value: customized_coverage_option
                           ">
-                      {# event: {change: apply_selected_customization} #}
                     </select>
                   </li>
               </ul>
@@ -448,6 +447,8 @@
 </script>
 
 <script type="text/html" id="riders-template">
+  <br>
+
   {# Riders Selection #}
   <div class="row" data-bind="if: visible_rider_options().length > 0"  >
 
@@ -466,9 +467,9 @@
         </thead>
         <tbody data-bind="foreach: visible_rider_options">
           <tr>
-            <td><input type="checkbox" data-bind="checked: is_selected"></td>
-            <td>
-              <span data-bind="if: has_rider_modal">
+            <td><input type="checkbox" data-bind="checked: is_selected, enable: can_user_select"></td>
+            <td class="text-left">
+              <span data-bind="if: has_rider_modal()">
                 <a data-bind="click: show_rider_info, html: format_rider_name()"></a>
               </span>
               <span data-bind="if: !has_rider_modal()">
@@ -477,7 +478,7 @@
                for
               <span data-bind='text: format_applicant_name()'></span>
             </td>
-            <td data-bind="html: format_premium()"></td>
+            <td class="text-center" data-bind="html: format_premium()"></td>
           </tr>
         </tbody>
       </table>

@@ -122,39 +122,39 @@ function init_validation(ui) {
     if (info.step == 2 && info.direction == 'next') {
       var is_valid = true;
       //
-      //// validate replacement form
-      //if (ui.insurance_product.is_fpp_product() &&
-      //    (ui.should_show_replacement_form())) {
-      //  is_valid &= $('#questions-form').valid();
-      //}
-      //
-      //if (ui.insurance_product.is_fpp_product() &&
-      //    (ui.replacing_insurance() === null || ui.existing_insurance() === null)) {
-      //  // These always need to be answered
-      //  is_valid = false;
-      //}
-      //
-      //if (ui.insurance_product.is_fpp_product() && ui.is_KY_OR_KS() && ui.replacing_insurance()) {
-      //  // Must stop here for these states, no replacements.
-      //  is_valid = false;
-      //}
-      //if (ui.insurance_product.is_fpp_product() && ui.is_self_enroll()
-      //    && (ui.replacement_is_terminating() || ui.replacement_using_funds())) {
-      //  // can't continue as self-enroll with either of these as a yes.
-      //  is_valid = false;
-      //}
-      //
+      // validate replacement form
+      if (ui.did_select_any_fpp_product() &&
+          (ui.should_show_replacement_form())) {
+        is_valid &= $('#questions-form').valid();
+      }
+
+      if (ui.did_select_any_fpp_product() &&
+          (ui.replacing_insurance() === null || ui.existing_insurance() === null)) {
+        // These always need to be answered
+        is_valid = false;
+      }
+
+      if (ui.did_select_any_fpp_product() && ui.is_KY_OR_KS() && ui.replacing_insurance()) {
+        // Must stop here for these states, no replacements.
+        is_valid = false;
+      }
+
+      if (ui.did_select_any_fpp_product() && ui.is_self_enroll()
+          && (ui.replacement_is_terminating() || ui.replacement_using_funds())) {
+        // can't continue as self-enroll with either of these as a yes.
+        is_valid = false;
+      }
+
       //// validate questions
-      //is_valid &=  are_health_questions_valid();
-      //if (!is_valid) {
-      //  $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");
-      //  e.preventDefault();
-      //  return;
-      //} else {
-      //  $("#health_questions_error").html("");
-      //  return;
-      //}
-      return true;
+      is_valid &=  are_health_questions_valid();
+
+      if (!is_valid) {
+        $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");
+        e.preventDefault();
+        return;
+      } else {
+        $("#health_questions_error").html("");
+      }
     }
     if (info.step == 3 && info.direction == 'next') {
       if (!$('#step3-form').valid()) {

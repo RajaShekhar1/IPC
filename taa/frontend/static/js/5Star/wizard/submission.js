@@ -56,6 +56,8 @@ function handle_error_and_retry(req, wizard_results) {
 function build_wizard_results_for_product_coverage(product_cov) {
   var root = window.vm;
 
+  var health_questions = vm.get_product_health_questions(product_cov);
+
   var wizard_results = {
     //agent_data: root.options,
     case_id: root.enrollment_case.id,
@@ -74,12 +76,11 @@ function build_wizard_results_for_product_coverage(product_cov) {
     identityType: root.identityType(),
 
     employee: root.employee().serialize_data(),
-    // TODO: SOH QUESTIONS
-    employee_soh_questions: [],
+
+    employee_soh_questions: health_questions.serialize_answers_for_applicant(vm.employee()),
 
     spouse: root.spouse().serialize_data(),
-    // TODO: SOH QUESTIONS
-    spouse_soh_questions: [],
+    spouse_soh_questions: health_questions.serialize_answers_for_applicant(vm.spouse()),
 
     is_spouse_address_same_as_employee: root.is_spouse_address_same_as_employee(),
     is_spouse_email_same_as_employee: root.is_spouse_email_same_as_employee(),
@@ -144,8 +145,8 @@ function build_wizard_results_for_product_coverage(product_cov) {
     wizard_results['children'].push(child.serialize_data());
     var coverage = product_cov.get_coverage_for_applicant(child);
     wizard_results['child_coverages'].push(coverage.coverage_option().serialize_data());
-    // TODO: SOH QUESTIONS
-    var soh_questions = [];
+
+    var soh_questions = health_questions.serialize_answers_for_applicant(child);
     wizard_results['children_soh_questions'].push(soh_questions);
   });
 
@@ -158,7 +159,7 @@ function build_wizard_results_for_product_coverage(product_cov) {
   wizard_results.replacement_policies = _.invoke(root.replacement_policies(), "serialize");
 
   // TODO: Add this back in
-  wizard_results.rider_data = {};//product_cov.selected_riders.serialize_data();
+  wizard_results.rider_data = product_cov.selected_riders.serialize_data();
 
   return wizard_results;
 }

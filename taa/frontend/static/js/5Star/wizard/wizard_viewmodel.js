@@ -144,14 +144,16 @@ var wizard_viewmodel = (function() {
     },
     get_applicant_coverage_for_product: function(applicant, product) {
       var product_coverage = this.get_product_coverage(product);
-      return _.find(product_coverage.applicant_coverage_selections(), function(app_cov) {
-        return app_cov.applicant === applicant;
-      });
+      return product_coverage.get_coverage_for_applicant(applicant);
     },
     format_total_premium_for_product: function(product) {
       var product_coverage = this.get_product_coverage(product);
       var total = product_coverage.get_total_premium();
       return format_premium_value(total);
+    },
+
+    get_enabled_riders_for_product: function(product) {
+      return this.get_product_coverage(product).enabled_riders;
     },
 
     format_total_premium_for_applicant: function(applicant) {
@@ -204,8 +206,8 @@ var wizard_viewmodel = (function() {
   };
 
 
-  function ProductCoverageViewModel(product, case_data, payment_mode,
-                                    should_include_spouse, should_include_children, applicant_list) {
+  function ProductCoverageViewModel(product, case_data, applicant_list, payment_mode,
+                                    should_include_spouse, should_include_children) {
 
     // ProductCoverageViewModel keeps track of the coverage selections for the applicants for a single product.
 
@@ -221,68 +223,17 @@ var wizard_viewmodel = (function() {
     self.available_recommendations = product_rates_service.get_product_recommendations(self.product, payment_mode);
     self.selected_recommendation = ko.observable(null);
 
-    // Riders
-
-    // Available riders
-    _.map(product.riders, function(r) {
-          return new CaseRiderConfiguration(self, product, r, case_data.product_settings);
-        });
-    self.all_riders = ko.observableArray(defaults.riders);
-
-    // Currently shown rider
-    self.shown_rider = ko.observable(null);
-
-    // Build the rider viewmodels
-    self.rider_options = [];
-    _.each([self.employee(), self.spouse()], function(applicant) {
-        _.each(self.all_riders(), function(rider) {
-            var vm = new ApplicantRiderOptionVM(self, rider, applicant);
-            self.rider_options.push(vm);
-        });
-    });
-
-    self.visible_rider_options = ko.computed(function() {
-        return _.select(self.rider_options, function(option) {return option.is_visible()});
-    });
-
-    // Currently selected riders. Only Employee and spouse can have riders.
-    self.selected_riders = ko.computed(function() {
-        var selected_emp_riders = _.select(self.visible_rider_options(), function(option) {
-           return option.applicant === self.employee() && option.is_selected();
-        });
-
-        var selected_sp_riders = _.select(self.visible_rider_options(), function(option) {
-           return option.applicant === self.spouse() && option.is_selected() ;
-        });
-
-        return {
-            emp: _.pluck(selected_emp_riders, 'rider'),
-            sp: _.pluck(selected_sp_riders, 'rider')
-        };
-    });
-
-    self.selected_riders.serialize_data = ko.computed(function () {
-        return {
-            emp: self.selected_riders().emp,
-            sp: self.selected_riders().sp
-        };
-    });
-
-    self.get_selected_riders = function(person) {
-      if (person.applicant_type === "employee") {
-        return self.selected_riders().emp;
-      } else if (person.applicant_type === "spouse") {
-        return self.selected_riders().sp;
-      }
-      return [];
-    };
-
-
-
     // Cache the selections for applicants, instances should be instantiated just once.
     self._applicant_coverage_viewmodels = {};
 
+    // What options do the applicants have to choose from?
     self.applicant_coverage_selections = ko.computed(this._get_applicant_coverage_selections, this);
+
+    self.get_coverage_options_for_applicant = function(applicant) {
+      return _.find(self.applicant_coverage_selections(), function(cov) {
+        return cov.applicant.type === applicant.type;
+      }).get_coverage_options();
+    };
 
     self.has_completed_selection = ko.computed(this._has_completed_selection, this);
 
@@ -311,6 +262,73 @@ var wizard_viewmodel = (function() {
     self.get_covered_children = ko.computed(function() {
       return self._get_covered_children();
     });
+
+
+    // Riders
+    // Enabled riders for this case
+    function is_rider_enabled_for_case(rider, case_data) {
+      // See if there is a product-setting that enables this rider for this case.
+      return _.any(case_data.product_settings.riders, function(r) {
+        return (
+            self.product.product_data.base_product_type === r.product_code &&
+            rider.code === r.rider_code &&
+            r.is_selected
+        );
+      });
+    }
+
+    self.enabled_riders = _.select(product.product_data.riders, function(r) {
+      return is_rider_enabled_for_case(r, case_data);
+    });
+
+    // Currently shown rider (for modal pop-up explanations).
+    self.shown_rider = ko.observable(null);
+
+    // Build the rider viewmodels
+    self.rider_options = [];
+    _.each([self.applicant_list.get_employee(), self.applicant_list.get_spouse()], function(applicant) {
+        _.each(self.enabled_riders, function(rider) {
+            var vm = new ApplicantRiderOptionVM(self, rider, applicant);
+            self.rider_options.push(vm);
+        });
+    });
+
+    self.visible_rider_options = ko.computed(function() {
+        return _.select(self.rider_options, function(option) {return option.is_visible()});
+    });
+
+    // Currently selected riders. Only Employee and spouse can have riders.
+    self.selected_riders = ko.computed(function() {
+        var selected_emp_riders = _.select(self.visible_rider_options(), function(option) {
+           return option.applicant === self.applicant_list.get_employee() && option.is_selected();
+        });
+
+        var selected_sp_riders = _.select(self.visible_rider_options(), function(option) {
+           return option.applicant === self.applicant_list.get_spouse() && option.is_selected() ;
+        });
+
+        return {
+            emp: _.pluck(selected_emp_riders, 'rider'),
+            sp: _.pluck(selected_sp_riders, 'rider')
+        };
+    });
+
+    self.selected_riders.serialize_data = ko.computed(function () {
+        return {
+            emp: self.selected_riders().emp,
+            sp: self.selected_riders().sp
+        };
+    });
+
+    self.get_selected_riders = function(person) {
+      if (person.applicant_type === "employee") {
+        return self.selected_riders().emp;
+      } else if (person.applicant_type === "spouse") {
+        return self.selected_riders().sp;
+      }
+      return [];
+    };
+
 
 
     // Beneficiaries
@@ -578,14 +596,34 @@ var wizard_viewmodel = (function() {
     self.rider = rider;
     self.applicant = applicant;
 
-    self.is_selected = ko.observable(false);
+    self._user_selection = ko.observable(false);
 
-    self.is_visible = ko.computed(function () {
-        return self.applicant.has_selected_valid_coverage() && self.get_policy_years().length > 0;
+    self.can_user_select = ko.computed(function() {
+      // Right now, only AIR is selectable.
+      return self.rider.code === 'AIR';
     });
 
+    self.is_visible = ko.computed(function () {
+        return self.root.get_coverage_for_applicant(self.applicant).has_selected_coverage();
+    });
+
+    self.is_selected = ko.computed({
+      read: function() {
+        if (self.can_user_select()) {
+          return self._user_selection();
+        } else {
+          // If the rider is showing, it should be selected since it is a group-level rider.
+          return self.is_visible();
+        }
+      },
+      write: function(val) {
+        self._user_selection(val);
+      }
+    });
+
+
     self.format_rider_name = function () {
-        return self.rider.name;
+        return self.rider.user_facing_name;
     };
 
     self.format_applicant_name = function () {
@@ -628,97 +666,97 @@ var wizard_viewmodel = (function() {
     };
 
     self.format_coverage_for_policy = function () {
-        var coverage = 0;
-        var years = self.get_policy_years();
-        for (i = 0; i < years.length; i++) {
-            coverage += self.get_coverage_for_year(years[i]);
-        }
-        return format_face_value(coverage);
+      var coverage = 0;
+      var years = self.get_policy_years();
+      for (i = 0; i < years.length; i++) {
+          coverage += self.get_coverage_for_year(years[i]);
+      }
+      return format_face_value(coverage);
     };
 
     self.get_coverage_for_year = function (n) {
-        var age = self.get_age_for_policy_year(n);
-        return self.get_coverage_for_applicant_age(age);
+      var age = self.get_age_for_policy_year(n);
+      return self.get_coverage_for_applicant_age(age);
     };
 
     self.get_total_coverage_for_year = function (n) {
-        var additional_coverage = self.get_coverage_for_year(n);
-        if (n == 2) {
-            var selected_coverage = self.applicant.selected_coverage().face_value;
-            return selected_coverage + additional_coverage;
-        }
+      var additional_coverage = self.get_coverage_for_year(n);
+      if (n == 2) {
+        var selected_coverage = self.root.get_coverage_for_applicant(self.applicant).coverage_option().face_value;
+        return selected_coverage + additional_coverage;
+      }
 
-        var total_coverage_last_year = self.get_total_coverage_for_year(n - 1);
-        return additional_coverage + total_coverage_last_year;
+      var total_coverage_last_year = self.get_total_coverage_for_year(n - 1);
+      return additional_coverage + total_coverage_last_year;
     };
 
     self.get_coverage_for_applicant_age = function (n) {
-        var _coverage_values = {
-            18: '15339',
-            19: '15339',
-            20: '15339',
-            21: '15339',
-            22: '15339',
-            23: '15339',
-            24: '15339',
-            25: '15339',
-            26: '15249',
-            27: '14986',
-            28: '14566',
-            29: '13978',
-            30: '13299',
-            31: '12621',
-            32: '11954',
-            33: '11280',
-            34: '10612',
-            35: '9962',
-            36: '9336',
-            37: '8739',
-            38: '8176',
-            39: '7636',
-            40: '7123',
-            41: '6624',
-            42: '6154',
-            43: '5727',
-            44: '5339',
-            45: '4986',
-            46: '4668',
-            47: '4381',
-            48: '4117',
-            49: '3869',
-            50: '3629',
-            51: '3390',
-            52: '3152',
-            53: '2920',
-            54: '2698',
-            55: '2495',
-            56: '2311',
-            57: '2147',
-            58: '2002',
-            59: '1871',
-            60: '1751',
-            61: '1641',
-            62: '1540',
-            63: '1445',
-            64: '1353',
-            65: '1264',
-            66: '1174',
-            67: '1085',
-            68: '999',
-            69: '917',
-            70: '839'
-        };
+      var _coverage_values = {
+          18: '15339',
+          19: '15339',
+          20: '15339',
+          21: '15339',
+          22: '15339',
+          23: '15339',
+          24: '15339',
+          25: '15339',
+          26: '15249',
+          27: '14986',
+          28: '14566',
+          29: '13978',
+          30: '13299',
+          31: '12621',
+          32: '11954',
+          33: '11280',
+          34: '10612',
+          35: '9962',
+          36: '9336',
+          37: '8739',
+          38: '8176',
+          39: '7636',
+          40: '7123',
+          41: '6624',
+          42: '6154',
+          43: '5727',
+          44: '5339',
+          45: '4986',
+          46: '4668',
+          47: '4381',
+          48: '4117',
+          49: '3869',
+          50: '3629',
+          51: '3390',
+          52: '3152',
+          53: '2920',
+          54: '2698',
+          55: '2495',
+          56: '2311',
+          57: '2147',
+          58: '2002',
+          59: '1871',
+          60: '1751',
+          61: '1641',
+          62: '1540',
+          63: '1445',
+          64: '1353',
+          65: '1264',
+          66: '1174',
+          67: '1085',
+          68: '999',
+          69: '917',
+          70: '839'
+      };
 
-        return parseInt(_coverage_values[n]);
+      return parseInt(_coverage_values[n]);
     };
 
     self.format_premium = function () {
-        if (self.rider.code === "AIR") {
-            return "No initial premium charge";
-        } else {
-            // TODO: lookup rider rate in table.
-            return "$TODO";
-        }
+      if (self.rider.code === "AIR") {
+        return "No initial premium charge";
+      } else {
+        // Right now, all other types of riders have premiums included in table above.
+        return "Included";
+      }
     };
 
   }
@@ -737,6 +775,12 @@ var wizard_viewmodel = (function() {
       return questions;
     });
 
+    self.health_button_rows = ko.pureComputed(function() {
+      return _.map(self.health_questions(), function(question) {
+        return new HealthButtonRow(question, self.product_coverage, self);
+      });
+    });
+
     self.do_any_health_questions_need_answering = function() {
       if (self.health_questions().length == 0) {
         return false;
@@ -746,12 +790,118 @@ var wizard_viewmodel = (function() {
       });
     };
 
-    self.get_applicant_answer_for_question = function(applicant, question_text) {
-      /*return _.find(product_coverage.applicant_answers(), function(soh_answer) {
-        return soh_answer.question.question_text == question_text;
-      });
-      */
+    self._health_question_responses = [];
 
+    self.get_applicant_answer_for_question = function(applicant, question) {
+
+      var found_response = _.find(self._health_question_responses, function(response) {
+        return response.question === question && response.applicant === applicant;
+      });
+      if (found_response === undefined) {
+        var resp = new HealthQuestionResponse(question, applicant, null);
+        self._health_question_responses.push(resp);
+        return resp;
+      } else {
+        return found_response;
+      }
+    };
+
+    self.serialize_answers_for_applicant = function(applicant) {
+      return _.map(self.health_questions(), function(question) {
+        var response = self.get_applicant_answer_for_question(applicant, question);
+        return response.serialize();
+      });
+    }
+
+  }
+
+  function HealthButtonRow(question, product_coverage, product_health_questions) {
+    var self = this;
+    self.question = question;
+    self.product_coverage = product_coverage;
+    self.product_health_questions = product_health_questions;
+
+    self.button_groups = ko.pureComputed(function() {
+      return _.map(self.product_coverage.applicant_list.applicants(), function(applicant) {
+        // Create a button viewmodel that is linked to this question and the response object.
+        var response = self.product_health_questions.get_applicant_answer_for_question(applicant, question);
+        return new ResponseButtonGroup(question, applicant, response, {});
+      });
+    });
+  }
+
+  function ResponseButtonGroup(question, applicant, response, options) {
+    var self = this;
+    self.question = question;
+    self.applicant = applicant;
+    self.response = response;
+
+    self.yes_text = options.yes_text || "Yes";
+    self.no_text = options.yes_text || "No";
+    self.yes_highlight = self.question.get_yes_highlight();
+    self.no_highlight = "checkmark";
+
+    self.handle_yes = function() {
+      //console.log('Yes', self);
+      self.response.value('Yes');
+      self.question.show_yes_dialogue(self.applicant.type, self.applicant);
+    };
+    self.handle_no = function() {
+      self.response.value('No');
+    };
+
+    self.does_applicant_need_to_answer = ko.pureComputed(function() {
+      return self.question.does_applicant_need_to_answer(self.applicant);
+    });
+
+    self.should_show_yes_flag = ko.pureComputed(function() {
+      return self.response.value() === "Yes" && self.yes_highlight === "flag";
+    });
+    self.should_show_yes_stop = ko.pureComputed(function() {
+      return self.response.value() === "Yes" && self.yes_highlight === "stop";
+    });
+    self.should_show_yes_checkmark = ko.pureComputed(function() {
+      return self.response.value() === "Yes" && self.yes_highlight === "checkmark";
+    });
+    self.should_show_yes_default = ko.pureComputed(function() {
+      return self.response.value() !== "Yes";
+    });
+
+    self.should_show_no_flag = ko.pureComputed(function() {
+      return self.response.value() === "No" && self.no_highlight === "flag";
+    });
+    self.should_show_no_stop = ko.pureComputed(function() {
+      return self.response.value() === "No" && self.no_highlight === "stop";
+    });
+    self.should_show_no_checkmark = ko.pureComputed(function() {
+      return self.response.value() === "No" && self.no_highlight === "checkmark";
+    });
+    self.should_show_no_default = ko.pureComputed(function() {
+      return self.response.value() !== "No";
+    });
+  }
+
+  function HealthQuestionResponse(question, applicant, initial_response) {
+    var self = this;
+    self.question = question;
+    self.applicant = applicant;
+    self.value = ko.observable(initial_response);
+
+    self.serialize = function() {
+
+      var answer = null;
+      if (self.question.does_applicant_need_to_answer(self.applicant)) {
+        answer = self.value();
+      } else if (self.question.can_applicant_skip_due_to_GI(self.applicant)) {
+        answer = 'GI';
+      }
+
+      return {
+        question: self.question.get_question_text(),
+        label: self.question.get_question_label(),
+        is_spouse_only: self.question.is_spouse_only(),
+        answer: answer
+      }
     };
   }
 
@@ -845,7 +995,8 @@ var wizard_viewmodel = (function() {
           self.coverage_vm.payment_mode(),
           self.applicant_list,
           self.handle_update_rates_error,
-          self.enrollment_case.situs_state
+          self.enrollment_case.situs_state,
+          self.coverage_vm
       );
     };
 
@@ -1015,10 +1166,15 @@ var wizard_viewmodel = (function() {
       });
     };
 
-    // STEP 2 stuff
+    // STEP 2 data and methods.
     self.existing_insurance = ko.observable(null);
     self.replacing_insurance = ko.observable(null);
     self.is_employee_actively_at_work = ko.observable(null);
+
+    // Todo - cache the ProductHealthQuestions objects if necessary.
+    //// Store the question-related data in this list. We filter only the selected ones for display,
+    ////  but want to keep the other question answer data in case it is reselected.
+    //self._product_health_questions = [];
 
     self.selected_product_health_questions = ko.computed(function() {
       return _.map(self.coverage_vm.selected_product_coverages(), function(product_cov) {
@@ -1029,6 +1185,12 @@ var wizard_viewmodel = (function() {
         )
       });
     });
+
+    self.get_product_health_questions = function(product_coverage) {
+      return _.find(self.selected_product_health_questions(), function(phq) {
+        return phq.product_coverage === product_coverage;
+      });
+    };
 
     self.should_show_other_insurance_questions = ko.pureComputed(function() {
       // If any selected product requires this
@@ -1132,15 +1294,18 @@ var wizard_viewmodel = (function() {
         return false;
       }
 
-      if (self.is_KY_OR_KS() || self.is_CT_DC_ND_VI())
+      if (self.is_KY_OR_KS() || self.is_CT_DC_ND_VI()) {
         return false;
+      }
 
       // Self-enroll is the only way that existing insurance does anything when yes.
-      if (self.is_self_enroll() && self.existing_insurance())
+      if (self.is_self_enroll() && self.existing_insurance()) {
         return true;
+      }
 
-      if (self.should_show_NAIC_replacement_notice())
+      if (self.should_show_NAIC_replacement_notice()) {
         return false;
+      }
 
       return self.replacing_insurance();
     });

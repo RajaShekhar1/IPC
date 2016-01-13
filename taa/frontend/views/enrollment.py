@@ -31,6 +31,7 @@ self_enrollment_service = LookupService('SelfEnrollmentService')
 self_enrollment_link_service = LookupService('SelfEnrollmentLinkService')
 enrollment_import_service = LookupService('EnrollmentImportService')
 
+
 @app.route('/enroll')
 @login_required
 def enroll_start():
@@ -43,57 +44,58 @@ def enroll_start():
 
     abort(404)
 
-# Wizard
+#
+# # Wizard
+# @app.route('/test-wizard')
+# def test_wizard():
+#     #case_id = request.params.get('case_id')
+#     #case = case_service.get(case_id)
+#     fppti = product_service.query().filter_by(code='FPPTI').first()
+#     fppci = product_service.query().filter_by(code='FPPCI').first()
+#     products = [fppti, fppci]
+#     state = 'MI'
+#
+#     # Get SOH Questions and other form or product specific questions
+#     from taa.services.products import StatementOfHealthQuestionService
+#     soh_questions = {}
+#     for product in products:
+#         soh_questions[product.id] = StatementOfHealthQuestionService().get_health_questions(product, state)
+#
+#     spouse_questions = {}
+#     for product in products:
+#         spouse_questions[product.id] = StatementOfHealthQuestionService().get_spouse_questions(product, state)
+#
+#     payment_mode = 26
+#     if is_payment_mode_changeable(payment_mode):
+#         # User can select payment mode
+#         payment_mode_choices = get_payment_modes(True)
+#     else:
+#         # Payment mode is set on case and cannot be changed
+#         payment_mode_choices = get_payment_modes(single=payment_mode)
+#
+#     case_riders = [] #rider_service.get_selected_case_rider_info(case)
+#     enrollment_riders = [] # rider_service.get_enrollment_rider_info()
+#
+#     return render_template(
+#         'enrollment/main-wizard.html',
+#         wizard_data={
+#             'products':products,
+#             'state':'MI',
+#             'enroll_city':'Lansing',
+#             'children_data':[],
+#             'payment_mode': payment_mode,
+#             'payment_mode_choices':payment_mode_choices,
+#             'health_questions':soh_questions,
+#             'spouse_questions':spouse_questions,
+#             'is_in_person': True,
+#             'selected_riders':[],
+#         },
+#         states=get_states(),
+#         nav_menu=get_nav_menu(),
+#         case_riders=case_riders,
+#         enrollment_riders=enrollment_riders,
+#     )
 
-@app.route('/test-wizard')
-def test_wizard():
-    #case_id = request.params.get('case_id')
-    #case = case_service.get(case_id)
-    fppti = product_service.query().filter_by(code='FPPTI').first()
-    fppci = product_service.query().filter_by(code='FPPCI').first()
-    products = [fppti, fppci]
-    state = 'MI'
-
-    # Get SOH Questions and other form or product specific questions
-    from taa.services.products import StatementOfHealthQuestionService
-    soh_questions = {}
-    for product in products:
-        soh_questions[product.id] = StatementOfHealthQuestionService().get_health_questions(product, state)
-
-    spouse_questions = {}
-    for product in products:
-        spouse_questions[product.id] = StatementOfHealthQuestionService().get_spouse_questions(product, state)
-
-    payment_mode = 26
-    if is_payment_mode_changeable(payment_mode):
-        # User can select payment mode
-        payment_mode_choices = get_payment_modes(True)
-    else:
-        # Payment mode is set on case and cannot be changed
-        payment_mode_choices = get_payment_modes(single=payment_mode)
-
-    case_riders = [] #rider_service.get_selected_case_rider_info(case)
-    enrollment_riders = [] # rider_service.get_enrollment_rider_info()
-
-    return render_template(
-        'enrollment/main-wizard.html',
-        wizard_data={
-            'products':products,
-            'state':'MI',
-            'enroll_city':'Lansing',
-            'children_data':[],
-            'payment_mode': payment_mode,
-            'payment_mode_choices':payment_mode_choices,
-            'health_questions':soh_questions,
-            'spouse_questions':spouse_questions,
-            'is_in_person': True,
-            'selected_riders':[],
-        },
-        states=get_states(),
-        nav_menu=get_nav_menu(),
-        case_riders=case_riders,
-        enrollment_riders=enrollment_riders,
-    )
 
 @app.route('/in-person-enrollment', methods=['POST'])
 @login_required
@@ -211,9 +213,6 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     for product in products:
         spouse_questions[product.id] = StatementOfHealthQuestionService().get_spouse_questions(product, state)
 
-    #case_riders = rider_service.get_selected_case_rider_info(case)
-    #enrollment_riders = rider_service.get_enrollment_rider_info()
-
     # wizard_data = {
     #     'state': state if state != 'XX' else None,
     #     'enroll_city': city,
@@ -255,26 +254,11 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'situs_city': 'Chicago',
             'company_name': "DelMar Software Development, LLC",
             'group_riders': [],
-            'payment_mode': 52
+            'payment_mode': 52,
+            'product_settings': case.product_settings if case.product_settings else {},
         },
         applicants= applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in case.products],
-        # products=[
-        #   {
-        #     id: 1,
-        #     code: 'FPPTI',
-        #     name: "Family Protection Plan: Terminal Illness",
-        #     base_product_type: 'FPPTI',
-        #     soh_questions: [{'question': 'Have you had a heart attack in the last 5 years?'}]
-        #   },
-        #   {
-        #     'id': 2,
-        #     'code': 'FPPCI',
-        #     'name': "Family Protection Plan: Critical Illness",
-        #     'base_product_type': 'FPPCI',
-        #     'soh_questions': [{'question': 'Have you had a stroke in the last 5 years?'}]
-        #   }
-        # ],
         payment_modes=payment_mode_choices,
         # payment_modes=[
         #   {'frequency': 52, 'label': 'Weekly'},
@@ -284,6 +268,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         # ],
         beneficiaries=[],
         spouse_questions=spouse_questions,
+        health_questions=soh_questions,
     )
 
     # Commit any changes made (none right now)
@@ -298,13 +283,12 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
 
 
 def serialize_product_for_wizard(product, all_soh_questions):
-    return dict(
-        id=product.id,
-        name=product.name,
-        code=product.get_base_product_code(),
-        base_product_type=product.get_base_product_code(),
-        soh_questions=all_soh_questions.get(product.id, []),
-    )
+    data = product.to_json()
+    # Override code to be the base product code and alias it to base_product_type.
+    data['code'] = product.get_base_product_code()
+    data['base_product_type'] = data['code']
+    data['soh_questions'] = all_soh_questions.get(product.id, [])
+    return data
 
 
 # Self Enrollment Landing Page
@@ -408,6 +392,7 @@ def get_case_enrollment_data(case):
     data['email'] = ""
     return data
 
+
 @app.route('/submit-wizard-data', methods=['POST'])
 def submit_wizard_data():
 
@@ -435,7 +420,6 @@ def submit_wizard_data():
     agent = agent_service.get_logged_in_agent()
     if (agent is None and session.get('is_self_enroll') is not None):
         agent = case.owner_agent
-
     try:
 
         # Standardize the wizard data for submission processing
@@ -480,6 +464,7 @@ def submit_wizard_data():
     # right now
     db.session.commit()
     return data
+
 
 @app.route('/application_completed', methods=['GET'])
 def ds_landing_page():

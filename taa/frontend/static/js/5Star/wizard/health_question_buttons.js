@@ -218,14 +218,12 @@ function handle_question_yes() {
 }
 
 function are_health_questions_valid() {
-  // Will need much better code here in general
-  //  should be able to highlight buttons that were missed or something
+  // TODO: will need to improve visual designation of which questions are failing validation.
 
   // this one can be yes or no
   if (window.vm.should_show_other_insurance_questions() &&
       window.vm.is_in_person_application() &&
       general_questions_by_id['existing_insurance'].get_val() === null) {
-    //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
     return false;
   }
 
@@ -250,10 +248,37 @@ function are_health_questions_valid() {
     }
   }
 
-
   var valid = true;
-  // TODO: Fix this so it works for multiproduct!!
-  //
+
+
+  _.each(window.vm.selected_product_health_questions(), function(product_health_questions) {
+    _.each(product_health_questions.health_button_rows(), function(health_button_row) {
+      _.each(health_button_row.button_groups(), function(button_group) {
+        if (button_group.does_applicant_need_to_answer()) {
+          // If a no-op question, but still required, must select yes or no.
+          if (!button_group.question.does_yes_stop_app() && button_group.response.value() === null) {
+            valid = false;
+            // break
+            return false;
+          // If this is required, the answer must be no.
+          } else if (button_group.question.does_yes_stop_app() && button_group.response.value() !== "No") {
+            valid = false;
+            // break
+            return false;
+          }
+        }
+      });
+      if (!valid) {
+        // break
+        return false;
+      }
+    });
+    if (!valid) {
+      // break
+      return false;
+    }
+  });
+
   //$.each(window.vm.coverage_vm.get_all_covered_people(), function () {
   //  var covered_person = this;
   //  $.each(covered_person.health_questions(), function () {

@@ -233,6 +233,7 @@ class ProductService(DBService):
         db.session.refresh(product)
 
     def get_rates(self, product, demographics, riders=None):
+
         if product.get_base_product_code() == 'Group CI':
             return get_rates(product, **demographics)
         else:
@@ -267,7 +268,8 @@ class ProductService(DBService):
             applicant_type = APPLICANT_CHILD
 
         product_options = {}
-        if riders:
+        # For a sanity check, don't allow riders with Child applicant.
+        if riders and applicant_type != APPLICANT_CHILD:
             product_options['riders'] = riders
 
         if applicant_type == APPLICANT_EMPLOYEE:
@@ -282,7 +284,6 @@ class ProductService(DBService):
             applicant_type,
             product_options,
             demographics['statecode'],
-            # FIXME
             ApplicantDemographics({'age': demographics_age}),
             demographics['payment_mode'],
             rate_options=ApplicantQueryOptions({}),

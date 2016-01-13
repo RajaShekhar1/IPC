@@ -326,6 +326,7 @@ var wizard_applicant = (function () {
     },
 
     remove_applicant: function(applicant) {
+      //_.remove(this.applicants(), {'type': applicant.type, 'first': applicant.first, 'last': applicant.last});
       this.applicants.remove(applicant);
     },
 

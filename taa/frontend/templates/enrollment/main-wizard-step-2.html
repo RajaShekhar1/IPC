@@ -269,87 +269,42 @@
           </tr>
           <!--/ko-->
 
-          <!--ko foreach: product_health_questions.health_questions-->
-          <tr data-bind="visible: does_any_applicant_need_to_answer">
+          <!--ko foreach: product_health_questions.health_button_rows -->
+            <tr data-bind="visible: question.does_any_applicant_need_to_answer">
             <td>
               <div class="row">
-                <div class="col-xs-12 col-sm-6" data-bind="html: get_question_text()">
+                <div class="col-xs-12 col-sm-6" data-bind="html: question.get_question_text()">
                 </div>
                 <div class="col-xs-12 col-sm-6">
-
                   <div class="row">
+                    <!--ko foreach: button_groups -->
                     <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
-                      <!--ko if: does_employee_need_to_answer-->
-                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $data,
-                                                      product_health_questions: product_health_questions,
-                                                      applicant: $root.employee(),
-                                                      is_required: does_employee_need_to_answer,
-                                                      val: 'Yes',
-                                                      highlight: $data.get_yes_highlight(),
-                                                      onclick: show_yes_dialogue_employee
-                                                      }">
+                      <!--ko if: does_applicant_need_to_answer -->
+                      <button class="btn btn-default btn-sm" type="button" data-bind="
+                          click: handle_yes,
+                          css: {
+                            'btn-warning': should_show_yes_flag,
+                            'btn-success': should_show_yes_checkmark,
+                            'btn-danger': should_show_yes_stop,
+                            'btn-default': should_show_yes_default
+                          } ">
+                        <i class="icon glyphicon glyphicon-flag" data-bind="visible: should_show_yes_flag"></i>
+                        <i class="icon glyphicon glyphicon-ok" data-bind="visible: should_show_yes_checkmark"></i>
+                        <i class="icon glyphicon glyphicon-remove" data-bind="visible: should_show_yes_stop"></i>
                         Yes
                       </button>
-                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $data,
-                                                      product_health_questions: product_health_questions,
-                                                      applicant: $root.employee(),
-                                                      is_required: does_employee_need_to_answer,
-                                                      val: 'No',
-                                                      highlight: 'checkmark'
-                                                      }">
-                        No
-                      </button>
-                      <!--/ko-->
-                    </div>
-                    <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
-                      <!--ko if: does_spouse_need_to_answer -->
-                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $data,
-                                                      product_health_questions: product_health_questions,
-                                                      applicant: $root.spouse(),
-                                                      is_required: does_spouse_need_to_answer,
-                                                      val: 'Yes',
-                                                      highlight: $data.get_yes_highlight(),
-                                                      onclick: show_yes_dialogue_spouse
-                                                      }">
-                        Yes
-                      </button>
-                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $data,
-                                                      product_health_questions: product_health_questions,
-                                                      applicant: $root.spouse(),
-                                                      is_required: does_spouse_need_to_answer,
-                                                      val: 'No',
-                                                      highlight: 'checkmark'
-                                                      }">
-                        No
-                      </button>
-                      <!--/ko-->
-                    </div>
-                    <!--ko foreach: {data: $parent.product_coverage.get_covered_children, as: 'child'} -->
-                    <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
-                      <!--ko if: $parent.does_child_need_to_answer(child) -->
-                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $parentContext.$data,
-                                                      product_health_questions: product_health_questions,
-                                                      applicant: $data,
-                                                      is_required: function() {return $parent.does_child_need_to_answer(child)},
-                                                      val: 'Yes',
-                                                      highlight: 'stop',
-                                                      onclick: function() {$parent.show_yes_dialogue_child(child)}
-                                                      }">
-                        Yes
-                      </button>
-                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: $parentContext.$data,
-                                                      product_health_questions: product_health_questions,
-                                                      applicant: $data,
-                                                      is_required: $parent.does_child_need_to_answer(child),
-                                                      val: 'No',
-                                                      highlight: 'checkmark'
-                                                      }">
+                      <button class="btn btn-default btn-sm" type="button" data-bind="
+                        click: handle_no,
+                          css: {
+                            'btn-warning': should_show_no_flag,
+                            'btn-success': should_show_no_checkmark,
+                            'btn-danger': should_show_no_stop,
+                            'btn-default': should_show_no_default
+                          }
+                       ">
+                        <i class="icon glyphicon glyphicon-flag" data-bind="visible: should_show_no_flag"></i>
+                        <i class="icon glyphicon glyphicon-ok" data-bind="visible: should_show_no_checkmark"></i>
+                        <i class="icon glyphicon glyphicon-remove" data-bind="visible: should_show_no_stop"></i>
                         No
                       </button>
                       <!--/ko-->
@@ -357,16 +312,111 @@
                     <!--/ko-->
                   </div>
                 </div>
-
-
               </div>
             </td>
-          </tr>
+            </tr>
           <!--/ko-->
+
+{#          <!--ko foreach: product_health_questions.health_questions-->#}
+{#          <tr data-bind="visible: does_any_applicant_need_to_answer">#}
+{#            <td>#}
+{#              <div class="row">#}
+{#                <div class="col-xs-12 col-sm-6" data-bind="html: get_question_text()">#}
+{#                </div>#}
+{#                <div class="col-xs-12 col-sm-6">#}
+{##}
+{#                  <div class="row">#}
+{#                    <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">#}
+{##}
+{#                      <!--ko if: does_employee_need_to_answer-->#}
+{#                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {#}
+{#                                                      question: $data,#}
+{#                                                      product_health_questions: product_health_questions,#}
+{#                                                      applicant: $root.employee(),#}
+{#                                                      is_required: does_employee_need_to_answer,#}
+{#                                                      val: 'Yes',#}
+{#                                                      highlight: $data.get_yes_highlight(),#}
+{#                                                      onclick: show_yes_dialogue_employee#}
+{#                                                      }">#}
+{#                        Yes#}
+{#                      </button>#}
+{#                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {#}
+{#                                                      question: $data,#}
+{#                                                      product_health_questions: product_health_questions,#}
+{#                                                      applicant: $root.employee(),#}
+{#                                                      is_required: does_employee_need_to_answer,#}
+{#                                                      val: 'No',#}
+{#                                                      highlight: 'checkmark'#}
+{#                                                      }">#}
+{#                        No#}
+{#                      </button>#}
+{#                      <!--/ko-->#}
+{#                    </div>#}
+{#                    <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">#}
+{#                      <!--ko if: does_spouse_need_to_answer -->#}
+{#                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {#}
+{#                                                      question: $data,#}
+{#                                                      product_health_questions: product_health_questions,#}
+{#                                                      applicant: $root.spouse(),#}
+{#                                                      is_required: does_spouse_need_to_answer,#}
+{#                                                      val: 'Yes',#}
+{#                                                      highlight: $data.get_yes_highlight(),#}
+{#                                                      onclick: show_yes_dialogue_spouse#}
+{#                                                      }">#}
+{#                        Yes#}
+{#                      </button>#}
+{#                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {#}
+{#                                                      question: $data,#}
+{#                                                      product_health_questions: product_health_questions,#}
+{#                                                      applicant: $root.spouse(),#}
+{#                                                      is_required: does_spouse_need_to_answer,#}
+{#                                                      val: 'No',#}
+{#                                                      highlight: 'checkmark'#}
+{#                                                      }">#}
+{#                        No#}
+{#                      </button>#}
+{#                      <!--/ko-->#}
+{#                    </div>#}
+{#                    <!--ko foreach: {data: $parent.product_coverage.get_covered_children, as: 'child'} -->#}
+{#                    <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">#}
+{#                      <!--ko if: $parent.does_child_need_to_answer(child) -->#}
+{#                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {#}
+{#                                                      question: $parentContext.$data,#}
+{#                                                      product_health_questions: product_health_questions,#}
+{#                                                      applicant: $data,#}
+{#                                                      is_required: function() {return $parent.does_child_need_to_answer(child)},#}
+{#                                                      val: 'Yes',#}
+{#                                                      highlight: 'stop',#}
+{#                                                      onclick: function() {$parent.show_yes_dialogue_child(child)}#}
+{#                                                      }">#}
+{#                        Yes#}
+{#                      </button>#}
+{#                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {#}
+{#                                                      question: $parentContext.$data,#}
+{#                                                      product_health_questions: product_health_questions,#}
+{#                                                      applicant: $data,#}
+{#                                                      is_required: function() {$parent.does_child_need_to_answer(child)},#}
+{#                                                      val: 'No',#}
+{#                                                      highlight: 'checkmark'#}
+{#                                                      }">#}
+{#                        No#}
+{#                      </button>#}
+{#                      <!--/ko-->#}
+{#                    </div>#}
+{#                    <!--/ko-->#}
+{#                  </div>#}
+{#                </div>#}
+{##}
+{##}
+{#              </div>#}
+{#            </td>#}
+{#          </tr>#}
+{#          <!--/ko-->#}
           </tbody>
         </table>
       </div>
 
+      {# This section is the same as above, but reformatted for small screens. #}
       <div class="visible-xs visible-sm" data-bind="">
 
         <table class="table table-striped">
@@ -478,7 +528,7 @@
                   </div>
                   <!--/ko-->
 
-                  <!--ko foreach: {data: $parent.get_covered_children, as: 'child'} -->
+                  <!--ko foreach: {data: $parent.product_coverage.get_covered_children, as: 'child'} -->
                   <!--ko if: $parent.does_child_need_to_answer(child) -->
                   <div class="person-answer-small row">
                     <div class="col-xs-3 col-xs-offset-2" data-bind="text: name"></div>
@@ -498,7 +548,7 @@
                                                                   question: $parentContext.$data,
                                                                   product_health_questions: product_health_questions,
                                                                   applicant: $data,
-                                                                  is_required: $parent.does_child_need_to_answer(child),
+                                                                  is_required: function() {return $parent.does_child_need_to_answer(child)},
                                                                   val: 'No',
                                                                   highlight: 'checkmark'
                                                                   }">

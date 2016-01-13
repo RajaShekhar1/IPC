@@ -126,13 +126,14 @@ var product_rates_service = (function() {
 
   var rates_by_product_id = {};
 
-  function update_product_rates(products, payment_mode, applicant_list, error_callback, statecode) {
+  function update_product_rates(products, payment_mode, applicant_list, error_callback, statecode, coverage_vm) {
 
     // Signal we have started updating rates data.
     is_loading_rates(true);
 
     var requests = _.map(products, function(product) {
-      var data = _build_rate_parameters(payment_mode, applicant_list, statecode);
+      var enabled_riders = coverage_vm.get_enabled_riders_for_product(product);
+      var data = _build_rate_parameters(payment_mode, applicant_list, statecode, enabled_riders);
       return remote_service.get_product_rates(product.product_data.id, data);
     });
 
@@ -155,13 +156,15 @@ var product_rates_service = (function() {
       is_loading_rates(false);
     }
 
+    // Make all rates requests asynchronously, call process_product_rates when complete.
     $.when.apply($, requests).done(process_product_rates).fail(error_callback);
   }
 
-  function _build_rate_parameters(payment_mode, applicant_list, statecode) {
+  function _build_rate_parameters(payment_mode, applicant_list, statecode, enabled_riders) {
     var params = {
       payment_mode: payment_mode.frequency,
-      statecode: statecode
+      statecode: statecode,
+      rider_codes: _.pluck(enabled_riders, "code")
     };
     return $.extend({}, params, _build_applicant_parameters(applicant_list));
   }
