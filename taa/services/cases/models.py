@@ -77,8 +77,10 @@ class Case(CaseSerializer, db.Model):
 
     # Store settings for the products as JSON. Includes rider settings and rate overrides.
     product_settings = db.Column(JSON(none_as_null=False), nullable=True)
-
     include_bank_draft_form = db.Column(db.Boolean, nullable=False, server_default='FALSE')
+    occupation_class_settings = db.Column(JSON(none_as_null=False),
+                                          nullable=True)
+
 
     def get_product_names(self):
         return ','.join(p.name for p in self.products)
@@ -297,6 +299,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     child6_first = db.Column(db.String(256))
     child6_last = db.Column(db.String(256))
     child6_birthdate = db.Column(db.Date)
+    occupation_class = db.Column(db.String(256))
 
     def get_smoker_boolean(self, value):
         if value == 'Y':
