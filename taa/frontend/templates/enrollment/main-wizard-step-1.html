@@ -27,7 +27,7 @@
 
         <input class="input-mask-date" name="eeBenefitDOB"
                data-bind="value: employee().birthdate" type="text" id="eeDOB"
-               placeholder="DD/MM/YYYY">
+               placeholder="MM/DD/YYYY">
       </div>
 
       <div class="col-xs-12 visible-xs">&nbsp;</div>
@@ -83,7 +83,7 @@
 
         <input class="input-mask-date" name="spDOB"
                data-bind="value: spouse().birthdate" type="text" id="spDOB"
-               placeholder="DD/MM/YYYY">
+               placeholder="MM/DD/YYYY">
       </div>
 
     </div>
@@ -182,8 +182,9 @@
           <input class="input-mask-date child_birthdate" data-bind="
                         value: birthdate,
                         event: {change: $root.update_rate_table},
-                        attr: {id: 'child-dob-'+$index()}
-                        " type="text" placeholder="DD/MM/YYYY">
+                        attr: {id: 'child-dob-'+$index()},
+                        maskedInput: '99/99/9999'
+                        " type="text" placeholder="MM/DD/YYYY">
         </div>
 
       </div>
@@ -324,7 +325,7 @@
 
     {# Error message #}
     <div id="benefit_required" class="error pull-right" data-bind="visible: is_selection_error_visible">
-      You must select a coverage amount before advancing.
+      You must make a selection for each product before advancing.
     </div>
   </form>
 
@@ -368,15 +369,15 @@
               'widget-color-red3': recommendation_set.name === 'good',
               'widget-color-orange': recommendation_set.name === 'better',
               'widget-color-blue': recommendation_set.name === 'best'
-            }">
+            },click: function() {$parent.select_recommended_coverage(recommendation_set);}">
             <div class="widget-header center no-padding">
               <h5 class="bigger lighter" data-bind="text: recommendation_set.name"></h5>
             </div>
 
             <div class="widget-body">
               <div class="widget-main no-padding" data-bind="
-                    template: {name: 'recommendations_template', data: recommendation_set},
-                    click: function() {$parent.select_recommended_coverage(recommendation_set);}
+                    template: {name: 'recommendations_template', data: recommendation_set}
+
                     ">
               </div>
 
@@ -489,12 +490,18 @@
 
 <script type="text/html" id="multi-product-selected-coverage-table">
 
-  <table class="table table-striped table-responsive" data-bind="with: coverage_summary_vm">
+  <table class="table table-striped table-responsive summary-table" data-bind="with: coverage_summary_vm">
     <thead>
       <tr>
         <th></th>
-        <!--ko foreach: {data: product_names}-->
-          <th class="text-center" data-bind="text: $data"></th>
+        <!--ko foreach: {data: product_coverages}-->
+          <th class="text-center" data-bind="
+              click: $root.coverage_vm.select_product,
+              css: {'active-product': $root.coverage_vm.current_product() === $data}
+              ">
+            <div style="display: inline-block; width: 20px; border: 1px solid #eee; border-radius: 20px; background-color: white" data-bind="text: $index()+1"></div>
+            <span data-bind="text: product.product_data.name"></span>
+          </th>
         <!--/ko-->
         <th class="text-center">Total</th>
       </tr>
@@ -510,10 +517,20 @@
                 <strong>Declined</strong>
               </td>
             <!--/ko-->
+
             <!--ko if: !product_coverage.did_decline()-->
-            <td data-bind="with: $parents[2].get_applicant_coverage_option_for_product(applicant, product)">
-              <strong data-bind="html: format_face_value()"></strong>
-              <div data-bind="html: format_premium_option()"></div>
+            <td data-bind="
+              with: $parents[2].get_applicant_coverage_option_for_product(applicant, product),
+              click: $root.coverage_vm.select_product,
+              css: {'active-product': $root.coverage_vm.current_product() === $data}
+              ">
+              <!--ko if: !product_coverage.has_completed_selection()-->
+                 <span>Select Coverage</span>
+              <!--/ko-->
+              <!--ko if: product_coverage.has_completed_selection()-->
+                <strong data-bind="html: format_face_value()"></strong>
+                <div data-bind="html: format_premium_option()"></div>
+              <!--/ko-->
             </td>
             <!--/ko-->
           <!--/ko-->

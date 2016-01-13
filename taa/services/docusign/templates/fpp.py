@@ -153,17 +153,16 @@ class FPPTemplate(DocuSignServerTemplate):
             sp_tabs_list += [DocuSignTextTab('spEmail', self.data['spouse']['email'])]
 
         if self.data.did_spouse_select_coverage():
-            # TODO: Still need this data to be submitted to tabs
             # Special treatment for first two questions (non-health questions)
-            # if self.data['has_spouse_been_treated_6_months'] in ['Yes', 'No']:
-            #     sp_tabs_list += [DocuSignRadioTab('spouse_hospital_six_months', self.data['has_spouse_been_treated_6_months'].lower())]
-            # elif str(self.data['has_spouse_been_treated_6_months']).upper() == 'GI':
-            #     sp_tabs_list += [DocuSignTextTab('spouse_hospital_six_months_gi', 'GI')]
-            #
-            # if self.data['has_spouse_been_disabled_6_months'] in ['Yes', 'No']:
-            #     sp_tabs_list += [DocuSignRadioTab('spouse_disability_six_months', self.data['has_spouse_been_disabled_6_months'].lower())]
-            # elif str(self.data['has_spouse_been_disabled_6_months']).upper() == 'GI':
-            #     sp_tabs_list += [DocuSignTextTab('spouse_disability_six_months_gi', 'GI')]
+            if self.data['has_spouse_been_treated_6_months'] in ['Yes', 'No']:
+                sp_tabs_list += [DocuSignRadioTab('spouse_hospital_six_months', self.data['has_spouse_been_treated_6_months'].lower())]
+            elif str(self.data['has_spouse_been_treated_6_months']).upper() == 'GI':
+                sp_tabs_list += [DocuSignTextTab('spouse_hospital_six_months_gi', 'GI')]
+
+            if self.data['has_spouse_been_disabled_6_months'] in ['Yes', 'No']:
+                sp_tabs_list += [DocuSignRadioTab('spouse_disability_six_months', self.data['has_spouse_been_disabled_6_months'].lower())]
+            elif str(self.data['has_spouse_been_disabled_6_months']).upper() == 'GI':
+                sp_tabs_list += [DocuSignTextTab('spouse_disability_six_months_gi', 'GI')]
 
             sp_tabs_list += self.generate_SOH_tabs("sp", self.data['spouse_soh_questions'])
             sp_tabs_list += self.generate_SOH_GI_tabs("sp", self.data['spouse_soh_questions'])
@@ -309,7 +308,7 @@ class FPPTemplate(DocuSignServerTemplate):
 
     def make_payment_mode_tabs(self):
         return [
-            DocuSignRadioTab(group_name='payment_mode', value=self.data['payment_mode_text'], is_selected=True)
+            DocuSignRadioTab(group_name='payment_mode', value=self.data['payment_mode_text'].lower(), is_selected=True)
         ]
 
     def make_generic_tabs(self):
@@ -486,7 +485,6 @@ if __name__ == "__main__":
     recipients = [
         agent,
         employee,
-        # TODO Check if BCC's needed here
     ]
 
     fpp_form = FPPTemplate(recipients, wrap_data)

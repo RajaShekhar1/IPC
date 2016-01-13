@@ -114,7 +114,7 @@
       <div class="col-xs-12 col-sm-9">
         <div class="input-group">
 		<span class="input-group-addon">
-		  <i class="icon-envelope"></i>
+		  <i class="fa fa-envelope"></i>
 		</span>
 
           <input type="email" name="email" id="email" class="col-xs-12 col-sm-6"
@@ -131,7 +131,7 @@
       <div class="col-xs-12 col-sm-9">
         <div class="input-group">
             <span class="input-group-addon">
-              <i class="icon-phone"></i>
+              <i class="fa fa-phone"></i>
             </span>
 
           <input type="tel" id="phone" name="phone" data-bind="value: employee().phone"/>
@@ -141,25 +141,25 @@
 
     <div class="space-2"></div>
 
+    <!--ko foreach: coverage_vm.selected_product_coverages()-->
     <div class="form-group">
-      <label class="control-label col-xs-12 col-sm-3 no-padding-right">Policy Owner</label>
+      <label class="control-label col-xs-12 col-sm-3 no-padding-right">Policy Owner for <span data-bind="text: product.product_data.name"></span></label>
 
       <div class="col-xs-12 col-sm-9">
         <label class="blue">
-          <input name="eeOwner" value="self" type="radio" class="inline ace" id="eeOwner-self" checked=""
-                 data-bind="checked: policy_owner"/>
+          <input value="self" type="radio" class="inline ace" data-bind="checked: policy_owner, attr: {name: 'eeOwner'+$index()}"/>
           <span class="lbl"> Self &nbsp;&nbsp;&nbsp;</span>
         </label>
 
         <label class="blue">
-          <input name="eeOwner" value="other" type="radio" class="inline ace" id="eeOwner-other"
-                 data-bind="checked: policy_owner"/>
+          <input value="other" type="radio" class="inline ace"
+                 data-bind="checked: policy_owner, attr:{name: 'eeOwner'+$index()}"/>
           <span class="lbl"> Other</span>
         </label>
       </div>
     </div>
 
-    <div class="hide col-sm-offset-2" id="eeOtherOwner">
+    <div class="col-sm-offset-2" data-bind="visible: policy_owner() === 'other'">
       <div class="form-group">
         <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerName">Other
           owner </label>
@@ -177,11 +177,12 @@
 
         <div class="col-xs-12 col-sm-9">
           <input type="text" id="eeOtherOwnerSSN" name="eeOtherOwnerSSN"
-                 class="col-xs-12 col-sm-4 input-mask-ssn"
-                 data-bind="value: other_owner_ssn"/>
+                 class="col-xs-12 col-sm-4"
+                 data-bind="value: other_owner_ssn, maskedInput: '999-99-9999'"/>
         </div>
       </div>
     </div>
+    <!--/ko-->
 
 
   </form>

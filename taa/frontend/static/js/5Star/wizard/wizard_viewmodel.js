@@ -13,12 +13,13 @@ var wizard_viewmodel = (function() {
   // Main Step 1 view model. Handles the coverage selection of each applicant for every
   //  product that is being offered.
   function CoverageVM(available_products, applicant_list, case_data, all_payment_modes,
-                        should_include_spouse, should_include_children) {
+                        should_include_spouse, should_include_children, root) {
     this.products = available_products;
     this.applicants = applicant_list;
 
     this.should_include_spouse = should_include_spouse;
     this.should_include_children = should_include_children;
+    this.root = root;
 
     this.multiproduct_wizard_widget = ko.observable(null);
 
@@ -55,12 +56,16 @@ var wizard_viewmodel = (function() {
           applicant_list,
           this.payment_mode,
           this.should_include_spouse,
-          this.should_include_children);
+          this.should_include_children,
+          this.root);
     }, this));
 
     // Which product coverage is being displayed right now?
     this.current_product = ko.observable(this.product_coverage_viewmodels()[0]);
 
+    this.select_product = function(product_coverage) {
+      this.current_product(product_coverage);
+    }.bind(this);
 
     this.has_multiple_products = ko.pureComputed(function() {
       return this.product_coverage_viewmodels().length > 1;
@@ -207,7 +212,7 @@ var wizard_viewmodel = (function() {
 
 
   function ProductCoverageViewModel(product, case_data, applicant_list, payment_mode,
-                                    should_include_spouse, should_include_children) {
+                                    should_include_spouse, should_include_children, root) {
 
     // ProductCoverageViewModel keeps track of the coverage selections for the applicants for a single product.
 
@@ -218,6 +223,7 @@ var wizard_viewmodel = (function() {
     self.applicant_list = applicant_list;
     self.should_include_spouse = should_include_spouse;
     self.should_include_children = should_include_children;
+    self.root = root;
 
     self.did_decline = ko.observable(false);
     self.available_recommendations = product_rates_service.get_product_recommendations(self.product, payment_mode);
@@ -329,7 +335,14 @@ var wizard_viewmodel = (function() {
       return [];
     };
 
+    // Policy owners
+    self.policy_owner = ko.observable("self");
+    self.other_owner_name = ko.observable("");
+    self.other_owner_ssn = ko.observable("");
 
+    self.spouse_policy_owner = ko.observable("employee");
+    self.spouse_other_owner_name = ko.observable("");
+    self.spouse_other_owner_ssn = ko.observable("");
 
     // Beneficiaries
     self.employee_beneficiary_type = ko.observable("spouse");
@@ -370,6 +383,35 @@ var wizard_viewmodel = (function() {
           )
       );
     });
+
+    // Shortcut methods for the "Spouse-only" questions for FPP products.
+    self.has_spouse_been_treated_6_months = ko.pureComputed(function() {
+      return _find_answer_for_spouse_question_with_label("Spouse Treated 6 Months");
+    });
+    self.has_spouse_been_disabled_6_months = ko.pureComputed(function() {
+      return _find_answer_for_spouse_question_with_label("Spouse Disabled 6 Months");
+    });
+
+    function _find_answer_for_spouse_question_with_label(lbl) {
+      if (!self.did_select_spouse_coverage()) {
+        return null;
+      }
+      var product_questions = self.root.get_product_health_questions(self);
+      var spouse_question = _.find(product_questions.health_questions(), function(q) {
+        return q.get_question_label() === lbl;
+      });
+      if (!spouse_question) {
+        return null;
+      }
+
+      if (spouse_question.can_spouse_skip_due_to_GI()) {
+        return "GI";
+      }
+
+      // Find the answer given
+      var spouse_answer = product_questions.get_applicant_answer_for_question(self.root.spouse(), spouse_question);
+      return spouse_answer.value();
+    }
 
   }
 
@@ -486,7 +528,10 @@ var wizard_viewmodel = (function() {
 
     this.did_select_option = ko.pureComputed(function() {
       // Just see if a selection was made, even if the selection is NullCoverageOption.
-      return this.customized_coverage_option() !== null || this.recommended_coverage_option() !== null;
+      return (this.customized_coverage_option() !== null &&
+              // The selection dropdown sets this to undefined directly
+             this.customized_coverage_option() !== undefined) ||
+             this.recommended_coverage_option() !== null;
     }, this);
 
     this.riders = ko.observableArray();
@@ -938,7 +983,7 @@ var wizard_viewmodel = (function() {
 
     // Main step1 viewmodel - handles selecting coverage of products.
     self.coverage_vm = new CoverageVM(self.products, self.applicant_list, options.case_data, options.payment_modes,
-      self.should_show_spouse, self.should_include_children);
+      self.should_show_spouse, self.should_include_children, self);
     self.product_coverage_viewmodels = self.coverage_vm.product_coverage_viewmodels;
 
     // Add/remove children
@@ -1355,13 +1400,7 @@ var wizard_viewmodel = (function() {
 
     // STEP 3 Data - Other Employee Info
     self.company_name = ko.observable(self.enrollment_case.company_name);
-    self.policy_owner = ko.observable("self");
-    self.other_owner_name = ko.observable("");
-    self.other_owner_ssn = ko.observable("");
 
-    self.spouse_policy_owner = ko.observable("employee");
-    self.spouse_other_owner_name = ko.observable("");
-    self.spouse_other_owner_ssn = ko.observable("");
 
     // Step 4 Data - Other Dependant info
     // Spouse address
@@ -1407,7 +1446,7 @@ var wizard_viewmodel = (function() {
     self.should_use_date_of_hire_for_identity = function() {
       // TODO: double check this.
       return true;
-    }
+    };
 
     function any_selected_product(method) {
       var selected_products = _.pluck(self.coverage_vm.selected_product_coverages(), 'product');
@@ -1445,10 +1484,10 @@ var wizard_viewmodel = (function() {
       var should_show_children_initially = self.applicant_list.has_valid_children();
       self.should_include_children(should_show_children_initially);
 
-      // Add up to two blank children to the form to start if fewer than two are provided.
+      // Add up to two blank children to the form to start if none are provided.
       var num_initial_children = self.children().length;
       var last_name = self.employee().last() || "";
-      if (num_initial_children < 2) {
+      if (num_initial_children == 0) {
         var num_blank_children_forms = (2 - num_initial_children);
         for (var i = 0; i < num_blank_children_forms; i += 1) {
           var ch = wizard_applicant.create_applicant({last: last_name, type: wizard_applicant.Applicant.ChildType});

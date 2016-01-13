@@ -116,6 +116,18 @@ body {
     font-style: oblique;
 }
 
+.summary-table th.active-product {
+    background-color: #fafa8a;
+    color: #838000;
+    font-weight: bold;
+    box-shadow: 0 0 4px 2px rgba(0,0,0,.15);
+    z-index: 11;
+    transform: scale(1.03);
+}
+.summary-table td.active-product {
+    border: 2px solid #eaea8a;
+    z-index: 10;
+}
 
 .confirm-table td, .confirm-table th {
     text-align: center;

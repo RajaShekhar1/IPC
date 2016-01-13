@@ -1,46 +1,5 @@
 
 function init_validation(ui) {
-  $(document).on('change', 'input:radio[id^="eeOwner-"]', function () {
-    var other = $('#eeOtherOwner');
-    var inp = $('#eeOtherOwnerName').get(0);
-    var inpss = $('#eeOtherOwnerSSN').get(0);
-
-    if (other.hasClass('hide')) {
-      other.fadeIn("medium");
-      other.removeClass('hide');
-      inp.removeAttribute('disabled');
-      inp.placeholder = "Full Name";
-      inpss.removeAttribute('disabled');
-    } else {
-      $('#eeOtherOwner').addClass('hide');
-      inp.setAttribute('disabled', 'disabled');
-      inp.placeholder = "employee is policy owner";
-      inp.value = "";
-      inpss.setAttribute('disabled', 'disabled');
-      inpss.value = "";
-    }
-  });
-
-  $(document).on('change', 'input:radio[id^="spOwner-"]', function () {
-    var other = $('#spOtherOwner');
-    var inp = $('#spOtherOwnerName').get(0);
-    var inpss = $('#spOtherOwnerSSN').get(0);
-
-    if (other.hasClass('hide') && $('#spOwner-other').prop('checked')) {
-      other.fadeIn("medium");
-      other.removeClass('hide');
-      inp.removeAttribute('disabled');
-      inp.placeholder = "Full Name";
-      inpss.removeAttribute('disabled');
-    } else {
-      $('#spOtherOwner').addClass('hide');
-      inp.setAttribute('disabled', 'disabled');
-      inp.placeholder = "employee/spouse is policy owner";
-      inp.value = "";
-      inpss.setAttribute('disabled', 'disabled');
-      inpss.value = "";
-    }
-  });
 
   $('[data-rel=tooltip]').tooltip();
 
@@ -106,6 +65,7 @@ function init_validation(ui) {
         return true;
       }
 
+      // TODO: Re-enable for multiproduct.
       // Check each applicant for selecting too much product.
       //_.each(plan.get_covered_applicants_with_type(), function(val) {
       //  var applicant_type = {"Employee":"employee", "Spouse": "spouse", "Child": "children"}[val.type];
@@ -121,7 +81,9 @@ function init_validation(ui) {
     }
     if (info.step == 2 && info.direction == 'next') {
       var is_valid = true;
-      //
+
+      return true;
+
       // validate replacement form
       if (ui.did_select_any_fpp_product() &&
           (ui.should_show_replacement_form())) {
@@ -145,7 +107,7 @@ function init_validation(ui) {
         is_valid = false;
       }
 
-      //// validate questions
+      // validate questions
       is_valid &=  are_health_questions_valid();
 
       if (!is_valid) {
@@ -406,64 +368,66 @@ function init_validation(ui) {
           depends: ui.is_employee_beneficiary_info_required
         }
       },
-      eeContBeneOtherName: {
-        required: {
-          depends: function(element) {
-            return (
-                ui.should_show_contingent_beneficiary() &&
-                ui.employee_contingent_beneficiary_type() === "other"
-            )
-          }
-        }
-      },
-      eeContBeneOtherRelation: {
-        required: {
-          depends: function(element) {
-            return (
-                ui.should_show_contingent_beneficiary() &&
-                ui.employee_contingent_beneficiary_type() === "other"
-            )
-          }
-        }
-      },
 
-      spBeneOtherName: {
-        required: {
-          depends: function(element) {
-            return (ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
-          }
-        }
-      },
-      spBeneOtherRelation: {
-        required: {
-          depends: function(element) {
-            return (ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
-          }
-        }
-      },
-      spContBeneOtherName: {
-        required: {
-          depends: function(element) {
-            return (
-                ui.should_show_contingent_beneficiary() &&
-                ui.did_select_spouse_coverage() &&
-                ui.spouse_contingent_beneficiary_type() === "other"
-            );
-          }
-        }
-      },
+      // TODO: Re-enable using Knockout per-product
+      //eeContBeneOtherName: {
+      //  required: {
+      //    depends: function(element) {
+      //      return (
+      //          ui.should_show_contingent_beneficiary() &&
+      //          ui.employee_contingent_beneficiary_type() === "other"
+      //      )
+      //    }
+      //  }
+      //},
+      //eeContBeneOtherRelation: {
+      //  required: {
+      //    depends: function(element) {
+      //      return (
+      //          ui.should_show_contingent_beneficiary() &&
+      //          ui.employee_contingent_beneficiary_type() === "other"
+      //      )
+      //    }
+      //  }
+      //},
 
-      spContBeneOtherRelation: {
-        required: {
-          depends: function(element) {
-            return (
-                ui.should_show_contingent_beneficiary() &&
-                ui.did_select_spouse_coverage() &&
-                ui.spouse_contingent_beneficiary_type() === "other"
-            );
-          }
-        }
-      }
+      //spBeneOtherName: {
+      //  required: {
+      //    depends: function(element) {
+      //      return (ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
+      //    }
+      //  }
+      //},
+      //spBeneOtherRelation: {
+      //  required: {
+      //    depends: function(element) {
+      //      return (ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
+      //    }
+      //  }
+      //},
+      //spContBeneOtherName: {
+      //  required: {
+      //    depends: function(element) {
+      //      return (
+      //          ui.should_show_contingent_beneficiary() &&
+      //          ui.did_select_spouse_coverage() &&
+      //          ui.spouse_contingent_beneficiary_type() === "other"
+      //      );
+      //    }
+      //  }
+      //},
+
+      //spContBeneOtherRelation: {
+      //  required: {
+      //    depends: function(element) {
+      //      return (
+      //          ui.should_show_contingent_beneficiary() &&
+      //          ui.did_select_spouse_coverage() &&
+      //          ui.spouse_contingent_beneficiary_type() === "other"
+      //      );
+      //    }
+      //  }
+      //}
     },
 
     messages: {

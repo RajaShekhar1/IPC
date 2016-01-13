@@ -87,18 +87,17 @@ function build_wizard_results_for_product_coverage(product_cov) {
 
     existing_insurance:  root.existing_insurance(),
     replacing_insurance:  root.replacing_insurance(),
-    // TODO These need to be per-product
-    is_employee_actively_at_work: root.is_employee_actively_at_work(),
-    //has_spouse_been_treated_6_months: root.has_spouse_been_treated_6_months(),
-    //has_spouse_been_disabled_6_months: root.has_spouse_been_disabled_6_months(),
 
-    // TODO Owners need to be per-product
-    employee_owner:  root.policy_owner(),
-    employee_other_owner_name:  root.other_owner_name(),
-    employee_other_owner_ssn:  root.other_owner_ssn(),
-    spouse_owner:  root.spouse_policy_owner(),
-    spouse_other_owner_name:  root.spouse_other_owner_name(),
-    spouse_other_owner_ssn:  root.spouse_other_owner_ssn(),
+    is_employee_actively_at_work: root.is_employee_actively_at_work(),
+    has_spouse_been_treated_6_months: product_cov.has_spouse_been_treated_6_months(),
+    has_spouse_been_disabled_6_months: product_cov.has_spouse_been_disabled_6_months(),
+
+    employee_owner:  product_cov.policy_owner(),
+    employee_other_owner_name:  product_cov.other_owner_name(),
+    employee_other_owner_ssn:  product_cov.other_owner_ssn(),
+    spouse_owner:  product_cov.spouse_policy_owner(),
+    spouse_other_owner_name:  product_cov.spouse_other_owner_name(),
+    spouse_other_owner_ssn:  product_cov.spouse_other_owner_ssn(),
 
     employee_beneficiary:  product_cov.employee_beneficiary_type(),
     spouse_beneficiary:  product_cov.spouse_beneficiary_type(),
