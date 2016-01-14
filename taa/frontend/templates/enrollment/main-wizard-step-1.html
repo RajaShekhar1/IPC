@@ -2,221 +2,244 @@
 
 <div class="step-pane active" id="step1" data-step="1">
   <form id="step1-form">
+
   <h4 class="lighter block green">Initial information required to select a benefit plan</h4>
 
-  {# Employee Section #}
-  <div>
-    <div class="row">
-      <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="eeBenefitFName">
-        Employee
-      </label>
-
-      <div class="form-group col-xs-12 col-sm-10">
-        <input type="text" style="width: 45%" id="eeBenefitFName" name="eeBenefitFName"
-               data-bind="value: employee().first" placeholder="First Name">
-        <input type="text" style="width: 45%" id="eeBenefitLName" name="eeBenefitLName"
-               data-bind="value: employee().last" placeholder="Last Name">
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-        <label style="margin-right: 1em;" for="eeDOB">
-          Date of Birth
-        </label>
-
-        <input class="input-mask-date" name="eeBenefitDOB"
-               data-bind="value: employee().birthdate" type="text" id="eeDOB"
-               placeholder="MM/DD/YYYY">
-      </div>
-
-      <div class="col-xs-12 visible-xs">&nbsp;</div>
-
-      <div class="form-group col-xs-12 col-sm-4">
-        <div class="">
-          <label style="margin-right: 3em;">
-            <input type="checkbox" class="ace" data-bind="checked: should_show_spouse">
-            <span class="lbl padding-8 is_married">Married</span>
-          </label>
-
-          <label>
-            <input type="checkbox" class="ace" data-bind="checked: should_include_children">
-            {# TODO: Need to see if we all products allow grandchildren to put this back in?
-             <!--ko if: insurance_product.should_allow_grandchildren() -->
-              <span class="lbl padding-8 include_children">Include Children/Grandchildren</span>
-            <!--/ko-->
-            <!--ko if: !insurance_product.should_allow_grandchildren() -->
-              <span class="lbl padding-8 include_children">Include Children</span>
-            <!--/ko-->
-             #}
-            <span class="lbl padding-8 include_children">Include Children</span>
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <div data-bind="template: {name: 'extended-questions-template', data: employee}"></div>
-  </div>
-
-
-  {# Spouse Section #}
-  <div data-bind="slideDownIf: should_show_spouse">
-    <div class="row">
-      <label class="col-xs-12 col-sm-2 no-padding-right text-right" for="spFName">
-        Spouse
-      </label>
-
-      <div class="form-group col-xs-12 col-sm-10">
-        <input type="text" style="width: 45%" id="spFName" name="spFName"
-               data-bind="value: spouse().first" placeholder="First Name">
-        <input type="text" style="width: 45%" id="spLName" name="spLName"
-               data-bind="value: spouse().last" placeholder="Last Name">
-      </div>
-    </div>
-
-    <div class="row">
-
-      <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-        <label style="margin-right: 1em;" for="spDOB">
-          Date of Birth
-        </label>
-
-        <input class="input-mask-date" name="spDOB"
-               data-bind="value: spouse().birthdate" type="text" id="spDOB"
-               placeholder="MM/DD/YYYY">
-      </div>
-
-    </div>
-
-    <div data-bind="template: {name: 'extended-questions-template', data: spouse}"></div>
-  </div>
-
-
-  {# template for extended questions  #}
-  <script type="text/html" id="extended-questions-template">
-    <!--ko if: $root.should_show_extended_questions() -->
-    <div class="row">
-      <!--ko if: $root.should_show_gender() -->
-      <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-        <div class="">
-          <label style="margin-right: 1em;">
-            <input type="radio" value="male" class="ace"
-                   data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
-            <span class="lbl"> Male</span>
-          </label>
-          <label>
-            <input type="radio" value="female" class="ace"
-                   data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
-            <span class="lbl"> Female</span>
-          </label>
-        </div>
-      </div>
-      <!--/ko-->
-      <!--ko if: $root.should_show_smoker() -->
-      <div class="form-group col-xs-12 col-sm-5">
-        <label style="margin-right: 1em;">
-          <input type="radio" class="ace"
-                 data-bind="checked: is_smoker, checkedValue: false, attr: {name: 'tobacco-'+$data._id}">
-          <span class="lbl"> Non-Smoker</span>
-        </label>
-        <label>
-          <input type="radio" class="ace"
-                 data-bind="checked: is_smoker, checkedValue: true, attr: {name: 'tobacco-'+$data._id}">
-          <span class="lbl"> Smoker</span>
-        </label>
-      </div>
-      <!--/ko-->
-    </div>
-    <div class="row">
-      <!--ko if: $root.should_show_height() -->
-      <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-        <height-select class="height" params="value: height, name_suffix: $data._id+''"></height-select>
-      </div>
-      <!--/ko-->
-      <!--ko if: $root.should_show_weight() -->
-      <div class="form-group col-sm-4">
-        <label class="">
-          Weight: <input type="number" class="text-right"
-                         data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
-        </label>
-      </div>
-      <!--/ko-->
-    </div>
-    <!--/ko-->
-  </script>
-
-  {# Children Data #}
-  <div data-bind="slideDownIf: should_include_children">
-    <!--ko foreach: {data: children, afterAdd: rendered_child, beforeRemove: removing_child} -->
-    <div data-bind="attr: {'class':'child-'+$index()}">
+  <div data-bind="visible: is_applicant_editor_visible">
+    {# Employee Section #}
+    <div>
       <div class="row">
-        <label class="text-right control-label col-xs-12 col-sm-2 no-padding-right"
-               data-bind="attr: {for: 'child-first-'+$index()}">
-          {# TODO: include if we can  #}
-          Child {# <span data-bind="if: $root.insurance_product.should_allow_grandchildren()">/Grandchild</span> #}
-                <span data-bind="text: $index() + 1"></span>
+        <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="eeBenefitFName">
+          Employee
         </label>
 
         <div class="form-group col-xs-12 col-sm-10">
-          <input type="text" style="width: 45%" class="child_first"
-                 data-bind="value: first, attr: {id: 'child-first-'+$index()}"
-                 placeholder="First Name"/>
-
-          <input type="text" style="width: 45%" class="child_last" data-bind="value: last"
-                 placeholder="Last Name"/>
-
-          <div class="pull-right">
-            <button type="button" class="btn btn-xs btn-danger" data-bind="click: $root.remove_child">
-              <i class="ace-icon glyphicon-minus"></i>
-            </button>
-          </div>
+          <input type="text" style="width: 45%" id="eeBenefitFName" name="eeBenefitFName"
+                 data-bind="value: employee().first" placeholder="First Name">
+          <input type="text" style="width: 45%" id="eeBenefitLName" name="eeBenefitLName"
+                 data-bind="value: employee().last" placeholder="Last Name">
         </div>
       </div>
 
       <div class="row">
         <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-          <label style="margin-right: 1em;" data-bind="attr: {for: 'child-dob-'+$index()}">
+          <label style="margin-right: 1em;" for="eeDOB">
             Date of Birth
           </label>
 
-          <input class="input-mask-date child_birthdate" data-bind="
-                        value: birthdate,
-                        event: {change: $root.update_rate_table},
-                        attr: {id: 'child-dob-'+$index()},
-                        maskedInput: '99/99/9999'
-                        " type="text" placeholder="MM/DD/YYYY">
+          <input class="input-mask-date" name="eeBenefitDOB"
+                 data-bind="value: employee().birthdate" type="text" id="eeDOB"
+                 placeholder="MM/DD/YYYY">
+        </div>
+
+        <div class="col-xs-12 visible-xs">&nbsp;</div>
+
+        <div class="form-group col-xs-12 col-sm-4">
+          <div class="">
+            <label style="margin-right: 3em;">
+              <input type="checkbox" class="ace" data-bind="checked: should_show_spouse">
+              <span class="lbl padding-8 is_married">Married</span>
+            </label>
+
+            <label>
+              <input type="checkbox" class="ace" data-bind="checked: should_include_children">
+              {# TODO: Need to see if we all products allow grandchildren to put this back in?
+               <!--ko if: insurance_product.should_allow_grandchildren() -->
+                <span class="lbl padding-8 include_children">Include Children/Grandchildren</span>
+              <!--/ko-->
+              <!--ko if: !insurance_product.should_allow_grandchildren() -->
+                <span class="lbl padding-8 include_children">Include Children</span>
+              <!--/ko-->
+               #}
+              <span class="lbl padding-8 include_children">Include Children</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div data-bind="template: {name: 'extended-questions-template', data: employee}"></div>
+    </div>
+
+
+    {# Spouse Section #}
+    <div data-bind="slideDownIf: should_show_spouse">
+      <div class="row">
+        <label class="col-xs-12 col-sm-2 no-padding-right text-right" for="spFName">
+          Spouse
+        </label>
+
+        <div class="form-group col-xs-12 col-sm-10">
+          <input type="text" style="width: 45%" id="spFName" name="spFName"
+                 data-bind="value: spouse().first" placeholder="First Name">
+          <input type="text" style="width: 45%" id="spLName" name="spLName"
+                 data-bind="value: spouse().last" placeholder="Last Name">
+        </div>
+      </div>
+
+      <div class="row">
+
+        <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
+          <label style="margin-right: 1em;" for="spDOB">
+            Date of Birth
+          </label>
+
+          <input class="input-mask-date" name="spDOB"
+                 data-bind="value: spouse().birthdate" type="text" id="spDOB"
+                 placeholder="MM/DD/YYYY">
         </div>
 
       </div>
-    </div>
-    <!--/ko-->
 
-    <div class="row" id="addChildBtn">
-      <div class="col-xs-12 col-sm-offset-1 col-sm-2">
-        <button class="btn btn-default btn-sm" type="button" data-bind="click: add_child">
-          {# TODO: Add grandchildren text #}
-          Add Child{# <span data-bind="if: insurance_product.should_allow_grandchildren()">/Grandchild</span> #}
-        </button>
+      <div data-bind="template: {name: 'extended-questions-template', data: spouse}"></div>
+    </div>
+
+
+    {# template for extended questions  #}
+    <script type="text/html" id="extended-questions-template">
+      <!--ko if: $root.should_show_extended_questions() -->
+      <div class="row">
+        <!--ko if: $root.should_show_gender() -->
+        <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
+          <div class="">
+            <label style="margin-right: 1em;">
+              <input type="radio" value="male" class="ace"
+                     data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
+              <span class="lbl"> Male</span>
+            </label>
+            <label>
+              <input type="radio" value="female" class="ace"
+                     data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
+              <span class="lbl"> Female</span>
+            </label>
+          </div>
+        </div>
+        <!--/ko-->
+        <!--ko if: $root.should_show_smoker() -->
+        <div class="form-group col-xs-12 col-sm-5">
+          <label style="margin-right: 1em;">
+            <input type="radio" class="ace"
+                   data-bind="checked: is_smoker, checkedValue: false, attr: {name: 'tobacco-'+$data._id}">
+            <span class="lbl"> Non-Smoker</span>
+          </label>
+          <label>
+            <input type="radio" class="ace"
+                   data-bind="checked: is_smoker, checkedValue: true, attr: {name: 'tobacco-'+$data._id}">
+            <span class="lbl"> Smoker</span>
+          </label>
+        </div>
+        <!--/ko-->
+      </div>
+      <div class="row">
+        <!--ko if: $root.should_show_height() -->
+        <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
+          <height-select class="height" params="value: height, name_suffix: $data._id+''"></height-select>
+        </div>
+        <!--/ko-->
+        <!--ko if: $root.should_show_weight() -->
+        <div class="form-group col-sm-4">
+          <label class="">
+            Weight: <input type="number" class="text-right"
+                           data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
+          </label>
+        </div>
+        <!--/ko-->
+      </div>
+      <!--/ko-->
+    </script>
+
+    {# Children Data #}
+    <div data-bind="slideDownIf: should_include_children">
+      <!--ko foreach: {data: children, afterAdd: rendered_child, beforeRemove: removing_child} -->
+      <div data-bind="attr: {'class':'child-'+$index()}">
+        <div class="row">
+          <label class="text-right control-label col-xs-12 col-sm-2 no-padding-right"
+                 data-bind="attr: {for: 'child-first-'+$index()}">
+            {# TODO: include if we can  #}
+            Child {# <span data-bind="if: $root.insurance_product.should_allow_grandchildren()">/Grandchild</span> #}
+                  <span data-bind="text: $index() + 1"></span>
+          </label>
+
+          <div class="form-group col-xs-12 col-sm-10">
+            <input type="text" style="width: 45%" class="child_first"
+                   data-bind="value: first, attr: {id: 'child-first-'+$index()}"
+                   placeholder="First Name"/>
+
+            <input type="text" style="width: 45%" class="child_last" data-bind="value: last"
+                   placeholder="Last Name"/>
+
+            <div class="pull-right">
+              <button type="button" class="btn btn-xs btn-danger" data-bind="click: $root.remove_child">
+                <i class="ace-icon glyphicon-minus"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
+            <label style="margin-right: 1em;" data-bind="attr: {for: 'child-dob-'+$index()}">
+              Date of Birth
+            </label>
+
+            <input class="input-mask-date child_birthdate" data-bind="
+                          value: birthdate,
+                          attr: {id: 'child-dob-'+$index()},
+                          maskedInput: '99/99/9999'
+                          " type="text" placeholder="MM/DD/YYYY">
+            {#
+             This was required when we needed to subscribe to these changes:
+             event: {change: $root.update_rate_table},
+             #}
+          </div>
+
+        </div>
+      </div>
+      <!--/ko-->
+
+      <div class="row" id="addChildBtn">
+        <div class="col-xs-12 col-sm-offset-1 col-sm-2">
+          <button class="btn btn-default btn-sm" type="button" data-bind="click: add_child">
+            {# TODO: Add grandchildren text #}
+            Add Child{# <span data-bind="if: insurance_product.should_allow_grandchildren()">/Grandchild</span> #}
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    {# Payment Mode Selection #}
+    <div style="margin-top: 1.5em;" data-bind="visible: coverage_vm.can_change_payment_mode">
+      <div class="row">
+        <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="paymentMode">
+          Payment Mode
+        </label>
+
+        <div class="form-group col-xs-12 col-sm-10">
+          <select name="paymentMode" id="paymentMode"
+                  data-bind="
+                  value: coverage_vm.payment_mode,
+                  options: coverage_vm.payment_modes,
+                  optionsText: 'label',
+                  optionsCaption: '(Select Payment Mode)'"></select>
+        </div>
       </div>
     </div>
-
   </div>
 
-  {# Payment Mode Selection #}
-  <div style="margin-top: 1.5em;" data-bind="visible: coverage_vm.can_change_payment_mode">
+  {# Change applicant data button #}
+  <div class="row" data-bind="visible: !is_applicant_editor_visible()">
     <div class="row">
-      <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="paymentMode">
-        Payment Mode
-      </label>
-
-      <div class="form-group col-xs-12 col-sm-10">
-        <select name="paymentMode" id="paymentMode"
-                data-bind="
-                value: coverage_vm.payment_mode,
-                options: coverage_vm.payment_modes,
-                optionsText: 'label',
-                optionsCaption: '(Select Payment Mode)'"></select>
-      </div>
+      <!--ko foreach: {data: coverage_vm.applicants.get_valid_applicants(), as: 'applicant'}-->
+        <div class="col-xs-12 col-sm-11 col-sm-offset-1">
+          <span data-bind="text: applicant.name()"></span>, Age <span data-bind="text: applicant.get_age()"></span>
+        </div>
+      <!--/ko-->
+    </div>
+    <div class="align-center">
+      <button type="button" class="btn btn-default btn-sm"
+              data-bind="click: show_applicant_editor">
+        Change Applicant Data
+      </button>
     </div>
   </div>
 
@@ -231,8 +254,11 @@
   </div>
 
   {#  Rates/Recommended Coverage and Selected Plan Table #}
-  <div class="center recommended-coverage-table" data-bind="slideDownIf: is_coverage_selection_visible,
+  <div class="center recommended-coverage-table" data-bind="visible: is_coverage_selection_visible,
         css: {'ci-recommendations': should_show_critical_illness_styling}">
+
+
+    <h4 class="lighter block green text-left">Select Coverage</h4>
 
     <div class="center">
       <div data-bind="visible: is_rate_table_loading">
@@ -243,7 +269,7 @@
     </div>
 
 
-    <div data-bind="visible: !is_rate_table_loading(), with: coverage_vm">
+    <div style="border: 2px solid #ddd;" data-bind="visible: !is_rate_table_loading(), with: coverage_vm">
 
       <div data-bind="if: has_multiple_products">
 
@@ -309,7 +335,6 @@
   </div>
 
   <br/>
-  <br/>
 
 
     {# Decline any products option #}
@@ -322,15 +347,32 @@
       </div>
     </div>
 
-    {# Error message #}
-    <div id="benefit_required" class="error pull-right" data-bind="visible: is_selection_error_visible">
-      You must make a selection for each product before advancing.
+
+
+
+    <div class="row">
+      <div class="col-xs-12">
+
+        {# Error message #}
+        <div id="benefit_required" class="error pull-right" data-bind="visible: is_selection_error_visible">
+          You must make a selection for each product before advancing.
+        </div>
+
+        {# Total Modal Premium for All Products #}
+        <div class="pull-right" data-bind="if: is_coverage_selection_visible() && coverage_vm.payment_mode() && coverage_vm.has_multiple_products()">
+          <h4 class="light">Total <span data-bind="text: coverage_vm.payment_mode().display()"></span> premium all products: <strong data-bind="text: coverage_vm.format_grand_total_premium()"></strong></h4>
+        </div>
+
+        <div class="pull-right" data-bind="if: is_coverage_selection_visible() && coverage_vm.payment_mode() && !coverage_vm.has_multiple_products()">
+          <h4 class="light">Total <span data-bind="text: coverage_vm.payment_mode().display()"></span> premium: <span data-bind="text: coverage_vm.format_grand_total_premium()"></span></h4>
+        </div>
+
+      </div>
     </div>
+
   </form>
 
-  <div class="pull-right">
-    <h3>Total Premium All Products: <span data-bind="text: coverage_vm.format_grand_total_premium()"></span></h3>
-  </div>
+
 
 
 </div>
@@ -498,11 +540,11 @@
       <tr>
         <th></th>
         <!--ko foreach: {data: product_coverages}-->
-          <th class="text-center" data-bind="
+          <th class="text-center selectable" data-bind="
               click: $root.coverage_vm.select_product,
               css: {'active-product': $root.coverage_vm.current_product() === $data}
               ">
-            <div style="display: inline-block; width: 20px; border: 1px solid #eee; border-radius: 20px; background-color: white" data-bind="text: $index()+1"></div>
+            <div class="circled-number" data-bind="text: $index()+1"></div>
             <span data-bind="text: product.product_data.name"></span>
           </th>
         <!--/ko-->
@@ -516,13 +558,14 @@
           <td data-bind="text: applicant.name"></td>
           <!--ko foreach: {data: $parent.product_coverages, as: 'product_coverage'} -->
             <!--ko if: product_coverage.did_decline-->
-              <td>
+              <td class="selectable" data-bind="click: $root.coverage_vm.select_product,
+              css: {'active-product': $root.coverage_vm.current_product() === $data}">
                 <strong>Declined</strong>
               </td>
             <!--/ko-->
 
             <!--ko if: !product_coverage.did_decline()-->
-            <td data-bind="
+            <td class="selectable" data-bind="
               with: $parents[2].get_applicant_coverage_option_for_product(applicant, product),
               click: $root.coverage_vm.select_product,
               css: {'active-product': $root.coverage_vm.current_product() === $data}

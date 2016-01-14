@@ -9,6 +9,9 @@ var payment_mode = (function() {
     },
     display_lowercase: function() {
       return this.label.toLowerCase();
+    },
+    display: function() {
+      return this.label;
     }
   };
 

@@ -62,6 +62,8 @@ function init_validation(ui) {
           return false;
         }
 
+        // Scroll to top of page when moving to step 2.
+        $(document.body).scrollTop(0);
         return true;
       }
 

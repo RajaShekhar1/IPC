@@ -44,9 +44,9 @@ var wizard_viewmodel = (function() {
     this.payment_mode = ko.observable(
         payment_mode.select_initial_payment_mode(case_data, this.payment_modes)
     );
-    this.can_change_payment_mode = function() {
+    this.can_change_payment_mode = ko.computed(function() {
       return payment_mode.can_change_payment_mode(case_data);
-    };
+    });
     this.is_payment_mode_valid = ko.pureComputed(this._is_payment_mode_valid, this);
 
     this.product_coverage_viewmodels = ko.observableArray(_.map(this.products, function(p) {
@@ -134,7 +134,7 @@ var wizard_viewmodel = (function() {
     _is_payment_mode_valid: function() {
       return (
           (!this.can_change_payment_mode())
-          || (this.can_change_payment_mode() && this.payment_mode())
+          || (this.can_change_payment_mode() && this.payment_mode() != null)
       );
     },
     get_applicant_coverage_option_for_product: function(applicant, product) {
@@ -1017,6 +1017,10 @@ var wizard_viewmodel = (function() {
       return (self.is_show_rates_clicked() && self.can_display_rates_table());
     });
 
+    self.is_applicant_editor_visible = ko.pureComputed(function() {
+      return !self.is_recommended_table_visible();
+    });
+
     self.update_rate_table = function() {
       // Reset some validation errors
       //$.each(limit_error_lookup, function(k, v) {
@@ -1117,6 +1121,12 @@ var wizard_viewmodel = (function() {
         self.update_rate_table();
       }
 
+    };
+
+    self.show_applicant_editor = function() {
+      // Hide the rates table
+      self.has_show_rates_been_clicked(false);
+      self.is_show_rates_clicked(false);
     };
 
     self.is_coverage_selection_visible = ko.pureComputed(function() {

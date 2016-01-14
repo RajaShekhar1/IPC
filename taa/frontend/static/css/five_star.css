@@ -116,6 +116,28 @@ body {
     font-style: oblique;
 }
 
+table.summary-table,
+/* override the top border on the ace style for our summary table */
+.widget-body .table.summary-table{
+    border: 2px solid #ddd;
+    border-width: 0 0 2px 0;
+}
+
+.summary-table td.selectable, .summary-table th.selectable {
+    cursor: pointer;
+}
+
+
+.circled-number {
+    display: inline-block;
+    width: 22px;
+    border-radius: 11px;
+    border: 2px solid #aaa;
+    background-color: white;
+    color: #888;
+    font-weight: bold;
+}
+
 .summary-table th.active-product {
     background-color: #fafa8a;
     color: #838000;

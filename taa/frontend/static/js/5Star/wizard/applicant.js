@@ -260,6 +260,7 @@ var wizard_applicant = (function () {
     this.should_show_spouse = should_show_spouse;
     this.should_show_children = should_show_children;
     this.get_valid_applicants_for_coverage = ko.pureComputed(this._get_valid_applicants_for_coverage, this);
+    this.get_valid_applicants = ko.pureComputed(this._get_valid_applicants, this);
 
     // Create a default employee and spouse
     if (this.get_employee() === undefined) {
@@ -285,6 +286,11 @@ var wizard_applicant = (function () {
         applicants.push(this.get_children_group());
       }
       return applicants;
+    },
+    _get_valid_applicants: function() {
+      return _.filter(vm.coverage_vm.applicants.applicants(), function(a){
+        return a.is_valid();
+      })
     },
     get_employee: function() {
       return this._find_applicant_by_type(Applicant.EmployeeType);

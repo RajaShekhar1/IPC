@@ -228,8 +228,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     #     'payment_mode_choices': payment_mode_choices,
     #     'payment_mode': payment_mode,
     #     'case_id': case.id,
-    #     'record_id': record_id,
-    #     'account_href': current_user.get_id(),
+    #
     #     'selected_riders': []
     # }
     #
@@ -251,22 +250,19 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         case_data={
             'id': 1,
             'situs_state': state if state != 'XX' else None,
-            'situs_city': 'Chicago',
-            'company_name': "DelMar Software Development, LLC",
-            'group_riders': [],
-            'payment_mode': 52,
+            'situs_city': city,
+            'enroll_city': city,
+            'company_name': company_name,
+            'group_number': group_number,
+            'payment_mode': payment_mode,
             'product_settings': case.product_settings if case.product_settings else {},
+            'account_href': current_user.get_id(),
+            'record_id': record_id,
         },
         applicants= applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in case.products],
         payment_modes=payment_mode_choices,
-        # payment_modes=[
-        #   {'frequency': 52, 'label': 'Weekly'},
-        #   {'frequency': 26, 'label': 'Biweekly'},
-        #   {'frequency': 24, 'label': 'Semimonthly'},
-        #   {'frequency': 12, 'label': 'Monthly'}
-        # ],
-        beneficiaries=[],
+        #beneficiaries=[],
         spouse_questions=spouse_questions,
         health_questions=soh_questions,
     )
