@@ -193,7 +193,7 @@ var wizard_viewmodel = (function() {
 
     get_product_coverage: function(product) {
       return _.find(this.product_coverage_viewmodels(), function(pcov) {
-        return pcov.product === product;
+        return pcov.product.product_data.id === product.product_data.id;
       });
     },
 
