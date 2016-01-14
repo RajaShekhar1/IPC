@@ -266,6 +266,7 @@ class CensusRecordParser(object):
     employee_height_inches = CensusRecordField('EMP_HEIGHT_IN', 'employee_height_inches', preprocess_string, [])
     employee_weight_lbs = CensusRecordField('EMP_WEIGHT_LBS', 'employee_weight_lbs', preprocess_string, [])
     employee_smoker = CensusRecordField('EMP_SMOKER_Y_N', 'employee_smoker', preprocess_y_n, [])
+    employee_occupation_class = CensusRecordField('EMP_OCCUPATION', 'occupation_class', preprocess_string, [])
     # Spouse
     spouse_first = CensusRecordField('SP_FIRST', 'spouse_first', preprocess_string, [])
     spouse_last = CensusRecordField('SP_LAST', 'spouse_last', preprocess_string, [], [postprocess_spouse_last])
@@ -318,6 +319,7 @@ class CensusRecordParser(object):
         employee_height_inches,
         employee_weight_lbs,
         employee_smoker,
+        employee_occupation_class,
         spouse_first,
         spouse_last,
         spouse_ssn,

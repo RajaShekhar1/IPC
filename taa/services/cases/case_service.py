@@ -472,4 +472,19 @@ class CaseService(DBService):
     def is_agent_restricted_to_own_enrollments(self, agent, case):
         return not self.is_agent_allowed_to_view_full_census(agent, case)
 
+    def get_classifications(self, case):
+        classifications = []
+        if case.occupation_class_settings is not None:
+            for c in case.occupation_class_settings.get(
+                    'available_classifications', []):
+                classifications.append(c['label'])
+        return classifications
 
+    def get_classification_for_label(self, label, case):
+        if case.product_settings is None:
+            return None
+        mapping = case.product_settings['classification_mappings']
+        for k, v in mapping:
+            if k.lower() == label.lower():
+                return v
+        return None
