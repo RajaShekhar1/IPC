@@ -867,7 +867,7 @@ var wizard_viewmodel = (function() {
     self.product_health_questions = product_health_questions;
 
     self.button_groups = ko.pureComputed(function() {
-      return _.map(self.product_coverage.applicant_list.applicants(), function(applicant) {
+      return _.map(self.product_coverage.applicant_list.get_valid_applicants(), function(applicant) {
         // Create a button viewmodel that is linked to this question and the response object.
         var response = self.product_health_questions.get_applicant_answer_for_question(applicant, question);
         return new ResponseButtonGroup(question, applicant, response, {});
