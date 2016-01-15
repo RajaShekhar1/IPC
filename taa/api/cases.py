@@ -6,7 +6,7 @@ from flask_stormpath import current_user, groups_required, login_required
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
-from taa.services.cases import CaseService, SelfEnrollmentSetup
+from taa.services.cases import CaseService, SelfEnrollmentSetup, AgentSplitsSetup
 from taa.services.products.riders import RiderService
 from taa.services.cases.forms import (
     CensusRecordForm,
@@ -391,6 +391,23 @@ def update_self_enrollment_setup(case_id):
         return case_service.update_self_enrollment_setup(self_enrollment_setup, form.data)
 
     raise TAAFormError(form.errors)
+
+@route(bp, '/<case_id>/agent_splits_setup', methods=['PUT'])
+@login_required
+@groups_required(api_groups, all=False)
+def update_agent_split_setup(case_id):
+    case = case_service.get_if_allowed(case_id)
+
+    case_service.delete_agent_splits_setup_for_case(case)
+
+    if not case_service.can_current_user_edit_case(case):
+        abort(401)
+        return
+
+    for split in request.json:
+        case_service.create_agent_splits_setup(case, split)
+
+    return True
 
 
 def get_census_records_for_status(case, status=None):

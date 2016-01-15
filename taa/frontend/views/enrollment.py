@@ -475,7 +475,7 @@ def submit_wizard_data():
         raise
 
     data = jsonify(**resp)
-    
+
     # Need to manually commit all changes since this doesn't go through the API
     # right now
     db.session.commit()

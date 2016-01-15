@@ -385,6 +385,24 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     def child_birthdate(self, num):
         return getattr(self, 'child{}_birthdate'.format(num))
 
+class AgentSplitsSerializer(JsonSerializable):
+    __json_hidden__ = ['case']
+
+class AgentSplitsSetup(AgentSplitsSerializer, db.Model):
+    """
+    Model a case's agent commision splits
+    """
+    __tablename__ = 'agent_split_setups'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # Case
+    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True, index=True)
+    case = db.relationship('Case', backref='agent_splits')
+    agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
+    commision_subcount_code = db.Column(db.String, server_default="", default="")
+    split_percentage = db.Column(db.Integer)
+
 
 class SelfEnrollmentSerializer(JsonSerializable):
     __json_hidden__ = ['case', 'links', 'enrolling_agent']

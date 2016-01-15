@@ -29,6 +29,7 @@ class _CommonCaseFormMixin(object):
     agent_id = IntegerField('Agent', [validators.Optional()])
     active = BooleanField('Active')
     is_self_enrollment = BooleanField('Self-enrollment')
+    has_agent_splits = BooleanField('Agent-splits')
 
     def __init__(self, *args, **kwargs):
         super(_CommonCaseFormMixin, self).__init__(*args, **kwargs)

@@ -499,5 +499,3 @@ standard_coverage_options = [
     CoverageOption(is_by_face=True, amount=140000),
     CoverageOption(is_by_face=True, amount=150000),
 ]
-
-

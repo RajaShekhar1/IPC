@@ -21,6 +21,9 @@ var urls = (function urls() {
     get_case_api_self_enrollment_url: function(case_id) {
       return '/cases/' + case_id + '/self_enrollment_setup';
     },
+    get_case_api_agent_splits_url: function(case_id) {
+      return '/cases/' + case_id + '/agent_splits_setup';
+    },
     get_case_api_enrollment_records_url: function(case_id) {
       return '/cases/' + case_id + '/enrollment_records';
     },
