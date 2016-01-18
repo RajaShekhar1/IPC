@@ -643,6 +643,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.validate_splits = function() {
     //TODO: Make sure that splits for each product add up to 100
+    if (!self.has_agent_splits()) {
+      return true;
+    }
     var splits = self.serialize_agent_splits();
     var case_products = self.products();
     var allAddTo100 = true;
