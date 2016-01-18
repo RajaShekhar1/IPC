@@ -50,7 +50,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.enrollment_period_type = ko.observable(case_data.enrollment_period_type);
   self.enrollment_periods = ko.observableArray($.map(case_data.enrollment_periods, function(p) {
-        return new CaseEnrollmentPeriod(p)}
+        return new CaseEnrollmentPeriod(p); }
   ));
   self.situs_city = ko.observable(case_data.situs_city);
 
@@ -60,7 +60,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   function get_state_from_statecode(statecode) {
     return _.find(self.state_choices, function(c) {
       return c.statecode == statecode;
-    })
+    });
   }
 
   // Overrides for city state when doing an in-person enrollment.
@@ -123,7 +123,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   // Reset the overrides when the case values change
   self.situs_city.subscribe(function(new_val) {
-    self.enrollment_city_override(new_val)
+    self.enrollment_city_override(new_val);
   });
   self.situs_state.subscribe(function(new_val) {
     self.enrollment_state_override(new_val);
@@ -150,7 +150,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.partner_agents = ko.observable(
-      (case_data.partner_agents)? _.map(_.pluck(case_data.partner_agents, "id"), function(id) {return id+""}) : []);
+      (case_data.partner_agents)? _.map(_.pluck(case_data.partner_agents, "id"), function(id) {return id+"";}) : []);
 
 
   // Disable bad combos of states and products
@@ -162,6 +162,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   // Track whether or not we are editing products.
   self.is_editing_products = ko.observable(false);
+  if(case_data.products.length===0) {
+    self.is_editing_products(true);
+  }
   self.start_editing_products = function() {
     self.is_editing_products(true);
   };
@@ -184,11 +187,11 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return self.enrollment_period_type() === "annual";
   });
   self.get_open_enrollment_period = ko.computed(function() {
-    return _.find(self.enrollment_periods(), function(p) {return p.is_open()});
+    return _.find(self.enrollment_periods(), function(p) {return p.is_open();});
   });
 
   self.annual_enrollment_periods = ko.computed(function() {
-    return _.filter(self.enrollment_periods(), function(p) {return p.period_type === "annual_period"});
+    return _.filter(self.enrollment_periods(), function(p) {return p.period_type === "annual_period";});
   });
 
 
@@ -235,7 +238,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.case_riders_for_product = function(product) {
-    return _.filter(self.case_riders(), function(rider) {return rider.product === product});
+    return _.filter(self.case_riders(), function(rider) {return rider.product === product;});
   };
 
   self.enabled_case_riders = ko.computed(function() {
@@ -245,8 +248,181 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.enabled_case_riders_for_product = function(product) {
-    return _.filter(self.enabled_case_riders(), function(cr) {return cr.product === product});
+    return _.filter(self.enabled_case_riders(), function(cr) {return cr.product === product;});
   };
+
+  // Agent splits
+  self.owner_agent = ko.computed(function() {
+    return settings.active_agents.filter(function(elem) {
+      return elem.id == self.owner_agent_id();
+    })[0];
+  });
+  self.partner_agent_list = ko.computed(function() {
+    return settings.active_agents.filter(function(elem) {
+      return self.partner_agents().indexOf(String(elem.id)) !== -1;
+    });
+  });
+
+  self.has_agent_splits = ko.observable(case_data.agent_splits.length>0);
+  self.selected_agent_split = ko.observable("");
+  self.agent_split_records = ko.observableArray();
+  self.case_agents = ko.computed(function() {
+    return self.partner_agent_list().concat(self.owner_agent());
+  });
+  self.selected_agents = ko.observableArray();
+
+  self.unused_agents = ko.computed(function() {
+    var selected_ids = self.selected_agents().map(function(elem) {
+      return elem.id;
+    });
+    return self.case_agents().filter(function(i) {
+      if(i.id === null) { return true; }
+      return selected_ids.indexOf(i.id)===-1;
+    });
+  });
+
+  self.add_agent_split = function(record) {
+    if(self.selected_agent_split() !== "") {
+      var agent_split_record_template = function(agent) {
+        return {
+          agent_id: agent.id,
+          agent_name: agent.first+' '+agent.last,
+          valid: ko.computed(function() {
+            return self.case_agents().filter(function(elem) {
+              return elem.id===agent.id;
+            }).length !== 0;
+          }),
+          products: ko.computed(function() {
+            var products = [], case_products = self.products();
+            for (var i = 0; i < case_products.length; i++) {
+              products.push(
+                {
+                  product_id: case_products[i].id,
+                  product_name: case_products[i].name,
+                  commision_subcount_code: ko.observable(),
+                  split_percentage: ko.observable()
+                }
+              );
+            }
+            return products;
+          })
+        };
+      };
+      var selected_agent = self.selected_agent_split();
+
+      var split_record = new agent_split_record_template(selected_agent);
+
+      self.selected_agents.push(selected_agent);
+
+      self.agent_split_records.push(split_record);
+      self.selected_agent_split("");
+    }
+  };
+
+  function get_product_name_from_id(product_id) {
+      var cur_product = self.products().filter(function(elem) {
+        return elem.id === product_id;
+      })[0];
+      return cur_product.name;
+  }
+
+  function get_agent_name_from_id(id) {
+      if(id===null) { return "Writing Agent"; }
+      var cur_agent = settings.active_agents.filter(function(elem) {
+        return elem.id === id;
+      })[0];
+      return cur_agent.first + " " + cur_agent.last;
+  }
+
+  function AgentSplit(agent_id) {
+    this.agent_id = agent_id;
+    this.agent_name = get_agent_name_from_id(agent_id);
+    this.valid = ko.computed(function() {
+        if(agent_id===null) { return true; }
+        return self.case_agents().filter(function(elem) {
+          return elem.id===agent_id;
+        }).length !== 0;
+    });
+    this.products = ko.observableArray();
+    return;
+  }
+
+  Object.assign(AgentSplit.prototype, {
+    addProduct: function(id, commision_subcount_code, split_percentage) {
+      this.products.push({
+        product_id: id,
+        product_name: get_product_name_from_id(id),
+        commision_subcount_code: ko.observable(commision_subcount_code),
+        split_percentage: ko.observable(split_percentage)
+      });
+    },
+  });
+
+  function deserialize_agent_splits(records) {
+    if(!records) {
+      records = case_data.agent_splits;
+    }
+
+    var records_by_agent = {};
+    for (var i = 0; i < records.length; i++) {
+      var record = records[i];
+      if(!records_by_agent[record.agent_id]) {
+        if(record.agent_id === null) {
+          records_by_agent["writing"] = new AgentSplit(null);
+          self.selected_agents.push({first: "Writing", "last": "Agent", id: null});
+        } else {
+          records_by_agent[record.agent_id] = new AgentSplit(record.agent_id);
+          self.selected_agents.push(self.case_agents().filter(function(elem) { return elem.id === record.agent_id; })[0]);
+        }
+      }
+      if(record.agent_id === null) {
+        records_by_agent["writing"].addProduct(
+            record.product_id,
+            record.commision_subcount_code,
+            record.split_percentage
+        );
+      } else {
+        records_by_agent[record.agent_id].addProduct(
+            record.product_id,
+            record.commision_subcount_code,
+            record.split_percentage
+        );
+      }
+    }
+
+    /* var case_products = self.products();
+    for (var i = 0; i < case_products.length; i++) {
+      var current_product = case_products[i];
+      for(var record in records_by_agent) {
+        var agent_products = records_by_agent[record].products();
+
+        if()
+      }
+    } */
+
+    var has_writing = records.filter(function(elem) { return elem.agent_id === null; }).length === 0;
+    console.log(has_writing);
+
+    if(has_writing) {
+      /* we don't have a record with a null id, i.e. no writing agent */
+        if(!records_by_agent.writing) {
+          records_by_agent.writing = new AgentSplit(null);
+        }
+        var case_products = self.products();
+        for (var i = 0; i < case_products.length; i++) {
+          records_by_agent["writing"].addProduct(
+            case_products[i].id
+          );
+        }
+    }
+
+    return records_by_agent;
+  }
+
+  var records_on_case = deserialize_agent_splits();
+  for(var record in records_on_case) {
+      self.agent_split_records.push(records_on_case[record]);
+  }
 
   // Self-enrollment
   self.is_self_enrollment = ko.observable(case_data.is_self_enrollment);
@@ -258,12 +434,11 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
   });
   self.self_enrollment_type = ko.observable(case_data.self_enrollment_type);
-
   self.enrolling_agent_id = ko.observable(case_data.self_enrollment_setup.enrolling_agent_id);
 
   // Make sure there is at least one open enrollment period
   if (!self.get_open_enrollment_period()) {
-    self.enrollment_periods.push(new CaseEnrollmentPeriod({case_id: case_data.id, period_type: "open_with_start"}))
+    self.enrollment_periods.push(new CaseEnrollmentPeriod({case_id: case_data.id, period_type: "open_with_start"}));
   }
   // Make at least four annual enrollment periods by default
   if (self.annual_enrollment_periods().length < 4) {
@@ -280,7 +455,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   // utility methods for algorithm below
   function get_annual_periods_after_period(period) {
     var periods = self.annual_enrollment_periods();
-    return _.filter(periods, function(p) {return periods.indexOf(p) > periods.indexOf(period)})
+    return _.filter(periods, function(p) {return periods.indexOf(p) > periods.indexOf(period);});
   }
   function compute_next_quarter_start(m) {
     return m.add(3, "months");
@@ -289,7 +464,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return start.add(months, "months").subtract(1, "day");
   }
   function compute_quarterly_dates(period, val) {
-    if (val && period.is_valid_month_day(val) && period.end_date() == "") {
+    if (val && period.is_valid_month_day(val) && period.end_date() === "") {
       // Auto fill with end of next month approx. alg
       // Initial period is two months after start
       var computed_date = compute_period_end(period.get_month_day(val), 2);
@@ -327,7 +502,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   _.each(self.annual_enrollment_periods(), function(period) {
     _.each([period.start_date, period.end_date], function(date_observable){
       date_observable.subscribe(function(val) {
-        if (val == "") return;
+        if (val === "") return;
 
         var val_date = parse_month_date_input(val);
         if (!val_date.isValid()) {
@@ -392,20 +567,20 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       $("#log"+batch.id).html(data);
       $("#log"+batch.id+" .dt-responsive").dataTable();
       $("#log"+batch.id+" .dt-responsive .status").each(function() {
-        $(this).html(format_enrollment_status_html($(this).text()))
+        $(this).html(format_enrollment_status_html($(this).text()));
       });
     });
   };
 
   self.can_activate_case = ko.computed(function() {
     var is_valid = (
-        self.enrollment_period_type() != null &&
+        self.enrollment_period_type() !== null &&
         self.enrollment_periods().length > 0 &&
         self.products().length > 0 &&
-        $.trim(self.company_name()) != "" &&
-        $.trim(self.situs_city()) != "" &&
-        self.selected_statecode() != null &&
-        self.selected_payment_mode() != null &&
+        $.trim(self.company_name()) !== "" &&
+        $.trim(self.situs_city()) !== "" &&
+        self.selected_statecode() !== null &&
+        self.selected_payment_mode() !== null &&
         self.owner_agent_id() > 0
     );
 
@@ -436,7 +611,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     if (self.is_active()) {
       $("button.enroll-employee").prop('disabled', false);
     } else {
-      $("button.enroll-employee").prop('disabled', true)
+      $("button.enroll-employee").prop('disabled', true);
     }
   };
   self.toggle_enrollment_buttons();
@@ -452,7 +627,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.get_form_error = ko.pureComputed(function() {
     if (self.company_name.is_unique !== undefined &&
         self.company_name.is_unique() === false) {
-      return "The name '"+self.company_name()+"' is already used."
+      return "The name '"+self.company_name()+"' is already used.";
     }
     return "";
   });
@@ -464,6 +639,17 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       callback(is_unique);
     }, "json");
 
+  };
+
+  self.validate_splits = function() {
+    //TODO: Make sure that splits for each product add up to 100
+    var splits = self.serialize_agent_splits();
+    var case_products = self.products();
+    var allAddTo100 = true;
+    for(var i = 0; i<case_products.length; i++) {
+      allAddTo100 = allAddTo100 && (100 === splits.filter(function(elem) { return elem.product_id===case_products[i].id; }).reduce(function(a, b) { return a + parseInt(b.split_percentage,0); }, 0));
+    }
+    return allAddTo100;
   };
 
 
@@ -484,7 +670,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       add_case_error(errors, "company_name", unique_name_error);
     }
 
-    if ($.trim(self.company_name()) == "") {
+    if ($.trim(self.company_name()) === "") {
       add_case_error(errors, "company_name", "Company name is required.");
     }
 
@@ -492,19 +678,19 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     if (self.is_open_enrollment() && !self.get_open_enrollment_period().is_valid()) {
       var start = self.get_open_enrollment_period().start_date();
       var end = self.get_open_enrollment_period().end_date();
-      if(end != '') {
+      if(end !== '') {
         if(!is_valid_date(end)) {
-          add_case_error(errors, "open_enrollment_end_date", "Enter valid End Date")
+          add_case_error(errors, "open_enrollment_end_date", "Enter valid End Date");
         }
-        else if(start == '') {
-          add_case_error(errors, "open_enrollment_start_date", "Enter valid Start Date or both dates blank")
+        else if(start === '') {
+          add_case_error(errors, "open_enrollment_start_date", "Enter valid Start Date or both dates blank");
         }
       }
-      if(start != '' && !is_valid_date(start)) {
-        add_case_error(errors, "open_enrollment_start_date", "Enter valid Start Date")
+      if(start !== '' && !is_valid_date(start)) {
+        add_case_error(errors, "open_enrollment_start_date", "Enter valid Start Date");
       }
-      if(start != '' && end != '' && parse_date(start) > parse_date(end)) {
-        add_case_error(errors, "open_enrollment_start_date", "Start Date comes after End Date")
+      if(start !== '' && end !== '' && parse_date(start) > parse_date(end)) {
+        add_case_error(errors, "open_enrollment_start_date", "Start Date comes after End Date");
       }
     }
 
@@ -524,8 +710,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.missing_annual_period_predicate = function(period) {
-    var start_date_present = period.start_date() != "";
-    var end_date_present = period.end_date() != "";
+    var start_date_present = period.start_date() !== "";
+    var end_date_present = period.end_date() !== "";
     // XOR - one or the other, but not both the same
     return (start_date_present ? !end_date_present : end_date_present);
   };
@@ -535,7 +721,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.serialize_case = function() {
     var partner_agents = _.map(self.partner_agents(), function(id_str) {
-      return parseInt(id_str)
+      return parseInt(id_str);
     });
 
     return {
@@ -553,13 +739,13 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       is_self_enrollment: self.is_self_enrollment(),
       include_bank_draft_form: self.include_bank_draft_form(),
       product_settings: self.serialize_product_settings()
-    }
+    };
   };
 
   self.serialize_product_settings = function() {
     return {
       riders: self.serialize_riders()
-    }
+    };
   };
 
   self.serialize_riders = function() {
@@ -570,7 +756,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     if (self.is_annual_enrollment()) {
       // Only send valid periods
       return _.invoke(
-          _.filter(self.annual_enrollment_periods(), function(p) {return p.is_valid()}),
+          _.filter(self.annual_enrollment_periods(), function(p) {return p.is_valid(); }),
           "serialize");
     } else {
       var period = self.get_open_enrollment_period();
@@ -621,6 +807,24 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     };
   };
 
+  self.serialize_agent_splits = function() {
+    var records = self.agent_split_records(), serialized_records = [];
+    for (var i = 0; i < records.length; i++) {
+      var products = records[i].products();
+      for (var j=0; j < products.length; j++ ) {
+        if(products[j].commision_subcount_code()!=="" && products[j].split_percentage() > 0 && products[j].split_percentage() <= 100) {
+          serialized_records.push({
+            product_id: products[j].product_id,
+            agent_id: records[i].agent_id,
+            commision_subcount_code: products[j].commision_subcount_code(),
+            split_percentage: products[j].split_percentage(),
+          });
+        }
+      }
+    }
+    return serialized_records;
+  };
+
   self.loading_modal = ko.observable(null);
 
 
@@ -652,13 +856,30 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
         self.serialize_enrollment_periods()
     );
 
+    var self_enroll_request;
+
     if (self.is_self_enrollment()) {
       // Also save self enrollment settings.
-      var self_enroll_request = send_json_data(
+      self_enroll_request = send_json_data(
           "PUT",
           urls.get_case_api_self_enrollment_url(case_data.id),
           self.serialize_self_enroll()
       );
+    }
+
+    var agent_splits_request;
+
+    if(self.has_agent_splits()) {
+      // Also save agent split settings.
+      if(self.agent_split_records().length > 0) {
+        agent_splits_request = send_json_data(
+          "PUT",
+          urls.get_case_api_agent_splits_url(case_data.id),
+          self.serialize_agent_splits()
+        );
+      } else {
+
+      }
     }
 
     // Self Enroll settings
@@ -677,10 +898,11 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       self.loading_modal(null);
       self.flash_messages.flash_error("Save failed. Please correct any errors below.");
     };
+    var done;
     if (!self.is_self_enrollment()) {
-      var done = $.when(case_request, periods_request);
+      done = $.when(case_request, periods_request);
     } else {
-      var done = $.when(case_request, periods_request, self_enroll_request);
+      done = $.when(case_request, periods_request, self_enroll_request);
     }
 
     if(cb && typeof(cb) === "function") {
@@ -701,6 +923,11 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
 
     if (!self.validate()) {
+      self.flash_messages.flash_error("Please correct any errors below before saving.");
+      return false;
+    }
+
+    if (!self.validate_splits()) {
       self.flash_messages.flash_error("Please correct any errors below before saving.");
       return false;
     }
@@ -824,7 +1051,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       enrollment_tab.tab('show');
 
       // Load census data when tab loads
-      console.log("SetTimeout for load_initial_census_data")
+      console.log("SetTimeout for load_initial_census_data");
       setTimeout(load_initial_census_data, 0);
 
       function load_initial_census_data() {
@@ -888,4 +1115,3 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   }).run();
 
 };
-

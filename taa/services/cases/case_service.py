@@ -22,6 +22,7 @@ class CaseService(DBService):
     census_records = RequiredFeature('CensusRecordService')
     enrollment_periods = RequiredFeature('CaseEnrollmentPeriodsService')
     self_enrollment = RequiredFeature('SelfEnrollmentService')
+    agent_splits = RequiredFeature('AgentSplitsService')
     rider_service = RequiredFeature('RiderService')
 
     def __init__(self, *args, **kwargs):
@@ -430,6 +431,15 @@ class CaseService(DBService):
 
     def update_self_enrollment_setup(self, setup, data):
         return self.self_enrollment.update(setup, **data)
+
+    def get_agent_splits_setup(self, case):
+        return self.agent_splits.find(case_id=case.id)
+
+    def create_agent_splits_setup(self, case, data):
+        return self.agent_splits.create(case_id=case.id, **data)
+
+    def delete_agent_splits_setup_for_case(self, case):
+        return self.agent_splits.find(case_id=case.id).delete()
 
     def can_current_user_edit_case(self, case):
         from taa.services.agents import AgentService
