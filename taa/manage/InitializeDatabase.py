@@ -97,6 +97,20 @@ def init_basic_data():
             visible_to_agents=False,
             is_fpp_gov=True,
         ),
+        dict(
+            code=u"ACC",
+            name=u"Accident",
+            product_type=u"base",
+            visible_to_agents=True,
+            is_fpp_gov=False,
+        ),
+        dict(
+            code=u"HI",
+            name=u"Hospital Indemnity",
+            product_type=u"base",
+            visible_to_agents=True,
+            is_fpp_gov=False,
+        ),
     ]
     for product in product_data:
         #print("Checking {}".format(product['code']))

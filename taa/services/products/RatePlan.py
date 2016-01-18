@@ -464,6 +464,7 @@ class RatePlan(object):
 
             return rate_plan
 
+
 def load_rate_plan_for_base_product(base_product_code):
     if base_product_code == 'FPPTI':
         return RatePlan.load_from_yaml('fppti.yaml')
@@ -477,8 +478,13 @@ def load_rate_plan_for_base_product(base_product_code):
         return RatePlan.load_from_yaml('fpptiy.yaml')
     elif base_product_code == 'FPPTIB':
         return RatePlan.load_from_yaml('fpptib.yaml')
+    elif base_product_code == 'ACC':
+        return RatePlan.load_from_yaml('fppti.yaml')
+    elif base_product_code == 'HI':
+        return RatePlan.load_from_yaml('fppti.yaml')
     else:
         raise ValueError("No rate plan configured for base product '{}'".format(base_product_code))
+
 
 standard_coverage_options = [
     CoverageOption(is_by_face=True, amount=10000),
