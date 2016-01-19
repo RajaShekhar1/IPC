@@ -125,8 +125,13 @@ table.summary-table,
 
 .summary-table td.selectable, .summary-table th.selectable {
     cursor: pointer;
+    /* Give the product columns a border between each other. */
+    border: 2px solid #ddd;
+    border-width: 0 2px;
 }
-
+.summary-table th.selectable {
+    border-width: 0 2px 2px 2px;
+}
 
 .circled-number {
     display: inline-block;

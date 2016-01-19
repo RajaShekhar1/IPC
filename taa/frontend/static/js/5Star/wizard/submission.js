@@ -66,21 +66,14 @@ function build_wizard_results_for_product_coverage(product_cov) {
     payment_mode: root.coverage_vm.payment_mode().frequency,
     payment_mode_text: root.coverage_vm.payment_mode().label,
 
-    // TODO Need health questions
-    // health_questions: $.map(window.root.health_questions(), function(q) {return q.question}),
-
     method: (root.is_in_person_application()) ? 'in_person': 'self_enroll_email',
-    did_decline: product_cov.did_decline(),
+    did_decline: (root.coverage_vm.has_multiple_products()) ? product_cov.did_decline() : root.did_decline(),
 
     identityToken: root.identityToken(),
     identityType: root.identityType(),
 
     employee: root.employee().serialize_data(),
-
-    employee_soh_questions: health_questions.serialize_answers_for_applicant(vm.employee()),
-
     spouse: root.spouse().serialize_data(),
-    spouse_soh_questions: health_questions.serialize_answers_for_applicant(vm.spouse()),
 
     is_spouse_address_same_as_employee: root.is_spouse_address_same_as_employee(),
     is_spouse_email_same_as_employee: root.is_spouse_email_same_as_employee(),
@@ -117,6 +110,11 @@ function build_wizard_results_for_product_coverage(product_cov) {
     spouse_contingent_beneficiary: product_cov.spouse_contingent_beneficiary().serialize()
   };
 
+  if (health_questions) {
+    wizard_results.employee_soh_questions = health_questions.serialize_answers_for_applicant(vm.employee());
+    wizard_results.spouse_soh_questions = health_questions.serialize_answers_for_applicant(vm.spouse());
+
+  }
 
   if (!root.should_include_spouse_in_table()) {
     wizard_results.employee_beneficiary = "other";
@@ -145,8 +143,10 @@ function build_wizard_results_for_product_coverage(product_cov) {
     var coverage = product_cov.__get_coverage_for_applicant(child);
     wizard_results['child_coverages'].push(coverage.coverage_option().serialize_data());
 
-    var soh_questions = health_questions.serialize_answers_for_applicant(child);
-    wizard_results['children_soh_questions'].push(soh_questions);
+    if (health_questions) {
+      var soh_questions = health_questions.serialize_answers_for_applicant(child);
+      wizard_results['children_soh_questions'].push(soh_questions);
+    }
   });
 
   wizard_results['product_id'] = product_cov.product.product_data.id;
@@ -157,7 +157,7 @@ function build_wizard_results_for_product_coverage(product_cov) {
   wizard_results.replacement_using_funds = root.replacement_using_funds();
   wizard_results.replacement_policies = _.invoke(root.replacement_policies(), "serialize");
 
-  // TODO: Add this back in
+  // Rider data
   wizard_results.rider_data = product_cov.selected_riders.serialize_data();
 
   return wizard_results;
@@ -165,46 +165,52 @@ function build_wizard_results_for_product_coverage(product_cov) {
 
 
 //
-//function submit_decline() {
-//  var root = window.vm;
-//
-//  // Pull out all the data we need for docusign
-//  var wizard_results = {
-//    agent_data: root.options,
-//    enrollCity:  root.enrollCity(),
-//    enrollState:  root.enrollState,
-//    product_type: root.insurance_product.product_type,
-//    method: (ui.is_in_person_application()) ? 'in_person': 'self_enroll_email',
-//    did_decline: ui.did_decline(),
-//    employee: root.employee().serialize_data(),
-//    spouse: root.spouse().serialize_data()
-//  };
-//
-//  // Children
-//  wizard_results['children'] = [];
-//  $.each(root.get_valid_children(), function() {
-//    var child = this;
-//    wizard_results['children'].push(this.serialize_data());
-//  });
-//
-//  wizard_results['product_data'] = ui.insurance_product.product_data;
-//
-//  // Send to server
-//  ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function (resp) {
-//    if (resp.error) {
-//      bootbox.dialog({
-//        message: "There was a problem submitting the form (" + resp.error + ").  Please contact the enrollment system administrator.",
-//        buttons: {
-//          "success": {
-//            "label": "OK",
-//            "className": "btn-sm btn-primary"
-//          }
-//        }
-//      });
-//    } else {
-//      // Docusign redirect
-//      location = resp.redirect;
-//    }
-//  }, handle_remote_error, true);
-//
-//}
+function submit_decline() {
+  var root = window.vm;
+
+  //var submission_data = _.map(root.product_coverage_viewmodels(), function(product_coverage) {
+  //  // Pull out all the data we need for docusign
+  //  var wizard_results = {
+  //    agent_data: root.options,
+  //    enrollCity:  root.enrollCity(),
+  //    enrollState:  root.enrollState,
+  //    product_type: root.insurance_product.product_type,
+  //    method: (ui.is_in_person_application()) ? 'in_person': 'self_enroll_email',
+  //    did_decline: ui.did_decline(),
+  //    employee: root.employee().serialize_data(),
+  //    spouse: root.spouse().serialize_data()
+  //  };
+  //
+  //  // Children
+  //  wizard_results['children'] = [];
+  //  $.each(root.get_valid_children(), function() {
+  //    var child = this;
+  //    wizard_results['children'].push(this.serialize_data());
+  //  });
+  //
+  //  wizard_results['product_data'] = ui.coverage_vm().product_data;
+  //  return wizard_results;
+  //});
+  var results = _.map(root.product_coverage_viewmodels(), function(product_cov) {
+    return build_wizard_results_for_product_coverage(product_cov);
+  });
+
+  // Send to server
+  ajax_post("/submit-wizard-data", {"wizard_results": results}, function (resp) {
+    if (resp.error) {
+      bootbox.dialog({
+        message: "There was a problem submitting the form (" + resp.error + ").  Please contact the enrollment system administrator.",
+        buttons: {
+          "success": {
+            "label": "OK",
+            "className": "btn-sm btn-primary"
+          }
+        }
+      });
+    } else {
+      // Docusign redirect
+      location = resp.redirect;
+    }
+  }, handle_remote_error, true);
+
+}

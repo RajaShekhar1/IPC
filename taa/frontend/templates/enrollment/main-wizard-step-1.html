@@ -349,15 +349,15 @@
         </div>
 
         {# Decline option for product #}
-        <div class="row">
-          <div class="col-xs-12 text-center red">
-            <div class="decline-option">
-              <label><input type="checkbox" data-bind="checked: current_product().did_decline"> I decline to enroll in
-                <span data-bind="text: current_product().format_product_name()"></span> at this time
-              </label>
-            </div>
-          </div>
-        </div>
+{#        <div class="row">#}
+{#          <div class="col-xs-12 text-center red">#}
+{#            <div class="decline-option">#}
+{#              <label><input type="checkbox" data-bind="checked: current_product().did_decline"> I decline to enroll in#}
+{#                <span data-bind="text: current_product().format_product_name()"></span> at this time#}
+{#              </label>#}
+{#            </div>#}
+{#          </div>#}
+{#        </div>#}
 
       </div>
 
@@ -369,14 +369,14 @@
 
 
     {# Decline any products option #}
-{#    <div class="row" data-bind="visible: !coverage_vm.has_multiple_products()">#}
-{#      <div class="col-xs-12 text-center red" data-bind="if: can_decline">#}
-{#        <div class="decline-option">#}
-{#          <label><input type="checkbox" data-bind="checked: did_decline"> I decline to enroll in any of the 5Star#}
-{#            products at this time</label>#}
-{#        </div>#}
-{#      </div>#}
-{#    </div>#}
+    <div class="row" data-bind="visible: !coverage_vm.has_multiple_products()">
+      <div class="col-xs-12 text-center red" data-bind="if: can_decline">
+        <div class="decline-option">
+          <label><input type="checkbox" data-bind="checked: did_decline"> I decline to enroll in any of the 5Star
+            products at this time</label>
+        </div>
+      </div>
+    </div>
 
 
 
@@ -569,17 +569,18 @@
   <table class="table table-striped table-responsive summary-table" data-bind="with: coverage_summary_vm">
     <thead>
       <tr>
-        <th></th>
+        <th style="width: 10%"></th>
         <!--ko foreach: {data: product_coverages}-->
           <th class="text-center selectable" data-bind="
               click: $root.coverage_vm.select_product,
-              css: {'active-product': $root.coverage_vm.current_product() === $data}
+              css: {'active-product': $root.coverage_vm.current_product() === $data},
+              attr: {style: 'width: '+((100-10-6)/($root.products.length))+'%'}
               ">
             <div class="circled-number" data-bind="text: $index()+1"></div>
             <span data-bind="text: product.product_data.name"></span>
           </th>
         <!--/ko-->
-        <th class="text-center">Total</th>
+        <th class="text-center" style="width: 6%">Total</th>
       </tr>
     </thead>
     <tbody>

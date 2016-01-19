@@ -455,8 +455,8 @@ def submit_wizard_data():
                 'error_message': '',
                 'redirect': url_for('ds_landing_page',
                                     event='decline',
-                                    name=wizard_results['employee']['first'],
-                                    type='inperson' if wizard_results["method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
+                                    name=wizard_results[0]['employee']['first'],
+                                    type='inperson' if wizard_results[0]["method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
                                     )
             }
     except Exception:
