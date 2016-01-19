@@ -119,51 +119,59 @@
         </div>
 
         <div id="modal-auto-increase-rider" class="modal">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 class="lighter block blue center">What is an Automatic Increase Benefit?</h3>
-                    </div>
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="lighter block blue center">What is an Automatic Increase Benefit?</h3>
+              </div>
 
-                    <div class="modal-body">
-                        <!--ko with: $root.coverage_vm.current_product().shown_rider -->
-                          To make your Family Protection Plan even more valuable, you have an additional benefit that makes your coverage more robust and responsive to your growing coverage needs.  This optional add-on ("rider") incrementally increases your coverage by the amount of insurance that $1 in weekly premium purchases at your attained age over a <span data-bind="text: get_policy_years().length"></span> consecutive year period.  It starts on your first policy anniversary, and a $1/week premium increase is automatically approved with no further health qualification.  A demonstration of how this increasing benefit works is shown below.
+              <div class="modal-body" data-bind="with: $root.coverage_vm.current_product().shown_rider">
+                To make your Family Protection Plan even more valuable, you have an additional benefit that makes your
+                coverage more robust and responsive to your growing coverage needs. This optional add-on ("rider")
+                incrementally increases your coverage by the amount of insurance that $1 in weekly premium purchases at
+                your attained age over a <span data-bind="text: get_policy_years().length"></span> consecutive year
+                period. It starts on your first policy anniversary, and a $1/week premium increase is automatically
+                approved with no further health qualification. A demonstration of how this increasing benefit works is
+                shown below.
 
-                          <div class="space-10"></div>
+                <div class="space-10"></div>
 
-                          <table class="table table-bordered table-striped">
-                              <thead>
-                                  <tr>
-                                      <th class="center">Policy Year</th>
-                                      <th class="center">Age</th>
-                                      <th class="center">Additional Coverage</th>
-                                      <th class="center">Total Coverage</th>
-                                  </tr>
-                              </thead>
-                              <tbody>
-                                  <!--ko foreach: {data: get_policy_years(), as: 'year'} -->
-                                  <tr>
-                                      <td class="center" data-bind="text: year"></td>
-                                      <td class="center" data-bind="text: $parent.get_age_for_policy_year(year)"></td>
-                                      <td class="center" data-bind="text: $parent.format_coverage_for_year(year)"></td>
-                                      <td class="center" data-bind="text: $parent.format_total_coverage_for_year(year)"></td>
-                                  </tr>
-                                  <!--/ko-->
-                              </tbody>
-                          </table>
+                <table class="table table-bordered table-striped">
+                  <thead>
+                  <tr>
+                    <th class="center">Policy Year</th>
+                    <th class="center">Age</th>
+                    <th class="center">Additional Coverage</th>
+                    <th class="center">Total Coverage</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <!--ko foreach: {data: get_policy_years(), as: 'year'} -->
+                  <tr>
+                    <td class="center" data-bind="text: year"></td>
+                    <td class="center" data-bind="text: $parent.get_age_for_policy_year(year)"></td>
+                    <td class="center" data-bind="text: $parent.format_coverage_for_year(year)"></td>
+                    <td class="center" data-bind="text: $parent.format_total_coverage_for_year(year)"></td>
+                  </tr>
+                  <!--/ko-->
+                  </tbody>
+                </table>
 
-                          Total <span data-bind="text: get_policy_years().length"></span> year increase of <span data-bind="text: format_coverage_for_policy()"></span> coverage for $<span data-bind="text: get_policy_years().length"></span>/week additional premium.
-                        <!--/ko-->
-                        <br>
-                        <br>
-                        See <a href="http://5starlifeinsurance.com/FPP_Auto_Increase_Rider" target="blank">this flyer</a> and your policy certificate for more details.
-                    </div>
+                Total <span data-bind="text: get_policy_years().length"></span> year increase of <span
+                      data-bind="text: format_coverage_for_policy()"></span> coverage for $<span
+                      data-bind="text: get_policy_years().length"></span>/week additional premium.
 
-                    <div class="modal-footer">
-                        <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
-                    </div>
-                </div>
+                <br>
+                <br>
+                See <a href="http://5starlifeinsurance.com/FPP_Auto_Increase_Rider" target="blank">this flyer</a> and
+                your policy certificate for more details.
+              </div>
+
+              <div class="modal-footer">
+                <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
+              </div>
             </div>
+          </div>
         </div>
 
         <div id="actively_at_work_modal" class="modal">

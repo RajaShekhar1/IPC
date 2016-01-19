@@ -772,7 +772,7 @@ var wizard_viewmodel = (function() {
     self.get_total_coverage_for_year = function (n) {
       var additional_coverage = self.get_coverage_for_year(n);
       if (n == 2) {
-        var selected_coverage = self.root.get_coverage_for_applicant(self.applicant).coverage_option().face_value;
+        var selected_coverage = parseInt(self.root.get_coverage_for_applicant(self.applicant).coverage_option().face_value);
         return selected_coverage + additional_coverage;
       }
 
@@ -1226,14 +1226,17 @@ var wizard_viewmodel = (function() {
 
     // Can the applicant globally decline coverage?
     self.can_decline = ko.computed(function() {
-      // TODO: Re-implement
-      /*
+
       // Can not decline if any applicant has applied for coverage already
-      return (!_.any(self.applicant_list.applicants(), function(applicant) {
-        return applicant.get_existing_coverage_amount_for_product(self.insurance_product.product_data.id);
+      return (!_.any(self.product_coverage_viewmodels(), function(product_coverage) {
+        return !_.any(self.applicant_list.applicants(), function(applicant) {
+          // Does the applicant have existing coverage for this product?
+          return _.any(applicant.existing_coverages, function(existing_coverage) {
+            return existing_coverage.product_id === product_coverage.product.id;
+          });
+        });
       }));
-      */
-      return true;
+
     });
 
     // Globally decline coverage.
