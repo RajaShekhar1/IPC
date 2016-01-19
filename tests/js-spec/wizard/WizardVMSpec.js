@@ -232,9 +232,9 @@ describe("Wizard ViewModel", function() {
     var wizard = create_wizard(test_data);
     var offered_product_vm = wizard.product_coverage_viewmodels()[0];
 
-    var emp_coverage_selection = offered_product_vm.get_coverage_for_applicant(wizard.applicant_list.get_employee());
-    var spouse_coverage_selection = offered_product_vm.get_coverage_for_applicant(wizard.applicant_list.get_spouse());
-    var children_coverage_selection = offered_product_vm.get_coverage_for_applicant(wizard.applicant_list.get_children_group());
+    var emp_coverage_selection = offered_product_vm.__get_coverage_for_applicant(wizard.applicant_list.get_employee());
+    var spouse_coverage_selection = offered_product_vm.__get_coverage_for_applicant(wizard.applicant_list.get_spouse());
+    var children_coverage_selection = offered_product_vm.__get_coverage_for_applicant(wizard.applicant_list.get_children_group());
 
     expect(emp_coverage_selection.format_name()).toEqual(wizard.employee().name());
     expect(spouse_coverage_selection.format_name()).toEqual(wizard.spouse().name());
@@ -246,14 +246,14 @@ describe("Wizard ViewModel", function() {
 
     var offered_product_vm = wizard.product_coverage_viewmodels()[0];
 
-    var applicant_coverage_selection = offered_product_vm.get_coverage_for_applicant(wizard.applicant_list.get_employee());
+    var applicant_coverage_selection = offered_product_vm.__get_coverage_for_applicant(wizard.applicant_list.get_employee());
     expect(applicant_coverage_selection.has_selected_coverage()).toEqual(false);
   });
 
   it("should show an applicant's coverage level after selecting a specific coverage for an applicant", function() {
     var wizard = create_wizard(test_data);
     var offered_product_vm = wizard.product_coverage_viewmodels()[0];
-    var emp_selected_cov = offered_product_vm.get_coverage_for_applicant(wizard.applicant_list.get_employee());
+    var emp_selected_cov = offered_product_vm.__get_coverage_for_applicant(wizard.applicant_list.get_employee());
 
     var option = new CoverageOption({coverage: 10000, premium: 3.59});
     emp_selected_cov.select_custom_coverage(option);
@@ -271,7 +271,7 @@ describe("Wizard ViewModel", function() {
 
     offered_product_vm.select_recommended_coverage(recommendations[0].coverages);
 
-    var emp_selected_cov = offered_product_vm.get_coverage_for_applicant(wizard.applicant_list.get_employee());
+    var emp_selected_cov = offered_product_vm.__get_coverage_for_applicant(wizard.applicant_list.get_employee());
     expect(emp_selected_cov.get_selected_coverage()).toBe(recommendations[0].coverages.employee);
   });
 

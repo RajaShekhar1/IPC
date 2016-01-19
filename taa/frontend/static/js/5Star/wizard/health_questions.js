@@ -234,7 +234,7 @@ var GIHealthQuestion = function(product, question, product_coverage, applicant_c
     }
 
     var applicant = self.product_coverage.applicant_list.get_employee();
-    var coverage = self.product_coverage.get_coverage_for_applicant(applicant).coverage_option();
+    var coverage = self.product_coverage.__get_coverage_for_applicant(applicant).coverage_option();
     var employee_criteria = self.get_criteria("Employee");
     return _.find(employee_criteria, function(criterion) {
       return self.does_applicant_meet_GI_criteria(applicant, coverage, criterion);
@@ -250,7 +250,7 @@ var GIHealthQuestion = function(product, question, product_coverage, applicant_c
       return undefined;
     }
     var applicant = self.product_coverage.applicant_list.get_spouse();
-    var coverage = self.product_coverage.get_coverage_for_applicant(applicant).coverage_option();
+    var coverage = self.product_coverage.__get_coverage_for_applicant(applicant).coverage_option();
     var criteria = self.get_criteria("Spouse");
     return _.find(criteria, function(criterion) {
       return self.does_applicant_meet_GI_criteria(applicant, coverage, criterion);
@@ -275,7 +275,7 @@ var GIHealthQuestion = function(product, question, product_coverage, applicant_c
     }
     var criteria = self.get_criteria("Child");
     var children = self.product_coverage.applicant_list.get_children_group();
-    var coverage = self.product_coverage.get_coverage_for_applicant(children).coverage_option();
+    var coverage = self.product_coverage.__get_coverage_for_applicant(children).coverage_option();
     return _.find(criteria, function(criterion) {
       return self.does_applicant_meet_GI_criteria(child_applicant, coverage, criterion);
     });
@@ -342,7 +342,7 @@ var GIHealthQuestion = function(product, question, product_coverage, applicant_c
     // See if there is a GI condition with a lower coverage amount.
     var reduced_gi_criterion;
     var criteria = self.get_criteria(applicant_type);
-    var coverage = self.product_coverage.get_coverage_for_applicant(applicant).coverage_option();
+    var coverage = self.product_coverage.__get_coverage_for_applicant(applicant).coverage_option();
 
     // Does the applicant meet any of the demographic GI criteria?
     if (applicant_type == "Employee") {
@@ -377,7 +377,7 @@ var GIHealthQuestion = function(product, question, product_coverage, applicant_c
         );
 
         // Select this coverage.
-        self.product_coverage.get_coverage_for_applicant(applicant).customized_coverage_option(max_option);
+        self.product_coverage.__get_coverage_for_applicant(applicant).customized_coverage_option(max_option);
       }},
       remove: {label: "Remove this applicant", className: 'btn-danger', callback: function() {
         var applicant_coverage_options = self.product_coverage.get_coverage_options_for_applicant(applicant);
@@ -390,7 +390,7 @@ var GIHealthQuestion = function(product, question, product_coverage, applicant_c
             return o.face_value == 0
           });
 
-          self.product_coverage.get_coverage_for_applicant(applicant).customized_coverage_option(null_option);
+          self.product_coverage.__get_coverage_for_applicant(applicant).customized_coverage_option(null_option);
         }
       }},
       ignore: {label: "Ignore and Continue", className: 'btn-default', callback: function() {

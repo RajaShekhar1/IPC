@@ -72,7 +72,7 @@ ko.bindingHandlers.flagBtn = {
     if (val.applicant) {
       var applicant = val.applicant;
       var product_health_questions = val.product_health_questions;
-      var applicant_coverage = product_health_questions.product_coverage.get_coverage_for_applicant(applicant);
+      var applicant_coverage = product_health_questions.product_coverage.__get_coverage_for_applicant(applicant);
 
       var question_text = val.question.get_question_text();
       /*var applicant_health_answer = product_health_questions.get_applicant_answer_for_question(applicant, question_text);

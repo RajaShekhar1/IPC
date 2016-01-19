@@ -123,13 +123,13 @@ function build_wizard_results_for_product_coverage(product_cov) {
   }
 
   // Coverages
-  var emp_coverage = product_cov.get_coverage_for_applicant(root.employee());
+  var emp_coverage = product_cov.__get_coverage_for_applicant(root.employee());
   if (emp_coverage.coverage_option().is_valid()) {
     wizard_results['employee_coverage'] = emp_coverage.coverage_option().serialize_data();
   } else {
     wizard_results['employee_coverage'] = ""
   }
-  var sp_benefit = product_cov.get_coverage_for_applicant(root.spouse());
+  var sp_benefit = product_cov.__get_coverage_for_applicant(root.spouse());
   if (sp_benefit.coverage_option().is_valid()) {
     wizard_results['spouse_coverage'] = sp_benefit.coverage_option().serialize_data();
   } else {
@@ -142,7 +142,7 @@ function build_wizard_results_for_product_coverage(product_cov) {
   wizard_results['children_soh_questions'] = [];
   _.each(product_cov.get_covered_children(), function(child) {
     wizard_results['children'].push(child.serialize_data());
-    var coverage = product_cov.get_coverage_for_applicant(child);
+    var coverage = product_cov.__get_coverage_for_applicant(child);
     wizard_results['child_coverages'].push(coverage.coverage_option().serialize_data());
 
     var soh_questions = health_questions.serialize_answers_for_applicant(child);

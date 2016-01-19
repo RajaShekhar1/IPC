@@ -229,7 +229,7 @@
   {# Change applicant data button #}
   <div class="row" data-bind="visible: !is_applicant_editor_visible()">
     <div class="row">
-      <!--ko foreach: {data: coverage_vm.applicants.get_valid_applicants(), as: 'applicant'}-->
+      <!--ko foreach: {data: coverage_vm.applicants_in_table(), as: 'applicant'}-->
         <div class="col-xs-12 col-sm-11 col-sm-offset-1">
           <span data-bind="text: applicant.name()"></span>, Age <span data-bind="text: applicant.get_age()"></span>
         </div>
