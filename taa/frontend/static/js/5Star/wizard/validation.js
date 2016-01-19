@@ -34,25 +34,29 @@ function init_validation(ui) {
       // TODO: Re-implement check for adding on too much coverage.
 
       //var current_product_id = ui.insurance_product.product_data.id;
-      //var plan = ui.selected_plan();
 
-      function validate_coverage_amount(applicant, applicant_type, selected_coverage) {
-        var existing_coverage_amount = applicant.get_existing_coverage_amount_for_product(current_product_id);
+      function validate_coverage_amount(applicant_coverage) {
+        var product_id = applicant_coverage.product.product_data.id;
+        var product = applicant_coverage.product;
+        var applicant = applicant_coverage.applicant;
+
+        var existing_coverage_amount = applicant.get_existing_coverage_amount_for_product(product_id);
         if (!existing_coverage_amount) {
           // Short-circuit, there is no existing coverage to check so we are OK
           return true;
         }
 
-        var applied_coverage_amount = (selected_coverage.is_valid())? selected_coverage.face_value: 0;
-        var max_coverage_amount = ui.insurance_product.get_maximum_coverage_amount(applicant_type);
+        var selected_option = applicant_coverage.get_selected_coverage();
+        var applied_coverage_amount = (selected_option.is_valid())? selected_option.face_value: 0;
+        var max_coverage_amount = applicant_coverage.product.get_maximum_coverage_amount(applicant_coverage.applicant.type);
 
         var name = applicant.name();
-        if (existing_coverage_amount && (max_coverage_amount < existing_coverage_amount+applied_coverage_amount)) {
+        if (applied_coverage_amount > 0 && existing_coverage_amount && (max_coverage_amount < existing_coverage_amount + applied_coverage_amount)) {
 
           var additional_allowed_coverage = max_coverage_amount - existing_coverage_amount;
           // Make sure that we don't show a negative number here
           additional_allowed_coverage = _.max([0, additional_allowed_coverage]);
-          var msg = ("Due to one or more previous applications this enrollment period for "+
+          var msg = ("Due to one or more previous applications for " + product.product_data.name + " this enrollment period for "+
           format_face_value(existing_coverage_amount)+
           " coverage, "+name+" can apply for a maximum of "+
           format_face_value(additional_allowed_coverage)+" additional coverage.");
@@ -61,24 +65,32 @@ function init_validation(ui) {
           return false;
         }
 
-        // Scroll to top of page when moving to step 2.
-        $(document.body).scrollTop(0);
+
         return true;
       }
 
-      // TODO: Re-enable for multiproduct.
       // Check each applicant for selecting too much product.
-      //_.each(plan.get_covered_applicants_with_type(), function(val) {
-      //  var applicant_type = {"Employee":"employee", "Spouse": "spouse", "Child": "children"}[val.type];
-      //  var can_apply = validate_coverage_amount(val.applicant, applicant_type, val.coverage);
-      //  if (!can_apply) {
-      //    is_valid = false;
-      //  }
-      //});
+      _.each(ui.coverage_vm.selected_product_coverages(), function(product_coverage) {
+        _.each(product_coverage.applicant_coverage_selections(), function(applicant_coverage) {
+          var can_apply = validate_coverage_amount(applicant_coverage);
+          if (!can_apply) {
+            is_valid = false;
+            // Break out of loop.
+            return false;
+          }
+        });
+        if (!is_valid) {
+          // Break out of loop.
+          return false;
+        }
+      });
 
       if (!is_valid) {
         e.preventDefault();
       }
+
+      // Scroll to top of page when moving to step 2.
+      $(document.body).scrollTop(0);
     }
     if (info.step == 2 && info.direction == 'next') {
       var is_valid = true;
@@ -109,7 +121,7 @@ function init_validation(ui) {
       }
 
       // validate questions
-      is_valid &=  are_health_questions_valid();
+      is_valid &= health_questions.are_health_questions_valid();
 
       if (!is_valid) {
         $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");

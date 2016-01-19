@@ -1,3 +1,147 @@
+var health_question_buttons = (function() {
+
+  function HealthButtonRow(question, product_coverage, product_health_questions) {
+    var self = this;
+    self.question = question;
+    self.product_coverage = product_coverage;
+    self.product_health_questions = product_health_questions;
+
+    self.button_groups = ko.pureComputed(function() {
+      return _.map(self.product_coverage.applicant_list.get_valid_applicants(), function(applicant) {
+        // Create a button viewmodel that is linked to this question and the response object.
+        var response = self.product_health_questions.get_applicant_answer_for_question(applicant, question);
+        return new ResponseButtonGroup(question, applicant, response, {});
+      });
+    });
+  }
+
+  function ResponseButtonGroup(question, applicant, response, options) {
+    var self = this;
+    self.question = question;
+    self.applicant = applicant;
+    self.response = response;
+
+    self.yes_text = options.yes_text || "Yes";
+    self.no_text = options.yes_text || "No";
+    self.yes_highlight = self.question.get_yes_highlight();
+    self.no_highlight = "checkmark";
+
+    self.handle_yes = function() {
+      //console.log('Yes', self);
+      self.response.value('Yes');
+      self.question.show_yes_dialogue(self.applicant.type, self.applicant);
+    };
+    self.handle_no = function() {
+      self.response.value('No');
+    };
+
+    self.does_applicant_need_to_answer = ko.pureComputed(function() {
+      return self.question.does_applicant_need_to_answer(self.applicant);
+    });
+
+    self.should_show_yes_flag = ko.pureComputed(function() {
+      return self.response.value() === "Yes" && self.yes_highlight === "flag";
+    });
+    self.should_show_yes_stop = ko.pureComputed(function() {
+      return self.response.value() === "Yes" && self.yes_highlight === "stop";
+    });
+    self.should_show_yes_checkmark = ko.pureComputed(function() {
+      return self.response.value() === "Yes" && self.yes_highlight === "checkmark";
+    });
+    self.should_show_yes_default = ko.pureComputed(function() {
+      return self.response.value() !== "Yes";
+    });
+
+    self.should_show_no_flag = ko.pureComputed(function() {
+      return self.response.value() === "No" && self.no_highlight === "flag";
+    });
+    self.should_show_no_stop = ko.pureComputed(function() {
+      return self.response.value() === "No" && self.no_highlight === "stop";
+    });
+    self.should_show_no_checkmark = ko.pureComputed(function() {
+      return self.response.value() === "No" && self.no_highlight === "checkmark";
+    });
+    self.should_show_no_default = ko.pureComputed(function() {
+      return self.response.value() !== "No";
+    });
+  }
+
+  function are_health_questions_valid() {
+    // TODO: will need to improve visual designation of which questions are failing validation.
+
+    // this one can be yes or no
+    if (window.vm.should_show_other_insurance_questions() &&
+        window.vm.is_in_person_application() &&
+        general_questions_by_id['existing_insurance'].get_val() === null) {
+      return false;
+    }
+
+    if (window.vm.should_show_other_insurance_questions()
+        && (
+            !window.vm.did_select_any_fpp_product()
+            && general_questions_by_id['replace_insurance'].get_val() != "No"
+        ) ||
+        (
+            window.vm.did_select_any_fpp_product()
+            && general_questions_by_id['replace_insurance'].get_val() === null
+        )
+    ) {
+      //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
+      return false;
+    }
+
+    // fpp form
+    if (window.vm.did_select_any_fpp_product()) {
+      if (window.vm.is_employee_actively_at_work() === null) {
+        return false;
+      }
+    }
+
+    var valid = true;
+
+
+    _.each(window.vm.selected_product_health_questions(), function(product_health_questions) {
+      _.each(product_health_questions.health_button_rows(), function(health_button_row) {
+        _.each(health_button_row.button_groups(), function(button_group) {
+          if (button_group.does_applicant_need_to_answer()) {
+            // If a no-op question, but still required, must select yes or no.
+            if (!button_group.question.does_yes_stop_app() && button_group.response.value() === null) {
+              valid = false;
+              // break
+              return false;
+            // If this is required, the answer must be no.
+            } else if (button_group.question.does_yes_stop_app() && button_group.response.value() !== "No") {
+              valid = false;
+              // break
+              return false;
+            }
+          }
+        });
+        if (!valid) {
+          // break
+          return false;
+        }
+      });
+      if (!valid) {
+        // break
+        return false;
+      }
+    });
+    return valid;
+  }
+
+
+  return {
+    HealthButtonRow: HealthButtonRow,
+    ResponseButtonGroup: ResponseButtonGroup,
+    are_health_questions_valid: are_health_questions_valid
+  }
+})();
+
+
+
+
+// TODO: This code should be deprecated - need to replace the generic questions with the updated answer buttons.
 
 function QuestionButton(element, val, highlight_func, unhighlight_func) {
   var self = this;
@@ -58,6 +202,7 @@ function QuestionButtonGroup(question, is_required) {
     self.selected_btn(btn);
   };
 }
+
 
 var general_questions_by_id = {};
 ko.bindingHandlers.flagBtn = {
@@ -217,93 +362,3 @@ function handle_question_yes() {
   $("#health_modal").modal('show');
 }
 
-function are_health_questions_valid() {
-  // TODO: will need to improve visual designation of which questions are failing validation.
-
-  // this one can be yes or no
-  if (window.vm.should_show_other_insurance_questions() &&
-      window.vm.is_in_person_application() &&
-      general_questions_by_id['existing_insurance'].get_val() === null) {
-    return false;
-  }
-
-  if (window.vm.should_show_other_insurance_questions()
-      && (
-          !window.vm.did_select_any_fpp_product()
-          && general_questions_by_id['replace_insurance'].get_val() != "No"
-      ) ||
-      (
-          window.vm.did_select_any_fpp_product()
-          && general_questions_by_id['replace_insurance'].get_val() === null
-      )
-  ) {
-    //el = $(general_questions_by_id['existing_insurance'].buttons[0].elements[0]);
-    return false;
-  }
-
-  // fpp form
-  if (window.vm.did_select_any_fpp_product()) {
-    if (window.vm.is_employee_actively_at_work() === null) {
-      return false;
-    }
-  }
-
-  var valid = true;
-
-
-  _.each(window.vm.selected_product_health_questions(), function(product_health_questions) {
-    _.each(product_health_questions.health_button_rows(), function(health_button_row) {
-      _.each(health_button_row.button_groups(), function(button_group) {
-        if (button_group.does_applicant_need_to_answer()) {
-          // If a no-op question, but still required, must select yes or no.
-          if (!button_group.question.does_yes_stop_app() && button_group.response.value() === null) {
-            valid = false;
-            // break
-            return false;
-          // If this is required, the answer must be no.
-          } else if (button_group.question.does_yes_stop_app() && button_group.response.value() !== "No") {
-            valid = false;
-            // break
-            return false;
-          }
-        }
-      });
-      if (!valid) {
-        // break
-        return false;
-      }
-    });
-    if (!valid) {
-      // break
-      return false;
-    }
-  });
-
-  //$.each(window.vm.coverage_vm.get_all_covered_people(), function () {
-  //  var covered_person = this;
-  //  $.each(covered_person.health_questions(), function () {
-  //    if (this.button_group()
-  //        && this.button_group().is_required()
-  //        && (
-  //          // If a no-op question, but still required, must select yes or no.
-  //            (this.question.is_ignored
-  //                && this.button_group().get_val() === null
-  //            )
-  //              // If this is required, must be no.
-  //            || (!this.question.is_ignored
-  //                && this.button_group().get_val() !== "No"
-  //            )
-  //        )) {
-  //      valid = false;
-  //      // break
-  //      return false;
-  //    }
-  //  });
-  //  if (!valid) {
-  //    // break
-  //    return false;
-  //  }
-  //});
-
-  return valid;
-}

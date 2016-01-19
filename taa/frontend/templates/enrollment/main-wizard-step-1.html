@@ -384,11 +384,6 @@
     <div class="row">
       <div class="col-xs-12">
 
-        {# Error message #}
-        <div id="benefit_required" class="error pull-right" data-bind="visible: is_selection_error_visible">
-          You must make a selection for each product before advancing.
-        </div>
-
         {# Total Modal Premium for All Products #}
         <div class="pull-right" data-bind="if: is_coverage_selection_visible() && coverage_vm.payment_mode() && coverage_vm.has_multiple_products()">
           <h4 class="light">Total <span data-bind="text: coverage_vm.payment_mode().display()"></span> premium all products: <strong data-bind="text: coverage_vm.format_grand_total_premium()"></strong></h4>
@@ -396,6 +391,16 @@
 
         <div class="pull-right" data-bind="if: is_coverage_selection_visible() && coverage_vm.payment_mode() && !coverage_vm.has_multiple_products()">
           <h4 class="light">Total <span data-bind="text: coverage_vm.payment_mode().display()"></span> premium: <span data-bind="text: coverage_vm.format_grand_total_premium()"></span></h4>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xs-12">
+        {# Error message #}
+        <div id="benefit_required" class="error pull-right" data-bind="visible: is_selection_error_visible">
+          You must make a selection for each product before advancing.
         </div>
 
       </div>

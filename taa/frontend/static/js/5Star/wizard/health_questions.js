@@ -1,100 +1,186 @@
+var health_questions = (function() {
+  // View model for step 2
+  function ProductHealthQuestions(product_coverage, spouse_questions, all_health_questions) {
+    var self = this;
+    self.product_coverage = product_coverage;
 
+    // SOH Questions (depends on product and selected plan)
+    self.health_questions = ko.pureComputed(function() {
+      var questions = health_questions.process_spouse_question_data(spouse_questions, self.product_coverage);
+      var soh_questions = health_questions.process_health_question_data(all_health_questions, self.product_coverage);
+      $.merge(questions, soh_questions);
+      return questions;
+    });
 
-// Create the spouse-specific HealthQuestion objects from the raw data provided by the server.
-function process_spouse_question_data(question_data_by_product, product_coverage) {
-  // Build up the master list of questions for this product
-  var questions = [];
-  var product_data = product_coverage.product.product_data;
+    self.health_button_rows = ko.pureComputed(function() {
+      return _.map(self.health_questions(), function(question) {
+        return new health_question_buttons.HealthButtonRow(question, self.product_coverage, self);
+      });
+    });
 
-  _.each(question_data_by_product, function (product_questions, product_id) {
-    if (product_id == product_data.id) {
-      var question_factory;
-      if (product_coverage.product.product_data.is_guaranteed_issue) {
-        question_factory = function(question_data) {
-          return new GIHealthQuestion(product_coverage.product, question_data, product_coverage,
-              product_data.gi_criteria,
-              product_data.statement_of_health_bypass_type, product_data.bypassed_soh_questions);
-        };
+    self.do_any_health_questions_need_answering = function() {
+      if (self.health_questions().length == 0) {
+        return false;
+      }
+      return _.any(self.health_questions(), function(question) {
+        return question.does_any_applicant_need_to_answer();
+      });
+    };
+
+    self._health_question_responses = [];
+
+    self.get_applicant_answer_for_question = function(applicant, question) {
+
+      var found_response = _.find(self._health_question_responses, function(response) {
+        return response.question === question && response.applicant === applicant;
+      });
+      if (found_response === undefined) {
+        var resp = new HealthQuestionResponse(question, applicant, null);
+        self._health_question_responses.push(resp);
+        return resp;
       } else {
-        question_factory = function (question_data) {
-          return new StandardHealthQuestion(question_data, product_coverage);
-        }
+        return found_response;
+      }
+    };
+
+    self.serialize_answers_for_applicant = function(applicant) {
+      return _.map(self.health_questions(), function(question) {
+        var response = self.get_applicant_answer_for_question(applicant, question);
+        return response.serialize();
+      });
+    }
+
+  }
+
+  function HealthQuestionResponse(question, applicant, initial_response) {
+    var self = this;
+    self.question = question;
+    self.applicant = applicant;
+    self.value = ko.observable(initial_response);
+
+    self.serialize = function() {
+
+      var answer = null;
+      if (self.question.does_applicant_need_to_answer(self.applicant)) {
+        answer = self.value();
+      } else if (self.question.can_applicant_skip_due_to_GI(self.applicant)) {
+        answer = 'GI';
       }
 
-      questions = _.map(product_questions, question_factory);
-    }
-  });
-  return questions;
-}
-
-// Create the general Statement of Health HealthQuestion objects from the raw data provided by the server.
-function process_health_question_data(health_question_data_by_product, product_coverage) {
-  // Build up the master list of health questions for the product
-  var questions = [];
-  var product_data = product_coverage.product.product_data;
-
-  _.each(health_question_data_by_product, function (product_health_questions, product_id) {
-    if (product_id == product_data.id) {
-      var question_factory;
-      if (product_data.is_guaranteed_issue) {
-        question_factory = function (question_data) {
-          return new GIHealthQuestion(product_coverage.product, question_data, product_coverage,
-              product_data.gi_criteria,
-              product_data.statement_of_health_bypass_type, product_data.bypassed_soh_questions);
-        };
-      } else if (product_coverage.product.product_type == "Group CI") {
-        question_factory = function (question_data) {
-          return new GIHealthQuestion(product_coverage.product, question_data, product_coverage,
-
-              [
-                // Employees must answer if >= 10000 coverage
-                {
-                  guarantee_issue_amount: 10000,
-                  applicant_type: 'Employee',
-                  age_max: null,
-                  age_min: null,
-                  weight_min: null,
-                  weight_max: null,
-                  height_min: null,
-                  height_max: null
-                },
-                // Spouse always has to answer, so don't put criteria in for spouse.
-                {
-                  // Children never have to answer, make the max GI amount bigger to get this effect.
-                  guarantee_issue_amount: 25000,
-                  applicant_type: 'Child',
-                  age_max: null,
-                  age_min: null,
-                  weight_min: null,
-                  weight_max: null,
-                  height_min: null,
-                  height_max: null
-                }
-              ],
-              // Skip over these questions (all but first two )
-              "selected",
-              [
-                {question_type_label: "5yr Heart"},
-                {question_type_label: "5yr Hypertension / Cholesterol"},
-                {question_type_label: "5yr Lung / Colon"},
-                {question_type_label: "5yr Skin Cancer"},
-                {question_type_label: "5yr HPV/HSV"},
-                {question_type_label: "Abnormal Results"},
-                {question_type_label: "Ever been rejected"}
-              ]
-          );
-        }
-      } else {
-        question_factory = function (question_data) {
-          return new StandardHealthQuestion(question_data, product_coverage);
-        }
+      return {
+        question: self.question.get_question_text(),
+        label: self.question.get_question_label(),
+        is_spouse_only: self.question.is_spouse_only(),
+        answer: answer
       }
+    };
+  }
 
-      questions = _.map(product_health_questions, question_factory);
-    }
-  });
-  return questions;
-}
+
+  // Create the spouse-specific HealthQuestion objects from the raw data provided by the server.
+  function process_spouse_question_data(question_data_by_product, product_coverage) {
+    // Build up the master list of questions for this product
+    var questions = [];
+    var product_data = product_coverage.product.product_data;
+
+    _.each(question_data_by_product, function (product_questions, product_id) {
+      if (product_id == product_data.id) {
+        var question_factory;
+        if (product_coverage.product.product_data.is_guaranteed_issue) {
+          question_factory = function(question_data) {
+            return new GIHealthQuestion(product_coverage.product, question_data, product_coverage,
+                product_data.gi_criteria,
+                product_data.statement_of_health_bypass_type, product_data.bypassed_soh_questions);
+          };
+        } else {
+          question_factory = function (question_data) {
+            return new StandardHealthQuestion(question_data, product_coverage);
+          }
+        }
+
+        questions = _.map(product_questions, question_factory);
+      }
+    });
+    return questions;
+  }
+
+  // Create the general Statement of Health HealthQuestion objects from the raw data provided by the server.
+  function process_health_question_data(health_question_data_by_product, product_coverage) {
+    // Build up the master list of health questions for the product
+    var questions = [];
+    var product_data = product_coverage.product.product_data;
+
+    _.each(health_question_data_by_product, function (product_health_questions, product_id) {
+      if (product_id == product_data.id) {
+        var question_factory;
+        if (product_data.is_guaranteed_issue) {
+          question_factory = function (question_data) {
+            return new GIHealthQuestion(product_coverage.product, question_data, product_coverage,
+                product_data.gi_criteria,
+                product_data.statement_of_health_bypass_type, product_data.bypassed_soh_questions);
+          };
+        } else if (product_coverage.product.product_type == "Group CI") {
+          question_factory = function (question_data) {
+            return new GIHealthQuestion(product_coverage.product, question_data, product_coverage,
+
+                [
+                  // Employees must answer if >= 10000 coverage
+                  {
+                    guarantee_issue_amount: 10000,
+                    applicant_type: 'Employee',
+                    age_max: null,
+                    age_min: null,
+                    weight_min: null,
+                    weight_max: null,
+                    height_min: null,
+                    height_max: null
+                  },
+                  // Spouse always has to answer, so don't put criteria in for spouse.
+                  {
+                    // Children never have to answer, make the max GI amount bigger to get this effect.
+                    guarantee_issue_amount: 25000,
+                    applicant_type: 'Child',
+                    age_max: null,
+                    age_min: null,
+                    weight_min: null,
+                    weight_max: null,
+                    height_min: null,
+                    height_max: null
+                  }
+                ],
+                // Skip over these questions (all but first two )
+                "selected",
+                [
+                  {question_type_label: "5yr Heart"},
+                  {question_type_label: "5yr Hypertension / Cholesterol"},
+                  {question_type_label: "5yr Lung / Colon"},
+                  {question_type_label: "5yr Skin Cancer"},
+                  {question_type_label: "5yr HPV/HSV"},
+                  {question_type_label: "Abnormal Results"},
+                  {question_type_label: "Ever been rejected"}
+                ]
+            );
+          }
+        } else {
+          question_factory = function (question_data) {
+            return new StandardHealthQuestion(question_data, product_coverage);
+          }
+        }
+
+        questions = _.map(product_health_questions, question_factory);
+      }
+    });
+    return questions;
+  }
+
+
+  return {
+    ProductHealthQuestions: ProductHealthQuestions,
+    HealthQuestionResponse: HealthQuestionResponse,
+    process_health_question_data: process_health_question_data,
+    process_spouse_question_data: process_spouse_question_data
+  };
+})();
 
 
 var GlobalSOHQuestion = function(question_text) {

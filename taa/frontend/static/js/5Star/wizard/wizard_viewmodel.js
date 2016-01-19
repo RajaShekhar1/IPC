@@ -655,7 +655,7 @@ var wizard_viewmodel = (function() {
 
     this.product_names = ko.pureComputed(function() {
       return _.map(this.product_coverages(), function(pcov) {
-        return pcov.product.product_data.name;
+        return pcov.product.format_product_name();
       });
     }, this);
 
@@ -851,149 +851,6 @@ var wizard_viewmodel = (function() {
 
   }
 
-
-  // View model for step 2
-  function ProductHealthQuestions(product_coverage, spouse_questions, all_health_questions) {
-    var self = this;
-    self.product_coverage = product_coverage;
-
-    // SOH Questions (depends on product and selected plan)
-    self.health_questions = ko.pureComputed(function() {
-      var questions = process_spouse_question_data(spouse_questions, self.product_coverage);
-      var soh_questions = process_health_question_data(all_health_questions, self.product_coverage);
-      $.merge(questions, soh_questions);
-      return questions;
-    });
-
-    self.health_button_rows = ko.pureComputed(function() {
-      return _.map(self.health_questions(), function(question) {
-        return new HealthButtonRow(question, self.product_coverage, self);
-      });
-    });
-
-    self.do_any_health_questions_need_answering = function() {
-      if (self.health_questions().length == 0) {
-        return false;
-      }
-      return _.any(self.health_questions(), function(question) {
-        return question.does_any_applicant_need_to_answer();
-      });
-    };
-
-    self._health_question_responses = [];
-
-    self.get_applicant_answer_for_question = function(applicant, question) {
-
-      var found_response = _.find(self._health_question_responses, function(response) {
-        return response.question === question && response.applicant === applicant;
-      });
-      if (found_response === undefined) {
-        var resp = new HealthQuestionResponse(question, applicant, null);
-        self._health_question_responses.push(resp);
-        return resp;
-      } else {
-        return found_response;
-      }
-    };
-
-    self.serialize_answers_for_applicant = function(applicant) {
-      return _.map(self.health_questions(), function(question) {
-        var response = self.get_applicant_answer_for_question(applicant, question);
-        return response.serialize();
-      });
-    }
-
-  }
-
-  function HealthButtonRow(question, product_coverage, product_health_questions) {
-    var self = this;
-    self.question = question;
-    self.product_coverage = product_coverage;
-    self.product_health_questions = product_health_questions;
-
-    self.button_groups = ko.pureComputed(function() {
-      return _.map(self.product_coverage.applicant_list.get_valid_applicants(), function(applicant) {
-        // Create a button viewmodel that is linked to this question and the response object.
-        var response = self.product_health_questions.get_applicant_answer_for_question(applicant, question);
-        return new ResponseButtonGroup(question, applicant, response, {});
-      });
-    });
-  }
-
-  function ResponseButtonGroup(question, applicant, response, options) {
-    var self = this;
-    self.question = question;
-    self.applicant = applicant;
-    self.response = response;
-
-    self.yes_text = options.yes_text || "Yes";
-    self.no_text = options.yes_text || "No";
-    self.yes_highlight = self.question.get_yes_highlight();
-    self.no_highlight = "checkmark";
-
-    self.handle_yes = function() {
-      //console.log('Yes', self);
-      self.response.value('Yes');
-      self.question.show_yes_dialogue(self.applicant.type, self.applicant);
-    };
-    self.handle_no = function() {
-      self.response.value('No');
-    };
-
-    self.does_applicant_need_to_answer = ko.pureComputed(function() {
-      return self.question.does_applicant_need_to_answer(self.applicant);
-    });
-
-    self.should_show_yes_flag = ko.pureComputed(function() {
-      return self.response.value() === "Yes" && self.yes_highlight === "flag";
-    });
-    self.should_show_yes_stop = ko.pureComputed(function() {
-      return self.response.value() === "Yes" && self.yes_highlight === "stop";
-    });
-    self.should_show_yes_checkmark = ko.pureComputed(function() {
-      return self.response.value() === "Yes" && self.yes_highlight === "checkmark";
-    });
-    self.should_show_yes_default = ko.pureComputed(function() {
-      return self.response.value() !== "Yes";
-    });
-
-    self.should_show_no_flag = ko.pureComputed(function() {
-      return self.response.value() === "No" && self.no_highlight === "flag";
-    });
-    self.should_show_no_stop = ko.pureComputed(function() {
-      return self.response.value() === "No" && self.no_highlight === "stop";
-    });
-    self.should_show_no_checkmark = ko.pureComputed(function() {
-      return self.response.value() === "No" && self.no_highlight === "checkmark";
-    });
-    self.should_show_no_default = ko.pureComputed(function() {
-      return self.response.value() !== "No";
-    });
-  }
-
-  function HealthQuestionResponse(question, applicant, initial_response) {
-    var self = this;
-    self.question = question;
-    self.applicant = applicant;
-    self.value = ko.observable(initial_response);
-
-    self.serialize = function() {
-
-      var answer = null;
-      if (self.question.does_applicant_need_to_answer(self.applicant)) {
-        answer = self.value();
-      } else if (self.question.can_applicant_skip_due_to_GI(self.applicant)) {
-        answer = 'GI';
-      }
-
-      return {
-        question: self.question.get_question_text(),
-        label: self.question.get_question_label(),
-        is_spouse_only: self.question.is_spouse_only(),
-        answer: answer
-      }
-    };
-  }
 
   function WizardVM(options) {
     var self = this;
@@ -1310,14 +1167,10 @@ var wizard_viewmodel = (function() {
     self.replacing_insurance = ko.observable(null);
     self.is_employee_actively_at_work = ko.observable(null);
 
-    // Todo - cache the ProductHealthQuestions objects if necessary.
-    //// Store the question-related data in this list. We filter only the selected ones for display,
-    ////  but want to keep the other question answer data in case it is reselected.
-    //self._product_health_questions = [];
-
+    // Todo - Move to health_questions.js, and cache the ProductHealthQuestions objects if necessary.
     self.selected_product_health_questions = ko.computed(function() {
       return _.map(self.coverage_vm.selected_product_coverages(), function(product_cov) {
-        return new ProductHealthQuestions(
+        return new health_questions.ProductHealthQuestions(
             product_cov,
             options.spouse_questions,
             options.health_questions

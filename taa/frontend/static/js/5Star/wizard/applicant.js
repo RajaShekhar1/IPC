@@ -199,19 +199,19 @@ var wizard_applicant = (function () {
     //  return "$"+rider_amount.toFixed(2);
     //}
     //
-    //self.get_existing_coverage_amount_for_product = function(product_id) {
-    //  return parseFloat(self.get_existing_coverage_amount_by_product()[product_id]);
-    //};
-    //
-    //self.get_existing_coverage_amount_by_product = function() {
-    //  return _.reduce(self.existing_coverages, function(by_product_id, coverage) {
-    //    if (!(coverage.product.id in by_product_id)) {
-    //      by_product_id[coverage.product.id] = 0.0;
-    //    }
-    //    by_product_id[coverage.product.id] += parseFloat(coverage.coverage_face_value);
-    //    return by_product_id;
-    //  }, {});
-    //};
+    self.get_existing_coverage_amount_for_product = function(product_id) {
+      return parseFloat(self.get_existing_coverage_amount_by_product()[product_id]);
+    };
+
+    self.get_existing_coverage_amount_by_product = function() {
+      return _.reduce(self.existing_coverages, function(by_product_id, coverage) {
+        if (!(coverage.product.id in by_product_id)) {
+          by_product_id[coverage.product.id] = 0.0;
+        }
+        by_product_id[coverage.product.id] += parseFloat(coverage.coverage_face_value);
+        return by_product_id;
+      }, {});
+    };
 
 
   }
@@ -249,6 +249,13 @@ var wizard_applicant = (function () {
         type: self.type,
         applicants: _.map(self.applicants(), function(applicant) {return applicant.serialize_data();})
       }
+    };
+    self.get_existing_coverage_amount_for_product = function(product_id) {
+      if (self.applicants().length == 0) {
+        return 0;
+      }
+      // For now, just return the coverage for the first child.
+      return self.applicants()[0].get_existing_coverage_amount_for_product(product_id);
     };
   };
 
