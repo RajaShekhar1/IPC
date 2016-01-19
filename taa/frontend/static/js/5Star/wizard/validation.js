@@ -14,13 +14,12 @@ function init_validation(ui) {
       // Clear step2 health question error when we attempt to validate step 1
       $("#health_questions_error").html("");
 
-      // Check for "Decline all coverage" and bail out of the wizard if it is checked
-      // TODO: This is only if we are doing single product.
-      //if (ui.did_decline()) {
-      //  submit_decline();
-      //  e.preventDefault();
-      //  return;
-      //}
+      // Check for "Decline all coverage" and bail out of the wizard if it is checked.
+      if (ui.did_decline_all_products()) {
+        submit_decline();
+        e.preventDefault();
+        return;
+      }
 
       // trigger jquery validation
       var is_valid = ui.validator.form();

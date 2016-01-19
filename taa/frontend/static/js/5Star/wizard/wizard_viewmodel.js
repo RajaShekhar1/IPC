@@ -292,7 +292,7 @@ var wizard_viewmodel = (function() {
     // Currently shown rider (for modal pop-up explanations).
     self.shown_rider = ko.observable(null);
 
-    // Build the rider viewmodels
+    // Build the rider view models.
     self.rider_options = [];
     _.each([self.applicant_list.get_employee(), self.applicant_list.get_spouse()], function(applicant) {
         _.each(self.enabled_riders, function(rider) {
@@ -617,7 +617,15 @@ var wizard_viewmodel = (function() {
     format_recommendation_premium: function(recommendation_set) {
       var coverage = recommendation_set.get_recommended_applicant_coverage(this.applicant.type);
       return coverage.format_premium_option();
+    },
+
+    format_selected_coverage: function() {
+      return this.get_selected_coverage().format_face_value();
+    },
+    format_selected_premium: function() {
+      return this.get_selected_coverage().format_premium_option();
     }
+
   };
 
   // Small viewmodel for presenting recommended coverage.
@@ -1230,6 +1238,31 @@ var wizard_viewmodel = (function() {
 
     // Globally decline coverage.
     self.did_decline = ko.observable(false);
+
+    self.did_decline_all_products = ko.pureComputed(function() {
+      if (self.coverage_vm.has_multiple_products()) {
+        return _.all(self.product_coverage_viewmodels(), function(pcov) {
+          return pcov.did_decline();
+        });
+      } else {
+        return self.did_decline();
+      }
+    });
+
+    // Decline info box
+    self.did_decline.subscribe(function(val) {
+      if (val) {
+        bootbox.dialog({
+          message: "Please note that even after declining enrollment, you may still change your decision and elect to enroll at a later time, provided that your employer's enrollment period is still active.",
+          buttons: {
+            "success": {
+              "label": "Close",
+              "className": "btn-sm btn-primary"
+            }
+          }
+        });
+      }
+    });
 
     self.exit_application = function() {
       bootbox.dialog({

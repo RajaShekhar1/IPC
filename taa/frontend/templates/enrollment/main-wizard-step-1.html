@@ -327,7 +327,38 @@
       </div>
 
       <div data-bind="if: !has_multiple_products()">
-        ONLY ONE PRODUCT
+
+        <div class="row">
+          <div class="col-xs-12 ">
+
+            <h3 data-bind="text: current_product().format_product_name()"></h3>
+            <div  data-bind="slideDownIf: !current_product().did_decline()">
+              <ul class="list-unstyled" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">
+                <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">
+                  <span class="step" data-bind="text: $index() + 1"></span>
+                  <span class="title" data-bind="text: product_coverage.format_product_name()"></span>
+                </li>
+              </ul>
+
+              <div class="" data-bind="
+                template: {name: current_product().get_coverage_selection_template(), data: current_product()}
+                ">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {# Decline option for product #}
+        <div class="row">
+          <div class="col-xs-12 text-center red">
+            <div class="decline-option">
+              <label><input type="checkbox" data-bind="checked: current_product().did_decline"> I decline to enroll in
+                <span data-bind="text: current_product().format_product_name()"></span> at this time
+              </label>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -338,14 +369,14 @@
 
 
     {# Decline any products option #}
-    <div class="row" data-bind="visible: !coverage_vm.has_multiple_products()">
-      <div class="col-xs-12 text-center red" data-bind="if: can_decline">
-        <div class="decline-option">
-          <label><input type="checkbox" data-bind="checked: did_decline"> I decline to enroll in any of the 5Star
-            products at this time</label>
-        </div>
-      </div>
-    </div>
+{#    <div class="row" data-bind="visible: !coverage_vm.has_multiple_products()">#}
+{#      <div class="col-xs-12 text-center red" data-bind="if: can_decline">#}
+{#        <div class="decline-option">#}
+{#          <label><input type="checkbox" data-bind="checked: did_decline"> I decline to enroll in any of the 5Star#}
+{#            products at this time</label>#}
+{#        </div>#}
+{#      </div>#}
+{#    </div>#}
 
 
 
@@ -422,7 +453,6 @@
             <div class="widget-body">
               <div class="widget-main no-padding" data-bind="
                     template: {name: 'recommendations_template', data: recommendation_set}
-
                     ">
               </div>
 
@@ -467,23 +497,24 @@
       </div>
 
       {# Selected Plan #}
-{#      <div class="pricing-span">#}
-{#        <div class="widget-box pricing-box-small pricing-box-small-no-hover">#}
-{#          <div class="widget-header center header-color-green">#}
-{#            <h5 class="bigger lighter">Selected Plan</h5>#}
+      <!--ko if: !$root.coverage_vm.has_multiple_products()-->
+      <div class="pricing-span">
+        <div class="widget-box pricing-box-small pricing-box-small-no-hover">
+          <div class="widget-header center header-color-green">
+            <h5 class="bigger lighter">Selected Plan</h5>
 {#            <br>#}
-{#            <small data-bind="text: selected_plan[current_product]().name"></small>#}
+{#            <small data-bind="text: format_product_name()"></small>#}
 {#            <small data-bind="text: 'Current Product Name'"></small>#}
-{#          </div>#}
-{##}
-{#          <div class="widget-body">#}
-{#            <div class="widget-main no-padding"#}
-{#                 data-bind="template: {name: 'recommendations_template', data: selected_plan}">#}
-{#            </div>#}
-{#          </div>#}
-{#        </div>#}
-{#      </div>#}
+          </div>
 
+          <div class="widget-body">
+            <div class="widget-main no-padding"
+                 data-bind="template: 'selected_coverage_template'">
+            </div>
+          </div>
+        </div>
+      </div>
+      <!--/ko-->
     </div>
 
   </div>
@@ -661,15 +692,6 @@
     <li data-bind="template: {name: 'recommend_coverage_option_template',
                                   data: applicant_coverage}">
     </li>
-{#    <!--ko if: $root.should_include_spouse_in_table-->#}
-{#    <li data-bind="template: {name: spouse_recommendation().is_valid() ? 'recommend_coverage_option_template' : 'blank_template',#}
-{#                          data: spouse_recommendation}"></li>#}
-{#    <!--/ko-->#}
-{#    <!--ko if: $root.should_include_children_in_table-->#}
-{#    <li data-bind="template: {name: children_recommendation().is_valid()? 'recommend_coverage_option_template': 'blank_template',#}
-{#                          data: children_recommendation}"></li>#}
-{#    <!--/ko-->#}
-
   </ul>
   <div class="price" data-bind="visible: get_total_premium() > 0.0">
         <span class="label label-lg label-inverse arrowed-in arrowed-in-right">
@@ -681,9 +703,34 @@
   </div>
 </script>
 
+
+{# Single-product selected coverage column #}
+<script type="text/html" id="selected_coverage_template">
+  <ul class="list-unstyled list-striped pricing-table" data-bind="foreach: {data: applicant_coverage_selections(), as: 'applicant_coverage'}">
+    <li data-bind="template: {name: 'selected_coverage_option_template',
+                                  data: applicant_coverage}">
+    </li>
+  </ul>
+{#  <div class="price" data-bind="visible: get_total_premium() > 0.0">#}
+{#        <span class="label label-lg label-inverse arrowed-in arrowed-in-right">#}
+{#          <span data-bind="text: formatted_total_premium()"></span>#}
+{#          <small>#}
+{#            <span data-bind="text: formatted_payment_mode()"></span>#}
+{#          </small>#}
+{#        </span>#}
+{#  </div>#}
+</script>
+
+
 <script type="text/html" id="recommend_coverage_option_template">
   <strong data-bind="html: applicant_coverage.format_recommendation_coverage(recommendation_set)"></strong>
   <div data-bind="html: applicant_coverage.format_recommendation_premium(recommendation_set)"></div>
+</script>
+
+
+<script type="text/html" id="selected_coverage_option_template">
+  <strong data-bind="html: applicant_coverage.format_selected_coverage()"></strong>
+  <div data-bind="html: applicant_coverage.format_selected_premium()"></div>
 </script>
 
 

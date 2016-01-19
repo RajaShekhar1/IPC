@@ -138,9 +138,17 @@ var product_rates_service = (function() {
     });
 
     function process_product_rates() {
-      for (var i = 0; i < arguments.length; i++) {
-        // each product sends a separate rates request. We pull it out here.
-        var product_rate_response = arguments[i][0];
+
+      var product_rate_response;
+      for (var i = 0; i < products.length; i++) {
+        if (products.length === 1) {
+          // The data is in argument 0
+          product_rate_response = arguments[0];
+        } else {
+          // each product sends a separate rates request. We pull it out here.
+          product_rate_response = arguments[i][0];
+        }
+
         var product_rates = product_rate_response.data;
 
         // Find the matching product, call set_rates
