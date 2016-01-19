@@ -118,11 +118,13 @@ class RiderConfiguration(object):
             'FPPCI': StringIO(rider_config_ci),
             # These all share the same config.
             'FPPTI': StringIO(rider_config_fpp),
-            'FPPTIW':StringIO(rider_config_fpp),
-            'FPPTIY':StringIO(rider_config_fpp),
-            'FPPTIB':StringIO(rider_config_fpp),
+            'FPPTIW': StringIO(rider_config_fpp),
+            'FPPTIY': StringIO(rider_config_fpp),
+            'FPPTIB': StringIO(rider_config_fpp),
+            'ACC': StringIO(rider_config_fpp),
+            'HI': StringIO(rider_config_fpp),
             # This is just so we can serialize products in the process of being created.
-            '':StringIO(rider_config_fpp),
+            '': StringIO(rider_config_fpp),
         }
         rider_config_yaml = code_map.get(self.product_code)
         if not rider_config_yaml:

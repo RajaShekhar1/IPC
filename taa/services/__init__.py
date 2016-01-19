@@ -112,6 +112,7 @@ def initialize_services():
         CaseEnrollmentPeriodsService,
         CensusRecordService,
         SelfEnrollmentService,
+        AgentSplitsService
     )
     from taa.services.enrollments import (
         EnrollmentApplicationService,
@@ -145,6 +146,7 @@ def initialize_services():
     services_broker.Provide('CaseEnrollmentPeriodsService', CaseEnrollmentPeriodsService())
     services_broker.Provide('CensusRecordService', CensusRecordService())
     services_broker.Provide('SelfEnrollmentService', SelfEnrollmentService())
+    services_broker.Provide('AgentSplitsService', AgentSplitsService())
 
     services_broker.Provide('AgentService', AgentService())
     services_broker.Provide('ApiTokenService', ApiTokenService())
