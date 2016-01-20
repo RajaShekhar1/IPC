@@ -530,33 +530,34 @@ style="display: none;" data-bind="visible: true">
                     <div class="row">
                       <div class="col-xs-12">
                         <h3 class="header lighter blue">Current Splits</h3>
-                        <div class="form-group" data-bind="foreach: {data: agent_split_records, as: 'record'}">
-                          <h4 class="col-sm-12" data-bind="text: record.agent_name"></h4>
-                          <div class="col-sm-12" data-bind="if: !record.valid()">
-                            <div class="alert alert-block alert-danger">
-                              Agents must be either the case owner or a partner agent to have a commision split.
-                            </div>
-                          </div><br />
-                          <div class="col-sm-12" data-bind="foreach: {data: record.products, as: 'product' }">
-                            <div class="col-sm-4">
-                              <label>Product:</label><br />
-                              <div data-bind="attr: {id: 'product'+product.product_id}, text: product.product_name"></div>
-                            </div>
-                            <div class="col-sm-4">
-                              <label>Commision Subcount Code:</label>
-                              <input type="text" class="ace" data-bind="value: product.commision_subcount_code"/>
-                            </div>
-                            <div class="col-sm-4">
-                              <label>Split Percentage:</label><br />
-                              <input type="number" class="ace" min=0 max=100 data-bind="value: product.split_percentage"/>
-                            </div>
+                        <div class="form-group" data-bind="foreach: {data: selected_agents, as: 'agent_id'}">
+                          <h4 class="col-sm-12" data-bind="text: $root.get_agent_name_from_id(agent_id)"></h4>
+                          <div data-bind="foreach: {data: $root.products, as: 'product'}">
+                            <!-- ko with: $root.get_or_create_split(agent_id, product.id) -->
+                              <div class="col-sm-12" data-bind="if: valid()">
+                              <div class="alert alert-block alert-danger">
+                                Agents must be either the case owner or a partner agent to have a commision split.
+                              </div>
+                              </div><br />
+                                <div class="col-sm-4">
+                                  <div data-bind="attr: {id: 'product'+product_id}, text: product_name"></div>
+                                </div>
+                                <div class="col-sm-4">
+                                  <label>Commision Subcount Code:</label>
+                                  <input type="text" class="ace" data-bind="value: commision_subcount_code"/>
+                                </div>
+                                <div class="col-sm-4">
+                                  <label>Split Percentage:</label><br />
+                                  <input type="number" class="ace" min=0 max=100 data-bind="value: split_percentage"/>
+                                </div>
+                              <hr/>
+                            <!--  /ko -->
                           </div>
-                          <hr/>
                         </div>
                         <hr/>
                         <div class="form-group">
                           <div class="col-sm-3 col-sm-offset-3">
-                            <select data-bind="value: selected_agent_split,
+                            <select data-bind="value: selected_agent,
                                     options: unused_agents,
                                     optionsText: function(agent) {
                                       return agent.first+' '+agent.last;
