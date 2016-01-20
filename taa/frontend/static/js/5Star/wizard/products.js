@@ -207,9 +207,27 @@ Product.prototype = {
 
   get_replacement_paragraphs: function () {
     return [];
+  },
+
+  does_use_recommended_coverage_table: function() {
+    // Most products use this format for coverage selection.
+    return true;
   }
 
 };
+
+function ApplicantSelectionProduct(product_data) {
+  this.product_type = product_data.base_product_type;
+  this.product_data = product_data;
+}
+ApplicantSelectionProduct.prototype = {
+  does_use_recommended_coverage_table: function() {
+    // Don't use recommended coverage selection for these types of products.
+    return false;
+  }
+};
+
+
 
 function FPPTIProduct(product_data) {
   this.product_type = "FPPTI";

@@ -99,14 +99,14 @@ def init_basic_data():
         ),
         dict(
             code=u"ACC",
-            name=u"Accident",
+            name=u"Accident Insurance Plan",
             product_type=u"base",
             visible_to_agents=True,
             is_fpp_gov=False,
         ),
         dict(
             code=u"HI",
-            name=u"Hospital Indemnity",
+            name=u"Family Healthcare Indemnity Plan",
             product_type=u"base",
             visible_to_agents=True,
             is_fpp_gov=False,

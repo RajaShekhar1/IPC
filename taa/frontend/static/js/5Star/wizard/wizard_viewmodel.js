@@ -424,7 +424,13 @@ var wizard_viewmodel = (function() {
 
     get_coverage_selection_template: function() {
       // in the future, products may not all use the recommendation system for coverage selection.
-      return 'recommendation_coverage_selection';
+      if (this.product.does_use_recommended_coverage_table()) {
+        return 'recommendation_coverage_selection';
+      } else {
+        // Simple coverage category selection.
+        return 'category_coverage_selection';
+      }
+
     },
 
     select_recommended_coverage: function(recommendation_set) {

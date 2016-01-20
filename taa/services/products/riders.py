@@ -113,7 +113,7 @@ class RiderConfiguration(object):
 
     def load_rider_configuration(self):
         code_map = {
-            'Group CI': StringIO(rider_config_group_ci),
+            'Group CI': StringIO(no_riders),
             'FPP-Gov': StringIO(rider_config_fpp_gov),
             'FPPCI': StringIO(rider_config_ci),
             # These all share the same config.
@@ -121,8 +121,9 @@ class RiderConfiguration(object):
             'FPPTIW': StringIO(rider_config_fpp),
             'FPPTIY': StringIO(rider_config_fpp),
             'FPPTIB': StringIO(rider_config_fpp),
-            'ACC': StringIO(rider_config_fpp),
-            'HI': StringIO(rider_config_fpp),
+            # These don't have riders
+            'ACC': StringIO(no_riders),
+            'HI': StringIO(no_riders),
             # This is just so we can serialize products in the process of being created.
             '': StringIO(rider_config_fpp),
         }
@@ -181,17 +182,12 @@ rider_config_fpp_gov = """
   code: "WP"
   user_facing_name: "Waiver of Premium Benefit"
   is_group_level: false
-  compatibility_rules:
-    - message: "Quality of Life Benefit cannot be combined with Waiver of Premium"
-      triggered_if_included_riders: ["QOL3", "QOL4"]
 
 - name: "Quality of Life 3%"
   code: "QOL3"
   user_facing_name: "Quality of Life Benefit"
   is_group_level: true
   compatibility_rules:
-    - message: "Quality of Life Benefit cannot be combined with Waiver of Premium"
-      triggered_if_included_riders: ["WP"]
     - message: "Only one QOL rider can be used."
       triggered_if_included_riders: ["QOL4"]
 
@@ -200,8 +196,6 @@ rider_config_fpp_gov = """
   user_facing_name: "Quality of Life Benefit"
   is_group_level: true
   compatibility_rules:
-    - message: "Quality of Life Benefit cannot be combined with Waiver of Premium"
-      triggered_if_included_riders: ["WP"]
     - message: "Only one QOL rider can be used."
       triggered_if_included_riders: ["QOL3"]
 """
@@ -214,11 +208,19 @@ rider_config_ci = """
   user_facing_name: "Waiver of Premium Benefit"
 
 """
+
 rider_config_group_ci = """
 ---
 # No riders
 []
 """
+
+no_riders = """
+---
+# No riders
+[]
+"""
+
 
 
 class RiderCompatibility(object):

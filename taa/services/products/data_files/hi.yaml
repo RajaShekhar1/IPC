@@ -1,0 +1,68 @@
+---
+# HI Rate Plan
+
+
+name: "HI Base Rates"
+
+rate_levels:
+  - name: "Level 1"
+    value: 1
+  - name: "Level 2"
+    value: 2
+  - name: "Level 3"
+    value: 3
+
+cost_components:
+  - name: "Employee Only Premium"
+    type: "ACPT Lookup"
+    rate_table: "EE"
+    is_eligible:
+      - coverage_selection: "EE"
+
+  - name: "Employee and Spouse Premium"
+    type: "ACPT Lookup"
+    rate_table: "ES"
+    is_eligible:
+      - coverage_selection: "ES"
+
+  - name: "Employee, Children Premium"
+    type: "ACPT Lookup"
+    rate_table: "EC"
+    is_eligible:
+      - coverage_selection: "EC"
+
+  - name: "Employee, Spouse, and Children Premium"
+    type: "ACPT Lookup"
+    rate_table: "EF"
+    is_eligible:
+      - coverage_selection: "EF"
+
+rate_tables:
+  - name: "EE"
+    key: "rate_level"
+    table:
+      1:    "1005.68"
+      2:    "1804.92"
+      3:    "2542.28"
+
+  - name: "ES"
+    key: "rate_level"
+    table:
+      1:    "1911.00"
+      2:    "3428.88"
+      3:    "4829.76"
+
+  - name: "EC"
+    key: "rate_level"
+    table:
+      1:    "1810.12"
+      2:    "3248.44"
+      3:    "4576.00"
+
+  - name: "EF"
+    key: "rate_level"
+    table:
+      1:    "2715.44"
+      2:    "4872.92"
+      3:    "6863.48"
+

@@ -1,0 +1,87 @@
+---
+# ACC Rate Plan
+
+
+name: "ACC Base Rates"
+
+rate_levels:
+  - name: "Level 1"
+    value: 1
+  - name: "Level 2"
+    value: 2
+  - name: "Level 3"
+    value: 3
+  - name: "Level 1 24hr"
+    value: 4
+  - name: "Level 2 24hr"
+    value: 5
+  - name: "Level 3 24hr"
+    value: 6
+
+
+cost_components:
+  - name: "Employee Only Premium"
+    type: "ACPT Lookup"
+    rate_table: "EE"
+    is_eligible:
+      - coverage_selection: "EE"
+
+  - name: "Employee and Spouse Premium"
+    type: "ACPT Lookup"
+    rate_table: "ES"
+    is_eligible:
+      - coverage_selection: "ES"
+
+  - name: "Employee, Children Premium"
+    type: "ACPT Lookup"
+    rate_table: "EC"
+    is_eligible:
+      - coverage_selection: "EC"
+
+  - name: "Employee, Spouse, and Children Premium"
+    type: "ACPT Lookup"
+    rate_table: "EF"
+    is_eligible:
+      - coverage_selection: "EF"
+
+rate_tables:
+  - name: "EE"
+    key: "rate_level"
+    table:
+      1:    "144.04"
+      2:    "188.24"
+      3:    "232.44"
+      4:    "179.92"
+      5:    "235.56"
+      6:    "290.68"
+
+  - name: "ES"
+    key: "rate_level"
+    table:
+      1:    "216.32"
+      2:    "282.36"
+      3:    "348.92"
+      4:    "269.88"
+      5:    "353.08"
+      6:    "435.76"
+
+  - name: "EC"
+    key: "rate_level"
+    table:
+      1:    "259.48"
+      2:    "339.04"
+      3:    "418.60"
+      4:    "323.96"
+      5:    "423.80"
+      6:    "523.12"
+
+  - name: "EF"
+    key: "rate_level"
+    table:
+      1:    "323.96"
+      2:    "423.80"
+      3:    "523.12"
+      4:    "486.20"
+      5:    "529.36"
+      6:    "653.64"
+
