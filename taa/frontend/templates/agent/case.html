@@ -560,7 +560,7 @@ style="display: none;" data-bind="visible: true">
                           <h4 class="col-sm-12" data-bind="text: $root.get_agent_name_from_id(agent_id)"></h4>
                           <div data-bind="foreach: {data: $root.products, as: 'product'}">
                             <!-- ko with: $root.get_or_create_split(agent_id, product.id) -->
-                              <div class="col-sm-12" data-bind="if: valid()">
+                              <div class="col-sm-12" data-bind="if: !valid()">
                               <div class="alert alert-block alert-danger">
                                 Agents must be either the case owner or a partner agent to have a commission split.
                               </div>
@@ -581,7 +581,7 @@ style="display: none;" data-bind="visible: true">
                           </div>
                         </div>
                         <hr/>
-                        <div class="form-group">
+                        <div class="form-group" data-bind="visible: unused_agents().length > 0">
                           <div class="col-sm-3 col-sm-offset-3">
                             <select data-bind="value: selected_agent,
                                     options: unused_agents,

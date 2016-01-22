@@ -304,28 +304,39 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.has_agent_splits = ko.observable(case_data.is_stp);
 
-  self.selected_agent_splits = ko.observableArray();
+  // An array of AgentSplit viewmodels.
+  self.selected_agent_splits = ko.observableArray(get_initial_splits());
+
+  // Used for adding an agent to the split table.
+  self.selected_agent = ko.observable();
+
+  // Tracks which agents are in the split table.
+  self.selected_agents = ko.observableArray(get_initial_split_agents());
+
+  // Inverse of the selected_agents list compared to the available agents on this case.
+  self.unused_agents = ko.computed(function() {
+    var selected_ids = self.selected_agents();
+    return self.case_agents().filter(function(i) {
+      return !~selected_ids.indexOf(i.id);
+    });
+  });
+
+  self.add_agent_split = function() {
+    var selected_agent = self.selected_agent();
+    if (selected_agent) {
+      self.selected_agents.push(selected_agent.id);
+    }
+  };
 
   self.get_agent_name_from_id = function(agent_id) {
-      if(agent_id===null) { return "Writing Agent"; }
+      if (agent_id===null) { return "Writing Agent"; }
       var cur_agent = settings.active_agents.filter(function(elem) {
         return elem.id === agent_id;
       }).first();
       return cur_agent.first + " " + cur_agent.last;
   };
 
-  /* TODO: fix error when removing a product. Doesn't remove the product for the splits. Below
-    code should fix it, but isn't working. I think it is something wierd with ko. */
-
-  ko.watch(self.products, {}, function(p, ch, item) {
-    var current_products = self.products().map(function(e) { return e.id; });
-    var splits = self.selected_agent_splits();
-    splits = splits.filter(function(e) {
-      return !!~current_products.indexOf(e.product_id);
-    });
-    self.selected_agent_splits = ko.observableArray(splits);
-  });
-
+  // Basic viewmodel for an agent split percentage and commission code for a given product and agent.
   function AgentSplit(agent_id, product_id, commission_subcount_code, split_percentage) {
     this.agent_id = agent_id;
     this.product_id = product_id;
@@ -335,8 +346,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
         if(this.agent_id===null) { return true; }
         return self.case_agents().filter(function(elem) {
           return elem.id===this.agent_id;
-        }).length !== 0;
-    });
+        }.bind(this)).length > 0;
+    }, this);
     this.product_name = (function() {
         var cur_product = self.products().filter(function(elem) {
           return elem.id === product_id;
@@ -351,24 +362,35 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
         commission_subcount_code: this.commission_subcount_code()
       };
     };
-    return;
   }
 
-  self.selected_agent = ko.observable("");
+  // Used for populating the agent split UI grid. Checks the selected_agent_splits() array first to see if a viewmodel
+  //  exists, otherwise creates a new one.
+  self.get_or_create_split = function(agent_id, product_id) {
 
-  self.get_or_create_split = function(agent, product) {
-    var current_split = case_data.agent_splits.filter(function(elem) {
-      return elem.agent_id === agent && elem.product_id === product;
+    var current_split = self.selected_agent_splits().filter(function(elem) {
+      return elem.agent_id === agent_id && elem.product_id === product_id;
     }).first();
-    var split = new AgentSplit(agent, product);
-    if(current_split) {
-      split = new AgentSplit(current_split.agent_id, current_split.product_id, current_split.commission_subcount_code, current_split.split_percentage);
+
+    if (current_split) {
+      return current_split;
+    } else {
+      var split = new AgentSplit(agent_id, product_id);
+      self.selected_agent_splits.push(split);
+      return split;
     }
-    self.selected_agent_splits.push(split);
-    return split;
   };
 
-  function get_default_agents() {
+  function get_initial_splits() {
+    return case_data.agent_splits.filter(function(elem) {
+      // Ignore splits for products we don't have.
+      return _.find(self.products(), function(product) {return product.id === elem.product_id}) !== undefined;
+    }).map(function(elem) {
+      return new AgentSplit(elem.agent_id, elem.product_id, elem.commission_subcount_code, elem.split_percentage);
+    });
+  }
+
+  function get_initial_split_agents() {
     var default_agents = case_data.agent_splits.reduce(function(start, elem) {
         if(!~start.indexOf(elem.agent_id)) {
           start.push(elem.agent_id);
@@ -380,20 +402,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       }
       return default_agents;
   }
-
-  self.selected_agents = ko.observableArray(get_default_agents());
-
-  self.add_agent_split = function() {
-    var selected_agent = self.selected_agent();
-    self.selected_agents.push(selected_agent.id);
-  };
-
-  self.unused_agents = ko.computed(function() {
-    var selected_ids = self.selected_agents();
-    return self.case_agents().filter(function(i) {
-      return !~selected_ids.indexOf(i.id);
-    });
-  });
 
 
   // Self-enrollment
@@ -634,12 +642,12 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.sum_split_percentages_for_product = function(product) {
-    var splits = self.serialize_agent_splits();
+    var splits = self.selected_agent_splits(); //self.serialize_agent_splits();
     var splits_for_product_with_percentage = splits.filter(function(elem) {
-      return elem.product_id === product.id && parseInt(elem.percentage) > 0;
+      return elem.product_id === product.id && parseInt(elem.split_percentage()) > 0;
     });
     return splits_for_product_with_percentage.reduce(function(acc, split) {
-      return acc + parseInt(split.split_percentage, 0);
+      return acc + parseInt(split.split_percentage(), 0);
     }, 0);
   };
 
@@ -803,7 +811,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.serialize_agent_splits = function() {
     var serialized_records = self.selected_agent_splits();
     return serialized_records.reduce(function(start, elem) {
-      start.push(elem.toJson());
+      if (elem.split_percentage() || elem.commission_subcount_code()) {
+        start.push(elem.toJson());
+      }
       return start;
     }, []);
   };
