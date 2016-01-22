@@ -253,13 +253,22 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
 
   /* Agent Splits */
 
-  self.has_agent_splits = ko.observable(case_data.agent_splits.length>0);
+  if(!Array.prototype.first) {
+    Array.prototype.first = function() {
+      if(this.length>0) {
+        return this[0];
+      } else {
+        return undefined;
+      }
+    };
+  }
 
   self.owner_agent = ko.computed(function() {
     return settings.active_agents.filter(function(elem) {
-      return elem.id == self.owner_agent_id();
-    })[0];
+      return elem.id === parseInt(self.owner_agent_id(), 10);
+    });
   });
+
   self.partner_agent_list = ko.computed(function() {
     return settings.active_agents.filter(function(elem) {
       return self.partner_agents().indexOf(String(elem.id)) !== -1;
@@ -270,15 +279,29 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     return self.partner_agent_list().concat(self.owner_agent());
   });
 
+  self.has_agent_splits = ko.observable(case_data.is_stp);
+
+  self.selected_agent_splits = ko.observableArray();
+
   self.get_agent_name_from_id = function(agent_id) {
       if(agent_id===null) { return "Writing Agent"; }
       var cur_agent = settings.active_agents.filter(function(elem) {
         return elem.id === agent_id;
-      })[0];
+      }).first();
       return cur_agent.first + " " + cur_agent.last;
   };
 
-  //TODO: Change validate alert to bootbox alert, add item to case to turn of splits (has STP)
+  /* TODO: fix error when removing a product. Doesn't remove the product for the splits. Below
+    code should fix it, but isn't working. I think it is something wierd with ko. */
+
+  ko.watch(self.products, {}, function(p, ch, item) {
+    var current_products = self.products().map(function(e) { return e.id; });
+    var splits = self.selected_agent_splits();
+    splits = splits.filter(function(e) {
+      return !!~current_products.indexOf(e.product_id);
+    });
+    self.selected_agent_splits = ko.observableArray(splits);
+  });
 
   function AgentSplit(agent_id, product_id, commision_subcount_code, split_percentage) {
     this.agent_id = agent_id;
@@ -294,7 +317,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     this.product_name = (function() {
         var cur_product = self.products().filter(function(elem) {
           return elem.id === product_id;
-        })[0];
+        }).first();
         return cur_product.name;
     })();
     this.toJson = function() {
@@ -310,12 +333,10 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
 
   self.selected_agent = ko.observable("");
 
-  self.selected_agent_splits = ko.observableArray();
-
   self.get_or_create_split = function(agent, product) {
     var current_split = case_data.agent_splits.filter(function(elem) {
       return elem.agent_id === agent && elem.product_id === product;
-    })[0];
+    }).first();
     var split = new AgentSplit(agent, product);
     if(current_split) {
       split = new AgentSplit(current_split.agent_id, current_split.product_id, current_split.commision_subcount_code, current_split.split_percentage);
@@ -324,12 +345,20 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     return split;
   };
 
-  self.selected_agents = ko.observableArray(case_data.agent_splits.reduce(function(start, elem) {
-      if(!~start.indexOf(elem.agent_id)) {
-        start.push(elem.agent_id);
+  function get_default_agents() {
+    var default_agents = case_data.agent_splits.reduce(function(start, elem) {
+        if(!~start.indexOf(elem.agent_id)) {
+          start.push(elem.agent_id);
+        }
+        return start;
+      }, []);
+      if(!~default_agents.indexOf(null)) {
+        default_agents.push(null);
       }
-      return start;
-    }, []));
+      return default_agents;
+  }
+
+  self.selected_agents = ko.observableArray(get_default_agents());
 
   self.add_agent_split = function() {
     var selected_agent = self.selected_agent();
@@ -339,10 +368,10 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   self.unused_agents = ko.computed(function() {
     var selected_ids = self.selected_agents();
     return self.case_agents().filter(function(i) {
-      if(i.id === null) { return true; }
       return !~selected_ids.indexOf(i.id);
     });
   });
+
 
   // Self-enrollment
   self.is_self_enrollment = ko.observable(case_data.is_self_enrollment);
@@ -569,7 +598,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     if (!_.all(self.products(), self.has_proper_split_percentage_sum)) {
       var invalid_product = _.find(self.products(), _.negate(self.has_proper_split_percentage_sum));
       var bad_sum = self.sum_split_percentages_for_product(invalid_product);
-      alert("Agent splits for " + invalid_product.name + " must total 100%; the current total percentage is " + bad_sum +"%");
+      bootbox.alert("Agent splits for " + invalid_product.name + " must total 100%; the current total percentage is " + bad_sum +"%");
       return false;
     }
 
@@ -677,7 +706,8 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
       can_partners_download_enrollments: self.can_partners_download_enrollments(),
       is_self_enrollment: self.is_self_enrollment(),
       include_bank_draft_form: self.include_bank_draft_form(),
-      product_settings: self.serialize_product_settings()
+      product_settings: self.serialize_product_settings(),
+      is_stp: Boolean(self.has_agent_splits())
     };
   };
 
@@ -727,7 +757,7 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
   self.serialize_agent_splits = function() {
     var serialized_records = self.selected_agent_splits();
     return serialized_records.reduce(function(start, elem) {
-      if(elem.commision_subcount_code() && elem.split_percentage()) {
+      if(elem.split_percentage()) {
         start.push(elem.toJson());
       }
       return start;

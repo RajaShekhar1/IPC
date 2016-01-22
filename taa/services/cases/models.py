@@ -54,6 +54,7 @@ class Case(CaseSerializer, db.Model):
     owner_agent = db.relationship('Agent', backref='owned_cases')
     active = db.Column(db.Boolean, default=False, index=True)
     created_date = db.Column(db.DateTime)
+    is_stp = db.Column(db.Boolean, default=False)
     enrollment_period_type = db.Column(db.String(16), nullable=True)
     # Note: this flag is used for a few other restrictions now, and has a
     # broader meaning that a partner agent can view census data for only
