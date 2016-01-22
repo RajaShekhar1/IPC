@@ -276,7 +276,9 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
         return elem.id === agent_id;
       })[0];
       return cur_agent.first + " " + cur_agent.last;
-  }
+  };
+
+  //TODO: Change validate alert to bootbox alert, add item to case to turn of splits (has STP)
 
   function AgentSplit(agent_id, product_id, commision_subcount_code, split_percentage) {
     this.agent_id = agent_id;
@@ -322,19 +324,16 @@ var CaseSettingsPanel = function CaseSettingsPanel(case_data, product_choices, c
     return split;
   };
 
-  self.selected_agents = ko.computed(function() {
-    var selected_ids = case_data.agent_splits.reduce(function(start, elem) {
+  self.selected_agents = ko.observableArray(case_data.agent_splits.reduce(function(start, elem) {
       if(!~start.indexOf(elem.agent_id)) {
         start.push(elem.agent_id);
       }
       return start;
-    }, []);
-    return selected_ids;
-  });
+    }, []));
 
   self.add_agent_split = function() {
     var selected_agent = self.selected_agent();
-    var agent_split = new AgentSplit(selected_agent);
+    self.selected_agents.push(selected_agent.id);
   };
 
   self.unused_agents = ko.computed(function() {
