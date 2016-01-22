@@ -218,6 +218,29 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
   });
 
+
+  // Occupation classes
+  self.occupation_classes = ko.observableArray(case_data.occupation_class_settings);
+  self.new_occupation_class = ko.observable('');
+
+  self.addOccupationClass = function() {
+    self.occupation_classes.push({label: self.new_occupation_class()});
+    self.new_occupation_class('');
+  };
+
+  self.removeOccupationClass = function(occupation_class) {
+    self.occupation_classes.remove(occupation_class);
+  };
+
+  self.is_new_occupation_class_valid = ko.computed(function() {
+    var index = _.findIndex(self.occupation_classes(), function(item) {
+      return item.label.toLowerCase() === self.new_occupation_class().toLowerCase();
+    });
+    return (self.new_occupation_class() !== '' &&
+            index === -1);
+  });
+
+
   // cache the instances of the riders here.
   self._case_rider_configurations_by_product = {};
 
@@ -707,7 +730,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       is_self_enrollment: self.is_self_enrollment(),
       include_bank_draft_form: self.include_bank_draft_form(),
       product_settings: self.serialize_product_settings(),
-      is_stp: Boolean(self.has_agent_splits())
+      is_stp: Boolean(self.has_agent_splits()),
+      occupation_class_settings: self.occupation_classes()
     };
   };
 
