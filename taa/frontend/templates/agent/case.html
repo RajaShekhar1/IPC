@@ -258,9 +258,12 @@ style="display: none;" data-bind="visible: true">
                                       <div data-bind="template: { name: 'occupationClassTemplate', foreach: occupation_classes, as: 'occupation_class' }"></div>
                                       <script type="text/html" id="occupationClassTemplate">
                                         <div>
+                                          <span data-bind="text: label"></span>
+                                          <span> </span>
                                           <button class="btn btn-sm btn-white btn-inverse middle" title="Click to delete this occupation class" data-bind="click: $parent.removeOccupationClass">
-                                            <i class="ace-icon fa fa-minus"></i>
-                                            <span data-bind="text: label"></span>
+
+                                            <i class="ace-icon fa fa-trash color-red"></i>
+
                                           </button>
                                         </div>
                                       </script>
