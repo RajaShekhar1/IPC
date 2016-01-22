@@ -250,6 +250,32 @@ style="display: none;" data-bind="visible: true">
                                   </label>
                                 </div>
                               </div>
+                              <div class="row">
+                                <div class="form-group">
+                                  <label class="col-md-3 control-label">Occupation Classes</label>
+                                  <div class="col-md-9">
+                                    <div>
+                                      <div data-bind="template: { name: 'occupationClassTemplate', foreach: occupation_classes, as: 'occupation_class' }"></div>
+                                      <script type="text/html" id="occupationClassTemplate">
+                                        <div>
+                                          <button class="btn btn-sm btn-white btn-inverse middle" title="Click to delete this occupation class" data-bind="click: $parent.removeOccupationClass">
+                                            <i class="ace-icon fa fa-minus"></i>
+                                            <span data-bind="text: label"></span>
+                                          </button>
+                                        </div>
+                                      </script>
+                                      <div>
+                                        <input class="ace" size="10" id="new-occupation-class" data-bind="textInput: new_occupation_class">
+                                        <button class="btn btn-sm btn-success" data-bind="click: addOccupationClass,
+                                        enable: is_new_occupation_class_valid">
+                                          <i class="ace-icon fa fa-plus"></i>
+                                          Add new
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           {% endif %}
                           {% if not case_has_enrollments %}
