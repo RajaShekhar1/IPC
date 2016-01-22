@@ -326,10 +326,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     self.selected_agent_splits = ko.observableArray(splits);
   });
 
-  function AgentSplit(agent_id, product_id, commision_subcount_code, split_percentage) {
+  function AgentSplit(agent_id, product_id, commission_subcount_code, split_percentage) {
     this.agent_id = agent_id;
     this.product_id = product_id;
-    this.commision_subcount_code = ko.observable(commision_subcount_code);
+    this.commission_subcount_code = ko.observable(commission_subcount_code);
     this.split_percentage = ko.observable(split_percentage);
     this.valid = ko.computed(function() {
         if(this.agent_id===null) { return true; }
@@ -348,7 +348,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
         agent_id: this.agent_id,
         product_id: this.product_id,
         split_percentage: this.split_percentage(),
-        commision_subcount_code: this.commision_subcount_code()
+        commission_subcount_code: this.commission_subcount_code()
       };
     };
     return;
@@ -362,7 +362,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }).first();
     var split = new AgentSplit(agent, product);
     if(current_split) {
-      split = new AgentSplit(current_split.agent_id, current_split.product_id, current_split.commision_subcount_code, current_split.split_percentage);
+      split = new AgentSplit(current_split.agent_id, current_split.product_id, current_split.commission_subcount_code, current_split.split_percentage);
     }
     self.selected_agent_splits.push(split);
     return split;
@@ -635,10 +635,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.sum_split_percentages_for_product = function(product) {
     var splits = self.serialize_agent_splits();
-    var splits_for_product = splits.filter(function(elem) {
-      return elem.product_id===product.id;
+    var splits_for_product_with_percentage = splits.filter(function(elem) {
+      return elem.product_id === product.id && parseInt(elem.percentage) > 0;
     });
-    return splits_for_product.reduce(function(acc, split) {
+    return splits_for_product_with_percentage.reduce(function(acc, split) {
       return acc + parseInt(split.split_percentage, 0);
     }, 0);
   };
@@ -803,9 +803,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.serialize_agent_splits = function() {
     var serialized_records = self.selected_agent_splits();
     return serialized_records.reduce(function(start, elem) {
-      if(elem.split_percentage()) {
-        start.push(elem.toJson());
-      }
+      start.push(elem.toJson());
       return start;
     }, []);
   };

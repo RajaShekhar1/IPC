@@ -394,7 +394,7 @@ class AgentSplitsSerializer(JsonSerializable):
 
 class AgentSplitsSetup(AgentSplitsSerializer, db.Model):
     """
-    Model a case's agent commision splits
+    Model a case's agent commission splits
     """
     __tablename__ = 'agent_split_setups'
 
@@ -404,7 +404,7 @@ class AgentSplitsSetup(AgentSplitsSerializer, db.Model):
     case = db.relationship('Case', backref='agent_splits')
     agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
-    commision_subcount_code = db.Column(db.String, server_default="", default="")
+    commission_subcount_code = db.Column(db.String, server_default="", default="")
     split_percentage = db.Column(db.Integer)
 
 
