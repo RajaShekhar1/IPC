@@ -8,8 +8,6 @@ from flask_stormpath import login_required, groups_required, current_user
 
 from taa import app, db
 from nav import get_nav_menu
-from taa.api.cases import census_records
-from taa.services.docusign.docu_console import console_url
 from taa.services.cases import CaseService, SelfEnrollmentSetup
 from taa.services.products.riders import RiderService
 from taa.services.cases.forms import (CensusRecordForm,
@@ -35,13 +33,13 @@ self_enrollment_email_service = SelfEnrollmentEmailService()
 @app.route('/inbox', methods=['GET'])
 @login_required
 def inbox():
-    if sessionUserApprovedForDocusign():
-        return render_template('agent/agent-inbox.html',
-                               inboxURL=console_url(),
-                               nav_menu=get_nav_menu())
+    if agent_service.is_user_agent(current_user) or agent_service.can_manage_all_cases(current_user):
+        return render_template(
+            'agent/agent-inbox.html',
+            nav_menu=get_nav_menu()
+        )
     else:
-        flash("You are not yet authorized for signing applications. "
-              "Please see your Regional Director for assistance.")
+        flash("You are not authorized for signing applications.")
         return redirect(url_for('home'))
 
 

@@ -69,6 +69,18 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     received_data = db.Column(JSON(none_as_null=False))
     standardized_data = db.Column(JSON(none_as_null=False))
 
+    docusign_envelope_id = db.Column(db.Unicode(128))
+    agent_signing_status = db.Column(db.Unicode(32))
+    applicant_signing_status = db.Column(db.Unicode(32))
+
+    SIGNING_STATUS_PENDING = u'pending'
+    SIGNING_STATUS_DECLINED = u'declined_to_sign'
+    SIGNING_STATUS_TIMEOUT = u'timeout'
+    SIGNING_STATUS_ERROR = u'error'
+    SIGNING_STATUS_TTL_ERROR = u'ttl_expired'
+    SIGNING_STATUS_COMPLETE = u'signed'
+    SIGNING_STATUS_NA = u'not_applicable'
+
     def did_enroll(self):
         return self.application_status == self.APPLICATION_STATUS_ENROLLED
 

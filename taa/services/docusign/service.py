@@ -174,6 +174,27 @@ class DocuSignService(object):
 
         return components
 
+    def search_envelopes(self, for_user, envelope_status=None):
+
+        # Need to get all envelopes that this user is allowed to see.
+        agent_service = LookupService("AgentService")
+        if agent_service.is_user_agent(for_user):
+            # Only envelopes that have been signed by me.
+            filter_agent_id = for_user.id
+        else:
+            # Allow home office and admin to see all for now.
+            filter_agent_id = None
+
+        enrollment_service = LookupService("EnrollmentApplicationService")
+        enrollments = enrollment_service.search_enrollments(
+                by_agent_id=filter_agent_id,
+                by_applicant_signing_status=envelope_status,
+        )
+
+        return [DocusignEnvelope(enrollment.docusign_envelope_id) for enrollment in enrollments]
+
+
+
 
 def create_envelope(email_subject, components):
     docusign_service = LookupService('DocuSignService')
@@ -232,7 +253,7 @@ class DocusignEnvelope(object):
             authenticationMethod="email",
             email=recipient.email,
             returnUrl=callback_url,
-            clientUserId="123456",
+            clientUserId="123456",# clientUserId,
             userName=recipient.name,
         )
         base_url = docusign_transport.api_endpoint
@@ -264,6 +285,16 @@ class DocuSignTransport(object):
         self.api_password = api_password
         self.api_endpoint = api_endpoint
 
+    def get(self, url):
+        full_url = urljoin(self.api_endpoint, url)
+
+        req = requests.get(full_url, headers=self._make_headers())
+
+        if req.status_code < 200 or req.status_code >= 300:
+            self._raise_docusign_error(None, full_url, req)
+
+        return req.json()
+
     def post(self, url, data):
         full_url = urljoin(self.api_endpoint, url)
 
@@ -279,17 +310,34 @@ class DocuSignTransport(object):
         #print('headers: %s'%self._make_headers())
 
         if req.status_code < 200 or req.status_code >= 300:
-            # Print error to Heroku error logs.
-            print("""
+            self._raise_docusign_error(data, full_url, req)
+
+        return req.json()
+
+
+    def put(self, url, data):
+        full_url = urljoin(self.api_endpoint, url)
+
+        req = requests.put(
+            full_url,
+            data=json.dumps(data),
+            headers=self._make_headers()
+        )
+
+        if req.status_code < 200 or req.status_code >= 300:
+            self._raise_docusign_error(data, full_url, req)
+
+        return req.json()
+
+    def _raise_docusign_error(self, data, full_url, req):
+        # Print error to Heroku error logs.
+        print("""
 DOCUSIGN ERROR at URL: %s
 posted data: %s
 status is: %s
 response:
 %s""" % (full_url, data, req.status_code, req.text))
-
-            raise Exception("Bad DocuSign Request")
-
-        return req.json()
+        raise Exception("Bad DocuSign Request")
 
     def _make_headers(self):
         return {

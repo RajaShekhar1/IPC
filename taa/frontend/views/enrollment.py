@@ -444,7 +444,12 @@ def submit_wizard_data():
                     census_record,
                     case
             )
-            # Return the redirect url or error
+            enrollment_service.save_docusign_envelope(enrollment_application, envelope_result)
+
+            # Store the enrollment record ID in the session for now so we can access it on the landing page.
+            session['enrollment_application_id'] = enrollment_application.id
+
+            # Return the redirect url
             resp = {'error': False,
                     'error_message': "",
                     'redirect': signing_url}
@@ -479,6 +484,12 @@ def ds_landing_page():
     session_type = request.args['type']
     name = request.args['name']
     ds_event = request.args['event']
+
+    enrollment_application_id = session.get('enrollment_application_id')
+    if enrollment_application_id:
+        enrollment_application = enrollment_service.get(enrollment_application_id)
+        enrollment_service.update_applicant_signing_status(enrollment_application, ds_event)
+
     return render_template('enrollment/completed-session.html',
                            session_type=session_type,
                            name=name,

@@ -16,6 +16,7 @@ read_product_rate_groups = ['agents', 'home_office', 'admins']
 product_service = ProductService()
 rider_service = RiderService()
 
+
 @route(bp, '/', methods=['GET'])
 @login_required
 @groups_required(read_product_api_groups, all=False)

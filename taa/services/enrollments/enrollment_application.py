@@ -26,6 +26,20 @@ class EnrollmentApplicationService(DBService):
     product_service = RequiredFeature('ProductService')
     batch_item_service = RequiredFeature('EnrollmentImportBatchItemService')
 
+    def search_enrollments(self, by_agent_id=None, by_applicant_signing_status=None, by_agent_signing_status=None):
+        q = db.query(EnrollmentApplication)
+
+        if by_agent_id:
+            q = q.filter(EnrollmentApplication.agent_id == by_agent_id)
+
+        if by_applicant_signing_status:
+            q = q.filter(EnrollmentApplication.applicant_signing_status == by_applicant_signing_status)
+
+        if by_agent_signing_status:
+            q = q.filter(EnrollmentApplication.agent_signing_status == by_agent_signing_status)
+
+        return q
+
     def save_enrollment_data(self, data, case, census_record, agent, received_data=None):
         """
         Save all the enrollment and coverage information, including creating a census record if required.
@@ -65,6 +79,33 @@ class EnrollmentApplicationService(DBService):
         # Save coverages
         self._save_coverages(enrollment, data)
         return enrollment
+
+    def save_docusign_envelope(self, enrollment_application, envelope):
+        """Records a reference to a DocuSign envelope on our application record in the database."""
+
+        enrollment_application.docusign_envelope_id = envelope.uri
+        enrollment_application.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_PENDING
+        db.session.flush()
+
+    def update_applicant_signing_status(self, enrollment_application, status):
+        # Map what docusign returns to our own status
+        status_mapping_possibilities = {
+            'cancel': EnrollmentApplication.SIGNING_STATUS_DECLINED, # (recipient cancels signing)
+            'decline': EnrollmentApplication.SIGNING_STATUS_DECLINED, # (recipient declines signing)
+            'exception': EnrollmentApplication.SIGNING_STATUS_ERROR, #  (exception occurs)
+            #'fax_pending', #  (recipient has fax pending)
+            #'id_check_faild', #  (recipient failed an ID check)
+            'session_timeout': EnrollmentApplication.SIGNING_STATUS_TIMEOUT, #  (session times out)
+            'signing_complete': EnrollmentApplication.SIGNING_STATUS_COMPLETE, #  (recipient completes signing)
+            'ttl_expired':EnrollmentApplication.SIGNING_STATUS_TTL_ERROR, #  (the TTL expires)
+            #'viewing_complete', #  (recipient completes viewing the envelope)
+        }
+
+        if status in status_mapping_possibilities:
+            internal_status = status_mapping_possibilities[status]
+            enrollment_application.applicant_signing_status = internal_status
+            db.session.flush()
+
 
     def delete_case_enrollment_data(self, case):
         for census_record in case.census_records:
