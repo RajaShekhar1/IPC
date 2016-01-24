@@ -1,4 +1,4 @@
-var payment_mode = (function() {
+var payment_mode_module = (function() {
   function PaymentMode(options) {
     this.frequency = options.frequency;
     this.label = options.label;

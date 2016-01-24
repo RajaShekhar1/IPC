@@ -41,13 +41,13 @@ var wizard_viewmodel = (function() {
 
     // Payment mode
     this.payment_modes = _.map(all_payment_modes || [], function(pm){
-      return payment_mode.create_payment_mode(pm);
+      return payment_mode_module.create_payment_mode(pm);
     });
     this.payment_mode = ko.observable(
-        payment_mode.select_initial_payment_mode(case_data, this.payment_modes)
+        payment_mode_module.select_initial_payment_mode(case_data, this.payment_modes)
     );
     this.can_change_payment_mode = ko.computed(function() {
-      return payment_mode.can_change_payment_mode(case_data);
+      return payment_mode_module.can_change_payment_mode(case_data);
     });
     this.is_payment_mode_valid = ko.pureComputed(this._is_payment_mode_valid, this);
 
@@ -222,6 +222,7 @@ var wizard_viewmodel = (function() {
 
     self.product = product;
     self.case_data = case_data;
+    self.payment_mode = payment_mode;
     self.applicant_list = applicant_list;
     self.should_include_spouse = should_include_spouse;
     self.should_include_children = should_include_children;

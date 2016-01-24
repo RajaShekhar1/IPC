@@ -86,8 +86,13 @@ Product.prototype = {
   },
 
   // Allow the details of the benefit's face value, display to be based on the product
-  get_new_benefit_option: function (options) {
-    return new BenefitOption(options);
+  //get_new_benefit_option: function (options) {
+  //  return new BenefitOption(options);
+  //},
+
+  create_coverage_option: function(options) {
+    // Some products (CI for now) will override this.
+    return new CoverageOption(options);
   },
 
   requires_gender: function () {
@@ -246,8 +251,8 @@ function FPPCIProduct(product_data) {
 }
 // Inherit from product
 FPPCIProduct.prototype = Object.create(Product.prototype);
-FPPCIProduct.prototype.get_new_benefit_option = function (options) {
-  return new CIBenefitOption(new BenefitOption(options));
+FPPCIProduct.prototype.create_coverage_option = function (options) {
+  return new CICoverageOption(new CoverageOption(options));
 };
 FPPCIProduct.prototype.has_critical_illness_coverages = function () {
   return true;

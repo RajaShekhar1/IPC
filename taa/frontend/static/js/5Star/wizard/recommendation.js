@@ -13,7 +13,11 @@ function RecommendationSet(name, recommendations) {
     if (self.recommendations.length === 0) {
       return "";
     }
-    return self.recommendations[0].recommended_coverage.payment_mode().display_lowercase();
+    if (!_.any(_.invoke(self.recommendations, "is_valid"))) {
+      return "";
+    }
+    var valid_recommendation = _.find(self.recommendations, function(rec) {return rec.is_valid()});
+    return valid_recommendation.recommended_coverage.payment_mode().display_lowercase();
   };
 
   self.formatted_total_premium = function() {
@@ -37,7 +41,7 @@ function Recommendation(name, applicant_type, coverage_option) {
   self.recommended_coverage = coverage_option;
 
   self.is_valid = function() {
-    return true;
+    return self.recommended_coverage.is_valid();
   };
 
   self.format_premium_option = function() {
