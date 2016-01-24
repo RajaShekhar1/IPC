@@ -75,16 +75,21 @@ class DocuSignService(object):
         return DocusignEnvelope(result['uri'])
 
     def create_envelope_recipients(self, case, enrollment_data):
+
         signing_agent = enrollment_data.get_signing_agent()
+
         agent = AgentDocuSignRecipient(name=signing_agent.name(),
                                        email=signing_agent.email)
         employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
                                              email=enrollment_data.get_employee_email())
-        recipients = [
-            agent,
-            employee,
-            # TODO Check if BCC's needed here
-        ]
+
+        if enrollment_data.should_use_call_center_workflow():
+            recipients = [agent]
+        else:
+            recipients = [
+                agent,
+                employee,
+            ]
         return employee, recipients
 
     def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
@@ -97,6 +102,11 @@ class DocuSignService(object):
 
         # Build the components (different PDFs) needed for signing
         components = []
+
+        # We collect tab information differently depending on who is signing.
+        if enrollment_data.should_use_call_center_workflow():
+            # Insert the employee signature info into the data and ensure all tabs show up for the agent.
+
 
         # Main form
         fpp_form = FPPTemplate(recipients, enrollment_data, should_use_docusign_renderer)
@@ -543,9 +553,13 @@ class DocuSignEnvelopeComponent(object):
             tabs += [DocuSignPreSignedTextTab("SignHereAgent", self.data.get_agent_esignature())]
             tabs += [DocuSignPreSignedTextTab("InitialHereAgent", self.data.get_agent_initials())]
 
-        if self.data.get('application_date'):
+        if self.data.get('application_date') or self.data.get('employee_sig_date'):
+            employee_signed_date = self.data.get('application_date') if self.data.get('application_date') else self.data.get('employee_sig_date')
+            tabs += [DocuSignPreSignedTextTab("DateSignedEmployee", employee_signed_date)]
+
+        if self.data.get('application_date') or self.data.get('employee_sig_date'):
+            agent_signed_date = self.data.get('application_date') if self.data.get('application_date') else self.data.get('agent_sig_date')
             tabs += [
-                DocuSignPreSignedTextTab("DateSignedEmployee", self.data.get('application_date')),
                 DocuSignPreSignedTextTab("DateSignedAgent", self.data.get('application_date')),
             ]
 

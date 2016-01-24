@@ -490,6 +490,9 @@ def ds_landing_page():
         enrollment_application = enrollment_service.get(enrollment_application_id)
         enrollment_service.update_applicant_signing_status(enrollment_application, ds_event)
 
+    # Need to commit all database changes.
+    db.session.commit()
+
     return render_template('enrollment/completed-session.html',
                            session_type=session_type,
                            name=name,

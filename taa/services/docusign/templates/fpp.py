@@ -88,7 +88,6 @@ class FPPTemplate(DocuSignServerTemplate):
 
     def make_general_tabs(self):
 
-
         tabs = [
             DocuSignRadioTab('enrollType', "assist" if self.data.is_enrollment_type_agent_assisted() else "self"),
             DocuSignRadioTab('productType', self.get_product_type()),
