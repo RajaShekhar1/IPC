@@ -274,178 +274,135 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return _.filter(self.enabled_case_riders(), function(cr) {return cr.product === product;});
   };
 
-  // Agent splits
+  /* Agent Splits */
+
+  if(!Array.prototype.first) {
+    Array.prototype.first = function() {
+      if(this.length>0) {
+        return this[0];
+      } else {
+        return undefined;
+      }
+    };
+  }
+
   self.owner_agent = ko.computed(function() {
     return settings.active_agents.filter(function(elem) {
-      return elem.id == self.owner_agent_id();
-    })[0];
+      return elem.id === parseInt(self.owner_agent_id(), 10);
+    });
   });
+
   self.partner_agent_list = ko.computed(function() {
     return settings.active_agents.filter(function(elem) {
       return self.partner_agents().indexOf(String(elem.id)) !== -1;
     });
   });
 
-  self.has_agent_splits = ko.observable(case_data.agent_splits.length>0);
-  self.selected_agent_split = ko.observable("");
-  self.agent_split_records = ko.observableArray();
   self.case_agents = ko.computed(function() {
     return self.partner_agent_list().concat(self.owner_agent());
   });
-  self.selected_agents = ko.observableArray();
 
+  self.has_agent_splits = ko.observable(case_data.is_stp);
+
+  // An array of AgentSplit viewmodels.
+  self.selected_agent_splits = ko.observableArray(get_initial_splits());
+
+  // Used for adding an agent to the split table.
+  self.selected_agent = ko.observable();
+
+  // Tracks which agents are in the split table.
+  self.selected_agents = ko.observableArray(get_initial_split_agents());
+
+  // Inverse of the selected_agents list compared to the available agents on this case.
   self.unused_agents = ko.computed(function() {
-    var selected_ids = self.selected_agents().map(function(elem) {
-      return elem.id;
-    });
+    var selected_ids = self.selected_agents();
     return self.case_agents().filter(function(i) {
-      if(i.id === null) { return true; }
-      return selected_ids.indexOf(i.id)===-1;
+      return !~selected_ids.indexOf(i.id);
     });
   });
 
-  self.add_agent_split = function(record) {
-    if(self.selected_agent_split() !== "") {
-      var agent_split_record_template = function(agent) {
-        return {
-          agent_id: agent.id,
-          agent_name: agent.first+' '+agent.last,
-          valid: ko.computed(function() {
-            return self.case_agents().filter(function(elem) {
-              return elem.id===agent.id;
-            }).length !== 0;
-          }),
-          products: ko.computed(function() {
-            var products = [], case_products = self.products();
-            for (var i = 0; i < case_products.length; i++) {
-              products.push(
-                {
-                  product_id: case_products[i].id,
-                  product_name: case_products[i].name,
-                  commision_subcount_code: ko.observable(),
-                  split_percentage: ko.observable()
-                }
-              );
-            }
-            return products;
-          })
-        };
-      };
-      var selected_agent = self.selected_agent_split();
-
-      var split_record = new agent_split_record_template(selected_agent);
-
-      self.selected_agents.push(selected_agent);
-
-      self.agent_split_records.push(split_record);
-      self.selected_agent_split("");
+  self.add_agent_split = function() {
+    var selected_agent = self.selected_agent();
+    if (selected_agent) {
+      self.selected_agents.push(selected_agent.id);
     }
   };
 
-  function get_product_name_from_id(product_id) {
-      var cur_product = self.products().filter(function(elem) {
-        return elem.id === product_id;
-      })[0];
-      return cur_product.name;
-  }
-
-  function get_agent_name_from_id(id) {
-      if(id===null) { return "Writing Agent"; }
+  self.get_agent_name_from_id = function(agent_id) {
+      if (agent_id===null) { return "Writing Agent"; }
       var cur_agent = settings.active_agents.filter(function(elem) {
-        return elem.id === id;
-      })[0];
+        return elem.id === agent_id;
+      }).first();
       return cur_agent.first + " " + cur_agent.last;
-  }
+  };
 
-  function AgentSplit(agent_id) {
+  // Basic viewmodel for an agent split percentage and commission code for a given product and agent.
+  function AgentSplit(agent_id, product_id, commission_subcount_code, split_percentage) {
     this.agent_id = agent_id;
-    this.agent_name = get_agent_name_from_id(agent_id);
+    this.product_id = product_id;
+    this.commission_subcount_code = ko.observable(commission_subcount_code);
+    this.split_percentage = ko.observable(split_percentage);
     this.valid = ko.computed(function() {
-        if(agent_id===null) { return true; }
+        if(this.agent_id===null) { return true; }
         return self.case_agents().filter(function(elem) {
-          return elem.id===agent_id;
-        }).length !== 0;
+          return elem.id===this.agent_id;
+        }.bind(this)).length > 0;
+    }, this);
+    this.product_name = (function() {
+        var cur_product = self.products().filter(function(elem) {
+          return elem.id === product_id;
+        }).first();
+        return cur_product.name;
+    })();
+    this.toJson = function() {
+      return {
+        agent_id: this.agent_id,
+        product_id: this.product_id,
+        split_percentage: this.split_percentage(),
+        commission_subcount_code: this.commission_subcount_code()
+      };
+    };
+  }
+
+  // Used for populating the agent split UI grid. Checks the selected_agent_splits() array first to see if a viewmodel
+  //  exists, otherwise creates a new one.
+  self.get_or_create_split = function(agent_id, product_id) {
+
+    var current_split = self.selected_agent_splits().filter(function(elem) {
+      return elem.agent_id === agent_id && elem.product_id === product_id;
+    }).first();
+
+    if (current_split) {
+      return current_split;
+    } else {
+      var split = new AgentSplit(agent_id, product_id);
+      self.selected_agent_splits.push(split);
+      return split;
+    }
+  };
+
+  function get_initial_splits() {
+    return case_data.agent_splits.filter(function(elem) {
+      // Ignore splits for products we don't have.
+      return _.find(self.products(), function(product) {return product.id === elem.product_id}) !== undefined;
+    }).map(function(elem) {
+      return new AgentSplit(elem.agent_id, elem.product_id, elem.commission_subcount_code, elem.split_percentage);
     });
-    this.products = ko.observableArray();
-    return;
   }
 
-  Object.assign(AgentSplit.prototype, {
-    addProduct: function(id, commision_subcount_code, split_percentage) {
-      this.products.push({
-        product_id: id,
-        product_name: get_product_name_from_id(id),
-        commision_subcount_code: ko.observable(commision_subcount_code),
-        split_percentage: ko.observable(split_percentage)
-      });
-    },
-  });
-
-  function deserialize_agent_splits(records) {
-    if(!records) {
-      records = case_data.agent_splits;
-    }
-
-    var records_by_agent = {};
-    for (var i = 0; i < records.length; i++) {
-      var record = records[i];
-      if(!records_by_agent[record.agent_id]) {
-        if(record.agent_id === null) {
-          records_by_agent["writing"] = new AgentSplit(null);
-          self.selected_agents.push({first: "Writing", "last": "Agent", id: null});
-        } else {
-          records_by_agent[record.agent_id] = new AgentSplit(record.agent_id);
-          self.selected_agents.push(self.case_agents().filter(function(elem) { return elem.id === record.agent_id; })[0]);
+  function get_initial_split_agents() {
+    var default_agents = case_data.agent_splits.reduce(function(start, elem) {
+        if(!~start.indexOf(elem.agent_id)) {
+          start.push(elem.agent_id);
         }
+        return start;
+      }, []);
+      if(!~default_agents.indexOf(null)) {
+        default_agents.push(null);
       }
-      if(record.agent_id === null) {
-        records_by_agent["writing"].addProduct(
-            record.product_id,
-            record.commision_subcount_code,
-            record.split_percentage
-        );
-      } else {
-        records_by_agent[record.agent_id].addProduct(
-            record.product_id,
-            record.commision_subcount_code,
-            record.split_percentage
-        );
-      }
-    }
-
-    /* var case_products = self.products();
-    for (var i = 0; i < case_products.length; i++) {
-      var current_product = case_products[i];
-      for(var record in records_by_agent) {
-        var agent_products = records_by_agent[record].products();
-
-        if()
-      }
-    } */
-
-    var has_writing = records.filter(function(elem) { return elem.agent_id === null; }).length === 0;
-    console.log(has_writing);
-
-    if(has_writing) {
-      /* we don't have a record with a null id, i.e. no writing agent */
-        if(!records_by_agent.writing) {
-          records_by_agent.writing = new AgentSplit(null);
-        }
-        var case_products = self.products();
-        for (var i = 0; i < case_products.length; i++) {
-          records_by_agent["writing"].addProduct(
-            case_products[i].id
-          );
-        }
-    }
-
-    return records_by_agent;
+      return default_agents;
   }
 
-  var records_on_case = deserialize_agent_splits();
-  for(var record in records_on_case) {
-      self.agent_split_records.push(records_on_case[record]);
-  }
 
   // Self-enrollment
   self.is_self_enrollment = ko.observable(case_data.is_self_enrollment);
@@ -665,17 +622,33 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.validate_splits = function() {
-    //TODO: Make sure that splits for each product add up to 100
     if (!self.has_agent_splits()) {
       return true;
     }
-    var splits = self.serialize_agent_splits();
-    var case_products = self.products();
-    var allAddTo100 = true;
-    for(var i = 0; i<case_products.length; i++) {
-      allAddTo100 = allAddTo100 && (100 === splits.filter(function(elem) { return elem.product_id===case_products[i].id; }).reduce(function(a, b) { return a + parseInt(b.split_percentage,0); }, 0));
+
+    if (!_.all(self.products(), self.has_proper_split_percentage_sum)) {
+      var invalid_product = _.find(self.products(), _.negate(self.has_proper_split_percentage_sum));
+      var bad_sum = self.sum_split_percentages_for_product(invalid_product);
+      bootbox.alert("Agent splits for " + invalid_product.name + " must total 100%; the current total percentage is " + bad_sum +"%");
+      return false;
     }
-    return allAddTo100;
+
+    return true;
+  };
+
+  self.has_proper_split_percentage_sum = function(product) {
+    var product_split_sum = self.sum_split_percentages_for_product(product);
+    return product_split_sum === 100;
+  };
+
+  self.sum_split_percentages_for_product = function(product) {
+    var splits = self.selected_agent_splits(); //self.serialize_agent_splits();
+    var splits_for_product_with_percentage = splits.filter(function(elem) {
+      return elem.product_id === product.id && parseInt(elem.split_percentage()) > 0;
+    });
+    return splits_for_product_with_percentage.reduce(function(acc, split) {
+      return acc + parseInt(split.split_percentage(), 0);
+    }, 0);
   };
 
 
@@ -764,8 +737,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       can_partners_download_enrollments: self.can_partners_download_enrollments(),
       is_self_enrollment: self.is_self_enrollment(),
       include_bank_draft_form: self.include_bank_draft_form(),
-      occupation_class_settings: self.occupation_classes(),
-      product_settings: self.serialize_product_settings()
+      product_settings: self.serialize_product_settings(),
+      is_stp: Boolean(self.has_agent_splits()),
+      occupation_class_settings: self.occupation_classes()
     };
   };
 
@@ -835,21 +809,13 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.serialize_agent_splits = function() {
-    var records = self.agent_split_records(), serialized_records = [];
-    for (var i = 0; i < records.length; i++) {
-      var products = records[i].products();
-      for (var j=0; j < products.length; j++ ) {
-        if(products[j].commision_subcount_code()!=="" && products[j].split_percentage() > 0 && products[j].split_percentage() <= 100) {
-          serialized_records.push({
-            product_id: products[j].product_id,
-            agent_id: records[i].agent_id,
-            commision_subcount_code: products[j].commision_subcount_code(),
-            split_percentage: products[j].split_percentage(),
-          });
-        }
+    var serialized_records = self.selected_agent_splits();
+    return serialized_records.reduce(function(start, elem) {
+      if (elem.split_percentage() || elem.commission_subcount_code()) {
+        start.push(elem.toJson());
       }
-    }
-    return serialized_records;
+      return start;
+    }, []);
   };
 
   self.loading_modal = ko.observable(null);
@@ -898,15 +864,11 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
     if(self.has_agent_splits()) {
       // Also save agent split settings.
-      if(self.agent_split_records().length > 0) {
         agent_splits_request = send_json_data(
           "PUT",
           urls.get_case_api_agent_splits_url(case_data.id),
           self.serialize_agent_splits()
         );
-      } else {
-
-      }
     }
 
     // Self Enroll settings

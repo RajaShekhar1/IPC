@@ -75,6 +75,9 @@ class ApplicantQuery(object):
     def get_age(self):
         return self.demographics.get_age()
 
+    def get_rate_level(self):
+        return self.demographics.get_rate_level()
+
     def get_mode(self):
         return self.mode
 
@@ -170,9 +173,13 @@ class ApplicantTypeMatchesConstraint(ApplicantQueryConstraint):
 class ApplicantDemographics(object):
     def __init__(self, demographics_object):
         self.age = demographics_object.get('age', None)
+        self.rate_level = demographics_object.get('rate_level', None)
 
     def get_age(self):
         return int(self.age) if self.age is not None else None
+
+    def get_rate_level(self):
+        return int(self.rate_level) if self.rate_level is not None else None
 
 
 class AgeRateLookupTable(object):
@@ -182,6 +189,18 @@ class AgeRateLookupTable(object):
     def do_lookup(self, rate_query):
         age = rate_query.get_age()
         return self._mapping.get(int(age))
+
+
+class RateLevelRateLookupTable(object):
+    '''
+    Uses the applicant's rating level to lookup premium
+    '''
+    def __init__(self, mapping):
+        self._mapping = mapping
+
+    def do_lookup(self, rate_query):
+        rate_level = rate_query.get_rate_level()
+        return self._mapping.get(int(rate_level))
 
 
 class CostComponent(object):
@@ -231,6 +250,18 @@ class LookupTableCostComponent(CostComponent):
     def does_vary_with_coverage_selection(self):
         # In general the lookup tables will vary with coverage selection (ACPT)
         return self.does_vary_with_coverage
+
+
+class AnnualPremiumLookupTableCostComponent(LookupTableCostComponent):
+    """
+    Similar to an ACPT lookup table, but is a fixed annual premium based on a category of coverage selected instead of face amount.
+    """
+    def get_cost_per_thousand(self, rate_query):
+        # Doesn't support this method.
+        return None
+
+    def compute_annual_premium(self, rate_query):
+        return self.lookup_table.do_lookup(rate_query)
 
 
 class FlatFeeCostComponent(CostComponent):
@@ -435,14 +466,20 @@ class RatePlan(object):
             # Load rate tables
             rate_tables = {}
             for rate_table_def in rate_plan_data['rate_tables']:
-                if rate_table_def['key'] == 'age':
-                    # Convert string values to decimal
-                    table_mapping = {}
-                    for key, val in rate_table_def['table'].iteritems():
-                        table_mapping[int(key)] = Decimal(val)
 
+                table_mapping = cls.extract_lookup_table(rate_table_def)
+
+                # Create the appropriate type of lookup table.
+                if rate_table_def['key'] == 'age':
                     rate_table = AgeRateLookupTable(table_mapping)
                     rate_tables[rate_table_def['name']] = rate_table
+
+                elif rate_table_def['key'] == 'rate_level':
+                    rate_table = RateLevelRateLookupTable(table_mapping)
+                    rate_tables[rate_table_def['name']] = rate_table
+
+                else:
+                    raise ValueError("Invalid rate table key type '{}'".format(rate_table_def['key']))
 
             rate_plan = RatePlan(coverage_options=standard_coverage_options)
             for cost_component_def in rate_plan_data['cost_components']:
@@ -450,6 +487,14 @@ class RatePlan(object):
                 if cost_component_def['type'] == "ACPT Lookup":
                     lookup_table = rate_tables[cost_component_def['rate_table']]
                     cost_component = LookupTableCostComponent(
+                        lookup_table,
+                        does_vary_with_coverage=True,
+                        is_enabled_constraint=build_eligibility_constraint(cost_component_def['is_eligible'])
+                    )
+                    rate_plan.add_cost_component(cost_component)
+                elif cost_component_def['type'] == 'Annual Premium Lookup':
+                    lookup_table = rate_tables[cost_component_def['rate_table']]
+                    cost_component = AnnualPremiumLookupTableCostComponent(
                         lookup_table,
                         does_vary_with_coverage=True,
                         is_enabled_constraint=build_eligibility_constraint(cost_component_def['is_eligible'])
@@ -463,6 +508,14 @@ class RatePlan(object):
                     rate_plan.add_cost_component(cost_component)
 
             return rate_plan
+
+    @classmethod
+    def extract_lookup_table(cls, rate_table_def):
+        # Convert string values to decimal
+        table_mapping = {}
+        for key, val in rate_table_def['table'].iteritems():
+            table_mapping[int(key)] = Decimal(val)
+        return table_mapping
 
 
 def load_rate_plan_for_base_product(base_product_code):
@@ -479,9 +532,9 @@ def load_rate_plan_for_base_product(base_product_code):
     elif base_product_code == 'FPPTIB':
         return RatePlan.load_from_yaml('fpptib.yaml')
     elif base_product_code == 'ACC':
-        return RatePlan.load_from_yaml('fppti.yaml')
+        return RatePlan.load_from_yaml('acc.yaml')
     elif base_product_code == 'HI':
-        return RatePlan.load_from_yaml('fppti.yaml')
+        return RatePlan.load_from_yaml('hi.yaml')
     else:
         raise ValueError("No rate plan configured for base product '{}'".format(base_product_code))
 

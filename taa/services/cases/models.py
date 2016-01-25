@@ -54,6 +54,7 @@ class Case(CaseSerializer, db.Model):
     owner_agent = db.relationship('Agent', backref='owned_cases')
     active = db.Column(db.Boolean, default=False, index=True)
     created_date = db.Column(db.DateTime)
+    is_stp = db.Column(db.Boolean, default=False)
     enrollment_period_type = db.Column(db.String(16), nullable=True)
     # Note: this flag is used for a few other restrictions now, and has a
     # broader meaning that a partner agent can view census data for only
@@ -393,7 +394,7 @@ class AgentSplitsSerializer(JsonSerializable):
 
 class AgentSplitsSetup(AgentSplitsSerializer, db.Model):
     """
-    Model a case's agent commision splits
+    Model a case's agent commission splits
     """
     __tablename__ = 'agent_split_setups'
 
@@ -403,7 +404,7 @@ class AgentSplitsSetup(AgentSplitsSerializer, db.Model):
     case = db.relationship('Case', backref='agent_splits')
     agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
-    commision_subcount_code = db.Column(db.String, server_default="", default="")
+    commission_subcount_code = db.Column(db.String, server_default="", default="")
     split_percentage = db.Column(db.Integer)
 
 
