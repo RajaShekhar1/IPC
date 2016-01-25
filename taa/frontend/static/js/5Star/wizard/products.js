@@ -8,9 +8,14 @@ function build_products(root, products) {
     return null;
   }
 
-  return _.map(products, function (product) {
+  var product_objects =  _.map(products, function (product) {
     return build_product(root, product);
-  })
+  });
+
+  // Filter out products that don't show up on the wizard.
+  return _.filter(product_objects, function(product) {
+    return product !== null;
+  });
 }
 
 function build_product(root, product_data) {
@@ -25,6 +30,8 @@ function build_product(root, product_data) {
     base_product = new GroupCIProduct(root, product_data);
   } else if (base_type === "FPP-Gov") {
     base_product = new FPPGovProduct(product_data);
+  } else if (base_type === "ACC" || base_type === "HI") {
+    return null;
   } else {
     // default product?
     alert("Invalid product type '" + base_type + "'");
