@@ -115,7 +115,7 @@ function init_validation(ui) {
       }
 
       // validate questions
-      is_valid &= health_questions.are_health_questions_valid();
+      is_valid &= health_question_buttons.are_health_questions_valid();
 
       if (!is_valid) {
         $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");
