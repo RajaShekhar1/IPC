@@ -8,9 +8,14 @@ function build_products(root, products) {
     return null;
   }
 
-  return _.map(products, function (product) {
+  var product_objects =  _.map(products, function (product) {
     return build_product(root, product);
-  })
+  });
+
+  // Filter out products that don't show up on the wizard.
+  return _.filter(product_objects, function(product) {
+    return product !== null;
+  });
 }
 
 function build_product(root, product_data) {
@@ -25,6 +30,8 @@ function build_product(root, product_data) {
     base_product = new GroupCIProduct(root, product_data);
   } else if (base_type === "FPP-Gov") {
     base_product = new FPPGovProduct(product_data);
+  } else if (base_type === "ACC" || base_type === "HI") {
+    return null;
   } else {
     // default product?
     alert("Invalid product type '" + base_type + "'");
@@ -86,8 +93,13 @@ Product.prototype = {
   },
 
   // Allow the details of the benefit's face value, display to be based on the product
-  get_new_benefit_option: function (options) {
-    return new BenefitOption(options);
+  //get_new_benefit_option: function (options) {
+  //  return new BenefitOption(options);
+  //},
+
+  create_coverage_option: function(options) {
+    // Some products (CI for now) will override this.
+    return new CoverageOption(options);
   },
 
   requires_gender: function () {
@@ -246,8 +258,8 @@ function FPPCIProduct(product_data) {
 }
 // Inherit from product
 FPPCIProduct.prototype = Object.create(Product.prototype);
-FPPCIProduct.prototype.get_new_benefit_option = function (options) {
-  return new CIBenefitOption(new BenefitOption(options));
+FPPCIProduct.prototype.create_coverage_option = function (options) {
+  return new CICoverageOption(new CoverageOption(options));
 };
 FPPCIProduct.prototype.has_critical_illness_coverages = function () {
   return true;

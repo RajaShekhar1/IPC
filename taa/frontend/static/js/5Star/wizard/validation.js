@@ -31,10 +31,6 @@ function init_validation(ui) {
         return;
       }
 
-      // TODO: Re-implement check for adding on too much coverage.
-
-      //var current_product_id = ui.insurance_product.product_data.id;
-
       function validate_coverage_amount(applicant_coverage) {
         var product_id = applicant_coverage.product.product_data.id;
         var product = applicant_coverage.product;
@@ -95,8 +91,6 @@ function init_validation(ui) {
     if (info.step == 2 && info.direction == 'next') {
       var is_valid = true;
 
-      return true;
-
       // validate replacement form
       if (ui.did_select_any_fpp_product() &&
           (ui.should_show_replacement_form())) {
@@ -121,7 +115,7 @@ function init_validation(ui) {
       }
 
       // validate questions
-      is_valid &= health_questions.are_health_questions_valid();
+      is_valid &= health_question_buttons.are_health_questions_valid();
 
       if (!is_valid) {
         $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");

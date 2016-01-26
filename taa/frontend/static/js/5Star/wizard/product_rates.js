@@ -48,14 +48,14 @@ var product_rates_service = (function() {
       return options;
     },
 
-    create_coverage_options: function(is_by_face, applicant_type, options) {
-      return _.map(options, function(data) {
-        return new CoverageOption({
+    create_coverage_options: function(is_by_face, applicant_type, rate_options) {
+      return _.map(rate_options, function(data) {
+        return this.product.create_coverage_option({
           applicant_type: applicant_type,
           is_by_face: is_by_face,
           face_value: data.coverage,
           premium: data.premium,
-          payment_mode: function() {return payment_mode.create_payment_mode_by_frequency(data.payment_mode)}
+          payment_mode: function() {return payment_mode_module.create_payment_mode_by_frequency(data.payment_mode)}.bind(this)
         });
       }, this);
     },
@@ -185,14 +185,21 @@ var product_rates_service = (function() {
   }
 
   function get_or_create_product_rates_viewmodel(product) {
+
+    var rates_vm;
     if (!(product.product_data.id in rates_by_product_id)) {
-      rates_by_product_id[product.product_data.id] = new ProductRatesVM(product);
+      rates_vm = new ProductRatesVM(product);
+      // Cache the vm.
+      rates_by_product_id[product.product_data.id] = rates_vm;
+    } else {
+      rates_vm = rates_by_product_id[product.product_data.id];
     }
-    return rates_by_product_id[product.product_data.id];
+
+    return rates_vm;
   }
 
 
-  function get_product_recommendations(product, payment_mode) {
+  function get_product_recommendations(product) {
     var rates = get_or_create_product_rates_viewmodel(product);
     return rates.recommendations;
   }
@@ -209,7 +216,6 @@ var product_rates_service = (function() {
 
     // Returns observable array that yields CoverageOption instances.
     get_product_coverage_options_for_applicant: get_product_coverage_options_for_applicant,
-    get_product_recommendations: get_product_recommendations,
-    get_or_create_product_rates_viewmodel: get_or_create_product_rates_viewmodel
+    get_product_recommendations: get_product_recommendations
   };
 })();
