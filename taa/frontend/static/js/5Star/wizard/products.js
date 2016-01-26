@@ -182,6 +182,10 @@ Product.prototype = {
     return all_options;
   },
 
+  does_override_rate_options: function() {
+    return false;
+  },
+
   should_show_other_insurance_questions: function() {
     // should we show replacement questions
     // right now it is anything that isn't group CI, which is all FPP products.
@@ -377,8 +381,16 @@ function GroupCIProduct(root, product_data) {
 
   };
 
+  self.does_override_rate_options = function(applicant_type) {
+    // Group CI has to filter out some of the options returned by the rates module.
+    return (
+      applicant_type === wizard_applicant.Applicant.EmployeeType ||
+      applicant_type === wizard_applicant.Applicant.SpouseType
+    );
+  };
+
   // overrides the default impl.
-  self.get_coverage_options_for_applicant = function (applicant_type) {
+  self.get_coverage_options_for_applicant = function(applicant_type) {
     // returns an observable
     // use 'this' here to make sure we reference the correct object when
     //  decorating with GI
@@ -392,6 +404,61 @@ function GroupCIProduct(root, product_data) {
       premium: rate.premium
     });
   }
+
+  self.filter_coverage_options_for_applicant_type = function(all_options, applicant_type) {
+    if (applicant_type === wizard_applicant.Applicant.EmployeeType) {
+      // Basic options for employee.
+      return self.filter_base_rate_options(all_options);
+    } else if (applicant_type === wizard_applicant.Applicant.SpouseType) {
+      // Filter spouse options based on employee selection.
+      // FIXME: access to global window here.
+      var emp_coverage = window.vm.coverage_vm.get_applicant_coverage_for_product(window.vm.employee(), self);
+      //var sp_coverage = window.vm.coverage_vm.get_applicant_coverage_for_product(window.vm.spouse(), self);
+
+      // Get the 5,000 to 100,000 coverage options to start with.
+      var options = self.filter_base_rate_options(all_options);
+
+
+      var emp_benefit = emp_coverage.coverage_option();
+
+      // Triggered whenever the employee's selected coverage changes
+      var valid_options = [];
+
+      // If the employee has answered yes to any question, we have no limits
+      var anyYesQuestions = false;//self.root.employee().has_answered_any_question_yes();
+
+      // Limit to 50% of employee's current selection, or 25k max
+      //if (!anyYesQuestions && (!emp_benefit.is_valid())) {
+      //  // No options.
+      //  return [];
+      if (!emp_benefit.is_valid() || anyYesQuestions) {
+        // All options up to 25k
+        return _.filter(options, function(o) {return o.face_value <= 25000;});
+      } else {
+        // Cap at 25k or half the employee rate
+        var limit = _.min([emp_benefit.face_value / 2.0, 25000]);
+        options = _.filter(options, function(o) {return o.face_value <= limit});
+
+        // Add an additional option if possible that is exactly 1/2 the employee selected coverage.
+        if (options.length && options[options.length - 1].face_value < limit) {
+          var half_opt = _.find(all_options, function(o) {return o.face_value === limit});
+          if (half_opt) {
+            options.push(half_opt);
+          }
+        }
+        return options;
+      }
+
+    }
+
+    // TODO: Also limit children to half employee rate.
+    return all_options;
+  };
+
+  self.filter_base_rate_options = function(all_options) {
+    // Usually just present $5,000 to $100,000 in $5000 increments.
+    return _.filter(all_options, function(o) {return o.face_value % 5000 === 0;});
+  };
 
   // Overrides the default implementation for Group CI behavior.
   self.parse_benefit_options = function (applicant_type, applicant, rates) {
@@ -473,9 +540,7 @@ function GroupCIProduct(root, product_data) {
 
 }
 GroupCIProduct.prototype = Object.create(Product.prototype);
-//GroupCIProduct.prototype.get_new_benefit_option = function(options) {
-//    return new CIBenefitOption(new BenefitOption(options));
-//};
+
 GroupCIProduct.prototype.is_valid_employee = function (employee) {
   // Need to validate age and is_smoker is valid
   var age = employee.get_age();
