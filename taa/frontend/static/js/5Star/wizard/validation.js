@@ -385,7 +385,7 @@ function init_validation(ui) {
 
     if (applicant_type === "employee") {
       if (beneficiary_type === "primary") {
-        return product_coverage.employee_beneficiary_type() === "other";
+        return product_coverage.employee_beneficiary_type() === "other" || !ui.coverage_vm.did_select_spouse_coverage();
       } else {
         return product_coverage.employee_contingent_beneficiary_type() === "other";
       }
