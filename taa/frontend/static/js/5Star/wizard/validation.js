@@ -257,6 +257,49 @@ function init_validation(ui) {
       }
     }
   });
+  //
+  //$.validator.addMethod("isEmployeeOtherOwnerRequired", function(val, element, params) {
+  //  // Required if we have set the owner to someone other than employee.
+  //  var product_coverage = ko.dataFor(element);
+  //  return (product_coverage.policy_owner() === "other");
+  //}, "This field is required.");
+
+  function isEmployeeOtherOwnerRequired(element) {
+    var product_coverage = ko.dataFor(element);
+    return product_coverage.policy_owner() === "other";
+  }
+
+  function isSpouseOtherOwnerRequired(element) {
+    var product_coverage = ko.dataFor(element);
+    return product_coverage.spouse_policy_owner() === "other";
+  }
+
+  $.validator.addClassRules("ee-other-owner-name", {
+    required: {
+      depends: function(element) {
+        return isEmployeeOtherOwnerRequired(element);
+      }
+    }
+  });
+  $.validator.addClassRules("ee-other-owner-ssn", {
+    required: {depends: function(element) {
+      return isEmployeeOtherOwnerRequired(element);
+    }}
+  });
+
+  $.validator.addClassRules("sp-other-owner-name", {
+    required: {
+      depends: function(element) {
+        return isSpouseOtherOwnerRequired(element);
+      }
+    }
+  });
+  $.validator.addClassRules("sp-other-owner-ssn", {
+    required: {depends: function(element) {
+      return isSpouseOtherOwnerRequired(element);
+    }}
+  });
+
 
   $('#step3-form').validate({
     errorElement: 'div',
@@ -274,21 +317,7 @@ function init_validation(ui) {
       eeCity: {required: true},
       eeState: {required: true},
       eeZip: {required: true},
-      eeOwner: {required: true},
-      eeOtherOwnerName: {
-        required: {
-          depends: function (element) {
-            return ($("#eeOwner-other").is(':checked'))
-          }
-        }
-      },
-      eeOtherOwnerSSN: {
-        required: {
-          depends: function (element) {
-            return ($("#eeOwner-other").is(':checked'))
-          }
-        }
-      }
+      eeOwner: {required: true}
     },
 
     messages: {
@@ -303,9 +332,7 @@ function init_validation(ui) {
       eeCity: "required",
       eeState: "required",
       eeZip: "required",
-      eeOwner: "Please confirm policy owner",
-      eeOtherOwnerName: "required",
-      eeOtherOwnerSSN: "required"
+      eeOwner: "Please confirm policy owner"
     },
 
     highlight: wizard_validate_highlight,
@@ -328,21 +355,7 @@ function init_validation(ui) {
           }
         }
       },
-      spOwner: {required: true},
-      spOtherOwnerName: {
-        required: {
-          depends: function (element) {
-            return ($("#spOwner-other").is(':checked'))
-          }
-        }
-      },
-      spOtherOwnerSSN: {
-        required: {
-          depends: function (element) {
-            return ($("#spOwner-other").is(':checked'))
-          }
-        }
-      }
+      spOwner: {required: true}
     },
 
     messages: {
@@ -350,9 +363,7 @@ function init_validation(ui) {
       spLName2: "required",
       spGender: "Please choose gender",
       spssn: "Spouse SSN required",//"Spouse SSN required if owner of policy",
-      spOwner: "Please confirm policy owner",
-      spOtherOwnerName: "required",
-      spOtherOwnerSSN: "required"
+      spOwner: "Please confirm policy owner"
     },
 
     highlight: wizard_validate_highlight,
