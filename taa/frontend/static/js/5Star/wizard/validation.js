@@ -439,47 +439,7 @@ function init_validation(ui) {
     errorElement: 'div',
     errorClass: 'help-block',
     focusInvalid: false,
-    rules: {
-
-
-      //spBeneOtherName: {
-      //  required: {
-      //    depends: function(element) {
-      //      return (ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
-      //    }
-      //  }
-      //},
-      //spBeneOtherRelation: {
-      //  required: {
-      //    depends: function(element) {
-      //      return (ui.did_select_spouse_coverage() && $("#spBeneOther").is(':checked'))
-      //    }
-      //  }
-      //},
-      //spContBeneOtherName: {
-      //  required: {
-      //    depends: function(element) {
-      //      return (
-      //          ui.should_show_contingent_beneficiary() &&
-      //          ui.did_select_spouse_coverage() &&
-      //          ui.spouse_contingent_beneficiary_type() === "other"
-      //      );
-      //    }
-      //  }
-      //},
-
-      //spContBeneOtherRelation: {
-      //  required: {
-      //    depends: function(element) {
-      //      return (
-      //          ui.should_show_contingent_beneficiary() &&
-      //          ui.did_select_spouse_coverage() &&
-      //          ui.spouse_contingent_beneficiary_type() === "other"
-      //      );
-      //    }
-      //  }
-      //}
-    },
+    rules: {},
 
     highlight: wizard_validate_highlight,
     success: wizard_validate_success,
