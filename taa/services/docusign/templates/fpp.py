@@ -64,7 +64,8 @@ class FPPTemplate(DocuSignServerTemplate):
 
         if recipient.is_agent():
             tabs += self.make_agent_tabs()
-        elif recipient.is_employee():
+
+        if recipient.is_employee() or self.data.should_use_call_center_workflow():
 
             lists_of_tabs = [
                 self.make_employer_tabs(),

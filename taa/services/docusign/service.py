@@ -23,34 +23,43 @@ class DocuSignService(object):
     def create_multiproduct_envelope(self, product_submissions, census_record, case):
         # Use the first product to get employee and agent data
         first_product_data = EnrollmentDataWrap(product_submissions[0], census_record, case)
-        employee, recipients = self.create_envelope_recipients(case, first_product_data)
+        in_person_signer, recipients = self.create_envelope_recipients(case, first_product_data)
 
         # Create and combine components of the envelope from each product.
         components = []
         for product_submission in product_submissions:
             # Wrap the submission with an object that knows how to pull out key info.
             enrollment_data = EnrollmentDataWrap(product_submission, census_record, case)
+
+
+            # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
+            should_use_docusign_renderer = False if enrollment_data.should_use_call_center_workflow() else True
+
+
             product_id = product_submission['product_id']
             product = self.product_service.get(product_id)
             if product.is_fpp():
                 components += self.create_fpp_envelope_components(enrollment_data, recipients,
-                                                                  should_use_docusign_renderer=True)
+                                                                  should_use_docusign_renderer)
             else:
                 components += self.create_group_ci_envelope_components(enrollment_data, recipients,
-                                                                       should_use_docusign_renderer=True)
+                                                                       should_use_docusign_renderer)
 
+        signer_name = first_product_data.get_employee_name() if not enrollment_data.should_use_call_center_workflow() else recipients[0].name
         envelope_result = self.create_envelope(
             email_subject="Signature needed: {} ({})".format(
                 #first_product_data.get_product().name,
-                first_product_data.get_employee_name(),
+                signer_name,
                 first_product_data.get_employer_name()),
             components=components,
         )
-        return employee, envelope_result
+        return in_person_signer, envelope_result
 
     def create_fpp_envelope(self, enrollment_data, case):
-        employee, recipients = self.create_envelope_recipients(case, enrollment_data)
-        components = self.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer=True)
+        in_person_signer, recipients = self.create_envelope_recipients(case, enrollment_data)
+        # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
+        should_use_docusign_renderer = False if enrollment_data.should_use_call_center_workflow() else True
+        components = self.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer)
         envelope_result = self.create_envelope(
             email_subject="Signature needed: {} for {} ({})".format(
                 enrollment_data.get_product().name,
@@ -58,7 +67,7 @@ class DocuSignService(object):
                 enrollment_data.get_employer_name()),
             components=components,
         )
-        return employee, envelope_result
+        return in_person_signer, envelope_result
 
     def create_envelope(self, email_subject, components):
         docusign_transport = get_docusign_transport()
@@ -85,12 +94,13 @@ class DocuSignService(object):
 
         if enrollment_data.should_use_call_center_workflow():
             recipients = [agent]
+            return agent, recipients
         else:
             recipients = [
                 agent,
                 employee,
             ]
-        return employee, recipients
+            return employee, recipients
 
     def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
         from taa.services.docusign.templates.fpp import FPPTemplate
@@ -105,8 +115,9 @@ class DocuSignService(object):
 
         # We collect tab information differently depending on who is signing.
         if enrollment_data.should_use_call_center_workflow():
-            # Insert the employee signature info into the data and ensure all tabs show up for the agent.
-
+            # TODO: Insert the employee signature info into the data and ensure all tabs show up for the agent.
+            # TODO: Insert the agent signature tab into the main form
+            pass
 
         # Main form
         fpp_form = FPPTemplate(recipients, enrollment_data, should_use_docusign_renderer)
@@ -236,17 +247,17 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
 def create_multiproduct_envelope_and_fetch_signing_url(wizard_data, census_record, case):
 
     docusign_service = LookupService('DocuSignService')
-    employee, envelope_result = docusign_service.create_multiproduct_envelope(wizard_data, census_record, case)
+    in_person_signer, envelope_result = docusign_service.create_multiproduct_envelope(wizard_data, census_record, case)
 
     enrollment_data = EnrollmentDataWrap(wizard_data[0], census_record, case)
-    signing_url = fetch_signing_url(employee, enrollment_data, envelope_result)
+    signing_url = fetch_signing_url(in_person_signer, enrollment_data, envelope_result)
 
     return envelope_result, signing_url
 
 
-def fetch_signing_url(employee, enrollment_data, envelope_result):
+def fetch_signing_url(in_person_signer, enrollment_data, envelope_result):
     redirect_url = envelope_result.get_signing_url(
-        employee,
+        in_person_signer,
         callback_url=build_callback_url(
             enrollment_data, enrollment_data.get_session_type()),
         docusign_transport=get_docusign_transport()
@@ -263,7 +274,7 @@ class DocusignEnvelope(object):
             authenticationMethod="email",
             email=recipient.email,
             returnUrl=callback_url,
-            clientUserId="123456",# clientUserId,
+            clientUserId=recipient.get_client_user_id(),
             userName=recipient.name,
         )
         base_url = docusign_transport.api_endpoint
@@ -362,12 +373,12 @@ response:
 
 # Envelope Recipient
 class DocuSignRecipient(object):
-    def __init__(self, name, email, cc_only=False, role_name=None, exclude_from_envelope=False):
+    def __init__(self, name, email, cc_only=False, role_name=None, exclude_from_envelope=False, use_embedded_signing=True):
         self.name = name
         self.email = email
         self.cc_only = cc_only
         self.role_name = role_name
-
+        self._use_embedded_signing = use_embedded_signing
         self._exclude_from_envelope = exclude_from_envelope
 
     def is_carbon_copy(self):
@@ -397,12 +408,22 @@ class DocuSignRecipient(object):
     def should_exclude_from_envelope(self):
         return self._exclude_from_envelope
 
+    def should_use_embedded_signing(self):
+        return bool(self._use_embedded_signing)
+
+    def get_client_user_id(self):
+        return "123456"
+
 
 class EmployeeDocuSignRecipient(DocuSignRecipient):
     def is_employee(self):
         return True
 
     def is_required(self):
+        return True
+
+    def should_use_embedded_signing(self):
+        # Always uses embedded signing process.
         return True
 
 
@@ -516,8 +537,9 @@ class DocuSignEnvelopeComponent(object):
                 templateRequired=recipient.is_required(),
                 tabs=self.generate_docusign_formatted_tabs(recipient),
             )
-            if recipient.is_employee():
-                recip_repr['clientUserId'] = "123456"
+            if recipient.should_use_embedded_signing():
+                # TODO: Generate if needed
+                recip_repr['clientUserId'] = recipient.get_client_user_id()
 
             if self.is_recipient_signer(recipient):
                 output["signers"].append(recip_repr)

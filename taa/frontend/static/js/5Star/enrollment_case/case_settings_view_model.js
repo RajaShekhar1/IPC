@@ -218,6 +218,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
   });
 
+  // Call Center Workflow
+  self.should_use_call_center_workflow = ko.observable(case_data.should_use_call_center_workflow);
 
   // Occupation classes
   self.occupation_classes = ko.observableArray(case_data.occupation_class_settings);
@@ -737,6 +739,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       can_partners_download_enrollments: self.can_partners_download_enrollments(),
       is_self_enrollment: self.is_self_enrollment(),
       include_bank_draft_form: self.include_bank_draft_form(),
+      should_use_call_center_workflow: self.should_use_call_center_workflow(),
       product_settings: self.serialize_product_settings(),
       is_stp: Boolean(self.has_agent_splits()),
       occupation_class_settings: self.occupation_classes()
