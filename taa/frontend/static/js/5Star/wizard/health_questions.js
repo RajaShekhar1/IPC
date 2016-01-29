@@ -4,7 +4,8 @@ var health_questions = (function() {
     var self = this;
     self.product_coverage = product_coverage;
 
-    // SOH Questions (depends on product and selected plan)
+    // SOH Questions (depends on product)
+      // TODO: Double check that this need to be computed since the ProductHealthQuestions object is instantiated once for each product.
     self.health_questions = ko.pureComputed(function() {
       var questions = health_questions.process_spouse_question_data(spouse_questions, self.product_coverage);
       var soh_questions = health_questions.process_health_question_data(all_health_questions, self.product_coverage);

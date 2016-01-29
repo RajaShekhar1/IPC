@@ -41,13 +41,13 @@ var wizard_viewmodel = (function() {
 
     // Payment mode
     this.payment_modes = _.map(all_payment_modes || [], function(pm){
-      return payment_mode.create_payment_mode(pm);
+      return payment_mode_module.create_payment_mode(pm);
     });
     this.payment_mode = ko.observable(
-        payment_mode.select_initial_payment_mode(case_data, this.payment_modes)
+        payment_mode_module.select_initial_payment_mode(case_data, this.payment_modes)
     );
     this.can_change_payment_mode = ko.computed(function() {
-      return payment_mode.can_change_payment_mode(case_data);
+      return payment_mode_module.can_change_payment_mode(case_data);
     });
     this.is_payment_mode_valid = ko.pureComputed(this._is_payment_mode_valid, this);
 
@@ -222,6 +222,7 @@ var wizard_viewmodel = (function() {
 
     self.product = product;
     self.case_data = case_data;
+    self.payment_mode = payment_mode;
     self.applicant_list = applicant_list;
     self.should_include_spouse = should_include_spouse;
     self.should_include_children = should_include_children;
@@ -924,12 +925,9 @@ var wizard_viewmodel = (function() {
     });
 
     self.update_rate_table = function() {
-      // Reset some validation errors
-      //$.each(limit_error_lookup, function(k, v) {
-      //  limit_error_lookup[k](null);
-      //});
 
-      //self.validator.resetForm();
+
+      self.validator.resetForm();
 
       self.is_show_rates_clicked(true);
 
@@ -951,36 +949,13 @@ var wizard_viewmodel = (function() {
       );
     };
 
-    self.show_updated_rates = function() {
-
-
-      //self.insurance_product.parse_benefit_options('employee', self.employee(), data.employee_rates);
-      //self.insurance_product.parse_benefit_options('spouse', self.spouse(), data.spouse_rates);
-
-      // Reset child rates
-      //self.insurance_product.parse_benefit_options('children', self.child_benefits(), data.children_rates);
-
-      //if (data.recommendations) {
-      //  self.recommendations.good.set_recommendations(data.recommendations['good']);
-      //  self.recommendations.better.set_recommendations(data.recommendations['better']);
-      //  self.recommendations.best.set_recommendations(data.recommendations['best']);
-      //}
-
-      // Update selection with new data
-      //if (self.selected_plan().is_valid()) {
-      //  self.apply_selected_customization();
-      //}
-
-    };
-
     self.handle_update_rates_error = function(resp) {
       if (resp.status === 400 && resp.responseJSON && resp.responseJSON.errors) {
         $.each(resp.responseJSON.errors, function() {
           var field_name = this.field;
           var message = this.error;
           // set error and show with validator
-          // TODO: check this
-          //limit_error_lookup[field_name](true);
+          self.limit_error_lookup[field_name](true);
           self.validator.form();
         });
       } else {
@@ -1001,21 +976,27 @@ var wizard_viewmodel = (function() {
               // TODO: Reimplement
               // && product validation
             && self.coverage_vm.is_payment_mode_valid()
+            && !self.any_limit_error()
       );
     });
 
     // User indicates he is ready to show the coverage selection options.
     self.show_coverage_selection_table = function() {
 
-      if (!self.can_display_rates_table()) {
-        return;
-      }
+      // Reset some validation errors
+      $.each(self.limit_error_lookup, function(k, v) {
+        self.limit_error_lookup[k](null);
+      });
 
       var valid_form = true;
 
+      if (!self.can_display_rates_table()) {
+        valid_form = false;
+      }
+
       // Trigger the jQuery validator. This test allows jasmine tests to work without DOM node present for form.
       if (self.validator) {
-        valid_form = self.validator.form();
+        valid_form = self.validator.form() && valid_form;
       }
 
       if (valid_form) {
@@ -1463,13 +1444,21 @@ var wizard_viewmodel = (function() {
       }, "Must be no more than {0} years old for this product");
 
 
+
       // Height and Weight limits for Group CI
-      var limit_error_lookup = {
+      self.limit_error_lookup = {
         employee_height:self.employee().height_error,
         employee_weight:self.employee().weight_error,
         spouse_height:self.spouse().height_error,
         spouse_weight:self.spouse().weight_error
       };
+
+      self.any_limit_error = ko.pureComputed(function() {
+        return self.employee().height_error() ||
+               self.employee().weight_error() ||
+                self.spouse().height_error() ||
+                self.spouse().weight_error();
+      });
 
       $.validator.addMethod("empHeightLimit", function(val, el, params) {
         return self.employee().height_error() == null;
@@ -1484,10 +1473,17 @@ var wizard_viewmodel = (function() {
         return self.spouse().weight_error() == null;
       }, "The height or weight entered is outside the limits for this product.");
 
+      $.validator.addMethod("isValidPaymentMode", function(value, element) {
+        // Use this custom method because our payment mode selector options have objects as values which
+        //  confuses jquery validate.
+        return self.coverage_vm.is_payment_mode_valid();
+      }, "You must select a payment mode.");
+
       function any_valid_spouse_field() {
         //return self.should_include_spouse_in_table(); //self.should_show_spouse();
         return self.spouse().any_valid_field();
       }
+
       self.validator = $("#step1-form").validate({
         highlight: wizard_validate_highlight,
         success: wizard_validate_success,
@@ -1553,13 +1549,13 @@ var wizard_viewmodel = (function() {
           'height_inches_1': {
             required: { depends: any_valid_spouse_field },
             spHeightLimit: true
-          }
-          /*
-          paymentMode: {
-            required: true
           },
 
-          debug: true*/
+          paymentMode: {
+            isValidPaymentMode: {depends: self.can_change_payment_mode}
+          }
+
+          /*debug: true*/
 
         },
         groups: {

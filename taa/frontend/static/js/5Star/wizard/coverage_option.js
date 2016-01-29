@@ -61,6 +61,8 @@ function CoverageOption(options) {
     self.format_for_dropdown = wrapped_option.format_for_dropdown;
     self.is_valid = wrapped_option.is_valid;
     self.serialize_data = wrapped_option.serialize_data;
+    self.payment_mode = wrapped_option.payment_mode;
+    self.applicant_type = wrapped_option.applicant_type;
   }
 
 
@@ -90,6 +92,9 @@ function CoverageOption(options) {
     };
     self.serialize_data = function() {
       return {}
-    }
+    };
+    self.payment_mode = function() {
+      return null;
+    };
   }
 
