@@ -327,6 +327,17 @@ class EnrollmentImportBatchService(DBService):
         new_hash = hashlib.md5(data).hexdigest()
         return new_hash
 
+    def delete_batch(self, batch):
+        from taa.services.enrollments import EnrollmentApplicationService
+        enrollment_service = EnrollmentApplicationService()
+        # Remove all the enrollments for each batch item, then remove the items, and last the batch itself.
+        for item in batch.batch_items:
+            enrollment_service.delete_enrollment_record(item.enrollment_record)
+            EnrollmentImportBatchItemService().delete(item)
+
+        EnrollmentImportBatchService().delete(batch)
+
+        db.session.commit()
 
 class EnrollmentImportBatchItemService(DBService):
     __model__ = EnrollmentImportBatchItem
