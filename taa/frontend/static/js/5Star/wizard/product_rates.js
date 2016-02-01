@@ -106,9 +106,17 @@ var product_rates_service = (function() {
     },
 
     _get_employee_options: function() {
+      if (this.product.does_override_rate_options(wizard_applicant.Applicant.EmployeeType)) {
+        var all_options = this._get_options_by_applicant_type(wizard_applicant.Applicant.EmployeeType);
+        return this.product.filter_coverage_options_for_applicant_type(all_options, wizard_applicant.Applicant.EmployeeType);
+      }
       return this._get_options_by_applicant_type(wizard_applicant.Applicant.EmployeeType);
     },
     _get_spouse_options: function() {
+      if (this.product.does_override_rate_options(wizard_applicant.Applicant.SpouseType)) {
+        var all_options = this._get_options_by_applicant_type(wizard_applicant.Applicant.SpouseType);
+        return this.product.filter_coverage_options_for_applicant_type(all_options, wizard_applicant.Applicant.SpouseType);
+      }
       return this._get_options_by_applicant_type(wizard_applicant.Applicant.SpouseType);
     },
     _get_children_options: function() {

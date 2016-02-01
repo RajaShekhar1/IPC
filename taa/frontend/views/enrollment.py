@@ -185,9 +185,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
 
         company_name = data['companyName']
         group_number = data['groupNumber']
-        product_id = data['productID']
-        product = product_service.get(product_id)
-        products = [product] if product else []
+        products = case.products
         employee_data = dict(
             first=data['eeFName'],
             last=data['eeLName'],

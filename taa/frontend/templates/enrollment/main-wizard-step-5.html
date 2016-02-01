@@ -46,8 +46,8 @@
               </label>
 
               <div class="col-xs-12 col-sm-9 form-group">
-                <input type="text" id="eeBeneOtherName" name="eeBeneOtherName" placeholder="Full Name"
-                       data-bind="value: employee_other_beneficiary().name"/>
+                <input type="text" placeholder="Full Name" class="ee-bene-name"
+                       data-bind="value: employee_other_beneficiary().name, attr: {name: 'eeBeneOtherName'+$index()}"/>
               </div>
             </div>
 
@@ -57,8 +57,8 @@
               </label>
 
               <div class="col-xs-12 col-sm-9 form-group">
-                <input type="text" id="eeBeneOtherRelation" name="eeBeneOtherRelation"
-                       placeholder="Relationship" data-bind="value: employee_other_beneficiary().relationship"/>
+                <input type="text" class="ee-bene-rel"
+                       placeholder="Relationship" data-bind="value: employee_other_beneficiary().relationship, attr: {name: 'eeBeneOtherRelation'+$index()}"/>
               </div>
             </div>
           </div>
@@ -70,8 +70,8 @@
               </label>
 
               <div class="col-xs-10 col-sm-9 form-group">
-                <input type="text" id="eeBeneOtherSSN" name="eeBeneOtherSSN"
-                       data-bind="value: employee_other_beneficiary().ssn, maskedInput: '999-99-9999'"/>
+                <input type="text" class="ee-bene-ssn"
+                       data-bind="value: employee_other_beneficiary().ssn, maskedInput: '999-99-9999', attr: {name: 'eeBeneOtherSSN'+$index()}"/>
               </div>
             </div>
 
@@ -81,9 +81,9 @@
               </label>
 
               <div class="col-xs-10 col-sm-9 form-group">
-                <input name="eeBeneOtherDOB"
-                       data-bind="value: employee_other_beneficiary().date_of_birth, maskedInput: '99/99/9999'"
-                       type="text" id="eeBeneOtherDOB" placeholder="MM/DD/YYYY"/>
+                <input class="ee-bene-dob"
+                       data-bind="value: employee_other_beneficiary().date_of_birth, maskedInput: '99/99/9999', attr: {name: 'eeBeneOtherDOB'+$index()}"
+                       type="text" placeholder="MM/DD/YYYY"/>
               </div>
             </div>
           </div>
@@ -131,8 +131,8 @@
               </label>
 
               <div class="col-xs-12 col-sm-9 form-group">
-                <input type="text" id="eeContBeneOtherName" name="eeContBeneOtherName" placeholder="Full Name"
-                       data-bind="value: employee_contingent_beneficiary().name"/>
+                <input type="text" placeholder="Full Name" class="ee-cont-bene-name"
+                       data-bind="value: employee_contingent_beneficiary().name, attr: {name: 'eeContBeneOtherName'+$index()}"/>
               </div>
             </div>
 
@@ -143,8 +143,8 @@
               </label>
 
               <div class="col-xs-12 col-sm-9 form-group">
-                <input type="text" id="eeContBeneOtherRelation" name="eeContBeneOtherRelation"
-                       placeholder="Relationship" data-bind="value: employee_contingent_beneficiary().relationship"/>
+                <input type="text" class="ee-cont-bene-rel"
+                       placeholder="Relationship" data-bind="value: employee_contingent_beneficiary().relationship, attr: {name: 'eeContBeneOtherRelation'+$index()}"/>
               </div>
             </div>
           </div>
@@ -156,8 +156,8 @@
               </label>
 
               <div class="col-xs-10 col-sm-9">
-                <input type="text" id="eeContBeneOtherSSN" name="eeContBeneOtherSSN"
-                       data-bind="value: employee_contingent_beneficiary().ssn, maskedInput: '999-99-9999'"/>
+                <input type="text" class="ee-cont-bene-ssn"
+                       data-bind="value: employee_contingent_beneficiary().ssn, maskedInput: '999-99-9999', attr: {name: 'eeContBeneOtherSSN'+$index()}"/>
               </div>
             </div>
 
@@ -167,23 +167,13 @@
               </label>
 
               <div class="col-xs-10 col-sm-9">
-                <input name="eeContBeneOtherDOB"
-                       data-bind="value: employee_contingent_beneficiary().date_of_birth, maskedInput: '99/99/9999'"
-                       type="text" id="eeContBeneOtherDOB" placeholder="MM/DD/YYYY"/>
+                <input class="ee-cont-bene-dob"
+                       data-bind="value: employee_contingent_beneficiary().date_of_birth, maskedInput: '99/99/9999', attr: {name: 'eeContBeneOtherDOB'+$index()}"
+                       type="text" placeholder="MM/DD/YYYY"/>
               </div>
             </div>
           </div>
-          {#
-                        <div class="row">
-                            <div class="col-sm-12 col-md-6 form-group">
-                                <label class="control-label col-xs-12 col-sm-12 no-padding-right">
-                                    <input type="checkbox" id="eeContBeneOtherEntity" name="eeContBeneOtherEntity"
-                                           data-bind="checked: employee_contingent_beneficiary().is_nonperson_entity"/>
-                                    beneficiary is an estate, trust, or other non-person entity
-                                </label>
-                            </div>
-                        </div>
-                        #}
+
         </div>
         <!-- /eeContBeneficiaryOther -->
       </div>
@@ -225,8 +215,8 @@
               </label>
 
               <div class="col-xs-12 col-sm-9 form-group">
-                <input type="text" id="spBeneOtherName" name="spBeneOtherName" placeholder="Full Name"
-                       data-bind="value: spouse_other_beneficiary().name"/>
+                <input type="text" class="sp-bene-name" placeholder="Full Name"
+                       data-bind="value: spouse_other_beneficiary().name, attr: {name: 'spBeneOtherName'+$index()}"/>
               </div>
             </div>
 
@@ -237,8 +227,8 @@
               </label>
 
               <div class="col-xs-12 col-sm-9 form-group">
-                <input type="text" id="spBeneOtherRelation" name="spBeneOtherRelation"
-                       placeholder="Relationship" data-bind="value: spouse_other_beneficiary().relationship"/>
+                <input type="text" class="sp-bene-rel"
+                       placeholder="Relationship" data-bind="value: spouse_other_beneficiary().relationship, attr: {name: 'spBeneOtherRelation'+$index()}"/>
               </div>
             </div>
           </div>
@@ -250,8 +240,8 @@
               </label>
 
               <div class="col-xs-10 col-sm-9">
-                <input type="text" id="spBeneOtherSSN" name="spBeneOtherSSN"
-                       data-bind="value: spouse_other_beneficiary().ssn, maskedInput: '999-99-9999'"/>
+                <input type="text" class="sp-bene-ssn"
+                       data-bind="value: spouse_other_beneficiary().ssn, maskedInput: '999-99-9999', attr: {name: 'spBeneOtherSSN'+$index()}"/>
               </div>
             </div>
 
@@ -261,9 +251,9 @@
               </label>
 
               <div class="col-xs-10 col-sm-9">
-                <input name="spBeneOtherDOB"
-                       data-bind="value: spouse_other_beneficiary().date_of_birth, maskedInput: '99/99/9999',"
-                       type="text" id="spBeneOtherDOB" placeholder="MM/DD/YYYY"/>
+                <input class="sp-bene-dob"
+                       data-bind="value: spouse_other_beneficiary().date_of_birth, maskedInput: '99/99/9999', attr: {name: 'spBeneOtherDOB'+$index()}"
+                       type="text" placeholder="MM/DD/YYYY"/>
               </div>
             </div>
           </div>
@@ -309,8 +299,8 @@
               </label>
 
               <div class="col-xs-12 col-sm-9 form-group">
-                <input type="text" id="spContBeneOtherName" name="spContBeneOtherName" placeholder="Full Name"
-                       data-bind="value: spouse_contingent_beneficiary().name"/>
+                <input type="text" class="sp-cont-bene-name" placeholder="Full Name"
+                       data-bind="value: spouse_contingent_beneficiary().name, attr: {name: 'spContBeneOtherName'+$index()}"/>
               </div>
             </div>
 
@@ -320,8 +310,8 @@
               </label>
 
               <div class="col-xs-12 col-sm-9 form-group">
-                <input type="text" id="spContBeneOtherRelation" name="spContBeneOtherRelation"
-                       placeholder="Relationship" data-bind="value: spouse_contingent_beneficiary().relationship"/>
+                <input type="text" class="sp-cont-bene-rel"
+                       placeholder="Relationship" data-bind="value: spouse_contingent_beneficiary().relationship, attr: {name: 'spContBeneOtherRelation'+$index()}"/>
               </div>
             </div>
           </div>
@@ -333,8 +323,8 @@
               </label>
 
               <div class="col-xs-10 col-sm-9">
-                <input type="text" id="spContBeneOtherSSN" name="spContBeneOtherSSN"
-                       data-bind="value: spouse_contingent_beneficiary().ssn, maskedInput: '999-99-9999'"/>
+                <input type="text" class="sp-cont-bene-ssn"
+                       data-bind="value: spouse_contingent_beneficiary().ssn, maskedInput: '999-99-9999', attr: {name: 'spContBeneOtherSSN'+$index()}"/>
               </div>
             </div>
 
@@ -344,9 +334,9 @@
               </label>
 
               <div class="col-xs-10 col-sm-9">
-                <input name="spContBeneOtherDOB"
-                       data-bind="value: spouse_contingent_beneficiary().date_of_birth, maskedInput: '99/99/9999'"
-                       type="text" id="spContBeneOtherDOB" placeholder="MM/DD/YYYY"/>
+                <input class="sp-cont-bene-dob"
+                       data-bind="value: spouse_contingent_beneficiary().date_of_birth, maskedInput: '99/99/9999', attr: {name: 'spContBeneOtherDOB'+$index()}"
+                       type="text" placeholder="MM/DD/YYYY"/>
               </div>
             </div>
           </div>

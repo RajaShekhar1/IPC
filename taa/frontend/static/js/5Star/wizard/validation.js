@@ -257,6 +257,49 @@ function init_validation(ui) {
       }
     }
   });
+  //
+  //$.validator.addMethod("isEmployeeOtherOwnerRequired", function(val, element, params) {
+  //  // Required if we have set the owner to someone other than employee.
+  //  var product_coverage = ko.dataFor(element);
+  //  return (product_coverage.policy_owner() === "other");
+  //}, "This field is required.");
+
+  function isEmployeeOtherOwnerRequired(element) {
+    var product_coverage = ko.dataFor(element);
+    return product_coverage.policy_owner() === "other";
+  }
+
+  function isSpouseOtherOwnerRequired(element) {
+    var product_coverage = ko.dataFor(element);
+    return product_coverage.spouse_policy_owner() === "other";
+  }
+
+  $.validator.addClassRules("ee-other-owner-name", {
+    required: {
+      depends: function(element) {
+        return isEmployeeOtherOwnerRequired(element);
+      }
+    }
+  });
+  $.validator.addClassRules("ee-other-owner-ssn", {
+    required: {depends: function(element) {
+      return isEmployeeOtherOwnerRequired(element);
+    }}
+  });
+
+  $.validator.addClassRules("sp-other-owner-name", {
+    required: {
+      depends: function(element) {
+        return isSpouseOtherOwnerRequired(element);
+      }
+    }
+  });
+  $.validator.addClassRules("sp-other-owner-ssn", {
+    required: {depends: function(element) {
+      return isSpouseOtherOwnerRequired(element);
+    }}
+  });
+
 
   $('#step3-form').validate({
     errorElement: 'div',
@@ -274,21 +317,7 @@ function init_validation(ui) {
       eeCity: {required: true},
       eeState: {required: true},
       eeZip: {required: true},
-      eeOwner: {required: true},
-      eeOtherOwnerName: {
-        required: {
-          depends: function (element) {
-            return ($("#eeOwner-other").is(':checked'))
-          }
-        }
-      },
-      eeOtherOwnerSSN: {
-        required: {
-          depends: function (element) {
-            return ($("#eeOwner-other").is(':checked'))
-          }
-        }
-      }
+      eeOwner: {required: true}
     },
 
     messages: {
@@ -303,9 +332,7 @@ function init_validation(ui) {
       eeCity: "required",
       eeState: "required",
       eeZip: "required",
-      eeOwner: "Please confirm policy owner",
-      eeOtherOwnerName: "required",
-      eeOtherOwnerSSN: "required"
+      eeOwner: "Please confirm policy owner"
     },
 
     highlight: wizard_validate_highlight,
@@ -328,21 +355,7 @@ function init_validation(ui) {
           }
         }
       },
-      spOwner: {required: true},
-      spOtherOwnerName: {
-        required: {
-          depends: function (element) {
-            return ($("#spOwner-other").is(':checked'))
-          }
-        }
-      },
-      spOtherOwnerSSN: {
-        required: {
-          depends: function (element) {
-            return ($("#spOwner-other").is(':checked'))
-          }
-        }
-      }
+      spOwner: {required: true}
     },
 
     messages: {
@@ -350,9 +363,7 @@ function init_validation(ui) {
       spLName2: "required",
       spGender: "Please choose gender",
       spssn: "Spouse SSN required",//"Spouse SSN required if owner of policy",
-      spOwner: "Please confirm policy owner",
-      spOtherOwnerName: "required",
-      spOtherOwnerSSN: "required"
+      spOwner: "Please confirm policy owner"
     },
 
     highlight: wizard_validate_highlight,
@@ -360,43 +371,76 @@ function init_validation(ui) {
     errorPlacement: wizard_error_placement
   });
 
+  // Beneficiary rules
+
+  function is_other_beneficiary_detail_required(element, applicant_type, beneficiary_type) {
+    var product_coverage = ko.dataFor(element);
+    if (beneficiary_type === "contingent" && !product_coverage.should_show_contingent_beneficiary()) {
+      // Not required for this product.
+      return false;
+    }
+    if (applicant_type === "spouse" && !ui.coverage_vm.did_select_spouse_coverage()) {
+      return false;
+    }
+
+    if (applicant_type === "employee") {
+      if (beneficiary_type === "primary") {
+        return product_coverage.employee_beneficiary_type() === "other" || !ui.coverage_vm.did_select_spouse_coverage();
+      } else {
+        return product_coverage.employee_contingent_beneficiary_type() === "other";
+      }
+    } else if (applicant_type === 'spouse') {
+      if (beneficiary_type === "primary") {
+        return product_coverage.spouse_beneficiary_type() === "other";
+      } else {
+        return product_coverage.spouse_contingent_beneficiary_type() === "other";
+      }
+    }
+  }
+
+  var beneficiary_depends_rules = {
+    "ee-bene-name": function(el) {
+      return is_other_beneficiary_detail_required(el, 'employee', 'primary')
+    },
+    "ee-bene-rel": function(el) {
+      return is_other_beneficiary_detail_required(el, 'employee', 'primary')
+    },
+
+    "ee-cont-bene-name": function(el) {
+      return is_other_beneficiary_detail_required(el, 'employee', 'contingent')
+    },
+
+    "ee-cont-bene-rel": function(el) {
+      return is_other_beneficiary_detail_required(el, 'employee', 'contingent')
+    },
+
+    "sp-bene-name": function(el) {
+      return is_other_beneficiary_detail_required(el, 'spouse', 'primary')
+    },
+    "sp-bene-rel": function(el) {
+      return is_other_beneficiary_detail_required(el, 'spouse', 'primary')
+    },
+
+    "sp-cont-bene-name": function(el) {
+      return is_other_beneficiary_detail_required(el, 'spouse', 'contingent')
+    },
+
+    "sp-cont-bene-rel": function(el) {
+      return is_other_beneficiary_detail_required(el, 'spouse', 'contingent')
+    }
+  };
+  for (className in beneficiary_depends_rules) {
+    var depends_func = beneficiary_depends_rules[className];
+    $.validator.addClassRules(className, {required: {depends: depends_func}})
+  }
+
+
   $('#step5-form').validate({
     errorElement: 'div',
     errorClass: 'help-block',
     focusInvalid: false,
     rules: {
-      eeBeneOtherName: {
-        required: {
-          depends: ui.is_employee_beneficiary_info_required
-        }
-      },
-      eeBeneOtherRelation: {
-        required: {
-          depends: ui.is_employee_beneficiary_info_required
-        }
-      },
 
-      // TODO: Re-enable using Knockout per-product
-      //eeContBeneOtherName: {
-      //  required: {
-      //    depends: function(element) {
-      //      return (
-      //          ui.should_show_contingent_beneficiary() &&
-      //          ui.employee_contingent_beneficiary_type() === "other"
-      //      )
-      //    }
-      //  }
-      //},
-      //eeContBeneOtherRelation: {
-      //  required: {
-      //    depends: function(element) {
-      //      return (
-      //          ui.should_show_contingent_beneficiary() &&
-      //          ui.employee_contingent_beneficiary_type() === "other"
-      //      )
-      //    }
-      //  }
-      //},
 
       //spBeneOtherName: {
       //  required: {
@@ -435,17 +479,6 @@ function init_validation(ui) {
       //    }
       //  }
       //}
-    },
-
-    messages: {
-      eeBeneOtherName: "required",
-      eeBeneOtherRelation: "required",
-      spBeneOtherName: "required",
-      eeContBeneOtherName: "required",
-      eeContBeneOtherRelation: "required",
-      spBeneOtherRelation: "required",
-      spContBeneOtherName: "required",
-      spContBeneOtherRelation: "required"
     },
 
     highlight: wizard_validate_highlight,

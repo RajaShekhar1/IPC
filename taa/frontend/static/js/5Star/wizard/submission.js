@@ -1,5 +1,4 @@
 function submit_application() {
-  // Massage the agent_data resubmitted so we don't resend all product info.
 
   var results = _.map(window.vm.coverage_vm.selected_product_coverages(), function(product_cov) {
     return build_wizard_results_for_product_coverage(product_cov);
@@ -164,33 +163,10 @@ function build_wizard_results_for_product_coverage(product_cov) {
 }
 
 
-//
+
 function submit_decline() {
   var root = window.vm;
 
-  //var submission_data = _.map(root.product_coverage_viewmodels(), function(product_coverage) {
-  //  // Pull out all the data we need for docusign
-  //  var wizard_results = {
-  //    agent_data: root.options,
-  //    enrollCity:  root.enrollCity(),
-  //    enrollState:  root.enrollState,
-  //    product_type: root.insurance_product.product_type,
-  //    method: (ui.is_in_person_application()) ? 'in_person': 'self_enroll_email',
-  //    did_decline: ui.did_decline(),
-  //    employee: root.employee().serialize_data(),
-  //    spouse: root.spouse().serialize_data()
-  //  };
-  //
-  //  // Children
-  //  wizard_results['children'] = [];
-  //  $.each(root.get_valid_children(), function() {
-  //    var child = this;
-  //    wizard_results['children'].push(this.serialize_data());
-  //  });
-  //
-  //  wizard_results['product_data'] = ui.coverage_vm().product_data;
-  //  return wizard_results;
-  //});
   var results = _.map(root.product_coverage_viewmodels(), function(product_cov) {
     return build_wizard_results_for_product_coverage(product_cov);
   });
