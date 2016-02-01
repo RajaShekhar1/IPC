@@ -6,6 +6,7 @@ from io import BytesIO
 from collections import defaultdict
 from decimal import Decimal
 
+from datetime import datetime
 import requests
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate
@@ -31,10 +32,8 @@ class DocuSignService(object):
             # Wrap the submission with an object that knows how to pull out key info.
             enrollment_data = EnrollmentDataWrap(product_submission, census_record, case)
 
-
             # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
             should_use_docusign_renderer = False if enrollment_data.should_use_call_center_workflow() else True
-
 
             product_id = product_submission['product_id']
             product = self.product_service.get(product_id)
@@ -115,9 +114,12 @@ class DocuSignService(object):
 
         # We collect tab information differently depending on who is signing.
         if enrollment_data.should_use_call_center_workflow():
-            # TODO: Insert the employee signature info into the data and ensure all tabs show up for the agent.
-            # TODO: Insert the agent signature tab into the main form
-            pass
+            # Insert the employee signature info into the data so he doesn't need to sign.
+            enrollment_data['emp_sig_txt'] = 'esigned by {}'.format(enrollment_data.get_employee_name())
+            enrollment_data['emp_sig_date'] = datetime.today().strftime('%m/%d/%Y')
+
+            # TODO: Make sure the agent signature tab is inserted for signing.
+
 
         # Main form
         fpp_form = FPPTemplate(recipients, enrollment_data, should_use_docusign_renderer)
@@ -480,16 +482,18 @@ class DocuSignTextTab(DocuSignTab):
 
         tabs['textTabs'].append(dict(tabLabel=self.name, value=self.value))
 
+
 class DocuSignPreSignedTextTab(DocuSignTextTab):
     pass
 
+
 class DocuSignSigTab(DocuSignTab):
-    def __init__(self, x, y, document_id, page_number):
+    def __init__(self, x, y, document_id, page_number, name=None):
         self.x = x
         self.y = y
         self.document_id = document_id
         self.page_number = page_number
-        self.name = "SignHere"
+        self.name = name if name else "SignHere"
 
     def add_to_tabs(self, tabs):
         if 'signHereTabs' not in tabs:
@@ -503,10 +507,34 @@ class DocuSignSigTab(DocuSignTab):
         ))
 
 
+class DocuSignSigDateTab(DocuSignTab):
+    def __init__(self, x, y, document_id, page_number, name=None):
+        self.x = x
+        self.y = y
+        self.document_id = document_id
+        self.page_number = page_number
+        self.name = name if name else 'SigDate'
+
+    def add_to_tabs(self, tabs):
+        if 'dateSignedTabs' not in tabs:
+            tabs['dateSignedTabs'] = []
+
+        tabs['dateSignedTabs'].append(dict(
+            xPosition=int(self.x),
+            yPosition=int(self.y),
+            documentId=self.document_id,
+            pageNumber=self.page_number,
+        ))
+
 # Envelope Components - basically, some sort of document or template
 #
 # Base class
 class DocuSignEnvelopeComponent(object):
+
+    # Constants used for determining purpose of tab generation.
+    PDF_TABS = u'pdf_tabs'
+    DOCUSIGN_TABS = u'docusign_tabs'
+
     def __init__(self, recipients):
         """
         The order of the recipients dictates the DocuSign routing order for now.
@@ -551,23 +579,25 @@ class DocuSignEnvelopeComponent(object):
     def generate_docusign_formatted_tabs(self, recipient):
         # Format tabs for docusign
         ds_tabs = {}
-        generated_tabs = self.generate_tabs(recipient)
+        generated_tabs = self.generate_tabs(recipient, self.DOCUSIGN_TABS)
 
-        # Check to see if
-        if isinstance(generated_tabs, dict):
-            ds_tabs.update(generated_tabs)
-            return ds_tabs
+        # Check to see if we are already returning docusign-formatted tab
+        # if isinstance(generated_tabs, dict):
+        #     ds_tabs.update(generated_tabs)
+        #     return ds_tabs
 
         for tab in generated_tabs:
             tab.add_to_tabs(ds_tabs)
 
         return ds_tabs
 
-    def generate_tabs(self, recipient):
+    def generate_tabs(self, recipient, purpose):
         """Returns list of our own internal tab representation"""
 
-        # Inject any signature data that has been passed from the enrollment.
+        # Inject any signature and date data that has been passed from the enrollment.
         tabs = []
+
+        # e-signatures
         if self.data.get('emp_sig_txt'):
             tabs += [DocuSignPreSignedTextTab("SignHereEmployee", self.data.get_employee_esignature())]
             tabs += [DocuSignPreSignedTextTab("InitialHereEmployee", self.data.get_employee_initials())]
@@ -575,14 +605,15 @@ class DocuSignEnvelopeComponent(object):
             tabs += [DocuSignPreSignedTextTab("SignHereAgent", self.data.get_agent_esignature())]
             tabs += [DocuSignPreSignedTextTab("InitialHereAgent", self.data.get_agent_initials())]
 
-        if self.data.get('application_date') or self.data.get('employee_sig_date'):
-            employee_signed_date = self.data.get('application_date') if self.data.get('application_date') else self.data.get('employee_sig_date')
+        # Dates
+        if self.data.get('application_date') or self.data.get('emp_sig_date'):
+            employee_signed_date = self.data.get('application_date') if self.data.get('application_date') else self.data.get('emp_sig_date')
             tabs += [DocuSignPreSignedTextTab("DateSignedEmployee", employee_signed_date)]
 
-        if self.data.get('application_date') or self.data.get('employee_sig_date'):
+        if self.data.get('application_date') or self.data.get('agent_sig_date'):
             agent_signed_date = self.data.get('application_date') if self.data.get('application_date') else self.data.get('agent_sig_date')
             tabs += [
-                DocuSignPreSignedTextTab("DateSignedAgent", self.data.get('application_date')),
+                DocuSignPreSignedTextTab("DateSignedAgent", agent_signed_date),
             ]
 
         return tabs
@@ -610,6 +641,7 @@ class DocuSignEnvelopeComponent(object):
 # Server-side template base class.
 class DocuSignServerTemplate(DocuSignEnvelopeComponent):
 
+    tab_repository = RequiredFeature('FormTemplateTabRepository')
     pdf_generator_service = RequiredFeature("ImagedFormGeneratorService")
 
     def __init__(self, template_id, recipients, use_docusign_renderer=True):
@@ -652,7 +684,7 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
     def generate_pdf_bytes(self):
         tabs = []
         for recipient in self.recipients:
-            tabs += self.generate_tabs(recipient)
+            tabs += self.generate_tabs(recipient, purpose=self.PDF_TABS)
         pdf_bytes = self.pdf_generator_service.generate_form_pdf(
             self.template_id,
             tabs,
@@ -664,11 +696,36 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
         num_pages = reader.getNumPages()
         return num_pages
 
-    def generate_tabs(self, recipient):
-        return super(DocuSignServerTemplate, self).generate_tabs(recipient)
+    def generate_tabs(self, recipient, purpose):
+        tabs = super(DocuSignServerTemplate, self).generate_tabs(recipient, purpose)
+
+        # Include a tab for the agent signature if this is call center.
+        if purpose == self.DOCUSIGN_TABS and self.data.should_use_call_center_workflow():
+            # Find the tab definition
+            tab_definitions = self.tab_repository.get_tabs_for_template(self.template_id)
+            for tab_def in tab_definitions:
+                if tab_def.type_ == "SignHere" and tab_def.recipient_role == "Agent":
+                    tabs.append(DocuSignSigTab(
+                        x=tab_def.x,
+                        y=tab_def.y,
+                        # Not sure what this is?
+                        document_id=1,
+                        page_number=tab_def.page,
+                    ))
+                elif tab_def.type_ == "DateSigned" and tab_def.recipient_role == "Agent":
+                    tabs.append(DocuSignSigDateTab(
+                        x=tab_def.x,
+                        y=tab_def.y,
+                        # Not sure if we will need to generate this?
+                        document_id=1,
+                        page_number=tab_def.page,
+                    ))
+        return tabs
 
     def is_recipient_signer(self, recipient):
         return recipient.is_employee() or recipient.is_agent()
+
+
 
 
 # Custom PDF documents
@@ -722,7 +779,8 @@ class BasePDFDoc(DocuSignEnvelopeComponent):
         # Add any tabs needed and merge them onto this PDF
         tabs = []
         for r in self.recipients:
-            tabs += self.generate_tabs(r)
+            tabs += self.generate_tabs(r, self.PDF_TABS)
+
         pdf_bytes = self.pdf_generator_service.generate_overlay_pdf_from_tabs(
             tabs,
             # Sig tabs will be auto-generated

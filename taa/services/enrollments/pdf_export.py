@@ -153,6 +153,25 @@ class ImagedFormGeneratorService(object):
         self.add_custom_signature_tabs(enrollment_tabs, tab_definitions)
         self.match_signatures_to_defs(enrollment_tabs, tab_definitions)
 
+    def add_custom_signature_tabs(self, enrollment_tabs, tab_definitions):
+        """
+        If there is a signature tab passed in, make sure a matching tab definition is present so that match_signatures_to_defs
+          works as expected.
+        (This is just some machinery to allow our PDFAttachments to work the same way as the template pages
+          derived from docusign.)
+        """
+        custom_sig_tabs = filter(lambda t: isinstance(t, DocuSignSigTab), enrollment_tabs)
+        for tab in custom_sig_tabs:
+            # Create an ad-hoc tab definition
+            tab_def = FormTemplateTabs(
+                page=tab.page_number,
+                x=tab.x,
+                y=tab.y,
+                type_="SignHere",
+                recipient_role="Employee",
+            )
+            tab_definitions.append(tab_def)
+
     def match_signatures_to_defs(self, enrollment_tabs, tab_definitions):
         """
         Match up any eSignatures to proper signature definitions
@@ -173,19 +192,6 @@ class ImagedFormGeneratorService(object):
                 if tab_values and tab_defs:
                     for tab_def in tab_defs:
                         self._add_to_tab_pages(tab_def, tab_values[0])
-
-    def add_custom_signature_tabs(self, enrollment_tabs, tab_definitions):
-        custom_sig_tabs = filter(lambda t: isinstance(t, DocuSignSigTab), enrollment_tabs)
-        for tab in custom_sig_tabs:
-            # Create an ad-hoc tab definition
-            tab_def = FormTemplateTabs(
-                page=tab.page_number,
-                x=tab.x,
-                y=tab.y,
-                type_="SignHere",
-                recipient_role="Employee",
-            )
-            tab_definitions.append(tab_def)
 
 
 class FormTemplateTabRepository(object):

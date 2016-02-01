@@ -1,4 +1,4 @@
-from taa.services.docusign.service import DocuSignServerTemplate
+from taa.services.docusign.service import DocuSignServerTemplate, DocuSignRadioTab, DocuSignTextTab
 from taa.services.docusign.DocuSign_config import get_template_id
 from taa.services.products import ProductService
 
@@ -19,15 +19,15 @@ class GroupCITemplate(DocuSignServerTemplate):
     def is_child_attachment_form_needed(self):
         return self.data.get_num_covered_children() > 2
 
-    def generate_tabs(self, recipient):
+    def generate_tabs(self, recipient, purpose):
 
-        # TODO: check to see if this is needed for document e-signing on import
-        #tabs = super(GroupCITemplate, self).generate_tabs(recipient)
+        tabs = super(GroupCITemplate, self).generate_tabs(recipient, purpose)
 
         if recipient.is_agent():
-            return self.make_agent_tabs()
-        elif recipient.is_employee():
-            return self.make_employee_tabs()
+            tabs += self.convert_to_tab_objects(self.make_agent_tabs())
+
+        if recipient.is_employee() or self.data.should_use_call_center_workflow():
+            tabs += self.convert_to_tab_objects(self.make_employee_tabs())
 
         return tabs
 
@@ -57,6 +57,22 @@ class GroupCITemplate(DocuSignServerTemplate):
             }
         )
         return {'radioGroupTabs': agent_radios}
+
+    def convert_to_tab_objects(self, docusign_tabs):
+        "Takes docusign-formatted tab dicts and converts them to our internal, intermediate representation that our PDF renderer understands."
+        tabs = []
+
+        if 'radioGroupTabs' in docusign_tabs:
+            for tab in docusign_tabs['radioGroupTabs']:
+                for radio in tab['radios']:
+                    if radio.get('selected') == "True":
+                        tabs.append(DocuSignRadioTab(group_name=tab['groupName'], value=radio['value'], is_selected="True"))
+
+        if 'textTabs' in docusign_tabs:
+            for tab in docusign_tabs['textTabs']:
+                tabs.append(DocuSignTextTab(name=tab['tabLabel'], value=tab['value']))
+
+        return tabs
 
     def make_employee_tabs(self):
         # To get the legacy code below to work, make this a local variable.

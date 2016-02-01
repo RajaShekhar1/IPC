@@ -4,11 +4,13 @@ from dateutil.relativedelta import *
 from datetime import date
 from decimal import Decimal
 
+
 from taa.services.docusign.service import DocuSignServerTemplate, DocuSignTextTab, DocuSignRadioTab
 from taa.services.docusign.DocuSign_config import get_template_id
 
 
 class FPPTemplate(DocuSignServerTemplate):
+
     def __init__(self, recipients, enrollment_data, use_docusign_renderer):
 
         product_code = enrollment_data.get_product().get_base_product_code()
@@ -59,11 +61,11 @@ class FPPTemplate(DocuSignServerTemplate):
     def get_attachment_children(self):
         return self.data.get_covered_children()[2:] if len(self.data.get_covered_children()) > 2 else []
 
-    def generate_tabs(self, recipient):
-        tabs = super(FPPTemplate, self).generate_tabs(recipient)
+    def generate_tabs(self, recipient, purpose):
+        tabs = super(FPPTemplate, self).generate_tabs(recipient, purpose)
 
         if recipient.is_agent():
-            tabs += self.make_agent_tabs()
+            tabs += self.make_agent_tabs(purpose)
 
         if recipient.is_employee() or self.data.should_use_call_center_workflow():
 
@@ -79,9 +81,25 @@ class FPPTemplate(DocuSignServerTemplate):
             for tab_list in lists_of_tabs:
                 tabs.extend(tab_list)
 
+
         return tabs
 
-    def make_agent_tabs(self):
+    def make_agent_tabs(self, purpose):
+        if self.data.should_use_call_center_workflow() and purpose == self.PDF_TABS:
+            # Don't render any overlay for the pdf
+            return []
+        elif self.data.should_use_call_center_workflow() and purpose == self.DOCUSIGN_TABS:
+            # TODO: We want to return tabs for docusign to display and be changable
+            tab_defs = self.tab_repository.get_tabs_for_template(self.template_id)
+            agent_tabs = []
+            agent_tabs += filter(lambda t: t.name == 'existingInsAgent', tab_defs)
+            agent_tabs += filter(lambda t: t.name == 'replaceAgent', tab_defs)
+            return [DocuSignRadioTab(
+                group_name=t.name,
+                value=t.value,
+
+            ) for t in agent_tabs]
+
         return [
             DocuSignRadioTab('existingInsAgent', 'yes' if self.data['existing_insurance'] else 'no'),
             DocuSignRadioTab('replaceAgent', 'yes' if self.data['replacing_insurance'] else 'no'),
