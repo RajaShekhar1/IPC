@@ -71,6 +71,17 @@ def reprocess_batch(batch_id):
     # Enqueue the batch for processing
     enrollment_submission_service.submit_import_enrollments(batch)
 
+@route(bp, '/import_batches/<batch_id>', methods=['DELETE'])
+@login_required
+@groups_required(['admins'])
+def delete_batch(batch_id):
+    batch = enrollment_import_batch_service.get(batch_id)
+
+    # Delete all the enrollment records, batch items, and the batch itself.
+    enrollment_import_batch_service.delete_batch(batch)
+
+
+
 # For convenience, allow lookup of enrollment records without case id for admin only
 #  (if this is opened up to other users, add case permission checking)
 @route(bp, '/records/<int:enrollment_record_id>', methods=['GET'])
