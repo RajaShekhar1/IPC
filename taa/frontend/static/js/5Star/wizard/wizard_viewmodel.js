@@ -1350,8 +1350,8 @@ var wizard_viewmodel = (function() {
 
     // Step 5 - Beneficiaries
     self.should_show_step_5 = function() {
-      return _.any(self.products, function(p) {
-        return p.should_show_step_5();
+      return _.any(self.coverage_vm.selected_product_coverages(), function(pcov) {
+        return pcov.product.should_show_step_5();
       })
     };
     self.should_show_contingent_beneficiary = function() {

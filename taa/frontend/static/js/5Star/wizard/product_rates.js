@@ -106,29 +106,32 @@ var product_rates_service = (function() {
     },
 
     _get_employee_options: function() {
-      if (this.product.does_override_rate_options(wizard_applicant.Applicant.EmployeeType)) {
-        var all_options = this._get_options_by_applicant_type(wizard_applicant.Applicant.EmployeeType);
-        return this.product.filter_coverage_options_for_applicant_type(all_options, wizard_applicant.Applicant.EmployeeType);
-      }
-      return this._get_options_by_applicant_type(wizard_applicant.Applicant.EmployeeType);
-    },
-    _get_spouse_options: function() {
-      if (this.product.does_override_rate_options(wizard_applicant.Applicant.SpouseType)) {
-        var all_options = this._get_options_by_applicant_type(wizard_applicant.Applicant.SpouseType);
-        return this.product.filter_coverage_options_for_applicant_type(all_options, wizard_applicant.Applicant.SpouseType);
-      }
-      return this._get_options_by_applicant_type(wizard_applicant.Applicant.SpouseType);
-    },
-    _get_children_options: function() {
-      return this._get_options_by_applicant_type(wizard_applicant.Applicant.ChildType);
+      return this._get_applicant_type_options(wizard_applicant.Applicant.EmployeeType);
     },
 
-    _get_options_by_applicant_type: function(applicant_type) {
+    _get_spouse_options: function() {
+      return this._get_applicant_type_options(wizard_applicant.Applicant.SpouseType);
+    },
+
+    _get_children_options: function() {
+      return this._get_applicant_type_options(wizard_applicant.Applicant.ChildType);
+    },
+
+    _get_applicant_type_options: function(applicant_type) {
+      // Some products have rates for many options, but not all options are available for all applicants, and it can
+      //  change dynamically. This checks to see if this is one of those products, and filters accordingly.
+      if (this.product.does_override_rate_options(applicant_type)) {
+        var all_options = this._get_all_options_by_applicant_type(applicant_type);
+        return this.product.filter_coverage_options_for_applicant_type(all_options, applicant_type);
+      }
+      return this._get_all_options_by_applicant_type(applicant_type);
+    },
+
+    _get_all_options_by_applicant_type: function(applicant_type) {
       return _.select(this.rates(), function(option) {
         return option.applicant_type === applicant_type;
       })
     }
-
   };
 
 

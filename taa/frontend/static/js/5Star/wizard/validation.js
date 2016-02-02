@@ -44,7 +44,7 @@ function init_validation(ui) {
 
         var selected_option = applicant_coverage.get_selected_coverage();
         var applied_coverage_amount = (selected_option.is_valid())? selected_option.face_value: 0;
-        var max_coverage_amount = applicant_coverage.product.get_maximum_coverage_amount(applicant_coverage.applicant.type);
+        var max_coverage_amount = applicant_coverage.product.get_maximum_coverage_amount(applicant_coverage.applicant);
 
         var name = applicant.name();
         if (applied_coverage_amount > 0 && existing_coverage_amount && (max_coverage_amount < existing_coverage_amount + applied_coverage_amount)) {
@@ -86,7 +86,9 @@ function init_validation(ui) {
       }
 
       // Scroll to top of page when moving to step 2.
-      $(document.body).scrollTop(0);
+      if (is_valid) {
+        $(document.body).scrollTop(0);
+      }
     }
     if (info.step == 2 && info.direction == 'next') {
       var is_valid = true;
