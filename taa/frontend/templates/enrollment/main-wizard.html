@@ -1241,47 +1241,47 @@
 
             <div class="space-2"></div>
 
-            <div class="form-group">
-                <label class="control-label col-xs-12 col-sm-3 no-padding-right">Policy Owner</label>
-
-                <div class="col-xs-12 col-sm-9">
-                    <label class="blue">
-                        <input name="eeOwner" value="self" type="radio" class="inline ace" id="eeOwner-self" checked=""
-                               data-bind="checked: policy_owner"/>
-                        <span class="lbl"> Self &nbsp;&nbsp;&nbsp;</span>
-                    </label>
-
-                    <label class="blue">
-                        <input name="eeOwner" value="other" type="radio" class="inline ace" id="eeOwner-other"
-                               data-bind="checked: policy_owner"/>
-                        <span class="lbl"> Other</span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="hide col-sm-offset-2" id="eeOtherOwner">
-                <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerName">Other
-                        owner </label>
-
-                    <div class="col-xs-12 col-sm-9">
-                        <input type="text" id="eeOtherOwnerName" name="eeOtherOwnerName" class="col-xs-12 col-sm-4"
-                               placeholder="Full Name"
-                               data-bind="value: other_owner_name"/>
-                    </div>
-                </div>
-                <div class="space-2"></div>
-                <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerSSN">Owners's
-                        SSN </label>
-
-                    <div class="col-xs-12 col-sm-9">
-                        <input type="text" id="eeOtherOwnerSSN" name="eeOtherOwnerSSN"
-                               class="col-xs-12 col-sm-4 input-mask-ssn"
-                               data-bind="value: other_owner_ssn"/>
-                    </div>
-                </div>
-            </div>
+{#            <div class="form-group">#}
+{#                <label class="control-label col-xs-12 col-sm-3 no-padding-right">Policy Owner</label>#}
+{##}
+{#                <div class="col-xs-12 col-sm-9">#}
+{#                    <label class="blue">#}
+{#                        <input name="eeOwner" value="self" type="radio" class="inline ace" id="eeOwner-self" checked=""#}
+{#                               data-bind="checked: policy_owner"/>#}
+{#                        <span class="lbl"> Self &nbsp;&nbsp;&nbsp;</span>#}
+{#                    </label>#}
+{##}
+{#                    <label class="blue">#}
+{#                        <input name="eeOwner" value="other" type="radio" class="inline ace" id="eeOwner-other"#}
+{#                               data-bind="checked: policy_owner"/>#}
+{#                        <span class="lbl"> Other</span>#}
+{#                    </label>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div class="hide col-sm-offset-2" id="eeOtherOwner">#}
+{#                <div class="form-group">#}
+{#                    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerName">Other#}
+{#                        owner </label>#}
+{##}
+{#                    <div class="col-xs-12 col-sm-9">#}
+{#                        <input type="text" id="eeOtherOwnerName" name="eeOtherOwnerName" class="col-xs-12 col-sm-4"#}
+{#                               placeholder="Full Name"#}
+{#                               data-bind="value: other_owner_name"/>#}
+{#                    </div>#}
+{#                </div>#}
+{#                <div class="space-2"></div>#}
+{#                <div class="form-group">#}
+{#                    <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerSSN">Owners's#}
+{#                        SSN </label>#}
+{##}
+{#                    <div class="col-xs-12 col-sm-9">#}
+{#                        <input type="text" id="eeOtherOwnerSSN" name="eeOtherOwnerSSN"#}
+{#                               class="col-xs-12 col-sm-4 input-mask-ssn"#}
+{#                               data-bind="value: other_owner_ssn"/>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
 
 
         </div>
@@ -1431,53 +1431,53 @@
 
                 <div class="space-2"></div>
 
-                <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-2 no-padding-right">Spouse Policy Owner</label>
-
-                    <div class="col-xs-12 col-sm-10">
-                        <label class="blue">
-                            <input name="spOwner" value="employee" type="radio" class="inline ace" id="spOwner-employee"
-                                   checked="" data-bind="checked: spouse_policy_owner"/>
-                            <span class="lbl"> Employee (<span data-bind="text: employee().first"></span>)&nbsp;&nbsp;&nbsp;</span>
-                        </label>
-
-                        <label class="blue">
-                            <input name="spOwner" value="self" type="radio" class="inline ace" id="spOwner-self"
-                                   checked="" data-bind="checked: spouse_policy_owner"/>
-                            <span class="lbl"> Self (<span data-bind="text: spouse().first"></span>) &nbsp;&nbsp;&nbsp;</span>
-                        </label>
-
-                        <label class="blue">
-                            <input name="spOwner" value="other" type="radio" class="inline ace" id="spOwner-other"
-                                   data-bind="checked: spouse_policy_owner"/>
-                            <span class="lbl"> Other</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="hide col-sm-offset-2" id="spOtherOwner">
-                    <div class="form-group">
-                        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spOtherOwnerName">Other
-                            owner of spouse policy</label>
-
-                        <div class="col-xs-12 col-sm-9">
-                            <input type="text" id="spOtherOwnerName" name="spOtherOwnerName" class="col-xs-12 col-sm-4"
-                                   placeholder="Full Name" data-bind="value: spouse_other_owner_name"/>
-                        </div>
-                    </div>
-
-                    <div class="space-2"></div>
-                    <div class="form-group">
-                        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spOtherOwnerSSN">Owners's
-                            SSN </label>
-
-                        <div class="col-xs-12 col-sm-9">
-                            <input type="text" id="spOtherOwnerSSN" name="spOtherOwnerSSN"
-                                   class="col-xs-12 col-sm-4 input-mask-ssn" data-bind="value: spouse_other_owner_ssn"/>
-                        </div>
-                    </div>
-
-                </div>
+{#                <div class="form-group">#}
+{#                    <label class="control-label col-xs-12 col-sm-2 no-padding-right">Spouse Policy Owner</label>#}
+{##}
+{#                    <div class="col-xs-12 col-sm-10">#}
+{#                        <label class="blue">#}
+{#                            <input name="spOwner" value="employee" type="radio" class="inline ace" id="spOwner-employee"#}
+{#                                   checked="" data-bind="checked: spouse_policy_owner"/>#}
+{#                            <span class="lbl"> Employee (<span data-bind="text: employee().first"></span>)&nbsp;&nbsp;&nbsp;</span>#}
+{#                        </label>#}
+{##}
+{#                        <label class="blue">#}
+{#                            <input name="spOwner" value="self" type="radio" class="inline ace" id="spOwner-self"#}
+{#                                   checked="" data-bind="checked: spouse_policy_owner"/>#}
+{#                            <span class="lbl"> Self (<span data-bind="text: spouse().first"></span>) &nbsp;&nbsp;&nbsp;</span>#}
+{#                        </label>#}
+{##}
+{#                        <label class="blue">#}
+{#                            <input name="spOwner" value="other" type="radio" class="inline ace" id="spOwner-other"#}
+{#                                   data-bind="checked: spouse_policy_owner"/>#}
+{#                            <span class="lbl"> Other</span>#}
+{#                        </label>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <div class="hide col-sm-offset-2" id="spOtherOwner">#}
+{#                    <div class="form-group">#}
+{#                        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spOtherOwnerName">Other#}
+{#                            owner of spouse policy</label>#}
+{##}
+{#                        <div class="col-xs-12 col-sm-9">#}
+{#                            <input type="text" id="spOtherOwnerName" name="spOtherOwnerName" class="col-xs-12 col-sm-4"#}
+{#                                   placeholder="Full Name" data-bind="value: spouse_other_owner_name"/>#}
+{#                        </div>#}
+{#                    </div>#}
+{##}
+{#                    <div class="space-2"></div>#}
+{#                    <div class="form-group">#}
+{#                        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spOtherOwnerSSN">Owners's#}
+{#                            SSN </label>#}
+{##}
+{#                        <div class="col-xs-12 col-sm-9">#}
+{#                            <input type="text" id="spOtherOwnerSSN" name="spOtherOwnerSSN"#}
+{#                                   class="col-xs-12 col-sm-4 input-mask-ssn" data-bind="value: spouse_other_owner_ssn"/>#}
+{#                        </div>#}
+{#                    </div>#}
+{##}
+{#                </div>#}
 
             </div>
             <!-- .SpouseInfoBlock -->
