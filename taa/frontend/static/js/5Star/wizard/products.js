@@ -264,47 +264,80 @@ function GroupCIProduct(root, product_data) {
     return self.filter_base_rate_options(all_options);
   };
 
+  function get_employee_total_cumulative_coverage() {
+    // FIXME: access to global window vm in this function.
+
+    var emp_coverage_option = window.vm.coverage_vm.get_applicant_coverage_option_for_product(window.vm.employee(), self);
+    var emp_existing_coverage_amount = window.vm.employee().get_existing_coverage_amount_for_product(self);
+    var emp_current_coverage_amount = (emp_coverage_option.is_valid() ? emp_coverage_option.face_value : 0);
+    return emp_existing_coverage_amount + emp_current_coverage_amount;
+  }
+
+  function has_employee_selected_coverage() {
+    // FIXME: access to global window vm in this function.
+
+    var applicant_coverage = window.vm.coverage_vm.get_applicant_coverage_for_product(window.vm.employee(), self);
+    return applicant_coverage.has_selected_coverage();
+  }
+
+  function has_employee_answered_required_question_yes() {
+    // TODO: Move this check to validate step?
+    //self.root.employee().has_answered_any_question_yes();
+    return false;
+  }
+
   self.filter_spouse_coverage_options = function(all_options) {
     // Filter spouse options based on employee selection.
-    // FIXME: access to global window here.
-    var emp_coverage_option = window.vm.coverage_vm.get_applicant_coverage_option_for_product(window.vm.employee(), self);
-    //var sp_coverage = window.vm.coverage_vm.get_applicant_coverage_for_product(window.vm.spouse(), self);
+
+    // FIXME: access to global window vm in this function.
 
     // Get the 5,000 to 100,000 coverage options to start with.
-    var options = self.filter_base_rate_options(all_options);
+    var base_options = self.filter_base_rate_options(all_options);
 
-    // Triggered whenever the employee's selected coverage changes
-    var valid_options = [];
-
-    // If the employee has answered yes to any question, we have no limits
-    var anyYesQuestions = false;//self.root.employee().has_answered_any_question_yes();
-
-    // Limit to 50% of employee's current selection, or 25k max
-    //if (!anyYesQuestions && (!emp_benefit.is_valid())) {
-    //  // No options.
-    //  return [];
-    if (!emp_coverage_option.is_valid() || anyYesQuestions) {
-      // All options up to 25k
-      return _.filter(options, function(o) {return o.face_value <= 25000;});
+    // Limit to 50% of employee's current selection, or 25k max.
+    // BUT, If the employee has answered yes to any required question, we should not limit the dependent coverage options.
+    if (!has_employee_selected_coverage() || has_employee_answered_required_question_yes()) {
+      // All base options up to and including 25k.
+      return _.filter(base_options, function(o) {return o.face_value <= 25000;});
     } else {
-      // Cap at 25k or half the employee rate
-      var limit = _.min([emp_coverage_option.face_value / 2.0, 25000]);
-      options = _.filter(options, function(o) {return o.face_value <= limit});
+      // Cap at 25k or half the employee total applied coverage.
+      var limit = _.min([get_employee_total_cumulative_coverage() / 2.0, 25000]);
+      var valid_options = _.filter(base_options, function(o) {return o.face_value <= limit});
+      self.append_halfway_coverage_option_if_needed(valid_options, limit, all_options);
+      return valid_options;
+    }
+  };
 
-      // Add an additional option if possible that is exactly 1/2 the employee selected coverage.
-      if (options.length && options[options.length - 1].face_value < limit) {
-        var half_opt = _.find(all_options, function(o) {return o.face_value === limit});
-        if (half_opt) {
-          options.push(half_opt);
-        }
+  self.append_halfway_coverage_option_if_needed = function(valid_options, max_coverage_limit, all_options) {
+    // Add an additional option if possible that is exactly 1/2 the employee selected coverage
+    //  if there isn't one already.
+
+    if (valid_options.length && valid_options[valid_options.length - 1].face_value < max_coverage_limit) {
+      var half_opt = _.find(all_options, function (o) {
+        return o.face_value === max_coverage_limit
+      });
+      if (half_opt) {
+        valid_options.push(half_opt);
       }
-      return options;
     }
   };
 
   self.filter_children_coverage_options = function(all_options) {
-    // TODO: 50% of emp coverage check
-    return all_options;
+    // Similar to spouse filtering above, but limited to 10k and no in-between option appended.
+    
+    // Get the 5,000 to 100,000 coverage options to start with.
+    var base_options = self.filter_base_rate_options(all_options);
+
+    // Limit to 50% of employee's current selection, or 10K max.
+    // BUT, If the employee has answered yes to any required question, we should not limit the dependent coverage options.
+    if (!has_employee_selected_coverage() || has_employee_answered_required_question_yes()) {
+      // All base options up to and including 10K.
+      return _.filter(base_options, function(o) {return o.face_value <= 10000;});
+    } else {
+      // Cap at 10K or half the employee total applied coverage. Do not add in-between option like for spouse.
+      var limit = _.min([get_employee_total_cumulative_coverage() / 2.0, 10000]);
+      return _.filter(base_options, function(o) {return o.face_value <= limit});
+    }
   };
 
   self.filter_base_rate_options = function(all_options) {

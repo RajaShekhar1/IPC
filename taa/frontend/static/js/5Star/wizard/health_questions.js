@@ -272,7 +272,13 @@ StandardHealthQuestion.prototype.does_applicant_need_to_answer = function(applic
     return this.does_spouse_need_to_answer();
   }
   if (applicant.type === wizard_applicant.Applicant.ChildType) {
-    return this.does_child_need_to_answer(applicant);
+    if (!applicant.applicants) {
+      return this.does_child_need_to_answer(applicant);
+    } else {
+      return _.any(applicant.applicants(), function(child) {
+        return this.does_child_need_to_answer(child);
+      }, this);
+    }
   }
 
   return false;
