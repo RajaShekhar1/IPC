@@ -473,14 +473,14 @@ ko.components.register('height-select', {
     self.required = params.required || false;
     self.name_suffix = params.name_suffix || null;
 
-    self.height_feet_part = ko.observable(get_feet_part(self.height()));
-    self.height_inches_part = ko.observable(get_inches_part(self.height()));
+    self.height_feet_part = ko.observable(""+get_feet_part(self.height()));
+    self.height_inches_part = ko.observable(""+get_inches_part(self.height()));
 
     // Update the observed value when one of the selectors changes
     self.update_height = function () {
       var feet = parseInt(self.height_feet_part());
       var inches = parseInt(self.height_inches_part());
-      if (feet === null || inches === null) {
+      if (feet === null || isNaN(feet) || inches === null || isNaN(inches)) {
         self.height(null);
       } else {
         self.height((12 * feet) + inches);
