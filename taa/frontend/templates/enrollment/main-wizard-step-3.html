@@ -139,50 +139,50 @@
       </div>
     </div>
 
-    <div class="space-2"></div>
+{#    <div class="space-2"></div>#}
 
-    <!--ko foreach: coverage_vm.selected_product_coverages()-->
-    <div class="form-group">
-      <label class="control-label col-xs-12 col-sm-3 no-padding-right">Policy Owner for <span data-bind="text: product.product_data.name"></span></label>
-
-      <div class="col-xs-12 col-sm-9">
-        <label class="blue">
-          <input value="self" type="radio" class="inline ace" data-bind="checked: policy_owner, attr: {name: 'eeOwner'+$index()}"/>
-          <span class="lbl"> Self &nbsp;&nbsp;&nbsp;</span>
-        </label>
-
-        <label class="blue">
-          <input value="other" type="radio" class="inline ace"
-                 data-bind="checked: policy_owner, attr:{name: 'eeOwner'+$index()}"/>
-          <span class="lbl"> Other</span>
-        </label>
-      </div>
-    </div>
-
-    <div class="col-sm-offset-2" data-bind="visible: policy_owner() === 'other'">
-      <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerName">Other
-          owner </label>
-
-        <div class="col-xs-12 col-sm-9">
-          <input type="text" class="col-xs-12 col-sm-4 ee-other-owner-name"
-                 placeholder="Full Name"
-                 data-bind="value: other_owner_name, attr: {name: 'eeOtherOwnerName'+$index()}"/>
-        </div>
-      </div>
-      <div class="space-2"></div>
-      <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerSSN">Owners's
-          SSN </label>
-
-        <div class="col-xs-12 col-sm-9">
-          <input type="text"
-                 class="col-xs-12 col-sm-4 ee-other-owner-ssn"
-                 data-bind="value: other_owner_ssn, maskedInput: '999-99-9999', attr: {name: 'eeOtherOwnerSSN'+$index()}"/>
-        </div>
-      </div>
-    </div>
-    <!--/ko-->
+{#    <!--ko foreach: coverage_vm.selected_product_coverages()-->#}
+{#    <div class="form-group">#}
+{#      <label class="control-label col-xs-12 col-sm-3 no-padding-right">Policy Owner for <span data-bind="text: product.product_data.name"></span></label>#}
+{##}
+{#      <div class="col-xs-12 col-sm-9">#}
+{#        <label class="blue">#}
+{#          <input value="self" type="radio" class="inline ace" data-bind="checked: policy_owner, attr: {name: 'eeOwner'+$index()}"/>#}
+{#          <span class="lbl"> Self &nbsp;&nbsp;&nbsp;</span>#}
+{#        </label>#}
+{##}
+{#        <label class="blue">#}
+{#          <input value="other" type="radio" class="inline ace"#}
+{#                 data-bind="checked: policy_owner, attr:{name: 'eeOwner'+$index()}"/>#}
+{#          <span class="lbl"> Other</span>#}
+{#        </label>#}
+{#      </div>#}
+{#    </div>#}
+{##}
+{#    <div class="col-sm-offset-2" data-bind="visible: policy_owner() === 'other'">#}
+{#      <div class="form-group">#}
+{#        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerName">Other#}
+{#          owner </label>#}
+{##}
+{#        <div class="col-xs-12 col-sm-9">#}
+{#          <input type="text" class="col-xs-12 col-sm-4 ee-other-owner-name"#}
+{#                 placeholder="Full Name"#}
+{#                 data-bind="value: other_owner_name, attr: {name: 'eeOtherOwnerName'+$index()}"/>#}
+{#        </div>#}
+{#      </div>#}
+{#      <div class="space-2"></div>#}
+{#      <div class="form-group">#}
+{#        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerSSN">Owners's#}
+{#          SSN </label>#}
+{##}
+{#        <div class="col-xs-12 col-sm-9">#}
+{#          <input type="text"#}
+{#                 class="col-xs-12 col-sm-4 ee-other-owner-ssn"#}
+{#                 data-bind="value: other_owner_ssn, maskedInput: '999-99-9999', attr: {name: 'eeOtherOwnerSSN'+$index()}"/>#}
+{#        </div>#}
+{#      </div>#}
+{#    </div>#}
+{#    <!--/ko-->#}
 
 
   </form>
