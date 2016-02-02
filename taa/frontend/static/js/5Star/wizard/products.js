@@ -251,12 +251,17 @@ function GroupCIProduct(root, product_data) {
 
   self.filter_coverage_options_for_applicant_type = function(all_options, applicant_type) {
     if (applicant_type === wizard_applicant.Applicant.EmployeeType) {
-      return filter_employee_coverage_options(all_options);
+      return self.filter_employee_coverage_options(all_options);
     } else if (applicant_type === wizard_applicant.Applicant.SpouseType) {
-      return filter_spouse_coverage_options(all_options);
+      return self.filter_spouse_coverage_options(all_options);
     } else {
       return self.filter_children_coverage_options(all_options);
     }
+  };
+
+  self.filter_employee_coverage_options = function(all_options) {
+    // Basic options for employee, every 5k up to 100k.
+    return self.filter_base_rate_options(all_options);
   };
 
   self.filter_spouse_coverage_options = function(all_options) {
@@ -297,13 +302,9 @@ function GroupCIProduct(root, product_data) {
     }
   };
 
-  self.filter_employee_coverage_options = function(all_options) {
-    // Basic options for employee, every 5k up to 100k.
-    return self.filter_base_rate_options(all_options);
-  };
-
   self.filter_children_coverage_options = function(all_options) {
-
+    // TODO: 50% of emp coverage check
+    return all_options;
   };
 
   self.filter_base_rate_options = function(all_options) {
