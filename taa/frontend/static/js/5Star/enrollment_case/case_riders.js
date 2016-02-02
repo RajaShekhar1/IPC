@@ -14,7 +14,7 @@ function CaseRiderConfiguration(case_settings, product, rider, initial_product_s
     }
 
     return _.any(initial_product_settings.riders, function(r) {
-      return (self.product.base_product_type === r.product_code &&
+      return (self.product.id === r.product_id &&
           self.rider.code === r.rider_code &&
           r.is_selected)
     });
@@ -43,7 +43,7 @@ function CaseRiderConfiguration(case_settings, product, rider, initial_product_s
 
 CaseRiderConfiguration.prototype.serialize = function() {
   return {
-      product_code: this.product.base_product_type,
+      product_id: this.product.id,
       rider_code: this.rider.code,
       is_selected: this.is_selected()
     }
