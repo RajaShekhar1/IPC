@@ -265,6 +265,8 @@ function GroupCIProduct(root, product_data) {
   };
 
   function get_employee_total_cumulative_coverage() {
+    // Add together existing coverage applications and the current application.
+
     // FIXME: access to global window vm in this function.
 
     var emp_coverage_option = window.vm.coverage_vm.get_applicant_coverage_option_for_product(window.vm.employee(), self);
@@ -324,7 +326,7 @@ function GroupCIProduct(root, product_data) {
 
   self.filter_children_coverage_options = function(all_options) {
     // Similar to spouse filtering above, but limited to 10k and no in-between option appended.
-    
+
     // Get the 5,000 to 100,000 coverage options to start with.
     var base_options = self.filter_base_rate_options(all_options);
 
@@ -593,29 +595,11 @@ FPPGovProduct.prototype.has_critical_illness_coverages = function () {
 FPPGovProduct.prototype.get_replacement_paragraphs = function () {
   return this.product_data.replacement_paragraphs;
 };
-//
-//
-//// Guaranteed Issue Product decorator
-////  Wraps a base product type
-//function GIProductDecorator(product, product_data) {
-//  var self = this;
-//
-//  self.product = product;
-//  self.product_data = product_data;
-//  self.product_type = product.product_type;
-//
-//  // Defined all of product's methods on self and delegate to self.product by default
-//  _.each(_.methods(product), function (method) {
-//    self[method] = function () {
-//      return self.product[method].apply(self, arguments);
-//    }
-//  });
-//
-//}
-//
-  return {
-    build_products: build_products
-  };
+
+
+return {
+  build_products: build_products
+};
 })();
 
 

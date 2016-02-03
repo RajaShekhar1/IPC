@@ -605,6 +605,13 @@ var wizard_viewmodel = (function() {
       return this.coverage_option();
     },
 
+    get_cumulative_coverage_amount: function() {
+      // Add together previous coverage application amounts and the current application amount.
+      var previous_coverage_amount = this.applicant.get_existing_coverage_amount_for_product(this.product.product_data.id);
+      var current_coverage_amount = (this.has_selected_coverage() ? this.coverage_option().face_value : 0);
+      return previous_coverage_amount + current_coverage_amount;
+    },
+
     format_name: function() {
       return this.applicant.name();
     },
@@ -631,6 +638,10 @@ var wizard_viewmodel = (function() {
     },
     format_selected_premium: function() {
       return this.get_selected_coverage().format_premium_option();
+    },
+
+    get_previous_coverage_amount: function() {
+      return this.applicant.get_existing_coverage_amount_for_product(this.product.product_data.id);
     }
 
   };

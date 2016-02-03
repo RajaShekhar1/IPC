@@ -214,7 +214,11 @@ var wizard_applicant = (function () {
     //}
     //
     self.get_existing_coverage_amount_for_product = function(product_id) {
-      return parseFloat(self.get_existing_coverage_amount_by_product()[product_id]);
+      var amount = self.get_existing_coverage_amount_by_product()[product_id];
+      if (!amount) {
+        return 0;
+      }
+      return parseFloat(amount);
     };
 
     self.get_existing_coverage_amount_by_product = function() {
