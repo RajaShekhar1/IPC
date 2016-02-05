@@ -615,7 +615,7 @@
 
 </script>
 
-{# This is for step 6, but it is so similar to the above summary table for step 1 that I wanted to leave it here. #}
+{# This is for step 6, but it is so similar to the above summary table for step 1 that I want to leave it here. #}
 <script type="text/html" id="multi-product-summary-table">
   <table class="table table-striped table-bordered table-responsive summary-table" data-bind="with: coverage_summary_vm"
       style="border-top-width: 1px;">
@@ -624,7 +624,7 @@
         <th></th>
         <!--ko foreach: {data: product_coverages}-->
           <th class="text-center">
-            <div style="display: inline-block; width: 20px; border: 1px solid #eee; border-radius: 20px; background-color: white" data-bind="text: $index()+1"></div>
+            <div class="circled-number" data-bind="text: $index()+1, visible: $root.coverage_vm.has_multiple_products()"></div>
             <span data-bind="text: product.product_data.name"></span>
           </th>
         <!--/ko-->
@@ -634,7 +634,7 @@
     <tbody>
       <!--ko foreach: {data: valid_applicants, as: 'applicant'} -->
         <tr>
-          <td data-bind="text: applicant.name"></td>
+          <td class="text-center" data-bind="text: applicant.name"></td>
           <!--ko foreach: {data: $parent.product_coverages, as: 'product_coverage'} -->
             <!--ko if: product_coverage.did_decline-->
               <td class="text-center">
@@ -658,9 +658,18 @@
       {# Totals #}
       <tfoot>
         <tr>
-          <th class="text-center">Totals: </th>
+
+          <th class="text-center">
+            <span data-bind="visible: $root.coverage_vm.has_multiple_products()">Totals:</span>
+          </th>
+
           <!--ko foreach: {data: $parent.products, as: 'product'} -->
-            <th  class="text-center" data-bind="text: $parents[1].format_total_premium_for_product(product)"></th>
+            <!--ko if: $root.coverage_vm.has_multiple_products()-->
+              <th  class="text-center" data-bind="text: $parents[1].format_total_premium_for_product(product)"></th>
+            <!--/ko-->
+            <!--ko if: !$root.coverage_vm.has_multiple_products()-->
+              <th></th>
+            <!--/ko-->
           <!--/ko-->
           <th class="text-center" data-bind="text: $parent.format_grand_total_premium()"></th>
         </tr>

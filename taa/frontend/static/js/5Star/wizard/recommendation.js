@@ -27,24 +27,35 @@ function RecommendationSet(name, recommendations) {
   self.get_total_premium = function() {
     var total = 0.0;
     _.each(self.recommendations, function(rec) {
-      total += rec.recommended_coverage.premium;
+      total += rec.get_total_premium();
     });
     return total;
   };
 }
 
 
-function Recommendation(name, applicant_type, coverage_option) {
+function Recommendation(name, applicant_type, coverage_option, product) {
   var self = this;
   self.name = name;
   self.applicant_type = applicant_type;
   self.recommended_coverage = coverage_option;
+  self.product = product;
 
   self.is_valid = function() {
     return self.recommended_coverage.is_valid();
   };
 
+  self.get_total_premium = function() {
+    // FPP products multiply by # children.
+    if (self.product.is_fpp_product() && self.applicant_type === wizard_applicant.Applicant.ChildType) {
+      return self.recommended_coverage.premium * window.vm.coverage_vm.applicants.get_valid_children().length;
+    }
+
+    return self.recommended_coverage.premium;
+  };
+
   self.format_premium_option = function() {
+
     return self.recommended_coverage.format_premium_option()
   };
   self.format_coverage = function() {

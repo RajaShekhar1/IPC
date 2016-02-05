@@ -9,6 +9,10 @@ function CoverageOption(options) {
     self.face_value = options.face_value;
     self.applicant_type = options.applicant_type;
 
+    self.get_total_premium = function() {
+      return self.premium;
+    };
+
     self.format_premium = function() {
       return format_premium_value(self.premium);
     };
@@ -48,6 +52,7 @@ function CoverageOption(options) {
     var self = this;
     self.is_by_face = wrapped_option.is_by_face;
     self.premium = wrapped_option.premium;
+    self.get_total_premium = wrapped_option.get_total_premium;
     self.face_value = wrapped_option.face_value;
     self.format_premium = wrapped_option.format_premium;
     self.format_premium_option = wrapped_option.format_premium_option;
@@ -82,6 +87,10 @@ function CoverageOption(options) {
     };
     self.format_premium = function() {
 
+    };
+
+    self.get_total_premium = function() {
+      return 0;
     };
 
     self.format_face_value = function() {

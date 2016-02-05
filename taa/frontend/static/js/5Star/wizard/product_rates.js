@@ -78,9 +78,9 @@ var product_rates_service = (function() {
         processed_recommendations.push(new RecommendationSet(
             rec_data.name,
             [
-              new Recommendation(rec_data.name, wizard_applicant.Applicant.EmployeeType, emp_option),
-              new Recommendation(rec_data.name, wizard_applicant.Applicant.SpouseType, sp_option),
-              new Recommendation(rec_data.name, wizard_applicant.Applicant.ChildType, ch_option)
+              new Recommendation(rec_data.name, wizard_applicant.Applicant.EmployeeType, emp_option, this.product),
+              new Recommendation(rec_data.name, wizard_applicant.Applicant.SpouseType, sp_option, this.product),
+              new Recommendation(rec_data.name, wizard_applicant.Applicant.ChildType, ch_option, this.product)
             ]
         ));
       }, this);
