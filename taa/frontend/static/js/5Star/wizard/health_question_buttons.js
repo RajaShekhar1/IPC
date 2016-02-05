@@ -29,7 +29,7 @@ var health_question_buttons = (function() {
     self.handle_yes = function() {
       //console.log('Yes', self);
       self.response.value('Yes');
-      self.question.show_yes_dialogue(self.applicant.type, self.applicant);
+      self.question.show_yes_dialogue(self.applicant);
     };
     self.handle_no = function() {
       self.response.value('No');

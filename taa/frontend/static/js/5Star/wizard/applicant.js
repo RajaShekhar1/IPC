@@ -95,6 +95,20 @@ var wizard_applicant = (function () {
       return age_for_date(self.birthdate());
     });
 
+    self.is_age_in_band = function(min_age, max_age) {
+      var is_in_band = true;
+
+      if (min_age !== null) {
+        is_in_band = is_in_band && self.get_age() >= min_age;
+      }
+
+      if (max_age !== null) {
+        is_in_band = is_in_band && self.get_age() <= max_age;
+      }
+
+      return is_in_band;
+    };
+
     self.serialize_data = function () {
       var data = {};
 
@@ -200,7 +214,11 @@ var wizard_applicant = (function () {
     //}
     //
     self.get_existing_coverage_amount_for_product = function(product_id) {
-      return parseFloat(self.get_existing_coverage_amount_by_product()[product_id]);
+      var amount = self.get_existing_coverage_amount_by_product()[product_id];
+      if (!amount) {
+        return 0;
+      }
+      return parseFloat(amount);
     };
 
     self.get_existing_coverage_amount_by_product = function() {
@@ -240,6 +258,30 @@ var wizard_applicant = (function () {
       });
       return _.invoke(non_empty_name_applicants, "name").join(", ");
     });
+
+    self.is_age_in_band = function(min_age, max_age) {
+      return self.all_ages_in_band(min_age, max_age);
+    };
+
+    self.all_ages_in_band = function(min_age, max_age) {
+      // Inclusive of bounds.
+
+      var is_in_band = true;
+
+      if (min_age !== null) {
+        is_in_band = is_in_band && _.all(self.applicants(), function(applicant) {
+          return applicant.get_age() >= min_age;
+        });
+      }
+
+      if (max_age !== null) {
+        is_in_band = is_in_band && _.all(self.applicants(), function(applicant) {
+          return applicant.get_age() <= max_age;
+        })
+      }
+
+      return is_in_band;
+    };
 
     self.any_valid_field = function() {
       return _.any(self.applicants(), function(applicant) {return applicant.any_valid_field();});

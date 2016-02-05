@@ -142,54 +142,54 @@
 
       <div class="space-2"></div>
 
-      <!--ko foreach: coverage_vm.selected_product_coverages()-->
-      <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2 no-padding-right">Spouse Policy Owner for <span data-bind="text: product.product_data.name"></span></label>
-
-        <div class="col-xs-12 col-sm-10">
-          <label class="blue">
-            <input value="employee" type="radio" class="inline ace"
-                   data-bind="checked: spouse_policy_owner, attr:{name: 'spOwner'+$index()}"/>
-            <span class="lbl"> Employee (<span data-bind="text: $root.employee().first"></span>)&nbsp;&nbsp;&nbsp;</span>
-          </label>
-
-          <label class="blue">
-            <input value="self" type="radio" class="inline ace"
-                   data-bind="checked: spouse_policy_owner, attr:{name: 'spOwner'+$index()}"/>
-            <span class="lbl"> Self (<span data-bind="text: $root.spouse().first"></span>) &nbsp;&nbsp;&nbsp;</span>
-          </label>
-
-          <label class="blue">
-            <input value="other" type="radio" class="inline ace"
-                   data-bind="checked: spouse_policy_owner, attr:{name: 'spOwner'+$index()}"/>
-            <span class="lbl"> Other</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="col-sm-offset-2" data-bind="visible: spouse_policy_owner() === 'other'">
-        <div class="form-group">
-          <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spOtherOwnerName">Other
-            owner of spouse policy</label>
-
-          <div class="col-xs-12 col-sm-9">
-            <input type="text"  class="col-xs-12 col-sm-4 sp-other-owner-name"
-                   placeholder="Full Name" data-bind="value: spouse_other_owner_name, attr: {name: 'spOtherOwnerName'+$index()}"/>
-          </div>
-        </div>
-
-        <div class="space-2"></div>
-        <div class="form-group">
-          <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spOtherOwnerSSN">Owners's
-            SSN </label>
-
-          <div class="col-xs-12 col-sm-9">
-            <input type="text"
-                   class="col-xs-12 col-sm-4 sp-other-owner-ssn" data-bind="value: spouse_other_owner_ssn, maskedInput: '999-99-9999', attr: {name: 'spOtherOwnerSSN'+$index()}"/>
-          </div>
-        </div>
-      </div>
-      <!--/ko-->
+{#      <!--ko foreach: coverage_vm.selected_product_coverages()-->#}
+{#      <div class="form-group">#}
+{#        <label class="control-label col-xs-12 col-sm-2 no-padding-right">Spouse Policy Owner for <span data-bind="text: product.product_data.name"></span></label>#}
+{##}
+{#        <div class="col-xs-12 col-sm-10">#}
+{#          <label class="blue">#}
+{#            <input value="employee" type="radio" class="inline ace"#}
+{#                   data-bind="checked: spouse_policy_owner, attr:{name: 'spOwner'+$index()}"/>#}
+{#            <span class="lbl"> Employee (<span data-bind="text: $root.employee().first"></span>)&nbsp;&nbsp;&nbsp;</span>#}
+{#          </label>#}
+{##}
+{#          <label class="blue">#}
+{#            <input value="self" type="radio" class="inline ace"#}
+{#                   data-bind="checked: spouse_policy_owner, attr:{name: 'spOwner'+$index()}"/>#}
+{#            <span class="lbl"> Self (<span data-bind="text: $root.spouse().first"></span>) &nbsp;&nbsp;&nbsp;</span>#}
+{#          </label>#}
+{##}
+{#          <label class="blue">#}
+{#            <input value="other" type="radio" class="inline ace"#}
+{#                   data-bind="checked: spouse_policy_owner, attr:{name: 'spOwner'+$index()}"/>#}
+{#            <span class="lbl"> Other</span>#}
+{#          </label>#}
+{#        </div>#}
+{#      </div>#}
+{##}
+{#      <div class="col-sm-offset-2" data-bind="visible: spouse_policy_owner() === 'other'">#}
+{#        <div class="form-group">#}
+{#          <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spOtherOwnerName">Other#}
+{#            owner of spouse policy</label>#}
+{##}
+{#          <div class="col-xs-12 col-sm-9">#}
+{#            <input type="text"  class="col-xs-12 col-sm-4 sp-other-owner-name"#}
+{#                   placeholder="Full Name" data-bind="value: spouse_other_owner_name, attr: {name: 'spOtherOwnerName'+$index()}"/>#}
+{#          </div>#}
+{#        </div>#}
+{##}
+{#        <div class="space-2"></div>#}
+{#        <div class="form-group">#}
+{#          <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spOtherOwnerSSN">Owners's#}
+{#            SSN </label>#}
+{##}
+{#          <div class="col-xs-12 col-sm-9">#}
+{#            <input type="text"#}
+{#                   class="col-xs-12 col-sm-4 sp-other-owner-ssn" data-bind="value: spouse_other_owner_ssn, maskedInput: '999-99-9999', attr: {name: 'spOtherOwnerSSN'+$index()}"/>#}
+{#          </div>#}
+{#        </div>#}
+{#      </div>#}
+{#      <!--/ko-->#}
 
     </div>
 
@@ -254,7 +254,7 @@
       <div class="space-2"></div>
 	    
 	     <span class="text-primary bigger-110 ">
-	       <i class="icon-info-sign"></i>
+	       <i class="icon fa fa-info-sign"></i>
 	       Employee will be the Owner of any child policy(ies)
 	     </span>
 

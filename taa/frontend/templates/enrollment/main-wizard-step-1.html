@@ -597,10 +597,10 @@
               click: $root.coverage_vm.select_product,
               css: {'active-product': $root.coverage_vm.current_product() === $data}
               ">
-              <!--ko if: !product_coverage.has_completed_selection()-->
+              <!--ko if: !$root.coverage_vm.get_applicant_coverage_for_product(applicant, product_coverage.product).did_select_option()-->
                  <span>Select Coverage</span>
               <!--/ko-->
-              <!--ko if: product_coverage.has_completed_selection()-->
+              <!--ko if: $root.coverage_vm.get_applicant_coverage_for_product(applicant, product_coverage.product).did_select_option()-->
                 <strong data-bind="html: format_face_value()"></strong>
                 <div data-bind="html: format_premium_option()"></div>
               <!--/ko-->
@@ -610,17 +610,6 @@
           <td data-bind="text: $parents[1].format_total_premium_for_applicant(applicant)"></td>
         </tr>
       <!--/ko-->
-      {# Totals #}
-    {#        No totals row for now; will need this in step 6 though. #}
-{#      <tfoot>#}
-{#        <tr>#}
-{#          <th class="text-center">Totals: </th>#}
-{#          <!--ko foreach: {data: $parent.products, as: 'product'} -->#}
-{#            <th  class="text-center" data-bind="text: $parents[1].format_total_premium_for_product(product)"></th>#}
-{#          <!--/ko-->#}
-{#          <th class="text-center" data-bind="text: $parent.format_grand_total_premium()"></th>#}
-{#        </tr>#}
-{#      </tfoot>#}
     </tbody>
   </table>
 
@@ -628,7 +617,8 @@
 
 {# This is for step 6, but it is so similar to the above summary table for step 1 that I wanted to leave it here. #}
 <script type="text/html" id="multi-product-summary-table">
-  <table class="table table-striped table-bordered table-responsive summary-table" data-bind="with: coverage_summary_vm">
+  <table class="table table-striped table-bordered table-responsive summary-table" data-bind="with: coverage_summary_vm"
+      style="border-top-width: 1px;">
     <thead>
       <tr>
         <th></th>
@@ -654,9 +644,7 @@
 
             <!--ko if: !product_coverage.did_decline()-->
             <td class="text-center" data-bind="with: $parents[2].get_applicant_coverage_option_for_product(applicant, product)">
-              <!--ko if: !product_coverage.has_completed_selection()-->
-                 <span>Select Coverage</span>
-              <!--/ko-->
+
               <!--ko if: product_coverage.has_completed_selection()-->
                 <strong data-bind="html: format_face_value()"></strong>
                 <div data-bind="html: format_premium_option()"></div>

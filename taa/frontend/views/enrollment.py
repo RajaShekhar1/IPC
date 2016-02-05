@@ -211,26 +211,6 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     for product in products:
         spouse_questions[product.id] = StatementOfHealthQuestionService().get_spouse_questions(product, state)
 
-    # wizard_data = {
-    #     'state': state if state != 'XX' else None,
-    #     'enroll_city': city,
-    #     'company_name': company_name,
-    #     'group_number': group_number,
-    #     'products': products,
-    #     'employee_data': employee_data,
-    #     'spouse_data': spouse_data,
-    #     'children_data': children_data,
-    #     'is_in_person': not is_self_enroll,
-    #     'health_questions': soh_questions,
-    #     'spouse_questions': spouse_questions,
-    #     'payment_mode_choices': payment_mode_choices,
-    #     'payment_mode': payment_mode,
-    #     'case_id': case.id,
-    #
-    #     'selected_riders': []
-    # }
-    #
-
     # New wizard formatting for multiproduct.
     applicants = []
     employee_data['type'] = u'employee'
@@ -246,7 +226,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     wizard_data = dict(
         is_in_person=not is_self_enroll,
         case_data={
-            'id': 1,
+            'id': case.id,
             'situs_state': state if state != 'XX' else None,
             'situs_city': city,
             'enroll_city': city,

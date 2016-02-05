@@ -153,7 +153,7 @@ rider_config_fpp = """
 
 - name: Automatic Increase Rider
   code: "AIR"
-  user_facing_name: "Disability Automatic Increase Benefit"
+  user_facing_name: "Automatic Increase Benefit"
   is_group_level: true
   compatibility_rules:
     - message: "Auto Increase Rider cannot be combined with Waiver of Premium"

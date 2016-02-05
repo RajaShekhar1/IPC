@@ -58,7 +58,7 @@ MODE_MONTHLY = 12
 
 class ApplicantQuery(object):
     """
-    Used for querying the system for rates and
+    Used for querying the system for us and
         checking to see if an applicant can apply for a given product configuration (riders, coverage, etc).
     """
     def __init__(self, applicant_type, product_options, state, demographics, mode, rate_options):
@@ -383,7 +383,7 @@ class RatePlan(object):
         for premium in self.get_premium_options(applicant_query.get_mode()):
             applicant_query.rate_options = ApplicantQueryOptions({'by_premium': premium})
             rates.append({
-                'coverage': self.calculate_coverage(applicant_query),
+                'coverage': int(self.calculate_coverage(applicant_query)),
                 'premium': float(premium),
                 'payment_mode': applicant_query.get_mode(),
             })
