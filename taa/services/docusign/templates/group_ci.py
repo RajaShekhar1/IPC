@@ -372,8 +372,7 @@ def generate_ChildTabsEntry (child_index, wizard_data):
         {
             'tabLabel': childStr + 'Premium',
             'value':
-                format(child_coverage['premium']*52/12,
-                       ',.2f') if child_coverage else ''
+                format(child_coverage['premium'], ',.2f') if child_coverage else ''
         },
     ]
     return tabsList
