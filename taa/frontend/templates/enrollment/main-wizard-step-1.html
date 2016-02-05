@@ -138,7 +138,7 @@
         <!--ko if: $root.should_show_weight() -->
         <div class="form-group col-sm-4">
           <label class="">
-            Weight: <input type="number" class="text-right"
+            Weight: <input type="number" class="text-right" max="9999"
                            data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
           </label>
         </div>

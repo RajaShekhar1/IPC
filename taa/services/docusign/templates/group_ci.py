@@ -16,8 +16,17 @@ class GroupCITemplate(DocuSignServerTemplate):
 
         self.data = enrollment_data
 
+    def num_children_on_form(self):
+        return 4
+
     def is_child_attachment_form_needed(self):
-        return self.data.get_num_covered_children() > 2
+        return self.data.get_num_covered_children() > self.num_children_on_form()
+
+    def get_attachment_children(self):
+        return self.data.get_covered_children()[self.num_children_on_form():] if len(self.data.get_covered_children()) > self.num_children_on_form() else []
+
+    def should_include_bank_draft(self):
+        return self.data.should_include_bank_draft()
 
     def generate_tabs(self, recipient, purpose):
 

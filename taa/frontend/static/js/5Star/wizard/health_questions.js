@@ -533,24 +533,26 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
     var applicant_coverage_options = self.product_coverage.get_coverage_options_for_applicant(applicant);
     var applicant_coverage = self.product_coverage.__get_coverage_for_applicant(applicant);
     var previous_coverage_amount = applicant_coverage.get_previous_coverage_amount();
-    var reducted_gi_criterion = get_reduced_coverage_criteria(applicant);
+    var reduced_gi_criterion = get_reduced_coverage_criteria(applicant);
     
     var gi_amount = reduced_gi_criterion.guarantee_issue_amount;
     // Find an option, if possible, that gives the most coverage but is below the GI threshold.
     //  Note that we include any previously applied coverage in this calculation.
-    var reduced_option = _.max(
-        _.filter(applicant_coverage_options, function (o) {
-          return o.face_value > 0 && (previous_coverage_amount + o.face_value) <= gi_amount
-        }),
-        function (o) {
+    var filtered_options = _.filter(applicant_coverage_options, function (o) {
+      return o.face_value > 0 && (previous_coverage_amount + o.face_value) <= gi_amount
+    });
+
+    // If no option exists below the current coverage, return null.
+    if (filtered_options.length == 0) {
+      return null;
+    }
+
+    // Otherwise return the option with the largest coverage.
+    return _.max(
+        filtered_options, function (o) {
           return o.face_value
         }
     );
-    if (!isFinite(reduced_option)) {
-      return null;
-    } else {
-      return reduced_option;
-    }
   }
 
   self.does_employee_need_to_answer = ko.computed(function () {

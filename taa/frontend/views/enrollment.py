@@ -240,7 +240,6 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         applicants= applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in case.products],
         payment_modes=payment_mode_choices,
-        #beneficiaries=[],
         spouse_questions=spouse_questions,
         health_questions=soh_questions,
     )
@@ -258,6 +257,9 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
 
 def serialize_product_for_wizard(product, all_soh_questions):
     data = product.to_json()
+    # Override the name to be the base product name
+    data['name'] = product.get_base_product().name
+
     # Override code to be the base product code and alias it to base_product_type.
     data['code'] = product.get_base_product_code()
     data['base_product_type'] = data['code']
@@ -401,7 +403,7 @@ def submit_wizard_data():
     # For self-enroll situations, the owner agent is used
     # TODO: Use agent who sent emails for targeted links
     agent = agent_service.get_logged_in_agent()
-    if (agent is None and session.get('is_self_enroll') is not None):
+    if (agent is None and session.get('is_self_enroll')):
         agent = case.owner_agent
     try:
 

@@ -213,8 +213,17 @@ class EnrollmentDataWrap(object):
         return '%.2f' % amount
 
     def get_total_children_premium(self):
-        return sum(decimal.Decimal(unicode(child_coverage.get('premium', '0.00')))
-                   for child_coverage in self.data["child_coverages"])
+        if self.get_product().is_fpp():
+            # Add up the child premium for each child if this is FPP
+            return sum(decimal.Decimal(unicode(child_coverage.get('premium', '0.00')))
+                       for child_coverage in self.data["child_coverages"])
+        else:
+            # Just use the first child premium, if any.
+            if len(self.data["child_coverages"]) > 0:
+                child_coverage = self.data["child_coverages"][0]
+                return decimal.Decimal(unicode(child_coverage.get('premium', '0.00')))
+
+            return decimal.Decimal('0.00')
 
     def get_total_modal_premium(self):
         total = decimal.Decimal('0.00')

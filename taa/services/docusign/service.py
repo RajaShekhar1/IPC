@@ -12,6 +12,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate
 from PyPDF2 import PdfFileReader
 
+
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callback_url
 from taa.services import RequiredFeature, LookupService
 
@@ -125,14 +126,8 @@ class DocuSignService(object):
         fpp_form = FPPTemplate(recipients, enrollment_data, should_use_docusign_renderer)
         components.append(fpp_form)
 
-        # For transitional reasons, Group CI Import is fed through this code. Don't let replacement
-        # forms be generated for Group CI.
-        is_group_ci = enrollment_data.get_product_code() == 'Group CI'
-
         # Additional Children
-        # Note - can't attach to group CI in this way, since questions that show up will be FPP
-        #   and also because Group CI has 4 children on form.
-        if fpp_form.is_child_attachment_form_needed() and not is_group_ci:
+        if fpp_form.is_child_attachment_form_needed():
             child_attachment_form = ChildAttachmentForm(recipients, enrollment_data)
             for i, child in enumerate(fpp_form.get_attachment_children()):
                 # The indexing starts with the 3rd child.
@@ -147,18 +142,18 @@ class DocuSignService(object):
             components.append(child_attachment_form)
 
         # Percentage/Multiple beneficiaries
-        if fpp_form.is_beneficiary_attachment_needed() and not is_group_ci:
+        if fpp_form.is_beneficiary_attachment_needed():
             components.append(MultipleBeneficiariesAttachment(recipients, enrollment_data))
 
         # Replacement Form
-        if fpp_form.is_replacement_form_needed() and not is_group_ci:
+        if fpp_form.is_replacement_form_needed():
             replacement_form = FPPReplacementFormTemplate(recipients,
                                                           enrollment_data,
                                                           should_use_docusign_renderer)
             components.append(replacement_form)
 
         # Additional replacement policies form
-        if fpp_form.is_additional_replacement_policy_attachment_needed() and not is_group_ci:
+        if fpp_form.is_additional_replacement_policy_attachment_needed():
             components.append(AdditionalReplacementPoliciesForm(recipients,
                                                                 enrollment_data))
 
@@ -172,6 +167,7 @@ class DocuSignService(object):
 
     def create_group_ci_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
         from taa.services.docusign.templates.group_ci import GroupCITemplate
+        from taa.services.docusign.templates.fpp_bank_draft import FPPBankDraftFormTemplate
         from taa.services.docusign.documents.additional_children import ChildAttachmentForm
 
         # Build the components (different PDFs) needed for signing
@@ -182,18 +178,25 @@ class DocuSignService(object):
         components.append(form)
 
         # Additional Children
-        # if form.is_child_attachment_form_needed():
-        #     child_attachment_form = ChildAttachmentForm(recipients, enrollment_data)
-        #     for i, child in enumerate(form.get_attachment_children()):
-        #         # The indexing starts with the 3rd child.
-        #         child_index = i + 2
-        #         child_data = enrollment_data['child_coverages'][child_index]
-        #         child.update(dict(
-        #             coverage=format(Decimal(unicode(child_data['face_value'])), ',.0f'),
-        #             premium=format(Decimal(unicode(child_data['premium'])), '.2f')
-        #         ))
-        #         child_attachment_form.add_child(child)
-        #     components.append(child_attachment_form)
+        if form.is_child_attachment_form_needed():
+            child_attachment_form = ChildAttachmentForm(recipients, enrollment_data, starting_child_num=5)
+            for i, child in enumerate(form.get_attachment_children()):
+                # The indexing starts with the 3rd child.
+                child_index = i + form.num_children_on_form()
+                child_data = enrollment_data['child_coverages'][child_index]
+                child.update(dict(
+                    coverage=format(Decimal(unicode(child_data['face_value'])), ',.0f'),
+                    premium=format(Decimal(unicode(child_data['premium'])), '.2f'),
+                    soh_questions=enrollment_data['children_soh_questions'][child_index],
+                ))
+                child_attachment_form.add_child(child)
+            components.append(child_attachment_form)
+
+        # The second part of this statement is meant to restrict this form
+        # from showing up when importing enrollments until we implement
+        # collecting the Bank Draft data.
+        if form.should_include_bank_draft() and not enrollment_data.is_import():
+            components.append(FPPBankDraftFormTemplate(recipients, enrollment_data, should_use_docusign_renderer))
 
         return components
 
