@@ -84,6 +84,8 @@ def manage_case(case_id):
         vars['can_edit_case'] = False
         vars['can_download_enrollments'] = case_service.is_agent_allowed_to_view_full_census(agent, case)
         vars['can_view_report_tab'] = case_service.is_agent_allowed_to_view_full_census(agent, case)
+        # Empty list for privacy of other agent data.
+        vars['active_agents'] = []
         agent_name = agent.name()
         agent_id = agent.id
         agent_email = agent.email
