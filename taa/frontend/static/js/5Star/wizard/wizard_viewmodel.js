@@ -280,7 +280,7 @@ var wizard_viewmodel = (function() {
       // See if there is a product-setting that enables this rider for this case.
       return _.any(case_data.product_settings.riders, function(r) {
         return (
-            self.product.product_data.base_product_type === r.product_code &&
+            self.product.product_data.id === r.product_id &&
             rider.code === r.rider_code &&
             r.is_selected
         );
