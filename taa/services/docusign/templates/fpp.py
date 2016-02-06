@@ -347,14 +347,22 @@ class FPPTemplate(DocuSignServerTemplate):
 
         rider_tabs = []
         for rider_person, riders in self.data['rider_data'].iteritems():
+            def fix_rider_code(code):
+                if code.startswith("QOL"):
+                    # QOL rider is "CHR" on the form.
+                    return "CHR"
+
+                return code
+
             if rider_person == "emp" and self.data.did_employee_select_coverage():
                 for rider in riders: 
-                    tab_name = 'ee_rider_{}'.format(rider.get('code'))
+                    tab_name = 'ee_rider_{}'.format(fix_rider_code(rider.get('code')))
                     rider_tabs.append(DocuSignRadioTab(tab_name, 'yes'))
             if rider_person == "sp" and self.data.did_spouse_select_coverage():    
                 for rider in riders: 
-                    tab_name = 'sp_rider_{}'.format(rider.get('code'))
+                    tab_name = 'sp_rider_{}'.format(fix_rider_code(rider.get('code')))
                     rider_tabs.append(DocuSignRadioTab(tab_name, 'yes'))
+
         return [
             DocuSignTextTab('eeEnrollCityState', self.data["enrollCity"] + ", " + self.data["enrollState"]),
             DocuSignTextTab('eeEnrollCity', self.data['enrollCity']),
