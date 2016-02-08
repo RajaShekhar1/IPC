@@ -314,7 +314,7 @@ style="display: none;" data-bind="visible: true">
                             <h4 class="header lighter blue">Product Configuration</h4>
                             <div class="row">
                               <div class="col-sm-10 col-md-offset-1">
-                              <!--ko foreach: products-->
+                                <!--ko foreach: {data: products, as: 'product'}-->
                                 <div class="panel panel-default">
                                   <div class="panel-heading panel-title"><span data-bind="text: name"></span></div>
                                   <div class="panel-body">
@@ -329,6 +329,23 @@ style="display: none;" data-bind="visible: true">
                                         </label>
                                         <br />
                                       </div>
+                                    </div>
+                                    {# Occupation Class Mappings #}
+                                    <div class="form-group">
+                                      <h4 class="header lighter blue">Occupation Classes</h4>
+                                      <table data-bind="foreach: $parent.occupation_classes_for_product($data)">
+                                        <tr>
+                                          <td style="padding: 0.5em 1em;">&bull; <span data-bind="text: label"></span></td>
+                                          <td>
+                                            <select data-bind="options: $root.available_occupation_mappings,
+                                              optionsText: 'label',
+                                              optionsValue: 'value',
+                                              value: value,
+                                              optionsCaption: 'Not mapped'">
+                                            </select>
+                                          </td>
+                                        </tr>
+                                      </table>
                                     </div>
                                   </div>
                                 </div>

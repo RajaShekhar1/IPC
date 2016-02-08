@@ -236,9 +236,135 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     var index = _.findIndex(self.occupation_classes(), function(item) {
       return item.label.toLowerCase() === self.new_occupation_class().toLowerCase();
     });
-    return (self.new_occupation_class() !== '' &&
-            index === -1);
+    return (self.new_occupation_class() !== '' && index === -1);
   });
+
+
+  // Mappings available to the user -- used in case.html to populate mapping dropdown
+  // A 'null' is implicit
+  self.available_occupation_mappings = [
+    {value: 1, label: '1'},
+    {value: 2, label: '2'},
+    {value: 3, label: '3'}
+  ];
+
+  self.occ_mapping_cache = {};
+
+  self.update_occ_vm = function(product_id, label, value) {
+    var is_update = false;
+    if(product_id in self.occ_mapping_cache) {
+      if(!(label in self.occ_mapping_cache[product_id])) {
+        is_update = true;
+      }
+    } else {
+      self.occ_mapping_cache[product_id] = {};
+      self.occ_mapping_cache[product_id][label] = {};
+      is_update = true;
+    }
+    if(is_update) {
+      self.occ_mapping_cache[product_id][label] = {
+        product_id: product_id,
+        label: label,
+        value: ko.observable(value)
+      };
+    }
+  };
+
+
+  function is_product_active(product) {
+    for(var i in self.products()) {
+      if(i == 'first') {
+        continue;
+      }
+      if(self.products()[i].id == product.id) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
+  function is_occupation_class_active(label) {
+    for(var i in self.occupation_classes()) {
+      if(i == 'first') {
+        continue;
+      }
+      if(self.occupation_classes()[i].label == label) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  self.deserialize_occ_mapping = function() {
+    self.occ_mapping_cache = {};
+    var data = case_data.product_settings.classification_mappings;
+    if(!data) {
+      return;
+    }
+    for(var i = 0; i < case_data.products.length; i++) {
+      for(var j = 0; j < self.occupation_classes().length; j++) {
+        var product = case_data.products[i];
+        var occ_label = self.occupation_classes()[j].label;
+        var value = null;
+        if(data[product.id] != undefined && data[product.id][occ_label] != undefined) {
+          value = data[product.id][occ_label];
+        }
+        self.update_occ_vm(product.id, occ_label, value);
+      }
+    }
+  };
+
+  // Load initial occupation mappings from database
+  self.deserialize_occ_mapping();
+
+  self.serialize_occ_mapping = function() {
+    var data = {};
+    for(var product_id in self.occ_mapping_cache) {
+      if(!is_product_active({id: product_id})) {
+        continue;
+      }
+      if(!(product_id in data)) {
+        data[product_id] = {};
+      }
+      for(var label in self.occ_mapping_cache[product_id]) {
+        if(!is_occupation_class_active(label)) {
+          continue;
+        }
+        if(!(label in data)) {
+          data[product_id][label] = self.occ_mapping_cache[product_id][label].value();
+        }
+      }
+    }
+    return data;
+  };
+
+
+  self.occupation_classes_for_product = function(product) {
+    var r = [];
+    if(!(product.id in self.occ_mapping_cache)) {
+      for(var i in self.occupation_classes()) {
+        if(i == 'first') {
+          continue;
+        }
+        self.update_occ_vm(product.id, self.occupation_classes()[i].label, null);
+      }
+    }
+    for(var i in self.occupation_classes()) {
+      if(i == 'first') {
+        continue;
+      }
+      if(!(self.occupation_classes()[i].label in self.occ_mapping_cache[product.id])) {
+        self.update_occ_vm(product.id, self.occupation_classes()[i].label, null);
+      }
+    }
+    for(var label in self.occ_mapping_cache[product.id]) {
+      if(is_product_active(product) && is_occupation_class_active(label)) {
+        r.push(self.occ_mapping_cache[product.id][label]);
+      }
+    }
+    return r;
+  };
 
 
   // cache the instances of the riders here.
@@ -745,7 +871,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.serialize_product_settings = function() {
     return {
-      riders: self.serialize_riders()
+      riders: self.serialize_riders(),
+      classification_mappings: self.serialize_occ_mapping()
     };
   };
 
