@@ -72,7 +72,7 @@ style="display: none;" data-bind="visible: true">
                       <h3 class="col-xs-6">Main Settings</h3>
                       <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
                         <label style="margin-right: 15px;">
-                          {{ case_setup_form.active(class_="ace ace-switch ace-switch-6", **{'data-bind': 'checked: is_active'})|safe }}
+                          <input checked="" class="ace ace-switch ace-switch-6" data-bind="checked: is_active" id="active" name="active" type="checkbox" value="y">
                           <span class="lbl padding-16"  data-bind="text: switch_label">Case is Active</span>
                         </label>
                       </h3>
@@ -164,7 +164,10 @@ style="display: none;" data-bind="visible: true">
                               <div class="panel-heading">
                                 <label>
                                   <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="open">
-                                  <span class="lbl padding-8">Enrollment Period with End Date</span>
+                                  <span class="lbl padding-8">Enrollment Period with End Date</span><br />
+                                  <small data-bind="visible: !today_between() && enrollment_period_type() == 'open'">
+                                    <em class="text-danger">Currently not active since outside date range</em>
+                                  </small>
                                 </label>
                               </div>
                               <div class="panel-body" data-bind="slideDownIf: is_open_enrollment">
@@ -188,7 +191,10 @@ style="display: none;" data-bind="visible: true">
                               <div class="panel-heading">
                                 <label>
                                   <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="annual">
-                                  <span class="lbl padding-8">Annual Periods</span>
+                                  <span class="lbl padding-8">Annual Periods</span><br />
+                                  <small data-bind="visible: !annual_today_between() && enrollment_period_type() == 'annual'">
+                                    <em class="text-danger">Currently not active since outside date range</em>
+                                  </small>
                                 </label>
                               </div>
                               <div class="panel-body" data-bind="slideDownIf: is_annual_enrollment()">
