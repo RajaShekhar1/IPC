@@ -111,15 +111,6 @@ class DocuSignService(object):
         # Build the components (different PDFs) needed for signing
         components = []
 
-        # We collect tab information differently depending on who is signing.
-        if enrollment_data.should_use_call_center_workflow():
-            # Insert the employee signature info into the data so he doesn't need to sign.
-            enrollment_data['emp_sig_txt'] = 'esigned by {}'.format(enrollment_data.get_employee_name())
-            enrollment_data['emp_sig_date'] = datetime.today().strftime('%m/%d/%Y')
-
-            # TODO: Make sure the agent signature tab is inserted for signing.
-
-
         # Main form
         fpp_form = FPPTemplate(recipients, enrollment_data, should_use_docusign_renderer)
         components.append(fpp_form)

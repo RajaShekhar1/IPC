@@ -18,7 +18,7 @@ class FPPReplacementFormTemplate(DocuSignServerTemplate):
     def generate_tabs(self, recipient, purpose):
         tabs = super(FPPReplacementFormTemplate, self).generate_tabs(recipient, purpose)
 
-        if not recipient.is_employee():
+        if not recipient.is_employee() and not self.data.should_use_call_center_workflow():
             return tabs
 
         tabs += [
