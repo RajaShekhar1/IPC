@@ -338,7 +338,6 @@ class DocuSignTransport(object):
 
         return req.json()
 
-
     def put(self, url, data):
         full_url = urljoin(self.api_endpoint, url)
 
@@ -446,7 +445,7 @@ class CarbonCopyRecipient(DocuSignRecipient):
 
 # Tabs
 class DocuSignTab(object):
-    def __init__(self, x=None, y=None, document_id=None, page_number=None, locked=False, required=None,
+    def __init__(self, x=None, y=None, document_id=None, page_number=None, locked=None, required=None,
                  width=None, height=None, tooltip=None):
         self.x = x
         self.y = y
