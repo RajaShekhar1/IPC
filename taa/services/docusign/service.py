@@ -842,8 +842,6 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
 
 
 # Custom PDF documents
-
-
 class BasePDFDoc(DocuSignEnvelopeComponent):
 
     pdf_generator_service = RequiredFeature("ImagedFormGeneratorService")

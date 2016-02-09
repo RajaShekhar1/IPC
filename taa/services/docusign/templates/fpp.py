@@ -1,3 +1,4 @@
+from itertools import ifilter
 
 from dateutil.parser import parse as dateutil_parse
 from dateutil.relativedelta import *
@@ -65,7 +66,7 @@ class FPPTemplate(DocuSignServerTemplate):
         tabs = super(FPPTemplate, self).generate_tabs(recipient, purpose)
 
         if recipient.is_agent():
-            tabs += self.make_agent_tabs(purpose)
+            tabs += self.make_agent_tabs(tabs, purpose)
 
         if recipient.is_employee() or self.data.should_use_call_center_workflow():
 
@@ -81,24 +82,33 @@ class FPPTemplate(DocuSignServerTemplate):
             for tab_list in lists_of_tabs:
                 tabs.extend(tab_list)
 
-
         return tabs
 
-    def make_agent_tabs(self, purpose):
+    def make_agent_tabs(self, tabs, purpose):
         if self.data.should_use_call_center_workflow() and purpose == self.PDF_TABS:
             # Don't render any overlay for the pdf
             return []
         elif self.data.should_use_call_center_workflow() and purpose == self.DOCUSIGN_TABS:
-            # TODO: We want to return tabs for docusign to display and be changable
-            tab_defs = self.tab_repository.get_tabs_for_template(self.template_id)
-            agent_tabs = []
-            agent_tabs += filter(lambda t: t.name == 'existingInsAgent', tab_defs)
-            agent_tabs += filter(lambda t: t.name == 'replaceAgent', tab_defs)
-            return [DocuSignRadioTab(
-                group_name=t.name,
-                value=t.value,
 
-            ) for t in agent_tabs]
+            # find the existingInsAgent and replaceAgent tabs and set the value to what the employee indicated as a default.
+            existing_tab_yes = next(ifilter(lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'existingInsAgent' and t.value == "yes", tabs), None)
+            existing_tab_no = next(ifilter(lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'existingInsAgent' and t.value == "no", tabs), None)
+
+            replace_tab_yes = next(ifilter(lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'replaceAgent' and t.value == "yes", tabs), None)
+            replace_tab_no = next(ifilter(lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'replaceAgent' and t.value == "no", tabs), None)
+
+            if existing_tab_yes:
+                existing_tab_yes.is_selected = self.data['existing_insurance']
+            if existing_tab_no:
+                existing_tab_no.is_selected = not self.data['existing_insurance']
+
+            if replace_tab_yes:
+                replace_tab_yes.is_selected = self.data['replacing_insurance']
+            if replace_tab_no:
+                replace_tab_no.is_selected = not self.data['replacing_insurance']
+
+            # Don't add any new tabs.
+            return []
 
         return [
             DocuSignRadioTab('existingInsAgent', 'yes' if self.data['existing_insurance'] else 'no'),
