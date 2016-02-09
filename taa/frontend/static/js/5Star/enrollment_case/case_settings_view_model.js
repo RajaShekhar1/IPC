@@ -239,7 +239,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return (self.new_occupation_class() !== '' && index === -1);
   });
 
-
   // Mappings available to the user -- used in case.html to populate mapping dropdown
   // A 'null' is implicit
   self.available_occupation_mappings = [
@@ -247,6 +246,28 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     {value: 2, label: '2'},
     {value: 3, label: '3'}
   ];
+
+  // Product base codes that will display occupation class mapping widgets
+  self.eligible_product_codes = ['ACC', 'HI'];
+
+  self.is_product_occupation_class_eligible = function(product) {
+    return self.eligible_product_codes.indexOf(product.base_product_type) != -1;
+  };
+
+  self.is_case_occupation_class_eligible = function() {
+    return _.any(_.map(
+        case_settings.products(),
+        function(p) {
+          return self.is_product_occupation_class_eligible(p);
+        }));
+    return _.intersection(
+        _.map(
+            case_settings.products(),
+            function(p) {
+              return p.base_product_type;
+            }),
+        self.eligible_product_codes).length;
+  };
 
   self.occ_mapping_cache = {};
 
