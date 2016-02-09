@@ -1,22 +1,20 @@
-import json
-from urlparse import urljoin
-import base64
+from datetime import datetime
+
 import StringIO
-from io import BytesIO
+import base64
+import json
+import requests
+from PyPDF2 import PdfFileReader
 from collections import defaultdict
 from decimal import Decimal
-
-from datetime import datetime
-import requests
+from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate
-from PyPDF2 import PdfFileReader
-
-
-from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callback_url
-from taa.services import RequiredFeature, LookupService
+from urlparse import urljoin
 
 from taa import app
+from taa.services import RequiredFeature, LookupService
+from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callback_url
 
 
 class DocuSignService(object):
@@ -448,11 +446,57 @@ class CarbonCopyRecipient(DocuSignRecipient):
 
 # Tabs
 class DocuSignTab(object):
-    pass
+    def __init__(self, x=None, y=None, document_id=None, page_number=None, locked=False, required=None,
+                 width=None, height=None, tooltip=None):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+        self.document_id = document_id
+        self.page_number = page_number
+        self.locked = locked
+        self.required = required
+        self.tooltip = tooltip
+
+    def build_data(self):
+        "Base data that applies to all tabs."
+
+        data = {}
+
+        if self.x is not None:
+            data['xPosition'] = int(self.x)
+        if self.y is not None:
+            data['yPosition'] = int(self.y)
+        if self.document_id is not None:
+            data['documentId'] = self.document_id
+        if self.page_number is not None:
+            data['pageNumber'] = self.page_number
+
+        if self.width is not None:
+            data['width'] = self.width
+
+        if self.height is not None:
+            data['height'] = self.height
+
+        if self.locked is not None:
+            data['locked'] = self.locked
+
+        if self.required is not None:
+            data['required'] = self.required
+
+        if self.tooltip is not None:
+            # They call tooltip 'name' for some reason.
+            data['name'] = self.tooltip
+
+        return data
 
 
 class DocuSignRadioTab(DocuSignTab):
-    def __init__(self, group_name, value, is_selected=True):
+    def __init__(self, group_name, value, is_selected=True, x=None, y=None, document_id=None, page_number=None):
+
+        super(DocuSignRadioTab, self).__init__(x, y, document_id, page_number)
+
         self.group_name = self.name = group_name
         self.value = value
         self.is_selected = is_selected
@@ -464,26 +508,59 @@ class DocuSignRadioTab(DocuSignTab):
         # Find the radio with this group name if it exists
         radio_group = next((tab for tab in tabs['radioGroupTabs'] if tab['groupName'] == self.group_name), None)
         if not radio_group:
-            radio_group = dict(groupName=self.group_name, radios=[])
+            radio_group = dict(groupName=self.group_name, radios=[], documentID=self.document_id)
             tabs['radioGroupTabs'].append(radio_group)
 
         # Add this radio
-        radio_group['radios'].append(dict(
-            selected="True" if self.is_selected else "False",
+        data = self.build_data()
+        data.update(dict(
             value=str(self.value),
+            selected=bool(self.is_selected),
         ))
+        radio_group['radios'].append(data)
 
 
 class DocuSignTextTab(DocuSignTab):
-    def __init__(self, name, value):
+    def __init__(self, name, value, x=None, y=None, document_id=None, page_number=None, width=None, height=None,
+                 is_bold=None, is_italic=None, is_underline=None, font=None, font_size=None, font_color=None,
+                 required=None, tooltip=None):
+
+        super(DocuSignTextTab, self).__init__(x, y, document_id, page_number,
+                                              width=width, height=height, required=required, tooltip=tooltip)
+
         self.name = name
         self.value = value
+
+        self.font = font
+        self.font_size = font_size
+        self.font_color = font_color
+
+        self.is_bold = is_bold
+        self.is_underlined = is_underline
+        self.is_italic = is_italic
 
     def add_to_tabs(self, tabs):
         if 'textTabs' not in tabs:
             tabs['textTabs'] = []
 
-        tabs['textTabs'].append(dict(tabLabel=self.name, value=self.value))
+        data = self.build_data()
+        text_data = dict(
+            tabLabel=self.name,
+            value=self.value,
+        )
+        for attr, docu_attr in [
+            ('font', 'font'),
+            ('font_size', 'fontSize'),
+            ('font_color', 'fontColor'),
+            ('is_bold', 'bold'),
+            ('is_underlined', 'underline'),
+            ('is_italic', 'italic'),
+            ]:
+            if getattr(self, attr) is not None:
+                text_data[docu_attr] = getattr(self, attr)
+
+        data.update(text_data)
+        tabs['textTabs'].append(data)
 
 
 class DocuSignPreSignedTextTab(DocuSignTextTab):
@@ -492,30 +569,21 @@ class DocuSignPreSignedTextTab(DocuSignTextTab):
 
 class DocuSignSigTab(DocuSignTab):
     def __init__(self, x, y, document_id, page_number, name=None):
-        self.x = x
-        self.y = y
-        self.document_id = document_id
-        self.page_number = page_number
+
+        super(DocuSignSigTab, self).__init__(x, y, document_id, page_number)
         self.name = name if name else "SignHere"
 
     def add_to_tabs(self, tabs):
         if 'signHereTabs' not in tabs:
             tabs['signHereTabs'] = []
 
-        tabs['signHereTabs'].append(dict(
-            xPosition=int(self.x),
-            yPosition=int(self.y),
-            documentId=self.document_id,
-            pageNumber=self.page_number,
-        ))
+        tabs['signHereTabs'].append(self.build_data())
 
 
 class DocuSignSigDateTab(DocuSignTab):
     def __init__(self, x, y, document_id, page_number, name=None):
-        self.x = x
-        self.y = y
-        self.document_id = document_id
-        self.page_number = page_number
+
+        super(DocuSignSigDateTab, self).__init__(x, y, document_id, page_number)
         self.name = name if name else 'SigDate'
 
     def add_to_tabs(self, tabs):
@@ -533,6 +601,9 @@ class DocuSignSigDateTab(DocuSignTab):
 #
 # Base class
 class DocuSignEnvelopeComponent(object):
+
+    tab_repository = RequiredFeature('FormTemplateTabRepository')
+    pdf_generator_service = RequiredFeature("ImagedFormGeneratorService")
 
     # Constants used for determining purpose of tab generation.
     PDF_TABS = u'pdf_tabs'
@@ -600,7 +671,27 @@ class DocuSignEnvelopeComponent(object):
         # Inject any signature and date data that has been passed from the enrollment.
         tabs = []
 
-        # e-signatures
+        # Convert call-center employee signatures to voice-auth statements.
+        if purpose == self.PDF_TABS and self.data.should_use_call_center_workflow() and hasattr(self, 'template_id'):
+            tab_definitions = self.tab_repository.get_tabs_for_template(self.template_id)
+            for tab_def in tab_definitions:
+                # The PDF Export code currently expects a name of "{}{}".format(tab_type, recip_type)
+                #   In order to match up tab defs to values correctly.
+                if tab_def.type_ == "SignHere" and tab_def.recipient_role == "Employee":
+                    tabs += [DocuSignTextTab("SignHereEmployee", self.data.get_employee_esignature(),
+                                                     x=tab_def.x, y=tab_def.y,
+                                                      document_id=1, page_number=tab_def.page,
+                                                      )]
+                elif tab_def.type_ == "DateSigned" and tab_def.recipient_role == "Employee":
+                    tabs.append(DocuSignTextTab("DateSignedEmployee", datetime.today().strftime('%m/%d/%Y'),
+                        x=tab_def.x,
+                        y=tab_def.y,
+                        document_id=1,
+                        page_number=tab_def.page,
+                    ))
+
+
+        # This is for enrollment import - replace signatures with text when rendering PDF.
         if self.data.get('emp_sig_txt'):
             tabs += [DocuSignPreSignedTextTab("SignHereEmployee", self.data.get_employee_esignature())]
             tabs += [DocuSignPreSignedTextTab("InitialHereEmployee", self.data.get_employee_initials())]
@@ -618,6 +709,9 @@ class DocuSignEnvelopeComponent(object):
             tabs += [
                 DocuSignPreSignedTextTab("DateSignedAgent", agent_signed_date),
             ]
+
+
+
 
         return tabs
 
@@ -644,8 +738,6 @@ class DocuSignEnvelopeComponent(object):
 # Server-side template base class.
 class DocuSignServerTemplate(DocuSignEnvelopeComponent):
 
-    tab_repository = RequiredFeature('FormTemplateTabRepository')
-    pdf_generator_service = RequiredFeature("ImagedFormGeneratorService")
 
     def __init__(self, template_id, recipients, use_docusign_renderer=True):
         DocuSignEnvelopeComponent.__init__(self, recipients)
@@ -702,7 +794,7 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
     def generate_tabs(self, recipient, purpose):
         tabs = super(DocuSignServerTemplate, self).generate_tabs(recipient, purpose)
 
-        # Include a tab for the agent signature if this is call center.
+        # Include all agent tabs if this is call center mode.
         if purpose == self.DOCUSIGN_TABS and self.data.should_use_call_center_workflow():
             # Find the tab definition
             tab_definitions = self.tab_repository.get_tabs_for_template(self.template_id)
@@ -723,6 +815,34 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
                         document_id=1,
                         page_number=tab_def.page,
                     ))
+                # Include all radio button tabs that were not locked, both employee and agent.
+                elif tab_def.custom_type == "Radio" and not tab_def.custom_tab_locked:
+                    label = tab_def.label.split('.')[0] if len(tab_def.label.split('.')) > 1 else tab_def.label
+                    tabs.append(DocuSignRadioTab(
+                        label,
+                        is_selected=False,
+                        value=tab_def.name,
+                        x=tab_def.x,
+                        y=tab_def.y,
+                        document_id=1,
+                        page_number=tab_def.page))
+
+                elif tab_def.custom_type == "Text" and not tab_def.custom_tab_locked:
+                    tabs.append(
+                        DocuSignTextTab(
+                            # Tab def label is really the name
+                            name=tab_def.label,
+                            value="",
+                            x=tab_def.x,
+                            y=tab_def.y,
+                            width=tab_def.width,
+                            height=tab_def.height,
+                            document_id=1,
+                            page_number=tab_def.page,
+                            required=tab_def.custom_tab_required,
+                        ))
+
+
         return tabs
 
     def is_recipient_signer(self, recipient):

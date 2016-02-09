@@ -19,7 +19,7 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
     def generate_tabs(self, recipient, purpose):
         tabs = super(FPPBankDraftFormTemplate, self).generate_tabs(recipient, purpose)
 
-        if not recipient.is_employee():
+        if not recipient.is_employee() and not self.data.should_use_call_center_workflow():
             return tabs
 
         employee_data = self.data["employee"]

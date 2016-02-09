@@ -1,6 +1,7 @@
 # DocuSign API Walkthrough 08 (PYTHON) - Embedded Signing
 import decimal
 import random
+from datetime import datetime
 
 import flask
 import re
@@ -248,7 +249,9 @@ class EnrollmentDataWrap(object):
         return covered_children
 
     def get_employee_esignature(self):
-        return self.data.get('emp_sig_txt', '')
+        # Replace employee signature with "John Doe voice auth on file 02:45pm"
+        esig = "{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%H:%M%p"))
+        return self.data.get('emp_sig_txt', esig)
 
     def get_employee_initials(self):
         return self.data.get('emp_initials_txt', '')

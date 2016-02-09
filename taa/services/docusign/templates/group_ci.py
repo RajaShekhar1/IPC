@@ -42,29 +42,32 @@ class GroupCITemplate(DocuSignServerTemplate):
 
     def make_agent_tabs(self):
         agent_radios = []
-        # identical to whatever EE said
-        agent_radios.append(
-            {
-                'groupName': 'existingInsAgent',
-                'radios': [
-                    {
-                        'selected': 'True',
-                        'value': self.data['existing_insurance']
-                    }
-                ]
-            }
-        )
-        agent_radios.append(
-            {
-                'groupName': 'replaceAgent',
-                'radios': [
-                    {
-                        'selected': 'True',
-                        'value': self.data['replacing_insurance']
-                    }
-                ]
-            }
-        )
+
+        if not self.data.should_use_call_center_workflow():
+            # identical to whatever EE said
+            agent_radios.append(
+                {
+                    'groupName': 'existingInsAgent',
+                    'radios': [
+                        {
+                            'selected': 'True',
+                            'value': self.data['existing_insurance']
+                        }
+                    ]
+                }
+            )
+            agent_radios.append(
+                {
+                    'groupName': 'replaceAgent',
+                    'radios': [
+                        {
+                            'selected': 'True',
+                            'value': self.data['replacing_insurance']
+                        }
+                    ]
+                }
+            )
+
         return {'radioGroupTabs': agent_radios}
 
     def convert_to_tab_objects(self, docusign_tabs):

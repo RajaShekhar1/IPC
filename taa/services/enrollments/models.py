@@ -399,3 +399,10 @@ class FormTemplateTabs(db.Model):
     font_size = db.Column(db.Integer)
     font_color = db.Column(db.Unicode)
     recipient_role = db.Column(db.Unicode)
+
+    template_tab_locked = db.Column(db.Boolean)
+    template_tab_required = db.Column(db.Boolean)
+    custom_tab_locked = db.Column(db.Boolean)
+    custom_tab_required = db.Column(db.Boolean)
+
+

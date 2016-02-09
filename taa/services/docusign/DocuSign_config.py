@@ -80,7 +80,7 @@ def get_replacement_template_id(product_type, state):
 
 def get_bank_draft_template_id(product_type, state):
     if should_use_demo_account():
-        return '02990C98-52E7-4BCC-92FF-02A29526625B'
+        return '44088a96-8bb2-47d1-b589-6ff68148a8af'
     else:
         return 'BA8F7F9C-1CF9-497A-B904-1C9DE2362589'
 
