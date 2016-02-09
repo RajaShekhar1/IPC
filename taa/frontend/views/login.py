@@ -17,6 +17,7 @@ from flask.ext.stormpath import (
 )
 
 from taa import app
+from taa.errors import email_exception
 from .nav import get_nav_menu
 from taa.old_model.Registration import TAA_RegistrationForm, TAA_LoginForm
 from taa.old_model.Enrollment import NotifyAdminEmail
@@ -89,6 +90,7 @@ def register_taa():
                 return redirect(url_for('confirmRegistration'))
             except StormpathError as err:
                 flash(err.message['message'])
+                email_exception(app, err)
 
     return render_template('user_account/register.html', form=form, nav_menu=get_nav_menu())
 
@@ -121,7 +123,6 @@ def login():
             # we'll log the user in (creating a secure session using
             # Flask-Login), then redirect the user to the ?next=<url>
             # query parameter, or just the HOME page
-
             print "LOGIN: %s %s, (%s  activated=%s)" % (account.given_name, account.surname, account.email, account.custom_data.get('activated'))
             account_groups = [g.name for g in account.groups]
             is_agent = agent_service.is_user_agent(account)
@@ -149,9 +150,15 @@ def login():
                 return redirect(url_for('login'))
 
         except StormpathError, err:
-            flash(apology_message, "error")
+            if not isinstance(err.message, str) and 'message' in err.message:
+                flash(err.message['message'], 'error')
+            else:
+                flash(apology_message, "error")
+                email_exception(app, err)
+
         except Exception, err:
             flash(apology_message, "error")
+            email_exception(app, err)
 
     return render_template('user_account/login.html',
                            form = form,
