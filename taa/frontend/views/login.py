@@ -24,6 +24,10 @@ from taa.services.agents import AgentService
 from taa.services.users import UserService
 from taa.services import RequiredFeature, LookupService
 
+
+apology_message = "There is a temporary problem with the login process. We apologize for the inconvenience. Please try again in a few minutes."
+
+
 @app.route("/user_register", methods=['GET', 'POST'])
 def register_taa():
     """
@@ -107,6 +111,7 @@ def login():
     # If we received a POST request with valid information, we'll continue
     # processing.
     if form.validate_on_submit():
+
         try:
             # Try to fetch the user's account from Stormpath.  If this
             # fails, an exception will be raised.
@@ -144,10 +149,9 @@ def login():
                 return redirect(url_for('login'))
 
         except StormpathError, err:
-            if 'message' in err.message:
-                flash(err.message['message'])
-            else:
-                flash(err.message)
+            flash(apology_message, "error")
+        except Exception, err:
+            flash(apology_message, "error")
 
     return render_template('user_account/login.html',
                            form = form,
@@ -209,10 +213,10 @@ def reauth():
 
     except StormpathError, err:
         is_error = True
-        if 'message' in err.message:
-            error_message = err.message['message']
-        else:
+        if isinstance(err.message, str):
             error_message = err.message
+        else:
+            error_message = err.message['message']
 
     resp = {
         'error': is_error,
