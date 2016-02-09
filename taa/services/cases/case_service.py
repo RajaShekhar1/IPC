@@ -485,8 +485,7 @@ class CaseService(DBService):
     def get_classifications(self, case):
         classifications = []
         if case.occupation_class_settings is not None:
-            for c in case.occupation_class_settings.get(
-                    'available_classifications', []):
+            for c in case.occupation_class_settings:
                 classifications.append(c['label'])
         return classifications
 
