@@ -17,12 +17,17 @@ from flask.ext.stormpath import (
 )
 
 from taa import app
+from taa.errors import email_exception
 from .nav import get_nav_menu
 from taa.old_model.Registration import TAA_RegistrationForm, TAA_LoginForm
 from taa.old_model.Enrollment import NotifyAdminEmail
 from taa.services.agents import AgentService
 from taa.services.users import UserService
 from taa.services import RequiredFeature, LookupService
+
+
+apology_message = "There is a temporary problem with the login process. We apologize for the inconvenience. Please try again in a few minutes."
+
 
 @app.route("/user_register", methods=['GET', 'POST'])
 def register_taa():
@@ -85,6 +90,7 @@ def register_taa():
                 return redirect(url_for('confirmRegistration'))
             except StormpathError as err:
                 flash(err.message['message'])
+                email_exception(app, err)
 
     return render_template('user_account/register.html', form=form, nav_menu=get_nav_menu())
 
@@ -107,6 +113,7 @@ def login():
     # If we received a POST request with valid information, we'll continue
     # processing.
     if form.validate_on_submit():
+
         try:
             # Try to fetch the user's account from Stormpath.  If this
             # fails, an exception will be raised.
@@ -116,7 +123,6 @@ def login():
             # we'll log the user in (creating a secure session using
             # Flask-Login), then redirect the user to the ?next=<url>
             # query parameter, or just the HOME page
-
             print "LOGIN: %s %s, (%s  activated=%s)" % (account.given_name, account.surname, account.email, account.custom_data.get('activated'))
             account_groups = [g.name for g in account.groups]
             is_agent = agent_service.is_user_agent(account)
@@ -144,10 +150,15 @@ def login():
                 return redirect(url_for('login'))
 
         except StormpathError, err:
-            if 'message' in err.message:
-                flash(err.message['message'])
+            if not isinstance(err.message, str) and 'message' in err.message:
+                flash(err.message['message'], 'error')
             else:
-                flash(err.message)
+                flash(apology_message, "error")
+                email_exception(app, err)
+
+        except Exception, err:
+            flash(apology_message, "error")
+            email_exception(app, err)
 
     return render_template('user_account/login.html',
                            form = form,
@@ -209,10 +220,10 @@ def reauth():
 
     except StormpathError, err:
         is_error = True
-        if 'message' in err.message:
-            error_message = err.message['message']
-        else:
+        if isinstance(err.message, str):
             error_message = err.message
+        else:
+            error_message = err.message['message']
 
     resp = {
         'error': is_error,
