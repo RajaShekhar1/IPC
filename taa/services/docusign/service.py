@@ -231,11 +231,13 @@ class DocuSignService(object):
 
         if not enrollment_data:
             raise ValueError("No envelope with id {}".format(envelope_id))
-
         enrollment_record = enrollment_data[0]
 
         # Ask Docusign for a signing redirect
         envelope = DocusignEnvelope(envelope_url, enrollment_record)
+
+        recipient_status = envelope.get_recipient_status()
+
         recipient = AgentDocuSignRecipient(agent, agent.name(), agent.email)
 
         is_ssl = app.config.get('IS_SSL', True)
@@ -302,6 +304,15 @@ class DocusignEnvelope(object):
         self.uri = uri
         self.enrollment_record = enrollment_record
 
+    def get_recipient_status(self):
+        docusign_transport = get_docusign_transport()
+        #
+        #https://{server}/restapi/{apiVersion}/accounts/{accountId}/envelopes/{envelopeId}/recipients
+        #
+
+        return docusign_transport.get("{}/recipients".format(self.get_envelope_base_url()))
+
+
     def get_signing_url(self, recipient, callback_url, docusign_transport):
         data = dict(
             authenticationMethod="email",
@@ -310,14 +321,18 @@ class DocusignEnvelope(object):
             clientUserId=recipient.get_client_user_id(),
             userName=recipient.name,
         )
-        base_url = docusign_transport.api_endpoint
-        if base_url.endswith('/'):
-            base_url = base_url[:-1]
-        view_url = base_url + self.uri + "/views/recipient"
+        view_url = self.get_envelope_base_url() + "/views/recipient"
         result = docusign_transport.post(view_url, data=data)
 
         return result['url']
 
+    def get_envelope_base_url(self):
+        docusign_transport = get_docusign_transport()
+        base_url = docusign_transport.api_endpoint
+        if base_url.endswith('/'):
+            base_url = base_url[:-1]
+        envelope_url = base_url + self.uri
+        return envelope_url
 
     def to_json(self):
         return dict(
