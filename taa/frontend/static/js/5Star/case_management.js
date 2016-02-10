@@ -31,11 +31,7 @@ var case_management = (function() {
               {"aTargets":[4], "mData": function(source) {
                 return normalize_date(source.employee_birthdate);
               }},
-              {"aTargets":[5], "mData": function(source) {
-
-                  return source.email;
-                  //return source.
-              }}
+              {"aTargets":[5], "mData": "agent", className: "min-breakIII"}
               //{"aTargets":[5], "mData":"employee_email", className: "min-breakIII"}
             ],
             "aaSorting": [[ 3, "asc" ]]
