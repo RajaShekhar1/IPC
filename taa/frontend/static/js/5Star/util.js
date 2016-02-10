@@ -1,4 +1,10 @@
 
+// Global cache-buster for AJAX GET requests.
+$(function() {
+  $.ajaxSetup({ cache: false });
+});
+
+// form_data is
 function send_form_data(method, url, data, on_success, on_error) {
   return submit_data(method, url, data, true, on_success, on_error);
 }
