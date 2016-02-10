@@ -20,6 +20,10 @@ DEFAULT_FONT = 'LucidaConsole'
 DEFAULT_COLOR = HexColor('#000000')
 FONT_DIR = 'taa/services/enrollments/pdf_generator_fonts'
 
+pdfmetrics.registerFont(
+    TTFont('LucidaConsole', os.path.join(FONT_DIR, 'LucidaConsole.ttf')))
+pdfmetrics.registerFont(
+    TTFont('CourierNew', os.path.join(FONT_DIR, 'CourierNew-Bold.ttf')))
 
 class ImagedFormGeneratorService(object):
 
@@ -212,10 +216,6 @@ class FormTemplateTabRepository(object):
             FormTemplate.template_id.ilike(template_id)).first()
 
 
-pdfmetrics.registerFont(
-    TTFont('LucidaConsole', os.path.join(FONT_DIR, 'LucidaConsole.ttf')))
-pdfmetrics.registerFont(
-    TTFont('CourierNew', os.path.join(FONT_DIR, 'CourierNew-Bold.ttf')))
 
 
 FONTMAP = {
@@ -327,6 +327,9 @@ class FormPDFRenderer(object):
         self.c.setFont('Helvetica', 12)
 
     def _translate(self, x, y):
+
+
+
         face = pdfmetrics.getFont(self.c._fontname).face
         y_offset = face.descent * self.c._fontsize / 1000
         return x + 8, self.c._pagesize[1] - y - y_offset - 14

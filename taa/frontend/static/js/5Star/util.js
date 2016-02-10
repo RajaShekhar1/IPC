@@ -203,6 +203,34 @@ ko.bindingHandlers.modal = {
   }
 };
 
+// Simple DataTable binding using a javascript data source (usually observable)
+ko.bindingHandlers.dataTable = {
+
+
+  update: function(element, valueAccessor) {
+    var bind_opts = ko.unwrap(valueAccessor());
+    var datatable_opts = bind_opts.options;
+    var data_observable = bind_opts.data;
+
+    var updated_data = data_observable();
+
+    if (!$.fn.DataTable.fnIsDataTable(element) && updated_data.length > 0) {
+      // Initialize DataTable for the first time.
+
+      // Add data to table.
+      datatable_opts.data = updated_data;
+
+      // Create table
+      $(element).//wrap("<div class='dataTables_borderWrap' />").
+            DataTable(datatable_opts);
+
+    } else if (updated_data.length > 0) {
+        var table = $(element).DataTable();
+        table.clear();
+        table.rows.add(updated_data).draw();
+    }
+  }
+};
 
 ko.bindingHandlers.flashMessage = {
   update: function (element, valueAccessor) {

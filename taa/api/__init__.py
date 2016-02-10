@@ -11,26 +11,8 @@ from werkzeug.wrappers import Response
 
 from taa.models import db
 
-# def create_app(settings_override=None, register_security_blueprint=False):
-#     """Returns the API application instance"""
-#
-#     app = factory.create_app(__name__, __path__, settings_override,
-#                              register_security_blueprint=register_security_blueprint)
-#
-#     # Set the default JSON encoder
-#     app.json_encoder = JSONEncoder
-#
-#     # Register custom error handlers
-#     app.errorhandler(TAAError)(on_api_error)
-#     app.errorhandler(TAAFormError)(on_api_form_error)
-#     app.errorhandler(404)(on_404)
-#
-#     return app
-
-
 def route(bp, *args, **kwargs):
     kwargs.setdefault('strict_slashes', False)
-    csrf = CsrfProtect()
     # Wrap all routes with login_required by default, wrap response data
     # using jsonify
 

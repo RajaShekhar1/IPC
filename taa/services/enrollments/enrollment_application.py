@@ -26,8 +26,15 @@ class EnrollmentApplicationService(DBService):
     product_service = RequiredFeature('ProductService')
     batch_item_service = RequiredFeature('EnrollmentImportBatchItemService')
 
-    def search_enrollments(self, by_agent_id=None, by_applicant_signing_status=None, by_agent_signing_status=None):
-        q = db.query(EnrollmentApplication)
+    def search_enrollments(self,
+                           by_agent_id=None,
+                           by_envelope_url=None,
+                           by_applicant_signing_status=None, by_agent_signing_status=None):
+        q = db.session.query(EnrollmentApplication)
+        q.options(db.eagerload('coverages', 'product'))
+
+        if by_envelope_url:
+            q = q.filter(EnrollmentApplication.docusign_envelope_id == by_envelope_url)
 
         if by_agent_id:
             q = q.filter(EnrollmentApplication.agent_id == by_agent_id)

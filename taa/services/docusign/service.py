@@ -12,6 +12,10 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate
 from urlparse import urljoin
 
+from taa.services.enrollments import EnrollmentApplicationCoverage
+
+from taa.services.agents import AgentService
+
 from taa import app
 from taa.services import RequiredFeature, LookupService
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callback_url
@@ -85,7 +89,7 @@ class DocuSignService(object):
 
         signing_agent = enrollment_data.get_signing_agent()
 
-        agent = AgentDocuSignRecipient(name=signing_agent.name(),
+        agent = AgentDocuSignRecipient(signing_agent, name=signing_agent.name(),
                                        email=signing_agent.email)
         employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
                                              email=enrollment_data.get_employee_email())
@@ -195,7 +199,7 @@ class DocuSignService(object):
         agent_service = LookupService("AgentService")
         if agent_service.is_user_agent(for_user):
             # Only envelopes that have been signed by me.
-            filter_agent_id = for_user.id
+            filter_agent_id = agent_service.get_agent_from_user(for_user).id
         else:
             # Allow home office and admin to see all for now.
             filter_agent_id = None
@@ -206,10 +210,44 @@ class DocuSignService(object):
                 by_applicant_signing_status=envelope_status,
         )
 
-        return [DocusignEnvelope(enrollment.docusign_envelope_id) for enrollment in enrollments]
+        return [DocusignEnvelope(enrollment.docusign_envelope_id, enrollment)
+                for enrollment in enrollments if enrollment.docusign_envelope_id is not None]
 
+    def get_envelope_signing_url(self, for_user, envelope_id):
+        "Must be the agent that the envelope was sent to (this user must be the recipient)"
+        envelope_url = '/envelopes/%s'%envelope_id
+        agent_service = LookupService("AgentService")
+        enrollment_service = LookupService("EnrollmentApplicationService")
+        if not agent_service.is_user_agent(for_user):
+            raise ValueError("No agent record associated with user {}".format(for_user.href))
 
+        # Only envelopes that have been signed by me.
+        agent = agent_service.get_agent_from_user(for_user)
+        enrollments = enrollment_service.search_enrollments(
+            by_agent_id=agent.id,
+            by_envelope_url=envelope_url,
+        )
+        enrollment_data = enrollments.all()
 
+        if not enrollment_data:
+            raise ValueError("No envelope with id {}".format(envelope_id))
+
+        enrollment_record = enrollment_data[0]
+
+        # Ask Docusign for a signing redirect
+        envelope = DocusignEnvelope(envelope_url, enrollment_record)
+        recipient = AgentDocuSignRecipient(agent, agent.name(), agent.email)
+
+        is_ssl = app.config.get('IS_SSL', True)
+        hostname = app.config.get('HOSTNAME', '5starenroll.com')
+        scheme = 'https://' if is_ssl else 'http://'
+        callback_url = ('{scheme}{hostname}/inbox'.format(
+                    scheme=scheme,
+                    hostname=hostname,
+        ))
+
+        url = envelope.get_signing_url(recipient, callback_url=callback_url, docusign_transport=get_docusign_transport())
+        return url
 
 def create_envelope(email_subject, components):
     docusign_service = LookupService('DocuSignService')
@@ -260,8 +298,9 @@ def fetch_signing_url(in_person_signer, enrollment_data, envelope_result):
 
 
 class DocusignEnvelope(object):
-    def __init__(self, uri):
+    def __init__(self, uri, enrollment_record=None):
         self.uri = uri
+        self.enrollment_record = enrollment_record
 
     def get_signing_url(self, recipient, callback_url, docusign_transport):
         data = dict(
@@ -278,6 +317,45 @@ class DocusignEnvelope(object):
         result = docusign_transport.post(view_url, data=data)
 
         return result['url']
+
+
+    def to_json(self):
+        return dict(
+            id=self.get_envelope_id(),
+            enrollment_record_id=self.enrollment_record.id,
+            group=self.enrollment_record.case.company_name,
+            timestamp=self.enrollment_record.signature_time,
+            employee_first=self.enrollment_record.census_record.employee_first,
+            employee_last=self.enrollment_record.census_record.employee_last,
+            products=self.get_product_names(),
+            coverage=self.get_coverage_summary(),
+        )
+
+    def get_product_names(self):
+        return ', '.join(set([coverage.product.name for coverage in self.enrollment_record.coverages]))
+
+    def get_coverage_summary(self):
+        ee_cov = None
+        sp_cov = None
+        ch_cov = None
+        for cov in self.enrollment_record.coverages:
+            if cov.applicant_type == EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE:
+                ee_cov = cov.coverage_face_value
+            elif cov.applicant_type == EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE:
+                sp_cov = cov.coverage_face_value
+            elif cov.applicant_type == EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD:
+                ch_cov = cov.coverage_face_value
+
+        def format_coverage_summary(val):
+            if not val:
+                return "-"
+            import locale
+            return locale.currency(int(val), grouping=True)
+
+        return '{} / {} / {}'.format(format_coverage_summary(ee_cov), format_coverage_summary(sp_cov), format_coverage_summary(ch_cov))
+
+    def get_envelope_id(self):
+        return self.uri.replace("/envelopes/", "")
 
 
 def get_docusign_transport():
@@ -405,7 +483,7 @@ class DocuSignRecipient(object):
         return bool(self._use_embedded_signing)
 
     def get_client_user_id(self):
-        return "123456"
+        raise NotImplementedError()
 
 
 class EmployeeDocuSignRecipient(DocuSignRecipient):
@@ -419,14 +497,30 @@ class EmployeeDocuSignRecipient(DocuSignRecipient):
         # Always uses embedded signing process.
         return True
 
+    def get_client_user_id(self):
+        return "ee-123456"
 
 class AgentDocuSignRecipient(DocuSignRecipient):
+    def __init__(self, agent, name, email, cc_only=False, role_name=None, exclude_from_envelope=False,
+                 use_embedded_signing=True):
+
+        super(AgentDocuSignRecipient, self).__init__(name, email, cc_only, role_name, exclude_from_envelope,
+                                                     use_embedded_signing)
+        self.agent = agent
+
     def is_employee(self):
         return False
 
     def is_agent(self):
         return True
 
+    def get_client_user_id(self):
+        return "123456"
+        # Use the stormpath URL for this agent
+        agent_service = AgentService()
+        # Hash our agent id
+        import hashlib
+        return hashlib.sha256("agent-{}".format(self.agent.id)).hexdigest()
 
 class CarbonCopyRecipient(DocuSignRecipient):
     def is_employee(self): return False
