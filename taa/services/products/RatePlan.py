@@ -322,6 +322,7 @@ def build_eligibility_constraint(constraint_def):
 def build_rider_constraint(rider_code):
     return ProductRiderIncludedConstraint(rider_code)
 
+
 class RatePlan(object):
     def __init__(self, coverage_options, eligibility_constraint=None):
         self.coverage_options = coverage_options
