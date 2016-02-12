@@ -30,6 +30,7 @@ enrollment_service = EnrollmentApplicationService()
 self_enrollment_link_service = SelfEnrollmentLinkService()
 self_enrollment_email_service = SelfEnrollmentEmailService()
 
+
 @app.route('/inbox', methods=['GET'])
 @login_required
 def inbox():
@@ -175,7 +176,7 @@ Please follow the instructions carefully on the next page, stepping through the 
 
     vars["current_user_token"] = api_token_service.get_token_by_sp_href(current_user.href)
 
-    #vars['riders'] = rider_service.get_rider_info_for_case(case)
+    # vars['riders'] = rider_service.get_rider_info_for_case(case)
 
     return render_template('agent/case.html', **vars)
 
@@ -189,7 +190,7 @@ def edit_census_record(case_id, census_record_id):
     agent = agent_service.get_logged_in_agent()
     # Get the child entries out
     child_form_fields = []
-    for x in range(1, 6+1):
+    for x in range(1, 6 + 1):
         child_fields = [
             getattr(record_form, 'child{}_first'.format(x)),
             getattr(record_form, 'child{}_last'.format(x)),
@@ -203,7 +204,7 @@ def edit_census_record(case_id, census_record_id):
 
     enroll_data = []
     for enrollment_data in enrollment_records:
-        enroll_data += [format_enroll_data(enrollment_data, product_num) for product_num in range(1, 6+1)]
+        enroll_data += [format_enroll_data(enrollment_data, product_num) for product_num in range(1, 6 + 1)]
 
     vars = dict(
         case=case,
@@ -230,10 +231,10 @@ def format_enroll_data(enrollment_data, product_number):
             id=enrollment_data['enrollment_id'],
             product_name=enrollment_data["product_{}_name".format(product_number)],
             time=enrollment_data["signature_time"],
-            coverage=[get_coverage_for_product(enrollment_data, product_number, j) for j in ["emp","sp","ch"]],
+            coverage=[get_coverage_for_product(enrollment_data, product_number, j) for j in ["emp", "sp", "ch"]],
             status=enrollment_data["application_status"],
             total=reduce(lambda coverage_type, accum: calc_total(enrollment_data, product_number, coverage_type, accum),
-                         ["emp","sp","ch"], 0)
+                         ["emp", "sp", "ch"], 0)
         )
     else:
         data = None
@@ -294,35 +295,35 @@ def edit_self_enroll_setup(case_id=None):
 @app.route('/batch-info/<int:case_id>/preview/<batch_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def view_batch_email_preview(case_id, batch_id=None):
-        batch = self_enrollment_email_service.get_batch_for_case(case_id, batch_id)
-        case = case_service.get_if_allowed(case_id)
-        setup = case.self_enrollment_setup
-        email_test = batch.email_logs[0]
-        return render_template(
-            "agent/preview_email.html",
-            custom_message=batch.email_body,
-            greeting=build_fake_email_greeting(setup),
-            enrollment_url="#",
-            company_name=case.company_name,
-            products = case.products
-        )
+    batch = self_enrollment_email_service.get_batch_for_case(case_id, batch_id)
+    case = case_service.get_if_allowed(case_id)
+    setup = case.self_enrollment_setup
+    email_test = batch.email_logs[0]
+    return render_template(
+        "agent/preview_email.html",
+        custom_message=batch.email_body,
+        greeting=build_fake_email_greeting(setup),
+        enrollment_url="#",
+        company_name=case.company_name,
+        products=case.products
+    )
 
 
 @app.route('/batch-info/<int:case_id>/logs/<batch_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def view_batch_email_logs(case_id, batch_id=None):
-        case = case_service.get_if_allowed(case_id)
-        batch = self_enrollment_email_service.get_batch_for_case(case_id, batch_id)
-        email_logs = []
+    case = case_service.get_if_allowed(case_id)
+    batch = self_enrollment_email_service.get_batch_for_case(case_id, batch_id)
+    email_logs = []
 
-        for email in batch.email_logs:
-            census_record = case_service.get_census_record(case, email.census_id)
-            email.enrollment_status = enrollment_service.get_enrollment_status(census_record)
-            email_logs.append(email)
-        return render_template(
-            "agent/email_logs.html",
-            batch_emails=email_logs,
-        )
+    for email in batch.email_logs:
+        census_record = case_service.get_census_record(case, email.census_id)
+        email.enrollment_status = enrollment_service.get_enrollment_status(census_record)
+        email_logs.append(email)
+    return render_template(
+        "agent/email_logs.html",
+        batch_emails=email_logs,
+    )
 
 
 def build_fake_email_greeting(setup):
