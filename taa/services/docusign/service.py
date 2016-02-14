@@ -3,6 +3,8 @@ from datetime import datetime
 import StringIO
 import base64
 import json
+from itertools import ifilter
+
 import requests
 from PyPDF2 import PdfFileReader
 from collections import defaultdict
@@ -11,12 +13,11 @@ from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate
 from urlparse import urljoin
+from dateutil.parser import parse as parse_datetime
 
-from taa.services.enrollments import EnrollmentApplicationCoverage
-
+from taa import app, db
+from taa.services.enrollments import EnrollmentApplicationCoverage, EnrollmentApplication
 from taa.services.agents import AgentService
-
-from taa import app
 from taa.services import RequiredFeature, LookupService
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callback_url
 
@@ -233,13 +234,9 @@ class DocuSignService(object):
             raise ValueError("No envelope with id {}".format(envelope_id))
         enrollment_record = enrollment_data[0]
 
-        # Ask Docusign for a signing redirect
         envelope = DocusignEnvelope(envelope_url, enrollment_record)
 
-        recipient_status = envelope.get_recipient_status()
-
-        recipient = AgentDocuSignRecipient(agent, agent.name(), agent.email)
-
+        # Build a callback URL for the inbox
         is_ssl = app.config.get('IS_SSL', True)
         hostname = app.config.get('HOSTNAME', '5starenroll.com')
         scheme = 'https://' if is_ssl else 'http://'
@@ -248,7 +245,20 @@ class DocuSignService(object):
                     hostname=hostname,
         ))
 
-        url = envelope.get_signing_url(recipient, callback_url=callback_url, docusign_transport=get_docusign_transport())
+        # First, we update our signing status
+        envelope.update_enrollment_status()
+
+        # Does the employee need to sign?
+        if envelope.is_employee_sig_pending():
+            url = envelope.get_employee_signing_url(callback_url)
+        elif envelope.is_agent_sig_pending():
+            url = envelope.get_agent_signing_url(callback_url)
+        else:
+            url = envelope.get_completed_view_url(callback_url)
+
+
+
+        #url = envelope.get_signing_url(recipient, callback_url=callback_url, docusign_transport=get_docusign_transport())
         return url
 
 def create_envelope(email_subject, components):
@@ -304,14 +314,19 @@ class DocusignEnvelope(object):
         self.uri = uri
         self.enrollment_record = enrollment_record
 
+        self._cached_recipient_status = None
+
     def get_recipient_status(self):
+        if self._cached_recipient_status:
+            return self._cached_recipient_status
+
         docusign_transport = get_docusign_transport()
-        #
-        #https://{server}/restapi/{apiVersion}/accounts/{accountId}/envelopes/{envelopeId}/recipients
-        #
+        self._cached_recipient_status = docusign_transport.get("{}/recipients".format(self.get_envelope_base_url()))
+        return self._cached_recipient_status
 
-        return docusign_transport.get("{}/recipients".format(self.get_envelope_base_url()))
-
+    def get_envelope_status(self):
+        docusign_transport = get_docusign_transport()
+        return docusign_transport.get(self.get_envelope_base_url())
 
     def get_signing_url(self, recipient, callback_url, docusign_transport):
         data = dict(
@@ -371,6 +386,104 @@ class DocusignEnvelope(object):
 
     def get_envelope_id(self):
         return self.uri.replace("/envelopes/", "")
+
+    def update_enrollment_status(self):
+
+        # Get employee if he is a signer.
+        emp_signer = self.get_employee_signing_status()
+        if emp_signer:
+            if emp_signer['status'] == 'sent':
+                # Not signed
+                pass
+            elif emp_signer.get('signedDateTime'):
+                # Employee Signed
+                self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_COMPLETE
+                self.enrollment_record.applicant_signing_datetime = self.parse_signing_date(emp_signer.get('signedDateTime'))
+            elif emp_signer['status'] == 'declined':
+                self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_DECLINED
+                self.enrollment_record.applicant_signing_datetime = None
+
+            # TODO: Handle more statuses?
+
+        agent_signer = self.get_agent_signing_status()
+        if agent_signer:
+            if agent_signer['status'] == 'sent':
+                # Not signed
+                pass
+            elif agent_signer.get('signedDateTime'):
+                # Employee Signed
+                self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_COMPLETE
+                self.enrollment_record.agent_signing_datetime = self.parse_signing_date(agent_signer.get('signedDateTime'))
+            elif emp_signer['status'] == 'declined':
+                self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_DECLINED
+                self.enrollment_record.agent_signing_datetime = None
+
+        db.session.commit()
+
+    def parse_signing_date(self, val):
+        dt = parse_datetime(val)
+        # Strip off timezone information by parsing a format without TZ.
+        # This helps because we know it is UTC and SQLAlchemy forces dateutil to compare TZ to non-TZ instance, which crashes.
+        return parse_datetime(dt.strftime("%m/%d/%YT%H:%M:%S"))
+
+    def is_employee_sig_pending(self):
+        # First, is employee even a signer?
+        employee_signing_status = self.get_employee_signing_status()
+        if not employee_signing_status:
+            return False
+
+        signed_date_time = employee_signing_status.get('signedDateTime')
+        return not bool(signed_date_time)
+
+    def is_agent_sig_pending(self):
+        # First, is employee even a signer?
+        agent_sig_status = self.get_agent_signing_status()
+        if not agent_sig_status:
+            return False
+
+        signed_date_time = agent_sig_status.get('signedDateTime')
+        return not bool(signed_date_time)
+
+    def get_employee_signing_status(self):
+        return self.find_recipient_by_role(self.get_recipient_status(), "Employee")
+
+    def get_agent_signing_status(self):
+        return self.find_recipient_by_role(self.get_recipient_status(), "Agent")
+
+    def find_recipient_by_role(self, recipient_status, role_name):
+        return next(ifilter(lambda r: r['roleName'] == role_name, recipient_status.get('signers', [])), None)
+
+    def get_employee_signing_url(self, callback_url):
+        ds_recip = self.get_employee_signing_status()
+        #recipient = AgentDocuSignRecipient(agent, agent.name(), agent.email)
+        recipient = EmployeeDocuSignRecipient(
+            name=ds_recip['name'],
+            email=ds_recip['email'],
+            role_name="Employee",
+        )
+        return self.get_signing_url(recipient, callback_url, get_docusign_transport())
+
+    def get_agent_signing_url(self, callback_url):
+        ds_recip = self.get_agent_signing_status()
+        #recipient = AgentDocuSignRecipient(agent, agent.name(), agent.email)
+        #return self.get_signing_url(recipient, callback_url, get_docusign_transport())
+        # TODO: should put check here to see if current user is actually agent, or up one level?
+        data = dict(
+            authenticationMethod="email",
+            email=ds_recip['email'],
+            returnUrl=callback_url,
+            clientUserId=ds_recip['clientUserId'],
+            userName=ds_recip['name'],
+        )
+        view_url = self.get_envelope_base_url() + "/views/recipient"
+        result = get_docusign_transport().post(view_url, data=data)
+
+        return result['url']
+
+    def get_completed_view_url(self, callback_url):
+        # Return any valid recipient view
+        return self.get_agent_signing_url(callback_url)
+
 
 
 def get_docusign_transport():

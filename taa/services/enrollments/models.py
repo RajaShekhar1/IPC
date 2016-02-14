@@ -71,7 +71,9 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
 
     docusign_envelope_id = db.Column(db.Unicode(128))
     agent_signing_status = db.Column(db.Unicode(32))
+    agent_signing_datetime = db.Column(db.DateTime)
     applicant_signing_status = db.Column(db.Unicode(32))
+    applicant_signing_datetime = db.Column(db.DateTime)
 
     SIGNING_STATUS_PENDING = u'pending'
     SIGNING_STATUS_DECLINED = u'declined_to_sign'
