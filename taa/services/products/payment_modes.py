@@ -25,6 +25,17 @@ payment_modes = map(lambda x: dict(mode=x[0], name=x[1], immutable=x[2]), [
     ])
 
 
+def get_full_payment_modes():
+    """
+    Used for the rewritten multi-product wizard, return all payment modes with more detail.
+    """
+    return [
+      {'frequency': 52, 'label': 'Weekly'},
+      {'frequency': 26, 'label': 'Biweekly'},
+      {'frequency': 24, 'label': 'Semimonthly'},
+      {'frequency': 12, 'label': 'Monthly'}
+    ]
+
 def get_payment_modes(changeable=False, single=None):
     result = filter(lambda x: x['immutable'] or x['immutable'] == changeable,
                     payment_modes)

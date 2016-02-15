@@ -1,3 +1,9 @@
+
+// Global cache-buster for AJAX GET requests.
+$(function() {
+  $.ajaxSetup({ cache: false });
+});
+
 // form_data is
 function send_form_data(method, url, data, on_success, on_error) {
   return submit_data(method, url, data, true, on_success, on_error);
@@ -49,6 +55,12 @@ function format_enrollment_status_html(status) {
 //Specific Date handling
 function parse_month_date_input(val) {
   return parse_date(val, "MM/DD");
+}
+
+// check if today is between a start and end date
+function today_between(start, end) {
+  var today = moment();
+  return today.isSameOrAfter(moment(start), 'day') && today.isSameOrBefore(moment(end), 'day')
 }
 
 // Date handling
@@ -259,7 +271,12 @@ ko.bindingHandlers.multiSelect = {
     //  and an observableArray passed in as the 'observed' key
 
     // hook into observed value so we get updates
-    valueAccessor().observed();
+    valueAccessor().observed.subscribe(function(newVal) {
+      console.log(newVal);
+      $(element).multiselect('deselectAll');
+      $(element).multiselect('select', newVal);
+
+    });
     $(element).multiselect(valueAccessor().options);
   },
   update: function (element, valueAccessor, allBindings, viewModel) {
@@ -468,14 +485,14 @@ ko.components.register('height-select', {
     self.required = params.required || false;
     self.name_suffix = params.name_suffix || null;
 
-    self.height_feet_part = ko.observable(get_feet_part(self.height()));
-    self.height_inches_part = ko.observable(get_inches_part(self.height()));
+    self.height_feet_part = ko.observable(""+get_feet_part(self.height()));
+    self.height_inches_part = ko.observable(""+get_inches_part(self.height()));
 
     // Update the observed value when one of the selectors changes
     self.update_height = function () {
       var feet = parseInt(self.height_feet_part());
       var inches = parseInt(self.height_inches_part());
-      if (feet === null || inches === null) {
+      if (feet === null || isNaN(feet) || inches === null || isNaN(inches)) {
         self.height(null);
       } else {
         self.height((12 * feet) + inches);
@@ -552,12 +569,12 @@ ko.components.register('limited-product-select', {
   viewModel: function (params) {
     this.limiter = params.limiter;
     this.is_disabled = ko.observable(params.disabled || false);
+    this.is_mulit_select = params.is_multi_select || false;
   },
-  template: '<select name="productID" id="productID" data-bind="\
-  value: limiter.selected_product, \
+  template: '<select multiple name="productID" id="productID" data-bind="\
+  selectedOptions: limiter.selected_products, \
   options: limiter.available_products,\
   optionsText: \'name\', \
-  optionsCaption: \'(Select Product)\', \
   optionsAfterRender: limiter.disable_product_option_if_invalid,\
   disable: is_disabled\
   "> \
@@ -583,23 +600,23 @@ var ProductStatesLimiterViewModel = function (product_statecode_mapping,
   self.available_products = available_products;
 
   // Until multi-product is working, use a single selected product
-  self.selected_product = ko.computed({
-    read: function () {
-      if (self.selected_products().length > 0) {
-        return self.selected_products()[0];
-      } else {
-        return null;
-      }
-    },
-    write: function (val) {
-      if (val) {
-        self.selected_products([val]);
-      } else {
-        self.selected_products([]);
-      }
-    },
-    owner: self
-  });
+  //self.selected_product = ko.computed({
+  //  read: function () {
+  //    if (self.selected_products().length > 0) {
+  //      return self.selected_products()[0];
+  //    } else {
+  //      return null;
+  //    }
+  //  },
+  //  write: function (val) {
+  //    if (val) {
+  //      self.selected_products([val]);
+  //    } else {
+  //      self.selected_products([]);
+  //    }
+  //  },
+  //  owner: self
+  //});
 
 
   self.is_valid_product_for_state = function (product, state) {
@@ -730,6 +747,25 @@ var StatesLimiterViewModel = function(product_statecode_mapping,
 };
 
 
+// IE8 and below polyfill for object.create
+if (typeof Object.create != 'function') {
+    (function () {
+        var F = function () {};
+        Object.create = function (o) {
+            if (arguments.length > 1) {
+                throw Error('Second argument not supported');
+            }
+            if (o === null) {
+                throw Error('Cannot set a null [[Prototype]]');
+            }
+            if (typeof o != 'object') {
+                throw new TypeError('Argument must be an object');
+            }
+            F.prototype = o;
+            return new F();
+        };
+    })();
+}
 
 // Show a special delete modal with custom message and callback.
 ko.components.register('delete-confirm-modal', {

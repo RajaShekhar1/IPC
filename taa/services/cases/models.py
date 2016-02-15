@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 
+from sqlalchemy.dialects.postgresql import JSON
+
 from taa import db
 from taa.helpers import JsonSerializable
 
@@ -22,14 +24,16 @@ case_partner_agents = db.Table('case_partner_agents', db.metadata,
                                          primary_key=True),
                                )
 
+# Index going the other way so both lookups can be sped up.
+db.Index('ix_case_partners_agent', case_partner_agents.c.agent_id)
+
 
 class CaseSerializer(JsonSerializable):
     __json_modifiers__ = {
         'products': lambda products, _: [p for p in products],
         'enrollment_periods': lambda periods, _: [p for p in periods],
         'partner_agents': lambda agents, _: [a for a in agents],
-         # When serializing active, make sure we take into account the enrollment period.
-        'active': lambda _, case: case.can_enroll()
+        'can_enroll': lambda _, case: case.can_enroll()
     }
     __json_hidden__ = ['census_records', 'enrollment_records', 'batches']
 
@@ -47,8 +51,9 @@ class Case(CaseSerializer, db.Model):
     situs_city = db.Column(db.String)
     agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
     owner_agent = db.relationship('Agent', backref='owned_cases')
-    active = db.Column(db.Boolean, default=False)
+    active = db.Column(db.Boolean, default=False, index=True)
     created_date = db.Column(db.DateTime)
+    is_stp = db.Column(db.Boolean, default=False)
     enrollment_period_type = db.Column(db.String(16), nullable=True)
     # Note: this flag is used for a few other restrictions now, and has a
     # broader meaning that a partner agent can view census data for only
@@ -68,10 +73,14 @@ class Case(CaseSerializer, db.Model):
                                    nullable=False)
     self_enrollment_setup = db.relationship('SelfEnrollmentSetup',
                                             uselist=False, backref='case')
-    case_token = db.Column(db.String(64), nullable=True)
-    case_riders = db.Column(db.String(64), nullable=True)
+    case_token = db.Column(db.String(64), nullable=True, index=True)
 
+    # Store settings for the products as JSON. Includes rider settings and rate overrides.
+    product_settings = db.Column(JSON(none_as_null=False), nullable=True)
     include_bank_draft_form = db.Column(db.Boolean, nullable=False, server_default='FALSE')
+    occupation_class_settings = db.Column(JSON(none_as_null=False),
+                                          nullable=True)
+
 
     def get_product_names(self):
         return ','.join(p.name for p in self.products)
@@ -128,7 +137,7 @@ class CaseEnrollmentPeriod(PeriodSerializer, db.Model):
     __tablename__ = 'case_enrollment_periods'
 
     id = db.Column(db.Integer, primary_key=True)
-    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'))
+    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), index=True)
     period_type = db.Column(db.String(32))
     __mapper_args__ = {
         'polymorphic_on': period_type,
@@ -230,7 +239,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     __tablename__ = 'case_census'
 
     id = db.Column(db.Integer, primary_key=True)
-    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True)
+    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True, index=True)
     case = db.relationship('Case', backref=db.backref('census_records'))
     upload_date = db.Column(db.DateTime, server_default=db.func.now())
     is_uploaded_census = db.Column(db.Boolean, server_default='TRUE')
@@ -290,6 +299,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     child6_first = db.Column(db.String(256))
     child6_last = db.Column(db.String(256))
     child6_birthdate = db.Column(db.Date)
+    occupation_class = db.Column(db.String(256))
 
     def get_smoker_boolean(self, value):
         if value == 'Y':
@@ -378,6 +388,24 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     def child_birthdate(self, num):
         return getattr(self, 'child{}_birthdate'.format(num))
 
+class AgentSplitsSerializer(JsonSerializable):
+    __json_hidden__ = ['case']
+
+class AgentSplitsSetup(AgentSplitsSerializer, db.Model):
+    """
+    Model a case's agent commission splits
+    """
+    __tablename__ = 'agent_split_setups'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # Case
+    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True, index=True)
+    case = db.relationship('Case', backref='agent_splits')
+    agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
+    commission_subcount_code = db.Column(db.String, server_default="", default="")
+    split_percentage = db.Column(db.Integer)
+
 
 class SelfEnrollmentSerializer(JsonSerializable):
     __json_hidden__ = ['case', 'links', 'enrolling_agent']
@@ -391,7 +419,7 @@ class SelfEnrollmentSetup(SelfEnrollmentSerializer, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     # Case
-    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True)
+    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True, index=True)
     # Type
     TYPE_CASE_TARGETED = 'case-targeted'
     TYPE_CASE_GENERIC = 'case-generic'

@@ -3,6 +3,7 @@ import cStringIO
 
 from flask import render_template
 
+from taa.helpers import UnicodeCsvWriter
 from taa import app
 from taa.services.enrollments import EnrollmentRecordParser
 from taa.services.validators import (
@@ -98,7 +99,7 @@ class FileImportService(object):
             format_str = "Must be either 2 or 3 characters long"
 
         if product_validator in field.validators:
-            format_str = "Either 'FPPTI' or 'FPPCI'"
+            format_str = "One of 'FPPTI', 'FPPCI', or 'CIEMP'"
 
         return format_str
 
@@ -154,19 +155,20 @@ for assistance."""
         return self.dialect
 
     def import_file(self, file_obj):
-
-        bytes = file_obj.read()
-
         # Autodetect CSV dialect
         try:
-            self.dialect = csv.Sniffer().sniff(bytes)
+            self.dialect = csv.Sniffer().sniff(file_obj.readline(), delimiters=[',', '\t'])
         except csv.Error as e:
-            self.error = self.default_error_message
-            self.headers = self.rows = []
-            return
+            self.dialect = None
 
         # To get universal newlines (ie, cross-platform) we use splitlines()
-        lines = bytes.splitlines()
+        file_obj.seek(0)
+        lines = file_obj.read().splitlines()
+
+        if not lines:
+            self.error = "The file is empty or could not be parsed."
+            self.headers = self.rows = []
+            return
 
         # Process headers so they are not case-sensitive.
         preprocessed_lines = self._preprocess_header_row(lines, self.dialect)
@@ -185,12 +187,15 @@ for assistance."""
         To get case-insensitive parsing behaviour, we uppercase every column
         in the first line before passing it off to the DictReader
         """
+        if not lines:
+            return lines
+
         header = []
         header_reader = csv.reader([lines[0]], dialect)
         for row in header_reader:
             header = [col.upper() for col in row]
         io = cStringIO.StringIO()
-        header_writer = csv.writer(io, dialect)
+        header_writer = UnicodeCsvWriter(io, dialect)
         header_writer.writerow(header)
         lines[0] = io.getvalue()
         return lines

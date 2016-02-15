@@ -71,6 +71,13 @@ def init_basic_data():
         ),
         dict(
             code=u"FPP-Gov",
+            name=u"FPP-Gov",
+            product_type=u"base",
+            visible_to_agents=False,
+            is_fpp_gov=True,
+        ),
+        dict(
+            code=u"FPPTIW",
             name=u"FPP-White",
             product_type=u"base",
             visible_to_agents=False,
@@ -89,6 +96,20 @@ def init_basic_data():
             product_type=u"base",
             visible_to_agents=False,
             is_fpp_gov=True,
+        ),
+        dict(
+            code=u"ACC",
+            name=u"Accident Insurance Plan",
+            product_type=u"base",
+            visible_to_agents=True,
+            is_fpp_gov=False,
+        ),
+        dict(
+            code=u"HI",
+            name=u"Family Healthcare Indemnity Plan",
+            product_type=u"base",
+            visible_to_agents=True,
+            is_fpp_gov=False,
         ),
     ]
     for product in product_data:

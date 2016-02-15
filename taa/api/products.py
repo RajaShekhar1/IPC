@@ -5,7 +5,7 @@ from taa.core import TAAFormError
 from taa.api import route
 from taa.helpers import get_posted_data
 from taa.services.products import ProductService
-from taa.services.cases import RiderService
+from taa.services.products.riders import RiderService
 from taa.services.products.forms import NewProductForm, EditProductForm
 
 bp = Blueprint('products', __name__, url_prefix='/products')
@@ -84,7 +84,7 @@ def delete_product(product_id):
 
 # Rates and recommendations for a product given key demographic data
 @route(bp, '/<product_id>/rates', methods=['POST'])
-# TODO: This is unauthenticated right now to accomodate self-enroll use case.
+# TODO: This is unauthenticated right now to accommodate self-enroll use case.
 # @groups_required(read_product_rate_groups, all=False)
 def get_product_rates(product_id):
     # product = product_service.get_if_allowed(product_id)
@@ -94,8 +94,9 @@ def get_product_rates(product_id):
     # Pull parameters from the request
     employee = data['employee']
     spouse = data['spouse']
-    num_children = data['num_children']
     payment_mode = data.get('payment_mode')
+    rider_codes = data.get('rider_codes', [])
+    statecode = data.get('statecode', None)
 
     demographics = dict(
         employee_age=employee['age'],
@@ -108,25 +109,24 @@ def get_product_rates(product_id):
         spouse_gender=spouse['gender'] if spouse else None,
         spouse_height=spouse['height'] if spouse else None,
         spouse_weight=spouse['weight'] if spouse else None,
-        num_children=num_children,
-        payment_mode=payment_mode
+        payment_mode=payment_mode,
+        statecode=statecode,
     )
 
-    #Rider Rates
-    rider_rates = rider_service.get_rider_rates(payment_mode)
-    emp_rider_rates = rider_rates['emp']
-    sp_rider_rates = rider_rates['sp']
-
     # Return rates and recommendations
-    rates = product_service.get_rates(product, demographics)
+    rates = product_service.get_rates(product, demographics, riders=rider_codes)
+
     recommendations = product_service.get_recommendations(
-        product, demographics)
+        product, demographics
+    )
+
     return dict(
-        success=True,
+        product_id=product.id,
         employee_rates=rates['employee'],
         spouse_rates=rates.get('spouse'),
         children_rates=rates.get('children'),
         recommendations=recommendations,
-        emp_rider_rates=emp_rider_rates,
-        sp_rider_rates=sp_rider_rates
+        #emp_rider_rates=emp_rider_rates,
+        #sp_rider_rates=sp_rider_rates
     )
+

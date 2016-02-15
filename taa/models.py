@@ -2,7 +2,7 @@
 Convenience imports for getting all the DB metadata.
 """
 
-from services.agents.models import *
-from services.cases.models import *
-from services.products.models import *
-from services.enrollments.models import *
+from taa.services.agents.models import *
+from taa.services.cases.models import *
+from taa.services.products.models import *
+from taa.services.enrollments.models import *

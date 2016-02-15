@@ -6,7 +6,8 @@ from flask_stormpath import current_user, groups_required, login_required
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
-from taa.services.cases import CaseService, SelfEnrollmentSetup, RiderService
+from taa.services.cases import CaseService, SelfEnrollmentSetup, AgentSplitsSetup
+from taa.services.products.riders import RiderService
 from taa.services.cases.forms import (
     CensusRecordForm,
     NewCaseForm,
@@ -117,19 +118,20 @@ def update_case(case_id):
             case_service.update_partner_agents(
                 case, [a for a in agent_service.get_all(
                     *data['partner_agents'])])
-        # Update case table (these keys must be removed for the main case
-        # update)
-        selected_riders = []
-        if data['products'] and not 'Group CI' in [p.get('code') for p in data['products']]:
-            riders = data["riders"]
-            for rider in riders:
-                if rider.get('selected'):
-                    selected_riders.append(rider.get('code'))
-        case_service.update_riders(case, [rider_service.get_rider_by_code(rc) for rc in selected_riders])
+
+        # Update the product settings
+        case_service.update_product_settings(case, data['product_settings'])
+
+        # Before updating the case table, these keys must be removed for the main case update.
         del data['products']
         del data['partner_agents']
-        del data['riders']
+        del data['product_settings']
+
+
+
+        # Update case table
         return case_service.update(case, **data)
+
     raise TAAFormError(form.errors)
 
 
@@ -392,6 +394,23 @@ def update_self_enrollment_setup(case_id):
 
     raise TAAFormError(form.errors)
 
+@route(bp, '/<case_id>/agent_splits_setup', methods=['PUT'])
+@login_required
+@groups_required(api_groups, all=False)
+def update_agent_split_setup(case_id):
+    case = case_service.get_if_allowed(case_id)
+
+    case_service.delete_agent_splits_setup_for_case(case)
+
+    if not case_service.can_current_user_edit_case(case):
+        abort(401)
+        return
+
+    for split in request.json:
+        case_service.create_agent_splits_setup(case, split)
+
+    return True
+
 
 def get_census_records_for_status(case, status=None):
     result = []
@@ -412,6 +431,7 @@ def get_census_records_for_status(case, status=None):
                 result.append(record)
     return result
 
+
 @route(bp, '/<case_id>/self_enroll_email_batches', methods=['GET'])
 @login_required
 @groups_required(api_groups, all=False)
@@ -419,12 +439,14 @@ def email_self_enrollment_batch_get_all(case_id):
     case = case_service.get_if_allowed(case_id)
     return self_enrollment_email_service.get_batches_for_case(case)
 
+
 @route(bp, '/<case_id>/self_enroll_email_batches/<batch_id>', methods=['GET'])
 @login_required
 @groups_required(api_groups, all=False)
 def email_self_enrollment_batch_get(case_id, batch_id):
     case = case_service.get_if_allowed(case_id)
     return self_enrollment_email_service.get_batch_for_case(case, batch_id)
+
 
 @route(bp, '/<case_id>/self_enroll_email_batches', methods=['POST'])
 @login_required

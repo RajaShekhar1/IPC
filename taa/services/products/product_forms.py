@@ -2,7 +2,6 @@
 from .states import all_statecodes
 
 
-
 class ProductFormService(object):
 
     def get_application_form_template_id(self, base_product_code, statecode):
@@ -87,7 +86,6 @@ fpp_spouse_treated_6_months = SpouseGIQuestion(
     is_ignored=True,
 )
 fpp_spouse_disabled_6_months = SpouseGIQuestion("Spouse Disabled 6 Months", 'Has <span data-bind="$root.spouse().name"></span> been <a href="#modal-disabled-definition" data-toggle="modal">disabled</a> in the prior 6 months or received disability payments?')
-
 
 
 # Common SOH Questions used in most applications
@@ -177,7 +175,6 @@ group_ci_abnormal_question = SOHQuestion("Abnormal Results",
                                          "In the past 2 (TWO) years, has the proposed insured been informed by a member of the medical profession of any abnormal test results or been advised to have any diagnostic tests or procedures which have not yet been completed?",
                                          skip_if_coverage_at_most=10000,
 )
-
 group_ci_ever_rejected_question = SOHQuestion("Ever been rejected",
                                               "Has the proposed insured ever applied for and been rejected for a Critical Illness, Cancer, Heart or Stroke insurance policy?",
                                               skip_if_coverage_at_most=10000,
@@ -191,6 +188,7 @@ states_without_FPP = ['NJ', 'NY', 'VT', 'WA']
 states_with_custom_fpp_forms = ['DE', 'SD', 'VI', 'CA', 'CT', 'DC', 'FL', 'ND']
 
 TEMPLATE_ID_FPP_GENERIC = 'E26A7761-1ACF-4993-A2A1-2D021B79E68C'
+
 
 def get_product_application_forms():
     app_forms = {
@@ -331,9 +329,16 @@ def get_product_application_forms():
                 docusign_template_id='B57234AB-5EA5-48D4-984F-D3BF07793B9B',
             ),
         ],
-
-
-
+        'ACC': [
+            ApplicationForm('Generic', [s for s in all_statecodes if s not in
+                                        states_without_FPP + states_without_FPPTI_only + states_with_custom_fpp_forms],
+                            [], is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC)
+        ],
+        'HI': [
+            ApplicationForm('Generic', [s for s in all_statecodes if s not in
+                                        states_without_FPP + states_without_FPPTI_only + states_with_custom_fpp_forms],
+                            [], is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC)
+        ],
     }
 
     # FPP-White (FPP-Gov), FPP-Blue, and FPP-Gray use FPPTI forms
@@ -342,7 +347,6 @@ def get_product_application_forms():
     app_forms['FPPTIB'] = app_forms['FPPTI']
 
     return app_forms
-
 
 
 class ReplacementForm(object):
@@ -669,10 +673,6 @@ Please note your application will not be able to be completed without these item
 )
 
 
-
-
-
-
 def get_replacement_forms():
     fpp_forms = [
         CA_fpp_replacement_form,
@@ -697,9 +697,11 @@ def get_replacement_forms():
     ]
 
     return {
-        'FPPTI':fpp_forms,
-        'FPPCI':fpp_forms,
+        'FPPTI': fpp_forms,
+        'FPPCI': fpp_forms,
         'FPP-Gov': fpp_forms,
         'FPPTIB': fpp_forms,
         'FPPTIY': fpp_forms,
+        'ACC': fpp_forms,
+        'HI': fpp_forms,
     }

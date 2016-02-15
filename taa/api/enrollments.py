@@ -1,3 +1,4 @@
+import csv
 from StringIO import StringIO
 from io import BytesIO
 from zipfile import ZipFile
@@ -7,6 +8,7 @@ from flask_stormpath import login_required, groups_required
 
 from taa.api import route
 from taa.services import LookupService
+from taa.services.enrollments.csv_export import export_acc_hi
 
 
 bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
@@ -16,6 +18,7 @@ enrollment_import_batch_service = LookupService("EnrollmentImportBatchService")
 enrollment_import_batch_item_service = LookupService("EnrollmentImportBatchItemService")
 enrollment_submission_service = LookupService("EnrollmentSubmissionService")
 enrollment_application_service = LookupService("EnrollmentApplicationService")
+product_service = LookupService("ProductService")
 
 @route(bp, '/', methods=["POST"])
 def submit_enrollments():
@@ -73,6 +76,17 @@ def reprocess_batch(batch_id):
     # Enqueue the batch for processing
     enrollment_submission_service.submit_import_enrollments(batch)
 
+@route(bp, '/import_batches/<batch_id>', methods=['DELETE'])
+@login_required
+@groups_required(['admins'])
+def delete_batch(batch_id):
+    batch = enrollment_import_batch_service.get(batch_id)
+
+    # Delete all the enrollment records, batch items, and the batch itself.
+    enrollment_import_batch_service.delete_batch(batch)
+
+
+
 # For convenience, allow lookup of enrollment records without case id for admin only
 #  (if this is opened up to other users, add case permission checking)
 @route(bp, '/records/<int:enrollment_record_id>', methods=['GET'])
@@ -111,7 +125,6 @@ def render_batch_item_pdf(batch_id, item_id):
     response.headers['Content-Disposition'] = 'inline; filename=%s.pdf' % 'enrollment_{}'.format(item.enrollment_record_id)
     return response
 
-
 @route(bp, '/import_batches/<batch_id>/<item_id>/xml', methods=['GET'])
 @login_required
 @groups_required(['admins'])
@@ -132,3 +145,24 @@ def render_batch_item_xml(batch_id, item_id):
     zipstream.seek(0)
     return send_file(zipstream, attachment_filename='enrollment_{}.zip'.format(
         item.enrollment_record_id), as_attachment=True)
+
+@route(bp, '/export/acchi/csv/<from_>/<to_>', methods=['GET'])
+@login_required
+@groups_required(['admins'])
+def render_acc_hi_csv(from_, to_):
+    # Get cases for ACC/HI products
+    case_ids = []
+    for code in ['ACC', 'HI']:
+        case_ids.extend([c.id for p in product_service.search(by_code=code)
+                         for c in p.cases])
+    case_ids = set(case_ids)
+
+    enrollments = enrollment_application_service.get_enrollments_by_date(
+            from_, to_).filter(
+            enrollment_application_service.__model__.case_id.in_(case_ids)).all()
+    data = export_acc_hi(enrollments)
+    response = make_response(data)
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = 'inline; filename=acc-hi_{}~{}.csv'.format(from_, to_)
+    return response
+

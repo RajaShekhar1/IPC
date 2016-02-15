@@ -96,3 +96,4 @@ class FakeTabDef(object):
         self.page = page
         self.type_ = type_
         self.recipient_role = recipient_role
+        self.custom_type = "text"

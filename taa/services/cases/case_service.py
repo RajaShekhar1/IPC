@@ -1,22 +1,19 @@
-import dateutil.parser
-from datetime import datetime, date as datetime_date
-import re
-import csv
-import uuid
 import StringIO
+import uuid
+from datetime import datetime
 
+import dateutil.parser
+import sqlalchemy as sa
 from flask import abort
 from flask_stormpath import current_user
 from sqlalchemy.orm import joinedload
-import sqlalchemy as sa
 
+from models import (Case, CaseCensus, CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod,
+                    SelfEnrollmentSetup)
 from taa.core import DBService
 from taa.core import db
 from taa.services import RequiredFeature, LookupService
 from taa.services.agents.models import Agent
-from models import (Case, CaseCensus, CaseEnrollmentPeriod,
-                    CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod,
-                    SelfEnrollmentSetup)
 
 
 class CaseService(DBService):
@@ -25,6 +22,7 @@ class CaseService(DBService):
     census_records = RequiredFeature('CensusRecordService')
     enrollment_periods = RequiredFeature('CaseEnrollmentPeriodsService')
     self_enrollment = RequiredFeature('SelfEnrollmentService')
+    agent_splits = RequiredFeature('AgentSplitsService')
     rider_service = RequiredFeature('RiderService')
 
     def __init__(self, *args, **kwargs):
@@ -88,13 +86,11 @@ class CaseService(DBService):
         return sorted(case.products, cmp=lambda x, y: cmp(x.name, y.name))
 
     def get_rider_codes(self):
-        return self.case_riders.split(",")
+        return [] # [c.code for c in self.case_riders.split(",")]
 
-    def get_case_level_riders(self):
-        return rider_service.case_level_riders() 
-
-    def update_riders(self, case, riders):
-        case.case_riders = ','.join([r.code for r in riders])
+    def update_product_settings(self, case, product_settings):
+        # TODO: validate the product settings before saving.
+        case.product_settings = product_settings
         db.session.flush()
 
     def update_products(self, case, products):
@@ -436,6 +432,15 @@ class CaseService(DBService):
     def update_self_enrollment_setup(self, setup, data):
         return self.self_enrollment.update(setup, **data)
 
+    def get_agent_splits_setup(self, case):
+        return self.agent_splits.find(case_id=case.id)
+
+    def create_agent_splits_setup(self, case, data):
+        return self.agent_splits.create(case_id=case.id, **data)
+
+    def delete_agent_splits_setup_for_case(self, case):
+        return self.agent_splits.find(case_id=case.id).delete()
+
     def can_current_user_edit_case(self, case):
         from taa.services.agents import AgentService
         agent_service = AgentService()
@@ -477,79 +482,18 @@ class CaseService(DBService):
     def is_agent_restricted_to_own_enrollments(self, agent, case):
         return not self.is_agent_allowed_to_view_full_census(agent, case)
 
-class Rider(object):
-    def __init__(self, name, code, enrollment_level=False, restrict_to=[]):
-        self.name = name
-        self.code = code
-        self.enrollment_level = enrollment_level
-        self.restrict_to = restrict_to
+    def get_classifications(self, case):
+        classifications = []
+        if case.occupation_class_settings is not None:
+            for c in case.occupation_class_settings:
+                classifications.append(c['label'])
+        return classifications
 
-    def to_json(self):
-        return dict(
-                name=self.name,
-                code=self.code,
-                enrollment_level=self.enrollment_level,
-                restrict_to=self.restrict_to
-                )
-
-
-class RiderService(object):
-    default_riders = [
-        # Rider("Disability Waiver of Premium", "WP"),
-        Rider("Automatic Increase Rider", "AIR", True, ["FPPTI"]), 
-        # Rider("Chronic Illness Rider", "CHR", True) 
-    ]
-
-    def __init__(self):
-        pass
-
-    def valid_rider_code(self, code):
-        return code in [r.code for r in self.default_riders]
-    
-    def get_rider_by_code(self, code):
-        return [r for r in self.default_riders if r.code==code][0]
-
-    def case_level_riders(self):
-        return [r for r in self.default_riders if not r.enrollment_level]
-
-    def enrollment_level_riders(self):
-        return [r for r in self.default_riders if r.enrollment_level]
-
-    def get_rider_info_for_case(self, case):
-        """Returns all the riders that a case can potentially have at the group level, with current selections."""
-        return [{
-                'selected': self.is_rider_selected_for_case(rider, case),
-                'description': rider.name,
-                'code': rider.code,
-                'enrollment_level': rider.enrollment_level,
-                'restrict_to': rider.restrict_to
-                }
-                for rider in self.default_riders
-        ]
-
-    def is_rider_selected_for_case(self, rider, case):
-        return case.case_riders and rider.code in case.case_riders.split(",")
-
-    def get_selected_case_riders(self, case):
-        return [r
-                for r in self.default_riders
-                if self.is_rider_selected_for_case(r, case)
-        ]
-
-    def get_selected_case_rider_info(self, case):
-        return [r.to_json() for r in self.get_selected_case_riders(case)]
-
-    def get_enrollment_rider_info(self):
-        return [r.to_json() for r in self.enrollment_level_riders()]
-    def get_rider_rates(self, payment_mode):        
-        emp_rider_rates = dict(
-            WP=10*int(payment_mode)/52,
-            AIR=0*int(payment_mode)/52,
-            CHR=5*int(payment_mode)/52
-            )
-        sp_rider_rates = dict(
-            WP=10*int(payment_mode)/52,
-            AIR=0*int(payment_mode)/52,
-            CHR=5*int(payment_mode)/52
-            )
-        return dict(emp=emp_rider_rates, sp=sp_rider_rates)
+    def get_classification_for_label(self, label, case):
+        if case.product_settings is None:
+            return None
+        mapping = case.product_settings['classification_mappings']
+        for k, v in mapping:
+            if k.lower() == label.lower():
+                return v
+        return None

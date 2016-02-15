@@ -42,6 +42,7 @@
     <!--ko if: selected_batch_records() !== null -->
 
       <button data-bind="click: reprocess_selected_batch" class="btn btn-success pull-right">Reprocess Batch</button>
+      <button data-bind="click: delete_selected_batch" class="btn btn-sm btn-danger pull-right">Delete Batch</button>
 
       <!--ko foreach: selected_batch_records()-->
       <div class="row">
@@ -79,6 +80,26 @@
       // Load new records
       self.selected_batch_records(null);
       self.fetch_batch_records(batch);
+    };
+
+    self.delete_selected_batch = function() {
+      if (self.selected_batch() === null) {
+        return;
+      }
+      if (!confirm("Are you sure you want to DELETE this entire batch? This is permanent and cannot be undone!")) {
+        return;
+      }
+
+      $.ajax({
+        url:"/enrollments/import_batches/"+self.selected_batch().id,
+        method: "DELETE"
+      }).success(function() {
+        alert("Deleted batch "+self.selected_batch().id);
+        self.selected_batch(null);
+        self.selected_batch_records(null);
+        self.fetch_all_batches();
+
+      }).error(function() {alert("Error deleting batch.")});
     };
 
     self.reprocess_selected_batch = function() {

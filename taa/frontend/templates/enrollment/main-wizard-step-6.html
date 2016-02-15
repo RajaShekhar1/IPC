@@ -1,0 +1,188 @@
+<div class="step-pane" id="step6" data-step="6">
+  <h3 class="green">Confirmation</h3>
+
+  Please review your Summary of Coverage below, and click "I agree..." below to be taken to application for
+  signing.
+  <div class="space-10"></div>
+
+  <div id="CoverageSummary">
+    <h4 class="green center">Summary of Benefits</h4>
+    <div data-bind="with: coverage_vm">
+      <div data-bind="template: 'multi-product-summary-table'">
+      </div>
+    </div>
+{#    <!--ko foreach: {data: selected_products, as: 'current_product'}-->#}
+{#    <table class="center confirm-table table table-hover" data-bind="with: selected_plan[current_product]">#}
+{#      <thead>#}
+{#      <tr class="table-striped">#}
+{#        <th class="center">Name</th>#}
+{#        <th class="center">Age</th>#}
+{#        <th class="center">Coverage</th>#}
+{#        <th class="center">Additional Riders</th>#}
+{#        <th class="center"><span data-bind="text: $root.payment_mode_text"></span> Premium</th>#}
+{#      </tr>#}
+{#      </thead>#}
+{#      <tbody>#}
+{#      <!--ko foreach: get_all_people -->#}
+{#      <tr>#}
+{#        <td data-bind="text: name"></td>#}
+{#        <td data-bind="text:get_age"></td>#}
+{#        <td data-bind="html:display_selected_coverage"></td>#}
+{#        <td></td>#}
+{#        <td data-bind="text:display_premium"></td>#}
+{#      </tr>#}
+{#      <!--ko if: $root.current_person($data) --><!-- /ko -->#}
+{#        <!--ko foreach: {data: $root.get_selected_riders, as: 'rider'} -->#}
+{#          <tr>#}
+{#            <td></td>#}
+{#            <td></td>#}
+{#            <td></td>#}
+{#            <td data-bind="text: rider.name"></td>#}
+{#            <td data-bind="text:$parent.display_riders(rider.code)"></td>#}
+{#          </tr>#}
+{#        <!--/ko-->#}
+{#      <!--/ko-->#}
+{#      <tr class="success">#}
+{#        <td></td>#}
+{#        <td></td>#}
+{#        <td></td>#}
+{#        <td><span class="text-primary bigger-110">Total</span></td>#}
+{#        <td><span class="text-primary bigger-110" data-bind="text: formatted_total_premium()"></span></td>#}
+{#      </tr>#}
+{#      </tbody>#}
+{#    </table>#}
+
+    <div class="space-10"></div>
+
+    <form class="form-horizontal" id="step6-form">
+      <div id="inPersonSignerToken">
+        <h4 class="green">Employee Identification</h4>
+{#        <!--ko if: !insurance_product.should_use_date_of_hire_for_identity()-->#}
+{#        <div class="row">#}
+{#          <div class="col-xs-12">#}
+{#            <p>As identity confirmation, please enter either your Date of Hire, your Employee Number, or#}
+{#              your current Driver's License number.</p>#}
+{#          </div>#}
+{#        </div>#}
+{##}
+{#        <div class="row form-group">#}
+{#          <div class="hidden-xs col-sm-12">#}
+{#            <div class="col-sm-1">#}
+{#            </div>#}
+{##}
+{#            <label class="" for="tokenType">My</label>#}
+{#            <select id="tokenType" class="select1" placeholder="Select one..."#}
+{#                    data-bind="value: identityType">#}
+{#              <option value="" disabled="disabled">Select one...</option>#}
+{#              <option value="Date of Hire">Date of Hire</option>#}
+{#              <option value="Employee Num">Employee #</option>#}
+{#              <option value="Driver's License Num">Driver's License #</option>#}
+{#            </select>#}
+{#            <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>#}
+{#            <input type="text" id="ConfirmationToken" name="ConfirmationToken"#}
+{#                   data-bind="value: identityToken"/>#}
+{#          </div>#}
+{#          <!-- /.hidden-xs -->#}
+{##}
+{#          <div class="col-xs-12 hidden-sm hidden-md hidden-lg">#}
+{#            <div class="col-xs-1">#}
+{#            </div>#}
+{#            <div class="col-xs-11">#}
+{#              <label class="" for="tokenType">My</label>#}
+{#              <select id="tokenType" name="tokenType" class="select1"#}
+{#                      data-bind="value: identityType">#}
+{#                <option value="">Select one...</option>#}
+{#                <option value="Date of Hire">"Date of Hire"</option>#}
+{#                <option value="Employee Num">"Employee #"</option>#}
+{#                <option value="Driver's License Num">"Driver's License #"</option>#}
+{#              </select>#}
+{#            </div>#}
+{#          </div>#}
+{#          <div class="col-xs-12  hidden-sm hidden-md hidden-lg">#}
+{#            <div class="col-xs-12">#}
+{#              <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>#}
+{#              <input type="text" id="ConfirmationToken" name="ConfirmationToken"#}
+{#                     data-bind="value: identityToken"/>#}
+{#            </div>#}
+{#          </div>#}
+{#          <!-- /.hidden-sm -->#}
+{##}
+{#        </div>#}
+{#        <!-- /.form-group -->#}
+{#        <!--/ko-->#}
+{#        <!--ko if: insurance_product.should_use_date_of_hire_for_identity() -->#}
+        <div class="row">
+          <div class="col-xs-12">
+            <p>As identity confirmation, please enter your Date of Hire:</p>
+          </div>
+        </div>
+
+        <div class="row form-group">
+          <div class="hidden-xs col-sm-12">
+            <div class="col-sm-1">
+            </div>
+
+            <input type="text" class="input-mask-date" id="ConfirmationToken" name="ConfirmationToken"
+                   data-bind="value: identityToken">
+          </div>
+          <!-- /.hidden-xs -->
+
+          <div class="col-xs-12  hidden-sm hidden-md hidden-lg">
+            <div class="col-xs-12">
+              <input type="text" class="input-mask-date" id="ConfirmationToken" name="ConfirmationToken"
+                     data-bind="value: identityToken">
+            </div>
+          </div>
+          <!-- /.hidden-sm -->
+
+        </div>
+{#        <!--/ko-->#}
+      </div>
+      <!-- /inPersonSignerToken -->
+
+      <div class="space-2"></div>
+      <div class="col-xs-12">
+        <label class="control-label col-xs-12 col-sm-5 col-md-4 col-lg-3 no-padding-right" for="enrollCity">I
+          am making this application from</label>
+
+        <div class="col-xs-12 col-sm-7 col-md-8 col-lg-9">
+          <input type="text" id="enrollCity" name="enrollCity" placeholder="City"
+                 data-bind="value: enrollCity"/>,&nbsp<span data-bind="text: enrollState"></span>
+        </div>
+      </div>
+      <!-- /signing Location -->
+
+    </form>
+    <!-- /step6 form -->
+  </div>
+  <!-- /CoverageSummary -->
+
+  <br>
+  <br>
+
+  <!--ko if: should_confirm_disclosure_notice() -->
+  <div id="disclaimerNotice">
+    <div class="form-group">
+      <br>
+      <label class="control-label col-xs-12 col-sm-12 no-padding-right">
+        <input type="checkbox" id="confirmDisclaimer" name="confirmDisclaimer"
+               data-bind="checked: disclaimer_notice_confirmed"/> I acknowledge the related <a
+              href="#modal-disclaimer" data-toggle="modal">Accelerated Benefit Disclosure</a>
+      </label>
+    </div>
+  </div>
+  <!--/ko-->
+
+  <!--ko if: should_confirm_payroll_deduction() -->
+  <div class="form-group">
+    <br>
+    <label class="control-label col-xs-12 col-sm-12 no-padding-right">
+      <input type="checkbox" id="confirmPayrollDeductions" name="confirmPayrollDeductions"
+             data-bind="checked: payroll_deductions_confirmed"/> I certify I have authorized my employer to make payroll
+      deduction of premiums for myself and my family members.</a>
+    </label>
+  </div>
+  <!--/ko-->
+
+
+</div>

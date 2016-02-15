@@ -174,14 +174,19 @@ class Rates(object):
             for index, key in enumerate(itertools.product([floatify(line[0])], header[1:]), start=1):
                 self._rates[product_key][payment_mode][type_][key] = {
                     TYPE_PREMIUM: floatify(line[index]) if type_ == TYPE_COVERAGE else key[1],
-                    TYPE_COVERAGE: floatify(line[index]) if type_ == TYPE_PREMIUM else key[1]
+                    TYPE_COVERAGE: floatify(line[index]) if type_ == TYPE_PREMIUM else key[1],
+                    "payment_mode": payment_mode,
                 }
 
     def get(self, product_code, payment_mode, age, smoker=None, applicant_type=None, height=None, weight=None):
         result = {}
-        if age is None:
+        if applicant_type == APPLICANT_TYPE_CHILDREN:
             # Children rates/premiums are indexed with age as -1
             age = -1
+        elif age is None:
+            # Don't return any rate options for this applicant (Emp/Sp) if age is not provided.
+            return {'byface':[], 'bypremium':[]}
+
         product_key = Rates._get_product_key(product_code, smoker)
 
         for type_ in (TYPE_PREMIUM, TYPE_COVERAGE):
@@ -199,6 +204,7 @@ class Rates(object):
         # Rename keys to fit existing API
         result['byface'] = result.pop(TYPE_COVERAGE)
         result['bypremium'] = result.pop(TYPE_PREMIUM)
+
         return result
 
 
@@ -399,13 +405,13 @@ def initialize_rates_from_files(rates):
     rates.from_string("age,10000\n-1,3.25", 'Group CI',
                       MODES_BY_NAME['monthly'], TYPE_COVERAGE)
     # FPPCI
-    rates.from_string("age,10000,20000\n-1,1.15,2.30", 'FPPCI',
+    rates.from_string("age,10000,20000\n-1,1.00,2.00", 'FPPCI',
                       MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,2.30,4.60", 'FPPCI',
+    rates.from_string("age,10000,20000\n-1,2.00,4.00", 'FPPCI',
                       MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,2.49,4.98", 'FPPCI',
+    rates.from_string("age,10000,20000\n-1,2.17,4.33", 'FPPCI',
                       MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,4.98,9.97", 'FPPCI',
+    rates.from_string("age,10000,20000\n-1,4.33,8.67", 'FPPCI',
                       MODES_BY_NAME['monthly'], TYPE_COVERAGE)
     # FPP-White (FPP-Gov)
     rates.from_string("age,10000,20000\n-1,1.15,2.30", 'FPP-Gov',
@@ -443,3 +449,25 @@ def initialize_rates_from_files(rates):
                       MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
     rates.from_string("age,10000,20000\n-1,4.98,9.97", 'FPPTI',
                       MODES_BY_NAME['monthly'], TYPE_COVERAGE)
+
+
+#
+#
+#
+#
+# def get_rates_for_applicant(applicant_type, product, product_options, state, demographics, mode):
+#
+#     rate_query = ApplicantRateQuery(applicant_type, product, product_options, state, demographics, mode)
+#
+#     if not product.rate_package.is_eligible(rate_query):
+#         raise ValueError("Eligibility requirements not met.")
+#
+#     if not product.rate_package.has_valid_options(rate_query):
+#         raise ValueError("Invalid product options")
+#
+#     rates = product.rate_package.lookup_rates(rate_query)
+#
+
+
+if __name__ == "__main__":
+    pass

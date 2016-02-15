@@ -1,11 +1,10 @@
 from decimal import Decimal
 from unittest2 import TestCase
 
-from hamcrest import assert_that, equal_to, has_entries, contains
-from mock import Mock, sentinel
+from hamcrest import assert_that, has_entries
+from mock import Mock
 
 from taa.services.enrollments.enrollment_import import EnrollmentImportService
-from taa.services.enrollments import EnrollmentRecordParser
 
 
 class TestDataStandardization(TestCase):
@@ -272,7 +271,6 @@ class TestDataStandardization(TestCase):
         ]
         assert_that(output['children'][0], has_entries(expected[0]))
         assert_that(output['children'][1], has_entries(expected[1]))
-
 
     def test_it_should_standardize_coverages(self):
 
