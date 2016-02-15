@@ -149,7 +149,7 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | N   | Y  | Y    | N    | Spouse         | FPPTIB            | MI    | FPQTIB/3  |
       | N   | Y  | Y    | N    | Spouse         | FPPTIY            | MI    | FPQTIY/3  |
 
-    Examples: Employee or Spouse with QOL4 rider
+    Examples: Employee or Spouse with WP and QOL4 riders
       | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code |
       | N   | Y  | N    | Y    | Employee       | FPPTI             | MI    | FPQTI4    |
       | N   | Y  | N    | Y    | Employee       | FPPTIG            | MI    | FPQTIG/4  |
@@ -163,5 +163,54 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | N   | Y  | N    | Y    | Spouse         | FPPTIB            | MI    | FPQTIB/4  |
       | N   | Y  | N    | Y    | Spouse         | FPPTIY            | MI    | FPQTIY/4  |
 
+    Examples: Employee or Spouse with single rider in MD
+      | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code  |
+      | Y   | N  | N    | N    | Employee       | FPPTI             | MD    | FPATI MD   |
+      | N   | Y  | N    | N    | Employee       | FPPTI             | MD    | FPPTI MD   |
+      | N   | N  | Y    | N    | Employee       | FPPTI             | MD    | FPQTI3 MD  |
+      | N   | N  | N    | Y    | Employee       | FPPTI             | MD    | FPQTI4 MD  |
 
-    # TODO: MD and UT state-specific product codes
+      | Y   | N  | N    | N    | Spouse         | FPPTI             | MD    | FPATI MD   |
+      | N   | Y  | N    | N    | Spouse         | FPPTI             | MD    | FPPTI MD   |
+      | N   | N  | Y    | N    | Spouse         | FPPTI             | MD    | FPQTI/3 MD |
+      | N   | N  | N    | Y    | Spouse         | FPPTI             | MD    | FPQTI/4 MD |
+
+    Examples: Employee or Spouse with single rider in UT
+      | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code  |
+      | Y   | N  | N    | N    | Employee       | FPPTI             | UT    | FPATI UT   |
+      | N   | Y  | N    | N    | Employee       | FPPTI             | UT    | FPPTI UT   |
+      | N   | N  | Y    | N    | Employee       | FPPTI             | UT    | FPQTI3 UT  |
+      | N   | N  | N    | Y    | Employee       | FPPTI             | UT    | FPQTI4 UT  |
+
+      | Y   | N  | N    | N    | Spouse         | FPPTI             | UT    | FPATI UT   |
+      | N   | Y  | N    | N    | Spouse         | FPPTI             | UT    | FPPTI UT   |
+      | N   | N  | Y    | N    | Spouse         | FPPTI             | UT    | FPQTI/3 UT |
+      | N   | N  | N    | Y    | Spouse         | FPPTI             | UT    | FPQTI/4 UT |
+
+    Examples: Employee or Spouse with multiple riders in MD
+      | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code  |
+      | Y   | Y  | N    | N    | Employee       | FPPTI             | MD    | None       |
+      | Y   | N  | Y    | N    | Employee       | FPPTI             | MD    | FPATI MD   |
+      | Y   | N  | N    | Y    | Employee       | FPPTI             | MD    | FPATI4 MD  |
+      | N   | Y  | Y    | N    | Employee       | FPPTI             | MD    | FPQTI3 MD  |
+      | N   | Y  | N    | Y    | Employee       | FPPTI             | MD    | FPQTI4 MD  |
+
+      | Y   | Y  | N    | N    | Spouse         | FPPTI             | MD    | None       |
+      | Y   | N  | Y    | N    | Spouse         | FPPTI             | MD    | FPATI MD   |
+      | Y   | N  | N    | Y    | Spouse         | FPPTI             | MD    | FPATI4 MD  |
+      | N   | Y  | Y    | N    | Spouse         | FPPTI             | MD    | FPQTI/3 MD |
+      | N   | Y  | N    | Y    | Spouse         | FPPTI             | MD    | FPQTI/4 MD |
+
+    Examples: Employee or Spouse with multiple riders in MD
+      | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code  |
+      | Y   | Y  | N    | N    | Employee       | FPPTI             | UT    | None       |
+      | Y   | N  | Y    | N    | Employee       | FPPTI             | UT    | FPATI UT   |
+      | Y   | N  | N    | Y    | Employee       | FPPTI             | UT    | FPATI4 UT  |
+      | N   | Y  | Y    | N    | Employee       | FPPTI             | UT    | FPQTI3 UT  |
+      | N   | Y  | N    | Y    | Employee       | FPPTI             | UT    | FPQTI4 UT  |
+
+      | Y   | Y  | N    | N    | Spouse         | FPPTI             | UT    | None       |
+      | Y   | N  | Y    | N    | Spouse         | FPPTI             | UT    | FPATI UT   |
+      | Y   | N  | N    | Y    | Spouse         | FPPTI             | UT    | FPATI4 UT  |
+      | N   | Y  | Y    | N    | Spouse         | FPPTI             | UT    | FPQTI/3 UT |
+      | N   | Y  | N    | Y    | Spouse         | FPPTI             | UT    | FPQTI/4 UT |
