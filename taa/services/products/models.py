@@ -46,6 +46,7 @@ class Product(ProductJsonSerializable, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String, nullable=False, index=True)
     name = db.Column(db.String, nullable=False)
+    customer_short_name = db.Column(db.String, nullable=True)
     brochure_url = db.Column(db.Unicode(2000))
     brochure_name = db.Column(db.Unicode(256))
     is_fpp_gov = db.Column(db.Boolean, nullable=False, server_default='FALSE')
