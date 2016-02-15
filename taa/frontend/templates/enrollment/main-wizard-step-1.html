@@ -326,12 +326,12 @@
 
             <h3 data-bind="text: current_product().format_product_name()"></h3>
             <div  data-bind="slideDownIf: !current_product().did_decline()">
-              <ul class="list-unstyled" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">
-                <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">
-                  <span class="step" data-bind="text: $index() + 1"></span>
-                  <span class="title" data-bind="text: product_coverage.format_product_name()"></span>
-                </li>
-              </ul>
+{#              <ul class="list-unstyled" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">#}
+{#                <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">#}
+{#                  <span class="step" data-bind="text: $index() + 1"></span>#}
+{#                  <span class="title" data-bind="text: product_coverage.format_product_name()"></span>#}
+{#                </li>#}
+{#              </ul>#}
 
               <div class="" data-bind="
                 template: {name: current_product().get_coverage_selection_template(), data: current_product()}
