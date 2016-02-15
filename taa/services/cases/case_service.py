@@ -199,26 +199,12 @@ class CaseService(DBService):
         from taa.services.enrollments.models import EnrollmentApplication
         query = self.census_records.find(case_id=case.id)
 
-        # Filter enrollment status. Also load in any enrollment data eagerly.
-        if include_enrolled == False:
-            # Since we need to filter on enrollment status, pull in the
-            # enrollment applications if it exists.
-            query = query.outerjoin('enrollment_applications').filter(
-                EnrollmentApplication.application_status ==
-                EnrollmentApplication.APPLICATION_STATUS_DECLINED)
-            query = query.options(
-                db.contains_eager('enrollment_applications'
-                                 ).subqueryload('coverages'
-                                 ).joinedload('product')
-            )
-        else:
-            # Eager load enrollment applications, coverages, and associated
-            # products
-            query = query.options(
-                db.joinedload('enrollment_applications'
-                    ).subqueryload('coverages'
-                    ).joinedload('product')
-            )
+        # Eager load enrollment applications, coverages, and associated products
+        query = query.outerjoin('enrollment_applications').options(
+            db.contains_eager('enrollment_applications'
+                ).subqueryload('coverages'
+                ).joinedload('product')
+        )
 
         if filter_agent:
             # Only show enrolled census records where this agent was the enrolling agent.

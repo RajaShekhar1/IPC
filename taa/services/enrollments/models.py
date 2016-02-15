@@ -33,6 +33,8 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     identity_token_type = db.Column(db.Unicode(64))
     # Application status
     APPLICATION_STATUS_ENROLLED = u'enrolled'
+    APPLICATION_STATUS_PENDING_AGENT = u'pending_agent'
+    APPLICATION_STATUS_PENDING_EMPLOYEE = u'pending_employee'
     APPLICATION_STATUS_DECLINED = u'declined'
     application_status = db.Column(db.Unicode(32))
     # Payment mode
@@ -274,8 +276,7 @@ CaseCensus.sent_email_count = db.column_property(
             where(db.or_(
                 SelfEnrollmentEmailLog.status == SelfEnrollmentEmailLog.STATUS_SUCCESS,
                 SelfEnrollmentEmailLog.status == SelfEnrollmentEmailLog.STATUS_PENDING,
-            )).\
-            correlate_except(SelfEnrollmentEmailLog)
+            )).correlate_except(SelfEnrollmentEmailLog)
 )
 
 
