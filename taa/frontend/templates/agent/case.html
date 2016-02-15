@@ -165,7 +165,7 @@ style="display: none;" data-bind="visible: true">
                                 <label>
                                   <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="open">
                                   <span class="lbl padding-8">Enrollment Period with End Date</span><br />
-                                  <small data-bind="visible: !today_between() && enrollment_period_type() == 'open'">
+                                  <small data-bind="visible: !today_between() && enrollment_period_type() === 'open'">
                                     <em class="text-danger">Currently not active since outside date range</em>
                                   </small>
                                 </label>
@@ -365,6 +365,7 @@ style="display: none;" data-bind="visible: true">
                                     </div>
                                   </div>
                                 </div>
+                              </div>
                               <!--/ko-->
                               <div data-bind="if: !products().length">No Products Configured Yet</div>
                             </div>

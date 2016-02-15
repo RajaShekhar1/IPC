@@ -25,6 +25,6 @@ def sign_envelope(envelope_id):
     from taa.services.docusign import DocuSignService
     docusign_service = DocuSignService()
 
-    url = docusign_service.get_envelope_signing_url(current_user, envelope_id)
+    url, errors = docusign_service.get_envelope_signing_url(current_user, envelope_id)
 
-    return {'url': url}
+    return {'url': url, 'errors': errors}

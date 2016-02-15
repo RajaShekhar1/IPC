@@ -34,6 +34,9 @@ var agent_inbox = (function() {
     };
 
     self.handle_signing_redirect = function(data) {
+      if (data.errors) {
+        alert(data.errors)
+      }
       window.location.href = data.data.url;
     };
 

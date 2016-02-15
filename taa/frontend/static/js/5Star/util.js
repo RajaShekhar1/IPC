@@ -60,7 +60,14 @@ function parse_month_date_input(val) {
 // check if today is between a start and end date
 function today_between(start, end) {
   var today = moment();
-  return today.isSameOrAfter(moment(start), 'day') && today.isSameOrBefore(moment(end), 'day')
+  var is_after_start = today.isSameOrAfter(moment(start), 'day');
+  if (!moment(end).isValid()) {
+    return is_after_start;
+  } else {
+    var is_before_end = today.isSameOrBefore(moment(end), 'day');
+    return is_after_start && is_before_end
+  }
+  
 }
 
 // Date handling

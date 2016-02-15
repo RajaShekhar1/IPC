@@ -231,6 +231,8 @@ class DocuSignService(object):
 
     def get_envelope_signing_url(self, for_user, envelope_id):
         "Must be the agent that the envelope was sent to (this user must be the recipient)"
+        errors = []
+
         envelope_url = '/envelopes/%s'%envelope_id
         agent_service = LookupService("AgentService")
         enrollment_service = LookupService("EnrollmentApplicationService")
@@ -268,6 +270,11 @@ class DocuSignService(object):
         # First, we update our signing status
         envelope.update_enrollment_status()
 
+        # If this has been voided, we return an error.
+        if (enrollment_record.applicant_signing_status == EnrollmentApplication.SIGNING_STATUS_VOIDED
+                or enrollment_record.agent_signing_status == EnrollmentApplication.SIGNING_STATUS_VOIDED):
+            return None, [dict(message="This envelope has been voided, and can no longer be viewed or signed.", reason='voided_envelope')]
+
         # Does the employee need to sign?
         if envelope.is_employee_sig_pending():
             url = envelope.get_employee_signing_url(callback_url)
@@ -279,7 +286,7 @@ class DocuSignService(object):
 
 
         #url = envelope.get_signing_url(recipient, callback_url=callback_url, docusign_transport=get_docusign_transport())
-        return url
+        return url, errors
 
 def create_envelope(email_subject, components):
     docusign_service = LookupService('DocuSignService')
