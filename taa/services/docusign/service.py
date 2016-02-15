@@ -195,21 +195,36 @@ class DocuSignService(object):
         return components
 
     def search_envelopes(self, for_user, envelope_status=None):
+        enrollment_service = LookupService("EnrollmentApplicationService")
 
         # Need to get all envelopes that this user is allowed to see.
         agent_service = LookupService("AgentService")
         if agent_service.is_user_agent(for_user):
-            # Only envelopes that have been signed by me.
-            filter_agent_id = agent_service.get_agent_from_user(for_user).id
+            # Envelopes that have been created by me.
+            agent = agent_service.get_agent_from_user(for_user)
+
+            own_enrollments = enrollment_service.search_enrollments(
+                    by_agent_id=agent.id,
+                    by_applicant_signing_status=envelope_status,
+            )
+
+            # Envelopes for partner agents on cases I own.
+            owned_case_ids = [case.id for case in agent.owned_cases]
+
+            partner_enrollments = db.session.query(EnrollmentApplication
+                ).filter(db.or_(EnrollmentApplication.agent_id != agent.id,
+                             EnrollmentApplication.agent_id == None,
+                             )
+                ).filter(EnrollmentApplication.case_id.in_(owned_case_ids)
+                )
+            enrollments = list(own_enrollments) + list(partner_enrollments)
+
         else:
             # Allow home office and admin to see all for now.
-            filter_agent_id = None
-
-        enrollment_service = LookupService("EnrollmentApplicationService")
-        enrollments = enrollment_service.search_enrollments(
-                by_agent_id=filter_agent_id,
-                by_applicant_signing_status=envelope_status,
-        )
+            enrollments = enrollment_service.search_enrollments(
+                    by_agent_ids=None,
+                    by_applicant_signing_status=envelope_status,
+            )
 
         return [DocusignEnvelope(enrollment.docusign_envelope_id, enrollment)
                 for enrollment in enrollments if enrollment.docusign_envelope_id is not None]
@@ -222,16 +237,20 @@ class DocuSignService(object):
         if not agent_service.is_user_agent(for_user):
             raise ValueError("No agent record associated with user {}".format(for_user.href))
 
+        # TODO: Enforce the permissions better here. Might be easier to pass in enrollment ID,
+        #  since the caller should have that, then we just need to check if current user has
+        #  permissions on that enrollment record.
+
         # Only envelopes that have been signed by me.
         agent = agent_service.get_agent_from_user(for_user)
         enrollments = enrollment_service.search_enrollments(
-            by_agent_id=agent.id,
+            #by_agent_id=agent.id,
             by_envelope_url=envelope_url,
         )
         enrollment_data = enrollments.all()
 
         if not enrollment_data:
-            raise ValueError("No envelope with id {}".format(envelope_id))
+            raise ValueError("No enrollment with envelope id {}".format(envelope_id))
         enrollment_record = enrollment_data[0]
 
         envelope = DocusignEnvelope(envelope_url, enrollment_record)
@@ -240,9 +259,10 @@ class DocuSignService(object):
         is_ssl = app.config.get('IS_SSL', True)
         hostname = app.config.get('HOSTNAME', '5starenroll.com')
         scheme = 'https://' if is_ssl else 'http://'
-        callback_url = ('{scheme}{hostname}/inbox'.format(
+        callback_url = ('{scheme}{hostname}/inbox?enrollment={enrollment_id}'.format(
                     scheme=scheme,
                     hostname=hostname,
+                    enrollment_id=enrollment_record.id,
         ))
 
         # First, we update our signing status
@@ -352,6 +372,11 @@ class DocusignEnvelope(object):
     def to_json(self):
         return dict(
             id=self.get_envelope_id(),
+            agent_id=self.enrollment_record.agent_id,
+            employee_signing_status=self.enrollment_record.applicant_signing_status,
+            employee_signing_datetime=self.enrollment_record.applicant_signing_datetime,
+            agent_signing_datetime=self.enrollment_record.agent_signing_datetime,
+            agent_signing_status=self.enrollment_record.agent_signing_status,
             enrollment_record_id=self.enrollment_record.id,
             group=self.enrollment_record.case.company_name,
             timestamp=self.enrollment_record.signature_time,

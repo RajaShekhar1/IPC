@@ -34,10 +34,24 @@ self_enrollment_email_service = SelfEnrollmentEmailService()
 @app.route('/inbox', methods=['GET'])
 @login_required
 def inbox():
-    if agent_service.is_user_agent(current_user) or agent_service.can_manage_all_cases(current_user):
+
+    # If we are passed an enrollment (id), we will update any linked envelope for that enrollment.
+    #  This allows us to stay sync'd up with DocuSign.
+    if request.args.get('enrollment') and request.args.get('enrollment').isdigit():
+        try:
+            app = EnrollmentApplicationService().get(request.args['enrollment'])
+            EnrollmentApplicationService().update_applicant_signing_status(app, request.args.get('event'))
+            db.session.commit()
+        except Exception as ex:
+            print("DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')), ex)
+
+    if agent_service.is_user_agent(current_user): #or agent_service.can_manage_all_cases(current_user):
+        #
+        agent = agent_service.get_agent_from_user(current_user)
         return render_template(
             'agent/agent-inbox.html',
-            nav_menu=get_nav_menu()
+            nav_menu=get_nav_menu(),
+            agent_id=agent.id
         )
     else:
         flash("You are not authorized for signing applications.")

@@ -417,7 +417,7 @@ def submit_wizard_data():
             received_data=wizard_results,
         )
 
-        if not all(map(lambda data: data.get('did_decline'),  standardized_data)):
+        if not all(map(lambda data: data.get('did_decline'), standardized_data)):
             # Hand off wizard_results to docusign
             envelope_result, signing_url = create_multiproduct_envelope_and_fetch_signing_url(
                     standardized_data,

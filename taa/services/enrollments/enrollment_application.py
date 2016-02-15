@@ -4,6 +4,7 @@ import json
 from decimal import Decimal
 
 import dateutil.parser
+from taa.services.docusign.service import DocusignEnvelope
 
 from enrollment_application_coverages import (
     filter_applicant_coverages,
@@ -28,6 +29,7 @@ class EnrollmentApplicationService(DBService):
 
     def search_enrollments(self,
                            by_agent_id=None,
+                           by_agent_ids=None,
                            by_envelope_url=None,
                            by_applicant_signing_status=None, by_agent_signing_status=None):
         q = db.session.query(EnrollmentApplication)
@@ -38,6 +40,9 @@ class EnrollmentApplicationService(DBService):
 
         if by_agent_id:
             q = q.filter(EnrollmentApplication.agent_id == by_agent_id)
+
+        if by_agent_ids:
+            q = q.filter(EnrollmentApplication.agent_id.in_(by_agent_ids))
 
         if by_applicant_signing_status:
             q = q.filter(EnrollmentApplication.applicant_signing_status == by_applicant_signing_status)
@@ -95,24 +100,28 @@ class EnrollmentApplicationService(DBService):
         db.session.flush()
 
     def update_applicant_signing_status(self, enrollment_application, status):
-        # Map what docusign returns to our own status
-        status_mapping_possibilities = {
-            'cancel': EnrollmentApplication.SIGNING_STATUS_DECLINED, # (recipient cancels signing)
-            'decline': EnrollmentApplication.SIGNING_STATUS_DECLINED, # (recipient declines signing)
-            'exception': EnrollmentApplication.SIGNING_STATUS_ERROR, #  (exception occurs)
-            #'fax_pending', #  (recipient has fax pending)
-            #'id_check_faild', #  (recipient failed an ID check)
-            'session_timeout': EnrollmentApplication.SIGNING_STATUS_TIMEOUT, #  (session times out)
-            'signing_complete': EnrollmentApplication.SIGNING_STATUS_COMPLETE, #  (recipient completes signing)
-            'ttl_expired':EnrollmentApplication.SIGNING_STATUS_TTL_ERROR, #  (the TTL expires)
-            #'viewing_complete', #  (recipient completes viewing the envelope)
-        }
 
-        if status in status_mapping_possibilities:
-            internal_status = status_mapping_possibilities[status]
-            enrollment_application.applicant_signing_status = internal_status
-            db.session.flush()
-
+        envelope = DocusignEnvelope(enrollment_application.docusign_envelope_id, enrollment_application)
+        envelope.update_enrollment_status()
+        #
+        # # Map what docusign returns to our own status
+        # status_mapping_possibilities = {
+        #     'cancel': EnrollmentApplication.SIGNING_STATUS_DECLINED, # (recipient cancels signing)
+        #     'decline': EnrollmentApplication.SIGNING_STATUS_DECLINED, # (recipient declines signing)
+        #     'exception': EnrollmentApplication.SIGNING_STATUS_ERROR, #  (exception occurs)
+        #     #'fax_pending', #  (recipient has fax pending)
+        #     #'id_check_faild', #  (recipient failed an ID check)
+        #     'session_timeout': EnrollmentApplication.SIGNING_STATUS_TIMEOUT, #  (session times out)
+        #     'signing_complete': EnrollmentApplication.SIGNING_STATUS_COMPLETE, #  (recipient completes signing)
+        #     'ttl_expired':EnrollmentApplication.SIGNING_STATUS_TTL_ERROR, #  (the TTL expires)
+        #     #'viewing_complete', #  (recipient completes viewing the envelope)
+        # }
+        #
+        # if status in status_mapping_possibilities:
+        #     internal_status = status_mapping_possibilities[status]
+        #     enrollment_application.applicant_signing_status = internal_status
+        #     db.session.flush()
+        #
 
     def delete_case_enrollment_data(self, case):
         for census_record in case.census_records:

@@ -215,7 +215,7 @@ ko.bindingHandlers.dataTable = {
 
   update: function(element, valueAccessor) {
     var bind_opts = ko.unwrap(valueAccessor());
-    var datatable_opts = bind_opts.options;
+    var datatable_opts = $.extend({}, bind_opts.options);
     var data_observable = bind_opts.data;
 
     var updated_data = data_observable();
