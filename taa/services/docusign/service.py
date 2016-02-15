@@ -370,9 +370,16 @@ class DocusignEnvelope(object):
         return envelope_url
 
     def to_json(self):
+
+        if self.enrollment_record.agent_name:
+            agent_name = self.enrollment_record.agent_name
+        else:
+            agent_name = ""
+
         return dict(
             id=self.get_envelope_id(),
             agent_id=self.enrollment_record.agent_id,
+            agent=agent_name,
             employee_signing_status=self.enrollment_record.applicant_signing_status,
             employee_signing_datetime=self.enrollment_record.applicant_signing_datetime,
             agent_signing_datetime=self.enrollment_record.agent_signing_datetime,
@@ -427,6 +434,9 @@ class DocusignEnvelope(object):
             elif emp_signer['status'] == 'declined':
                 self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_DECLINED
                 self.enrollment_record.applicant_signing_datetime = None
+            elif emp_signer['status'] == 'voided':
+                self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_VOIDED
+                self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_VOIDED
 
             # TODO: Handle more statuses?
 
@@ -439,9 +449,12 @@ class DocusignEnvelope(object):
                 # Employee Signed
                 self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_COMPLETE
                 self.enrollment_record.agent_signing_datetime = self.parse_signing_date(agent_signer.get('signedDateTime'))
-            elif emp_signer['status'] == 'declined':
+            elif agent_signer['status'] == 'declined':
                 self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_DECLINED
                 self.enrollment_record.agent_signing_datetime = None
+            elif agent_signer['status'] == 'voided':
+                self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_VOIDED
+                self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_VOIDED
 
         db.session.commit()
 

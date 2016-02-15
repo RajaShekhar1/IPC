@@ -79,6 +79,7 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
 
     SIGNING_STATUS_PENDING = u'pending'
     SIGNING_STATUS_DECLINED = u'declined_to_sign'
+    SIGNING_STATUS_VOIDED = u'voided'
     SIGNING_STATUS_TIMEOUT = u'timeout'
     SIGNING_STATUS_ERROR = u'error'
     SIGNING_STATUS_TTL_ERROR = u'ttl_expired'

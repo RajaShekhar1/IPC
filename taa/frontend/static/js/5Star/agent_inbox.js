@@ -9,13 +9,17 @@ var agent_inbox = (function() {
 
     self.pending_envelopes = ko.pureComputed(function() {
       return _.filter(self.envelopes(), function(e) {
-        return e.agent_signing_status !== "signed";
+        return e.agent_signing_status !== "signed"
+            // Never show voided envelopes
+            && e.employee_signing_status !== "voided";
       });
     });
 
     self.completed_envelopes = ko.pureComputed(function() {
       return _.filter(self.envelopes(), function(e) {
-        return e.agent_signing_status === "signed";
+        return e.agent_signing_status === "signed"
+            // Never show voided envelopes
+            && e.employee_signing_status !== "voided";
       });
     });
 
@@ -66,6 +70,9 @@ var agent_inbox = (function() {
         {
           data: "formatted_timestamp",
           orderData: [1]
+        },
+        {
+          data: "agent"
         },
         {
           data: "group"
@@ -127,6 +134,7 @@ var agent_inbox = (function() {
     //self.timestamp = envelope.timestamp;
     //self.formatted_timestamp = moment(envelope.timestamp).format("MM/DD/YYYY h:mma");
     self.group = envelope.group;
+    self.agent = envelope.agent;
     self.employee_first = envelope.employee_first;
     self.employee_last = envelope.employee_last;
     self.products = envelope.products;
