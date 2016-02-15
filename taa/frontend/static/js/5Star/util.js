@@ -57,6 +57,12 @@ function parse_month_date_input(val) {
   return parse_date(val, "MM/DD");
 }
 
+// check if today is between a start and end date
+function today_between(start, end) {
+  var today = moment();
+  return today.isSameOrAfter(moment(start), 'day') && today.isSameOrBefore(moment(end), 'day')
+}
+
 // Date handling
 function parse_date(date_str, format_str) {
   // Parse a date as a moment object from the given string, according to the format string.
