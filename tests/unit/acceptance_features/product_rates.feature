@@ -6,57 +6,6 @@ Feature: Compute rates for products and associated riders.
   useful combinations of rates and the expected output of the rates calculator
   from the TAA system.
 
-#  Background:
-#    Given I have entered the following plan codes into TAA:
-#      | Base Product | Applicant Type  | Rider Codes | State   | Plan Code |
-#      | FPPTI        | Employee,Spouse |             | DEFAULT | FPPTI     |
-#      | FPPTI        | Employee,Spouse |             | UT      | FPPTI UT  |
-#      | FPPTI        | Employee,Spouse | AIO         | UT      | FPATI UT  |
-#      | FPPTI        | Child           |             | DEFAULT | FPPTID    |
-#      | FPP Gov      | Employee,Spouse |             | DEFAULT | FPPTIG    |
-#
-#  Scenario Outline: : I want to know the Dell FPP Plan code given a base product, applicant type, set of riders, and state
-#    Given The applicant type is '<Applicant Type>'
-#    And the riders selected are '<Riders>'
-#    And the state is '<State>'
-#    When I look up the plan code for base product '<Base Product Type>'
-#    Then I should see '<Plan Code>'
-#
-#    Examples: Employee with different base products
-#      | Riders | Applicant Type | Base Product Type | State | Plan Code |
-#      |        | Employee       | FPPTI             | MI    | FPPTI     |
-#      |        | Employee       | FPPTIG            | MI    | FPPTIG    |
-#      |        | Employee       | FPPTIW            | MI    | FPPTIW    |
-#      |        | Employee       | FPPTIB            | MI    | FPPTIB    |
-#      |        | Employee       | FPPTIY            | MI    | FPPTIY    |
-#
-#    Examples: Spouse with
-#
-#      | Y   | N    | N    | N  | Employee       | FPATI          | N/A             | FPATW           | FPATB           | FPATY           |
-#      | N   | N    | N    | Y  | Employee       | FPPTI          | FPPTIG          | FPPTIW          | FPPTIB          | FPPTIY          |
-#      | N   | Y    | N    | N  | Employee       | FPQTI3         | FPQTIG/3        | FPQTIW/3        | FPQTIB/3        | FPQTIY/3        |
-#      | N   | N    | Y    | N  | Employee       | FPQTI4         | FPQTIG/4        | FPQTIW/4        | FPQTIB/4        | FPQTIY/4        |
-#
-#
-#
-#
-#    # Base Product, Applicant Type, List of Rider Codes = Unique Plan Code if entered, otherwise Disallowed
-#    Scenario: Lookup without state or riders gets generic code
-#    When I look up the plan code for product 'FPPTI', applicant type 'Employee', riders ' ', state ' '
-#    Then I should see 'FPPTI'
-
-
-#  Scenario: Lookup Spouse enrollment plan codes (they should match employee codes above)
-#    Given The applicant type is 'Spouse'
-#    Then I should see the following plan codes
-#    | AIR | QOL3 | QOL4 | WP |  Code for FPPTI | Code for FPPTIG | Code for FPPTIW | Code for FPPTIB | Code for FPPTIY |
-#    | N   | N    | N    | N  |  FPPTI          | FPPTIG          | FPPTIW          | FPPTIB          | FPPTIY          |
-#
-#  Scenario: Lookup child (Dependent) enrollment plan codes
-#    Given The applicant type is 'Employee'
-#    Then I should see the following plan codes
-#      | N   | N    | N    | N  | Child          | FPPTID         | FPPTIDG         | FPPTIDW         | FPPTIDB         | FPPTIDY         |
-
 
   Scenario: FPPTI Employee / Spouse WEEKLY premiums by coverage with no riders.
     Given I want rates for the 'FPPTI' product

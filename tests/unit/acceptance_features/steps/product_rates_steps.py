@@ -114,3 +114,4 @@ def step_impl(context):
 def step_impl(context, product):
     context.product = product
     context.rate_plan = load_rate_plan_for_base_product(product)
+
