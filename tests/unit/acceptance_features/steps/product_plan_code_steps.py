@@ -35,7 +35,7 @@ def step_impl(context, expected_plan_code):
     # Create the applicant request
 
     query = ApplicantQuery(
-        applicant_type=context.applicant_type,
+        applicant_type=context.applicant_type.lower(),
         product_options={'riders': get_rider_list(context)},
         demographics=ApplicantDemographics(demographics_object={'applicant_type': context.applicant_type}),
         state=context.state,
