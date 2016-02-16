@@ -565,7 +565,11 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       if(!~default_agents.indexOf(null)) {
         default_agents.push(null);
       }
-      return default_agents;
+
+      // Need to include only the agents that are in the list of agents for the case.
+      return _.filter(default_agents, function(a) {
+        return _.find(self.case_agents(), function(case_agent) { return case_agent.id === a.agent_id;});
+      });
   }
 
 

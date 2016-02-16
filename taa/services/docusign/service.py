@@ -342,6 +342,16 @@ class DocusignEnvelope(object):
         self.enrollment_record = enrollment_record
 
         self._cached_recipient_status = None
+        self._cached_envelope_status = None
+        self._cached_envelope_status_changes = None
+
+    def get_envelope_status_changes(self):
+        if self._cached_envelope_status_changes:
+            return self._cached_envelope_status_changes
+
+        url = '{}/envelopes?envelopeId={}'.format(self.get_account_base_url(), self.get_envelope_id())
+        self._cached_envelope_status_changes = get_docusign_transport().get(url)
+        return self._cached_envelope_status_changes
 
     def get_recipient_status(self):
         if self._cached_recipient_status:
@@ -352,8 +362,12 @@ class DocusignEnvelope(object):
         return self._cached_recipient_status
 
     def get_envelope_status(self):
+        if self._cached_envelope_status:
+            return self._cached_envelope_status
+
         docusign_transport = get_docusign_transport()
-        return docusign_transport.get(self.get_envelope_base_url())
+        self._cached_envelope_status = docusign_transport.get(self.get_envelope_base_url())
+        return self._cached_envelope_status
 
     def get_signing_url(self, recipient, callback_url, docusign_transport):
         data = dict(
@@ -369,12 +383,14 @@ class DocusignEnvelope(object):
         return result['url']
 
     def get_envelope_base_url(self):
-        docusign_transport = get_docusign_transport()
-        base_url = docusign_transport.api_endpoint
-        if base_url.endswith('/'):
-            base_url = base_url[:-1]
-        envelope_url = base_url + self.uri
+        envelope_url = self.get_account_base_url() + self.uri
         return envelope_url
+
+    def get_account_base_url(self):
+        url = get_docusign_transport().api_endpoint
+        if url.endswith('/'):
+            url = url[:-1]
+        return url
 
     def to_json(self):
 
@@ -428,6 +444,19 @@ class DocusignEnvelope(object):
 
     def update_enrollment_status(self):
 
+        # Check overall envelope status first.
+        if self.get_envelope_status()['status'] == 'voided':
+            self.update_envelope_status_on_enrollment()
+        else:
+            self.update_recipient_statuses()
+
+        db.session.commit()
+
+    def update_envelope_status_on_enrollment(self):
+        self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_VOIDED
+        self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_VOIDED
+
+    def update_recipient_statuses(self):
         # Get employee if he is a signer.
         emp_signer = self.get_employee_signing_status()
         if emp_signer:
@@ -437,16 +466,13 @@ class DocusignEnvelope(object):
             elif emp_signer.get('signedDateTime'):
                 # Employee Signed
                 self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_COMPLETE
-                self.enrollment_record.applicant_signing_datetime = self.parse_signing_date(emp_signer.get('signedDateTime'))
+                self.enrollment_record.applicant_signing_datetime = self.parse_signing_date(
+                    emp_signer.get('signedDateTime'))
             elif emp_signer['status'] == 'declined':
                 self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_DECLINED
                 self.enrollment_record.applicant_signing_datetime = None
-            elif emp_signer['status'] == 'voided':
-                self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_VOIDED
-                self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_VOIDED
 
-            # TODO: Handle more statuses?
-
+                # TODO: Handle more statuses?
         agent_signer = self.get_agent_signing_status()
         if agent_signer:
             if agent_signer['status'] == 'sent':
@@ -455,21 +481,27 @@ class DocusignEnvelope(object):
             elif agent_signer.get('signedDateTime'):
                 # Employee Signed
                 self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_COMPLETE
-                self.enrollment_record.agent_signing_datetime = self.parse_signing_date(agent_signer.get('signedDateTime'))
+                self.enrollment_record.agent_signing_datetime = self.parse_signing_date(
+                    agent_signer.get('signedDateTime'))
             elif agent_signer['status'] == 'declined':
                 self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_DECLINED
                 self.enrollment_record.agent_signing_datetime = None
-            elif agent_signer['status'] == 'voided':
-                self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_VOIDED
-                self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_VOIDED
-
-        db.session.commit()
 
     def parse_signing_date(self, val):
-        dt = parse_datetime(val)
-        # Strip off timezone information by parsing a format without TZ.
-        # This helps because we know it is UTC and SQLAlchemy forces dateutil to compare TZ to non-TZ instance, which crashes.
-        return parse_datetime(dt.strftime("%m/%d/%YT%H:%M:%S"))
+        utc_datetime = parse_datetime(val)
+
+        # Docusign datetimes are UTC and include TZ info. We are storing localtimes for now on the server, so convert it.
+
+        from dateutil.tz import tzlocal
+        from datetime import datetime
+
+        # First add the local timezone offset to the UTC date.
+        local_utc_offset = datetime.now(tzlocal()).utcoffset()
+        local_datetime_with_tz = utc_datetime + local_utc_offset
+
+        # Strip off the timezone info by parsing a format without TZ info.
+        #  (We don't want to store the TZ info in the database)
+        return parse_datetime(local_datetime_with_tz.strftime("%FT%T"))
 
     def is_employee_sig_pending(self):
         # First, is employee even a signer?

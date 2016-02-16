@@ -27,17 +27,30 @@ var agent_inbox = (function() {
       // Invoked using jquery due to data tables control of table.
       var envelope_id = $(this).attr("data-id");
       $.post("/envelopes/"+envelope_id+"/sign"
-        ).success(self.handle_signing_redirect
+        ).success(function(data) {return self.handle_signing_redirect(envelope_id, data)}
         ).error(self.handle_signing_failure);
 
       bootbox.alert("Redirecting to signing page, please wait...");
     };
 
-    self.handle_signing_redirect = function(data) {
-      if (data.errors) {
-        alert(data.errors)
+    self.handle_signing_redirect = function(envelope_id, resp) {
+      var data = resp.data;
+      if (data.errors.length > 0) {
+        bootbox.hideAll();
+        bootbox.alert(data.errors[0].message);
+
+        // Remove voided envelope from the inbox immediately.
+        if (data.errors[0].reason === "voided_envelope") {
+          var envelope = _.find(self.envelopes(), function(e) { return e.id === envelope_id});
+          if (envelope) {
+            self.envelopes.remove(envelope);
+          }
+        }
+
+        return;
       }
-      window.location.href = data.data.url;
+
+      window.location.href = data.url;
     };
 
     self.handle_signing_failure = function(data) {
