@@ -557,19 +557,26 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   function get_initial_split_agents() {
     var default_agents = case_data.agent_splits.reduce(function(start, elem) {
-        if(!~start.indexOf(elem.agent_id)) {
-          start.push(elem.agent_id);
-        }
-        return start;
-      }, []);
-      if(!~default_agents.indexOf(null)) {
-        default_agents.push(null);
+      if(!~start.indexOf(elem.agent_id)) {
+        start.push(elem.agent_id);
       }
+      return start;
+    }, []);
 
-      // Need to include only the agents that are in the list of agents for the case.
-      return _.filter(default_agents, function(a) {
-        return _.find(self.case_agents(), function(case_agent) { return case_agent.id === a.agent_id;});
-      });
+    // Need to include only the agents that are in the list of agents for the case.
+    default_agents = _.filter(default_agents, function(a_id) {
+      // Allow the default agent
+      if (a_id === null) return true;
+
+      return _.find(self.case_agents(), function(case_agent) { return case_agent.id === a_id;});
+    });
+
+    // Add the default agent to the list if not there.
+    if (!~default_agents.indexOf(null)) {
+      default_agents.push(null);
+    }
+
+    return default_agents;
   }
 
 
