@@ -66,23 +66,23 @@
               <div class="col-md-12 case-setup-section">
                 <form class="form-horizontal case_setup" data-bind="submit: save_settings">
 
-                  <div class="widget-box">
-                    <div class="widget-header">
-                      <div class="row">
-                        <h3 class="col-xs-6">Main Settings</h3>
-                        <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
-                          <label style="margin-right: 15px;">
-                            {{ case_setup_form.active(class_="ace ace-switch ace-switch-6", **{'data-bind': 'checked: is_active'})|safe }}
-                            <span class="lbl padding-16" data-bind="text: switch_label">Case is Active</span>
-                          </label>
-                        </h3>
-                      </div>
+                <div class="widget-box">
+                  <div class="widget-header">
+                    <div class="row">
+                      <h3 class="col-xs-6">Main Settings</h3>
+                      <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
+                        <label style="margin-right: 15px;">
+                          <input checked="" class="ace ace-switch ace-switch-6" data-bind="checked: is_active" id="active" name="active" type="checkbox" value="y">
+                          <span class="lbl padding-16"  data-bind="text: switch_label">Case is Active</span>
+                        </label>
+                      </h3>
                     </div>
-                    <div class="widget-body">
-                      <div class="widget-main">
-                        <div class="row">
-                          <div class="col-md-5 col-xs-12">
-                            <h3 class="header lighter blue">Settings</h3>
+                  </div>
+                  <div class="widget-body">
+                    <div class="widget-main">
+                      <div class="row">
+                        <div class="col-md-5 col-xs-12">
+                          <h3 class="header lighter blue">Settings</h3>
 
                             <div class="form-group">
                               <label class="col-md-3 control-label" for="company_name">Company Name</label>
@@ -156,56 +156,55 @@
                               </div>
                             </div>
 
-                            <div class="form-group">
-                              <label class="col-md-3 control-label" for="paymentMode">Payment</label>
-                              <div class="col-md-9">
-                                <select id="paymentMode" name="paymentMode"
-                                        data-bind="value: payment_mode, options: payment_mode_choices, optionsText: 'name', optionsCaption: '(Select Payment Type)'"></select>
-                              </div>
+                          <div class="form-group">
+                            <label class="col-md-3 control-label" for="paymentMode">Payment</label>
+                            <div class="col-md-9">
+                              <select id="paymentMode" name="paymentMode" data-bind="value: payment_mode, options: payment_mode_choices, optionsText: 'name', optionsCaption: '(Select Payment Type)'"></select>
                             </div>
                           </div>
-                          <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
-                            <h3 class="header lighter blue">Enrollment Periods</h3>
-                            <div>
-                              <div class="panel form-group">
-                                <div class="panel-heading">
-                                  <label>
-                                    <input data-bind="checked: enrollment_period_type" type="radio" class="ace"
-                                           name="enrollment_period_type" value="open">
-                                    <span class="lbl padding-8">Enrollment Period with End Date</span>
-                                  </label>
-                                </div>
-                                <div class="panel-body" data-bind="slideDownIf: is_open_enrollment">
-                                  <div class="row">
-                                    <div class="col-md-6">
-                                      <label>
-                                        Start Date:
-                                        <input data-bind="value: get_open_enrollment_period().start_date" type="text"
-                                               placeholder="MM/DD/YYYY" class="input-mask-date"
-                                               name="open_enrollment_start_date">
-                                      </label>
-                                    </div>
-                                    <div class="col-md-6">
-                                      <label>
-                                        End Date:
-                                        <input data-bind="value: get_open_enrollment_period().end_date" type="text"
-                                               placeholder="MM/DD/YYYY" class="input-mask-date"
-                                               name="open_enrollment_end_date">
-                                      </label>
-                                    </div>
+                        </div>
+                        <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
+                          <h3 class="header lighter blue">Enrollment Periods</h3>
+                          <div>
+                            <div class="panel form-group">
+                              <div class="panel-heading">
+                                <label>
+                                  <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="open">
+                                  <span class="lbl padding-8">Enrollment Period with End Date</span><br />
+                                  <small data-bind="visible: !today_between() && enrollment_period_type() == 'open'">
+                                    <em class="text-danger">Currently not active since outside date range</em>
+                                  </small>
+                                </label>
+                              </div>
+                              <div class="panel-body" data-bind="slideDownIf: is_open_enrollment">
+                                <div class="row">
+                                  <div class="col-md-6">
+                                    <label>
+                                      Start Date:
+                                      <input data-bind="value: get_open_enrollment_period().start_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_start_date">
+                                    </label>
+                                  </div>
+                                  <div class="col-md-6">
+                                    <label>
+                                      End Date:
+                                      <input data-bind="value: get_open_enrollment_period().end_date" type="text" placeholder="MM/DD/YYYY" class="input-mask-date" name="open_enrollment_end_date">
+                                    </label>
                                   </div>
                                 </div>
                               </div>
-                              <div class="panel form-group">
-                                <div class="panel-heading">
-                                  <label>
-                                    <input data-bind="checked: enrollment_period_type" type="radio" class="ace"
-                                           name="enrollment_period_type" value="annual">
-                                    <span class="lbl padding-8">Annual Periods</span>
-                                  </label>
-                                </div>
-                                <div class="panel-body" data-bind="slideDownIf: is_annual_enrollment()">
-                                  <!--ko foreach: annual_enrollment_periods-->
+                            </div>
+                            <div class="panel form-group">
+                              <div class="panel-heading">
+                                <label>
+                                  <input data-bind="checked: enrollment_period_type" type="radio" class="ace" name="enrollment_period_type" value="annual">
+                                  <span class="lbl padding-8">Annual Periods</span><br />
+                                  <small data-bind="visible: !annual_today_between() && enrollment_period_type() == 'annual'">
+                                    <em class="text-danger">Currently not active since outside date range</em>
+                                  </small>
+                                </label>
+                              </div>
+                              <div class="panel-body" data-bind="slideDownIf: is_annual_enrollment()">
+                                <!--ko foreach: annual_enrollment_periods-->
                                   <div class="row">
                                     <div class="col-md-6">
                                       <label class="">

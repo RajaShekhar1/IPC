@@ -127,6 +127,8 @@ def update_case(case_id):
         del data['partner_agents']
         del data['product_settings']
 
+
+
         # Update case table
         return case_service.update(case, **data)
 

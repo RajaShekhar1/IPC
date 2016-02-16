@@ -196,12 +196,26 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     });
   });
 
-  self.annual_enrollment_periods = ko.computed(function () {
-    return _.filter(self.enrollment_periods(), function (p) {
-      return p.period_type === "annual_period";
-    });
+  self.today_between = ko.computed(function() {
+    var start = self.get_open_enrollment_period().start_date();
+    var end = self.get_open_enrollment_period().end_date();
+    return today_between(start, end);
   });
 
+  self.annual_enrollment_periods = ko.computed(function() {
+    return _.filter(self.enrollment_periods(), function(p) {return p.period_type === "annual_period";});
+  });
+
+  self.annual_today_between = ko.computed(function() {
+    if(self.annual_enrollment_periods().length >= 4 && self.annual_enrollment_periods().first().start_date() !== "") {
+      return self.annual_enrollment_periods().reduce(function(a, period) {
+        var start_date = moment(period.start_date(), "MM/DD");
+        var end_date = moment(period.end_date(), "MM/DD");
+        return today_between(start_date, end_date) || a;
+      }, false);
+    }
+    return true;
+  });
 
   // Get payment modes
   self.payment_mode_choices = settings.payment_modes;
@@ -791,21 +805,19 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       self.selected_payment_mode() !== null &&
       self.owner_agent_id() > 0
     );
-
-    if (self.is_open_enrollment() && !self.get_open_enrollment_period().is_valid()) {
-      is_valid = false;
-    } else if (self.is_annual_enrollment()) {
-      // Make sure there is at least one valid period date
-      is_valid &= _.any(self.annual_enrollment_periods(), function (p) {
-        return p.is_valid();
-      });
-    }
+    // if (self.is_open_enrollment() && !self.get_open_enrollment_period().is_valid()) {
+    //   is_valid = false;
+    // } else if (self.is_annual_enrollment()) {
+    //   // Make sure there is at least one valid period date
+    //   is_valid &= _.any(self.annual_enrollment_periods(), function(p) {
+    //     return p.is_valid();
+    //   });
+    // }
 
     return is_valid;
   });
 
-  self.is_active.subscribe(function (value) {
-
+  self.is_active.subscribe(function(value) {
     if (value && !self.can_activate_case()) {
       bootbox.alert("Cannot activate case for enrollment until settings are complete.");
       self.is_active(false);
