@@ -296,6 +296,10 @@ input[type=radio].ace+.lbl::before {
     padding-right: 8px;
 }
 
+.enroll-status.pending {
+    color: #aaa933;
+}
+
 .enroll-status.declined {
     color: #c04000;
     padding-right: 8px;

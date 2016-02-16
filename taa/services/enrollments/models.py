@@ -36,6 +36,7 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     APPLICATION_STATUS_PENDING_AGENT = u'pending_agent'
     APPLICATION_STATUS_PENDING_EMPLOYEE = u'pending_employee'
     APPLICATION_STATUS_DECLINED = u'declined'
+    APPLICATION_STATUS_VOIDED = u'voided'
     application_status = db.Column(db.Unicode(32))
     # Payment mode
     payment_mode = db.Column(db.Integer(), nullable=True)
@@ -85,6 +86,19 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     SIGNING_STATUS_TTL_ERROR = u'ttl_expired'
     SIGNING_STATUS_COMPLETE = u'signed'
     SIGNING_STATUS_NA = u'not_applicable'
+
+    def is_pending(self):
+        return self.is_pending_employee() or self.is_pending_agent()
+
+    def is_pending_employee(self):
+        return self.application_status in [self.APPLICATION_STATUS_PENDING_EMPLOYEE]
+
+    def is_pending_agent(self):
+        return self.application_status in [self.APPLICATION_STATUS_PENDING_AGENT]
+
+
+    def did_decline(self):
+        return self.application_status == self.APPLICATION_STATUS_DECLINED
 
     def did_enroll(self):
         return self.application_status == self.APPLICATION_STATUS_ENROLLED

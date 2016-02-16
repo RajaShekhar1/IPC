@@ -9,36 +9,22 @@ var agent_inbox = (function() {
 
     self.pending_envelopes = ko.pureComputed(function() {
       return _.filter(self.envelopes(), function(e) {
-        return e.agent_signing_status !== "signed"
-            // Never show voided envelopes
-            && e.employee_signing_status !== "voided";
+        return e.is_pending();
       });
     });
 
     self.completed_envelopes = ko.pureComputed(function() {
       return _.filter(self.envelopes(), function(e) {
-        return e.agent_signing_status === "signed"
-            // Never show voided envelopes
-            && e.employee_signing_status !== "voided";
+        return e.is_completed();
       });
     });
 
     self.sign_envelope = function() {
-      // Invoked using jquery due to data tables control of table.
+      // Get the envelope ID from the button.
       var envelope_id = $(this).attr("data-id");
-      $.post("/envelopes/"+envelope_id+"/sign"
-        ).success(function(data) {return self.handle_signing_redirect(envelope_id, data)}
-        ).error(self.handle_signing_failure);
 
-      bootbox.alert("Redirecting to signing page, please wait...");
-    };
-
-    self.handle_signing_redirect = function(envelope_id, resp) {
-      var data = resp.data;
-      if (data.errors.length > 0) {
-        bootbox.hideAll();
-        bootbox.alert(data.errors[0].message);
-
+      sign_envelope(envelope_id).error(function(resp) {
+        var data = resp.data;
         // Remove voided envelope from the inbox immediately.
         if (data.errors[0].reason === "voided_envelope") {
           var envelope = _.find(self.envelopes(), function(e) { return e.id === envelope_id});
@@ -47,15 +33,7 @@ var agent_inbox = (function() {
           }
         }
 
-        return;
-      }
-
-      window.location.href = data.url;
-    };
-
-    self.handle_signing_failure = function(data) {
-      bootbox.hideAll();
-      bootbox.alert("There was a problem redirecting to the signing page.");
+      });
     };
 
     self.table_options = {
@@ -94,7 +72,9 @@ var agent_inbox = (function() {
           data: "group"
         },
         {
-          data: "employee_first"
+          data: function(row) {
+            return "<a href='/enrollment_case/" + row.case_id + "/" + row.census_record_id +"'>" + row.employee_first + "</a>";
+          }
         },
         {
           data: "employee_last"
@@ -119,10 +99,13 @@ var agent_inbox = (function() {
     var self = this;
 
     self.id = envelope.id;
+    self.case_id = envelope.case_id;
+    self.census_record_id = envelope.census_record_id;
 
     self.agent_signing_status = envelope.agent_signing_status;
     self.employee_signing_status = envelope.employee_signing_status;
     self.employee_signing_datetime = envelope.employee_signing_datetime;
+    self.agent_signing_datetime = envelope.agent_signing_datetime;
 
     if (self.employee_signing_status === "pending" || self.employee_signing_status === "declined_to_sign") {
       self.status = "Pending Employee";
@@ -138,7 +121,11 @@ var agent_inbox = (function() {
     } else if (self.agent_signing_status === "signed") {
       self.status = "Complete";
       self.button_text = "View";
-      self.timestamp = self.employee_signing_datetime;
+      self.timestamp = (self.employee_signing_datetime) ?  self.employee_signing_datetime: self.agent_signing_datetime;
+      self.formatted_timestamp = format_time();
+    } else if (self.agent_signing_status === "declined_to_sign") {
+      self.status = "Agent Declined";
+      self.timestamp = envelope.timestamp;
       self.formatted_timestamp = format_time();
     } else {
       self.status = "Unknown";
@@ -156,6 +143,20 @@ var agent_inbox = (function() {
     self.products = envelope.products;
     self.coverage = envelope.coverage;
     self.agent_id = envelope.agent_id;
+
+    self.is_pending = function() {
+      return self.agent_signing_status !== "signed"
+            // Never show voided or declines here
+            && self.agent_signing_status !== "declined_to_sign"
+            && self.employee_signing_status !== "voided";
+    };
+
+    self.is_completed = function() {
+      return self.agent_signing_status === "signed"
+            // Never show voided envelopes
+            && self.employee_signing_status !== "voided";
+    };
+
 
     self.should_show_sign_button = function(current_agent_id) {
       return self.button_text === "Sign" && (current_agent_id === self.agent_id || self.agent_id === null);
@@ -187,9 +188,41 @@ var agent_inbox = (function() {
     })
   }
 
+
+  function sign_envelope(envelope_id) {
+    var req = $.post("/envelopes/"+envelope_id+"/sign"
+      ).success(function(data) {return handle_signing_redirect(envelope_id, data)}
+      ).error(handle_signing_failure);
+
+    bootbox.alert("Redirecting to signing page, please wait...");
+    return req;
+  }
+
+  function handle_signing_redirect(envelope_id, resp) {
+      var data = resp.data;
+      if (data.errors.length > 0) {
+        bootbox.hideAll();
+        bootbox.alert(data.errors[0].message);
+
+        return;
+      }
+
+      // Perform the redirection.
+      window.location.href = data.url;
+    }
+
+    function handle_signing_failure(data) {
+      bootbox.hideAll();
+      bootbox.alert("There was a problem redirecting to the signing page.");
+    }
+
   return {
     init_viewmodel: function(params) {
       return new AgentInboxViewModel(params);
+    },
+
+    sign_envelope: function(envelope_id) {
+      return sign_envelope(envelope_id);
     }
   }
 })();

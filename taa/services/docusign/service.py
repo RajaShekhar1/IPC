@@ -414,6 +414,8 @@ class DocusignEnvelope(object):
             employee_last=self.enrollment_record.census_record.employee_last,
             products=self.get_product_names(),
             coverage=self.get_coverage_summary(),
+            case_id=self.enrollment_record.case_id,
+            census_record_id=self.enrollment_record.census_record_id,
         )
 
     def get_product_names(self):
@@ -443,18 +445,50 @@ class DocusignEnvelope(object):
         return self.uri.replace("/envelopes/", "")
 
     def update_enrollment_status(self):
-
-        # Check overall envelope status first.
-        if self.get_envelope_status()['status'] == 'voided':
-            self.update_envelope_status_on_enrollment()
-        else:
-            self.update_recipient_statuses()
+        self.update_application_status()
+        self.update_recipient_statuses()
 
         db.session.commit()
 
-    def update_envelope_status_on_enrollment(self):
+    def update_application_status(self):
+        DS_ENV_STATUS_DELETED = "deleted"
+        DS_ENV_STATUS_VOIDED = "voided"
+        DS_ENV_STATUS_DECLINED = "declined"
+        DS_ENV_STATUS_COMPLETED = "completed"
+        # These statuses are all "pending" full completion.
+        DS_ENV_STATUS_SIGNED = "signed"
+        DS_ENV_STATUS_DELIVERED = "delivered"
+        DS_ENV_STATUS_SENT = "sent"
+        DS_ENV_STATUS_CREATED = "created"
+
+        # Based on the signing status and envelope status
+        env_status = self.get_envelope_status()['status']
+        if env_status in [DS_ENV_STATUS_VOIDED, DS_ENV_STATUS_DELETED]:
+            self.void_enrollment()
+        elif env_status in [DS_ENV_STATUS_DECLINED]:
+            self.decline_enrollment()
+        elif env_status in [DS_ENV_STATUS_COMPLETED]:
+            self.complete_enrollment()
+        else:
+            # Anything else is a pending status
+            self.mark_enrollment_pending()
+
+    def void_enrollment(self):
         self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_VOIDED
         self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_VOIDED
+        self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_VOIDED
+
+    def decline_enrollment(self):
+        self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
+
+    def complete_enrollment(self):
+        self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+
+    def mark_enrollment_pending(self):
+        if self.is_employee_sig_pending():
+            self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
+        else:
+            self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
 
     def update_recipient_statuses(self):
         # Get employee if he is a signer.
@@ -462,22 +496,31 @@ class DocusignEnvelope(object):
         if emp_signer:
             if emp_signer['status'] == 'sent':
                 # Not signed
-                pass
+                self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_PENDING
+                self.enrollment_record.applicant_signing_datetime = None
+
             elif emp_signer.get('signedDateTime'):
                 # Employee Signed
                 self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_COMPLETE
                 self.enrollment_record.applicant_signing_datetime = self.parse_signing_date(
                     emp_signer.get('signedDateTime'))
+
             elif emp_signer['status'] == 'declined':
                 self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_DECLINED
                 self.enrollment_record.applicant_signing_datetime = None
 
                 # TODO: Handle more statuses?
+
+        else:
+            # No employee signer on envelope.
+            self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_NA
+
         agent_signer = self.get_agent_signing_status()
         if agent_signer:
-            if agent_signer['status'] == 'sent':
+            if agent_signer['status'] == 'sent' or agent_signer['status'] == 'delivered':
                 # Not signed
-                pass
+                self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_PENDING
+
             elif agent_signer.get('signedDateTime'):
                 # Employee Signed
                 self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_COMPLETE
@@ -486,6 +529,8 @@ class DocusignEnvelope(object):
             elif agent_signer['status'] == 'declined':
                 self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_DECLINED
                 self.enrollment_record.agent_signing_datetime = None
+
+
 
     def parse_signing_date(self, val):
         utc_datetime = parse_datetime(val)
@@ -1105,7 +1150,7 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
                         page_number=tab_def.page,
                     ))
                 # Include all radio button tabs that were not locked, both employee and agent.
-                elif tab_def.custom_type == "Radio" and not tab_def.custom_tab_locked:
+                elif tab_def.custom_type == "Radio" and tab_def.custom_tab_locked == False:
                     label = tab_def.label.split('.')[0] if len(tab_def.label.split('.')) > 1 else tab_def.label
                     tabs.append(DocuSignRadioTab(
                         label,
@@ -1116,7 +1161,7 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
                         document_id=1,
                         page_number=tab_def.page))
 
-                elif tab_def.custom_type == "Text" and not tab_def.custom_tab_locked:
+                elif tab_def.custom_type == "Text" and tab_def.custom_tab_locked == False:
                     tabs.append(
                         DocuSignTextTab(
                             # Tab def label is really the name

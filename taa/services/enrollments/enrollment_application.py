@@ -323,9 +323,27 @@ class EnrollmentApplicationService(DBService):
 
     def get_enrollment_status(self, census_record):
         # Get the flattened enrollment record
-        enrollment_data = self.get_enrollment_data(census_record)
-        return (enrollment_data['application_status']
-                if enrollment_data else None)
+        #enrollment_data = self.get_enrollment_data(census_record)
+        #return (enrollment_data['application_status']
+        #        if enrollment_data else None)
+
+        enrollment_records = census_record.enrollment_applications
+
+        # If any is pending, we say the whole record is pending so as to not have more than one pending at a time.
+        if any([e for e in enrollment_records if e.is_pending_employee()]):
+            return EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
+        elif any([e for e in enrollment_records if e.is_pending_agent()]):
+            return EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
+        # Otherwise, we check to see if anyone has ever enrolled for this record
+        elif any([e for e in enrollment_records if e.did_enroll()]):
+            return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+        elif any([e for e in enrollment_records if e.did_decline()]):
+            return EnrollmentApplication.APPLICATION_STATUS_DECLINED
+        else:
+            return None
+
+
+
 
     def get_census_data(self, census_record):
         return census_record.to_json()
@@ -335,12 +353,12 @@ class EnrollmentApplicationService(DBService):
         #        should merge these functions and remove extraneous code
         #        since no other code needs a merged record
         enrollment_data = {}
-        enrollments_with_sig_times = [e for e in census_record.enrollment_applications if e.signature_time]
-        if not enrollments_with_sig_times:
+        undeclined_enrollments = [e for e in census_record.enrollment_applications if not e.did_decline()]
+        if not undeclined_enrollments:
             return None
         # Get the most recent enrollment for the generic data
-        enrollment = max(enrollments_with_sig_times,
-                         key=lambda e: e.signature_time)
+        enrollment = max(undeclined_enrollments,
+                         key=lambda e: e.applicant_signing_datetime)
         # Export data from enrollment
         for col in enrollment_columns:
             enrollment_data[col.get_field_name()] = col.get_value(enrollment)
@@ -469,6 +487,11 @@ class EnrollmentApplicationService(DBService):
             enrollment_data['{}_total_premium'.format(prefix)] = total_product_premium
 
         enrollment_data['total_annual_premium'] = total_annual_premium
+        if enrollment.docusign_envelope_id:
+            envelope = DocusignEnvelope(uri=enrollment.docusign_envelope_id, enrollment_record=enrollment)
+            enrollment_data['docusign_envelope_id'] = envelope.get_envelope_id()
+        else:
+            enrollment_data['docusign_envelope_id'] = None
 
         return enrollment_data
 
