@@ -223,6 +223,13 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             child['type'] = u'children'
             applicants.append(child)
 
+    # Any FPP product for acknowledgment / disclosure box?
+    fpp_products = [p for p in products if p.is_fpp()]
+    any_fpp_product = bool(fpp_products)
+    fpp_base_product_code = None
+    if any_fpp_product:
+        fpp_base_product_code = fpp_products[0].get_base_product_code()
+
     wizard_data = dict(
         is_in_person=not is_self_enroll,
         case_data={
@@ -242,6 +249,8 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         payment_modes=payment_mode_choices,
         spouse_questions=spouse_questions,
         health_questions=soh_questions,
+        any_fpp_product=any_fpp_product,
+        fpp_base_product_code=fpp_base_product_code
     )
 
     # Commit any changes made (none right now)

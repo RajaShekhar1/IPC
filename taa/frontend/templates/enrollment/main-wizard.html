@@ -226,44 +226,56 @@
               </div>
 
               <div class="modal-body">
-                {#                {% set base_product_code = wizard_data['products'][0].get_base_product_code() %}#}
-                {#                    <iframe src="{%#}
-                {#        if base_product_code=='FPPTI' or base_product_code == 'FPP-Gov' %}#}
-                {#	       {% if wizard_data['state']=='TX' %}#}
-                {#	         {{ url_for ('FPPTI_disclosure_TX') }}#}
-                {#	       {% elif wizard_data['state']=='KS' %}#}
-                {#	         {{ url_for ('FPPTI_disclosure_KS') }}#}
-                {#	       {% elif wizard_data['state']=='VA' %}#}
-                {#	         {{ url_for ('FPPTI_disclosure_VA') }}	    #}
-                {#	       {% elif wizard_data['state']=='OR' %}#}
-                {#	         {{ url_for ('FPPTI_disclosure_OR') }}#}
-                {#	       {% else %}#}
-                {#	         {{ url_for ('FPPTI_disclosure_generic') }}#}
-                {#	       {% endif %}#}
-                {#	    {% elif base_product_code=='FPPCI' %}#}
-                {#	       {% if wizard_data['state']=='KS' %}#}
-                {#	         {{ url_for ('FPPCI_disclosure_KS') }}#}
-                {#	       {% elif wizard_data['state']=='VA' %}#}
-                {#	         {{ url_for ('FPPCI_disclosure_VA') }}	    #}
-                {#	       {% elif wizard_data['state']=='OR' %}#}
-                {#	         {{ url_for ('FPPCI_disclosure_OR') }}#}
-                {#	       {% else %}#}
-                {#	         {{ url_for ('FPPCI_disclosure_generic') }}#}
-                {#	       {% endif %}#}
-                {#        {% elif base_product_code == 'Group CI' %}#}
-                {#           {% if wizard_data['state'] == 'KS' %}#}
-                {#               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-KS.pdf') }}#}
-                {#           {% elif wizard_data['state'] == 'OR' %}#}
-                {#               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-OR.pdf') }}#}
-                {#           {% elif wizard_data['state'] == 'VA' %}#}
-                {#               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-VA.pdf') }}#}
-                {#           {% else %}#}
-                {#               {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508 (Generic).pdf') }}#}
-                {#           {% endif %}#}
-                {#	    {% else %}#}
-                {#	       {{ url_for ('FPPTI_disclosure_generic') }}#}
-                {#	    {% endif %}"#}
-                {#                            style="zoom:1.0" width="100%" height="500" frameborder="0"></iframe>#}
+                {% if wizard_data.any_fpp_product %}
+
+                  {% set base_product_code = wizard_data.fpp_base_product_code %}
+                  {% set fpp_state = wizard_data['state'] %}
+
+                  {% if base_product_code=='FPPTI' or base_product_code == 'FPP-Gov' %}
+                     {% if fpp_state == 'TX' %}
+                       {% set disclosure_url = url_for ('FPPTI_disclosure_TX') %}
+                     {% elif fpp_state == 'KS' %}
+                       {% set disclosure_url = url_for ('FPPTI_disclosure_KS') %}
+                     {% elif fpp_state == 'VA' %}
+                       {% set disclosure_url = url_for ('FPPTI_disclosure_VA') %}
+                     {% elif fpp_state == 'OR' %}
+                       {% set disclosure_url = url_for ('FPPTI_disclosure_OR') %}
+                     {% else %}
+                       {% set disclosure_url = url_for ('FPPTI_disclosure_generic') %}
+                     {% endif %}
+                  {% elif base_product_code=='FPPCI' %}
+                     {% if fpp_state == 'KS' %}
+                       {% set disclosure_url = url_for ('FPPCI_disclosure_KS') %}
+                     {% elif fpp_state == 'VA' %}
+                       {% set disclosure_url = url_for ('FPPCI_disclosure_VA') %}
+                     {% elif fpp_state == 'OR' %}
+                       {% set disclosure_url = url_for ('FPPCI_disclosure_OR') %}
+                     {% else %}
+                       {% set disclosure_url = url_for ('FPPCI_disclosure_generic') %}
+                     {% endif %}
+                  {% endif %}
+
+                  {% if disclosure_url %}
+                    <iframe src="{{ disclosure_url }}" style="zoom:1.0" width="100%" height="500" frameborder="0"></iframe>
+                  {% endif %}
+                {% endif %}
+
+
+
+{#                      {% elif base_product_code == 'Group CI' %}#}
+{#                         {% if wizard_data['state'] == 'KS' %}#}
+{#                             {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-KS.pdf') }}#}
+{#                         {% elif wizard_data['state'] == 'OR' %}#}
+{#                             {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-OR.pdf') }}#}
+{#                         {% elif wizard_data['state'] == 'VA' %}#}
+{#                             {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-VA.pdf') }}#}
+{#                         {% else %}#}
+{#                             {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508 (Generic).pdf') }}#}
+{#                         {% endif %}#}
+{#                	    {% else %}#}
+{#                	       {{ url_for ('FPPTI_disclosure_generic') }}#}
+{#                	    {% endif %}"#}
+
               </div>
 
               <div class="modal-footer">
