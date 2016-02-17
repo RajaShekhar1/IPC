@@ -486,7 +486,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     var owner = self.owner_agent();
 
     // The owner can be added to partner agent list, even though it is not sensible.
-    if (_.pluck(self.partner_agent_list(), "id").indexOf(owner.id) === -1) {
+    if (owner && _.pluck(self.partner_agent_list(), "id").indexOf(owner.id) === -1) {
       // Sort the owner into the list
       var all_agents = self.partner_agent_list().concat(owner);
       all_agents.sort(function(a, b) {
