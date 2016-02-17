@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import json
 
 from taa import db
 from taa.helpers import JsonSerializable
@@ -14,6 +15,8 @@ class ProductJsonSerializable(JsonSerializable):
     def to_json(self):
         # Default serialized data
         data = super(ProductJsonSerializable, self).to_json()
+        # if data['use_base_product_settings'] is not None:
+        #     data['use_base_product_settings'] = json.load(data['use_base_product_settings']);
 
         # Add in some helper attributes
 
@@ -46,6 +49,7 @@ class Product(ProductJsonSerializable, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String, nullable=False, index=True)
     name = db.Column(db.String, nullable=False)
+    use_base_product_settings = db.Column(db.String, nullable=True)
     customer_short_name = db.Column(db.String, nullable=True)
     brochure_url = db.Column(db.Unicode(2000))
     brochure_name = db.Column(db.Unicode(256))
