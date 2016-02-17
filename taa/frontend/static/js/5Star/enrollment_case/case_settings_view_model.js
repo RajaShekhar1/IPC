@@ -197,6 +197,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.today_between = ko.computed(function() {
+    if (!self.get_open_enrollment_period()) {
+      return false;
+    }
+
     var start = self.get_open_enrollment_period().start_date();
     var end = self.get_open_enrollment_period().end_date();
     return today_between(start, end);
@@ -465,7 +469,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   }
 
   self.owner_agent = ko.computed(function () {
-    return settings.active_agents.filter(function (elem) {
+    return settings.active_agents.find(function (elem) {
       return elem.id === parseInt(self.owner_agent_id(), 10);
     });
   });
@@ -477,7 +481,25 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.case_agents = ko.computed(function () {
-    return self.partner_agent_list().concat(self.owner_agent());
+    // Concatenate the owner agent with the partner agents.
+
+    var owner = self.owner_agent();
+
+    // The owner can be added to partner agent list, even though it is not sensible.
+    if (_.pluck(self.partner_agent_list(), "id").indexOf(owner.id) === -1) {
+      // Sort the owner into the list
+      var all_agents = self.partner_agent_list().concat(owner);
+      all_agents.sort(function(a, b) {
+        if (a.last == b.last) {
+          return a.first.localeCompare(b.first);
+        }
+        return a.last.localeCompare(b.last);
+      });
+      return all_agents;
+    } else {
+      return self.partner_agent_list();
+    }
+
   });
 
   self.has_agent_splits = ko.observable(case_data.is_stp);
