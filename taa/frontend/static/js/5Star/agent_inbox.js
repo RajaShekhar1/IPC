@@ -73,11 +73,13 @@ var agent_inbox = (function() {
         },
         {
           data: function(row) {
-            return "<a href='/enrollment_case/" + row.case_id + "/" + row.census_record_id +"'>" + row.employee_first + "</a>";
+            return "<a href='/enrollment-case/" + row.case_id + "/census/" + row.census_record_id +"'>" + row.employee_first + "</a>";
           }
         },
         {
-          data: "employee_last"
+          data: function(row) {
+            return "<a href='/enrollment-case/" + row.case_id + "/census/" + row.census_record_id +"'>" + row.employee_last + "</a>";
+          }
         },
         {
           data: "products"
