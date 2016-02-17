@@ -229,7 +229,7 @@
                 {% if wizard_data.any_fpp_product %}
 
                   {% set base_product_code = wizard_data.fpp_base_product_code %}
-                  {% set fpp_state = wizard_data['state'] %}
+                  {% set fpp_state = wizard_data.case_data.situs_state %}
 
                   {% if base_product_code=='FPPTI' or base_product_code == 'FPP-Gov' %}
                      {% if fpp_state == 'TX' %}
