@@ -23,7 +23,7 @@ var agent_inbox = (function() {
       // Get the envelope ID from the button.
       var envelope_id = $(this).attr("data-id");
 
-      sign_envelope(envelope_id).error(function(resp) {
+      sign_envelope(envelope_id).success(function(resp) {
         var data = resp.data;
         // Remove voided envelope from the inbox immediately.
         if (data.errors[0].reason === "voided_envelope") {
@@ -63,7 +63,7 @@ var agent_inbox = (function() {
         },
         {
           data: "formatted_timestamp",
-          orderData: [1]
+          orderData: [2]
         },
         {
           data: "agent"
@@ -104,6 +104,10 @@ var agent_inbox = (function() {
     self.case_id = envelope.case_id;
     self.census_record_id = envelope.census_record_id;
 
+    // Overall status of the application.
+    self.application_status = envelope.application_status;
+
+    // Individual signing statuses and timestamps.
     self.agent_signing_status = envelope.agent_signing_status;
     self.employee_signing_status = envelope.employee_signing_status;
     self.employee_signing_datetime = envelope.employee_signing_datetime;
@@ -150,13 +154,13 @@ var agent_inbox = (function() {
       return self.agent_signing_status !== "signed"
             // Never show voided or declines here
             && self.agent_signing_status !== "declined_to_sign"
-            && self.employee_signing_status !== "voided";
+            && self.application_status !== "voided";
     };
 
     self.is_completed = function() {
       return self.agent_signing_status === "signed"
             // Never show voided envelopes
-            && self.employee_signing_status !== "voided";
+            && self.application_status !== "voided";
     };
 
 

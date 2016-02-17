@@ -271,8 +271,7 @@ class DocuSignService(object):
         envelope.update_enrollment_status()
 
         # If this has been voided, we return an error.
-        if (enrollment_record.applicant_signing_status == EnrollmentApplication.SIGNING_STATUS_VOIDED
-                or enrollment_record.agent_signing_status == EnrollmentApplication.SIGNING_STATUS_VOIDED):
+        if enrollment_record.application_status == EnrollmentApplication.APPLICATION_STATUS_VOIDED:
             return None, [dict(message="This envelope has been voided, and can no longer be viewed or signed.", reason='voided_envelope')]
 
         # Does the employee need to sign?
@@ -283,9 +282,6 @@ class DocuSignService(object):
         else:
             url = envelope.get_completed_view_url(callback_url)
 
-
-
-        #url = envelope.get_signing_url(recipient, callback_url=callback_url, docusign_transport=get_docusign_transport())
         return url, errors
 
 def create_envelope(email_subject, components):
@@ -416,6 +412,7 @@ class DocusignEnvelope(object):
             coverage=self.get_coverage_summary(),
             case_id=self.enrollment_record.case_id,
             census_record_id=self.enrollment_record.census_record_id,
+            application_status=self.enrollment_record.application_status,
         )
 
     def get_product_names(self):
@@ -474,8 +471,6 @@ class DocusignEnvelope(object):
             self.mark_enrollment_pending()
 
     def void_enrollment(self):
-        self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_VOIDED
-        self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_VOIDED
         self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_VOIDED
 
     def decline_enrollment(self):
@@ -491,10 +486,11 @@ class DocusignEnvelope(object):
             self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
 
     def update_recipient_statuses(self):
+
         # Get employee if he is a signer.
         emp_signer = self.get_employee_signing_status()
         if emp_signer:
-            if emp_signer['status'] == 'sent':
+            if emp_signer['status'] == 'sent' or emp_signer['status'] == 'delivered':
                 # Not signed
                 self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_PENDING
                 self.enrollment_record.applicant_signing_datetime = None
@@ -509,7 +505,10 @@ class DocusignEnvelope(object):
                 self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_DECLINED
                 self.enrollment_record.applicant_signing_datetime = None
 
-                # TODO: Handle more statuses?
+            else:
+                # All other statuses are some form of pending
+                self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_PENDING
+                self.enrollment_record.applicant_signing_datetime = None
 
         else:
             # No employee signer on envelope.
