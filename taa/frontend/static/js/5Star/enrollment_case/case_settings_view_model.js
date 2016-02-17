@@ -539,6 +539,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     var cur_agent = settings.active_agents.filter(function (elem) {
       return elem.id === agent_id;
     }).first();
+    if (!cur_agent) {
+      return "";
+    }
     return cur_agent.first + " " + cur_agent.last;
   };
 
