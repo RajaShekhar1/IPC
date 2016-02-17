@@ -255,13 +255,49 @@ var StandardHealthQuestion = function (question, product_coverage) {
     return self.show_yes_dialogue();
   };
 
-  self.show_yes_dialogue = function () {
-    if (self.does_yes_stop_app()) {
-      handle_question_yes();
-    } else {
-      // do nothing
-    }
+  //self.show_yes_dialogue = function () {
+  //  if (self.does_yes_stop_app()) {
+  //    handle_question_yes();
+  //  } else {
+  //    // do nothing
+  //  }
+  //};
+
+  self.show_yes_dialogue = function (applicant) {
+
+    // If we get here, the applicant has answered 'Yes' to a question.
+    //   We offer a choice to remove the applicant directly from step 2.
+
+    var button_options = {
+      remove: {
+        label: "Remove this applicant", className: 'btn-danger', callback: function () {
+          var applicant_coverage_options = self.product_coverage.get_coverage_options_for_applicant(applicant);
+
+          // If child, we remove only the selected child, not all child coverage.
+          if (applicant.type == wizard_applicant.Applicant.ChildType) {
+            self.product_coverage.applicant_list.remove_applicant(applicant);
+          } else {
+            var null_option = _.find(applicant_coverage_options, function (o) {
+              return o.face_value == 0
+            });
+
+            self.product_coverage.__get_coverage_for_applicant(applicant).customized_coverage_option(null_option);
+          }
+        }
+      },
+      ignore: {
+        label: "Ignore and Continue", className: 'btn-default', callback: function () {
+          // Nothing to do in this case
+        }
+      }
+    };
+
+    bootbox.dialog({
+      message: "A \"yes\" response to this question disqualifies this person from obtaining coverage.  You may proceed with this application after removing this individual from the coverage selection before proceeding.",
+      buttons: button_options
+    });
   };
+
 
   self.does_any_applicant_need_to_answer = ko.pureComputed(function () {
 
