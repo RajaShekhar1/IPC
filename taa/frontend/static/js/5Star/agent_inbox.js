@@ -26,7 +26,7 @@ var agent_inbox = (function() {
       sign_envelope(envelope_id).success(function(resp) {
         var data = resp.data;
         // Remove voided envelope from the inbox immediately.
-        if (data.errors[0].reason === "voided_envelope") {
+        if (data.errors && data.errors.length > 0 && data.errors[0].reason === "voided_envelope") {
           var envelope = _.find(self.envelopes(), function(e) { return e.id === envelope_id});
           if (envelope) {
             self.envelopes.remove(envelope);

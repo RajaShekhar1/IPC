@@ -56,10 +56,10 @@
                       </td>
                     {% else %}
                       <td>
-                      {% if enrollment.status in ["Pending Employee", "Pending Agent"] and enrollment.envelope_id %}
+                      {% if enrollment.status in ["Pending Employee", "Pending Agent"] and enrollment.envelope_id and current_agent_id != None and current_agent_id == enrollment.agent_id %}
                         <button class="btn btn-warning btn-sm sign-envelope" data-id="{{ enrollment.envelope_id }}"><i class="icon fa fa-pencil"></i> Sign</button>
                       {% endif %}
-                      {% if enrollment.status in ["Enrolled"] and enrollment.envelope_id %}
+                      {% if enrollment.status in ["Enrolled"] and enrollment.envelope_id and (can_edit_case or current_agent_id == enrollment.agent_id) %}
                         <button class="btn btn-primary btn-sm sign-envelope" data-id="{{ enrollment.envelope_id }}"><i class="icon fa fa-file"></i> View</button>
                       {% endif %}
 
