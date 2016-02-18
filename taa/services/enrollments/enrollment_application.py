@@ -254,6 +254,9 @@ class EnrollmentApplicationService(DBService):
 
     def _save_coverages(self, enrollment, all_data):
         # Create coverage record for each applicant / product combination where coverage was selected.
+        if not isinstance(all_data, list):
+            all_data = [all_data]
+
         for data in all_data:
             if data['did_decline']:
                 continue
