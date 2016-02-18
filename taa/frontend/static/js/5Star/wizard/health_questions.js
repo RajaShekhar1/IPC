@@ -255,13 +255,49 @@ var StandardHealthQuestion = function (question, product_coverage) {
     return self.show_yes_dialogue();
   };
 
-  self.show_yes_dialogue = function () {
-    if (self.does_yes_stop_app()) {
-      handle_question_yes();
-    } else {
-      // do nothing
-    }
+  //self.show_yes_dialogue = function () {
+  //  if (self.does_yes_stop_app()) {
+  //    handle_question_yes();
+  //  } else {
+  //    // do nothing
+  //  }
+  //};
+
+  self.show_yes_dialogue = function (applicant) {
+
+    // If we get here, the applicant has answered 'Yes' to a question.
+    //   We offer a choice to remove the applicant directly from step 2.
+
+    var button_options = {
+      remove: {
+        label: "Remove this applicant", className: 'btn-danger', callback: function () {
+          var applicant_coverage_options = self.product_coverage.get_coverage_options_for_applicant(applicant);
+
+          // If child, we remove only the selected child, not all child coverage.
+          if (applicant.type == wizard_applicant.Applicant.ChildType) {
+            self.product_coverage.applicant_list.remove_applicant(applicant);
+          } else {
+            var null_option = _.find(applicant_coverage_options, function (o) {
+              return o.face_value == 0
+            });
+
+            self.product_coverage.__get_coverage_for_applicant(applicant).customized_coverage_option(null_option);
+          }
+        }
+      },
+      ignore: {
+        label: "Ignore and Continue", className: 'btn-default', callback: function () {
+          // Nothing to do in this case
+        }
+      }
+    };
+
+    bootbox.dialog({
+      message: "A \"yes\" response to this question disqualifies this person from obtaining coverage.  You may proceed with this application after removing this individual from the coverage selection before proceeding.",
+      buttons: button_options
+    });
   };
+
 
   self.does_any_applicant_need_to_answer = ko.pureComputed(function () {
 
@@ -533,24 +569,26 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
     var applicant_coverage_options = self.product_coverage.get_coverage_options_for_applicant(applicant);
     var applicant_coverage = self.product_coverage.__get_coverage_for_applicant(applicant);
     var previous_coverage_amount = applicant_coverage.get_previous_coverage_amount();
-    var reducted_gi_criterion = get_reduced_coverage_criteria(applicant);
+    var reduced_gi_criterion = get_reduced_coverage_criteria(applicant);
     
     var gi_amount = reduced_gi_criterion.guarantee_issue_amount;
     // Find an option, if possible, that gives the most coverage but is below the GI threshold.
     //  Note that we include any previously applied coverage in this calculation.
-    var reduced_option = _.max(
-        _.filter(applicant_coverage_options, function (o) {
-          return o.face_value > 0 && (previous_coverage_amount + o.face_value) <= gi_amount
-        }),
-        function (o) {
+    var filtered_options = _.filter(applicant_coverage_options, function (o) {
+      return o.face_value > 0 && (previous_coverage_amount + o.face_value) <= gi_amount
+    });
+
+    // If no option exists below the current coverage, return null.
+    if (filtered_options.length == 0) {
+      return null;
+    }
+
+    // Otherwise return the option with the largest coverage.
+    return _.max(
+        filtered_options, function (o) {
           return o.face_value
         }
     );
-    if (!isFinite(reduced_option)) {
-      return null;
-    } else {
-      return reduced_option;
-    }
   }
 
   self.does_employee_need_to_answer = ko.computed(function () {

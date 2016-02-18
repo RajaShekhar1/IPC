@@ -174,7 +174,7 @@ class EnrollmentSubmissionProcessor(object):
         # Exclude both from the envelope, use them only for tab generation purposes
         signing_agent = enrollment_data.get_signing_agent()
         recipients = [
-            AgentDocuSignRecipient(name=signing_agent.name(),
+            AgentDocuSignRecipient(signing_agent, name=signing_agent.name(),
                                   email=signing_agent.email,
                                   exclude_from_envelope=True),
             EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),

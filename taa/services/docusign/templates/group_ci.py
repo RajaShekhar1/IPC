@@ -1,4 +1,4 @@
-from taa.services.docusign.service import DocuSignServerTemplate
+from taa.services.docusign.service import DocuSignServerTemplate, DocuSignRadioTab, DocuSignTextTab
 from taa.services.docusign.DocuSign_config import get_template_id
 from taa.services.products import ProductService
 
@@ -16,47 +16,75 @@ class GroupCITemplate(DocuSignServerTemplate):
 
         self.data = enrollment_data
 
+    def num_children_on_form(self):
+        return 4
+
     def is_child_attachment_form_needed(self):
-        return self.data.get_num_covered_children() > 2
+        return self.data.get_num_covered_children() > self.num_children_on_form()
 
-    def generate_tabs(self, recipient):
+    def get_attachment_children(self):
+        return self.data.get_covered_children()[self.num_children_on_form():] if len(self.data.get_covered_children()) > self.num_children_on_form() else []
 
-        # TODO: check to see if this is needed for document e-signing on import
-        #tabs = super(GroupCITemplate, self).generate_tabs(recipient)
+    def should_include_bank_draft(self):
+        return self.data.should_include_bank_draft()
+
+    def generate_tabs(self, recipient, purpose):
+
+        tabs = super(GroupCITemplate, self).generate_tabs(recipient, purpose)
 
         if recipient.is_agent():
-            return self.make_agent_tabs()
-        elif recipient.is_employee():
-            return self.make_employee_tabs()
+            tabs += self.convert_to_tab_objects(self.make_agent_tabs())
+
+        if recipient.is_employee() or self.data.should_use_call_center_workflow():
+            tabs += self.convert_to_tab_objects(self.make_employee_tabs())
 
         return tabs
 
     def make_agent_tabs(self):
         agent_radios = []
-        # identical to whatever EE said
-        agent_radios.append(
-            {
-                'groupName': 'existingInsAgent',
-                'radios': [
-                    {
-                        'selected': 'True',
-                        'value': self.data['existing_insurance']
-                    }
-                ]
-            }
-        )
-        agent_radios.append(
-            {
-                'groupName': 'replaceAgent',
-                'radios': [
-                    {
-                        'selected': 'True',
-                        'value': self.data['replacing_insurance']
-                    }
-                ]
-            }
-        )
+
+        if not self.data.should_use_call_center_workflow():
+            # identical to whatever EE said
+            agent_radios.append(
+                {
+                    'groupName': 'existingInsAgent',
+                    'radios': [
+                        {
+                            'selected': 'True',
+                            'value': self.data['existing_insurance']
+                        }
+                    ]
+                }
+            )
+            agent_radios.append(
+                {
+                    'groupName': 'replaceAgent',
+                    'radios': [
+                        {
+                            'selected': 'True',
+                            'value': self.data['replacing_insurance']
+                        }
+                    ]
+                }
+            )
+
         return {'radioGroupTabs': agent_radios}
+
+    def convert_to_tab_objects(self, docusign_tabs):
+        "Takes docusign-formatted tab dicts and converts them to our internal, intermediate representation that our PDF renderer understands."
+        tabs = []
+
+        if 'radioGroupTabs' in docusign_tabs:
+            for tab in docusign_tabs['radioGroupTabs']:
+                for radio in tab['radios']:
+                    if radio.get('selected') == "True":
+                        tabs.append(DocuSignRadioTab(group_name=tab['groupName'], value=radio['value'], is_selected="True"))
+
+        if 'textTabs' in docusign_tabs:
+            for tab in docusign_tabs['textTabs']:
+                tabs.append(DocuSignTextTab(name=tab['tabLabel'], value=tab['value']))
+
+        return tabs
 
     def make_employee_tabs(self):
         # To get the legacy code below to work, make this a local variable.
@@ -356,8 +384,7 @@ def generate_ChildTabsEntry (child_index, wizard_data):
         {
             'tabLabel': childStr + 'Premium',
             'value':
-                format(child_coverage['premium']*52/12,
-                       ',.2f') if child_coverage else ''
+                format(child_coverage['premium'], ',.2f') if child_coverage else ''
         },
     ]
     return tabsList

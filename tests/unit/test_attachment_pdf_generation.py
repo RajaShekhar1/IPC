@@ -158,8 +158,7 @@ class TestPDFAttachments(TestCase):
 
     def setUp(self):
 
-
-        agent = AgentDocuSignRecipient(name="Zachary Mason", email="zmason@delmarsd.com")
+        agent = AgentDocuSignRecipient(agent=None, name="Zachary Mason", email="zmason@delmarsd.com")
         employee = EmployeeDocuSignRecipient(name="Joe Tester", email="zach@zachmason.com")
         self.test_recipients = [
             agent,

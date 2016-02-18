@@ -81,6 +81,9 @@ class Case(CaseSerializer, db.Model):
     occupation_class_settings = db.Column(JSON(none_as_null=False),
                                           nullable=True)
 
+    # Call center workflow setting
+    should_use_call_center_workflow = db.Column(db.Boolean, server_default='FALSE', nullable=False)
+
 
     def get_product_names(self):
         return ','.join(p.name for p in self.products)

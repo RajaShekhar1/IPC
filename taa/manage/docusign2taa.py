@@ -13,8 +13,6 @@ import dateutil.tz
 from flask_script import Command, Option
 
 from ..models import db
-from taa.services.docusign.service import DocuSignTextTab, DocuSignRadioTab
-from taa.services.enrollments import ImagedFormGeneratorService
 from taa.services.enrollments.models import FormTemplate, FormTemplateTabs
 
 
@@ -109,6 +107,10 @@ class DocusignImportCommand(Command):
                 font_size=tab['font_size'],
                 font_color=tab['font_color'],
                 recipient_role=tab['recipient_role'],
+                custom_tab_required=tab['custom_tab_required'],
+                custom_tab_locked=tab['custom_tab_locked'],
+                template_tab_required=tab['template_tab_required'],
+                template_tab_locked=tab['template_tab_locked']
             )
             db.session.add(new_tab)
         db.session.commit()
@@ -183,6 +185,10 @@ class DocusignDocument(object):
             recip_id = int(self._xpath('RecipientID', root=tab).text)
             recip_role = recipient_roles.get(recip_id, '')
 
+
+            def convert_to_bool(val):
+                return True if val == "true" else False
+
             data = {
                 'page': int(self._xpath('PageNumber', root=tab).text),
                 'x': int(self._xpath('XPosition', root=tab).text),
@@ -190,15 +196,9 @@ class DocusignDocument(object):
                 'name': self._xpath('Name', root=tab).text,
                 'type': self._xpath('Type', root=tab).text,
                 'label': self._xpath('TabLabel', root=tab).text,
-                'is_bold': self._get_or_none('Bold', tab,
-                                             lambda x:
-                                             True if x == 'true' else False),
-                'is_italic': self._get_or_none('Italic', tab,
-                                               lambda x:
-                                               True if x == 'true' else False),
-                'is_underline': self._get_or_none('Underline', tab,
-                                                  lambda x:
-                                                  True if x == 'true' else False),
+                'is_bold': self._get_or_none('Bold', tab, convert_to_bool),
+                'is_italic': self._get_or_none('Italic', tab, convert_to_bool),
+                'is_underline': self._get_or_none('Underline', tab, convert_to_bool),
                 'custom_type':
                     self._get_or_none('CustomTabType', tab),
                 'width': self._get_or_none('CustomTabWidth', tab, int),
@@ -209,10 +209,15 @@ class DocusignDocument(object):
                                       lambda x: int(''.join([c for c in x
                                                              if c.isdigit()]))),
                 'font_color': self._get_or_none('FontColor', root=tab),
-                'recipient_role':recip_role
+                'recipient_role':recip_role,
+                'custom_tab_required': self._get_or_none('CustomTabRequired', tab, convert_to_bool),
+                'custom_tab_locked':self._get_or_none('CustomTabLocked', tab, convert_to_bool),
+                'template_tab_required':self._get_or_none('TemplateTabRequired', tab, convert_to_bool),
+                'template_tab_locked':self._get_or_none('TemplateTabLocked', tab, convert_to_bool),
             }
             doc['tabs'].append(data)
         return doclist
+
 
     def _get_or_none(self, tag, root, f=None):
         if self._xpath(tag, root=root) is not None:

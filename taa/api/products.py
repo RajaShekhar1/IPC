@@ -16,6 +16,7 @@ read_product_rate_groups = ['agents', 'home_office', 'admins']
 product_service = ProductService()
 rider_service = RiderService()
 
+
 @route(bp, '/', methods=['GET'])
 @login_required
 @groups_required(read_product_api_groups, all=False)
@@ -59,7 +60,10 @@ def update_product(product_id):
     if product.is_base_product():
         # Handle a little differently
         product_service.update_product_restricted_agents(product, **data)
-        return product
+        del data['restricted_agents']
+        # Since we don't want to change the name of base products, delete the key
+        del data['name']
+        return product_service.update(product, **data)
 
     form = EditProductForm()
     if form.validate_on_submit():

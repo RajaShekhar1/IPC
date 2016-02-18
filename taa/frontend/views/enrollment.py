@@ -223,6 +223,13 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             child['type'] = u'children'
             applicants.append(child)
 
+    # Any FPP product for acknowledgment / disclosure box?
+    fpp_products = [p for p in products if p.is_fpp()]
+    any_fpp_product = bool(fpp_products)
+    fpp_base_product_code = None
+    if any_fpp_product:
+        fpp_base_product_code = fpp_products[0].get_base_product_code()
+
     wizard_data = dict(
         is_in_person=not is_self_enroll,
         case_data={
@@ -240,9 +247,10 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         applicants= applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in case.products],
         payment_modes=payment_mode_choices,
-        #beneficiaries=[],
         spouse_questions=spouse_questions,
         health_questions=soh_questions,
+        any_fpp_product=any_fpp_product,
+        fpp_base_product_code=fpp_base_product_code
     )
 
     # Commit any changes made (none right now)
@@ -258,6 +266,9 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
 
 def serialize_product_for_wizard(product, all_soh_questions):
     data = product.to_json()
+    # Override the name to be the base product name
+    data['name'] = product.get_base_product().name
+
     # Override code to be the base product code and alias it to base_product_type.
     data['code'] = product.get_base_product_code()
     data['base_product_type'] = data['code']
@@ -401,7 +412,7 @@ def submit_wizard_data():
     # For self-enroll situations, the owner agent is used
     # TODO: Use agent who sent emails for targeted links
     agent = agent_service.get_logged_in_agent()
-    if (agent is None and session.get('is_self_enroll') is not None):
+    if (agent is None and session.get('is_self_enroll')):
         agent = case.owner_agent
     try:
 
@@ -415,14 +426,19 @@ def submit_wizard_data():
             received_data=wizard_results,
         )
 
-        if not all(map(lambda data: data.get('did_decline'),  standardized_data)):
+        if not all(map(lambda data: data.get('did_decline'), standardized_data)):
             # Hand off wizard_results to docusign
             envelope_result, signing_url = create_multiproduct_envelope_and_fetch_signing_url(
                     standardized_data,
                     census_record,
                     case
             )
-            # Return the redirect url or error
+            enrollment_service.save_docusign_envelope(enrollment_application, envelope_result)
+
+            # Store the enrollment record ID in the session for now so we can access it on the landing page.
+            session['enrollment_application_id'] = enrollment_application.id
+
+            # Return the redirect url
             resp = {'error': False,
                     'error_message': "",
                     'redirect': signing_url}
@@ -457,6 +473,15 @@ def ds_landing_page():
     session_type = request.args['type']
     name = request.args['name']
     ds_event = request.args['event']
+
+    enrollment_application_id = session.get('enrollment_application_id')
+    if enrollment_application_id:
+        enrollment_application = enrollment_service.get(enrollment_application_id)
+        enrollment_service.update_applicant_signing_status(enrollment_application, ds_event)
+
+    # Need to commit all database changes.
+    db.session.commit()
+
     return render_template('enrollment/completed-session.html',
                            session_type=session_type,
                            name=name,

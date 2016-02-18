@@ -1,20 +1,25 @@
-import json
-from urlparse import urljoin
-import base64
+from datetime import datetime
+
 import StringIO
-from io import BytesIO
-from collections import defaultdict
-from decimal import Decimal
+import base64
+import json
+from itertools import ifilter
 
 import requests
+from PyPDF2 import PdfFileReader
+from collections import defaultdict
+from decimal import Decimal
+from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate
-from PyPDF2 import PdfFileReader
+from urlparse import urljoin
+from dateutil.parser import parse as parse_datetime
 
-from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callback_url
+from taa import app, db
+from taa.services.enrollments import EnrollmentApplicationCoverage, EnrollmentApplication
+from taa.services.agents import AgentService
 from taa.services import RequiredFeature, LookupService
-
-from taa import app
+from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callback_url
 
 
 class DocuSignService(object):
@@ -23,34 +28,41 @@ class DocuSignService(object):
     def create_multiproduct_envelope(self, product_submissions, census_record, case):
         # Use the first product to get employee and agent data
         first_product_data = EnrollmentDataWrap(product_submissions[0], census_record, case)
-        employee, recipients = self.create_envelope_recipients(case, first_product_data)
+        in_person_signer, recipients = self.create_envelope_recipients(case, first_product_data)
 
         # Create and combine components of the envelope from each product.
         components = []
         for product_submission in product_submissions:
             # Wrap the submission with an object that knows how to pull out key info.
             enrollment_data = EnrollmentDataWrap(product_submission, census_record, case)
+
+            # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
+            should_use_docusign_renderer = False if enrollment_data.should_use_call_center_workflow() else True
+
             product_id = product_submission['product_id']
             product = self.product_service.get(product_id)
             if product.is_fpp():
                 components += self.create_fpp_envelope_components(enrollment_data, recipients,
-                                                                  should_use_docusign_renderer=True)
+                                                                  should_use_docusign_renderer)
             else:
                 components += self.create_group_ci_envelope_components(enrollment_data, recipients,
-                                                                       should_use_docusign_renderer=True)
+                                                                       should_use_docusign_renderer)
 
+        signer_name = first_product_data.get_employee_name() if not enrollment_data.should_use_call_center_workflow() else recipients[0].name
         envelope_result = self.create_envelope(
             email_subject="Signature needed: {} ({})".format(
                 #first_product_data.get_product().name,
-                first_product_data.get_employee_name(),
+                signer_name,
                 first_product_data.get_employer_name()),
             components=components,
         )
-        return employee, envelope_result
+        return in_person_signer, envelope_result
 
     def create_fpp_envelope(self, enrollment_data, case):
-        employee, recipients = self.create_envelope_recipients(case, enrollment_data)
-        components = self.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer=True)
+        in_person_signer, recipients = self.create_envelope_recipients(case, enrollment_data)
+        # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
+        should_use_docusign_renderer = False if enrollment_data.should_use_call_center_workflow() else True
+        components = self.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer)
         envelope_result = self.create_envelope(
             email_subject="Signature needed: {} for {} ({})".format(
                 enrollment_data.get_product().name,
@@ -58,7 +70,7 @@ class DocuSignService(object):
                 enrollment_data.get_employer_name()),
             components=components,
         )
-        return employee, envelope_result
+        return in_person_signer, envelope_result
 
     def create_envelope(self, email_subject, components):
         docusign_transport = get_docusign_transport()
@@ -75,17 +87,23 @@ class DocuSignService(object):
         return DocusignEnvelope(result['uri'])
 
     def create_envelope_recipients(self, case, enrollment_data):
+
         signing_agent = enrollment_data.get_signing_agent()
-        agent = AgentDocuSignRecipient(name=signing_agent.name(),
+
+        agent = AgentDocuSignRecipient(signing_agent, name=signing_agent.name(),
                                        email=signing_agent.email)
         employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
                                              email=enrollment_data.get_employee_email())
-        recipients = [
-            agent,
-            employee,
-            # TODO Check if BCC's needed here
-        ]
-        return employee, recipients
+
+        if enrollment_data.should_use_call_center_workflow():
+            recipients = [agent]
+            return agent, recipients
+        else:
+            recipients = [
+                agent,
+                employee,
+            ]
+            return employee, recipients
 
     def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
         from taa.services.docusign.templates.fpp import FPPTemplate
@@ -102,14 +120,8 @@ class DocuSignService(object):
         fpp_form = FPPTemplate(recipients, enrollment_data, should_use_docusign_renderer)
         components.append(fpp_form)
 
-        # For transitional reasons, Group CI Import is fed through this code. Don't let replacement
-        # forms be generated for Group CI.
-        is_group_ci = enrollment_data.get_product_code() == 'Group CI'
-
         # Additional Children
-        # Note - can't attach to group CI in this way, since questions that show up will be FPP
-        #   and also because Group CI has 4 children on form.
-        if fpp_form.is_child_attachment_form_needed() and not is_group_ci:
+        if fpp_form.is_child_attachment_form_needed():
             child_attachment_form = ChildAttachmentForm(recipients, enrollment_data)
             for i, child in enumerate(fpp_form.get_attachment_children()):
                 # The indexing starts with the 3rd child.
@@ -124,18 +136,18 @@ class DocuSignService(object):
             components.append(child_attachment_form)
 
         # Percentage/Multiple beneficiaries
-        if fpp_form.is_beneficiary_attachment_needed() and not is_group_ci:
+        if fpp_form.is_beneficiary_attachment_needed():
             components.append(MultipleBeneficiariesAttachment(recipients, enrollment_data))
 
         # Replacement Form
-        if fpp_form.is_replacement_form_needed() and not is_group_ci:
+        if fpp_form.is_replacement_form_needed():
             replacement_form = FPPReplacementFormTemplate(recipients,
                                                           enrollment_data,
                                                           should_use_docusign_renderer)
             components.append(replacement_form)
 
         # Additional replacement policies form
-        if fpp_form.is_additional_replacement_policy_attachment_needed() and not is_group_ci:
+        if fpp_form.is_additional_replacement_policy_attachment_needed():
             components.append(AdditionalReplacementPoliciesForm(recipients,
                                                                 enrollment_data))
 
@@ -149,6 +161,7 @@ class DocuSignService(object):
 
     def create_group_ci_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
         from taa.services.docusign.templates.group_ci import GroupCITemplate
+        from taa.services.docusign.templates.fpp_bank_draft import FPPBankDraftFormTemplate
         from taa.services.docusign.documents.additional_children import ChildAttachmentForm
 
         # Build the components (different PDFs) needed for signing
@@ -159,21 +172,117 @@ class DocuSignService(object):
         components.append(form)
 
         # Additional Children
-        # if form.is_child_attachment_form_needed():
-        #     child_attachment_form = ChildAttachmentForm(recipients, enrollment_data)
-        #     for i, child in enumerate(form.get_attachment_children()):
-        #         # The indexing starts with the 3rd child.
-        #         child_index = i + 2
-        #         child_data = enrollment_data['child_coverages'][child_index]
-        #         child.update(dict(
-        #             coverage=format(Decimal(unicode(child_data['face_value'])), ',.0f'),
-        #             premium=format(Decimal(unicode(child_data['premium'])), '.2f')
-        #         ))
-        #         child_attachment_form.add_child(child)
-        #     components.append(child_attachment_form)
+        if form.is_child_attachment_form_needed():
+            child_attachment_form = ChildAttachmentForm(recipients, enrollment_data, starting_child_num=5)
+            for i, child in enumerate(form.get_attachment_children()):
+                # The indexing starts with the 3rd child.
+                child_index = i + form.num_children_on_form()
+                child_data = enrollment_data['child_coverages'][child_index]
+                child.update(dict(
+                    coverage=format(Decimal(unicode(child_data['face_value'])), ',.0f'),
+                    premium=format(Decimal(unicode(child_data['premium'])), '.2f'),
+                    soh_questions=enrollment_data['children_soh_questions'][child_index],
+                ))
+                child_attachment_form.add_child(child)
+            components.append(child_attachment_form)
+
+        # The second part of this statement is meant to restrict this form
+        # from showing up when importing enrollments until we implement
+        # collecting the Bank Draft data.
+        if form.should_include_bank_draft() and not enrollment_data.is_import():
+            components.append(FPPBankDraftFormTemplate(recipients, enrollment_data, should_use_docusign_renderer))
 
         return components
 
+    def search_envelopes(self, for_user, envelope_status=None):
+        enrollment_service = LookupService("EnrollmentApplicationService")
+
+        # Need to get all envelopes that this user is allowed to see.
+        agent_service = LookupService("AgentService")
+        if agent_service.is_user_agent(for_user):
+            # Envelopes that have been created by me.
+            agent = agent_service.get_agent_from_user(for_user)
+
+            own_enrollments = enrollment_service.search_enrollments(
+                    by_agent_id=agent.id,
+                    by_applicant_signing_status=envelope_status,
+            )
+
+            # Envelopes for partner agents on cases I own.
+            owned_case_ids = [case.id for case in agent.owned_cases]
+
+            partner_enrollments = db.session.query(EnrollmentApplication
+                ).filter(db.or_(EnrollmentApplication.agent_id != agent.id,
+                             EnrollmentApplication.agent_id == None,
+                             )
+                ).filter(EnrollmentApplication.case_id.in_(owned_case_ids)
+                )
+            enrollments = list(own_enrollments) + list(partner_enrollments)
+
+        else:
+            # Allow home office and admin to see all for now.
+            enrollments = enrollment_service.search_enrollments(
+                    by_agent_ids=None,
+                    by_applicant_signing_status=envelope_status,
+            )
+
+        return [DocusignEnvelope(enrollment.docusign_envelope_id, enrollment)
+                for enrollment in enrollments if enrollment.docusign_envelope_id is not None]
+
+    def get_envelope_signing_url(self, for_user, envelope_id):
+        "Must be the agent that the envelope was sent to (this user must be the recipient)"
+        errors = []
+
+        envelope_url = '/envelopes/%s'%envelope_id
+        agent_service = LookupService("AgentService")
+        enrollment_service = LookupService("EnrollmentApplicationService")
+        if not agent_service.is_user_agent(for_user):
+            raise ValueError("No agent record associated with user {}".format(for_user.href))
+
+        # TODO: Enforce the permissions better here. Might be easier to pass in enrollment ID,
+        #  since the caller should have that, then we just need to check if current user has
+        #  permissions on that enrollment record.
+
+        # Only envelopes that have been signed by me.
+        agent = agent_service.get_agent_from_user(for_user)
+        enrollments = enrollment_service.search_enrollments(
+            #by_agent_id=agent.id,
+            by_envelope_url=envelope_url,
+        )
+        enrollment_data = enrollments.all()
+
+        if not enrollment_data:
+            raise ValueError("No enrollment with envelope id {}".format(envelope_id))
+        enrollment_record = enrollment_data[0]
+
+        envelope = DocusignEnvelope(envelope_url, enrollment_record)
+
+        # Build a callback URL for the inbox
+        is_ssl = app.config.get('IS_SSL', True)
+        hostname = app.config.get('HOSTNAME', '5starenroll.com')
+        scheme = 'https://' if is_ssl else 'http://'
+        callback_url = ('{scheme}{hostname}/inbox?enrollment={enrollment_id}'.format(
+                    scheme=scheme,
+                    hostname=hostname,
+                    enrollment_id=enrollment_record.id,
+        ))
+
+        # First, we update our signing status
+        envelope.update_enrollment_status()
+
+        # If this has been voided, we return an error.
+        if enrollment_record.application_status == EnrollmentApplication.APPLICATION_STATUS_VOIDED:
+            return None, [dict(message="This envelope has been voided, and can no longer be viewed or signed.", reason='voided_envelope')]
+
+        # Does the employee need to sign?
+        if envelope.is_employee_sig_pending():
+            url = envelope.get_employee_signing_url(callback_url)
+        elif envelope.is_agent_sig_pending():
+            url = envelope.get_agent_signing_url(callback_url)
+        else:
+            url = envelope.get_completed_view_url(callback_url)
+
+        return url, errors
 
 def create_envelope(email_subject, components):
     docusign_service = LookupService('DocuSignService')
@@ -205,17 +314,17 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
 def create_multiproduct_envelope_and_fetch_signing_url(wizard_data, census_record, case):
 
     docusign_service = LookupService('DocuSignService')
-    employee, envelope_result = docusign_service.create_multiproduct_envelope(wizard_data, census_record, case)
+    in_person_signer, envelope_result = docusign_service.create_multiproduct_envelope(wizard_data, census_record, case)
 
     enrollment_data = EnrollmentDataWrap(wizard_data[0], census_record, case)
-    signing_url = fetch_signing_url(employee, enrollment_data, envelope_result)
+    signing_url = fetch_signing_url(in_person_signer, enrollment_data, envelope_result)
 
     return envelope_result, signing_url
 
 
-def fetch_signing_url(employee, enrollment_data, envelope_result):
+def fetch_signing_url(in_person_signer, enrollment_data, envelope_result):
     redirect_url = envelope_result.get_signing_url(
-        employee,
+        in_person_signer,
         callback_url=build_callback_url(
             enrollment_data, enrollment_data.get_session_type()),
         docusign_transport=get_docusign_transport()
@@ -224,24 +333,278 @@ def fetch_signing_url(employee, enrollment_data, envelope_result):
 
 
 class DocusignEnvelope(object):
-    def __init__(self, uri):
+    def __init__(self, uri, enrollment_record=None):
         self.uri = uri
+        self.enrollment_record = enrollment_record
+
+        self._cached_recipient_status = None
+        self._cached_envelope_status = None
+        self._cached_envelope_status_changes = None
+
+    def get_envelope_status_changes(self):
+        if self._cached_envelope_status_changes:
+            return self._cached_envelope_status_changes
+
+        url = '{}/envelopes?envelopeId={}'.format(self.get_account_base_url(), self.get_envelope_id())
+        self._cached_envelope_status_changes = get_docusign_transport().get(url)
+        return self._cached_envelope_status_changes
+
+    def get_recipient_status(self):
+        if self._cached_recipient_status:
+            return self._cached_recipient_status
+
+        docusign_transport = get_docusign_transport()
+        self._cached_recipient_status = docusign_transport.get("{}/recipients".format(self.get_envelope_base_url()))
+        return self._cached_recipient_status
+
+    def get_envelope_status(self):
+        if self._cached_envelope_status:
+            return self._cached_envelope_status
+
+        docusign_transport = get_docusign_transport()
+        self._cached_envelope_status = docusign_transport.get(self.get_envelope_base_url())
+        return self._cached_envelope_status
 
     def get_signing_url(self, recipient, callback_url, docusign_transport):
         data = dict(
             authenticationMethod="email",
             email=recipient.email,
             returnUrl=callback_url,
-            clientUserId="123456",
+            clientUserId=recipient.get_client_user_id(),
             userName=recipient.name,
         )
-        base_url = docusign_transport.api_endpoint
-        if base_url.endswith('/'):
-            base_url = base_url[:-1]
-        view_url = base_url + self.uri + "/views/recipient"
+        view_url = self.get_envelope_base_url() + "/views/recipient"
         result = docusign_transport.post(view_url, data=data)
 
         return result['url']
+
+    def get_envelope_base_url(self):
+        envelope_url = self.get_account_base_url() + self.uri
+        return envelope_url
+
+    def get_account_base_url(self):
+        url = get_docusign_transport().api_endpoint
+        if url.endswith('/'):
+            url = url[:-1]
+        return url
+
+    def to_json(self):
+
+        if self.enrollment_record.agent_name:
+            agent_name = self.enrollment_record.agent_name
+        else:
+            agent_name = ""
+
+        return dict(
+            id=self.get_envelope_id(),
+            agent_id=self.enrollment_record.agent_id,
+            agent=agent_name,
+            employee_signing_status=self.enrollment_record.applicant_signing_status,
+            employee_signing_datetime=self.enrollment_record.applicant_signing_datetime,
+            agent_signing_datetime=self.enrollment_record.agent_signing_datetime,
+            agent_signing_status=self.enrollment_record.agent_signing_status,
+            enrollment_record_id=self.enrollment_record.id,
+            group=self.enrollment_record.case.company_name,
+            timestamp=self.enrollment_record.signature_time,
+            employee_first=self.enrollment_record.census_record.employee_first,
+            employee_last=self.enrollment_record.census_record.employee_last,
+            products=self.get_product_names(),
+            coverage=self.get_coverage_summary(),
+            case_id=self.enrollment_record.case_id,
+            census_record_id=self.enrollment_record.census_record_id,
+            application_status=self.enrollment_record.application_status,
+        )
+
+    def get_product_names(self):
+        return ', '.join(set([coverage.product.name for coverage in self.enrollment_record.coverages]))
+
+    def get_coverage_summary(self):
+        ee_cov = None
+        sp_cov = None
+        ch_cov = None
+        for cov in self.enrollment_record.coverages:
+            if cov.applicant_type == EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE:
+                ee_cov = cov.coverage_face_value
+            elif cov.applicant_type == EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE:
+                sp_cov = cov.coverage_face_value
+            elif cov.applicant_type == EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD:
+                ch_cov = cov.coverage_face_value
+
+        def format_coverage_summary(val):
+            if not val:
+                return "-"
+            import locale
+            return locale.currency(int(val), grouping=True)
+
+        return '{} / {} / {}'.format(format_coverage_summary(ee_cov), format_coverage_summary(sp_cov), format_coverage_summary(ch_cov))
+
+    def get_envelope_id(self):
+        return self.uri.replace("/envelopes/", "")
+
+    def update_enrollment_status(self):
+        self.update_application_status()
+        self.update_recipient_statuses()
+
+        db.session.commit()
+
+    def update_application_status(self):
+        DS_ENV_STATUS_DELETED = "deleted"
+        DS_ENV_STATUS_VOIDED = "voided"
+        DS_ENV_STATUS_DECLINED = "declined"
+        DS_ENV_STATUS_COMPLETED = "completed"
+        # These statuses are all "pending" full completion.
+        DS_ENV_STATUS_SIGNED = "signed"
+        DS_ENV_STATUS_DELIVERED = "delivered"
+        DS_ENV_STATUS_SENT = "sent"
+        DS_ENV_STATUS_CREATED = "created"
+
+        # Based on the signing status and envelope status
+        env_status = self.get_envelope_status()['status']
+        if env_status in [DS_ENV_STATUS_VOIDED, DS_ENV_STATUS_DELETED]:
+            self.void_enrollment()
+        elif env_status in [DS_ENV_STATUS_DECLINED]:
+            self.decline_enrollment()
+        elif env_status in [DS_ENV_STATUS_COMPLETED]:
+            self.complete_enrollment()
+        else:
+            # Anything else is a pending status
+            self.mark_enrollment_pending()
+
+    def void_enrollment(self):
+        self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_VOIDED
+
+    def decline_enrollment(self):
+        self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
+
+    def complete_enrollment(self):
+        self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+
+    def mark_enrollment_pending(self):
+        if self.is_employee_sig_pending():
+            self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
+        else:
+            self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
+
+    def update_recipient_statuses(self):
+
+        # Get employee if he is a signer.
+        emp_signer = self.get_employee_signing_status()
+        if emp_signer:
+            if emp_signer['status'] == 'sent' or emp_signer['status'] == 'delivered':
+                # Not signed
+                self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_PENDING
+                self.enrollment_record.applicant_signing_datetime = None
+
+            elif emp_signer.get('signedDateTime'):
+                # Employee Signed
+                self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_COMPLETE
+                self.enrollment_record.applicant_signing_datetime = self.parse_signing_date(
+                    emp_signer.get('signedDateTime'))
+
+            elif emp_signer['status'] == 'declined':
+                self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_DECLINED
+                self.enrollment_record.applicant_signing_datetime = None
+
+            else:
+                # All other statuses are some form of pending
+                self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_PENDING
+                self.enrollment_record.applicant_signing_datetime = None
+
+        else:
+            # No employee signer on envelope.
+            self.enrollment_record.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_NA
+
+        agent_signer = self.get_agent_signing_status()
+        if agent_signer:
+            if agent_signer['status'] == 'sent' or agent_signer['status'] == 'delivered':
+                # Not signed
+                self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_PENDING
+
+            elif agent_signer.get('signedDateTime'):
+                # Employee Signed
+                self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_COMPLETE
+                self.enrollment_record.agent_signing_datetime = self.parse_signing_date(
+                    agent_signer.get('signedDateTime'))
+            elif agent_signer['status'] == 'declined':
+                self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_DECLINED
+                self.enrollment_record.agent_signing_datetime = None
+
+
+
+    def parse_signing_date(self, val):
+        utc_datetime = parse_datetime(val)
+
+        # Docusign datetimes are UTC and include TZ info. We are storing localtimes for now on the server, so convert it.
+
+        from dateutil.tz import tzlocal
+        from datetime import datetime
+
+        # First add the local timezone offset to the UTC date.
+        local_utc_offset = datetime.now(tzlocal()).utcoffset()
+        local_datetime_with_tz = utc_datetime + local_utc_offset
+
+        # Strip off the timezone info by parsing a format without TZ info.
+        #  (We don't want to store the TZ info in the database)
+        return parse_datetime(local_datetime_with_tz.strftime("%FT%T"))
+
+    def is_employee_sig_pending(self):
+        # First, is employee even a signer?
+        employee_signing_status = self.get_employee_signing_status()
+        if not employee_signing_status:
+            return False
+
+        signed_date_time = employee_signing_status.get('signedDateTime')
+        return not bool(signed_date_time)
+
+    def is_agent_sig_pending(self):
+        # First, is employee even a signer?
+        agent_sig_status = self.get_agent_signing_status()
+        if not agent_sig_status:
+            return False
+
+        signed_date_time = agent_sig_status.get('signedDateTime')
+        return not bool(signed_date_time)
+
+    def get_employee_signing_status(self):
+        return self.find_recipient_by_role(self.get_recipient_status(), "Employee")
+
+    def get_agent_signing_status(self):
+        return self.find_recipient_by_role(self.get_recipient_status(), "Agent")
+
+    def find_recipient_by_role(self, recipient_status, role_name):
+        return next(ifilter(lambda r: r['roleName'] == role_name, recipient_status.get('signers', [])), None)
+
+    def get_employee_signing_url(self, callback_url):
+        ds_recip = self.get_employee_signing_status()
+        #recipient = AgentDocuSignRecipient(agent, agent.name(), agent.email)
+        recipient = EmployeeDocuSignRecipient(
+            name=ds_recip['name'],
+            email=ds_recip['email'],
+            role_name="Employee",
+        )
+        return self.get_signing_url(recipient, callback_url, get_docusign_transport())
+
+    def get_agent_signing_url(self, callback_url):
+        ds_recip = self.get_agent_signing_status()
+        #recipient = AgentDocuSignRecipient(agent, agent.name(), agent.email)
+        #return self.get_signing_url(recipient, callback_url, get_docusign_transport())
+        # TODO: should put check here to see if current user is actually agent, or up one level?
+        data = dict(
+            authenticationMethod="email",
+            email=ds_recip['email'],
+            returnUrl=callback_url,
+            clientUserId=ds_recip['clientUserId'],
+            userName=ds_recip['name'],
+        )
+        view_url = self.get_envelope_base_url() + "/views/recipient"
+        result = get_docusign_transport().post(view_url, data=data)
+
+        return result['url']
+
+    def get_completed_view_url(self, callback_url):
+        # Return any valid recipient view
+        return self.get_agent_signing_url(callback_url)
+
 
 
 def get_docusign_transport():
@@ -264,6 +627,16 @@ class DocuSignTransport(object):
         self.api_password = api_password
         self.api_endpoint = api_endpoint
 
+    def get(self, url):
+        full_url = urljoin(self.api_endpoint, url)
+
+        req = requests.get(full_url, headers=self._make_headers())
+
+        if req.status_code < 200 or req.status_code >= 300:
+            self._raise_docusign_error(None, full_url, req)
+
+        return req.json()
+
     def post(self, url, data):
         full_url = urljoin(self.api_endpoint, url)
 
@@ -279,17 +652,33 @@ class DocuSignTransport(object):
         #print('headers: %s'%self._make_headers())
 
         if req.status_code < 200 or req.status_code >= 300:
-            # Print error to Heroku error logs.
-            print("""
+            self._raise_docusign_error(data, full_url, req)
+
+        return req.json()
+
+    def put(self, url, data):
+        full_url = urljoin(self.api_endpoint, url)
+
+        req = requests.put(
+            full_url,
+            data=json.dumps(data),
+            headers=self._make_headers()
+        )
+
+        if req.status_code < 200 or req.status_code >= 300:
+            self._raise_docusign_error(data, full_url, req)
+
+        return req.json()
+
+    def _raise_docusign_error(self, data, full_url, req):
+        # Print error to Heroku error logs.
+        print("""
 DOCUSIGN ERROR at URL: %s
 posted data: %s
 status is: %s
 response:
 %s""" % (full_url, data, req.status_code, req.text))
-
-            raise Exception("Bad DocuSign Request")
-
-        return req.json()
+        raise Exception("Bad DocuSign Request")
 
     def _make_headers(self):
         return {
@@ -304,12 +693,12 @@ response:
 
 # Envelope Recipient
 class DocuSignRecipient(object):
-    def __init__(self, name, email, cc_only=False, role_name=None, exclude_from_envelope=False):
+    def __init__(self, name, email, cc_only=False, role_name=None, exclude_from_envelope=False, use_embedded_signing=True):
         self.name = name
         self.email = email
         self.cc_only = cc_only
         self.role_name = role_name
-
+        self._use_embedded_signing = use_embedded_signing
         self._exclude_from_envelope = exclude_from_envelope
 
     def is_carbon_copy(self):
@@ -339,6 +728,12 @@ class DocuSignRecipient(object):
     def should_exclude_from_envelope(self):
         return self._exclude_from_envelope
 
+    def should_use_embedded_signing(self):
+        return bool(self._use_embedded_signing)
+
+    def get_client_user_id(self):
+        raise NotImplementedError()
+
 
 class EmployeeDocuSignRecipient(DocuSignRecipient):
     def is_employee(self):
@@ -347,14 +742,34 @@ class EmployeeDocuSignRecipient(DocuSignRecipient):
     def is_required(self):
         return True
 
+    def should_use_embedded_signing(self):
+        # Always uses embedded signing process.
+        return True
+
+    def get_client_user_id(self):
+        return "ee-123456"
 
 class AgentDocuSignRecipient(DocuSignRecipient):
+    def __init__(self, agent, name, email, cc_only=False, role_name=None, exclude_from_envelope=False,
+                 use_embedded_signing=True):
+
+        super(AgentDocuSignRecipient, self).__init__(name, email, cc_only, role_name, exclude_from_envelope,
+                                                     use_embedded_signing)
+        self.agent = agent
+
     def is_employee(self):
         return False
 
     def is_agent(self):
         return True
 
+    def get_client_user_id(self):
+        return "123456"
+        # Use the stormpath URL for this agent
+        agent_service = AgentService()
+        # Hash our agent id
+        import hashlib
+        return hashlib.sha256("agent-{}".format(self.agent.id)).hexdigest()
 
 class CarbonCopyRecipient(DocuSignRecipient):
     def is_employee(self): return False
@@ -364,11 +779,57 @@ class CarbonCopyRecipient(DocuSignRecipient):
 
 # Tabs
 class DocuSignTab(object):
-    pass
+    def __init__(self, x=None, y=None, document_id=None, page_number=None, locked=None, required=None,
+                 width=None, height=None, tooltip=None):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+        self.document_id = document_id
+        self.page_number = page_number
+        self.locked = locked
+        self.required = required
+        self.tooltip = tooltip
+
+    def build_data(self):
+        "Base data that applies to all tabs."
+
+        data = {}
+
+        if self.x is not None:
+            data['xPosition'] = int(self.x)
+        if self.y is not None:
+            data['yPosition'] = int(self.y)
+        if self.document_id is not None:
+            data['documentId'] = self.document_id
+        if self.page_number is not None:
+            data['pageNumber'] = self.page_number
+
+        if self.width is not None:
+            data['width'] = self.width
+
+        if self.height is not None:
+            data['height'] = self.height
+
+        if self.locked is not None:
+            data['locked'] = self.locked
+
+        if self.required is not None:
+            data['required'] = self.required
+
+        if self.tooltip is not None:
+            # They call tooltip 'name' for some reason.
+            data['name'] = self.tooltip
+
+        return data
 
 
 class DocuSignRadioTab(DocuSignTab):
-    def __init__(self, group_name, value, is_selected=True):
+    def __init__(self, group_name, value, is_selected=True, x=None, y=None, document_id=None, page_number=None):
+
+        super(DocuSignRadioTab, self).__init__(x, y, document_id, page_number)
+
         self.group_name = self.name = group_name
         self.value = value
         self.is_selected = is_selected
@@ -380,54 +841,107 @@ class DocuSignRadioTab(DocuSignTab):
         # Find the radio with this group name if it exists
         radio_group = next((tab for tab in tabs['radioGroupTabs'] if tab['groupName'] == self.group_name), None)
         if not radio_group:
-            radio_group = dict(groupName=self.group_name, radios=[])
+            radio_group = dict(groupName=self.group_name, radios=[], documentID=self.document_id)
             tabs['radioGroupTabs'].append(radio_group)
 
         # Add this radio
-        radio_group['radios'].append(dict(
-            selected="True" if self.is_selected else "False",
+        data = self.build_data()
+        data.update(dict(
             value=str(self.value),
+            selected=bool(self.is_selected),
         ))
+        radio_group['radios'].append(data)
 
 
 class DocuSignTextTab(DocuSignTab):
-    def __init__(self, name, value):
+    def __init__(self, name, value, x=None, y=None, document_id=None, page_number=None, width=None, height=None,
+                 is_bold=None, is_italic=None, is_underline=None, font=None, font_size=None, font_color=None,
+                 required=None, tooltip=None):
+
+        super(DocuSignTextTab, self).__init__(x, y, document_id, page_number,
+                                              width=width, height=height, required=required, tooltip=tooltip)
+
         self.name = name
         self.value = value
+
+        self.font = font
+        self.font_size = font_size
+        self.font_color = font_color
+
+        self.is_bold = is_bold
+        self.is_underlined = is_underline
+        self.is_italic = is_italic
 
     def add_to_tabs(self, tabs):
         if 'textTabs' not in tabs:
             tabs['textTabs'] = []
 
-        tabs['textTabs'].append(dict(tabLabel=self.name, value=self.value))
+        data = self.build_data()
+        text_data = dict(
+            tabLabel=self.name,
+            value=self.value,
+        )
+        for attr, docu_attr in [
+            ('font', 'font'),
+            ('font_size', 'fontSize'),
+            ('font_color', 'fontColor'),
+            ('is_bold', 'bold'),
+            ('is_underlined', 'underline'),
+            ('is_italic', 'italic'),
+            ]:
+            if getattr(self, attr) is not None:
+                text_data[docu_attr] = getattr(self, attr)
+
+        data.update(text_data)
+        tabs['textTabs'].append(data)
+
 
 class DocuSignPreSignedTextTab(DocuSignTextTab):
     pass
 
+
 class DocuSignSigTab(DocuSignTab):
-    def __init__(self, x, y, document_id, page_number):
-        self.x = x
-        self.y = y
-        self.document_id = document_id
-        self.page_number = page_number
-        self.name = "SignHere"
+    def __init__(self, x, y, document_id, page_number, name=None):
+
+        super(DocuSignSigTab, self).__init__(x, y, document_id, page_number)
+        self.name = name if name else "SignHere"
 
     def add_to_tabs(self, tabs):
         if 'signHereTabs' not in tabs:
             tabs['signHereTabs'] = []
 
-        tabs['signHereTabs'].append(dict(
+        tabs['signHereTabs'].append(self.build_data())
+
+
+class DocuSignSigDateTab(DocuSignTab):
+    def __init__(self, x, y, document_id, page_number, name=None):
+
+        super(DocuSignSigDateTab, self).__init__(x, y, document_id, page_number)
+        self.name = name if name else 'SigDate'
+
+    def add_to_tabs(self, tabs):
+        if 'dateSignedTabs' not in tabs:
+            tabs['dateSignedTabs'] = []
+
+        tabs['dateSignedTabs'].append(dict(
             xPosition=int(self.x),
             yPosition=int(self.y),
             documentId=self.document_id,
             pageNumber=self.page_number,
         ))
 
-
 # Envelope Components - basically, some sort of document or template
 #
 # Base class
 class DocuSignEnvelopeComponent(object):
+
+    tab_repository = RequiredFeature('FormTemplateTabRepository')
+    pdf_generator_service = RequiredFeature("ImagedFormGeneratorService")
+
+    # Constants used for determining purpose of tab generation.
+    PDF_TABS = u'pdf_tabs'
+    DOCUSIGN_TABS = u'docusign_tabs'
+
     def __init__(self, recipients):
         """
         The order of the recipients dictates the DocuSign routing order for now.
@@ -458,8 +972,9 @@ class DocuSignEnvelopeComponent(object):
                 templateRequired=recipient.is_required(),
                 tabs=self.generate_docusign_formatted_tabs(recipient),
             )
-            if recipient.is_employee():
-                recip_repr['clientUserId'] = "123456"
+            if recipient.should_use_embedded_signing():
+                # TODO: Generate if needed
+                recip_repr['clientUserId'] = recipient.get_client_user_id()
 
             if self.is_recipient_signer(recipient):
                 output["signers"].append(recip_repr)
@@ -471,23 +986,45 @@ class DocuSignEnvelopeComponent(object):
     def generate_docusign_formatted_tabs(self, recipient):
         # Format tabs for docusign
         ds_tabs = {}
-        generated_tabs = self.generate_tabs(recipient)
+        generated_tabs = self.generate_tabs(recipient, self.DOCUSIGN_TABS)
 
-        # Check to see if
-        if isinstance(generated_tabs, dict):
-            ds_tabs.update(generated_tabs)
-            return ds_tabs
+        # Check to see if we are already returning docusign-formatted tab
+        # if isinstance(generated_tabs, dict):
+        #     ds_tabs.update(generated_tabs)
+        #     return ds_tabs
 
         for tab in generated_tabs:
             tab.add_to_tabs(ds_tabs)
 
         return ds_tabs
 
-    def generate_tabs(self, recipient):
+    def generate_tabs(self, recipient, purpose):
         """Returns list of our own internal tab representation"""
 
-        # Inject any signature data that has been passed from the enrollment.
+        # Inject any signature and date data that has been passed from the enrollment.
         tabs = []
+
+        # Convert call-center employee signatures to voice-auth statements.
+        if purpose == self.PDF_TABS and self.data.should_use_call_center_workflow() and hasattr(self, 'template_id'):
+            tab_definitions = self.tab_repository.get_tabs_for_template(self.template_id)
+            for tab_def in tab_definitions:
+                # The PDF Export code currently expects a name of "{}{}".format(tab_type, recip_type)
+                #   In order to match up tab defs to values correctly.
+                if tab_def.type_ == "SignHere" and tab_def.recipient_role == "Employee":
+                    tabs += [DocuSignTextTab("SignHereEmployee", self.data.get_employee_esignature(),
+                                                     x=tab_def.x, y=tab_def.y,
+                                                      document_id=1, page_number=tab_def.page,
+                                                      )]
+                elif tab_def.type_ == "DateSigned" and tab_def.recipient_role == "Employee":
+                    tabs.append(DocuSignTextTab("DateSignedEmployee", datetime.today().strftime('%m/%d/%Y'),
+                        x=tab_def.x,
+                        y=tab_def.y,
+                        document_id=1,
+                        page_number=tab_def.page,
+                    ))
+
+
+        # This is for enrollment import - replace signatures with text when rendering PDF.
         if self.data.get('emp_sig_txt'):
             tabs += [DocuSignPreSignedTextTab("SignHereEmployee", self.data.get_employee_esignature())]
             tabs += [DocuSignPreSignedTextTab("InitialHereEmployee", self.data.get_employee_initials())]
@@ -495,11 +1032,19 @@ class DocuSignEnvelopeComponent(object):
             tabs += [DocuSignPreSignedTextTab("SignHereAgent", self.data.get_agent_esignature())]
             tabs += [DocuSignPreSignedTextTab("InitialHereAgent", self.data.get_agent_initials())]
 
-        if self.data.get('application_date'):
+        # Dates
+        if self.data.get('application_date') or self.data.get('emp_sig_date'):
+            employee_signed_date = self.data.get('application_date') if self.data.get('application_date') else self.data.get('emp_sig_date')
+            tabs += [DocuSignPreSignedTextTab("DateSignedEmployee", employee_signed_date)]
+
+        if self.data.get('application_date') or self.data.get('agent_sig_date'):
+            agent_signed_date = self.data.get('application_date') if self.data.get('application_date') else self.data.get('agent_sig_date')
             tabs += [
-                DocuSignPreSignedTextTab("DateSignedEmployee", self.data.get('application_date')),
-                DocuSignPreSignedTextTab("DateSignedAgent", self.data.get('application_date')),
+                DocuSignPreSignedTextTab("DateSignedAgent", agent_signed_date),
             ]
+
+
+
 
         return tabs
 
@@ -526,7 +1071,6 @@ class DocuSignEnvelopeComponent(object):
 # Server-side template base class.
 class DocuSignServerTemplate(DocuSignEnvelopeComponent):
 
-    pdf_generator_service = RequiredFeature("ImagedFormGeneratorService")
 
     def __init__(self, template_id, recipients, use_docusign_renderer=True):
         DocuSignEnvelopeComponent.__init__(self, recipients)
@@ -568,7 +1112,7 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
     def generate_pdf_bytes(self):
         tabs = []
         for recipient in self.recipients:
-            tabs += self.generate_tabs(recipient)
+            tabs += self.generate_tabs(recipient, purpose=self.PDF_TABS)
         pdf_bytes = self.pdf_generator_service.generate_form_pdf(
             self.template_id,
             tabs,
@@ -580,16 +1124,67 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
         num_pages = reader.getNumPages()
         return num_pages
 
-    def generate_tabs(self, recipient):
-        return super(DocuSignServerTemplate, self).generate_tabs(recipient)
+    def generate_tabs(self, recipient, purpose):
+        tabs = super(DocuSignServerTemplate, self).generate_tabs(recipient, purpose)
+
+        # Include all agent tabs if this is call center mode.
+        if purpose == self.DOCUSIGN_TABS and self.data.should_use_call_center_workflow():
+            # Find the tab definition
+            tab_definitions = self.tab_repository.get_tabs_for_template(self.template_id)
+            for tab_def in tab_definitions:
+                if tab_def.type_ == "SignHere" and tab_def.recipient_role == "Agent":
+                    tabs.append(DocuSignSigTab(
+                        x=tab_def.x,
+                        y=tab_def.y,
+                        # Not sure what this is?
+                        document_id=1,
+                        page_number=tab_def.page,
+                    ))
+                elif tab_def.type_ == "DateSigned" and tab_def.recipient_role == "Agent":
+                    tabs.append(DocuSignSigDateTab(
+                        x=tab_def.x,
+                        y=tab_def.y,
+                        # Not sure if we will need to generate this?
+                        document_id=1,
+                        page_number=tab_def.page,
+                    ))
+                # Include all radio button tabs that were not locked, both employee and agent.
+                elif tab_def.custom_type == "Radio" and tab_def.custom_tab_locked == False:
+                    label = tab_def.label.split('.')[0] if len(tab_def.label.split('.')) > 1 else tab_def.label
+                    tabs.append(DocuSignRadioTab(
+                        label,
+                        is_selected=False,
+                        value=tab_def.name,
+                        x=tab_def.x,
+                        y=tab_def.y,
+                        document_id=1,
+                        page_number=tab_def.page))
+
+                elif tab_def.custom_type == "Text" and tab_def.custom_tab_locked == False:
+                    tabs.append(
+                        DocuSignTextTab(
+                            # Tab def label is really the name
+                            name=tab_def.label,
+                            value="",
+                            x=tab_def.x,
+                            y=tab_def.y,
+                            width=tab_def.width,
+                            height=tab_def.height,
+                            document_id=1,
+                            page_number=tab_def.page,
+                            required=tab_def.custom_tab_required,
+                        ))
+
+
+        return tabs
 
     def is_recipient_signer(self, recipient):
         return recipient.is_employee() or recipient.is_agent()
 
 
+
+
 # Custom PDF documents
-
-
 class BasePDFDoc(DocuSignEnvelopeComponent):
 
     pdf_generator_service = RequiredFeature("ImagedFormGeneratorService")
@@ -638,7 +1233,8 @@ class BasePDFDoc(DocuSignEnvelopeComponent):
         # Add any tabs needed and merge them onto this PDF
         tabs = []
         for r in self.recipients:
-            tabs += self.generate_tabs(r)
+            tabs += self.generate_tabs(r, self.PDF_TABS)
+
         pdf_bytes = self.pdf_generator_service.generate_overlay_pdf_from_tabs(
             tabs,
             # Sig tabs will be auto-generated

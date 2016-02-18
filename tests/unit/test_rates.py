@@ -5,6 +5,8 @@ import operator as op
 import random
 from collections import OrderedDict
 
+from hamcrest import assert_that, equal_to
+
 from taa.services.products import ProductService, Product
 from taa.services.products.rates import Rates, TYPE_COVERAGE, TYPE_PREMIUM
 from taa.services.products.payment_modes import MODES_BY_MODE
@@ -14,11 +16,8 @@ from taa.services.products.payment_modes import MODES_BY_MODE
 rates = Rates()
 VERIFIER = {}
 
-# Just have two to test that it separates the rates.
+# Group CI is only product using lookup table anymore.
 base_products = [
-    Product(
-        code='FPPTI',
-    ),
     Product(
         code='Group CI',
     )
@@ -59,7 +58,8 @@ def get_rates_for(product_code, payment_mode, age, smoker=None, digits=2):
         for item in iter(VERIFIER.get(
                 (product_code, payment_mode, type_, age)).items()):
             result[type_].append(
-                {'coverage': item[0] if type_ == TYPE_COVERAGE else item[1],
+                {'payment_mode': payment_mode,
+                 'coverage': item[0] if type_ == TYPE_COVERAGE else item[1],
                  'premium': round(item[0], digits) if type_ == TYPE_PREMIUM
                  else round(item[1], digits)}
             )
@@ -73,12 +73,7 @@ def get_rates_for(product_code, payment_mode, age, smoker=None, digits=2):
 def test_groupci():
     for payment_mode in iter(MODES_BY_MODE.keys()):
         for age in ages:
-            assert cmp(rates.get('Group CI', payment_mode, age),
-                       get_rates_for('Group CI', payment_mode, age)) == 0
-
-def test_fppti():
-    for payment_mode in iter(MODES_BY_MODE.keys()):
-        for age in ages:
-            assert cmp(rates.get('FPPTI', payment_mode, age),
-                       get_rates_for('FPPTI', payment_mode, age)) == 0
+            assert_that(rates.get('Group CI', payment_mode, age),
+                        equal_to(get_rates_for('Group CI', payment_mode, age))
+                        )
 

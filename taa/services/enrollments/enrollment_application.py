@@ -4,6 +4,7 @@ import json
 from decimal import Decimal
 
 import dateutil.parser
+from taa.services.docusign.service import DocusignEnvelope
 
 from enrollment_application_coverages import (
     filter_applicant_coverages,
@@ -25,6 +26,31 @@ class EnrollmentApplicationService(DBService):
     case_service = RequiredFeature('CaseService')
     product_service = RequiredFeature('ProductService')
     batch_item_service = RequiredFeature('EnrollmentImportBatchItemService')
+
+    def search_enrollments(self,
+                           by_agent_id=None,
+                           by_agent_ids=None,
+                           by_envelope_url=None,
+                           by_applicant_signing_status=None, by_agent_signing_status=None):
+        q = db.session.query(EnrollmentApplication)
+        q.options(db.eagerload('coverages', 'product'))
+
+        if by_envelope_url:
+            q = q.filter(EnrollmentApplication.docusign_envelope_id == by_envelope_url)
+
+        if by_agent_id:
+            q = q.filter(EnrollmentApplication.agent_id == by_agent_id)
+
+        if by_agent_ids:
+            q = q.filter(EnrollmentApplication.agent_id.in_(by_agent_ids))
+
+        if by_applicant_signing_status:
+            q = q.filter(EnrollmentApplication.applicant_signing_status == by_applicant_signing_status)
+
+        if by_agent_signing_status:
+            q = q.filter(EnrollmentApplication.agent_signing_status == by_agent_signing_status)
+
+        return q
 
     def save_enrollment_data(self, data, case, census_record, agent, received_data=None):
         """
@@ -65,6 +91,37 @@ class EnrollmentApplicationService(DBService):
         # Save coverages
         self._save_coverages(enrollment, data)
         return enrollment
+
+    def save_docusign_envelope(self, enrollment_application, envelope):
+        """Records a reference to a DocuSign envelope on our application record in the database."""
+
+        enrollment_application.docusign_envelope_id = envelope.uri
+        enrollment_application.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_PENDING
+        db.session.flush()
+
+    def update_applicant_signing_status(self, enrollment_application, status):
+
+        envelope = DocusignEnvelope(enrollment_application.docusign_envelope_id, enrollment_application)
+        envelope.update_enrollment_status()
+        #
+        # # Map what docusign returns to our own status
+        # status_mapping_possibilities = {
+        #     'cancel': EnrollmentApplication.SIGNING_STATUS_DECLINED, # (recipient cancels signing)
+        #     'decline': EnrollmentApplication.SIGNING_STATUS_DECLINED, # (recipient declines signing)
+        #     'exception': EnrollmentApplication.SIGNING_STATUS_ERROR, #  (exception occurs)
+        #     #'fax_pending', #  (recipient has fax pending)
+        #     #'id_check_faild', #  (recipient failed an ID check)
+        #     'session_timeout': EnrollmentApplication.SIGNING_STATUS_TIMEOUT, #  (session times out)
+        #     'signing_complete': EnrollmentApplication.SIGNING_STATUS_COMPLETE, #  (recipient completes signing)
+        #     'ttl_expired':EnrollmentApplication.SIGNING_STATUS_TTL_ERROR, #  (the TTL expires)
+        #     #'viewing_complete', #  (recipient completes viewing the envelope)
+        # }
+        #
+        # if status in status_mapping_possibilities:
+        #     internal_status = status_mapping_possibilities[status]
+        #     enrollment_application.applicant_signing_status = internal_status
+        #     db.session.flush()
+        #
 
     def delete_case_enrollment_data(self, case):
         for census_record in case.census_records:
@@ -266,9 +323,27 @@ class EnrollmentApplicationService(DBService):
 
     def get_enrollment_status(self, census_record):
         # Get the flattened enrollment record
-        enrollment_data = self.get_enrollment_data(census_record)
-        return (enrollment_data['application_status']
-                if enrollment_data else None)
+        #enrollment_data = self.get_enrollment_data(census_record)
+        #return (enrollment_data['application_status']
+        #        if enrollment_data else None)
+
+        enrollment_records = census_record.enrollment_applications
+
+        # If any is pending, we say the whole record is pending so as to not have more than one pending at a time.
+        if any([e for e in enrollment_records if e.is_pending_employee()]):
+            return EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
+        elif any([e for e in enrollment_records if e.is_pending_agent()]):
+            return EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
+        # Otherwise, we check to see if anyone has ever enrolled for this record
+        elif any([e for e in enrollment_records if e.did_enroll()]):
+            return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+        elif any([e for e in enrollment_records if e.did_decline()]):
+            return EnrollmentApplication.APPLICATION_STATUS_DECLINED
+        else:
+            return None
+
+
+
 
     def get_census_data(self, census_record):
         return census_record.to_json()
@@ -278,12 +353,12 @@ class EnrollmentApplicationService(DBService):
         #        should merge these functions and remove extraneous code
         #        since no other code needs a merged record
         enrollment_data = {}
-        enrollments_with_sig_times = [e for e in census_record.enrollment_applications if e.signature_time]
-        if not enrollments_with_sig_times:
+        undeclined_enrollments = [e for e in census_record.enrollment_applications if not e.did_decline()]
+        if not undeclined_enrollments:
             return None
         # Get the most recent enrollment for the generic data
-        enrollment = max(enrollments_with_sig_times,
-                         key=lambda e: e.signature_time)
+        enrollment = max(undeclined_enrollments,
+                         key=lambda e: e.applicant_signing_datetime)
         # Export data from enrollment
         for col in enrollment_columns:
             enrollment_data[col.get_field_name()] = col.get_value(enrollment)
@@ -412,6 +487,11 @@ class EnrollmentApplicationService(DBService):
             enrollment_data['{}_total_premium'.format(prefix)] = total_product_premium
 
         enrollment_data['total_annual_premium'] = total_annual_premium
+        if enrollment.docusign_envelope_id:
+            envelope = DocusignEnvelope(uri=enrollment.docusign_envelope_id, enrollment_record=enrollment)
+            enrollment_data['docusign_envelope_id'] = envelope.get_envelope_id()
+        else:
+            enrollment_data['docusign_envelope_id'] = None
 
         return enrollment_data
 

@@ -33,7 +33,10 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     identity_token_type = db.Column(db.Unicode(64))
     # Application status
     APPLICATION_STATUS_ENROLLED = u'enrolled'
+    APPLICATION_STATUS_PENDING_AGENT = u'pending_agent'
+    APPLICATION_STATUS_PENDING_EMPLOYEE = u'pending_employee'
     APPLICATION_STATUS_DECLINED = u'declined'
+    APPLICATION_STATUS_VOIDED = u'voided'
     application_status = db.Column(db.Unicode(32))
     # Payment mode
     payment_mode = db.Column(db.Integer(), nullable=True)
@@ -68,6 +71,33 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     # Save the raw data that we receive
     received_data = db.Column(JSON(none_as_null=False))
     standardized_data = db.Column(JSON(none_as_null=False))
+
+    docusign_envelope_id = db.Column(db.Unicode(128))
+    agent_signing_status = db.Column(db.Unicode(32))
+    agent_signing_datetime = db.Column(db.DateTime)
+    applicant_signing_status = db.Column(db.Unicode(32))
+    applicant_signing_datetime = db.Column(db.DateTime)
+
+    SIGNING_STATUS_PENDING = u'pending'
+    SIGNING_STATUS_DECLINED = u'declined_to_sign'
+    SIGNING_STATUS_TIMEOUT = u'timeout'
+    SIGNING_STATUS_ERROR = u'error'
+    SIGNING_STATUS_TTL_ERROR = u'ttl_expired'
+    SIGNING_STATUS_COMPLETE = u'signed'
+    SIGNING_STATUS_NA = u'not_applicable'
+
+    def is_pending(self):
+        return self.is_pending_employee() or self.is_pending_agent()
+
+    def is_pending_employee(self):
+        return self.application_status in [self.APPLICATION_STATUS_PENDING_EMPLOYEE]
+
+    def is_pending_agent(self):
+        return self.application_status in [self.APPLICATION_STATUS_PENDING_AGENT]
+
+
+    def did_decline(self):
+        return self.application_status == self.APPLICATION_STATUS_DECLINED
 
     def did_enroll(self):
         return self.application_status == self.APPLICATION_STATUS_ENROLLED
@@ -260,8 +290,7 @@ CaseCensus.sent_email_count = db.column_property(
             where(db.or_(
                 SelfEnrollmentEmailLog.status == SelfEnrollmentEmailLog.STATUS_SUCCESS,
                 SelfEnrollmentEmailLog.status == SelfEnrollmentEmailLog.STATUS_PENDING,
-            )).\
-            correlate_except(SelfEnrollmentEmailLog)
+            )).correlate_except(SelfEnrollmentEmailLog)
 )
 
 
@@ -387,3 +416,10 @@ class FormTemplateTabs(db.Model):
     font_size = db.Column(db.Integer)
     font_color = db.Column(db.Unicode)
     recipient_role = db.Column(db.Unicode)
+
+    template_tab_locked = db.Column(db.Boolean)
+    template_tab_required = db.Column(db.Boolean)
+    custom_tab_locked = db.Column(db.Boolean)
+    custom_tab_required = db.Column(db.Boolean)
+
+

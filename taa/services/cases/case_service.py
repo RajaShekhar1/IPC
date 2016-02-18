@@ -199,26 +199,12 @@ class CaseService(DBService):
         from taa.services.enrollments.models import EnrollmentApplication
         query = self.census_records.find(case_id=case.id)
 
-        # Filter enrollment status. Also load in any enrollment data eagerly.
-        if include_enrolled == False:
-            # Since we need to filter on enrollment status, pull in the
-            # enrollment applications if it exists.
-            query = query.outerjoin('enrollment_applications').filter(
-                EnrollmentApplication.application_status ==
-                EnrollmentApplication.APPLICATION_STATUS_DECLINED)
-            query = query.options(
-                db.contains_eager('enrollment_applications'
-                                 ).subqueryload('coverages'
-                                 ).joinedload('product')
-            )
-        else:
-            # Eager load enrollment applications, coverages, and associated
-            # products
-            query = query.options(
-                db.joinedload('enrollment_applications'
-                    ).subqueryload('coverages'
-                    ).joinedload('product')
-            )
+        # Eager load enrollment applications, coverages, and associated products
+        query = query.outerjoin('enrollment_applications').options(
+            db.contains_eager('enrollment_applications'
+                ).subqueryload('coverages'
+                ).joinedload('product')
+        )
 
         if filter_agent:
             # Only show enrolled census records where this agent was the enrolling agent.
@@ -325,14 +311,10 @@ class CaseService(DBService):
             return self.agent_can_view_case(agent, case)
         return False
 
-    def create_ad_hoc_census_record(self, case, **data):
-        # Ad-hoc records that decline are a special case that have no
-        # requirements
-        # if 'ssn' not in data:
-        #    abort(400, "SSN is required to create an ad-hoc census record")
-        ssn = data.get('ssn', '').replace('-', '')
-        record =  self.census_records.add_record(case, **dict(employee_ssn=ssn,
-                                                              is_uploaded_census=False))
+    def create_ad_hoc_census_record(self, case, data):
+        """Creates a census record and updates the data from standardized enrollment data"""
+        record = self.census_records.add_record(case, **dict(is_uploaded_census=False))
+        self.update_census_record_from_enrollment(record, data)
         db.session.flush()
         return record
 

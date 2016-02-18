@@ -1,6 +1,7 @@
 # DocuSign API Walkthrough 08 (PYTHON) - Embedded Signing
 import decimal
 import random
+from datetime import datetime
 
 import flask
 import re
@@ -213,8 +214,17 @@ class EnrollmentDataWrap(object):
         return '%.2f' % amount
 
     def get_total_children_premium(self):
-        return sum(decimal.Decimal(unicode(child_coverage.get('premium', '0.00')))
-                   for child_coverage in self.data["child_coverages"])
+        if self.get_product().is_fpp():
+            # Add up the child premium for each child if this is FPP
+            return sum(decimal.Decimal(unicode(child_coverage.get('premium', '0.00')))
+                       for child_coverage in self.data["child_coverages"])
+        else:
+            # Just use the first child premium, if any.
+            if len(self.data["child_coverages"]) > 0:
+                child_coverage = self.data["child_coverages"][0]
+                return decimal.Decimal(unicode(child_coverage.get('premium', '0.00')))
+
+            return decimal.Decimal('0.00')
 
     def get_total_modal_premium(self):
         total = decimal.Decimal('0.00')
@@ -239,7 +249,9 @@ class EnrollmentDataWrap(object):
         return covered_children
 
     def get_employee_esignature(self):
-        return self.data.get('emp_sig_txt', '')
+        # Replace employee signature with "John Doe voice auth on file 02:45pm"
+        esig = "{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%H:%M%p"))
+        return self.data.get('emp_sig_txt', esig)
 
     def get_employee_initials(self):
         return self.data.get('emp_initials_txt', '')
@@ -315,6 +327,8 @@ class EnrollmentDataWrap(object):
     def should_include_bank_draft(self):
         return self.case.include_bank_draft_form
 
+    def should_use_call_center_workflow(self):
+        return self.case.should_use_call_center_workflow
 
 def build_callback_url(wizard_data, session_type):
     is_ssl = app.config.get('IS_SSL', True)

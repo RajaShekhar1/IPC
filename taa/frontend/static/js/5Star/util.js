@@ -34,6 +34,10 @@ function format_enrollment_status_text(status) {
     return "Enrolled";
   } else if (status === "declined") {
     return "Declined";
+  } else if (status === "pending_employee") {
+    return "Pending Employee";
+  } else if (status === "pending_agent") {
+    return "Pending Agent";
   } else {
     return "Not Enrolled";
   }
@@ -46,6 +50,8 @@ function format_enrollment_status_html(status) {
   } else {
     if (status_text === "Enrolled") {
       return "<span class='enroll-status ace-icon glyphicon glyphicon-ok'> </span><span class='enroll-status'> Enrolled</span>";
+    } else if (status_text === "Pending Employee" || status_text === "Pending Agent") {
+      return "<span class='enroll-status pending icon glyphicon glyphicon-pencil'></span><span class='enroll-status pending'>" + status_text + "</span>";
     } else {
       return "<span class='ace-icon glyphicon glyphicon-remove error'></span> <span class='enroll-status declined'> Declined</span>";
     }
@@ -60,7 +66,14 @@ function parse_month_date_input(val) {
 // check if today is between a start and end date
 function today_between(start, end) {
   var today = moment();
-  return today.isSameOrAfter(moment(start), 'day') && today.isSameOrBefore(moment(end), 'day')
+  var is_after_start = today.isSameOrAfter(moment(start), 'day');
+  if (!moment(end).isValid()) {
+    return is_after_start;
+  } else {
+    var is_before_end = today.isSameOrBefore(moment(end), 'day');
+    return is_after_start && is_before_end
+  }
+
 }
 
 // Date handling
@@ -215,6 +228,34 @@ ko.bindingHandlers.modal = {
   }
 };
 
+// Simple DataTable binding using a javascript data source (usually observable)
+ko.bindingHandlers.dataTable = {
+
+
+  update: function(element, valueAccessor) {
+    var bind_opts = ko.unwrap(valueAccessor());
+    var datatable_opts = $.extend({}, bind_opts.options);
+    var data_observable = bind_opts.data;
+
+    var updated_data = data_observable();
+
+    if (!$.fn.DataTable.fnIsDataTable(element) && updated_data.length > 0) {
+      // Initialize DataTable for the first time.
+
+      // Add data to table.
+      datatable_opts.data = updated_data;
+
+      // Create table
+      $(element).//wrap("<div class='dataTables_borderWrap' />").
+            DataTable(datatable_opts);
+
+    } else if (updated_data.length > 0) {
+        var table = $(element).DataTable();
+        table.clear();
+        table.rows.add(updated_data).draw();
+    }
+  }
+};
 
 ko.bindingHandlers.flashMessage = {
   update: function (element, valueAccessor) {

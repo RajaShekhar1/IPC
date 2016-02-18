@@ -176,7 +176,8 @@ var wizard_viewmodel = (function() {
         if (!matching_applicant_coverage) {
           return format_premium_value(0.0);
         }
-        applicant_total += matching_applicant_coverage.coverage_option().premium;
+
+        applicant_total += matching_applicant_coverage.get_total_premium();
       });
       return format_premium_value(applicant_total);
     },
@@ -279,7 +280,7 @@ var wizard_viewmodel = (function() {
       // See if there is a product-setting that enables this rider for this case.
       return _.any(case_data.product_settings.riders, function(r) {
         return (
-            self.product.product_data.base_product_type === r.product_code &&
+            self.product.product_data.id === r.product_id &&
             rider.code === r.rider_code &&
             r.is_selected
         );
@@ -533,7 +534,7 @@ var wizard_viewmodel = (function() {
         return total;
       }
       _.each(this.applicant_coverage_selections(), function(applicant_coverage) {
-        total += applicant_coverage.coverage_option().premium;
+        total += applicant_coverage.get_total_premium();
       }, this);
       return total;
     }
@@ -638,6 +639,15 @@ var wizard_viewmodel = (function() {
     },
     format_selected_premium: function() {
       return this.get_selected_coverage().format_premium_option();
+    },
+
+    get_total_premium: function() {
+      // If this is an FPP product, and the applicant is a children group, we multiply the selected premium by the number of children.
+      if (this.applicant.type === wizard_applicant.Applicant.ChildType && this.product.is_fpp_product()) {
+        return this.coverage_option().premium * this.applicant.applicants().length;
+      }
+
+      return this.coverage_option().premium;
     },
 
     get_previous_coverage_amount: function() {

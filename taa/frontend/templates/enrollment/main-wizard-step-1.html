@@ -138,7 +138,7 @@
         <!--ko if: $root.should_show_weight() -->
         <div class="form-group col-sm-4">
           <label class="">
-            Weight: <input type="number" class="text-right"
+            Weight: <input type="number" class="text-right" max="9999" min="0"
                            data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
           </label>
         </div>
@@ -326,12 +326,12 @@
 
             <h3 data-bind="text: current_product().format_product_name()"></h3>
             <div  data-bind="slideDownIf: !current_product().did_decline()">
-              <ul class="list-unstyled" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">
-                <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">
-                  <span class="step" data-bind="text: $index() + 1"></span>
-                  <span class="title" data-bind="text: product_coverage.format_product_name()"></span>
-                </li>
-              </ul>
+{#              <ul class="list-unstyled" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">#}
+{#                <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">#}
+{#                  <span class="step" data-bind="text: $index() + 1"></span>#}
+{#                  <span class="title" data-bind="text: product_coverage.format_product_name()"></span>#}
+{#                </li>#}
+{#              </ul>#}
 
               <div class="" data-bind="
                 template: {name: current_product().get_coverage_selection_template(), data: current_product()}
@@ -615,7 +615,7 @@
 
 </script>
 
-{# This is for step 6, but it is so similar to the above summary table for step 1 that I wanted to leave it here. #}
+{# This is for step 6, but it is so similar to the above summary table for step 1 that I want to leave it here. #}
 <script type="text/html" id="multi-product-summary-table">
   <table class="table table-striped table-bordered table-responsive summary-table" data-bind="with: coverage_summary_vm"
       style="border-top-width: 1px;">
@@ -624,7 +624,7 @@
         <th></th>
         <!--ko foreach: {data: product_coverages}-->
           <th class="text-center">
-            <div style="display: inline-block; width: 20px; border: 1px solid #eee; border-radius: 20px; background-color: white" data-bind="text: $index()+1"></div>
+            <div class="circled-number" data-bind="text: $index()+1, visible: $root.coverage_vm.has_multiple_products()"></div>
             <span data-bind="text: product.product_data.name"></span>
           </th>
         <!--/ko-->
@@ -634,7 +634,7 @@
     <tbody>
       <!--ko foreach: {data: valid_applicants, as: 'applicant'} -->
         <tr>
-          <td data-bind="text: applicant.name"></td>
+          <td class="text-center" data-bind="text: applicant.name"></td>
           <!--ko foreach: {data: $parent.product_coverages, as: 'product_coverage'} -->
             <!--ko if: product_coverage.did_decline-->
               <td class="text-center">
@@ -658,9 +658,18 @@
       {# Totals #}
       <tfoot>
         <tr>
-          <th class="text-center">Totals: </th>
+
+          <th class="text-center">
+            <span data-bind="visible: $root.coverage_vm.has_multiple_products()">Totals:</span>
+          </th>
+
           <!--ko foreach: {data: $parent.products, as: 'product'} -->
-            <th  class="text-center" data-bind="text: $parents[1].format_total_premium_for_product(product)"></th>
+            <!--ko if: $root.coverage_vm.has_multiple_products()-->
+              <th  class="text-center" data-bind="text: $parents[1].format_total_premium_for_product(product)"></th>
+            <!--/ko-->
+            <!--ko if: !$root.coverage_vm.has_multiple_products()-->
+              <th></th>
+            <!--/ko-->
           <!--/ko-->
           <th class="text-center" data-bind="text: $parent.format_grand_total_premium()"></th>
         </tr>
