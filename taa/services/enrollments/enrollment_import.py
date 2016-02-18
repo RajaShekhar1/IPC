@@ -176,7 +176,6 @@ class EnrollmentImportService(object):
             output['replacement_is_terminating'] = False
             output['replacement_using_funds'] = False
             output['replacement_policies'] = []
-        import ipdb; ipdb.set_trace()
 
         # Update beneficiary data to new format
         output.update(

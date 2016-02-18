@@ -11,6 +11,7 @@ from flask import render_template
 
 from .models import db
 from taa.services import RequiredFeature
+from taa.services.products.plan_codes import get_plan_code
 from dell import *
 
 
@@ -308,6 +309,7 @@ def get_policy_info(data, form_for):
     policy['replacement_type_code'] = replacement_type['code']
     policy['replacement_type'] = replacement_type['name']
     # TODO: need to determine logic for plan mapping
+    # policy['product_type'] = get_plan_code(data['product_type'], None)
     if data['product_type'] == 'FPPTI':
         policy.update({'product_code': 'Term'})
     else:
