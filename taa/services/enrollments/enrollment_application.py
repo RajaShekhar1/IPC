@@ -171,6 +171,10 @@ class EnrollmentApplicationService(DBService):
                 application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
         else:
             data = wizard_data
+            if data['did_decline']:
+                application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
+            else:
+                application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
 
         given_sig_time = data.get('time_stamp')
         signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
@@ -250,6 +254,9 @@ class EnrollmentApplicationService(DBService):
 
     def _save_coverages(self, enrollment, all_data):
         # Create coverage record for each applicant / product combination where coverage was selected.
+        if not isinstance(all_data, list):
+            all_data = [all_data]
+
         for data in all_data:
             if data['did_decline']:
                 continue
@@ -333,7 +340,7 @@ class EnrollmentApplicationService(DBService):
         if any([e for e in enrollment_records if e.is_pending_employee()]):
             return EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
         elif any([e for e in enrollment_records if e.is_pending_agent()]):
-            return EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
+            return EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
         # Otherwise, we check to see if anyone has ever enrolled for this record
         elif any([e for e in enrollment_records if e.did_enroll()]):
             return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
