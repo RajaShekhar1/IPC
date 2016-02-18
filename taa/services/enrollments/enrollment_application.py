@@ -333,7 +333,7 @@ class EnrollmentApplicationService(DBService):
         if any([e for e in enrollment_records if e.is_pending_employee()]):
             return EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
         elif any([e for e in enrollment_records if e.is_pending_agent()]):
-            return EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
+            return EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
         # Otherwise, we check to see if anyone has ever enrolled for this record
         elif any([e for e in enrollment_records if e.did_enroll()]):
             return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
