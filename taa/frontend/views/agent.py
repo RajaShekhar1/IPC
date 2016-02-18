@@ -240,8 +240,11 @@ def edit_census_record(case_id, census_record_id):
     )
     if agent:
         vars['can_edit_case'] = (agent is case_service.get_case_owner(case))
+        vars['current_agent_id'] = agent.id
     else:
         vars['can_edit_case'] = True
+        vars['current_agent_id'] = None
+
     return render_template('agent/census_record.html', **vars)
 
 
@@ -255,7 +258,8 @@ def format_enroll_data(enrollment_data, product_number):
             status=format_status(enrollment_data["application_status"]),
             total=reduce(lambda coverage_type, accum: calc_total(enrollment_data, product_number, coverage_type, accum),
                          ["emp", "sp", "ch"], 0),
-            envelope_id=enrollment_data['docusign_envelope_id']
+            envelope_id=enrollment_data['docusign_envelope_id'],
+            agent_id=enrollment_data['agent_id'],
         )
     else:
         data = None

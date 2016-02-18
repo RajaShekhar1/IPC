@@ -493,6 +493,8 @@ class EnrollmentApplicationService(DBService):
         else:
             enrollment_data['docusign_envelope_id'] = None
 
+        enrollment_data['agent_id'] = enrollment.agent_id
+
         return enrollment_data
 
     def find_most_recent_coverage_by_product_for_applicant_type(self,

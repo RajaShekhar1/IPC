@@ -14,10 +14,11 @@ var case_management = (function() {
               // Show enroll button in first column
               {"aTargets":[0], "bSortable": false, "mData":function(source) {
                 if (source.enrollment_status === "enrolled") {
-                  return '<button class="btn btn-primary btn-xs enroll-employee" data-id="'+source.id+'"><span class="ace-icon glyphicon glyphicon-plus"></span> Add Coverage</button>';
+                    return '<button class="btn btn-primary btn-xs enroll-employee" data-id="'+source.id+'"><span class="ace-icon glyphicon glyphicon-plus"></span> Add Coverage</button>';
                 } else if (source.enrollment_status === "pending_employee" || source.enrollment_status === "pending_agent") {
-                  //return '<button class="btn btn-primary btn-xs enroll-employee" data-id="'+source.id+'"><span class="ace-icon fa fa-pencil"></span> Sign</button>'
-                    return "<a class='btn btn-warning btn-xs' href='/enrollment-case/"+source.case_id+"/census/" + source.id + "'><span class='icon fa fa-pencil'></span> Sign</a>";
+                    //return '<button class="btn btn-primary btn-xs enroll-employee" data-id="'+source.id+'"><span class="ace-icon fa fa-pencil"></span> Sign</button>'
+                    // No button because only the agent who created it can enroll, and we don't have that agent id in this record right now.
+                    return "";//"<a class='btn btn-warning btn-xs' href='/enrollment-case/"+source.case_id+"/census/" + source.id + "'><span class='icon fa fa-pencil'></span> Sign</a>";
                 } else {
                     return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'">Enroll</button>';
                 }

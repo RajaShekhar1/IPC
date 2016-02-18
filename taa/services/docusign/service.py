@@ -14,6 +14,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate
 from urlparse import urljoin
 from dateutil.parser import parse as parse_datetime
+from taa.services.users import UserService
 
 from taa import app, db
 from taa.services.enrollments import EnrollmentApplicationCoverage, EnrollmentApplication
@@ -234,17 +235,9 @@ class DocuSignService(object):
         errors = []
 
         envelope_url = '/envelopes/%s'%envelope_id
-        agent_service = LookupService("AgentService")
+
         enrollment_service = LookupService("EnrollmentApplicationService")
-        if not agent_service.is_user_agent(for_user):
-            raise ValueError("No agent record associated with user {}".format(for_user.href))
 
-        # TODO: Enforce the permissions better here. Might be easier to pass in enrollment ID,
-        #  since the caller should have that, then we just need to check if current user has
-        #  permissions on that enrollment record.
-
-        # Only envelopes that have been signed by me.
-        agent = agent_service.get_agent_from_user(for_user)
         enrollments = enrollment_service.search_enrollments(
             #by_agent_id=agent.id,
             by_envelope_url=envelope_url,
@@ -269,6 +262,19 @@ class DocuSignService(object):
 
         # First, we update our signing status
         envelope.update_enrollment_status()
+
+        # Now, see if we can view this envelope based on who is logged in and the status.
+        agent_service = LookupService("AgentService")
+
+        # If not completed, we kick the user out if not an admin or an agent.
+        # TODO: Enforce the permissions better here. Might be easier to pass in enrollment ID,
+        #  since the caller should have that, then we just need to check if current user has
+        #  permissions on that enrollment record.
+        if not envelope.is_completed() and not agent_service.is_user_agent(for_user) and not agent_service.can_manage_all_cases(for_user):
+            raise ValueError("No agent record associated with user {}".format(for_user.href))
+
+        # Only envelopes that have been signed by me.
+        agent = agent_service.get_agent_from_user(for_user)
 
         # If this has been voided, we return an error.
         if enrollment_record.application_status == EnrollmentApplication.APPLICATION_STATUS_VOIDED:
@@ -605,6 +611,10 @@ class DocusignEnvelope(object):
         # Return any valid recipient view
         return self.get_agent_signing_url(callback_url)
 
+    def is_completed(self):
+        """Basically is it all done, enrolled.
+        Might add declined to this to allow viewing declines."""
+        return self.enrollment_record.application_status == EnrollmentApplication.APPLICATION_STATUS_ENROLLED
 
 
 def get_docusign_transport():
