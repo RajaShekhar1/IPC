@@ -201,19 +201,46 @@
             <div class="form-group">
               <div class="col-md-2 control-label"><label for="product-short-name">Short Name</label></div>
               <div class="col-md-6">
-                <input id="product-short-name" class="form-control" data-bind='value: product().customer_short_name, enable: product.editable'>
+                <span data-bind="if: !product().use_base_product_settings.customer_short_name()"> 
+                  <input id="product-short-name" class="form-control" data-bind='value: product().customer_short_name, enable: !product().use_base_product_settings.customer_short_name()'>
+                </span>
+                <span data-bind="if: product().use_base_product_settings.customer_short_name()"> 
+                  <input class="form-control" disabled data-bind="value: product().customer_short_name_display()" />
+                </span>
+                <span data-bind="if: product().base_product_id">
+                  <input type="checkbox" data-bind="checked: product().use_base_product_settings.customer_short_name">
+                  Use Base Product Settings
+                </span>
               </div>
             </div>
             <div class="form-group">
               <div class="col-md-2 control-label"><label for="brochure-name">Brochure Name</label></div>
               <div class="col-md-6">
-                <input id="brochure-name" class="form-control" data-bind='value: product().brochure_name, enable: product.editable'>
+                <span data-bind="if: !product().use_base_product_settings.brochure_name()"> 
+                  <input id="brochure-name" class="form-control" data-bind='value: product().brochure_name, enable: !product().use_base_product_settings.brochure_name()'> 
+                </span>
+                <span data-bind="if: product().use_base_product_settings.brochure_name()"> 
+                  <input class="form-control" disabled data-bind="value: product().brochure_name_display()" />
+                </span>
+                <span data-bind="if: product().base_product_id">
+                  <input type="checkbox" data-bind="checked: product().use_base_product_settings.brochure_name"> 
+                  Use Base Product Settings
+                </span>
               </div>
             </div>
             <div class="form-group">
               <div class="col-md-2 control-label"><label for="brochure-url">Brochure Url</label></div>
               <div class="col-md-6">
-                <input id="brochure-url" class="form-control" data-bind='value: product().brochure_url, enable: product.editable'>
+                <span data-bind="if: !product().use_base_product_settings.brochure_url()"> 
+                <input id="brochure-url" class="form-control" data-bind='value: product().brochure_url'>
+                </span>
+                <span data-bind="if: product().use_base_product_settings.brochure_url()"> 
+                  <input disabled class="form-control" data-bind="value: product().brochure_url_display()" />
+                </span>
+                <span data-bind="if: product().base_product_id">
+                  <input type="checkbox" data-bind="checked: product().use_base_product_settings.brochure_url"> 
+                  Use Base Product Settings
+                </span>
               </div>
             </div>
 
@@ -382,13 +409,57 @@ $(function() {
 
     self.id = ko.observable(custom_product.id);
     self.name = ko.observable(custom_product.name);
-    self.customer_short_name = ko.observable(custom_product.customer_short_name);
-    self.brochure_name = ko.observable(custom_product.brochure_name);
-    self.brochure_url = ko.observable(custom_product.brochure_url);
     self.base_product_id = ko.observable(custom_product.base_product_id);
     self.gi_criteria = ko.observableArray($.map(custom_product.gi_criteria, function(c) {
       return new GICriterionViewModel(c);
     }));
+
+    self.base_product = ko.observable();
+
+    if(custom_product.use_base_product_settings !== null) {
+      var base_product_settings = JSON.parse(custom_product.use_base_product_settings); 
+      self.use_base_product_settings = {
+        customer_short_name: ko.observable(base_product_settings.customer_short_name),
+        brochure_name: ko.observable(base_product_settings.brochure_name),
+        brochure_url: ko.observable(base_product_settings.brochure_url)
+      };
+    } else {
+      self.use_base_product_settings = {
+        customer_short_name: ko.observable(false),
+        brochure_name: ko.observable(false),
+        brochure_url: ko.observable(false)
+      };
+    }
+    self.customer_short_name = ko.observable(custom_product.customer_short_name);
+    self.customer_short_name_display = ko.computed(function() {
+      var use_base_setting = self.use_base_product_settings.customer_short_name();
+      if(use_base_setting) {
+        if(self.base_product !== "") {
+          return self.base_product().customer_short_name();
+        }
+      } 
+      return custom_product.customer_short_name;
+    });
+    self.brochure_name = ko.observable(custom_product.brochure_name);
+    self.brochure_name_display = ko.computed(function() {
+      var use_base_setting = self.use_base_product_settings.brochure_name();
+      if(use_base_setting) {
+        if(self.base_product() !== "") {
+          return self.base_product().brochure_name();
+        }
+      } 
+      return custom_product.brochure_name;
+    });
+    self.brochure_url = ko.observable(custom_product.brochure_url);
+    self.brochure_url_display = ko.computed(function() {
+      var use_base_setting = self.use_base_product_settings.brochure_url();
+      if(use_base_setting) {
+        if(self.base_product()) {
+          return self.base_product().brochure_url();
+        }
+      } 
+      return custom_product.brochure_url;
+    });
 
     self.should_limit_rates_to_gi = ko.observable(custom_product.should_limit_rates_to_gi);
     self.can_limit_rates_to_gi = ko.pureComputed(function() {
@@ -396,7 +467,12 @@ $(function() {
       if (!self.base_product_id()) {
         return false;
       }
-      var base_product = _.find(editor.base_product_options, function(p) {return p.id === self.base_product_id()});
+      base_product = _.find(editor.base_product_options, function(p) {
+        return p.id === self.base_product_id()
+      });
+
+      self.base_product(base_product);
+
       // TODO: This is a bit fragile, but is a workaround for now.
       return base_product.name != "Group Critical Illness";
     });
@@ -468,6 +544,12 @@ $(function() {
         customer_short_name: self.customer_short_name(),
         brochure_name: self.brochure_name(),
         brochure_url: self.brochure_url(),
+        use_base_product_settings: (function() { 
+          for(var key in self.use_base_product_settings) {
+            self.use_base_product_settings[key] = self.use_base_product_settings[key]();
+          }
+          return JSON.stringify(self.use_base_product_settings);
+        }()),
         base_product_id: self.base_product_id(),
         gi_criteria: $.map(self.gi_criteria(), function(c) {return c.serialize()}),
         should_limit_rates_to_gi: self.should_limit_rates_to_gi(),
@@ -483,6 +565,9 @@ $(function() {
     self.id = base_product.id;
     self.name = base_product.name;
     self.is_visible_to_agents = base_product.visible_to_agents;
+    self.customer_short_name = ko.observable(base_product.customer_short_name);
+    self.brochure_name = ko.observable(base_product.brochure_name);
+    self.brochure_url = ko.observable(base_product.brochure_url);
 
     var available_by_id = _.indexBy(available_agents, 'id');
     var restricted_agents = [];
@@ -502,7 +587,10 @@ $(function() {
       return {
         id: self.id,
         name: self.name,
-        restricted_agents: self.restricted_agents()
+        restricted_agents: self.restricted_agents(),
+        customer_short_name: self.customer_short_name(),
+        brochure_name: self.brochure_name(),
+        brochure_url: self.brochure_url()
       }
     }
   };
