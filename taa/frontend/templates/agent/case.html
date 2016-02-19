@@ -636,7 +636,7 @@
                                         <br>
                                         <h4 class="col-sm-8">Agent</h4>
                                         <h4 class="col-sm-4">%</h4>
-                                        <div data-bind="foreach: { data: $parent.selected_agents, as: 'agent_id' }">
+                                        <div data-bind="foreach: { data: $root.selected_agents, as: 'agent_id' }">
                                           <!-- ko with: $root.get_or_create_split(agent_id, product.id) -->
                                           <div class="col-sm-12" data-bind="if: !valid()">
                                             <div class="alert alert-block alert-danger">
@@ -697,12 +697,14 @@
                                                     <h4 class="col-sm-4">Subcount Code</h4>
                                                   </div>
                                                   <div
-                                                          data-bind="foreach: { data: $root.get_agent_splits_for_product(product.id), as: 'split' }">
+                                                          data-bind="foreach: { data: $root.case_agents, as: 'agent' }">
                                                     <div class="row">
-                                                      <p class="col-sm-8"
-                                                         data-bind="text: $root.get_agent_name_from_id(split.agent_id)"></p>
+                                                      <!-- ko with: $root.get_or_create_split(agent.id, product.id) -->
+                                                      <label class="col-sm-8"
+                                                         data-bind="text: $root.get_agent_name_from_id(agent_id)"></label>
                                                       <input type="text"
-                                                             data-bind="value: split.commission_subcount_code">
+                                                             data-bind="value: commission_subcount_code">
+                                                      <!-- /ko -->
                                                     </div>
                                                   </div>
                                                 </div>

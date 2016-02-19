@@ -196,7 +196,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     });
   });
 
-  self.today_between = ko.computed(function() {
+  self.today_between = ko.computed(function () {
     if (!self.get_open_enrollment_period()) {
       return false;
     }
@@ -206,13 +206,15 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return today_between(start, end);
   });
 
-  self.annual_enrollment_periods = ko.computed(function() {
-    return _.filter(self.enrollment_periods(), function(p) {return p.period_type === "annual_period";});
+  self.annual_enrollment_periods = ko.computed(function () {
+    return _.filter(self.enrollment_periods(), function (p) {
+      return p.period_type === "annual_period";
+    });
   });
 
-  self.annual_today_between = ko.computed(function() {
-    if(self.annual_enrollment_periods().length >= 4 && self.annual_enrollment_periods().first().start_date() !== "") {
-      return self.annual_enrollment_periods().reduce(function(a, period) {
+  self.annual_today_between = ko.computed(function () {
+    if (self.annual_enrollment_periods().length >= 4 && self.annual_enrollment_periods().first().start_date() !== "") {
+      return self.annual_enrollment_periods().reduce(function (a, period) {
         var start_date = moment(period.start_date(), "MM/DD");
         var end_date = moment(period.end_date(), "MM/DD");
         return today_between(start_date, end_date) || a;
@@ -489,7 +491,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     if (owner && _.pluck(self.partner_agent_list(), "id").indexOf(owner.id) === -1) {
       // Sort the owner into the list
       var all_agents = self.partner_agent_list().concat(owner);
-      all_agents.sort(function(a, b) {
+      all_agents.sort(function (a, b) {
         if (a.last == b.last) {
           return a.first.localeCompare(b.first);
         }
@@ -570,7 +572,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       return "Complete";
     }
     var splits = self.selected_agent_splits().filter(function (split) {
-      return !! split.agent_id && split.product_id === product_id;
+      return !!split.agent_id && split.product_id === product_id;
     });
     var success = _.reduce(splits, function (sum, n) {
       return sum && !!n.commission_subcount_code();
@@ -584,12 +586,41 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.is_data_dirty = ko.observable();
 
+  //region Percentage Functions
+
+  self.agent_has_percentage = function (agent_id) {
+    var agent = _.find(self.case_agents(), function (item) {
+      return item.id === agent_id;
+    });
+    if (!agent) {
+      return false;
+    }
+
+    return _.some(self.selected_agent_splits(), {agent_id: agent.id});
+  };
+
+
+  self.agents_with_percentage = ko.computed(function () {
+    return _.filter(self.case_agents(), function (agent) {
+      return self.agent_has_percentage(agent.id);
+    });
+  });
+
+  self.agents_with_percentage_ids = ko.computed(function () {
+    return _.map(self.agents_with_percentage(), function (item) {
+      return item.id;
+    });
+  });
+
+  //endregion
+
   // Basic viewmodel for an agent split percentage and commission code for a given product and agent.
-  function AgentSplit(agent_id, product_id, commission_subcount_code, split_percentage) {
+  function AgentSplit(agent_id, product_id, commission_subcount_code, split_percentage, is_added) {
     this.agent_id = agent_id;
     this.product_id = product_id;
     this.commission_subcount_code = ko.observable(commission_subcount_code);
     this.split_percentage = ko.observable(split_percentage);
+    this.is_added = ko.observable(!!is_added);
     this.valid = ko.computed(function () {
       // Check if Writing Agent
       if (this.agent_id === null) {
@@ -614,10 +645,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       };
     };
 
-    this.commission_subcount_code.subscribe(function() {
+    this.commission_subcount_code.subscribe(function () {
       self.is_data_dirty(true);
     });
-    this.split_percentage.subscribe(function() {
+    this.split_percentage.subscribe(function () {
       self.is_data_dirty(true);
     });
   }
@@ -651,28 +682,15 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   }
 
   function get_initial_split_agents() {
-
-    var default_agents = case_data.agent_splits.reduce(function(start, elem) {
-      if(!~start.indexOf(elem.agent_id)) {
-        start.push(elem.agent_id);
-      }
-      return start;
-    }, []);
-
-    // Need to include only the agents that are in the list of agents for the case.
-    default_agents = _.filter(default_agents, function(a_id) {
-      // Allow the default agent
-      if (a_id === null) return true;
-
-      return _.find(self.case_agents(), function(case_agent) { return case_agent.id === a_id;});
-    });
-
-    // Add the default agent to the list if not there.
-    if (!~default_agents.indexOf(null)) {
-      default_agents.push(null);
-    }
-
-    return default_agents;
+    return _.chain(case_data.agent_splits)
+      .filter(function (split) {
+        return !!split.split_percentage;
+      })
+      .map(function (split) {
+        return split.agent_id;
+      })
+      .uniq()
+      .value();
   }
 
 
@@ -762,7 +780,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   _.each(self.annual_enrollment_periods(), function (period) {
     _.each([period.start_date, period.end_date], function (date_observable) {
       date_observable.subscribe(function (val) {
-        if (val === "") return;
+        if (val === "") {
+          return;
+        }
 
         var val_date = parse_month_date_input(val);
         if (!val_date.isValid()) {
@@ -856,7 +876,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return is_valid;
   });
 
-  self.is_active.subscribe(function(value) {
+  self.is_active.subscribe(function (value) {
     if (value && !self.can_activate_case()) {
       bootbox.alert("Cannot activate case for enrollment until settings are complete.");
       self.is_active(false);
