@@ -618,7 +618,7 @@
                                 <p>Agent splits are not currently active.</p>
                               </div>
                               <div class="panel-body" data-bind="slideDownIf: has_agent_splits()">
-                                <div class="agent-splits-setup">
+                                <div class="agent-splits-setup" data-bind="visible: $root.has_products">
                                   <div id="save-success" class="alert alert-block alert-success" style="display: none;">
                                     <strong><i class="ace-icon fa fa-check"></i></strong>
                                     Successfully saved agent split settings.
@@ -741,6 +741,9 @@
                                     </div>
                                     <hr>
                                   </div>
+                                </div>
+                                <div data-bind="visible: !$root.has_products()">
+                                  <p>At least one product must be selected to edit agent splits.</p>
                                 </div>
                               </div>
                             </div>

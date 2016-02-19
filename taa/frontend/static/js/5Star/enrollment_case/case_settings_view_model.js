@@ -669,6 +669,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       return split;
     }
   };
+0
+  self.has_products = ko.computed(function () {
+    return !!self.products() && self.products().length > 0;
+  });
 
   function get_initial_splits() {
     return case_data.agent_splits.filter(function (elem) {
@@ -682,15 +686,23 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   }
 
   function get_initial_split_agents() {
-    return _.chain(case_data.agent_splits)
+    var agentIds = _.chain(case_data.agent_splits)
       .filter(function (split) {
-        return !!split.split_percentage;
+        // Grab only splits that have a split percentage
+        return !!split.split_percentage && _.find(self.case_agents(), { id: split.agent_id });
       })
       .map(function (split) {
+        // Grab the agent ids
         return split.agent_id;
       })
-      .uniq()
+      .uniq() // Get unique agent ids
       .value();
+
+    // Add a null value if one does not exist to represent the writing agent
+    if (!_.find(agentIds, null)) {
+      agentIds.push(null);
+    }
+    return agentIds;
   }
 
 
