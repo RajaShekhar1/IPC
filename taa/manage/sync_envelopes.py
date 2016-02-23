@@ -94,6 +94,11 @@ def match_enrollment(emp_status, envelope):
         print("COULD NOT LINK ENVELOPE: No eeSSN found")
         return None
     ee_name = find_text_tab(emp_status, 'eeName')
+    if not ee_name:
+        ee_first = find_text_tab(emp_status, 'eeFName')
+        ee_last = find_text_tab(emp_status, 'eeLName')
+        ee_name = '{} {}'.format(ee_first, ee_last)
+        
     ee_ssn = ee_ssn.replace('-', '').strip()
     ee_ssn_masked = "***-**-" + ee_ssn[-4:]
     ee_cov = find_text_tab(emp_status, 'eeCoverage')
