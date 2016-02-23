@@ -22,7 +22,7 @@
 {% block content %}
 
   <div class="page-content"
-          {# Prevent flash of unstyled content #}
+      {# Prevent flash of unstyled content #}
        style="display: none;" data-bind="visible: true">
 
     <div class="row">
@@ -33,11 +33,11 @@
             <div class="widget-box">
               <div class="widget-header widget-header-blue widget-header-flat">
                 <h4 class="lighter">5Star Life Enrollment:&nbsp;&nbsp;<span
-                        data-bind="text: enrollment_case.company_name"></span></h4>
+                    data-bind="text: enrollment_case.company_name"></span></h4>
 
                 <div class="grey smaller-80 pull-right">
                   <p>enrollment in <span data-bind="text: enrollment_case.situs_city"></span>, <span
-                          data-bind="text: enrollment_case.situs_state"></span>&nbsp;&nbsp;
+                      data-bind="text: enrollment_case.situs_state"></span>&nbsp;&nbsp;
                   </p>
                 </div>
               </div>
@@ -81,12 +81,12 @@
                     <hr/>
 
                     <div class="step-content">
-                    {% include "enrollment/main-wizard-step-1.html" %}
-                    {% include 'enrollment/main-wizard-step-2.html' %}
-                    {% include 'enrollment/main-wizard-step-3.html' %}
-                    {% include 'enrollment/main-wizard-step-4.html' %}
-                    {% include 'enrollment/main-wizard-step-5.html' %}
-                    {% include 'enrollment/main-wizard-step-6.html' %}
+                      {% include "enrollment/main-wizard-step-1.html" %}
+                      {% include 'enrollment/main-wizard-step-2.html' %}
+                      {% include 'enrollment/main-wizard-step-3.html' %}
+                      {% include 'enrollment/main-wizard-step-4.html' %}
+                      {% include 'enrollment/main-wizard-step-5.html' %}
+                      {% include 'enrollment/main-wizard-step-6.html' %}
                     </div>
 
                   </div>
@@ -158,13 +158,115 @@
                 </table>
 
                 Total <span data-bind="text: get_policy_years().length"></span> year increase of <span
-                      data-bind="text: format_coverage_for_policy()"></span> coverage for $<span
-                      data-bind="text: get_policy_years().length"></span>/week additional premium.
+                  data-bind="text: format_coverage_for_policy()"></span> coverage for $<span
+                  data-bind="text: get_policy_years().length"></span>/week additional premium.
 
                 <br>
                 <br>
                 See <a href="http://5starlifeinsurance.com/FPP_Auto_Increase_Rider" target="blank">this flyer</a> and
                 your policy certificate for more details.
+              </div>
+
+              <div class="modal-footer">
+                <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="modal-qol3-rider" class="modal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="lighter block blue center">What is a Quality of Life Benefit?</h3>
+              </div>
+
+              <div class="modal-body" data-bind="with: $root.coverage_vm.current_product().shown_rider">
+                <p>
+                  This Qualify of Life Rider accelerates a portion of the insured’s death benefit on a monthly basis, 3%
+                  each month, and payable directly to the employee on a tax favored basis. An employee can receive up
+                  to 75% of the current face amount of the life benefit following a diagnosis of either a chronic
+                  illness or cognitive impairment that requires substantial assistance. Benefits are paid for the
+                  following:
+                </p>
+                <ul>
+                  <li>Permanent inability to perform at least two of the six Activities of Daily Living (ADLs) without
+                    substantial assistance, or
+                  </li>
+                  <li>A permanent severe cognitive impairment, such as dementia, Alzheimer’s disease and other forms of
+                    senility requiring substantial supervision.
+                  </li>
+                </ul>
+                <br>
+                <p>See <a href="http://5starlifeinsurance.com/FPP_QOL_Rider" target="blank">this flyer</a> and your
+                  policy certificate for more details.</p>
+              </div>
+
+              <div class="modal-footer">
+                <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="modal-qol4-rider" class="modal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="lighter block blue center">What is a Quality of Life Benefit?</h3>
+              </div>
+
+              <div class="modal-body" data-bind="with: $root.coverage_vm.current_product().shown_rider">
+                <p>
+                  This Qualify of Life Rider accelerates a portion of the insured’s death benefit on a monthly basis, 4%
+                  each month, and payable directly to the employee on a tax favored basis. An employee can receive up
+                  to 75% of the current face amount of the life benefit following a diagnosis of either a chronic
+                  illness or cognitive impairment that requires substantial assistance. Benefits are paid for the
+                  following:
+                </p>
+                <ul>
+                  <li>Permanent inability to perform at least two of the six Activities of Daily Living (ADLs) without
+                    substantial assistance, or
+                  </li>
+                  <li>A permanent severe cognitive impairment, such as dementia, Alzheimer’s disease and other forms of
+                    senility requiring substantial supervision.
+                  </li>
+                </ul>
+                <br>
+                <p>See <a href="http://5starlifeinsurance.com/FPP_QOL_Rider" target="blank">this flyer</a> and your
+                  policy certificate for more details.</p>
+              </div>
+
+              <div class="modal-footer">
+                <button class="btn btn-info btn-sm center" data-dismiss="modal">OK</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="modal-wop-rider" class="modal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="lighter block blue center">What is a Waiver of Premium Benefit?</h3>
+              </div>
+
+              <div class="modal-body" data-bind="with: $root.coverage_vm.current_product().shown_rider">
+                <p>
+                  The Waiver of Premium rider allows customers who develop long term disabilities to temporarily
+                  discontinue paying premiums for the duration of the disability and keep their coverage, following an
+                  elimination period of 180 days of total disability. Total disability under this rider is defined as:
+                </p>
+                <ul>
+                  <li>Inability to perform the substantial and material duties of your job, or</li>
+                  <li>Total and permanent loss of sight of both eyes, hearing in both ears, speech or the use of both
+                    hands, both feet or one hand and one foot, and
+                  </li>
+                  <li>After 24 months, the insured cannot be retrained to perform any other job.</li>
+                </ul>
+                <br>
+                <p>See <a href="http://5starlifeinsurance.com/FPP_WOP_Rider" target="blank">this flyer</a> and your
+                  policy certificate for more details.</p>
               </div>
 
               <div class="modal-footer">
@@ -232,49 +334,50 @@
                   {% set fpp_state = wizard_data.case_data.situs_state %}
 
                   {% if base_product_code=='FPPTI' or base_product_code == 'FPP-Gov' %}
-                     {% if fpp_state == 'TX' %}
-                       {% set disclosure_url = url_for ('FPPTI_disclosure_TX') %}
-                     {% elif fpp_state == 'KS' %}
-                       {% set disclosure_url = url_for ('FPPTI_disclosure_KS') %}
-                     {% elif fpp_state == 'VA' %}
-                       {% set disclosure_url = url_for ('FPPTI_disclosure_VA') %}
-                     {% elif fpp_state == 'OR' %}
-                       {% set disclosure_url = url_for ('FPPTI_disclosure_OR') %}
-                     {% else %}
-                       {% set disclosure_url = url_for ('FPPTI_disclosure_generic') %}
-                     {% endif %}
+                    {% if fpp_state == 'TX' %}
+                      {% set disclosure_url = url_for ('FPPTI_disclosure_TX') %}
+                    {% elif fpp_state == 'KS' %}
+                      {% set disclosure_url = url_for ('FPPTI_disclosure_KS') %}
+                    {% elif fpp_state == 'VA' %}
+                      {% set disclosure_url = url_for ('FPPTI_disclosure_VA') %}
+                    {% elif fpp_state == 'OR' %}
+                      {% set disclosure_url = url_for ('FPPTI_disclosure_OR') %}
+                    {% else %}
+                      {% set disclosure_url = url_for ('FPPTI_disclosure_generic') %}
+                    {% endif %}
                   {% elif base_product_code=='FPPCI' %}
-                     {% if fpp_state == 'KS' %}
-                       {% set disclosure_url = url_for ('FPPCI_disclosure_KS') %}
-                     {% elif fpp_state == 'VA' %}
-                       {% set disclosure_url = url_for ('FPPCI_disclosure_VA') %}
-                     {% elif fpp_state == 'OR' %}
-                       {% set disclosure_url = url_for ('FPPCI_disclosure_OR') %}
-                     {% else %}
-                       {% set disclosure_url = url_for ('FPPCI_disclosure_generic') %}
-                     {% endif %}
+                    {% if fpp_state == 'KS' %}
+                      {% set disclosure_url = url_for ('FPPCI_disclosure_KS') %}
+                    {% elif fpp_state == 'VA' %}
+                      {% set disclosure_url = url_for ('FPPCI_disclosure_VA') %}
+                    {% elif fpp_state == 'OR' %}
+                      {% set disclosure_url = url_for ('FPPCI_disclosure_OR') %}
+                    {% else %}
+                      {% set disclosure_url = url_for ('FPPCI_disclosure_generic') %}
+                    {% endif %}
                   {% endif %}
 
                   {% if disclosure_url %}
-                    <iframe src="{{ disclosure_url }}" style="zoom:1.0" width="100%" height="500" frameborder="0"></iframe>
+                    <iframe src="{{ disclosure_url }}" style="zoom:1.0" width="100%" height="500"
+                            frameborder="0"></iframe>
                   {% endif %}
                 {% endif %}
 
 
 
-{#                      {% elif base_product_code == 'Group CI' %}#}
-{#                         {% if wizard_data['state'] == 'KS' %}#}
-{#                             {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-KS.pdf') }}#}
-{#                         {% elif wizard_data['state'] == 'OR' %}#}
-{#                             {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-OR.pdf') }}#}
-{#                         {% elif wizard_data['state'] == 'VA' %}#}
-{#                             {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-VA.pdf') }}#}
-{#                         {% else %}#}
-{#                             {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508 (Generic).pdf') }}#}
-{#                         {% endif %}#}
-{#                	    {% else %}#}
-{#                	       {{ url_for ('FPPTI_disclosure_generic') }}#}
-{#                	    {% endif %}"#}
+                {#                      {% elif base_product_code == 'Group CI' %}#}
+                {#                         {% if wizard_data['state'] == 'KS' %}#}
+                {#                             {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-KS.pdf') }}#}
+                {#                         {% elif wizard_data['state'] == 'OR' %}#}
+                {#                             {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-OR.pdf') }}#}
+                {#                         {% elif wizard_data['state'] == 'VA' %}#}
+                {#                             {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508-VA.pdf') }}#}
+                {#                         {% else %}#}
+                {#                             {{ url_for('serve_pdf', file_name='FPP-ABDisclosure Form R508 (Generic).pdf') }}#}
+                {#                         {% endif %}#}
+                {#                	    {% else %}#}
+                {#                	       {{ url_for ('FPPTI_disclosure_generic') }}#}
+                {#                	    {% endif %}"#}
 
               </div>
 
@@ -312,14 +415,14 @@
         <div class="modal-body">
           <p>
             <span id="modal_text_existing_warning" style="display: none;" class="bigger-120">If yes, and you live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV please complete and sign the Notice: Replacement of Life Insurance and Annuity. The Notice must be <span
-                    class="text-danger bigger-130">presented</span> and <span
-                    class="text-danger bigger-130">read</span> to you by your agent at the time he/she takes your application. </span>
+                class="text-danger bigger-130">presented</span> and <span
+                class="text-danger bigger-130">read</span> to you by your agent at the time he/she takes your application. </span>
 
             <span id="modal_text_existing_warning_remote" style="display: none;" class="bigger-120">STOP:  since you are enrolling remotely via email but your response requires the <span
-                    class="oblique">Notice: Replacement of Life Insurance and Annuity</span> to be presented and read to you by your agent, you will not be permitted to continue with this online application. </span>
+                class="oblique">Notice: Replacement of Life Insurance and Annuity</span> to be presented and read to you by your agent, you will not be permitted to continue with this online application. </span>
 
             <span id="modal_text_replacement_warning" style="display: none;" class="bigger-120">If yes, and you do not live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV, you must complete and sign the applicable state-specific Notice: Replacement of Life Insurance and Annuity, obtainable from your agent or enrollment professional.<br> <span
-                    class="text-danger bigger-130">You cannot proceed with this online enrollment, and must enroll via paper forms with your agent or enrollment professional.</span></span>
+                class="text-danger bigger-130">You cannot proceed with this online enrollment, and must enroll via paper forms with your agent or enrollment professional.</span></span>
 
             <span id="modal_text_soh_warning" style="display: none;" class="bigger-120">A "yes" response to this question disqualifies this person from obtaining coverage.  You may proceed with this application after removing this individual from the coverage selection before proceeding.</span>
 

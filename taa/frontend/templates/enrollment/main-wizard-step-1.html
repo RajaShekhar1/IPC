@@ -542,7 +542,7 @@
             <td><input type="checkbox" data-bind="checked: is_selected, enable: can_user_select"></td>
             <td class="text-left">
               <span data-bind="if: has_rider_modal()">
-                <a data-bind="click: show_rider_info, html: format_rider_name()"></a>
+                <a class="pointer" data-bind="click: show_rider_info, html: format_rider_name()"></a>
               </span>
               <span data-bind="if: !has_rider_modal()">
                 <span data-bind="html: format_rider_name()"></span>
