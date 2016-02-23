@@ -64,7 +64,7 @@ class Case(CaseSerializer, db.Model):
     ANNUAL_ENROLLMENT_TYPE = u'annual'
     # This relationship defines what products are explicitly enabled for
     # a given case
-    products = db.relationship('Product', secondary=case_products, backref=db.backref('cases', lazy='dynamic'))
+    products = db.relationship('Product', secondary=case_products, backref=db.backref('cases', lazy='dynamic'), order_by=case_products.c.ordinal)
     partner_agents = db.relationship('Agent', secondary=case_partner_agents,
                                      backref=db.backref('partner_cases', lazy='dynamic'))
     payment_mode = db.Column(db.Integer, nullable=True)

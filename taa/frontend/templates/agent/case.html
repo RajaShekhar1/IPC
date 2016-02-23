@@ -131,21 +131,46 @@
                                 <!--/ko-->
                                 <!--ko if: is_editing_products-->
                                 <div class="row">
-                                  <div class="col-xs-6 text-center" data-bind="click: move_products_up"><i class="ace-icon fa fa-arrow-up select-button"></i></div>
-                                  <div class="col-xs-6 text-center" data-bind="click: move_products_down"><i class="ace-icon fa fa-arrow-down select-button"></i></div>
+                                  <select class="col-xs-12 form-control"
+                                          data-bind="options: unselected_products, optionsText: 'name', value: selected_product, optionsCaption: '(Select Product to Add)'"></select>
                                 </div>
-                                <select class="form-control" multiple data-bind="options: products, optionsText: 'name', selectedOptions: sort_selected_products"></select>
-                                <!--ko foreach: product_choices-->
-                                <label>
-                                  <input type="checkbox"
-                                         data-bind="checked: $parent.products, checkedValue: $data, disable: $root.state_product_limiter.is_product_disabled($data)">
-                                  <span data-bind="text: name"></span>
-                                </label>
+                                <div class="row">
+                                  <button class="col-xs-12 btn btn-sm btn-success" data-bind="click: add_selected_product, enable: has_selected_product"><i
+                                      class="ace-icon fa fa-plus"></i> Add
+                                  </button>
+                                </div>
+                                <div class="row">
+                                  <button class="col-xs-6 text-center btn move btn-white"
+                                          data-bind="click: move_products_up"><i
+                                      class="ace-icon fa fa-arrow-up select-button"></i></button>
+                                  <button class="col-xs-6 text-center btn move btn-white"
+                                          data-bind="click: move_products_down"><i
+                                      class="ace-icon fa fa-arrow-down select-button"></i></button>
+                                </div>
+                                <div class="row">
+                                  <select class="col-xs-12 form-control" size="5"
+                                          data-bind="options: products, optionsText: 'name', selectedOptions: sort_selected_products"></select>
+                                </div>
+                                <div class="row">
+                                  <button class="col-xs-12 btn btn-sm btn-danger" data-bind="click: remove_selected_products, visible: has_product_sort_selections"><i class="ace-icon fa fa-minus"></i> Remove
+                                    Selected
+                                  </button>
+                                </div>
                                 <br>
-                                <!--/ko-->
-                                <button class="btn btn-default" data-bind="click: stop_editing_products">Collapse
-                                  Product Options
-                                </button>
+                                <br>
+                                {#                                <!--ko foreach: product_choices-->#}
+                                {#                                <label>#}
+                                {#                                  <input type="checkbox"#}
+                                {#                                         data-bind="checked: $parent.products, checkedValue: $data, disable: $root.state_product_limiter.is_product_disabled($data)">#}
+                                {#                                  <span data-bind="text: name"></span>#}
+                                {#                                </label>#}
+                                {#                                <br>#}
+                                {#                                <!--/ko-->#}
+                                <div class="row">
+                                  <button class="btn btn-default" data-bind="click: stop_editing_products">Collapse
+                                    Product Options
+                                  </button>
+                                </div>
                                 {# This multi-select works, but is not as intuitive as a list of checkboxes like above. #}
                                 {#<limited-product-select params="limiter: state_product_limiter, disabled: !can_edit_case, is_multi_select: true"></limited-product-select>#}
                                 <!--/ko-->

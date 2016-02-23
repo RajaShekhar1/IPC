@@ -37,6 +37,43 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     self.is_data_dirty(true);
   });
 
+  self.has_product_sort_selections = ko.computed(function () {
+    return !!self.sort_selected_products() && self.sort_selected_products().length > 0;
+  });
+
+  self.unselected_products = ko.computed(function () {
+    return _.sortBy(_.difference(self.product_choices(), self.products()), function (product) { return product.ordinal; });
+  });
+
+  self.selected_product = ko.observable(null);
+
+  self.has_selected_product = ko.computed(function () {
+    return !!self.selected_product();
+  });
+
+  self.add_selected_product = function () {
+    var product = self.selected_product();
+    if (!product) {
+      return;
+    }
+    self.products.push(product);
+  };
+
+  self.remove_selected_products = function () {
+    var productsToRemove = self.sort_selected_products();
+    var products = self.products();
+    if (!productsToRemove || productsToRemove.length === 0) {
+      return;
+    }
+    _.forEach(productsToRemove, function (product) {
+      var index = products.indexOf(product);
+      if (index !== -1) {
+        products.splice(index, 1);
+      }
+    });
+    self.products(products);
+  };
+
   self.emailSettings = {
     sender_name: ko.observable(case_data.self_enrollment_setup.email_sender_name),
     sender_email: ko.observable(case_data.self_enrollment_setup.email_sender_email),
