@@ -581,7 +581,8 @@ class DocusignEnvelope(object):
         return self.find_recipient_by_role(self.get_recipient_status(), "Agent")
 
     def find_recipient_by_role(self, recipient_status, role_name):
-        return next(ifilter(lambda r: r['roleName'] == role_name, recipient_status.get('signers', [])), None)
+        signers = recipient_status.get('signers', [])
+        return next(ifilter(lambda r: r.get('roleName') == role_name, signers), None)
 
     def get_employee_signing_url(self, callback_url):
         ds_recip = self.get_employee_signing_status()

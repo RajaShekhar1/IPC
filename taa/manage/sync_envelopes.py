@@ -36,7 +36,7 @@ def match_envelopes():
             print(envelope_data)
             continue
 
-        if not agent_signer.get('signedDateTime'):
+        if not agent_signer.get('signedDateTime') and not is_linked(env):
             # Agent has not signed
             #print("Found envelope where agent did not sign: {}".format(eid))
             link_envelope(env)
@@ -45,11 +45,16 @@ def match_envelopes():
     # Match all completed envelopes next
     for envelope_data in get_all_completed_envelopes():
         env = DocusignEnvelope(envelope_data['envelopeUri'], fetch_tabs=True)
-        link_envelope(env)
+
+        if not is_linked(env):
+            link_envelope(env)
 
 
     # Voided?
 
+def is_linked(envelope):
+
+    linked_enrollment = EnrollmentApplication.query.filter(EnrollmentApplication.docusign_envelope_id == envelope.uri)
 
 def link_envelope(envelope):
     status = envelope.get_envelope_status()
@@ -76,6 +81,7 @@ def link_envelope(envelope):
             sp_cov = None
         if ch_cov == 'None' or ch_cov == 'NONE':
             ch_cov = None
+
 
         matching_enrollment = EnrollmentApplication.query.filter(EnrollmentApplication.signature_time >= start
             ).filter(EnrollmentApplication.signature_time < end
