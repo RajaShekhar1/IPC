@@ -434,7 +434,7 @@ $(function() {
     self.customer_short_name_display = ko.computed(function() {
       var use_base_setting = self.use_base_product_settings.customer_short_name();
       if(use_base_setting) {
-        if(self.base_product !== "") {
+        if(self.base_product) {
           return self.base_product().customer_short_name();
         }
       } 
@@ -444,7 +444,7 @@ $(function() {
     self.brochure_name_display = ko.computed(function() {
       var use_base_setting = self.use_base_product_settings.brochure_name();
       if(use_base_setting) {
-        if(self.base_product() !== "") {
+        if(self.base_product()) {
           return self.base_product().brochure_name();
         }
       } 
@@ -731,7 +731,6 @@ $(function() {
 
     self.save_settings = function() {
       var form_data = self.product().serialize();
-
       var settings_request = send_json_data(
           "PUT",
           "{{ url_for("products.update_product", product_id=product.id) }}",

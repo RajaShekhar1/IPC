@@ -15,8 +15,10 @@ class ProductJsonSerializable(JsonSerializable):
     def to_json(self):
         # Default serialized data
         data = super(ProductJsonSerializable, self).to_json()
-        # if data['use_base_product_settings'] is not None:
-        #     data['use_base_product_settings'] = json.load(data['use_base_product_settings']);
+
+        data['customer_short_name_display'] = self.get_short_name()
+        data['brochure_name_display'] = self.get_brochure_name()
+        data['brochure_url_display'] = self.get_brochure_url()
 
         # Add in some helper attributes
 
@@ -26,6 +28,12 @@ class ProductJsonSerializable(JsonSerializable):
 
         # Get replacement form text for the wizard
         data['replacement_paragraphs'] = self.get_replacement_paragraphs()
+
+        if hasattr(self, 'case_id'):
+            from taa.services.cases.models import case_products
+            association = db.session.query(case_products).filter_by(case_id=self.case_id, product_id=self.id).first()
+            if association is not None:
+                data['ordinal'] = association.ordinal
 
         # Get rider information
         data['riders'] = RiderService().get_riders_for_product(self)
@@ -90,6 +98,33 @@ class Product(ProductJsonSerializable, db.Model):
 
     def is_base_fpp_gov(self):
         return self.get_base_product().is_fpp_gov if self.get_base_product() else self.is_fpp_gov
+
+    def should_use_base_product_settings(self):
+        use_base_product_settings = getattr(self, "use_base_product_settings")
+        if use_base_product_settings is not None:
+            return json.loads(use_base_product_settings)
+        return dict()
+
+    def get_short_name(self):
+        use_base_product_settings = self.should_use_base_product_settings()
+        if use_base_product_settings.get("customer_short_name"):
+            base_product = getattr(self, "base_product")
+            return getattr(base_product, "customer_short_name")
+        return getattr(self, "customer_short_name")
+
+    def get_brochure_name(self):
+        use_base_product_settings = self.should_use_base_product_settings()
+        if use_base_product_settings.get("brochure_name"):
+            base_product = getattr(self, "base_product")
+            return getattr(base_product, "brochure_name")
+        return getattr(self, "brochure_name")
+
+    def get_brochure_url(self):
+        use_base_product_settings = self.should_use_base_product_settings()
+        if use_base_product_settings.get("brochure_url"):
+            base_product = getattr(self, "base_product")
+            return getattr(base_product, "brochure_url")
+        return getattr(self, "brochure_url")
 
     def format_type(self):
         if self.is_guaranteed_issue():

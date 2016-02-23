@@ -261,7 +261,7 @@ class EnrollmentApplicationService(DBService):
             if data['did_decline']:
                 continue
 
-            product_id = data['product_id']
+            product_id = data['product_data']['id']
             product = self.product_service.get(product_id)
 
             if data['employee_coverage']:
