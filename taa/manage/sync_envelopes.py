@@ -62,7 +62,9 @@ def link_envelope(envelope):
         if not ee_ssn:
             print("COULD NOT LINK ENVELOPE: No eeSSN found")
             return None
+
         ee_ssn = ee_ssn.replace('-', '').strip()
+        ee_ssn_masked = "***-**-" + ee_ssn[-4:]
 
         ee_cov = find_text_tab(emp_status, 'eeCoverage')
         sp_cov = find_text_tab(emp_status, 'spCoverage')
@@ -91,7 +93,7 @@ def link_envelope(envelope):
             matching_ch_cov = find_coverage_for_applicant(ch_cov, matching_enrollment, EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
 
             if (ee_cov and not matching_ee_cov) or (sp_cov and not matching_sp_cov) or (ch_cov and not matching_ch_cov):
-                print("Invalid coverage match on '{}' '{}' {}/{}/{} got {}/{}/{}".format(start.strftime('%F'), ee_ssn, ee_cov, sp_cov, ch_cov,
+                print("Invalid coverage match on '{}' '{}' {}/{}/{} got {}/{}/{}".format(start.strftime('%F'), ee_ssn_masked, ee_cov, sp_cov, ch_cov,
                      matching_ee_cov.coverage_face_value if matching_ee_cov else '',
                      matching_sp_cov.coverage_face_value if matching_sp_cov else '',
                      matching_ch_cov.coverage_face_value if matching_ch_cov else ''))
@@ -103,7 +105,7 @@ def link_envelope(envelope):
                 db.session.flush()
                 db.session.commit()
         else:
-            print("No match on '{}' '{}' {}/{}/{}".format(start.strftime('%F'), ee_ssn, ee_cov, sp_cov, ch_cov))
+            print("No match on '{}' '{}' {}/{}/{}".format(start.strftime('%F'), ee_ssn_masked, ee_cov, sp_cov, ch_cov))
     else:
 
         # Must be call center test?
