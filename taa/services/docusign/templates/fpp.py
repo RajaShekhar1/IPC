@@ -19,7 +19,7 @@ class FPPTemplate(DocuSignServerTemplate):
         template_id = get_template_id(product_code, state)
 
         DocuSignServerTemplate.__init__(self, template_id, recipients, use_docusign_renderer)
-            
+
         self.data = enrollment_data
 
     def is_child_attachment_form_needed(self):
@@ -156,8 +156,8 @@ class FPPTemplate(DocuSignServerTemplate):
         ee_tabs_list += self.make_generic_tabs()
 
         if self.data.did_employee_select_coverage():
-            ee_tabs_list += self.generate_SOH_tabs("ee", self.data['employee_soh_questions'])
-            ee_tabs_list += self.generate_SOH_GI_tabs("ee", self.data['employee_soh_questions'])
+            ee_tabs_list += self.generate_SOH_tabs("ee", self.data['employee']['soh_questions'])
+            ee_tabs_list += self.generate_SOH_GI_tabs("ee", self.data['employee']['soh_questions'])
 
         return ee_tabs_list
 
@@ -192,8 +192,8 @@ class FPPTemplate(DocuSignServerTemplate):
             elif str(self.data['has_spouse_been_disabled_6_months']).upper() == 'GI':
                 sp_tabs_list += [DocuSignTextTab('spouse_disability_six_months_gi', 'GI')]
 
-            sp_tabs_list += self.generate_SOH_tabs("sp", self.data['spouse_soh_questions'])
-            sp_tabs_list += self.generate_SOH_GI_tabs("sp", self.data['spouse_soh_questions'])
+            sp_tabs_list += self.generate_SOH_tabs("sp", self.data['spouse']['soh_questions'])
+            sp_tabs_list += self.generate_SOH_GI_tabs("sp", self.data['spouse']['soh_questions'])
 
         return sp_tabs_list
 
@@ -205,8 +205,8 @@ class FPPTemplate(DocuSignServerTemplate):
                 continue
 
             tabs += self.add_child_data_tabs(i)
-            tabs += self.generate_SOH_tabs("c%s"%(i+1), self.data["children_soh_questions"][i])
-            tabs += self.generate_SOH_GI_tabs("c%s"%(i+1), self.data["children_soh_questions"][i])
+            tabs += self.generate_SOH_tabs("c%s"%(i+1), self.data['children'][i]['soh_questions'])
+            tabs += self.generate_SOH_GI_tabs("c%s"%(i+1), self.data['children'][i]['soh_questions'])
 
         if self.is_child_attachment_form_needed():
             tabs += [DocuSignTextTab('extra_children_notice', "SEE ATTACHED FOR ADDITIONAL CHILDREN")]
@@ -365,11 +365,11 @@ class FPPTemplate(DocuSignServerTemplate):
                 return code
 
             if rider_person == "emp" and self.data.did_employee_select_coverage():
-                for rider in riders: 
+                for rider in riders:
                     tab_name = 'ee_rider_{}'.format(fix_rider_code(rider.get('code')))
                     rider_tabs.append(DocuSignRadioTab(tab_name, 'yes'))
-            if rider_person == "sp" and self.data.did_spouse_select_coverage():    
-                for rider in riders: 
+            if rider_person == "sp" and self.data.did_spouse_select_coverage():
+                for rider in riders:
                     tab_name = 'sp_rider_{}'.format(fix_rider_code(rider.get('code')))
                     rider_tabs.append(DocuSignRadioTab(tab_name, 'yes'))
 

@@ -139,7 +139,7 @@ class EnrollmentDataWrap(object):
         return self.get_product().get_base_product_code()
 
     def get_product(self):
-        return product_service.get(self.data['product_id'])
+        return product_service.get(self.data['product_data']['id'])
 
     def get_employee_name(self):
         return '{} {}'.format(self.data['employee']['first'],
