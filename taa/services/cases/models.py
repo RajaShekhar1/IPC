@@ -13,6 +13,7 @@ case_products = db.Table('case_products', db.metadata,
                          db.Column('product_id', db.Integer,
                                    db.ForeignKey('products.id'),
                                    primary_key=True),
+                         db.Column('ordinal', db.Integer),
                          )
 
 case_partner_agents = db.Table('case_partner_agents', db.metadata,
@@ -63,16 +64,12 @@ class Case(CaseSerializer, db.Model):
     ANNUAL_ENROLLMENT_TYPE = u'annual'
     # This relationship defines what products are explicitly enabled for
     # a given case
-    products = db.relationship('Product', secondary=case_products,
-                               backref=db.backref('cases', lazy='dynamic'))
+    products = db.relationship('Product', secondary=case_products, backref=db.backref('cases', lazy='dynamic'))
     partner_agents = db.relationship('Agent', secondary=case_partner_agents,
-                               backref=db.backref('partner_cases',
-                                                  lazy='dynamic'))
+                                     backref=db.backref('partner_cases', lazy='dynamic'))
     payment_mode = db.Column(db.Integer, nullable=True)
-    is_self_enrollment = db.Column(db.Boolean, server_default='FALSE',
-                                   nullable=False)
-    self_enrollment_setup = db.relationship('SelfEnrollmentSetup',
-                                            uselist=False, backref='case')
+    is_self_enrollment = db.Column(db.Boolean, server_default='FALSE', nullable=False)
+    self_enrollment_setup = db.relationship('SelfEnrollmentSetup', uselist=False, backref='case')
     case_token = db.Column(db.String(64), nullable=True, index=True)
 
     # Store settings for the products as JSON. Includes rider settings and rate overrides.
@@ -83,7 +80,6 @@ class Case(CaseSerializer, db.Model):
 
     # Call center workflow setting
     should_use_call_center_workflow = db.Column(db.Boolean, server_default='FALSE', nullable=False)
-
 
     def get_product_names(self):
         return ','.join(p.name for p in self.products)
@@ -123,8 +119,6 @@ class Case(CaseSerializer, db.Model):
             return True
         else:
             return self.can_partners_download_enrollments
-
-
 
 
 class PeriodSerializer(JsonSerializable):
@@ -238,6 +232,7 @@ class CensusRecordSerializer(JsonSerializable):
         email_logs = SelfEnrollmentEmailService().get_for_census_record(self)
         return any(email.status == SelfEnrollmentEmailLog.STATUS_SUCCESS for email in email_logs)
 
+
 class CaseCensus(CensusRecordSerializer, db.Model):
     __tablename__ = 'case_census'
 
@@ -317,8 +312,8 @@ class CaseCensus(CensusRecordSerializer, db.Model):
         employee_coverages = EnrollmentApplicationCoverageService().get_coverages_for_employee(self)
         return dict(
             first=self.employee_first,
-            last = self.employee_last,
-            ssn = self.employee_ssn,
+            last=self.employee_last,
+            ssn=self.employee_ssn,
             birthdate=self.format_date(self.employee_birthdate),
             email=self.employee_email,
             phone=self.employee_phone,
@@ -338,29 +333,29 @@ class CaseCensus(CensusRecordSerializer, db.Model):
         from taa.services.enrollments import EnrollmentApplicationCoverageService
         spouse_coverages = EnrollmentApplicationCoverageService().get_coverages_for_spouse(self)
         return dict(
-                first=self.spouse_first,
-                last=self.spouse_last,
-                ssn=self.spouse_ssn,
-                birthdate=self.format_date(self.spouse_birthdate),
-                email=self.spouse_email,
-                phone=self.spouse_phone,
-                gender=self.spouse_gender.lower() if self.spouse_gender else '',
-                weight=self.spouse_weight_lbs,
-                height=self.spouse_height_inches,
-                is_smoker=self.get_smoker_boolean(self.spouse_smoker),
-                street_address=self.spouse_street_address,
-                street_address2=self.spouse_street_address2,
-                city=self.spouse_city,
-                state=self.spouse_state,
-                zip=self.spouse_zip,
-                existing_coverages=spouse_coverages,
-            )
+            first=self.spouse_first,
+            last=self.spouse_last,
+            ssn=self.spouse_ssn,
+            birthdate=self.format_date(self.spouse_birthdate),
+            email=self.spouse_email,
+            phone=self.spouse_phone,
+            gender=self.spouse_gender.lower() if self.spouse_gender else '',
+            weight=self.spouse_weight_lbs,
+            height=self.spouse_height_inches,
+            is_smoker=self.get_smoker_boolean(self.spouse_smoker),
+            street_address=self.spouse_street_address,
+            street_address2=self.spouse_street_address2,
+            city=self.spouse_city,
+            state=self.spouse_state,
+            zip=self.spouse_zip,
+            existing_coverages=spouse_coverages,
+        )
 
     def get_children_data(self):
         children = []
         from taa.services.enrollments import EnrollmentApplicationCoverageService
         children_coverages = EnrollmentApplicationCoverageService().get_coverages_for_children(self)
-        for num in range(1, 6+1):
+        for num in range(1, 6 + 1):
             if self.has_child(num):
                 children.append(dict(
                     first=self.child_first(num),
@@ -391,8 +386,10 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     def child_birthdate(self, num):
         return getattr(self, 'child{}_birthdate'.format(num))
 
+
 class AgentSplitsSerializer(JsonSerializable):
     __json_hidden__ = ['case']
+
 
 class AgentSplitsSetup(AgentSplitsSerializer, db.Model):
     """

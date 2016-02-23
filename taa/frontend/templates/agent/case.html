@@ -8,7 +8,7 @@
   <flash-messages params="messages: flash_messages"></flash-messages>
 
   <div class="row main-container"
-          {# Prevent flash of unstyled content #}
+      {# Prevent flash of unstyled content #}
        style="display: none;" data-bind="visible: true">
     <ul class="breadcrumb col-xs-12">
       <li><a href="{{ url_for('index') }}"><i class="ace-icon fa fa-home"></i> Home</a></li>
@@ -130,6 +130,11 @@
                                 <!--/ko-->
                                 <!--/ko-->
                                 <!--ko if: is_editing_products-->
+                                <div class="row">
+                                  <div class="col-xs-6 text-center" data-bind="click: move_products_up"><i class="ace-icon fa fa-arrow-up select-button"></i></div>
+                                  <div class="col-xs-6 text-center" data-bind="click: move_products_down"><i class="ace-icon fa fa-arrow-down select-button"></i></div>
+                                </div>
+                                <select class="form-control" multiple data-bind="options: products, optionsText: 'name', selectedOptions: sort_selected_products"></select>
                                 <!--ko foreach: product_choices-->
                                 <label>
                                   <input type="checkbox"
@@ -153,7 +158,7 @@
                               <label class="col-md-3 control-label" for="enrollmentState">State</label>
                               <div class="col-md-9">
                                 <limited-state-select
-                                        params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-state-select>
+                                    params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-state-select>
                               </div>
                             </div>
 
@@ -206,7 +211,8 @@
                                     <input data-bind="checked: enrollment_period_type" type="radio" class="ace"
                                            name="enrollment_period_type" value="annual">
                                     <span class="lbl padding-8">Annual Periods</span><br/>
-                                    <small data-bind="visible: !annual_today_between() && enrollment_period_type() == 'annual'">
+                                    <small
+                                        data-bind="visible: !annual_today_between() && enrollment_period_type() == 'annual'">
                                       <em class="text-danger">Currently not active since outside date range</em>
                                     </small>
                                   </label>
@@ -247,9 +253,9 @@
                                       <option value="">(No Owner)</option>
                                       {% for agent in active_agents %}
                                         <option value="{{ agent.id }}"
-                                                {%-if agent.id == case.agent_id -%}
+                                            {%-if agent.id == case.agent_id -%}
                                                 selected="selected"
-                                                {%- endif -%}
+                                            {%- endif -%}
                                         >{{ agent.name() }}</option>
                                       {% endfor %}
                                     </select>
@@ -291,7 +297,7 @@
                                   <div class="col-md-9">
                                     <div>
                                       <div
-                                              data-bind="template: { name: 'occupationClassTemplate', foreach: occupation_classes, as: 'occupation_class' }"></div>
+                                          data-bind="template: { name: 'occupationClassTemplate', foreach: occupation_classes, as: 'occupation_class' }"></div>
                                       <script type="text/html" id="occupationClassTemplate">
                                         <div>
                                           <span data-bind="text: label"></span>
@@ -416,9 +422,9 @@
                                           size="10" style="min-height: 8em;">
                                     {% for agent in active_agents %}
                                       <option value="{{ agent.id }}"
-                                              {%-if agent in case.partner_agents -%}
+                                          {%-if agent in case.partner_agents -%}
                                               selected="selected"
-                                              {%- endif -%}
+                                          {%- endif -%}
                                       >{{ agent.name() }}</option>
                                     {% endfor %}
                                   </select>
@@ -647,7 +653,7 @@
                                           <br>
                                           <div class="col-sm-8">
                                             <div
-                                                    data-bind="attr: { id: 'product' + product_id }, text: $root.get_agent_name_from_id(agent_id)"></div>
+                                                data-bind="attr: { id: 'product' + product_id }, text: $root.get_agent_name_from_id(agent_id)"></div>
                                           </div>
                                           <div class="col-sm-4">
                                             <input type="number" min="0" max="100" class="ace"
@@ -689,7 +695,7 @@
                                                           aria-label="Close"><span aria-hidden="true">&times;</span>
                                                   </button>
                                                   <h4 class="modal-title">Subcounts for <span
-                                                          data-bind="text: product.name"></span></h4>
+                                                      data-bind="text: product.name"></span></h4>
                                                 </div>
                                                 <div class="modal-body">
                                                   <div class="row">
@@ -697,11 +703,11 @@
                                                     <h4 class="col-sm-4">Subcount Code</h4>
                                                   </div>
                                                   <div
-                                                          data-bind="foreach: { data: $root.case_agents, as: 'agent' }">
+                                                      data-bind="foreach: { data: $root.case_agents, as: 'agent' }">
                                                     <div class="row">
                                                       <!-- ko with: $root.get_or_create_split(agent.id, product.id) -->
                                                       <label class="col-sm-8"
-                                                         data-bind="text: $root.get_agent_name_from_id(agent_id)"></label>
+                                                             data-bind="text: $root.get_agent_name_from_id(agent_id)"></label>
                                                       <input type="text"
                                                              data-bind="value: commission_subcount_code">
                                                       <!-- /ko -->
@@ -734,7 +740,7 @@
                                                   'fa-exclamation': !$root.are_agent_splits_complete(product.id)
                                                   }"></i>
                                             <span
-                                                    data-bind="text: $root.get_agent_splits_completion_status(product.id)"></span>
+                                                data-bind="text: $root.get_agent_splits_completion_status(product.id)"></span>
                                           </div>
                                         </div>
                                       </div>
@@ -795,9 +801,9 @@
                           New Enrollment
                         </a>
                         <button
-                                data-bind="visible: is_self_enrollment() && is_active() && has_census_data() && self_enrollment_type() == 'case-targeted'"
-                                type="button" class="btn btn-warning pull-right" data-toggle="modal"
-                                data-target="#email-target-links-modal">
+                            data-bind="visible: is_self_enrollment() && is_active() && has_census_data() && self_enrollment_type() == 'case-targeted'"
+                            type="button" class="btn btn-warning pull-right" data-toggle="modal"
+                            data-target="#email-target-links-modal">
                           <i class="ace-icon fa fa-envelope"></i>
                           Email Enroll
                         </button>
@@ -813,7 +819,7 @@
                                                          data-bind="value: enrollment_city_override"></label>
                           <label>Enrollment State:
                             <limited-state-select
-                                    params="limiter: state_product_override_limiter"></limited-state-select>
+                                params="limiter: state_product_override_limiter"></limited-state-select>
                           </label>
                         </div>
                       </div>
@@ -880,7 +886,7 @@ we load from the server using ajax at run time (helps with performance, needs to
                                      data-icon-hide="ace-icon fa fa-angle-down"
                                      class="bigger-110 ace-icon fa fa-angle-right"></i>
                                   Sent <span data-bind="text: email_count"></span> emails <span
-                                        data-bind="text: moment(sent_date).calendar().toLowerCase()"></span>
+                                    data-bind="text: moment(sent_date).calendar().toLowerCase()"></span>
                                 </a>
                               </h4>
                             </div>
@@ -1051,7 +1057,7 @@ we load from the server at run time for page speed
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal"><span
-                  aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+              aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
           <h4 class="modal-title">Delete Case and All Enrollment Data</h4>
         </div>
         <div class="modal-body">
@@ -1170,7 +1176,7 @@ we load from the server at run time for page speed
           <tr>
             <td data-bind="text: name"></td>
             <td class="text-center"><span data-bind="text: num_taken"></span> (<span
-                    data-bind="text: percent_taken"></span>%)
+                data-bind="text: percent_taken"></span>%)
             </td>
             <td class="text-right">$<span data-bind="text: annualized_premium"></span></td>
           </tr>
@@ -1205,7 +1211,7 @@ we load from the server at run time for page speed
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal"><span
-                      aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                  aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
               <h4 class="modal-title">Email Census Self-Enroll</h4>
             </div>
             <div class="modal-body">
@@ -1219,8 +1225,8 @@ we load from the server at run time for page speed
                       <option data-bind="text: numbers.not_sent()+' employees who have not been sent a link'"
                               value="not-sent"></option>
                       <option
-                              data-bind="text: numbers.not_enrolled()+' employees who have neither enrolled nor declined'"
-                              value='not-enrolled'></option>
+                          data-bind="text: numbers.not_enrolled()+' employees who have neither enrolled nor declined'"
+                          value='not-enrolled'></option>
                       <option data-bind="text: numbers.declined()+' employees who have declined'"
                               value='declined'></option>
                     </select>
@@ -1283,7 +1289,7 @@ we load from the server at run time for page speed
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal"><span
-                    aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
             <h4 class="modal-title">New Enrollment</h4>
           </div>
           <div class="modal-body">
@@ -1308,7 +1314,7 @@ we load from the server at run time for page speed
                     <div class="form-group">
                       <label>Enrollment State:</label>
                       <limited-state-select
-                              params="limiter: case_settings.state_product_override_limiter"></limited-state-select>
+                          params="limiter: case_settings.state_product_override_limiter"></limited-state-select>
 
                     </div>
 
@@ -1410,7 +1416,7 @@ we load from the server at run time for page speed
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal"><span
-                      aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                  aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
               <h4 class="modal-title">Upload Census Data</h4>
             </div>
             <div class="modal-body">
@@ -1568,7 +1574,7 @@ we load from the server at run time for page speed
           <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal"><span
-                      aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                  aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
               <h4 class="modal-title">Upload Enrollment Data</h4>
             </div>
             <div class="modal-body">
@@ -1637,6 +1643,11 @@ we load from the server at run time for page speed
       </div>
     </form>
   </div>
+
+  <!-- Knockout template for sortable products -->
+  <script id="template-sortable-products" type="text/html">
+    <li data-bind="text: name"><span data-bind="text: name"></span></li>
+  </script>
 {% endblock %}
 
 {% block page_js %}
@@ -1662,10 +1673,10 @@ we load from the server at run time for page speed
       };
 
       window.case_settings = new CaseViewModel(
-              {{ case |tojson|safe }},
-              {{ product_choices |tojson|safe }},
-              {{ 'true' if can_edit_case else 'false'}},
-              settings
+          {{ case |tojson|safe }},
+          {{ product_choices |tojson|safe }},
+          {{ 'true' if can_edit_case else 'false'}},
+          settings
       );
 
       // Initialize new View Models for knockout

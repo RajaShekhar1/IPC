@@ -351,6 +351,10 @@ table.DTTT_selectable.table-hover > tbody > tr:hover > td {
     background-color: lightyellow;
 }
 
+.select-button {
+    cursor: pointer;
+}
+
 @media print {
     body {
         color: #000;
