@@ -60,12 +60,12 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.remove_selected_products = function () {
-    var productsToRemove = self.sort_selected_products();
+    var products_to_remove = self.sort_selected_products();
     var products = self.products();
-    if (!productsToRemove || productsToRemove.length === 0) {
+    if (!products_to_remove || products_to_remove.length === 0) {
       return;
     }
-    _.forEach(productsToRemove, function (product) {
+    _.forEach(products_to_remove, function (product) {
       var index = products.indexOf(product);
       if (index !== -1) {
         products.splice(index, 1);
