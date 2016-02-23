@@ -4,8 +4,20 @@
 
 
 {% block content %}
+  {# Hide until JS is loaded. #}
+  <div data-bind="visible: true" style="display: none;">
 
-  <div data-bind="visible: true">
+    <ul class="breadcrumb" style="margin: 0">
+      <li><a href="{{ url_for('index') }}"><i class="ace-icon fa fa-home"></i> Home</a></li>
+      <li class="active" ><i class="ace-icon fa fa-email"></i> Agent Inbox</li>
+    </ul>
+
+    <div class="">
+      <h3 class="header header-light blue">Agent Inbox</h3>
+    </div>
+
+
+
     <!-- Nav tabs -->
     <ul class="nav nav-tabs" role="tablist">
       <li role="presentation" class="active"><a href="#pending" aria-controls="pending" role="tab" data-toggle="tab">Pending</a></li>

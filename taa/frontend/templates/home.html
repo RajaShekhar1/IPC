@@ -22,18 +22,17 @@
             <div class="col-sm-6">
                 {{ render_simple_widget(
                         title="Agent Signing",
-                        body_html='''<p class="lead">All applications require signature by agent. Completed interviews will
-                                be routed to your "signing inbox" <span class="smaller-80">(powered by Docusign; in their <i>Manage</i> area)</span>
-                                for finalizing any pending applications with your confirmation and signature.</p>
-
+                        body_html='''<p class="lead">All applications require signature by agent.
+                        Applications without your agent signature will be routed to your "signing inbox" for finalizing
+                        any pending applications with your confirmation and signature.</p>
                             <p><i class="icon-warning-sign bigger-120 orange"></i> Applications will not be not
-                                submitted for processing until your signature is complete on the document.</p>''',
+                                submitted for processing until your signature is complete on the document.
+                            </p>''',
                         button_text="Access agent signing inbox",
                         button_classes="btn btn-lg btn-warning",
                         button_url=url_for('inbox')
                    )
                 }}
-
             </div>
         </div>
         <br>
