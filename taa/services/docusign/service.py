@@ -339,9 +339,10 @@ def fetch_signing_url(in_person_signer, enrollment_data, envelope_result):
 
 
 class DocusignEnvelope(object):
-    def __init__(self, uri, enrollment_record=None):
+    def __init__(self, uri, enrollment_record=None, fetch_tabs=False):
         self.uri = uri
         self.enrollment_record = enrollment_record
+        self.fetch_tabs = fetch_tabs
 
         self._cached_recipient_status = None
         self._cached_envelope_status = None
@@ -360,7 +361,9 @@ class DocusignEnvelope(object):
             return self._cached_recipient_status
 
         docusign_transport = get_docusign_transport()
-        self._cached_recipient_status = docusign_transport.get("{}/recipients".format(self.get_envelope_base_url()))
+        self._cached_recipient_status = docusign_transport.get(
+            "{}/recipients?include_tabs={}".format(self.get_envelope_base_url(), "true" if self.fetch_tabs else "false")
+        )
         return self._cached_recipient_status
 
     def get_envelope_status(self):
