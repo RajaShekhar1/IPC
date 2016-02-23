@@ -68,6 +68,8 @@ def link_envelope(envelope):
             print("COULD NOT LINK ENVELOPE: No eeSSN found")
             return None
 
+        ee_name = find_text_tab(emp_status, 'eeName')
+
         ee_ssn = ee_ssn.replace('-', '').strip()
         ee_ssn_masked = "***-**-" + ee_ssn[-4:]
 
@@ -81,7 +83,6 @@ def link_envelope(envelope):
             sp_cov = None
         if ch_cov == 'None' or ch_cov == 'NONE':
             ch_cov = None
-
 
         matching_enrollment = EnrollmentApplication.query.filter(EnrollmentApplication.signature_time >= start
             ).filter(EnrollmentApplication.signature_time < end
@@ -105,13 +106,13 @@ def link_envelope(envelope):
                      matching_ch_cov.coverage_face_value if matching_ch_cov else ''))
 
             else:
-                print("FOUND matching enrollment(s) for envelope: {} to {} '{}' '{}' {}/{}/{}".format(envelope.uri, matching_enrollment.id, start.strftime('%F'), ee_ssn, ee_cov, sp_cov, ch_cov))
+                #print("FOUND matching enrollment(s) for envelope: {} to {} '{}' '{}' {}/{}/{}".format(envelope.uri, matching_enrollment.id, start.strftime('%F'), ee_ssn_masked, ee_cov, sp_cov, ch_cov))
                 # Link it up
                 matching_enrollment.docusign_envelope_id = envelope.uri
                 db.session.flush()
                 db.session.commit()
         else:
-            print("No match on '{}' '{}' {}/{}/{}".format(start.strftime('%F'), ee_ssn_masked, ee_cov, sp_cov, ch_cov))
+            print("No match on '{}' '{}' '{}' {}/{}/{}".format(start.strftime('%F'), ee_name, ee_ssn_masked, ee_cov, sp_cov, ch_cov))
     else:
 
         # Must be call center test?
