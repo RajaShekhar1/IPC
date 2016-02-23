@@ -35,6 +35,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.sort_selected_products = ko.observableArray([]);
   self.products.subscribe(function () {
     self.is_data_dirty(true);
+    self.update_product_ordinals();
   });
 
   self.has_product_sort_selections = ko.computed(function () {
@@ -72,6 +73,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       }
     });
     self.products(products);
+    self.update_product_ordinals();
   };
 
   self.emailSettings = {
@@ -802,8 +804,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       .value();
 
     // Add a null value if one does not exist to represent the writing agent
-    if (!_.find(agentIds, null)) {
-      agentIds.push(null);
+    if (agentIds.indexOf(null) === -1) {
+      agentIds.splice(0, 0, null);
     }
     return agentIds;
   }
@@ -1228,6 +1230,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.serialize_agent_splits = function () {
     var serialized_records = self.selected_agent_splits();
+    serialized_records = _.filter(serialized_records, function (split) {
+      return _.some(self.case_agents(), { 'id': split.agent_id });
+    });
     return serialized_records.reduce(function (start, elem) {
       if (elem.split_percentage() || elem.commission_subcount_code()) {
         start.push(elem.toJson());
