@@ -68,11 +68,11 @@ def link_envelope(envelope):
         sp_cov = find_text_tab(emp_status, 'spCoverage')
         ch_cov = find_text_tab(emp_status, 'child1Coverage')
 
-        if ee_cov == 'None':
+        if ee_cov == 'None' or ee_cov == 'NONE':
             ee_cov = None
-        if sp_cov == 'None':
+        if sp_cov == 'None' or sp_cov == 'NONE':
             sp_cov = None
-        if ch_cov == 'None':
+        if ch_cov == 'None' or ch_cov == 'NONE':
             ch_cov = None
 
         matching_enrollment = EnrollmentApplication.query.filter(EnrollmentApplication.signature_time >= start
