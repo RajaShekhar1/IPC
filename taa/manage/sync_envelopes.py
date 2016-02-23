@@ -100,8 +100,8 @@ def link_envelope(envelope):
                 print("FOUND matching enrollment(s) for envelope: {} to {} '{}' '{}' {}/{}/{}".format(envelope.uri, matching_enrollment.id, start.strftime('%F'), ee_ssn, ee_cov, sp_cov, ch_cov))
                 # Link it up
                 matching_enrollment.docusign_envelope_id = envelope.uri
-                db.flush()
-                db.commit()
+                db.session.flush()
+                db.session.commit()
         else:
             print("No match on '{}' '{}' {}/{}/{}".format(start.strftime('%F'), ee_ssn, ee_cov, sp_cov, ch_cov))
     else:
