@@ -68,6 +68,10 @@ def match_envelopes():
     # Link up voided?
 
 
+    print("Linked {}".format(num_linked))
+    print("Already linked: {}".format(num_already_linked))
+    print("Skipped: {}".format(num_skipped))
+
 def is_linked(envelope):
 
     linked_enrollment = EnrollmentApplication.query.filter(EnrollmentApplication.docusign_envelope_id == envelope.uri)
