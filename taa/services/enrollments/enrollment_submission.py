@@ -111,6 +111,9 @@ class EnrollmentSubmissionProcessor(object):
             components=components
         )
 
+        # Save the envelope ID on the enrollment record
+        enrollment_record.docusign_envelope_id = envelope.uri
+
     def generate_envelope_components(self, enrollment_record):
         data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data),
                                        census_record=enrollment_record.census_record,
