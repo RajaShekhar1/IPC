@@ -94,7 +94,27 @@ class CaseService(DBService):
         db.session.flush()
 
     def update_products(self, case, products):
-        case.products = products
+        from taa.services.products import ProductService
+        products_service = ProductService()
+        product_ids = [p['id'] for p in products]
+        fetched_products = products_service.get_all(*product_ids)
+
+        case.products = fetched_products
+        db.session.flush()
+
+        # Iterate through products and set the ordinal
+        from taa.services.cases.models import case_products
+        from sqlalchemy import update
+        for product in case.products:
+            api_product = next(p for p in products if p['id'] == product.id)
+            if api_product is not None:
+                ordinal = int(api_product['ordinal'])
+                query = update(case_products)\
+                    .where(case_products.c.case_id == case.id)\
+                    .where(case_products.c.product_id == product.id)\
+                    .values({'ordinal': ordinal})
+                db.session.execute(query)
+
         db.session.flush()
 
     def get_agent_cases(self, agent, **kwargs):

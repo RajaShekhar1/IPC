@@ -29,6 +29,12 @@ class ProductJsonSerializable(JsonSerializable):
         # Get replacement form text for the wizard
         data['replacement_paragraphs'] = self.get_replacement_paragraphs()
 
+        if hasattr(self, 'case_id'):
+            from taa.services.cases.models import case_products
+            association = db.session.query(case_products).filter_by(case_id=self.case_id, product_id=self.id).first()
+            if association is not None:
+                data['ordinal'] = association.ordinal
+
         # Get rider information
         data['riders'] = RiderService().get_riders_for_product(self)
 

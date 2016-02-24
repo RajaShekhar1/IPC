@@ -22,11 +22,59 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.group_number = ko.observable(case_data.group_number || "");
 
   self.product_choices = ko.observableArray(product_choices);
-  // Get the list of initially selected products from the product choices.
-  var matched_selected_products = _.filter(self.product_choices(), function (p) {
-    return _.contains(_.pluck(case_data.products, "id"), p.id);
+  // Get the list of initially selected products from the product choices and sort it by ordinals
+  var matched_selected_products = _.chain(self.product_choices())
+    .filter(function (p) {
+      return _.includes(_.map(case_data.products, "id"), p.id);
+    })
+    .value();
+  matched_selected_products = _.sortBy(matched_selected_products, function (product) {
+    return product.ordinal;
   });
   self.products = ko.observableArray(matched_selected_products);
+  self.sort_selected_products = ko.observableArray([]);
+  self.products.subscribe(function () {
+    self.is_data_dirty(true);
+    self.update_product_ordinals();
+  });
+
+  self.has_product_sort_selections = ko.computed(function () {
+    return !!self.sort_selected_products() && self.sort_selected_products().length > 0;
+  });
+
+  self.unselected_products = ko.computed(function () {
+    return _.sortBy(_.difference(self.product_choices(), self.products()), function (product) { return product.ordinal; });
+  });
+
+  self.selected_product = ko.observable(null);
+
+  self.has_selected_product = ko.computed(function () {
+    return !!self.selected_product();
+  });
+
+  self.add_selected_product = function () {
+    var product = self.selected_product();
+    if (!product) {
+      return;
+    }
+    self.products.push(product);
+  };
+
+  self.remove_selected_products = function () {
+    var products_to_remove = self.sort_selected_products();
+    var products = self.products();
+    if (!products_to_remove || products_to_remove.length === 0) {
+      return;
+    }
+    _.forEach(products_to_remove, function (product) {
+      var index = products.indexOf(product);
+      if (index !== -1) {
+        products.splice(index, 1);
+      }
+    });
+    self.products(products);
+    self.update_product_ordinals();
+  };
 
   self.emailSettings = {
     sender_name: ko.observable(case_data.self_enrollment_setup.email_sender_name),
@@ -47,6 +95,63 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     page_text: ko.observable(case_data.self_enrollment_setup.page_text || $("#page_text").html())
   };
 
+  //region Product Sorting
+  self.update_product_ordinals = function () {
+    for (var idx = 0; idx < self.products().length; idx++) {
+      var product = self.products()[idx];
+      product.ordinal = idx;
+    }
+  };
+
+  self.move_products_up = function () {
+    var productsToSort = self.sort_selected_products();
+    if (!productsToSort || productsToSort.length === 0 || productsToSort.length === self.products().length) {
+      return;
+    }
+    var selectedProducts = self.products();
+    var startPosition = selectedProducts.indexOf(_.first(productsToSort));
+    if (startPosition === 0) {
+      return;
+    }
+
+    _.forEach(productsToSort, function (product) {
+      var position = selectedProducts.indexOf(product);
+      if (position === 0 || position === -1) {
+        return;
+      }
+      selectedProducts.splice(position, 1);
+      selectedProducts.splice(position - 1, 0, product);
+      self.products(selectedProducts);
+    });
+    self.update_product_ordinals();
+  };
+
+  self.move_products_down = function () {
+    var productsToSort = self.sort_selected_products();
+    if (!productsToSort || productsToSort.length === 0 || productsToSort.length === self.products().length) {
+      return;
+    }
+    var selectedProducts = self.products();
+
+    var endPosition = selectedProducts.indexOf(_.last(productsToSort));
+    if (endPosition === selectedProducts.length - 1) {
+      return;
+    }
+
+    _.chain(productsToSort)
+      .reverse()
+      .forEach(function (product) {
+        var position = selectedProducts.indexOf(product);
+        if (position === -1) {
+          return;
+        }
+        selectedProducts.splice(position, 1);
+        selectedProducts.splice(position + 1, 0, product);
+        self.products(selectedProducts);
+      }).value();
+    self.update_product_ordinals();
+  };
+  //endregion
 
   self.enrollment_period_type = ko.observable(case_data.enrollment_period_type);
   self.enrollment_periods = ko.observableArray($.map(case_data.enrollment_periods, function (p) {
@@ -669,7 +774,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       return split;
     }
   };
-0
+  0
   self.has_products = ko.computed(function () {
     return !!self.products() && self.products().length > 0;
   });
@@ -689,7 +794,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     var agentIds = _.chain(case_data.agent_splits)
       .filter(function (split) {
         // Grab only splits that have a split percentage
-        return !!split.split_percentage && _.find(self.case_agents(), { id: split.agent_id });
+        return !!split.split_percentage && _.find(self.case_agents(), {id: split.agent_id});
       })
       .map(function (split) {
         // Grab the agent ids
@@ -699,8 +804,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       .value();
 
     // Add a null value if one does not exist to represent the writing agent
-    if (!_.find(agentIds, null)) {
-      agentIds.push(null);
+    if (agentIds.indexOf(null) === -1) {
+      agentIds.splice(0, 0, null);
     }
     return agentIds;
   }
@@ -1125,6 +1230,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.serialize_agent_splits = function () {
     var serialized_records = self.selected_agent_splits();
+    serialized_records = _.filter(serialized_records, function (split) {
+      return _.some(self.case_agents(), { 'id': split.agent_id });
+    });
     return serialized_records.reduce(function (start, elem) {
       if (elem.split_percentage() || elem.commission_subcount_code()) {
         start.push(elem.toJson());

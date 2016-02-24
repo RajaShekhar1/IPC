@@ -90,6 +90,8 @@ def manage_cases():
 def manage_case(case_id):
     api_token_service = LookupService('ApiTokenService')
     case = case_service.get_if_allowed(case_id)
+    for product in case.products:
+        setattr(product, 'case_id', case.id)
     vars = {'case': case, 'can_edit_case': False}
 
     agent = agent_service.get_logged_in_agent()

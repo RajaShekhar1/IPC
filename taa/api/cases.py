@@ -29,12 +29,12 @@ enrollment_application_service = LookupService('EnrollmentApplicationService')
 
 api_groups = ['agents', 'home_office', 'admins']
 
+
 # Case management endpoints
 @route(bp, '/')
 @login_required
 @groups_required(api_groups, all=False)
 def get_cases():
-
     name_filter = request.args.get('by_name')
 
     agent = agent_service.get_logged_in_agent()
@@ -76,7 +76,7 @@ def create_case():
     # Make sure this case name isn't used already
     existing_cases = case_service.search_cases(by_name=data['company_name'])
     if existing_cases:
-        raise TAAFormError(errors=[{'error': 'Case already exists with the name "%s"'%data['company_name']}])
+        raise TAAFormError(errors=[{'error': 'Case already exists with the name "%s"' % data['company_name']}])
 
     form = NewCaseForm(form_data=data)
     if agent:
@@ -111,8 +111,7 @@ def update_case(case_id):
     form.products.data = [p['id'] for p in data['products']]
     if form.validate_on_submit():
         # Update products
-        case_service.update_products(
-            case, [p for p in product_service.get_all(*form.products.data)])
+        case_service.update_products(case, data['products'])
         # Update partner agents
         if is_admin:
             case_service.update_partner_agents(
@@ -126,8 +125,6 @@ def update_case(case_id):
         del data['products']
         del data['partner_agents']
         del data['product_settings']
-
-
 
         # Update case table
         return case_service.update(case, **data)
@@ -216,6 +213,7 @@ def enrollment_records(case_id):
         return make_response(body, 200, headers)
     return data
 
+
 @route(bp, '/<case_id>/enrollment_records/<int:census_id>', methods=['GET'])
 @login_required
 @groups_required(api_groups, all=False)
@@ -269,8 +267,6 @@ def census_records(case_id):
         return make_response(body, 200, headers)
 
     return data
-
-
 
 
 # Census Records - lookup self-enroll link debug API for Bill to get SSNs with self-enroll links.
@@ -374,8 +370,7 @@ def update_self_enrollment_setup(case_id):
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
 
     if ('self_enrollment_type' in request.json
-            and request.json['self_enrollment_type'] == SelfEnrollmentSetup.TYPE_CASE_GENERIC):
-
+        and request.json['self_enrollment_type'] == SelfEnrollmentSetup.TYPE_CASE_GENERIC):
         # Remove email-specific fields from the form so they are not validated
         del form.email_greeting_type
         del form.email_greeting_salutation
@@ -393,6 +388,7 @@ def update_self_enrollment_setup(case_id):
         return case_service.update_self_enrollment_setup(self_enrollment_setup, form.data)
 
     raise TAAFormError(form.errors)
+
 
 @route(bp, '/<case_id>/agent_splits_setup', methods=['PUT'])
 @login_required
@@ -473,4 +469,4 @@ def email_self_enrollment_batch_post(case_id):
     for email_log in results:
         self_enrollment_email_service.queue_email(email_log.id)
 
-    return ["Scheduled %s emails for immediate processing."%len(results)]
+    return ["Scheduled %s emails for immediate processing." % len(results)]
