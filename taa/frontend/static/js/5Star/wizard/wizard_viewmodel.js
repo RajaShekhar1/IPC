@@ -247,9 +247,19 @@ var wizard_viewmodel = (function() {
 
     self.has_completed_selection = ko.computed(this._has_completed_selection, this);
 
+    // Has any applicant selected something? (even if 'no benefit')
     self.did_select_coverage = ko.pureComputed(function() {
       return self.has_completed_selection() && !self.did_decline();
     }, this);
+
+    // Whether or not any valid benefit has been selected. (excludes "no benefit" selection)
+    self.did_select_valid_coverage = ko.pureComputed(function() {
+      return self.did_select_coverage() && (
+              self.did_select_employee_coverage() ||
+              self.did_select_spouse_coverage() ||
+              self.did_select_children_coverage()
+          );
+    });
 
     self.did_select_employee_coverage = ko.pureComputed(function() {
       return _.any(self.valid_applicant_coverage_selections(), function(cov) {
@@ -1094,7 +1104,7 @@ var wizard_viewmodel = (function() {
 
       // Can not decline if any applicant has applied for coverage already
       return (!_.any(self.product_coverage_viewmodels(), function(product_coverage) {
-        return !_.any(self.applicant_list.applicants(), function(applicant) {
+        return _.any(self.applicant_list.applicants(), function(applicant) {
           // Does the applicant have existing coverage for this product?
           return _.any(applicant.existing_coverages, function(existing_coverage) {
             return existing_coverage.product_id === product_coverage.product.id;
@@ -1108,13 +1118,9 @@ var wizard_viewmodel = (function() {
     self.did_decline = ko.observable(false);
 
     self.did_decline_all_products = ko.pureComputed(function() {
-      if (self.coverage_vm.has_multiple_products()) {
-        return _.all(self.product_coverage_viewmodels(), function(pcov) {
-          return pcov.did_decline();
-        });
-      } else {
-        return self.did_decline();
-      }
+      return self.did_decline() || _.all(self.product_coverage_viewmodels(), function(pcov) {
+        return pcov.did_decline();
+      });
     });
 
     // Decline info box
@@ -1166,7 +1172,7 @@ var wizard_viewmodel = (function() {
     // Just for step 1 ...
     self.is_coverage_selection_valid = function() {
       return _.all(self.coverage_vm.product_coverage_viewmodels(), function(prod_cov) {
-        return prod_cov.has_completed_selection();
+        return prod_cov.did_select_valid_coverage();
       });
     };
 
