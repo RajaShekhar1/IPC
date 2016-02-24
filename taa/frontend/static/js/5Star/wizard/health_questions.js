@@ -264,7 +264,11 @@ var StandardHealthQuestion = function (question, product_coverage) {
   //};
 
   self.show_yes_dialogue = function (applicant) {
-
+    if (!self.does_yes_stop_app()) {
+      // No need to show anything, return.
+      return;
+    }
+    
     // If we get here, the applicant has answered 'Yes' to a question.
     //   We offer a choice to remove the applicant directly from step 2.
 
