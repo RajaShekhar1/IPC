@@ -765,7 +765,7 @@ var wizard_viewmodel = (function () {
     };
 
     self.has_rider_modal = function () {
-      return (self.rider.code === "AIR" || self.rider.code === "QOL3" || self.rider.code === "QOL4" || self.rider.code === "WOP");
+      return (self.rider.code === "AIR" || self.rider.code === "QOL3" || self.rider.code === "QOL4" || self.rider.code === "WP");
     };
 
     self.show_rider_info = function () {
@@ -774,7 +774,7 @@ var wizard_viewmodel = (function () {
         case "AIR":
           $("#modal-auto-increase-rider").modal('show');
           break;
-        case "WOP":
+        case "WP":
           $("#modal-wop-rider").modal('show');
           break;
         case "QOL3":
