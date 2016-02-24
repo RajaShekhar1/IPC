@@ -250,7 +250,7 @@ class EnrollmentDataWrap(object):
 
     def get_employee_esignature(self):
         # Replace employee signature with "John Doe voice auth on file 02:45pm"
-        esig = "{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%H:%M%p"))
+        esig = "{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
         return self.data.get('emp_sig_txt', esig)
 
     def get_employee_initials(self):
