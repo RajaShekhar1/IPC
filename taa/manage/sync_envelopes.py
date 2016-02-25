@@ -161,7 +161,8 @@ class EnvelopeSync(object):
             return False
 
         else:
-            print("FOUND matching enrollment(s) for envelope: {} to {} '{}' '{}' {}/{}/{}".format(envelope.uri, matching_enrollment.id, start.strftime('%F'), ee_ssn_masked, ee_cov, sp_cov, ch_cov))
+            print("FOUND matching enrollment(s) for envelope: {} to {} '{}' '{}' {}/{}/{}".format(
+                envelope.uri, matching_enrollment.id, created_time.strftime('%F'), ee_ssn_masked, ee_cov, sp_cov, ch_cov))
             # Link it up
             matching_enrollment.docusign_envelope_id = envelope.uri
             db.session.flush()
