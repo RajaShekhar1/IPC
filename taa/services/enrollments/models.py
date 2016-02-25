@@ -105,6 +105,13 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     def did_process(self):
         return self.application_status != None
 
+    def is_terminal_status(self):
+        return self.application_status in [
+            self.APPLICATION_STATUS_DECLINED,
+            self.APPLICATION_STATUS_ENROLLED,
+            self.APPLICATION_STATUS_VOIDED,
+        ]
+
 
 class EnrollmentApplicationCoverageSerializer(JsonSerializable):
     __json_hidden__ = ['enrollment']
