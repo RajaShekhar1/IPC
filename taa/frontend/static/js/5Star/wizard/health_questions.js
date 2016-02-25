@@ -296,8 +296,10 @@ var StandardHealthQuestion = function (question, product_coverage) {
       }
     };
 
+    var product_name = self.product_coverage.format_product_name();
+
     bootbox.dialog({
-      message: "A \"yes\" response to this question disqualifies this person from obtaining coverage.  You may proceed with this application after removing this individual from the coverage selection before proceeding.",
+      message: "A \"yes\" response to this question disqualifies this person from obtaining coverage for '" + product_name + "'.  You may proceed with this application after removing this individual from the coverage selection before proceeding.",
       buttons: button_options
     });
   };
@@ -506,7 +508,8 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
       add_reduce_option(applicant, button_options);
       message = create_reduce_dialogue_message(applicant);
     } else {
-      message = "A \"yes\" response to this question disqualifies this person from obtaining coverage.  You may proceed with this application after removing this individual from the coverage selection before proceeding.";
+      var product_name = self.product_coverage.format_product_name();
+      message = "A \"yes\" response to this question disqualifies this person from obtaining coverage for '" + product_name + "'.  You may proceed with this application after removing this individual from the coverage selection before proceeding.";
     }
 
     bootbox.dialog({
