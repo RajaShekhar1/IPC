@@ -146,7 +146,6 @@
         <div class="row">
           <label class="text-right control-label col-xs-12 col-sm-2 no-padding-right"
                  data-bind="attr: {for: 'child-first-'+$index()}">
-            {# TODO: include if we can  #}
             Child<span data-bind="visible: $parent.should_allow_grandchildren">/Grandchild</span> <span data-bind="text: $index() + 1"></span>
           </label>
 
