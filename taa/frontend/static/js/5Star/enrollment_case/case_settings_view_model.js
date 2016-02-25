@@ -1230,8 +1230,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.serialize_agent_splits = function () {
     var serialized_records = self.selected_agent_splits();
+    // Filter out any splits for agents that have been removed from the case
     serialized_records = _.filter(serialized_records, function (split) {
-      return _.some(self.case_agents(), { 'id': split.agent_id });
+      // The null check ensures that the Writing Agent, which is denoted by a null id
+      return _.some(self.case_agents(), { 'id': split.agent_id }) || split.agent_id === null;
     });
     return serialized_records.reduce(function (start, elem) {
       if (elem.split_percentage() || elem.commission_subcount_code()) {
