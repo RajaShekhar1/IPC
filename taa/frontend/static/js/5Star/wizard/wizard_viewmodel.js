@@ -1014,13 +1014,14 @@ var wizard_viewmodel = (function () {
 
     // Recommendations table visibility
     self.has_show_rates_been_clicked = ko.observable(false);
+
     self.can_display_rates_table = ko.computed(function () {
-      return (self.applicant_list.has_valid_employee()
-          // TODO: Reimplement
-          // && product validation
-        && self.coverage_vm.is_payment_mode_valid()
-        && !self.any_limit_error()
-      );
+      // TODO: Reimplement
+      // && product validation
+      var dob = self.employee().birthdate();
+      dob = moment(self.employee().birthdate(), 'MM/DD/YYYY');
+
+      return self.applicant_list.has_valid_employee() && self.coverage_vm.is_payment_mode_valid() && !self.any_limit_error();
     });
 
     // User indicates he is ready to show the coverage selection options.
@@ -1415,8 +1416,8 @@ var wizard_viewmodel = (function () {
     };
     self.has_contingent_beneficiary_error = ko.computed(function () {
       return _.any(self.coverage_vm.selected_product_coverages(), function (prod_cov) {
-        return prod_cov.has_contingent_beneficiary_error();
-      })
+          return prod_cov.has_contingent_beneficiary_error();
+        });
     });
 
 
@@ -1758,5 +1759,5 @@ var wizard_viewmodel = (function () {
   }
 
 
-  return {WizardVM: WizardVM}
+  return {WizardVM: WizardVM};
 })();
