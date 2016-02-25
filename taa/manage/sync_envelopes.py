@@ -170,6 +170,8 @@ class EnvelopeSync(object):
             return True
 
     def find_coverage_for_applicant(self, cov_to_match, matching_enrollment, applicant_type):
+        if not cov_to_match:
+            cov_to_match = ''
         return next(ifilter(
             lambda c: c.applicant_type == applicant_type and c.coverage_face_value == cov_to_match.replace(',', ''),
             matching_enrollment.coverages), None)
