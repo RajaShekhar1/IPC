@@ -121,7 +121,7 @@ function is_valid_date_of_birth(date_of_birth) {
 function get_date_of_birth_validation_error(date_of_birth) {
   'use strict';
   if (!date_of_birth) {
-    return 'Date of Birth is required.';
+    return null;
   }
   var dob_moment = moment.isMoment(date_of_birth) ? date_of_birth : moment(date_of_birth, 'MM/DD/YYYY');
   if (!dob_moment.isValid()) {

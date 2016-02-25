@@ -43,7 +43,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.unselected_products = ko.computed(function () {
-    return _.sortBy(_.difference(self.product_choices(), self.products()), function (product) { return product.ordinal; });
+    return _.sortBy(_.difference(self.product_choices(), self.products()), function (product) {
+      return product.ordinal;
+    });
   });
 
   self.selected_product = ko.observable(null);
@@ -268,6 +270,16 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     self.state_choices,
     self.products, self.product_choices
   );
+
+  self.on_products_select_rendered = function (option, item) {
+    if (!item) {
+      return;
+    }
+    var is_valid = ko.computed(function () {
+      return self.state_product_limiter.is_valid_product_for_state(item, self.situs_state());
+    });
+    ko.applyBindingAccessorsToNode(option, {enable: is_valid}, item);
+  };
 
   // Track whether or not we are editing products.
   self.is_editing_products = ko.observable(false);
@@ -1233,7 +1245,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     // Filter out any splits for agents that have been removed from the case
     serialized_records = _.filter(serialized_records, function (split) {
       // The null check ensures that the Writing Agent, which is denoted by a null id
-      return _.some(self.case_agents(), { 'id': split.agent_id }) || split.agent_id === null;
+      return _.some(self.case_agents(), {'id': split.agent_id}) || split.agent_id === null;
     });
     return serialized_records.reduce(function (start, elem) {
       if (elem.split_percentage() || elem.commission_subcount_code()) {
