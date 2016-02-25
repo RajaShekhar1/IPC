@@ -1,11 +1,11 @@
-
 <div class="step-pane" id="step5" data-step="5">
   <form class="" id="step5-form">
 
     <!--ko foreach: coverage_vm.selected_product_coverages -->
     <div data-bind="visible: $data.product.should_show_step_5()">
 
-      <h3 class="header light blue">Beneficiaries for <span data-bind="text: $data.product.product_data.name"></span></h3>
+      <h3 class="header light blue">Beneficiaries for <span data-bind="text: $data.product.product_data.name"></span>
+      </h3>
 
       <div id="eeBeneficiaryBlock" data-bind="visible: did_select_employee_coverage()">
         <h4 class="lighter block green">
@@ -58,7 +58,8 @@
 
               <div class="col-xs-12 col-sm-9 form-group">
                 <input type="text" class="ee-bene-rel"
-                       placeholder="Relationship" data-bind="value: employee_other_beneficiary().relationship, attr: {name: 'eeBeneOtherRelation'+$index()}"/>
+                       placeholder="Relationship"
+                       data-bind="value: employee_other_beneficiary().relationship, attr: {name: 'eeBeneOtherRelation'+$index()}"/>
               </div>
             </div>
           </div>
@@ -80,10 +81,13 @@
                 DOB
               </label>
 
-              <div class="col-xs-10 col-sm-9 form-group">
+              <div class="col-xs-10 col-sm-9 form-group"
+                   data-bind="css: { 'has-error': !!employee_other_beneficiary().date_of_birth_validation_error() }">
                 <input class="ee-bene-dob"
                        data-bind="value: employee_other_beneficiary().date_of_birth, maskedInput: '99/99/9999', attr: {name: 'eeBeneOtherDOB'+$index()}"
                        type="text" placeholder="MM/DD/YYYY"/>
+                <span class="help-block" data-bind="visible: !!employee_other_beneficiary().date_of_birth_validation_error(),
+                    text: employee_other_beneficiary().date_of_birth_validation_error()"></span>
               </div>
             </div>
           </div>
@@ -144,7 +148,8 @@
 
               <div class="col-xs-12 col-sm-9 form-group">
                 <input type="text" class="ee-cont-bene-rel"
-                       placeholder="Relationship" data-bind="value: employee_contingent_beneficiary().relationship, attr: {name: 'eeContBeneOtherRelation'+$index()}"/>
+                       placeholder="Relationship"
+                       data-bind="value: employee_contingent_beneficiary().relationship, attr: {name: 'eeContBeneOtherRelation'+$index()}"/>
               </div>
             </div>
           </div>
@@ -166,10 +171,13 @@
                 DOB
               </label>
 
-              <div class="col-xs-10 col-sm-9">
+              <div class="col-xs-10 col-sm-9 form-group"
+                   data-bind="css: { 'has-error': !!employee_contingent_beneficiary().date_of_birth_validation_error() }">
                 <input class="ee-cont-bene-dob"
                        data-bind="value: employee_contingent_beneficiary().date_of_birth, maskedInput: '99/99/9999', attr: {name: 'eeContBeneOtherDOB'+$index()}"
                        type="text" placeholder="MM/DD/YYYY"/>
+                <span class="help-block" data-bind="visible: !!employee_contingent_beneficiary().date_of_birth_validation_error(),
+                    text: employee_contingent_beneficiary().date_of_birth_validation_error()"></span>
               </div>
             </div>
           </div>
@@ -194,8 +202,10 @@
           <div class="col-xs-12 col-sm-7">
             <label class="blue">
               <input value="spouse" type="radio"
-                     class="inline ace" data-bind="checked: spouse_beneficiary_type, attr: {name: 'spBeneficiary'+$index()}"/>
-              <span class="lbl"> Employee (<span data-bind="text: $root.employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
+                     class="inline ace"
+                     data-bind="checked: spouse_beneficiary_type, attr: {name: 'spBeneficiary'+$index()}"/>
+              <span class="lbl"> Employee (<span
+                  data-bind="text: $root.employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
             </label>
 
             <label class="blue">
@@ -228,7 +238,8 @@
 
               <div class="col-xs-12 col-sm-9 form-group">
                 <input type="text" class="sp-bene-rel"
-                       placeholder="Relationship" data-bind="value: spouse_other_beneficiary().relationship, attr: {name: 'spBeneOtherRelation'+$index()}"/>
+                       placeholder="Relationship"
+                       data-bind="value: spouse_other_beneficiary().relationship, attr: {name: 'spBeneOtherRelation'+$index()}"/>
               </div>
             </div>
           </div>
@@ -272,14 +283,17 @@
           <div class="col-xs-12 col-sm-7">
             <label class="blue">
               <input value="none" type="radio"
-                     class="inline ace" data-bind="checked: spouse_contingent_beneficiary_type, attr: {name: 'spContBeneficiary'+$index()}"/>
+                     class="inline ace"
+                     data-bind="checked: spouse_contingent_beneficiary_type, attr: {name: 'spContBeneficiary'+$index()}"/>
               <span class="lbl"> None &nbsp;&nbsp;&nbsp; </span>
             </label>
 
             <label class="blue">
               <input value="spouse" type="radio"
-                     class="inline ace" data-bind="checked: spouse_contingent_beneficiary_type, attr: {name: 'spContBeneficiary'+$index()}"/>
-              <span class="lbl"> Employee (<span data-bind="text: $root.employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
+                     class="inline ace"
+                     data-bind="checked: spouse_contingent_beneficiary_type, attr: {name: 'spContBeneficiary'+$index()}"/>
+              <span class="lbl"> Employee (<span
+                  data-bind="text: $root.employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
             </label>
 
             <label class="blue">
@@ -311,7 +325,8 @@
 
               <div class="col-xs-12 col-sm-9 form-group">
                 <input type="text" class="sp-cont-bene-rel"
-                       placeholder="Relationship" data-bind="value: spouse_contingent_beneficiary().relationship, attr: {name: 'spContBeneOtherRelation'+$index()}"/>
+                       placeholder="Relationship"
+                       data-bind="value: spouse_contingent_beneficiary().relationship, attr: {name: 'spContBeneOtherRelation'+$index()}"/>
               </div>
             </div>
           </div>

@@ -1,7 +1,6 @@
-
 // Global cache-buster for AJAX GET requests.
-$(function() {
-  $.ajaxSetup({ cache: false });
+$(function () {
+  $.ajaxSetup({cache: false});
 });
 
 // form_data is
@@ -23,9 +22,9 @@ function get_loading_html(message) {
   var text = message || "Loading data...";
   //return "<span class='icon-spinner icon-spin grey bigger-200'></span> <span class='bigger-175'> "+text+"</span>";
   return '<div class="text-center">' +
-  "<h4>" + text + "</h4>" +
-  '<i class="icon-spinner icon-spin grey bigger-200"></i>' +
-  "</div>";
+    "<h4>" + text + "</h4>" +
+    '<i class="icon-spinner icon-spin grey bigger-200"></i>' +
+    "</div>";
 }
 
 // Misc Formatting
@@ -93,11 +92,48 @@ function normalize_date(date_str) {
     return '';
   }
 }
+
+function normalize_date_of_birth(date_of_birth_string) {
+  'use strict';
+  if (date_of_birth_string && is_valid_date_of_birth(date_of_birth_string)) {
+    return format_date(parse_date(date_of_birth_string));
+  } else {
+    return '';
+  }
+}
+
 function is_valid_date(date_str, format_str) {
   // Is the given string valid according to the format string? Defaults format to server-sent date format.
   var date = parse_date(date_str, format_str);
   return date.isValid();
 }
+
+function is_valid_date_of_birth(date_of_birth) {
+  'use strict';
+  if (!date_of_birth) {
+    return false;
+  }
+  var dob_moment = moment.isMoment(date_of_birth) ? date_of_birth : moment(date_of_birth, 'MM/DD/YYYY');
+  var today = moment({hour: 0, minute: 0, seconds: 0, milliseconds: 0});
+  return dob_moment.isValid() && dob_moment.isBefore(today);
+}
+
+function get_date_of_birth_validation_error(date_of_birth) {
+  'use strict';
+  if (!date_of_birth) {
+    return 'Date of Birth is required.';
+  }
+  var dob_moment = moment.isMoment(date_of_birth) ? date_of_birth : moment(date_of_birth, 'MM/DD/YYYY');
+  if (!dob_moment.isValid()) {
+    return 'Date is invalid.';
+  }
+  var today = moment({hour: 0, minute: 0, seconds: 0, milliseconds: 0});
+  if (dob_moment.isAfter(today)) {
+    return 'Date must be before today.';
+  }
+  return null;
+}
+
 function format_date(moment_date) {
   // Given a moment object, format it the same across the site
   return moment_date.format("MM/DD/YYYY");
@@ -113,20 +149,22 @@ function get_responsive_datatables_breakpoints() {
   //         'min-breakIV' to hide it below 560,
   //          etc.
   return [
-  {name: 'breakI', width: Infinity},
-  {name: 'breakII', width: 1024},
-  {name: 'breakIII', width: 768},
-  {name: 'breakIV', width: 600},
-  {name: 'breakV', width: 560},
-  {name: 'smallphone', width: 480}
+    {name: 'breakI', width: Infinity},
+    {name: 'breakII', width: 1024},
+    {name: 'breakIII', width: 768},
+    {name: 'breakIV', width: 600},
+    {name: 'breakV', width: 560},
+    {name: 'smallphone', width: 480}
   ];
 }
 
 
 // The shortcut functions above use this method to wrap the jquery ajax call in slightly different ways
 function submit_data(method, url, data, should_process_data, on_success, on_error, contentType) {
-  on_success = on_success || function () {};
-  on_error = on_error || function () {};
+  on_success = on_success || function () {
+    };
+  on_error = on_error || function () {
+    };
 
   var options = {
     url: url,
@@ -188,7 +226,7 @@ function show_all_errors(all_errors) {
 function show_errors(field_name, field_error_messages) {
   get_field(field_name).after(
     $("<div>").addClass("error").html(field_error_messages.join("<br>"))
-    );
+  );
 }
 
 function get_field(field_name) {
@@ -232,7 +270,7 @@ ko.bindingHandlers.modal = {
 ko.bindingHandlers.dataTable = {
 
 
-  update: function(element, valueAccessor) {
+  update: function (element, valueAccessor) {
     var bind_opts = ko.unwrap(valueAccessor());
     var datatable_opts = $.extend({}, bind_opts.options);
     var data_observable = bind_opts.data;
@@ -247,12 +285,12 @@ ko.bindingHandlers.dataTable = {
 
       // Create table
       $(element).//wrap("<div class='dataTables_borderWrap' />").
-            DataTable(datatable_opts);
+      DataTable(datatable_opts);
 
     } else if (updated_data.length > 0) {
-        var table = $(element).DataTable();
-        table.clear();
-        table.rows.add(updated_data).draw();
+      var table = $(element).DataTable();
+      table.clear();
+      table.rows.add(updated_data).draw();
     }
   }
 };
@@ -312,7 +350,7 @@ ko.bindingHandlers.multiSelect = {
     //  and an observableArray passed in as the 'observed' key
 
     // hook into observed value so we get updates
-    valueAccessor().observed.subscribe(function(newVal) {
+    valueAccessor().observed.subscribe(function (newVal) {
       console.log(newVal);
       $(element).multiselect('deselectAll');
       $(element).multiselect('select', newVal);
@@ -376,12 +414,12 @@ ko.bindingHandlers.uniqueNameValidation = {
 
 // Trigger a change event on any contenteditable fields for easier tracking.
 // http://stackoverflow.com/questions/1391278/contenteditable-change-events
-$(function() {
-  $('body').on('focus', '[contenteditable]', function() {
+$(function () {
+  $('body').on('focus', '[contenteditable]', function () {
     var $this = $(this);
     $this.data('before', $this.html());
     return $this;
-  }).on('blur keyup paste input', '[contenteditable]', function() {
+  }).on('blur keyup paste input', '[contenteditable]', function () {
     var $this = $(this);
     if ($this.data('before') !== $this.html()) {
       $this.data('before', $this.html());
@@ -526,8 +564,8 @@ ko.components.register('height-select', {
     self.required = params.required || false;
     self.name_suffix = params.name_suffix || null;
 
-    self.height_feet_part = ko.observable(""+get_feet_part(self.height()));
-    self.height_inches_part = ko.observable(""+get_inches_part(self.height()));
+    self.height_feet_part = ko.observable("" + get_feet_part(self.height()));
+    self.height_inches_part = ko.observable("" + get_inches_part(self.height()));
 
     // Update the observed value when one of the selectors changes
     self.update_height = function () {
@@ -622,8 +660,8 @@ ko.components.register('limited-product-select', {
   </select>'
 });
 var ProductStatesLimiterViewModel = function (product_statecode_mapping,
-  selected_state, available_states,
-  selected_products, available_products) {
+                                              selected_state, available_states,
+                                              selected_products, available_products) {
   // product_state_mapping: links a given product_id to a list of valid state codes
   // selected_state: an observable that can be null, or a two-letter statecode
   // available_states: the states we can select from
@@ -740,14 +778,14 @@ function map_states_to_products_from_statecode_map(available_states, product_sta
 }
 
 
-var StatesLimiterViewModel = function(product_statecode_mapping,
-  selected_state, available_states,
-  selected_products) {
+var StatesLimiterViewModel = function (product_statecode_mapping,
+                                       selected_state, available_states,
+                                       selected_products) {
   var self = this;
   self.available_states = available_states;
   self.selected_state = selected_state;
   self.product_state_mapping = map_states_to_products_from_statecode_map(available_states, product_statecode_mapping);
-  self.is_valid_product_for_state = function(product, state) {
+  self.is_valid_product_for_state = function (product, state) {
     return _.contains(self.product_state_mapping[product.id], state);
   };
 
@@ -779,9 +817,9 @@ var StatesLimiterViewModel = function(product_statecode_mapping,
   // When the products change, remove any ineligible states from the selection
   selected_products.subscribe(function (products) {
     // reset the selected state if not valid for the new product(s).
-    if (!_.any(products, function(product) {
-      return self.is_valid_product_for_state(product, self.selected_state());
-    })) {
+    if (!_.any(products, function (product) {
+        return self.is_valid_product_for_state(product, self.selected_state());
+      })) {
       self.selected_state(null);
     }
   });
@@ -790,22 +828,23 @@ var StatesLimiterViewModel = function(product_statecode_mapping,
 
 // IE8 and below polyfill for object.create
 if (typeof Object.create != 'function') {
-    (function () {
-        var F = function () {};
-        Object.create = function (o) {
-            if (arguments.length > 1) {
-                throw Error('Second argument not supported');
-            }
-            if (o === null) {
-                throw Error('Cannot set a null [[Prototype]]');
-            }
-            if (typeof o != 'object') {
-                throw new TypeError('Argument must be an object');
-            }
-            F.prototype = o;
-            return new F();
-        };
-    })();
+  (function () {
+    var F = function () {
+    };
+    Object.create = function (o) {
+      if (arguments.length > 1) {
+        throw Error('Second argument not supported');
+      }
+      if (o === null) {
+        throw Error('Cannot set a null [[Prototype]]');
+      }
+      if (typeof o != 'object') {
+        throw new TypeError('Argument must be an object');
+      }
+      F.prototype = o;
+      return new F();
+    };
+  })();
 }
 
 // Show a special delete modal with custom message and callback.
@@ -820,7 +859,7 @@ ko.components.register('delete-confirm-modal', {
 
     // Built-in behavior has user type "DELETE"
     self.delete_confirmation_text = ko.observable("");
-    self.is_delete_text_valid = ko.pureComputed(function() {
+    self.is_delete_text_valid = ko.pureComputed(function () {
       return self.delete_confirmation_text() == "DELETE";
     });
 

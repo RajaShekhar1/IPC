@@ -35,7 +35,7 @@ var wizard_applicant = (function () {
     self.last = ko.observable(applicant_data.last);
     self.email = ko.observable(applicant_data.email);
     self.phone = ko.observable(applicant_data.phone);
-    self.birthdate = ko.observable(normalize_date(applicant_data.birthdate));
+    self.birthdate = ko.observable(normalize_date_of_birth(applicant_data.birthdate));
     self.ssn = ko.observable(applicant_data.ssn);
     self.gender = ko.observable(applicant_data.gender);
 
