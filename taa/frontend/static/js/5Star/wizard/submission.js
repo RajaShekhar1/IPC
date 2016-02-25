@@ -57,16 +57,18 @@ function build_wizard_results_for_product_coverage(product_cov) {
 
   var health_questions = vm.get_product_health_questions(product_cov);
 
+  var did_decline = (root.coverage_vm.has_multiple_products()) ? product_cov.did_decline() : root.did_decline();
+
   var wizard_results = {
-    //agent_data: root.options,
+    product_id: product_cov.product.product_data.id,
     case_id: root.enrollment_case.id,
-    enrollCity:  root.enrollCity(),
-    enrollState:  root.enrollState(),
+    enrollCity: root.enrollCity(),
+    enrollState: root.enrollState(),
     payment_mode: root.coverage_vm.payment_mode().frequency,
     payment_mode_text: root.coverage_vm.payment_mode().label,
 
-    method: (root.is_in_person_application()) ? 'in_person': 'self_enroll_email',
-    did_decline: (root.coverage_vm.has_multiple_products()) ? product_cov.did_decline() : root.did_decline(),
+    method: (root.is_in_person_application()) ? 'in_person' : 'self_enroll_email',
+    did_decline: did_decline,
 
     identityToken: root.identityToken(),
     identityType: root.identityType(),
@@ -76,13 +78,6 @@ function build_wizard_results_for_product_coverage(product_cov) {
 
     is_spouse_address_same_as_employee: root.is_spouse_address_same_as_employee(),
     is_spouse_email_same_as_employee: root.is_spouse_email_same_as_employee(),
-
-    existing_insurance:  root.existing_insurance(),
-    replacing_insurance:  root.replacing_insurance(),
-
-    is_employee_actively_at_work: root.is_employee_actively_at_work(),
-    has_spouse_been_treated_6_months: product_cov.has_spouse_been_treated_6_months(),
-    has_spouse_been_disabled_6_months: product_cov.has_spouse_been_disabled_6_months(),
 
     employee_owner:  product_cov.policy_owner(),
     employee_other_owner_name:  product_cov.other_owner_name(),
@@ -109,6 +104,26 @@ function build_wizard_results_for_product_coverage(product_cov) {
     spouse_contingent_beneficiary: product_cov.spouse_contingent_beneficiary().serialize()
   };
 
+  wizard_results.children = [];
+  _.each(product_cov.get_covered_children(), function(child) {
+    wizard_results['children'].push(child.serialize_data());
+  });
+
+  if (did_decline) {
+    // Return just the basic data if declining.
+    return wizard_results;
+  }
+
+  wizard_results = $.extend({}, wizard_results, {
+    existing_insurance:  root.existing_insurance(),
+    replacing_insurance:  root.replacing_insurance(),
+
+    is_employee_actively_at_work: root.is_employee_actively_at_work(),
+    has_spouse_been_treated_6_months: product_cov.has_spouse_been_treated_6_months(),
+    has_spouse_been_disabled_6_months: product_cov.has_spouse_been_disabled_6_months(),
+
+  });
+
   if (health_questions) {
     wizard_results.employee_soh_questions = health_questions.serialize_answers_for_applicant(vm.employee());
     wizard_results.spouse_soh_questions = health_questions.serialize_answers_for_applicant(vm.spouse());
@@ -134,11 +149,9 @@ function build_wizard_results_for_product_coverage(product_cov) {
   }
 
   // Children and child coverages
-  wizard_results['children'] = [];
   wizard_results['child_coverages'] = [];
   wizard_results['children_soh_questions'] = [];
   _.each(product_cov.get_covered_children(), function(child) {
-    wizard_results['children'].push(child.serialize_data());
     var coverage = product_cov.__get_coverage_for_applicant(child);
     wizard_results['child_coverages'].push(coverage.coverage_option().serialize_data());
 
@@ -147,8 +160,6 @@ function build_wizard_results_for_product_coverage(product_cov) {
       wizard_results['children_soh_questions'].push(soh_questions);
     }
   });
-
-  wizard_results['product_id'] = product_cov.product.product_data.id;
 
   // Replacement form
   wizard_results.replacement_read_aloud = root.replacement_read_aloud();
@@ -184,7 +195,7 @@ function submit_decline() {
         }
       });
     } else {
-      // Docusign redirect
+      // redirect
       location = resp.redirect;
     }
   }, handle_remote_error, true);

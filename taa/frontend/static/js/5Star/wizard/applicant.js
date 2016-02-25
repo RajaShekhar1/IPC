@@ -145,7 +145,9 @@ var wizard_applicant = (function () {
         if (!(coverage.product.id in by_product_id)) {
           by_product_id[coverage.product.id] = 0.0;
         }
-        by_product_id[coverage.product.id] += parseFloat(coverage.coverage_face_value);
+        if (coverage.coverage_status === 'enrolled') {
+          by_product_id[coverage.product.id] += parseFloat(coverage.coverage_face_value);
+        }
         return by_product_id;
       }, {});
     };

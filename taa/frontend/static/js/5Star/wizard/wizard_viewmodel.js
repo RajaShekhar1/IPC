@@ -1123,7 +1123,8 @@ var wizard_viewmodel = (function () {
         return _.any(self.applicant_list.applicants(), function (applicant) {
           // Does the applicant have existing coverage for this product?
           return _.any(applicant.existing_coverages, function (existing_coverage) {
-            return existing_coverage.product_id === product_coverage.product.id;
+            return existing_coverage.product_id === product_coverage.product.id
+                && existing_coverage.coverage_status === 'enrolled';
           });
         });
       }));
