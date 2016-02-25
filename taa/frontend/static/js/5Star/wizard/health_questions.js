@@ -268,7 +268,7 @@ var StandardHealthQuestion = function (question, product_coverage) {
       // No need to show anything, return.
       return;
     }
-    
+
     // If we get here, the applicant has answered 'Yes' to a question.
     //   We offer a choice to remove the applicant directly from step 2.
 

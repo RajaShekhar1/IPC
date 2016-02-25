@@ -537,12 +537,6 @@ var wizard_viewmodel = (function () {
       }
     },
 
-    get_applicant_recommendations: function (recommendation_set) {
-      return _.map(this.applicant_coverage_selections(), function (applicant_coverage) {
-        return new ApplicantRecommendationVM(applicant_coverage.applicant, recommendation_set);
-      }, this);
-    },
-
     get_total_premium: function () {
       var total = 0.0;
       if (this.did_decline()) {
@@ -646,14 +640,21 @@ var wizard_viewmodel = (function () {
       return coverage.format_face_value();
     },
     format_recommendation_premium: function (recommendation_set) {
-      var coverage = recommendation_set.get_recommended_applicant_coverage(this.applicant.type);
-      return coverage.format_premium_option();
+      var recommendation = recommendation_set.get_applicant_recommendation(this.applicant.type);
+      return recommendation.format_total_premium();
     },
 
     format_selected_coverage: function () {
       return this.get_selected_coverage().format_face_value();
     },
     format_selected_premium: function () {
+      if (this.applicant.type == wizard_applicant.Applicant.ChildType &&
+          this.product_coverage.product.is_fpp_product() &&
+          this.has_selected_coverage()) {
+        // Do the formatting here for single product enroll fpp children multiplier ... ugh.
+        var premium = this.get_selected_coverage().get_total_premium() * window.vm.coverage_vm.applicants.get_valid_children().length;
+        return format_premium_value(premium);
+      }
       return this.get_selected_coverage().format_premium_option();
     },
 
@@ -672,26 +673,6 @@ var wizard_viewmodel = (function () {
 
   };
 
-  // Small viewmodel for presenting recommended coverage.
-  function ApplicantRecommendationVM(applicant, recommendation_set) {
-    var self = this;
-    self.applicant = applicant;
-    self.recommended_coverage = recommendation_set.get_recommended_applicant_coverage(self.applicant.type);
-    self.total_premium = recommendation_set.get_total_premium;
-
-    self.is_valid = function () {
-      return self.recommended_coverage.is_valid();
-    };
-
-    self.format_premium_option = function () {
-      return self.recommended_coverage.format_premium_option();
-    };
-
-    self.format_coverage = function () {
-      return self.recommended_coverage.format_face_value();
-    };
-
-  }
 
   function CoverageSummaryVM(product_coverages, applicant_list) {
     this.product_coverages = product_coverages;
