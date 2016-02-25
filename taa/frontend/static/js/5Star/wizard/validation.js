@@ -81,13 +81,12 @@ function init_validation(ui) {
         }
       });
 
-      if (!is_valid) {
-        e.preventDefault();
-      }
-
-      // Scroll to top of page when moving to step 2.
       if (is_valid) {
+        // Scroll to top of page when moving to step 2.
         $(document.body).scrollTop(0);
+      } else {
+        // Don't allow moving to the next page
+        e.preventDefault();
       }
     }
     if (info.step == 2 && info.direction == 'next') {

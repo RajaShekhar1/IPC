@@ -903,8 +903,13 @@ var wizard_viewmodel = (function () {
 
     init_jquery_validator();
 
-    // Step 1 ViewModel observables
+    self.set_wizard_step = function() {
+      var wizard = $('#enrollment-wizard').data('fu.wizard');
+      wizard.currentStep = 1;
+      wizard.setState()
+    };
 
+    // Step 1 ViewModel observables
     self.should_include_spouse_in_table = ko.computed(function () {
       return self.should_show_spouse() && self.spouse().is_valid();
     });
@@ -1189,7 +1194,7 @@ var wizard_viewmodel = (function () {
     // Just for step 1 ...
     self.is_coverage_selection_valid = function () {
       return _.all(self.coverage_vm.product_coverage_viewmodels(), function (prod_cov) {
-        return prod_cov.did_select_valid_coverage();
+        return prod_cov.did_select_valid_coverage() || prod_cov.did_decline();
       });
     };
 

@@ -208,6 +208,21 @@ NonHealthQuestion.prototype.get_question_text = function () {
 };
 
 
+function decline_product_if_no_coverage(product_coverage) {
+// If we have removed the last applicant for this product, set it as declined.
+  if (!product_coverage.did_select_valid_coverage()) {
+    if (window.vm.coverage_vm.has_multiple_products()) {
+      product_coverage.did_decline(true);
+    } else {
+      window.vm.did_decline(true);
+    }
+  }
+
+  // If all products are declined now, go back to step 1.
+  if (window.vm.did_decline_all_products()) {
+    window.vm.set_wizard_step(1);
+  }
+}
 var StandardHealthQuestion = function (question, product_coverage) {
   // A viewmodel that keeps track of which applicants need to answer which health questions
   var self = this;
@@ -263,6 +278,7 @@ var StandardHealthQuestion = function (question, product_coverage) {
   //  }
   //};
 
+
   self.show_yes_dialogue = function (applicant) {
     if (!self.does_yes_stop_app()) {
       // No need to show anything, return.
@@ -287,6 +303,8 @@ var StandardHealthQuestion = function (question, product_coverage) {
 
             self.product_coverage.__get_coverage_for_applicant(applicant).customized_coverage_option(null_option);
           }
+
+          decline_product_if_no_coverage(self.product_coverage);
         }
       },
       ignore: {
@@ -494,6 +512,8 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
 
             self.product_coverage.__get_coverage_for_applicant(applicant).customized_coverage_option(null_option);
           }
+
+          decline_product_if_no_coverage(self.product_coverage);
         }
       },
       ignore: {
