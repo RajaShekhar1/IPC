@@ -4,6 +4,8 @@ import json
 from decimal import Decimal
 
 import dateutil.parser
+from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
+
 from taa.services.docusign.service import DocusignEnvelope
 
 from enrollment_application_coverages import (
@@ -261,8 +263,7 @@ class EnrollmentApplicationService(DBService):
             if data['did_decline']:
                 continue
 
-            product_id = data['product_data']['id']
-            product = self.product_service.get(product_id)
+            product = EnrollmentDataWrap(data, enrollment.census_record, enrollment.case).get_product()
 
             if data['employee_coverage']:
                 self.coverages_service.create_coverage(
