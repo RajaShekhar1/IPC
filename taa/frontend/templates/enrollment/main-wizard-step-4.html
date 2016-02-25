@@ -202,8 +202,7 @@
           <div class="row form-group">
             <label class="control-label col-xs-12 col-sm-2 no-padding-right"
                    data-bind="attr: {for: 'child-first-'+$index()}">
-              Child{#<span data-bind="if: $root.insurance_product.should_allow_grandchildren()">/Grandchild</span> #}
-                        <span data-bind="text: $index() + 1"></span>
+              Child<span data-bind="visible: $parent.should_allow_grandchildren">/Grandchild</span> <span data-bind="text: $index() + 1"></span>
             </label>
 
             <div class="col-xs-12 col-sm-6">
@@ -255,7 +254,7 @@
 	    
 	     <span class="text-primary bigger-110 ">
 	       <i class="icon fa fa-info-sign"></i>
-	       Employee will be the Owner of any child policy(ies)
+	       Employee will be the Owner of any child<span data-bind="visible: $parent.should_allow_grandchildren">/grandchild</span>  policy(ies)
 	     </span>
 
     </div>

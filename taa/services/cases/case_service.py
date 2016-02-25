@@ -107,7 +107,7 @@ class CaseService(DBService):
         from sqlalchemy import update
         for product in case.products:
             api_product = next(p for p in products if p['id'] == product.id)
-            if api_product is not None:
+            if api_product is not None and api_product['ordinal'] is not None:
                 ordinal = int(api_product['ordinal'])
                 query = update(case_products)\
                     .where(case_products.c.case_id == case.id)\
