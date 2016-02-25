@@ -1002,6 +1002,9 @@ var wizard_viewmodel = (function () {
       }
     };
 
+    self.should_allow_grandchildren = ko.computed(function () {
+      return !!self.products && self.products.length === 1 && _.some(self.products, function (product) { return product.is_fpp_product(); });
+    });
 
     self.show_spouse_name = ko.computed(function () {
       return (self.should_include_spouse_in_table()) ? self.spouse().name() : "";
