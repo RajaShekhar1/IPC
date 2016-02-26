@@ -380,7 +380,7 @@ class DocusignEnvelope(object):
         return self._cached_envelope_status
 
     def get_signing_url(self, recipient, callback_url, docusign_transport, clientUserId=None):
-        if clientUserId == None
+        if clientUserId == None:
             clientUserId = recipient.get_client_user_id()
 
         data = dict(
