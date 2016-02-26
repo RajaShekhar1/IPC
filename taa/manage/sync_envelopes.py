@@ -22,7 +22,6 @@ class SyncEnvelopesCommand(Command):
         EnvelopeSync().match_envelopes()
 
 
-
 class EnvelopeSync(object):
     def __init__(self):
         self.num_linked = 0
@@ -99,7 +98,6 @@ class EnvelopeSync(object):
             print("No employee on envelope; got agent signing status: {}".format(agent_status))
             return False
 
-
     def match_enrollment(self, emp_status, envelope):
 
         ee_ssn = self.find_text_tab(emp_status, 'eeSSN')
@@ -163,10 +161,16 @@ class EnvelopeSync(object):
         else:
             print("FOUND matching enrollment(s) for envelope: {} to {} '{}' '{}' {}/{}/{}".format(
                 envelope.uri, matching_enrollment.id, created_time.strftime('%F'), ee_ssn_masked, ee_cov, sp_cov, ch_cov))
+
             # Link it up
             matching_enrollment.docusign_envelope_id = envelope.uri
             db.session.flush()
             db.session.commit()
+
+            # Sync the enrollment
+            envelope.enrollment_record = matching_enrollment
+            envelope.update_enrollment_status()
+
             return True
 
     def find_coverage_for_applicant(self, cov_to_match, matching_enrollment, applicant_type):
