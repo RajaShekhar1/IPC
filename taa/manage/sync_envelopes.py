@@ -71,7 +71,7 @@ class EnvelopeSync(object):
         start_time = datetime.now()
         current_wait = 8
 
-        time_limiter = APIRateLimiter(975)
+        time_limiter = APIRateLimiter(500)
 
         for i, envelope_data in enumerate(completed):
             current_time = datetime.now()
@@ -230,7 +230,7 @@ class EnvelopeSync(object):
 class APIRateLimiter(object):
     def __init__(self, limit):
         self.num_requests = 0
-        self.current_wait = 0
+        self.current_wait = 8
         self.hourly_limit = limit
         self.start_time = datetime.now()
 
