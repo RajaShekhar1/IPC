@@ -3,6 +3,7 @@ var CaseReportsViewModel = function(params) {
   var self = this;
 
   self.is_loading = ko.observable(true);
+  self.error_message = ko.observable("");
 
   self.company_name = ko.observable({});
   self.group_number = ko.observable({});
@@ -51,6 +52,7 @@ var CaseReportsViewModel = function(params) {
       self.is_loading(false);
     }).error(function(e) {
       console.error(e);
+      self.error_message("There was a problem loading the enrollment report data.");
       self.is_loading(false);
     });
   };

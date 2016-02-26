@@ -176,10 +176,7 @@
                           attr: {id: 'child-dob-'+$index()},
                           maskedInput: '99/99/9999'
                           " type="text" placeholder="MM/DD/YYYY">
-            {#
-             This was required when we needed to subscribe to these changes:
-             event: {change: $root.update_rate_table},
-             #}
+
           </div>
 
         </div>
@@ -189,8 +186,7 @@
       <div class="row" id="addChildBtn">
         <div class="col-xs-12 col-sm-offset-1 col-sm-2">
           <button class="btn btn-default btn-sm" type="button" data-bind="click: add_child">
-            {# TODO: Add grandchildren text #}
-            Add Child{# <span data-bind="if: insurance_product.should_allow_grandchildren()">/Grandchild</span> #}
+            Add Child <span data-bind="if: should_allow_grandchildren">/Grandchild</span>
           </button>
         </div>
       </div>
