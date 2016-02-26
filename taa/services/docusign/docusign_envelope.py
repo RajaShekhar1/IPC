@@ -359,6 +359,7 @@ class EnrollmentDataWrap(object):
     def should_use_call_center_workflow(self):
         return self.case.should_use_call_center_workflow
 
+
 def build_callback_url(wizard_data, session_type):
     is_ssl = app.config.get('IS_SSL', True)
     hostname = app.config.get('HOSTNAME', '5starenroll.com')

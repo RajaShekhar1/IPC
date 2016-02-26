@@ -599,6 +599,7 @@ class DocusignEnvelope(object):
         #recipient = AgentDocuSignRecipient(agent, agent.name(), agent.email)
         #return self.get_signing_url(recipient, callback_url, get_docusign_transport())
         # TODO: should put check here to see if current user is actually agent, or up one level?
+
         data = dict(
             authenticationMethod="email",
             email=ds_recip['email'],
@@ -612,8 +613,20 @@ class DocusignEnvelope(object):
         return result['url']
 
     def get_completed_view_url(self, callback_url):
-        # Return any valid recipient view
-        return self.get_agent_signing_url(callback_url)
+        if self.get_employee_signing_status():
+            return self.get_employee_signing_url(callback_url)
+        else:
+            # Return any valid recipient view
+            return self.get_agent_signing_url(callback_url)
+
+    def get_completed_pdf(self):
+        # Return the raw PDF bytes. The PDF will only have all the data if it is completed.
+        transport = get_docusign_transport()
+        content = transport.get_binary(self.get_envelope_base_url() + '/documents/combined')
+        # Can pull out the filename from the header, but let's not do that for now.
+        return content
+
+
 
     def is_completed(self):
         """Basically is it all done, enrolled.
@@ -641,20 +654,32 @@ class DocuSignTransport(object):
         self.api_password = api_password
         self.api_endpoint = api_endpoint
 
+        self.last_request = None
+
     def get(self, url):
         full_url = urljoin(self.api_endpoint, url)
 
-        req = requests.get(full_url, headers=self._make_headers())
+        self.last_request = req = requests.get(full_url, headers=self._make_headers())
 
         if req.status_code < 200 or req.status_code >= 300:
             self._raise_docusign_error(None, full_url, req)
 
         return req.json()
 
+    def get_binary(self, url):
+        full_url = urljoin(self.api_endpoint, url)
+
+        self.last_request = req = requests.get(full_url, headers=self._make_headers())
+
+        if req.status_code < 200 or req.status_code >= 300:
+            self._raise_docusign_error(None, full_url, req)
+
+        return req.content
+
     def post(self, url, data):
         full_url = urljoin(self.api_endpoint, url)
 
-        req = requests.post(
+        self.last_request = req = requests.post(
             full_url,
             data=json.dumps(data),
             headers=self._make_headers()
@@ -673,7 +698,7 @@ class DocuSignTransport(object):
     def put(self, url, data):
         full_url = urljoin(self.api_endpoint, url)
 
-        req = requests.put(
+        self.last_request = req = requests.put(
             full_url,
             data=json.dumps(data),
             headers=self._make_headers()
