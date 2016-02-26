@@ -1,5 +1,6 @@
 # Functions to synchronize DocuSign envelopes with our enrollment records
-from datetime import timedelta
+import time
+from datetime import timedelta, datetime
 from itertools import ifilter
 
 from flask_script import Command
@@ -60,22 +61,37 @@ class EnvelopeSync(object):
             elif self.is_linked(env):
                 self.num_already_linked += 1
 
-        # completed = self.get_all_completed_envelopes()
-        #
-        # self.num_total = len(completed)
-        # self.progress_count = 0
-        # # Match all completed envelopes next
-        # for envelope_data in completed:
-        #     env = DocusignEnvelope(envelope_data['envelopeUri'], fetch_tabs=True)
-        #
-        #     if not self.is_linked(env):
-        #         did_link = self.link_envelope(env)
-        #         if did_link:
-        #             self.num_linked += 1
-        #         else:
-        #             self.num_skipped += 1
-        #     else:
-        #         self.num_already_linked += 1
+        completed = self.get_all_completed_envelopes()
+
+        self.num_total = len(completed)
+        self.progress_count = 0
+        # Match all completed envelopes next
+
+        num_requests = 0
+        start_time = datetime.now()
+        current_wait = 8
+
+        time_limiter = APIRateLimiter(975)
+
+        for i, envelope_data in enumerate(completed):
+            current_time = datetime.now()
+
+            env = DocusignEnvelope(envelope_data['envelopeUri'], fetch_tabs=True)
+
+            if not self.is_linked(env):
+                did_link = self.link_envelope(env)
+                if did_link:
+                    self.num_linked += 1
+                    print("{}/{} Linked".format(i+1, len(completed)))
+                else:
+                    print("{}/{} Skipped".format(i+1, len(completed)))
+                    self.num_skipped += 1
+
+                time_limiter.wait(num_requests=2)
+
+            else:
+                self.num_already_linked += 1
+                print("{}/{} Already Linked".format(i+1, len(completed)))
 
 
         # TODO: Link up voided
@@ -202,13 +218,37 @@ class EnvelopeSync(object):
 
     def fetch_envelopes_for_status(self, status):
         transport = get_docusign_transport()
-        data = transport.get('envelopes?from_date=2014-01-01&status={}'.format(status))
+        data = transport.get('envelopes?from_date=2015-01-01&status={}'.format(status))
         total = data['resultSetSize']
         print("Processing {} envelopes...".format(total))
 
         if total == 0:
             return []
         return data['envelopes']
+
+
+class APIRateLimiter(object):
+    def __init__(self, limit):
+        self.num_requests = 0
+        self.current_wait = 0
+        self.hourly_limit = limit
+        self.start_time = datetime.now()
+
+    def wait(self, num_requests):
+        self.num_requests += num_requests
+
+        # Limit our rate of requests to under req_limit/hr
+        one_hour_in_seconds = 3600.0
+
+        diff = datetime.now() - self.start_time
+        seconds = diff.total_seconds()
+        avg_freq = num_requests / seconds
+        expected_freq = self.hourly_limit / one_hour_in_seconds
+        drift = (avg_freq - expected_freq)
+        if drift > 1 or drift < -1:
+            self.current_wait += drift
+
+        time.sleep(self.current_wait)
 
 
 def parse_utc_date(val):
