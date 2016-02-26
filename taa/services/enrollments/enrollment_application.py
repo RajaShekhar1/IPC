@@ -101,29 +101,11 @@ class EnrollmentApplicationService(DBService):
         enrollment_application.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_PENDING
         db.session.flush()
 
-    def update_applicant_signing_status(self, enrollment_application, status):
-
+    def update_applicant_signing_status(self, enrollment_application, status=None):
+        "Synchronizes our enrollment record with the signing and application statuses that DocuSign has."
         envelope = DocusignEnvelope(enrollment_application.docusign_envelope_id, enrollment_application)
         envelope.update_enrollment_status()
-        #
-        # # Map what docusign returns to our own status
-        # status_mapping_possibilities = {
-        #     'cancel': EnrollmentApplication.SIGNING_STATUS_DECLINED, # (recipient cancels signing)
-        #     'decline': EnrollmentApplication.SIGNING_STATUS_DECLINED, # (recipient declines signing)
-        #     'exception': EnrollmentApplication.SIGNING_STATUS_ERROR, #  (exception occurs)
-        #     #'fax_pending', #  (recipient has fax pending)
-        #     #'id_check_faild', #  (recipient failed an ID check)
-        #     'session_timeout': EnrollmentApplication.SIGNING_STATUS_TIMEOUT, #  (session times out)
-        #     'signing_complete': EnrollmentApplication.SIGNING_STATUS_COMPLETE, #  (recipient completes signing)
-        #     'ttl_expired':EnrollmentApplication.SIGNING_STATUS_TTL_ERROR, #  (the TTL expires)
-        #     #'viewing_complete', #  (recipient completes viewing the envelope)
-        # }
-        #
-        # if status in status_mapping_possibilities:
-        #     internal_status = status_mapping_possibilities[status]
-        #     enrollment_application.applicant_signing_status = internal_status
-        #     db.session.flush()
-        #
+
 
     def delete_case_enrollment_data(self, case):
         for census_record in case.census_records:
@@ -560,6 +542,15 @@ class EnrollmentApplicationService(DBService):
     def get_enrollments_by_date(self, from_, to_):
         return self.__model__.query.filter(self.__model__.signature_time >= from_,
                                            self.__model__.signature_time <= to_)
+
+    def sync_enrollment_with_docusign(self, enrollment_application_id):
+        enrollment_application = self.get(enrollment_application_id)
+        if enrollment_application and enrollment_application.docusign_envelope_id and enrollment_application.is_terminal_status():
+            self.update_applicant_signing_status(enrollment_application)
+
+    # Need to commit all database changes.
+    db.session.commit()
+
 
 def export_string(val):
     return val.strip()

@@ -359,7 +359,7 @@ class EnrollmentDataWrap(object):
     def should_use_call_center_workflow(self):
         return self.case.should_use_call_center_workflow
 
-
+# For employee signing sessions
 def build_callback_url(wizard_data, session_type):
     is_ssl = app.config.get('IS_SSL', True)
     hostname = app.config.get('HOSTNAME', '5starenroll.com')
@@ -371,4 +371,15 @@ def build_callback_url(wizard_data, session_type):
                 hostname=hostname,
                 name=wizard_data['employee']['first'],
                 session_type=session_type,
+    ))
+
+def build_callcenter_callback_url(case):
+    is_ssl = app.config.get('IS_SSL', True)
+    hostname = app.config.get('HOSTNAME', '5starenroll.com')
+    scheme = 'https://' if is_ssl else 'http://'
+    # note: DS supplies the last parm of 'event' in the callback
+    return ('{scheme}{hostname}/enrollment-case/{case_id}#enrollment'.format(
+                scheme=scheme,
+                hostname=hostname,
+                case_id=case.id,
     ))

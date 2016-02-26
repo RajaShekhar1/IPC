@@ -40,6 +40,7 @@ def inbox():
     #  This allows us to stay sync'd up with DocuSign.
     if request.args.get('enrollment') and request.args.get('enrollment').isdigit():
         try:
+            enrollment_service.sync_enrollment_with_docusign(request.args['enrollment'])
             app = EnrollmentApplicationService().get(request.args['enrollment'])
             EnrollmentApplicationService().update_applicant_signing_status(app, request.args.get('event'))
             db.session.commit()

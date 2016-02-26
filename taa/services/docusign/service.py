@@ -20,7 +20,8 @@ from taa import app, db
 from taa.services.enrollments import EnrollmentApplicationCoverage, EnrollmentApplication
 from taa.services.agents import AgentService
 from taa.services import RequiredFeature, LookupService
-from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callback_url
+from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callback_url, \
+    build_callcenter_callback_url
 
 
 class DocuSignService(object):
@@ -329,10 +330,14 @@ def create_multiproduct_envelope_and_fetch_signing_url(wizard_data, census_recor
 
 
 def fetch_signing_url(in_person_signer, enrollment_data, envelope_result):
+    if enrollment_data.should_use_call_center_workflow():
+        callback_url = build_callcenter_callback_url(enrollment_data.case)
+    else:
+        callback_url = build_callback_url(enrollment_data, enrollment_data.get_session_type())
+
     redirect_url = envelope_result.get_signing_url(
         in_person_signer,
-        callback_url=build_callback_url(
-            enrollment_data, enrollment_data.get_session_type()),
+        callback_url=callback_url,
         docusign_transport=get_docusign_transport()
     )
     return redirect_url
@@ -374,12 +379,15 @@ class DocusignEnvelope(object):
         self._cached_envelope_status = docusign_transport.get(self.get_envelope_base_url())
         return self._cached_envelope_status
 
-    def get_signing_url(self, recipient, callback_url, docusign_transport):
+    def get_signing_url(self, recipient, callback_url, docusign_transport, clientUserId=None):
+        if clientUserId == None
+            clientUserId = recipient.get_client_user_id()
+
         data = dict(
             authenticationMethod="email",
             email=recipient.email,
             returnUrl=callback_url,
-            clientUserId=recipient.get_client_user_id(),
+            clientUserId=clientUserId,
             userName=recipient.name,
         )
         view_url = self.get_envelope_base_url() + "/views/recipient"
@@ -538,8 +546,6 @@ class DocusignEnvelope(object):
                 self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_DECLINED
                 self.enrollment_record.agent_signing_datetime = None
 
-
-
     def parse_signing_date(self, val):
         utc_datetime = parse_datetime(val)
 
@@ -592,7 +598,7 @@ class DocusignEnvelope(object):
             email=ds_recip['email'],
             role_name="Employee",
         )
-        return self.get_signing_url(recipient, callback_url, get_docusign_transport())
+        return self.get_signing_url(recipient, callback_url, get_docusign_transport(), ds_recip.get('clientUserId'))
 
     def get_agent_signing_url(self, callback_url):
         ds_recip = self.get_agent_signing_status()
@@ -604,9 +610,11 @@ class DocusignEnvelope(object):
             authenticationMethod="email",
             email=ds_recip['email'],
             returnUrl=callback_url,
-            clientUserId=ds_recip['clientUserId'],
             userName=ds_recip['name'],
         )
+        if ds_recip.get('clientUserId'):
+            data['clientUserId'] = ds_recip.get('clientUserId')
+
         view_url = self.get_envelope_base_url() + "/views/recipient"
         result = get_docusign_transport().post(view_url, data=data)
 
@@ -803,7 +811,6 @@ class AgentDocuSignRecipient(DocuSignRecipient):
         return True
 
     def get_client_user_id(self):
-        return "123456"
         # Use the stormpath URL for this agent
         agent_service = AgentService()
         # Hash our agent id
