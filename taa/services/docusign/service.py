@@ -231,35 +231,12 @@ class DocuSignService(object):
         return [DocusignEnvelope(enrollment.docusign_envelope_id, enrollment)
                 for enrollment in enrollments if enrollment.docusign_envelope_id is not None]
 
-    def get_envelope_signing_url(self, for_user, envelope_id):
+    def get_envelope_signing_url(self, for_user, envelope_id, callback_url):
         "Must be the agent that the envelope was sent to (this user must be the recipient)"
         errors = []
-
         envelope_url = '/envelopes/%s'%envelope_id
-
-        enrollment_service = LookupService("EnrollmentApplicationService")
-
-        enrollments = enrollment_service.search_enrollments(
-            #by_agent_id=agent.id,
-            by_envelope_url=envelope_url,
-        )
-        enrollment_data = enrollments.all()
-
-        if not enrollment_data:
-            raise ValueError("No enrollment with envelope id {}".format(envelope_id))
-        enrollment_record = enrollment_data[0]
-
+        enrollment_record = self.get_enrollment_record_from_envelope(envelope_id)
         envelope = DocusignEnvelope(envelope_url, enrollment_record)
-
-        # Build a callback URL for the inbox
-        is_ssl = app.config.get('IS_SSL', True)
-        hostname = app.config.get('HOSTNAME', '5starenroll.com')
-        scheme = 'https://' if is_ssl else 'http://'
-        callback_url = ('{scheme}{hostname}/inbox?enrollment={enrollment_id}'.format(
-                    scheme=scheme,
-                    hostname=hostname,
-                    enrollment_id=enrollment_record.id,
-        ))
 
         # First, we update our signing status
         envelope.update_enrollment_status()
@@ -275,7 +252,7 @@ class DocuSignService(object):
             raise ValueError("No agent record associated with user {}".format(for_user.href))
 
         # Only envelopes that have been signed by me.
-        agent = agent_service.get_agent_from_user(for_user)
+        #agent = agent_service.get_agent_from_user(for_user)
 
         # If this has been voided, we return an error.
         if enrollment_record.application_status == EnrollmentApplication.APPLICATION_STATUS_VOIDED:
@@ -290,6 +267,45 @@ class DocuSignService(object):
             url = envelope.get_completed_view_url(callback_url)
 
         return url, errors
+
+    def get_enrollment_record_from_envelope(self, envelope_id):
+        envelope_url = '/envelopes/%s'%envelope_id
+        enrollment_service = LookupService("EnrollmentApplicationService")
+        enrollments = enrollment_service.search_enrollments(
+            # by_agent_id=agent.id,
+            by_envelope_url=envelope_url,
+        )
+        enrollment_data = enrollments.all()
+        if not enrollment_data:
+            raise ValueError("No enrollment with envelope id {}".format(envelope_id))
+        enrollment_record = enrollment_data[0]
+        return enrollment_record
+
+    def build_inbox_callback_url(self, enrollment_record):
+        # Build a callback URL for the inbox
+        is_ssl = app.config.get('IS_SSL', True)
+        hostname = app.config.get('HOSTNAME', '5starenroll.com')
+        scheme = 'https://' if is_ssl else 'http://'
+        callback_url = ('{scheme}{hostname}/inbox?enrollment={enrollment_id}'.format(
+            scheme=scheme,
+            hostname=hostname,
+            enrollment_id=enrollment_record.id,
+        ))
+        return callback_url
+
+    def build_census_record_callback_url(self, enrollment_record):
+        # Build a callback URL for the inbox
+        is_ssl = app.config.get('IS_SSL', True)
+        hostname = app.config.get('HOSTNAME', '5starenroll.com')
+        scheme = 'https://' if is_ssl else 'http://'
+        return ('{scheme}{hostname}/enrollment-case/{case_id}/census/{census_id}'.format(
+            scheme=scheme,
+            hostname=hostname,
+            enrollment_id=enrollment_record.id,
+            case_id=enrollment_record.case_id,
+            census_id=enrollment_record.census_record_id,
+        ))
+
 
 def create_envelope(email_subject, components):
     docusign_service = LookupService('DocuSignService')

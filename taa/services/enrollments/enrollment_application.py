@@ -545,7 +545,7 @@ class EnrollmentApplicationService(DBService):
 
     def sync_enrollment_with_docusign(self, enrollment_application_id):
         enrollment_application = self.get(enrollment_application_id)
-        if enrollment_application and enrollment_application.docusign_envelope_id and enrollment_application.is_terminal_status():
+        if enrollment_application and enrollment_application.docusign_envelope_id and not enrollment_application.is_terminal_status():
             self.update_applicant_signing_status(enrollment_application)
 
     # Need to commit all database changes.
