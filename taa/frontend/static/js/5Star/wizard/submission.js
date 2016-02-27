@@ -1,5 +1,9 @@
 function submit_application() {
 
+  // Don't allow duplicate submissions.
+  window.vm.is_submitting(true);
+  window.vm.submission_error("");
+
   var results = _.map(window.vm.coverage_vm.selected_product_coverages(), function(product_cov) {
     return build_wizard_results_for_product_coverage(product_cov);
   });
@@ -23,6 +27,8 @@ function _send_wizard_results(wizard_results) {
   // Send to server
   ajax_post("/submit-wizard-data", {"wizard_results": wizard_results}, function (resp) {
     if (resp.error) {
+      window.vm.is_submitting(false);
+
       bootbox.dialog({
         message: "There was a problem generating the application form (" + resp.error + ").  Please contact the enrollment system administrator.",
         buttons: {
@@ -177,6 +183,10 @@ function build_wizard_results_for_product_coverage(product_cov) {
 
 function submit_decline() {
   var root = window.vm;
+
+  // Don't allow duplicate submissions.
+  window.vm.is_submitting(true);
+  window.vm.submission_error("");
 
   var results = _.map(root.product_coverage_viewmodels(), function(product_cov) {
     return build_wizard_results_for_product_coverage(product_cov);

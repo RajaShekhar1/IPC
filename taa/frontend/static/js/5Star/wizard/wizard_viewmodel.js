@@ -1140,6 +1140,14 @@ var wizard_viewmodel = (function () {
 
     });
 
+    // Can we submit step 6
+    self.is_submitting = ko.observable(false);
+    self.submission_error = ko.observable("");
+
+    self.can_submit_wizard = ko.pureComputed(function() {
+      return !self.is_submitting();
+    });
+
     // Globally decline coverage.
     self.did_decline = ko.observable(false);
 
