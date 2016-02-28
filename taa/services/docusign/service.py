@@ -27,16 +27,16 @@ from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_ca
 class DocuSignService(object):
     product_service = RequiredFeature('ProductService')
 
-    def create_multiproduct_envelope(self, product_submissions, census_record, case):
+    def create_multiproduct_envelope(self, product_submissions, case):
         # Use the first product to get employee and agent data
-        first_product_data = EnrollmentDataWrap(product_submissions[0], census_record, case)
+        first_product_data = EnrollmentDataWrap(product_submissions[0], case)
         in_person_signer, recipients = self.create_envelope_recipients(case, first_product_data)
 
         # Create and combine components of the envelope from each product.
         components = []
         for product_submission in product_submissions:
             # Wrap the submission with an object that knows how to pull out key info.
-            enrollment_data = EnrollmentDataWrap(product_submission, census_record, case)
+            enrollment_data = EnrollmentDataWrap(product_submission, case)
 
             # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
             should_use_docusign_renderer = False if enrollment_data.should_use_call_center_workflow() else True
@@ -50,7 +50,11 @@ class DocuSignService(object):
                 components += self.create_group_ci_envelope_components(enrollment_data, recipients,
                                                                        should_use_docusign_renderer)
 
-        signer_name = first_product_data.get_employee_name() if not enrollment_data.should_use_call_center_workflow() else recipients[0].name
+        if not enrollment_data.should_use_call_center_workflow():
+            signer_name = first_product_data.get_employee_name()
+        else:
+            signer_name = recipients[0].name
+
         envelope_result = self.create_envelope(
             email_subject="Signature needed: {} ({})".format(
                 #first_product_data.get_product().name,
@@ -337,9 +341,9 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
 def create_multiproduct_envelope_and_fetch_signing_url(wizard_data, census_record, case):
 
     docusign_service = LookupService('DocuSignService')
-    in_person_signer, envelope_result = docusign_service.create_multiproduct_envelope(wizard_data, census_record, case)
+    in_person_signer, envelope_result = docusign_service.create_multiproduct_envelope(wizard_data, case)
 
-    enrollment_data = EnrollmentDataWrap(wizard_data[0], census_record, case)
+    enrollment_data = EnrollmentDataWrap(wizard_data[0], case)
     signing_url = fetch_signing_url(in_person_signer, enrollment_data, envelope_result)
 
     return envelope_result, signing_url

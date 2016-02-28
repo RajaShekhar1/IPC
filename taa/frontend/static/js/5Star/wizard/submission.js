@@ -44,6 +44,7 @@ function _send_wizard_results(wizard_results) {
     }
 
   }, function (req) {
+    window.vm.is_submitting(false);
     handle_error_and_retry(req, wizard_results);
   }, true);
 

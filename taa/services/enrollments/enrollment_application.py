@@ -128,13 +128,9 @@ class EnrollmentApplicationService(DBService):
 
     def _create_enrollment(self, census_record, wizard_data, agent, received_data=None):
 
-        # Link to census record and case, if it exists.
-        if census_record:
-            case_id = census_record.case_id
-            census_record_id = census_record.id
-        else:
-            case_id = None
-            census_record_id = None
+        # Link to census record and case
+        case_id = census_record.case_id
+        census_record_id = census_record.id
 
         # Link to agent if given
         if agent:
@@ -151,13 +147,16 @@ class EnrollmentApplicationService(DBService):
             data = wizard_data[0]
             if all(map(lambda d: d['did_decline'], wizard_data)):
                 application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
+            elif census_record.case.should_use_call_center_workflow:
+                application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
             else:
-                application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+                application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
         else:
             data = wizard_data
             if data['did_decline']:
                 application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
             else:
+                # We are likely importing the data and we don't have to say 'pending' since there is no signing process.
                 application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
 
         given_sig_time = data.get('time_stamp')
@@ -170,7 +169,6 @@ class EnrollmentApplicationService(DBService):
             emp_beneficiary_relation = 'spouse'
             emp_beneficiary_dob = data['spouse']['birthdate']
         else:
-
             emp_beneficiary_name = data.get('employee_beneficiary_name')
             emp_beneficiary_ssn = self._strip_ssn(data.get('employee_beneficiary_ssn', None))
             emp_beneficiary_relation = data.get('employee_beneficiary_relationship')
@@ -245,7 +243,7 @@ class EnrollmentApplicationService(DBService):
             if data['did_decline']:
                 continue
 
-            product = EnrollmentDataWrap(data, enrollment.census_record, enrollment.case).get_product()
+            product = EnrollmentDataWrap(data, enrollment.case).get_product()
 
             if data['employee_coverage']:
                 self.coverages_service.create_coverage(

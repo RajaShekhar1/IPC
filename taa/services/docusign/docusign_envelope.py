@@ -19,9 +19,8 @@ rider_service = RiderService()
 
 
 class EnrollmentDataWrap(object):
-    def __init__(self, wizard_data, census_record, case):
+    def __init__(self, wizard_data, case):
         self.data = wizard_data
-        self.census_record = census_record
         self.case = case
 
     def __getitem__(self, item):
@@ -151,6 +150,18 @@ class EnrollmentDataWrap(object):
     def get_employee_name(self):
         return '{} {}'.format(self.data['employee']['first'],
                               self.data['employee']['last'])
+
+    def get_employee_first(self):
+        return self.data['employee']['first']
+
+    def get_employee_last(self):
+        return self.data['employee']['last']
+
+    def get_employee_birthdate(self):
+        return self.data['employee']['birthdate']
+
+    def get_employee_ssn(self):
+        return self.data['employee']['ssn']
 
     def get_spouse_name(self):
         return '{} {}'.format(self.data['spouse']['first'],
