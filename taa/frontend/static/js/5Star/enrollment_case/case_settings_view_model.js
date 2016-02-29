@@ -941,7 +941,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
       self.enrollment_periods, self.situs_city, self.situs_state, self.payment_mode,
       self.is_active, self.owner_agent_id, self.can_partners_download_enrollments, self.is_self_enrollment,
-      self.selected_agent_splits
+      self.selected_agent_splits,
+      self.has_agent_splits
     ];
     _.each(self.enrollment_periods(), function (p) {
       fields.push(p.start_date);
