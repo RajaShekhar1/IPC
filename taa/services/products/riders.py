@@ -3,48 +3,9 @@ from StringIO import StringIO
 import yaml
 
 
-class Rider(object):
-    def __init__(self, name, user_facing_name, code, is_group_level=False, compatibility_rules=None):
-        self.name = name
-        self.user_facing_name = user_facing_name
-        self.code = code
-        self.is_group_level = is_group_level
-        self.compatibility_rules = compatibility_rules
-
-    def get_restricted_combinations(self):
-        if not self.compatibility_rules:
-            return []
-
-        combinations = set()
-        for rule in self.compatibility_rules:
-            if 'triggered_if_included_riders' in rule:
-                for rider_code in rule['triggered_if_included_riders']:
-                    combinations.add(rider_code)
-
-        return list(combinations)
-
-    def to_json(self):
-        return dict(
-                name=self.name,
-                code=self.code,
-                user_facing_name=self.user_facing_name,
-                is_group_level=self.is_group_level,
-                disallowed_rider_combinations=self.get_restricted_combinations(),
-                )
-
-
 class RiderService(object):
-    # default_riders = [
-    #     Rider("Disability Waiver of Premium", "WP"),
-    #     Rider("Automatic Increase Rider", "AIR", True),
-    #     Rider("Quality of Life Rider 3%", "QOL3", True),
-    #     Rider("Quality of Life Rider 4%", "QOL4", True),
-    #
-    # ]
-
     def __init__(self):
         pass
-
 
     def get_riders_for_product(self, product):
         # Right now, available riders are based solely on the base product ID.
@@ -60,52 +21,9 @@ class RiderService(object):
         else:
             return matching[0]
 
-    def case_level_riders(self, base_product_code):
-        return [r for r in self.get_riders_for_product(base_product_code) if not r.enrollment_level]
-
-    def enrollment_level_riders(self, base_product_code):
-        return [r for r in self.get_riders_for_product(base_product_code) if r.enrollment_level]
-
-    # def get_rider_info_for_case(self, case):
-    #     """Returns all the riders that a case can potentially have at the group level, with current selections."""
-    #     return [{
-    #             'selected': self.is_rider_selected_for_case(rider, case),
-    #             'description': rider.name,
-    #             'code': rider.code,
-    #             'enrollment_level': rider.enrollment_level,
-    #             #'restrict_to': rider.restrict_to
-    #             }
-    #             for rider in self.default_riders
-    #     ]
-    #
-    # def is_rider_selected_for_case(self, rider, case):
-    #     return case.case_riders and rider.code in case.case_riders.split(",")
-    #
-    # def get_selected_case_riders(self, case):
-    #     return [r
-    #             for r in self.default_riders
-    #             if self.is_rider_selected_for_case(r, case)
-    #     ]
-    #
-    # def get_selected_case_rider_info(self, case):
-    #     return [r.to_json() for r in self.get_selected_case_riders(case)]
-    #
-    # def get_enrollment_rider_info(self):
-    #     return [r.to_json() for r in self.enrollment_level_riders()]
-    #
-    # def get_rider_rates(self, payment_mode):
-    #     emp_rider_rates = dict(
-    #         WP=10*int(payment_mode)/52,
-    #         AIR=0*int(payment_mode)/52,
-    #         CHR=5*int(payment_mode)/52
-    #         )
-    #     sp_rider_rates = dict(
-    #         WP=10*int(payment_mode)/52,
-    #         AIR=0*int(payment_mode)/52,
-    #         CHR=5*int(payment_mode)/52
-    #         )
-    #     return dict(emp=emp_rider_rates, sp=sp_rider_rates)
-
+    def get_import_rider_codes(self):
+        # These will match what is on the form(s) for importable products.
+        return ['AIR', 'WP', 'QOL3', 'QOL4']
 
 class RiderConfiguration(object):
     def __init__(self, product_code):
@@ -222,8 +140,40 @@ no_riders = """
 """
 
 
+class Rider(object):
+    def __init__(self, name, user_facing_name, code, is_group_level=False, compatibility_rules=None):
+        self.name = name
+        self.user_facing_name = user_facing_name
+        self.code = code
+        self.is_group_level = is_group_level
+        self.compatibility_rules = compatibility_rules
+
+    def get_restricted_combinations(self):
+        if not self.compatibility_rules:
+            return []
+
+        combinations = set()
+        for rule in self.compatibility_rules:
+            if 'triggered_if_included_riders' in rule:
+                for rider_code in rule['triggered_if_included_riders']:
+                    combinations.add(rider_code)
+
+        return list(combinations)
+
+    def to_json(self):
+        return dict(
+            name=self.name,
+            code=self.code,
+            user_facing_name=self.user_facing_name,
+            is_group_level=self.is_group_level,
+            disallowed_rider_combinations=self.get_restricted_combinations(),
+        )
+
 
 class RiderCompatibility(object):
+    """
+    Determines if two riders are allowed to be combined with each other on a case.
+    """
     def __init__(self, product_code, requested_rider_codes):
         self.product_code = product_code
         self.requested_rider_codes = requested_rider_codes
