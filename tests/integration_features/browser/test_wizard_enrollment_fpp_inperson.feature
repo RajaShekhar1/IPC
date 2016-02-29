@@ -47,7 +47,6 @@ Feature: An employee takes an app using the wizard with an Agent assisting
       | 01/01/2010   | Y                      | Y                           |
     Then I should be redirected to the DocuSign website
 
-  @wip
   Scenario: Other beneficiaries and contingent beneficiaries are provided
     Given I begin a new empty enrollment for the case 'Test Case'
     When I enter the following information into the wizard step 1
@@ -63,7 +62,7 @@ Feature: An employee takes an app using the wizard with an Agent assisting
     And I enter the following for step 5 of the wizard
       | ee_bene_name | ee_bene_relationship | ee_bene_ssn | ee_bene_birthdate | sp_bene_name | sp_bene_relationship | sp_bene_ssn | sp_bene_birthdate | ee_cont_bene_name | ee_cont_bene_relationship | ee_cont_bene_ssn | ee_cont_bene_birthdate | sp_cont_bene_name | sp_cont_bene_relationship| sp_cont_bene_ssn | sp_cont_bene_birthdate|
       | EE BENE      | EE REL               | 121-23-1234 | 01/01/1980        | SP BENE      | SP REL               | 323-23-3333 | 01/01/2000        | EE CONT NAME      | EE CONT REL               | 444-44-4444      | 02/02/2002             | SP CONT BENE NAME | SP CONT BENE REL         | 555-55-5555      | 05/05/2005            |
-    #And I enter the following for step 6 of the wizard
-    #  | date_of_hire | ack_benefit_disclosure | authorize_payroll_deduction |
-    #  | 01/01/2010   | Y                      | Y                           |
-    #Then I should be redirected to the DocuSign website
+    And I enter the following for step 6 of the wizard
+      | date_of_hire | ack_benefit_disclosure | authorize_payroll_deduction |
+      | 01/01/2010   | Y                      | Y                           |
+    Then I should be redirected to the DocuSign website

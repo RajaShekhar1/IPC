@@ -906,7 +906,7 @@ var wizard_viewmodel = (function () {
     self.set_wizard_step = function() {
       var wizard = $('#enrollment-wizard').data('fu.wizard');
       wizard.currentStep = 1;
-      wizard.setState()
+      wizard.setState();
     };
 
     // Step 1 ViewModel observables
@@ -1017,10 +1017,10 @@ var wizard_viewmodel = (function () {
     self.can_display_rates_table = ko.computed(function () {
       // TODO: Reimplement
       // && product validation
-      var dob = self.employee().birthdate();
-      dob = moment(self.employee().birthdate(), 'MM/DD/YYYY');
-
-      return self.applicant_list.has_valid_employee() && self.coverage_vm.is_payment_mode_valid() && !self.any_limit_error();
+      var is_employee_valid = self.applicant_list.has_valid_employee();
+      var is_payment_valid = self.coverage_vm.is_payment_mode_valid();
+      var has_limit_errors = self.any_limit_error();
+      return is_employee_valid && is_payment_valid && !has_limit_errors;
     });
 
     // User indicates he is ready to show the coverage selection options.

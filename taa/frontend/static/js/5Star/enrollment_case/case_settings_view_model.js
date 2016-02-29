@@ -265,11 +265,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
 
   // Disable bad combos of states and products
-  self.state_product_limiter = new ProductStatesLimiterViewModel(settings.product_state_mapping,
-    self.situs_state,
-    self.state_choices,
-    self.products, self.product_choices
-  );
+  self.state_product_limiter = new ProductStatesLimiterViewModel(settings.product_state_mapping, self.situs_state, self.state_choices, self.products, self.product_choices);
 
   self.on_products_select_rendered = function (option, item) {
     if (!item) {
@@ -300,6 +296,12 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     self.products
   );
 
+  self.on_state_selected = function () {
+    self.selected_product(null);
+  };
+
+  self.state_product_limiter.selected_state.subscribe(self.on_state_selected);
+  self.state_product_override_limiter.selected_state.subscribe(self.on_state_selected);
 
   self.is_open_enrollment = ko.computed(function () {
     return self.enrollment_period_type() === "open";
