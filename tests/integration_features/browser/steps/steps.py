@@ -120,6 +120,8 @@ def step_impl(context):
     did_load = wizard_page.wait_until_loaded()
     assert_that(did_load, equal_to(True))
 
+    wizard_page.wait_until_step_1_loaded()
+    time.sleep(0.25)
     data = get_data_from_first_row_of_table(context)
     wizard_page.fill_out_step1_data(**data)
     if data.get('emp_coverage'):

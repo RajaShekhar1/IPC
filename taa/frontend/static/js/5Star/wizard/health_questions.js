@@ -208,6 +208,21 @@ NonHealthQuestion.prototype.get_question_text = function () {
 };
 
 
+function decline_product_if_no_coverage(product_coverage) {
+// If we have removed the last applicant for this product, set it as declined.
+  if (!product_coverage.did_select_valid_coverage()) {
+    if (window.vm.coverage_vm.has_multiple_products()) {
+      product_coverage.did_decline(true);
+    } else {
+      window.vm.did_decline(true);
+    }
+  }
+
+  // If all products are declined now, go back to step 1.
+  if (window.vm.did_decline_all_products()) {
+    window.vm.set_wizard_step(1);
+  }
+}
 var StandardHealthQuestion = function (question, product_coverage) {
   // A viewmodel that keeps track of which applicants need to answer which health questions
   var self = this;
@@ -263,7 +278,12 @@ var StandardHealthQuestion = function (question, product_coverage) {
   //  }
   //};
 
+
   self.show_yes_dialogue = function (applicant) {
+    if (!self.does_yes_stop_app()) {
+      // No need to show anything, return.
+      return;
+    }
 
     // If we get here, the applicant has answered 'Yes' to a question.
     //   We offer a choice to remove the applicant directly from step 2.
@@ -283,6 +303,8 @@ var StandardHealthQuestion = function (question, product_coverage) {
 
             self.product_coverage.__get_coverage_for_applicant(applicant).customized_coverage_option(null_option);
           }
+
+          decline_product_if_no_coverage(self.product_coverage);
         }
       },
       ignore: {
@@ -292,8 +314,10 @@ var StandardHealthQuestion = function (question, product_coverage) {
       }
     };
 
+    var product_name = self.product_coverage.format_product_name();
+
     bootbox.dialog({
-      message: "A \"yes\" response to this question disqualifies this person from obtaining coverage.  You may proceed with this application after removing this individual from the coverage selection before proceeding.",
+      message: "A \"yes\" response to this question disqualifies this person from obtaining coverage for '" + product_name + "'.  You may proceed with this application after removing this individual from the coverage selection before proceeding.",
       buttons: button_options
     });
   };
@@ -488,6 +512,8 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
 
             self.product_coverage.__get_coverage_for_applicant(applicant).customized_coverage_option(null_option);
           }
+
+          decline_product_if_no_coverage(self.product_coverage);
         }
       },
       ignore: {
@@ -502,7 +528,8 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
       add_reduce_option(applicant, button_options);
       message = create_reduce_dialogue_message(applicant);
     } else {
-      message = "A \"yes\" response to this question disqualifies this person from obtaining coverage.  You may proceed with this application after removing this individual from the coverage selection before proceeding.";
+      var product_name = self.product_coverage.format_product_name();
+      message = "A \"yes\" response to this question disqualifies this person from obtaining coverage for '" + product_name + "'.  You may proceed with this application after removing this individual from the coverage selection before proceeding.";
     }
 
     bootbox.dialog({

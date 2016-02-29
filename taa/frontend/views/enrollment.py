@@ -477,7 +477,8 @@ def ds_landing_page():
     enrollment_application_id = session.get('enrollment_application_id')
     if enrollment_application_id:
         enrollment_application = enrollment_service.get(enrollment_application_id)
-        enrollment_service.update_applicant_signing_status(enrollment_application, ds_event)
+        if enrollment_application and enrollment_application.docusign_envelope_id and enrollment_application.is_terminal_status():
+            enrollment_service.update_applicant_signing_status(enrollment_application, ds_event)
 
     # Need to commit all database changes.
     db.session.commit()

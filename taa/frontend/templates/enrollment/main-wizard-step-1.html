@@ -43,15 +43,7 @@
 
             <label>
               <input type="checkbox" class="ace" data-bind="checked: should_include_children">
-              {# TODO: Need to see if we all products allow grandchildren to put this back in?
-               <!--ko if: insurance_product.should_allow_grandchildren() -->
-                <span class="lbl padding-8 include_children">Include Children/Grandchildren</span>
-              <!--/ko-->
-              <!--ko if: !insurance_product.should_allow_grandchildren() -->
-                <span class="lbl padding-8 include_children">Include Children</span>
-              <!--/ko-->
-               #}
-              <span class="lbl padding-8 include_children">Include Children</span>
+              <span class="lbl padding-8 include_children">Include Children<span data-bind="visible: should_allow_grandchildren">/Grandchildren</span></span>
             </label>
           </div>
         </div>
@@ -154,9 +146,7 @@
         <div class="row">
           <label class="text-right control-label col-xs-12 col-sm-2 no-padding-right"
                  data-bind="attr: {for: 'child-first-'+$index()}">
-            {# TODO: include if we can  #}
-            Child {# <span data-bind="if: $root.insurance_product.should_allow_grandchildren()">/Grandchild</span> #}
-                  <span data-bind="text: $index() + 1"></span>
+            Child<span data-bind="visible: $parent.should_allow_grandchildren">/Grandchild</span> <span data-bind="text: $index() + 1"></span>
           </label>
 
           <div class="form-group col-xs-12 col-sm-10">
@@ -246,7 +236,7 @@
   {# Show Coverage Options Button #}
   <div class="row" data-bind="visible: !is_coverage_selection_visible()">
     <div class="align-center">
-      <button type="button" class="btn btn-primary btn-lg show-rates"
+      <button type="button" id="show-coverage-options" class="btn btn-primary btn-lg show-rates"
               data-bind="click: show_coverage_selection_table">
         Show Coverage Options
       </button>
@@ -325,7 +315,7 @@
           <div class="col-xs-12 ">
 
             <h3 data-bind="text: current_product().format_product_name()"></h3>
-            <div  data-bind="slideDownIf: !current_product().did_decline()">
+            <div  data-bind="slideDownIf: !$root.did_decline()">
 {#              <ul class="list-unstyled" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">#}
 {#                <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">#}
 {#                  <span class="step" data-bind="text: $index() + 1"></span>#}
@@ -352,6 +342,17 @@
 {#          </div>#}
 {#        </div>#}
 
+
+        {# Decline any products option #}
+        <div class="row" data-bind="visible: !$root.coverage_vm.has_multiple_products()">
+          <div class="col-xs-12 text-center red" data-bind="if: $root.can_decline">
+            <div class="decline-option">
+              <label><input type="checkbox" data-bind="checked: $root.did_decline"> I decline to enroll in any of the 5Star
+                products at this time</label>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -361,15 +362,6 @@
   <br/>
 
 
-    {# Decline any products option #}
-    <div class="row" data-bind="visible: !coverage_vm.has_multiple_products()">
-      <div class="col-xs-12 text-center red" data-bind="if: can_decline">
-        <div class="decline-option">
-          <label><input type="checkbox" data-bind="checked: did_decline"> I decline to enroll in any of the 5Star
-            products at this time</label>
-        </div>
-      </div>
-    </div>
 
 
 

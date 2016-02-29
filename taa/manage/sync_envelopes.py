@@ -1,5 +1,6 @@
 # Functions to synchronize DocuSign envelopes with our enrollment records
-from datetime import timedelta
+import time
+from datetime import timedelta, datetime
 from itertools import ifilter
 
 from flask_script import Command
@@ -22,7 +23,6 @@ class SyncEnvelopesCommand(Command):
         EnvelopeSync().match_envelopes()
 
 
-
 class EnvelopeSync(object):
     def __init__(self):
         self.num_linked = 0
@@ -34,12 +34,11 @@ class EnvelopeSync(object):
 
     def match_envelopes(self):
 
-        out_for_sig = get_all_out_for_signature_envelopes()
-        total = len(out_for_sig)
-
+        out_for_sig = self.get_all_out_for_signature_envelopes()
+        self.num_total = len(out_for_sig)
 
         for envelope_data in out_for_sig:
-            progress += 1
+            self.progress_count += 1
 
             eid = envelope_data['envelopeId']
 
@@ -47,77 +46,91 @@ class EnvelopeSync(object):
             env = DocusignEnvelope(envelope_data['envelopeUri'], fetch_tabs=True)
             agent_signer = env.get_agent_signing_status()
             if not agent_signer:
-                print("{}/{} Envelope {} did not have an agent signer!".format(progress, total, eid))
+                print("Envelope {} did not have an agent signer!".format(eid))
                 print(envelope_data)
                 continue
 
-            if not agent_signer.get('signedDateTime') and not is_linked(env):
+            if not agent_signer.get('signedDateTime') and not self.is_linked(env):
                 # Agent has not signed
                 #print("Found envelope where agent did not sign: {}".format(eid))
-                did_link = link_envelope(env)
+                did_link = self.link_envelope(env)
                 if did_link:
-                    num_linked += 1
+                    self.num_linked += 1
                 else:
-                    num_skipped += 1
-            elif is_linked(env):
-                num_already_linked += 1
+                    self.num_skipped += 1
+            elif self.is_linked(env):
+                self.num_already_linked += 1
 
-        completed = get_all_completed_envelopes()
-        total = len(completed)
-        progress = 0
+        completed = self.get_all_completed_envelopes()
+
+        self.num_total = len(completed)
+        self.progress_count = 0
         # Match all completed envelopes next
-        for envelope_data in completed:
+
+        num_requests = 0
+        start_time = datetime.now()
+        current_wait = 8
+
+        time_limiter = APIRateLimiter(500)
+
+        for i, envelope_data in enumerate(completed):
+            current_time = datetime.now()
+
             env = DocusignEnvelope(envelope_data['envelopeUri'], fetch_tabs=True)
 
-            if not is_linked(env):
-                did_link = link_envelope(env, progress)
+            if not self.is_linked(env):
+                did_link = self.link_envelope(env)
                 if did_link:
-                    num_linked += 1
+                    self.num_linked += 1
+                    print("{}/{} Linked".format(i+1, len(completed)))
                 else:
-                    num_skipped += 1
+                    print("{}/{} Skipped".format(i+1, len(completed)))
+                    self.num_skipped += 1
+
+                time_limiter.wait(num_requests=2)
+
             else:
-                num_already_linked += 1
+                self.num_already_linked += 1
+                print("{}/{} Already Linked".format(i+1, len(completed)))
 
 
-        # Link up voided?
+        # TODO: Link up voided
 
 
-        print("Linked {}".format(num_linked))
-        print("Already linked: {}".format(num_already_linked))
-        print("Skipped: {}".format(num_skipped))
+        print("Linked {}".format(self.num_linked))
+        print("Already linked: {}".format(self.num_already_linked))
+        print("Skipped: {}".format(self.num_skipped))
 
     def is_linked(self, envelope):
+        return EnrollmentApplication.query.filter(EnrollmentApplication.docusign_envelope_id == envelope.uri).first()
 
-        linked_enrollment = EnrollmentApplication.query.filter(EnrollmentApplication.docusign_envelope_id == envelope.uri)
-
-    def link_envelope(self, envelope, progress):
+    def link_envelope(self, envelope):
         emp_status = envelope.get_employee_signing_status()
         if emp_status:
-            return match_enrollment(emp_status, envelope)
+            return self.match_enrollment(emp_status, envelope)
         else:
             # Must be call center test?
             agent_status = envelope.get_agent_signing_status()
-            print("{}/{} No employee on envelope; got agent signing status: {}".format(agent_status))
+            print("No employee on envelope; got agent signing status: {}".format(agent_status))
             return False
-
 
     def match_enrollment(self, emp_status, envelope):
 
-        ee_ssn = find_text_tab(emp_status, 'eeSSN')
+        ee_ssn = self.find_text_tab(emp_status, 'eeSSN')
         if not ee_ssn:
             print("COULD NOT LINK ENVELOPE: No eeSSN found")
             return None
-        ee_name = find_text_tab(emp_status, 'eeName')
+        ee_name = self.find_text_tab(emp_status, 'eeName')
         if not ee_name:
-            ee_first = find_text_tab(emp_status, 'eeFName')
-            ee_last = find_text_tab(emp_status, 'eeLName')
+            ee_first = self.find_text_tab(emp_status, 'eeFName')
+            ee_last = self.find_text_tab(emp_status, 'eeLName')
             ee_name = '{} {}'.format(ee_first, ee_last)
 
         ee_ssn = ee_ssn.replace('-', '').strip()
         ee_ssn_masked = "***-**-" + ee_ssn[-4:]
-        ee_cov = find_text_tab(emp_status, 'eeCoverage')
-        sp_cov = find_text_tab(emp_status, 'spCoverage')
-        ch_cov = find_text_tab(emp_status, 'child1Coverage')
+        ee_cov = self.find_text_tab(emp_status, 'eeCoverage')
+        sp_cov = self.find_text_tab(emp_status, 'spCoverage')
+        ch_cov = self.find_text_tab(emp_status, 'child1Coverage')
         if ee_cov == 'None' or ee_cov == 'NONE':
             ee_cov = None
         if sp_cov == 'None' or sp_cov == 'NONE':
@@ -137,7 +150,7 @@ class EnvelopeSync(object):
             ).filter(CaseCensus.employee_ssn == ee_ssn
             ).first()
         if matching_enrollment:
-            return match_coverages(ch_cov, ee_cov, ee_ssn_masked, envelope, matching_enrollment, sp_cov, created_time)
+            return self.match_coverages(ch_cov, ee_cov, ee_ssn_masked, envelope, matching_enrollment, sp_cov, created_time)
         else:
             print("No match on '{}' '{}' '{}' {}/{}/{}".format(start.strftime('%F'), ee_name, ee_ssn_masked, ee_cov, sp_cov,
                                                                ch_cov))
@@ -146,11 +159,11 @@ class EnvelopeSync(object):
 
     def match_coverages(self, ch_cov, ee_cov, ee_ssn_masked, envelope, matching_enrollment, sp_cov, created_time):
         # Make sure coverages match too
-        matching_ee_cov = find_coverage_for_applicant(ee_cov, matching_enrollment,
+        matching_ee_cov = self.find_coverage_for_applicant(ee_cov, matching_enrollment,
                                                       EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE)
-        matching_sp_cov = find_coverage_for_applicant(sp_cov, matching_enrollment,
+        matching_sp_cov = self.find_coverage_for_applicant(sp_cov, matching_enrollment,
                                                       EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
-        matching_ch_cov = find_coverage_for_applicant(ch_cov, matching_enrollment,
+        matching_ch_cov = self.find_coverage_for_applicant(ch_cov, matching_enrollment,
                                                       EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
         if (ee_cov and not matching_ee_cov) or (sp_cov and not matching_sp_cov) or (ch_cov and not matching_ch_cov):
             print(
@@ -162,19 +175,26 @@ class EnvelopeSync(object):
             return False
 
         else:
-            # print("FOUND matching enrollment(s) for envelope: {} to {} '{}' '{}' {}/{}/{}".format(envelope.uri, matching_enrollment.id, start.strftime('%F'), ee_ssn_masked, ee_cov, sp_cov, ch_cov))
+            print("FOUND matching enrollment(s) for envelope: {} to {} '{}' '{}' {}/{}/{}".format(
+                envelope.uri, matching_enrollment.id, created_time.strftime('%F'), ee_ssn_masked, ee_cov, sp_cov, ch_cov))
+
             # Link it up
             matching_enrollment.docusign_envelope_id = envelope.uri
             db.session.flush()
             db.session.commit()
+
+            # Sync the enrollment
+            envelope.enrollment_record = matching_enrollment
+            envelope.update_enrollment_status()
+
             return True
 
-
     def find_coverage_for_applicant(self, cov_to_match, matching_enrollment, applicant_type):
+        if not cov_to_match:
+            cov_to_match = ''
         return next(ifilter(
             lambda c: c.applicant_type == applicant_type and c.coverage_face_value == cov_to_match.replace(',', ''),
             matching_enrollment.coverages), None)
-
 
     def find_text_tab(self, recip_status, tab_name):
         text_tabs = recip_status.get('tabs', {}).get('textTabs', [])
@@ -184,26 +204,21 @@ class EnvelopeSync(object):
         else:
             return tab['value']
 
-
     def get_all_completed_envelopes(self):
-        return fetch_envelopes_for_status("Completed")
-
+        return self.fetch_envelopes_for_status("Completed")
 
     def get_all_out_for_signature_envelopes(self):
-        return fetch_envelopes_for_status("Signed,Delivered,Sent")
-
+        return self.fetch_envelopes_for_status("Signed,Delivered,Sent")
 
     def get_declined_envelopes(self):
-        return fetch_envelopes_for_status('Declined')
-
+        return self.fetch_envelopes_for_status('Declined')
 
     def get_voided_envelopes(self):
-        return fetch_envelopes_for_status('Voided')
-
+        return self.fetch_envelopes_for_status('Voided')
 
     def fetch_envelopes_for_status(self, status):
         transport = get_docusign_transport()
-        data = transport.get('envelopes?from_date=2014-01-01&status={}'.format(status))
+        data = transport.get('envelopes?from_date=2015-01-01&status={}'.format(status))
         total = data['resultSetSize']
         print("Processing {} envelopes...".format(total))
 
@@ -211,14 +226,29 @@ class EnvelopeSync(object):
             return []
         return data['envelopes']
 
-        # # num_results = data['resultSetSize']
-        # next_uri = data.get('nextUri')
-        # while next_uri:
-        #     data = transport.get('search_folders/{}'.format(status))
-        #
-        #     envelope_data += data['folderItems']
-        #     next_uri = data.get('nextUri')
-        # return [envelope_data]
+
+class APIRateLimiter(object):
+    def __init__(self, limit):
+        self.num_requests = 0
+        self.current_wait = 8
+        self.hourly_limit = limit
+        self.start_time = datetime.now()
+
+    def wait(self, num_requests):
+        self.num_requests += num_requests
+
+        # Limit our rate of requests to under req_limit/hr
+        one_hour_in_seconds = 3600.0
+
+        diff = datetime.now() - self.start_time
+        seconds = diff.total_seconds()
+        avg_freq = num_requests / seconds
+        expected_freq = self.hourly_limit / one_hour_in_seconds
+        drift = (avg_freq - expected_freq)
+        if drift > 1 or drift < -1:
+            self.current_wait += drift
+
+        time.sleep(self.current_wait)
 
 
 def parse_utc_date(val):
@@ -238,4 +268,4 @@ def parse_utc_date(val):
 
 
 if __name__ == "__main__":
-    match_envelopes()
+    EnvelopeSync().match_envelopes()

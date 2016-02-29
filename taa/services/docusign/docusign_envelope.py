@@ -139,7 +139,14 @@ class EnrollmentDataWrap(object):
         return self.get_product().get_base_product_code()
 
     def get_product(self):
-        return product_service.get(self.data['product_data']['id'])
+        return product_service.get(self.get_product_id())
+
+    def get_product_id(self):
+        if 'product_data' in self.data:
+            # For backwards compatibility with old data format.
+            return self.data['product_data']['id']
+        else:
+            return self.data['product_id']
 
     def get_employee_name(self):
         return '{} {}'.format(self.data['employee']['first'],
@@ -248,9 +255,31 @@ class EnrollmentDataWrap(object):
                 covered_children.append(child)
         return covered_children
 
+    def get_employee_soh_questions(self):
+        if 'soh_questions' in self.data['employee']:
+            # Legacy format
+            return self.data['employee']['soh_questions']
+        else:
+            return self.data['employee_soh_questions']
+
+    def get_spouse_soh_questions(self):
+        if 'soh_questions' in self.data['spouse']:
+            # Legacy format
+            return self.data['spouse']['soh_questions']
+        else:
+            return self.data['spouse_soh_questions']
+
+    def get_child_soh_questions(self, child_index):
+        child = self.data['children'][child_index]
+        if 'soh_questions' in child:
+            # Backwards compat for legacy data format:
+            return child['soh_questions']
+        else:
+            return self.data['children_soh_questions'][child_index]
+
     def get_employee_esignature(self):
         # Replace employee signature with "John Doe voice auth on file 02:45pm"
-        esig = "{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%H:%M%p"))
+        esig = "{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
         return self.data.get('emp_sig_txt', esig)
 
     def get_employee_initials(self):

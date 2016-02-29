@@ -132,7 +132,7 @@
                                 <!--ko if: is_editing_products-->
                                 <div class="row">
                                   <select class="col-xs-12 form-control"
-                                          data-bind="options: unselected_products, optionsText: 'name', value: selected_product, optionsCaption: '(Select Product to Add)'"></select>
+                                          data-bind="options: unselected_products, optionsText: 'name', optionsAfterRender: on_products_select_rendered, value: selected_product, optionsCaption: '(Select Product to Add)'"></select>
                                 </div>
                                 <div class="row">
                                   <button class="col-xs-12 btn btn-sm btn-success" data-bind="click: add_selected_product, enable: has_selected_product"><i

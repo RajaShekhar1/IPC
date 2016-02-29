@@ -4,8 +4,15 @@ function RecommendationSet(name, recommendations) {
   self.name = name;
   self.recommendations = recommendations;
 
+  self.get_applicant_recommendation = function(applicant_type) {
+    return _.find(self.recommendations, function(rec) {return rec.applicant_type === applicant_type;})
+  };
+
   self.get_recommended_applicant_coverage = function(applicant_type) {
-    var rec = _.find(self.recommendations, function(rec) {return rec.applicant_type === applicant_type;});
+    var rec = self.get_applicant_recommendation(applicant_type);
+    if (!rec) {
+      return new NullCoverageOption();
+    }
     return rec.recommended_coverage;
   };
 
@@ -54,6 +61,13 @@ function Recommendation(name, applicant_type, coverage_option, product) {
     return self.recommended_coverage.premium;
   };
 
+  self.format_total_premium = function() {
+    if (!self.recommended_coverage.is_valid()) {
+      return "";
+    }
+    return format_premium_value(self.get_total_premium());
+  };
+
   self.format_premium_option = function() {
 
     return self.recommended_coverage.format_premium_option()
@@ -68,7 +82,13 @@ function NullRecommendation(name) {
   self.name = name;
   self.recommended_coverage = new NullCoverageOption();
   self.is_valid = function() {return false;};
+  self.get_total_premium = function() {
+    return 0.0;
+  };
   self.format_premium_option = function() {
+    return "";
+  };
+  self.format_total_premium = function() {
     return "";
   };
   self.format_coverage = function() {

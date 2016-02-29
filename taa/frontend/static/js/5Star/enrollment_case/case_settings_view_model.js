@@ -43,7 +43,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.unselected_products = ko.computed(function () {
-    return _.sortBy(_.difference(self.product_choices(), self.products()), function (product) { return product.ordinal; });
+    return _.sortBy(_.difference(self.product_choices(), self.products()), function (product) {
+      return product.ordinal;
+    });
   });
 
   self.selected_product = ko.observable(null);
@@ -263,11 +265,17 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
 
   // Disable bad combos of states and products
-  self.state_product_limiter = new ProductStatesLimiterViewModel(settings.product_state_mapping,
-    self.situs_state,
-    self.state_choices,
-    self.products, self.product_choices
-  );
+  self.state_product_limiter = new ProductStatesLimiterViewModel(settings.product_state_mapping, self.situs_state, self.state_choices, self.products, self.product_choices);
+
+  self.on_products_select_rendered = function (option, item) {
+    if (!item) {
+      return;
+    }
+    var is_valid = ko.computed(function () {
+      return self.state_product_limiter.is_valid_product_for_state(item, self.situs_state());
+    });
+    ko.applyBindingAccessorsToNode(option, {enable: is_valid}, item);
+  };
 
   // Track whether or not we are editing products.
   self.is_editing_products = ko.observable(false);
@@ -288,6 +296,12 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     self.products
   );
 
+  self.on_state_selected = function () {
+    self.selected_product(null);
+  };
+
+  self.state_product_limiter.selected_state.subscribe(self.on_state_selected);
+  self.state_product_override_limiter.selected_state.subscribe(self.on_state_selected);
 
   self.is_open_enrollment = ko.computed(function () {
     return self.enrollment_period_type() === "open";
@@ -1230,8 +1244,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.serialize_agent_splits = function () {
     var serialized_records = self.selected_agent_splits();
+    // Filter out any splits for agents that have been removed from the case
     serialized_records = _.filter(serialized_records, function (split) {
-      return _.some(self.case_agents(), { 'id': split.agent_id });
+      // The null check ensures that the Writing Agent, which is denoted by a null id
+      return _.some(self.case_agents(), {'id': split.agent_id}) || split.agent_id === null;
     });
     return serialized_records.reduce(function (start, elem) {
       if (elem.split_percentage() || elem.commission_subcount_code()) {

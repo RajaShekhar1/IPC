@@ -1,4 +1,3 @@
-
 function init_validation(ui) {
 
   $('[data-rel=tooltip]').tooltip();
@@ -43,7 +42,7 @@ function init_validation(ui) {
         }
 
         var selected_option = applicant_coverage.get_selected_coverage();
-        var applied_coverage_amount = (selected_option.is_valid())? selected_option.face_value: 0;
+        var applied_coverage_amount = (selected_option.is_valid()) ? selected_option.face_value : 0;
         var max_coverage_amount = applicant_coverage.product.get_maximum_coverage_amount(applicant_coverage.applicant);
 
         var name = applicant.name();
@@ -52,10 +51,10 @@ function init_validation(ui) {
           var additional_allowed_coverage = max_coverage_amount - existing_coverage_amount;
           // Make sure that we don't show a negative number here
           additional_allowed_coverage = _.max([0, additional_allowed_coverage]);
-          var msg = ("Due to one or more previous applications for " + product.product_data.name + " this enrollment period for "+
-          format_face_value(existing_coverage_amount)+
-          " coverage, "+name+" can apply for a maximum of "+
-          format_face_value(additional_allowed_coverage)+" additional coverage.");
+          var msg = ("Due to one or more previous applications for " + product.product_data.name + " this enrollment period for " +
+          format_face_value(existing_coverage_amount) +
+          " coverage, " + name + " can apply for a maximum of " +
+          format_face_value(additional_allowed_coverage) + " additional coverage.");
 
           alert(msg);
           return false;
@@ -66,8 +65,8 @@ function init_validation(ui) {
       }
 
       // Check each applicant for selecting too much product.
-      _.each(ui.coverage_vm.selected_product_coverages(), function(product_coverage) {
-        _.each(product_coverage.applicant_coverage_selections(), function(applicant_coverage) {
+      _.each(ui.coverage_vm.selected_product_coverages(), function (product_coverage) {
+        _.each(product_coverage.applicant_coverage_selections(), function (applicant_coverage) {
           var can_apply = validate_coverage_amount(applicant_coverage);
           if (!can_apply) {
             is_valid = false;
@@ -81,13 +80,12 @@ function init_validation(ui) {
         }
       });
 
-      if (!is_valid) {
-        e.preventDefault();
-      }
-
-      // Scroll to top of page when moving to step 2.
       if (is_valid) {
+        // Scroll to top of page when moving to step 2.
         $(document.body).scrollTop(0);
+      } else {
+        // Don't allow moving to the next page
+        e.preventDefault();
       }
     }
     if (info.step == 2 && info.direction == 'next') {
@@ -95,12 +93,12 @@ function init_validation(ui) {
 
       // validate replacement form
       if (ui.did_select_any_fpp_product() &&
-          (ui.should_show_replacement_form())) {
+        (ui.should_show_replacement_form())) {
         is_valid &= $('#questions-form').valid();
       }
 
       if (ui.did_select_any_fpp_product() &&
-          (ui.replacing_insurance() === null || ui.existing_insurance() === null)) {
+        (ui.replacing_insurance() === null || ui.existing_insurance() === null)) {
         // These always need to be answered
         is_valid = false;
       }
@@ -111,7 +109,7 @@ function init_validation(ui) {
       }
 
       if (ui.did_select_any_fpp_product() && ui.is_self_enroll()
-          && (ui.replacement_is_terminating() || ui.replacement_using_funds())) {
+        && (ui.replacement_is_terminating() || ui.replacement_using_funds())) {
         // can't continue as self-enroll with either of these as a yes.
         is_valid = false;
       }
@@ -139,8 +137,23 @@ function init_validation(ui) {
         return;
       }
     }
-    if (info.step == 5 && info.direction == 'next') {
-      if (!$('#step5-form').valid()) {
+    if (info.step === 5 && info.direction === 'next') {
+      // Set the beneficiary dob to itself to force the dob validation to run if it is empty and has yet to trigger
+      _.forEach(ui.coverage_vm.product_coverage_viewmodels(), function (product_coverage_vm) {
+        product_coverage_vm.employee_other_beneficiary().date_of_birth.valueHasMutated();
+        if (product_coverage_vm.employee_contingent_beneficiary_type() === 'other') {
+          product_coverage_vm.employee_contingent_beneficiary().date_of_birth.valueHasMutated();
+        }
+      });
+
+      var has_beneficiary_errors = _.any(ui.coverage_vm.product_coverage_viewmodels(), function has_beneficiary_errors(product_coverage_vm) {
+        if (product_coverage_vm.employee_contingent_beneficiary_type() === 'other') {
+          return !!product_coverage_vm.employee_other_beneficiary().date_of_birth_validation_error() ||  !!product_coverage_vm.employee_contingent_beneficiary().date_of_birth_validation_error();
+        }
+        return !!product_coverage_vm.employee_other_beneficiary().date_of_birth_validation_error();
+      });
+
+      if (!$('#step5-form').valid() || has_beneficiary_errors) {
         e.preventDefault();
         return;
       }
@@ -164,7 +177,7 @@ function init_validation(ui) {
 
     // jQuery validator rule should be handling this, but it's not, so force a popup here
     if (ui.should_confirm_disclosure_notice()
-        && !ui.disclaimer_notice_confirmed()
+      && !ui.disclaimer_notice_confirmed()
     ) {
       bootbox.dialog({
         message: "Please confirm that you have received the disclosure notice.",
@@ -179,7 +192,7 @@ function init_validation(ui) {
     }
 
     if (ui.should_confirm_payroll_deduction()
-        && !ui.payroll_deductions_confirmed()) {
+      && !ui.payroll_deductions_confirmed()) {
       bootbox.dialog({
         message: "Please confirm that you agree to payroll deductions by your employer.",
         buttons: {
@@ -217,21 +230,21 @@ function init_validation(ui) {
     rules: {
       replacement_read_aloud: {
         required: {
-          depends: function() {
+          depends: function () {
             return ui.is_replacement_form_required();
           }
         }
       },
       replacement_is_terminating: {
         required: {
-          depends: function() {
+          depends: function () {
             return ui.is_replacement_form_required();
           }
         }
       },
       replacement_using_funds: {
         required: {
-          depends: function() {
+          depends: function () {
             return ui.is_replacement_form_required();
           }
         }
@@ -247,14 +260,14 @@ function init_validation(ui) {
 
   $.validator.addClassRules("replacement-question", {
     required: {
-      depends: function() {
+      depends: function () {
         return ui.is_replacement_form_required();
       }
     }
   });
   $.validator.addClassRules("replacement-details-input", {
     required: {
-      depends: function() {
+      depends: function () {
         return ui.should_show_replacement_details_form();
       }
     }
@@ -278,28 +291,32 @@ function init_validation(ui) {
 
   $.validator.addClassRules("ee-other-owner-name", {
     required: {
-      depends: function(element) {
+      depends: function (element) {
         return isEmployeeOtherOwnerRequired(element);
       }
     }
   });
   $.validator.addClassRules("ee-other-owner-ssn", {
-    required: {depends: function(element) {
-      return isEmployeeOtherOwnerRequired(element);
-    }}
+    required: {
+      depends: function (element) {
+        return isEmployeeOtherOwnerRequired(element);
+      }
+    }
   });
 
   $.validator.addClassRules("sp-other-owner-name", {
     required: {
-      depends: function(element) {
+      depends: function (element) {
         return isSpouseOtherOwnerRequired(element);
       }
     }
   });
   $.validator.addClassRules("sp-other-owner-ssn", {
-    required: {depends: function(element) {
-      return isSpouseOtherOwnerRequired(element);
-    }}
+    required: {
+      depends: function (element) {
+        return isSpouseOtherOwnerRequired(element);
+      }
+    }
   });
 
 
@@ -308,9 +325,13 @@ function init_validation(ui) {
     errorClass: 'help-block',
     focusInvalid: false,
     rules: {
-      email: {email: true, required: {
-        depends: function() {return ui.is_self_enroll();}
-      }},
+      email: {
+        email: true, required: {
+          depends: function () {
+            return ui.is_self_enroll();
+          }
+        }
+      },
       eeFName2: {required: true},
       eeLName2: {required: true},
       eeGender: {required: true},
@@ -401,33 +422,33 @@ function init_validation(ui) {
   }
 
   var beneficiary_depends_rules = {
-    "ee-bene-name": function(el) {
+    "ee-bene-name": function (el) {
       return is_other_beneficiary_detail_required(el, 'employee', 'primary')
     },
-    "ee-bene-rel": function(el) {
+    "ee-bene-rel": function (el) {
       return is_other_beneficiary_detail_required(el, 'employee', 'primary')
     },
 
-    "ee-cont-bene-name": function(el) {
+    "ee-cont-bene-name": function (el) {
       return is_other_beneficiary_detail_required(el, 'employee', 'contingent')
     },
 
-    "ee-cont-bene-rel": function(el) {
+    "ee-cont-bene-rel": function (el) {
       return is_other_beneficiary_detail_required(el, 'employee', 'contingent')
     },
 
-    "sp-bene-name": function(el) {
+    "sp-bene-name": function (el) {
       return is_other_beneficiary_detail_required(el, 'spouse', 'primary')
     },
-    "sp-bene-rel": function(el) {
+    "sp-bene-rel": function (el) {
       return is_other_beneficiary_detail_required(el, 'spouse', 'primary')
     },
 
-    "sp-cont-bene-name": function(el) {
+    "sp-cont-bene-name": function (el) {
       return is_other_beneficiary_detail_required(el, 'spouse', 'contingent')
     },
 
-    "sp-cont-bene-rel": function(el) {
+    "sp-cont-bene-rel": function (el) {
       return is_other_beneficiary_detail_required(el, 'spouse', 'contingent')
     }
   };
@@ -457,7 +478,7 @@ function init_validation(ui) {
       enrollCity: {required: true},
       tokenType: {required: true},
       ConfirmationToken: {
-        required: function() {
+        required: function () {
           return window.vm.should_use_date_of_hire_for_identity();
         }
       },
@@ -506,4 +527,3 @@ function wizard_error_placement(error, element) {
   else error.insertAfter(element);
   //else error.insertAfter(element.parent());
 }
-

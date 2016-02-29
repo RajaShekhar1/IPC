@@ -248,9 +248,19 @@ var wizard_viewmodel = (function () {
 
     self.has_completed_selection = ko.computed(this._has_completed_selection, this);
 
+    // Has any applicant selected something? (even if 'no benefit')
     self.did_select_coverage = ko.pureComputed(function () {
       return self.has_completed_selection() && !self.did_decline();
     }, this);
+
+    // Whether or not any valid benefit has been selected. (excludes "no benefit" selection)
+    self.did_select_valid_coverage = ko.pureComputed(function() {
+      return self.did_select_coverage() && (
+              self.did_select_employee_coverage() ||
+              self.did_select_spouse_coverage() ||
+              self.did_select_children_coverage()
+          );
+    });
 
     self.did_select_employee_coverage = ko.pureComputed(function () {
       return _.any(self.valid_applicant_coverage_selections(), function (cov) {
@@ -527,12 +537,6 @@ var wizard_viewmodel = (function () {
       }
     },
 
-    get_applicant_recommendations: function (recommendation_set) {
-      return _.map(this.applicant_coverage_selections(), function (applicant_coverage) {
-        return new ApplicantRecommendationVM(applicant_coverage.applicant, recommendation_set);
-      }, this);
-    },
-
     get_total_premium: function () {
       var total = 0.0;
       if (this.did_decline()) {
@@ -636,14 +640,21 @@ var wizard_viewmodel = (function () {
       return coverage.format_face_value();
     },
     format_recommendation_premium: function (recommendation_set) {
-      var coverage = recommendation_set.get_recommended_applicant_coverage(this.applicant.type);
-      return coverage.format_premium_option();
+      var recommendation = recommendation_set.get_applicant_recommendation(this.applicant.type);
+      return recommendation.format_total_premium();
     },
 
     format_selected_coverage: function () {
       return this.get_selected_coverage().format_face_value();
     },
     format_selected_premium: function () {
+      if (this.applicant.type == wizard_applicant.Applicant.ChildType &&
+          this.product_coverage.product.is_fpp_product() &&
+          this.has_selected_coverage()) {
+        // Do the formatting here for single product enroll fpp children multiplier ... ugh.
+        var premium = this.get_selected_coverage().get_total_premium() * window.vm.coverage_vm.applicants.get_valid_children().length;
+        return format_premium_value(premium);
+      }
       return this.get_selected_coverage().format_premium_option();
     },
 
@@ -662,26 +673,6 @@ var wizard_viewmodel = (function () {
 
   };
 
-  // Small viewmodel for presenting recommended coverage.
-  function ApplicantRecommendationVM(applicant, recommendation_set) {
-    var self = this;
-    self.applicant = applicant;
-    self.recommended_coverage = recommendation_set.get_recommended_applicant_coverage(self.applicant.type);
-    self.total_premium = recommendation_set.get_total_premium;
-
-    self.is_valid = function () {
-      return self.recommended_coverage.is_valid();
-    };
-
-    self.format_premium_option = function () {
-      return self.recommended_coverage.format_premium_option();
-    };
-
-    self.format_coverage = function () {
-      return self.recommended_coverage.format_face_value();
-    };
-
-  }
 
   function CoverageSummaryVM(product_coverages, applicant_list) {
     this.product_coverages = product_coverages;
@@ -755,7 +746,7 @@ var wizard_viewmodel = (function () {
     };
 
     self.has_rider_modal = function () {
-      return (self.rider.code === "AIR" || self.rider.code === "QOL3" || self.rider.code === "QOL4" || self.rider.code === "WOP");
+      return (self.rider.code === "AIR" || self.rider.code === "QOL3" || self.rider.code === "QOL4" || self.rider.code === "WP");
     };
 
     self.show_rider_info = function () {
@@ -764,7 +755,7 @@ var wizard_viewmodel = (function () {
         case "AIR":
           $("#modal-auto-increase-rider").modal('show');
           break;
-        case "WOP":
+        case "WP":
           $("#modal-wop-rider").modal('show');
           break;
         case "QOL3":
@@ -912,8 +903,13 @@ var wizard_viewmodel = (function () {
 
     init_jquery_validator();
 
-    // Step 1 ViewModel observables
+    self.set_wizard_step = function() {
+      var wizard = $('#enrollment-wizard').data('fu.wizard');
+      wizard.currentStep = 1;
+      wizard.setState();
+    };
 
+    // Step 1 ViewModel observables
     self.should_include_spouse_in_table = ko.computed(function () {
       return self.should_show_spouse() && self.spouse().is_valid();
     });
@@ -1006,6 +1002,9 @@ var wizard_viewmodel = (function () {
       }
     };
 
+    self.should_allow_grandchildren = ko.computed(function () {
+      return !!self.products && self.products.length === 1 && _.some(self.products, function (product) { return product.is_fpp_product(); });
+    });
 
     self.show_spouse_name = ko.computed(function () {
       return (self.should_include_spouse_in_table()) ? self.spouse().name() : "";
@@ -1014,13 +1013,14 @@ var wizard_viewmodel = (function () {
 
     // Recommendations table visibility
     self.has_show_rates_been_clicked = ko.observable(false);
+
     self.can_display_rates_table = ko.computed(function () {
-      return (self.applicant_list.has_valid_employee()
-          // TODO: Reimplement
-          // && product validation
-        && self.coverage_vm.is_payment_mode_valid()
-        && !self.any_limit_error()
-      );
+      // TODO: Reimplement
+      // && product validation
+      var is_employee_valid = self.applicant_list.has_valid_employee();
+      var is_payment_valid = self.coverage_vm.is_payment_mode_valid();
+      var has_limit_errors = self.any_limit_error();
+      return is_employee_valid && is_payment_valid && !has_limit_errors;
     });
 
     // User indicates he is ready to show the coverage selection options.
@@ -1129,10 +1129,11 @@ var wizard_viewmodel = (function () {
 
       // Can not decline if any applicant has applied for coverage already
       return (!_.any(self.product_coverage_viewmodels(), function (product_coverage) {
-        return !_.any(self.applicant_list.applicants(), function (applicant) {
+        return _.any(self.applicant_list.applicants(), function (applicant) {
           // Does the applicant have existing coverage for this product?
           return _.any(applicant.existing_coverages, function (existing_coverage) {
-            return existing_coverage.product_id === product_coverage.product.id;
+            return existing_coverage.product_id === product_coverage.product.id
+                && existing_coverage.coverage_status === 'enrolled';
           });
         });
       }));
@@ -1143,13 +1144,9 @@ var wizard_viewmodel = (function () {
     self.did_decline = ko.observable(false);
 
     self.did_decline_all_products = ko.pureComputed(function () {
-      if (self.coverage_vm.has_multiple_products()) {
-        return _.all(self.product_coverage_viewmodels(), function (pcov) {
-          return pcov.did_decline();
-        });
-      } else {
-        return self.did_decline();
-      }
+      return self.did_decline() || _.all(self.product_coverage_viewmodels(), function (pcov) {
+        return pcov.did_decline();
+      });
     });
 
     // Decline info box
@@ -1201,7 +1198,7 @@ var wizard_viewmodel = (function () {
     // Just for step 1 ...
     self.is_coverage_selection_valid = function () {
       return _.all(self.coverage_vm.product_coverage_viewmodels(), function (prod_cov) {
-        return prod_cov.has_completed_selection();
+        return prod_cov.did_select_valid_coverage() || prod_cov.did_decline();
       });
     };
 
@@ -1415,8 +1412,8 @@ var wizard_viewmodel = (function () {
     };
     self.has_contingent_beneficiary_error = ko.computed(function () {
       return _.any(self.coverage_vm.selected_product_coverages(), function (prod_cov) {
-        return prod_cov.has_contingent_beneficiary_error();
-      })
+          return prod_cov.has_contingent_beneficiary_error();
+        });
     });
 
 
@@ -1758,5 +1755,5 @@ var wizard_viewmodel = (function () {
   }
 
 
-  return {WizardVM: WizardVM}
+  return {WizardVM: WizardVM};
 })();
