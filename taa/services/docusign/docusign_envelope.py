@@ -19,9 +19,8 @@ rider_service = RiderService()
 
 
 class EnrollmentDataWrap(object):
-    def __init__(self, wizard_data, census_record, case):
+    def __init__(self, wizard_data, case):
         self.data = wizard_data
-        self.census_record = census_record
         self.case = case
 
     def __getitem__(self, item):
@@ -151,6 +150,18 @@ class EnrollmentDataWrap(object):
     def get_employee_name(self):
         return '{} {}'.format(self.data['employee']['first'],
                               self.data['employee']['last'])
+
+    def get_employee_first(self):
+        return self.data['employee']['first']
+
+    def get_employee_last(self):
+        return self.data['employee']['last']
+
+    def get_employee_birthdate(self):
+        return self.data['employee']['birthdate']
+
+    def get_employee_ssn(self):
+        return self.data['employee']['ssn']
 
     def get_spouse_name(self):
         return '{} {}'.format(self.data['spouse']['first'],
@@ -359,6 +370,7 @@ class EnrollmentDataWrap(object):
     def should_use_call_center_workflow(self):
         return self.case.should_use_call_center_workflow
 
+# For employee signing sessions
 def build_callback_url(wizard_data, session_type):
     is_ssl = app.config.get('IS_SSL', True)
     hostname = app.config.get('HOSTNAME', '5starenroll.com')
@@ -370,4 +382,15 @@ def build_callback_url(wizard_data, session_type):
                 hostname=hostname,
                 name=wizard_data['employee']['first'],
                 session_type=session_type,
+    ))
+
+def build_callcenter_callback_url(case):
+    is_ssl = app.config.get('IS_SSL', True)
+    hostname = app.config.get('HOSTNAME', '5starenroll.com')
+    scheme = 'https://' if is_ssl else 'http://'
+    # note: DS supplies the last parm of 'event' in the callback
+    return ('{scheme}{hostname}/enrollment-case/{case_id}#enrollment'.format(
+                scheme=scheme,
+                hostname=hostname,
+                case_id=case.id,
     ))

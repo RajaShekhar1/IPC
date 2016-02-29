@@ -161,9 +161,7 @@ class EnrollmentSubmissionProcessor(object):
         enrollment_record.docusign_envelope_id = envelope.uri
 
     def generate_envelope_components(self, enrollment_record):
-        data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data),
-                                       census_record=enrollment_record.census_record,
-                                       case=enrollment_record.case)
+        data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data), case=enrollment_record.case)
         recipients = self._create_import_recipients(enrollment_record.case, data_wrap)
         components = self.docusign_service.create_fpp_envelope_components(
             data_wrap,

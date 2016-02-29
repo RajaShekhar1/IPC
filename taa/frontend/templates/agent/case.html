@@ -1113,7 +1113,10 @@ we load from the server at run time for page speed
     <div data-bind="visible: is_loading">
       <div class="loading">Loading Report...</div>
     </div>
-    <div class="report-wrap" data-bind="visible: !is_loading()">
+
+    <h3 class="text-danger" data-bind="text: error_message()"></h3>
+
+    <div class="report-wrap" data-bind="visible: !is_loading() && error_message() === ''">
 
       <!--ko if: !any_enrollments()-->
       <h2>No Enrollments Recorded</h2>
@@ -1131,7 +1134,7 @@ we load from the server at run time for page speed
             <th class="text-center w_25">Total Processed</th>
             <th class="text-center w_25">Total Taken</th>
             <th class="text-center w_25">Total Declined</th>
-            <th class="text-center w_25">Total Annual Premium</th>
+            <th class="text-center w_25">Total Enrolled Premium</th>
           </tr>
           </thead>
           <tbody>

@@ -48,6 +48,10 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
     agent_code = db.Column(db.Unicode(16))
     agent_name = db.Column(db.Unicode(256))
+
+    # Helpful for querying for all records an agent is allowed to see within a given case
+    db.Index('ix_enrollment_applications_agent_case', agent_id, case_id)
+
     # Policy owner
     is_employee_owner = db.Column(db.Boolean)
     employee_other_owner_name = db.Column(db.UnicodeText)
@@ -95,7 +99,6 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     def is_pending_agent(self):
         return self.application_status in [self.APPLICATION_STATUS_PENDING_AGENT]
 
-
     def did_decline(self):
         return self.application_status == self.APPLICATION_STATUS_DECLINED
 
@@ -103,7 +106,8 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
         return self.application_status == self.APPLICATION_STATUS_ENROLLED
 
     def did_process(self):
-        return self.application_status != None
+        # Pending does not count as processed.
+        return self.application_status in [self.APPLICATION_STATUS_DECLINED, self.APPLICATION_STATUS_ENROLLED]
 
     def is_terminal_status(self):
         return self.application_status in [
@@ -111,6 +115,7 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
             self.APPLICATION_STATUS_ENROLLED,
             self.APPLICATION_STATUS_VOIDED,
         ]
+
 
 
 class EnrollmentApplicationCoverageSerializer(JsonSerializable):
@@ -272,7 +277,7 @@ class SelfEnrollmentEmailLog(SelfEnrollmentEmailLogSerializer, db.Model):
     link_id = db.Column(db.Integer, db.ForeignKey('self_enrollment_links.id'),
                         nullable=False, index=True)
     census_id = db.Column(db.Integer, db.ForeignKey('case_census.id'),
-                          nullable=False)
+                          nullable=False, index=True)
     census_record = db.relationship('CaseCensus', backref='email_logs')
     agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=False)
     sent_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
@@ -285,7 +290,7 @@ class SelfEnrollmentEmailLog(SelfEnrollmentEmailLogSerializer, db.Model):
 
     is_success = db.Column(db.Boolean, nullable=False)
 
-    status = db.Column(db.Unicode(16))
+    status = db.Column(db.Unicode(16), index=True)
 
     STATUS_PENDING = u'pending'
     STATUS_FAILURE = u'failure'
