@@ -32,18 +32,18 @@ class WizardPage(PageBase):
     EE_BENE_TYPE_OTHER_RADIO = "input[name=eeBeneficiary,value=other]"
     EE_BENE_TYPE_SPOUSE_RADIO = "input[name=eeBeneficiary,value=spouse]"
 
-    EE_BENE_NAME = "#eeBeneOtherName"
-    EE_BENE_REL = "#eeBeneOtherRelation"
-    EE_BENE_SSN = "#eeBeneOtherSSN"
-    EE_BENE_BIRTHDATE = "#eeBeneOtherDOB"
+    EE_BENE_NAME = ".ee-bene-name"
+    EE_BENE_REL = ".ee-bene-rel"
+    EE_BENE_SSN = ".ee-bene-ssn"
+    EE_BENE_BIRTHDATE = ".ee-bene-dob"
 
     EE_CONT_TYPE_NONE = "input[name=eeContBeneficiary,value=none]"
     EE_CONT_TYPE_SPOUSE = "input[name=eeContBeneficiary,value=spouse]"
     EE_CONT_TYPE_OTHER = "input[name=eeContBeneficiary,value=other]"
-    EE_CONT_BENE_NAME = "#eeContBeneOtherName"
-    EE_CONT_BENE_REL = "#eeContBeneOtherRelation"
-    EE_CONT_BENE_SSN = "#eeContBeneOtherSSN"
-    EE_CONT_BENE_BIRTHDATE = "#eeContBeneOtherDOB"
+    EE_CONT_BENE_NAME = ".ee-cont-bene-name"
+    EE_CONT_BENE_REL = ".ee-cont-bene-rel"
+    EE_CONT_BENE_SSN = ".ee-cont-bene-ssn"
+    EE_CONT_BENE_BIRTHDATE = ".ee-cont-bene-dob"
 
     SP_FIRST = '#spFName'
     SP_LAST = '#spLName'
@@ -59,17 +59,17 @@ class WizardPage(PageBase):
 
     SP_BENE_TYPE_OTHER_RADIO = "input[name=spBeneficiary,value=other]"
     SP_BENE_TYPE_SPOUSE_RADIO = "input[name=spBeneficiary,value=spouse]"
-    SP_BENE_NAME = "#spBeneOtherName"
-    SP_BENE_REL = "#spBeneOtherRelation"
-    SP_BENE_SSN = "#spBeneOtherSSN"
-    SP_BENE_DOB = "#spBeneOtherDOB"
+    SP_BENE_NAME = ".sp-bene-name"
+    SP_BENE_REL = ".sp-bene-rel"
+    SP_BENE_SSN = ".sp-bene-ssn"
+    SP_BENE_DOB = ".sp-bene-dob"
     SP_CONT_TYPE_NONE = "input[name=spContBeneficiary,value=none]"
     SP_CONT_TYPE_SPOUSE = "input[name=spContBeneficiary,value=spouse]"
     SP_CONT_TYPE_OTHER = "input[name=spContBeneficiary,value=other]"
-    SP_CONT_BENE_NAME = "#spContBeneOtherName"
-    SP_CONT_BENE_REL = "#spContBeneOtherRelation"
-    SP_CONT_BENE_SSN = "#spContBeneOtherSSN"
-    SP_CONT_BENE_DOB = "#spContBeneOtherDOB"
+    SP_CONT_BENE_NAME = ".sp-cont-bene-name"
+    SP_CONT_BENE_REL = ".sp-cont-bene-rel"
+    SP_CONT_BENE_SSN = ".sp-cont-bene-ssn"
+    SP_CONT_BENE_DOB = ".sp-cont-bene-dob"
 
 
     CH1_FIRST = '.child-0 .child_first'
@@ -86,15 +86,15 @@ class WizardPage(PageBase):
     SP_COVERAGE_SELECT = 'select.sp-coverage'
     CH_COVERAGE_SELECT = 'select.ch-coverage'
 
-    REC_COVERAGE_GOOD = '.pricing-span.good .widget-main'
-    REC_COVERAGE_BETTER = '.pricing-span.better .widget-main'
-    REC_COVERAGE_BEST = '.pricing-span.best .widget-main'
+    REC_COVERAGE_GOOD = '.pricing-span.good .widget-box'
+    REC_COVERAGE_BETTER = '.pricing-span.better .widget-box'
+    REC_COVERAGE_BEST = '.pricing-span.best .widget-box'
 
     ENROLL_CITY = "#enrollCity"
     ACK_DISCLOSURE = "#confirmDisclaimer"
     ACK_PAYROLL_DEDUCTION = "#confirmPayrollDeductions"
     def test_navigation_succeeded(self):
-        return EC.element_to_be_clickable((By.CSS_SELECTOR, self.EE_FIRST))
+        return EC.visibility_of_element_located((By.CSS_SELECTOR, '.page-content'))
 
     def wait_until_loaded(self):
         try:
@@ -105,6 +105,8 @@ class WizardPage(PageBase):
         return True
 
     def fill_out_step1_data(self, **data):
+        time.sleep(1)
+
         self.enter_emp_data(data)
         self.enter_spouse_data(data)
         self.enter_children_data(data)
@@ -160,31 +162,31 @@ class WizardPage(PageBase):
                 self.lookup(field).send_keys(value)
             elif value and js_observable_name:
                 self.browser.execute_script("""
-                window.ui.{0}("{1}")
+                window.vm.{0}("{1}")
                 """.format(js_observable_name, value))
+        self.lookup('body').click()
 
     def enter_employee_val_js(self, attr, val):
         self.browser.execute_script("""
-            window.ui.employee().{0}("{1}");
+            window.vm.employee().{0}("{1}");
             """.format(attr, val)
         )
 
     def enter_spouse_val_js(self, attr, val):
         self.browser.execute_script("""
-            window.ui.spouse().{0}("{1}");
+            window.vm.spouse().{0}("{1}");
             """.format(attr, val)
         )
 
     def enter_child_val_js(self, child_num, attr, val):
         self.browser.execute_script("""
-            window.ui.children()[{0}].{1}("{2}");
+            window.vm.children()[{0}].{1}("{2}");
             """.format(child_num, attr, val)
         )
 
-
     def click_show_rates(self):
-        btn = self.lookup(self.SHOW_RATES_BTN)
-        btn.click()
+        self.lookup('button.show-rates').click()
+        # self.browser.execute_script("$('button.show-rates').click();")
 
     def select_recommended_coverage(self, recommendation):
         coverage_divs = {
@@ -212,6 +214,7 @@ class WizardPage(PageBase):
 
     def select_custom_coverage(self, applicant, amount):
         self.click_show_rates()
+
         self.wait_for_rate_table()
 
         if applicant == 'employee':
@@ -220,8 +223,9 @@ class WizardPage(PageBase):
             # TODO: get child with matching amount as value and select it
 
     def click_next(self):
-        btn = self.lookup(self.NEXT_BTN)
-        btn.click()
+        self.browser.execute_script("""$('button.btn.btn-success.btn-next').click()""")
+        # btn = self.lookup(self.NEXT_BTN)
+        # btn.click()
 
     def wait_until_condition(self, condition, timeout=10):
         try:
@@ -230,6 +234,9 @@ class WizardPage(PageBase):
             return False
 
         return True
+
+    def wait_until_step_1_loaded(self):
+        return self.wait_until_condition(EC.element_to_be_clickable((By.CSS_SELECTOR, '#show-coverage-options')))
 
     def wait_until_step_2_loaded(self):
         return self.wait_until_condition(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.flagBtn")))
@@ -250,13 +257,14 @@ class WizardPage(PageBase):
         return self.wait_until_condition(lambda browser: "docusign" in browser.current_url, timeout=20)
 
     def get_all_no_buttons(self):
-        return self.lookup_multiple("button.flagBtn.val_No")
+        return self.lookup_multiple("button.val_No")
 
     def select_no_for_all_questions(self):
-        btns = self.get_all_no_buttons()
-        for btn in btns:
-            if btn.is_displayed():
-                btn.click()
+        self.browser.execute_script("""$('button:contains(No):visible').click()""")
+        # btns = self.get_all_no_buttons()
+        # for btn in btns:
+        #     if btn.is_displayed():
+        #         btn.click()
 
     def fill_out_step3_data(self, **kwargs):
         text_fields = [
@@ -285,7 +293,6 @@ class WizardPage(PageBase):
                              root_element=self.lookup(self.EE_STATE_SELECT))
             el.click()
 
-
     def fill_out_step_4_data(self, **kwargs):
         text_fields = [
             (self.SP_SSN, 'sp_ssn'),
@@ -304,57 +311,60 @@ class WizardPage(PageBase):
         ee_bene_other_text_fields = [
             (self.EE_BENE_NAME, "ee_bene_name"),
             (self.EE_BENE_REL, "ee_bene_relationship"),
-            (self.EE_BENE_SSN, "ee_bene_ssn", "employee_other_beneficiary().ssn"),
-            (self.EE_BENE_BIRTHDATE, "ee_bene_birthdate", "employee_other_beneficiary().date_of_birth"),
         ]
         sp_bene_other_text_fields = [
             (self.SP_BENE_NAME, "sp_bene_name"),
             (self.SP_BENE_REL, "sp_bene_relationship"),
-            (self.SP_BENE_SSN, "sp_bene_ssn", "spouse_other_beneficiary().ssn"),
-            (self.SP_BENE_DOB, "sp_bene_birthdate", "spouse_other_beneficiary().date_of_birth"),
         ]
 
         ee_cont_bene_other_text_fields = [
             (self.EE_CONT_BENE_NAME, "ee_cont_bene_name"),
             (self.EE_CONT_BENE_REL, "ee_cont_bene_relationship"),
-            (self.EE_CONT_BENE_SSN, "ee_cont_bene_ssn", "employee_contingent_beneficiary().ssn"),
-            (self.EE_CONT_BENE_BIRTHDATE, "ee_cont_bene_birthdate", "employee_contingent_beneficiary().date_of_birth"),
         ]
 
         sp_cont_bene_other_text_fields = [
             (self.SP_CONT_BENE_NAME, "sp_cont_bene_name"),
             (self.SP_CONT_BENE_REL, "sp_cont_bene_relationship"),
-            (self.SP_CONT_BENE_SSN, "sp_cont_bene_ssn", "spouse_contingent_beneficiary().ssn"),
-            (self.SP_CONT_BENE_DOB, "sp_cont_bene_birthdate", "spouse_contingent_beneficiary().date_of_birth"),
         ]
 
         # If any of these are provided, select other
         if filter(lambda t: kwargs.get(t[1]), ee_bene_other_text_fields):
             self.browser.execute_script("""
-            window.ui.employee_beneficiary_type("other")
+            _.forEach(window.vm.coverage_vm.selected_product_coverages(), function (product) {
+                product.employee_beneficiary_type('other');
+            });
             """)
         if filter(lambda t: kwargs.get(t[1]), sp_bene_other_text_fields):
             self.browser.execute_script("""
-            window.ui.spouse_beneficiary_type("other")
+            _.forEach(window.vm.coverage_vm.selected_product_coverages(), function (product) {
+                product.spouse_beneficiary_type('other');
+            });
             """)
-
 
         if filter(lambda t: kwargs.get(t[1]), ee_cont_bene_other_text_fields):
             self.browser.execute_script("""
-            window.ui.employee_contingent_beneficiary_type("other")
+            _.forEach(window.vm.coverage_vm.selected_product_coverages(), function (product) {
+                product.employee_contingent_beneficiary_type('other');
+            });
             """)
         elif 'ee_cont_bene_type' in kwargs:
             self.browser.execute_script("""
-            window.ui.employee_contingent_beneficiary_type("{}")
+            _.forEach(window.vm.coverage_vm.selected_product_coverages(), function (product) {
+                product.employee_contingent_beneficiary_type('{}');
+            });
             """.format(kwargs['ee_cont_bene_type']))
 
         if filter(lambda t: kwargs.get(t[1]), sp_cont_bene_other_text_fields):
             self.browser.execute_script("""
-            window.ui.spouse_contingent_beneficiary_type("other")
+            _.forEach(window.vm.coverage_vm.selected_product_coverages(), function (product) {
+                product.spouse_contingent_beneficiary_type('other');
+            });
             """)
         elif 'sp_cont_bene_type' in kwargs:
             self.browser.execute_script("""
-            window.ui.spouse_contingent_beneficiary_type("{}")
+            _.forEach(window.vm.coverage_vm.selected_product_coverages(), function (product) {
+                product.spouse_contingent_beneficiary_type('{}');
+            });
             """.format(kwargs['sp_cont_bene_type']))
 
         self.enter_text_data_if_provided(ee_bene_other_text_fields, kwargs)
@@ -362,11 +372,26 @@ class WizardPage(PageBase):
         self.enter_text_data_if_provided(ee_cont_bene_other_text_fields, kwargs)
         self.enter_text_data_if_provided(sp_cont_bene_other_text_fields, kwargs)
 
+        self.browser.execute_script("""
+        _.forEach(window.vm.coverage_vm.selected_product_coverages(), function (product) {
+            // Grab data for the employee's beneficiary data and put it into the input values
+            $('.ee-bene-ssn').val('333333333');
+            $('.ee-bene-dob').val('10/10/1990');
+            $('.ee-bene-cont-ssn').val('444444444');
+            $('.ee-bene-cont-dob').val('10/10/1990');
+
+            // Grab data for the spouse's beneficiary data and put it into the input values
+            $('.sp-bene-ssn').val('333333333');
+            $('.sp-bene-dob').val('10/10/1990');
+            $('.sp-bene-cont-ssn').val('444444444');
+            $('.sp-bene-cont-dob').val('10/10/1990');
+        });
+        """)
 
     def fill_out_step_6_data(self, **kwargs):
         if 'date_of_hire' in kwargs:
             self.browser.execute_script("""
-            window.ui.identityToken("{}")
+            window.vm.identityToken("{}")
             """.format(kwargs['date_of_hire']))
 
         if kwargs.get('ack_benefit_disclosure', '').upper() == 'Y':
