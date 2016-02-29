@@ -125,45 +125,54 @@
                               <label class="col-md-3 control-label" for="productID">Products</label>
                               <div class="col-md-9">
                                 <!--ko if: !is_editing_products()-->
-                                <!--ko foreach: products -->
-                                <a data-bind="text: name, click: $parent.start_editing_products" href="#"></a><br>
-                                <!--/ko-->
+                                  <!--ko foreach: products -->
+                                    <a data-bind="text: name, click: $parent.start_editing_products" href="#"></a><br>
+                                  <!--/ko-->
+                                  <!--ko if: products().length == 0 -->
+                                    <a data-bind="click: start_editing_products" href="#">Add Products</a><br>
+                                  <!--/ko-->
                                 <!--/ko-->
                                 <!--ko if: is_editing_products-->
-                                <div class="row">
-                                  <select class="col-xs-12 form-control"
-                                          data-bind="options: unselected_products, optionsText: 'name', optionsAfterRender: on_products_select_rendered, value: selected_product, optionsCaption: '(Select Product to Add)'"></select>
-                                </div>
-                                <div class="row">
-                                  <button class="col-xs-12 btn btn-sm btn-success" data-bind="click: add_selected_product, enable: has_selected_product"><i
-                                      class="ace-icon fa fa-plus"></i> Add
-                                  </button>
-                                </div>
-                                <div class="row">
-                                  <button class="col-xs-6 text-center btn move btn-white"
-                                          data-bind="click: move_products_up"><i
-                                      class="ace-icon fa fa-arrow-up select-button"></i></button>
-                                  <button class="col-xs-6 text-center btn move btn-white"
-                                          data-bind="click: move_products_down"><i
-                                      class="ace-icon fa fa-arrow-down select-button"></i></button>
-                                </div>
-                                <div class="row">
-                                  <select class="col-xs-12 form-control" size="5"
-                                          data-bind="options: products, optionsText: 'name', selectedOptions: sort_selected_products"></select>
-                                </div>
-                                <div class="row">
-                                  <button class="col-xs-12 btn btn-sm btn-danger" data-bind="click: remove_selected_products, visible: has_product_sort_selections"><i class="ace-icon fa fa-minus"></i> Remove
-                                    Selected
-                                  </button>
-                                </div>
-                                <br>
-                                <div class="row">
-                                  <button class="btn btn-default" data-bind="click: stop_editing_products">Collapse
-                                    Product Options
-                                  </button>
-                                </div>
-                                {# This multi-select works, but is not as intuitive as a list of checkboxes like above. #}
-                                {#<limited-product-select params="limiter: state_product_limiter, disabled: !can_edit_case, is_multi_select: true"></limited-product-select>#}
+                                  <div class="row">
+                                    <select class="col-xs-12 form-control"
+                                            data-bind="
+                                            options: unselected_products,
+                                            optionsText: 'name',
+                                            optionsAfterRender: on_products_select_rendered,
+                                            value: selected_product,
+                                            optionsCaption: '(Select Product to Add)'">
+                                    </select>
+                                  </div>
+                                  <div class="row">
+                                    <button class="col-xs-12 btn btn-sm btn-success" data-bind="click: add_selected_product, enable: has_selected_product"><i
+                                        class="ace-icon fa fa-plus"></i> Add
+                                    </button>
+                                  </div>
+                                  <div class="row">
+                                    <button class="col-xs-6 text-center btn move btn-white"
+                                            data-bind="click: move_products_up"><i
+                                        class="ace-icon fa fa-arrow-up select-button"></i></button>
+                                    <button class="col-xs-6 text-center btn move btn-white"
+                                            data-bind="click: move_products_down"><i
+                                        class="ace-icon fa fa-arrow-down select-button"></i></button>
+                                  </div>
+                                  <div class="row">
+                                    <select class="col-xs-12 form-control" size="5"
+                                            data-bind="options: products, optionsText: 'name', selectedOptions: sort_selected_products"></select>
+                                  </div>
+                                  <div class="row">
+                                    <button class="col-xs-12 btn btn-sm btn-danger" data-bind="click: remove_selected_products, visible: has_product_sort_selections"><i class="ace-icon fa fa-minus"></i> Remove
+                                      Selected
+                                    </button>
+                                  </div>
+                                  <br>
+                                  <div class="row">
+                                    <button class="btn btn-default" data-bind="click: stop_editing_products">
+                                      Collapse Product Options
+                                    </button>
+                                  </div>
+                                  {# This multi-select works, but is not as intuitive as a list of checkboxes like above. #}
+                                  {#<limited-product-select params="limiter: state_product_limiter, disabled: !can_edit_case, is_multi_select: true"></limited-product-select>#}
                                 <!--/ko-->
                               </div>
                             </div>
