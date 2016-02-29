@@ -332,7 +332,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.annual_today_between = ko.computed(function () {
-    if (self.annual_enrollment_periods().length >= 4 && self.annual_enrollment_periods().first().start_date() !== "") {
+    if (self.annual_enrollment_periods().length >= 4 && self.annual_enrollment_periods()[0].start_date() !== "") {
       return self.annual_enrollment_periods().reduce(function (a, period) {
         var start_date = moment(period.start_date(), "MM/DD");
         var end_date = moment(period.end_date(), "MM/DD");
