@@ -73,6 +73,17 @@
                                 <div class="error" data-bind="visible: product_name.has_been_checked, text: get_form_error"></div>
                             </div>
                         </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label" for="product_name">Base Product</label>
+                            <div class="col-md-9">
+                                <select data-bind="
+                                value: base_product_id,
+                                options: base_product_options,
+                                optionsValue: 'id',
+                                optionsText: 'name',
+                                optionsCaption: '(Select Product)'"></select>
+                            </div>
+                        </div>
                     </div>
                     <div class="loading-panel" data-bind="visible: is_creating">
                         Creating new custom product...
@@ -109,7 +120,7 @@ $(function() {
         messages: {name: "Product name is required"}
     });
     
-    function ManageProductsPage() {
+    function ManageProductsPage(base_product_options) {
         var self = this;
         
         self.is_creating = ko.observable(false);
@@ -120,7 +131,10 @@ $(function() {
         self.product_name.is_checking = ko.observable(false);
         self.product_name.is_checking_request = ko.observable(null);
         self.product_name.is_unique = ko.observable(null);
-        
+
+        self.base_product_id = ko.observable(null);
+        self.base_product_options = base_product_options;
+
         self.check_name_uniqueness = function(value) {
             // If we have a pending request, cancel it
             if (self.product_name.is_checking_request()) {
@@ -143,7 +157,9 @@ $(function() {
         
         self.is_create_button_enabled = ko.computed(function() {
             return (self.product_name() != "" && self.product_name.is_checking() == false && 
-                    self.product_name.is_unique() == true);
+                    self.product_name.is_unique() == true &&
+                    self.base_product_id() != null
+            );
         });
         
         self.product_name.subscribe(self.check_name_uniqueness);
@@ -166,7 +182,8 @@ $(function() {
                 return false;
             }
             var data = {
-                product_name: $("#product_name").val()
+                product_name: self.product_name(),
+                base_product_id: self.base_product_id()
             };
             
             // Show loading modal while we are creating the product
@@ -194,7 +211,7 @@ $(function() {
         "order": [[ 1, 'asc' ], [0, 'asc']]
     });
     
-    var form = new ManageProductsPage();
+    var form = new ManageProductsPage({{ base_product_options |tojson|safe }});
     window.form = form;
     ko.applyBindings(form); 
 });
