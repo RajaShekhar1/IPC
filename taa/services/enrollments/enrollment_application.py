@@ -35,7 +35,9 @@ class EnrollmentApplicationService(DBService):
                            by_envelope_url=None,
                            by_applicant_signing_status=None, by_agent_signing_status=None):
         q = db.session.query(EnrollmentApplication)
-        q.options(db.eagerload('coverages', 'product'))
+        q = q.options(db.eagerload('coverages').joinedload('product')
+                  ).options(db.joinedload('census_record')
+                  ).options(db.joinedload('case'))
 
         if by_envelope_url:
             q = q.filter(EnrollmentApplication.docusign_envelope_id == by_envelope_url)

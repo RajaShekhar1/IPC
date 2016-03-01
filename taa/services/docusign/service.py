@@ -222,7 +222,9 @@ class DocuSignService(object):
                              EnrollmentApplication.agent_id == None,
                              )
                 ).filter(EnrollmentApplication.case_id.in_(owned_case_ids)
-                )
+                ).options(db.joinedload('case')
+                ).options(db.joinedload('coverages').joinedload('product')
+                ).options(db.joinedload('census_record'))
             enrollments = list(own_enrollments) + list(partner_enrollments)
 
         else:
@@ -230,8 +232,9 @@ class DocuSignService(object):
             enrollments = enrollment_service.search_enrollments(
                     by_agent_ids=None,
                     by_applicant_signing_status=envelope_status,
-            )
+            ).options(db.eagerload('coverages', 'product'))
 
+        print("LOADED ALL ENROLLMENTS")
         return [DocusignEnvelope(enrollment.docusign_envelope_id, enrollment)
                 for enrollment in enrollments if enrollment.docusign_envelope_id is not None]
 
