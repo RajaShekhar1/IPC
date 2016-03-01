@@ -23,7 +23,7 @@ var agent_inbox = (function() {
       // Get the envelope ID from the button.
       var envelope_id = $(this).attr("data-id");
 
-      sign_envelope(envelope_id).success(function(resp) {
+      sign_envelope(envelope_id, {from_inbox: true}).success(function(resp) {
         var data = resp.data;
         // Remove voided envelope from the inbox immediately.
         if (data.errors && data.errors.length > 0 && data.errors[0].reason === "voided_envelope") {
@@ -195,8 +195,12 @@ var agent_inbox = (function() {
   }
 
 
-  function sign_envelope(envelope_id) {
-    var req = $.post("/envelopes/"+envelope_id+"/sign"
+  function sign_envelope(envelope_id, options) {
+    var url = "/envelopes/"+envelope_id+"/sign";
+    if (options && options.from_inbox) {
+      url += "?from=inbox";
+    }
+    var req = $.post(url
       ).success(function(data) {return handle_signing_redirect(envelope_id, data)}
       ).error(handle_signing_failure);
 

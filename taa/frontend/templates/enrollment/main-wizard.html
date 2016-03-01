@@ -103,7 +103,8 @@
                       Prev
                     </button>
 
-                    <button class="btn btn-success btn-next" data-last="I agree to this coverage and am ready to sign ">
+                    <button data-bind="enable: can_submit_wizard"
+                            class="btn btn-success btn-next" data-last="I agree to this coverage and am ready to sign ">
                       Next
                       <i class="icon-arrow-right icon-on-right"></i>
                     </button>

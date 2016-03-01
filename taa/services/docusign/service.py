@@ -20,22 +20,23 @@ from taa import app, db
 from taa.services.enrollments import EnrollmentApplicationCoverage, EnrollmentApplication
 from taa.services.agents import AgentService
 from taa.services import RequiredFeature, LookupService
-from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callback_url
+from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callback_url, \
+    build_callcenter_callback_url
 
 
 class DocuSignService(object):
     product_service = RequiredFeature('ProductService')
 
-    def create_multiproduct_envelope(self, product_submissions, census_record, case):
+    def create_multiproduct_envelope(self, product_submissions, case):
         # Use the first product to get employee and agent data
-        first_product_data = EnrollmentDataWrap(product_submissions[0], census_record, case)
+        first_product_data = EnrollmentDataWrap(product_submissions[0], case)
         in_person_signer, recipients = self.create_envelope_recipients(case, first_product_data)
 
         # Create and combine components of the envelope from each product.
         components = []
         for product_submission in product_submissions:
             # Wrap the submission with an object that knows how to pull out key info.
-            enrollment_data = EnrollmentDataWrap(product_submission, census_record, case)
+            enrollment_data = EnrollmentDataWrap(product_submission, case)
 
             # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
             should_use_docusign_renderer = False if enrollment_data.should_use_call_center_workflow() else True
@@ -49,7 +50,11 @@ class DocuSignService(object):
                 components += self.create_group_ci_envelope_components(enrollment_data, recipients,
                                                                        should_use_docusign_renderer)
 
-        signer_name = first_product_data.get_employee_name() if not enrollment_data.should_use_call_center_workflow() else recipients[0].name
+        if not enrollment_data.should_use_call_center_workflow():
+            signer_name = first_product_data.get_employee_name()
+        else:
+            signer_name = recipients[0].name
+
         envelope_result = self.create_envelope(
             email_subject="Signature needed: {} ({})".format(
                 #first_product_data.get_product().name,
@@ -230,35 +235,12 @@ class DocuSignService(object):
         return [DocusignEnvelope(enrollment.docusign_envelope_id, enrollment)
                 for enrollment in enrollments if enrollment.docusign_envelope_id is not None]
 
-    def get_envelope_signing_url(self, for_user, envelope_id):
+    def get_envelope_signing_url(self, for_user, envelope_id, callback_url):
         "Must be the agent that the envelope was sent to (this user must be the recipient)"
         errors = []
-
         envelope_url = '/envelopes/%s'%envelope_id
-
-        enrollment_service = LookupService("EnrollmentApplicationService")
-
-        enrollments = enrollment_service.search_enrollments(
-            #by_agent_id=agent.id,
-            by_envelope_url=envelope_url,
-        )
-        enrollment_data = enrollments.all()
-
-        if not enrollment_data:
-            raise ValueError("No enrollment with envelope id {}".format(envelope_id))
-        enrollment_record = enrollment_data[0]
-
+        enrollment_record = self.get_enrollment_record_from_envelope(envelope_id)
         envelope = DocusignEnvelope(envelope_url, enrollment_record)
-
-        # Build a callback URL for the inbox
-        is_ssl = app.config.get('IS_SSL', True)
-        hostname = app.config.get('HOSTNAME', '5starenroll.com')
-        scheme = 'https://' if is_ssl else 'http://'
-        callback_url = ('{scheme}{hostname}/inbox?enrollment={enrollment_id}'.format(
-                    scheme=scheme,
-                    hostname=hostname,
-                    enrollment_id=enrollment_record.id,
-        ))
 
         # First, we update our signing status
         envelope.update_enrollment_status()
@@ -274,7 +256,7 @@ class DocuSignService(object):
             raise ValueError("No agent record associated with user {}".format(for_user.href))
 
         # Only envelopes that have been signed by me.
-        agent = agent_service.get_agent_from_user(for_user)
+        #agent = agent_service.get_agent_from_user(for_user)
 
         # If this has been voided, we return an error.
         if enrollment_record.application_status == EnrollmentApplication.APPLICATION_STATUS_VOIDED:
@@ -289,6 +271,45 @@ class DocuSignService(object):
             url = envelope.get_completed_view_url(callback_url)
 
         return url, errors
+
+    def get_enrollment_record_from_envelope(self, envelope_id):
+        envelope_url = '/envelopes/%s'%envelope_id
+        enrollment_service = LookupService("EnrollmentApplicationService")
+        enrollments = enrollment_service.search_enrollments(
+            # by_agent_id=agent.id,
+            by_envelope_url=envelope_url,
+        )
+        enrollment_data = enrollments.all()
+        if not enrollment_data:
+            raise ValueError("No enrollment with envelope id {}".format(envelope_id))
+        enrollment_record = enrollment_data[0]
+        return enrollment_record
+
+    def build_inbox_callback_url(self, enrollment_record):
+        # Build a callback URL for the inbox
+        is_ssl = app.config.get('IS_SSL', True)
+        hostname = app.config.get('HOSTNAME', '5starenroll.com')
+        scheme = 'https://' if is_ssl else 'http://'
+        callback_url = ('{scheme}{hostname}/inbox?enrollment={enrollment_id}'.format(
+            scheme=scheme,
+            hostname=hostname,
+            enrollment_id=enrollment_record.id,
+        ))
+        return callback_url
+
+    def build_census_record_callback_url(self, enrollment_record):
+        # Build a callback URL for the inbox
+        is_ssl = app.config.get('IS_SSL', True)
+        hostname = app.config.get('HOSTNAME', '5starenroll.com')
+        scheme = 'https://' if is_ssl else 'http://'
+        return ('{scheme}{hostname}/enrollment-case/{case_id}/census/{census_id}'.format(
+            scheme=scheme,
+            hostname=hostname,
+            enrollment_id=enrollment_record.id,
+            case_id=enrollment_record.case_id,
+            census_id=enrollment_record.census_record_id,
+        ))
+
 
 def create_envelope(email_subject, components):
     docusign_service = LookupService('DocuSignService')
@@ -320,19 +341,23 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
 def create_multiproduct_envelope_and_fetch_signing_url(wizard_data, census_record, case):
 
     docusign_service = LookupService('DocuSignService')
-    in_person_signer, envelope_result = docusign_service.create_multiproduct_envelope(wizard_data, census_record, case)
+    in_person_signer, envelope_result = docusign_service.create_multiproduct_envelope(wizard_data, case)
 
-    enrollment_data = EnrollmentDataWrap(wizard_data[0], census_record, case)
+    enrollment_data = EnrollmentDataWrap(wizard_data[0], case)
     signing_url = fetch_signing_url(in_person_signer, enrollment_data, envelope_result)
 
     return envelope_result, signing_url
 
 
 def fetch_signing_url(in_person_signer, enrollment_data, envelope_result):
+    if enrollment_data.should_use_call_center_workflow():
+        callback_url = build_callcenter_callback_url(enrollment_data.case)
+    else:
+        callback_url = build_callback_url(enrollment_data, enrollment_data.get_session_type())
+
     redirect_url = envelope_result.get_signing_url(
         in_person_signer,
-        callback_url=build_callback_url(
-            enrollment_data, enrollment_data.get_session_type()),
+        callback_url=callback_url,
         docusign_transport=get_docusign_transport()
     )
     return redirect_url
@@ -374,12 +399,15 @@ class DocusignEnvelope(object):
         self._cached_envelope_status = docusign_transport.get(self.get_envelope_base_url())
         return self._cached_envelope_status
 
-    def get_signing_url(self, recipient, callback_url, docusign_transport):
+    def get_signing_url(self, recipient, callback_url, docusign_transport, clientUserId=None):
+        if clientUserId == None:
+            clientUserId = recipient.get_client_user_id()
+
         data = dict(
             authenticationMethod="email",
             email=recipient.email,
             returnUrl=callback_url,
-            clientUserId=recipient.get_client_user_id(),
+            clientUserId=clientUserId,
             userName=recipient.name,
         )
         view_url = self.get_envelope_base_url() + "/views/recipient"
@@ -538,8 +566,6 @@ class DocusignEnvelope(object):
                 self.enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_DECLINED
                 self.enrollment_record.agent_signing_datetime = None
 
-
-
     def parse_signing_date(self, val):
         utc_datetime = parse_datetime(val)
 
@@ -592,28 +618,43 @@ class DocusignEnvelope(object):
             email=ds_recip['email'],
             role_name="Employee",
         )
-        return self.get_signing_url(recipient, callback_url, get_docusign_transport())
+        return self.get_signing_url(recipient, callback_url, get_docusign_transport(), ds_recip.get('clientUserId'))
 
     def get_agent_signing_url(self, callback_url):
         ds_recip = self.get_agent_signing_status()
         #recipient = AgentDocuSignRecipient(agent, agent.name(), agent.email)
         #return self.get_signing_url(recipient, callback_url, get_docusign_transport())
         # TODO: should put check here to see if current user is actually agent, or up one level?
+
         data = dict(
             authenticationMethod="email",
             email=ds_recip['email'],
             returnUrl=callback_url,
-            clientUserId=ds_recip['clientUserId'],
             userName=ds_recip['name'],
         )
+        if ds_recip.get('clientUserId'):
+            data['clientUserId'] = ds_recip.get('clientUserId')
+
         view_url = self.get_envelope_base_url() + "/views/recipient"
         result = get_docusign_transport().post(view_url, data=data)
 
         return result['url']
 
     def get_completed_view_url(self, callback_url):
-        # Return any valid recipient view
-        return self.get_agent_signing_url(callback_url)
+        if self.get_employee_signing_status():
+            return self.get_employee_signing_url(callback_url)
+        else:
+            # Return any valid recipient view
+            return self.get_agent_signing_url(callback_url)
+
+    def get_completed_pdf(self):
+        # Return the raw PDF bytes. The PDF will only have all the data if it is completed.
+        transport = get_docusign_transport()
+        content = transport.get_binary(self.get_envelope_base_url() + '/documents/combined')
+        # Can pull out the filename from the header, but let's not do that for now.
+        return content
+
+
 
     def is_completed(self):
         """Basically is it all done, enrolled.
@@ -641,20 +682,32 @@ class DocuSignTransport(object):
         self.api_password = api_password
         self.api_endpoint = api_endpoint
 
+        self.last_request = None
+
     def get(self, url):
         full_url = urljoin(self.api_endpoint, url)
 
-        req = requests.get(full_url, headers=self._make_headers())
+        self.last_request = req = requests.get(full_url, headers=self._make_headers())
 
         if req.status_code < 200 or req.status_code >= 300:
             self._raise_docusign_error(None, full_url, req)
 
         return req.json()
 
+    def get_binary(self, url):
+        full_url = urljoin(self.api_endpoint, url)
+
+        self.last_request = req = requests.get(full_url, headers=self._make_headers())
+
+        if req.status_code < 200 or req.status_code >= 300:
+            self._raise_docusign_error(None, full_url, req)
+
+        return req.content
+
     def post(self, url, data):
         full_url = urljoin(self.api_endpoint, url)
 
-        req = requests.post(
+        self.last_request = req = requests.post(
             full_url,
             data=json.dumps(data),
             headers=self._make_headers()
@@ -673,7 +726,7 @@ class DocuSignTransport(object):
     def put(self, url, data):
         full_url = urljoin(self.api_endpoint, url)
 
-        req = requests.put(
+        self.last_request = req = requests.put(
             full_url,
             data=json.dumps(data),
             headers=self._make_headers()
@@ -778,7 +831,6 @@ class AgentDocuSignRecipient(DocuSignRecipient):
         return True
 
     def get_client_user_id(self):
-        return "123456"
         # Use the stormpath URL for this agent
         agent_service = AgentService()
         # Hash our agent id

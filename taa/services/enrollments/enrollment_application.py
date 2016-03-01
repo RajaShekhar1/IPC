@@ -101,29 +101,11 @@ class EnrollmentApplicationService(DBService):
         enrollment_application.applicant_signing_status = EnrollmentApplication.SIGNING_STATUS_PENDING
         db.session.flush()
 
-    def update_applicant_signing_status(self, enrollment_application, status):
-
+    def update_applicant_signing_status(self, enrollment_application, status=None):
+        "Synchronizes our enrollment record with the signing and application statuses that DocuSign has."
         envelope = DocusignEnvelope(enrollment_application.docusign_envelope_id, enrollment_application)
         envelope.update_enrollment_status()
-        #
-        # # Map what docusign returns to our own status
-        # status_mapping_possibilities = {
-        #     'cancel': EnrollmentApplication.SIGNING_STATUS_DECLINED, # (recipient cancels signing)
-        #     'decline': EnrollmentApplication.SIGNING_STATUS_DECLINED, # (recipient declines signing)
-        #     'exception': EnrollmentApplication.SIGNING_STATUS_ERROR, #  (exception occurs)
-        #     #'fax_pending', #  (recipient has fax pending)
-        #     #'id_check_faild', #  (recipient failed an ID check)
-        #     'session_timeout': EnrollmentApplication.SIGNING_STATUS_TIMEOUT, #  (session times out)
-        #     'signing_complete': EnrollmentApplication.SIGNING_STATUS_COMPLETE, #  (recipient completes signing)
-        #     'ttl_expired':EnrollmentApplication.SIGNING_STATUS_TTL_ERROR, #  (the TTL expires)
-        #     #'viewing_complete', #  (recipient completes viewing the envelope)
-        # }
-        #
-        # if status in status_mapping_possibilities:
-        #     internal_status = status_mapping_possibilities[status]
-        #     enrollment_application.applicant_signing_status = internal_status
-        #     db.session.flush()
-        #
+
 
     def delete_case_enrollment_data(self, case):
         for census_record in case.census_records:
@@ -146,13 +128,9 @@ class EnrollmentApplicationService(DBService):
 
     def _create_enrollment(self, census_record, wizard_data, agent, received_data=None):
 
-        # Link to census record and case, if it exists.
-        if census_record:
-            case_id = census_record.case_id
-            census_record_id = census_record.id
-        else:
-            case_id = None
-            census_record_id = None
+        # Link to census record and case
+        case_id = census_record.case_id
+        census_record_id = census_record.id
 
         # Link to agent if given
         if agent:
@@ -169,13 +147,16 @@ class EnrollmentApplicationService(DBService):
             data = wizard_data[0]
             if all(map(lambda d: d['did_decline'], wizard_data)):
                 application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
+            elif census_record.case.should_use_call_center_workflow:
+                application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
             else:
-                application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+                application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
         else:
             data = wizard_data
             if data['did_decline']:
                 application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
             else:
+                # We are likely importing the data and we don't have to say 'pending' since there is no signing process.
                 application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
 
         given_sig_time = data.get('time_stamp')
@@ -188,7 +169,6 @@ class EnrollmentApplicationService(DBService):
             emp_beneficiary_relation = 'spouse'
             emp_beneficiary_dob = data['spouse']['birthdate']
         else:
-
             emp_beneficiary_name = data.get('employee_beneficiary_name')
             emp_beneficiary_ssn = self._strip_ssn(data.get('employee_beneficiary_ssn', None))
             emp_beneficiary_relation = data.get('employee_beneficiary_relationship')
@@ -263,7 +243,7 @@ class EnrollmentApplicationService(DBService):
             if data['did_decline']:
                 continue
 
-            product = EnrollmentDataWrap(data, enrollment.census_record, enrollment.case).get_product()
+            product = EnrollmentDataWrap(data, enrollment.case).get_product()
 
             if data['employee_coverage']:
                 self.coverages_service.create_coverage(
@@ -560,6 +540,15 @@ class EnrollmentApplicationService(DBService):
     def get_enrollments_by_date(self, from_, to_):
         return self.__model__.query.filter(self.__model__.signature_time >= from_,
                                            self.__model__.signature_time <= to_)
+
+    def sync_enrollment_with_docusign(self, enrollment_application_id):
+        enrollment_application = self.get(enrollment_application_id)
+        if enrollment_application and enrollment_application.docusign_envelope_id and not enrollment_application.is_terminal_status():
+            self.update_applicant_signing_status(enrollment_application)
+
+    # Need to commit all database changes.
+    db.session.commit()
+
 
 def export_string(val):
     return val.strip()

@@ -3,7 +3,7 @@ AGENT pages and DOCUSIGN inbox
 """
 import os
 
-from flask import render_template, redirect, url_for, flash, send_file, request
+from flask import render_template, redirect, url_for, flash, send_file, request, session
 from flask_stormpath import login_required, groups_required, current_user
 
 from taa import app, db
@@ -40,8 +40,7 @@ def inbox():
     #  This allows us to stay sync'd up with DocuSign.
     if request.args.get('enrollment') and request.args.get('enrollment').isdigit():
         try:
-            app = EnrollmentApplicationService().get(request.args['enrollment'])
-            EnrollmentApplicationService().update_applicant_signing_status(app, request.args.get('event'))
+            enrollment_service.sync_enrollment_with_docusign(request.args['enrollment'])
             db.session.commit()
         except Exception as ex:
             print("DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')), ex)
@@ -88,6 +87,9 @@ def manage_cases():
 @app.route('/enrollment-case/<case_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def manage_case(case_id):
+
+    check_for_enrollment_sync_update()
+
     api_token_service = LookupService('ApiTokenService')
     case = case_service.get_if_allowed(case_id)
     for product in case.products:
@@ -198,9 +200,26 @@ Please follow the instructions carefully on the next page, stepping through the 
     return render_template('agent/case.html', **vars)
 
 
+def check_for_enrollment_sync_update():
+    # Check to see if this is a callback from signing session.
+    enrollment_application_id = session.get('enrollment_application_id')
+    if enrollment_application_id:
+        try:
+            enrollment_service.sync_enrollment_with_docusign(enrollment_application_id)
+            # Remove from session so we don't keep updating it.
+            del session['enrollment_application_id']
+            db.session.commit()
+        except Exception as ex:
+            print(
+            "DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')), ex)
+
+
 @app.route('/enrollment-case/<case_id>/census/<census_record_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def edit_census_record(case_id, census_record_id):
+
+    check_for_enrollment_sync_update()
+
     case = case_service.get_if_allowed(case_id)
     census_record = case_service.get_census_record(case, census_record_id)
     record_form = CensusRecordForm(obj=census_record)

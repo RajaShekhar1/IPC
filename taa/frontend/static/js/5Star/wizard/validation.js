@@ -169,6 +169,7 @@ function init_validation(ui) {
         e.preventDefault();
         return;
       }
+
     }
 
   }).on('finished.fu.wizard', function (e) {
@@ -202,6 +203,12 @@ function init_validation(ui) {
           }
         }
       });
+      return false;
+    }
+
+    if (!ui.can_submit_wizard()) {
+      e.preventDefault();
+      vm.submission_error("Please wait, the submission is still processing.");
       return false;
     }
 

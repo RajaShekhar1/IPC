@@ -214,7 +214,10 @@ class CaseService(DBService):
     def get_census_records(self, case, offset=None, num_records=None,
                            search_text=None, text_columns=None,
                            sorting=None, sort_desc=False, include_enrolled=True,
-                           filter_ssn=None, filter_birthdate=None,
+                           filter_ssn=None,
+                           filter_birthdate=None,
+                           filter_emp_first=None,
+                           filter_emp_last=None,
                            filter_agent=None):
         from taa.services.enrollments.models import EnrollmentApplication
         query = self.census_records.find(case_id=case.id)
@@ -234,6 +237,13 @@ class CaseService(DBService):
         if filter_ssn:
             query = query.filter(CaseCensus.employee_ssn ==
                                  filter_ssn.replace('-', ''))
+
+        if filter_emp_first:
+            query = query.filter(CaseCensus.employee_first.ilike("{}%".format(filter_emp_first)))
+
+        if filter_emp_last:
+            query = query.filter(CaseCensus.employee_last.ilike("{}%".format(filter_emp_last)))
+
         if filter_birthdate:
             bd = dateutil.parser.parse(filter_birthdate)
             query = query.filter(CaseCensus.employee_birthdate == bd)
@@ -250,6 +260,26 @@ class CaseService(DBService):
             query = query.limit(num_records)
 
         return query.all()
+
+    def match_census_record_to_wizard_data(self, enrollment_data):
+        """
+        Given enrollment data, try to find a matching census record based on SSN, Name, and Birthdate.
+        """
+        first = enrollment_data.get_employee_first()
+        last = enrollment_data.get_employee_last()
+        birthdate = unicode(enrollment_data.get_employee_birthdate())
+        ssn = enrollment_data.get_employee_ssn()
+
+        matching = self.get_census_records(
+            enrollment_data.case,
+            filter_emp_first=first,
+            filter_emp_last=last,
+            filter_birthdate=birthdate,
+            filter_ssn=ssn
+        )
+        if not matching:
+            return None
+        return matching[0]
 
     def get_current_user_census_records(self, case):
         if not self.is_current_user_restricted_to_own_enrollments(case):

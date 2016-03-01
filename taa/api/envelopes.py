@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, session
 from flask_stormpath import login_required, groups_required, current_user
 
 from taa.api import route
@@ -25,6 +25,17 @@ def sign_envelope(envelope_id):
     from taa.services.docusign import DocuSignService
     docusign_service = DocuSignService()
 
-    url, errors = docusign_service.get_envelope_signing_url(current_user, envelope_id)
+    enrollment_record = docusign_service.get_enrollment_record_from_envelope(envelope_id)
+
+    # To allow the callback page to know that we may have modified an enrollment, set a session variable.
+    session['enrollment_application_id'] = enrollment_record.id
+
+    if request.args.get('from') == 'inbox':
+        callback_url = docusign_service.build_inbox_callback_url(enrollment_record)
+    else:
+        # Return the user to the census record view.
+        callback_url = docusign_service.build_census_record_callback_url(enrollment_record)
+
+    url, errors = docusign_service.get_envelope_signing_url(current_user, envelope_id, callback_url)
 
     return {'url': url, 'errors': errors}

@@ -386,6 +386,9 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     def child_birthdate(self, num):
         return getattr(self, 'child{}_birthdate'.format(num))
 
+    def get_pending_enrollments(self):
+        return filter(lambda e: e.is_pending(), self.enrollment_applications)
+
 
 class AgentSplitsSerializer(JsonSerializable):
     __json_hidden__ = ['case']
