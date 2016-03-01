@@ -1057,7 +1057,8 @@ var wizard_viewmodel = (function () {
         if (!moment.isMoment(age)) {
           age = moment(age, 'MM/DD/YYYY');
         }
-        var twenty_three_years_ago = moment({ hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
+        var twenty_three_years_ago = moment({hours: 0, minutes: 0, seconds: 0, milliseconds: 0});
+        twenty_three_years_ago.subtract(23, 'years');
         return age.isAfter(twenty_three_years_ago);
       });
 
@@ -1707,7 +1708,7 @@ var wizard_viewmodel = (function () {
   }
 
 
-  // TODO:  Will need to expose this function to the other modules, integrate Barrett's reauth mechanism below
+// TODO:  Will need to expose this function to the other modules, integrate Barrett's reauth mechanism below
   function handle_remote_error(request, retry_callback) {
     if (request.status == 401) {
       if (ui.account_href != null) {
@@ -1785,4 +1786,5 @@ var wizard_viewmodel = (function () {
 
 
   return {WizardVM: WizardVM};
-})();
+})
+();
