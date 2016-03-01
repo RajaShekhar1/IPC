@@ -405,9 +405,11 @@ class WizardPage(PageBase):
             if el and el.is_displayed():
                 el.click()
 
-
-
-
-
-
-
+    def select_coverage_options(self, product_coverage_pairs):
+        for product_code, coverage_type in product_coverage_pairs:
+            coverage_header_id = '#coverage-header-{0}'.format(product_code.upper())
+            recommended_coverage_div = 'div.pricing-span.{0}'.format(coverage_type.lower())
+            self.lookup(coverage_header_id).click()
+            self.lookup(recommended_coverage_div).click()
+            time.sleep(0.25)
+        self.click_next()

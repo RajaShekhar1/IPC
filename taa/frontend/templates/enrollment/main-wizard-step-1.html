@@ -561,7 +561,7 @@
           <th class="text-center selectable" data-bind="
               click: $root.coverage_vm.select_product,
               css: {'active-product': $root.coverage_vm.current_product() === $data},
-              attr: {style: 'width: '+((100-10-6)/($root.products.length))+'%'}
+              attr: {style: 'width: '+((100-10-6)/($root.products.length))+'%', id: 'coverage-header-' + $data.product.product_type }
               ">
             <div class="circled-number" data-bind="text: $index()+1"></div>
             <span data-bind="text: product.product_data.name"></span>
