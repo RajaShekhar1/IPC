@@ -595,18 +595,11 @@ var wizard_viewmodel = (function () {
   }
 
   ApplicantCoverageSelectionVM.prototype = {
-    select_recommended_coverage: function (recommendation_set) {
-      var self = this;
-      if (!self.applicant || !self.applicant.type) {
-        return;
-      }
-      var coverage_option = _.find(_.pairs(recommendation_set), function (pair) {
-        var key = pair[0];
-        return key === self.applicant.type;
-      });
+    select_recommended_coverage: function(recommendation_set) {
+      var coverage_option = recommendation_set.get_recommended_applicant_coverage(this.applicant.type);
       if (coverage_option) {
-        this.recommended_coverage_option(coverage_option[1]);
-        // Reset the custom option, if any.
+        this.recommended_coverage_option(coverage_option);
+        // Reset the custom option,  if any.
         this.customized_coverage_option(null);
       }
     },
@@ -1048,21 +1041,7 @@ var wizard_viewmodel = (function () {
       }
 
       // Trigger the jQuery validator. This test allows jasmine tests to work without DOM node present for form.
-      if (self.validator) {
-        valid_form = self.validator.form() && valid_form;
-      }
-
-      var are_children_valid = _.all(self.applicant_list.children(), function (child) {
-        var age = child.birthdate();
-        if (!moment.isMoment(age)) {
-          age = moment(age, 'MM/DD/YYYY');
-        }
-        var twenty_three_years_ago = moment({hours: 0, minutes: 0, seconds: 0, milliseconds: 0});
-        twenty_three_years_ago.subtract(23, 'years');
-        return age.isAfter(twenty_three_years_ago);
-      });
-
-      valid_form = are_children_valid && valid_form;
+      valid_form = self.validator.form() && valid_form;
 
       if (valid_form) {
         self.has_show_rates_been_clicked(true);
@@ -1652,12 +1631,11 @@ var wizard_viewmodel = (function () {
       }
 
       function is_child_field_required(element) {
+        // Treat the first child as always required if the children checkbox is checked
         if ($(element).attr("id") === "child-first-0" ||
           $(element).attr("id") === "child-last-0" ||
           $(element).attr("id") === "child-dob-0"
         ) {
-          // Treat the first child as always required if
-          // the children checkbox is checked
           return self.should_include_children();
         }
 

@@ -151,10 +151,10 @@
 
           <div class="form-group col-xs-12 col-sm-10">
             <input type="text" style="width: 45%" class="child_first"
-                   data-bind="value: first, attr: {id: 'child-first-'+$index()}"
+                   data-bind="value: first, attr: {id: 'child-first-'+$index(), name: 'child-first-' + $index() }"
                    placeholder="First Name"/>
 
-            <input type="text" style="width: 45%" class="child_last" data-bind="value: last"
+            <input type="text" style="width: 45%" class="child_last" data-bind="value: last, attr: { id: 'child-last-'+$index(), name: 'child-last-' + $index() }"
                    placeholder="Last Name"/>
 
             <div class="pull-right">
@@ -173,7 +173,7 @@
 
             <input class="input-mask-date child_birthdate" data-bind="
                           value: birthdate,
-                          attr: {id: 'child-dob-'+$index()},
+                          attr: {id: 'child-dob-'+$index(), name: 'child-dob-' + $index() },
                           maskedInput: '99/99/9999'
                           " type="text" placeholder="MM/DD/YYYY">
 
