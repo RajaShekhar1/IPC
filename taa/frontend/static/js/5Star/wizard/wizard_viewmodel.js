@@ -1052,6 +1052,17 @@ var wizard_viewmodel = (function () {
         valid_form = self.validator.form() && valid_form;
       }
 
+      var are_children_valid = _.all(self.applicant_list.children(), function (child) {
+        var age = child.birthdate();
+        if (!moment.isMoment(age)) {
+          age = moment(age, 'MM/DD/YYYY');
+        }
+        var twenty_three_years_ago = moment({ hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
+        return age.isAfter(twenty_three_years_ago);
+      });
+
+      valid_form = are_children_valid && valid_form;
+
       if (valid_form) {
         self.has_show_rates_been_clicked(true);
         self.update_rate_table();
@@ -1090,16 +1101,16 @@ var wizard_viewmodel = (function () {
     };
 
     self.should_show_gender = function () {
-      return any_product('requires_gender')
+      return any_product('requires_gender');
     };
     self.should_show_height = function () {
-      return any_product('requires_height')
+      return any_product('requires_height');
     };
     self.should_show_weight = function () {
-      return any_product('requires_weight')
+      return any_product('requires_weight');
     };
     self.should_show_smoker = function () {
-      return any_product('requires_is_smoker')
+      return any_product('requires_is_smoker');
     };
 
     var any_product = function (method_name) {
