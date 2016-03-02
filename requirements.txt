@@ -87,7 +87,6 @@ SQLAlchemy==1.0.12
 SQLAlchemy-Utils==0.30.11
 stormpath==2.1.1
 sure==1.2.12
--e git+git@github.com:thumbprint/TAA.git@0ce50251ce8601efb4201cb619968b6b4a738d92#egg=taa
 testtools==1.8.0
 traceback2==1.4.0
 unittest2==1.1.0
