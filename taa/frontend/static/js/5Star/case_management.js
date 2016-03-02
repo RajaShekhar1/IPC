@@ -10,70 +10,100 @@ var case_management = (function() {
         var table_settings = {
             "responsive": {breakpoints: get_responsive_datatables_breakpoints()},
             "autoWidth": false,
-            "aoColumnDefs":[
+            "processing": true,
+            "pagingType": "full",
+            "serverSide": true,
+            "ajax": "/cases/"+case_id+"/census_records",
+            "columnDefs":[
               // Show enroll button in first column
-              {"aTargets":[0], "bSortable": false, "mData":function(source) {
-                if (source.enrollment_status === "enrolled") {
-                    return '<button class="btn btn-primary btn-xs enroll-employee" data-id="'+source.id+'"><span class="ace-icon glyphicon glyphicon-plus"></span> Add Coverage</button>';
-                } else if (source.enrollment_status === "pending_employee" || source.enrollment_status === "pending_agent") {
+              {targets: [0], sortable: false, name: "action", data: function(row) {
+                if (row.enrollment_status === "enrolled") {
+                    return '<button class="btn btn-primary btn-xs enroll-employee" data-id="'+row.id+'"><span class="ace-icon glyphicon glyphicon-plus"></span> Add Coverage</button>';
+                } else if (row.enrollment_status === "pending_employee" || row.enrollment_status === "pending_agent") {
                     //return '<button class="btn btn-primary btn-xs enroll-employee" data-id="'+source.id+'"><span class="ace-icon fa fa-pencil"></span> Sign</button>'
                     // No button because only the agent who created it can enroll, and we don't have that agent id in this record right now.
                     return "";//"<a class='btn btn-warning btn-xs' href='/enrollment-case/"+source.case_id+"/census/" + source.id + "'><span class='icon fa fa-pencil'></span> Sign</a>";
                 } else {
-                    return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+source.id+'">Enroll</button>';
+                    return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+row.id+'">Enroll</button>';
                 }
 
               }},
-              {"aTargets":[1], "mData":function(source) {
-                return format_enrollment_status_html(source.enrollment_status);
+              {targets: [1], name: "status", data: function(row) {
+                return format_enrollment_status_html(row.enrollment_status);
               }},
-              {"aTargets":[2], "mData":function(source) {
-                return "<a href='/enrollment-case/"+source.case_id+"/census/" + source.id + "'>"+ source.employee_first + "</a>";
+              {targets: [2], name: "employee_first", data: function(row) {
+                return "<a href='/enrollment-case/"+row.case_id+"/census/" + row.id + "'>"+ row.employee_first + "</a>";
               }},
-              {"aTargets":[3], "mData":function(source) {
+              {targets: [3], name: "employee_last", data: function(source) {
                 return "<a href='/enrollment-case/"+source.case_id+"/census/" + source.id + "'>"+ source.employee_last + "</a>";
               }},
-              {"aTargets":[4], "mData": function(source) {
+              {targets: [4], sortable: false, name: "employee_birthdate", data: function(source) {
                 return normalize_date(source.employee_birthdate);
               }},
               //{"aTargets":[5], "mData": "agent", className: "min-breakIII"}
-              {"aTargets":[5], "mData":"employee_email", className: "min-breakIII"}
+              {targets:[5], sortable: false, name: "employee_email", data: "employee_email", className: "min-breakIII"}
             ],
-            "aaSorting": [[ 3, "asc" ]]
-          };
+            sorting: [[3, "asc"]]
+        };
+
+
+        table.show();
+        $(".no-census-header").hide();
+
+        if (!$.fn.DataTable.fnIsDataTable(table[0])) {
+            // Initialize DataTable
+            //table_settings.aaData = resp.data;
+            table.wrap("<div class='dataTables_borderWrap' />").DataTable(table_settings);
+        }
+
+        // If table exists, add new data. Otherwise, initialize
+        //if ($.fn.DataTable.fnIsDataTable(table[0])) {
+        //    table.dataTable().fnAddData(resp.data);
+        //    if (success_callback !== undefined) {
+        //        success_callback(table, resp.data);
+        //    }
+        //} else {
+        //
+        //    //if (init_callback !== undefined) {
+        //    //    init_callback(table, resp.data);
+        //    //}
+        //    //if (success_callback !== undefined) {
+        //    //    success_callback(table, resp.data);
+        //    //}
+        //}
 
         // Show loading
-        loading.html(loading_html);
+        //loading.html(loading_html);
 
         // Clear table if it exists
-        clear_table(table);
+        //clear_table(table);
 
         // Make the remote call
-        $.get(url, {}, function(resp) {
-            // Clear loading
-            loading.html("");
-            // If table exists, add new data. Otherwise, initialize
-            if ($.fn.DataTable.fnIsDataTable(table[0])) {
-                table.dataTable().fnAddData(resp.data);
-                if (success_callback !== undefined) {
-                    success_callback(table, resp.data);
-                }
-            } else if (resp.data.length > 0){
-                table.show();
-                $(".no-census-header").hide();
-                // Initialize DataTable
-                table_settings.aaData = resp.data;
-                table.wrap("<div class='dataTables_borderWrap' />").dataTable(table_settings);
-                if (init_callback !== undefined) {
-                    init_callback(table, resp.data);
-                }
-                if (success_callback !== undefined) {
-                    success_callback(table, resp.data);
-                }
-            } else if (no_data_cb !== undefined) {
-                no_data_cb();
-            }
-        });
+        //$.get(url, {}, function(resp) {
+        //    // Clear loading
+        //    loading.html("");
+        //    // If table exists, add new data. Otherwise, initialize
+        //    if ($.fn.DataTable.fnIsDataTable(table[0])) {
+        //        table.dataTable().fnAddData(resp.data);
+        //        if (success_callback !== undefined) {
+        //            success_callback(table, resp.data);
+        //        }
+        //    } else if (resp.data.length > 0){
+        //        table.show();
+        //        $(".no-census-header").hide();
+        //        // Initialize DataTable
+        //        table_settings.aaData = resp.data;
+        //        table.wrap("<div class='dataTables_borderWrap' />").dataTable(table_settings);
+        //        if (init_callback !== undefined) {
+        //            init_callback(table, resp.data);
+        //        }
+        //        if (success_callback !== undefined) {
+        //            success_callback(table, resp.data);
+        //        }
+        //    } else if (no_data_cb !== undefined) {
+        //        no_data_cb();
+        //    }
+        //});
     }
 
     function refresh_enrollments_table(case_id, url, table_selector, loading_selector, table_options, init_callback) {

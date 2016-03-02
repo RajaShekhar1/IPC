@@ -26,7 +26,7 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
                                     backref=db.backref(
                                         'enrollment_applications',
                                         lazy='joined'))
-    signature_time = db.Column(db.DateTime)
+    signature_time = db.Column(db.DateTime, index=True)
     signature_city = db.Column(db.UnicodeText)
     signature_state = db.Column(db.Unicode(2))
     identity_token = db.Column(db.UnicodeText)
@@ -76,7 +76,7 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     received_data = db.Column(JSON(none_as_null=False))
     standardized_data = db.Column(JSON(none_as_null=False))
 
-    docusign_envelope_id = db.Column(db.Unicode(128))
+    docusign_envelope_id = db.Column(db.Unicode(128), index=True)
     agent_signing_status = db.Column(db.Unicode(32))
     agent_signing_datetime = db.Column(db.DateTime)
     applicant_signing_status = db.Column(db.Unicode(32))

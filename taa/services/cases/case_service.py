@@ -261,6 +261,88 @@ class CaseService(DBService):
 
         return query.all()
 
+    def retrieve_census_data_for_table(self, case,
+            agent_id=None,
+            offset=0,
+            limit=None,
+            search_text=None,
+            order_column=None,
+            order_dir=None):
+        from taa.services.enrollments.models import EnrollmentApplication
+
+        # Need the following data columns:
+        query = db.session.query(
+            CaseCensus.id.label('id'),
+            CaseCensus.case_id.label('case_id'),
+            EnrollmentApplication.application_status.label('enrollment_status'),
+            CaseCensus.employee_first.label('employee_first'),
+            CaseCensus.employee_last.label('employee_last'),
+            CaseCensus.employee_birthdate.label('employee_birthdate'),
+            CaseCensus.employee_email.label('employee_email'),
+        )
+
+        query = self.join_most_recent_enrollment(query)
+
+        # Overall filtering
+        query = query.filter(CaseCensus.case_id == case.id)
+        if agent_id is not None:
+            query = query.filter(EnrollmentApplication.agent_id == agent_id)
+
+        # Data filtering
+        if search_text:
+            for text_snippet in search_text.split():
+                query = query.filter(db.or_(
+                    CaseCensus.employee_first.ilike('{}%'.format(text_snippet)),
+                    CaseCensus.employee_last.ilike('{}%'.format(text_snippet)),
+                    CaseCensus.employee_email.ilike('{}%'.format(text_snippet)),
+                    EnrollmentApplication.application_status.ilike('{}%'.format(text_snippet))
+                ))
+
+        # Ordering
+        order_column_mapping = dict(
+            employee_last=CaseCensus.employee_last,
+            employee_first=CaseCensus.employee_first,
+            enrollment_status=EnrollmentApplication.application_status,
+        )
+        order_clause = order_column_mapping.get(order_column, "employee_last")
+        if order_dir == 'desc':
+            order_clause = db.desc(order_clause)
+        query = query.order_by(order_clause)
+
+        # Pagination
+        query = query.offset(offset).limit(limit)
+
+        return query
+
+    def join_most_recent_enrollment(self, query):
+        from taa.services.enrollments import EnrollmentApplication
+        valid_enrollment_status = db.and_(
+            EnrollmentApplication.application_status != EnrollmentApplication.APPLICATION_STATUS_VOIDED,
+            EnrollmentApplication.application_status != None
+        )
+        query = query.outerjoin(
+            EnrollmentApplication,
+            db.and_(
+                EnrollmentApplication.signature_time == db.select([db.func.max(EnrollmentApplication.signature_time)]
+                                                                  ).where(valid_enrollment_status
+                                                                          ).where(
+                    EnrollmentApplication.census_record_id == CaseCensus.id
+                    ).correlate(CaseCensus),
+                EnrollmentApplication.census_record_id == CaseCensus.id
+            )
+        )
+        return query
+
+    def retrieve_census_total_visible_count_for_table(self, case, agent_id=None):
+        query = self.retrieve_census_data_for_table(case=case, agent_id=agent_id)
+        return query.count()
+
+    def retrieve_census_filtered_count_for_table(self, case, agent_id=None, search_text=None):
+        query = self.retrieve_census_data_for_table(case=case, agent_id=agent_id, search_text=search_text)
+        return query.count()
+
+
+
     def match_census_record_to_wizard_data(self, enrollment_data):
         """
         Given enrollment data, try to find a matching census record based on SSN, Name, and Birthdate.

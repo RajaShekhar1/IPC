@@ -849,10 +849,10 @@
                         </div>
                       </div>
 
-                      <h4 class="no-census-header text-center lighter" data-bind="visible: census_data().length == 0"
+                      <h4 class="no-census-header text-center lighter" data-bind="visible: false"
                           style="display: none;">No Census Data</h4>
 
-                      <div class="table-responsive" data-bind="visible: census_data().length > 0">
+                      <div class="table-responsive" data-bind="visible: has_census_data">
                         <table id="census-records-table" class="table table-bordered table-hover no-wrap dt-responsive">
                           <thead>
                           <tr>

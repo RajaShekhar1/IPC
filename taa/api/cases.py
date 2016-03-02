@@ -1,7 +1,10 @@
+import json
 from datetime import datetime
 
-from flask import Blueprint, request, abort, make_response
+import re
+from flask import Blueprint, request, abort, make_response, Response
 from flask_stormpath import current_user, groups_required, login_required
+from taa import JSONEncoder
 
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
@@ -254,9 +257,9 @@ def census_records(case_id):
     if case_service.is_current_user_restricted_to_own_enrollments(case) and not args['filter_ssn']:
         args['filter_agent'] = agent_service.get_logged_in_agent()
 
-    data = case_service.get_census_records(case, **args)
-
+    # If we are requesting CSV format, get the whole data set.
     if request.args.get('format') == 'csv':
+        data = case_service.get_census_records(case, **args)
         body = case_service.export_census_records(data)
         date_str = datetime.now().strftime('%Y-%m-%d')
         headers = {
@@ -266,7 +269,59 @@ def census_records(case_id):
         }
         return make_response(body, 200, headers)
 
-    return data
+    # DataTables parameters
+    offset = int(request.args.get('start', 0))
+    limit = int(request.args.get('length', -1))
+    search_text = request.args.get('search[value]', "")
+    order_col_num = int(request.args.get('order[0][column]', 3))
+    order_dir = request.args.get('order[0][dir]', 'asc')
+
+    col_name_pattern = re.compile('columns\[(\d+)\]\[name\]')
+    column_names = {}
+    for argname in request.args:
+        match = col_name_pattern.match(argname)
+        if match:
+            col_num = int(match.groups()[0])
+            name = request.args[argname]
+            column_names[col_num] = name
+
+    order_col_name = column_names.get(order_col_num)
+
+    # Search for the matching census rows
+    if case_service.is_current_user_restricted_to_own_enrollments(case):
+        limit_to_agent = agent_service.get_logged_in_agent().id
+    else:
+        limit_to_agent = None
+
+    data = case_service.retrieve_census_data_for_table(
+        case,
+        offset=offset,
+        limit=limit,
+        search_text=search_text,
+        order_column=order_col_name,
+        order_dir=order_dir,
+        agent_id=limit_to_agent,
+    )
+
+    table_data = [dict(
+        id=row.id,
+        case_id=row.case_id,
+        employee_first=row.employee_first,
+        employee_last=row.employee_last,
+        employee_email=row.employee_email,
+        employee_birthdate=row.employee_birthdate,
+        enrollment_status=row.enrollment_status,
+    ) for row in data]
+
+    resp_data = dict(
+        data=table_data,
+        # DataTables docs recommends casting this to int to prevent XSS
+        draw=int(request.args['draw']),
+        recordsTotal=case_service.retrieve_census_total_visible_count_for_table(case, limit_to_agent),
+        recordsFiltered=case_service.retrieve_census_filtered_count_for_table(case, limit_to_agent, search_text),
+    )
+
+    return Response(response=json.dumps(resp_data, cls=JSONEncoder), content_type='application/json')
 
 
 # Census Records - lookup self-enroll link debug API for Bill to get SSNs with self-enroll links.
