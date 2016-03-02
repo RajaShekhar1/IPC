@@ -94,13 +94,14 @@ def is_eligible(product_code, sex, height, weight):
     initialize_eligibilities_from_files()
     if product_code in ELIGIBILITIES:
         table = ELIGIBILITIES[product_code][sex]
-        if height is None or weight is None:
-            return False
-        height = int(height)
-        if height not in table:
-            return False
-        weight = int(weight)
-        return table[height][0] <= weight <= table[height][1]
+        if height is not None:
+            height = int(height)
+            if height not in table:
+                return False
+        if weight is not None:
+            weight = int(weight)
+        if height is not None and weight is not None:
+            return table[height][0] <= weight <= table[height][1]
     # Default to eligible if product has no lookup table
     return True
 
