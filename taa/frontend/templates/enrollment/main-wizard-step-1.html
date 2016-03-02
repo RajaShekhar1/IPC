@@ -48,8 +48,6 @@
           </div>
         </div>
       </div>
-
-      <div data-bind="template: {name: 'extended-questions-template', data: employee}"></div>
     </div>
 
 
@@ -81,63 +79,7 @@
         </div>
 
       </div>
-
-      <div data-bind="template: {name: 'extended-questions-template', data: spouse}"></div>
     </div>
-
-
-    {# template for extended questions  #}
-    <script type="text/html" id="extended-questions-template">
-      <!--ko if: $root.should_show_extended_questions() -->
-      <div class="row">
-        <!--ko if: $root.should_show_gender() -->
-        <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-          <div class="">
-            <label style="margin-right: 1em;">
-              <input type="radio" value="male" class="ace"
-                     data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
-              <span class="lbl"> Male</span>
-            </label>
-            <label>
-              <input type="radio" value="female" class="ace"
-                     data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
-              <span class="lbl"> Female</span>
-            </label>
-          </div>
-        </div>
-        <!--/ko-->
-        <!--ko if: $root.should_show_smoker() -->
-        <div class="form-group col-xs-12 col-sm-5">
-          <label style="margin-right: 1em;">
-            <input type="radio" class="ace"
-                   data-bind="checked: is_smoker, checkedValue: false, attr: {name: 'tobacco-'+$data._id}">
-            <span class="lbl"> Non-Smoker</span>
-          </label>
-          <label>
-            <input type="radio" class="ace"
-                   data-bind="checked: is_smoker, checkedValue: true, attr: {name: 'tobacco-'+$data._id}">
-            <span class="lbl"> Smoker</span>
-          </label>
-        </div>
-        <!--/ko-->
-      </div>
-      <div class="row">
-        <!--ko if: $root.should_show_height() -->
-        <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-          <height-select class="height" params="value: height, name_suffix: $data._id+''"></height-select>
-        </div>
-        <!--/ko-->
-        <!--ko if: $root.should_show_weight() -->
-        <div class="form-group col-sm-4">
-          <label class="">
-            Weight: <input type="number" class="text-right" max="9999" min="0"
-                           data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
-          </label>
-        </div>
-        <!--/ko-->
-      </div>
-      <!--/ko-->
-    </script>
 
     {# Children Data #}
     <div data-bind="slideDownIf: should_include_children">
