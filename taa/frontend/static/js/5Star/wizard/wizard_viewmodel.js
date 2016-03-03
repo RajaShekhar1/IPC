@@ -6,14 +6,14 @@ var wizard_viewmodel = (function () {
       var val = val_accessor();
       val($(element).ace_wizard());
 
-      $(element).wizard('selectedItem', {step: 1});
+      $(element).wizard('selectedItem', { step: 1 });
     }
   };
 
   // Main Step 1 view model. Handles the coverage selection of each applicant for every
   //  product that is being offered.
-  function CoverageVM(available_products, applicant_list, case_data, all_payment_modes,
-                      should_include_spouse, should_include_children, root) {
+  function CoverageVM (available_products, applicant_list, case_data, all_payment_modes,
+                       should_include_spouse, should_include_children, root) {
     this.products = available_products;
     this.applicants = applicant_list;
 
@@ -63,7 +63,7 @@ var wizard_viewmodel = (function () {
     }, this));
 
     // Which product coverage is being displayed right now?
-    this.current_product = ko.observable(this.product_coverage_viewmodels()[0]);
+    this.current_product = ko.observable(this.product_coverage_viewmodels()[ 0 ]);
 
     this.select_product = function (product_coverage) {
       this.current_product(product_coverage);
@@ -83,9 +83,9 @@ var wizard_viewmodel = (function () {
       return val_or_null(this.product_coverage_viewmodels(), index + 1);
     }, this);
 
-    function val_or_null(array, index) {
+    function val_or_null (array, index) {
       if (index >= 0 && index < array.length) {
-        return array[index];
+        return array[ index ];
       }
       return null;
     }
@@ -214,9 +214,8 @@ var wizard_viewmodel = (function () {
     }
   };
 
-
-  function ProductCoverageViewModel(product, case_data, applicant_list, payment_mode,
-                                    should_include_spouse, should_include_children, root) {
+  function ProductCoverageViewModel (product, case_data, applicant_list, payment_mode,
+                                     should_include_spouse, should_include_children, root) {
 
     // ProductCoverageViewModel keeps track of the coverage selections for the applicants for a single product.
 
@@ -284,10 +283,9 @@ var wizard_viewmodel = (function () {
       return self._get_covered_children();
     });
 
-
     // Riders
     // Enabled riders for this case
-    function is_rider_enabled_for_case(rider, case_data) {
+    function is_rider_enabled_for_case (rider, case_data) {
       // See if there is a product-setting that enables this rider for this case.
       return _.any(case_data.product_settings.riders, function (r) {
         return (
@@ -307,7 +305,7 @@ var wizard_viewmodel = (function () {
 
     // Build the rider view models.
     self.rider_options = [];
-    _.each([self.applicant_list.get_employee(), self.applicant_list.get_spouse()], function (applicant) {
+    _.each([ self.applicant_list.get_employee(), self.applicant_list.get_spouse() ], function (applicant) {
       _.each(self.enabled_riders, function (rider) {
         var vm = new ApplicantRiderOptionVM(self, rider, applicant);
         self.rider_options.push(vm);
@@ -376,7 +374,6 @@ var wizard_viewmodel = (function () {
       return !self.did_select_spouse_coverage() || $("#eeBeneOther").is(':checked')
     };
 
-
     self.should_show_contingent_beneficiary = function () {
       return self.product.should_show_contingent_beneficiary();
     };
@@ -409,7 +406,7 @@ var wizard_viewmodel = (function () {
       return _find_answer_for_spouse_question_with_label("Spouse Disabled 6 Months");
     });
 
-    function _find_answer_for_spouse_question_with_label(lbl) {
+    function _find_answer_for_spouse_question_with_label (lbl) {
       if (!self.did_select_spouse_coverage()) {
         return null;
       }
@@ -515,10 +512,10 @@ var wizard_viewmodel = (function () {
 
       var applicant_coverage;
       if (applicant._id in this._applicant_coverage_viewmodels) {
-        applicant_coverage = this._applicant_coverage_viewmodels[applicant._id];
+        applicant_coverage = this._applicant_coverage_viewmodels[ applicant._id ];
       } else {
         var new_selection_instance = new ApplicantCoverageSelectionVM(applicant, this);
-        this._applicant_coverage_viewmodels[applicant._id] = new_selection_instance;
+        this._applicant_coverage_viewmodels[ applicant._id ] = new_selection_instance;
         applicant_coverage = new_selection_instance;
       }
 
@@ -549,8 +546,7 @@ var wizard_viewmodel = (function () {
     }
   };
 
-
-  function ApplicantCoverageSelectionVM(applicant, product_coverage) {
+  function ApplicantCoverageSelectionVM (applicant, product_coverage) {
     this.applicant = applicant;
     this.product_coverage = product_coverage;
     this.product = product_coverage.product;
@@ -595,7 +591,7 @@ var wizard_viewmodel = (function () {
   }
 
   ApplicantCoverageSelectionVM.prototype = {
-    select_recommended_coverage: function(recommendation_set) {
+    select_recommended_coverage: function (recommendation_set) {
       var coverage_option = recommendation_set.get_recommended_applicant_coverage(this.applicant.type);
       if (coverage_option) {
         this.recommended_coverage_option(coverage_option);
@@ -628,7 +624,7 @@ var wizard_viewmodel = (function () {
     },
 
     _get_coverage_options: function () {
-      var options = [new NullCoverageOption()];
+      var options = [ new NullCoverageOption() ];
       options = $.merge(options,
         product_rates_service.get_product_coverage_options_for_applicant(this.product, this.applicant)()
       );
@@ -673,8 +669,7 @@ var wizard_viewmodel = (function () {
 
   };
 
-
-  function CoverageSummaryVM(product_coverages, applicant_list) {
+  function CoverageSummaryVM (product_coverages, applicant_list) {
     this.product_coverages = product_coverages;
     this.applicant_list = applicant_list;
 
@@ -701,9 +696,8 @@ var wizard_viewmodel = (function () {
 
   }
 
-
   // ViewModel for a rider option on the wizard.
-  function ApplicantRiderOptionVM(root, rider, applicant) {
+  function ApplicantRiderOptionVM (root, rider, applicant) {
     var self = this;
     self.MAX_COVERAGE = 150000;
 
@@ -735,7 +729,6 @@ var wizard_viewmodel = (function () {
         self._user_selection(val);
       }
     });
-
 
     self.format_rider_name = function () {
       return self.rider.user_facing_name;
@@ -797,7 +790,7 @@ var wizard_viewmodel = (function () {
       var coverage = 0;
       var years = self.get_policy_years();
       for (i = 0; i < years.length; i++) {
-        coverage += self.get_coverage_for_year(years[i]);
+        coverage += self.get_coverage_for_year(years[ i ]);
       }
       return format_face_value(coverage);
     };
@@ -875,7 +868,7 @@ var wizard_viewmodel = (function () {
         70: '839'
       };
 
-      return parseInt(_coverage_values[n]);
+      return parseInt(_coverage_values[ n ]);
     };
 
     self.format_premium = function () {
@@ -889,8 +882,7 @@ var wizard_viewmodel = (function () {
 
   }
 
-
-  function WizardVM(options) {
+  function WizardVM (options) {
     var self = this;
     self.options = options;
     self.enrollment_case = options.case_data;
@@ -994,7 +986,7 @@ var wizard_viewmodel = (function () {
           var field_name = this.field;
           var message = this.error;
           // set error and show with validator
-          self.limit_error_lookup[field_name](true);
+          self.limit_error_lookup[ field_name ](true);
           self.validator.form();
         });
       } else {
@@ -1013,7 +1005,6 @@ var wizard_viewmodel = (function () {
       return (self.should_include_spouse_in_table()) ? self.spouse().name() : "";
     });
 
-
     // Recommendations table visibility
     self.has_show_rates_been_clicked = ko.observable(false);
 
@@ -1031,7 +1022,7 @@ var wizard_viewmodel = (function () {
 
       // Reset some validation errors
       $.each(self.limit_error_lookup, function (k, v) {
-        self.limit_error_lookup[k](null);
+        self.limit_error_lookup[ k ](null);
       });
 
       var valid_form = true;
@@ -1101,27 +1092,27 @@ var wizard_viewmodel = (function () {
     };
 
     // validation helpers
-    function min_emp_age() {
+    function min_emp_age () {
       return _.min(_.invoke(self.products, 'min_emp_age'));
     }
 
-    function min_sp_age() {
+    function min_sp_age () {
       return _.min(_.invoke(self.products, 'min_sp_age'));
     }
 
-    function min_ch_age() {
+    function min_ch_age () {
       return _.min(_.invoke(self.products, 'min_child_age'));
     }
 
-    function max_emp_age() {
+    function max_emp_age () {
       return _.max(_.invoke(self.products, 'max_emp_age'));
     }
 
-    function max_sp_age() {
+    function max_sp_age () {
       return _.max(_.invoke(self.products, 'max_sp_age'));
     }
 
-    function max_ch_age() {
+    function max_ch_age () {
       return _.max(_.invoke(self.products, 'max_child_age'));
     }
 
@@ -1248,7 +1239,7 @@ var wizard_viewmodel = (function () {
         //   replacement paragraphs.
         $.extend(paragraph_map, paragraphs);
       });
-      var paragraphs = paragraph_map[self.enrollment_case.situs_state];
+      var paragraphs = paragraph_map[ self.enrollment_case.situs_state ];
       if (!paragraphs) {
         return [];
       }
@@ -1261,9 +1252,9 @@ var wizard_viewmodel = (function () {
       });
     });
 
-    self.NAIC_AND_MI = ['AK', 'AL', 'AR', 'AZ', 'CO', 'IA', 'LA', 'MD', 'ME', 'MS', 'MT',
+    self.NAIC_AND_MI = [ 'AK', 'AL', 'AR', 'AZ', 'CO', 'IA', 'LA', 'MD', 'ME', 'MS', 'MT',
       'NC', 'NE', 'NH', 'NJ', 'NM', 'OH', 'OR', 'RI', 'SC', 'TX', 'UT', 'VA', 'VT',
-      'WI', 'WV', 'MI'];
+      'WI', 'WV', 'MI' ];
 
     self.is_NAIC_OR_MI = function () {
       return self.did_select_any_fpp_product() && _.contains(self.NAIC_AND_MI, self.enrollment_case.situs_state);
@@ -1274,7 +1265,7 @@ var wizard_viewmodel = (function () {
     };
 
     self.is_CT_DC_ND_VI = function () {
-      return _.contains(['CT', 'DC', 'ND', 'VI'], self.enrollment_case.situs_state);
+      return _.contains([ 'CT', 'DC', 'ND', 'VI' ], self.enrollment_case.situs_state);
     };
 
     self.is_non_NAIC_other = function () {
@@ -1329,7 +1320,6 @@ var wizard_viewmodel = (function () {
       return (self.is_NAIC_OR_MI() && self.replacing_insurance() === false);
     });
 
-
     self.should_show_replacement_form = ko.computed(function () {
       if (!self.did_select_any_fpp_product()) {
         return false;
@@ -1377,7 +1367,7 @@ var wizard_viewmodel = (function () {
       return self.replacement_using_funds() || self.replacement_is_terminating();
     });
 
-    self.replacement_policies = ko.observableArray([new ReplacementPolicy()]);
+    self.replacement_policies = ko.observableArray([ new ReplacementPolicy() ]);
 
     self.add_replacement_policy = function () {
       self.replacement_policies.push(new ReplacementPolicy());
@@ -1397,7 +1387,6 @@ var wizard_viewmodel = (function () {
     // STEP 3 Data - Other Employee Info
     self.company_name = ko.observable(self.enrollment_case.company_name);
 
-
     // Step 4 Data - Other Dependant info
     // Spouse address
     self.is_spouse_address_same_as_employee = ko.observable(!self.spouse().address1() || (
@@ -1408,7 +1397,6 @@ var wizard_viewmodel = (function () {
         self.employee().zip() === self.spouse().zip()
       ));
     self.is_spouse_email_same_as_employee = ko.observable((!self.spouse().email() || self.employee().email() === self.spouse().email()));
-
 
     // Step 5 - Beneficiaries
     self.should_show_step_5 = function () {
@@ -1424,7 +1412,6 @@ var wizard_viewmodel = (function () {
         return prod_cov.has_contingent_beneficiary_error();
       });
     });
-
 
     // Step 6 Data
     self.disclaimer_notice_confirmed = ko.observable(false);
@@ -1444,12 +1431,12 @@ var wizard_viewmodel = (function () {
       return true;
     };
 
-    function any_selected_product(method) {
+    function any_selected_product (method) {
       var selected_products = _.pluck(self.coverage_vm.selected_product_coverages(), 'product');
       return _.any(_.invoke(selected_products, method));
     }
 
-    function init_applicants() {
+    function init_applicants () {
       var initial_applicant_list = _.map(options.applicants || [], function (applicant_data) {
         return wizard_applicant.create_applicant(applicant_data);
       });
@@ -1473,7 +1460,6 @@ var wizard_viewmodel = (function () {
         return self.applicant_list.get_children();
       });
 
-
       var should_show_spouse_initially = self.spouse().any_valid_field();
       self.should_show_spouse(should_show_spouse_initially);
 
@@ -1486,14 +1472,14 @@ var wizard_viewmodel = (function () {
       if (num_initial_children == 0) {
         var num_blank_children_forms = (2 - num_initial_children);
         for (var i = 0; i < num_blank_children_forms; i += 1) {
-          var ch = wizard_applicant.create_applicant({last: last_name, type: wizard_applicant.Applicant.ChildType});
+          var ch = wizard_applicant.create_applicant({ last: last_name, type: wizard_applicant.Applicant.ChildType });
           self.applicant_list.add_applicant(ch);
         }
       }
 
     }
 
-    function init_jquery_validator() {
+    function init_jquery_validator () {
       // jquery form validator
       $.validator.addMethod("minAge", function (val, element, params) {
         var age = wizard_applicant.age_for_date(val);
@@ -1504,7 +1490,6 @@ var wizard_viewmodel = (function () {
         var age = wizard_applicant.age_for_date(val);
         return (age !== "" && age <= params);
       }, "Must be no more than {0} years old for this product");
-
 
       // Height and Weight limits for Group CI
       self.limit_error_lookup = {
@@ -1540,7 +1525,7 @@ var wizard_viewmodel = (function () {
         return self.coverage_vm.is_payment_mode_valid();
       }, "You must select a payment mode.");
 
-      function any_valid_spouse_field() {
+      function any_valid_spouse_field () {
         //return self.should_include_spouse_in_table(); //self.should_show_spouse();
         return self.spouse().any_valid_field();
       }
@@ -1571,11 +1556,11 @@ var wizard_viewmodel = (function () {
             }
           },
           spLName: {
-            required: {depends: any_valid_spouse_field}
+            required: { depends: any_valid_spouse_field }
           },
           spDOB: {
-            required: {depends: any_valid_spouse_field},
-            date: {depends: any_valid_spouse_field},
+            required: { depends: any_valid_spouse_field },
+            date: { depends: any_valid_spouse_field },
             minAge: {
               param: min_sp_age(),
               depends: any_valid_spouse_field
@@ -1585,14 +1570,14 @@ var wizard_viewmodel = (function () {
               depends: any_valid_spouse_field
             }
           },
-          'tobacco-1': {required: {depends: any_valid_spouse_field}},
-          'gender-1': {required: {depends: any_valid_spouse_field}},
+          'tobacco-1': { required: { depends: any_valid_spouse_field } },
+          'gender-1': { required: { depends: any_valid_spouse_field } },
           'weight_0': {
             required: true,
             empWeightLimit: true
           },
           'weight_1': {
-            required: {depends: any_valid_spouse_field},
+            required: { depends: any_valid_spouse_field },
             spWeightLimit: true
           },
           'height_feet_0': {
@@ -1604,16 +1589,16 @@ var wizard_viewmodel = (function () {
             empHeightLimit: true
           },
           'height_feet_1': {
-            required: {depends: any_valid_spouse_field},
+            required: { depends: any_valid_spouse_field },
             spHeightLimit: true
           },
           'height_inches_1': {
-            required: {depends: any_valid_spouse_field},
+            required: { depends: any_valid_spouse_field },
             spHeightLimit: true
           },
 
           paymentMode: {
-            isValidPaymentMode: {depends: self.can_change_payment_mode}
+            isValidPaymentMode: { depends: self.can_change_payment_mode }
           }
 
           /*debug: true*/
@@ -1625,12 +1610,53 @@ var wizard_viewmodel = (function () {
         }
       });
 
+      self.validators = {};
+      self.validators.step2 = $('#questions-form').validate({
+        highlight: wizard_validate_highlight,
+        success: wizard_validate_success,
+        errorPlacement: wizard_error_placement,
+        errorElement: 'span',
+        errorClass: 'help-block',
+        rules: {
+          'tobacco-0': {
+            required: true
+          },
+          'gender-0': "required",
 
-      function is_child_name_required(element) {
+          'tobacco-1': { required: { depends: any_valid_spouse_field } },
+          'gender-1': { required: { depends: any_valid_spouse_field } },
+          'weight_0': {
+            required: true,
+            empWeightLimit: true
+          },
+          'weight_1': {
+            required: { depends: any_valid_spouse_field },
+            spWeightLimit: true
+          },
+          'height_feet_0': {
+            required: true,
+            empHeightLimit: true
+          },
+          'height_inches_0': {
+            required: true,
+            empHeightLimit: true
+          },
+          'height_feet_1': {
+            required: { depends: any_valid_spouse_field },
+            spHeightLimit: true
+          },
+          'height_inches_1': {
+            required: { depends: any_valid_spouse_field },
+            spHeightLimit: true
+          }
+        }
+      });
+
+      function is_child_name_required (element) {
         return true;
       }
 
-      function is_child_field_required(element) {
+      function is_child_field_required (element) {
         // Treat the first child as always required if the children checkbox is checked
         if ($(element).attr("id") === "child-first-0" ||
           $(element).attr("id") === "child-last-0" ||
@@ -1685,9 +1711,8 @@ var wizard_viewmodel = (function () {
 
   }
 
-
 // TODO:  Will need to expose this function to the other modules, integrate Barrett's reauth mechanism below
-  function handle_remote_error(request, retry_callback) {
+  function handle_remote_error (request, retry_callback) {
     if (request.status == 401) {
       if (ui.account_href != null) {
         prompt_login(retry_callback);
@@ -1701,12 +1726,12 @@ var wizard_viewmodel = (function () {
     }
   }
 
-  function prompt_login(callback) {
+  function prompt_login (callback) {
     bootbox.confirm({
       message: "Please type your password to login again: <input id='password' class='form-control' placeholder='Password' type='password'/>",
       title: "Session Timed Out, Please Re-Login:",
       buttons: {
-        "cancel": {"label": "Cancel"},
+        "cancel": { "label": "Cancel" },
         "confirm": {
           "label": "Login",
           "className": "width-35 pull-right btn btn-primary"
@@ -1720,7 +1745,7 @@ var wizard_viewmodel = (function () {
     });
   }
 
-  function login_reauth(account_href, password, callback) {
+  function login_reauth (account_href, password, callback) {
     var post_data = {
       "account_href": account_href,
       "password": password,
@@ -1745,7 +1770,7 @@ var wizard_viewmodel = (function () {
     }, true);
   }
 
-  function ajax_post(url, data, on_success, on_error, is_json) {
+  function ajax_post (url, data, on_success, on_error, is_json) {
     var options = {
       data: data,
       error: on_error,
@@ -1762,7 +1787,6 @@ var wizard_viewmodel = (function () {
     $.ajax(url, options);
   }
 
-
-  return {WizardVM: WizardVM};
+  return { WizardVM: WizardVM };
 })
 ();

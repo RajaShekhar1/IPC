@@ -1,4 +1,4 @@
-function init_validation(ui) {
+function init_validation (ui) {
 
   $('[data-rel=tooltip]').tooltip();
 
@@ -8,8 +8,9 @@ function init_validation(ui) {
       return true;
     }
 
-    if (info.step === 1) {
+    var is_valid;
 
+    if (info.step === 1) {
       // Clear step2 health question error when we attempt to validate step 1
       $("#health_questions_error").html("");
 
@@ -21,7 +22,7 @@ function init_validation(ui) {
       }
 
       // trigger jquery validation
-      var is_valid = ui.validator.form();
+      is_valid = ui.validator.form();
 
       if (!ui.is_coverage_selection_valid()) {
 
@@ -30,7 +31,7 @@ function init_validation(ui) {
         return;
       }
 
-      function validate_coverage_amount(applicant_coverage) {
+      function validate_coverage_amount (applicant_coverage) {
         var product_id = applicant_coverage.product.product_data.id;
         var product = applicant_coverage.product;
         var applicant = applicant_coverage.applicant;
@@ -50,7 +51,7 @@ function init_validation(ui) {
 
           var additional_allowed_coverage = max_coverage_amount - existing_coverage_amount;
           // Make sure that we don't show a negative number here
-          additional_allowed_coverage = _.max([0, additional_allowed_coverage]);
+          additional_allowed_coverage = _.max([ 0, additional_allowed_coverage ]);
           var msg = ("Due to one or more previous applications for " + product.product_data.name + " this enrollment period for " +
           format_face_value(existing_coverage_amount) +
           " coverage, " + name + " can apply for a maximum of " +
@@ -59,7 +60,6 @@ function init_validation(ui) {
           alert(msg);
           return false;
         }
-
 
         return true;
       }
@@ -88,13 +88,16 @@ function init_validation(ui) {
         e.preventDefault();
       }
     }
-    if (info.step == 2 && info.direction == 'next') {
-      var is_valid = true;
+    if (info.step === 2 && info.direction === 'next') {
+      var validator = ui.validators.step2;
+
+      // trigger jquery validation
+      is_valid = validator.form();
 
       // validate replacement form
       if (ui.did_select_any_fpp_product() &&
         (ui.should_show_replacement_form())) {
-        is_valid &= $('#questions-form').valid();
+        is_valid = $('#questions-form').valid() && is_valid;
       }
 
       if (ui.did_select_any_fpp_product() &&
@@ -115,7 +118,7 @@ function init_validation(ui) {
       }
 
       // validate questions
-      is_valid &= health_question_buttons.are_health_questions_valid();
+      is_valid = health_question_buttons.are_health_questions_valid() && is_valid;
 
       if (!is_valid) {
         $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");
@@ -125,13 +128,13 @@ function init_validation(ui) {
         $("#health_questions_error").html("");
       }
     }
-    if (info.step == 3 && info.direction == 'next') {
+    if (info.step === 3 && info.direction === 'next') {
       if (!$('#step3-form').valid()) {
         e.preventDefault();
         return;
       }
     }
-    if (info.step == 4 && info.direction == 'next') {
+    if (info.step === 4 && info.direction === 'next') {
       if (!$('#step4-form').valid()) {
         e.preventDefault();
         return;
@@ -146,9 +149,9 @@ function init_validation(ui) {
         }
       });
 
-      var has_beneficiary_errors = _.any(ui.coverage_vm.product_coverage_viewmodels(), function has_beneficiary_errors(product_coverage_vm) {
+      var has_beneficiary_errors = _.any(ui.coverage_vm.product_coverage_viewmodels(), function has_beneficiary_errors (product_coverage_vm) {
         if (product_coverage_vm.employee_contingent_beneficiary_type() === 'other') {
-          return !!product_coverage_vm.employee_other_beneficiary().date_of_birth_validation_error() ||  !!product_coverage_vm.employee_contingent_beneficiary().date_of_birth_validation_error();
+          return !!product_coverage_vm.employee_other_beneficiary().date_of_birth_validation_error() || !!product_coverage_vm.employee_contingent_beneficiary().date_of_birth_validation_error();
         }
         return !!product_coverage_vm.employee_other_beneficiary().date_of_birth_validation_error();
       });
@@ -219,7 +222,7 @@ function init_validation(ui) {
   });
 
   //documentation : http://docs.jquery.com/Plugins/Validation/validate
-  $.mask.definitions['~'] = '[+-]';
+  $.mask.definitions[ '~' ] = '[+-]';
   $('#phone').mask('(999) 999-9999');
   $('#eeDOB').mask('99/99/1999');
   $('.input-mask-date').mask('99/99/9999');
@@ -259,7 +262,6 @@ function init_validation(ui) {
 
     },
 
-
     highlight: wizard_validate_highlight,
     success: wizard_validate_success,
     errorPlacement: wizard_error_placement
@@ -286,12 +288,12 @@ function init_validation(ui) {
   //  return (product_coverage.policy_owner() === "other");
   //}, "This field is required.");
 
-  function isEmployeeOtherOwnerRequired(element) {
+  function isEmployeeOtherOwnerRequired (element) {
     var product_coverage = ko.dataFor(element);
     return product_coverage.policy_owner() === "other";
   }
 
-  function isSpouseOtherOwnerRequired(element) {
+  function isSpouseOtherOwnerRequired (element) {
     var product_coverage = ko.dataFor(element);
     return product_coverage.spouse_policy_owner() === "other";
   }
@@ -326,7 +328,6 @@ function init_validation(ui) {
     }
   });
 
-
   $('#step3-form').validate({
     errorElement: 'div',
     errorClass: 'help-block',
@@ -339,15 +340,15 @@ function init_validation(ui) {
           }
         }
       },
-      eeFName2: {required: true},
-      eeLName2: {required: true},
-      eeGender: {required: true},
-      eessn: {required: true},
-      eeStreet1: {required: true},
-      eeCity: {required: true},
-      eeState: {required: true},
-      eeZip: {required: true},
-      eeOwner: {required: true}
+      eeFName2: { required: true },
+      eeLName2: { required: true },
+      eeGender: { required: true },
+      eessn: { required: true },
+      eeStreet1: { required: true },
+      eeCity: { required: true },
+      eeState: { required: true },
+      eeZip: { required: true },
+      eeOwner: { required: true }
     },
 
     messages: {
@@ -375,9 +376,9 @@ function init_validation(ui) {
     errorClass: 'help-block',
     focusInvalid: false,
     rules: {
-      spFName2: {required: true},
-      spLName2: {required: true},
-      spGender: {required: true},
+      spFName2: { required: true },
+      spLName2: { required: true },
+      spGender: { required: true },
       spssn: {
         required: {
           depends: function (element) {
@@ -385,7 +386,7 @@ function init_validation(ui) {
           }
         }
       },
-      spOwner: {required: true}
+      spOwner: { required: true }
     },
 
     messages: {
@@ -403,7 +404,7 @@ function init_validation(ui) {
 
   // Beneficiary rules
 
-  function is_other_beneficiary_detail_required(element, applicant_type, beneficiary_type) {
+  function is_other_beneficiary_detail_required (element, applicant_type, beneficiary_type) {
     var product_coverage = ko.dataFor(element);
     if (beneficiary_type === "contingent" && !product_coverage.should_show_contingent_beneficiary()) {
       // Not required for this product.
@@ -460,10 +461,9 @@ function init_validation(ui) {
     }
   };
   for (className in beneficiary_depends_rules) {
-    var depends_func = beneficiary_depends_rules[className];
-    $.validator.addClassRules(className, {required: {depends: depends_func}})
+    var depends_func = beneficiary_depends_rules[ className ];
+    $.validator.addClassRules(className, { required: { depends: depends_func } })
   }
-
 
   $('#step5-form').validate({
     errorElement: 'div',
@@ -481,15 +481,15 @@ function init_validation(ui) {
     errorClass: 'help-block',
     focusInvalid: false,
     rules: {
-      confirmDisclaimer: {required: true},
-      enrollCity: {required: true},
-      tokenType: {required: true},
+      confirmDisclaimer: { required: true },
+      enrollCity: { required: true },
+      tokenType: { required: true },
       ConfirmationToken: {
         required: function () {
           return window.vm.should_use_date_of_hire_for_identity();
         }
       },
-      hireDate: {required: true}
+      hireDate: { required: true }
     },
 
     messages: {
@@ -504,20 +504,18 @@ function init_validation(ui) {
     errorPlacement: wizard_error_placement
   });
 
-
 }
 
-
-function wizard_validate_highlight(e) {
+function wizard_validate_highlight (e) {
   $(e).closest('.form-group').removeClass('has-info').addClass('has-error');
 }
 
-function wizard_validate_success(e) {
+function wizard_validate_success (e) {
   $(e).closest('.form-group').removeClass('has-error').addClass('has-info');
   $(e).remove();
 }
 
-function wizard_error_placement(error, element) {
+function wizard_error_placement (error, element) {
   if (element.is(':checkbox') || element.is(':radio')) {
     var controls = element.closest('div[class*="col-"]');
     if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
