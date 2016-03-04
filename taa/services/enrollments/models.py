@@ -116,6 +116,9 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
             self.APPLICATION_STATUS_VOIDED,
         ]
 
+    def is_voided(self):
+        return self.application_status == self.APPLICATION_STATUS_VOIDED
+
 
 
 class EnrollmentApplicationCoverageSerializer(JsonSerializable):

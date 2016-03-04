@@ -79,6 +79,9 @@ class EnrollmentApplicationService(DBService):
     def save_multiproduct_enrollment_data(self, data, case, census_record, agent, received_data=None):
         """
         Same idea as save_enrollment_data, but adapted for an enrollment in multiple products.
+
+        Create and save the enrollment data. Creates a census record if this is a generic link, and in
+             either case updates the census record with the latest enrollment data.
         """
 
         first_product_data = data[0]
