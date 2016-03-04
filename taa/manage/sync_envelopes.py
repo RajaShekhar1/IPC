@@ -219,7 +219,8 @@ class EnvelopeSync(object):
         if matching_enrollment:
             return self.match_coverages(ch_cov, ee_cov, ee_ssn_masked, envelope, matching_enrollment, sp_cov, created_time, ee_name)
         else:
-            print("No match on '{}' '{}' '{}' {}/{}/{}".format(start.strftime('%F'), ee_name, ee_ssn_masked, ee_cov, sp_cov,
+            print("No match on envelope '{}' '{}' '{}' '{}' {}/{}/{}".format(envelope.uri,
+                start.strftime('%F%T'), ee_name, ee_ssn_masked, ee_cov, sp_cov,
                                                                ch_cov))
             return False
 
