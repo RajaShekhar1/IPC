@@ -590,7 +590,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   }
 
   self.owner_agent = ko.computed(function () {
-    return settings.active_agents.find(function (elem) {
+    return _.find(settings.active_agents, function (elem) {
       return elem.id === parseInt(self.owner_agent_id(), 10);
     });
   });
