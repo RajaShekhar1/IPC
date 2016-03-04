@@ -148,7 +148,7 @@ class EnvelopeSync(object):
 
         if not rate_limiter:
             rate_limiter = APIRateLimiter(500)
-        for i, envelope_data in enumerate(completed):
+        for i, envelope_data in enumerate(reversed(completed)):
             current_time = datetime.now()
 
             env = DocusignEnvelope(envelope_data['envelopeUri'], fetch_tabs=True)
