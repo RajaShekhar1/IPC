@@ -311,6 +311,82 @@ class EnrollmentApplicationService(DBService):
                 data.append(export_record)
         return data
 
+    def retrieve_enrollment_data_for_table(self, case, offset=None, limit=None, search_text=None, order_column=None, order_dir=None):
+        from taa.services.agents.models import Agent
+        from taa.services.cases import CaseCensus
+
+        query = db.session.query(
+            EnrollmentApplication.signature_time.label('date'),
+            EnrollmentApplication.application_status.label('enrollment_status'),
+            EnrollmentApplication.id.label('id'),
+            EnrollmentApplication.case_id.label('case_id'),
+            EnrollmentApplication.census_record_id.label('census_record_id'),
+            (Agent.first + " " + Agent.last).label('agent_name'),
+            CaseCensus.employee_first.label('employee_first'),
+            CaseCensus.employee_last.label('employee_last'),
+            CaseCensus.employee_birthdate.label('employee_birthdate'),
+            CaseCensus.employee_email.label('employee_email'),
+            # Compute the annual premium
+            db.select([
+                db.case([
+                    (db.func.sum(EnrollmentApplicationCoverage.weekly_premium) > 0,
+                        db.func.sum(EnrollmentApplicationCoverage.weekly_premium) * 52),
+                    (db.func.sum(EnrollmentApplicationCoverage.biweekly_premium) > 0,
+                        db.func.sum(EnrollmentApplicationCoverage.biweekly_premium) * 26),
+                    (db.func.sum(EnrollmentApplicationCoverage.semimonthly_premium) > 0,
+                        db.func.sum(EnrollmentApplicationCoverage.semimonthly_premium) * 24),
+                    (db.func.sum(EnrollmentApplicationCoverage.monthly_premium) > 0,
+                        db.func.sum(EnrollmentApplicationCoverage.monthly_premium) * 12)
+                    ],
+                    else_=0
+                )
+            ],
+            ).where(EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id
+            ).label('total_premium')
+        )
+
+        query = query.join(CaseCensus, CaseCensus.id == EnrollmentApplication.census_record_id)
+        query = query.outerjoin(Agent, Agent.id == EnrollmentApplication.agent_id)
+
+        # Overall filtering
+        query = query.filter(CaseCensus.case_id == case.id)
+
+        # Data filtering
+        if search_text:
+            for text_snippet in search_text.split():
+                query = query.filter(db.or_(
+                    CaseCensus.employee_first.ilike('{}%'.format(text_snippet)),
+                    CaseCensus.employee_last.ilike('{}%'.format(text_snippet)),
+                    CaseCensus.employee_email.ilike('{}%'.format(text_snippet)),
+                    EnrollmentApplication.application_status.ilike('{}%'.format(text_snippet))
+                ))
+
+        # Ordering
+        order_column_mapping = dict(
+            date=EnrollmentApplication.signature_time,
+            employee_first=CaseCensus.employee_first,
+            employee_last=CaseCensus.employee_last,
+            employee_email=CaseCensus.employee_email,
+            enrollment_status=EnrollmentApplication.application_status,
+            total_premium='total_premium',
+            agent_name='agent_name',
+        )
+        order_clause = order_column_mapping.get(order_column, "employee_last")
+        if order_dir == 'desc':
+            order_clause = db.desc(order_clause)
+        query = query.order_by(order_clause)
+
+        # Pagination
+        query = query.offset(offset).limit(limit)
+
+        return query
+
+    def retrieve_enrollments_total_visible_count_for_table(self, case):
+        return self.retrieve_enrollment_data_for_table(case).count()
+
+    def retrieve_enrollments_filtered_count_for_table(self, case, search_text):
+        return self.retrieve_enrollment_data_for_table(case, search_text=search_text).count()
+
     def get_enrollment_status(self, census_record):
         # Get the flattened enrollment record
         #enrollment_data = self.get_enrollment_data(census_record)
@@ -331,9 +407,6 @@ class EnrollmentApplicationService(DBService):
             return EnrollmentApplication.APPLICATION_STATUS_DECLINED
         else:
             return None
-
-
-
 
     def get_census_data(self, census_record):
         return census_record.to_json()

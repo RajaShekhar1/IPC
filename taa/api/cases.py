@@ -203,6 +203,61 @@ def enrollment_records(case_id):
     format=json|csv (json by default)
     """
     case = case_service.get_if_allowed(case_id)
+
+
+    if request.args.get('draw'):
+        # Do a datatables response with pagination and search text.
+        offset = int(request.args.get('start', 0))
+        limit = int(request.args.get('length', None))
+        search_text = request.args.get('search[value]', "")
+        order_col_num = int(request.args.get('order[0][column]', 1))
+        order_dir = request.args.get('order[0][dir]', 'asc')
+
+        col_name_pattern = re.compile('columns\[(\d+)\]\[name\]')
+        column_names = {}
+        for argname in request.args:
+            match = col_name_pattern.match(argname)
+            if match:
+                col_num = int(match.groups()[0])
+                name = request.args[argname]
+                column_names[col_num] = name
+
+        order_col_name = column_names.get(order_col_num)
+
+        data = enrollment_application_service.retrieve_enrollment_data_for_table(
+            case,
+            offset=offset,
+            limit=limit,
+            search_text=search_text,
+            order_column=order_col_name,
+            order_dir=order_dir,
+        )
+
+        table_data = [dict(
+            id=row.id,
+            date=row.date,
+            case_id=row.case_id,
+            census_record_id=row.census_record_id,
+            employee_first=row.employee_first,
+            employee_last=row.employee_last,
+            #employee_email=row.employee_email,
+            agent_name=row.agent_name,
+            employee_birthdate=row.employee_birthdate,
+            enrollment_status=row.enrollment_status,
+            total_premium=row.total_premium,
+        ) for row in data]
+
+        resp_data = dict(
+            data=table_data,
+            # DataTables docs recommends casting this to int to prevent XSS
+            draw=int(request.args['draw']),
+            recordsTotal=enrollment_application_service.retrieve_enrollments_total_visible_count_for_table(case),
+            recordsFiltered=enrollment_application_service.retrieve_enrollments_filtered_count_for_table(case, search_text),
+        )
+
+        return Response(response=json.dumps(resp_data, cls=JSONEncoder), content_type='application/json')
+
+
     census_records = case_service.get_current_user_census_records(case)
     data = enrollment_application_service.get_enrollment_records_for_census_records(census_records)
 
@@ -269,9 +324,14 @@ def census_records(case_id):
         }
         return make_response(body, 200, headers)
 
+    # If we are doing an SSN lookup, use simpler method.
+    if args['filter_ssn'] or args['filter_birthdate']:
+        return case_service.get_census_records(case, **args)
+
+
     # DataTables parameters
     offset = int(request.args.get('start', 0))
-    limit = int(request.args.get('length', -1))
+    limit = int(request.args.get('length', None))
     search_text = request.args.get('search[value]', "")
     order_col_num = int(request.args.get('order[0][column]', 3))
     order_dir = request.args.get('order[0][dir]', 'asc')
