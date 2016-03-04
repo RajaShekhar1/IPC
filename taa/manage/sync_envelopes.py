@@ -217,14 +217,14 @@ class EnvelopeSync(object):
             ).filter(CaseCensus.employee_ssn == ee_ssn
             ).first()
         if matching_enrollment:
-            return self.match_coverages(ch_cov, ee_cov, ee_ssn_masked, envelope, matching_enrollment, sp_cov, created_time)
+            return self.match_coverages(ch_cov, ee_cov, ee_ssn_masked, envelope, matching_enrollment, sp_cov, created_time, ee_name)
         else:
             print("No match on '{}' '{}' '{}' {}/{}/{}".format(start.strftime('%F'), ee_name, ee_ssn_masked, ee_cov, sp_cov,
                                                                ch_cov))
             return False
 
 
-    def match_coverages(self, ch_cov, ee_cov, ee_ssn_masked, envelope, matching_enrollment, sp_cov, created_time):
+    def match_coverages(self, ch_cov, ee_cov, ee_ssn_masked, envelope, matching_enrollment, sp_cov, created_time, ee_name):
         # Make sure coverages match too
         matching_ee_cov = self.find_coverage_for_applicant(ee_cov, matching_enrollment,
                                                       EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE)
@@ -234,7 +234,7 @@ class EnvelopeSync(object):
                                                       EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
         if (ee_cov and not matching_ee_cov) or (sp_cov and not matching_sp_cov) or (ch_cov and not matching_ch_cov):
             print(
-                "Invalid coverage match on '{}' '{}' {}/{}/{} got {}/{}/{}".format(created_time.strftime('%F'), ee_ssn_masked,
+                "Invalid coverage match on '{}' '{}' {} {}/{}/{} got {}/{}/{}".format(created_time.strftime('%F%T'), ee_ssn_masked, ee_name,
                                                                                    ee_cov, sp_cov, ch_cov,
                                                                                    matching_ee_cov.coverage_face_value if matching_ee_cov else '',
                                                                                    matching_sp_cov.coverage_face_value if matching_sp_cov else '',
@@ -243,7 +243,7 @@ class EnvelopeSync(object):
 
         else:
             print("FOUND matching enrollment(s) for envelope: {} to {} '{}' '{}' {}/{}/{}".format(
-                envelope.uri, matching_enrollment.id, created_time.strftime('%F'), ee_ssn_masked, ee_cov, sp_cov, ch_cov))
+                envelope.uri, matching_enrollment.id, created_time.strftime('%F%T'), ee_name, ee_ssn_masked, ee_cov, sp_cov, ch_cov))
 
             # Link it up
             matching_enrollment.docusign_envelope_id = envelope.uri
@@ -285,7 +285,7 @@ class EnvelopeSync(object):
 
     def fetch_envelopes_for_status(self, status):
         transport = get_docusign_transport()
-        data = transport.get('envelopes?from_date=2015-01-01&status={}'.format(status))
+        data = transport.get('envelopes?from_date=2015-06-01&status={}'.format(status))
         total = data['resultSetSize']
         print("Processing {} envelopes...".format(total))
 
