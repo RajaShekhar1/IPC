@@ -302,7 +302,7 @@ class CaseService(DBService):
         order_column_mapping = dict(
             employee_last=CaseCensus.employee_last,
             employee_first=CaseCensus.employee_first,
-            enrollment_status=EnrollmentApplication.application_status,
+            status='enrollment_status',
         )
         order_clause = order_column_mapping.get(order_column, "employee_last")
         if order_dir == 'desc':
