@@ -357,8 +357,10 @@ class EnrollmentApplicationService(DBService):
                 query = query.filter(db.or_(
                     CaseCensus.employee_first.ilike('{}%'.format(text_snippet)),
                     CaseCensus.employee_last.ilike('{}%'.format(text_snippet)),
-                    CaseCensus.employee_email.ilike('{}%'.format(text_snippet)),
-                    EnrollmentApplication.application_status.ilike('{}%'.format(text_snippet))
+                    #CaseCensus.employee_email.ilike('{}%'.format(text_snippet)),
+                    EnrollmentApplication.application_status.ilike('{}%'.format(text_snippet)),
+                    Agent.first.ilike('{}%'.format(text_snippet)),
+                    Agent.last.ilike('{}%'.format(text_snippet)),
                 ))
 
         # Ordering
@@ -366,7 +368,6 @@ class EnrollmentApplicationService(DBService):
             date=EnrollmentApplication.signature_time,
             employee_first=CaseCensus.employee_first,
             employee_last=CaseCensus.employee_last,
-            employee_email=CaseCensus.employee_email,
             enrollment_status=EnrollmentApplication.application_status,
             total_premium='total_premium',
             agent_name='agent_name',

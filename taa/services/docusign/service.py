@@ -740,6 +740,20 @@ class DocuSignTransport(object):
 
         return req.json()
 
+    def delete(self, url, data):
+        full_url = urljoin(self.api_endpoint, url)
+
+        self.last_request = req = requests.delete(
+            full_url,
+            data=json.dumps(data),
+            headers=self._make_headers()
+        )
+
+        if req.status_code < 200 or req.status_code >= 300:
+            self._raise_docusign_error(data, full_url, req)
+
+        return req.json()
+
     def _raise_docusign_error(self, data, full_url, req):
         # Print error to Heroku error logs.
         print("""
@@ -834,8 +848,6 @@ class AgentDocuSignRecipient(DocuSignRecipient):
         return True
 
     def get_client_user_id(self):
-        # Use the stormpath URL for this agent
-        agent_service = AgentService()
         # Hash our agent id
         import hashlib
         return hashlib.sha256("agent-{}".format(self.agent.id)).hexdigest()
