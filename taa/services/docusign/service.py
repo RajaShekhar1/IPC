@@ -14,6 +14,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate
 from urlparse import urljoin
 from dateutil.parser import parse as parse_datetime
+from taa.config_defaults import DOCUSIGN_CC_RECIPIENTS
+
 from taa.services.users import UserService
 
 from taa import app, db
@@ -102,14 +104,20 @@ class DocuSignService(object):
                                              email=enrollment_data.get_employee_email())
 
         if enrollment_data.should_use_call_center_workflow():
-            recipients = [agent]
+            recipients = [agent] + self.get_carbon_copy_recipients()
             return agent, recipients
         else:
             recipients = [
                 agent,
                 employee,
-            ]
+            ] + self.get_carbon_copy_recipients()
             return employee, recipients
+
+    def get_carbon_copy_recipients(self):
+        return [
+            CarbonCopyRecipient(name, email)
+            for name, email in DOCUSIGN_CC_RECIPIENTS
+        ]
 
     def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
         from taa.services.docusign.templates.fpp import FPPTemplate
