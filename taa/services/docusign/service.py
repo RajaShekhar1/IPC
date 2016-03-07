@@ -876,6 +876,9 @@ class CarbonCopyRecipient(DocuSignRecipient):
     def should_use_embedded_signing(self):
         return False
 
+    def get_role_name(self):
+        return None
+
 
 # Tabs
 class DocuSignTab(object):
@@ -1068,10 +1071,16 @@ class DocuSignEnvelopeComponent(object):
                 email=recipient.email,
                 recipientId=str(num),
                 routingOrder=str(num),
-                roleName=recipient.get_role_name(),
                 templateRequired=recipient.is_required(),
-                tabs=self.generate_docusign_formatted_tabs(recipient),
             )
+
+            tabs = self.generate_docusign_formatted_tabs(recipient)
+            if tabs:
+                recip_repr['tabs'] = tabs
+
+            if recipient.get_role_name():
+                recip_repr['roleName'] = recipient.get_role_name()
+
             if recipient.should_use_embedded_signing():
                 # TODO: Generate if needed
                 recip_repr['clientUserId'] = recipient.get_client_user_id()
