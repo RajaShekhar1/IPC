@@ -51,24 +51,24 @@ Product.prototype = {
   // Override if necessary
 
   min_emp_age: function () {
-    return 18
+    return 18;
   },
   max_emp_age: function () {
-    return 70
+    return 70;
   },
 
   min_sp_age: function () {
-    return 18
+    return 18;
   },
   max_sp_age: function () {
-    return 70
+    return 70;
   },
 
   min_child_age: function () {
-    return 0
+    return 0;
   },
   max_child_age: function () {
-    return 23
+    return 23;
   },
 
   is_valid_employee: function (employee) {

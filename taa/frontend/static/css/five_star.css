@@ -119,41 +119,85 @@ body {
 table.summary-table,
 /* override the top border on the ace style for our summary table */
 .widget-body .table.summary-table{
-    border: 2px solid #ddd;
-    border-width: 0 0 2px 0;
+    /* border: 2px solid #ddd; */
+    /* border-width: 0 0 2px 0; */
+  border:none;
+  position:relative;
+  top:-41px;
 }
 
-.summary-table td.selectable, .summary-table th.selectable {
+
+.summary-table td.selectable {
     cursor: pointer;
     /* Give the product columns a border between each other. */
-    border: 2px solid #ddd;
-    border-width: 0 2px;
+    border:1px solid #ddd;
+    border-top:none;
 }
+
 .summary-table th.selectable {
-    border-width: 0 2px 2px 2px;
+    cursor: pointer;
 }
+
+/* .summary-table>tbody tr td:first-child { */
+/*   border-left: 2px solid #ddd; */
+/* } */
+
+/* .summary-table>tbody tr td:last-child { */
+/*   border-right: 2px solid #ddd; */
+/* } */
 
 .circled-number {
     display: inline-block;
     width: 22px;
     border-radius: 11px;
-    border: 2px solid #aaa;
+    border: 2px solid #ddd;
     background-color: white;
-    color: #888;
+    color: #ddd;
     font-weight: bold;
 }
 
-.summary-table th.active-product {
-    background-color: #fafa8a;
-    color: #838000;
-    font-weight: bold;
-    box-shadow: 0 0 4px 2px rgba(0,0,0,.15);
-    z-index: 11;
-    transform: scale(1.03);
+th.active-product .circled-number {
+    border: 2px solid #268DC0;
+    background-color: white;
+    color: #268DC0;
 }
+
+.summary-table>thead>tr>th:first-child {
+  border-width: 0 0 2px 0 !important;
+}
+
+.summary-table th.active-product {
+    border-style:solid !important;
+    border-color: #ddd #c1c1c1 !important;
+    border-width: 0 2px 1px 2px !important;
+    border-top:3px solid #268DC0 !important;
+    font-weight: bold;
+    z-index: 11;
+}
+
 .summary-table td.active-product {
-    border: 2px solid #eaea8a;
     z-index: 10;
+    border-width: 1px 2px;
+    border-color: #ddd #c1c1c1;
+    background:#fff;
+}
+
+.summary-table tr:last-child td {
+    border-bottom:2px solid #c1c1c1 !important;
+}
+
+.summary-table tr:last-child td.active-product {
+    border-bottom:none !important;
+}
+
+/* .summary-table td.selectable:not(.active-product) { */
+/*   background:#fff; */
+/* } */
+
+.multi-widget {
+  border:1px solid #ddd;
+  border-width: 0 2px 2px 2px;
+  margin-top:60px;
 }
 
 .confirm-table td, .confirm-table th {
