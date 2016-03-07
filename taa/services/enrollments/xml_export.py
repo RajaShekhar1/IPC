@@ -7,7 +7,7 @@ import datetime
 import uuid
 from decimal import Decimal
 
-from flask import render_template
+from flask import current_app, render_template
 
 from .models import db
 from taa.services import RequiredFeature
@@ -20,30 +20,6 @@ from dell import *
 
 class XmlUploadService(object):
     pass
-
-
-def wsdl_test():
-    from pysimplesoap.client import SoapClient
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.addHandler(logging.NullHandler())
-    c = SoapClient(wsdl='file:///vagrant/Artifacts/TAA3.0/'
-                        '5Star XML Info (rev 052915)/TxLife WSDL.txt')
-    cc = SoapClient(location='https://extranetapps-mo.tagtpa.com/TxLifeImport/TxLife.asmx')
-    cc.call('TXlifeProcessor')
-
-"""
-OLD
-# https://extranetapps-mo.perotsystemsbps.net/TxLifeImport/TxLife.asmx
-have WSDL for:
-https://extranetapps.perotsystemsbps.net/TxLifeImport/TxLife.asmx
-
-NEW
-need WSDL for:
-https://extranetapps-mo.tagtpa.com/TxLifeImport/TxLife.asmx
-https://extranetapps.tagtpa.com/TxLifeImport/TxLife.asmx
-"""
-
 
 # TODO: add support for additional coverage
 # 5Star XML ACORD XML 103 cell C115
@@ -73,26 +49,6 @@ def generate_from_enrollment(enrollment_id, census_record_id,
 
 def generate_xml(data, agents, template, form_for='employee', pdf_bytes=None):
     vars = get_variables(data, agents, form_for, pdf_bytes)
-
-    # # Update based on internal data
-    # vars['policy']['payment_method'] = PAYMENT_METHODS[vars['policy']['payment_method_code']]
-    # vars['policy']['eft_account_type'] = PAYMENT_ACCOUNT_TYPES[vars['policy']['eft_account_type_code']]
-    # vars['policy']['replacement_type'] = REPLACEMENT_TYPES[vars['policy']['replacement_type_code']]
-    # # TODO: Set properly  vv
-    # vars['policy']['payment_mode_code'] = PAYMENT_MODE.get('12')
-    # vars['policy']['payment_mode'] = vars['policy']['payment_mode_code']
-    # vars['policy']['qualified_plan_type'] = QUALIFYING_PLAN_TYPES[vars['life']['qualified_plan_type_code']]
-    # vars['policy']['coverage_indicator'] = COVERAGE_INDICATOR_CODES[vars['life']['coverage_indicator_code']]
-    # for sig in vars['application_info']['signatures']:
-    #     sig['role'] = PARTICIPANT_ROLE_CODES[sig['role_code']]
-    #     sig['ok'] = bool(sig['ok_code'])
-    # for _ in range(vars['enrollee']['num_children']):
-    #     vars['policy']['participants'].append('4')
-    # vars['enrollee']['employee']['state'] = STATE_CODES[vars['enrollee']['employee']['state_code']]
-    # vars['enrollee']['employee']['birth_jurisdiction'] = STATE_CODES[vars['enrollee']['employee']['birth_jurisdiction_code']]
-    # vars['enrollee']['employee']['smoker'] = SMOKER_CODES[vars['enrollee']['employee']['smoker_code']]
-    # vars['enrollee']['employee']['existing_insurance'] = bool(vars['enrollee']['employee']['existing_insurance'])
-    # vars['agent']['existing_insurance'] = bool(vars['agent']['existing_insurance'])
     if vars['enrollee']['coverage']['face_value'] is None:
         return None
     return render_template(template, **vars)
@@ -179,7 +135,9 @@ def get_variables(data, agents, form_for, pdf_bytes):
         'olife': {
             'vendor_code': 'xxx',
             'extension_code': 'xxxx',
-            'company_num': '67',
+            'company_num': COMPANY_NUMBERS['test']
+                                if current_app.config['DEBUG']
+                                else COMPANY_NUMBERS['production'],
             'app_code': 'New Enrollee',
         },
         'case': data['case'],
@@ -245,35 +203,37 @@ def get_variables(data, agents, form_for, pdf_bytes):
             'contingent': []
         }
     else:
-        vars['enrollee']['beneficiaries'] = {
-            'primary': [
-                {
-                    'birthdate': data[form_for + '_beneficiary1_dob'],
-                    'ssn': data[form_for + '_beneficiary1_ssn'],
-                    'first': data[form_for + '_beneficiary1_name'].split(' ', 1)[0],
-                    'last': data[form_for + '_beneficiary1_name'].split(' ', 1)[1],
-                    'percentage': data[form_for + '_beneficiary1_percentage'],
-                    'relationship': data[form_for + '_beneficiary1_relationship'].lower(),
-                }
-            ],
-            'contingent': [
-                {
-                    'birthdate': data[form_for + '_contingent_beneficiary1_dob'],
-                    'ssn': data[form_for + '_contingent_beneficiary1_ssn'],
-                    'first': data[form_for + '_contingent_beneficiary1_name'].split(' ', 1)[0],
-                    'last': data[form_for + '_contingent_beneficiary1_name'].split(' ', 1)[1],
-                    'percentage': data[form_for + '_contingent_beneficiary1_percentage'],
-                    'relationship': data[form_for + '_contingent_beneficiary1_relationship'].lower(),
-                }
-            ],
-        }
+        vars['enrollee']['beneficiaries'] = {}
+        for source in ['beneficiary', 'contingent_beneficiary']:
+            for index in range(1, 11):
+                if source == 'beneficiary' and index > MAX_PRIMARY_BENEFICIARIES:
+                    break
+                elif source == 'contingent_beneficiary' and index > MAX_CONTINGENT_BENEFICIARIES:
+                    break
+                prefix = '{}_{}{}'.format(form_for, source, index)
+                if source not in vars['enrollee']['beneficiaries']:
+                    vars['enrollee']['beneficiaries'][source] = []
+                if prefix + '_name' not in data:
+                    break
+                name = data[prefix + '_name']
+                if name.strip() == '':
+                    break
+                first, last = name.split(' ', 1) if ' ' in name else (name, '')
+                vars['enrollee']['beneficiaries'][source].append({
+                    'first': first,
+                    'last': last,
+                    'ssn': data[prefix + '_ssn'],
+                    'birthdate': data[prefix + '_dob'],
+                    'percentage': data[prefix + '_percentage'],
+                    'relationship': data[prefix + '_relationship'].lower(),
+                })
 
     vars['relationships'] = {}
-    owner = 'self' if enrollee['is_employee'] else \
-            'spouse' if enrollee['is_spouse'] else \
-            'child' if enrollee['is_child'] else None
+    owner = ('self' if enrollee['is_employee'] else
+             'spouse' if enrollee['is_spouse'] else
+             'child' if enrollee['is_child'] else None)
     vars['relationships']['owner_to_primary'] = RELATIONSHIP_ROLES.get(owner)
-    for type_ in ['primary', 'contingent']:
+    for type_ in ['beneficiary', 'contingent_beneficiary']:
         for beneficiary in vars['enrollee']['beneficiaries'][type_]:
             key = 'owner_to_{}_beneficiary'.format(type_)
             if key not in vars['relationships']:

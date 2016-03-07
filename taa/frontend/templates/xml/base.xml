@@ -185,7 +185,7 @@
                     <Zip>{{ employee.zip }}</Zip>
                 </Address>
             </Party>
-            {% for beneficiary in enrollee.beneficiaries.primary -%}
+            {% for beneficiary in enrollee.beneficiaries.beneficiary -%}
             <Party id="Party_PrimaryBene_{{ loop.index }}">
                 <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
                 <GovtID>{{ beneficiary.ssn }}</GovtID>
@@ -199,7 +199,7 @@
                 </Person>
             </Party>
             {% endfor -%}
-            {% for beneficiary in enrollee.beneficiaries.contingent -%}
+            {% for beneficiary in enrollee.beneficiaries.contingent_beneficiary -%}
             <Party id="Party_ContingentBene_{{ loop.index }}">
                 <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
                 <Person DataRep="Partial">

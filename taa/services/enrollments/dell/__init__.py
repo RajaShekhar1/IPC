@@ -30,6 +30,9 @@ RESULT_CODES = {
 # Signifies the item was successfully processed.  So the TransRefGUID 	used in this transmission should not be used again.
 # Any @tc value should be regarded as an error.  The transmission may be 	sent again at a later time.
 
+MAX_PRIMARY_BENEFICIARIES = 2
+MAX_CONTINGENT_BENEFICIARIES = 1
+
 GENDER = {
     'male': '1',
     'female': '2'
