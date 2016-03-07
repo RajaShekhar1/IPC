@@ -841,6 +841,7 @@ class EmployeeDocuSignRecipient(DocuSignRecipient):
     def get_client_user_id(self):
         return "ee-123456"
 
+
 class AgentDocuSignRecipient(DocuSignRecipient):
     def __init__(self, agent, name, email, cc_only=False, role_name=None, exclude_from_envelope=False,
                  use_embedded_signing=True):
@@ -860,10 +861,20 @@ class AgentDocuSignRecipient(DocuSignRecipient):
         import hashlib
         return hashlib.sha256("agent-{}".format(self.agent.id)).hexdigest()
 
+
 class CarbonCopyRecipient(DocuSignRecipient):
-    def is_employee(self): return False
-    def is_agent(self): return False
-    def is_carbon_copy(self): return True
+
+    def is_employee(self):
+        return False
+
+    def is_agent(self):
+        return False
+
+    def is_carbon_copy(self):
+        return True
+
+    def should_use_embedded_signing(self):
+        return False
 
 
 # Tabs
