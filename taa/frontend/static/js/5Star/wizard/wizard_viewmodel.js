@@ -1461,10 +1461,6 @@ var wizard_viewmodel = (function () {
         return self.applicant_list.get_spouse();
       };
 
-      // "Private" variables to store the old values of the employee and spouse smoker status. They should not be used to check the current value of the smoker status
-      self.__employee_smoker_value = self.employee().is_smoker();
-      self.__spouse_smoker_value = self.spouse() && self.spouse().is_smoker();
-
       // Function to prompt the user to inform them that changing the smoking status requires them to reselect their benefits selection
       self.show_smoker_status_changed_dialog = function () {
         $('#smoking-status-dialog').modal('show');
@@ -1482,23 +1478,32 @@ var wizard_viewmodel = (function () {
         self.set_wizard_step(1);
       };
 
-      // Register Smoker/Non-smoker subscriptions to update the user
-      self.employee().is_smoker.subscribe(function (value) {
-        if (self.__employee_smoker_value !== undefined) {
-          self.show_smoker_status_changed_dialog();
+      // Function to keep the fire off a callback when it was not already null or undefined and is not being set to false
+      function subscribe_to_smoker_change(observable, callback) {
+        if (!observable) {
+          return;
         }
-        // Set self.__employee_smoker_value to value for use the next time it changes
-        self.__employee_smoker_value = value;
-      });
-
-      if (self.spouse()) {
-        self.spouse().is_smoker.subscribe(function (value) {
-          if (self.__spouse_smoker_value !== undefined) {
-            self.show_smoker_status_changed_dialog();
+        var previous_value;
+        observable.subscribe(function (old_value) {
+          previous_value = old_value;
+        }, null, 'beforeChange');
+        observable.subscribe(function (value) {
+          // Check if the value has not been initialized and that it is being set to false
+          if ((previous_value === undefined || previous_value === null) && value === false) {
+            return;
           }
-          // Set self.__spouse_smoker_value to the new value
-          self.__spouse_smoker_value = value;
+          // Check if the value has been initialized or is being set to true
+          if ((previous_value !== undefined && previous_value !== null) || value === true) {
+            callback();
+          }
         });
+      }
+
+      /* Show the smoker status changed dialog when the employee or spouse (if available) switches from smoker to
+       non-smoker and vice versa */
+      subscribe_to_smoker_change(self.employee().is_smoker, self.show_smoker_status_changed_dialog);
+      if (self.spouse()) {
+        subscribe_to_smoker_change(self.spouse().is_smoker, self.show_smoker_status_changed_dialog);
       }
 
       self.children = ko.computed(function () {
