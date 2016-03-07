@@ -34,6 +34,7 @@
                             <CommissionDetail>
                                 <WritingProducerID>{{ agent.code }}</WritingProducerID>
                                 <SplitPercent>{{ agent.commission_percent }}</SplitPercent>
+                                <CommissionSchedule>{{ agent.subcode or '001' }}</CommissionSchedule>
                             </CommissionDetail>
                         {% endfor -%}
                     </CommissionCalcActivity>
@@ -67,6 +68,7 @@
                     <ApplicationInfo>
                         <SignatureInfo>
                             <SignatureRoleCode tc="18">Owner</SignatureRoleCode>
+                            <SignatureDate>{{ primary_agent.signature_date|truncate(10, end='') }}</SignatureDate>
                             <SignatureCity>{{ policy.enroll_city }}</SignatureCity>
                             <SignatureState tc="{{ policy.enroll_state_code }}">{{ policy.enroll_state }}</SignatureState>
                             <SignatureOK tc="1">True</SignatureOK>
@@ -82,7 +84,7 @@
 {#                        </SignatureInfo>#}
                         <SignatureInfo>
                             <SignatureRoleCode tc="15">Primary Agent</SignatureRoleCode>
-                            <SignatureDate>{{ primary_agent.signature_date }}</SignatureDate>
+                            <SignatureDate>{{ primary_agent.signature_date|truncate(10, end='') }}</SignatureDate>
                             {# PDF application form does not have Agent Signature State specified. Value below corresponds to Owner Signature State. Please see if you need to send a different value in next field #}
                             <SignatureState tc="17">{{ primary_agent.signature_state }}</SignatureState>
                             <SignatureOK tc="1">True</SignatureOK>
