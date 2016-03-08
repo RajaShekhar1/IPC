@@ -197,9 +197,9 @@
     </div>
 
 
-    <div style="border: 2px solid #ddd;" data-bind="visible: !is_rate_table_loading(), with: coverage_vm">
+    <div data-bind="visible: !is_rate_table_loading(), with: coverage_vm">
 
-      <div data-bind="if: has_multiple_products">
+      <div class="multi-widget" data-bind="if: has_multiple_products">
 
         {# Summary table for multi-product enrollments. #}
         <div data-bind="template: 'multi-product-selected-coverage-table'">
@@ -542,7 +542,6 @@
       <!--/ko-->
     </tbody>
   </table>
-
 </script>
 
 {# This is for step 6, but it is so similar to the above summary table for step 1 that I want to leave it here. #}
