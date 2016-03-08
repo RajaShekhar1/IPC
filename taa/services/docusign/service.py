@@ -52,16 +52,22 @@ class DocuSignService(object):
                 components += self.create_group_ci_envelope_components(enrollment_data, recipients,
                                                                        should_use_docusign_renderer)
 
+        product_codes = [
+            EnrollmentDataWrap(product_submission, case).get_product_code()
+            for product_submission in product_submissions
+        ]
+
         if not enrollment_data.should_use_call_center_workflow():
             signer_name = first_product_data.get_employee_name()
         else:
             signer_name = recipients[0].name
 
         envelope_result = self.create_envelope(
-            email_subject="Signature needed: {} ({})".format(
-                #first_product_data.get_product().name,
-                signer_name,
-                first_product_data.get_employer_name()),
+            email_subject="Enroll {} ({}) | {}".format(
+                first_product_data.get_employee_name(),
+                first_product_data.get_employer_name(),
+                ','.join(product_codes),
+                ),
             components=components,
         )
         return in_person_signer, envelope_result
@@ -1082,7 +1088,6 @@ class DocuSignEnvelopeComponent(object):
                 recip_repr['roleName'] = recipient.get_role_name()
 
             if recipient.should_use_embedded_signing():
-                # TODO: Generate if needed
                 recip_repr['clientUserId'] = recipient.get_client_user_id()
 
             if self.is_recipient_signer(recipient):
