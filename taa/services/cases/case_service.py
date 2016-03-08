@@ -529,3 +529,9 @@ class CaseService(DBService):
             if k.lower() == label.lower():
                 return v
         return None
+
+    def is_agent_allowed_to_view_case_setup(self, agent, case):
+        if case.can_partners_download_enrollments:
+            return True
+        else:
+            return agent.id == case.agent_id
