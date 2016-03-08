@@ -1039,6 +1039,7 @@ var wizard_viewmodel = (function () {
             " requirements for '" + product.product_data.name + "'. You may proceed with this application after" +
             " removing this individual from the coverage selection before proceeding."
           );
+          self.validators.step2.form();
         }
       } else {
         handle_remote_error(resp, function () {
