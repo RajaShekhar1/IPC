@@ -906,14 +906,18 @@ var wizard_viewmodel = (function () {
       wizard.setState();
     };
 
+    self.get_wizard_step = function () {
+      var wizard = $('#enrollment-wizard').data('fu.wizard');
+      return wizard.currentStep;
+    };
+
     // Step 1 ViewModel observables
     self.should_include_spouse_in_table = ko.computed(function () {
       return self.should_show_spouse() && self.spouse().is_valid();
     });
 
     self.should_include_children_in_table = ko.computed(function () {
-      return (self.should_include_children()
-        && self.applicant_list.has_valid_children()
+      return (self.should_include_children() && self.applicant_list.has_valid_children()
       );
     });
 
@@ -985,20 +989,63 @@ var wizard_viewmodel = (function () {
       );
     };
 
+    //region Rate Update Error Callback
     self.handle_update_rates_error = function (resp) {
       if (resp.status === 400 && resp.responseJSON && resp.responseJSON.errors) {
-        $.each(resp.responseJSON.errors, function () {
+        $.each(resp.responseJSON.errors, function (error) {
           var field_name = this.field;
           var message = this.error;
           // set error and show with validator
           self.limit_error_lookup[field_name](true);
           self.validator.form();
         });
+        if (self.get_wizard_step && self.get_wizard_step() === 2) {
+          var product_id = resp.product_id;
+          if (!product_id) {
+            return;
+          }
+          var employee_height_error = _.find(resp.responseJSON.errors, function (error) {
+            return error.field === 'employee_height';
+          });
+          var employee_weight_error = _.find(resp.responseJSON.errors, function (error) {
+            return error.field === 'employee_weight';
+          });
+          var spouse_height_error = _.find(resp.responseJSON.errors, function (error) {
+            return error.field === 'spouse_height';
+          });
+          var spouse_weight_error = _.find(resp.responseJSON.errors, function (error) {
+            return error.field === 'spouse_weight';
+          });
+          var applicant;
+          if (employee_height_error || employee_weight_error) {
+            applicant = self.employee();
+          }
+          if (spouse_height_error || spouse_weight_error) {
+            applicant = self.spouse();
+          }
+
+          if (!applicant) {
+            return;
+          }
+          var product = _.find(self.products, function (product) {
+            return product.product_data.id === product_id;
+          });
+          var health_questions_vm = _.find(self.selected_product_health_questions(), function (health_question_vm) {
+            return health_question_vm.product_coverage.product.product_data.id === product_id;
+          });
+          health_questions_vm.show_yes_dialogue(
+            applicant,
+            "This applicant is not within the height and weight" +
+            " requirements for '" + product.product_data.name + "'. You may proceed with this application after" +
+            " removing this individual from the coverage selection before proceeding."
+          );
+        }
       } else {
         handle_remote_error(resp, function () {
         });
       }
     };
+    //endregion
 
     self.should_allow_grandchildren = ko.computed(function () {
       return !!self.products && self.products.length === 1 && _.some(self.products, function (product) {
@@ -1219,7 +1266,7 @@ var wizard_viewmodel = (function () {
           product_cov,
           options.spouse_questions,
           options.health_questions
-        )
+        );
       });
     });
 
@@ -1479,7 +1526,7 @@ var wizard_viewmodel = (function () {
       };
 
       // Function to keep the fire off a callback when it was not already null or undefined and is not being set to false
-      function subscribe_to_smoker_change(observable, callback) {
+      function subscribe_to_boolean_changes(observable, callback) {
         if (!observable) {
           return;
         }
@@ -1501,10 +1548,39 @@ var wizard_viewmodel = (function () {
 
       /* Show the smoker status changed dialog when the employee or spouse (if available) switches from smoker to
        non-smoker and vice versa */
-      subscribe_to_smoker_change(self.employee().is_smoker, self.show_smoker_status_changed_dialog);
+      subscribe_to_boolean_changes(self.employee().is_smoker, self.show_smoker_status_changed_dialog);
       if (self.spouse()) {
-        subscribe_to_smoker_change(self.spouse().is_smoker, self.show_smoker_status_changed_dialog);
+        subscribe_to_boolean_changes(self.spouse().is_smoker, self.show_smoker_status_changed_dialog);
       }
+
+      function update_rates_if_height_weight_are_valid() {
+        var employee_height = self.employee().height();
+        var employee_weight = self.employee().weight();
+        if (employee_weight && typeof employee_weight === 'string') {
+          employee_weight = parseInt(employee_weight);
+        }
+        var is_employee_height_and_weight_valid = _.isNumber(employee_height) && _.isNumber(employee_weight);
+        var is_spouse_height_and_weight_valid = true;
+        if (self.spouse()) {
+          var spouse_height = self.spouse().height();
+          var spouse_weight = self.spouse().weight();
+          if (spouse_weight && typeof spouse_weight === 'string') {
+            spouse_weight = parseInt(spouse_weight);
+          }
+          is_spouse_height_and_weight_valid = (spouse_height === null && spouse_height === null) || (_.isNumber(spouse_height) && _.isNumber(spouse_weight));
+        }
+        if (is_employee_height_and_weight_valid && is_spouse_height_and_weight_valid) {
+          self.refresh_rate_table();
+        }
+      }
+
+      var height_weight_observables = [self.employee().height, self.employee().weight];
+      if (self.spouse()) {
+        height_weight_observables.push(self.spouse().height, self.spouse().weight);
+      }
+      _.forEach(height_weight_observables, function (observable) {
+        observable.subscribe(update_rates_if_height_weight_are_valid);
+      });
 
       self.children = ko.computed(function () {
         return self.applicant_list.get_children();
