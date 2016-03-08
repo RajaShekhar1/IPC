@@ -1740,7 +1740,7 @@ var wizard_viewmodel = (function () {
       self.validators.step2 = $('#questions-form').validate({
         highlight: wizard_validate_highlight,
         success: wizard_validate_success,
-        errorPlacement: wizard_error_placement,
+        errorPlacement: step_two_error_placement,
         errorElement: 'span',
         errorClass: 'help-block',
         rules: {

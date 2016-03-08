@@ -37,7 +37,7 @@
           </div>
           <!--/ko-->
         </div>
-        <div class="form-group">
+        <div class="form-group" data-bind="attr: { id: type.toLowerCase() + '-height-weight' }">
           <!--ko if: $root.should_show_height() -->
           <div class="col-xs-10 col-sm-4">
             <height-select class="height" params="value: height, name_suffix: $data._id+''"></height-select>
