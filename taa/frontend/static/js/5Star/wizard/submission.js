@@ -70,8 +70,8 @@ function handle_remote_error_with_retry(response, retry_callback) {
     //  // The user wasn't logged in, so just restart our session
     //  login_reauth(null, null, retry_callback);
     //}
-  } else {
-    // Maintain a counter that allows us to retry up to a certain number of times.
+  } else if (response.status === 503) {
+    // Heroku Timeout. Maintain a counter that allows us to retry up to a certain number of times.
     //  This is a temporary shortcut to get around the Heroku timeout.
     if (submission_retry_count < SUBMISSION_RETRIES_ALLOWED) {
       submission_retry_count += 1;
@@ -81,6 +81,10 @@ function handle_remote_error_with_retry(response, retry_callback) {
       window.location = urls.get_manage_case_url(window.vm.options.case_data.id);
     }
 
+  } else if (response.status === 500) {
+    alert("Sorry, the server encountered an error processing this request.");
+  } else {
+    alert("Sorry, an error occurred communicating with the server. Please check your connection to the internet and try again.");
   }
 
 }
