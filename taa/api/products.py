@@ -107,7 +107,7 @@ def get_product_rates(product_id):
         employee_height=employee['height'],
         employee_weight=employee['weight'],
         employee_gender=employee['gender'],
-        employee_smoker=employee['is_smoker'],
+        employee_smoker=employee['is_smoker'] if employee['is_smoker'] else False,
         spouse_age=spouse['age'] if spouse else None,
         spouse_smoker=spouse['is_smoker'] if spouse else None,
         spouse_gender=spouse['gender'] if spouse else None,
