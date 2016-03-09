@@ -139,6 +139,11 @@ var product_rates_service = (function() {
 
   function update_product_rates(products, payment_mode, applicant_list, error_callback, statecode, coverage_vm) {
 
+    // TODO: Remove once HI/ACC rates are implemented
+    products = _.filter(products, function (product) {
+      return product.product_data.base_product_type !== 'HI' && product.product_data.base_product_type !== 'ACC';
+    });
+
     // Signal we have started updating rates data.
     is_loading_rates(true);
 
@@ -164,7 +169,7 @@ var product_rates_service = (function() {
 
         // Find the matching product, call set_rates
         var product = _.find(products, function (p) {
-          return p.product_data.id === product_rates.product_id
+          return p.product_data.id === product_rates.product_id;
         }, this);
 
         var product_rates_viewmodel = get_or_create_product_rates_viewmodel(product);

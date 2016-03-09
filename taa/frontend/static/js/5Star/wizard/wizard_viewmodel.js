@@ -439,7 +439,9 @@ var wizard_viewmodel = (function () {
 
     get_coverage_selection_template: function () {
       // in the future, products may not all use the recommendation system for coverage selection.
-      if (this.product.does_use_recommended_coverage_table()) {
+      if (this.product.has_simple_coverage()) {
+        return 'simple_coverage_selection';
+      } else if (this.product.does_use_recommended_coverage_table()) {
         return 'recommendation_coverage_selection';
       } else {
         // Simple coverage category selection.
@@ -595,7 +597,7 @@ var wizard_viewmodel = (function () {
   }
 
   ApplicantCoverageSelectionVM.prototype = {
-    select_recommended_coverage: function(recommendation_set) {
+    select_recommended_coverage: function (recommendation_set) {
       var coverage_option = recommendation_set.get_recommended_applicant_coverage(this.applicant.type);
       if (coverage_option) {
         this.recommended_coverage_option(coverage_option);
@@ -619,7 +621,7 @@ var wizard_viewmodel = (function () {
     get_cumulative_coverage_amount: function () {
       // Add together previous coverage application amounts and the current application amount.
       var previous_coverage_amount = this.applicant.get_existing_coverage_amount_for_product(this.product.product_data.id);
-      var current_coverage_amount = (this.has_selected_coverage() ? this.coverage_option().face_value : 0);
+      var current_coverage_amount = (this.has_selected_coverage()? this.coverage_option().face_value : 0);
       return previous_coverage_amount + current_coverage_amount;
     },
 
@@ -896,6 +898,21 @@ var wizard_viewmodel = (function () {
     self.enrollment_case = options.case_data;
     self.products = wizard_products.build_products(self, options.products);
 
+    //region Occupation Items
+    self.occupations = ko.computed(function () {
+      var occupations = _.map(self.products, function (product) {
+        return product.get_occupations();
+      });
+      occupations = _.flatten(occupations);
+
+      return _.uniq(occupations);
+    });
+    self.selected_occupation = ko.observable(null);
+    self.requires_occupation = ko.computed(function () {
+      return _.any(self.products, function product_has_occupations(product) { return product.get_occupations().length > 0; });
+    });
+    //endregion
+
     self.is_rate_table_loading = product_rates_service.is_loading_rates;
     self.is_show_rates_clicked = ko.observable(false);
 
@@ -1010,7 +1027,7 @@ var wizard_viewmodel = (function () {
     });
 
     self.show_spouse_name = ko.computed(function () {
-      return (self.should_include_spouse_in_table()) ? self.spouse().name() : "";
+      return (self.should_include_spouse_in_table())? self.spouse().name() : "";
     });
 
 

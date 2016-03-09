@@ -179,6 +179,10 @@ var wizard_products = (function () {
     does_use_recommended_coverage_table: function () {
       // Most products use this format for coverage selection.
       return true;
+    },
+
+    get_occupations: function () {
+      return [];
     }
 
   };
@@ -482,6 +486,9 @@ var wizard_products = (function () {
   ACCProduct.prototype = Object.create(Product.prototype);
   ACCProduct.prototype.has_simple_coverage = function () {
     return true;
+  };
+  ACCProduct.prototype.get_occupations = function () {
+    return ['Management', 'Worker', 'Secretary'];
   };
   //endregion
 

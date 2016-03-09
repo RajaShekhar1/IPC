@@ -48,6 +48,15 @@
           </div>
         </div>
 
+        <div class="row" data-bind="if: requires_occupation">
+          <div class="col-xs-11 col-xs-offset col-sm-4 col-sm-offset-2">
+            <div class="form-group col-xs-12 col-sm-4">
+              <label for="occupation">Occupation</label>
+              <select id="occupation" name="occupation" class="ace" data-bind="options: occupations, selectedOptions: selected_occupation, optionsCaption: '(Choose Occupation)'"></select>
+            </div>
+          </div>
+        </div>
+
         <div data-bind="template: {name: 'extended-questions-template', data: employee}"></div>
       </div>
 
@@ -277,9 +286,8 @@
 
               <h3 data-bind="text: current_product().format_product_name()"></h3>
               <div data-bind="slideDownIf: !current_product().did_decline()">
-                <div class="" data-bind="
-                template: {name: current_product().get_coverage_selection_template(), data: current_product()}
-                ">
+                <div class=""
+                     data-bind="template: {name: current_product().get_coverage_selection_template(), data: current_product()}">
                 </div>
               </div>
             </div>
@@ -506,6 +514,94 @@
 
 </script>
 
+<script id="simple_coverage_selection" type="text/html">
+
+  <div class="row">
+    <div class="col-xs-4 col-sm-3 pricing-span-header">
+      <div class="widget-box transparent">
+        <div class="widget-header">
+          <h5 class="bigger lighter">Covered</h5>
+        </div>
+        <div class="widget-body">
+          <div class="widget-main no-padding">
+            <ul class="list-unstyled list-striped js">
+              <li>Joe</li>
+              <li>Joe + Betty</li>
+              <li>Joe + Child(ren)</li>
+              <li>Family (all)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-8 col-sm-9 pricing-span-body">
+      <div class="pricing-span good">
+        <div class="widget-box pricing-box-small widget-color-red3">
+          <div class="widget-header center no-padding">
+            <h5 class="bugger lighter">Level 1</h5>
+          </div>
+          <div class="widget-body">
+            <div class="widget-main no-padding">
+              <ul class="list-unstyled list-striped pricing-table">
+                <li>$19.34</li>
+                <li>$36.75</li>
+                <li>$34.81</li>
+                <li>$52.22</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div>
+          <a class="btn btn-block btn-sm btn-danger">Select</a>
+        </div>
+      </div>
+      <div class="pricing-span better">
+        <div class="widget-box pricing-box-small widget-color-orange">
+          <div class="widget-header center no-padding">
+            <h5 class="bugger lighter">Level 2</h5>
+          </div>
+          <div class="widget-body">
+            <div class="widget-main no-padding">
+              <ul class="list-unstyled list-striped pricing-table">
+                <li>$34.71</li>
+                <li>$65.94</li>
+                <li>$62.47</li>
+                <li>$93.71</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div>
+          <a class="btn btn-block btn-sm btn-warning">Select</a>
+        </div>
+      </div>
+      <div class="pricing-span better">
+        <div class="widget-box pricing-box-small widget-color-blue">
+          <div class="widget-header center no-padding">
+            <h5 class="bugger lighter">Level 3</h5>
+          </div>
+          <div class="widget-body">
+            <div class="widget-main no-padding">
+              <ul class="list-unstyled list-striped pricing-table">
+                <li>$48.89</li>
+                <li>$92.88</li>
+                <li>$88.00</li>
+                <li>$131.99</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div>
+          <a class="btn btn-block btn-sm btn-primary">Select</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-bind="template: {name: 'riders-template', data: $data}"></div>
+
+</script>
+
 <script type="text/html" id="riders-template">
   <br>
 
@@ -717,9 +813,9 @@
 </script>
 
 {# Template for HI/ACC coverage options #}
-<script id="simple-coverage-template" type="text/html">
+<script id="simple_coverage_selection" type="text/html">
   <h3 data-bind="text: current_product().format_product_name()"></h3>
-  <div data-bind="slideDownIf: current_product() && !current_product().did_decline()">
+  <div data-bind="slideDownIf: !current_product().did_decline()">
 
   </div>
 </script>
