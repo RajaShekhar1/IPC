@@ -75,7 +75,11 @@ function handle_remote_error_with_retry(response, retry_callback) {
     //  This is a temporary shortcut to get around the Heroku timeout.
     if (submission_retry_count < SUBMISSION_RETRIES_ALLOWED) {
       submission_retry_count += 1;
-      retry_callback(true);
+      // Wait for a few seconds before retrying.
+      setTimeout(function() {
+        retry_callback(true);
+      }, 8000);
+      
     } else {
       alert("Sorry, an error occurred communicating with the server. Please check your Agent Inbox to sign this application.");
       window.location = urls.get_manage_case_url(window.vm.options.case_data.id);
