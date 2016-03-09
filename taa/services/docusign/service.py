@@ -1075,8 +1075,8 @@ class DocuSignEnvelopeComponent(object):
             recip_repr = dict(
                 name=recipient.name,
                 email=recipient.email,
-                recipientId=str(num),
-                routingOrder=str(num),
+                recipientId=str(num + 1),
+                routingOrder=str(num + 1),
                 templateRequired=recipient.is_required(),
             )
 
@@ -1130,7 +1130,7 @@ class DocuSignEnvelopeComponent(object):
                                                       document_id=1, page_number=tab_def.page,
                                                       )]
                 elif tab_def.type_ == "DateSigned" and tab_def.recipient_role == "Employee":
-                    tabs.append(DocuSignTextTab("DateSignedEmployee", datetime.today().strftime('%m/%d/%Y'),
+                    tabs.append(DocuSignTextTab("DateSignedEmployee", self.data.get_employee_esignature_date(),
                         x=tab_def.x,
                         y=tab_def.y,
                         document_id=1,

@@ -293,6 +293,9 @@ class EnrollmentDataWrap(object):
         esig = "{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
         return self.data.get('emp_sig_txt', esig)
 
+    def get_employee_esignature_date(self):
+        return self.data.get('emp_sig_date', datetime.today().strftime('%m/%d/%Y'))
+
     def get_employee_initials(self):
         return self.data.get('emp_initials_txt', '')
 
