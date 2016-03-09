@@ -127,6 +127,8 @@ class EnrollmentDataWrap(object):
             return self.case.owner_agent
         elif agent_service.get_logged_in_agent():
             return agent_service.get_logged_in_agent()
+        elif self.data.get('agent_id'):
+            return agent_service.get(self.data['agent_id'])
         else:
             # If the logged-in user is not an agent, default to case owner.
             return self.case.owner_agent
