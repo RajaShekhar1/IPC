@@ -54,10 +54,14 @@
         </div>
     </script>
 
-    <div id="extended-questions" data-bind="if: $root.should_show_extended_questions">
+    <div id="extended-questions" data-bind="id: $root.requires_additional_information">
       <h3 class="lighter block green">Additional Information</h3>
+      <!-- ko if: $root.requires_additional_employee_information -->
       <div data-bind="template: { name: 'extended-information-template', data: employee }"></div>
+      <!-- /ko -->
+      <!-- ko if: $root.requires_additional_spouse_information -->
       <div data-bind="template: { name: 'extended-information-template', data: spouse }"></div>
+      <!-- /ko -->
     </div>
 
     <div data-bind="visible: should_show_other_insurance_questions">

@@ -620,7 +620,7 @@ var wizard_viewmodel = (function () {
     get_cumulative_coverage_amount: function () {
       // Add together previous coverage application amounts and the current application amount.
       var previous_coverage_amount = this.applicant.get_existing_coverage_amount_for_product(this.product.product_data.id);
-      var current_coverage_amount = (this.has_selected_coverage() ? this.coverage_option().face_value : 0);
+      var current_coverage_amount = (this.has_selected_coverage()? this.coverage_option().face_value : 0);
       return previous_coverage_amount + current_coverage_amount;
     },
 
@@ -1056,7 +1056,7 @@ var wizard_viewmodel = (function () {
     });
 
     self.show_spouse_name = ko.computed(function () {
-      return (self.should_include_spouse_in_table()) ? self.spouse().name() : "";
+      return (self.should_include_spouse_in_table())? self.spouse().name() : "";
     });
 
     // Recommendations table visibility
@@ -1115,6 +1115,13 @@ var wizard_viewmodel = (function () {
       return false;
     };
 
+    var any_product = function (method_name) {
+      return _.any(_.invoke(self.products, method_name));
+    };
+    var all_products = function (method_name) {
+      return _.all(_.invoke(self.products, method_name));
+    };
+
     // Extended questions for step 1
     self.should_show_extended_questions = function () {
       return (
@@ -1124,6 +1131,35 @@ var wizard_viewmodel = (function () {
         any_product('requires_is_smoker')
       );
     };
+
+    function requires_additional_employee_information() {
+      var result = _.any(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_view_model) {
+        var product = product_coverage_view_model.product;
+        var requires_additional_information = product.requires_gender() || product.requires_height() || product.requires_weight() || product.requires_is_smoker();
+        var coverage = product_coverage_view_model.__get_coverage_for_applicant(self.employee());
+        return requires_additional_information && coverage && coverage.coverage_option() && coverage.coverage_option().face_value !== 0;
+      });
+      return result;
+    }
+
+    function requires_additional_spouse_information() {
+      if (!self.spouse()) {
+        return false;
+      }
+      var result = _.any(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_view_model) {
+        var product = product_coverage_view_model.product;
+        var requires_additional_information = product.requires_gender() || product.requires_height() || product.requires_weight() || product.requires_is_smoker();
+        var coverage = product_coverage_view_model.__get_coverage_for_applicant(self.spouse());
+        return requires_additional_information && coverage && coverage.coverage_option() && coverage.coverage_option().face_value !== 0;
+      });
+      return result;
+    }
+
+    self.requires_additional_employee_information = ko.computed(requires_additional_employee_information);
+    self.requires_additional_spouse_information = ko.computed(requires_additional_spouse_information);
+    self.requires_additional_information = ko.computed(function () {
+      return self.requires_additional_employee_information() || self.requires_additional_spouse_information();
+    });
 
     self.should_show_gender = function () {
       return any_product('requires_gender');
@@ -1136,13 +1172,6 @@ var wizard_viewmodel = (function () {
     };
     self.should_show_smoker = function () {
       return any_product('requires_is_smoker');
-    };
-
-    var any_product = function (method_name) {
-      return _.any(_.invoke(self.products, method_name));
-    };
-    var all_products = function (method_name) {
-      return _.all(_.invoke(self.products, method_name));
     };
 
     // validation helpers
@@ -1692,10 +1721,6 @@ var wizard_viewmodel = (function () {
             minAge: min_emp_age(),
             maxAge: max_emp_age()
           },
-          'tobacco-0': {
-            required: true
-          },
-          'gender-0': "required",
           spFName: {
             required: {
               depends: any_valid_spouse_field
@@ -1716,33 +1741,6 @@ var wizard_viewmodel = (function () {
               depends: any_valid_spouse_field
             }
           },
-          'tobacco-1': {required: {depends: any_valid_spouse_field}},
-          'gender-1': {required: {depends: any_valid_spouse_field}},
-          'weight_0': {
-            required: true,
-            empWeightLimit: true
-          },
-          'weight_1': {
-            required: {depends: any_valid_spouse_field},
-            spWeightLimit: true
-          },
-          'height_feet_0': {
-            required: true,
-            empHeightLimit: true
-          },
-          'height_inches_0': {
-            required: true,
-            empHeightLimit: true
-          },
-          'height_feet_1': {
-            required: {depends: any_valid_spouse_field},
-            spHeightLimit: true
-          },
-          'height_inches_1': {
-            required: {depends: any_valid_spouse_field},
-            spHeightLimit: true
-          },
-
           paymentMode: {
             isValidPaymentMode: {depends: self.can_change_payment_mode}
           }
@@ -1757,6 +1755,7 @@ var wizard_viewmodel = (function () {
       });
 
       self.validators = {};
+      self.validators.step1 = self.validator;
       self.validators.step2 = $('#questions-form').validate({
         highlight: wizard_validate_highlight,
         success: wizard_validate_success,
