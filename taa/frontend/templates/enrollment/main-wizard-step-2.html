@@ -54,7 +54,7 @@
         </div>
     </script>
 
-    <div id="extended-questions" data-bind="id: $root.requires_additional_information">
+    <div id="extended-questions" data-bind="if: $root.requires_additional_information">
       <h3 class="lighter block green">Additional Information</h3>
       <!-- ko if: $root.requires_additional_employee_information -->
       <div data-bind="template: { name: 'extended-information-template', data: employee }"></div>

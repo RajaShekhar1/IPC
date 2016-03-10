@@ -978,9 +978,17 @@ var wizard_viewmodel = (function () {
     };
 
     self.refresh_rate_table = function () {
+      var products_to_fetch = _.chain(self.product_coverage_viewmodels())
+        .filter(function (product_coverage_view_model) {
+          return !product_coverage_view_model.did_decline();
+        })
+        .map(function (product_coverage_view_model) {
+          return product_coverage_view_model.product;
+        })
+        .value();
 
       product_rates_service.update_product_rates(
-        self.products,
+        products_to_fetch,
         self.coverage_vm.payment_mode(),
         self.applicant_list,
         self.handle_update_rates_error,

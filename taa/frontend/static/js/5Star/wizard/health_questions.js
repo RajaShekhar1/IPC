@@ -250,7 +250,8 @@ NonHealthQuestion.prototype.get_question_text = function () {
 
 
 function decline_product_if_no_coverage(product_coverage) {
-// If we have removed the last applicant for this product, set it as declined.
+  'use strict';
+  // If we have removed the last applicant for this product, set it as declined.
   if (!product_coverage.did_select_valid_coverage()) {
     if (window.vm.coverage_vm.has_multiple_products()) {
       product_coverage.did_decline(true);
@@ -419,7 +420,7 @@ StandardHealthQuestion.prototype.can_applicant_skip_due_to_GI = function (applic
 };
 
 StandardHealthQuestion.prototype.get_yes_highlight = function () {
-  return (this.does_yes_stop_app()) ? 'stop' : 'checkmark';
+  return (this.does_yes_stop_app())? 'stop' : 'checkmark';
 };
 StandardHealthQuestion.prototype.does_yes_stop_app = function () {
   return !this.question.is_ignored;
@@ -800,7 +801,7 @@ function HealthQuestionAnswer(question, button_group, question_object) {
     // answer: [Yes|No|GI] (GI means it was skipped due to GI)
     var answer;
     if (self.button_group()) {
-      answer = (self.button_group().is_required()) ? self.button_group().get_val() : "GI";
+      answer = (self.button_group().is_required())? self.button_group().get_val() : "GI";
     } else {
       answer = null;
     }
