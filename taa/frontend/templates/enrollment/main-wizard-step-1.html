@@ -52,7 +52,8 @@
           <div class="col-xs-11 col-xs-offset col-sm-4 col-sm-offset-2">
             <div class="form-group col-xs-12 col-sm-4">
               <label for="occupation">Occupation</label>
-              <select id="occupation" name="occupation" class="ace" data-bind="options: occupations, selectedOptions: selected_occupation, optionsCaption: '(Choose Occupation)'"></select>
+              <select id="occupation" name="occupation" class="ace"
+                      data-bind="options: occupations, selectedOptions: selected_occupation, optionsCaption: '(Choose Occupation)'"></select>
             </div>
           </div>
         </div>
@@ -517,7 +518,7 @@
 <script id="simple_coverage_selection" type="text/html">
 
   <div class="row">
-    <div class="col-xs-4 col-sm-3 pricing-span-header">
+    <div class="col-xs-4 col-sm-3 col-xs-offset-2 col-sm-offset-3 pricing-span-header">
       <div class="widget-box transparent">
         <div class="widget-header">
           <h5 class="bigger lighter">Covered</h5>
@@ -525,60 +526,44 @@
         <div class="widget-body">
           <div class="widget-main no-padding">
             <ul class="list-unstyled list-striped js">
-              <li>Joe</li>
-              <li>Joe + Betty</li>
-              <li>Joe + Child(ren)</li>
-              <li>Family (all)</li>
+              <li>
+                <label>
+                  <span data-bind="text: $root.employee().first"></span>
+                  <br>
+                  <input type="radio" name="coverage-type" value="employee">
+                </label>
+              </li>
+              <li data-bind="if: $root.has_spouse">
+                <label>
+                  <span data-bind="text: $root.spouse_and_employee_names"></span>
+                  <br>
+                  <input type="radio" name="coverage-type" value="employee,spouse">
+                </label>
+              </li>
+              <li data-bind="if: $root.has_children">
+                <label>
+                  <span>Joe + Child(ren)</span>
+                  <br>
+                  <input type="radio" name="coverage-type" value="employee,children">
+                </label>
+              </li>
+              <li data-bind="if: $root.has_children() && $root.has_spouse()">
+                <label>
+                  <span>Family (All)</span>
+                  <br>
+                  <input type="radio" name="coverage-type" value="employee,spouse,children">
+                </label>
+              </li>
             </ul>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-xs-8 col-sm-9 pricing-span-body">
-      <div class="pricing-span good">
-        <div class="widget-box pricing-box-small widget-color-red3">
-          <div class="widget-header center no-padding">
-            <h5 class="bugger lighter">Level 1</h5>
-          </div>
-          <div class="widget-body">
-            <div class="widget-main no-padding">
-              <ul class="list-unstyled list-striped pricing-table">
-                <li>$19.34</li>
-                <li>$36.75</li>
-                <li>$34.81</li>
-                <li>$52.22</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div>
-          <a class="btn btn-block btn-sm btn-danger">Select</a>
-        </div>
-      </div>
-      <div class="pricing-span better">
-        <div class="widget-box pricing-box-small widget-color-orange">
-          <div class="widget-header center no-padding">
-            <h5 class="bugger lighter">Level 2</h5>
-          </div>
-          <div class="widget-body">
-            <div class="widget-main no-padding">
-              <ul class="list-unstyled list-striped pricing-table">
-                <li>$34.71</li>
-                <li>$65.94</li>
-                <li>$62.47</li>
-                <li>$93.71</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div>
-          <a class="btn btn-block btn-sm btn-warning">Select</a>
-        </div>
-      </div>
-      <div class="pricing-span better">
+    <div class="col-xs-4 col-sm-3 pricing-span-body">
+      <div class="pricing-span best">
         <div class="widget-box pricing-box-small widget-color-blue">
           <div class="widget-header center no-padding">
-            <h5 class="bugger lighter">Level 3</h5>
+            <h5 class="bugger lighter">Weekly Premium</h5>
           </div>
           <div class="widget-body">
             <div class="widget-main no-padding">
@@ -590,9 +575,6 @@
               </ul>
             </div>
           </div>
-        </div>
-        <div>
-          <a class="btn btn-block btn-sm btn-primary">Select</a>
         </div>
       </div>
     </div>
@@ -810,14 +792,6 @@
 <script type="text/html" id="selected_coverage_option_template">
   <strong data-bind="html: applicant_coverage.format_selected_coverage()"></strong>
   <div data-bind="html: applicant_coverage.format_selected_premium()"></div>
-</script>
-
-{# Template for HI/ACC coverage options #}
-<script id="simple_coverage_selection" type="text/html">
-  <h3 data-bind="text: current_product().format_product_name()"></h3>
-  <div data-bind="slideDownIf: !current_product().did_decline()">
-
-  </div>
 </script>
 
 <script type="text/html" id="blank_template">

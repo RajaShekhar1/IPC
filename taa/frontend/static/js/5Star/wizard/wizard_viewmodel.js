@@ -1700,6 +1700,24 @@ var wizard_viewmodel = (function () {
     // in validation.js, wizard validation
     init_validation(self);
 
+    //region HI/ACC Helpers
+    self.has_spouse = ko.computed(function () {
+      return !!self.spouse();
+    });
+
+    self.has_children = ko.computed(function () {
+      return !!self.children() && self.children().length > 0;
+    });
+
+    self.spouse_and_employee_names = ko.computed(function () {
+      if (self.spouse()) {
+        return self.employee().first() + ' + ' + self.spouse().first();
+      } else {
+        return self.employee().first();
+      }
+    });
+    //endregion
+
   }
 
 
