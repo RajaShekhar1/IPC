@@ -1,3 +1,5 @@
+import inspect
+
 import dateutil.parser
 from datetime import datetime
 import re
@@ -12,6 +14,7 @@ class CensusRecordField(object):
     """
     def __init__(self, csv_column_name, database_name, preprocessor, validators,
                  post_processors=None):
+        self.parser = None
         self.csv_column_name = csv_column_name
         self.database_name = database_name
         self.preprocessor = preprocessor or (lambda x: x)
@@ -19,6 +22,7 @@ class CensusRecordField(object):
         self.post_processors = post_processors or []
 
     def validate(self, parser, record):
+        self.parser = parser
         all_valid = True
         for validator in self.validators:
             is_valid, error_message = validator(self, record)
@@ -128,6 +132,22 @@ def state_validator(field, record):
     ps = ProductService()
     if not state or not len(state) == 2 or not state in ps.get_all_statecodes():
         return False, "Invalid US State. Must be two-letter abbreviation."
+
+    return True, None
+
+
+def classification_validator(field, record):
+    parser = field.parser
+    case = parser.case
+
+    classification = field.get_column_from_record(record)
+    if not classification:
+        return True, None
+
+    from taa.services.cases import CaseService
+    case_service = CaseService()
+    if classification.lower() not in [c.lower() for c in case_service.get_classifications(case)]:
+        return False, "Invalid Occupation. Must be in case's list of occupations or empty."
 
     return True, None
 
@@ -266,7 +286,7 @@ class CensusRecordParser(object):
     employee_height_inches = CensusRecordField('EMP_HEIGHT_IN', 'employee_height_inches', preprocess_string, [])
     employee_weight_lbs = CensusRecordField('EMP_WEIGHT_LBS', 'employee_weight_lbs', preprocess_string, [])
     employee_smoker = CensusRecordField('EMP_SMOKER_Y_N', 'employee_smoker', preprocess_y_n, [])
-    employee_occupation_class = CensusRecordField('EMP_OCCUPATION', 'occupation_class', preprocess_string, [])
+    employee_occupation_class = CensusRecordField('CLASSIFICATION', 'occupation_class', preprocess_string, [classification_validator])
     # Spouse
     spouse_first = CensusRecordField('SP_FIRST', 'spouse_first', preprocess_string, [])
     spouse_last = CensusRecordField('SP_LAST', 'spouse_last', preprocess_string, [], [postprocess_spouse_last])
@@ -354,11 +374,12 @@ class CensusRecordParser(object):
             RequiredIfAnyInGroupValidator([child_birthdate]))
         all_possible_fields += [child_first, child_last, child_birthdate]
 
-    def __init__(self):
+    def __init__(self, case):
         self.errors = []
         self.valid_data = []
         self.used_ssns = set()
         self.line_number = 0
+        self.case = case
 
     def process_file(self, file_data, error_if_matching=None):
         headers, records, dialect = self._process_file_stream(file_data)
