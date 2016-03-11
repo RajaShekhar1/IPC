@@ -45,8 +45,8 @@ class ProductService(DBService):
         return CustomGuaranteeIssueProduct.query.options(
             db.eagerload('agents')).all()
 
-    def create_custom_product(self, product_name):
-        product = CustomGuaranteeIssueProduct(name=product_name, code='')
+    def create_custom_product(self, product_name, base_product_id):
+        product = CustomGuaranteeIssueProduct(name=product_name, code='', base_product_id=base_product_id)
         return self.save(product)
 
     def get_cases_using_product(self, product):

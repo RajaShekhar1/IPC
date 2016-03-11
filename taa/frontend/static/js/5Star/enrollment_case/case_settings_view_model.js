@@ -332,7 +332,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.annual_today_between = ko.computed(function () {
-    if (self.annual_enrollment_periods().length >= 4 && self.annual_enrollment_periods().first().start_date() !== "") {
+    if (self.annual_enrollment_periods().length >= 4 && self.annual_enrollment_periods()[0].start_date() !== "") {
       return self.annual_enrollment_periods().reduce(function (a, period) {
         var start_date = moment(period.start_date(), "MM/DD");
         var end_date = moment(period.end_date(), "MM/DD");
@@ -590,7 +590,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   }
 
   self.owner_agent = ko.computed(function () {
-    return settings.active_agents.find(function (elem) {
+    return _.find(settings.active_agents, function (elem) {
       return elem.id === parseInt(self.owner_agent_id(), 10);
     });
   });
@@ -929,9 +929,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   // enrollment data
-  self.census_data = ko.observable([]);
+  self.census_data = ko.observable(true);
   self.has_census_data = ko.pureComputed(function () {
-    return self.census_data().length > 0;
+    return self.census_data();
   });
 
   self.flash_messages = new FlashMessages();
@@ -941,7 +941,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     var fields = [self.company_name, self.group_number, self.products, self.enrollment_period_type,
       self.enrollment_periods, self.situs_city, self.situs_state, self.payment_mode,
       self.is_active, self.owner_agent_id, self.can_partners_download_enrollments, self.is_self_enrollment,
-      self.selected_agent_splits
+      self.selected_agent_splits,
+      self.has_agent_splits
     ];
     _.each(self.enrollment_periods(), function (p) {
       fields.push(p.start_date);
@@ -1488,7 +1489,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       enrollment_tab.tab('show');
 
       // Load census data when tab loads
-      console.log("SetTimeout for load_initial_census_data");
       setTimeout(load_initial_census_data, 0);
 
       function load_initial_census_data() {
@@ -1511,7 +1511,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       }
 
       function handle_no_census_data_loaded() {
-        self.census_data([]);
+        self.census_data(false);
         self.toggle_enrollment_buttons();
       }
     });
@@ -1519,9 +1519,12 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     this.get("#history", function () {
       self.exit_print_mode();
       history_tab.tab('show');
-      $.getJSON(urls.get_case_api_census_email_batches(case_data.id), function (data) {
-        self.email_batches(data.data);
-      });
+
+      setTimeout(function() {
+        $.getJSON(urls.get_case_api_census_email_batches(case_data.id), function (data) {
+          self.email_batches(data.data);
+        });
+      }, 0);
     });
 
     this.get("#reports", function () {
