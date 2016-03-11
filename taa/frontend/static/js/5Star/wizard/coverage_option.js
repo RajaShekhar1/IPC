@@ -109,8 +109,6 @@ function CoverageOption(options) {
         return "";
       }
       return 'Selected';
-
-      return format_face_value(self.face_value);
     };
     self.format_face_option = function() {
       // Only show employee info for this kind of product.

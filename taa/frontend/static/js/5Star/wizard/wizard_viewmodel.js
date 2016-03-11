@@ -1741,6 +1741,7 @@ var wizard_viewmodel = (function () {
     //region HI/ACC Helpers
 
     self.get_simple_coverage_options = ko.pureComputed(function() {
+      // FIXME: code not finished or being called yet
       var options = [
         {
           label: self.employee().first(),
@@ -1769,6 +1770,7 @@ var wizard_viewmodel = (function () {
         });
       }
 
+      return options;
     });
 
     self.has_spouse = ko.computed(function () {
