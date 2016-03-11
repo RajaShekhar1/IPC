@@ -86,7 +86,7 @@ def get_rates(product, **demographics):
                                 height=demographics.get('spouse_height'),
                                 weight=demographics.get('spouse_weight')),
         'children': rate_calc.get(product_code, demographics.get('payment_mode'), age=None,
-                                  applicant_type=APPLICANT_TYPE_CHILDREN)
+                                  applicant_type=APPLICANT_TYPE_CHILDREN, smoker=None)
     }
 
 
@@ -192,6 +192,7 @@ class Rates(object):
         if applicant_type == APPLICANT_TYPE_CHILDREN:
             # Children rates/premiums are indexed with age as -1
             age = -1
+            smoker = None
         elif age is None:
             # Don't return any rate options for this applicant (Emp/Sp) if age is not provided.
             return {'byface': [], 'bypremium': []}
