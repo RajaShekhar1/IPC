@@ -708,6 +708,9 @@ var ProductStatesLimiterViewModel = function (product_statecode_mapping,
 
 
   self.is_valid_product_for_state = function (product, state) {
+    if (!state) {
+      return true;
+    }
     return _.contains(self.product_state_mapping[product.id], state);
   };
 

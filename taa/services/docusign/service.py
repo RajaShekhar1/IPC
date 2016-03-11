@@ -14,6 +14,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate
 from urlparse import urljoin
 from dateutil.parser import parse as parse_datetime
+from taa.config_defaults import DOCUSIGN_CC_RECIPIENTS
+
 from taa.services.users import UserService
 
 from taa import app, db
@@ -52,16 +54,22 @@ class DocuSignService(object):
                 components += self.create_group_ci_envelope_components(enrollment_data, recipients,
                                                                        should_use_docusign_renderer)
 
+        product_codes = [
+            EnrollmentDataWrap(product_submission, case).get_product_code()
+            for product_submission in product_submissions
+        ]
+
         if not enrollment_data.should_use_call_center_workflow():
             signer_name = first_product_data.get_employee_name()
         else:
             signer_name = recipients[0].name
 
         envelope_result = self.create_envelope(
-            email_subject="Signature needed: {} ({})".format(
-                #first_product_data.get_product().name,
-                signer_name,
-                first_product_data.get_employer_name()),
+            email_subject="Enroll {} ({}) | {}".format(
+                first_product_data.get_employee_name(),
+                first_product_data.get_employer_name(),
+                ','.join(product_codes),
+                ),
             components=components,
         )
         return in_person_signer, envelope_result
@@ -104,14 +112,20 @@ class DocuSignService(object):
                                              email=enrollment_data.get_employee_email())
 
         if enrollment_data.should_use_call_center_workflow():
-            recipients = [agent]
+            recipients = [agent] + self.get_carbon_copy_recipients()
             return agent, recipients
         else:
             recipients = [
                 agent,
                 employee,
-            ]
+            ] + self.get_carbon_copy_recipients()
             return employee, recipients
+
+    def get_carbon_copy_recipients(self):
+        return [
+            CarbonCopyRecipient(name, email)
+            for name, email in DOCUSIGN_CC_RECIPIENTS
+        ]
 
     def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
         from taa.services.docusign.templates.fpp import FPPTemplate
@@ -138,7 +152,7 @@ class DocuSignService(object):
                 child.update(dict(
                     coverage=format(Decimal(unicode(child_data['face_value'])), ',.0f'),
                     premium=format(Decimal(unicode(child_data['premium'])), '.2f'),
-                    soh_questions=enrollment_data['children_soh_questions'][child_index],
+                    soh_questions=enrollment_data.get_child_soh_questions(child_index),
                 ))
                 child_attachment_form.add_child(child)
             components.append(child_attachment_form)
@@ -189,7 +203,7 @@ class DocuSignService(object):
                 child.update(dict(
                     coverage=format(Decimal(unicode(child_data['face_value'])), ',.0f'),
                     premium=format(Decimal(unicode(child_data['premium'])), '.2f'),
-                    soh_questions=enrollment_data['children_soh_questions'][child_index],
+                    soh_questions=enrollment_data.get_child_soh_questions(child_index),
                 ))
                 child_attachment_form.add_child(child)
             components.append(child_attachment_form)
@@ -224,7 +238,9 @@ class DocuSignService(object):
                              EnrollmentApplication.agent_id == None,
                              )
                 ).filter(EnrollmentApplication.case_id.in_(owned_case_ids)
-                )
+                ).options(db.joinedload('case')
+                ).options(db.joinedload('coverages').joinedload('product')
+                ).options(db.joinedload('census_record'))
             enrollments = list(own_enrollments) + list(partner_enrollments)
 
         else:
@@ -232,8 +248,9 @@ class DocuSignService(object):
             enrollments = enrollment_service.search_enrollments(
                     by_agent_ids=None,
                     by_applicant_signing_status=envelope_status,
-            )
+            ).options(db.eagerload('coverages', 'product'))
 
+        print("LOADED ALL ENROLLMENTS")
         return [DocusignEnvelope(enrollment.docusign_envelope_id, enrollment)
                 for enrollment in enrollments if enrollment.docusign_envelope_id is not None]
 
@@ -739,6 +756,20 @@ class DocuSignTransport(object):
 
         return req.json()
 
+    def delete(self, url, data):
+        full_url = urljoin(self.api_endpoint, url)
+
+        self.last_request = req = requests.delete(
+            full_url,
+            data=json.dumps(data),
+            headers=self._make_headers()
+        )
+
+        if req.status_code < 200 or req.status_code >= 300:
+            self._raise_docusign_error(data, full_url, req)
+
+        return req.json()
+
     def _raise_docusign_error(self, data, full_url, req):
         # Print error to Heroku error logs.
         print("""
@@ -818,6 +849,7 @@ class EmployeeDocuSignRecipient(DocuSignRecipient):
     def get_client_user_id(self):
         return "ee-123456"
 
+
 class AgentDocuSignRecipient(DocuSignRecipient):
     def __init__(self, agent, name, email, cc_only=False, role_name=None, exclude_from_envelope=False,
                  use_embedded_signing=True):
@@ -833,16 +865,27 @@ class AgentDocuSignRecipient(DocuSignRecipient):
         return True
 
     def get_client_user_id(self):
-        # Use the stormpath URL for this agent
-        agent_service = AgentService()
         # Hash our agent id
         import hashlib
         return hashlib.sha256("agent-{}".format(self.agent.id)).hexdigest()
 
+
 class CarbonCopyRecipient(DocuSignRecipient):
-    def is_employee(self): return False
-    def is_agent(self): return False
-    def is_carbon_copy(self): return True
+
+    def is_employee(self):
+        return False
+
+    def is_agent(self):
+        return False
+
+    def is_carbon_copy(self):
+        return True
+
+    def should_use_embedded_signing(self):
+        return False
+
+    def get_role_name(self):
+        return None
 
 
 # Tabs
@@ -1034,14 +1077,19 @@ class DocuSignEnvelopeComponent(object):
             recip_repr = dict(
                 name=recipient.name,
                 email=recipient.email,
-                recipientId=str(num),
-                routingOrder=str(num),
-                roleName=recipient.get_role_name(),
+                recipientId=str(num + 1),
+                routingOrder=str(num + 1),
                 templateRequired=recipient.is_required(),
-                tabs=self.generate_docusign_formatted_tabs(recipient),
             )
+
+            tabs = self.generate_docusign_formatted_tabs(recipient)
+            if tabs:
+                recip_repr['tabs'] = tabs
+
+            if recipient.get_role_name():
+                recip_repr['roleName'] = recipient.get_role_name()
+
             if recipient.should_use_embedded_signing():
-                # TODO: Generate if needed
                 recip_repr['clientUserId'] = recipient.get_client_user_id()
 
             if self.is_recipient_signer(recipient):
@@ -1084,7 +1132,7 @@ class DocuSignEnvelopeComponent(object):
                                                       document_id=1, page_number=tab_def.page,
                                                       )]
                 elif tab_def.type_ == "DateSigned" and tab_def.recipient_role == "Employee":
-                    tabs.append(DocuSignTextTab("DateSignedEmployee", datetime.today().strftime('%m/%d/%Y'),
+                    tabs.append(DocuSignTextTab("DateSignedEmployee", self.data.get_employee_esignature_date(),
                         x=tab_def.x,
                         y=tab_def.y,
                         document_id=1,

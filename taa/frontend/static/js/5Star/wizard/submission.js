@@ -9,13 +9,12 @@ function submit_application() {
   });
 
   var please_wait_dialogue = bootbox.dialog({
-    //just showing action in the interim while getting routed to the Docusign page... the DS page should redirect probably before there's time to read this
-    message: "Generating application form for signature, please wait...",
+    message: "Please wait, this may take a minute or two...",
     buttons: {
-      "success": {
-        "label": "Close",
-        "className": "btn-sm btn-primary"
-      }
+      //"success": {
+      //  "label": "Close",
+      //  "className": "btn-sm btn-primary"
+      //}
     }
   });
 
@@ -51,13 +50,48 @@ function _send_wizard_results(wizard_results) {
 }
 
 function handle_error_and_retry(req, wizard_results) {
-  handle_remote_error(req, function retry_callback(success) {
+  handle_remote_error_with_retry(req, function retry_callback(success) {
     // We allow re-authentication if they have timed out; if successful, submit again immediately.
     if (success) {
       _send_wizard_results(wizard_results);
     }
   });
 }
+
+var SUBMISSION_RETRIES_ALLOWED = 3;
+var submission_retry_count = 0;
+
+function handle_remote_error_with_retry(response, retry_callback) {
+  if (response.status === 401) {
+    // TODO: add this reauthentication logic again
+    //if (ui.account_href != null) {
+    //  prompt_login(retry_callback);
+    //} else {
+    //  // The user wasn't logged in, so just restart our session
+    //  login_reauth(null, null, retry_callback);
+    //}
+  } else if (response.status === 503) {
+    // Heroku Timeout. Maintain a counter that allows us to retry up to a certain number of times.
+    //  This is a temporary shortcut to get around the Heroku timeout.
+    if (submission_retry_count < SUBMISSION_RETRIES_ALLOWED) {
+      submission_retry_count += 1;
+      // Wait for a few seconds before retrying.
+      setTimeout(function() {
+        retry_callback(true);
+      }, 25000);
+    } else {
+      alert("Sorry, an error occurred communicating with the server. Please check your Agent Inbox to sign this application.");
+      window.location = urls.get_manage_case_url(window.vm.options.case_data.id);
+    }
+
+  } else if (response.status === 500) {
+    alert("Sorry, the server encountered an error processing this request.");
+  } else {
+    alert("Sorry, an error occurred communicating with the server. Please check your connection to the internet and try again.");
+  }
+
+}
+
 
 function build_wizard_results_for_product_coverage(product_cov) {
   var root = window.vm;
