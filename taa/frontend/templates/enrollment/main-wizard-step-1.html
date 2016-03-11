@@ -151,10 +151,10 @@
 
           <div class="form-group col-xs-12 col-sm-10">
             <input type="text" style="width: 45%" class="child_first"
-                   data-bind="value: first, attr: {id: 'child-first-'+$index()}"
+                   data-bind="value: first, attr: {id: 'child-first-'+$index(), name: 'child-first-' + $index() }"
                    placeholder="First Name"/>
 
-            <input type="text" style="width: 45%" class="child_last" data-bind="value: last"
+            <input type="text" style="width: 45%" class="child_last" data-bind="value: last, attr: { id: 'child-last-'+$index(), name: 'child-last-' + $index() }"
                    placeholder="Last Name"/>
 
             <div class="pull-right">
@@ -173,7 +173,7 @@
 
             <input class="input-mask-date child_birthdate" data-bind="
                           value: birthdate,
-                          attr: {id: 'child-dob-'+$index()},
+                          attr: {id: 'child-dob-'+$index(), name: 'child-dob-' + $index() },
                           maskedInput: '99/99/9999'
                           " type="text" placeholder="MM/DD/YYYY">
 
@@ -255,9 +255,9 @@
     </div>
 
 
-    <div style="border: 2px solid #ddd;" data-bind="visible: !is_rate_table_loading(), with: coverage_vm">
+    <div data-bind="visible: !is_rate_table_loading(), with: coverage_vm">
 
-      <div data-bind="if: has_multiple_products">
+      <div class="multi-widget" data-bind="if: has_multiple_products">
 
         {# Summary table for multi-product enrollments. #}
         <div data-bind="template: 'multi-product-selected-coverage-table'">
@@ -557,7 +557,7 @@
           <th class="text-center selectable" data-bind="
               click: $root.coverage_vm.select_product,
               css: {'active-product': $root.coverage_vm.current_product() === $data},
-              attr: {style: 'width: '+((100-10-6)/($root.products.length))+'%'}
+              attr: {style: 'width: '+((100-10-6)/($root.products.length))+'%', id: 'coverage-header-' + $data.product.product_type }
               ">
             <div class="circled-number" data-bind="text: $index()+1"></div>
             <span data-bind="text: product.product_data.name"></span>
@@ -600,7 +600,6 @@
       <!--/ko-->
     </tbody>
   </table>
-
 </script>
 
 {# This is for step 6, but it is so similar to the above summary table for step 1 that I want to leave it here. #}

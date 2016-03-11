@@ -95,6 +95,12 @@ function normalize_date(date_str) {
 
 function normalize_date_of_birth(date_of_birth_string) {
   'use strict';
+  //var date = moment(date_of_birth_string);
+  //if (date.isValid()) {
+  //  return format_date(date);
+  //} else {
+  //  return '';
+  //}
   if (date_of_birth_string && is_valid_date_of_birth(date_of_birth_string)) {
     return format_date(parse_date(date_of_birth_string));
   } else {
@@ -114,6 +120,9 @@ function is_valid_date_of_birth(date_of_birth) {
     return false;
   }
   var dob_moment = moment.isMoment(date_of_birth) ? date_of_birth : moment(date_of_birth, 'MM/DD/YYYY');
+  if (!dob_moment.isValid()) {
+    dob_moment = moment(date_of_birth, 'YYYY-MM-DD');
+  }
   var today = moment({hour: 0, minute: 0, seconds: 0, milliseconds: 0});
   return dob_moment.isValid() && dob_moment.isBefore(today);
 }
