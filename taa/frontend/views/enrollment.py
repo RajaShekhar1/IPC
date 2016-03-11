@@ -489,13 +489,12 @@ def get_or_create_enrollment(case, census_record, standardized_data, wizard_resu
 
 
 def get_or_create_envelope(case, enrollment_application, standardized_data):
-    if enrollment_application.docusign_envelope_id:
-        # We already have an envelope created in docusign, just use that one.
-        envelope = DocusignEnvelope(enrollment_application.docusign_envelope_id, enrollment_application)
-    else:
-        docusign_service = LookupService('DocuSignService')
 
+    envelope = get_existing_envelope(enrollment_application)
+
+    if not envelope:
         # Create the envelope
+        docusign_service = LookupService('DocuSignService')
         in_person_signer, envelope = docusign_service.create_multiproduct_envelope(standardized_data, case)
 
         # Save envelope ID on enrollment
@@ -503,6 +502,24 @@ def get_or_create_envelope(case, enrollment_application, standardized_data):
 
     return envelope
 
+
+def get_existing_envelope(enrollment_application):
+
+    if enrollment_application.docusign_envelope_id:
+        # We already have an envelope created in docusign, just use that one.
+        envelope = DocusignEnvelope(enrollment_application.docusign_envelope_id, enrollment_application)
+
+        # We do want to make sure that the enrollment status is up-to-date, though.
+        envelope.update_enrollment_status()
+
+
+        if envelope.enrollment_record.is_voided():
+            # If the envelope is voided, we will just create a new envelope to replace it.
+            return None
+
+        return envelope
+
+    return None
 
 def get_envelope_signing_url(enrollment_data, envelope):
     if enrollment_data.should_use_call_center_workflow():

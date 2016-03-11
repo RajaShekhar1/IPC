@@ -1,9 +1,11 @@
 # Functions to synchronize DocuSign envelopes with our enrollment records
+import hashlib
 import time
 from datetime import timedelta, datetime
 from itertools import ifilter
 
-from flask_script import Command
+import sys
+from flask_script import Command, Option
 from dateutil.parser import parse as dateutil_parse
 from taa.services.cases import CaseCensus
 
@@ -18,9 +20,25 @@ agent_service = AgentService()
 
 class SyncEnvelopesCommand(Command):
     """Pull agents from stormpath and add them to the DB"""
+    option_list = (
+        Option(dest='sync_type', choices=['pending', 'complete'],
+               help="One of 'pending' or 'complete'"),
+        Option('-r', '--rate-limit', dest='rate_limit', required=False, type=int,
+               help="Set the API rate limiter in requests/hr"),
+    )
 
-    def run(self):
-        EnvelopeSync().match_envelopes()
+    def run(self, sync_type, rate_limit=None):
+
+        envelope_sync = EnvelopeSync()
+        if sync_type == "pending":
+            envelope_sync.sync_out_for_sig()
+        elif sync_type == "complete":
+            rate_limiter = APIRateLimiter(rate_limit)
+            envelope_sync.sync_completed(rate_limiter)
+        else:
+            print("Unknown sync_type '{}'".format(sync_type))
+
+        envelope_sync.print_results_summary()
 
 
 class EnvelopeSync(object):
@@ -34,9 +52,22 @@ class EnvelopeSync(object):
 
     def match_envelopes(self):
 
+        self.sync_out_for_sig()
+
+        self.sync_completed()
+
+        # TODO: Link up voided
+
+        self.print_results_summary()
+
+    def print_results_summary(self):
+        print("Linked {}".format(self.num_linked))
+        print("Already linked: {}".format(self.num_already_linked))
+        print("Skipped: {}".format(self.num_skipped))
+
+    def sync_out_for_sig(self):
         out_for_sig = self.get_all_out_for_signature_envelopes()
         self.num_total = len(out_for_sig)
-
         for envelope_data in out_for_sig:
             self.progress_count += 1
 
@@ -52,7 +83,7 @@ class EnvelopeSync(object):
 
             if not agent_signer.get('signedDateTime') and not self.is_linked(env):
                 # Agent has not signed
-                #print("Found envelope where agent did not sign: {}".format(eid))
+                # print("Found envelope where agent did not sign: {}".format(eid))
                 did_link = self.link_envelope(env)
                 if did_link:
                     self.num_linked += 1
@@ -61,19 +92,63 @@ class EnvelopeSync(object):
             elif self.is_linked(env):
                 self.num_already_linked += 1
 
-        completed = self.get_all_completed_envelopes()
+            # Replace agent account with embedded agent signing if necessary
+            # print("Progress: {}".format(self.progress_count))
+            # if not agent_signer.get('clientUserId'):
+            #     enrollment = self.is_linked(env)
+            #     clientUserId = hashlib.sha256("agent-{}".format(enrollment.agent_id)).hexdigest()
+            #     new_recip_id = unicode(int(agent_signer['recipientId']) + 10)
+            #     print("clientUserId {}".format(clientUserId))
+            #
+            #     print("REPLACING AGENT ON ENVELOPE {}".format(eid))
+            #     print("Agent: {}".format(agent_signer))
+            #
+            #     tab_types = ['textTabs', 'signHereTabs', 'radioGroupTabs', 'initialHereTabs', 'dateSignedTabs']
+            #
+            #     updated_tabs = {}
+            #     for tt in tab_types:
+            #         updated_tabs[tt] = []
+            #
+            #         if agent_signer['tabs'].get(tt):
+            #             for tab in agent_signer['tabs'][tt]:
+            #                 tab['recipientId'] = new_recip_id
+            #                 updated_tabs[tt].append(tab)
+            #
+            #     new_recip = {
+            #         'recipientId': new_recip_id,
+            #         'routingOrder': u'2',
+            #         'roleName': u'Agent',
+            #         'name': agent_signer['name'],
+            #         'email': agent_signer['email'],
+            #         'tabs': updated_tabs,
+            #         'clientUserId': clientUserId,
+            #         'templateRequired': False,
+            #     }
+            #
+            #     transport = get_docusign_transport()
+            #     print("Adding embedded recip...")
+            #     transport.post('{}/recipients'.format(env.get_envelope_base_url()),
+            #                    {"signers": [new_recip]})
+            #     print("Deleting recip...")
+            #     transport.delete('{}/recipients'.format(env.get_envelope_base_url()), {"signers": [{"recipientId": agent_signer['recipientId']}]})
+            #
+            #     # For some reason need to post tabs again
+            #     print("Posting tabs...")
+            #     transport.post('{}/recipients/{}/tabs'.format(env.get_envelope_base_url(), new_recip_id), updated_tabs)
+            #     print("Finished agent ")
 
+    def sync_completed(self, rate_limiter=None):
+        completed = self.get_all_completed_envelopes()
         self.num_total = len(completed)
         self.progress_count = 0
         # Match all completed envelopes next
-
         num_requests = 0
         start_time = datetime.now()
         current_wait = 8
 
-        time_limiter = APIRateLimiter(500)
-
-        for i, envelope_data in enumerate(completed):
+        if not rate_limiter:
+            rate_limiter = APIRateLimiter(500)
+        for i, envelope_data in enumerate(reversed(completed)):
             current_time = datetime.now()
 
             env = DocusignEnvelope(envelope_data['envelopeUri'], fetch_tabs=True)
@@ -82,24 +157,16 @@ class EnvelopeSync(object):
                 did_link = self.link_envelope(env)
                 if did_link:
                     self.num_linked += 1
-                    print("{}/{} Linked".format(i+1, len(completed)))
+                    print("{}/{} Linked".format(i + 1, len(completed)))
                 else:
-                    print("{}/{} Skipped".format(i+1, len(completed)))
+                    print("{}/{} Skipped".format(i + 1, len(completed)))
                     self.num_skipped += 1
 
-                time_limiter.wait(num_requests=2)
+                rate_limiter.wait(num_requests=2)
 
             else:
                 self.num_already_linked += 1
-                print("{}/{} Already Linked".format(i+1, len(completed)))
-
-
-        # TODO: Link up voided
-
-
-        print("Linked {}".format(self.num_linked))
-        print("Already linked: {}".format(self.num_already_linked))
-        print("Skipped: {}".format(self.num_skipped))
+                print("{}/{} Already Linked".format(i + 1, len(completed)))
 
     def is_linked(self, envelope):
         return EnrollmentApplication.query.filter(EnrollmentApplication.docusign_envelope_id == envelope.uri).first()
@@ -150,14 +217,15 @@ class EnvelopeSync(object):
             ).filter(CaseCensus.employee_ssn == ee_ssn
             ).first()
         if matching_enrollment:
-            return self.match_coverages(ch_cov, ee_cov, ee_ssn_masked, envelope, matching_enrollment, sp_cov, created_time)
+            return self.match_coverages(ch_cov, ee_cov, ee_ssn_masked, envelope, matching_enrollment, sp_cov, created_time, ee_name)
         else:
-            print("No match on '{}' '{}' '{}' {}/{}/{}".format(start.strftime('%F'), ee_name, ee_ssn_masked, ee_cov, sp_cov,
+            print("No match on envelope '{}' '{}' '{}' '{}' {}/{}/{}".format(envelope.uri,
+                start.strftime('%F%T'), ee_name, ee_ssn_masked, ee_cov, sp_cov,
                                                                ch_cov))
             return False
 
 
-    def match_coverages(self, ch_cov, ee_cov, ee_ssn_masked, envelope, matching_enrollment, sp_cov, created_time):
+    def match_coverages(self, ch_cov, ee_cov, ee_ssn_masked, envelope, matching_enrollment, sp_cov, created_time, ee_name):
         # Make sure coverages match too
         matching_ee_cov = self.find_coverage_for_applicant(ee_cov, matching_enrollment,
                                                       EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE)
@@ -167,7 +235,7 @@ class EnvelopeSync(object):
                                                       EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
         if (ee_cov and not matching_ee_cov) or (sp_cov and not matching_sp_cov) or (ch_cov and not matching_ch_cov):
             print(
-                "Invalid coverage match on '{}' '{}' {}/{}/{} got {}/{}/{}".format(created_time.strftime('%F'), ee_ssn_masked,
+                "Invalid coverage match on '{}' '{}' {} {}/{}/{} got {}/{}/{}".format(created_time.strftime('%F%T'), ee_ssn_masked, ee_name,
                                                                                    ee_cov, sp_cov, ch_cov,
                                                                                    matching_ee_cov.coverage_face_value if matching_ee_cov else '',
                                                                                    matching_sp_cov.coverage_face_value if matching_sp_cov else '',
@@ -176,7 +244,7 @@ class EnvelopeSync(object):
 
         else:
             print("FOUND matching enrollment(s) for envelope: {} to {} '{}' '{}' {}/{}/{}".format(
-                envelope.uri, matching_enrollment.id, created_time.strftime('%F'), ee_ssn_masked, ee_cov, sp_cov, ch_cov))
+                envelope.uri, matching_enrollment.id, created_time.strftime('%F%T'), ee_name, ee_ssn_masked, ee_cov, sp_cov, ch_cov))
 
             # Link it up
             matching_enrollment.docusign_envelope_id = envelope.uri
@@ -218,7 +286,7 @@ class EnvelopeSync(object):
 
     def fetch_envelopes_for_status(self, status):
         transport = get_docusign_transport()
-        data = transport.get('envelopes?from_date=2015-01-01&status={}'.format(status))
+        data = transport.get('envelopes?from_date=2015-06-01&status={}'.format(status))
         total = data['resultSetSize']
         print("Processing {} envelopes...".format(total))
 
@@ -266,6 +334,3 @@ def parse_utc_date(val):
     #  (We don't want to store the TZ info in the database)
     return dateutil_parse(local_datetime_with_tz.strftime("%FT%T"))
 
-
-if __name__ == "__main__":
-    EnvelopeSync().match_envelopes()
