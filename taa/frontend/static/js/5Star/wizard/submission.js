@@ -37,9 +37,12 @@ function _send_wizard_results(wizard_results) {
           }
         }
       });
+    } else if (resp.redirect_url) {
+      // A redirect URL was returned immediately.
+      location = resp.redirect_url
     } else {
-      // Docusign redirect
-      location = resp.redirect
+      // We need to poll until the redirect URL is ready.
+      handle_error_and_retry(req, wizard_results, resp.poll_url)
     }
 
   }, function (req) {

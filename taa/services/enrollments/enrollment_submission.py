@@ -17,6 +17,27 @@ from taa.services.enrollments.models import EnrollmentImportBatchItem
 class EnrollmentSubmissionService(object):
     enrollment_application_service = RequiredFeature('EnrollmentApplicationService')
     enrollment_batch_service = RequiredFeature('EnrollmentImportBatchService')
+    docusign_service = RequiredFeature('DocuSignService')
+
+    def submit_wizard_enrollment(self, enrollment_application):
+        tasks.process_wizard_enrollment.delay(enrollment_application.id)
+
+    def process_wizard_submission(self, enrollment_application_id):
+
+        enrollment_application = self.enrollment_application_service.get(enrollment_application_id)
+        if not enrollment_application:
+            raise ValueError("No enrollment application exists with id {}".format(enrollment_application_id))
+
+        envelope = self.docusign_service.get_existing_envelope(enrollment_application)
+        if not envelope:
+            # Create the envelope
+            standardized_data = json.loads(enrollment_application.standardized_data)
+            in_person_signer, envelope = self.docusign_service.create_multiproduct_envelope(standardized_data, enrollment_application.case)
+
+            # Save envelope ID on enrollment
+            self.enrollment_application_service.save_docusign_envelope(enrollment_application, envelope)
+
+        return envelope
 
     def submit_import_enrollments(self, enrollment_batch):
 

@@ -54,22 +54,34 @@ FIVE_MINUTES = 5 * 60
 
 @app.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def process_enrollment_upload(task, batch_id):
-    #try:
+
     submission_service = LookupService("EnrollmentSubmissionService")
     errors = submission_service.process_import_submission_batch(batch_id)
     if errors:
-        send_admin_error_email(batch_id, errors)
+        send_admin_error_email("Error processing submission batch {}".format(batch_id), errors)
         # Go ahead and attempt to reprocess
         task.retry(exc=Exception(errors[0]))
-    #except Exception as exc:
-    #    task.retry(exc=exc)
 
 
-def send_admin_error_email(batch_id, errors):
+@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+def process_wizard_enrollment(task, enrollment_id):
+
+    docusign_service = LookupService("DocuSignService")
+    envelope = docusign_service.get_or_create_envelope(case, enrollment_application, standardized_data)
+
+    submission_service = LookupService("EnrollmentSubmissionService")
+    errors = submission_service.process_wizard_submission(enrollment_id)
+    if errors:
+        send_admin_error_email("Error processing submission batch {}".format(enrollment_id), errors)
+        # Go ahead and attempt to reprocess
+        task.retry(exc=Exception(errors[0]))
+
+
+def send_admin_error_email(error_message, errors):
     try:
         tracebacks = '\n<br>'.join([err for err in errors])
-        body = "Error processing submission batch {}. <br><br>Tracebacks: <br><br>{}".format(
-            batch_id, tracebacks.replace('<br>', '\n')
+        body = "{} <br><br>Tracebacks: <br><br>{}".format(
+            error_message, tracebacks.replace('<br>', '\n')
         )
 
         # Get stormpath admins

@@ -29,6 +29,23 @@ from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_ca
 class DocuSignService(object):
     product_service = RequiredFeature('ProductService')
 
+    def get_existing_envelope(self, enrollment_application):
+
+        if enrollment_application.docusign_envelope_id:
+            # We already have an envelope created in docusign, just use that one.
+            envelope = DocusignEnvelope(enrollment_application.docusign_envelope_id, enrollment_application)
+
+            # We do want to make sure that the enrollment status is up-to-date, though.
+            envelope.update_enrollment_status()
+
+            if envelope.enrollment_record.is_voided():
+                # If the envelope is voided, we will just create a new envelope to replace it.
+                return None
+
+            return envelope
+
+        return None
+
     def create_multiproduct_envelope(self, product_submissions, case):
         # Use the first product to get employee and agent data
         first_product_data = EnrollmentDataWrap(product_submissions[0], case)
