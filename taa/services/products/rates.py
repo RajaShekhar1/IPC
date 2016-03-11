@@ -23,9 +23,9 @@ rates = None
 
 
 def get_rates(product, **demographics):
-    '''
-    Public Rates interface
-    '''
+    """
+    Public Rates interface, but only used for products we can't calculate yet.
+    """
 
     # Initialize rates if None
     global rates
@@ -34,11 +34,6 @@ def get_rates(product, **demographics):
         initialize_rates_from_files(rates)
 
     product_code = product.get_base_product_code()
-
-    if demographics['employee_gender'] is None:
-        demographics['employee_gender'] = u'male'
-    if demographics['spouse_age'] is not None and demographics['spouse_gender'] is None:
-        demographics['spouse_gender'] = u'male'
 
     # Check employee eligibility
     limit_errors = []
@@ -96,17 +91,25 @@ def get_rates(product, **demographics):
 
 
 def is_eligible(product_code, sex, height, weight):
+
+    # Skip eligibility check if any criteria is not provided.
+    if sex is None or height is None or weight is None:
+        return True
+
+    height = int(height)
+    weight = int(weight)
+
     initialize_eligibilities_from_files()
     if product_code in ELIGIBILITIES:
         table = ELIGIBILITIES[product_code][sex]
-        if height is not None:
-            height = int(height)
-            if height not in table:
-                return False
-        if weight is not None:
-            weight = int(weight)
-        if height is not None and weight is not None:
-            return table[height][0] <= weight <= table[height][1]
+
+        # Is height out of range?
+        if height not in table:
+            return False
+
+        # Is weight out of range for this height?
+        return table[height][0] <= weight <= table[height][1]
+
     # Default to eligible if product has no lookup table
     return True
 

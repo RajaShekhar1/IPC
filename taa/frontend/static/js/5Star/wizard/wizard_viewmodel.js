@@ -1141,26 +1141,22 @@ var wizard_viewmodel = (function () {
     };
 
     function requires_additional_employee_information() {
-      var result = _.any(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_view_model) {
+      return _.any(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_view_model) {
         var product = product_coverage_view_model.product;
         var requires_additional_information = product.requires_gender() || product.requires_height() || product.requires_weight() || product.requires_is_smoker();
-        var coverage = product_coverage_view_model.__get_coverage_for_applicant(self.employee());
-        return requires_additional_information && coverage && coverage.coverage_option() && coverage.coverage_option().face_value !== 0;
+        return requires_additional_information && product_coverage_view_model.did_select_employee_coverage();
       });
-      return result;
     }
 
     function requires_additional_spouse_information() {
-      if (!self.spouse()) {
+      if (!self.should_include_spouse_in_table()) {
         return false;
       }
-      var result = _.any(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_view_model) {
+      return _.any(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_view_model) {
         var product = product_coverage_view_model.product;
         var requires_additional_information = product.requires_gender() || product.requires_height() || product.requires_weight() || product.requires_is_smoker();
-        var coverage = product_coverage_view_model.__get_coverage_for_applicant(self.spouse());
-        return requires_additional_information && coverage && coverage.coverage_option() && coverage.coverage_option().face_value !== 0;
+        return requires_additional_information && product_coverage_view_model.did_select_spouse_coverage();
       });
-      return result;
     }
 
     self.requires_additional_employee_information = ko.computed(requires_additional_employee_information);
