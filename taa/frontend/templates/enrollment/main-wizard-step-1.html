@@ -406,9 +406,6 @@
 
 {# Runs in the context of a ProductCoverageViewModel #}
 <script type="text/html" id="recommendation_coverage_selection">
-  {#  <h3 class="header smaller red">#}
-  {#    Recommended Coverage for <span data-bind="text: format_product_name()"></span>#}
-  {#  </h3>#}
   <div class="row">
 
     <div class="col-xs-4 col-sm-3 pricing-span-header">
@@ -515,8 +512,9 @@
 
 </script>
 
-<script id="simple_coverage_selection" type="text/html">
 
+<script id="simple_coverage_selection" type="text/html">
+  <a href="#">See this brochure for details</a>
   <div class="row">
     <div class="col-xs-4 col-sm-3 col-xs-offset-2 col-sm-offset-3 pricing-span-header">
       <div class="widget-box transparent">
@@ -530,28 +528,28 @@
                 <label>
                   <span data-bind="text: $root.employee().first"></span>
                   <br>
-                  <input type="radio" name="coverage-type" value="employee">
+                  <input type="radio" name="coverage-type" value="EE" data-bind="checked: selected_simple_coverage_value">
                 </label>
               </li>
-              <li data-bind="if: $root.has_spouse">
+              <li data-bind="if: $root.should_include_spouse_in_table">
                 <label>
                   <span data-bind="text: $root.spouse_and_employee_names"></span>
                   <br>
-                  <input type="radio" name="coverage-type" value="employee,spouse">
+                  <input type="radio" name="coverage-type" value="ES" data-bind="checked: selected_simple_coverage_value">
                 </label>
               </li>
-              <li data-bind="if: $root.has_children">
+              <li data-bind="if: $root.should_include_children_in_table">
                 <label>
-                  <span>Joe + Child(ren)</span>
+                  <span data-bind="text: $root.employee().first"></span>  + Child(ren)
                   <br>
-                  <input type="radio" name="coverage-type" value="employee,children">
+                  <input type="radio" name="coverage-type" value="EC" data-bind="checked: selected_simple_coverage_value">
                 </label>
               </li>
-              <li data-bind="if: $root.has_children() && $root.has_spouse()">
+              <li data-bind="if: $root.should_include_children_in_table() && $root.should_include_spouse_in_table()">
                 <label>
                   <span>Family (All)</span>
                   <br>
-                  <input type="radio" name="coverage-type" value="employee,spouse,children">
+                  <input type="radio" name="coverage-type" value="EF" data-bind="checked: selected_simple_coverage_value">
                 </label>
               </li>
             </ul>
@@ -563,7 +561,7 @@
       <div class="pricing-span best">
         <div class="widget-box pricing-box-small widget-color-blue">
           <div class="widget-header center no-padding">
-            <h5 class="bugger lighter">Weekly Premium</h5>
+            <h5 class="bugger lighter">Premium</h5>
           </div>
           <div class="widget-body">
             <div class="widget-main no-padding">

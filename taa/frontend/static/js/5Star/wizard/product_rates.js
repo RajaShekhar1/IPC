@@ -39,10 +39,10 @@ var product_rates_service = (function() {
 
     create_coverage_options_for_applicant: function(applicant_type, applicant_rates_data) {
       var options = [];
-      if (applicant_rates_data.bypremium) {
+      if (applicant_rates_data && applicant_rates_data.bypremium) {
         options = $.merge(options, this.create_coverage_options(false, applicant_type, applicant_rates_data.bypremium));
       }
-      if (applicant_rates_data.byface) {
+      if (applicant_rates_data && applicant_rates_data.byface) {
         options = $.merge(options, this.create_coverage_options(true, applicant_type, applicant_rates_data.byface));
       }
       return options;
@@ -139,10 +139,10 @@ var product_rates_service = (function() {
 
   function update_product_rates(products, payment_mode, applicant_list, error_callback, statecode, coverage_vm) {
 
-    // TODO: Remove once HI/ACC rates are implemented
-    products = _.filter(products, function (product) {
-      return product.product_data.base_product_type !== 'HI' && product.product_data.base_product_type !== 'ACC';
-    });
+    //// TODO: Remove once HI/ACC rates are implemented
+    //products = _.filter(products, function (product) {
+    //  return product.product_data.base_product_type !== 'HI' && product.product_data.base_product_type !== 'ACC';
+    //});
 
     // Signal we have started updating rates data.
     is_loading_rates(true);

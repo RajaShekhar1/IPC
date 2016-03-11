@@ -402,28 +402,29 @@
                                         </div>
                                       </div>
                                       <div class="form-group"
-                                           data-bind="visible: $parent.case_riders_for_product($data).length === 0">
+                                           data-bind="visible: $parent.case_riders_for_product($data).length === 0 && !$root.is_product_occupation_class_eligible(product)">
                                         This product has no configuration options
-                                        {# Occupation Class Mappings #}
-                                        <div class="form-group"
-                                             data-bind="visible: $root.is_product_occupation_class_eligible(product)">
-                                          <h4 class="header lighter blue">Occupation Classes</h4>
-                                          <table data-bind="foreach: $parent.occupation_classes_for_product($data)">
-                                            <tr>
-                                              <td style="padding: 0.5em 1em;">&bull; <span
-                                                  data-bind="text: label"></span>
-                                              </td>
-                                              <td>
-                                                <select data-bind="options: $root.available_occupation_mappings,
-                                              optionsText: 'label',
-                                              optionsValue: 'value',
-                                              value: value,
-                                              optionsCaption: 'Not mapped'">
-                                                </select>
-                                              </td>
-                                            </tr>
-                                          </table>
-                                        </div>
+                                      </div>
+
+                                      {# Occupation Class Mappings #}
+                                      <div class="form-group"
+                                           data-bind="visible: $root.is_product_occupation_class_eligible(product)">
+                                        <h4 class="header lighter blue">Occupation Classes</h4>
+                                        <table data-bind="foreach: $parent.occupation_classes_for_product($data)">
+                                          <tr>
+                                            <td style="padding: 0.5em 1em;">&bull; <span
+                                                data-bind="text: label"></span>
+                                            </td>
+                                            <td>
+                                              <select data-bind="options: $root.available_occupation_mappings,
+                                            optionsText: 'label',
+                                            optionsValue: 'value',
+                                            value: value,
+                                            optionsCaption: 'Not mapped'">
+                                              </select>
+                                            </td>
+                                          </tr>
+                                        </table>
                                       </div>
                                     </div>
                                   </div>

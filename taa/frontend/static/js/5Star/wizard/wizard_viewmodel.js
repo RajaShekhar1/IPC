@@ -234,6 +234,28 @@ var wizard_viewmodel = (function () {
     self.available_recommendations = product_rates_service.get_product_recommendations(self.product, payment_mode);
     self.selected_recommendation = ko.observable(null);
 
+    // When there is a simple 'Y/N' or set of coverage options, use this rather than applicant coverage viewmodels.
+    self.selected_simple_coverage_option = ko.observable(new NullCoverageOption());
+
+    self.selected_simple_coverage_value = ko.computed({
+      read: function() {
+        if (!self.selected_simple_coverage_option().is_valid()) {
+          return null;
+        } else {
+          return self.selected_simple_coverage_option().coverage_tier;
+        }
+      },
+      write: function(val) {
+        var lookup = {EE: 48.89, ES: 92.88, EC: 88.00, EF: 131.99};
+        self.selected_simple_coverage_option(new SimpleCoverageOption({
+          coverage_tier: val,
+          premium: lookup[val],
+          payment_mode: self.payment_mode,
+          applicant_type: wizard_applicant.Applicant.EmployeeType
+        }));
+      }
+    });
+
     // Cache the selections for applicants, instances should be instantiated just once.
     self._applicant_coverage_viewmodels = {};
 
@@ -464,6 +486,8 @@ var wizard_viewmodel = (function () {
       // We want to know if we can advance to the next step, so all products have selections or were declined.
       if (this.did_decline()) {
         return true;
+      } else if (this.product.has_simple_coverage() && true) {//this.selected_simple_coverage_option()) {
+        return true;
       }
 
       return _.all(this.valid_applicant_coverage_selections(), function (applicant_coverage) {
@@ -475,6 +499,12 @@ var wizard_viewmodel = (function () {
       //
       // Return every valid ApplicantGroup that can get coverage for this product.
       var selections = [];
+
+      if (this.product.has_simple_coverage()) {
+        // Use the employee option only for now.
+        selections.push(this.__get_coverage_for_applicant(this.applicant_list.get_employee()));
+        return selections;
+      }
 
       if (this.applicant_list.has_valid_employee()) {
         selections.push(this.__get_coverage_for_applicant(this.applicant_list.get_employee()));
@@ -570,6 +600,10 @@ var wizard_viewmodel = (function () {
         return new NullCoverageOption();
       }
 
+      if (this.product.has_simple_coverage()) {
+        return this.product_coverage.selected_simple_coverage_option();
+      }
+
       var custom_option = this.customized_coverage_option();
       var recommended_option = this.recommended_coverage_option();
 
@@ -583,6 +617,10 @@ var wizard_viewmodel = (function () {
     }, this);
 
     this.did_select_option = ko.pureComputed(function () {
+      if (this.product.has_simple_coverage()) {
+        return this.product_coverage.selected_simple_coverage_option().is_valid();
+      }
+
       // Just see if a selection was made, even if the selection is NullCoverageOption.
       return (this.customized_coverage_option() !== null &&
           // The selection dropdown sets this to undefined directly
@@ -1701,6 +1739,38 @@ var wizard_viewmodel = (function () {
     init_validation(self);
 
     //region HI/ACC Helpers
+
+    self.get_simple_coverage_options = ko.pureComputed(function() {
+      var options = [
+        {
+          label: self.employee().first(),
+          coverage: new SimpleCoverageOption({premium: 1.00, value: 'EE'})
+        }
+      ];
+
+      if (self.should_include_spouse_in_table()) {
+        options.push({
+          label: self.employee().first() + ' + ' + self.spouse().first(),
+          coverage: new SimpleCoverageOption({premium: 2.00, value: 'ES'})
+        });
+      }
+
+      if (self.should_include_children_in_table()) {
+        options.push({
+          label: self.employee().first() + ' + Children',
+          coverage: new SimpleCoverageOption({premium: 1.50, value: 'EC'})
+        });
+      }
+
+      if (self.should_include_spouse_in_table() && self.should_include_children_in_table()) {
+        options.push({
+          label: 'All Family',
+          coverage: new SimpleCoverageOption({premium: 2.50, value: 'EF'})
+        });
+      }
+
+    });
+
     self.has_spouse = ko.computed(function () {
       return !!self.spouse();
     });

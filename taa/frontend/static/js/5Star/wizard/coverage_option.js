@@ -71,6 +71,78 @@ function CoverageOption(options) {
   }
 
 
+  function SimpleCoverageOption(options) {
+    var self = this;
+    self.is_by_face = true;
+    self.premium = options.premium;
+
+    // For ACC or HI, one of: EE, ES, EC, EF
+    self.coverage_tier = options.coverage_tier;
+
+    // This is an observable
+    self.payment_mode = options.payment_mode;
+    self.face_value = null;//options.face_value;
+    self.applicant_type = options.applicant_type;
+
+    self.get_total_premium = function() {
+      return self.premium;
+    };
+
+    self.format_premium = function() {
+      // Only show employee info for this kind of product.
+      if (self.applicant_type != wizard_applicant.Applicant.EmployeeType) {
+        return "";
+      }
+      return format_premium_value(self.premium);
+    };
+
+    self.format_premium_option = function() {
+      // Only show employee info for this kind of product.
+      if (self.applicant_type != wizard_applicant.Applicant.EmployeeType) {
+        return "";
+      }
+      return self.format_premium() + " " + self.payment_mode().display_lowercase();
+    };
+    self.format_face_value = function() {
+      // Only show employee info for this kind of product.
+      if (self.applicant_type != wizard_applicant.Applicant.EmployeeType) {
+        return "";
+      }
+      return 'Selected';
+
+      return format_face_value(self.face_value);
+    };
+    self.format_face_option = function() {
+      // Only show employee info for this kind of product.
+      if (self.applicant_type != wizard_applicant.Applicant.EmployeeType) {
+        return "";
+      }
+      return self.format_face_value() + " face amount";
+    };
+    self.format_for_dropdown = function() {
+      // Only show employee info for this kind of product.
+      if (self.applicant_type != wizard_applicant.Applicant.EmployeeType) {
+        return "";
+      }
+      if (self.is_by_face) {
+        return self.format_face_option();
+      } else {
+        return self.format_premium_option();
+      }
+    };
+    self.is_valid = function() {
+      return true;
+    };
+
+    self.serialize_data = function() {
+      return {
+        premium: self.premium,
+        face_value: self.coverage_tier
+      }
+    }
+  }
+
+
   function NullCoverageOption() {
     var self = this;
 
