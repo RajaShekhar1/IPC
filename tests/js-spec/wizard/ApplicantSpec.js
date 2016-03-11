@@ -26,7 +26,7 @@ describe("Applicant ViewModel", function() {
 
       // TODO: what format are these?
       existing_coverages: []
-    }
+    };
 
   });
 

@@ -10,7 +10,6 @@ from page import PageBase, PageError
 
 
 class CaseEnrollmentPage(PageBase):
-    URL = lambda s, case_id: '/enrollment-case/{case_id}#enrollment'.format(case_id=case_id)
 
     ADD_ENROLLMENT_BUTTON = '#add-to-census-btn'
     NEW_ENROLLMENT_SSN_INPUT = '#add-census-ssn-input'
@@ -22,10 +21,13 @@ class CaseEnrollmentPage(PageBase):
 
     def get_base_url(self):
         return "{}://{}".format(self.http_scheme, self.hostname)
-        
+
+    def get_url_path(self):
+        return '/enrollment-case/{0}#enrollment'.format(self.context.case.id)
+
     def get_url(self):
-        return "{}{}".format(self.get_base_url(), self.URL(self.context.case.id))
-    
+        return "{}{}".format(self.get_base_url(), self.get_url_path())
+
     def add_enrollment(self, ssn):
         add_enrollment_button = self.lookup(self.ADD_ENROLLMENT_BUTTON)
         add_enrollment_button.click()

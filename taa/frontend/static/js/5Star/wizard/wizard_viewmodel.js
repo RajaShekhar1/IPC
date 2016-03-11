@@ -254,12 +254,12 @@ var wizard_viewmodel = (function () {
     }, this);
 
     // Whether or not any valid benefit has been selected. (excludes "no benefit" selection)
-    self.did_select_valid_coverage = ko.pureComputed(function() {
+    self.did_select_valid_coverage = ko.pureComputed(function () {
       return self.did_select_coverage() && (
-              self.did_select_employee_coverage() ||
-              self.did_select_spouse_coverage() ||
-              self.did_select_children_coverage()
-          );
+          self.did_select_employee_coverage() ||
+          self.did_select_spouse_coverage() ||
+          self.did_select_children_coverage()
+        );
     });
 
     self.did_select_employee_coverage = ko.pureComputed(function () {
@@ -595,11 +595,11 @@ var wizard_viewmodel = (function () {
   }
 
   ApplicantCoverageSelectionVM.prototype = {
-    select_recommended_coverage: function (recommendation_set) {
+    select_recommended_coverage: function(recommendation_set) {
       var coverage_option = recommendation_set.get_recommended_applicant_coverage(this.applicant.type);
       if (coverage_option) {
         this.recommended_coverage_option(coverage_option);
-        // Reset the custom option, if any.
+        // Reset the custom option,  if any.
         this.customized_coverage_option(null);
       }
     },
@@ -649,8 +649,8 @@ var wizard_viewmodel = (function () {
     },
     format_selected_premium: function () {
       if (this.applicant.type == wizard_applicant.Applicant.ChildType &&
-          this.product_coverage.product.is_fpp_product() &&
-          this.has_selected_coverage()) {
+        this.product_coverage.product.is_fpp_product() &&
+        this.has_selected_coverage()) {
         // Do the formatting here for single product enroll fpp children multiplier ... ugh.
         var premium = this.get_selected_coverage().get_total_premium() * window.vm.coverage_vm.applicants.get_valid_children().length;
         return format_premium_value(premium);
@@ -903,7 +903,7 @@ var wizard_viewmodel = (function () {
 
     init_jquery_validator();
 
-    self.set_wizard_step = function() {
+    self.set_wizard_step = function () {
       var wizard = $('#enrollment-wizard').data('fu.wizard');
       wizard.currentStep = 1;
       wizard.setState();
@@ -964,8 +964,9 @@ var wizard_viewmodel = (function () {
 
     self.update_rate_table = function () {
 
-
-      self.validator.resetForm();
+      if (self.validator) {
+        self.validator.resetForm();
+      }
 
       self.is_show_rates_clicked(true);
 
@@ -1003,7 +1004,9 @@ var wizard_viewmodel = (function () {
     };
 
     self.should_allow_grandchildren = ko.computed(function () {
-      return !!self.products && self.products.length === 1 && _.some(self.products, function (product) { return product.is_fpp_product(); });
+      return !!self.products && self.products.length === 1 && _.some(self.products, function (product) {
+          return product.is_fpp_product();
+        });
     });
 
     self.show_spouse_name = ko.computed(function () {
@@ -1038,9 +1041,7 @@ var wizard_viewmodel = (function () {
       }
 
       // Trigger the jQuery validator. This test allows jasmine tests to work without DOM node present for form.
-      if (self.validator) {
-        valid_form = self.validator.form() && valid_form;
-      }
+      valid_form = self.validator.form() && valid_form;
 
       if (valid_form) {
         self.has_show_rates_been_clicked(true);
@@ -1080,16 +1081,16 @@ var wizard_viewmodel = (function () {
     };
 
     self.should_show_gender = function () {
-      return any_product('requires_gender')
+      return any_product('requires_gender');
     };
     self.should_show_height = function () {
-      return any_product('requires_height')
+      return any_product('requires_height');
     };
     self.should_show_weight = function () {
-      return any_product('requires_weight')
+      return any_product('requires_weight');
     };
     self.should_show_smoker = function () {
-      return any_product('requires_is_smoker')
+      return any_product('requires_is_smoker');
     };
 
     var any_product = function (method_name) {
@@ -1133,7 +1134,7 @@ var wizard_viewmodel = (function () {
           // Does the applicant have existing coverage for this product?
           return _.any(applicant.existing_coverages, function (existing_coverage) {
             return existing_coverage.product_id === product_coverage.product.id
-                && existing_coverage.coverage_status === 'enrolled';
+              && existing_coverage.coverage_status === 'enrolled';
           });
         });
       }));
@@ -1144,7 +1145,7 @@ var wizard_viewmodel = (function () {
     self.is_submitting = ko.observable(false);
     self.submission_error = ko.observable("");
 
-    self.can_submit_wizard = ko.pureComputed(function() {
+    self.can_submit_wizard = ko.pureComputed(function () {
       return !self.is_submitting();
     });
 
@@ -1153,8 +1154,8 @@ var wizard_viewmodel = (function () {
 
     self.did_decline_all_products = ko.pureComputed(function () {
       return self.did_decline() || _.all(self.product_coverage_viewmodels(), function (pcov) {
-        return pcov.did_decline();
-      });
+          return pcov.did_decline();
+        });
     });
 
     // Decline info box
@@ -1420,8 +1421,8 @@ var wizard_viewmodel = (function () {
     };
     self.has_contingent_beneficiary_error = ko.computed(function () {
       return _.any(self.coverage_vm.selected_product_coverages(), function (prod_cov) {
-          return prod_cov.has_contingent_beneficiary_error();
-        });
+        return prod_cov.has_contingent_beneficiary_error();
+      });
     });
 
 
@@ -1630,12 +1631,11 @@ var wizard_viewmodel = (function () {
       }
 
       function is_child_field_required(element) {
+        // Treat the first child as always required if the children checkbox is checked
         if ($(element).attr("id") === "child-first-0" ||
           $(element).attr("id") === "child-last-0" ||
           $(element).attr("id") === "child-dob-0"
         ) {
-          // Treat the first child as always required if
-          // the children checkbox is checked
           return self.should_include_children();
         }
 
@@ -1686,7 +1686,7 @@ var wizard_viewmodel = (function () {
   }
 
 
-  // TODO:  Will need to expose this function to the other modules, integrate Barrett's reauth mechanism below
+// TODO:  Will need to expose this function to the other modules, integrate Barrett's reauth mechanism below
   function handle_remote_error(request, retry_callback) {
     if (request.status == 401) {
       if (ui.account_href != null) {
@@ -1764,4 +1764,5 @@ var wizard_viewmodel = (function () {
 
 
   return {WizardVM: WizardVM};
-})();
+})
+();

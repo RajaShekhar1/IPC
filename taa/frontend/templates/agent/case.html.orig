@@ -118,6 +118,38 @@
                                 </div>
                               </div>
 
+<<<<<<< HEAD
+                            {# Restore multi-product selection when multi-product enrollment is working #}
+                            {#                          {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsText: "name", optionsValue: "id", selectedOptions: products, multiSelect: {#}
+                            {#                          observed: selected_product_ids,#}
+                            {#                          options: {nonSelectedText: "No Products Selected", numberDisplayed: 3}#}
+                            {#                          }'}) }}#}
+
+                            <div class="form-group">
+                              <label class="col-md-3 control-label" for="productID">Products</label>
+                              <div class="col-md-9">
+                                <!--ko if: !is_editing_products()-->
+                                  <!--ko foreach: products -->
+                                    <a data-bind="text: name, click: $parent.start_editing_products" href="#"></a><br>
+                                  <!--/ko-->
+                                  <!--ko if: products().length == 0 -->
+                                    <a data-bind="click: start_editing_products" href="#">Add Products</a><br>
+                                  <!--/ko-->
+                                <!--/ko-->
+                                <!--ko if: is_editing_products-->
+                                  <div class="row">
+                                    <select class="col-xs-12 form-control"
+                                            data-bind="
+                                            options: unselected_products,
+                                            optionsText: 'name',
+                                            optionsAfterRender: on_products_select_rendered,
+                                            value: selected_product,
+                                            optionsCaption: '(Select Product to Add)'">
+                                    </select>
+                                  </div>
+                                  <div class="row">
+                                    <button class="col-xs-12 btn btn-sm btn-success" data-bind="click: add_selected_product, enable: has_selected_product"><i
+=======
                               {# Restore multi-product selection when multi-product enrollment is working #}
                               {#                          {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsText: "name", optionsValue: "id", selectedOptions: products, multiSelect: {#}
                               {#                          observed: selected_product_ids,#}
@@ -131,24 +163,16 @@
                                   <!--ko foreach: products -->
                                   <a data-bind="text: name, click: $parent.start_editing_products" href="#"></a><br>
                                   <!--/ko-->
-                                  <!--ko if: products().length == 0 -->
-                                    <a data-bind="click: start_editing_products" href="#">Add Products</a><br>
-                                  <!--/ko-->
                                   <!--/ko-->
                                   <!--ko if: is_editing_products-->
                                   <div class="row">
                                     <select class="col-xs-12 form-control"
-                                            data-bind="
-                                            options: unselected_products,
-                                            optionsText: 'name',
-                                            optionsAfterRender: on_products_select_rendered,
-                                            value: selected_product,
-                                            optionsCaption: '(Select Product to Add)'">
-                                    </select>
+                                            data-bind="options: unselected_products, optionsText: 'name', optionsAfterRender: on_products_select_rendered, value: selected_product, optionsCaption: '(Select Product to Add)'"></select>
                                   </div>
                                   <div class="row">
                                     <button class="col-xs-12 btn btn-sm btn-success"
                                             data-bind="click: add_selected_product, enable: has_selected_product"><i
+>>>>>>> 93cf75c784616bb1736894cf66d22df16348cc77
                                         class="ace-icon fa fa-plus"></i> Add
                                     </button>
                                   </div>
@@ -165,22 +189,35 @@
                                             data-bind="options: products, optionsText: 'name', selectedOptions: sort_selected_products"></select>
                                   </div>
                                   <div class="row">
+<<<<<<< HEAD
+                                    <button class="col-xs-12 btn btn-sm btn-danger" data-bind="click: remove_selected_products, visible: has_product_sort_selections"><i class="ace-icon fa fa-minus"></i> Remove
+=======
                                     <button class="col-xs-12 btn btn-sm btn-danger"
                                             data-bind="click: remove_selected_products, visible: has_product_sort_selections">
                                       <i class="ace-icon fa fa-minus"></i> Remove
+>>>>>>> 93cf75c784616bb1736894cf66d22df16348cc77
                                       Selected
                                     </button>
                                   </div>
                                   <br>
                                   <div class="row">
+<<<<<<< HEAD
                                     <button class="btn btn-default" data-bind="click: stop_editing_products">
                                       Collapse Product Options
+=======
+                                    <button class="btn btn-default" data-bind="click: stop_editing_products">Collapse
+                                      Product Options
+>>>>>>> 93cf75c784616bb1736894cf66d22df16348cc77
                                     </button>
                                   </div>
                                   {# This multi-select works, but is not as intuitive as a list of checkboxes like above. #}
                                   {#<limited-product-select params="limiter: state_product_limiter, disabled: !can_edit_case, is_multi_select: true"></limited-product-select>#}
+<<<<<<< HEAD
+                                <!--/ko-->
+=======
                                   <!--/ko-->
                                 </div>
+>>>>>>> 93cf75c784616bb1736894cf66d22df16348cc77
                               </div>
 
                               {{ render_field_with_errors(case_setup_form.situs_city, **{'data-bind':'value: situs_city'}) }}
