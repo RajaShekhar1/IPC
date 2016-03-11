@@ -1668,16 +1668,16 @@ var wizard_viewmodel = (function () {
       });
 
       $.validator.addMethod("empHeightLimit", function (val, el, params) {
-        return self.employee().height_error() == null || !extra_information_for_employee_required();
+        return self.employee().height_error() == null || !requires_additional_employee_information();
       }, "The height or weight entered is outside the limits for this product.");
       $.validator.addMethod("empWeightLimit", function (val, el, params) {
-        return self.employee().weight_error() == null || !extra_information_for_employee_required();
+        return self.employee().weight_error() == null || !requires_additional_employee_information();
       }, "The height or weight entered is outside the limits for this product.");
       $.validator.addMethod("spHeightLimit", function (val, el, params) {
-        return self.spouse().height_error() == null || !extra_information_for_spouse_required();
+        return self.spouse().height_error() == null || !requires_additional_spouse_information();
       }, "The height or weight entered is outside the limits for this product.");
       $.validator.addMethod("spWeightLimit", function (val, el, params) {
-        return self.spouse().weight_error() == null || !extra_information_for_spouse_required();
+        return self.spouse().weight_error() == null || !requires_additional_spouse_information();
       }, "The height or weight entered is outside the limits for this product.");
 
       $.validator.addMethod("isValidPaymentMode", function (value, element) {
@@ -1689,24 +1689,6 @@ var wizard_viewmodel = (function () {
       function any_valid_spouse_field() {
         //return self.should_include_spouse_in_table(); //self.should_show_spouse();
         return self.spouse().any_valid_field();
-      }
-
-      function extra_information_for_spouse_required() {
-        var result = self.spouse() && self.spouse().any_valid_field() && _.any(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_view_model) {
-            return _.any(product_coverage_view_model.applicant_list.applicants(), function (applicant) {
-              return applicant._id === self.spouse().id;
-            });
-          });
-        return result;
-      }
-
-      function extra_information_for_employee_required() {
-        var result = self.employee() && _.any(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_view_model) {
-            return _.any(product_coverage_view_model.applicant_list.applicants(), function (applicant) {
-              return applicant._id === self.employee().id;
-            });
-          });
-        return result;
       }
 
       self.validator = $("#step1-form").validate({
@@ -1768,35 +1750,35 @@ var wizard_viewmodel = (function () {
         errorClass: 'help-block',
         rules: {
           'tobacco-0': {
-            required: extra_information_for_employee_required
+            required: requires_additional_employee_information
           },
           'gender-0': {
-            required: extra_information_for_employee_required
+            required: requires_additional_employee_information
           },
           'height_feet_0': {
-            required: extra_information_for_employee_required,
+            required: requires_additional_employee_information,
             empHeightLimit: true
           },
           'height_inches_0': {
-            required: extra_information_for_employee_required,
+            required: requires_additional_employee_information,
             empHeightLimit: true
           },
           'weight_0': {
-            required: extra_information_for_employee_required,
+            required: requires_additional_employee_information,
             empWeightLimit: true
           },
-          'tobacco-1': {required: {depends: extra_information_for_spouse_required}},
-          'gender-1': {required: {depends: extra_information_for_spouse_required}},
+          'tobacco-1': {required: {depends: requires_additional_spouse_information}},
+          'gender-1': {required: {depends: requires_additional_spouse_information}},
           'weight_1': {
-            required: {depends: extra_information_for_spouse_required},
+            required: {depends: requires_additional_spouse_information},
             spWeightLimit: true
           },
           'height_feet_1': {
-            required: {depends: extra_information_for_spouse_required},
+            required: {depends: requires_additional_spouse_information},
             spHeightLimit: true
           },
           'height_inches_1': {
-            required: {depends: extra_information_for_spouse_required},
+            required: {depends: requires_additional_spouse_information},
             spHeightLimit: true
           }
         }

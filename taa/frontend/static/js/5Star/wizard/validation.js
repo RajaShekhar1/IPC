@@ -541,5 +541,7 @@ function step_two_error_placement(error, element) {
   } else if ((element.is('[name="height_feet_1"]') || element.is('[name="height_inches_1"]') || element.is('[name="weight_1"]')) &&
     $('#weight_1-error').length === 0 && $('#height_feet_1-error').length === 0 && $('#height_inches_1-error').length === 0) {
     error.appendTo($('#spouse-height-weight'));
+  } else if (element.is('[name="tobacco-0"]') || element.is('[name="tobacco-1"]') || element.is('[name="gender-0"]') || element.is('[name="gender-1"]')) {
+    error.appendTo(element.parent().parent());
   }
 }
