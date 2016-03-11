@@ -590,7 +590,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   }
 
   self.owner_agent = ko.computed(function () {
-    return settings.active_agents.find(function (elem) {
+    return _.find(settings.active_agents, function (elem) {
       return elem.id === parseInt(self.owner_agent_id(), 10);
     });
   });
@@ -929,9 +929,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   // enrollment data
-  self.census_data = ko.observable([]);
+  self.census_data = ko.observable(true);
   self.has_census_data = ko.pureComputed(function () {
-    return self.census_data().length > 0;
+    return self.census_data();
   });
 
   self.flash_messages = new FlashMessages();
@@ -1489,7 +1489,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       enrollment_tab.tab('show');
 
       // Load census data when tab loads
-      console.log("SetTimeout for load_initial_census_data");
       setTimeout(load_initial_census_data, 0);
 
       function load_initial_census_data() {
@@ -1512,7 +1511,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       }
 
       function handle_no_census_data_loaded() {
-        self.census_data([]);
+        self.census_data(false);
         self.toggle_enrollment_buttons();
       }
     });
@@ -1520,9 +1519,12 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     this.get("#history", function () {
       self.exit_print_mode();
       history_tab.tab('show');
-      $.getJSON(urls.get_case_api_census_email_batches(case_data.id), function (data) {
-        self.email_batches(data.data);
-      });
+
+      setTimeout(function() {
+        $.getJSON(urls.get_case_api_census_email_batches(case_data.id), function (data) {
+          self.email_batches(data.data);
+        });
+      }, 0);
     });
 
     this.get("#reports", function () {

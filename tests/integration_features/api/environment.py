@@ -15,7 +15,7 @@ def before_scenario(context, scenario):
     init_brochures()
 
     # Add basic docusign template data
-    DocusignImportCommand().run("Artifacts/TAA3.0/ICC14_FPP_Generic_R1114.xml")
+    DocusignImportCommand().run("tests/data/ICC14_FPP_Generic_R1114.xml")
 
     # Initialize the testing app
     app.config['TESTING'] = True
