@@ -101,6 +101,7 @@ def get_product_rates(product_id):
     payment_mode = data.get('payment_mode')
     rider_codes = data.get('rider_codes', [])
     statecode = data.get('statecode', None)
+    rate_level = data.get('rate_level', None)
 
     demographics = dict(
         employee_age=employee['age'],
@@ -118,7 +119,7 @@ def get_product_rates(product_id):
     )
 
     # Return rates and recommendations
-    rates = product_service.get_rates(product, demographics, riders=rider_codes)
+    rates = product_service.get_rates(product, demographics, riders=rider_codes, rate_level=rate_level)
 
     recommendations = product_service.get_recommendations(
         product, demographics

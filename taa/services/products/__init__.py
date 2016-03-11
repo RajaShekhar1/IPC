@@ -1,7 +1,8 @@
 from flask import abort
 from flask_stormpath import current_user
 from taa.services.products.RatePlan import ApplicantQuery, APPLICANT_CHILD, ApplicantQueryOptions, \
-    load_rate_plan_for_base_product, ApplicantDemographics, APPLICANT_SPOUSE, APPLICANT_EMPLOYEE
+    load_rate_plan_for_base_product, ApplicantDemographics, APPLICANT_SPOUSE, APPLICANT_EMPLOYEE, COVERAGE_SELECTION_EE, \
+    COVERAGE_SELECTION_ES, COVERAGE_SELECTION_EF, COVERAGE_SELECTION_EC
 
 import recommendations
 from taa.core import DBService, db
@@ -232,10 +233,25 @@ class ProductService(DBService):
         db.session.flush()
         db.session.refresh(product)
 
-    def get_rates(self, product, demographics, riders=None):
+    def get_rates(self, product, demographics, riders=None, rate_level=None):
 
         if product.get_base_product_code() == 'Group CI':
             return get_rates(product, **demographics)
+        elif product.get_base_product_code() in ['ACC', 'HI']:
+            # Set up the rate calculator to use 'tiers' of coverage options + rate levels.
+            coverage_tiers = [COVERAGE_SELECTION_EE, COVERAGE_SELECTION_ES, COVERAGE_SELECTION_EC, COVERAGE_SELECTION_EF]
+            rate_response = {'employee': {
+                'bytier': [{
+                        tier: self.calc_rate_for_tier(product, tier, rate_level, demographics)
+                    }
+                    for tier in coverage_tiers
+                ]
+            }}
+
+            #for coverage_tier in coverage_tiers:
+            #    query = ApplicantQuery()
+
+            return rate_response
         else:
             # Use the new rates calculator for all the other products.
             rate_response = {}
@@ -272,6 +288,16 @@ class ProductService(DBService):
         if riders and applicant_type != APPLICANT_CHILD:
             product_options['riders'] = riders
 
+        return ApplicantQuery(
+            applicant_type,
+            product_options,
+            demographics['statecode'],
+            ApplicantDemographics({'age': self.get_applicant_age(applicant_type, demographics)}),
+            demographics['payment_mode'],
+            rate_options=ApplicantQueryOptions({}),
+        )
+
+    def get_applicant_age(self, applicant_type, demographics):
         if applicant_type == APPLICANT_EMPLOYEE:
             demographics_age = demographics['employee_age']
         elif applicant_type == APPLICANT_SPOUSE:
@@ -279,15 +305,7 @@ class ProductService(DBService):
         else:
             # FIXME: child age doesn't matter for now, but on future products it might.
             demographics_age = demographics.get('child_age', 0)
-
-        return ApplicantQuery(
-            applicant_type,
-            product_options,
-            demographics['statecode'],
-            ApplicantDemographics({'age': demographics_age}),
-            demographics['payment_mode'],
-            rate_options=ApplicantQueryOptions({}),
-        )
+        return demographics_age
 
     def calc_rates_by_premium(self, product, applicant_type, demographics, riders):
         rate_plan = load_rate_plan_for_base_product(product.get_base_product_code())
@@ -303,6 +321,21 @@ class ProductService(DBService):
             return []
         return rate_plan.get_all_rates_by_coverage(applicant_query)
 
+    def calc_rate_for_tier(self, product, tier, rate_level, demographics):
+        """For simple coverage options, a coverage tier and rate level determine premium"""
+
+        # We always use the employee for this type of coverage.
+        applicant_query = ApplicantQuery(
+            applicant_type=APPLICANT_EMPLOYEE,
+            product_options={},
+            state=demographics['statecode'],
+            demographics=ApplicantDemographics({}),
+            mode=demographics['payment_mode'],
+            rate_options=ApplicantQueryOptions({'by_coverage': tier, 'rate_level': rate_level}),
+        )
+
+        rate_plan = load_rate_plan_for_base_product(product.get_base_product_code())
+        return rate_plan.calculate_premium(applicant_query)
 
 class ProductCriteriaService(DBService):
     __model__ = GuaranteeIssueCriteria
