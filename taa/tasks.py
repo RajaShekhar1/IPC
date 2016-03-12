@@ -66,15 +66,12 @@ def process_enrollment_upload(task, batch_id):
 @app.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def process_wizard_enrollment(task, enrollment_id):
 
-    docusign_service = LookupService("DocuSignService")
-    envelope = docusign_service.get_or_create_envelope(case, enrollment_application, standardized_data)
-
     submission_service = LookupService("EnrollmentSubmissionService")
-    errors = submission_service.process_wizard_submission(enrollment_id)
-    if errors:
-        send_admin_error_email("Error processing submission batch {}".format(enrollment_id), errors)
+    envelope = submission_service.process_wizard_submission(enrollment_id)
+    if not envelope:
+        send_admin_error_email("Error processing wizard enrollment {}".format(enrollment_id))
         # Go ahead and attempt to reprocess
-        task.retry(exc=Exception(errors[0]))
+        task.retry(exc=Exception("No envelope created"))
 
 
 def send_admin_error_email(error_message, errors):

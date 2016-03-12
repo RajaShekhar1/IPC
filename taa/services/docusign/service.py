@@ -504,6 +504,8 @@ class DocusignEnvelope(object):
         def format_coverage_summary(val):
             if not val:
                 return "-"
+            if not val.isdigit():
+                return val
             import locale
             return locale.currency(int(val), grouping=True)
 

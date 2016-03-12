@@ -21,6 +21,10 @@ function submit_application() {
   _send_wizard_results(results);
 }
 
+var POLL_WAIT = 5000;
+var MAX_POLL_COUNT = 25;
+var poll_count = 0;
+
 function _send_wizard_results(wizard_results) {
 
   // Send to server
@@ -39,21 +43,41 @@ function _send_wizard_results(wizard_results) {
       });
     } else if (resp.redirect_url) {
       // A redirect URL was returned immediately.
-      location = resp.redirect_url
+      window.location.href = resp.redirect_url
     } else {
       // We need to poll until the redirect URL is ready.
-      handle_error_and_retry(req, wizard_results, resp.poll_url)
+      setTimeout(function() {
+        poll_envelope_result(resp.poll_url, wizard_results);
+      }, POLL_WAIT);
     }
 
   }, function (req) {
     window.vm.is_submitting(false);
     handle_error_and_retry(req, wizard_results);
   }, true);
-
 }
 
-function handle_error_and_retry(req, wizard_results) {
-  handle_remote_error_with_retry(req, function retry_callback(success) {
+function poll_envelope_result(url, wizard_results) {
+
+  poll_count += 1;
+  if (poll_count > MAX_POLL_COUNT) {
+    alert("Sorry, an error occurred generating the signature page. Please check your Agent Inbox to sign this application.");
+    window.location.href = urls.get_manage_case_url(window.vm.options.case_data.id);
+  }
+
+  $.get(url).success(function(resp) {
+    if (resp.status === 'ready' || resp.status === 'declined') {
+      window.location.href = resp.redirect_url;
+    } else {
+      setTimeout(function() { poll_envelope_result(url, wizard_results); }, POLL_WAIT);
+    }
+  }).error(function(resp) {
+    handle_error_and_retry(resp, wizard_results)
+  })
+}
+
+function handle_error_and_retry(resp, wizard_results) {
+  handle_remote_error_with_retry(resp, function retry_callback(success) {
     // We allow re-authentication if they have timed out; if successful, submit again immediately.
     if (success) {
       _send_wizard_results(wizard_results);
@@ -65,6 +89,7 @@ var SUBMISSION_RETRIES_ALLOWED = 3;
 var submission_retry_count = 0;
 
 function handle_remote_error_with_retry(response, retry_callback) {
+  window.vm.is_submitting(false);
   if (response.status === 401) {
     // TODO: add this reauthentication logic again
     //if (ui.account_href != null) {
@@ -76,16 +101,16 @@ function handle_remote_error_with_retry(response, retry_callback) {
   } else if (response.status === 503) {
     // Heroku Timeout. Maintain a counter that allows us to retry up to a certain number of times.
     //  This is a temporary shortcut to get around the Heroku timeout.
-    if (submission_retry_count < SUBMISSION_RETRIES_ALLOWED) {
-      submission_retry_count += 1;
-      // Wait for a few seconds before retrying.
-      setTimeout(function() {
-        retry_callback(true);
-      }, 25000);
-    } else {
+    //if (submission_retry_count < SUBMISSION_RETRIES_ALLOWED) {
+    //  submission_retry_count += 1;
+    //  // Wait for a few seconds before retrying.
+    //  setTimeout(function() {
+    //    retry_callback(true);
+    //  }, 25000);
+    //} else {
       alert("Sorry, an error occurred communicating with the server. Please check your Agent Inbox to sign this application.");
       window.location = urls.get_manage_case_url(window.vm.options.case_data.id);
-    }
+    //}
 
   } else if (response.status === 500) {
     alert("Sorry, the server encountered an error processing this request.");

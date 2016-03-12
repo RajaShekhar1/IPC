@@ -37,6 +37,7 @@ class EnrollmentSubmissionService(object):
             # Save envelope ID on enrollment
             self.enrollment_application_service.save_docusign_envelope(enrollment_application, envelope)
 
+        db.session.commit()
         return envelope
 
     def submit_import_enrollments(self, enrollment_batch):

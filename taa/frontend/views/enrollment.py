@@ -415,7 +415,7 @@ def submit_wizard_data():
 
         return jsonify(**{
             'error': False,
-            'poll_url': url_for(check_submission_status, enrollment_id=enrollment.id),
+            'poll_url': url_for('check_submission_status', enrollment_id=enrollment.id),
             'enrollment_id': enrollment.id,
         })
     except Exception:
@@ -438,27 +438,29 @@ def process_wizard_submission(case, wizard_results):
 
 
 @app.route('/check-submission-status', methods=['GET'])
-def check_submission_status(enrollment_id):
+def check_submission_status():
+    enrollment_id = int(request.args['enrollment_id'])
 
     # For security, make sure we just submitted this enrollment (set up in submit_wizard_data.
     if not session.get('enrollment_application_id') == enrollment_id:
         abort(403)
 
     enrollment = enrollment_service.get(enrollment_id)
-    enrollment_data = json.loads(enrollment.standardized_data)
+    received_enrollment_data = json.loads(enrollment.received_data)
+    standardized_enrollment_data = json.loads(enrollment.standardized_data)
 
-    if are_all_products_declined(enrollment_data):
+    if are_all_products_declined(received_enrollment_data):
         # Declined enrollment, return redirect to our landing page.
         redirect_url = url_for('ds_landing_page',
                        event='decline',
-                       name=enrollment_data[0]['employee']['first'],
-                       type='inperson' if enrollment_data[0]["method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
+                       name=received_enrollment_data[0]['employee']['first'],
+                       type='inperson' if received_enrollment_data[0]["method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
                        )
         return jsonify(status="declined", redirect_url=redirect_url)
     elif enrollment.docusign_envelope_id is not None:
         # Done processing this envelope, get the signing URL
         envelope = DocusignEnvelope(enrollment.docusign_envelope_id, enrollment_record=enrollment)
-        data_wrap = EnrollmentDataWrap(enrollment_data, enrollment.case)
+        data_wrap = EnrollmentDataWrap(standardized_enrollment_data, enrollment.case)
         return jsonify(**{'status': 'ready', 'redirect_url': get_envelope_signing_url(data_wrap, envelope)})
     else:
         # Not done processing yet
