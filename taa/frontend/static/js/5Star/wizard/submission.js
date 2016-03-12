@@ -9,7 +9,7 @@ function submit_application() {
   });
 
   var please_wait_dialogue = bootbox.dialog({
-    message: "Please wait, this may take a minute or two...",
+    message: "Generating application form(s) for signature. Please wait, this make take a minute...",
     buttons: {
       //"success": {
       //  "label": "Close",
