@@ -10,8 +10,12 @@ from decimal import Decimal
 from flask import current_app, render_template
 
 from .models import db
+from taa.services.agents.models import Agent
 from taa.services import RequiredFeature
 from taa.services.products.plan_codes import get_plan_code
+from taa.services.products.RatePlan import (ApplicantQuery,
+                                            ApplicantDemographics,
+                                            ApplicantQueryOptions)
 from dell import *
 
 
@@ -27,7 +31,7 @@ class XmlUploadService(object):
 
 
 enrollment_service = RequiredFeature('EnrollmentApplicationService')
-agent_service = RequiredFeature('AgentService').result
+agent_service = RequiredFeature('AgentService')
 # pdf_service = RequiredFeature('ImagedFormGeneratorService')
 # census_service = RequiredFeature('CensusRecordService')
 
@@ -44,17 +48,18 @@ def generate_from_enrollment(enrollment_id, census_record_id,
         'spouse': None,
         'children': [],
     }
-    return generate_xml(census.standardized_data, template, agent, form_for='employee')
+    return generate_xml(census.standardized_data, case, template,
+                        form_for='employee')
 
 
-def generate_xml(data, agents, template, form_for='employee', pdf_bytes=None):
-    vars = get_variables(data, agents, form_for, pdf_bytes)
+def generate_xml(data, case, template, form_for='employee', pdf_bytes=None):
+    vars = get_variables(data, case, form_for, pdf_bytes)
     if vars['enrollee']['coverage']['face_value'] is None:
         return None
     return render_template(template, **vars)
 
 
-def get_variables(data, agents, form_for, pdf_bytes):
+def get_variables(data, case, form_for, pdf_bytes):
     """
     Get the variables needed to populate Dell's ACORD XML template
 
@@ -169,18 +174,11 @@ def get_variables(data, agents, form_for, pdf_bytes):
     vars['employee']['state_code'] = state['code']
 
     vars['employee']['hire_date'] = data['identityToken']
-    vars['agents'] = []
-    for agent in agents:
-        vars['agents'].append({
-            'first': agent.first,
-            'last': agent.last,
-            'code': agent.agent_code,
-            'commission_percent': 100 / len(agents),
-        })
 
-    policy = get_policy_info(data, form_for)
+    policy = get_policy_info(data, form_for, enrollee, case)
     vars['policy'].update(policy)
 
+    vars['agents'] = get_agents(data, case)
     vars['primary_agent'] = vars['agents'][0]
     vars['primary_agent']['signature_state'] = vars['policy']['enroll_state']
     vars['primary_agent']['signature_date'] = data['time_stamp']
@@ -240,22 +238,41 @@ def get_variables(data, agents, form_for, pdf_bytes):
                 vars['relationships'][key] = []
             vars['relationships'][key].append(RELATIONSHIP_ROLES.get(beneficiary['relationship']))
 
-    vars['encoded_pdf'] = None if pdf_bytes is None else \
-        base64.b64encode(pdf_bytes)
-
+    vars['encoded_pdf'] = (None if pdf_bytes is None
+                           else base64.b64encode(pdf_bytes))
     return vars
 
 
-def get_policy_info(data, form_for):
+def make_applicant_query(data, form_for, enrollee, case):
+    rider_settings = case.product_settings.get('riders', [])
+    riders = []
+    for rider in rider_settings:
+        if rider['is_selected']:
+            riders.append(rider['rider_code'])
+    riders = ['QOL4']
+    return ApplicantQuery(
+            applicant_type=form_for,
+            product_options={'riders': riders},
+            demographics=ApplicantDemographics(
+                    demographics_object={'applicant_type': form_for}),
+            state=enrollee['state'],
+            mode=data['payment_mode'],
+            rate_options=ApplicantQueryOptions({})
+    )
+
+
+def get_policy_info(data, form_for, enrollee, case):
     policy = {
         'carrier_code': CARRIER_CODE,
         'status_code': POLICY_STATUS_CODE,
         'status': POLICY_STATUS,
         'is_replacement_code': BOOLEAN[data.get('replacing_insurance')],
         'is_replacement': data.get('replacing_insurance', False),
+        'replacement_number': data.get('replacement_policy1_number', ''),
         'existing_insurance_code': BOOLEAN[data.get('existing_insurance')],
         'existing_insurance': data.get('existing_insurance'),
         'product_type': data['product_type'],
+        'base_product_type': data['product_type'],
         'indicator_code': '1',
         'indicator': 'Base',
         'is_life': True,
@@ -263,15 +280,46 @@ def get_policy_info(data, form_for):
     if form_for.startswith('child'):
         policy['product_type'] += 'D'
     if policy['is_replacement']:
-        replacement_type = REPLACEMENT_TYPES['internal']
+        replacement_type = REPLACEMENT_TYPES['external']
     else:
         replacement_type = REPLACEMENT_TYPES[None]
     policy['replacement_type_code'] = replacement_type['code']
     policy['replacement_type'] = replacement_type['name']
-    # TODO: need to determine logic for plan mapping
-    # policy['product_type'] = get_plan_code(data['product_type'], None)
-    if data['product_type'] == 'FPPTI':
+    policy['product_type'] = get_plan_code(data['product_type'],
+                                           make_applicant_query(data, form_for,
+                                                                enrollee, case))
+    if policy['base_product_type'].startswith('FPPTI'):
         policy.update({'product_code': 'Term'})
     else:
         policy.update({'product_code': 'Family Protection'})
     return policy
+
+
+def get_agents(data, case):
+    agents = []
+    if case.agent_splits is not None:
+        # Case has agent splits
+        for split in case.agent_splits:
+            if split.agent is None:
+                # Writing agent (null agent) is placeholder for enrolling agent
+                agent = Agent.query.filter_by(
+                        agent_code=data['agent_code']).one()
+            else:
+                agent = split.agent
+            if split.split_percentage > 0:
+                agents.append({
+                    'first': agent.first,
+                    'last': agent.last,
+                    'code': agent.agent_code,
+                    'subcode': split.commission_subcount_code,
+                    'commission_percent': split.split_percentage,
+                })
+    else:
+        agent = Agent.query.filter_by(agent_code=data['agent_code']).one()
+        agents.append({
+            'first': agent.first,
+            'last': agent.last,
+            'code': agent.agent_code,
+            'commission_percent': 100,
+        })
+    return agents
