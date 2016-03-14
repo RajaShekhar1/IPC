@@ -125,6 +125,7 @@ def render_batch_item_pdf(batch_id, item_id):
     response.headers['Content-Disposition'] = 'inline; filename=%s.pdf' % 'enrollment_{}'.format(item.enrollment_record_id)
     return response
 
+
 @route(bp, '/import_batches/<batch_id>/<item_id>/xml', methods=['GET'])
 @login_required
 @groups_required(['admins'])
@@ -145,6 +146,7 @@ def render_batch_item_xml(batch_id, item_id):
     zipstream.seek(0)
     return send_file(zipstream, attachment_filename='enrollment_{}.zip'.format(
         item.enrollment_record_id), as_attachment=True)
+
 
 @route(bp, '/export/acchi/csv/<from_>/<to_>', methods=['GET'])
 @login_required
