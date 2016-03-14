@@ -432,7 +432,7 @@ def process_wizard_submission(case, wizard_results):
     census_record = get_or_create_census_record(case, enrollment_data)
     enrollment_application = get_or_create_enrollment(case, census_record, standardized_data, wizard_results)
     db.session.commit()
-    
+
     return enrollment_application
 
 
