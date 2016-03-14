@@ -405,6 +405,7 @@ class AgentSplitsSetup(AgentSplitsSerializer, db.Model):
     case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True, index=True)
     case = db.relationship('Case', backref='agent_splits')
     agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
+    agent = db.relationship('Agent', backref='agent_splits')
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
     commission_subcount_code = db.Column(db.String, server_default="", default="")
     split_percentage = db.Column(db.Integer)
