@@ -127,6 +127,8 @@ class EnrollmentDataWrap(object):
             return self.case.owner_agent
         elif agent_service.get_logged_in_agent():
             return agent_service.get_logged_in_agent()
+        elif self.data.get('agent_id'):
+            return agent_service.get(self.data['agent_id'])
         else:
             # If the logged-in user is not an agent, default to case owner.
             return self.case.owner_agent
@@ -292,6 +294,9 @@ class EnrollmentDataWrap(object):
         # Replace employee signature with "John Doe voice auth on file 02:45pm"
         esig = "{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
         return self.data.get('emp_sig_txt', esig)
+
+    def get_employee_esignature_date(self):
+        return self.data.get('emp_sig_date', datetime.today().strftime('%m/%d/%Y'))
 
     def get_employee_initials(self):
         return self.data.get('emp_initials_txt', '')

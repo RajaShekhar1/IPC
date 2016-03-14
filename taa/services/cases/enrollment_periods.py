@@ -7,6 +7,7 @@ from models import (Case, CaseEnrollmentPeriod,
                     CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod,
                     )
 
+
 class CaseEnrollmentPeriodsService(DBService):
     __model__ = CaseEnrollmentPeriod
 
@@ -19,16 +20,7 @@ class CaseEnrollmentPeriodsService(DBService):
 
     def validate_open_enrollment_period(self, case, data):
         errors = {}
-        if len(data) == 0:
-            periods = []
-        elif len(data) > 1:
-            periods = [data[0]]
-        else:
-            periods = data
-        for period in data:
-            # Not finished?
-            dateutil.parser.parse(period['start_date'])
-            dateutil.parser.parse(period['end_date'])
+
         return errors
 
     def validate_annual_enrollment_period(self, case, data):

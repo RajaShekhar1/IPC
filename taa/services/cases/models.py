@@ -213,9 +213,7 @@ class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
 
 
 class CensusRecordSerializer(JsonSerializable):
-    __json_modifiers__ = {
-        # 'enrollment_applications': lambda apps, _: [a for a in apps]
-    }
+    __json_modifiers__ = {}
     __json_add__ = {
         'enrollment_status': lambda record: record.get_enrollment_status(),
         'sent_email': lambda record: record.sent_email_count,
@@ -242,12 +240,13 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     upload_date = db.Column(db.DateTime, server_default=db.func.now())
     is_uploaded_census = db.Column(db.Boolean, server_default='TRUE')
     # Employee
-    employee_ssn = db.Column(db.String(9))
-    employee_first = db.Column(db.String(256))
-    employee_last = db.Column(db.String(256))
+    # Index any column we may need to sort on.
+    employee_ssn = db.Column(db.String(9), index=True)
+    employee_first = db.Column(db.String(256), index=True)
+    employee_last = db.Column(db.String(256), index=True)
     employee_gender = db.Column(db.String(6))
     employee_birthdate = db.Column(db.Date)
-    employee_email = db.Column(db.String(256))
+    employee_email = db.Column(db.String(256), index=True)
     employee_phone = db.Column(db.String(32))
     employee_height_inches = db.Column(db.String(16))
     employee_weight_lbs = db.Column(db.String(16))
@@ -404,6 +403,7 @@ class AgentSplitsSetup(AgentSplitsSerializer, db.Model):
     # Case
     case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True, index=True)
     case = db.relationship('Case', backref='agent_splits')
+    # NULL agent_id represents the 'Writing' agent.
     agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
     agent = db.relationship('Agent', backref='agent_splits')
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))

@@ -21,10 +21,14 @@ def home_office_dashboard():
 @app.route("/manage-products")
 @groups_required(home_office_groups, all=False)
 def manage_custom_products():
-    
-    products = product_service.get_base_products() + product_service.get_custom_products()
+
+    base_product_options = product_service.get_base_products()
+    products = base_product_options + product_service.get_custom_products()
+
+
     return render_template('home_office/manage_products.html', 
         products=products,
+        base_product_options=base_product_options,
         nav_menu=get_nav_menu()
     )
 

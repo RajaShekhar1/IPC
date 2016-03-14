@@ -4,16 +4,22 @@ var SendEmailsModalViewModel = function SendEmailsModalViewModel(case_settings_v
 
   self.numbers = {
     not_sent: ko.pureComputed(function() {
+      // FIXME: now that census data not loaded on client side, need to fetch these numbers.
+      return 0;
       return self.case_settings_vm.census_data().reduce(function addNotSent(acc, app) {
         return !app.sent_email ? acc+1 : acc;
       },0);
     }),
     not_enrolled: ko.pureComputed(function() {
+      // FIXME: now that census data not loaded on client side, need to fetch these numbers.
+      return 0;
       return self.case_settings_vm.census_data().reduce(function addNotApplied(acc, app) {
         return app.enrollment_status===null ? acc+1 : acc;
       },0);
     }),
     declined: ko.pureComputed(function() {
+      // FIXME: now that census data not loaded on client side, need to fetch these numbers.
+      return 0;
       return self.case_settings_vm.census_data().reduce(function addDeclined(acc, app) {
         return app.enrollment_status==='declined' ? acc+1 : acc;
       },0);

@@ -104,9 +104,9 @@ class GroupCITemplate(DocuSignServerTemplate):
                     enrollment_data['employee_coverage']['face_value'], ',.0f')
                 eePremium = format(enrollment_data['employee_coverage']['premium'], ',.2f')
                 SOH_RadiosList += generate_SOHRadios(
-                    'ee', enrollment_data['employee_soh_questions'])
+                    'ee', enrollment_data.get_employee_soh_questions())
                 SOH_GI_Tabs += generate_SOH_GI_tabs(
-                    'ee', enrollment_data['employee_soh_questions'])
+                    'ee', enrollment_data.get_employee_soh_questions())
             else:
                 employeeCoverage = eeCoverageNullToken
                 eePremium = ' '
@@ -120,9 +120,9 @@ class GroupCITemplate(DocuSignServerTemplate):
                     enrollment_data['spouse_coverage']['face_value'], ',.0f')
                 spPremium = format(enrollment_data['spouse_coverage']['premium'], ',.2f')
                 SOH_RadiosList += generate_SOHRadios(
-                    'sp', enrollment_data['spouse_soh_questions'])
+                    'sp', enrollment_data.get_spouse_soh_questions())
                 SOH_GI_Tabs += generate_SOH_GI_tabs(
-                    'sp', enrollment_data['spouse_soh_questions'])
+                    'sp', enrollment_data.get_spouse_soh_questions())
             else:
                 spouseCoverage = ' '
                 spPremium = ' '
@@ -138,8 +138,8 @@ class GroupCITemplate(DocuSignServerTemplate):
                 continue
             childTabsList += generate_ChildTabsEntry(i, enrollment_data)
             childRadiosList.append(generate_ChildGenderRadio(i, enrollment_data))
-            childRadiosList += generate_SOHRadios('c%s' % (i+1), enrollment_data['children_soh_questions'][i])
-            SOH_GI_Tabs += generate_SOH_GI_tabs('c%s' % (i+1), enrollment_data['children_soh_questions'][i])
+            childRadiosList += generate_SOHRadios('c%s' % (i+1), enrollment_data.get_child_soh_questions(i))
+            SOH_GI_Tabs += generate_SOH_GI_tabs('c%s' % (i+1), enrollment_data.get_child_soh_questions(i))
 
         agent_code = enrollment_data.get_agent_code()
         agent_signing_name = enrollment_data.get_agent_signing_name()
