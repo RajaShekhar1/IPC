@@ -111,10 +111,11 @@ class EnrollmentSubmissionProcessor(object):
             components=components
         )
 
+        # Save the envelope ID on the enrollment record
+        enrollment_record.docusign_envelope_id = envelope.uri
+
     def generate_envelope_components(self, enrollment_record):
-        data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data),
-                                       census_record=enrollment_record.census_record,
-                                       case=enrollment_record.case)
+        data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data), case=enrollment_record.case)
         recipients = self._create_import_recipients(enrollment_record.case, data_wrap)
         components = self.docusign_service.create_fpp_envelope_components(
             data_wrap,
@@ -128,7 +129,7 @@ class EnrollmentSubmissionProcessor(object):
         # Exclude both from the envelope, use them only for tab generation purposes
         signing_agent = enrollment_data.get_signing_agent()
         recipients = [
-            AgentDocuSignRecipient(name=signing_agent.name(),
+            AgentDocuSignRecipient(signing_agent, name=signing_agent.name(),
                                   email=signing_agent.email,
                                   exclude_from_envelope=True),
             EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),

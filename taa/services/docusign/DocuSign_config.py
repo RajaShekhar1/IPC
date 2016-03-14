@@ -19,12 +19,6 @@ integratorKey = DOCUSIGN_INTEGRATOR_KEY
 baseUrl = DOCUSIGN_API_ENDPOINT[:-1]
 #"https://" + dsServer + "/restapi/v2/accounts/" + apiAccountID
 
-# to add an embedded recipient you must set their clientUserId property in addition to the recipient name and email.
-# Whatever you set the clientUserId to you MUST use the same value when requesting the signing URL;
-# this seems to be only a Docusign protocol matter and not necessrily related *in our use* to security integrity.
-# So just treating this like a constant and reusing anywhere we need such an client ID
-templateClientID = "123456"
-
 def dsAgentAuthenticateString():
     if 'ds_apikey' in user.custom_data.keys():
         agentName = user.custom_data['ds_apikey']
@@ -80,7 +74,7 @@ def get_replacement_template_id(product_type, state):
 
 def get_bank_draft_template_id(product_type, state):
     if should_use_demo_account():
-        return '02990C98-52E7-4BCC-92FF-02A29526625B'
+        return '44088a96-8bb2-47d1-b589-6ff68148a8af'
     else:
         return 'BA8F7F9C-1CF9-497A-B904-1C9DE2362589'
 

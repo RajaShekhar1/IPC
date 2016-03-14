@@ -1,5 +1,7 @@
 from flask import abort
 from flask_stormpath import current_user
+from taa.services.products.RatePlan import ApplicantQuery, APPLICANT_CHILD, ApplicantQueryOptions, \
+    load_rate_plan_for_base_product, ApplicantDemographics, APPLICANT_SPOUSE, APPLICANT_EMPLOYEE
 
 import recommendations
 from taa.core import DBService, db
@@ -12,9 +14,10 @@ from models import (
 from .statement_of_health import StatementOfHealthQuestionService
 from .states import all_states, all_statecodes, get_all_states
 from .rates import get_rates
-from .payment_modes import get_payment_modes, is_payment_mode_changeable
+from .payment_modes import get_payment_modes, is_payment_mode_changeable, get_full_payment_modes
 
 from product_forms import ProductFormService
+
 
 class ProductService(DBService):
     __model__ = Product
@@ -42,8 +45,8 @@ class ProductService(DBService):
         return CustomGuaranteeIssueProduct.query.options(
             db.eagerload('agents')).all()
 
-    def create_custom_product(self, product_name):
-        product = CustomGuaranteeIssueProduct(name=product_name, code='')
+    def create_custom_product(self, product_name, base_product_id):
+        product = CustomGuaranteeIssueProduct(name=product_name, code='', base_product_id=base_product_id)
         return self.save(product)
 
     def get_cases_using_product(self, product):
@@ -229,11 +232,76 @@ class ProductService(DBService):
         db.session.flush()
         db.session.refresh(product)
 
-    def get_rates(self, product, demographics):
-        return get_rates(product, **demographics)
+    def get_rates(self, product, demographics, riders=None):
+
+        if product.get_base_product_code() == 'Group CI':
+            return get_rates(product, **demographics)
+        else:
+            # Use the new rates calculator for all the other products.
+            rate_response = {}
+            for applicant_type in ['employee', 'spouse', 'children']:
+
+                rate_response[applicant_type] = {}
+
+                # Don't give children option to choose by premium.
+                if applicant_type != 'children':
+                    rate_response[applicant_type]['bypremium'] = [
+                        r for r in self.calc_rates_by_premium(product, applicant_type, demographics, riders)
+                        if r is not None
+                    ]
+
+                rates_by_coverage = [r for r in self.calc_rates_by_face(product, applicant_type, demographics, riders) if r is not None]
+
+                # Give children only some of the options for coverage
+                if applicant_type == 'children':
+                    rates_by_coverage = filter(lambda r: int(r['coverage']) <= 20000, rates_by_coverage)
+
+                rate_response[applicant_type]['byface'] = rates_by_coverage
+
+            return rate_response
 
     def get_recommendations(self, product, demographics):
         return recommendations.get_recommendations(product, **demographics)
+
+    def build_applicant_query_for_demographics(self, product, applicant_type, demographics, riders):
+        if applicant_type == 'children':
+            applicant_type = APPLICANT_CHILD
+
+        product_options = {}
+        # For a sanity check, don't allow riders with Child applicant.
+        if riders and applicant_type != APPLICANT_CHILD:
+            product_options['riders'] = riders
+
+        if applicant_type == APPLICANT_EMPLOYEE:
+            demographics_age = demographics['employee_age']
+        elif applicant_type == APPLICANT_SPOUSE:
+            demographics_age = demographics['spouse_age']
+        else:
+            # FIXME: child age doesn't matter for now, but on future products it might.
+            demographics_age = demographics.get('child_age', 0)
+
+        return ApplicantQuery(
+            applicant_type,
+            product_options,
+            demographics['statecode'],
+            ApplicantDemographics({'age': demographics_age}),
+            demographics['payment_mode'],
+            rate_options=ApplicantQueryOptions({}),
+        )
+
+    def calc_rates_by_premium(self, product, applicant_type, demographics, riders):
+        rate_plan = load_rate_plan_for_base_product(product.get_base_product_code())
+        applicant_query = self.build_applicant_query_for_demographics(product, applicant_type, demographics, riders)
+        if applicant_query.get_age() is None:
+            return []
+        return rate_plan.get_all_rates_by_premium(applicant_query)
+
+    def calc_rates_by_face(self, product, applicant_type, demographics, riders):
+        rate_plan = load_rate_plan_for_base_product(product.get_base_product_code())
+        applicant_query = self.build_applicant_query_for_demographics(product, applicant_type, demographics, riders)
+        if applicant_query.get_age() is None:
+            return []
+        return rate_plan.get_all_rates_by_coverage(applicant_query)
 
 
 class ProductCriteriaService(DBService):

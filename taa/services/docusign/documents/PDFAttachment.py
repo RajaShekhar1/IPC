@@ -19,8 +19,8 @@ class PDFAttachment(BasePDFDoc):
     def draw_signature_line(self):
         return create_signature_line(self.page_width, self.sig_coords, self.get_signer_recipients())
 
-    def generate_tabs(self, recipient):
-        tabs = super(BasePDFDoc, self).generate_tabs(recipient)
+    def generate_tabs(self, recipient, purpose):
+        tabs = super(BasePDFDoc, self).generate_tabs(recipient, purpose)
 
         if self.is_recipient_signer(recipient):
             # Add a signature tab to the last page

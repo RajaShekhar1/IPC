@@ -1,0 +1,189 @@
+
+<div class="step-pane" id="step3"  data-step="3">
+  <form class="form-horizontal" id="step3-form">
+
+    <h3 class="lighter block green">Employee information</h3>
+
+    <div class="form-group">
+      <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="companyName">Company Name</label>
+
+      <div class="col-xs-12 col-sm-9">
+        <div class="clearfix">
+          <input readonly="" type="text" id="companyName" name="companyName" class="col-xs-12 col-sm-9"
+                 data-bind="value: company_name"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-2"></div>
+
+    <div class="row form-group">
+      <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeFName2">
+        Employee Name
+      </label>
+
+      <div class="col-xs-12 col-sm-9">
+        <input type="text" id="eeFName2" name="eeFName2"
+               data-bind="value: employee().first" placeholder="First Name"/>
+        <input type="text" id="eeLName2" name="eeLName2"
+               data-bind="value: employee().last" placeholder="Last Name"/>
+      </div>
+    </div>
+
+    <div class="space-2"></div>
+
+    <div class="form-group">
+      <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eessn">
+        Employee SSN
+      </label>
+
+      <div class="col-xs-12 col-sm-5">
+        <input type="text" id="eessn" name="eessn" class="col-xs-12 col-sm-5 input-mask-ssn"
+               data-bind="value: employee().ssn"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="control-label col-xs-12 col-sm-3 no-padding-right">Gender</label>
+
+      <div class="col-xs-12 col-sm-9">
+        <label class="blue">
+          <input name="eeGender" value="male" type="radio" class="inline ace"
+                 data-bind="checked: employee().gender"/>
+          <span class="lbl"> Male &nbsp;&nbsp;&nbsp; </span>
+        </label>
+
+        <label class="blue">
+          <input name="eeGender" value="female" type="radio" class="inline ace"
+                 data-bind="checked: employee().gender"/>
+          <span class="lbl"> Female</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="space-2"></div>
+    <div class="clearfix"></div>
+
+    <div class="form-group">
+      <label class="clearfix control-label col-xs-12 col-sm-3 no-padding-right" for="eeStreet1">Street
+        1</label>
+
+      <div class="col-xs-12 col-sm-9">
+        <div class="clearfix">
+          <input type="text" id="eeStreet1" name="eeStreet1" class="col-xs-12 col-sm-9"
+                 data-bind="value: employee().address1"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeStreet2">Street 2</label>
+
+      <div class="col-xs-12 col-sm-9">
+        <div class="clearfix">
+          <input type="text" id="eeStreet2" name="eeStreet2" class="col-xs-12 col-sm-9"
+                 data-bind="value: employee().address2"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-2"></div>
+
+    <div class="form-group">
+      <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeCity">City, ST Zip</label>
+
+      <div class="col-xs-12 col-sm-9">
+        <input type="text" id="eeCity" name="eeCity" placeholder="City" data-bind="value: employee().city"/>
+
+        <select id="eeState" name="eeState" class="select1"
+                data-bind="value: employee().state">
+          <option value="">&nbsp;</option>
+          {% for state in states %}
+            <option value="{{ state['code'] }}">{{ state['name'] }}</option>
+          {% endfor %}
+        </select>
+
+        <input type="text" id="eeZip" name="eeZip" class="input-mask-zip" placeholder="zip"
+               data-bind="value: employee().zip"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="email">Email Address:</label>
+
+      <div class="col-xs-12 col-sm-9">
+        <div class="input-group">
+		<span class="input-group-addon">
+		  <i class="icon fa fa-envelope"></i>
+		</span>
+
+          <input type="email" name="email" id="email" class="col-xs-12 col-sm-6"
+                 data-bind="value: employee().email"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-2"></div>
+
+    <div class="form-group">
+      <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="phone">Daytime Phone:</label>
+
+      <div class="col-xs-12 col-sm-9">
+        <div class="input-group">
+            <span class="input-group-addon">
+              <i class="fa fa-phone"></i>
+            </span>
+
+          <input type="tel" id="phone" name="phone" data-bind="value: employee().phone"/>
+        </div>
+      </div>
+    </div>
+
+{#    <div class="space-2"></div>#}
+
+{#    <!--ko foreach: coverage_vm.selected_product_coverages()-->#}
+{#    <div class="form-group">#}
+{#      <label class="control-label col-xs-12 col-sm-3 no-padding-right">Policy Owner for <span data-bind="text: product.product_data.name"></span></label>#}
+{##}
+{#      <div class="col-xs-12 col-sm-9">#}
+{#        <label class="blue">#}
+{#          <input value="self" type="radio" class="inline ace" data-bind="checked: policy_owner, attr: {name: 'eeOwner'+$index()}"/>#}
+{#          <span class="lbl"> Self &nbsp;&nbsp;&nbsp;</span>#}
+{#        </label>#}
+{##}
+{#        <label class="blue">#}
+{#          <input value="other" type="radio" class="inline ace"#}
+{#                 data-bind="checked: policy_owner, attr:{name: 'eeOwner'+$index()}"/>#}
+{#          <span class="lbl"> Other</span>#}
+{#        </label>#}
+{#      </div>#}
+{#    </div>#}
+{##}
+{#    <div class="col-sm-offset-2" data-bind="visible: policy_owner() === 'other'">#}
+{#      <div class="form-group">#}
+{#        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerName">Other#}
+{#          owner </label>#}
+{##}
+{#        <div class="col-xs-12 col-sm-9">#}
+{#          <input type="text" class="col-xs-12 col-sm-4 ee-other-owner-name"#}
+{#                 placeholder="Full Name"#}
+{#                 data-bind="value: other_owner_name, attr: {name: 'eeOtherOwnerName'+$index()}"/>#}
+{#        </div>#}
+{#      </div>#}
+{#      <div class="space-2"></div>#}
+{#      <div class="form-group">#}
+{#        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerSSN">Owners's#}
+{#          SSN </label>#}
+{##}
+{#        <div class="col-xs-12 col-sm-9">#}
+{#          <input type="text"#}
+{#                 class="col-xs-12 col-sm-4 ee-other-owner-ssn"#}
+{#                 data-bind="value: other_owner_ssn, maskedInput: '999-99-9999', attr: {name: 'eeOtherOwnerSSN'+$index()}"/>#}
+{#        </div>#}
+{#      </div>#}
+{#    </div>#}
+{#    <!--/ko-->#}
+
+
+  </form>
+</div>

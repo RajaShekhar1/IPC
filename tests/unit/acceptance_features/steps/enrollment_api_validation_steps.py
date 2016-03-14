@@ -6,6 +6,7 @@ use_step_matcher("parse")
 from taa.services import LookupService, services_broker
 enrollment_parser_service = LookupService("EnrollmentRecordParser")
 
+
 # Environment stubs
 class MockApiTokenService(object):
     def __init__(self):
@@ -13,6 +14,7 @@ class MockApiTokenService(object):
 
     def is_valid_token(self, token):
         return token in self.valid_tokens
+
 
 class MockCaseService(object):
     def __init__(self):
@@ -28,6 +30,7 @@ class MockCaseService(object):
 
     def is_enrolling(self, case):
         return True
+
 
 class MockProductService(object):
     def __init__(self):
@@ -62,6 +65,13 @@ class MockProductService(object):
     def invalidate_statecode(self, product_code, statecode):
         if self.is_valid_statecode_for_product(product_code, statecode):
             self.valid_statecodes[product_code].remove(statecode)
+
+    def get_products_by_codes(self, codes):
+        class FakeProduct(object):
+            def is_fpp(self):
+                return True
+
+        return [FakeProduct() for code in codes]
 
 
 @given(u"I have an API User named {user_name} with token {user_token}")

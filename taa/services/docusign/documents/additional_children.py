@@ -7,10 +7,11 @@ from utils import style, bold_style2, NumberedCanvas, create_attachment_header
 
 
 class ChildAttachmentForm(PDFAttachment):
-    def __init__(self, recipients, enrollment_data):
+    def __init__(self, recipients, enrollment_data, starting_child_num=3):
         PDFAttachment.__init__(self, recipients, enrollment_data)
 
         self.children = []
+        self.starting_child_num = starting_child_num
 
     def add_child(self, child_data):
         """
@@ -74,7 +75,7 @@ class ChildAttachmentForm(PDFAttachment):
                 gender = ""
 
             row = [
-                str(num + 3),
+                str(num + self.starting_child_num),
                 Paragraph("%s %s"%(child['first'], child['last']), style),
                 child.get("ssn", ""),
                 gender,

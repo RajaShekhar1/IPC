@@ -1,0 +1,384 @@
+<div class="step-pane" id="step5" data-step="5">
+  <form class="" id="step5-form">
+
+    <!--ko foreach: coverage_vm.selected_product_coverages -->
+    <div data-bind="visible: $data.product.should_show_step_5()">
+
+      <h3 class="header light blue">Beneficiaries for <span data-bind="text: $data.product.product_data.name"></span>
+      </h3>
+
+      <div id="eeBeneficiaryBlock" data-bind="visible: did_select_employee_coverage()">
+        <h4 class="lighter block green">
+          Employee Beneficiary
+        </h4>
+
+        <div class="row form-group" id="eeHasSpouseAsBeneficiaryOption"
+             data-bind="visible: $root.should_include_spouse_in_table()">
+          <label class="control-label col-xs-12 col-sm-5 no-padding-right">
+                            <span data-bind="visible: $root.should_show_contingent_beneficiary">
+                                Primary
+                            </span>
+            Beneficiary of Employee Coverage is
+          </label>
+
+          <div class="col-xs-12 col-sm-7">
+            <label class="blue">
+              <input value="spouse" type="radio" class="inline ace"
+                     data-bind="checked: employee_beneficiary_type, attr: {name: 'eeBeneficiary'+$index()}"/>
+              <span class="lbl"> Spouse (<span data-bind="text: $root.spouse().first"></span>)&nbsp;&nbsp;&nbsp; </span>
+            </label>
+
+            <label class="blue">
+              <input value="other" type="radio" class="inline ace"
+                     data-bind="checked: employee_beneficiary_type, attr: {name: 'eeBeneficiary'+$index()}"/>
+              <span class="lbl"> Someone else</span>
+            </label>
+          </div>
+
+        </div>
+
+        <div id="eeBeneficiaryOther"
+             data-bind="visible: !$root.should_include_spouse_in_table() || employee_beneficiary_type() == 'other'">
+          <div class="row">
+            <div class="col-sm-12 col-md-6 form-group">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherName">
+                Beneficiary
+              </label>
+
+              <div class="col-xs-12 col-sm-9 form-group">
+                <input type="text" placeholder="Full Name" class="ee-bene-name"
+                       data-bind="value: employee_other_beneficiary().name, attr: {name: 'eeBeneOtherName'+$index()}"/>
+              </div>
+            </div>
+
+            <div class="col-sm-12 col-md-6 form-group">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherRelation">
+                Relationship
+              </label>
+
+              <div class="col-xs-12 col-sm-9 form-group">
+                <input type="text" class="ee-bene-rel"
+                       placeholder="Relationship"
+                       data-bind="value: employee_other_beneficiary().relationship, attr: {name: 'eeBeneOtherRelation'+$index()}"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm-12 col-md-6 form-group">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherSSN">
+                SSN
+              </label>
+
+              <div class="col-xs-10 col-sm-9 form-group">
+                <input type="text" class="ee-bene-ssn"
+                       data-bind="value: employee_other_beneficiary().ssn, maskedInput: '999-99-9999', attr: {name: 'eeBeneOtherSSN'+$index()}"/>
+              </div>
+            </div>
+
+            <div class="col-sm-12 col-md-6 form-group">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeBeneOtherDOB">
+                DOB
+              </label>
+
+              <div class="col-xs-10 col-sm-9 form-group"
+                   data-bind="css: { 'has-error': !!employee_other_beneficiary().date_of_birth_validation_error() }">
+                <input class="ee-bene-dob"
+                       data-bind="value: employee_other_beneficiary().date_of_birth, maskedInput: '99/99/9999', attr: {name: 'eeBeneOtherDOB'+$index()}"
+                       type="text" placeholder="MM/DD/YYYY"/>
+                <span class="help-block" data-bind="visible: !!employee_other_beneficiary().date_of_birth_validation_error(),
+                    text: employee_other_beneficiary().date_of_birth_validation_error()"></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /eeBeneficiaryOther -->
+      </div>
+      <!-- /eeBeneficiaryBlock -->
+
+      {# Employee contingent beneficiary #}
+      <div id="eeContingentBeneficiaryBlock"
+           data-bind="visible: did_select_employee_coverage() && should_show_contingent_beneficiary()">
+
+        <div class="row form-group">
+          <label class="control-label col-xs-12 col-sm-5 no-padding-right">Contingent Beneficiary of Employee Coverage
+            is </label>
+
+          <div class="col-xs-12 col-sm-7">
+            <label class="blue">
+              <input value="none" type="radio" class="inline ace"
+                     data-bind="checked: employee_contingent_beneficiary_type, attr: {name: 'eeContBeneficiary'+$index()}"/>
+              <span class="lbl"> None &nbsp;&nbsp;&nbsp; </span>
+            </label>
+            <label class="blue" data-bind="visible: $root.should_include_spouse_in_table()">
+              <input value="spouse" type="radio" class="inline ace"
+                     data-bind="checked: employee_contingent_beneficiary_type, attr: {name: 'eeContBeneficiary'+$index()}"/>
+              <span class="lbl"> Spouse (<span data-bind="text: $root.spouse().first"></span>)&nbsp;&nbsp;&nbsp; </span>
+            </label>
+
+            <label class="blue">
+              <input value="other" type="radio" class="inline ace"
+                     data-bind="checked: employee_contingent_beneficiary_type, attr: {name: 'eeContBeneficiary'+$index()}"/>
+              <span class="lbl"> Someone else</span>
+            </label>
+          </div>
+
+        </div>
+
+        <div id="eeContingentBeneficiaryOther"
+             data-bind="visible: employee_contingent_beneficiary_type() == 'other'">
+          <div class="row">
+            <div class="col-sm-12 col-md-6">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeContBeneOtherName">
+                Beneficiary
+              </label>
+
+              <div class="col-xs-12 col-sm-9 form-group">
+                <input type="text" placeholder="Full Name" class="ee-cont-bene-name"
+                       data-bind="value: employee_contingent_beneficiary().name, attr: {name: 'eeContBeneOtherName'+$index()}"/>
+              </div>
+            </div>
+
+
+            <div class="col-sm-12 col-md-6">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeContBeneOtherRelation">
+                Relationship
+              </label>
+
+              <div class="col-xs-12 col-sm-9 form-group">
+                <input type="text" class="ee-cont-bene-rel"
+                       placeholder="Relationship"
+                       data-bind="value: employee_contingent_beneficiary().relationship, attr: {name: 'eeContBeneOtherRelation'+$index()}"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm-12 col-md-6 form-group">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeContBeneOtherSSN">
+                SSN
+              </label>
+
+              <div class="col-xs-10 col-sm-9">
+                <input type="text" class="ee-cont-bene-ssn"
+                       data-bind="value: employee_contingent_beneficiary().ssn, maskedInput: '999-99-9999', attr: {name: 'eeContBeneOtherSSN'+$index()}"/>
+              </div>
+            </div>
+
+            <div class="col-sm-12 col-md-6 form-group">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeContBeneOtherDOB">
+                DOB
+              </label>
+
+              <div class="col-xs-10 col-sm-9 form-group"
+                   data-bind="css: { 'has-error': !!employee_contingent_beneficiary().date_of_birth_validation_error() }">
+                <input class="ee-cont-bene-dob"
+                       data-bind="value: employee_contingent_beneficiary().date_of_birth, maskedInput: '99/99/9999', attr: {name: 'eeContBeneOtherDOB'+$index()}"
+                       type="text" placeholder="MM/DD/YYYY"/>
+                <span class="help-block" data-bind="visible: !!employee_contingent_beneficiary().date_of_birth_validation_error(),
+                    text: employee_contingent_beneficiary().date_of_birth_validation_error()"></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /eeContBeneficiaryOther -->
+      </div>
+
+      <div id="spBeneficiaryBlock" data-bind="visible: did_select_spouse_coverage()">
+        <h4 class="lighter block green">
+          Spouse Beneficiary
+        </h4>
+
+        <div class="row form-group">
+          <label class="control-label col-xs-12 col-sm-5 no-padding-right">
+                            <span data-bind="visible: should_show_contingent_beneficiary()">
+                                Primary
+                            </span>
+            Beneficiary of Spouse Coverage is
+          </label>
+
+          <div class="col-xs-12 col-sm-7">
+            <label class="blue">
+              <input value="spouse" type="radio"
+                     class="inline ace"
+                     data-bind="checked: spouse_beneficiary_type, attr: {name: 'spBeneficiary'+$index()}"/>
+              <span class="lbl"> Employee (<span
+                  data-bind="text: $root.employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
+            </label>
+
+            <label class="blue">
+              <input value="other" type="radio" class="inline ace"
+                     data-bind="checked: spouse_beneficiary_type, attr: {name: 'spBeneficiary'+$index()}"/>
+              <span class="lbl"> Someone else</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="spBeneficiaryOther"
+             data-bind="visible: did_select_spouse_coverage() && spouse_beneficiary_type() == 'other'">
+          <div class="row">
+            <div class="col-sm-12 col-md-6">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherName">
+                Beneficiary
+              </label>
+
+              <div class="col-xs-12 col-sm-9 form-group">
+                <input type="text" class="sp-bene-name" placeholder="Full Name"
+                       data-bind="value: spouse_other_beneficiary().name, attr: {name: 'spBeneOtherName'+$index()}"/>
+              </div>
+            </div>
+
+
+            <div class="col-sm-12 col-md-6">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherRelation">
+                Relationship
+              </label>
+
+              <div class="col-xs-12 col-sm-9 form-group">
+                <input type="text" class="sp-bene-rel"
+                       placeholder="Relationship"
+                       data-bind="value: spouse_other_beneficiary().relationship, attr: {name: 'spBeneOtherRelation'+$index()}"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm-12 col-md-6 form-group">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherSSN">
+                SSN
+              </label>
+
+              <div class="col-xs-10 col-sm-9">
+                <input type="text" class="sp-bene-ssn"
+                       data-bind="value: spouse_other_beneficiary().ssn, maskedInput: '999-99-9999', attr: {name: 'spBeneOtherSSN'+$index()}"/>
+              </div>
+            </div>
+
+            <div class="col-sm-12 col-md-6 form-group">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spBeneOtherDOB">
+                DOB
+              </label>
+
+              <div class="col-xs-10 col-sm-9">
+                <input class="sp-bene-dob"
+                       data-bind="value: spouse_other_beneficiary().date_of_birth, maskedInput: '99/99/9999', attr: {name: 'spBeneOtherDOB'+$index()}"
+                       type="text" placeholder="MM/DD/YYYY"/>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /spBeneficiaryOther -->
+      </div>
+      <!-- /spBeneficiaryBlock -->
+
+      <div id="spContBeneficiaryBlock"
+           data-bind="visible: did_select_spouse_coverage() && should_show_contingent_beneficiary()">
+        <div class="row form-group">
+          <label class="control-label col-xs-12 col-sm-5 no-padding-right">
+            Contingent Beneficiary of Spouse Coverage is
+          </label>
+
+          <div class="col-xs-12 col-sm-7">
+            <label class="blue">
+              <input value="none" type="radio"
+                     class="inline ace"
+                     data-bind="checked: spouse_contingent_beneficiary_type, attr: {name: 'spContBeneficiary'+$index()}"/>
+              <span class="lbl"> None &nbsp;&nbsp;&nbsp; </span>
+            </label>
+
+            <label class="blue">
+              <input value="spouse" type="radio"
+                     class="inline ace"
+                     data-bind="checked: spouse_contingent_beneficiary_type, attr: {name: 'spContBeneficiary'+$index()}"/>
+              <span class="lbl"> Employee (<span
+                  data-bind="text: $root.employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
+            </label>
+
+            <label class="blue">
+              <input value="other" type="radio" class="inline ace"
+                     data-bind="checked: spouse_contingent_beneficiary_type, attr: {name: 'spContBeneficiary'+$index()}"/>
+              <span class="lbl"> Someone else</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="spContBeneficiaryOther"
+             data-bind="visible: did_select_spouse_coverage() && spouse_contingent_beneficiary_type() == 'other'">
+          <div class="row">
+            <div class="col-sm-12 col-md-6">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spContBeneOtherName">
+                Beneficiary
+              </label>
+
+              <div class="col-xs-12 col-sm-9 form-group">
+                <input type="text" class="sp-cont-bene-name" placeholder="Full Name"
+                       data-bind="value: spouse_contingent_beneficiary().name, attr: {name: 'spContBeneOtherName'+$index()}"/>
+              </div>
+            </div>
+
+            <div class="col-sm-12 col-md-6">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spContBeneOtherRelation">
+                Relationship
+              </label>
+
+              <div class="col-xs-12 col-sm-9 form-group">
+                <input type="text" class="sp-cont-bene-rel"
+                       placeholder="Relationship"
+                       data-bind="value: spouse_contingent_beneficiary().relationship, attr: {name: 'spContBeneOtherRelation'+$index()}"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="row ">
+            <div class="col-sm-12 col-md-6 form-group">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spContBeneOtherSSN">
+                SSN
+              </label>
+
+              <div class="col-xs-10 col-sm-9">
+                <input type="text" class="sp-cont-bene-ssn"
+                       data-bind="value: spouse_contingent_beneficiary().ssn, maskedInput: '999-99-9999', attr: {name: 'spContBeneOtherSSN'+$index()}"/>
+              </div>
+            </div>
+
+            <div class="col-sm-12 col-md-6 form-group">
+              <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spContBeneOtherDOB">
+                DOB
+              </label>
+
+              <div class="col-xs-10 col-sm-9">
+                <input class="sp-cont-bene-dob"
+                       data-bind="value: spouse_contingent_beneficiary().date_of_birth, maskedInput: '99/99/9999', attr: {name: 'spContBeneOtherDOB'+$index()}"
+                       type="text" placeholder="MM/DD/YYYY"/>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /spContBeneficiaryOther -->
+      </div>
+      <!-- /spContBeneficiaryBlock -->
+
+      <div id="onlyChildCoverageBeneficiaryStmt" data-bind="visible: did_select_children_coverage()">
+        <h4 class="lighter block green">Child Beneficiary</h4>
+                    <span class="text-primary bigger-110 center">
+                      <i class="icon-info-sign"></i>
+                      Beneficiary of Child coverage will be designated as the Employee unless otherwise noted via separate written communication with 5Star's Administrative office.
+                    </span>
+      </div>
+
+      <div class="error" data-bind="visible: has_contingent_beneficiary_error()">
+        Spouse cannot be both primary and contingent beneficiary.
+      </div>
+    </div>
+    <!--/ko-->
+
+    <div data-bind="visible: !should_show_step_5()">
+      <h3 class="green center">
+        This step does not apply for any selected product.
+      </h3>
+    </div>
+
+  </form>
+</div>

@@ -4,11 +4,11 @@ import os
 __all__ = ['get_recommendations']
 
 DATA_DIR = 'taa/services/products/data_files'
-DEFAULT_RECOMMENDATIONS = {
-    'good': {'employee': 50000, 'spouse': 50000, 'children': None},
-    'better': {'employee': 100000, 'spouse': 100000, 'children': 10000},
-    'best': {'employee': 150000, 'spouse': 150000, 'children': 20000}
-}
+DEFAULT_RECOMMENDATIONS = [
+    {'name':'good', 'coverages': {'employee': 50000, 'spouse': 50000, 'children': None}},
+    {'name':'better', 'coverages': {'employee': 100000, 'spouse': 100000, 'children': 10000}},
+    {'name':'best', 'coverages': {'employee': 150000, 'spouse': 150000, 'children': 20000}}
+]
 EMP_COLUMNS = {'good': 'emp1_cov', 'better': 'emp2_cov', 'best': 'emp3_cov'}
 SPOUSE_COLUMNS = {'good': 'sp1_cov', 'better': 'sp2_cov', 'best': 'sp3_cov'}
 CHILDREN_COLUMNS = {'good': 'ch1_cov', 'better': 'ch2_cov', 'best': 'ch3_cov'}
@@ -37,12 +37,12 @@ def get_recommendations(product, **demographics):
 
     return lookup(key,
                   demographics['employee_age'],
-                  demographics.get('spouse_age'),
-                  demographics.get('num_children'))
+                  demographics.get('spouse_age')
+                  )
 
 
 
-def lookup(product, employee_age, spouse_age=None, num_children=None):
+def lookup(product, employee_age, spouse_age=None):
     init_from_data_files()
     return RECOMMENDATIONS[product].get(employee_age, DEFAULT_RECOMMENDATIONS)
 
@@ -143,10 +143,15 @@ def build(csv_path):
         age = int(line['age'])
         for rating in ['good', 'better', 'best']:
             if age not in table:
-                table[age] = {}
-            table[age][rating] = {
-                'employee': line.get(EMP_COLUMNS[rating]),
-                'spouse': line.get(SPOUSE_COLUMNS[rating]),
-                'children': line.get(CHILDREN_COLUMNS[rating])
-            }
+                table[age] = []
+
+            table[age].append(
+                {'name': rating,
+                 'coverages': {
+                    'employee': line.get(EMP_COLUMNS[rating]),
+                    'spouse': line.get(SPOUSE_COLUMNS[rating]),
+                    'children': line.get(CHILDREN_COLUMNS[rating])
+                }
+            })
+
     return table

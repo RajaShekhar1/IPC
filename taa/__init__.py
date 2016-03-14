@@ -62,9 +62,11 @@ def create_app(bind=None):
     from api.cases import bp as cases_api
     from api.products import bp as products_api
     from api.enrollments import bp as enrollments_api
+    from api.envelopes import bp as envelopes_api
     app.register_blueprint(cases_api)
     app.register_blueprint(products_api)
     app.register_blueprint(enrollments_api)
+    app.register_blueprint(envelopes_api)
 
     # API custom JSON encoder
     app.json_encoder = JSONEncoder

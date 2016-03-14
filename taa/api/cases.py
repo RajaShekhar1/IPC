@@ -1,12 +1,16 @@
+import json
 from datetime import datetime
 
-from flask import Blueprint, request, abort, make_response
+import re
+from flask import Blueprint, request, abort, make_response, Response
 from flask_stormpath import current_user, groups_required, login_required
+from taa import JSONEncoder
 
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
-from taa.services.cases import CaseService, SelfEnrollmentSetup, RiderService
+from taa.services.cases import CaseService, SelfEnrollmentSetup, AgentSplitsSetup
+from taa.services.products.riders import RiderService
 from taa.services.cases.forms import (
     CensusRecordForm,
     NewCaseForm,
@@ -28,12 +32,12 @@ enrollment_application_service = LookupService('EnrollmentApplicationService')
 
 api_groups = ['agents', 'home_office', 'admins']
 
+
 # Case management endpoints
 @route(bp, '/')
 @login_required
 @groups_required(api_groups, all=False)
 def get_cases():
-
     name_filter = request.args.get('by_name')
 
     agent = agent_service.get_logged_in_agent()
@@ -75,7 +79,7 @@ def create_case():
     # Make sure this case name isn't used already
     existing_cases = case_service.search_cases(by_name=data['company_name'])
     if existing_cases:
-        raise TAAFormError(errors=[{'error': 'Case already exists with the name "%s"'%data['company_name']}])
+        raise TAAFormError(errors=[{'error': 'Case already exists with the name "%s"' % data['company_name']}])
 
     form = NewCaseForm(form_data=data)
     if agent:
@@ -110,26 +114,24 @@ def update_case(case_id):
     form.products.data = [p['id'] for p in data['products']]
     if form.validate_on_submit():
         # Update products
-        case_service.update_products(
-            case, [p for p in product_service.get_all(*form.products.data)])
+        case_service.update_products(case, data['products'])
         # Update partner agents
         if is_admin:
             case_service.update_partner_agents(
                 case, [a for a in agent_service.get_all(
                     *data['partner_agents'])])
-        # Update case table (these keys must be removed for the main case
-        # update)
-        selected_riders = []
-        if data['products'] and not 'Group CI' in [p.get('code') for p in data['products']]:
-            riders = data["riders"]
-            for rider in riders:
-                if rider.get('selected'):
-                    selected_riders.append(rider.get('code'))
-        case_service.update_riders(case, [rider_service.get_rider_by_code(rc) for rc in selected_riders])
+
+        # Update the product settings
+        case_service.update_product_settings(case, data['product_settings'])
+
+        # Before updating the case table, these keys must be removed for the main case update.
         del data['products']
         del data['partner_agents']
-        del data['riders']
+        del data['product_settings']
+
+        # Update case table
         return case_service.update(case, **data)
+
     raise TAAFormError(form.errors)
 
 
@@ -201,6 +203,61 @@ def enrollment_records(case_id):
     format=json|csv (json by default)
     """
     case = case_service.get_if_allowed(case_id)
+
+
+    if request.args.get('draw'):
+        # Do a datatables response with pagination and search text.
+        offset = int(request.args.get('start', 0))
+        limit = int(request.args.get('length', None))
+        search_text = request.args.get('search[value]', "")
+        order_col_num = int(request.args.get('order[0][column]', 1))
+        order_dir = request.args.get('order[0][dir]', 'asc')
+
+        col_name_pattern = re.compile('columns\[(\d+)\]\[name\]')
+        column_names = {}
+        for argname in request.args:
+            match = col_name_pattern.match(argname)
+            if match:
+                col_num = int(match.groups()[0])
+                name = request.args[argname]
+                column_names[col_num] = name
+
+        order_col_name = column_names.get(order_col_num)
+
+        data = enrollment_application_service.retrieve_enrollment_data_for_table(
+            case,
+            offset=offset,
+            limit=limit,
+            search_text=search_text,
+            order_column=order_col_name,
+            order_dir=order_dir,
+        )
+
+        table_data = [dict(
+            id=row.id,
+            date=row.date,
+            case_id=row.case_id,
+            census_record_id=row.census_record_id,
+            employee_first=row.employee_first,
+            employee_last=row.employee_last,
+            #employee_email=row.employee_email,
+            agent_name=row.agent_name,
+            employee_birthdate=row.employee_birthdate,
+            enrollment_status=row.enrollment_status,
+            total_premium=row.total_premium,
+        ) for row in data]
+
+        resp_data = dict(
+            data=table_data,
+            # DataTables docs recommends casting this to int to prevent XSS
+            draw=int(request.args['draw']),
+            recordsTotal=enrollment_application_service.retrieve_enrollments_total_visible_count_for_table(case),
+            recordsFiltered=enrollment_application_service.retrieve_enrollments_filtered_count_for_table(case, search_text),
+        )
+
+        return Response(response=json.dumps(resp_data, cls=JSONEncoder), content_type='application/json')
+
+
     census_records = case_service.get_current_user_census_records(case)
     data = enrollment_application_service.get_enrollment_records_for_census_records(census_records)
 
@@ -213,6 +270,7 @@ def enrollment_records(case_id):
         }
         return make_response(body, 200, headers)
     return data
+
 
 @route(bp, '/<case_id>/enrollment_records/<int:census_id>', methods=['GET'])
 @login_required
@@ -254,9 +312,9 @@ def census_records(case_id):
     if case_service.is_current_user_restricted_to_own_enrollments(case) and not args['filter_ssn']:
         args['filter_agent'] = agent_service.get_logged_in_agent()
 
-    data = case_service.get_census_records(case, **args)
-
+    # If we are requesting CSV format, get the whole data set.
     if request.args.get('format') == 'csv':
+        data = case_service.get_census_records(case, **args)
         body = case_service.export_census_records(data)
         date_str = datetime.now().strftime('%Y-%m-%d')
         headers = {
@@ -266,9 +324,64 @@ def census_records(case_id):
         }
         return make_response(body, 200, headers)
 
-    return data
+    # If we are doing an SSN lookup, use simpler method.
+    if args['filter_ssn'] or args['filter_birthdate']:
+        return case_service.get_census_records(case, **args)
 
 
+    # DataTables parameters
+    offset = int(request.args.get('start', 0))
+    limit = int(request.args.get('length', None))
+    search_text = request.args.get('search[value]', "")
+    order_col_num = int(request.args.get('order[0][column]', 3))
+    order_dir = request.args.get('order[0][dir]', 'asc')
+
+    col_name_pattern = re.compile('columns\[(\d+)\]\[name\]')
+    column_names = {}
+    for argname in request.args:
+        match = col_name_pattern.match(argname)
+        if match:
+            col_num = int(match.groups()[0])
+            name = request.args[argname]
+            column_names[col_num] = name
+
+    order_col_name = column_names.get(order_col_num)
+
+    # Search for the matching census rows
+    if case_service.is_current_user_restricted_to_own_enrollments(case):
+        limit_to_agent = agent_service.get_logged_in_agent().id
+    else:
+        limit_to_agent = None
+
+    data = case_service.retrieve_census_data_for_table(
+        case,
+        offset=offset,
+        limit=limit,
+        search_text=search_text,
+        order_column=order_col_name,
+        order_dir=order_dir,
+        agent_id=limit_to_agent,
+    )
+
+    table_data = [dict(
+        id=row.id,
+        case_id=row.case_id,
+        employee_first=row.employee_first,
+        employee_last=row.employee_last,
+        employee_email=row.employee_email,
+        employee_birthdate=row.employee_birthdate,
+        enrollment_status=row.enrollment_status,
+    ) for row in data]
+
+    resp_data = dict(
+        data=table_data,
+        # DataTables docs recommends casting this to int to prevent XSS
+        draw=int(request.args['draw']),
+        recordsTotal=case_service.retrieve_census_total_visible_count_for_table(case, limit_to_agent),
+        recordsFiltered=case_service.retrieve_census_filtered_count_for_table(case, limit_to_agent, search_text),
+    )
+
+    return Response(response=json.dumps(resp_data, cls=JSONEncoder), content_type='application/json')
 
 
 # Census Records - lookup self-enroll link debug API for Bill to get SSNs with self-enroll links.
@@ -372,8 +485,7 @@ def update_self_enrollment_setup(case_id):
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
 
     if ('self_enrollment_type' in request.json
-            and request.json['self_enrollment_type'] == SelfEnrollmentSetup.TYPE_CASE_GENERIC):
-
+        and request.json['self_enrollment_type'] == SelfEnrollmentSetup.TYPE_CASE_GENERIC):
         # Remove email-specific fields from the form so they are not validated
         del form.email_greeting_type
         del form.email_greeting_salutation
@@ -391,6 +503,24 @@ def update_self_enrollment_setup(case_id):
         return case_service.update_self_enrollment_setup(self_enrollment_setup, form.data)
 
     raise TAAFormError(form.errors)
+
+
+@route(bp, '/<case_id>/agent_splits_setup', methods=['PUT'])
+@login_required
+@groups_required(api_groups, all=False)
+def update_agent_split_setup(case_id):
+    case = case_service.get_if_allowed(case_id)
+
+    case_service.delete_agent_splits_setup_for_case(case)
+
+    if not case_service.can_current_user_edit_case(case):
+        abort(401)
+        return
+
+    for split in request.json:
+        case_service.create_agent_splits_setup(case, split)
+
+    return True
 
 
 def get_census_records_for_status(case, status=None):
@@ -454,4 +584,4 @@ def email_self_enrollment_batch_post(case_id):
     for email_log in results:
         self_enrollment_email_service.queue_email(email_log.id)
 
-    return ["Scheduled %s emails for immediate processing."%len(results)]
+    return ["Scheduled %s emails for immediate processing." % len(results)]

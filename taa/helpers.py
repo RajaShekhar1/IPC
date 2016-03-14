@@ -35,7 +35,11 @@ class JSONEncoder(FlaskJSONEncoder):
         
         if isinstance(obj, Decimal):
             return str(obj) 
-        
+
+        # As a last-ditch effort, try a to_json method if it exists.
+        if hasattr(obj, 'to_json'):
+            return obj.to_json()
+
         return super(JSONEncoder, self).default(obj)
 
 def json_encode(val):

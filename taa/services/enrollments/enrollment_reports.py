@@ -128,16 +128,20 @@ class EnrollmentReportService(object):
 
     def get_num_declined_enrollments(self, merged_enrollment_applications):
         return sum(1 for e in merged_enrollment_applications
-                   if e['enrollment'] and not e['enrollment'].did_enroll())
+                   if e['enrollment'] and e['enrollment'].did_decline())
 
     def get_total_annualized_premium(self, unmerged_enrollment_applications):
         total = Decimal('0.00')
         for e in unmerged_enrollment_applications:
+            if not e['enrollment'].did_enroll():
+                continue
+
             all_coverages = []
             for product, coverages in e['coverages'].iteritems():
                 all_coverages += coverages
             total += sum(map(lambda c: c.get_annualized_premium(),
-                             all_coverages))
+                         filter(lambda c: c.did_enroll(), all_coverages))
+                        )
         return total
 
     def get_num_census_records(self, records):

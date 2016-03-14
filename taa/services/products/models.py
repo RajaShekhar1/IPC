@@ -1,8 +1,11 @@
 from collections import defaultdict
 
+import json
+
 from taa import db
 from taa.helpers import JsonSerializable
 from taa.services.products.product_forms import ProductFormService
+from taa.services.products.riders import RiderService
 product_form_service = ProductFormService()
 
 
@@ -13,6 +16,10 @@ class ProductJsonSerializable(JsonSerializable):
         # Default serialized data
         data = super(ProductJsonSerializable, self).to_json()
 
+        data['customer_short_name_display'] = self.get_short_name()
+        data['brochure_name_display'] = self.get_brochure_name()
+        data['brochure_url_display'] = self.get_brochure_url()
+
         # Add in some helper attributes
 
         # Base product type 'code'
@@ -21,6 +28,15 @@ class ProductJsonSerializable(JsonSerializable):
 
         # Get replacement form text for the wizard
         data['replacement_paragraphs'] = self.get_replacement_paragraphs()
+
+        if hasattr(self, 'case_id'):
+            from taa.services.cases.models import case_products
+            association = db.session.query(case_products).filter_by(case_id=self.case_id, product_id=self.id).first()
+            if association is not None:
+                data['ordinal'] = association.ordinal
+
+        # Get rider information
+        data['riders'] = RiderService().get_riders_for_product(self)
 
         return data
 
@@ -32,14 +48,17 @@ product_restricted_agents = db.Table('product_restricted_agents', db.metadata,
                                      db.Column('agent_id', db.Integer, db.ForeignKey('agents.id'),
                                                primary_key=True),
 )
+db.Index('ix_product_restricted_agents_agent', product_restricted_agents.c.agent_id)
 
 
 class Product(ProductJsonSerializable, db.Model):
     __tablename__ = 'products'
 
     id = db.Column(db.Integer, primary_key=True)
-    code = db.Column(db.String, nullable=False)
+    code = db.Column(db.String, nullable=False, index=True)
     name = db.Column(db.String, nullable=False)
+    use_base_product_settings = db.Column(db.String, nullable=True)
+    customer_short_name = db.Column(db.String, nullable=True)
     brochure_url = db.Column(db.Unicode(2000))
     brochure_name = db.Column(db.Unicode(256))
     is_fpp_gov = db.Column(db.Boolean, nullable=False, server_default='FALSE')
@@ -79,6 +98,33 @@ class Product(ProductJsonSerializable, db.Model):
 
     def is_base_fpp_gov(self):
         return self.get_base_product().is_fpp_gov if self.get_base_product() else self.is_fpp_gov
+
+    def should_use_base_product_settings(self):
+        use_base_product_settings = getattr(self, "use_base_product_settings")
+        if use_base_product_settings is not None:
+            return json.loads(use_base_product_settings)
+        return dict()
+
+    def get_short_name(self):
+        use_base_product_settings = self.should_use_base_product_settings()
+        if use_base_product_settings.get("customer_short_name"):
+            base_product = getattr(self, "base_product")
+            return getattr(base_product, "customer_short_name")
+        return getattr(self, "customer_short_name")
+
+    def get_brochure_name(self):
+        use_base_product_settings = self.should_use_base_product_settings()
+        if use_base_product_settings.get("brochure_name"):
+            base_product = getattr(self, "base_product")
+            return getattr(base_product, "brochure_name")
+        return getattr(self, "brochure_name")
+
+    def get_brochure_url(self):
+        use_base_product_settings = self.should_use_base_product_settings()
+        if use_base_product_settings.get("brochure_url"):
+            base_product = getattr(self, "base_product")
+            return getattr(base_product, "brochure_url")
+        return getattr(self, "brochure_url")
 
     def format_type(self):
         if self.is_guaranteed_issue():
@@ -129,7 +175,7 @@ product_agents = db.Table('product_agents', db.metadata,
     db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True),
     db.Column('agent_id', db.Integer, db.ForeignKey('agents.id'), primary_key=True),
 )
-
+db.Index('ix_product_agents_agent', product_agents.c.agent_id)
 
 class CustomProductSerializer(ProductJsonSerializable):
     __json_hidden__ = ['cases', 'customized_products', 'base_product']
@@ -176,7 +222,7 @@ class BypassedStatementOfHealthQuestion(BypassedSOHSerializer, db.Model):
     __tablename__ = "products_gi_bypass_questions"
 
     id = db.Column(db.Integer, primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), index=True)
     product = db.relationship("Product", backref=db.backref('bypassed_soh_questions'))
     question_type_label = db.Column(db.Unicode)
 
@@ -191,7 +237,7 @@ class GuaranteeIssueCriteria(GICriteriaSerializer, db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     # Custom product this applies to
-    product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), index=True)
     product = db.relationship('Product', backref=db.backref('gi_criteria'))
 
     # To which applicants does this criteria apply

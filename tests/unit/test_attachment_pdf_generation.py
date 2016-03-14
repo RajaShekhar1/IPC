@@ -22,7 +22,7 @@ class TestPDFAttachments(TestCase):
         ))
 
         attachment = MultipleBeneficiariesAttachment(self.test_recipients,
-                                                     EnrollmentDataWrap(self.test_enrollment_data, None, self.case),
+                                                     EnrollmentDataWrap(self.test_enrollment_data, self.case),
                                                      )
 
         attachment.generate()
@@ -46,7 +46,7 @@ class TestPDFAttachments(TestCase):
         ))
 
         attachment = MultipleBeneficiariesAttachment(self.test_recipients,
-                                                     EnrollmentDataWrap(self.test_enrollment_data, None, self.case),
+                                                     EnrollmentDataWrap(self.test_enrollment_data, self.case),
                                                      )
 
         attachment.generate()
@@ -83,7 +83,7 @@ class TestPDFAttachments(TestCase):
         ))
 
         attachment = MultipleBeneficiariesAttachment(self.test_recipients,
-                                                     EnrollmentDataWrap(self.test_enrollment_data, None, self.case),
+                                                     EnrollmentDataWrap(self.test_enrollment_data, self.case),
                                                      )
 
         attachment.generate()
@@ -96,8 +96,7 @@ class TestPDFAttachments(TestCase):
                                                     enrollment_data=EnrollmentDataWrap(dict(
                                                         agent_data=dict(company_name="DelMar SD"),
                                                         employee=dict(first="Test", last="Employee", ssn="123-12-1234")
-                                                        ), None, self.case
-                                                    )
+                                                    ), self.case)
         )
 
         child_attachment_form.add_child(dict(
@@ -149,7 +148,7 @@ class TestPDFAttachments(TestCase):
                     replacement_reason="Testing Reason ntahoensuthansoe hunsao a oeunaoenu hane unaoe a asoe unaeu",
                 )
             ]
-        ), None, self.case))
+        ), self.case))
 
         attachment.generate()
         bytes = attachment._pdf_data.getvalue()
@@ -158,8 +157,7 @@ class TestPDFAttachments(TestCase):
 
     def setUp(self):
 
-
-        agent = AgentDocuSignRecipient(name="Zachary Mason", email="zmason@delmarsd.com")
+        agent = AgentDocuSignRecipient(agent=None, name="Zachary Mason", email="zmason@delmarsd.com")
         employee = EmployeeDocuSignRecipient(name="Joe Tester", email="zach@zachmason.com")
         self.test_recipients = [
             agent,

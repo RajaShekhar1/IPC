@@ -41,11 +41,10 @@
             </thead>
             <tbody>
               {% for enrollment in enrollment_data %}
-                {% if enrollment %}
                   <tr style="background:rgba(50,50,50,.1)">
                     <td><strong data-bind="text: moment('{{ enrollment.time }}').format('MM/DD/YYYY hh:mma')"></strong></td>
                     <td><strong>{{enrollment.product_name}}</strong></td>
-                    <td><strong>{{enrollment.status.capitalize()}}</strong></td>
+                    <td><strong>{{enrollment.status}}</strong></td>
                     {% if enrollment.status=='declined'%}
                       <td><strong>N/A</strong></td>
                       <td><strong>N/A</strong></td>
@@ -56,7 +55,15 @@
                         {% endif %}
                       </td>
                     {% else %}
-                      <td></td>
+                      <td>
+                      {% if enrollment.status in ["Pending Employee", "Pending Agent"] and enrollment.envelope_id and current_agent_id != None and current_agent_id == enrollment.agent_id %}
+                        <button class="btn btn-warning btn-sm sign-envelope" data-id="{{ enrollment.envelope_id }}"><i class="icon fa fa-pencil"></i> Sign</button>
+                      {% endif %}
+                      {% if enrollment.status in ["Enrolled"] and enrollment.envelope_id and (can_edit_case or current_agent_id == enrollment.agent_id) %}
+                        <button class="btn btn-primary btn-sm sign-envelope" data-id="{{ enrollment.envelope_id }}"><i class="icon fa fa-file"></i> View</button>
+                      {% endif %}
+
+                      </td>
                       <td></td>
                       <td><strong>{{enrollment.total}}</strong></td>
                       <td>
@@ -82,7 +89,6 @@
                       </tr>
                     {% endfor %}
                   {% endif %}
-                {% endif %}
               {% endfor %}
             </tbody>
           </table>
@@ -98,7 +104,7 @@
         {% if case_is_enrolling %}
           {% if enrollment_status == None %}
             <button class="btn btn-primary btn-sm enroll-employee" data-id="{{census_record.id}}">Enroll</button>
-          {% elif enrollment_status != None %}
+          {% elif enrollment_status == "enrolled" %}
             <button class="btn btn-primary btn-sm enroll-employee" data-id="{{census_record.id}}"><i class="fa fa-plus"></i> Add Coverage</button>
           {% endif %}
         {% endif %}
@@ -382,6 +388,11 @@
               enrollment_city: "{{case.situs_city}}",
               enrollment_state: "{{case.situs_state}}"
             });
+          });
+
+          $(document).on('click', "button.sign-envelope", function() {
+            var envelope_id = $(this).attr('data-id');
+            agent_inbox.sign_envelope(envelope_id);
           });
 
           $("#edit-record-form").on("submit", function() {

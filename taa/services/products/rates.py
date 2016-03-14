@@ -174,7 +174,8 @@ class Rates(object):
             for index, key in enumerate(itertools.product([floatify(line[0])], header[1:]), start=1):
                 self._rates[product_key][payment_mode][type_][key] = {
                     TYPE_PREMIUM: floatify(line[index]) if type_ == TYPE_COVERAGE else key[1],
-                    TYPE_COVERAGE: floatify(line[index]) if type_ == TYPE_PREMIUM else key[1]
+                    TYPE_COVERAGE: floatify(line[index]) if type_ == TYPE_PREMIUM else key[1],
+                    "payment_mode": payment_mode,
                 }
 
     def get(self, product_code, payment_mode, age, smoker=None, applicant_type=None, height=None, weight=None):
@@ -203,6 +204,7 @@ class Rates(object):
         # Rename keys to fit existing API
         result['byface'] = result.pop(TYPE_COVERAGE)
         result['bypremium'] = result.pop(TYPE_PREMIUM)
+
         return result
 
 
@@ -447,3 +449,25 @@ def initialize_rates_from_files(rates):
                       MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
     rates.from_string("age,10000,20000\n-1,4.98,9.97", 'FPPTI',
                       MODES_BY_NAME['monthly'], TYPE_COVERAGE)
+
+
+#
+#
+#
+#
+# def get_rates_for_applicant(applicant_type, product, product_options, state, demographics, mode):
+#
+#     rate_query = ApplicantRateQuery(applicant_type, product, product_options, state, demographics, mode)
+#
+#     if not product.rate_package.is_eligible(rate_query):
+#         raise ValueError("Eligibility requirements not met.")
+#
+#     if not product.rate_package.has_valid_options(rate_query):
+#         raise ValueError("Invalid product options")
+#
+#     rates = product.rate_package.lookup_rates(rate_query)
+#
+
+
+if __name__ == "__main__":
+    pass

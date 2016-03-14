@@ -63,8 +63,8 @@ Feature: Validate an enrollment record submitted via API.
       | missing_header | time_stamp          |
       | missing_header | signed_at_city      |
       | missing_header | signed_at_state     |
-      | missing_header | existing_insurance  |
-      | missing_header | replacing_insurance |
+      #| missing_header | existing_insurance  |
+      #| missing_header | replacing_insurance |
 
   Scenario: It should allow case-insensitive match on required headers
     Given I prepare an enrollment file with basic valid enrollment data

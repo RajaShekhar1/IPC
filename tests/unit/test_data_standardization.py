@@ -1,11 +1,10 @@
 from decimal import Decimal
 from unittest2 import TestCase
 
-from hamcrest import assert_that, equal_to, has_entries, contains
-from mock import Mock, sentinel
+from hamcrest import assert_that, has_entries
+from mock import Mock
 
 from taa.services.enrollments.enrollment_import import EnrollmentImportService
-from taa.services.enrollments import EnrollmentRecordParser
 
 
 class TestDataStandardization(TestCase):
@@ -273,7 +272,6 @@ class TestDataStandardization(TestCase):
         assert_that(output['children'][0], has_entries(expected[0]))
         assert_that(output['children'][1], has_entries(expected[1]))
 
-
     def test_it_should_standardize_coverages(self):
 
         output = self.import_service.standardize_imported_data(self.init_data)
@@ -374,7 +372,7 @@ class TestDataStandardization(TestCase):
 
 
     def test_it_standardizes_wizard_contingent_beneficiaries(self):
-        self.wizard_data = {
+        self.wizard_data = [{
             'employee_contingent_beneficiary_type': 'other',
             'spouse_contingent_beneficiary_type': 'other',
             'employee_contingent_beneficiary': dict(
@@ -389,9 +387,9 @@ class TestDataStandardization(TestCase):
                 date_of_birth='11/11/2011',
                 ssn='333-22-1234',
             ),
-        }
-        input_emp_cont = self.wizard_data['employee_contingent_beneficiary']
-        input_sp_cont = self.wizard_data['spouse_contingent_beneficiary']
+        }]
+        input_emp_cont = self.wizard_data[0]['employee_contingent_beneficiary']
+        input_sp_cont = self.wizard_data[0]['spouse_contingent_beneficiary']
 
         expected = {
             'employee_contingent_beneficiary1_name': input_emp_cont['name'],
@@ -407,7 +405,7 @@ class TestDataStandardization(TestCase):
 
         output = self.import_service.standardize_wizard_data(self.wizard_data)
 
-        assert_that(output, has_entries(expected))
+        assert_that(output[0], has_entries(expected))
 
     def get_mock_product_service(self):
         mock_product_service = Mock()

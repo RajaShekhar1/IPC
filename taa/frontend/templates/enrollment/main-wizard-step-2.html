@@ -1,0 +1,432 @@
+
+<div class="step-pane" id="step2" data-step="2">
+  <form class="form-horizontal" id="questions-form">
+
+    <div data-bind="visible: should_show_other_insurance_questions">
+      <h3 class="lighter block green">Other Insurance</h3>
+
+      <div class="row form-group">
+        <div class="col-xs-12 col-sm-9">
+          <span class="bigger-120">Does anyone on this application have any existing life insurance or annuity contracts?</span><br>
+                        <span id="existing_warning_text" style="display: none;" class=" bigger-120">If yes, and you live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV please complete and sign the Notice: Replacement of Life Insurance and Annuity. The Notice must be <span
+                                class="text-warning bigger-120">presented</span> and <span
+                                class="text-warning bigger-120">read</span> to you by your agent at the time he/she takes your application.</span>
+        </div>
+        <div class="col-xs-12 col-sm-3 btn-group no-padding-right">
+          <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                            question: new GlobalSOHQuestion('existing_insurance'), 
+                            val: 'Yes', 
+                            highlight: $root.get_has_existing_question_highlight(),
+                            onclick: $root.select_has_existing_insurance
+                            }">
+            Yes
+          </button>
+          <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                            question: new GlobalSOHQuestion('existing_insurance'), 
+                            val: 'No', 
+                            highlight: 'checkmark',
+                            onclick: window.reset_existing_insurance_warning
+                            }">
+            No
+          </button>
+        </div>
+      </div>
+
+      <div class="row form-group">
+        <div class="col-xs-12 col-sm-9">
+          <span class="bigger-120">Will the coverage applied for replace any existing life insurance or annuities?</span><br>
+                        <span id="replacement_warning_text" style="display: none;" class="bigger-120"><br>If yes, and you do not live in the above listed states, you will need to complete and sign the applicable state-specific Notice: Replacement of Life Insurance and Annuity, obtainable from your agent or enrollment professional.<br><br> <span
+                                class="text-danger bigger-130">You cannot proceed with this online enrollment, and must enroll via paper forms with your agent or enrollment professional.</span></span>
+        </div>
+        <div class="col-xs-12 col-sm-3 btn-group no-padding-right" data-toggle="buttons">
+          <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                            question: new GlobalSOHQuestion('replace_insurance'), 
+                            val: 'Yes', 
+                            highlight: $root.get_replacing_question_highlight(),
+                            onclick: $root.select_replacing_insurance
+                            }">
+            Yes
+          </button>
+          <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                            question: new GlobalSOHQuestion('replace_insurance'), 
+                            val: 'No', 
+                            highlight: 'checkmark',
+                            onclick: window.reset_replacement_insurance_warning
+                            }">
+            No
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <div data-bind="slideDownIf: $root.should_show_NAIC_replacement_notice">
+      <div class="row">
+        <div class="col-xs-12">
+          Your enrollment professional has a copy of the "IMPORTANT NOTICE: REPLACEMENT OF LIFE INSURANCE OR ANNUITY"
+          available upon request.
+        </div>
+      </div>
+    </div>
+
+    <br>
+
+    <div data-bind="slideDownIf: $root.should_show_replacement_form">
+      <div class="modal-header">
+        <div class="form-group row">
+          <div class="col-xs-12 col-sm-9">
+            <small>I want this notice read aloud to me
+              &nbsp;&nbsp;
+              <label class="blue">
+                <input name="replacement_read_aloud" value="Y" type="radio" class="inline ace"
+                       data-bind="checked: $root.replacement_read_aloud, checkedValue: true, disable: $root.is_self_enroll()"/>
+                <span class="lbl"> Y &nbsp; </span>
+              </label>
+
+              <label class="blue">
+                <input name="replacement_read_aloud" value="N" type="radio" class="inline ace"
+                       data-bind="checked: $root.replacement_read_aloud, checkedValue: false, disable: $root.is_self_enroll()"/>
+                <span class="lbl"> N</span>
+              </label>
+            </small>
+
+          </div>
+
+        </div>
+        <h3 class="lighter block blue center">NOTICE OF REPLACEMENT OF LIFE INSURANCE OR ANNUITIES</h3>
+      </div>
+
+      <div class="modal-body">
+
+        <!--ko foreach: $root.get_replacement_paragraphs()-->
+          <p data-bind="html: $data"></p>
+        <!--/ko-->
+
+        <div class="row">
+          <div class="col-xs-12 col-sm-11 col-sm-offset-1">
+            <div class="row">
+              <div class="form-group col-xs-12">
+                1. Are you considering discontinuing making premium payments, surrendering, forfeiting, assigning to the
+                insurer, or otherwise terminating your existing policy or contract?
+                <input type="radio" class="replacement-question inline ace" name="replacement_is_terminating" value="Y"
+                       data-bind='checked: $root.replacement_is_terminating, checkedValue: true'> <span class="lbl"> Y</span>
+                <input type="radio" class="replacement-question inline ace" name="replacement_is_terminating" value="N"
+                       data-bind='checked: $root.replacement_is_terminating, checkedValue: false'> <span class="lbl"> N</span>
+              </div>
+            </div>
+            <div class="row">
+              <div class="form-group col-xs-12">
+                2. Are you considering using funds from your existing policies or contracts to pay premiums due on the
+                new policy or contract?
+                <input type="radio" class="replacement-question inline ace" name="replacement_using_funds" value="Y"
+                       data-bind='checked: $root.replacement_using_funds, checkedValue: true'> <span class="lbl"> Y</span>
+                <input type="radio" class="replacement-question inline ace" name="replacement_using_funds" value="N"
+                       data-bind='checked: $root.replacement_using_funds, checkedValue: false'> <span class="lbl"> N</span>
+              </div>
+            </div>
+
+            <div data-bind="slideDownIf: $root.should_show_replacement_details_form">
+              <strong> Please list each existing policy or contract you are contemplating replacing (include the name of
+                the insurer, the insured, and the contract number if available) and whether each policy will be replaced
+                or used as a source of financing:</strong>
+              <!--ko foreach: $root.replacement_policies-->
+              <div class="row">
+                <div class="col-sm-6 col-md-3 form-group">
+                  <label>Insurer Name</label><br>
+                  <input type="text" class="replacement-details-input"
+                         data-bind="value: name, attr: {name: 'policy-name-'+$index()}">
+                </div>
+                <div class="col-sm-6 col-md-3 form-group">
+                  <label>Contract or Policy #</label><br>
+                  <input type="text" class="replacement-details-input"
+                         data-bind="value: policy_number, attr: {name: 'policy-number-'+$index()}">
+                </div>
+                <div class="col-sm-6 col-md-3 form-group">
+                  <label>Insured</label><br>
+                  <input type="text" class="replacement-details-input"
+                         data-bind="value: insured, attr: {name: 'insured-'+$index()}">
+                </div>
+                <div class="col-sm-6 col-md-3 form-group">
+                  <br>
+                  <label>
+                    <input type="radio" value="replaced" class="replacement-details-input inline ace"
+                           data-bind="checked: replaced_or_financing, checkedValue: 'replaced', attr: {name: 'replaced_or_financing-'+$index()}">
+                    <span class="lbl">Replaced</span>
+                  </label>
+
+                  <label>
+                    <input type="radio" name="replaced_or_financing" value="financing"
+                           class="replacement-details-input inline ace"
+                           data-bind="checked: replaced_or_financing, checkedValue: 'financing', attr: {name: 'replaced_or_financing-'+$index()}">
+                    <span class="lbl">Financing</span>
+                  </label>
+
+                  <div class="pull-right" data-bind="if: $root.replacement_policies().length > 1">
+                    <button class="btn btn-xs btn-danger" data-bind="click: $root.remove_replacement_policy">
+                      <i class="icon fa fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+              <div class="row">
+                <div class="col-sm-12 form-group">
+                  <p>The existing policy or contract is being replaced because:
+                    <input type="text" class="col-xs-12" data-bind="value: replacement_reason">
+                  </p>
+                </div>
+              </div>
+              <!--/ko-->
+              <br>
+              <button class="btn btn-success btn-sm" data-bind="click: $root.add_replacement_policy">Add Another Policy
+              </button>
+            </div>
+
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    {# Loop through each product that we have selected and show its questions #}
+    <!--ko foreach: {data: $root.selected_product_health_questions(), as: 'product_health_questions'} -->
+    {# Only show questions if there are some for this product. #}
+    <div data-bind="visible: product_health_questions.do_any_health_questions_need_answering()">
+      <h3 class="lighter block green">Please answer each question below regarding to apply for <span data-bind="text: product_health_questions.product_coverage.product.product_data.name"></span></h3>
+
+      <div class="hidden-xs hidden-sm">
+
+        <div class="row">
+          <div class="col-sm-6">
+          </div>
+          <div class="col-sm-6">
+            <div class="row">
+
+              <div class="col-sm-3 text-center" data-bind="if: product_health_questions.product_coverage.did_select_employee_coverage">
+                <span data-bind="text: $root.employee().name"></span>
+              </div>
+              <div class="col-sm-3 text-center" data-bind="if: product_health_questions.product_coverage.did_select_spouse_coverage">
+                <span data-bind="text: $root.spouse().name"></span>
+              </div>
+              <!--ko foreach: product_health_questions.product_coverage.get_covered_children -->
+              <div class="col-sm-3 text-center">
+                <span data-bind="text: $data.name"></span>
+              </div>
+              <!--/ko-->
+            </div>
+          </div>
+        </div>
+
+        <table class="table table-striped">
+          <tbody>
+          <!--ko if: product_health_questions.product_coverage.product.is_fpp_product()-->
+
+          <tr>
+            <td>
+              <div class="row">
+                <div class="col-xs-12 col-sm-6">
+                  Is <span data-bind="text:$root.employee().name"></span> <a href="#actively_at_work_modal"
+                                                                             data-toggle="modal">actively at work?</a>
+                </div>
+                <div class="col-xs-12 col-sm-6">
+
+                  <div class="row">
+                    <div class="col-sm-3 btn-group no-padding-right">
+
+                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                      question: new NonHealthQuestion('actively_at_work'),
+                                                      is_required: true,
+                                                      val: 'Yes',
+                                                      highlight: 'checkmark',
+                                                      onclick: function() {$root.is_employee_actively_at_work(true)},
+                                                      is_selected: $root.is_employee_actively_at_work() === true
+                                                      }">
+                        Yes
+                      </button>
+                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                      question: new NonHealthQuestion('actively_at_work'),
+                                                      is_required: true,
+                                                      val: 'No',
+                                                      highlight: 'checkmark',
+                                                      onclick: function() {$root.is_employee_actively_at_work(false)},
+                                                      is_selected: $root.is_employee_actively_at_work() === false
+                                                      }">
+                        No
+                      </button>
+                    </div>
+                    <div class="col-sm-3 btn-group no-padding-right" data-bind="if: product_health_questions.product_coverage.did_select_spouse_coverage"></div>
+
+
+                  </div>
+                </div>
+
+
+              </div>
+            </td>
+
+
+          </tr>
+          <!--/ko-->
+
+          <!--ko foreach: product_health_questions.health_button_rows -->
+            <tr data-bind="visible: question.does_any_applicant_need_to_answer">
+            <td>
+              <div class="row">
+                <div class="col-xs-12 col-sm-6" data-bind="html: question.get_question_text()">
+                </div>
+                <div class="col-xs-12 col-sm-6">
+                  <div class="row">
+                    <!--ko foreach: button_groups -->
+                    <div class="col-sm-3 btn-group no-padding-right" data-toggle="buttons">
+                      <!--ko if: does_applicant_need_to_answer -->
+                      <button class="btn btn-default btn-sm" type="button" data-bind="
+                          click: handle_yes,
+                          css: {
+                            'btn-warning': should_show_yes_flag,
+                            'btn-success': should_show_yes_checkmark,
+                            'btn-danger': should_show_yes_stop,
+                            'btn-default': should_show_yes_default
+                          } ">
+                        <i class="icon glyphicon glyphicon-flag" data-bind="visible: should_show_yes_flag"></i>
+                        <i class="icon glyphicon glyphicon-ok" data-bind="visible: should_show_yes_checkmark"></i>
+                        <i class="icon glyphicon glyphicon-remove" data-bind="visible: should_show_yes_stop"></i>
+                        Yes
+                      </button>
+                      <button class="btn btn-default btn-sm" type="button" data-bind="
+                        click: handle_no,
+                        val: 'No',
+                          css: {
+                            'btn-warning': should_show_no_flag,
+                            'btn-success': should_show_no_checkmark,
+                            'btn-danger': should_show_no_stop,
+                            'btn-default': should_show_no_default
+                          }
+                       ">
+                        <i class="icon glyphicon glyphicon-flag" data-bind="visible: should_show_no_flag"></i>
+                        <i class="icon glyphicon glyphicon-ok" data-bind="visible: should_show_no_checkmark"></i>
+                        <i class="icon glyphicon glyphicon-remove" data-bind="visible: should_show_no_stop"></i>
+                        No
+                      </button>
+                      <!--/ko-->
+                    </div>
+                    <!--/ko-->
+                  </div>
+                </div>
+              </div>
+            </td>
+            </tr>
+          <!--/ko-->
+
+          </tbody>
+        </table>
+      </div>
+
+      {# This section is the same as above, but reformatted for small screens. #}
+      <div class="visible-xs visible-sm" data-bind="">
+
+        <table class="table table-striped">
+          <tbody>
+          <!--ko if: product_health_questions.product_coverage.product.is_fpp_product()-->
+          <tr>
+            <td>
+              <div class="row">
+                <div class="col-xs-12 col-sm-6">
+                  Is <span data-bind="text:$root.employee().name"></span> <a href="#actively_at_work_modal"
+                                                                             data-toggle="modal">actively at work?</a>
+                </div>
+
+                <div class="col-xs-12 col-sm-6">
+                  <div class="person-answer-small row">
+                    <div class="col-xs-3 col-xs-offset-2" data-bind="text: $root.employee().name()"></div>
+                    <div class="col-xs-7 btn-group">
+
+                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                              question: new NonHealthQuestion('actively_at_work'),
+                                                              product_health_questions: product_health_questions,
+                                                              is_required: true,
+                                                              val: 'Yes',
+                                                              highlight: 'checkmark',
+                                                              onclick: function() {$root.is_employee_actively_at_work(true)}
+                                                              }">
+                        Yes
+                      </button>
+                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                                              question: new NonHealthQuestion('actively_at_work'),
+                                                              product_health_questions: product_health_questions,
+                                                              is_required: true,
+                                                              val: 'No',
+                                                              highlight: 'checkmark',
+                                                              onclick: function() {$root.is_employee_actively_at_work(false)}
+                                                              }">
+                        No
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!--/ko-->
+
+          <!--ko foreach: product_health_questions.health_button_rows-->
+          <tr data-bind="visible: question.does_any_applicant_need_to_answer">
+            <td>
+              <div class="row">
+                <div class="col-xs-12 col-sm-6" data-bind="html: question.get_question_text()">
+                </div>
+                <div class="col-xs-12 col-sm-6">
+                  <!--ko foreach: button_groups -->
+                    <!--ko if: does_applicant_need_to_answer-->
+                    <div class="person-answer-small row">
+                      <div class="col-xs-3 col-xs-offset-2" data-bind="text: applicant.name()"></div>
+                      <div class="col-xs-7 btn-group" data-toggle="buttons">
+                        <button class="btn btn-default btn-sm" type="button" data-bind="
+                            click: handle_yes,
+                            css: {
+                              'btn-warning': should_show_yes_flag,
+                              'btn-success': should_show_yes_checkmark,
+                              'btn-danger': should_show_yes_stop,
+                              'btn-default': should_show_yes_default
+                            } ">
+                          <i class="icon glyphicon glyphicon-flag" data-bind="visible: should_show_yes_flag"></i>
+                          <i class="icon glyphicon glyphicon-ok" data-bind="visible: should_show_yes_checkmark"></i>
+                          <i class="icon glyphicon glyphicon-remove" data-bind="visible: should_show_yes_stop"></i>
+                          Yes
+                        </button>
+                        <button class="btn btn-default btn-sm" type="button" data-bind="
+                          click: handle_no,
+                          val: 'No',
+                            css: {
+                              'btn-warning': should_show_no_flag,
+                              'btn-success': should_show_no_checkmark,
+                              'btn-danger': should_show_no_stop,
+                              'btn-default': should_show_no_default
+                            }
+                         ">
+                          <i class="icon glyphicon glyphicon-flag" data-bind="visible: should_show_no_flag"></i>
+                          <i class="icon glyphicon glyphicon-ok" data-bind="visible: should_show_no_checkmark"></i>
+                          <i class="icon glyphicon glyphicon-remove" data-bind="visible: should_show_no_stop"></i>
+                          No
+                        </button>
+                      </div>
+                    </div>
+                    <!--/ko-->
+                  <!--/ko-->
+                </div>
+              </div>
+            </td>
+          </tr>
+          <!--/ko-->
+          </tbody>
+        </table>
+      </div>
+
+
+    </div>
+    <!--/ko-->
+    <div id="health_questions_error" class="error has-error pull-right"></div>
+
+
+  </form>
+</div>

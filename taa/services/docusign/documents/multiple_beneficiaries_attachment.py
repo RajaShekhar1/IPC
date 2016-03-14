@@ -134,90 +134,90 @@ class MultipleBeneficiariesAttachment(PDFAttachment):
         return flowables
 
 
-if __name__ == '__main__':
-
-    from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient
-    from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
-    from mock import Mock
-
-    case = Mock(company_name='DelMar SD')
-    agent = AgentDocuSignRecipient(name="Zachary Mason", email="zmason@delmarsd.com")
-    employee = EmployeeDocuSignRecipient(name="Joe Tester", email="zach@zachmason.com")
-    test_recipients = [
-        agent,
-        employee,
-    ]
-    data_test = dict(agent_data=dict(company_name="DelMar SD"),
-        employee=dict(first="Test", last="Employee", ssn="123-12-1234"),
-        emp_bene1_name="John Doe",
-        emp_bene1_ssn='123-123-1234',
-        emp_bene1_relationship='Friend',
-        emp_bene1_birthdate='1990-01-01',
-        emp_bene1_percentage=100,
-
-        emp_bene2_name="Frank Doe",
-        emp_bene2_ssn='123-123-1234',
-        emp_bene2_relationship=None,
-        emp_bene2_birthdate='1940-01-01',
-        emp_bene2_percentage=10,
-
-        emp_cont_bene1_name="Jimmy Doe",
-        emp_cont_bene1_ssn='123-123-1234',
-        emp_cont_bene1_relationship='Child',
-        emp_cont_bene1_birthdate='1940-01-01',
-        emp_cont_bene1_percentage=34,
-
-
-        emp_cont_bene2_name="Suzie Doe",
-        emp_cont_bene2_ssn='123-123-1234',
-        emp_cont_bene2_relationship='Child',
-        emp_cont_bene2_birthdate='1940-01-01',
-        emp_cont_bene2_percentage=33,
-
-        emp_cont_bene3_name="Frank Doe Jr",
-        emp_cont_bene3_ssn='123-123-1234',
-        emp_cont_bene3_relationship='Child',
-        emp_cont_bene3_birthdate='1940-01-01',
-        emp_cont_bene3_percentage=33,
-
-        sp_bene1_name="Jane Doe",
-        sp_bene1_ssn='123-123-1234',
-        sp_bene1_relationship='Spouse',
-        sp_bene1_birthdate='1940-01-01',
-        sp_bene1_percentage=10,
-
-        sp_bene2_name="Janet Doe",
-        sp_bene2_ssn='123-123-1234',
-        sp_bene2_relationship='Mother',
-        sp_bene2_birthdate='1940-01-01',
-        sp_bene2_percentage=10,
-
-        sp_cont_bene1_name="Jimmy Doe",
-        sp_cont_bene1_ssn='123-123-1234',
-        sp_cont_bene1_relationship='Child',
-        sp_cont_bene1_birthdate='1940-01-01',
-        sp_cont_bene1_percentage=34,
-
-        sp_cont_bene2_name="Suzie Doe",
-        sp_cont_bene2_ssn='123-123-1234',
-        sp_cont_bene2_relationship='Child',
-        sp_cont_bene2_birthdate='1940-01-01',
-        sp_cont_bene2_percentage=33,
-
-        sp_cont_bene3_name="Frank Doe Jr",
-        sp_cont_bene3_ssn='123-123-1234',
-        sp_cont_bene3_relationship='Child',
-        sp_cont_bene3_birthdate='1940-01-01',
-        sp_cont_bene3_percentage=33,
-    )
-
-    attachment = MultipleBeneficiariesAttachment(test_recipients,
-                                                 EnrollmentDataWrap(data_test, None, case),
-    )
-
-    attachment.generate()
-    bytes = attachment._pdf_data.getvalue()
-
-    f = open('test.pdf', 'w+')
-    f.write(bytes)
-    f.close()
+# if __name__ == '__main__':
+#
+#     from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient
+#     from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
+#     from mock import Mock
+#
+#     case = Mock(company_name='DelMar SD')
+#     agent = AgentDocuSignRecipient(name="Zachary Mason", email="zmason@delmarsd.com")
+#     employee = EmployeeDocuSignRecipient(name="Joe Tester", email="zach@zachmason.com")
+#     test_recipients = [
+#         agent,
+#         employee,
+#     ]
+#     data_test = dict(agent_data=dict(company_name="DelMar SD"),
+#         employee=dict(first="Test", last="Employee", ssn="123-12-1234"),
+#         emp_bene1_name="John Doe",
+#         emp_bene1_ssn='123-123-1234',
+#         emp_bene1_relationship='Friend',
+#         emp_bene1_birthdate='1990-01-01',
+#         emp_bene1_percentage=100,
+#
+#         emp_bene2_name="Frank Doe",
+#         emp_bene2_ssn='123-123-1234',
+#         emp_bene2_relationship=None,
+#         emp_bene2_birthdate='1940-01-01',
+#         emp_bene2_percentage=10,
+#
+#         emp_cont_bene1_name="Jimmy Doe",
+#         emp_cont_bene1_ssn='123-123-1234',
+#         emp_cont_bene1_relationship='Child',
+#         emp_cont_bene1_birthdate='1940-01-01',
+#         emp_cont_bene1_percentage=34,
+#
+#
+#         emp_cont_bene2_name="Suzie Doe",
+#         emp_cont_bene2_ssn='123-123-1234',
+#         emp_cont_bene2_relationship='Child',
+#         emp_cont_bene2_birthdate='1940-01-01',
+#         emp_cont_bene2_percentage=33,
+#
+#         emp_cont_bene3_name="Frank Doe Jr",
+#         emp_cont_bene3_ssn='123-123-1234',
+#         emp_cont_bene3_relationship='Child',
+#         emp_cont_bene3_birthdate='1940-01-01',
+#         emp_cont_bene3_percentage=33,
+#
+#         sp_bene1_name="Jane Doe",
+#         sp_bene1_ssn='123-123-1234',
+#         sp_bene1_relationship='Spouse',
+#         sp_bene1_birthdate='1940-01-01',
+#         sp_bene1_percentage=10,
+#
+#         sp_bene2_name="Janet Doe",
+#         sp_bene2_ssn='123-123-1234',
+#         sp_bene2_relationship='Mother',
+#         sp_bene2_birthdate='1940-01-01',
+#         sp_bene2_percentage=10,
+#
+#         sp_cont_bene1_name="Jimmy Doe",
+#         sp_cont_bene1_ssn='123-123-1234',
+#         sp_cont_bene1_relationship='Child',
+#         sp_cont_bene1_birthdate='1940-01-01',
+#         sp_cont_bene1_percentage=34,
+#
+#         sp_cont_bene2_name="Suzie Doe",
+#         sp_cont_bene2_ssn='123-123-1234',
+#         sp_cont_bene2_relationship='Child',
+#         sp_cont_bene2_birthdate='1940-01-01',
+#         sp_cont_bene2_percentage=33,
+#
+#         sp_cont_bene3_name="Frank Doe Jr",
+#         sp_cont_bene3_ssn='123-123-1234',
+#         sp_cont_bene3_relationship='Child',
+#         sp_cont_bene3_birthdate='1940-01-01',
+#         sp_cont_bene3_percentage=33,
+#     )
+#
+#     attachment = MultipleBeneficiariesAttachment(test_recipients,
+#                                                  EnrollmentDataWrap(data_test, None, case),
+#     )
+#
+#     attachment.generate()
+#     bytes = attachment._pdf_data.getvalue()
+#
+#     f = open('test.pdf', 'w+')
+#     f.write(bytes)
+#     f.close()

@@ -3,20 +3,20 @@ AGENT pages and DOCUSIGN inbox
 """
 import os
 
-from flask import render_template, redirect, url_for, flash, send_file, request
+from flask import render_template, redirect, url_for, flash, send_file, request, session
 from flask_stormpath import login_required, groups_required, current_user
 
 from taa import app, db
 from nav import get_nav_menu
-from taa.api.cases import census_records
-from taa.services.docusign.docu_console import console_url
-from taa.services.cases import CaseService, SelfEnrollmentSetup, RiderService
+from taa.services.cases import CaseService, SelfEnrollmentSetup
+from taa.services.products.riders import RiderService
 from taa.services.cases.forms import (CensusRecordForm,
                                       NewCaseEnrollmentPeriodForm,
                                       SelfEnrollmentSetupForm,
                                       UpdateCaseForm
                                       )
-from taa.services.enrollments import SelfEnrollmentLinkService, SelfEnrollmentEmailService, EnrollmentApplicationService
+from taa.services.enrollments import SelfEnrollmentLinkService, SelfEnrollmentEmailService, EnrollmentApplicationService, \
+    EnrollmentApplication
 from taa.services.agents import AgentService
 from taa.services.products import ProductService, get_all_states
 from taa.services.products import get_payment_modes
@@ -31,16 +31,30 @@ enrollment_service = EnrollmentApplicationService()
 self_enrollment_link_service = SelfEnrollmentLinkService()
 self_enrollment_email_service = SelfEnrollmentEmailService()
 
+
 @app.route('/inbox', methods=['GET'])
 @login_required
 def inbox():
-    if sessionUserApprovedForDocusign():
-        return render_template('agent/agent-inbox.html',
-                               inboxURL=console_url(),
-                               nav_menu=get_nav_menu())
+
+    # If we are passed an enrollment (id), we will update any linked envelope for that enrollment.
+    #  This allows us to stay sync'd up with DocuSign.
+    if request.args.get('enrollment') and request.args.get('enrollment').isdigit():
+        try:
+            enrollment_service.sync_enrollment_with_docusign(request.args['enrollment'])
+            db.session.commit()
+        except Exception as ex:
+            print("DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')), ex)
+
+    if agent_service.is_user_agent(current_user): #or agent_service.can_manage_all_cases(current_user):
+        #
+        agent = agent_service.get_agent_from_user(current_user)
+        return render_template(
+            'agent/agent-inbox.html',
+            nav_menu=get_nav_menu(),
+            agent_id=agent.id
+        )
     else:
-        flash("You are not yet authorized for signing applications. "
-              "Please see your Regional Director for assistance.")
+        flash("You are not authorized for signing applications.")
         return redirect(url_for('home'))
 
 
@@ -73,8 +87,13 @@ def manage_cases():
 @app.route('/enrollment-case/<case_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def manage_case(case_id):
+
+    check_for_enrollment_sync_update()
+
     api_token_service = LookupService('ApiTokenService')
     case = case_service.get_if_allowed(case_id)
+    for product in case.products:
+        setattr(product, 'case_id', case.id)
     vars = {'case': case, 'can_edit_case': False}
 
     agent = agent_service.get_logged_in_agent()
@@ -85,6 +104,8 @@ def manage_case(case_id):
         vars['can_edit_case'] = False
         vars['can_download_enrollments'] = case_service.is_agent_allowed_to_view_full_census(agent, case)
         vars['can_view_report_tab'] = case_service.is_agent_allowed_to_view_full_census(agent, case)
+        # Empty list for privacy of other agent data.
+        vars['active_agents'] = []
         agent_name = agent.name()
         agent_id = agent.id
         agent_email = agent.email
@@ -174,23 +195,38 @@ Please follow the instructions carefully on the next page, stepping through the 
 
     vars["current_user_token"] = api_token_service.get_token_by_sp_href(current_user.href)
 
-    case_riders = rider_service.get_rider_info_for_case(case)
-
-    vars['riders'] = case_riders
+    # vars['riders'] = rider_service.get_rider_info_for_case(case)
 
     return render_template('agent/case.html', **vars)
+
+
+def check_for_enrollment_sync_update():
+    # Check to see if this is a callback from signing session.
+    enrollment_application_id = session.get('enrollment_application_id')
+    if enrollment_application_id:
+        try:
+            enrollment_service.sync_enrollment_with_docusign(enrollment_application_id)
+            # Remove from session so we don't keep updating it.
+            del session['enrollment_application_id']
+            db.session.commit()
+        except Exception as ex:
+            print(
+            "DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')), ex)
 
 
 @app.route('/enrollment-case/<case_id>/census/<census_record_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def edit_census_record(case_id, census_record_id):
+
+    check_for_enrollment_sync_update()
+
     case = case_service.get_if_allowed(case_id)
     census_record = case_service.get_census_record(case, census_record_id)
     record_form = CensusRecordForm(obj=census_record)
     agent = agent_service.get_logged_in_agent()
     # Get the child entries out
     child_form_fields = []
-    for x in range(1, 6+1):
+    for x in range(1, 6 + 1):
         child_fields = [
             getattr(record_form, 'child{}_first'.format(x)),
             getattr(record_form, 'child{}_last'.format(x)),
@@ -204,7 +240,12 @@ def edit_census_record(case_id, census_record_id):
 
     enroll_data = []
     for enrollment_data in enrollment_records:
-        enroll_data += [format_enroll_data(enrollment_data, product_num) for product_num in range(1, 6+1)]
+        data = []
+        for product_num in range(1, 6 + 1):
+            formatted = format_enroll_data(enrollment_data, product_num)
+            if formatted:
+                data.append(formatted)
+        enroll_data += data
 
     vars = dict(
         case=case,
@@ -216,12 +257,15 @@ def edit_census_record(case_id, census_record_id):
         is_admin=is_admin,
         case_is_enrolling=case_service.is_enrolling(case),
         header_title='Home Office' if is_admin else '',
-        nav_menu=get_nav_menu()
+        nav_menu=get_nav_menu(),
     )
     if agent:
         vars['can_edit_case'] = (agent is case_service.get_case_owner(case))
+        vars['current_agent_id'] = agent.id
     else:
         vars['can_edit_case'] = True
+        vars['current_agent_id'] = None
+
     return render_template('agent/census_record.html', **vars)
 
 
@@ -231,15 +275,25 @@ def format_enroll_data(enrollment_data, product_number):
             id=enrollment_data['enrollment_id'],
             product_name=enrollment_data["product_{}_name".format(product_number)],
             time=enrollment_data["signature_time"],
-            coverage=[get_coverage_for_product(enrollment_data, product_number, j) for j in ["emp","sp","ch"]],
-            status=enrollment_data["application_status"],
+            coverage=[get_coverage_for_product(enrollment_data, product_number, j) for j in ["emp", "sp", "ch"]],
+            status=format_status(enrollment_data["application_status"]),
             total=reduce(lambda coverage_type, accum: calc_total(enrollment_data, product_number, coverage_type, accum),
-                         ["emp","sp","ch"], 0)
+                         ["emp", "sp", "ch"], 0),
+            envelope_id=enrollment_data['docusign_envelope_id'],
+            agent_id=enrollment_data['agent_id'],
         )
     else:
         data = None
 
     return data
+
+
+def format_status(status):
+    return capitalize_words(status.replace('_', ' '))
+
+
+def capitalize_words(val):
+    return ' '.join([word.capitalize() for word in val.split()])
 
 
 def get_coverage_for_product(enrollment_data, product_number, coverage_type):
@@ -295,35 +349,35 @@ def edit_self_enroll_setup(case_id=None):
 @app.route('/batch-info/<int:case_id>/preview/<batch_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def view_batch_email_preview(case_id, batch_id=None):
-        batch = self_enrollment_email_service.get_batch_for_case(case_id, batch_id)
-        case = case_service.get_if_allowed(case_id)
-        setup = case.self_enrollment_setup
-        email_test = batch.email_logs[0]
-        return render_template(
-            "agent/preview_email.html",
-            custom_message=batch.email_body,
-            greeting=build_fake_email_greeting(setup),
-            enrollment_url="#",
-            company_name=case.company_name,
-            products = case.products
-        )
+    batch = self_enrollment_email_service.get_batch_for_case(case_id, batch_id)
+    case = case_service.get_if_allowed(case_id)
+    setup = case.self_enrollment_setup
+    email_test = batch.email_logs[0]
+    return render_template(
+        "agent/preview_email.html",
+        custom_message=batch.email_body,
+        greeting=build_fake_email_greeting(setup),
+        enrollment_url="#",
+        company_name=case.company_name,
+        products=case.products
+    )
 
 
 @app.route('/batch-info/<int:case_id>/logs/<batch_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def view_batch_email_logs(case_id, batch_id=None):
-        case = case_service.get_if_allowed(case_id)
-        batch = self_enrollment_email_service.get_batch_for_case(case_id, batch_id)
-        email_logs = []
+    case = case_service.get_if_allowed(case_id)
+    batch = self_enrollment_email_service.get_batch_for_case(case_id, batch_id)
+    email_logs = []
 
-        for email in batch.email_logs:
-            census_record = case_service.get_census_record(case, email.census_id)
-            email.enrollment_status = enrollment_service.get_enrollment_status(census_record)
-            email_logs.append(email)
-        return render_template(
-            "agent/email_logs.html",
-            batch_emails=email_logs,
-        )
+    for email in batch.email_logs:
+        census_record = case_service.get_census_record(case, email.census_id)
+        email.enrollment_status = enrollment_service.get_enrollment_status(census_record)
+        email_logs.append(email)
+    return render_template(
+        "agent/email_logs.html",
+        batch_emails=email_logs,
+    )
 
 
 def build_fake_email_greeting(setup):

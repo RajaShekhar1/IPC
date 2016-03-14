@@ -1,22 +1,19 @@
-import dateutil.parser
-from datetime import datetime, date as datetime_date
-import re
-import csv
-import uuid
 import StringIO
+import uuid
+from datetime import datetime
 
+import dateutil.parser
+import sqlalchemy as sa
 from flask import abort
 from flask_stormpath import current_user
 from sqlalchemy.orm import joinedload
-import sqlalchemy as sa
 
+from models import (Case, CaseCensus, CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod,
+                    SelfEnrollmentSetup)
 from taa.core import DBService
 from taa.core import db
 from taa.services import RequiredFeature, LookupService
 from taa.services.agents.models import Agent
-from models import (Case, CaseCensus, CaseEnrollmentPeriod,
-                    CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod,
-                    SelfEnrollmentSetup)
 
 
 class CaseService(DBService):
@@ -25,6 +22,7 @@ class CaseService(DBService):
     census_records = RequiredFeature('CensusRecordService')
     enrollment_periods = RequiredFeature('CaseEnrollmentPeriodsService')
     self_enrollment = RequiredFeature('SelfEnrollmentService')
+    agent_splits = RequiredFeature('AgentSplitsService')
     rider_service = RequiredFeature('RiderService')
 
     def __init__(self, *args, **kwargs):
@@ -88,17 +86,35 @@ class CaseService(DBService):
         return sorted(case.products, cmp=lambda x, y: cmp(x.name, y.name))
 
     def get_rider_codes(self):
-        return self.case_riders.split(",")
+        return [] # [c.code for c in self.case_riders.split(",")]
 
-    def get_case_level_riders(self):
-        return rider_service.case_level_riders() 
-
-    def update_riders(self, case, riders):
-        case.case_riders = ','.join([r.code for r in riders])
+    def update_product_settings(self, case, product_settings):
+        # TODO: validate the product settings before saving.
+        case.product_settings = product_settings
         db.session.flush()
 
     def update_products(self, case, products):
-        case.products = products
+        from taa.services.products import ProductService
+        products_service = ProductService()
+        product_ids = [p['id'] for p in products]
+        fetched_products = products_service.get_all(*product_ids)
+
+        case.products = fetched_products
+        db.session.flush()
+
+        # Iterate through products and set the ordinal
+        from taa.services.cases.models import case_products
+        from sqlalchemy import update
+        for product in case.products:
+            api_product = next(p for p in products if p['id'] == product.id)
+            if api_product is not None and api_product['ordinal'] is not None:
+                ordinal = int(api_product['ordinal'])
+                query = update(case_products)\
+                    .where(case_products.c.case_id == case.id)\
+                    .where(case_products.c.product_id == product.id)\
+                    .values({'ordinal': ordinal})
+                db.session.execute(query)
+
         db.session.flush()
 
     def get_agent_cases(self, agent, **kwargs):
@@ -198,31 +214,20 @@ class CaseService(DBService):
     def get_census_records(self, case, offset=None, num_records=None,
                            search_text=None, text_columns=None,
                            sorting=None, sort_desc=False, include_enrolled=True,
-                           filter_ssn=None, filter_birthdate=None,
+                           filter_ssn=None,
+                           filter_birthdate=None,
+                           filter_emp_first=None,
+                           filter_emp_last=None,
                            filter_agent=None):
         from taa.services.enrollments.models import EnrollmentApplication
         query = self.census_records.find(case_id=case.id)
 
-        # Filter enrollment status. Also load in any enrollment data eagerly.
-        if include_enrolled == False:
-            # Since we need to filter on enrollment status, pull in the
-            # enrollment applications if it exists.
-            query = query.outerjoin('enrollment_applications').filter(
-                EnrollmentApplication.application_status ==
-                EnrollmentApplication.APPLICATION_STATUS_DECLINED)
-            query = query.options(
-                db.contains_eager('enrollment_applications'
-                                 ).subqueryload('coverages'
-                                 ).joinedload('product')
-            )
-        else:
-            # Eager load enrollment applications, coverages, and associated
-            # products
-            query = query.options(
-                db.joinedload('enrollment_applications'
-                    ).subqueryload('coverages'
-                    ).joinedload('product')
-            )
+        # Eager load enrollment applications, coverages, and associated products
+        query = query.outerjoin('enrollment_applications').options(
+            db.contains_eager('enrollment_applications'
+                ).subqueryload('coverages'
+                ).joinedload('product')
+        )
 
         if filter_agent:
             # Only show enrolled census records where this agent was the enrolling agent.
@@ -232,6 +237,13 @@ class CaseService(DBService):
         if filter_ssn:
             query = query.filter(CaseCensus.employee_ssn ==
                                  filter_ssn.replace('-', ''))
+
+        if filter_emp_first:
+            query = query.filter(CaseCensus.employee_first.ilike("{}%".format(filter_emp_first)))
+
+        if filter_emp_last:
+            query = query.filter(CaseCensus.employee_last.ilike("{}%".format(filter_emp_last)))
+
         if filter_birthdate:
             bd = dateutil.parser.parse(filter_birthdate)
             query = query.filter(CaseCensus.employee_birthdate == bd)
@@ -248,6 +260,108 @@ class CaseService(DBService):
             query = query.limit(num_records)
 
         return query.all()
+
+    def retrieve_census_data_for_table(self, case,
+            agent_id=None,
+            offset=0,
+            limit=None,
+            search_text=None,
+            order_column=None,
+            order_dir=None):
+        from taa.services.enrollments.models import EnrollmentApplication
+
+        # Need the following data columns:
+        query = db.session.query(
+            CaseCensus.id.label('id'),
+            CaseCensus.case_id.label('case_id'),
+            EnrollmentApplication.application_status.label('enrollment_status'),
+            CaseCensus.employee_first.label('employee_first'),
+            CaseCensus.employee_last.label('employee_last'),
+            CaseCensus.employee_birthdate.label('employee_birthdate'),
+            CaseCensus.employee_email.label('employee_email'),
+        )
+
+        query = self.join_most_recent_enrollment(query)
+
+        # Overall filtering
+        query = query.filter(CaseCensus.case_id == case.id)
+        if agent_id is not None:
+            query = query.filter(EnrollmentApplication.agent_id == agent_id)
+
+        # Data filtering
+        if search_text:
+            for text_snippet in search_text.split():
+                query = query.filter(db.or_(
+                    CaseCensus.employee_first.ilike('{}%'.format(text_snippet)),
+                    CaseCensus.employee_last.ilike('{}%'.format(text_snippet)),
+                    CaseCensus.employee_email.ilike('{}%'.format(text_snippet)),
+                    EnrollmentApplication.application_status.ilike('{}%'.format(text_snippet))
+                ))
+
+        # Ordering
+        order_column_mapping = dict(
+            employee_last=CaseCensus.employee_last,
+            employee_first=CaseCensus.employee_first,
+            status='enrollment_status',
+        )
+        order_clause = order_column_mapping.get(order_column, "employee_last")
+        if order_dir == 'desc':
+            order_clause = db.desc(order_clause)
+        query = query.order_by(order_clause)
+
+        # Pagination
+        query = query.offset(offset).limit(limit)
+
+        return query
+
+    def join_most_recent_enrollment(self, query):
+        from taa.services.enrollments import EnrollmentApplication
+        valid_enrollment_status = db.and_(
+            EnrollmentApplication.application_status != EnrollmentApplication.APPLICATION_STATUS_VOIDED,
+            EnrollmentApplication.application_status != None
+        )
+        query = query.outerjoin(
+            EnrollmentApplication,
+            db.and_(
+                EnrollmentApplication.signature_time == db.select([db.func.max(EnrollmentApplication.signature_time)]
+                                                                  ).where(valid_enrollment_status
+                                                                          ).where(
+                    EnrollmentApplication.census_record_id == CaseCensus.id
+                    ).correlate(CaseCensus),
+                EnrollmentApplication.census_record_id == CaseCensus.id
+            )
+        )
+        return query
+
+    def retrieve_census_total_visible_count_for_table(self, case, agent_id=None):
+        query = self.retrieve_census_data_for_table(case=case, agent_id=agent_id)
+        return query.count()
+
+    def retrieve_census_filtered_count_for_table(self, case, agent_id=None, search_text=None):
+        query = self.retrieve_census_data_for_table(case=case, agent_id=agent_id, search_text=search_text)
+        return query.count()
+
+
+
+    def match_census_record_to_wizard_data(self, enrollment_data):
+        """
+        Given enrollment data, try to find a matching census record based on SSN, Name, and Birthdate.
+        """
+        first = enrollment_data.get_employee_first()
+        last = enrollment_data.get_employee_last()
+        birthdate = unicode(enrollment_data.get_employee_birthdate())
+        ssn = enrollment_data.get_employee_ssn()
+
+        matching = self.get_census_records(
+            enrollment_data.case,
+            filter_emp_first=first,
+            filter_emp_last=last,
+            filter_birthdate=birthdate,
+            filter_ssn=ssn
+        )
+        if not matching:
+            return None
+        return matching[0]
 
     def get_current_user_census_records(self, case):
         if not self.is_current_user_restricted_to_own_enrollments(case):
@@ -329,14 +443,10 @@ class CaseService(DBService):
             return self.agent_can_view_case(agent, case)
         return False
 
-    def create_ad_hoc_census_record(self, case, **data):
-        # Ad-hoc records that decline are a special case that have no
-        # requirements
-        # if 'ssn' not in data:
-        #    abort(400, "SSN is required to create an ad-hoc census record")
-        ssn = data.get('ssn', '').replace('-', '')
-        record =  self.census_records.add_record(case, **dict(employee_ssn=ssn,
-                                                              is_uploaded_census=False))
+    def create_ad_hoc_census_record(self, case, data):
+        """Creates a census record and updates the data from standardized enrollment data"""
+        record = self.census_records.add_record(case, **dict(is_uploaded_census=False))
+        self.update_census_record_from_enrollment(record, data)
         db.session.flush()
         return record
 
@@ -436,6 +546,15 @@ class CaseService(DBService):
     def update_self_enrollment_setup(self, setup, data):
         return self.self_enrollment.update(setup, **data)
 
+    def get_agent_splits_setup(self, case):
+        return self.agent_splits.find(case_id=case.id)
+
+    def create_agent_splits_setup(self, case, data):
+        return self.agent_splits.create(case_id=case.id, **data)
+
+    def delete_agent_splits_setup_for_case(self, case):
+        return self.agent_splits.find(case_id=case.id).delete()
+
     def can_current_user_edit_case(self, case):
         from taa.services.agents import AgentService
         agent_service = AgentService()
@@ -477,79 +596,18 @@ class CaseService(DBService):
     def is_agent_restricted_to_own_enrollments(self, agent, case):
         return not self.is_agent_allowed_to_view_full_census(agent, case)
 
-class Rider(object):
-    def __init__(self, name, code, enrollment_level=False, restrict_to=[]):
-        self.name = name
-        self.code = code
-        self.enrollment_level = enrollment_level
-        self.restrict_to = restrict_to
+    def get_classifications(self, case):
+        classifications = []
+        if case.occupation_class_settings is not None:
+            for c in case.occupation_class_settings:
+                classifications.append(c['label'])
+        return classifications
 
-    def to_json(self):
-        return dict(
-                name=self.name,
-                code=self.code,
-                enrollment_level=self.enrollment_level,
-                restrict_to=self.restrict_to
-                )
-
-
-class RiderService(object):
-    default_riders = [
-        # Rider("Disability Waiver of Premium", "WP"),
-        Rider("Automatic Increase Rider", "AIR", True, ["FPPTI"]), 
-        # Rider("Chronic Illness Rider", "CHR", True) 
-    ]
-
-    def __init__(self):
-        pass
-
-    def valid_rider_code(self, code):
-        return code in [r.code for r in self.default_riders]
-    
-    def get_rider_by_code(self, code):
-        return [r for r in self.default_riders if r.code==code][0]
-
-    def case_level_riders(self):
-        return [r for r in self.default_riders if not r.enrollment_level]
-
-    def enrollment_level_riders(self):
-        return [r for r in self.default_riders if r.enrollment_level]
-
-    def get_rider_info_for_case(self, case):
-        """Returns all the riders that a case can potentially have at the group level, with current selections."""
-        return [{
-                'selected': self.is_rider_selected_for_case(rider, case),
-                'description': rider.name,
-                'code': rider.code,
-                'enrollment_level': rider.enrollment_level,
-                'restrict_to': rider.restrict_to
-                }
-                for rider in self.default_riders
-        ]
-
-    def is_rider_selected_for_case(self, rider, case):
-        return case.case_riders and rider.code in case.case_riders.split(",")
-
-    def get_selected_case_riders(self, case):
-        return [r
-                for r in self.default_riders
-                if self.is_rider_selected_for_case(r, case)
-        ]
-
-    def get_selected_case_rider_info(self, case):
-        return [r.to_json() for r in self.get_selected_case_riders(case)]
-
-    def get_enrollment_rider_info(self):
-        return [r.to_json() for r in self.enrollment_level_riders()]
-    def get_rider_rates(self, payment_mode):        
-        emp_rider_rates = dict(
-            WP=10*int(payment_mode)/52,
-            AIR=0*int(payment_mode)/52,
-            CHR=5*int(payment_mode)/52
-            )
-        sp_rider_rates = dict(
-            WP=10*int(payment_mode)/52,
-            AIR=0*int(payment_mode)/52,
-            CHR=5*int(payment_mode)/52
-            )
-        return dict(emp=emp_rider_rates, sp=sp_rider_rates)
+    def get_classification_for_label(self, label, case):
+        if case.product_settings is None:
+            return None
+        mapping = case.product_settings['classification_mappings']
+        for k, v in mapping:
+            if k.lower() == label.lower():
+                return v
+        return None

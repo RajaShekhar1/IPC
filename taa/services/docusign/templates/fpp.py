@@ -1,22 +1,25 @@
+from itertools import ifilter
 
 from dateutil.parser import parse as dateutil_parse
 from dateutil.relativedelta import *
 from datetime import date
 from decimal import Decimal
 
+
 from taa.services.docusign.service import DocuSignServerTemplate, DocuSignTextTab, DocuSignRadioTab
 from taa.services.docusign.DocuSign_config import get_template_id
 
 
 class FPPTemplate(DocuSignServerTemplate):
+
     def __init__(self, recipients, enrollment_data, use_docusign_renderer):
 
-        product_type = enrollment_data["product_type"]
+        product_code = enrollment_data.get_product().get_base_product_code()
         state = enrollment_data["enrollState"]
-        template_id = get_template_id(product_type, state)
+        template_id = get_template_id(product_code, state)
 
         DocuSignServerTemplate.__init__(self, template_id, recipients, use_docusign_renderer)
-            
+
         self.data = enrollment_data
 
     def is_child_attachment_form_needed(self):
@@ -59,12 +62,13 @@ class FPPTemplate(DocuSignServerTemplate):
     def get_attachment_children(self):
         return self.data.get_covered_children()[2:] if len(self.data.get_covered_children()) > 2 else []
 
-    def generate_tabs(self, recipient):
-        tabs = super(FPPTemplate, self).generate_tabs(recipient)
+    def generate_tabs(self, recipient, purpose):
+        tabs = super(FPPTemplate, self).generate_tabs(recipient, purpose)
 
         if recipient.is_agent():
-            tabs += self.make_agent_tabs()
-        elif recipient.is_employee():
+            tabs += self.make_agent_tabs(tabs, purpose)
+
+        if recipient.is_employee() or self.data.should_use_call_center_workflow():
 
             lists_of_tabs = [
                 self.make_employer_tabs(),
@@ -80,16 +84,42 @@ class FPPTemplate(DocuSignServerTemplate):
 
         return tabs
 
-    def make_agent_tabs(self):
+    def make_agent_tabs(self, tabs, purpose):
+        if self.data.should_use_call_center_workflow() and purpose == self.PDF_TABS:
+            # Don't render any overlay for the pdf
+            return []
+        elif self.data.should_use_call_center_workflow() and purpose == self.DOCUSIGN_TABS:
+
+            # find the existingInsAgent and replaceAgent tabs and set the value to what the employee indicated as a default.
+            existing_tab_yes = next(ifilter(lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'existingInsAgent' and t.value == "yes", tabs), None)
+            existing_tab_no = next(ifilter(lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'existingInsAgent' and t.value == "no", tabs), None)
+
+            replace_tab_yes = next(ifilter(lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'replaceAgent' and t.value == "yes", tabs), None)
+            replace_tab_no = next(ifilter(lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'replaceAgent' and t.value == "no", tabs), None)
+
+            if existing_tab_yes:
+                existing_tab_yes.is_selected = self.data['existing_insurance']
+            if existing_tab_no:
+                existing_tab_no.is_selected = not self.data['existing_insurance']
+
+            if replace_tab_yes:
+                replace_tab_yes.is_selected = self.data['replacing_insurance']
+            if replace_tab_no:
+                replace_tab_no.is_selected = not self.data['replacing_insurance']
+
+            # Don't add any new tabs.
+            return []
+
         return [
             DocuSignRadioTab('existingInsAgent', 'yes' if self.data['existing_insurance'] else 'no'),
             DocuSignRadioTab('replaceAgent', 'yes' if self.data['replacing_insurance'] else 'no'),
         ]
 
     def make_general_tabs(self):
+
         tabs = [
             DocuSignRadioTab('enrollType', "assist" if self.data.is_enrollment_type_agent_assisted() else "self"),
-            DocuSignRadioTab('productType', "FPPTI" if self.data['product_type'] == "FPP-Gov" else self.data['product_type']),
+            DocuSignRadioTab('productType', self.get_product_type()),
             DocuSignRadioTab('existingIns', 'yes' if self.data["existing_insurance"] else 'no'),
             DocuSignRadioTab('existingInsAgent', 'yes' if self.data['existing_insurance'] else 'no'),
             DocuSignRadioTab('replaceAgent', 'yes' if self.data['replacing_insurance'] else 'no'),
@@ -126,8 +156,8 @@ class FPPTemplate(DocuSignServerTemplate):
         ee_tabs_list += self.make_generic_tabs()
 
         if self.data.did_employee_select_coverage():
-            ee_tabs_list += self.generate_SOH_tabs("ee", self.data['employee']['soh_questions'])
-            ee_tabs_list += self.generate_SOH_GI_tabs("ee", self.data['employee']['soh_questions'])
+            ee_tabs_list += self.generate_SOH_tabs("ee", self.data.get_employee_soh_questions())
+            ee_tabs_list += self.generate_SOH_GI_tabs("ee", self.data.get_employee_soh_questions())
 
         return ee_tabs_list
 
@@ -162,8 +192,8 @@ class FPPTemplate(DocuSignServerTemplate):
             elif str(self.data['has_spouse_been_disabled_6_months']).upper() == 'GI':
                 sp_tabs_list += [DocuSignTextTab('spouse_disability_six_months_gi', 'GI')]
 
-            sp_tabs_list += self.generate_SOH_tabs("sp", self.data['spouse']['soh_questions'])
-            sp_tabs_list += self.generate_SOH_GI_tabs("sp", self.data['spouse']['soh_questions'])
+            sp_tabs_list += self.generate_SOH_tabs("sp", self.data.get_spouse_soh_questions())
+            sp_tabs_list += self.generate_SOH_GI_tabs("sp", self.data.get_spouse_soh_questions())
 
         return sp_tabs_list
 
@@ -175,8 +205,8 @@ class FPPTemplate(DocuSignServerTemplate):
                 continue
 
             tabs += self.add_child_data_tabs(i)
-            tabs += self.generate_SOH_tabs("c%s"%(i+1), self.data["children"][i]['soh_questions'])
-            tabs += self.generate_SOH_GI_tabs("c%s"%(i+1), self.data["children"][i]['soh_questions'])
+            tabs += self.generate_SOH_tabs("c%s"%(i+1), self.data.get_child_soh_questions(i))
+            tabs += self.generate_SOH_GI_tabs("c%s"%(i+1), self.data.get_child_soh_questions(i))
 
         if self.is_child_attachment_form_needed():
             tabs += [DocuSignTextTab('extra_children_notice', "SEE ATTACHED FOR ADDITIONAL CHILDREN")]
@@ -306,7 +336,7 @@ class FPPTemplate(DocuSignServerTemplate):
 
     def make_payment_mode_tabs(self):
         return [
-            DocuSignRadioTab(group_name='payment_mode', value=self.data['payment_mode_text'], is_selected=True)
+            DocuSignRadioTab(group_name='payment_mode', value=self.data['payment_mode_text'].lower(), is_selected=True)
         ]
 
     def make_generic_tabs(self):
@@ -324,17 +354,25 @@ class FPPTemplate(DocuSignServerTemplate):
                                                                        self.data.get_spouse_ssn())
         else:
             spouse_owner_notice = ""
+
         rider_tabs = []
-        for rider_person in self.data['rider_data']:
-            riders = self.data['rider_data'].get(rider_person)
+        for rider_person, riders in self.data['rider_data'].iteritems():
+            def fix_rider_code(code):
+                if code.startswith("QOL"):
+                    # QOL rider is "CHR" on the form.
+                    return "CHR"
+
+                return code
+
             if rider_person == "emp" and self.data.did_employee_select_coverage():
-                for rider in riders: 
-                    tab_name = 'ee_rider_{}'.format(rider.get('code'))
+                for rider in riders:
+                    tab_name = 'ee_rider_{}'.format(fix_rider_code(rider.get('code')))
                     rider_tabs.append(DocuSignRadioTab(tab_name, 'yes'))
-            if rider_person == "sp" and self.data.did_spouse_select_coverage():    
-                for rider in riders: 
-                    tab_name = 'sp_rider_{}'.format(rider.get('code'))
+            if rider_person == "sp" and self.data.did_spouse_select_coverage():
+                for rider in riders:
+                    tab_name = 'sp_rider_{}'.format(fix_rider_code(rider.get('code')))
                     rider_tabs.append(DocuSignRadioTab(tab_name, 'yes'))
+
         return [
             DocuSignTextTab('eeEnrollCityState', self.data["enrollCity"] + ", " + self.data["enrollState"]),
             DocuSignTextTab('eeEnrollCity', self.data['enrollCity']),
@@ -455,62 +493,11 @@ class FPPTemplate(DocuSignServerTemplate):
 
         return tabs
 
+    def get_product_type(self):
+        "Usually FPPTI, but can be FPPCI if CI product"
+        product_code = self.data.get_product_code()
+        if product_code == 'FPPCI':
+            return 'FPPCI'
 
-if __name__ == "__main__":
-    from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient, get_docusign_transport, create_envelope
-    from taa.services.docusign.docusign_envelope import build_callback_url, EnrollmentDataWrap
-    from taa.services.docusign.templates.fpp_replacement import FPPReplacementFormTemplate
-    from taa.services.docusign.documents.extra_children import ChildAttachmentForm
+        return "FPPTI"
 
-    # Sample pulled from site
-    true = True
-    false = False
-    null = None
-    wizard_data = {"health_questions":[{"label":"Hospital 90 days","question_text":"Has any Applicant been hospitalized in the past 90 days?","skip_if_coverage_at_most":null},{"label":"Heart","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?","skip_if_coverage_at_most":null},{"label":"Cancer","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?","skip_if_coverage_at_most":null},{"label":"Respiratory","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?","skip_if_coverage_at_most":null},{"label":"Liver","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?","skip_if_coverage_at_most":null},{"label":"HIV/AIDS","question_text":"Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?","skip_if_coverage_at_most":null},{"label":"Ever been rejected","question_text":"Has any Applicant ever applied for and been rejected for life insurance?","skip_if_coverage_at_most":null}],"agent_data":{"children_data":[],"company_name":"ABC","employee_data":{"birthdate":"","city":null,"email":null,"existing_coverages":[],"first":null,"gender":"","height":null,"is_smoker":null,"last":null,"phone":null,"ssn":"111111116","state":null,"street_address":null,"street_address2":null,"weight":null,"zip":null},"enroll_city":"Indianapolis","group_number":"ABC-XYZ-12334","health_questions":{"2":[{"label":"Hospital 90 days","question_text":"Has any Applicant been hospitalized in the past 90 days?","skip_if_coverage_at_most":null},{"label":"Heart","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?","skip_if_coverage_at_most":null},{"label":"Cancer","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?","skip_if_coverage_at_most":null},{"label":"Respiratory","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?","skip_if_coverage_at_most":null},{"label":"Liver","question_text":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?","skip_if_coverage_at_most":null},{"label":"HIV/AIDS","question_text":"Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?","skip_if_coverage_at_most":null},{"label":"Ever been rejected","question_text":"Has any Applicant ever applied for and been rejected for life insurance?","skip_if_coverage_at_most":null}]},"is_in_person":true,"payment_mode":12,"payment_mode_choices":[{"immutable":true,"mode":12,"name":"Monthly"}],"products":[{"base_product_type":"FPPCI","bypassed_soh_questions":[],"code":"FPPCI","gi_criteria":[],"id":2,"is_guaranteed_issue":false,"name":"Family Protection Plan - Critical Illness","product_type":"base","restricted_agents":[],"visible_to_agents":true}],"spouse_data":{"birthdate":"","city":null,"email":null,"existing_coverages":[],"first":null,"gender":"","height":null,"is_smoker":null,"last":null,"phone":null,"ssn":null,"state":null,"street_address":null,"street_address2":null,"weight":null,"zip":null},"state":"IN"},"enrollCity":"Indianapolis","enrollState":"IN","product_type":"FPPCI","payment_mode":12,"payment_mode_text":"monthly","method":"in_person","did_decline":false,"identityToken":"01/01/1999","identityType":"","employee":{"first":"John","last":"Smith","email":null,"age":35,"weight":null,"height":null,"is_smoker":null,"birthdate":"01/01/1980","ssn":"111111116","gender":"male","phone":null,"address1":"Test Street","address2":null,"city":"ABC","state":"IN","zip":"12345","soh_questions":[{"question":"Has any Applicant been hospitalized in the past 90 days?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?","answer":"No"},{"question":"Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?","answer":"No"},{"question":"Has any Applicant ever applied for and been rejected for life insurance?","answer":"No"}]},"spouse":{"first":"Jane","last":"Smith","email":null,"age":27,"weight":null,"height":null,"is_smoker":null,"birthdate":"01/01/1988","ssn":"111-12-2222","gender":"female","phone":null,"address1":null,"address2":null,"city":null,"state":"","zip":null,"soh_questions":[{"question":"Has any Applicant been hospitalized in the past 90 days?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?","answer":"No"},{"question":"Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?","answer":"No"},{"question":"Has any Applicant ever applied for and been rejected for life insurance?","answer":"No"}]},"is_spouse_address_same_as_employee":true,"is_spouse_email_same_as_employee":true,"existing_insurance":false,"replacing_insurance":true,"is_employee_actively_at_work":false,"has_spouse_been_treated_6_months":false,"has_spouse_been_disabled_6_months":false,"employee_owner":"self","employee_other_owner_name":"","employee_other_owner_ssn":"","spouse_owner":"employee","spouse_other_owner_name":"","spouse_other_owner_ssn":"","employee_beneficiary":"spouse","spouse_beneficiary":"spouse","employee_contingent_beneficiary_type":"none","employee_contingent_beneficiary":{},"spouse_contingent_beneficiary_type":"none","spouse_contingent_beneficiary":{},"children":[{"first":"Johnny","last":"Smith","email":"","age":4,"weight":null,"height":null,"is_smoker":null,"birthdate":"10/10/2010","ssn":"","gender":null,"phone":"","address1":"","address2":"","city":"","state":"","zip":"","soh_questions":[{"question":"Has any Applicant been hospitalized in the past 90 days?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?","answer":"No"},{"question":"Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?","answer":"No"},{"question":"Has any Applicant ever applied for and been rejected for life insurance?","answer":"No"}]},{"first":"Janet","last":"Smith","email":"","age":3,"weight":null,"height":null,"is_smoker":null,"birthdate":"11/11/2011","ssn":"","gender":null,"phone":"","address1":"","address2":"","city":"","state":"","zip":"","soh_questions":[{"question":"Has any Applicant been hospitalized in the past 90 days?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?","answer":"No"},{"question":"Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?","answer":"No"},{"question":"Has any Applicant ever applied for and been rejected for life insurance?","answer":"No"}]},{"first":"Julie","last":"Smith","email":"","age":2,"weight":null,"height":null,"is_smoker":null,"birthdate":"11/11/2012","ssn":"","gender":null,"phone":"","address1":"","address2":"","city":"","state":"","zip":"","soh_questions":[{"question":"Has any Applicant been hospitalized in the past 90 days?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for any form of cancer to include leukemia or Hodgkin's Disease (excluding non-invasive, non-melanoma skin cancer)?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?","answer":"No"},{"question":"In the past 10 years, has any Applicant had or been hospitalized for, been medically diagnosed, treated, or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?","answer":"No"},{"question":"Has any Applicant been diagnosed or treated by a physician, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?","answer":"No"},{"question":"Has any Applicant ever applied for and been rejected for life insurance?","answer":"No"}]}],"child_coverages":[{"premium":4.99,"face_value":10000},{"premium":4.99,"face_value":10000},{"premium":4.99,"face_value":10000}],"employee_coverage":{"premium":69.55,"face_value":125000},"spouse_coverage":{"premium":24.35,"face_value":50000},"product_data":{"base_product_type":"FPPCI","bypassed_soh_questions":[],"code":"FPPCI","gi_criteria":[],"id":2,"is_guaranteed_issue":false,"name":"Family Protection Plan - Critical Illness","product_type":"base","restricted_agents":[],"visible_to_agents":true},"replacement_read_aloud":false,"replacement_is_terminating":true,"replacement_using_funds":false,"replacement_policies":[{"name":"uuu","policy_number":"uuu","insured":"uuu","replaced_or_financing":"replaced","replacement_reason":"aoeu"},{"name":"iii","policy_number":"iii","insured":"iii","replaced_or_financing":"financing","replacement_reason":"iii"}]}
-    enrollment_data = wrap_data = EnrollmentDataWrap(wizard_data, None, None)
-
-    owner_agent = "Agent Mason" # census_record.case.owner_agent
-    agent = AgentDocuSignRecipient(name=owner_agent, email="agent@zachmason.com")
-    employee = EmployeeDocuSignRecipient(name=wrap_data.get_employee_name(),
-                                         email="zach@zachmason.com")
-    recipients = [
-        agent,
-        employee,
-        # TODO Check if BCC's needed here
-    ]
-
-    fpp_form = FPPTemplate(recipients, wrap_data)
-    components = [fpp_form]
-
-    # Replacement Form
-    if fpp_form.is_replacement_form_needed():
-        replacement_form = FPPReplacementFormTemplate(recipients, wrap_data)
-        components.append(replacement_form)
-
-    # Additional Children
-    if fpp_form.is_child_attachment_form_needed():
-        child_attachment_form = ChildAttachmentForm(recipients, wrap_data)
-
-        for i, child in enumerate(fpp_form.get_attachment_children()):
-            child.update(dict(
-                coverage=format(enrollment_data['child_coverages'][i+2]['face_value'], ",.0f"),
-                premium=format(enrollment_data['child_coverages'][i+2]['premium'], ".2f"),
-            ))
-            child_attachment_form.add_child(child)
-
-        components.append(child_attachment_form)
-
-    transport = get_docusign_transport()
-    envelope_result = create_envelope(email_subject="Signature needed",
-                                      components=components,
-                                      docusign_transport=transport,
-                                     )
-
-    redirect_url = envelope_result.get_signing_url(
-        employee,
-        callback_url=build_callback_url(wizard_data, wrap_data.get_session_type()),
-        docusign_transport=transport
-    )
-
-
-    print(redirect_url)

@@ -99,7 +99,7 @@ body {
     margin-top: 2em;
 }
 .decline-option label {
-    font-size: 14pt;
+    font-size: 11pt;
 }
 
 .recommended-coverage-table .widget-header {
@@ -116,6 +116,45 @@ body {
     font-style: oblique;
 }
 
+table.summary-table,
+/* override the top border on the ace style for our summary table */
+.widget-body .table.summary-table{
+    border: 2px solid #ddd;
+    border-width: 0 0 2px 0;
+}
+
+.summary-table td.selectable, .summary-table th.selectable {
+    cursor: pointer;
+    /* Give the product columns a border between each other. */
+    border: 2px solid #ddd;
+    border-width: 0 2px;
+}
+.summary-table th.selectable {
+    border-width: 0 2px 2px 2px;
+}
+
+.circled-number {
+    display: inline-block;
+    width: 22px;
+    border-radius: 11px;
+    border: 2px solid #aaa;
+    background-color: white;
+    color: #888;
+    font-weight: bold;
+}
+
+.summary-table th.active-product {
+    background-color: #fafa8a;
+    color: #838000;
+    font-weight: bold;
+    box-shadow: 0 0 4px 2px rgba(0,0,0,.15);
+    z-index: 11;
+    transform: scale(1.03);
+}
+.summary-table td.active-product {
+    border: 2px solid #eaea8a;
+    z-index: 10;
+}
 
 .confirm-table td, .confirm-table th {
     text-align: center;
@@ -257,6 +296,10 @@ input[type=radio].ace+.lbl::before {
     padding-right: 8px;
 }
 
+.enroll-status.pending {
+    color: #aaa933;
+}
+
 .enroll-status.declined {
     color: #c04000;
     padding-right: 8px;
@@ -306,6 +349,11 @@ table.DTTT_selectable tbody tr {
 
 table.DTTT_selectable.table-hover > tbody > tr:hover > td {
     background-color: lightyellow;
+}
+
+.pointer,
+.select-button {
+    cursor: pointer;
 }
 
 @media print {

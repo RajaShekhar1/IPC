@@ -45,7 +45,6 @@ class EnrollmentApplicationCoverageService(DBService):
             soh_answers=json.dumps(dict(
                 existing_insurance=data['existing_insurance'],
                 replacing_insurance=data['replacing_insurance'],
-                health_questions=applicant_data['soh_questions'],
             ))
         ))
 

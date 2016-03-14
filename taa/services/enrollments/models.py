@@ -6,7 +6,6 @@ from taa.services.agents import ApiTokenService
 from taa import db
 from taa.helpers import JsonSerializable
 from taa.services.cases import CaseCensus, CaseService
-from taa.services.users import UserService
 
 
 class EnrollmentSerializer(JsonSerializable):
@@ -18,23 +17,26 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     __tablename__ = 'enrollment_applications'
 
     id = db.Column(db.Integer, primary_key=True)
-    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True)
+    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True, index=True)
     case = db.relationship('Case', backref=db.backref('enrollment_records',
                                                       lazy='dynamic'))
     census_record_id = db.Column(db.Integer, db.ForeignKey('case_census.id'),
-                                 nullable=False)
+                                 nullable=False, index=True)
     census_record = db.relationship('CaseCensus',
                                     backref=db.backref(
                                         'enrollment_applications',
                                         lazy='joined'))
-    signature_time = db.Column(db.DateTime)
+    signature_time = db.Column(db.DateTime, index=True)
     signature_city = db.Column(db.UnicodeText)
     signature_state = db.Column(db.Unicode(2))
     identity_token = db.Column(db.UnicodeText)
     identity_token_type = db.Column(db.Unicode(64))
     # Application status
     APPLICATION_STATUS_ENROLLED = u'enrolled'
+    APPLICATION_STATUS_PENDING_AGENT = u'pending_agent'
+    APPLICATION_STATUS_PENDING_EMPLOYEE = u'pending_employee'
     APPLICATION_STATUS_DECLINED = u'declined'
+    APPLICATION_STATUS_VOIDED = u'voided'
     application_status = db.Column(db.Unicode(32))
     # Payment mode
     payment_mode = db.Column(db.Integer(), nullable=True)
@@ -46,6 +48,10 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
     agent_code = db.Column(db.Unicode(16))
     agent_name = db.Column(db.Unicode(256))
+
+    # Helpful for querying for all records an agent is allowed to see within a given case
+    db.Index('ix_enrollment_applications_agent_case', agent_id, case_id)
+
     # Policy owner
     is_employee_owner = db.Column(db.Boolean)
     employee_other_owner_name = db.Column(db.UnicodeText)
@@ -70,14 +76,49 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     received_data = db.Column(JSON(none_as_null=False))
     standardized_data = db.Column(JSON(none_as_null=False))
 
-    def get_signature_time_as_int(self):
-        'useful for sorting'
+    docusign_envelope_id = db.Column(db.Unicode(128), index=True)
+    agent_signing_status = db.Column(db.Unicode(32))
+    agent_signing_datetime = db.Column(db.DateTime)
+    applicant_signing_status = db.Column(db.Unicode(32))
+    applicant_signing_datetime = db.Column(db.DateTime)
+
+    SIGNING_STATUS_PENDING = u'pending'
+    SIGNING_STATUS_DECLINED = u'declined_to_sign'
+    SIGNING_STATUS_TIMEOUT = u'timeout'
+    SIGNING_STATUS_ERROR = u'error'
+    SIGNING_STATUS_TTL_ERROR = u'ttl_expired'
+    SIGNING_STATUS_COMPLETE = u'signed'
+    SIGNING_STATUS_NA = u'not_applicable'
+
+    def is_pending(self):
+        return self.is_pending_employee() or self.is_pending_agent()
+
+    def is_pending_employee(self):
+        return self.application_status in [self.APPLICATION_STATUS_PENDING_EMPLOYEE]
+
+    def is_pending_agent(self):
+        return self.application_status in [self.APPLICATION_STATUS_PENDING_AGENT]
+
+    def did_decline(self):
+        return self.application_status == self.APPLICATION_STATUS_DECLINED
 
     def did_enroll(self):
         return self.application_status == self.APPLICATION_STATUS_ENROLLED
 
     def did_process(self):
-        return self.application_status != None
+        # Pending does not count as processed.
+        return self.application_status in [self.APPLICATION_STATUS_DECLINED, self.APPLICATION_STATUS_ENROLLED]
+
+    def is_terminal_status(self):
+        return self.application_status in [
+            self.APPLICATION_STATUS_DECLINED,
+            self.APPLICATION_STATUS_ENROLLED,
+            self.APPLICATION_STATUS_VOIDED,
+        ]
+
+    def is_voided(self):
+        return self.application_status == self.APPLICATION_STATUS_VOIDED
+
 
 
 class EnrollmentApplicationCoverageSerializer(JsonSerializable):
@@ -86,11 +127,12 @@ class EnrollmentApplicationCoverageSerializer(JsonSerializable):
 
 class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
                                     db.Model):
+    __tablename__ = 'enrollment_application_coverage'
     id = db.Column(db.Integer, primary_key=True)
     enrollment_application_id = db.Column(db.Integer,
                                           db.ForeignKey(
                                               'enrollment_applications.id'),
-                                          nullable=False)
+                                          nullable=False, index=True)
     enrollment = db.relationship('EnrollmentApplication',
                                  backref=db.backref('coverages'))
     # Product
@@ -105,6 +147,7 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
     COVERAGE_STATUS_ENROLLED = u'enrolled'
     COVERAGE_STATUS_DECLINED = u'declined'
     coverage_status = db.Column(db.Unicode(32))
+    coverage_selection = db.Column(db.Unicode(32))
     # Additional non-census data
     height_inches = db.Column(db.Integer)
     weight_pounds = db.Column(db.Integer)
@@ -171,7 +214,7 @@ class SelfEnrollmentLink(SelfEnrollmentLinkSerializer, db.Model):
                                              'self_enrollment_setups.id'),
                                          nullable=False)
     self_enrollment_setup = db.relationship('SelfEnrollmentSetup')
-    url = db.Column(db.Unicode(2000), nullable=False)
+    url = db.Column(db.Unicode(2000), nullable=False, index=True)
     clicks = db.Column(db.Integer, server_default='0', nullable=False)
     emails = db.relationship('SelfEnrollmentEmailLog', backref='link')
 
@@ -216,8 +259,7 @@ class _SelfEnrollmentEmailBatch(db.Model):
 
     sent_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
 
-    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'),
-                          nullable=False)
+    case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=False, index=True)
     case = db.relationship('Case', backref="batches")
 
 class SelfEnrollmentEmailBatchWithEmails(SelfEnrollmentEmailBatchSerializerWithEmails, _SelfEnrollmentEmailBatch):
@@ -236,9 +278,9 @@ class SelfEnrollmentEmailLog(SelfEnrollmentEmailLogSerializer, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     link_id = db.Column(db.Integer, db.ForeignKey('self_enrollment_links.id'),
-                        nullable=False)
+                        nullable=False, index=True)
     census_id = db.Column(db.Integer, db.ForeignKey('case_census.id'),
-                          nullable=False)
+                          nullable=False, index=True)
     census_record = db.relationship('CaseCensus', backref='email_logs')
     agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=False)
     sent_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
@@ -246,12 +288,12 @@ class SelfEnrollmentEmailLog(SelfEnrollmentEmailLogSerializer, db.Model):
     email_to_name = db.Column(db.Unicode)
     email_body = db.Column(db.Unicode)
 
-    batch_id = db.Column(db.Integer, db.ForeignKey('self_enrollment_email_batches.id'), nullable=True)
+    batch_id = db.Column(db.Integer, db.ForeignKey('self_enrollment_email_batches.id'), nullable=True, index=True)
     batch = db.relationship('_SelfEnrollmentEmailBatch', backref="email_logs")
 
     is_success = db.Column(db.Boolean, nullable=False)
 
-    status = db.Column(db.Unicode(16))
+    status = db.Column(db.Unicode(16), index=True)
 
     STATUS_PENDING = u'pending'
     STATUS_FAILURE = u'failure'
@@ -263,8 +305,7 @@ CaseCensus.sent_email_count = db.column_property(
             where(db.or_(
                 SelfEnrollmentEmailLog.status == SelfEnrollmentEmailLog.STATUS_SUCCESS,
                 SelfEnrollmentEmailLog.status == SelfEnrollmentEmailLog.STATUS_PENDING,
-            )).\
-            correlate_except(SelfEnrollmentEmailLog)
+            )).correlate_except(SelfEnrollmentEmailLog)
 )
 
 
@@ -272,7 +313,7 @@ def get_batch_case_id(batch):
     token = batch.case_token
     if not token:
         return None
-    
+
     case = CaseService().get_case_for_token(token)
     if not case:
         return None
@@ -315,10 +356,10 @@ class EnrollmentImportBatch(EnrollmentImportBatchSerializer, db.Model):
 
     timestamp = db.Column(db.DateTime, server_default=db.func.now())
     auth_token = db.Column(db.Unicode(64))
-    case_token = db.Column(db.Unicode(64))
+    case_token = db.Column(db.Unicode(64), index=True)
     num_processed = db.Column(db.Integer)
     num_errors = db.Column(db.Integer)
-    log_hash = db.Column(db.Unicode(64))
+    log_hash = db.Column(db.Unicode(64), index=True)
 
 
 class EnrollmentImportBatchItemSerializer(JsonSerializable):
@@ -332,7 +373,7 @@ class EnrollmentImportBatchItem(EnrollmentImportBatchItemSerializer, db.Model):
     __tablename__ = 'enrollment_import_batch_items'
 
     id = db.Column(db.Integer, primary_key=True)
-    enrollment_batch_id = db.Column(db.Integer, db.ForeignKey('enrollment_import_batches.id'))
+    enrollment_batch_id = db.Column(db.Integer, db.ForeignKey('enrollment_import_batches.id'), index=True)
     enrollment_batch = db.relationship('EnrollmentImportBatch', backref='batch_items')
     enrollment_record_id = db.Column(db.Integer, db.ForeignKey('enrollment_applications.id'))
     enrollment_record = db.relationship('EnrollmentApplication')
@@ -361,6 +402,8 @@ class FormTemplate(db.Model):
     pages = db.Column(db.Integer, nullable=False)
     modified_at = db.Column(db.DateTime)
 
+    db.Index('ix_form_templates_template_id', template_id, unique=True)
+
 
 class FormTemplateTabs(db.Model):
     """
@@ -370,7 +413,7 @@ class FormTemplateTabs(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     form_template_id = db.Column(db.Integer, db.ForeignKey('form_templates.id'),
-                                 nullable=False)
+                                 nullable=False, index=True)
     template = db.relationship('FormTemplate', backref='tabs')
     page = db.Column(db.Integer, nullable=False)
     x = db.Column(db.Integer, nullable=False)
@@ -388,3 +431,10 @@ class FormTemplateTabs(db.Model):
     font_size = db.Column(db.Integer)
     font_color = db.Column(db.Unicode)
     recipient_role = db.Column(db.Unicode)
+
+    template_tab_locked = db.Column(db.Boolean)
+    template_tab_required = db.Column(db.Boolean)
+    custom_tab_locked = db.Column(db.Boolean)
+    custom_tab_required = db.Column(db.Boolean)
+
+

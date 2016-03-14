@@ -8,11 +8,7 @@ from flask_assets import Environment, Bundle
 
 from taa import app
 
-if app.config['ASSETS_DEBUG']:
-    # Put any debug configurations for JS and CSS here
-    knockout_js = Bundle('js/knockout-3.3.0.debug.js')
-else:
-    knockout_js = Bundle('js/knockout-3.3.0.js', filters='rjsmin')
+knockout_js = Bundle('js/knockout-3.4.0.js', filters='rjsmin')
 
 css_taa = Bundle(
     "css/five_star_ace_overlay.css",
@@ -87,8 +83,8 @@ js_vendor = Bundle(
     'js/jquery.mobile.custom.min.js',
     'js/typeahead-bs2.min.js',
     knockout_js,
-    'js/underscore-min.js',
-
+    #'js/underscore-min.js',
+    'js/lodash.min.js',
 )
 
 js_vendor_latest = Bundle(
@@ -122,7 +118,8 @@ js_vendor_latest = Bundle(
     'js/jquery.rcrumbs.min.js',
 
     knockout_js,
-    'js/underscore-min.js',
+    #'js/underscore-min.js',
+    'js/lodash.min.js',
     'js/sammy-latest.min.js',
     output='generated_assets/js_vendor_latest.min.js',
 )

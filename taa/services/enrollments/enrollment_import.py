@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from taa.services.products.riders import RiderService
+
 from taa.core import TAAFormError
 from taa.services.products.payment_modes import get_payment_modes
 from taa.services import RequiredFeature, LookupService
@@ -33,8 +35,6 @@ class EnrollmentImportService(object):
     def standardize_imported_data(self, data, method='api_import'):
 
         from taa.services.enrollments import EnrollmentRecordParser
-        from taa.services.cases import RiderService
-        rider_service = RiderService()
 
         out_data = {
             "employee": {},
@@ -141,11 +141,12 @@ class EnrollmentImportService(object):
             'sp': []
         }
 
+        # Riders
         for prefix, long_prefix in [('emp', 'employee'), ('sp', 'spouse')]:
-            for rider in RiderService.default_riders:
-                has_rider = data.get('{}_rider_{}'.format(prefix, rider.code.lower()))
-                if(has_rider):
-                    out_data['rider_data'][prefix].append(rider.to_json())
+            for rider_code in RiderService().get_import_rider_codes():
+                has_rider = data.get('{}_rider_{}'.format(prefix, rider_code.lower()))
+                if has_rider:
+                    out_data['rider_data'][prefix].append({'code': rider_code})
 
         return out_data
 
@@ -163,7 +164,11 @@ class EnrollmentImportService(object):
         )
 
     def standardize_wizard_data(self, wizard_data):
-        output = wizard_data.copy()
+        # Wizard data is a list now, each item representing a product submission.
+        return [self.standardize_wizard_product_results(product_data) for product_data in wizard_data]
+
+    def standardize_wizard_product_results(self, product_data):
+        output = product_data.copy()
 
         # If not replacing insurance, clear any replacement policies / questions provided.
         #  TODO: do this in the wizard so this isn't necessary to clear these here.
@@ -174,16 +179,16 @@ class EnrollmentImportService(object):
 
         # Update beneficiary data to new format
         output.update(
-            standardize_wizard_beneficiaries(wizard_data, "employee")
+                standardize_wizard_beneficiaries(product_data, "employee")
         )
         output.update(
-            standardize_wizard_beneficiaries(wizard_data, "spouse")
+                standardize_wizard_beneficiaries(product_data, "spouse")
         )
         output.update(
-            standardize_wizard_contingent_beneficiaries(wizard_data, "employee_contingent")
+                standardize_wizard_contingent_beneficiaries(product_data, "employee_contingent")
         )
         output.update(
-            standardize_wizard_contingent_beneficiaries(wizard_data, "spouse_contingent")
+                standardize_wizard_contingent_beneficiaries(product_data, "spouse_contingent")
         )
         return output
 

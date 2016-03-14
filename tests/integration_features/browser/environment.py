@@ -24,9 +24,6 @@ def before_scenario(context, scenario):
     init_basic_data()
     init_brochures()
 
-    # Add basic docusign template data
-    #DocusignImportCommand().run("Artifacts/TAA3.0/ICC14_FPP_Generic_R1114.xml")
-
 
 def after_scenario(context, scenario):
     # Clear the session
