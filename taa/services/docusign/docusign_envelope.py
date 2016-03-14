@@ -86,12 +86,9 @@ class EnrollmentDataWrap(object):
         if self.data.get('is_third_party'):
             return self.data['agent_name']
 
-        if not flask.has_request_context():
-            return '(TEST)'
-
         agent = self.get_signing_agent()
         if not agent:
-            return ''
+            return '(No Agent)'
 
         # Get stormpath user for agent
         agent_user = agent_service.get_agent_stormpath_account(agent)
@@ -107,12 +104,9 @@ class EnrollmentDataWrap(object):
         if self.data.get('is_third_party'):
             return self.data['agent_code']
 
-        if not flask.has_request_context():
-            return '(TEST)'
-
         agent = self.get_signing_agent()
         if not agent:
-            return ''
+            return '(No Agent)'
 
         return agent.agent_code
 
@@ -135,6 +129,8 @@ class EnrollmentDataWrap(object):
             return agent_service.get_logged_in_agent()
         elif self.data.get('agent_id'):
             return agent_service.get(self.data['agent_id'])
+        elif not flask.has_request_context():
+            return None
         else:
             # If the logged-in user is not an agent, default to case owner.
             return self.case.owner_agent
