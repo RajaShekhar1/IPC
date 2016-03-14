@@ -1584,6 +1584,9 @@ var wizard_viewmodel = (function () {
         //  confuses jquery validate.
         return self.coverage_vm.is_payment_mode_valid();
       }, "You must select a payment mode.");
+      $.validator.addMethod('isValidOccupation', function (value, element, params) {
+        return self.selected_occupation();
+      }, 'You must select an occupation.');
 
       function any_valid_spouse_field() {
         //return self.should_include_spouse_in_table(); //self.should_show_spouse();
@@ -1655,6 +1658,9 @@ var wizard_viewmodel = (function () {
           'height_inches_1': {
             required: {depends: any_valid_spouse_field},
             spHeightLimit: true
+          },
+          occupation: {
+            isValidOccupation: {depends: self.requires_occupation}
           },
 
           paymentMode: {
