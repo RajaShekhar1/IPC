@@ -115,7 +115,7 @@ class DocuSignService(object):
     def create_envelope_recipients(self, case, enrollment_data):
 
         signing_agent = enrollment_data.get_signing_agent()
-        
+
         agent = AgentDocuSignRecipient(signing_agent, name=signing_agent.name(),
                                        email=signing_agent.email)
         employee = EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
