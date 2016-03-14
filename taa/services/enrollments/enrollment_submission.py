@@ -82,7 +82,8 @@ class EnrollmentSubmissionService(object):
     def get_enrollees(self, enrollment_record):
         enrollees = ['employee']
         data = json.loads(enrollment_record.standardized_data)
-        if 'spouse' in data:
+        if ('spouse_coverage' in data and
+                data['spouse_coverage'].get('face_value') is not None):
             enrollees.append('spouse')
         for idx in range(len(data.get('children', []))):
             enrollees.append('child{}'.format(idx))
@@ -104,7 +105,8 @@ class EnrollmentSubmissionService(object):
             'company_name': enrollment_record.case.company_name,
             'group_number': enrollment_record.case.group_number,
         }
-        xml = generate_xml(data, agents, 'xml/base.xml', form_for, pdf_bytes)
+        xml = generate_xml(data, enrollment_record.case, 'xml/base.xml',
+                           form_for, pdf_bytes)
         return xml
 
     def get_applicant_types(self, enrollment_record):
