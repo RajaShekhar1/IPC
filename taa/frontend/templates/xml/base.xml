@@ -49,6 +49,11 @@
                     <ReplacementIndicator tc="{{ policy.is_replacement_code }}">{{ policy.is_replacement }}</ReplacementIndicator>
                     {# The Replacement Type  field is not present in PDF application form however if it is a replacement, vendor needs to specify in next field if it is Internal or External Replacement #}
                     <ReplacementType tc="{{ policy.replacement_type_code }}">{{ policy.replacement_type }}</ReplacementType>
+                    {% if policy.is_replacement -%}
+                    <OLifeExtension>
+                        <ReplacedPolicyNumber>{{ policy.replacement_number }}</ReplacedPolicyNumber>
+                    </OLifeExtension>
+                    {% endif -%}
                     <PaymentMode tc="{{ policy.payment_mode_code }}">{{ policy.payment_mode }}</PaymentMode>
                     <PaymentAmt>{{ enrollee.coverage.premium or '0.00' }}</PaymentAmt>
                     <PaymentMethod tc="{{ policy.payment.method_code }}">{{ policy.payment.method }}</PaymentMethod>
