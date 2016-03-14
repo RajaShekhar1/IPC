@@ -20,7 +20,7 @@ from taa.models import db
 from taa.old_model.States import get_states
 from taa.services.products.states import get_all_states
 from taa.services.products import get_payment_modes, is_payment_mode_changeable, get_full_payment_modes
-from taa.services.docusign.service import create_multiproduct_envelope_and_fetch_signing_url, DocusignEnvelope
+from taa.services.docusign.service import DocusignEnvelope
 from taa.services.products.riders import RiderService
 from taa.services import LookupService
 
@@ -432,8 +432,7 @@ def process_wizard_submission(case, wizard_results):
     census_record = get_or_create_census_record(case, enrollment_data)
     enrollment_application = get_or_create_enrollment(case, census_record, standardized_data, wizard_results)
     db.session.commit()
-
-
+    
     return enrollment_application
 
 
@@ -517,21 +516,6 @@ def get_or_create_enrollment(case, census_record, standardized_data, wizard_resu
         db.session.commit()
 
     return enrollment_application
-
-
-# def get_or_create_envelope(case, enrollment_application, standardized_data):
-#
-#     envelope = get_existing_envelope(enrollment_application)
-#
-#     if not envelope:
-#         # Create the envelope
-#         docusign_service = LookupService('DocuSignService')
-#         in_person_signer, envelope = docusign_service.create_multiproduct_envelope(standardized_data, case)
-#
-#         # Save envelope ID on enrollment
-#         enrollment_service.save_docusign_envelope(enrollment_application, envelope)
-#
-#     return envelope
 
 
 def get_envelope_signing_url(enrollment_data, envelope):

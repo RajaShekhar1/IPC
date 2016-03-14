@@ -19,9 +19,13 @@ rider_service = RiderService()
 
 
 class EnrollmentDataWrap(object):
-    def __init__(self, wizard_data, case):
+    def __init__(self, wizard_data, case, enrollment_record=None):
         self.data = wizard_data
         self.case = case
+
+        # There are times we need the enrollment record (if it has already been created) to determine some aspect
+        #  of the enrollment, like which agent was the writing agent.
+        self.enrollment_record = enrollment_record
 
     def __getitem__(self, item):
         """Allow dict access to raw data"""
@@ -125,6 +129,8 @@ class EnrollmentDataWrap(object):
                                 'owner agent.')
         elif self.is_import():
             return self.case.owner_agent
+        elif self.enrollment_record and self.enrollment_record.agent_id is not None:
+            return agent_service.get(self.enrollment_record.agent_id)
         elif agent_service.get_logged_in_agent():
             return agent_service.get_logged_in_agent()
         elif self.data.get('agent_id'):
