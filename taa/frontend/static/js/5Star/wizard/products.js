@@ -183,6 +183,10 @@ var wizard_products = (function () {
 
     get_occupations: function () {
       return [];
+    },
+
+    requires_occupation: function () {
+      return false;
     }
 
   };
@@ -280,7 +284,7 @@ var wizard_products = (function () {
 
       var emp_coverage_option = window.vm.coverage_vm.get_applicant_coverage_option_for_product(window.vm.employee(), self);
       var emp_existing_coverage_amount = window.vm.employee().get_existing_coverage_amount_for_product(self);
-      var emp_current_coverage_amount = (emp_coverage_option.is_valid() ? emp_coverage_option.face_value : 0);
+      var emp_current_coverage_amount = (emp_coverage_option.is_valid()? emp_coverage_option.face_value : 0);
       return emp_existing_coverage_amount + emp_current_coverage_amount;
     }
 
@@ -476,6 +480,9 @@ var wizard_products = (function () {
   HIProduct.prototype.has_simple_coverage = function () {
     return true;
   };
+  HIProduct.prototype.requires_occupation = function () {
+    return true;
+  };
   //endregion
 
   //region ACCProduct
@@ -483,12 +490,16 @@ var wizard_products = (function () {
     this.product_type = "ACC";
     this.product_data = product_data;
   }
+
   ACCProduct.prototype = Object.create(Product.prototype);
   ACCProduct.prototype.has_simple_coverage = function () {
     return true;
   };
   ACCProduct.prototype.get_occupations = function () {
     return ['Management', 'Worker', 'Secretary'];
+  };
+  ACCProduct.prototype.requires_occupation = function () {
+    return true;
   };
   //endregion
 

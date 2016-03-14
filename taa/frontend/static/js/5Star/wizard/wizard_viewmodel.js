@@ -238,14 +238,14 @@ var wizard_viewmodel = (function () {
     self.selected_simple_coverage_option = ko.observable(new NullCoverageOption());
 
     self.selected_simple_coverage_value = ko.computed({
-      read: function() {
+      read: function () {
         if (!self.selected_simple_coverage_option().is_valid()) {
           return null;
         } else {
           return self.selected_simple_coverage_option().coverage_tier;
         }
       },
-      write: function(val) {
+      write: function (val) {
         var lookup = {EE: 48.89, ES: 92.88, EC: 88.00, EF: 131.99};
         self.selected_simple_coverage_option(new SimpleCoverageOption({
           coverage_tier: val,
@@ -936,27 +936,19 @@ var wizard_viewmodel = (function () {
     self.enrollment_case = options.case_data;
     self.products = wizard_products.build_products(self, options.products);
 
-    //region Occupation Items
-    self.occupations = ko.computed(function () {
-      var occupations = _.map(self.products, function (product) {
-        return product.get_occupations();
-      });
-      occupations = _.flatten(occupations);
-
-      return _.uniq(occupations);
-    });
-    self.selected_occupation = ko.observable(null);
-    self.requires_occupation = ko.computed(function () {
-      return _.any(self.products, function product_has_occupations(product) { return product.get_occupations().length > 0; });
-    });
-    //endregion
-
     self.is_rate_table_loading = product_rates_service.is_loading_rates;
     self.is_show_rates_clicked = ko.observable(false);
 
     init_applicants();
 
     init_jquery_validator();
+
+    //region Occupations and helper functions for working with occupations
+    self.occupations = ko.observableArray(options.case_data.occupations || []);
+    self.selected_occupation = ko.observable(self.employee().occupation || null);
+    self.requires_occupation = _.any(self.products, function (product_view_model) { return product_view_model.requires_occupation();});
+    self.should_show_occupation = self.requires_occupation && !self.selected_occupation() && self.options.is_in_person;
+    //endregion
 
     self.set_wizard_step = function () {
       var wizard = $('#enrollment-wizard').data('fu.wizard');
@@ -970,8 +962,7 @@ var wizard_viewmodel = (function () {
     });
 
     self.should_include_children_in_table = ko.computed(function () {
-      return (self.should_include_children()
-        && self.applicant_list.has_valid_children()
+      return (self.should_include_children() && self.applicant_list.has_valid_children()
       );
     });
 
@@ -1528,7 +1519,6 @@ var wizard_viewmodel = (function () {
         return self.applicant_list.get_children();
       });
 
-
       var should_show_spouse_initially = self.spouse().any_valid_field();
       self.should_show_spouse(should_show_spouse_initially);
 
@@ -1740,7 +1730,7 @@ var wizard_viewmodel = (function () {
 
     //region HI/ACC Helpers
 
-    self.get_simple_coverage_options = ko.pureComputed(function() {
+    self.get_simple_coverage_options = ko.pureComputed(function () {
       // FIXME: code not finished or being called yet
       var options = [
         {
