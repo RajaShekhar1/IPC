@@ -33,7 +33,9 @@ var wizard_viewmodel = (function () {
       }
       if (this.applicants.has_valid_children() && this.should_include_children()) {
         _.each(this.applicants.get_children(), function (c) {
-          applicants_in_table.push(c);
+          if (c.any_valid_field()) {
+            applicants_in_table.push(c);
+          }
         });
       }
       return applicants_in_table;
@@ -392,13 +394,7 @@ var wizard_viewmodel = (function () {
         self.spouse_contingent_beneficiary_type() === 'spouse' &&
         self.spouse_beneficiary_type() === 'spouse'
       );
-      return (
-        self.should_show_contingent_beneficiary()
-        && (
-          employee_beneficiary_error
-          || spouse_beneficiary_error
-        )
-      );
+      return (self.should_show_contingent_beneficiary() && (employee_beneficiary_error || spouse_beneficiary_error));
     });
 
     // Shortcut methods for the "Spouse-only" questions for FPP products.
@@ -509,7 +505,7 @@ var wizard_viewmodel = (function () {
     // This raw method should not be used outside this class.
     __get_coverage_for_applicant: function (applicant) {
       // special case for group of children; if a child applicant is passed, use the group coverage
-      if (applicant.type == wizard_applicant.Applicant.ChildType) {
+      if (applicant.type === wizard_applicant.Applicant.ChildType) {
         applicant = this.applicant_list.get_children_group();
       }
 
@@ -619,7 +615,7 @@ var wizard_viewmodel = (function () {
     get_cumulative_coverage_amount: function () {
       // Add together previous coverage application amounts and the current application amount.
       var previous_coverage_amount = this.applicant.get_existing_coverage_amount_for_product(this.product.product_data.id);
-      var current_coverage_amount = (this.has_selected_coverage() ? this.coverage_option().face_value : 0);
+      var current_coverage_amount = (this.has_selected_coverage()? this.coverage_option().face_value : 0);
       return previous_coverage_amount + current_coverage_amount;
     },
 
@@ -915,8 +911,7 @@ var wizard_viewmodel = (function () {
     });
 
     self.should_include_children_in_table = ko.computed(function () {
-      return (self.should_include_children()
-        && self.applicant_list.has_valid_children()
+      return (self.should_include_children() && self.applicant_list.has_valid_children()
       );
     });
 
@@ -1010,7 +1005,7 @@ var wizard_viewmodel = (function () {
     });
 
     self.show_spouse_name = ko.computed(function () {
-      return (self.should_include_spouse_in_table()) ? self.spouse().name() : "";
+      return (self.should_include_spouse_in_table())? self.spouse().name() : "";
     });
 
 
@@ -1627,7 +1622,21 @@ var wizard_viewmodel = (function () {
 
 
       function is_child_name_required(element) {
-        return true;
+        if ($(element).attr("id") === "child-first-0" ||
+          $(element).attr("id") === "child-last-0" ||
+          $(element).attr("id") === "child-dob-0"
+        ) {
+          // Treat the first child as always required if
+          // the children checkbox is checked
+          return self.should_include_children();
+        }
+
+        var child = ko.dataFor(element);
+        if (!child) {
+          return false;
+        }
+
+        return child.any_valid_field();
       }
 
       function is_child_field_required(element) {
