@@ -8,6 +8,7 @@ from taa.services import RequiredFeature, LookupService
 from taa.services.enrollments.enrollment_record_parser import EnrollmentRecordParser
 from taa.services.enrollments.enrollment_import_processor import EnrollmentProcessor
 
+
 class EnrollmentImportService(object):
     case_service = RequiredFeature("CaseService")
     file_import_service = RequiredFeature("FileImportService")
@@ -237,6 +238,7 @@ def standardize_wizard_beneficiaries(data, out_prefix):
     out_data["{}_beneficiary1_percentage".format(out_prefix)] = 100
     return out_data
 
+
 def standardize_wizard_contingent_beneficiaries(data, out_prefix):
     out_data = {}
 
@@ -253,6 +255,7 @@ def standardize_wizard_contingent_beneficiaries(data, out_prefix):
     out_data["{}_beneficiary1_percentage".format(out_prefix)] = 100
 
     return out_data
+
 
 def standardize_multi_beneficiaries(data, out_prefix, prefix):
     out_data = {}
@@ -278,8 +281,10 @@ def standardize_answer(answer):
     answers = dict(Y="Yes", N="No", y="Yes", n="No")
     return answers.get(answer)
 
+
 def bool_from_answer(answer):
     return str(answer).lower() in ['y', 'yes']
+
 
 def build_person(data, prefix, product, state, soh_service):
     genders = dict(m="male", M="male", f="female", F="female")

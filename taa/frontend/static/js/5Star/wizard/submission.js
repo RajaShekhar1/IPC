@@ -62,7 +62,7 @@ function poll_envelope_result(url, wizard_results) {
   poll_count += 1;
   if (poll_count > MAX_POLL_COUNT) {
     alert("Sorry, an error occurred generating the signature page. Please check your Agent Inbox to sign this application.");
-    window.location.href = urls.get_manage_case_url(window.vm.options.case_data.id);
+    window.location.href = urls.get_manage_case_url(window.vm.options.case_data.id) + '#enrollment';
   }
 
   $.get(url).success(function(resp) {
@@ -109,7 +109,7 @@ function handle_remote_error_with_retry(response, retry_callback) {
     //  }, 25000);
     //} else {
       alert("Sorry, an error occurred communicating with the server. Please check your Agent Inbox to sign this application.");
-      window.location = urls.get_manage_case_url(window.vm.options.case_data.id);
+      window.location = urls.get_manage_case_url(window.vm.options.case_data.id) + '#enrollment';
     //}
 
   } else if (response.status === 500) {

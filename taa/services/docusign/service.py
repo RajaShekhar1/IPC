@@ -126,8 +126,8 @@ class DocuSignService(object):
             return agent, recipients
         else:
             recipients = [
-                agent,
                 employee,
+                agent,
             ] + self.get_carbon_copy_recipients()
             return employee, recipients
 

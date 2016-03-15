@@ -459,7 +459,7 @@ def check_submission_status():
     elif enrollment.docusign_envelope_id is not None:
         # Done processing this envelope, get the signing URL
         envelope = DocusignEnvelope(enrollment.docusign_envelope_id, enrollment_record=enrollment)
-        data_wrap = EnrollmentDataWrap(standardized_enrollment_data, enrollment.case)
+        data_wrap = EnrollmentDataWrap(standardized_enrollment_data[0], enrollment.case)
         return jsonify(**{'status': 'ready', 'redirect_url': get_envelope_signing_url(data_wrap, envelope)})
     else:
         # Not done processing yet

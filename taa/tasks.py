@@ -69,7 +69,7 @@ def process_wizard_enrollment(task, enrollment_id):
     submission_service = LookupService("EnrollmentSubmissionService")
     envelope = submission_service.process_wizard_submission(enrollment_id)
     if not envelope:
-        send_admin_error_email("Error processing wizard enrollment {}".format(enrollment_id))
+        send_admin_error_email("Error processing wizard enrollment {}".format(enrollment_id), [])
         # Go ahead and attempt to reprocess
         task.retry(exc=Exception("No envelope created"))
 
