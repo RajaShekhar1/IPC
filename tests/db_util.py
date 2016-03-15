@@ -61,31 +61,31 @@ def create_agent(first, last, agent_code, email, activated=True):
 
     # Create user in database
     agent = agent_service.create(**{
-        'first': first,
-        'last': last,
-        'agent_code': agent_code,
-        'email': email,
-        'stormpath_url':account.href,
-        'activated':activated,
+        'first': unicode(first),
+        'last': unicode(last),
+        'agent_code': unicode(agent_code),
+        'email': unicode(email),
+        'stormpath_url': unicode(account.href),
+        'activated': unicode(activated),
     })
 
     db.session.commit()
     return agent
 
 
-def create_case(company_name='Test Case', case_token='CASE-123123', product_codes=None, agent=None, case_id=None):
+def create_case(company_name=u'Test Case', case_token=u'CASE-123123', product_codes=None, agent=None, case_id=None):
     """
     Creates an actively-enrolling case with the given parameters.
     """
     if not agent:
-        agent = create_agent(first='TEST', last='AGENT',
-                             agent_code='26AGENT',
-                             email='test-case-owner@delmarsd.com')
+        agent = create_agent(first=u'TEST', last=u'AGENT',
+                             agent_code=u'26AGENT',
+                             email=u'test-case-owner@delmarsd.com')
     data = dict(
-        company_name=company_name,
-        group_number="GRP-NUM-EX123",
-        situs_state='MI',
-        situs_city='Lansing',
+        company_name=unicode(company_name),
+        group_number=u"GRP-NUM-EX123",
+        situs_state=u'MI',
+        situs_city=u'Lansing',
         agent_id=agent.id,
         active=True,
         created_date=datetime.datetime(year=2012, month=1, day=1),

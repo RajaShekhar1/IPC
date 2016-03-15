@@ -191,7 +191,7 @@ class EnvelopeSync(object):
         if not ee_name:
             ee_first = self.find_text_tab(emp_status, 'eeFName')
             ee_last = self.find_text_tab(emp_status, 'eeLName')
-            ee_name = '{} {}'.format(ee_first, ee_last)
+            ee_name = u'{} {}'.format(ee_first, ee_last)
 
         ee_ssn = ee_ssn.replace('-', '').strip()
         ee_ssn_masked = "***-**-" + ee_ssn[-4:]
@@ -219,7 +219,7 @@ class EnvelopeSync(object):
         if matching_enrollment:
             return self.match_coverages(ch_cov, ee_cov, ee_ssn_masked, envelope, matching_enrollment, sp_cov, created_time, ee_name)
         else:
-            print("No match on envelope '{}' '{}' '{}' '{}' {}/{}/{}".format(envelope.uri,
+            print(u"No match on envelope '{}' '{}' '{}' '{}' {}/{}/{}".format(envelope.uri,
                 start.strftime('%F%T'), ee_name, ee_ssn_masked, ee_cov, sp_cov,
                                                                ch_cov))
             return False
@@ -235,7 +235,7 @@ class EnvelopeSync(object):
                                                       EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
         if (ee_cov and not matching_ee_cov) or (sp_cov and not matching_sp_cov) or (ch_cov and not matching_ch_cov):
             print(
-                "Invalid coverage match on '{}' '{}' {} {}/{}/{} got {}/{}/{}".format(created_time.strftime('%F%T'), ee_ssn_masked, ee_name,
+                u"Invalid coverage match on '{}' '{}' {} {}/{}/{} got {}/{}/{}".format(created_time.strftime('%F%T'), ee_ssn_masked, ee_name,
                                                                                    ee_cov, sp_cov, ch_cov,
                                                                                    matching_ee_cov.coverage_face_value if matching_ee_cov else '',
                                                                                    matching_sp_cov.coverage_face_value if matching_sp_cov else '',
@@ -243,7 +243,7 @@ class EnvelopeSync(object):
             return False
 
         else:
-            print("FOUND matching enrollment(s) for envelope: {} to {} '{}' '{}' {}/{}/{}".format(
+            print(u"FOUND matching enrollment(s) for envelope: {} to {} '{}' '{}' {}/{}/{}".format(
                 envelope.uri, matching_enrollment.id, created_time.strftime('%F%T'), ee_name, ee_ssn_masked, ee_cov, sp_cov, ch_cov))
 
             # Link it up

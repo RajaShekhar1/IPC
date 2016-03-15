@@ -126,7 +126,7 @@ class EnrollmentSubmissionProcessor(object):
 
         # Generate envelope
         envelope = self.docusign_service.create_envelope(
-            email_subject="Enrollment imported: {} for {} ({})".format(
+            email_subject=u"Enrollment imported: {} for {} ({})".format(
                 data_wrap.get_product_code(),
                 data_wrap.get_employee_name(),
                 data_wrap.get_employer_name()),

@@ -37,8 +37,8 @@ class CSVToFlatFileCommand(Command):
         user_token = data[0].get("user_token").ljust(64)
         case_token = data[0].get("case_token").ljust(64)
         header = "{}{}{}{}".format(FlatFileSpec.FLAT_FILE_TYPE, FlatFileSpec.FLAT_FILE_VERSION.ljust(8), user_token, case_token)
-        records = "\n".join([self.format_flat_file_record(row, spec) for row in data])
-        return "{}\n{}".format(header, records)
+        records = u"\n".join([self.format_flat_file_record(row, spec) for row in data])
+        return u"{}\n{}".format(header, records)
 
     def format_flat_file_record(self, row, spec):
         row_text = ""
@@ -49,7 +49,7 @@ class CSVToFlatFileCommand(Command):
             if not current_item:
                 current_item = ""
             space_padding = "".join([" " for i in range(0, cur_spec.size - len(current_item))])
-            row_text += "{}{}".format(current_item, space_padding)[:cur_spec.size]
+            row_text += u"{}{}".format(current_item, space_padding)[:cur_spec.size]
         return row_text
 
     def normalize_headers(self, input_data):

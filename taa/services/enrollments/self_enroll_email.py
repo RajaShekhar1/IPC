@@ -75,7 +75,7 @@ class SelfEnrollmentEmailService(DBService):
             if link is None:
                 abort(500, "Could not retrieve or create self-enrollment link")
 
-            name = '{} {}'.format(record.employee_first, record.employee_last)
+            name = u'{} {}'.format(record.employee_first, record.employee_last)
 
             email_log = self.create_pending_email(
                 agent, link, record, batch,
@@ -104,14 +104,14 @@ class SelfEnrollmentEmailService(DBService):
 
         salutation = ''
         if setup.email_greeting_salutation:
-            salutation = '{} '.format(setup.email_greeting_salutation)
+            salutation = u'{} '.format(setup.email_greeting_salutation)
         greeting_end = ''
         if setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_FIRST_NAME:
-            greeting_end = "{},".format(record.employee_first)
+            greeting_end = u"{},".format(record.employee_first)
         elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_FULL_NAME:
-            greeting_end = "{} {},".format(record.employee_first, record.employee_last)
+            greeting_end = u"{} {},".format(record.employee_first, record.employee_last)
         elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_LAST_NAME:
-            greeting_end = "{},".format(record.employee_last)
+            greeting_end = u"{},".format(record.employee_last)
         elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_TITLE_LAST:
             if not record.employee_gender:
                 title = 'Mr./Ms.'
@@ -120,10 +120,10 @@ class SelfEnrollmentEmailService(DBService):
             else:
                 title = 'Mrs.'
 
-            greeting_end = "{} {},".format(title, record.employee_last)
+            greeting_end = u"{} {},".format(title, record.employee_last)
         elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_BLANK:
             greeting_end = ''
-        greeting = "{}{}".format(salutation, greeting_end)
+        greeting = u"{}{}".format(salutation, greeting_end)
         return greeting
 
     def get_for_census_record(self, census_record):
