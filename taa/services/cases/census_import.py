@@ -151,7 +151,7 @@ class RequiredIfAnyInGroupValidator(object):
 def preprocess_string(data, record=None):
     if data is None:
         return u''
-    return unicode(data).strip()
+    return unicode(data, 'utf-8').strip()
 
 
 def preprocess_product_code(data, record=None):
@@ -219,7 +219,7 @@ def preprocess_zip(data, record):
     if data is None:
         return u''
     # Just want first five characters
-    return unicode(data).strip().replace('-', '')[:5]
+    return unicode(data, 'utf-8').strip().replace('-', '')[:5]
 
 
 def preprocess_gender(data, record):
@@ -234,7 +234,7 @@ def preprocess_gender(data, record):
 def preprocess_numbers(data, record):
     if data is None:
         return ''
-    return ''.join(c for c in unicode(data) if c.isdigit())
+    return ''.join(c for c in unicode(data, 'utf-8') if c.isdigit())
 
 
 def preprocess_y_n(data, record):

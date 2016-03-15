@@ -160,8 +160,8 @@ class DocuSignService(object):
                 child_index = i + 2
                 child_data = enrollment_data['child_coverages'][child_index]
                 child.update(dict(
-                    coverage=format(Decimal(unicode(child_data['face_value'])), ',.0f'),
-                    premium=format(Decimal(unicode(child_data['premium'])), '.2f'),
+                    coverage=format(Decimal(unicode(child_data['face_value']), 'utf-8'), ',.0f'),
+                    premium=format(Decimal(unicode(child_data['premium']), 'utf-8'), '.2f'),
                     soh_questions=enrollment_data.get_child_soh_questions(child_index),
                 ))
                 child_attachment_form.add_child(child)
@@ -211,8 +211,8 @@ class DocuSignService(object):
                 child_index = i + form.num_children_on_form()
                 child_data = enrollment_data['child_coverages'][child_index]
                 child.update(dict(
-                    coverage=format(Decimal(unicode(child_data['face_value'])), ',.0f'),
-                    premium=format(Decimal(unicode(child_data['premium'])), '.2f'),
+                    coverage=format(Decimal(unicode(child_data['face_value']), 'utf-8'), ',.0f'),
+                    premium=format(Decimal(unicode(child_data['premium']), 'utf-8'), '.2f'),
                     soh_questions=enrollment_data.get_child_soh_questions(child_index),
                 ))
                 child_attachment_form.add_child(child)

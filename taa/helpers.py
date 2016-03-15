@@ -130,7 +130,7 @@ class SelectWithDisable(object):
             options['selected'] = u'selected'
         if disabled:
             options['disabled'] = u'disabled'
-        return HTMLString(u'<option %s>%s</option>' % (html_params(**options), escape(unicode(label))))
+        return HTMLString(u'<option %s>%s</option>' % (html_params(**options), escape(unicode(label, 'utf-8'))))
 
 
 class SelectFieldWithDisable(SelectField):
@@ -161,7 +161,7 @@ class UnicodeCsvWriter:
         unicode_row = []
         for col in row:
             if not isinstance(col, unicode):
-                col = unicode(col)
+                col = unicode(col, 'utf-8')
             unicode_row.append(col)
 
         # Use the standard CSV writer to get correct formatting.
