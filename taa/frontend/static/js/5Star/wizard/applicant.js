@@ -76,9 +76,9 @@ var wizard_applicant = (function () {
 
     self.any_valid_field = ko.computed(function () {
       return (
-          $.trim(self.first()) != "" ||
-          $.trim(self.last()) != "" ||
-          $.trim(self.birthdate()) != ""
+          $.trim(self.first()) !== "" ||
+          $.trim(self.last()) !== "" ||
+          $.trim(self.birthdate()) !== ""
       );
     });
 
@@ -170,7 +170,9 @@ var wizard_applicant = (function () {
 
     self._id = _applicant_count++;
     self.is_valid = ko.computed(function () {
-      return _.all(self.applicants(), function(applicant) {return applicant.is_valid();});
+      return _.all(self.applicants(), function(applicant) {
+        return (applicant.any_valid_field() && applicant.is_valid()) || !applicant.any_valid_field();
+      });
     });
 
     self.name = ko.pureComputed(function() {
@@ -198,7 +200,7 @@ var wizard_applicant = (function () {
       if (max_age !== null) {
         is_in_band = is_in_band && _.all(self.applicants(), function(applicant) {
           return applicant.get_age() <= max_age;
-        })
+        });
       }
 
       return is_in_band;
@@ -211,10 +213,10 @@ var wizard_applicant = (function () {
       return {
         type: self.type,
         applicants: _.map(self.applicants(), function(applicant) {return applicant.serialize_data();})
-      }
+      };
     };
     self.get_existing_coverage_amount_for_product = function(product_id) {
-      if (self.applicants().length == 0) {
+      if (self.applicants().length === 0) {
         return 0;
       }
       // For now, just return the coverage for the first child.
@@ -260,7 +262,7 @@ var wizard_applicant = (function () {
     _get_valid_applicants: function() {
       return _.filter(vm.coverage_vm.applicants.applicants(), function(a){
         return a.is_valid();
-      })
+      });
     },
     get_employee: function() {
       return this._find_applicant_by_type(Applicant.EmployeeType);
