@@ -19,9 +19,13 @@ rider_service = RiderService()
 
 
 class EnrollmentDataWrap(object):
-    def __init__(self, wizard_data, case):
+    def __init__(self, wizard_data, case, enrollment_record=None):
         self.data = wizard_data
         self.case = case
+
+        # There are times we need the enrollment record (if it has already been created) to determine some aspect
+        #  of the enrollment, like which agent was the writing agent.
+        self.enrollment_record = enrollment_record
 
     def __getitem__(self, item):
         """Allow dict access to raw data"""
@@ -82,12 +86,9 @@ class EnrollmentDataWrap(object):
         if self.data.get('is_third_party'):
             return self.data['agent_name']
 
-        if not flask.has_request_context():
-            return '(TEST)'
-
         agent = self.get_signing_agent()
         if not agent:
-            return ''
+            return '(No Agent)'
 
         # Get stormpath user for agent
         agent_user = agent_service.get_agent_stormpath_account(agent)
@@ -103,12 +104,9 @@ class EnrollmentDataWrap(object):
         if self.data.get('is_third_party'):
             return self.data['agent_code']
 
-        if not flask.has_request_context():
-            return '(TEST)'
-
         agent = self.get_signing_agent()
         if not agent:
-            return ''
+            return '(No Agent)'
 
         return agent.agent_code
 
@@ -125,10 +123,14 @@ class EnrollmentDataWrap(object):
                                 'owner agent.')
         elif self.is_import():
             return self.case.owner_agent
+        elif self.enrollment_record and self.enrollment_record.agent_id is not None:
+            return agent_service.get(self.enrollment_record.agent_id)
         elif agent_service.get_logged_in_agent():
             return agent_service.get_logged_in_agent()
         elif self.data.get('agent_id'):
             return agent_service.get(self.data['agent_id'])
+        elif not flask.has_request_context():
+            return None
         else:
             # If the logged-in user is not an agent, default to case owner.
             return self.case.owner_agent
@@ -236,13 +238,13 @@ class EnrollmentDataWrap(object):
     def get_total_children_premium(self):
         if self.get_product().is_fpp():
             # Add up the child premium for each child if this is FPP
-            return sum(decimal.Decimal(unicode(child_coverage.get('premium', '0.00')))
+            return sum(decimal.Decimal(unicode(child_coverage.get('premium', '0.00'), 'utf-8'))
                        for child_coverage in self.data["child_coverages"])
         else:
             # Just use the first child premium, if any.
             if len(self.data["child_coverages"]) > 0:
                 child_coverage = self.data["child_coverages"][0]
-                return decimal.Decimal(unicode(child_coverage.get('premium', '0.00')))
+                return decimal.Decimal(unicode(child_coverage.get('premium', '0.00'), 'utf-8'))
 
             return decimal.Decimal('0.00')
 
