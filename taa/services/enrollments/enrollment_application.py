@@ -168,7 +168,7 @@ class EnrollmentApplicationService(DBService):
         signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
 
         if data['employee_beneficiary'] == 'spouse':
-            emp_beneficiary_name = '{} {}'.format(data['spouse']['first'],
+            emp_beneficiary_name = u'{} {}'.format(data['spouse']['first'],
                                                   data['spouse']['last'])
             emp_beneficiary_ssn =  self._strip_ssn(data['spouse']['ssn'])
             emp_beneficiary_relation = 'spouse'
@@ -180,7 +180,7 @@ class EnrollmentApplicationService(DBService):
             emp_beneficiary_dob = data.get('employee_beneficiary_dob', None)
 
         if data['spouse_beneficiary'] == 'spouse':
-            sp_beneficiary_name = '{} {}'.format(data['employee']['first'],
+            sp_beneficiary_name = u'{} {}'.format(data['employee']['first'],
                                                  data['employee']['last'])
             sp_beneficiary_ssn = self._strip_ssn(data['employee']['ssn'])
             sp_beneficiary_relation = 'spouse'
@@ -358,12 +358,12 @@ class EnrollmentApplicationService(DBService):
         if search_text:
             for text_snippet in search_text.split():
                 query = query.filter(db.or_(
-                    CaseCensus.employee_first.ilike('{}%'.format(text_snippet)),
-                    CaseCensus.employee_last.ilike('{}%'.format(text_snippet)),
+                    CaseCensus.employee_first.ilike(u'{}%'.format(text_snippet)),
+                    CaseCensus.employee_last.ilike(u'{}%'.format(text_snippet)),
                     #CaseCensus.employee_email.ilike('{}%'.format(text_snippet)),
-                    EnrollmentApplication.application_status.ilike('{}%'.format(text_snippet)),
-                    Agent.first.ilike('{}%'.format(text_snippet)),
-                    Agent.last.ilike('{}%'.format(text_snippet)),
+                    EnrollmentApplication.application_status.ilike(u'{}%'.format(text_snippet)),
+                    Agent.first.ilike(u'{}%'.format(text_snippet)),
+                    Agent.last.ilike(u'{}%'.format(text_snippet)),
                 ))
 
         # Ordering
@@ -518,7 +518,7 @@ class EnrollmentApplicationService(DBService):
             else:
                 product = None
             prefix = 'product_{0}'.format(x + 1)
-            product_data = {'{}_name'.format(prefix): product.name if product else ''}
+            product_data = {u'{}_name'.format(prefix): product.name if product else ''}
 
             total_product_premium = Decimal('0.00')
             for applicant_abbr, applicant_coverages in (('emp',

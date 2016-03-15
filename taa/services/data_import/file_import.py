@@ -479,10 +479,10 @@ class FlatFileImporter(object):
     def validate_headers(self):
         if not self.headers["file_type"] == FlatFileSpec.FLAT_FILE_TYPE:
             expected = FlatFileSpec.FLAT_FILE_TYPE
-            self.errors.append("Expected FILE_TYPE header to be {} but got {}".format(expected, self.headers["file_type"]))
+            self.errors.append(u"Expected FILE_TYPE header to be {} but got {}".format(expected, self.headers["file_type"]))
         if not self.headers["version"] == FlatFileSpec.FLAT_FILE_VERSION:
             expected = FlatFileSpec.FLAT_FILE_VERSION
-            self.errors.append("Expected VERSION header to be {} but got {}".format(expected, self.headers["version"]))
+            self.errors.append(u"Expected VERSION header to be {} but got {}".format(expected, self.headers["version"]))
 
     def has_headers(self):
         return self.header_spec is not None
@@ -494,7 +494,7 @@ class FlatFileImporter(object):
         return [FlatFileFormatError(message) for message in self.errors]
 
     def get_error_message(self):
-        return "".join("Error {}: {}".format(i, message) for i, message in enumerate(self.errors))
+        return "".join(u"Error {}: {}".format(i, message) for i, message in enumerate(self.errors))
 
 
 class FlatFileFormatError(object):

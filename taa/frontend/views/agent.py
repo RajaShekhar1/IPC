@@ -43,7 +43,7 @@ def inbox():
             enrollment_service.sync_enrollment_with_docusign(request.args['enrollment'])
             db.session.commit()
         except Exception as ex:
-            print("DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')), ex)
+            print(u"DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')), ex)
 
     if agent_service.is_user_agent(current_user): #or agent_service.can_manage_all_cases(current_user):
         #
@@ -140,7 +140,7 @@ def manage_case(case_id):
     # Has active enrollments?
     vars['case_has_enrollments'] = case_service.does_case_have_enrollments(case)
 
-    vars['default_email_message'] = """
+    vars['default_email_message'] = u"""
 This is your online enrollment notice for {company_name} benefits from 5Star Life Insurance Company. As an employee/affiliate of {company_name}, you are eligible for the benefits listed below. <strong><emphasis>This email is unique to you specifically</strong></emphasis>; please do not forward this link to anyone else, as it will contain access to your personal information. <br>
 <br>
 Nearly 85% of Americans say most people need life insurance, yet only 62% have coverage and a staggering 33% say they don't have enough life insurance, including one-fourth who already have life insurance coverage. Financial experts recommend having enough life insurance to replace income for 7 to 10 years. This offering from 5Star Life is a highly affordable and convenient way to meet the needs of your family when they need it most. <br>
@@ -150,7 +150,7 @@ You may review the benefits from the brochure link provided. When ready, click t
 
     vars['default_email_subject'] = "Benefit enrollment - your action needed"
 
-    vars['default_page_text'] = """
+    vars['default_page_text'] = u"""
 You have reached the enrollment page for {company_name}, which is offering you important insurance benefits from 5Star Life. To view details of the offered products, see the link(s) below. This enrollment should take less than 5 minutes to complete. <br>
 <br>
 Please follow the instructions carefully on the next page, stepping through the simple interview using the next/previous buttons at the lower right of the page. At the end you will be presented with a complete application form to sign electronically. <br>
@@ -211,7 +211,7 @@ def check_for_enrollment_sync_update():
             db.session.commit()
         except Exception as ex:
             print(
-            "DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')), ex)
+            u"DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')), ex)
 
 
 @app.route('/enrollment-case/<case_id>/census/<census_record_id>')
@@ -383,7 +383,7 @@ def view_batch_email_logs(case_id, batch_id=None):
 def build_fake_email_greeting(setup):
     salutation = ''
     if setup.email_greeting_salutation:
-        salutation = '{} '.format(setup.email_greeting_salutation)
+        salutation = u'{} '.format(setup.email_greeting_salutation)
     greeting_end = ''
     if setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_FIRST_NAME:
         greeting_end = "Firstname,"
@@ -394,8 +394,8 @@ def build_fake_email_greeting(setup):
     elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_TITLE_LAST:
         title = 'Mr./Ms.'
 
-        greeting_end = "{} Lastname,".format(title)
+        greeting_end = u"{} Lastname,".format(title)
     elif setup.email_greeting_type == SelfEnrollmentSetup.EMAIL_GREETING_BLANK:
         greeting_end = ''
-    greeting = "{}{}".format(salutation, greeting_end)
+    greeting = u"{}{}".format(salutation, greeting_end)
     return greeting

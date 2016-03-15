@@ -160,10 +160,13 @@ class UnicodeCsvWriter:
         # First, ensure all the data has been converted to unicode.
         unicode_row = []
         for col in row:
-            if not isinstance(col, unicode):
+            if isinstance(col, basestring) and not isinstance(col, unicode):
                 col = unicode(col, 'utf-8')
-            unicode_row.append(col)
+            elif not isinstance(col, basestring):
+                col = unicode(col)
 
+            unicode_row.append(col
+                               )
         # Use the standard CSV writer to get correct formatting.
         self.writer.writerow([col.encode("utf-8") for col in unicode_row])
 

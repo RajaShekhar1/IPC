@@ -133,11 +133,11 @@ class EnrollmentRecordParser(object):
     for field in spouse_fields:
         validator = RequiredIfAnyInGroupValidator(
             spouse_fields,
-            message="{} is required if any of the following are"
-                    "provided: {}".format(field.dict_key_name,
-                                          ', '.join([f.dict_key_name
-                                                     for f in spouse_fields
-                                                     if f is not field])
+            message=u"{} is required if any of the following are provided: {}".format(
+                field.dict_key_name,
+                u', '.join([f.dict_key_name
+                         for f in spouse_fields
+                         if f is not field])
                                           ))
         # If any in group provided, all must be valid
         field.add_validator(validator)
@@ -151,7 +151,7 @@ class EnrollmentRecordParser(object):
 
     for field, group in premium_coverage_required:
         field.add_validator(RequiredIfAnyInGroupValidator([group],
-                            "{} is required if {} is provided".format(field.dict_key_name, group.dict_key_name))
+                            u"{} is required if {} is provided".format(field.dict_key_name, group.dict_key_name))
                             )
 
     all_fields = [

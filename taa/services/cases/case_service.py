@@ -239,10 +239,10 @@ class CaseService(DBService):
                                  filter_ssn.replace('-', ''))
 
         if filter_emp_first:
-            query = query.filter(CaseCensus.employee_first.ilike("{}%".format(filter_emp_first)))
+            query = query.filter(CaseCensus.employee_first.ilike(u"{}%".format(filter_emp_first)))
 
         if filter_emp_last:
-            query = query.filter(CaseCensus.employee_last.ilike("{}%".format(filter_emp_last)))
+            query = query.filter(CaseCensus.employee_last.ilike(u"{}%".format(filter_emp_last)))
 
         if filter_birthdate:
             bd = dateutil.parser.parse(filter_birthdate)
@@ -292,10 +292,10 @@ class CaseService(DBService):
         if search_text:
             for text_snippet in search_text.split():
                 query = query.filter(db.or_(
-                    CaseCensus.employee_first.ilike('{}%'.format(text_snippet)),
-                    CaseCensus.employee_last.ilike('{}%'.format(text_snippet)),
-                    CaseCensus.employee_email.ilike('{}%'.format(text_snippet)),
-                    EnrollmentApplication.application_status.ilike('{}%'.format(text_snippet))
+                    CaseCensus.employee_first.ilike(u'{}%'.format(text_snippet)),
+                    CaseCensus.employee_last.ilike(u'{}%'.format(text_snippet)),
+                    CaseCensus.employee_email.ilike(u'{}%'.format(text_snippet)),
+                    EnrollmentApplication.application_status.ilike(u'{}%'.format(text_snippet))
                 ))
 
         # Ordering
@@ -391,7 +391,7 @@ class CaseService(DBService):
     def _filter_record_text(self, query, search_text, text_columns):
         filters = []
         for col in text_columns:
-            filters.append(getattr(CaseCensus, col).ilike(search_text + '%'))
+            filters.append(getattr(CaseCensus, col).ilike(search_text + u'%'))
         return query.filter(sa.or_(*filters))
 
     def get_census_record(self, case, census_record_id):
