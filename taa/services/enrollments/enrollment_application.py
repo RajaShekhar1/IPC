@@ -193,7 +193,7 @@ class EnrollmentApplicationService(DBService):
 
         enrollment_data = dict(
             received_data=json.dumps(received_data, cls=JSONEncoder),
-            standardized_data=json.dumps(data, cls=JSONEncoder),
+            standardized_data=json.dumps(wizard_data, cls=JSONEncoder),
             case_id=case_id,
             census_record_id=census_record_id,
             application_status=application_status,
