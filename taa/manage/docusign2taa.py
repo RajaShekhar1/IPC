@@ -86,7 +86,7 @@ class DocusignImportCommand(Command):
             if tab['custom_type'] == 'Radio':
                 # Radio buttons use `label`.`name` for the column name
                 # to remain unique
-                label = '{}.{}'.format(tab['label'], tab['name'])
+                label = u'{}.{}'.format(tab['label'], tab['name'])
             else:
                 label = tab['label']
             new_tab = FormTemplateTabs(

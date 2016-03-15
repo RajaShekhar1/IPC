@@ -61,10 +61,10 @@ class EmailGenerator(object):
                 to=[dict(email=recipient)],
             )
         except mandrill.Error as e:
-            print "Error sending email: %s - %s" % (e.__class__, e)
+            print u"Error sending email: %s - %s" % (e.__class__, e)
             raise 
         except Exception as e:
-            print "Exception sending email: %s - %s"%(e.__class__, e)
+            print u"Exception sending email: %s - %s"%(e.__class__, e)
         
 class EnrollmentEmail(object):
     def send_enrollment_request(self, enrollment_request):

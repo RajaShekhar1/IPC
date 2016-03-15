@@ -31,11 +31,11 @@ def email_exception(app, exception):
 
     if current_user.is_authenticated():
         user_info = [
-            'Username: {}'.format(current_user.username),
-            'Email: {}'.format(current_user.email),
-            'Full Name: {}'.format(current_user.full_name),
-            'Groups: {}'.format([g.name for g in current_user.groups]),
-            'Directory: {}'.format(current_user.directory.name),
+            u'Username: {}'.format(current_user.username),
+            u'Email: {}'.format(current_user.email),
+            u'Full Name: {}'.format(current_user.full_name),
+            u'Groups: {}'.format([g.name for g in current_user.groups]),
+            u'Directory: {}'.format(current_user.directory.name),
         ]
     else:
         user_info = [
@@ -56,13 +56,13 @@ def email_exception(app, exception):
     environ = request.environ
     environkeys = sorted(environ.keys())
     for key in environkeys:
-        msg_contents.append('%s: %s' % (key, environ.get(key)))
+        msg_contents.append(u'%s: %s' % (key, environ.get(key)))
 
     msg = '\n'.join(msg_contents) + '\n'
 
     mandrill_flask.send_email(
         from_email=error_sender,
-        subject='5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
+        subject=u'5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
         to=[{'email': e} for e in error_recipients],
         text=msg,
     )

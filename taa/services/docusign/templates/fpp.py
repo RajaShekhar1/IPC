@@ -347,10 +347,10 @@ class FPPTemplate(DocuSignServerTemplate):
         agent_signing_name = self.data.get_agent_signing_name()
 
         if self.data['spouse_owner'] == "other":
-            spouse_owner_notice = "SPOUSE POLICY OWNER: {}, {}".format(self.data['spouse_other_owner_name'], self.data['spouse_other_owner_ssn'])
+            spouse_owner_notice = u"SPOUSE POLICY OWNER: {}, {}".format(self.data['spouse_other_owner_name'], self.data['spouse_other_owner_ssn'])
         elif self.data['spouse_owner'] == "self":
             # Spouse data
-            spouse_owner_notice = "SPOUSE POLICY OWNER: {}, {}".format(self.data.get_spouse_name(),
+            spouse_owner_notice = u"SPOUSE POLICY OWNER: {}, {}".format(self.data.get_spouse_name(),
                                                                        self.data.get_spouse_ssn())
         else:
             spouse_owner_notice = ""

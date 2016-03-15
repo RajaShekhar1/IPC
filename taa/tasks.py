@@ -58,7 +58,7 @@ def process_enrollment_upload(task, batch_id):
     submission_service = LookupService("EnrollmentSubmissionService")
     errors = submission_service.process_import_submission_batch(batch_id)
     if errors:
-        send_admin_error_email("Error processing submission batch {}".format(batch_id), errors)
+        send_admin_error_email(u"Error processing submission batch {}".format(batch_id), errors)
         # Go ahead and attempt to reprocess
         task.retry(exc=Exception(errors[0]))
 
@@ -69,7 +69,7 @@ def process_wizard_enrollment(task, enrollment_id):
     submission_service = LookupService("EnrollmentSubmissionService")
     envelope = submission_service.process_wizard_submission(enrollment_id)
     if not envelope:
-        send_admin_error_email("Error processing wizard enrollment {}".format(enrollment_id), [])
+        send_admin_error_email(u"Error processing wizard enrollment {}".format(enrollment_id), [])
         # Go ahead and attempt to reprocess
         task.retry(exc=Exception("No envelope created"))
 
@@ -77,7 +77,7 @@ def process_wizard_enrollment(task, enrollment_id):
 def send_admin_error_email(error_message, errors):
     try:
         tracebacks = '\n<br>'.join([err for err in errors])
-        body = "{} <br><br>Tracebacks: <br><br>{}".format(
+        body = u"{} <br><br>Tracebacks: <br><br>{}".format(
             error_message, tracebacks.replace('<br>', '\n')
         )
 
@@ -86,8 +86,8 @@ def send_admin_error_email(error_message, errors):
             mandrill_flask.send_email(
                 to=[{'email': account.email, 'name': account.full_name}],
                 from_email="errors@5StarEnroll.com",
-                from_name="TAA Error {}".format(taa_app.config['HOSTNAME']),
-                subject="5Star Import Error ({})".format(taa_app.config['HOSTNAME']),
+                from_name=u"TAA Error {}".format(taa_app.config['HOSTNAME']),
+                subject=u"5Star Import Error ({})".format(taa_app.config['HOSTNAME']),
                 html=body,
                 auto_text=True,
             )

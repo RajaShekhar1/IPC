@@ -22,7 +22,7 @@ class SelfEnrollmentLinkService(DBService):
         return slug
 
     def generate_link(self, prefix, case, record=None):
-        url = '{}self-enroll/{}/{}'.format(
+        url = u'{}self-enroll/{}/{}'.format(
             prefix,
             SelfEnrollmentLinkService._slugify(case.company_name or ''),
             uuid.uuid4().hex)

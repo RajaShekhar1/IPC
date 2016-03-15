@@ -336,8 +336,8 @@ def self_enrollment(company_name, uuid):
         })
     elif case:
         vars.update({
-            'page_title': 'Enrollment service for {} not available'.format(case.company_name),
-            'error_message': '''We're sorry for the inconvenience, but {} is not currently accepting benefit enrollments.<br><br>
+            'page_title': u'Enrollment service for {} not available'.format(case.company_name),
+            'error_message': u'''We're sorry for the inconvenience, but {} is not currently accepting benefit enrollments.<br><br>
             Please contact your enrollment or benefit representative if you have any questions.'''.format(case.company_name)
 
         })
@@ -419,7 +419,7 @@ def submit_wizard_data():
             'enrollment_id': enrollment.id,
         })
     except Exception:
-        print("[ENROLLMENT SUBMISSION ERROR]: (case {}) {}".format(case_id, wizard_results))
+        print(u"[ENROLLMENT SUBMISSION ERROR]: (case {}) {}".format(case_id, wizard_results))
         raise
 
 
