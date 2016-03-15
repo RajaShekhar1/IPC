@@ -191,7 +191,7 @@ var product_rates_service = (function() {
       rider_codes: _.pluck(enabled_riders, "code")
     };
     if (product && product.requires_occupation() && occupation_mappings && occupation) {
-      params.level = occupation_mappings[product.product_data.id][occupation];
+      params.rate_level = occupation_mappings[product.product_data.id][occupation];
     }
     return $.extend({}, params, _build_applicant_parameters(applicant_list));
   }

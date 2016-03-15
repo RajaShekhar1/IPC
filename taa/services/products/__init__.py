@@ -331,7 +331,7 @@ class ProductService(DBService):
             state=demographics['statecode'],
             demographics=ApplicantDemographics({}),
             mode=demographics['payment_mode'],
-            rate_options=ApplicantQueryOptions({'by_coverage': tier, 'rate_level': rate_level}),
+            rate_options=ApplicantQueryOptions({'coverage_tier': tier, 'rate_level': rate_level}),
         )
 
         rate_plan = load_rate_plan_for_base_product(product.get_base_product_code())
