@@ -349,7 +349,7 @@ class CaseService(DBService):
         """
         first = enrollment_data.get_employee_first()
         last = enrollment_data.get_employee_last()
-        birthdate = unicode(enrollment_data.get_employee_birthdate())
+        birthdate = unicode(enrollment_data.get_employee_birthdate(), 'utf-8')
         ssn = enrollment_data.get_employee_ssn()
 
         matching = self.get_census_records(
