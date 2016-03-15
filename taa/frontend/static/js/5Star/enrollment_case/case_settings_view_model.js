@@ -369,11 +369,13 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.should_use_call_center_workflow = ko.observable(case_data.should_use_call_center_workflow);
 
   // Occupation classes
-  self.occupation_classes = ko.observableArray(case_data.occupation_class_settings);
+  self.occupation_classes = ko.observableArray(_.map(case_data.occupation_class_settings, function (occupation) {
+    return new OccupationVM(occupation.label, occupation.level);
+  }));
   self.new_occupation_class = ko.observable('');
 
   self.addOccupationClass = function () {
-    self.occupation_classes.push({label: self.new_occupation_class()});
+    self.occupation_classes.push(new OccupationVM(self.new_occupation_class()));
     self.new_occupation_class('');
   };
 
@@ -394,6 +396,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     {value: 1, label: '1'},
     {value: 2, label: '2'},
     {value: 3, label: '3'}
+  ];
+
+  self.hi_occupation_classes = [
   ];
 
   // Product base codes that will display occupation class mapping widgets
@@ -1171,7 +1176,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       should_use_call_center_workflow: self.should_use_call_center_workflow(),
       product_settings: self.serialize_product_settings(),
       is_stp: Boolean(self.has_agent_splits()),
-      occupation_class_settings: self.occupation_classes()
+      occupation_class_settings: _.map(self.occupation_classes(), function (occupation_class) {
+        return occupation_class.serialize_object();
+      })
     };
   };
 

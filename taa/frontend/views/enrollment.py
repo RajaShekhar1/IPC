@@ -233,6 +233,8 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     if any_fpp_product:
         fpp_base_product_code = fpp_products[0].get_base_product_code()
 
+    occupations = case.occupation_class_settings if case.occupation_class_settings else []
+
     wizard_data = dict(
         is_in_person=not is_self_enroll,
         case_data={
@@ -246,14 +248,15 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'product_settings': case.product_settings if case.product_settings else {},
             'account_href': current_user.get_id(),
             'record_id': record_id,
+            'occupations': occupations,
         },
-        applicants= applicants,
+        applicants=applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in case.products],
         payment_modes=payment_mode_choices,
         spouse_questions=spouse_questions,
         health_questions=soh_questions,
         any_fpp_product=any_fpp_product,
-        fpp_base_product_code=fpp_base_product_code
+        fpp_base_product_code=fpp_base_product_code,
     )
 
     # Commit any changes made (none right now)

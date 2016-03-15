@@ -137,7 +137,7 @@ var product_rates_service = (function() {
 
   var rates_by_product_id = {};
 
-  function update_product_rates(products, payment_mode, applicant_list, error_callback, statecode, coverage_vm) {
+  function update_product_rates(products, payment_mode, applicant_list, error_callback, statecode, coverage_vm, classification_mappings, occupation) {
 
     //// TODO: Remove once HI/ACC rates are implemented
     //products = _.filter(products, function (product) {
@@ -149,7 +149,7 @@ var product_rates_service = (function() {
 
     var requests = _.map(products, function(product) {
       var enabled_riders = coverage_vm.get_enabled_riders_for_product(product);
-      var data = _build_rate_parameters(payment_mode, applicant_list, statecode, enabled_riders);
+      var data = _build_rate_parameters(payment_mode, applicant_list, statecode, enabled_riders, product, classification_mappings, occupation);
       return remote_service.get_product_rates(product.product_data.id, data);
     });
 
@@ -184,12 +184,15 @@ var product_rates_service = (function() {
     $.when.apply($, requests).done(process_product_rates).fail(error_callback);
   }
 
-  function _build_rate_parameters(payment_mode, applicant_list, statecode, enabled_riders) {
+  function _build_rate_parameters(payment_mode, applicant_list, statecode, enabled_riders, product, occupation_mappings, occupation) {
     var params = {
       payment_mode: payment_mode.frequency,
       statecode: statecode,
       rider_codes: _.pluck(enabled_riders, "code")
     };
+    if (product && product.requires_occupation() && occupation_mappings && occupation) {
+      params.level = occupation_mappings[product.product_data.id][occupation];
+    }
     return $.extend({}, params, _build_applicant_parameters(applicant_list));
   }
 

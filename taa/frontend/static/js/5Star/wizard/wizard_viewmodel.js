@@ -944,8 +944,12 @@ var wizard_viewmodel = (function () {
     init_jquery_validator();
 
     //region Occupations and helper functions for working with occupations
-    self.occupations = ko.observableArray(options.case_data.occupations || []);
-    self.selected_occupation = ko.observable(self.employee().occupation || null);
+    self.occupations = ko.observableArray(_.map(options.case_data.occupations, function (occupation) {
+      return new OccupationVM(occupation.label, occupation.level);
+    }));
+    self.selected_occupation = ko.observable(_.find(self.occupations, function (occupation) {
+      return !!self.employee().occupation && self.employee().occupation === occupation.label();
+    }));
     self.requires_occupation = _.any(self.products, function (product_view_model) { return product_view_model.requires_occupation();});
     self.should_show_occupation = self.requires_occupation && !self.selected_occupation() && self.options.is_in_person;
     //endregion
@@ -1030,7 +1034,9 @@ var wizard_viewmodel = (function () {
         self.applicant_list,
         self.handle_update_rates_error,
         self.enrollment_case.situs_state,
-        self.coverage_vm
+        self.coverage_vm,
+        self.enrollment_case.product_settings.classification_mappings,
+        self.selected_occupation()[0].label
       );
     };
 
