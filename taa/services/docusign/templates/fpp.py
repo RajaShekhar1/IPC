@@ -224,8 +224,8 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignTextTab(child_prefix + "LName", child_data['last']),
             DocuSignTextTab(child_prefix + "DOB", child_data['birthdate']),
             DocuSignTextTab(child_prefix + "SSN", self.format_ssn(child_data['ssn'])),
-            DocuSignTextTab(child_prefix + "Coverage", format(Decimal(unicode(child_coverage["face_value"])), ",.0f") if child_coverage else ""),
-            DocuSignTextTab(child_prefix + "Premium", format(Decimal(unicode(child_coverage["premium"])), ",.2f") if child_coverage else ""),
+            DocuSignTextTab(child_prefix + "Coverage", format(Decimal(unicode(child_coverage["face_value"]), 'utf-8'), ",.0f") if child_coverage else ""),
+            DocuSignTextTab(child_prefix + "Premium", format(Decimal(unicode(child_coverage["premium"]), 'utf-8'), ",.2f") if child_coverage else ""),
             DocuSignRadioTab(child_prefix + "Gender", child_data["gender"]),
         ]
 

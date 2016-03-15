@@ -238,13 +238,13 @@ class EnrollmentDataWrap(object):
     def get_total_children_premium(self):
         if self.get_product().is_fpp():
             # Add up the child premium for each child if this is FPP
-            return sum(decimal.Decimal(unicode(child_coverage.get('premium', '0.00')))
+            return sum(decimal.Decimal(unicode(child_coverage.get('premium', '0.00'), 'utf-8'))
                        for child_coverage in self.data["child_coverages"])
         else:
             # Just use the first child premium, if any.
             if len(self.data["child_coverages"]) > 0:
                 child_coverage = self.data["child_coverages"][0]
-                return decimal.Decimal(unicode(child_coverage.get('premium', '0.00')))
+                return decimal.Decimal(unicode(child_coverage.get('premium', '0.00'), 'utf-8'))
 
             return decimal.Decimal('0.00')
 
