@@ -34,12 +34,17 @@ class AgentService(DBService):
                 agent_code=user.custom_data.get('agent_code', ""),
                 activated=user.custom_data.get('activated', False),
                 stormpath_url=stormpath_url,
+                signing_name=user.custom_data.get('signing_name', ""),
+                agency=user.custom_data.get('agency', ""),
             )
         else:
             existing_agent.first = user.given_name
             existing_agent.last = user.surname
             existing_agent.email = user.email
             existing_agent.agent_code = user.custom_data.get('agent_code', "")
+            existing_agent.signing_name = user.custom_data.get('signing_name', "")
+            existing_agent.agency = user.custom_data.get('agency', "")
+
             db.session.commit()
 
         return existing_agent
