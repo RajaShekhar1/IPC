@@ -414,8 +414,8 @@ def make_applicant_tabs(prefix, data):
         make_tab(prefix + 'SSN', data['ssn']),
     ]
     if data.get('height'):
-        height_ft = '%s' % int(data['height']/12.0)
-        height_in = '%s' % int(data['height']%12.0)
+        height_ft = '%s' % int(float(data['height'])/12.0)
+        height_in = '%s' % int(float(data['height'])%12.0)
         tabs += [
             make_tab(prefix + 'HeightFt', height_ft),
             make_tab(prefix + 'HeightIn', height_in),
