@@ -101,8 +101,8 @@ class GroupCITemplate(DocuSignServerTemplate):
         if enrollment_data['employee_coverage']:
             if enrollment_data['employee_coverage']['face_value']:
                 employeeCoverage = format(
-                    enrollment_data['employee_coverage']['face_value'], ',.0f')
-                eePremium = format(enrollment_data['employee_coverage']['premium'], ',.2f')
+                    float(enrollment_data['employee_coverage']['face_value']), ',.0f')
+                eePremium = format(float(enrollment_data['employee_coverage']['premium']), ',.2f')
                 SOH_RadiosList += generate_SOHRadios(
                     'ee', enrollment_data.get_employee_soh_questions())
                 SOH_GI_Tabs += generate_SOH_GI_tabs(
@@ -117,8 +117,8 @@ class GroupCITemplate(DocuSignServerTemplate):
         if enrollment_data['spouse_coverage']:
             if enrollment_data['spouse_coverage']['face_value']:
                 spouseCoverage = format(
-                    enrollment_data['spouse_coverage']['face_value'], ',.0f')
-                spPremium = format(enrollment_data['spouse_coverage']['premium'], ',.2f')
+                    float(enrollment_data['spouse_coverage']['face_value']), ',.0f')
+                spPremium = format(float(enrollment_data['spouse_coverage']['premium']), ',.2f')
                 SOH_RadiosList += generate_SOHRadios(
                     'sp', enrollment_data.get_spouse_soh_questions())
                 SOH_GI_Tabs += generate_SOH_GI_tabs(
@@ -379,12 +379,12 @@ def generate_ChildTabsEntry (child_index, wizard_data):
         },
         {
             'tabLabel': childStr + 'Coverage',
-            'value': format(child_coverage['face_value'], ',.0f') if child_coverage else ''
+            'value': format(float(child_coverage['face_value']), ',.0f') if child_coverage else ''
         },
         {
             'tabLabel': childStr + 'Premium',
             'value':
-                format(child_coverage['premium'], ',.2f') if child_coverage else ''
+                format(float(child_coverage['premium']), ',.2f') if child_coverage else ''
         },
     ]
     return tabsList
