@@ -226,6 +226,7 @@ var wizard_viewmodel = (function () {
     self.case_data = case_data;
     self.payment_mode = payment_mode;
     self.applicant_list = applicant_list;
+    self.employee = _.find(applicant_list.applicants(), function (applicant) { return applicant.type === wizard_applicant.Applicant.EmployeeType; });
     self.should_include_spouse = should_include_spouse;
     self.should_include_children = should_include_children;
     self.root = root;
@@ -255,6 +256,45 @@ var wizard_viewmodel = (function () {
         }));
       }
     });
+
+
+    self.get_label_for_coverage_tier = function (coverage_tier) {
+      var employee_first_name = self.employee.first();
+      switch (coverage_tier) {
+        case 'EE':
+          return employee_first_name;
+        case 'ES':
+          return employee_first_name + ' + Spouse';
+        case 'EC':
+          return employee_first_name + ' + Child(ren)';
+        case 'EF':
+          return 'Family (All)';
+        default:
+          return '';
+      }
+    };
+
+    self.coverage_rate_observables = {
+      EE: ko.computed(function () {
+      }),
+      ES: ko.computed(function () {
+
+      }),
+      EC: ko.computed(function () {
+
+      }),
+      EF: ko.computed(function () {
+
+      })
+    };
+
+    self.get_coverage_rate_for_tier = function (coverage_tier) {
+      var coverage_option = product_rates_service.get_product_rate_for_coverage_tier(self.product, coverage_tier);
+      if (coverage_option) {
+        return coverage_option.format_face_value();
+      }
+      return '';
+    };
 
     // Cache the selections for applicants, instances should be instantiated just once.
     self._applicant_coverage_viewmodels = {};
@@ -1008,6 +1048,10 @@ var wizard_viewmodel = (function () {
       return (self.is_show_rates_clicked() && self.can_display_rates_table());
     });
 
+    self.get_coverage_value = function (product_id, coverage_tier) {
+
+    };
+
     self.is_applicant_editor_visible = ko.pureComputed(function () {
       return !self.is_recommended_table_visible();
     });
@@ -1027,6 +1071,7 @@ var wizard_viewmodel = (function () {
     };
 
     self.refresh_rate_table = function () {
+      var occupation = self.requires_occupation? self.selected_occupation()[0].label : null;
 
       product_rates_service.update_product_rates(
         self.products,
@@ -1036,7 +1081,7 @@ var wizard_viewmodel = (function () {
         self.enrollment_case.situs_state,
         self.coverage_vm,
         self.enrollment_case.product_settings.classification_mappings,
-        self.selected_occupation()[0].label
+        occupation
       );
     };
 

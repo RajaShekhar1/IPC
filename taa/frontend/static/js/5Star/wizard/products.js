@@ -187,6 +187,10 @@ var wizard_products = (function () {
 
     requires_occupation: function () {
       return false;
+    },
+
+    get_coverage_tiers: function () {
+      return [];
     }
 
   };
@@ -483,6 +487,14 @@ var wizard_products = (function () {
   HIProduct.prototype.requires_occupation = function () {
     return true;
   };
+  HIProduct.prototype.get_coverage_tiers = function () {
+    return [
+      'EE',
+      'ES',
+      'EC',
+      'EF'
+    ];
+  };
   //endregion
 
   //region ACCProduct
@@ -500,6 +512,14 @@ var wizard_products = (function () {
   };
   ACCProduct.prototype.requires_occupation = function () {
     return true;
+  };
+  ACCProduct.prototype.get_coverage_tiers = function () {
+    return [
+      'EE',
+      'ES',
+      'EC',
+      'EF'
+    ];
   };
   //endregion
 

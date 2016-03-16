@@ -286,7 +286,7 @@
               <h3 data-bind="text: current_product().format_product_name()"></h3>
               <div data-bind="slideDownIf: !current_product().did_decline()">
                 <div class=""
-                     data-bind="template: {name: current_product().get_coverage_selection_template(), data: current_product()}">
+                     data-bind="template: {name: current_product().get_coverage_selection_template(), data: current_product}">
                 </div>
               </div>
             </div>
@@ -521,37 +521,14 @@
         </div>
         <div class="widget-body">
           <div class="widget-main no-padding">
-            <ul class="list-unstyled list-striped js">
+            <ul class="list-unstyled list-striped js"
+                data-bind="foreach: { data: product.get_coverage_tiers(), as: 'coverage_tier' }">
               <li>
                 <label>
-                  <span data-bind="text: $root.employee().first"></span>
+                  <span data-bind="text: $parent.get_label_for_coverage_tier(coverage_tier)"></span>
                   <br>
-                  <input type="radio" name="coverage-type" value="EE"
-                         data-bind="checked: selected_simple_coverage_value">
-                </label>
-              </li>
-              <li data-bind="if: $root.should_include_spouse_in_table">
-                <label>
-                  <span data-bind="text: $root.spouse_and_employee_names"></span>
-                  <br>
-                  <input type="radio" name="coverage-type" value="ES"
-                         data-bind="checked: selected_simple_coverage_value">
-                </label>
-              </li>
-              <li data-bind="if: $root.should_include_children_in_table">
-                <label>
-                  <span data-bind="text: $root.employee().first"></span> + Child(ren)
-                  <br>
-                  <input type="radio" name="coverage-type" value="EC"
-                         data-bind="checked: selected_simple_coverage_value">
-                </label>
-              </li>
-              <li data-bind="if: $root.should_include_children_in_table() && $root.should_include_spouse_in_table()">
-                <label>
-                  <span>Family (All)</span>
-                  <br>
-                  <input type="radio" name="coverage-type" value="EF"
-                         data-bind="checked: selected_simple_coverage_value">
+                  <input type="radio" name="coverage-type"
+                         data-bind="checked: $parent.selected_simple_coverage_value, value: coverage_tier">
                 </label>
               </li>
             </ul>
@@ -567,11 +544,9 @@
           </div>
           <div class="widget-body">
             <div class="widget-main no-padding">
-              <ul class="list-unstyled list-striped pricing-table">
-                <li>$48.89</li>
-                <li>$92.88</li>
-                <li>$88.00</li>
-                <li>$131.99</li>
+              <ul class="list-unstyled list-striped pricing-table"
+                  data-bind="foreach: { data: product.get_coverage_tiers(), as: 'coverage_tier' }">
+                <li data-bind="text: $parent.get_coverage_rate_for_tier(coverage_tier)"></li>
               </ul>
             </div>
           </div>

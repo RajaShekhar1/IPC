@@ -45,15 +45,32 @@ var product_rates_service = (function() {
       if (applicant_rates_data && applicant_rates_data.byface) {
         options = $.merge(options, this.create_coverage_options(true, applicant_type, applicant_rates_data.byface));
       }
+      if (applicant_rates_data && applicant_rates_data.bytier) {
+        options = $.merge(options, this.create_coverage_options(false, applicant_type, applicant_rates_data.bytier));
+      }
       return options;
+    },
+
+    get_rate_for_coverage_tier: function (coverage_tier) {
+      var rates = this.rates();
+      return _.find(rates, function (rate) { return rate.tier && rate.tier === coverage_tier; });
     },
 
     create_coverage_options: function(is_by_face, applicant_type, rate_options) {
       return _.map(rate_options, function(data) {
+        var key_count = _.size(data);
+        var tier;
+        if (key_count === 1) {
+          var keys = _.keys(data);
+          tier = keys[0];
+          data.coverage = data[keys[0]];
+        }
+
         return this.product.create_coverage_option({
           applicant_type: applicant_type,
           is_by_face: is_by_face,
           face_value: data.coverage,
+          tier: tier,
           premium: data.premium,
           payment_mode: function() {return payment_mode_module.create_payment_mode_by_frequency(data.payment_mode)}.bind(this)
         });
@@ -130,7 +147,7 @@ var product_rates_service = (function() {
     _get_all_options_by_applicant_type: function(applicant_type) {
       return _.select(this.rates(), function(option) {
         return option.applicant_type === applicant_type;
-      })
+      });
     }
   };
 
@@ -228,6 +245,10 @@ var product_rates_service = (function() {
     return rates.get_coverage_options_observable_for_applicant(applicant);
   }
 
+  function get_product_rate_for_coverage_tier(product, coverage_tier) {
+    var rates = get_or_create_product_rates_viewmodel(product);
+    return rates.get_rate_for_coverage_tier(coverage_tier);
+  }
 
   return {
     update_product_rates: update_product_rates,
@@ -235,6 +256,7 @@ var product_rates_service = (function() {
 
     // Returns observable array that yields CoverageOption instances.
     get_product_coverage_options_for_applicant: get_product_coverage_options_for_applicant,
-    get_product_recommendations: get_product_recommendations
+    get_product_recommendations: get_product_recommendations,
+    get_product_rate_for_coverage_tier: get_product_rate_for_coverage_tier
   };
 })();
