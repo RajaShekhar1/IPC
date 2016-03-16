@@ -156,7 +156,7 @@ class EnrollmentSubmissionProcessor(object):
             components = self.docusign_service.create_group_ci_envelope_components(
                 data_wrap,
                 recipients,
-                should_user_docusign_renderer=False,
+                should_use_docusign_renderer=False,
             )
         return components, data_wrap
 
