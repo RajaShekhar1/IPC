@@ -999,8 +999,8 @@ var wizard_viewmodel = (function () {
     self.occupations = ko.observableArray(_.map(options.case_data.occupations, function (occupation) {
       return new OccupationVM(occupation.label, occupation.level);
     }));
-    self.selected_occupation = ko.observable(_.find(self.occupations, function (occupation) {
-      return !!self.employee().occupation && self.employee().occupation === occupation.label();
+    self.selected_occupation = ko.observable(_.find(self.occupations(), function (occupation) {
+      return !!self.employee().occupation && self.employee().occupation === occupation.label;
     }));
     self.requires_occupation = _.any(self.products, function (product_view_model) { return product_view_model.requires_occupation();});
     self.should_show_occupation = self.requires_occupation && !self.selected_occupation() && self.options.is_in_person;

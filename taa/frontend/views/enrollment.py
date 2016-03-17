@@ -195,6 +195,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             email=data['email'],
             ssn=data.get('ssn', ''),
             state=state,
+            occupation=data['occupation_class'],
         )
         spouse_data = None
         children_data = []
