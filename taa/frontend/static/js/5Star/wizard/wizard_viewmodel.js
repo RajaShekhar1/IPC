@@ -247,13 +247,7 @@ var wizard_viewmodel = (function () {
         }
       },
       write: function (val) {
-        var lookup = {EE: 48.89, ES: 92.88, EC: 88.00, EF: 131.99};
-        self.selected_simple_coverage_option(new SimpleCoverageOption({
-          coverage_tier: val,
-          premium: lookup[val],
-          payment_mode: self.payment_mode,
-          applicant_type: wizard_applicant.Applicant.EmployeeType
-        }));
+        self.selected_simple_coverage_option(product_rates_service.get_product_rate_for_coverage_tier(self.product, val));
       }
     });
 
@@ -272,20 +266,6 @@ var wizard_viewmodel = (function () {
         default:
           return '';
       }
-    };
-
-    self.coverage_rate_observables = {
-      EE: ko.computed(function () {
-      }),
-      ES: ko.computed(function () {
-
-      }),
-      EC: ko.computed(function () {
-
-      }),
-      EF: ko.computed(function () {
-
-      })
     };
 
     self.get_coverage_rate_for_tier = function (coverage_tier) {
@@ -618,6 +598,38 @@ var wizard_viewmodel = (function () {
         total += applicant_coverage.get_total_premium();
       }, this);
       return total;
+    },
+
+    is_applicant_type_covered: function (applicant_type) {
+      var coverage_option_view_model = this.get_coverage_for_applicant(this.employee);
+      var coverage_option = coverage_option_view_model.coverage_option();
+      if (!coverage_option || !coverage_option.is_valid()) {
+        return false;
+      }
+      if (applicant_type === wizard_applicant.Applicant.EmployeeType) {
+        return true;
+      }
+      if (applicant_type === wizard_applicant.Applicant.SpouseType) {
+        return coverage_option.tier === 'ES' || coverage_option.tier === 'EF';
+      }
+      if (applicant_type === wizard_applicant.Applicant.ChildType) {
+        return coverage_option.tier === 'EC' || coverage_option.tier === 'EF';
+      }
+    },
+
+    get_coverage_amount: function (applicant) {
+      var coverage_option_view_model = this.get_coverage_for_applicant(this.employee);
+      var coverage_option = coverage_option_view_model.coverage_option();
+      var is_covered = this.is_applicant_type_covered(applicant.type);
+      if (applicant.type === wizard_applicant.Applicant.EmployeeType && is_covered) {
+        return coverage_option.format_face_value();
+      } else if (is_covered) {
+        return 'Included';
+      } else if (coverage_option.is_valid()) {
+        return 'Not Included';
+      } else {
+        return 'Select Coverage';
+      }
     }
   };
 

@@ -642,8 +642,13 @@
         <span>Select Coverage</span>
         <!--/ko-->
         <!--ko if: $root.coverage_vm.get_applicant_coverage_for_product(applicant, product_coverage.product).did_select_option()-->
-        <strong data-bind="html: format_face_value()"></strong>
-        <div data-bind="html: format_premium_option()"></div>
+        <div data-bind="ifnot: $parent.product.has_simple_coverage()">
+          <strong data-bind="html: format_face_value()"></strong>
+          <div data-bind="html: format_premium_option()"></div>
+        </div>
+        <div data-bind="if: $parent.product.has_simple_coverage()">
+          <span data-bind="text: $parent.get_coverage_amount(applicant)"></span>
+        </div>
         <!--/ko-->
       </td>
       <!--/ko-->
@@ -688,8 +693,13 @@
           data-bind="with: $parents[2].get_applicant_coverage_option_for_product(applicant, product)">
 
         <!--ko if: product_coverage.has_completed_selection()-->
-        <strong data-bind="html: format_face_value()"></strong>
-        <div data-bind="html: format_premium_option()"></div>
+        <div data-bind="ifnot: product_coverage.product.has_simple_coverage()">
+          <strong data-bind="html: format_face_value()"></strong>
+          <div data-bind="html: format_premium_option()"></div>
+        </div>
+        <div data-bind="if: product_coverage.product.has_simple_coverage()">
+          <span data-bind="text: product_coverage.get_coverage_amount(applicant)"></span>
+        </div>
         <!--/ko-->
       </td>
       <!--/ko-->
