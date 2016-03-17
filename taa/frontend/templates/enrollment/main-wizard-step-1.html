@@ -647,9 +647,9 @@
           <div data-bind="html: format_premium_option()"></div>
         </div>
         <div data-bind="if: $parent.product.has_simple_coverage()">
-          <strong data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType, text: format_premium_option()"></strong>
+          <strong data-bind="text: $parent.get_coverage_status(applicant)"></strong>
           <br data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType">
-          <span data-bind="text: $parent.get_coverage_status(applicant)"></span>
+          <span data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType, text: format_premium_option()"></span>
         </div>
         <!--/ko-->
       </td>
@@ -699,10 +699,10 @@
           <strong data-bind="html: format_face_value()"></strong>
           <div data-bind="html: format_premium_option()"></div>
         </div>
-        <div data-bind="if: product_coverage.product.has_simple_coverage()">
-          <strong data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType, text: format_premium_option()"></strong>
+        <div data-bind="if: $parent.product.has_simple_coverage()">
+          <strong data-bind="text: $parent.get_coverage_status(applicant)"></strong>
           <br data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType">
-          <span data-bind="text: product_coverage.get_coverage_status(applicant)"></span>
+          <span data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType, text: format_premium_option()"></span>
         </div>
         <!--/ko-->
       </td>
