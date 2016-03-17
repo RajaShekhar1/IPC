@@ -147,6 +147,10 @@ var wizard_products = (function () {
       return true;
     },
 
+    should_show_step_two: function () {
+      return true;
+    },
+
     should_use_date_of_hire_for_identity: function () {
       // Right now all FPP products will use this.
       return true;
@@ -498,6 +502,12 @@ var wizard_products = (function () {
   HIProduct.prototype.create_coverage_option = function (options) {
     return new SimpleCoverageOption(options);
   };
+  HIProduct.prototype.is_fpp_product = function () {
+    return false;
+  };
+  HIProduct.prototype.should_show_step_two = function () {
+    return false;
+  };
   //endregion
 
   //region ACCProduct
@@ -526,6 +536,12 @@ var wizard_products = (function () {
   };
   ACCProduct.prototype.create_coverage_option = function (options) {
     return new SimpleCoverageOption(options);
+  };
+  ACCProduct.prototype.is_fpp_product = function () {
+    return false;
+  };
+  ACCProduct.prototype.should_show_step_two = function () {
+    return false;
   };
   //endregion
 

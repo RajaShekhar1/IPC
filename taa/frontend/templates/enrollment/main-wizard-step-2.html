@@ -2,6 +2,10 @@
 <div class="step-pane" id="step2" data-step="2">
   <form class="form-horizontal" id="questions-form">
 
+    <div data-bind="ifnot: should_show_step_two">
+      <h3 class="lighter block green text-center">This step does noy apply - no products selected require this step.</h3>
+    </div>
+
     <div data-bind="visible: should_show_other_insurance_questions">
       <h3 class="lighter block green">Other Insurance</h3>
 

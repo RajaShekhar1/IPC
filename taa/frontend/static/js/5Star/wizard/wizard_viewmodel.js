@@ -1349,6 +1349,12 @@ var wizard_viewmodel = (function () {
       });
     });
 
+    self.should_show_step_two = ko.pureComputed(function () {
+      return _.any(self.coverage_vm.selected_product_coverages(), function(product_coverage) {
+        return product_coverage.product.should_show_step_two();
+      });
+    });
+
     self.get_replacement_paragraphs = function () {
       var paragraph_map = {};
       _.each(self.coverage_vm.selected_product_coverages(), function (prod_cov) {
