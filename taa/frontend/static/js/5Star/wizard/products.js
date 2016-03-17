@@ -143,11 +143,15 @@ var wizard_products = (function () {
       return this.is_fpp_product();
     },
 
-    should_show_step_5: function () {
+    should_show_step_two: function () {
       return true;
     },
 
-    should_show_step_two: function () {
+    should_show_step_four: function () {
+      return true;
+    },
+
+    should_show_step_5: function () {
       return true;
     },
 
@@ -467,30 +471,39 @@ var wizard_products = (function () {
   }
 
   HIProduct.prototype = Object.create(Product.prototype);
+
   HIProduct.prototype.requires_gender = function () {
     return false;
   };
+
   HIProduct.prototype.requires_height = function () {
     return false;
   };
+
   HIProduct.prototype.requires_weight = function () {
     return false;
   };
+
   HIProduct.prototype.requires_is_smoker = function () {
     return false;
   };
+
   HIProduct.prototype.has_critical_illness_coverages = function () {
     return false;
   };
+
   HIProduct.prototype.has_critical_illness_coverages = function () {
     return false;
   };
+
   HIProduct.prototype.has_simple_coverage = function () {
     return true;
   };
+
   HIProduct.prototype.requires_occupation = function () {
     return true;
   };
+
   HIProduct.prototype.get_coverage_tiers = function () {
     return [
       'EE',
@@ -499,13 +512,20 @@ var wizard_products = (function () {
       'EF'
     ];
   };
+
   HIProduct.prototype.create_coverage_option = function (options) {
     return new SimpleCoverageOption(options);
   };
+
   HIProduct.prototype.is_fpp_product = function () {
     return false;
   };
+
   HIProduct.prototype.should_show_step_two = function () {
+    return false;
+  };
+
+  HIProduct.prototype.should_show_step_four = function () {
     return false;
   };
   //endregion
@@ -517,15 +537,19 @@ var wizard_products = (function () {
   }
 
   ACCProduct.prototype = Object.create(Product.prototype);
+
   ACCProduct.prototype.has_simple_coverage = function () {
     return true;
   };
+
   ACCProduct.prototype.get_occupations = function () {
     return ['Management', 'Worker', 'Secretary'];
   };
+
   ACCProduct.prototype.requires_occupation = function () {
     return true;
   };
+
   ACCProduct.prototype.get_coverage_tiers = function () {
     return [
       'EE',
@@ -534,13 +558,20 @@ var wizard_products = (function () {
       'EF'
     ];
   };
+
   ACCProduct.prototype.create_coverage_option = function (options) {
     return new SimpleCoverageOption(options);
   };
+
   ACCProduct.prototype.is_fpp_product = function () {
     return false;
   };
+
   ACCProduct.prototype.should_show_step_two = function () {
+    return false;
+  };
+
+  ACCProduct.prototype.should_show_step_four = function () {
     return false;
   };
   //endregion
