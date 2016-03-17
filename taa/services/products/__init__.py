@@ -242,7 +242,9 @@ class ProductService(DBService):
             coverage_tiers = [COVERAGE_SELECTION_EE, COVERAGE_SELECTION_ES, COVERAGE_SELECTION_EC, COVERAGE_SELECTION_EF]
             rate_response = {'employee': {
                 'bytier': [{
-                        tier: self.calc_rate_for_tier(product, tier, rate_level, demographics)
+                        'coverage_tier': tier,
+                        'premium': self.calc_rate_for_tier(product, tier, rate_level, demographics),
+                        'payment_mode': demographics['payment_mode']
                     }
                     for tier in coverage_tiers
                 ]

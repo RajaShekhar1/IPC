@@ -18,6 +18,9 @@ function CoverageOption(options) {
   };
 
   self.format_premium_option = function () {
+    if (self.applicant_type !== wizard_applicant.Applicant.EmployeeType) {
+      return '';
+    }
     return self.format_premium() + " " + self.payment_mode().display_lowercase();
   };
   self.format_face_value = function () {
@@ -41,8 +44,8 @@ function CoverageOption(options) {
     return {
       premium: self.premium,
       face_value: self.face_value
-    }
-  }
+    };
+  };
 }
 CoverageOption.display_benefit_option = function (item) {
   return item.format_for_dropdown();
@@ -76,12 +79,17 @@ function SimpleCoverageOption(options) {
   self.is_by_face = true;
   self.premium = options.premium;
 
+  // Convert premium to a number if it is a string
+  if (typeof self.premium === 'string') {
+    self.premium = parseFloat(self.premium);
+  }
+
   // For ACC or HI, one of: EE, ES, EC, EF
   self.coverage_tier = options.coverage_tier;
 
   // This is an observable
   self.payment_mode = options.payment_mode;
-  self.face_value = null;//options.face_value;
+  self.face_value = options.face_value;
   self.applicant_type = options.applicant_type;
 
   self.get_total_premium = function () {

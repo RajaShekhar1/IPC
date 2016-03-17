@@ -647,7 +647,9 @@
           <div data-bind="html: format_premium_option()"></div>
         </div>
         <div data-bind="if: $parent.product.has_simple_coverage()">
-          <span data-bind="text: $parent.get_coverage_amount(applicant)"></span>
+          <strong data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType, text: format_premium_option()"></strong>
+          <br data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType">
+          <span data-bind="text: $parent.get_coverage_status(applicant)"></span>
         </div>
         <!--/ko-->
       </td>
@@ -698,7 +700,9 @@
           <div data-bind="html: format_premium_option()"></div>
         </div>
         <div data-bind="if: product_coverage.product.has_simple_coverage()">
-          <span data-bind="text: product_coverage.get_coverage_amount(applicant)"></span>
+          <strong data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType, text: format_premium_option()"></strong>
+          <br data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType">
+          <span data-bind="text: product_coverage.get_coverage_status(applicant)"></span>
         </div>
         <!--/ko-->
       </td>

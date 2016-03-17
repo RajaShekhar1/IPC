@@ -271,7 +271,7 @@ var wizard_viewmodel = (function () {
     self.get_coverage_rate_for_tier = function (coverage_tier) {
       var coverage_option = product_rates_service.get_product_rate_for_coverage_tier(self.product, coverage_tier);
       if (coverage_option) {
-        return coverage_option.format_face_value();
+        return coverage_option.format_premium();
       }
       return '';
     };
@@ -610,14 +610,14 @@ var wizard_viewmodel = (function () {
         return true;
       }
       if (applicant_type === wizard_applicant.Applicant.SpouseType) {
-        return coverage_option.tier === 'ES' || coverage_option.tier === 'EF';
+        return coverage_option.coverage_tier === 'ES' || coverage_option.coverage_tier === 'EF';
       }
       if (applicant_type === wizard_applicant.Applicant.ChildType) {
-        return coverage_option.tier === 'EC' || coverage_option.tier === 'EF';
+        return coverage_option.coverage_tier === 'EC' || coverage_option.coverage_tier === 'EF';
       }
     },
 
-    get_coverage_amount: function (applicant) {
+    get_coverage_status: function (applicant) {
       var coverage_option_view_model = this.get_coverage_for_applicant(this.employee);
       var coverage_option = coverage_option_view_model.coverage_option();
       var is_covered = this.is_applicant_type_covered(applicant.type);
@@ -630,7 +630,7 @@ var wizard_viewmodel = (function () {
       } else {
         return 'Select Coverage';
       }
-    }
+    },
   };
 
 

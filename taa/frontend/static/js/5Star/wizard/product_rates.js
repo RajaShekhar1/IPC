@@ -53,24 +53,18 @@ var product_rates_service = (function() {
 
     get_rate_for_coverage_tier: function (coverage_tier) {
       var rates = this.rates();
-      return _.find(rates, function (rate) { return rate.tier && rate.tier === coverage_tier; });
+      return _.find(rates, function (rate) { return rate.coverage_tier && rate.coverage_tier === coverage_tier; });
     },
 
     create_coverage_options: function(is_by_face, applicant_type, rate_options) {
       return _.map(rate_options, function(data) {
         var key_count = _.size(data);
-        var tier;
-        if (key_count === 1) {
-          var keys = _.keys(data);
-          tier = keys[0];
-          data.coverage = data[keys[0]];
-        }
 
         return this.product.create_coverage_option({
           applicant_type: applicant_type,
           is_by_face: is_by_face,
           face_value: data.coverage,
-          tier: tier,
+          coverage_tier: data.coverage_tier,
           premium: data.premium,
           payment_mode: function() {return payment_mode_module.create_payment_mode_by_frequency(data.payment_mode)}.bind(this)
         });

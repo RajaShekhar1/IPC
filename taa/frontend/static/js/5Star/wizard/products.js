@@ -495,6 +495,9 @@ var wizard_products = (function () {
       'EF'
     ];
   };
+  HIProduct.prototype.create_coverage_option = function (options) {
+    return new SimpleCoverageOption(options);
+  };
   //endregion
 
   //region ACCProduct
@@ -520,6 +523,9 @@ var wizard_products = (function () {
       'EC',
       'EF'
     ];
+  };
+  ACCProduct.prototype.create_coverage_option = function (options) {
+    return new SimpleCoverageOption(options);
   };
   //endregion
 
