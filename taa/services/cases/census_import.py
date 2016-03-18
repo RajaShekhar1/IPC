@@ -171,7 +171,9 @@ class RequiredIfAnyInGroupValidator(object):
 def preprocess_string(data, record=None):
     if data is None:
         return u''
-    return unicode(data).strip()
+    if not isinstance(data, unicode):
+        data = unicode(data, 'utf-8')
+    return data.strip()
 
 
 def preprocess_product_code(data, record=None):
@@ -238,8 +240,12 @@ def preprocess_date(data, record):
 def preprocess_zip(data, record):
     if data is None:
         return u''
+
+    if not isinstance(data, unicode):
+        data = unicode(data, 'utf-8')
+
     # Just want first five characters
-    return unicode(data).strip().replace('-', '')[:5]
+    return data.strip().replace('-', '')[:5]
 
 
 def preprocess_gender(data, record):
@@ -254,7 +260,11 @@ def preprocess_gender(data, record):
 def preprocess_numbers(data, record):
     if data is None:
         return ''
-    return ''.join(c for c in unicode(data) if c.isdigit())
+
+    if not isinstance(data, unicode):
+        data = unicode(data, 'utf-8')
+
+    return ''.join(c for c in data if c.isdigit())
 
 
 def preprocess_y_n(data, record):
@@ -309,8 +319,7 @@ class CensusRecordParser(object):
     for field in spouse_fields:
         validator = RequiredIfAnyInGroupValidator(
             spouse_fields,
-            message="{} is required if any of the following are"
-                    "provided: {}".format(field.csv_column_name,
+            message=u"{} is required if any of the following are provided: {}".format(field.csv_column_name,
                                           ', '.join([f.csv_column_name
                                                      for f in spouse_fields
                                                      if f is not field])
@@ -320,7 +329,7 @@ class CensusRecordParser(object):
         # Also require this field if the SSN was provided
         field.add_validator(RequiredIfAnyInGroupValidator(
             [spouse_ssn],
-            message="{} is required if {} is provided".format(
+            message=u"{} is required if {} is provided".format(
                 field.csv_column_name, spouse_ssn.csv_column_name)
         ))
     all_possible_fields = [
@@ -448,8 +457,7 @@ class CensusRecordParser(object):
         missing_headers = self._get_missing_headers(headers)
         if missing_headers:
             missing_msg = ', '.join(missing_headers)
-            self.error_message("The following required columns are missing "
-                               "from the uploaded file: {}".format(missing_msg))
+            self.error_message(u"The following required columns are missing from the uploaded file: {}".format(missing_msg))
 
     def get_error_headers(self, field_name):
         headers = ['EMP_FIRST', 'EMP_LAST']

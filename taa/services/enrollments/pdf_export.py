@@ -252,7 +252,11 @@ class FormPDFRenderer(object):
 
     def draw_text(self, text, x, y, width, font=None, fontsize=None,
                   is_bold=False, is_italic=False, fontcolor=None):
-        text = str(text)
+
+        if isinstance(text, basestring) and not isinstance(text, unicode):
+            text = unicode(text, 'utf-8', errors='ignore')
+        elif not isinstance(text, basestring):
+            text = unicode(text)
 
         self.set_color(fontcolor)
         self.set_font(font, fontsize, is_bold, is_italic)

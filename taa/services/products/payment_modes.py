@@ -7,21 +7,21 @@ MODE_MONTHLY = 12
 MODE_CHANGEABLE = -1
 
 MODES_BY_MODE = {
-    MODE_WEEKLY: 'weekly',
-    MODE_BIWEEKLY: 'biweekly',
-    MODE_SEMIMONTHLY: 'semimonthly',
-    MODE_MONTHLY: 'monthly',
+    MODE_WEEKLY: u'weekly',
+    MODE_BIWEEKLY: u'biweekly',
+    MODE_SEMIMONTHLY: u'semimonthly',
+    MODE_MONTHLY: u'monthly',
 }
 
 MODES_BY_NAME = dict(zip(MODES_BY_MODE.values(), MODES_BY_MODE.keys()))
 
 # When `adhoc` is false, the option is not permitted during ad-hoc enrollment
 payment_modes = map(lambda x: dict(mode=x[0], name=x[1], immutable=x[2]), [
-    (MODE_WEEKLY, 'Weekly', True),
-    (MODE_BIWEEKLY, 'Biweekly', True),
-    (MODE_SEMIMONTHLY, 'Semimonthly', True),
-    (MODE_MONTHLY, 'Monthly', True),
-    (MODE_CHANGEABLE, 'Leave For Applicant To Select', False),
+    (MODE_WEEKLY, u'Weekly', True),
+    (MODE_BIWEEKLY, u'Biweekly', True),
+    (MODE_SEMIMONTHLY, u'Semimonthly', True),
+    (MODE_MONTHLY, u'Monthly', True),
+    (MODE_CHANGEABLE, u'Leave For Applicant To Select', False),
     ])
 
 
@@ -30,10 +30,10 @@ def get_full_payment_modes():
     Used for the rewritten multi-product wizard, return all payment modes with more detail.
     """
     return [
-      {'frequency': 52, 'label': 'Weekly'},
-      {'frequency': 26, 'label': 'Biweekly'},
-      {'frequency': 24, 'label': 'Semimonthly'},
-      {'frequency': 12, 'label': 'Monthly'}
+      {'frequency': 52, 'label': u'Weekly'},
+      {'frequency': 26, 'label': u'Biweekly'},
+      {'frequency': 24, 'label': u'Semimonthly'},
+      {'frequency': 12, 'label': u'Monthly'}
     ]
 
 def get_payment_modes(changeable=False, single=None):

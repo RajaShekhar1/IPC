@@ -114,7 +114,7 @@ def updateUser():
                         token.activated = True
                         db.session.commit()
                     else:
-                        full_name = "{} {}".format(account.given_name, account.surname)
+                        full_name = u"{} {}".format(account.given_name, account.surname)
                         api_token_service.create_new_token(full_name, account.href, activated=True)
                         db.session.commit()
 

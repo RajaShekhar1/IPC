@@ -96,7 +96,7 @@ class Case(CaseSerializer, db.Model):
         elif not self.situs_city:
             return self.situs_state
 
-        return "{0}, {1}".format(self.situs_city, self.situs_state)
+        return u"{0}, {1}".format(self.situs_city, self.situs_state)
 
     def format_is_active(self):
         return "Active" if self.can_enroll() else "Not Active"

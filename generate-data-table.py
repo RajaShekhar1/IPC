@@ -104,7 +104,7 @@ def main(type_, ratio, decimals, infn, outfn):
 
 
 def usage(args):
-    print("""
+    print(u"""
     Usage: python {} TYPE MULTIPLIER DIGITS INFILE OUTFILE
 
            Where:

@@ -41,8 +41,8 @@ def create_attachment_header(title, enrollment_data):
         Paragraph("5Star Family Protection Plan Application", style),
         Paragraph(title, bold_style),
         Spacer(0, .2*inch),
-        Paragraph("Employer/Group: %s"%group_name, style),
-        Paragraph("Employee: %s %s %s"%(employee_first, employee_last, masked_ssn), style),
+        Paragraph(u"Employer/Group: {}".format(group_name), style),
+        Paragraph(u"Employee: {} {} {}".format(employee_first, employee_last, masked_ssn), style),
     ]
 
 def create_signature_line(page_width, signature_coordinate_map, recipients):

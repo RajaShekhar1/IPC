@@ -146,7 +146,7 @@ class GroupCITemplate(DocuSignServerTemplate):
 
         eeTabsList = make_applicant_tabs('ee', enrollment_data['employee'])
         eeTabsList += [
-            make_tab('eeEnrollCityState', '{}, {}'.format(
+            make_tab('eeEnrollCityState', u'{}, {}'.format(
                 enrollment_data['enrollCity'], enrollment_data['enrollState'])),
             make_tab('identityToken', idTokenStr),
             make_tab('agentCode', agent_code),
@@ -173,7 +173,7 @@ class GroupCITemplate(DocuSignServerTemplate):
             spouseOtherOwnerName = enrollment_data['spouse_other_owner_name']
             spouseOtherOwnerSSN = enrollment_data['spouse_other_owner_ssn']
         elif enrollment_data['spouse_owner'] == 'employee':
-            spouseOtherOwnerName = '{} {}'.format(
+            spouseOtherOwnerName = u'{} {}'.format(
                 enrollment_data['employee']['first'],
                 enrollment_data['employee']['last'])
             spouseOtherOwnerSSN = enrollment_data['employee']['ssn']
@@ -357,7 +357,7 @@ def generate_ChildTabsEntry (child_index, wizard_data):
         # not used in the template
         {
             'tabLabel': childStr + 'FullName',
-            'value': '{} {}'.format(
+            'value': u'{} {}'.format(
                 wizard_data['children'][child_index]['first'],
                 wizard_data['children'][child_index]['last'])
         },

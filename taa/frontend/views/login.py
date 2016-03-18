@@ -123,13 +123,13 @@ def login():
             # we'll log the user in (creating a secure session using
             # Flask-Login), then redirect the user to the ?next=<url>
             # query parameter, or just the HOME page
-            print "LOGIN: %s %s, (%s  activated=%s)" % (account.given_name, account.surname, account.email, account.custom_data.get('activated'))
+            print(u"LOGIN: %s %s, (%s  activated=%s)" % (account.given_name, account.surname, account.email, account.custom_data.get('activated')))
             account_groups = [g.name for g in account.groups]
             is_agent = agent_service.is_user_agent(account)
             is_home_office = agent_service.is_user_home_office(account)
             is_admin = agent_service.is_user_admin(account)
             is_third_party_enroller = agent_service.is_user_third_party_enroller(account)
-            print "Is ADMIN: %s, GROUPS: %s"%(is_admin, account_groups)
+            print(u"Is ADMIN: %s, GROUPS: %s"%(is_admin, account_groups))
             if is_admin or is_home_office or (is_agent and account.custom_data.get('activated')) or is_third_party_enroller:
                 do_login(account)
 

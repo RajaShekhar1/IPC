@@ -29,16 +29,33 @@ from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_ca
 class DocuSignService(object):
     product_service = RequiredFeature('ProductService')
 
-    def create_multiproduct_envelope(self, product_submissions, case):
+    def get_existing_envelope(self, enrollment_application):
+
+        if enrollment_application.docusign_envelope_id:
+            # We already have an envelope created in docusign, just use that one.
+            envelope = DocusignEnvelope(enrollment_application.docusign_envelope_id, enrollment_application)
+
+            # We do want to make sure that the enrollment status is up-to-date, though.
+            envelope.update_enrollment_status()
+
+            if envelope.enrollment_record.is_voided():
+                # If the envelope is voided, we will just create a new envelope to replace it.
+                return None
+
+            return envelope
+
+        return None
+
+    def create_multiproduct_envelope(self, product_submissions, case, enrollment_application):
         # Use the first product to get employee and agent data
-        first_product_data = EnrollmentDataWrap(product_submissions[0], case)
+        first_product_data = EnrollmentDataWrap(product_submissions[0], case, enrollment_record=enrollment_application)
         in_person_signer, recipients = self.create_envelope_recipients(case, first_product_data)
 
         # Create and combine components of the envelope from each product.
         components = []
         for product_submission in product_submissions:
             # Wrap the submission with an object that knows how to pull out key info.
-            enrollment_data = EnrollmentDataWrap(product_submission, case)
+            enrollment_data = EnrollmentDataWrap(product_submission, case, enrollment_record=enrollment_application)
 
             # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
             should_use_docusign_renderer = False if enrollment_data.should_use_call_center_workflow() else True
@@ -55,17 +72,12 @@ class DocuSignService(object):
                                                                        should_use_docusign_renderer)
 
         product_codes = [
-            EnrollmentDataWrap(product_submission, case).get_product_code()
+            EnrollmentDataWrap(product_submission, case, enrollment_record=enrollment_application).get_product_code()
             for product_submission in product_submissions
         ]
 
-        if not enrollment_data.should_use_call_center_workflow():
-            signer_name = first_product_data.get_employee_name()
-        else:
-            signer_name = recipients[0].name
-
         envelope_result = self.create_envelope(
-            email_subject="Enroll {} ({}) | {}".format(
+            email_subject=u"Enroll {} ({}) | {}".format(
                 first_product_data.get_employee_name(),
                 first_product_data.get_employer_name(),
                 ','.join(product_codes),
@@ -80,7 +92,7 @@ class DocuSignService(object):
         should_use_docusign_renderer = False if enrollment_data.should_use_call_center_workflow() else True
         components = self.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer)
         envelope_result = self.create_envelope(
-            email_subject="Signature needed: {} for {} ({})".format(
+            email_subject=u"Signature needed: {} for {} ({})".format(
                 enrollment_data.get_product().name,
                 enrollment_data.get_employee_name(),
                 enrollment_data.get_employer_name()),
@@ -116,8 +128,8 @@ class DocuSignService(object):
             return agent, recipients
         else:
             recipients = [
-                agent,
                 employee,
+                agent,
             ] + self.get_carbon_copy_recipients()
             return employee, recipients
 
@@ -150,8 +162,8 @@ class DocuSignService(object):
                 child_index = i + 2
                 child_data = enrollment_data['child_coverages'][child_index]
                 child.update(dict(
-                    coverage=format(Decimal(unicode(child_data['face_value'])), ',.0f'),
-                    premium=format(Decimal(unicode(child_data['premium'])), '.2f'),
+                    coverage=format(Decimal(unicode(child_data['face_value']), 'utf-8'), ',.0f'),
+                    premium=format(Decimal(unicode(child_data['premium']), 'utf-8'), '.2f'),
                     soh_questions=enrollment_data.get_child_soh_questions(child_index),
                 ))
                 child_attachment_form.add_child(child)
@@ -201,8 +213,8 @@ class DocuSignService(object):
                 child_index = i + form.num_children_on_form()
                 child_data = enrollment_data['child_coverages'][child_index]
                 child.update(dict(
-                    coverage=format(Decimal(unicode(child_data['face_value'])), ',.0f'),
-                    premium=format(Decimal(unicode(child_data['premium'])), '.2f'),
+                    coverage=format(Decimal(unicode(child_data['face_value']), 'utf-8'), ',.0f'),
+                    premium=format(Decimal(unicode(child_data['premium']), 'utf-8'), '.2f'),
                     soh_questions=enrollment_data.get_child_soh_questions(child_index),
                 ))
                 child_attachment_form.add_child(child)
@@ -357,17 +369,6 @@ def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
     return False, None, redirect_url
 
 
-def create_multiproduct_envelope_and_fetch_signing_url(wizard_data, census_record, case):
-
-    docusign_service = LookupService('DocuSignService')
-    in_person_signer, envelope_result = docusign_service.create_multiproduct_envelope(wizard_data, case)
-
-    enrollment_data = EnrollmentDataWrap(wizard_data[0], case)
-    signing_url = fetch_signing_url(in_person_signer, enrollment_data, envelope_result)
-
-    return envelope_result, signing_url
-
-
 def fetch_signing_url(in_person_signer, enrollment_data, envelope_result):
     if enrollment_data.should_use_call_center_workflow():
         callback_url = build_callcenter_callback_url(enrollment_data.case)
@@ -489,6 +490,8 @@ class DocusignEnvelope(object):
         def format_coverage_summary(val):
             if not val:
                 return "-"
+            if not val.isdigit():
+                return val
             import locale
             return locale.currency(int(val), grouping=True)
 
@@ -772,7 +775,7 @@ class DocuSignTransport(object):
 
     def _raise_docusign_error(self, data, full_url, req):
         # Print error to Heroku error logs.
-        print("""
+        print(u"""
 DOCUSIGN ERROR at URL: %s
 posted data: %s
 status is: %s
