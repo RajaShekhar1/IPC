@@ -139,11 +139,23 @@ class EnrollmentSubmissionProcessor(object):
     def generate_envelope_components(self, enrollment_record):
         data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data), case=enrollment_record.case, enrollment_record=enrollment_record)
         recipients = self._create_import_recipients(enrollment_record.case, data_wrap)
-        components = self.docusign_service.create_fpp_envelope_components(
-            data_wrap,
-            recipients,
-            should_use_docusign_renderer=False
-        )
+
+        product = data_wrap.get_product()
+        if not product.does_generate_form():
+            return [], data_wrap
+        
+        if product.is_fpp():
+            components = self.docusign_service.create_fpp_envelope_components(
+                data_wrap,
+                recipients,
+                should_use_docusign_renderer=False,
+            )
+        else:
+            components = self.docusign_service.create_group_ci_envelope_components(
+                data_wrap,
+                recipients,
+                should_user_docusign_renderer=False,
+            )
         return components, data_wrap
 
     def _create_import_recipients(self, case, enrollment_data):

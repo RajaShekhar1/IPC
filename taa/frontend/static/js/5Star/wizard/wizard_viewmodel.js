@@ -591,11 +591,11 @@ var wizard_viewmodel = (function () {
   }
 
   ApplicantCoverageSelectionVM.prototype = {
-    select_recommended_coverage: function (recommendation_set) {
+    select_recommended_coverage: function(recommendation_set) {
       var coverage_option = recommendation_set.get_recommended_applicant_coverage(this.applicant.type);
       if (coverage_option) {
         this.recommended_coverage_option(coverage_option);
-        // Reset the custom option, if any.
+        // Reset the custom option,  if any.
         this.customized_coverage_option(null);
       }
     },
@@ -959,8 +959,9 @@ var wizard_viewmodel = (function () {
 
     self.update_rate_table = function () {
 
-
-      self.validator.resetForm();
+      if (self.validator) {
+        self.validator.resetForm();
+      }
 
       self.is_show_rates_clicked(true);
 
@@ -998,7 +999,9 @@ var wizard_viewmodel = (function () {
     };
 
     self.should_allow_grandchildren = ko.computed(function () {
-      return !!self.products && self.products.length === 1 && _.some(self.products, function (product) { return product.is_fpp_product(); });
+      return !!self.products && self.products.length === 1 && _.some(self.products, function (product) {
+          return product.is_fpp_product();
+        });
     });
 
     self.show_spouse_name = ko.computed(function () {
@@ -1033,9 +1036,7 @@ var wizard_viewmodel = (function () {
       }
 
       // Trigger the jQuery validator. This test allows jasmine tests to work without DOM node present for form.
-      if (self.validator) {
-        valid_form = self.validator.form() && valid_form;
-      }
+      valid_form = self.validator.form() && valid_form;
 
       if (valid_form) {
         self.has_show_rates_been_clicked(true);
@@ -1639,12 +1640,11 @@ var wizard_viewmodel = (function () {
       }
 
       function is_child_field_required(element) {
+        // Treat the first child as always required if the children checkbox is checked
         if ($(element).attr("id") === "child-first-0" ||
           $(element).attr("id") === "child-last-0" ||
           $(element).attr("id") === "child-dob-0"
         ) {
-          // Treat the first child as always required if
-          // the children checkbox is checked
           return self.should_include_children();
         }
 
@@ -1695,7 +1695,7 @@ var wizard_viewmodel = (function () {
   }
 
 
-  // TODO:  Will need to expose this function to the other modules, integrate Barrett's reauth mechanism below
+// TODO:  Will need to expose this function to the other modules, integrate Barrett's reauth mechanism below
   function handle_remote_error(request, retry_callback) {
     if (request.status == 401) {
       if (ui.account_href != null) {
@@ -1773,4 +1773,5 @@ var wizard_viewmodel = (function () {
 
 
   return {WizardVM: WizardVM};
-})();
+})
+();

@@ -20,7 +20,7 @@ test_agent_stormpath_url2 = 'https://api.stormpath.com/v1/accounts/3vwaoifZRl8Z1
 def create_agent(first, last, agent_code, email, activated=True):
     from stormpath.client import Client
     client = Client(id=STORMPATH_API_KEY_ID,
-               secret=STORMPATH_API_KEY_SECRET)
+                    secret=STORMPATH_API_KEY_SECRET)
     stormpath_application = client.applications.search(STORMPATH_APPLICATION)[0]
 
     matches = filter(lambda a: a.email == email, stormpath_application.accounts)
@@ -31,10 +31,10 @@ def create_agent(first, last, agent_code, email, activated=True):
         account.given_name = first
         account.surname = last
 
-        #account.custom_data['agency'] = data['agency']
+        # account.custom_data['agency'] = data['agency']
         account.custom_data['agent_code'] = agent_code
-        #account.custom_data['signing_name'] = data['signing_name']
-        #account.custom_data['ds_apikey'] = data['ds_apikey']
+        # account.custom_data['signing_name'] = data['signing_name']
+        # account.custom_data['ds_apikey'] = data['ds_apikey']
         account.custom_data['activated'] = activated
         account.save()
     else:
@@ -48,13 +48,13 @@ def create_agent(first, last, agent_code, email, activated=True):
                 'agent_code': agent_code,
                 'activated': True,
             },
-         })
+        })
 
     # Make sure in agent group
-    agents_group = filter(lambda g: g.name=='agents', stormpath_application.groups.items)[0]
+    agents_group = filter(lambda g: g.name == 'agents', stormpath_application.groups.items)[0]
     existing_membership = [acct_mem
                            for acct_mem in agents_group.account_memberships
-                           if acct_mem.account.email==account.email]
+                           if acct_mem.account.email == account.email]
     if not existing_membership:
         # Add this account to the group
         agents_group.add_account(account)
@@ -111,6 +111,7 @@ def create_case(company_name=u'Test Case', case_token=u'CASE-123123', product_co
 
     return case
 
+
 def create_user_in_groups(name, api_token=None, groups=None):
     # For now just use agent1
     if api_token:
@@ -122,6 +123,5 @@ def create_user_in_groups(name, api_token=None, groups=None):
         ))
 
 
-    #if groups:
-    #    for group in groups:
-
+        # if groups:
+        #    for group in groups:
