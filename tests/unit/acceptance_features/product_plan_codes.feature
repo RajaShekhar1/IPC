@@ -73,7 +73,7 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | N   | N  | Y    | N    | Employee       | FPPTIB            | MI    | FPQTIB/3  |
       | N   | N  | Y    | N    | Employee       | FPPTIY            | MI    | FPQTIY/3  |
 
-      | N   | N  | Y    | N    | Spouse         | FPPTI             | MI    | FPQTI/3   |
+      | N   | N  | Y    | N    | Spouse         | FPPTI             | MI    | FPQTI3   |
       | N   | N  | Y    | N    | Spouse         | FPPTIG            | MI    | FPQTIG/3  |
       | N   | N  | Y    | N    | Spouse         | FPPTIW            | MI    | FPQTIW/3  |
       | N   | N  | Y    | N    | Spouse         | FPPTIB            | MI    | FPQTIB/3  |
@@ -87,7 +87,7 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | N   | N  | N    | Y    | Employee       | FPPTIB            | MI    | FPQTIB/4  |
       | N   | N  | N    | Y    | Employee       | FPPTIY            | MI    | FPQTIY/4  |
 
-      | N   | N  | N    | Y    | Spouse         | FPPTI             | MI    | FPQTI/4   |
+      | N   | N  | N    | Y    | Spouse         | FPPTI             | MI    | FPQTI4    |
       | N   | N  | N    | Y    | Spouse         | FPPTIG            | MI    | FPQTIG/4  |
       | N   | N  | N    | Y    | Spouse         | FPPTIW            | MI    | FPQTIW/4  |
       | N   | N  | N    | Y    | Spouse         | FPPTIB            | MI    | FPQTIB/4  |
@@ -143,7 +143,7 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | N   | Y  | Y    | N    | Employee       | FPPTIB            | MI    | FPQTIB/3  |
       | N   | Y  | Y    | N    | Employee       | FPPTIY            | MI    | FPQTIY/3  |
 
-      | N   | Y  | Y    | N    | Spouse         | FPPTI             | MI    | FPQTI/3   |
+      | N   | Y  | Y    | N    | Spouse         | FPPTI             | MI    | FPQTI3   |
       | N   | Y  | Y    | N    | Spouse         | FPPTIG            | MI    | FPQTIG/3  |
       | N   | Y  | Y    | N    | Spouse         | FPPTIW            | MI    | FPQTIW/3  |
       | N   | Y  | Y    | N    | Spouse         | FPPTIB            | MI    | FPQTIB/3  |
@@ -157,7 +157,7 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | N   | Y  | N    | Y    | Employee       | FPPTIB            | MI    | FPQTIB/4  |
       | N   | Y  | N    | Y    | Employee       | FPPTIY            | MI    | FPQTIY/4  |
 
-      | N   | Y  | N    | Y    | Spouse         | FPPTI             | MI    | FPQTI/4   |
+      | N   | Y  | N    | Y    | Spouse         | FPPTI             | MI    | FPQTI4   |
       | N   | Y  | N    | Y    | Spouse         | FPPTIG            | MI    | FPQTIG/4  |
       | N   | Y  | N    | Y    | Spouse         | FPPTIW            | MI    | FPQTIW/4  |
       | N   | Y  | N    | Y    | Spouse         | FPPTIB            | MI    | FPQTIB/4  |
