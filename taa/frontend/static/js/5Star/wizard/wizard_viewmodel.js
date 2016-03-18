@@ -1083,7 +1083,13 @@ var wizard_viewmodel = (function () {
     };
 
     self.refresh_rate_table = function () {
-      var occupation = self.requires_occupation? self.selected_occupation()[0].label : null;
+      var occupation = null;
+
+      if (self.selected_occupation() && Array.isArray(self.selected_occupation())) {
+        occupation = self.selected_occupation()[0].label;
+      } else if (self.selected_occupation()) {
+        occupation = self.selected_occupation().label;
+      }
 
       product_rates_service.update_product_rates(
         self.products,
