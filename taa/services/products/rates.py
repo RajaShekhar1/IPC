@@ -187,7 +187,7 @@ class Rates(object):
                     "payment_mode": payment_mode,
                 }
 
-    def get(self, product_code, payment_mode, age, smoker=False, applicant_type=None, height=None, weight=None):
+    def get(self, product_code, payment_mode, age, smoker=None, applicant_type=None, height=None, weight=None):
         result = {}
         if applicant_type == APPLICANT_TYPE_CHILDREN:
             # Children rates/premiums are indexed with age as -1
