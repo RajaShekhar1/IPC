@@ -636,7 +636,7 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
         // Select the reduced coverage.
         self.product_coverage.__get_coverage_for_applicant(applicant).customized_coverage_option(find_reduced_coverage_option(applicant));
       }
-    }
+    };
   }
 
   function find_reduced_coverage_option(applicant) {
@@ -650,7 +650,7 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
     // Find an option, if possible, that gives the most coverage but is below the GI threshold.
     //  Note that we include any previously applied coverage in this calculation.
     var filtered_options = _.filter(applicant_coverage_options, function (o) {
-      return o.face_value > 0 && (previous_coverage_amount + o.face_value) <= gi_amount
+      return o.face_value > 0 && (previous_coverage_amount + o.face_value) <= gi_amount;
     });
 
     // If no option exists below the current coverage, return null.
@@ -661,7 +661,7 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
     // Otherwise return the option with the largest coverage.
     return _.max(
       filtered_options, function (o) {
-        return o.face_value
+        return o.face_value;
       }
     );
   }
