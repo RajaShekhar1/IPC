@@ -75,7 +75,7 @@ class DocuSignService(object):
         ]
 
         envelope_result = self.create_envelope(
-            email_subject="Enroll {} ({}) | {}".format(
+            email_subject=u"Enroll {} ({}) | {}".format(
                 first_product_data.get_employee_name(),
                 first_product_data.get_employer_name(),
                 ','.join(product_codes),
@@ -90,7 +90,7 @@ class DocuSignService(object):
         should_use_docusign_renderer = False if enrollment_data.should_use_call_center_workflow() else True
         components = self.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer)
         envelope_result = self.create_envelope(
-            email_subject="Signature needed: {} for {} ({})".format(
+            email_subject=u"Signature needed: {} for {} ({})".format(
                 enrollment_data.get_product().name,
                 enrollment_data.get_employee_name(),
                 enrollment_data.get_employer_name()),
@@ -773,7 +773,7 @@ class DocuSignTransport(object):
 
     def _raise_docusign_error(self, data, full_url, req):
         # Print error to Heroku error logs.
-        print("""
+        print(u"""
 DOCUSIGN ERROR at URL: %s
 posted data: %s
 status is: %s

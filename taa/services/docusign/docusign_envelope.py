@@ -152,7 +152,7 @@ class EnrollmentDataWrap(object):
             return self.data['product_id']
 
     def get_employee_name(self):
-        return '{} {}'.format(self.data['employee']['first'],
+        return u'{} {}'.format(self.data['employee']['first'],
                               self.data['employee']['last'])
 
     def get_employee_first(self):
@@ -168,7 +168,7 @@ class EnrollmentDataWrap(object):
         return self.data['employee']['ssn']
 
     def get_spouse_name(self):
-        return '{} {}'.format(self.data['spouse']['first'],
+        return u'{} {}'.format(self.data['spouse']['first'],
                               self.data['spouse']['last'])
 
     def get_spouse_ssn(self):
@@ -238,13 +238,13 @@ class EnrollmentDataWrap(object):
     def get_total_children_premium(self):
         if self.get_product().is_fpp():
             # Add up the child premium for each child if this is FPP
-            return sum(decimal.Decimal(unicode(child_coverage.get('premium', '0.00'), 'utf-8'))
+            return sum(decimal.Decimal(unicode(child_coverage.get('premium', '0.00')))
                        for child_coverage in self.data["child_coverages"])
         else:
             # Just use the first child premium, if any.
             if len(self.data["child_coverages"]) > 0:
                 child_coverage = self.data["child_coverages"][0]
-                return decimal.Decimal(unicode(child_coverage.get('premium', '0.00'), 'utf-8'))
+                return decimal.Decimal(unicode(child_coverage.get('premium', '0.00')))
 
             return decimal.Decimal('0.00')
 
@@ -294,7 +294,7 @@ class EnrollmentDataWrap(object):
 
     def get_employee_esignature(self):
         # Replace employee signature with "John Doe voice auth on file 02:45pm"
-        esig = "{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
+        esig = u"{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
         return self.data.get('emp_sig_txt', esig)
 
     def get_employee_esignature_date(self):
@@ -383,7 +383,7 @@ def build_callback_url(wizard_data, session_type):
     hostname = app.config.get('HOSTNAME', '5starenroll.com')
     scheme = 'https://' if is_ssl else 'http://'
     # note: DS supplies the last parm of 'event' in the callback
-    return ('{scheme}{hostname}/application_completed'
+    return (u'{scheme}{hostname}/application_completed'
             '?name={name}&type={session_type}'.format(
                 scheme=scheme,
                 hostname=hostname,
@@ -396,7 +396,7 @@ def build_callcenter_callback_url(case):
     hostname = app.config.get('HOSTNAME', '5starenroll.com')
     scheme = 'https://' if is_ssl else 'http://'
     # note: DS supplies the last parm of 'event' in the callback
-    return ('{scheme}{hostname}/enrollment-case/{case_id}#enrollment'.format(
+    return (u'{scheme}{hostname}/enrollment-case/{case_id}#enrollment'.format(
                 scheme=scheme,
                 hostname=hostname,
                 case_id=case.id,
