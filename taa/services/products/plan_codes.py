@@ -26,7 +26,7 @@ def get_qol_code(base_product_code, rider, applicant_type, state):
     plan_code = 'FPQTI'
     if base_product_code != PRODUCT_CODE_FPPTI:
         plan_code += base_product_code[-1]
-    if base_product_code != PRODUCT_CODE_FPPTI or applicant_type == APPLICANT_SPOUSE and state != 'MD' and state != 'UT':
+    if base_product_code != PRODUCT_CODE_FPPTI and state != 'MD' and state != 'UT':
         plan_code += '/'
     plan_code += rider[-1]
     if state == 'MD' or state == 'UT':

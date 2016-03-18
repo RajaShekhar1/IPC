@@ -17,6 +17,28 @@ from taa.services.enrollments.models import EnrollmentImportBatchItem
 class EnrollmentSubmissionService(object):
     enrollment_application_service = RequiredFeature('EnrollmentApplicationService')
     enrollment_batch_service = RequiredFeature('EnrollmentImportBatchService')
+    docusign_service = RequiredFeature('DocuSignService')
+
+    def submit_wizard_enrollment(self, enrollment_application):
+        tasks.process_wizard_enrollment.delay(enrollment_application.id)
+
+    def process_wizard_submission(self, enrollment_application_id):
+
+        enrollment_application = self.enrollment_application_service.get(enrollment_application_id)
+        if not enrollment_application:
+            raise ValueError("No enrollment application exists with id {}".format(enrollment_application_id))
+
+        envelope = self.docusign_service.get_existing_envelope(enrollment_application)
+        if not envelope:
+            # Create the envelope
+            standardized_data = json.loads(enrollment_application.standardized_data)
+            in_person_signer, envelope = self.docusign_service.create_multiproduct_envelope(standardized_data, enrollment_application.case, enrollment_application)
+
+            # Save envelope ID on enrollment
+            self.enrollment_application_service.save_docusign_envelope(enrollment_application, envelope)
+
+        db.session.commit()
+        return envelope
 
     def submit_import_enrollments(self, enrollment_batch):
 
@@ -152,7 +174,7 @@ class EnrollmentSubmissionProcessor(object):
 
         # Generate envelope
         envelope = self.docusign_service.create_envelope(
-            email_subject="Enrollment imported: {} for {} ({})".format(
+            email_subject=u"Enrollment imported: {} for {} ({})".format(
                 data_wrap.get_product_code(),
                 data_wrap.get_employee_name(),
                 data_wrap.get_employer_name()),
@@ -163,13 +185,25 @@ class EnrollmentSubmissionProcessor(object):
         enrollment_record.docusign_envelope_id = envelope.uri
 
     def generate_envelope_components(self, enrollment_record):
-        data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data), case=enrollment_record.case)
+        data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data), case=enrollment_record.case, enrollment_record=enrollment_record)
         recipients = self._create_import_recipients(enrollment_record.case, data_wrap)
-        components = self.docusign_service.create_fpp_envelope_components(
-            data_wrap,
-            recipients,
-            should_use_docusign_renderer=False
-        )
+
+        product = data_wrap.get_product()
+        if not product.does_generate_form():
+            return [], data_wrap
+        
+        if product.is_fpp():
+            components = self.docusign_service.create_fpp_envelope_components(
+                data_wrap,
+                recipients,
+                should_use_docusign_renderer=False,
+            )
+        else:
+            components = self.docusign_service.create_group_ci_envelope_components(
+                data_wrap,
+                recipients,
+                should_user_docusign_renderer=False,
+            )
         return components, data_wrap
 
     def _create_import_recipients(self, case, enrollment_data):

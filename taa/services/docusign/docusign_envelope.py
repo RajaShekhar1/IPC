@@ -19,9 +19,13 @@ rider_service = RiderService()
 
 
 class EnrollmentDataWrap(object):
-    def __init__(self, wizard_data, case):
+    def __init__(self, wizard_data, case, enrollment_record=None):
         self.data = wizard_data
         self.case = case
+
+        # There are times we need the enrollment record (if it has already been created) to determine some aspect
+        #  of the enrollment, like which agent was the writing agent.
+        self.enrollment_record = enrollment_record
 
     def __getitem__(self, item):
         """Allow dict access to raw data"""
@@ -82,12 +86,9 @@ class EnrollmentDataWrap(object):
         if self.data.get('is_third_party'):
             return self.data['agent_name']
 
-        if not flask.has_request_context():
-            return '(TEST)'
-
         agent = self.get_signing_agent()
         if not agent:
-            return ''
+            return '(No Agent)'
 
         # Get stormpath user for agent
         agent_user = agent_service.get_agent_stormpath_account(agent)
@@ -103,12 +104,9 @@ class EnrollmentDataWrap(object):
         if self.data.get('is_third_party'):
             return self.data['agent_code']
 
-        if not flask.has_request_context():
-            return '(TEST)'
-
         agent = self.get_signing_agent()
         if not agent:
-            return ''
+            return '(No Agent)'
 
         return agent.agent_code
 
@@ -125,10 +123,14 @@ class EnrollmentDataWrap(object):
                                 'owner agent.')
         elif self.is_import():
             return self.case.owner_agent
+        elif self.enrollment_record and self.enrollment_record.agent_id is not None:
+            return agent_service.get(self.enrollment_record.agent_id)
         elif agent_service.get_logged_in_agent():
             return agent_service.get_logged_in_agent()
         elif self.data.get('agent_id'):
             return agent_service.get(self.data['agent_id'])
+        elif not flask.has_request_context():
+            return None
         else:
             # If the logged-in user is not an agent, default to case owner.
             return self.case.owner_agent
@@ -150,7 +152,7 @@ class EnrollmentDataWrap(object):
             return self.data['product_id']
 
     def get_employee_name(self):
-        return '{} {}'.format(self.data['employee']['first'],
+        return u'{} {}'.format(self.data['employee']['first'],
                               self.data['employee']['last'])
 
     def get_employee_first(self):
@@ -166,7 +168,7 @@ class EnrollmentDataWrap(object):
         return self.data['employee']['ssn']
 
     def get_spouse_name(self):
-        return '{} {}'.format(self.data['spouse']['first'],
+        return u'{} {}'.format(self.data['spouse']['first'],
                               self.data['spouse']['last'])
 
     def get_spouse_ssn(self):
@@ -292,7 +294,7 @@ class EnrollmentDataWrap(object):
 
     def get_employee_esignature(self):
         # Replace employee signature with "John Doe voice auth on file 02:45pm"
-        esig = "{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
+        esig = u"{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
         return self.data.get('emp_sig_txt', esig)
 
     def get_employee_esignature_date(self):
@@ -381,7 +383,7 @@ def build_callback_url(wizard_data, session_type):
     hostname = app.config.get('HOSTNAME', '5starenroll.com')
     scheme = 'https://' if is_ssl else 'http://'
     # note: DS supplies the last parm of 'event' in the callback
-    return ('{scheme}{hostname}/application_completed'
+    return (u'{scheme}{hostname}/application_completed'
             '?name={name}&type={session_type}'.format(
                 scheme=scheme,
                 hostname=hostname,
@@ -394,7 +396,7 @@ def build_callcenter_callback_url(case):
     hostname = app.config.get('HOSTNAME', '5starenroll.com')
     scheme = 'https://' if is_ssl else 'http://'
     # note: DS supplies the last parm of 'event' in the callback
-    return ('{scheme}{hostname}/enrollment-case/{case_id}#enrollment'.format(
+    return (u'{scheme}{hostname}/enrollment-case/{case_id}#enrollment'.format(
                 scheme=scheme,
                 hostname=hostname,
                 case_id=case.id,

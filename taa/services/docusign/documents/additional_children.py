@@ -76,12 +76,12 @@ class ChildAttachmentForm(PDFAttachment):
 
             row = [
                 str(num + self.starting_child_num),
-                Paragraph("%s %s"%(child['first'], child['last']), style),
+                Paragraph(u"{} {}".format(child['first'], child['last']), style),
                 child.get("ssn", ""),
                 gender,
                 child['birthdate'],
-                "$%s"%child['coverage'],
-                "$%s"%child['premium'],
+                u"${}".format(child['coverage']),
+                u"${}".format(child['premium']),
             ]
             child_table_data.append(row)
 

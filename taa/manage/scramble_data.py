@@ -163,14 +163,14 @@ class ScrambleDataCommand(Command):
             ]
 
             for enrollment_application in census.enrollment_applications:
-                beneficiary_attributes = [
-                    ('employee_beneficiary_name', lambda: '{} {}'.format(
+                beneficiary_attributes =[
+                    ('employee_beneficiary_name', lambda: u'{} {}'.format(
                             random.choice(firstNames),
                             random.choice(lastNames))),
-                    ('spouse_beneficiary_name', lambda: '{} {}'.format(
+                    ('spouse_beneficiary_name', lambda: u'{} {}'.format(
                             random.choice(firstNames),
                             random.choice(lastNames))),
-                    ('employee_other_owner_name', lambda: '{} {}'.format(
+                    ('employee_other_owner_name', lambda: u'{} {}'.format(
                             random.choice(firstNames),
                             random.choice(lastNames))),
                     ('employee_beneficiary_ssn', lambda: get_ssn()),
