@@ -512,19 +512,20 @@ Feature: Compute rates for products and associated riders.
       | 18  | 12   | $23,077 | $34,615 | $46,154 | $57,692 | $69,231 | $80,769 | $92,308 | $103,846 | $115,385 |
       | 23  | 12   | $23,077 | $34,615 | $46,154 | $57,692 | $69,231 | $80,769 | $92,308 | $103,846 | $115,385 |
 
-  Scenario: FPPCI product + WP Rider
-    Given I want rates for the 'FPPCI' product
-    When I lookup premiums by coverage with the above data for the following ages
-      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
-      | 18  | Employee       | IN    | 52   | Y        | N         | N         |
-      | 30  | Spouse         | IN    | 52   | Y        | N         | N         |
-      | 70  | Employee       | IN    | 52   | Y        | N         | N         |
-    Then I should see the following premiums
-      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
-      | 18  | $1.50   | $2.00   | $2.25   | $2.51   | $3.01   | $3.51   | $4.01   | $4.51   | $4.76   | $5.02   | $5.52   | $6.02    | $6.52    | $7.27    | $7.53    | $8.03    | $8.53    |
-      | 30  | $1.73   | $2.47   | $2.83   | $3.20   | $3.93   | $4.66   | $5.40   | $6.13   | $6.50   | $6.86   | $7.59   | $8.33    | $9.06    | $10.16   | $10.53   | $11.26   | $11.99   |
-      | 70  | $14.85  | $28.69  | $35.62  | $42.54  | $56.38  | $70.23  | $84.08  | $97.92  | $104.85 | $111.77 | $125.62 | $139.46  | $153.31  | $174.08  | $181.00  | $194.85  | $208.69  |
-
+# Apparently this doesn't exist, even though it is in the calculator and there is a rate table for it.
+#  Scenario: FPPCI product + WP Rider
+#    Given I want rates for the 'FPPCI' product
+#    When I lookup premiums by coverage with the above data for the following ages
+#      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+#      | 18  | Employee       | IN    | 52   | Y        | N         | N         |
+#      | 30  | Spouse         | IN    | 52   | Y        | N         | N         |
+#      | 70  | Employee       | IN    | 52   | Y        | N         | N         |
+#    Then I should see the following premiums
+#      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+#      | 18  | $1.50   | $2.00   | $2.25   | $2.51   | $3.01   | $3.51   | $4.01   | $4.51   | $4.76   | $5.02   | $5.52   | $6.02    | $6.52    | $7.27    | $7.53    | $8.03    | $8.53    |
+#      | 30  | $1.73   | $2.47   | $2.83   | $3.20   | $3.93   | $4.66   | $5.40   | $6.13   | $6.50   | $6.86   | $7.59   | $8.33    | $9.06    | $10.16   | $10.53   | $11.26   | $11.99   |
+#      | 70  | $14.85  | $28.69  | $35.62  | $42.54  | $56.38  | $70.23  | $84.08  | $97.92  | $104.85 | $111.77 | $125.62 | $139.46  | $153.31  | $174.08  | $181.00  | $194.85  | $208.69  |
+#
 
   Scenario: FPP-Gov product + WP Rider
     Given I want rates for the 'FPP-Gov' product
