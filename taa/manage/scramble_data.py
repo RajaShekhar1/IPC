@@ -107,9 +107,9 @@ class ScrambleDataCommand(Command):
 
             for enrollment_application in census.enrollment_applications:
                 beneficiary_attributes =[
-                    ("employee_beneficiary_name", lambda: "{} {}".format(random.choice(firstNames), random.choice(lastNames))),
-                    ("spouse_beneficiary_name", lambda: "{} {}".format(random.choice(firstNames), random.choice(lastNames))),
-                    ("employee_other_owner_name", lambda: "{} {}".format(random.choice(firstNames), random.choice(lastNames))),
+                    ("employee_beneficiary_name", lambda: u"{} {}".format(random.choice(firstNames), random.choice(lastNames))),
+                    ("spouse_beneficiary_name", lambda: u"{} {}".format(random.choice(firstNames), random.choice(lastNames))),
+                    ("employee_other_owner_name", lambda: u"{} {}".format(random.choice(firstNames), random.choice(lastNames))),
                     ("employee_beneficiary_ssn", lambda: get_ssn()),
                     ("spouse_beneficiary_ssn", lambda: get_ssn()),
                     ("employee_other_owner_ssn", lambda: get_ssn()),

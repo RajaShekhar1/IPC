@@ -191,6 +191,13 @@ TEMPLATE_ID_FPP_GENERIC = 'E26A7761-1ACF-4993-A2A1-2D021B79E68C'
 
 
 def get_product_application_forms():
+    group_ci_generic_soh_questions = [group_ci_family_member_history_question, group_ci_diagnosed_question,
+                                      group_ci_heart_question,
+                                      group_ci_hypertension_question, group_ci_lung_question, group_ci_skin_question,
+                                      group_ci_hpv_question,
+                                      group_ci_abnormal_question, group_ci_ever_rejected_question,
+                                      ]
+
     app_forms = {
         'FPPTI': [
             fpp_de_sd_vi_form,
@@ -256,7 +263,7 @@ def get_product_application_forms():
                             skip_if_coverage_at_most=10000,
                 ),
                 group_ci_ever_rejected_question,
-            ]),
+            ], docusign_template_id='C362F325-D174-4EDC-835E-21B3CFBA515E'),
 
             ApplicationForm('Group CI IL', ['IL'], [
                 group_ci_family_member_history_question,
@@ -309,22 +316,69 @@ def get_product_application_forms():
                      skip_if_coverage_at_most=10000,
                 ),
 
-            ]),
+            ], docusign_template_id='58825CDE-83B7-4570-91F6-311B9BC0B986'),
+
+            ApplicationForm(
+                'Group CI CA',
+                ["CA"],
+                group_ci_generic_soh_questions,
+                is_generic=False,
+                docusign_template_id='ADE890CA-3471-476C-8BAD-CD7F6EF9217D',
+            ),
+            ApplicationForm(
+                'Group CI CO',
+                ["CO"],
+                group_ci_generic_soh_questions,
+                is_generic=False,
+                docusign_template_id='4D8B3FE5-1CBB-4682-B245-E7C6AE469399',
+            ),
+            ApplicationForm(
+                'Group CI KS',
+                ["KS"],
+                group_ci_generic_soh_questions,
+                is_generic=False,
+                docusign_template_id='C777942F-A126-4E31-8496-2920F1AB2599',
+            ),
+            ApplicationForm(
+                'Group CI KY',
+                ["KY"],
+                group_ci_generic_soh_questions,
+                is_generic=False,
+                docusign_template_id='C362F325-D174-4EDC-835E-21B3CFBA515E',
+            ),
+            ApplicationForm(
+                'Group CI NC',
+                ["NC"],
+                group_ci_generic_soh_questions,
+                is_generic=False,
+                docusign_template_id='D497B7E0-A3BC-4C35-9182-85F3157C7BAE',
+            ),
+            ApplicationForm(
+                'Group CI NE',
+                ["NE"],
+                group_ci_generic_soh_questions,
+                is_generic=False,
+                docusign_template_id='1ADA1FC1-193D-4F61-AAE8-5DDBD5829617',
+            ),
+            ApplicationForm(
+                'Group CI PA',
+                ["PA"],
+                group_ci_generic_soh_questions,
+                is_generic=False,
+                docusign_template_id='235B2610-F9F9-44E3-929A-C7925C3C39BF',
+            ),
+            ApplicationForm(
+                'Group CI VA',
+                ["VA"],
+                group_ci_generic_soh_questions,
+                is_generic=False,
+                docusign_template_id='6D430309-5AC2-433B-A545-ABAD10B4D352',
+            ),
 
             ApplicationForm(
                 'Group CI Generic',
                 ["AL", "AZ", "AR", "GA", "IN", "IA", "LA", "MA", "MI", "MS", "NE", "NV", "NM", "OK", "SC", "TX", "UT", "WI"],
-                [
-                    group_ci_family_member_history_question,
-                    group_ci_diagnosed_question,
-                    group_ci_heart_question,
-                    group_ci_hypertension_question,
-                    group_ci_lung_question,
-                    group_ci_skin_question,
-                    group_ci_hpv_question,
-                    group_ci_abnormal_question,
-                    group_ci_ever_rejected_question,
-                ],
+                group_ci_generic_soh_questions,
                 is_generic=True,
                 docusign_template_id='B57234AB-5EA5-48D4-984F-D3BF07793B9B',
             ),

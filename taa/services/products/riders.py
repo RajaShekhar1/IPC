@@ -47,7 +47,7 @@ class RiderConfiguration(object):
         }
         rider_config_yaml = code_map.get(self.product_code)
         if not rider_config_yaml:
-            raise ValueError("Riders not configured for base product {}".format(self.product_code))
+            raise ValueError(u"Riders not configured for base product {}".format(self.product_code))
 
         return yaml.load(rider_config_yaml)
 
@@ -190,7 +190,7 @@ class RiderCompatibility(object):
 
             # Check for invalid rider for this product.
             if not configured_rider:
-                self.add_error("Rider '{}' is not available for this product".format(requested_rider))
+                self.add_error(u"Rider '{}' is not available for this product".format(requested_rider))
                 self.incompatible_riders.append(requested_rider)
                 continue
 

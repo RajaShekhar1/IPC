@@ -128,7 +128,7 @@ class StormPathAuthorizer(object):
             account = self.stormpath_application.authenticate_account(username, password).account
         except StormpathError as err:
             msg = err.message['message'] if hasattr(err, 'message') and err.message and err.message.get('message') else ''
-            raise AuthenticationFailed("Authentication failed: {}".format(msg))
+            raise AuthenticationFailed(u"Authentication failed: {}".format(msg))
 
         # TODO: Validate user group
         if not UserService().can_user_submit_enrollments(account):
@@ -224,7 +224,7 @@ def main(port, certfile, upload_url, auth_token):
 
 if __name__ == '__main__':
     if not len(sys.argv) == 5:
-        print("Usage: {} port certfile upload_endpoint user_token".format(sys.argv[0]))
+        print(u"Usage: {} port certfile upload_endpoint user_token".format(sys.argv[0]))
         sys.exit(1)
 
     port = sys.argv[1]

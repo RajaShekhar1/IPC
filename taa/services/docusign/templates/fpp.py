@@ -224,8 +224,8 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignTextTab(child_prefix + "LName", child_data['last']),
             DocuSignTextTab(child_prefix + "DOB", child_data['birthdate']),
             DocuSignTextTab(child_prefix + "SSN", self.format_ssn(child_data['ssn'])),
-            DocuSignTextTab(child_prefix + "Coverage", format(Decimal(unicode(child_coverage["face_value"])), ",.0f") if child_coverage else ""),
-            DocuSignTextTab(child_prefix + "Premium", format(Decimal(unicode(child_coverage["premium"])), ",.2f") if child_coverage else ""),
+            DocuSignTextTab(child_prefix + "Coverage", format(Decimal(unicode(child_coverage["face_value"]), 'utf-8'), ",.0f") if child_coverage else ""),
+            DocuSignTextTab(child_prefix + "Premium", format(Decimal(unicode(child_coverage["premium"]), 'utf-8'), ",.2f") if child_coverage else ""),
             DocuSignRadioTab(child_prefix + "Gender", child_data["gender"]),
         ]
 
@@ -347,10 +347,10 @@ class FPPTemplate(DocuSignServerTemplate):
         agent_signing_name = self.data.get_agent_signing_name()
 
         if self.data['spouse_owner'] == "other":
-            spouse_owner_notice = "SPOUSE POLICY OWNER: {}, {}".format(self.data['spouse_other_owner_name'], self.data['spouse_other_owner_ssn'])
+            spouse_owner_notice = u"SPOUSE POLICY OWNER: {}, {}".format(self.data['spouse_other_owner_name'], self.data['spouse_other_owner_ssn'])
         elif self.data['spouse_owner'] == "self":
             # Spouse data
-            spouse_owner_notice = "SPOUSE POLICY OWNER: {}, {}".format(self.data.get_spouse_name(),
+            spouse_owner_notice = u"SPOUSE POLICY OWNER: {}, {}".format(self.data.get_spouse_name(),
                                                                        self.data.get_spouse_ssn())
         else:
             spouse_owner_notice = ""

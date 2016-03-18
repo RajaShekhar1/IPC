@@ -33,7 +33,9 @@ var wizard_viewmodel = (function () {
       }
       if (this.applicants.has_valid_children() && this.should_include_children()) {
         _.each(this.applicants.get_children(), function (c) {
-          applicants_in_table.push(c);
+          if (c.any_valid_field()) {
+            applicants_in_table.push(c);
+          }
         });
       }
       return applicants_in_table;
@@ -389,13 +391,7 @@ var wizard_viewmodel = (function () {
         self.spouse_contingent_beneficiary_type() === 'spouse' &&
         self.spouse_beneficiary_type() === 'spouse'
       );
-      return (
-        self.should_show_contingent_beneficiary()
-        && (
-          employee_beneficiary_error
-          || spouse_beneficiary_error
-        )
-      );
+      return (self.should_show_contingent_beneficiary() && (employee_beneficiary_error || spouse_beneficiary_error));
     });
 
     // Shortcut methods for the "Spouse-only" questions for FPP products.
@@ -506,7 +502,7 @@ var wizard_viewmodel = (function () {
     // This raw method should not be used outside this class.
     __get_coverage_for_applicant: function (applicant) {
       // special case for group of children; if a child applicant is passed, use the group coverage
-      if (applicant.type == wizard_applicant.Applicant.ChildType) {
+      if (applicant.type === wizard_applicant.Applicant.ChildType) {
         applicant = this.applicant_list.get_children_group();
       }
 
@@ -1785,7 +1781,21 @@ var wizard_viewmodel = (function () {
       });
 
       function is_child_name_required(element) {
-        return true;
+        if ($(element).attr("id") === "child-first-0" ||
+          $(element).attr("id") === "child-last-0" ||
+          $(element).attr("id") === "child-dob-0"
+        ) {
+          // Treat the first child as always required if
+          // the children checkbox is checked
+          return self.should_include_children();
+        }
+
+        var child = ko.dataFor(element);
+        if (!child) {
+          return false;
+        }
+
+        return child.any_valid_field();
       }
 
       function is_child_field_required(element) {
