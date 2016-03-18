@@ -20,7 +20,7 @@ from taa.models import db
 from taa.old_model.States import get_states
 from taa.services.products.states import get_all_states
 from taa.services.products import get_payment_modes, is_payment_mode_changeable, get_full_payment_modes
-from taa.services.docusign.service import DocusignEnvelope
+from taa.services.docusign.service import create_multiproduct_envelope_and_fetch_signing_url, DocusignEnvelope
 from taa.services.products.riders import RiderService
 from taa.services import LookupService
 
@@ -336,8 +336,8 @@ def self_enrollment(company_name, uuid):
         })
     elif case:
         vars.update({
-            'page_title': u'Enrollment service for {} not available'.format(case.company_name),
-            'error_message': u'''We're sorry for the inconvenience, but {} is not currently accepting benefit enrollments.<br><br>
+            'page_title': 'Enrollment service for {} not available'.format(case.company_name),
+            'error_message': '''We're sorry for the inconvenience, but {} is not currently accepting benefit enrollments.<br><br>
             Please contact your enrollment or benefit representative if you have any questions.'''.format(case.company_name)
 
         })
@@ -404,23 +404,19 @@ def submit_wizard_data():
     print("[ENROLLMENT SUBMITTED]")
 
     try:
-        enrollment = process_wizard_submission(case, wizard_results)
+        redirect_url = process_wizard_submission(case, wizard_results)
 
-        # Store the enrollment record ID in the session for now so we can access it on the landing page.
-        session['enrollment_application_id'] = enrollment.id
-
-        # Queue this call for a worker process to handle.
-        enrollment_submission_service = LookupService('EnrollmentSubmissionService')
-        enrollment_submission_service.submit_wizard_enrollment(enrollment)
-
-        return jsonify(**{
-            'error': False,
-            'poll_url': url_for('check_submission_status', enrollment_id=enrollment.id),
-            'enrollment_id': enrollment.id,
-        })
+        # Need to manually commit all changes since this doesn't go through the API
+        db.session.commit()
     except Exception:
-        print(u"[ENROLLMENT SUBMISSION ERROR]: (case {}) {}".format(case_id, wizard_results))
+        print("[ENROLLMENT SUBMISSION ERROR]: (case {}) {}".format(case_id, wizard_results))
         raise
+
+    return jsonify(**{
+        'error': False,
+        'error_message': '',
+        'redirect': redirect_url
+    })
 
 
 def process_wizard_submission(case, wizard_results):
@@ -430,53 +426,27 @@ def process_wizard_submission(case, wizard_results):
 
     # Save enrollment information and updated census data prior to DocuSign hand-off
     census_record = get_or_create_census_record(case, enrollment_data)
+
     enrollment_application = get_or_create_enrollment(case, census_record, standardized_data, wizard_results)
-    db.session.commit()
 
-    return enrollment_application
+    # Store the enrollment record ID in the session for now so we can access it on the landing page.
+    session['enrollment_application_id'] = enrollment_application.id
 
-
-@app.route('/check-submission-status', methods=['GET'])
-def check_submission_status():
-    enrollment_id = int(request.args['enrollment_id'])
-
-    # For security, make sure we just submitted this enrollment (set up in submit_wizard_data.
-    if not session.get('enrollment_application_id') == enrollment_id:
-        abort(403)
-
-    enrollment = enrollment_service.get(enrollment_id)
-    received_enrollment_data = json.loads(enrollment.received_data)
-    standardized_enrollment_data = json.loads(enrollment.standardized_data)
-
-    if are_all_products_declined(received_enrollment_data):
+    # DocuSign submission
+    if all(map(lambda data: data.get('did_decline'), standardized_data)):
         # Declined enrollment, return redirect to our landing page.
-        redirect_url = url_for('ds_landing_page',
-                       event='decline',
-                       name=received_enrollment_data[0]['employee']['first'],
-                       type='inperson' if received_enrollment_data[0]["method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
-                       )
-        return jsonify(status="declined", redirect_url=redirect_url)
-    elif enrollment.docusign_envelope_id is not None:
-        # Done processing this envelope, get the signing URL
-        envelope = DocusignEnvelope(enrollment.docusign_envelope_id, enrollment_record=enrollment)
-        data_wrap = EnrollmentDataWrap(standardized_enrollment_data[0], enrollment.case)
-        return jsonify(**{'status': 'ready', 'redirect_url': get_envelope_signing_url(data_wrap, envelope)})
+        return url_for('ds_landing_page',
+            event='decline',
+            name=wizard_results[0]['employee']['first'],
+            type='inperson' if wizard_results[0]["method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
+        )
     else:
-        # Not done processing yet
-        return jsonify(status="pending")
+        # Get or create envelope.
+        envelope = get_or_create_envelope(case, enrollment_application, standardized_data)
 
+        # Fetch signing URL
+        return get_envelope_signing_url(enrollment_data, envelope)
 
-def are_all_products_declined(standardized_data):
-    return all(map(lambda data: data.get('did_decline'), standardized_data))
-
-
-# def submit_enrollment_to_docusign(case, enrollment_application, enrollment_data, standardized_data, wizard_results):
-#     # DocuSign submission
-#     # Get or create envelope.
-#     envelope = get_or_create_envelope(case, enrollment_application, standardized_data)
-#
-#     # Fetch signing URL
-#     return get_envelope_signing_url(enrollment_data, envelope)
 
 
 def get_enrollment_agent(case):
@@ -517,6 +487,39 @@ def get_or_create_enrollment(case, census_record, standardized_data, wizard_resu
 
     return enrollment_application
 
+
+def get_or_create_envelope(case, enrollment_application, standardized_data):
+
+    envelope = get_existing_envelope(enrollment_application)
+
+    if not envelope:
+        # Create the envelope
+        docusign_service = LookupService('DocuSignService')
+        in_person_signer, envelope = docusign_service.create_multiproduct_envelope(standardized_data, case)
+
+        # Save envelope ID on enrollment
+        enrollment_service.save_docusign_envelope(enrollment_application, envelope)
+
+    return envelope
+
+
+def get_existing_envelope(enrollment_application):
+
+    if enrollment_application.docusign_envelope_id:
+        # We already have an envelope created in docusign, just use that one.
+        envelope = DocusignEnvelope(enrollment_application.docusign_envelope_id, enrollment_application)
+
+        # We do want to make sure that the enrollment status is up-to-date, though.
+        envelope.update_enrollment_status()
+
+
+        if envelope.enrollment_record.is_voided():
+            # If the envelope is voided, we will just create a new envelope to replace it.
+            return None
+
+        return envelope
+
+    return None
 
 def get_envelope_signing_url(enrollment_data, envelope):
     if enrollment_data.should_use_call_center_workflow():
@@ -643,3 +646,11 @@ def delimited_file_documentation_html():
     from taa.services.data_import.file_import import CSVFileDocumentation
     documentation = CSVFileDocumentation.generate_html_docs()
     return Response(documentation)
+<<<<<<< HEAD
+
+@app.route('/json_api_documentation.html')
+def json_api_docs():
+    from taa.services.enrollments.enrollment_api_docs import JSONImportDocumentation
+    return Response(JSONImportDocumentation().toHTML())
+=======
+>>>>>>> master

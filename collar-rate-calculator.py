@@ -80,9 +80,9 @@ def create_by_coverage():
                     for amount in amounts:
                         value = round((((amount * mode) - policy_fee) * 1000) / acpt[plan][age - 18], 0)
                         if 5000 <= value <= 150000:
-                            values.append('{:.0f}'.format(value))
+                            values.append(u'{:.0f}'.format(value))
                         else:
-                            values.append('')
+                            values.append(u'')
                     writer.writerow(values)
 
 

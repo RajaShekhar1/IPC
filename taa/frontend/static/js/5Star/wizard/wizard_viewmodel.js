@@ -25,21 +25,23 @@ var wizard_viewmodel = (function () {
 
       this.multiproduct_wizard_widget = ko.observable(null);
 
-      this.applicants_in_table = ko.computed(function () {
-        var applicants_in_table = [];
-        if (this.applicants.has_valid_employee()) {
-          applicants_in_table.push(this.applicants.get_employee());
-        }
-        if (this.applicants.has_valid_spouse() && this.should_include_spouse()) {
-          applicants_in_table.push(this.applicants.get_spouse());
-        }
-        if (this.applicants.has_valid_children() && this.should_include_children()) {
-          _.each(this.applicants.get_children(), function (c) {
+    this.applicants_in_table = ko.computed(function () {
+      var applicants_in_table = [];
+      if (this.applicants.has_valid_employee()) {
+        applicants_in_table.push(this.applicants.get_employee());
+      }
+      if (this.applicants.has_valid_spouse() && this.should_include_spouse()) {
+        applicants_in_table.push(this.applicants.get_spouse());
+      }
+      if (this.applicants.has_valid_children() && this.should_include_children()) {
+        _.each(this.applicants.get_children(), function (c) {
+          if (c.any_valid_field()) {
             applicants_in_table.push(c);
-          });
-        }
-        return applicants_in_table;
-      }, this);
+          }
+        });
+      }
+      return applicants_in_table;
+    }, this);
 
       // Payment mode
       this.payment_modes = _.map(all_payment_modes || [], function (pm) {
@@ -379,23 +381,19 @@ var wizard_viewmodel = (function () {
         return self.product.should_show_contingent_beneficiary();
       };
 
-      self.has_contingent_beneficiary_error = ko.computed(function () {
-        var employee_beneficiary_error = (
-          self.employee_contingent_beneficiary_type() === 'spouse' &&
-          self.employee_beneficiary_type() === 'spouse'
-        );
-        var spouse_beneficiary_error = (
-          self.did_select_spouse_coverage() &&
-          self.should_show_contingent_beneficiary() &&
-          self.spouse_contingent_beneficiary_type() === 'spouse' &&
-          self.spouse_beneficiary_type() === 'spouse'
-        );
-        return (
-          self.should_show_contingent_beneficiary() && (
-            employee_beneficiary_error || spouse_beneficiary_error
-          )
-        );
-      });
+    self.has_contingent_beneficiary_error = ko.computed(function () {
+      var employee_beneficiary_error = (
+        self.employee_contingent_beneficiary_type() === 'spouse' &&
+        self.employee_beneficiary_type() === 'spouse'
+      );
+      var spouse_beneficiary_error = (
+        self.did_select_spouse_coverage() &&
+        self.should_show_contingent_beneficiary() &&
+        self.spouse_contingent_beneficiary_type() === 'spouse' &&
+        self.spouse_beneficiary_type() === 'spouse'
+      );
+      return (self.should_show_contingent_beneficiary() && (employee_beneficiary_error || spouse_beneficiary_error));
+    });
 
       // Shortcut methods for the "Spouse-only" questions for FPP products.
       self.has_spouse_been_treated_6_months = ko.pureComputed(function () {
@@ -502,12 +500,12 @@ var wizard_viewmodel = (function () {
         //})
       },
 
-      // This raw method should not be used outside this class.
-      __get_coverage_for_applicant: function (applicant) {
-        // special case for group of children; if a child applicant is passed, use the group coverage
-        if (applicant.type == wizard_applicant.Applicant.ChildType) {
-          applicant = this.applicant_list.get_children_group();
-        }
+    // This raw method should not be used outside this class.
+    __get_coverage_for_applicant: function (applicant) {
+      // special case for group of children; if a child applicant is passed, use the group coverage
+      if (applicant.type === wizard_applicant.Applicant.ChildType) {
+        applicant = this.applicant_list.get_children_group();
+      }
 
         var applicant_coverage;
         if (applicant._id in this._applicant_coverage_viewmodels) {
@@ -1881,9 +1879,23 @@ var wizard_viewmodel = (function () {
           }
         });
 
-        function is_child_name_required(element) {
-          return true;
+      function is_child_name_required(element) {
+        if ($(element).attr("id") === "child-first-0" ||
+          $(element).attr("id") === "child-last-0" ||
+          $(element).attr("id") === "child-dob-0"
+        ) {
+          // Treat the first child as always required if
+          // the children checkbox is checked
+          return self.should_include_children();
         }
+
+        var child = ko.dataFor(element);
+        if (!child) {
+          return false;
+        }
+
+        return child.any_valid_field();
+      }
 
         function is_child_field_required(element) {
           // Treat the first child as always required if the children checkbox is checked
