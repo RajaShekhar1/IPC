@@ -43,9 +43,10 @@ def enroll_start():
     if session.get('active_case_id') and should_show_next_applicant:
         # We no longer use the separate setup enrollment page, forward agent to manage_case page
         case = case_service.get_if_allowed(session['active_case_id'])
-        return redirect(location=url_for('manage_case', case_id=case.id)+"#enrollment")
+        return redirect(location=url_for('manage_case', case_id=case.id) + "#enrollment")
 
     abort(404)
+
 
 #
 # # Wizard
@@ -135,7 +136,6 @@ def in_person_enrollment():
 
 
 def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False):
-
     # Defaults for session enrollment variables.
     session['active_case_id'] = case.id
     session['enrolling_census_record_id'] = None
@@ -200,7 +200,8 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         children_data = []
 
     # Validate that we can enroll in the product for this state - do we have a form?
-    if not any(product_form_service.form_for_product_code_and_state(p.get_base_product_code(), state) for p in products):
+    if not any(
+            product_form_service.form_for_product_code_and_state(p.get_base_product_code(), state) for p in products):
         # Change the state back to the case state to allow them to continue?
         state = case.situs_state
 
@@ -233,6 +234,14 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     if any_fpp_product:
         fpp_base_product_code = fpp_products[0].get_base_product_code()
 
+    from taa.services.products.rates import get_height_weight_table_for_product
+
+    height_weight_tables = dict()
+    for product in products:
+        table = get_height_weight_table_for_product(product)
+        if table is not None:
+            height_weight_tables[product.get_base_product_code()] = table
+
     wizard_data = dict(
         is_in_person=not is_self_enroll,
         case_data={
@@ -246,8 +255,9 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'product_settings': case.product_settings if case.product_settings else {},
             'account_href': current_user.get_id(),
             'record_id': record_id,
+            'product_height_weight_tables': height_weight_tables
         },
-        applicants= applicants,
+        applicants=applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in case.products],
         payment_modes=payment_mode_choices,
         spouse_questions=spouse_questions,
@@ -316,8 +326,8 @@ def self_enrollment(company_name, uuid):
             selected_city = census_record.employee_city or census_record.case.situs_city
             vars.update(
                 {'is_enrolled':
-                 enrollment_service.get_enrollment_status(
-                     census_record) == 'enrolled'})
+                     enrollment_service.get_enrollment_status(
+                         census_record) == 'enrolled'})
         else:
             selected_state = setup.case.situs_state
             selected_city = setup.case.situs_city
@@ -338,7 +348,8 @@ def self_enrollment(company_name, uuid):
         vars.update({
             'page_title': u'Enrollment service for {} not available'.format(case.company_name),
             'error_message': u'''We're sorry for the inconvenience, but {} is not currently accepting benefit enrollments.<br><br>
-            Please contact your enrollment or benefit representative if you have any questions.'''.format(case.company_name)
+            Please contact your enrollment or benefit representative if you have any questions.'''.format(
+                case.company_name)
 
         })
     else:
@@ -349,6 +360,7 @@ def self_enrollment(company_name, uuid):
         })
 
     return render_template('enrollment/landing_page.html', **vars)
+
 
 # Begin application from self-enrollment landing page.
 @app.route('/self-enrollment', methods=['POST'])
@@ -392,7 +404,6 @@ def get_case_enrollment_data(case):
 
 @app.route('/submit-wizard-data', methods=['POST'])
 def submit_wizard_data():
-
     if session.get('active_case_id') is None:
         abort(401)
 
@@ -451,10 +462,11 @@ def check_submission_status():
     if are_all_products_declined(received_enrollment_data):
         # Declined enrollment, return redirect to our landing page.
         redirect_url = url_for('ds_landing_page',
-                       event='decline',
-                       name=received_enrollment_data[0]['employee']['first'],
-                       type='inperson' if received_enrollment_data[0]["method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
-                       )
+                               event='decline',
+                               name=received_enrollment_data[0]['employee']['first'],
+                               type='inperson' if received_enrollment_data[0][
+                                                      "method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
+                               )
         return jsonify(status="declined", redirect_url=redirect_url)
     elif enrollment.docusign_envelope_id is not None:
         # Done processing this envelope, get the signing URL
@@ -554,6 +566,7 @@ def ds_landing_page():
                            nav_menu=get_nav_menu(),
                            )
 
+
 # TODO: just use this route in the future rather than adding more individual
 # routes for files
 @app.route('/pdfs/<file_name>')
@@ -625,18 +638,20 @@ def FPPCI_disclosure_VA():
         'pdfs/FPPCI_disclosure_VA.pdf')
 
 
-#Public flat file documenation endpoints
+# Public flat file documenation endpoints
 @app.route('/flat_file_documentation.pdf')
 def flat_file_documentation():
     return send_from_directory(
         os.path.join(app.root_path, 'frontend', 'static'),
         'pdfs/documentation/flat_file_documentation.pdf')
 
+
 @app.route('/flat_file_documentation.html')
 def flat_file_documentation_html():
     from taa.services.data_import.file_import import FlatFileDocumentation
     documentation = FlatFileDocumentation.generate_html_docs()
     return Response(documentation)
+
 
 @app.route('/delimited_file_import_documentation.html')
 def delimited_file_documentation_html():

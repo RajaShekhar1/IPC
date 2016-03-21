@@ -91,7 +91,6 @@ def get_rates(product, **demographics):
 
 
 def is_eligible(product_code, sex, height, weight):
-
     # Skip eligibility check if any criteria is not provided.
     if sex is None or height is None or weight is None:
         return True
@@ -275,6 +274,22 @@ class GILimitedRatesDecorator(Rates):
 
         # Use the highest number that is allowed for this applicant
         return max(criteria_for_applicant, key=lambda c: c.guarantee_issue_amount).guarantee_issue_amount
+
+
+def get_height_weight_table_for_product(product):
+    global ELIGIBILITIES
+    if ELIGIBILITIES is None:
+        initialize_eligibilities_from_files()
+    base_product_code = product.get_base_product_code()
+    if base_product_code in ELIGIBILITIES:
+        tables = dict()
+        for applicant_sex in ['female', 'male']:
+            eligibility = ELIGIBILITIES[base_product_code][applicant_sex]
+            tables[applicant_sex] = [{'height': e, 'min_weight': eligibility[e][0], 'max_weight': eligibility[e][1]} for
+                                     e in eligibility]
+        return tables
+
+    return None
 
 
 # If a product is not in this dict, there are no limits on eligibility
