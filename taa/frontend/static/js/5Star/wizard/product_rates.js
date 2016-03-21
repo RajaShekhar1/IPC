@@ -145,7 +145,9 @@ var product_rates_service = (function() {
     var requests = _.map(products, function(product) {
       var enabled_riders = coverage_vm.get_enabled_riders_for_product(product);
       var data = _build_rate_parameters(payment_mode, applicant_list, statecode, enabled_riders);
-      return remote_service.get_product_rates(product.product_data.id, data);
+      var request = remote_service.get_product_rates(product.product_data.id, data);
+      request.product_id = product.product_data.id;
+      return request;
     });
 
     function process_product_rates() {
@@ -164,7 +166,7 @@ var product_rates_service = (function() {
 
         // Find the matching product, call set_rates
         var product = _.find(products, function (p) {
-          return p.product_data.id === product_rates.product_id
+          return p.product_data.id === product_rates.product_id;
         }, this);
 
         var product_rates_viewmodel = get_or_create_product_rates_viewmodel(product);

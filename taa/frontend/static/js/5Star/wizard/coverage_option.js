@@ -72,11 +72,13 @@ function CoverageOption(options) {
 
 
   function NullCoverageOption() {
+    'use strict';
     var self = this;
 
     self.is_by_face = true;
     self.premium = 0;
     self.face_value = 0;
+    self.is_removed_from_product = ko.observable(false);
 
     self.is_valid = function() {
       return false;
@@ -100,7 +102,7 @@ function CoverageOption(options) {
       return "- no benefit -";
     };
     self.serialize_data = function() {
-      return {}
+      return {};
     };
     self.payment_mode = function() {
       return null;
