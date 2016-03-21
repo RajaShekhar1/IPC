@@ -1042,12 +1042,99 @@ var wizard_viewmodel = (function () {
           );
           self.validators.step2.resetForm();
           self.validators.step2.form();
+          self.show_height_weight_dialog_if_invalid();
         }
       } else {
         handle_remote_error(resp, function () {});
       }
     };
     //endregion
+
+    function show_height_weight_error(product, applicant) {
+      var health_questions_vm = _.find(self.selected_product_health_questions(), function (health_question_vm) {
+        return health_question_vm.product_coverage.product.product_data.id === product.product_data.id;
+      });
+      health_questions_vm.show_yes_dialogue(
+        applicant,
+        "This applicant is not within the height and weight" +
+        " requirements for '" + product.product_data.name + "'. You may proceed with this application after" +
+        " removing this individual from the coverage selection before proceeding."
+      );
+    }
+
+    function get_row_for_height(table, height) {
+      return _.find(table, function (row) {
+        return row.height === height;
+      });
+    }
+
+    function is_applicant_height_valid(product_tables, product, applicant) {
+      if (!product_tables || !product || !applicant) {
+        return false;
+      }
+      var result;
+      var gender = applicant.gender();
+      var height = applicant.height();
+      if (typeof height === 'string') {
+        height = parseInt(height);
+      }
+      try {
+        var gender_tables = product_tables[product.product_data.base_product_type];
+        var table = gender_tables[gender];
+        result = !!get_row_for_height(table, height);
+      } catch (ignored) {
+        result = false;
+      }
+      return result;
+    }
+
+    function is_applicant_weight_valid(product_tables, product, applicant) {
+      if (!product_tables || !product || !applicant) {
+        return false;
+      }
+      var result;
+      var gender = applicant.gender();
+      var height = applicant.height();
+      var weight = applicant.weight();
+      if (typeof height === 'string') {
+        height = parseInt(height);
+      }
+      if (typeof weight === 'string') {
+        weight = parseInt(weight);
+      }
+      try {
+        var table = product_tables[product.product_data.base_product_type][gender];
+        var row = get_row_for_height(table, height);
+        result = weight > row.min_weight && weight < row.max_weight;
+      } catch (ignored) {
+        result = false;
+      }
+      return result;
+    }
+
+    self.show_height_weight_dialog_if_applicants_invalid = function () {
+      var is_employee_invalid = _.any(self.products, function (product) {
+        return !is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.employee()) || !product.requires_additional_information();
+      });
+      if (is_employee_invalid) {
+        show_height_weight_error(_.first(self.products, function (product) { return product.requires_additional_information(); }), self.employee());
+        return;
+      }
+      var is_spouse_invalid = _.any(self.products, function (product) {
+        return (self.should_show_spouse() && !is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.spouse())) || !product.requires_additional_information();
+      });
+      if (is_spouse_invalid) {
+        show_height_weight_error(_.first(self.products, function (product) { return product.requires_additional_information(); }), self.spouse());
+      }
+    };
+
+    var observables = [self.employee().height, self.employee().weight];
+    if (self.should_show_spouse()) {
+      observables.push(self.spouse().height, self.spouse().weight);
+    }
+    _.forEach(observables, function (observable) {
+      observable.subscribe(function () {self.show_height_weight_dialog_if_applicants_invalid();});
+    });
 
     self.should_allow_grandchildren = ko.computed(function () {
       return !!self.products && self.products.length === 1 && _.some(self.products, function (product) {
@@ -1352,7 +1439,7 @@ var wizard_viewmodel = (function () {
     };
 
     self.is_in_person_application = function () {
-      return 'is_in_person' in options && options.is_in_person
+      return 'is_in_person' in options && options.is_in_person;
     };
     self.is_self_enroll = function () {
       return !self.is_in_person_application()
@@ -1663,35 +1750,6 @@ var wizard_viewmodel = (function () {
         subscribe_to_boolean_changes(self.spouse().is_smoker, self.show_smoker_status_changed_dialog, self.spouse());
       }
 
-      function update_rates_if_height_weight_are_valid() {
-        var employee_height = self.employee().height();
-        var employee_weight = self.employee().weight();
-        if (employee_weight && typeof employee_weight === 'string') {
-          employee_weight = parseInt(employee_weight);
-        }
-        var is_employee_height_and_weight_valid = _.isNumber(employee_height) && _.isNumber(employee_weight);
-        var is_spouse_height_and_weight_valid = true;
-        if (self.spouse()) {
-          var spouse_height = self.spouse().height();
-          var spouse_weight = self.spouse().weight();
-          if (spouse_weight && typeof spouse_weight === 'string') {
-            spouse_weight = parseInt(spouse_weight);
-          }
-          is_spouse_height_and_weight_valid = (spouse_height === null && spouse_height === null) || (_.isNumber(spouse_height) && _.isNumber(spouse_weight));
-        }
-        if (is_employee_height_and_weight_valid && is_spouse_height_and_weight_valid) {
-          self.refresh_rate_table();
-        }
-      }
-
-      var height_weight_observables = [self.employee().height, self.employee().weight];
-      if (self.spouse()) {
-        height_weight_observables.push(self.spouse().height, self.spouse().weight);
-      }
-      _.forEach(height_weight_observables, function (observable) {
-        observable.subscribe(update_rates_if_height_weight_are_valid);
-      });
-
       self.children = ko.computed(function () {
         return self.applicant_list.get_children();
       });
@@ -1746,16 +1804,36 @@ var wizard_viewmodel = (function () {
       });
 
       $.validator.addMethod("empHeightLimit", function (val, el, params) {
-        return self.employee().height_error() == null || !requires_additional_employee_information();
+        return _.chain(self.products)
+            .filter(function (product) {
+              return product.requires_additional_information();
+            }).all(function (product) {
+              return is_applicant_height_valid(self.enrollment_case.product_height_weight_tables, product, self.employee());
+            }).value() || !requires_additional_employee_information();
       }, "The height or weight entered is outside the limits for this product.");
       $.validator.addMethod("empWeightLimit", function (val, el, params) {
-        return self.employee().weight_error() == null || !requires_additional_employee_information();
+        return _.chain(self.products)
+            .filter(function (product) {
+              return product.requires_additional_information();
+            }).all(function (product) {
+              return is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.employee());
+            }).value() || !requires_additional_employee_information();
       }, "The height or weight entered is outside the limits for this product.");
       $.validator.addMethod("spHeightLimit", function (val, el, params) {
-        return self.spouse().height_error() == null || !requires_additional_spouse_information();
+        return _.chain(self.products)
+            .filter(function (product) {
+              return product.requires_additional_information();
+            }).all(function (product) {
+              return is_applicant_height_valid(self.enrollment_case.product_height_weight_tables, product, self.spouse());
+            }).value() || !requires_additional_employee_information();
       }, "The height or weight entered is outside the limits for this product.");
       $.validator.addMethod("spWeightLimit", function (val, el, params) {
-        return self.spouse().weight_error() == null || !requires_additional_spouse_information();
+        return _.chain(self.products)
+            .filter(function (product) {
+              return product.requires_additional_information();
+            }).all(function (product) {
+              return is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.spouse());
+            }).value() || !requires_additional_employee_information();
       }, "The height or weight entered is outside the limits for this product.");
 
       $.validator.addMethod("isValidPaymentMode", function (value, element) {
