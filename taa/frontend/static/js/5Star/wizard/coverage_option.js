@@ -152,9 +152,10 @@ function SimpleCoverageOption(options) {
 function NullCoverageOption() {
   var self = this;
 
-  self.is_by_face = true;
-  self.premium = 0;
-  self.face_value = 0;
+    self.is_by_face = true;
+    self.premium = 0;
+    self.face_value = 0;
+    self.is_removed_from_product = ko.observable(false);
 
   self.is_valid = function () {
     return false;

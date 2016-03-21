@@ -42,7 +42,7 @@ var wizard_applicant = (function () {
 
     // Extended questions
     self.height = ko.observable(parseFloat(applicant_data.height) ? parseFloat(applicant_data.height) : null);
-    self.weight = ko.observable(applicant_data.weight);
+    self.weight = ko.observable(applicant_data.weight || null);
     self.is_smoker = ko.observable(applicant_data.is_smoker);
 
     self.height_error = ko.observable(null);

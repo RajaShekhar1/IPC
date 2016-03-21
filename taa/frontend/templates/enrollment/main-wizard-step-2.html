@@ -1,4 +1,3 @@
-
 <div class="step-pane" id="step2" data-step="2">
   <form class="form-horizontal" id="questions-form">
 
@@ -6,15 +5,79 @@
       <h3 class="lighter block green text-center">This step does noy apply - no products selected require this step.</h3>
     </div>
 
+    <script id="extended-information-template" type="text/html">
+      <div class="row">
+          <h4 class="col-xs-12">Additional Qualification Questions for <span data-bind="text: first() + ' ' + last()"></span></h4>
+        </div>
+        <div class="form-group">
+          <!--ko if: $root.should_show_gender() -->
+          <div class="col-xs-10 col-sm-4">
+            <div>
+              <label style="margin-right: 1em;">
+                <input type="radio" value="male" class="ace"
+                       data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
+                <span class="lbl"> Male</span>
+              </label>
+              <label>
+                <input type="radio" value="female" class="ace"
+                       data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
+                <span class="lbl"> Female</span>
+              </label>
+            </div>
+          </div>
+          <!--/ko-->
+          <!--ko if: $root.should_show_smoker() -->
+          <div class="col-xs-10 col-sm-4">
+            <label style="margin-right: 1em;">
+              <input type="radio" class="ace"
+                     data-bind="checked: is_smoker, checkedValue: false, attr: {name: 'tobacco-'+$data._id}">
+              <span class="lbl"> Non-Smoker</span>
+            </label>
+            <label>
+              <input type="radio" class="ace"
+                     data-bind="checked: is_smoker, checkedValue: true, attr: {name: 'tobacco-'+$data._id}">
+              <span class="lbl"> Smoker</span>
+            </label>
+          </div>
+          <!--/ko-->
+        </div>
+        <div class="form-group" data-bind="attr: { id: type.toLowerCase() + '-height-weight' }">
+          <!--ko if: $root.should_show_height() -->
+          <div class="col-xs-10 col-sm-4">
+            <height-select class="height" params="value: height, name_suffix: $data._id+''"></height-select>
+          </div>
+          <!--/ko-->
+          <!--ko if: $root.should_show_weight() -->
+          <div class="col-xs-10 col-sm-4">
+            <label class="">
+              Weight: <input type="number" class="text-right" max="9999" min="0"
+                             data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
+            </label>
+          </div>
+          <!--/ko-->
+        </div>
+    </script>
+
+    <div id="extended-questions" data-bind="if: $root.requires_additional_information">
+      <h3 class="lighter block green">Additional Information</h3>
+      <!-- ko if: $root.requires_additional_employee_information -->
+      <div data-bind="template: { name: 'extended-information-template', data: employee }"></div>
+      <!-- /ko -->
+      <!-- ko if: $root.requires_additional_spouse_information -->
+      <div data-bind="template: { name: 'extended-information-template', data: spouse }"></div>
+      <!-- /ko -->
+    </div>
+
     <div data-bind="visible: should_show_other_insurance_questions">
       <h3 class="lighter block green">Other Insurance</h3>
 
       <div class="row form-group">
         <div class="col-xs-12 col-sm-9">
-          <span class="bigger-120">Does anyone on this application have any existing life insurance or annuity contracts?</span><br>
+      <span
+          class="bigger-120">Does anyone on this application have any existing life insurance or annuity contracts?</span><br>
                         <span id="existing_warning_text" style="display: none;" class=" bigger-120">If yes, and you live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV please complete and sign the Notice: Replacement of Life Insurance and Annuity. The Notice must be <span
-                                class="text-warning bigger-120">presented</span> and <span
-                                class="text-warning bigger-120">read</span> to you by your agent at the time he/she takes your application.</span>
+                            class="text-warning bigger-120">presented</span> and <span
+                            class="text-warning bigger-120">read</span> to you by your agent at the time he/she takes your application.</span>
         </div>
         <div class="col-xs-12 col-sm-3 btn-group no-padding-right">
           <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
@@ -38,9 +101,10 @@
 
       <div class="row form-group">
         <div class="col-xs-12 col-sm-9">
-          <span class="bigger-120">Will the coverage applied for replace any existing life insurance or annuities?</span><br>
+          <span
+              class="bigger-120">Will the coverage applied for replace any existing life insurance or annuities?</span><br>
                         <span id="replacement_warning_text" style="display: none;" class="bigger-120"><br>If yes, and you do not live in the above listed states, you will need to complete and sign the applicable state-specific Notice: Replacement of Life Insurance and Annuity, obtainable from your agent or enrollment professional.<br><br> <span
-                                class="text-danger bigger-130">You cannot proceed with this online enrollment, and must enroll via paper forms with your agent or enrollment professional.</span></span>
+                            class="text-danger bigger-130">You cannot proceed with this online enrollment, and must enroll via paper forms with your agent or enrollment professional.</span></span>
         </div>
         <div class="col-xs-12 col-sm-3 btn-group no-padding-right" data-toggle="buttons">
           <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
@@ -103,7 +167,7 @@
       <div class="modal-body">
 
         <!--ko foreach: $root.get_replacement_paragraphs()-->
-          <p data-bind="html: $data"></p>
+        <p data-bind="html: $data"></p>
         <!--/ko-->
 
         <div class="row">
@@ -113,9 +177,11 @@
                 1. Are you considering discontinuing making premium payments, surrendering, forfeiting, assigning to the
                 insurer, or otherwise terminating your existing policy or contract?
                 <input type="radio" class="replacement-question inline ace" name="replacement_is_terminating" value="Y"
-                       data-bind='checked: $root.replacement_is_terminating, checkedValue: true'> <span class="lbl"> Y</span>
+                       data-bind='checked: $root.replacement_is_terminating, checkedValue: true'> <span
+                  class="lbl"> Y</span>
                 <input type="radio" class="replacement-question inline ace" name="replacement_is_terminating" value="N"
-                       data-bind='checked: $root.replacement_is_terminating, checkedValue: false'> <span class="lbl"> N</span>
+                       data-bind='checked: $root.replacement_is_terminating, checkedValue: false'> <span
+                  class="lbl"> N</span>
               </div>
             </div>
             <div class="row">
@@ -123,9 +189,11 @@
                 2. Are you considering using funds from your existing policies or contracts to pay premiums due on the
                 new policy or contract?
                 <input type="radio" class="replacement-question inline ace" name="replacement_using_funds" value="Y"
-                       data-bind='checked: $root.replacement_using_funds, checkedValue: true'> <span class="lbl"> Y</span>
+                       data-bind='checked: $root.replacement_using_funds, checkedValue: true'> <span
+                  class="lbl"> Y</span>
                 <input type="radio" class="replacement-question inline ace" name="replacement_using_funds" value="N"
-                       data-bind='checked: $root.replacement_using_funds, checkedValue: false'> <span class="lbl"> N</span>
+                       data-bind='checked: $root.replacement_using_funds, checkedValue: false'> <span
+                  class="lbl"> N</span>
               </div>
             </div>
 
@@ -197,7 +265,8 @@
     <!--ko foreach: {data: $root.selected_product_health_questions(), as: 'product_health_questions'} -->
     {# Only show questions if there are some for this product. #}
     <div data-bind="visible: product_health_questions.do_any_health_questions_need_answering()">
-      <h3 class="lighter block green">Please answer each question below regarding to apply for <span data-bind="text: product_health_questions.product_coverage.product.product_data.name"></span></h3>
+      <h3 class="lighter block green">Please answer each question below regarding to apply for <span
+          data-bind="text: product_health_questions.product_coverage.product.product_data.name"></span></h3>
 
       <div class="hidden-xs hidden-sm">
 
@@ -207,10 +276,12 @@
           <div class="col-sm-6">
             <div class="row">
 
-              <div class="col-sm-3 text-center" data-bind="if: product_health_questions.product_coverage.did_select_employee_coverage">
+              <div class="col-sm-3 text-center"
+                   data-bind="if: product_health_questions.product_coverage.did_select_employee_coverage">
                 <span data-bind="text: $root.employee().name"></span>
               </div>
-              <div class="col-sm-3 text-center" data-bind="if: product_health_questions.product_coverage.did_select_spouse_coverage">
+              <div class="col-sm-3 text-center"
+                   data-bind="if: product_health_questions.product_coverage.did_select_spouse_coverage">
                 <span data-bind="text: $root.spouse().name"></span>
               </div>
               <!--ko foreach: product_health_questions.product_coverage.get_covered_children -->
@@ -259,7 +330,8 @@
                         No
                       </button>
                     </div>
-                    <div class="col-sm-3 btn-group no-padding-right" data-bind="if: product_health_questions.product_coverage.did_select_spouse_coverage"></div>
+                    <div class="col-sm-3 btn-group no-padding-right"
+                         data-bind="if: product_health_questions.product_coverage.did_select_spouse_coverage"></div>
 
 
                   </div>
@@ -274,7 +346,7 @@
           <!--/ko-->
 
           <!--ko foreach: product_health_questions.health_button_rows -->
-            <tr data-bind="visible: question.does_any_applicant_need_to_answer">
+          <tr data-bind="visible: question.does_any_applicant_need_to_answer">
             <td>
               <div class="row">
                 <div class="col-xs-12 col-sm-6" data-bind="html: question.get_question_text()">
@@ -319,7 +391,7 @@
                 </div>
               </div>
             </td>
-            </tr>
+          </tr>
           <!--/ko-->
 
           </tbody>
@@ -381,11 +453,11 @@
                 </div>
                 <div class="col-xs-12 col-sm-6">
                   <!--ko foreach: button_groups -->
-                    <!--ko if: does_applicant_need_to_answer-->
-                    <div class="person-answer-small row">
-                      <div class="col-xs-3 col-xs-offset-2" data-bind="text: applicant.name()"></div>
-                      <div class="col-xs-7 btn-group" data-toggle="buttons">
-                        <button class="btn btn-default btn-sm" type="button" data-bind="
+                  <!--ko if: does_applicant_need_to_answer-->
+                  <div class="person-answer-small row">
+                    <div class="col-xs-3 col-xs-offset-2" data-bind="text: applicant.name()"></div>
+                    <div class="col-xs-7 btn-group" data-toggle="buttons">
+                      <button class="btn btn-default btn-sm" type="button" data-bind="
                             click: handle_yes,
                             css: {
                               'btn-warning': should_show_yes_flag,
@@ -393,12 +465,12 @@
                               'btn-danger': should_show_yes_stop,
                               'btn-default': should_show_yes_default
                             } ">
-                          <i class="icon glyphicon glyphicon-flag" data-bind="visible: should_show_yes_flag"></i>
-                          <i class="icon glyphicon glyphicon-ok" data-bind="visible: should_show_yes_checkmark"></i>
-                          <i class="icon glyphicon glyphicon-remove" data-bind="visible: should_show_yes_stop"></i>
-                          Yes
-                        </button>
-                        <button class="btn btn-default btn-sm" type="button" data-bind="
+                        <i class="icon glyphicon glyphicon-flag" data-bind="visible: should_show_yes_flag"></i>
+                        <i class="icon glyphicon glyphicon-ok" data-bind="visible: should_show_yes_checkmark"></i>
+                        <i class="icon glyphicon glyphicon-remove" data-bind="visible: should_show_yes_stop"></i>
+                        Yes
+                      </button>
+                      <button class="btn btn-default btn-sm" type="button" data-bind="
                           click: handle_no,
                           val: 'No',
                             css: {
@@ -408,14 +480,14 @@
                               'btn-default': should_show_no_default
                             }
                          ">
-                          <i class="icon glyphicon glyphicon-flag" data-bind="visible: should_show_no_flag"></i>
-                          <i class="icon glyphicon glyphicon-ok" data-bind="visible: should_show_no_checkmark"></i>
-                          <i class="icon glyphicon glyphicon-remove" data-bind="visible: should_show_no_stop"></i>
-                          No
-                        </button>
-                      </div>
+                        <i class="icon glyphicon glyphicon-flag" data-bind="visible: should_show_no_flag"></i>
+                        <i class="icon glyphicon glyphicon-ok" data-bind="visible: should_show_no_checkmark"></i>
+                        <i class="icon glyphicon glyphicon-remove" data-bind="visible: should_show_no_stop"></i>
+                        No
+                      </button>
                     </div>
-                    <!--/ko-->
+                  </div>
+                  <!--/ko-->
                   <!--/ko-->
                 </div>
               </div>

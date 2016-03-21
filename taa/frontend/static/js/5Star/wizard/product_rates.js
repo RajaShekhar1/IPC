@@ -161,7 +161,9 @@ var product_rates_service = (function() {
     var requests = _.map(products, function(product) {
       var enabled_riders = coverage_vm.get_enabled_riders_for_product(product);
       var data = _build_rate_parameters(payment_mode, applicant_list, statecode, enabled_riders, product, classification_mappings, occupation);
-      return remote_service.get_product_rates(product.product_data.id, data);
+      var request = remote_service.get_product_rates(product.product_data.id, data);
+      request.product_id = product.product_data.id;
+      return request;
     });
 
     function process_product_rates() {

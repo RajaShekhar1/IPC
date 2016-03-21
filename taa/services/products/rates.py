@@ -23,9 +23,9 @@ rates = None
 
 
 def get_rates(product, **demographics):
-    '''
-    Public Rates interface
-    '''
+    """
+    Public Rates interface, but only used for products we can't calculate yet.
+    """
 
     # Initialize rates if None
     global rates
@@ -60,7 +60,7 @@ def get_rates(product, **demographics):
             dict(field='spouse_weight',
                  error='This height/weight combination is outside the range '
                        'for this product.'),
-            ]
+        ]
 
     # If any height/weight errors, raise an API exception
     if limit_errors:
@@ -74,33 +74,41 @@ def get_rates(product, **demographics):
 
     return {
         'employee': rate_calc.get(product_code, demographics.get('payment_mode'),
-                              demographics['employee_age'],
-                              demographics.get('employee_smoker'),
-                              applicant_type=APPLICANT_TYPE_EMPLOYEE,
-                              height=demographics.get('employee_height'),
-                              weight=demographics.get('employee_weight')),
+                                  demographics['employee_age'],
+                                  demographics.get('employee_smoker'),
+                                  applicant_type=APPLICANT_TYPE_EMPLOYEE,
+                                  height=demographics.get('employee_height'),
+                                  weight=demographics.get('employee_weight')),
         'spouse': rate_calc.get(product_code, demographics.get('payment_mode'),
-                            demographics.get('spouse_age'),
-                            demographics.get('spouse_smoker'),
-                              applicant_type=APPLICANT_TYPE_SPOUSE,
-                              height=demographics.get('spouse_height'),
-                              weight=demographics.get('spouse_weight')),
+                                demographics.get('spouse_age'),
+                                demographics.get('spouse_smoker'),
+                                applicant_type=APPLICANT_TYPE_SPOUSE,
+                                height=demographics.get('spouse_height'),
+                                weight=demographics.get('spouse_weight')),
         'children': rate_calc.get(product_code, demographics.get('payment_mode'), age=None,
-                              applicant_type=APPLICANT_TYPE_CHILDREN)
+                                  applicant_type=APPLICANT_TYPE_CHILDREN, smoker=None)
     }
 
 
 def is_eligible(product_code, sex, height, weight):
+    # Skip eligibility check if any criteria is not provided.
+    if sex is None or height is None or weight is None:
+        return True
+
+    height = int(height)
+    weight = int(weight)
+
     initialize_eligibilities_from_files()
     if product_code in ELIGIBILITIES:
         table = ELIGIBILITIES[product_code][sex]
-        if height is None or weight is None:
-            return False
-        height = int(height)
+
+        # Is height out of range?
         if height not in table:
             return False
-        weight = int(weight)
+
+        # Is weight out of range for this height?
         return table[height][0] <= weight <= table[height][1]
+
     # Default to eligible if product has no lookup table
     return True
 
@@ -183,23 +191,20 @@ class Rates(object):
         if applicant_type == APPLICANT_TYPE_CHILDREN:
             # Children rates/premiums are indexed with age as -1
             age = -1
+            smoker = None
         elif age is None:
             # Don't return any rate options for this applicant (Emp/Sp) if age is not provided.
-            return {'byface':[], 'bypremium':[]}
+            return {'byface': [], 'bypremium': []}
 
         product_key = Rates._get_product_key(product_code, smoker)
 
         for type_ in (TYPE_PREMIUM, TYPE_COVERAGE):
             if type_ not in result:
                 result[type_] = []
-            if (product_key in self._rates
-                    and payment_mode in self._rates[product_key]
-                    and type_ in self._rates[product_key][payment_mode]):
-                for key, value in iter(
-                        self._rates[product_key][payment_mode][type_].items()):
-                    if (key[0] == age
-                            and value[TYPE_PREMIUM] is not None
-                            and value[TYPE_COVERAGE] is not None):
+            if product_key in self._rates and payment_mode in self._rates[product_key] and type_ in \
+                    self._rates[product_key][payment_mode]:
+                for key, value in iter(self._rates[product_key][payment_mode][type_].items()):
+                    if key[0] == age and value[TYPE_PREMIUM] is not None and value[TYPE_COVERAGE] is not None:
                         result[type_].append(value)
         # Rename keys to fit existing API
         result['byface'] = result.pop(TYPE_COVERAGE)
@@ -231,6 +236,7 @@ class GILimitedRatesDecorator(Rates):
 
         # Get the GI limit for the criteria
         limit = self.get_GI_limit(applicant_type, age, smoker, height, weight)
+
         def filter_coverage_by_limit(rate):
             return rate['coverage'] <= limit
 
@@ -270,8 +276,26 @@ class GILimitedRatesDecorator(Rates):
         return max(criteria_for_applicant, key=lambda c: c.guarantee_issue_amount).guarantee_issue_amount
 
 
+def get_height_weight_table_for_product(product):
+    global ELIGIBILITIES
+    if ELIGIBILITIES is None:
+        initialize_eligibilities_from_files()
+    base_product_code = product.get_base_product_code()
+    if base_product_code in ELIGIBILITIES:
+        tables = dict()
+        for applicant_sex in ['female', 'male']:
+            eligibility = ELIGIBILITIES[base_product_code][applicant_sex]
+            tables[applicant_sex] = [{'height': e, 'min_weight': eligibility[e][0], 'max_weight': eligibility[e][1]} for
+                                     e in eligibility]
+        return tables
+
+    return None
+
+
 # If a product is not in this dict, there are no limits on eligibility
 ELIGIBILITIES = None
+
+
 def initialize_eligibilities_from_files():
     global ELIGIBILITIES
     if ELIGIBILITIES is None:

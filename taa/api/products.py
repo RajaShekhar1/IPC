@@ -108,9 +108,11 @@ def get_product_rates(product_id):
         employee_height=employee['height'],
         employee_weight=employee['weight'],
         employee_gender=employee['gender'],
-        employee_smoker=employee['is_smoker'],
+        # Default smoker to False if not provided so we can return some rates.
+        employee_smoker=employee['is_smoker'] if employee['is_smoker'] else False,
         spouse_age=spouse['age'] if spouse else None,
-        spouse_smoker=spouse['is_smoker'] if spouse else None,
+        # Default smoker to False if not provided so we can return some rates.
+        spouse_smoker=spouse['is_smoker'] if spouse and spouse['is_smoker'] is not None else False,
         spouse_gender=spouse['gender'] if spouse else None,
         spouse_height=spouse['height'] if spouse else None,
         spouse_weight=spouse['weight'] if spouse else None,

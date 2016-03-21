@@ -47,10 +47,8 @@ var wizard_products = (function () {
 
 // Model for different insurance products
 // Product is abstract base class
-  function Product() {
-  }
-
-  Product.prototype = {
+function Product() {}
+Product.prototype = {
 
     // Override if necessary
 
@@ -201,6 +199,11 @@ var wizard_products = (function () {
       return [];
     }
 
+    requires_additional_information: function () {
+      return this.requires_gender() || this.requires_height() ||
+        this.requires_weight() || this.requires_is_smoker();
+    }
+
   };
 
   function ApplicantSelectionProduct(product_data) {
@@ -245,7 +248,6 @@ var wizard_products = (function () {
     return this.product_data.replacement_paragraphs;
   };
 
-
   function GroupCIProduct(root, product_data) {
     var self = this;
     self.root = root;
@@ -273,7 +275,6 @@ var wizard_products = (function () {
       );
     };
 
-
     self.filter_coverage_options_for_applicant_type = function (all_options, applicant_type) {
       if (applicant_type === wizard_applicant.Applicant.EmployeeType) {
         return self.filter_employee_coverage_options(all_options);
@@ -296,7 +297,7 @@ var wizard_products = (function () {
 
       var emp_coverage_option = window.vm.coverage_vm.get_applicant_coverage_option_for_product(window.vm.employee(), self);
       var emp_existing_coverage_amount = window.vm.employee().get_existing_coverage_amount_for_product(self);
-      var emp_current_coverage_amount = (emp_coverage_option.is_valid()? emp_coverage_option.face_value : 0);
+      var emp_current_coverage_amount = (emp_coverage_option.is_valid() ? emp_coverage_option.face_value : 0);
       return emp_existing_coverage_amount + emp_current_coverage_amount;
     }
 
@@ -580,6 +581,3 @@ var wizard_products = (function () {
     build_products: build_products
   };
 })();
-
-
-
