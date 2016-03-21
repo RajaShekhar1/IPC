@@ -132,7 +132,7 @@
                                   <a data-bind="text: name, click: $parent.start_editing_products" href="#"></a><br>
                                   <!--/ko-->
                                   <!--ko if: products().length == 0 -->
-                                    <a data-bind="click: start_editing_products" href="#">Add Products</a><br>
+                                  <a data-bind="click: start_editing_products" href="#">Add Products</a><br>
                                   <!--/ko-->
                                   <!--/ko-->
                                   <!--ko if: is_editing_products-->
@@ -418,17 +418,16 @@
                                       <div class="form-group"
                                            data-bind="visible: $root.is_product_occupation_class_eligible(product)">
                                         <h4 class="header lighter blue">Occupation Classes</h4>
-                                        <table data-bind="foreach: $parent.occupation_classes_for_product($data)">
+                                        <table data-bind="foreach: { data: $parent.occupation_classes_for_product($data), as: 'occupation' }">
                                           <tr>
-                                            <td style="padding: 0.5em 1em;">&bull; <span
-                                                data-bind="text: label"></span>
+                                            <td style="padding: 0.5em 1em;">&bull; <span data-bind="text: occupation.label"></span>
                                             </td>
                                             <td>
                                               <select data-bind="options: $root.available_occupation_mappings,
-                                            optionsText: 'label',
-                                            optionsValue: 'value',
-                                            value: value,
-                                            optionsCaption: 'Not mapped'">
+                                                optionsText: 'label',
+                                                optionsValue: 'value',
+                                                value: value,
+                                                optionsCaption: 'Not mapped'">
                                               </select>
                                             </td>
                                           </tr>

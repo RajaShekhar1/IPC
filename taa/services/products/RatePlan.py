@@ -75,9 +75,6 @@ class ApplicantQuery(object):
     def get_age(self):
         return self.demographics.get_age()
 
-    def get_rate_level(self):
-        return self.demographics.get_rate_level()
-
     def get_mode(self):
         return self.mode
 
@@ -90,6 +87,12 @@ class ApplicantQuery(object):
     def get_selected_premium(self):
         return self.rate_options.get_requested_premium()
 
+    def get_coverage_selection_tier(self):
+        return self.rate_options.get_requested_coverage_tier()
+
+    def get_rate_level(self):
+        return self.rate_options.get_requested_rate_level()
+
 
 class ApplicantQueryOptions(object):
     def __init__(self, options):
@@ -100,6 +103,12 @@ class ApplicantQueryOptions(object):
 
     def get_requested_premium(self):
         return self.options.get('by_premium')
+
+    def get_requested_rate_level(self):
+        return self.options.get('rate_level')
+
+    def get_requested_coverage_tier(self):
+        return self.options.get('coverage_tier')
 
 
 class CoverageOption(object):
@@ -170,16 +179,26 @@ class ApplicantTypeMatchesConstraint(ApplicantQueryConstraint):
         return applicant_query.get_applicant_type().lower() == self.applicant_type.lower()
 
 
+COVERAGE_SELECTION_EE = u'EE'
+COVERAGE_SELECTION_ES = u'ES'
+COVERAGE_SELECTION_EC = u'EC'
+COVERAGE_SELECTION_EF = u'EF'
+
+class CoverageSelectionConstraint(ApplicantQueryConstraint):
+    def __init__(self, selection_value):
+        assert selection_value in [COVERAGE_SELECTION_EE, COVERAGE_SELECTION_ES, COVERAGE_SELECTION_EC, COVERAGE_SELECTION_EF]
+        self.selection_value = selection_value
+
+    def is_satisfied(self, applicant_query):
+        return applicant_query.get_coverage_selection_tier() == self.selection_value
+
+
 class ApplicantDemographics(object):
     def __init__(self, demographics_object):
         self.age = demographics_object.get('age', None)
-        self.rate_level = demographics_object.get('rate_level', None)
 
     def get_age(self):
         return int(self.age) if self.age is not None else None
-
-    def get_rate_level(self):
-        return int(self.rate_level) if self.rate_level is not None else None
 
 
 class AgeRateLookupTable(object):
@@ -296,6 +315,7 @@ def build_eligibility_constraint(constraint_def):
         'not': NotConstraint,
         'rider_included': build_rider_constraint,
         'applicant_type': ApplicantTypeMatchesConstraint,
+        'coverage_selection': CoverageSelectionConstraint,
     }
     if len(constraint_def.keys()) != 1:
         raise ValueError("Invalid constraint, should have exactly 1 constraint: %s"%constraint_def)
@@ -507,6 +527,8 @@ class RatePlan(object):
                         is_enabled_constraint=build_eligibility_constraint(cost_component_def['is_eligible'])
                     )
                     rate_plan.add_cost_component(cost_component)
+                else:
+                    raise ValueError("Invalid cost component '{}'".format(cost_component_def['type']))
 
             return rate_plan
 
