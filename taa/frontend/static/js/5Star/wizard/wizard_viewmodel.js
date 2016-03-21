@@ -1231,17 +1231,17 @@ var wizard_viewmodel = (function () {
 
     self.show_height_weight_dialog_if_applicants_invalid = function () {
       var is_employee_invalid = _.any(self.products, function (product) {
-        return !is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.employee()) || !product.requires_additional_information();
+        return !is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.employee()) && product.requires_additional_information();
       });
       if (is_employee_invalid) {
-        show_height_weight_error(_.first(self.products, function (product) { return product.requires_additional_information(); }), self.employee());
+        show_height_weight_error(_.find(self.products, function (product) { return product.requires_additional_information(); }), self.employee());
         return;
       }
       var is_spouse_invalid = _.any(self.products, function (product) {
-        return (self.should_show_spouse() && !is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.spouse())) || !product.requires_additional_information();
+        return (self.should_show_spouse() && !is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.spouse())) && product.requires_additional_information();
       });
       if (is_spouse_invalid) {
-        show_height_weight_error(_.first(self.products, function (product) { return product.requires_additional_information(); }), self.spouse());
+        show_height_weight_error(_.find(self.products, function (product) { return product.requires_additional_information(); }), self.spouse());
       }
     };
 

@@ -197,7 +197,7 @@ Product.prototype = {
 
     get_coverage_tiers: function () {
       return [];
-    }
+    },
 
     requires_additional_information: function () {
       return this.requires_gender() || this.requires_height() ||
