@@ -59,14 +59,6 @@ Feature: TAA should allow only certain combinations of riders on some base produ
       | N   | Y  | N    | N    |
     Then It should say the riders are allowed.
 
-
-  Scenario: Ensure WP rider is allowed on FPP-CI
-    Given I am setting up a case enrolling the 'FPPCI' base product
-    When I check the following riders for compatibility
-      | AIR | WP | QOL3 | QOL4 |
-      | N   | Y  | N    | N    |
-    Then It should say the riders are allowed.
-
   Scenario: Ensure QOL and AIR riders are not allowed on FPP-CI
     Given I am setting up a case enrolling the 'FPPCI' base product
     When I check the following riders for compatibility
