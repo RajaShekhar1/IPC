@@ -1167,6 +1167,24 @@ var wizard_viewmodel = (function () {
     };
     //endregion
 
+    self.show_height_weight_dialog_if_applicants_invalid = function () {
+      var is_employee_invalid = _.any(self.products, function (product) {
+        return !is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.employee()) && product.requires_additional_information();
+      });
+      is_employee_invalid = is_employee_invalid && !!self.employee().height() && !!self.employee().weight();
+      if (is_employee_invalid) {
+        show_height_weight_error(_.find(self.products, function (product) { return product.requires_additional_information(); }), self.employee());
+        return;
+      }
+      var is_spouse_invalid = _.any(self.products, function (product) {
+        return (self.should_show_spouse() && !is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.spouse())) && product.requires_additional_information();
+      });
+      is_spouse_invalid = is_spouse_invalid && !!self.spouse().height() && !!self.spouse().weight();
+      if (is_spouse_invalid) {
+        show_height_weight_error(_.find(self.products, function (product) { return product.requires_additional_information(); }), self.spouse());
+      }
+    };
+
     function show_height_weight_error(product, applicant) {
       var health_questions_vm = _.find(self.selected_product_health_questions(), function (health_question_vm) {
         return health_question_vm.product_coverage.product.product_data.id === product.product_data.id;
@@ -1189,6 +1207,9 @@ var wizard_viewmodel = (function () {
       if (!product_tables || !product || !applicant) {
         return false;
       }
+      if (!applicant.height() || !applicant.weight()) {
+        return true;
+      }
       var result;
       var gender = applicant.gender();
       var height = applicant.height();
@@ -1209,6 +1230,9 @@ var wizard_viewmodel = (function () {
       if (!product_tables || !product || !applicant) {
         return false;
       }
+      if (!applicant.height() || !applicant.weight()) {
+        return true;
+      }
       var result;
       var gender = applicant.gender();
       var height = applicant.height();
@@ -1228,22 +1252,6 @@ var wizard_viewmodel = (function () {
       }
       return result;
     }
-
-    self.show_height_weight_dialog_if_applicants_invalid = function () {
-      var is_employee_invalid = _.any(self.products, function (product) {
-        return !is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.employee()) && product.requires_additional_information();
-      });
-      if (is_employee_invalid) {
-        show_height_weight_error(_.find(self.products, function (product) { return product.requires_additional_information(); }), self.employee());
-        return;
-      }
-      var is_spouse_invalid = _.any(self.products, function (product) {
-        return (self.should_show_spouse() && !is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.spouse())) && product.requires_additional_information();
-      });
-      if (is_spouse_invalid) {
-        show_height_weight_error(_.find(self.products, function (product) { return product.requires_additional_information(); }), self.spouse());
-      }
-    };
 
     var observables = [self.employee().height, self.employee().weight];
     if (self.should_show_spouse()) {
