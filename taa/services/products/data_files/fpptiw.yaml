@@ -1,8 +1,9 @@
 ---
 # FPPTI "W" Rate Plan
 
-
 name: "FPPTIW"
+
+max_coverage_amount: 150000
 
 cost_components:
   - name: "Adult Premium"
