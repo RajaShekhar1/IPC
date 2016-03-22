@@ -2,6 +2,7 @@ import os
 from decimal import Decimal, ROUND_HALF_UP
 
 from yaml import load as yaml_load
+
 try:
     from yaml import CLoader as YamlLoader
 except ImportError:
@@ -61,6 +62,7 @@ class ApplicantQuery(object):
     Used for querying the system for us and
         checking to see if an applicant can apply for a given product configuration (riders, coverage, etc).
     """
+
     def __init__(self, applicant_type, product_options, state, demographics, mode, rate_options):
         self.applicant_type = applicant_type
         self.product_options = product_options
@@ -136,6 +138,7 @@ class ApplicantQueryConstraint(object):
 
 class AndConstraint(ApplicantQueryConstraint):
     "Compound condition that is satisfied if all sub-conditions are satisfied."
+
     def __init__(self, subconstraints):
         self.subconstraints = subconstraints
 
@@ -145,6 +148,7 @@ class AndConstraint(ApplicantQueryConstraint):
 
 class OrConstraint(ApplicantQueryConstraint):
     "Compound condition that is satisfied if any sub-condition is satisfied."
+
     def __init__(self, subconstraints):
         self.subconstraints = subconstraints
 
@@ -154,11 +158,12 @@ class OrConstraint(ApplicantQueryConstraint):
 
 class NotConstraint(ApplicantQueryConstraint):
     "Invert the logic of a constraint condition."
+
     def __init__(self, subconstraint):
         self.subconstraint = subconstraint
 
     def is_satisfied(self, applicant_query):
-        return not(self.subconstraint.is_satisfied(applicant_query))
+        return not (self.subconstraint.is_satisfied(applicant_query))
 
 
 class ProductRiderIncludedConstraint(ApplicantQueryConstraint):
@@ -184,9 +189,11 @@ COVERAGE_SELECTION_ES = u'ES'
 COVERAGE_SELECTION_EC = u'EC'
 COVERAGE_SELECTION_EF = u'EF'
 
+
 class CoverageSelectionConstraint(ApplicantQueryConstraint):
     def __init__(self, selection_value):
-        assert selection_value in [COVERAGE_SELECTION_EE, COVERAGE_SELECTION_ES, COVERAGE_SELECTION_EC, COVERAGE_SELECTION_EF]
+        assert selection_value in [COVERAGE_SELECTION_EE, COVERAGE_SELECTION_ES, COVERAGE_SELECTION_EC,
+                                   COVERAGE_SELECTION_EF]
         self.selection_value = selection_value
 
     def is_satisfied(self, applicant_query):
@@ -214,6 +221,7 @@ class RateLevelRateLookupTable(object):
     '''
     Uses the applicant's rating level to lookup premium
     '''
+
     def __init__(self, mapping):
         self._mapping = mapping
 
@@ -275,6 +283,7 @@ class AnnualPremiumLookupTableCostComponent(LookupTableCostComponent):
     """
     Similar to an ACPT lookup table, but is a fixed annual premium based on a category of coverage selected instead of face amount.
     """
+
     def get_cost_per_thousand(self, rate_query):
         # Doesn't support this method.
         return None
@@ -318,17 +327,17 @@ def build_eligibility_constraint(constraint_def):
         'coverage_selection': CoverageSelectionConstraint,
     }
     if len(constraint_def.keys()) != 1:
-        raise ValueError("Invalid constraint, should have exactly 1 constraint: %s"%constraint_def)
+        raise ValueError("Invalid constraint, should have exactly 1 constraint: %s" % constraint_def)
     key = constraint_def.keys()[0]
     if key not in constraint_keys:
-        raise ValueError("Invalid constraint key '%s'"%key)
+        raise ValueError("Invalid constraint key '%s'" % key)
 
     # If a compound constraint, wrap the val in a recursive call
     if key in ['and', 'or']:
         subconstraints = [
             build_eligibility_constraint(subconstraint_def)
             for subconstraint_def in constraint_def[key]
-        ]
+            ]
         initializer = subconstraints
     elif key == 'not':
         # 'not' has a single subconstraint
@@ -344,10 +353,11 @@ def build_rider_constraint(rider_code):
 
 
 class RatePlan(object):
-    def __init__(self, coverage_options, eligibility_constraint=None):
+    def __init__(self, coverage_options, eligibility_constraint=None, rate_levels=None):
         self.coverage_options = coverage_options
         self.cost_components = []
         self.eligibility_constraint = eligibility_constraint
+        self.rate_levels = rate_levels
 
     def get_coverage_options_by_face(self, applicant_query):
         return [option.get_face_amount() for option in self.coverage_options if option.is_by_face()]
@@ -439,7 +449,8 @@ class RatePlan(object):
         """
         component_premiums = [component.compute_annual_premium(applicant_query)
                               for component in self.cost_components
-                              if component.is_enabled(applicant_query) and component.compute_annual_premium(applicant_query)]
+                              if component.is_enabled(applicant_query) and component.compute_annual_premium(
+                applicant_query)]
         component_sum = sum(component_premiums, Decimal('0.00'))
         modalized_total = component_sum / applicant_query.get_mode()
         rounded = modalized_total.quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
@@ -455,22 +466,24 @@ class RatePlan(object):
         Figures out how much coverage is available for a given premium.
         Needs to subtract out fee and rider costs first to determine the premium that is allocated to coverage.
         """
-        #import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
         mode = applicant_query.get_mode()
         selected_premium = applicant_query.get_selected_premium()
         fixed_annual_fees = sum([component.compute_annual_premium(applicant_query)
-                             for component in self.cost_components
-                             if not component.does_vary_with_coverage_selection() and component.is_enabled(applicant_query)],
-                            Decimal('0.00'))
+                                 for component in self.cost_components
+                                 if not component.does_vary_with_coverage_selection() and component.is_enabled(
+                applicant_query)],
+                                Decimal('0.00'))
 
         # Remove fees from the annualized modal premium, divide by the combined ACPTs, and convert to coverage
         numerator = (selected_premium * mode - fixed_annual_fees)
         # Divide by the sum of the annualized
         denominator = sum([
-            component.get_cost_per_thousand(applicant_query)
-            for component in self.cost_components
-            if component.does_vary_with_coverage_selection() and component.is_enabled(applicant_query) and component.get_cost_per_thousand(applicant_query)
-        ], Decimal('0.00'))
+                              component.get_cost_per_thousand(applicant_query)
+                              for component in self.cost_components
+                              if component.does_vary_with_coverage_selection() and component.is_enabled(
+                applicant_query) and component.get_cost_per_thousand(applicant_query)
+                              ], Decimal('0.00'))
 
         # Prevent division by zero
         if denominator == Decimal('0.00'):
@@ -502,7 +515,13 @@ class RatePlan(object):
                 else:
                     raise ValueError("Invalid rate table key type '{}'".format(rate_table_def['key']))
 
-            rate_plan = RatePlan(coverage_options=standard_coverage_options)
+            rate_levels = None
+            if 'rate_levels' in rate_plan_data:
+                rate_levels = list()
+                for rate_level in rate_plan_data['rate_levels']:
+                    rate_levels.append({'name': rate_level['name'], 'value': rate_level['value']})
+
+            rate_plan = RatePlan(coverage_options=standard_coverage_options, rate_levels=rate_levels)
             for cost_component_def in rate_plan_data['cost_components']:
 
                 if cost_component_def['type'] == "ACPT Lookup":

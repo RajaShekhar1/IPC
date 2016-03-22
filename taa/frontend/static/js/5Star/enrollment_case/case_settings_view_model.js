@@ -1,7 +1,8 @@
-var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_case, settings) {
+var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_case, settings, product_rate_levels) {
   var self = this;
   self.case_id = case_data.id;
   self.case_token = case_data.case_token;
+  self.product_rate_levels = product_rate_levels || {};
 
   self.can_edit_case = can_edit_case;
 
@@ -153,6 +154,16 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       }).value();
     self.update_product_ordinals();
   };
+  //endregion
+
+  //region Product Rate Levels
+  self.get_rate_levels_for_product_code = function (product_code) {
+    if (_.has(self.product_rate_levels, product_code)) {
+      return self.product_rate_levels[product_code];
+    } else {
+      return [];
+    }
+  }
   //endregion
 
   self.enrollment_period_type = ko.observable(case_data.enrollment_period_type);

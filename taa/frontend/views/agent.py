@@ -15,7 +15,8 @@ from taa.services.cases.forms import (CensusRecordForm,
                                       SelfEnrollmentSetupForm,
                                       UpdateCaseForm
                                       )
-from taa.services.enrollments import SelfEnrollmentLinkService, SelfEnrollmentEmailService, EnrollmentApplicationService, \
+from taa.services.enrollments import SelfEnrollmentLinkService, SelfEnrollmentEmailService, \
+    EnrollmentApplicationService, \
     EnrollmentApplication
 from taa.services.agents import AgentService
 from taa.services.products import ProductService, get_all_states
@@ -35,7 +36,6 @@ self_enrollment_email_service = SelfEnrollmentEmailService()
 @app.route('/inbox', methods=['GET'])
 @login_required
 def inbox():
-
     # If we are passed an enrollment (id), we will update any linked envelope for that enrollment.
     #  This allows us to stay sync'd up with DocuSign.
     if request.args.get('enrollment') and request.args.get('enrollment').isdigit():
@@ -43,9 +43,10 @@ def inbox():
             enrollment_service.sync_enrollment_with_docusign(request.args['enrollment'])
             db.session.commit()
         except Exception as ex:
-            print(u"DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')), ex)
+            print(
+            u"DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')), ex)
 
-    if agent_service.is_user_agent(current_user): #or agent_service.can_manage_all_cases(current_user):
+    if agent_service.is_user_agent(current_user):  # or agent_service.can_manage_all_cases(current_user):
         #
         agent = agent_service.get_agent_from_user(current_user)
         return render_template(
@@ -87,7 +88,6 @@ def manage_cases():
 @app.route('/enrollment-case/<case_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def manage_case(case_id):
-
     check_for_enrollment_sync_update()
 
     api_token_service = LookupService('ApiTokenService')
@@ -183,6 +183,13 @@ Please follow the instructions carefully on the next page, stepping through the 
 
     form = SelfEnrollmentSetupForm(obj=self_enrollment_setup, case=case)
 
+    from taa.services.products.RatePlan import load_rate_plan_for_base_product
+    product_rate_levels = dict()
+    # TODO: Change this later to accommodate for other plans that have rates
+    for product in [p for p in products if p.get_base_product_code() == 'HI' or p.get_base_product_code() == 'ACC']:
+        product_rate_levels[product.get_base_product_code()] = load_rate_plan_for_base_product(
+            product.get_base_product_code()).rate_levels
+
     vars['setup'] = case.self_enrollment_setup
     vars['form'] = form
     vars['case_owner'] = case_service.get_case_owner(case)
@@ -192,6 +199,7 @@ Please follow the instructions carefully on the next page, stepping through the 
     vars['agent_name'] = agent_name
     vars['agent_email'] = agent_email
     vars['generic_link'] = self_enrollment_link_service.get_generic_link(request.url_root, case)
+    vars['product_rate_levels'] = product_rate_levels
 
     vars["current_user_groups"] = [g.group.name for g in current_user.group_memberships]
 
@@ -213,13 +221,13 @@ def check_for_enrollment_sync_update():
             db.session.commit()
         except Exception as ex:
             print(
-            u"DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')), ex)
+                u"DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')),
+                ex)
 
 
 @app.route('/enrollment-case/<case_id>/census/<census_record_id>')
 @groups_required(['agents', 'home_office', 'admins'], all=False)
 def edit_census_record(case_id, census_record_id):
-
     check_for_enrollment_sync_update()
 
     case = case_service.get_if_allowed(case_id)
