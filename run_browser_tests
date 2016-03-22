@@ -6,5 +6,8 @@ export SERVER_PORT=5050
 export PORT=$SERVER_PORT
 python run_server.py &
 SERVER_ID=$!
+celery worker --app=taa.tasks.app &
+CELERY_ID=$!
 behave tests/integration_features/browser/test_wizard_enrollment_fpp_inperson.feature
 kill $SERVER_ID
+kill $CELERY_ID

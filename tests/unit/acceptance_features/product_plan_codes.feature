@@ -222,3 +222,13 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | Y   | N  | N    | Y    | Spouse         | FPPTI             | UT    | FPATI4/UT  |
       | N   | Y  | Y    | N    | Spouse         | FPPTI             | UT    | FPQTI3/UT |
       | N   | Y  | N    | Y    | Spouse         | FPPTI             | UT    | FPQTI4/UT |
+
+
+    Examples: FPPCI plan code combinations
+      | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code |
+      | N   | N  | N    | N    | Employee       | FPPCI             | MI    | INDFPP    |
+      | N   | N  | N    | N    | Spouse         | FPPCI             | MI    | INDFPP    |
+      | N   | N  | N    | N    | Child          | FPPCI             | MI    | INDFPD    |
+      | N   | N  | N    | N    | Employee       | FPPCI             | UT    | INDFPP/UT    |
+      | N   | N  | N    | N    | Spouse         | FPPCI             | UT    | INDFPP/UT    |
+      | N   | N  | N    | N    | Child          | FPPCI             | UT    | INDFPD/UT    |
