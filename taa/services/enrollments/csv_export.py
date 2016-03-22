@@ -182,14 +182,3 @@ def export_acc_hi(enrollments, export_targets=None):
             row.extend([''] * dep_spaces * 7)
             w.writerow(row)
     return output.getvalue()
-
-
-if __name__ == '__main__':
-    from taa.services.cases.case_service import CaseService
-
-    case_service = CaseService()
-    case = case_service.get(2)
-    enrollments = case.enrollment_records
-    data = export_acc_hi(enrollments)
-    f = open('/Users/mnowak/temp/five-star/hi-acc_export.csv', 'w')
-    f.write(data)
