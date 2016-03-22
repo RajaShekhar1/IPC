@@ -4,6 +4,8 @@
 
 name: "FPPTIB"
 
+max_coverage_amount: 150000
+
 cost_components:
   - name: "Adult Premium"
     type: "ACPT Lookup"

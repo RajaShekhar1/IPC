@@ -141,8 +141,10 @@ class EnrollmentSubmissionProcessor(object):
         recipients = self._create_import_recipients(enrollment_record.case, data_wrap)
 
         product = data_wrap.get_product()
-        if not product.does_generate_form():
-            return [], data_wrap
+
+        # Add back in for HI/ACC
+        #if not product.does_generate_form():
+        #    return [], data_wrap
         
         if product.is_fpp():
             components = self.docusign_service.create_fpp_envelope_components(
@@ -154,7 +156,7 @@ class EnrollmentSubmissionProcessor(object):
             components = self.docusign_service.create_group_ci_envelope_components(
                 data_wrap,
                 recipients,
-                should_user_docusign_renderer=False,
+                should_use_docusign_renderer=False,
             )
         return components, data_wrap
 

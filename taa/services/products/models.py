@@ -116,20 +116,6 @@ class Product(ProductJsonSerializable, db.Model):
             return getattr(base_product, "customer_short_name")
         return getattr(self, "customer_short_name")
 
-    def get_brochure_name(self):
-        use_base_product_settings = self.should_use_base_product_settings()
-        if use_base_product_settings.get("brochure_name"):
-            base_product = getattr(self, "base_product")
-            return getattr(base_product, "brochure_name")
-        return getattr(self, "brochure_name")
-
-    def get_brochure_url(self):
-        use_base_product_settings = self.should_use_base_product_settings()
-        if use_base_product_settings.get("brochure_url"):
-            base_product = getattr(self, "base_product")
-            return getattr(base_product, "brochure_url")
-        return getattr(self, "brochure_url")
-
     def format_type(self):
         if self.is_guaranteed_issue():
             return self.base_product.name if self.base_product else '(Not Selected)'
@@ -150,6 +136,20 @@ class Product(ProductJsonSerializable, db.Model):
                     state_replacement_paragraphs[statecode] = form.paragraphs
 
         return state_replacement_paragraphs
+
+    def get_brochure_name(self):
+        use_base_product_settings = self.should_use_base_product_settings()
+        if use_base_product_settings.get("brochure_name"):
+            base_product = getattr(self, "base_product")
+            return getattr(base_product, "brochure_name")
+        return getattr(self, "brochure_name")
+
+    def get_brochure_url(self):
+        use_base_product_settings = self.should_use_base_product_settings()
+        if use_base_product_settings.get("brochure_url"):
+            base_product = getattr(self, "base_product")
+            return getattr(base_product, "brochure_url")
+        return getattr(self, "brochure_url")
 
     def get_brochure_name(self):
         if self.brochure_name:
