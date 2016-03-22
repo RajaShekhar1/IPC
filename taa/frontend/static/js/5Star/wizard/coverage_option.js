@@ -18,9 +18,6 @@ function CoverageOption(options) {
   };
 
   self.format_premium_option = function () {
-    if (self.applicant_type !== wizard_applicant.Applicant.EmployeeType) {
-      return '';
-    }
     return self.format_premium() + " " + self.payment_mode().display_lowercase();
   };
   self.format_face_value = function () {
