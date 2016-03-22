@@ -186,6 +186,9 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         state = override_state if override_state else data['enrollmentState']
         city = override_city if override_city else data['enrollmentCity']
 
+        if 'occupation_class' not in data:
+            data['occupation_class'] = None
+
         company_name = data['companyName']
         group_number = data['groupNumber']
         products = case.products
@@ -195,6 +198,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             email=data['email'],
             ssn=data.get('ssn', ''),
             state=state,
+            occupation=data['occupation_class'],
         )
         spouse_data = None
         children_data = []
@@ -234,6 +238,8 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     if any_fpp_product:
         fpp_base_product_code = fpp_products[0].get_base_product_code()
 
+    occupations = case.occupation_class_settings if case.occupation_class_settings else []
+
     from taa.services.products.rates import get_height_weight_table_for_product
 
     height_weight_tables = dict()
@@ -255,7 +261,8 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'product_settings': case.product_settings if case.product_settings else {},
             'account_href': current_user.get_id(),
             'record_id': record_id,
-            'product_height_weight_tables': height_weight_tables
+            'product_height_weight_tables': height_weight_tables,
+            'occupations': occupations,
         },
         applicants=applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in case.products],
@@ -263,7 +270,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         spouse_questions=spouse_questions,
         health_questions=soh_questions,
         any_fpp_product=any_fpp_product,
-        fpp_base_product_code=fpp_base_product_code
+        fpp_base_product_code=fpp_base_product_code,
     )
 
     # Commit any changes made (none right now)

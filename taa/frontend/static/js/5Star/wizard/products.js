@@ -1,9 +1,10 @@
 var wizard_products = (function () {
 
-  // Factory function for product data passed to wizard. Instantiates the correct product classes for each
-  //  serialized product.
+// Factory function for product data passed to wizard. Instantiates the correct product classes for each
+//  serialized product.
   function build_products(root, products) {
-    if (products.length == 0) {
+    'use strict';
+    if (products.length === 0) {
       alert("Error: No products to enroll.");
       return null;
     }
@@ -30,8 +31,10 @@ var wizard_products = (function () {
       base_product = new GroupCIProduct(root, product_data);
     } else if (base_type === "FPP-Gov") {
       base_product = new FPPGovProduct(product_data);
-    } else if (base_type === "ACC" || base_type === "HI") {
-      return null;
+    } else if (base_type === "ACC") {
+      base_product = new ACCProduct(product_data);
+    } else if (base_type === 'HI') {
+      base_product = new HIProduct(product_data);
     } else {
       // default product?
       alert("Invalid product type '" + base_type + "'");
@@ -41,10 +44,11 @@ var wizard_products = (function () {
     return base_product;
   }
 
-  // Model for different insurance products
-  // Product is abstract base class
-  function Product() {}
-  Product.prototype = {
+
+// Model for different insurance products
+// Product is abstract base class
+function Product() {}
+Product.prototype = {
 
     // Override if necessary
 
@@ -108,6 +112,11 @@ var wizard_products = (function () {
       return false;
     },
 
+    // HI/ACC Product functions
+    has_simple_coverage: function () {
+      return false;
+    },
+
     // SOH questions
     has_critical_illness_coverages: function () {
       return false;
@@ -130,6 +139,14 @@ var wizard_products = (function () {
       // should we show replacement questions
       // right now it is anything that isn't group CI, which is all FPP products.
       return this.is_fpp_product();
+    },
+
+    should_show_step_two: function () {
+      return true;
+    },
+
+    should_show_step_four: function () {
+      return true;
     },
 
     should_show_step_5: function () {
@@ -170,6 +187,18 @@ var wizard_products = (function () {
       return true;
     },
 
+    get_occupations: function () {
+      return [];
+    },
+
+    requires_occupation: function () {
+      return false;
+    },
+
+    get_coverage_tiers: function () {
+      return [];
+    },
+
     requires_additional_information: function () {
       return this.requires_gender() || this.requires_height() ||
         this.requires_weight() || this.requires_is_smoker();
@@ -181,6 +210,7 @@ var wizard_products = (function () {
     this.product_type = product_data.base_product_type;
     this.product_data = product_data;
   }
+
   ApplicantSelectionProduct.prototype = {
     does_use_recommended_coverage_table: function () {
       // Don't use recommended coverage selection for these types of products.
@@ -188,11 +218,13 @@ var wizard_products = (function () {
     }
   };
 
+
   function FPPTIProduct(product_data) {
     this.product_type = "FPPTI";
     this.product_data = product_data;
   }
-  // Inherit from product
+
+// Inherit from product
   FPPTIProduct.prototype = Object.create(Product.prototype);
 
   FPPTIProduct.prototype.get_replacement_paragraphs = function () {
@@ -203,7 +235,8 @@ var wizard_products = (function () {
     this.product_type = "FPPCI";
     this.product_data = product_data;
   }
-  // Inherit from product
+
+// Inherit from product
   FPPCIProduct.prototype = Object.create(Product.prototype);
   FPPCIProduct.prototype.create_coverage_option = function (options) {
     return new CICoverageOption(new CoverageOption(options));
@@ -350,7 +383,9 @@ var wizard_products = (function () {
       });
     };
 
+
   }
+
   GroupCIProduct.prototype = Object.create(Product.prototype);
 
   GroupCIProduct.prototype.is_valid_employee = function (employee) {
@@ -403,11 +438,13 @@ var wizard_products = (function () {
     return false;
   };
 
-  // FPP Gov
+
+// FPP Gov
   function FPPGovProduct(product_data) {
     this.product_type = "FPP-Gov";
     this.product_data = product_data;
   }
+
   FPPGovProduct.prototype = Object.create(Product.prototype);
   FPPGovProduct.prototype.requires_gender = function () {
     return false;
@@ -427,6 +464,118 @@ var wizard_products = (function () {
   FPPGovProduct.prototype.get_replacement_paragraphs = function () {
     return this.product_data.replacement_paragraphs;
   };
+
+  //region HI Product Prototype
+  function HIProduct(product_data) {
+    this.product_type = "HI";
+    this.product_data = product_data;
+  }
+
+  HIProduct.prototype = Object.create(Product.prototype);
+
+  HIProduct.prototype.requires_gender = function () {
+    return false;
+  };
+
+  HIProduct.prototype.requires_height = function () {
+    return false;
+  };
+
+  HIProduct.prototype.requires_weight = function () {
+    return false;
+  };
+
+  HIProduct.prototype.requires_is_smoker = function () {
+    return false;
+  };
+
+  HIProduct.prototype.has_critical_illness_coverages = function () {
+    return false;
+  };
+
+  HIProduct.prototype.has_critical_illness_coverages = function () {
+    return false;
+  };
+
+  HIProduct.prototype.has_simple_coverage = function () {
+    return true;
+  };
+
+  HIProduct.prototype.requires_occupation = function () {
+    return true;
+  };
+
+  HIProduct.prototype.get_coverage_tiers = function () {
+    return [
+      'EE',
+      'ES',
+      'EC',
+      'EF'
+    ];
+  };
+
+  HIProduct.prototype.create_coverage_option = function (options) {
+    return new SimpleCoverageOption(options);
+  };
+
+  HIProduct.prototype.is_fpp_product = function () {
+    return false;
+  };
+
+  HIProduct.prototype.should_show_step_two = function () {
+    return false;
+  };
+
+  HIProduct.prototype.should_show_step_four = function () {
+    return false;
+  };
+  //endregion
+
+  //region ACCProduct
+  function ACCProduct(product_data) {
+    this.product_type = "ACC";
+    this.product_data = product_data;
+  }
+
+  ACCProduct.prototype = Object.create(Product.prototype);
+
+  ACCProduct.prototype.has_simple_coverage = function () {
+    return true;
+  };
+
+  ACCProduct.prototype.get_occupations = function () {
+    return ['Management', 'Worker', 'Secretary'];
+  };
+
+  ACCProduct.prototype.requires_occupation = function () {
+    return true;
+  };
+
+  ACCProduct.prototype.get_coverage_tiers = function () {
+    return [
+      'EE',
+      'ES',
+      'EC',
+      'EF'
+    ];
+  };
+
+  ACCProduct.prototype.create_coverage_option = function (options) {
+    return new SimpleCoverageOption(options);
+  };
+
+  ACCProduct.prototype.is_fpp_product = function () {
+    return false;
+  };
+
+  ACCProduct.prototype.should_show_step_two = function () {
+    return false;
+  };
+
+  ACCProduct.prototype.should_show_step_four = function () {
+    return false;
+  };
+  //endregion
 
   return {
     build_products: build_products

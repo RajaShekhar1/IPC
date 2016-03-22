@@ -92,7 +92,7 @@ def get_rates(product, **demographics):
 
 def is_eligible(product_code, sex, height, weight):
     # Skip eligibility check if any criteria is not provided.
-    if sex is None or height is None or weight is None:
+    if sex is None or height is None or weight is None or height == '' or weight == '':
         return True
 
     height = int(height)

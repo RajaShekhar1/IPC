@@ -62,6 +62,8 @@ class DocuSignService(object):
 
             product_id = product_submission['product_id']
             product = self.product_service.get(product_id)
+            if not product.does_generate_form():
+                continue
             if product.is_fpp():
                 components += self.create_fpp_envelope_components(enrollment_data, recipients,
                                                                   should_use_docusign_renderer)
@@ -1122,7 +1124,7 @@ class DocuSignEnvelopeComponent(object):
         tabs = []
 
         # Convert call-center employee signatures to voice-auth statements.
-        if purpose == self.PDF_TABS and self.data.should_use_call_center_workflow() and hasattr(self, 'template_id'):
+        if purpose == self.PDF_TABS and self.data.should_use_call_center_workflow() and hasattr(self, 'template_id') and self.template_id:
             tab_definitions = self.tab_repository.get_tabs_for_template(self.template_id)
             for tab_def in tab_definitions:
                 # The PDF Export code currently expects a name of "{}{}".format(tab_type, recip_type)

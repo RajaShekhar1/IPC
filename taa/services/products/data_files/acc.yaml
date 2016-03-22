@@ -21,28 +21,28 @@ rate_levels:
 
 cost_components:
   - name: "Employee Only Premium"
-    type: "ACPT Lookup"
+    type: "Annual Premium Lookup"
     rate_table: "EE"
     is_eligible:
-      - coverage_selection: "EE"
+      coverage_selection: "EE"
 
   - name: "Employee and Spouse Premium"
-    type: "ACPT Lookup"
+    type: "Annual Premium Lookup"
     rate_table: "ES"
     is_eligible:
-      - coverage_selection: "ES"
+      coverage_selection: "ES"
 
   - name: "Employee, Children Premium"
-    type: "ACPT Lookup"
+    type: "Annual Premium Lookup"
     rate_table: "EC"
     is_eligible:
-      - coverage_selection: "EC"
+      coverage_selection: "EC"
 
   - name: "Employee, Spouse, and Children Premium"
-    type: "ACPT Lookup"
+    type: "Annual Premium Lookup"
     rate_table: "EF"
     is_eligible:
-      - coverage_selection: "EF"
+      coverage_selection: "EF"
 
 rate_tables:
   - name: "EE"
@@ -84,4 +84,3 @@ rate_tables:
       4:    "486.20"
       5:    "529.36"
       6:    "653.64"
-
