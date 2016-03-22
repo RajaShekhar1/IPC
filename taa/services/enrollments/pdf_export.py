@@ -254,7 +254,7 @@ class FormPDFRenderer(object):
                   is_bold=False, is_italic=False, fontcolor=None):
 
         if isinstance(text, basestring) and not isinstance(text, unicode):
-            text = unicode(text, 'utf-8')
+            text = unicode(text, 'utf-8', errors='ignore')
         elif not isinstance(text, basestring):
             text = unicode(text)
 

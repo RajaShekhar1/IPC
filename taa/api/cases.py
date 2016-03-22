@@ -204,7 +204,6 @@ def enrollment_records(case_id):
     """
     case = case_service.get_if_allowed(case_id)
 
-
     if request.args.get('draw'):
         # Do a datatables response with pagination and search text.
         offset = int(request.args.get('start', 0))
@@ -240,7 +239,7 @@ def enrollment_records(case_id):
             census_record_id=row.census_record_id,
             employee_first=row.employee_first,
             employee_last=row.employee_last,
-            #employee_email=row.employee_email,
+            # employee_email=row.employee_email,
             agent_name=row.agent_name,
             employee_birthdate=row.employee_birthdate,
             enrollment_status=row.enrollment_status,
@@ -252,11 +251,11 @@ def enrollment_records(case_id):
             # DataTables docs recommends casting this to int to prevent XSS
             draw=int(request.args['draw']),
             recordsTotal=enrollment_application_service.retrieve_enrollments_total_visible_count_for_table(case),
-            recordsFiltered=enrollment_application_service.retrieve_enrollments_filtered_count_for_table(case, search_text),
+            recordsFiltered=enrollment_application_service.retrieve_enrollments_filtered_count_for_table(case,
+                                                                                                         search_text),
         )
 
         return Response(response=json.dumps(resp_data, cls=JSONEncoder), content_type='application/json')
-
 
     census_records = case_service.get_current_user_census_records(case)
     data = enrollment_application_service.get_enrollment_records_for_census_records(census_records)
@@ -327,7 +326,6 @@ def census_records(case_id):
     # If we are doing an SSN lookup, use simpler method.
     if args['filter_ssn'] or args['filter_birthdate']:
         return case_service.get_census_records(case, **args)
-
 
     # DataTables parameters
     offset = int(request.args.get('start', 0))
@@ -406,7 +404,7 @@ def post_census_records(case_id):
     data = get_posted_data()
     file_obj = request.files.get('csv-file')
     if not file_obj:
-        ## TODO: create the ad-hoc record after an enrollment, not before.
+        # TODO: create the ad-hoc record after an enrollment, not before.
         # Attempt to process an ad-hoc post. Currently only SSN is required, and anyone who can
         #  view / enroll the case can do this
         return case_service.create_ad_hoc_census_record(case, ssn=data['ssn'])

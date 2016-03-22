@@ -445,10 +445,21 @@
           <h4 class="modal-title">Smoker Status</h4>
         </div>
         <div class="modal-body">
-          <div data-bind="ifnot: smoker_status_changed_dialog_loading">
-            <p data-bind="text: smoker_status_changed_message"></p>
+          <div data-bind="ifnot: $root.smoker_status_changed_dialog_loading">
+            <ul class="list-unstyled" data-bind="foreach: $root.smoker_status_changed_messages">
+              <li>
+                <span data-bind="text: $data"></span>
+                <span data-bind="
+                  visible: $root.smoker_status_changed_messages().length === 1">
+                  If you need to see alternative amounts please return to step 1.</span>
+              </li>
+            </ul>
+            <p data-bind="
+              visible: $root.smoker_status_changed_messages().length > 1">
+              If you need to see alternative amounts please return to step 1.
+            </p>
           </div>
-          <div data-bind="if: smoker_status_changed_dialog_loading">
+          <div data-bind="if: $root.smoker_status_changed_dialog_loading">
             <p>Tobacco status change - updating premium rate; please wait...</p>
             <div class="text-center">
               <i class="ace-icon fa fa-spinner fa-spin fa-3x"></i>
@@ -456,7 +467,10 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-bind="click: on_smoker_status_changed_dialog, disable: smoker_status_changed_dialog_loading">Ok</button>
+          <button type="button" class="btn btn-default" data-bind="
+            click: $root.on_smoker_status_changed_dialog,
+            disable: $root.smoker_status_changed_dialog_loading">Ok
+          </button>
         </div>
       </div>
       <!-- /.modal-content -->

@@ -384,13 +384,11 @@ def get_product_application_forms():
             ),
         ],
         'ACC': [
-            ApplicationForm('Generic', [s for s in all_statecodes if s not in
-                                        states_without_FPP + states_without_FPPTI_only + states_with_custom_fpp_forms],
+            ApplicationForm('Generic', ACC_STATECODES,
                             [], is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC)
         ],
         'HI': [
-            ApplicationForm('Generic', [s for s in all_statecodes if s not in
-                                        states_without_FPP + states_without_FPPTI_only + states_with_custom_fpp_forms],
+            ApplicationForm('Generic', HI_STATECODES,
                             [], is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC)
         ],
     }
@@ -402,6 +400,85 @@ def get_product_application_forms():
 
     return app_forms
 
+
+HI_STATECODES = [
+    'AL',
+    'AK',
+    'AZ',
+    'AR',
+    'DE',
+    'FL',
+    'GA',
+    'IL',
+    'IN',
+    'IA',
+    'KS',
+    'KY',
+    'LA',
+    'ME',
+    'MI',
+    'MS',
+    'MO',
+    'MT',
+    'NE',
+    'NV',
+    'NC',
+    'OH',
+    'OK',
+    'OR',
+    'PA',
+    'RI',
+    'SC',
+    'TN',
+    'TX',
+    'UT',
+    'VA',
+    'WV',
+    'WI',
+]
+
+ACC_STATECODES = [
+    'AL',
+    'AK',
+    'AZ',
+    'AR',
+    'CO',
+    'DE',
+    'DC',
+    'FL',
+    'GA',
+    'HI',
+    'ID',
+    'IL',
+    'IN',
+    'IA',
+    'KS',
+    'KY',
+    'LA',
+    'MI',
+    'MS',
+    'MO',
+    'MT',
+    'NE',
+    'NV',
+    'NM',
+    'NC',
+    'ND',
+    'OH',
+    'OK',
+    'OR',
+    'RI',
+    'SC',
+    'SD',
+    'TN',
+    'TX',
+    'UT',
+    'VT',
+    'VA',
+    'WV',
+    'WI',
+    'WY',
+]
 
 class ReplacementForm(object):
     def __init__(self, statecodes, docusign_template_id, paragraphs):
