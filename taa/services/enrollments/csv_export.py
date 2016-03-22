@@ -1,7 +1,7 @@
 import csv
 import json
 from taa.services.products import ProductService
-from taa.services.products.RatePlan import load_rate_plan_for_base_product
+from taa.services.cases import CaseService
 
 import dateutil.parser
 
