@@ -64,7 +64,7 @@ class CensusRecordService(DBService):
         existing_by_ssn = {r.employee_ssn: r for r in existing}
         # Parse the uploaded file and validate it. If we are in add-only mode,
         # pass in the existing SSN dict.
-        parser = CensusRecordParser()
+        parser = CensusRecordParser(case)
         parser.process_file(file_data,
                             error_if_matching=(existing_by_ssn if
                                                not replace_matching else None))
@@ -96,7 +96,7 @@ class CensusRecordService(DBService):
 
     def replace_census_data(self, case, file_stream):
         # Process the upload before deleting the current data
-        parser = CensusRecordParser()
+        parser = CensusRecordParser(case)
         parser.process_file(file_stream)
         # Bail out if any errors
         if parser.errors:
