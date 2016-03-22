@@ -186,6 +186,9 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         state = override_state if override_state else data['enrollmentState']
         city = override_city if override_city else data['enrollmentCity']
 
+        if 'occupation_class' not in data:
+            data['occupation_class'] = None
+
         company_name = data['companyName']
         group_number = data['groupNumber']
         products = case.products
