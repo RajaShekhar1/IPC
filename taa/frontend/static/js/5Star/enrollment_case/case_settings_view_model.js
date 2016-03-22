@@ -212,7 +212,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   function get_default_state_override() {
 
-    var case_default_statecode = (self.situs_state()) ? self.situs_state().statecode : "";
+    var case_default_statecode = (self.situs_state())? self.situs_state().statecode : "";
 
     // Use the default statecode unless we have session storage value for this case
     var statecode = get_storage_or_default('enrollment_state_override.' + self.case_id, case_default_statecode);
@@ -250,7 +250,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.selected_statecode = ko.pureComputed(function () {
-    return (self.situs_state()) ? self.situs_state().statecode : null;
+    return (self.situs_state())? self.situs_state().statecode : null;
   });
   self.is_active = ko.observable(case_data.active);
   self.owner_agent_id = ko.observable(case_data.agent_id || "");
@@ -270,7 +270,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.partner_agents = ko.observable(
-    (case_data.partner_agents) ? _.map(_.pluck(case_data.partner_agents, "id"), function (id) {
+    (case_data.partner_agents)? _.map(_.pluck(case_data.partner_agents, "id"), function (id) {
       return id + "";
     }) : []);
 
@@ -360,7 +360,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   }));
   // This is just the Integer representation of the payment_mode observable, or null if none is selected.
   self.selected_payment_mode = ko.pureComputed(function () {
-    return (self.payment_mode()) ? parseInt(self.payment_mode().mode) : null;
+    return (self.payment_mode())? parseInt(self.payment_mode().mode) : null;
   });
 
   // Bank Draft Form option
@@ -409,8 +409,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     {value: 3, label: '3'}
   ];
 
-  self.hi_occupation_classes = [
-  ];
+  self.hi_occupation_classes = [];
 
   // Product base codes that will display occupation class mapping widgets
   self.eligible_product_codes = ['ACC', 'HI'];
@@ -1068,7 +1067,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   };
 
-  self.validate_splits = function () {
+  self.validate_splits = function (callback) {
     if (!self.has_agent_splits()) {
       return true;
     }
@@ -1076,7 +1075,12 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     if (!_.all(self.products(), self.has_proper_split_percentage_sum)) {
       var invalid_product = _.find(self.products(), _.negate(self.has_proper_split_percentage_sum));
       var bad_sum = self.sum_split_percentages_for_product(invalid_product);
-      bootbox.alert("Agent splits for " + invalid_product.name + " must total 100%; the current total percentage is " + bad_sum + "%");
+      bootbox.alert("Agent splits for " + invalid_product.name + " must total 100%; the current total percentage is " + bad_sum + "%", function () {
+        $('.bootbox.modal').modal('hide');
+        if (callback) {
+          callback();
+        }
+      });
       return false;
     }
 
@@ -1159,7 +1163,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     var start_date_present = period.start_date() !== "";
     var end_date_present = period.end_date() !== "";
     // XOR - one or the other, but not both the same
-    return (start_date_present ? !end_date_present : end_date_present);
+    return (start_date_present? !end_date_present : end_date_present);
   };
   self.any_annual_period_missing_a_component = function () {
     return _.any(self.annual_enrollment_periods(), self.missing_annual_period_predicate);
@@ -1178,8 +1182,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       partner_agents: partner_agents,
       enrollment_period_type: self.enrollment_period_type(),
       situs_city: self.situs_city(),
-      situs_state: self.selected_statecode() ? self.selected_statecode() : "",
-      payment_mode: self.selected_payment_mode() ? self.selected_payment_mode() : null,
+      situs_state: self.selected_statecode()? self.selected_statecode() : "",
+      payment_mode: self.selected_payment_mode()? self.selected_payment_mode() : null,
       agent_id: self.owner_agent_id(),
       can_partners_download_enrollments: self.can_partners_download_enrollments(),
       is_self_enrollment: self.is_self_enrollment(),
@@ -1286,81 +1290,89 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       return;
     }
 
-    self.loading_modal({message: "Saving case..."});
+    function show_save_dialog() {
+      self.loading_modal({message: "Saving case..."});
 
-    // Make sure case can be activated
-    if (self.is_active() && !self.can_activate_case()) {
-      self.is_active(false);
-      self.flash_messages.flash_error("The case has been deactivated due to missing settings.");
-      // Continue saving the case
-    }
+      // Make sure case can be activated
+      if (self.is_active() && !self.can_activate_case()) {
+        self.is_active(false);
+        self.flash_messages.flash_error("The case has been deactivated due to missing settings.");
+        // Continue saving the case
+      }
 
-    var case_request = send_json_data(
-      "PUT",
-      urls.get_case_api_url(case_data.id),
-      self.serialize_case()
-    );
-
-    var periods_request = send_json_data(
-      "PUT",
-      urls.get_case_api_enrollment_periods_url(case_data.id),
-      self.serialize_enrollment_periods()
-    );
-
-    var self_enroll_request;
-
-    if (self.is_self_enrollment()) {
-      // Also save self enrollment settings.
-      self_enroll_request = send_json_data(
+      var case_request = send_json_data(
         "PUT",
-        urls.get_case_api_self_enrollment_url(case_data.id),
-        self.serialize_self_enroll()
+        urls.get_case_api_url(case_data.id),
+        self.serialize_case()
       );
-    }
 
-    var agent_splits_request;
-
-    if (self.has_agent_splits()) {
-      // Also save agent split settings.
-      agent_splits_request = send_json_data(
+      var periods_request = send_json_data(
         "PUT",
-        urls.get_case_api_agent_splits_url(case_data.id),
-        self.serialize_agent_splits()
+        urls.get_case_api_enrollment_periods_url(case_data.id),
+        self.serialize_enrollment_periods()
       );
+
+      var self_enroll_request;
+
+      if (self.is_self_enrollment()) {
+        // Also save self enrollment settings.
+        self_enroll_request = send_json_data(
+          "PUT",
+          urls.get_case_api_self_enrollment_url(case_data.id),
+          self.serialize_self_enroll()
+        );
+      }
+
+      var agent_splits_request;
+
+      if (self.has_agent_splits()) {
+        // Also save agent split settings.
+        agent_splits_request = send_json_data(
+          "PUT",
+          urls.get_case_api_agent_splits_url(case_data.id),
+          self.serialize_agent_splits()
+        );
+      }
+
+      // Self Enroll settings
+      $('#save-success').hide();
+      $('#save-fail').hide();
+
+      var on_success = function (case_xhr, periods_xhr, self_enroll_xhr) {
+        self.is_data_dirty(false);
+        self.flash_messages.flash_success("Data Saved");
+        $("#save-success").text("Data Saved");
+        self.loading_modal(null);
+      };
+      var on_failure = function (failed_xhr) {
+        var errors = failed_xhr.responseJSON.errors || [];
+        show_all_errors(errors);
+        self.loading_modal(null);
+        self.flash_messages.flash_error("Save failed. Please correct any errors below.");
+      };
+      var done;
+      if (!self.is_self_enrollment()) {
+        done = $.when(case_request, periods_request);
+      } else {
+        done = $.when(case_request, periods_request, self_enroll_request);
+      }
+
+      if (cb && typeof(cb) === "function") {
+        cb(done);
+        self.loading_modal(null);
+        return;
+      }
+
+      done.then(on_success, on_failure);
+
+      return false;
     }
 
-    // Self Enroll settings
-    $('#save-success').hide();
-    $('#save-fail').hide();
-
-    var on_success = function (case_xhr, periods_xhr, self_enroll_xhr) {
-      self.is_data_dirty(false);
-      self.flash_messages.flash_success("Data Saved");
-      $("#save-success").text("Data Saved");
-      self.loading_modal(null);
-    };
-    var on_failure = function (failed_xhr) {
-      var errors = failed_xhr.responseJSON.errors || [];
-      show_all_errors(errors);
-      self.loading_modal(null);
-      self.flash_messages.flash_error("Save failed. Please correct any errors below.");
-    };
-    var done;
-    if (!self.is_self_enrollment()) {
-      done = $.when(case_request, periods_request);
-    } else {
-      done = $.when(case_request, periods_request, self_enroll_request);
-    }
-
-    if (cb && typeof(cb) === "function") {
-      cb(done);
-      self.loading_modal(null);
+    if (!self.validate_splits(show_save_dialog)) {
       return;
     }
 
-    done.then(on_success, on_failure);
-
-    return false;
+    return show_save_dialog();
   };
 
   self.can_save_case = function () {
@@ -1370,11 +1382,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
 
     if (!self.validate()) {
-      self.flash_messages.flash_error("Please correct any errors below before saving.");
-      return false;
-    }
-
-    if (!self.validate_splits()) {
       self.flash_messages.flash_error("Please correct any errors below before saving.");
       return false;
     }
@@ -1428,7 +1435,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   if (self.can_edit_case) {
     $(window).bind("beforeunload", function () {
-      return self.has_unsaved_data() ? "You have made changes without saving. Do you you wish to leave this page and lose all changes?" : undefined;
+      return self.has_unsaved_data()? "You have made changes without saving. Do you you wish to leave this page and lose all changes?" : undefined;
     });
   }
 
@@ -1538,7 +1545,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       self.exit_print_mode();
       history_tab.tab('show');
 
-      setTimeout(function() {
+      setTimeout(function () {
         $.getJSON(urls.get_case_api_census_email_batches(case_data.id), function (data) {
           self.email_batches(data.data);
         });
