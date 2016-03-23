@@ -251,7 +251,7 @@ class DocuSignService(object):
                              )
                 ).filter(EnrollmentApplication.case_id.in_(owned_case_ids)
                 ).options(db.joinedload('case')
-                ).options(db.joinedload('coverages').joinedload('product')
+                #).options(db.joinedload('coverages').joinedload('product')
                 ).options(db.joinedload('census_record'))
             enrollments = list(own_enrollments) + list(partner_enrollments)
 
@@ -465,8 +465,9 @@ class DocusignEnvelope(object):
             timestamp=self.enrollment_record.signature_time,
             employee_first=self.enrollment_record.census_record.employee_first,
             employee_last=self.enrollment_record.census_record.employee_last,
-            products=self.get_product_names(),
-            coverage=self.get_coverage_summary(),
+            # TODO: Re-enable after adding server-side pagination to inbox.
+            #products=self.get_product_names(),
+            #coverage=self.get_coverage_summary(),
             case_id=self.enrollment_record.case_id,
             census_record_id=self.enrollment_record.census_record_id,
             application_status=self.enrollment_record.application_status,
