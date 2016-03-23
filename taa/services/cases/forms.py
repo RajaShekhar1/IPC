@@ -1,4 +1,3 @@
-
 from flask_wtf import Form
 from wtforms.fields import (
     BooleanField, DateField, FieldList, FileField, FormField, HiddenField,
@@ -10,6 +9,7 @@ from wtforms import validators
 
 from taa.services.cases.models import SelfEnrollmentSetup
 from taa.services.products import ProductService, get_all_states
+
 products_service = ProductService()
 
 
@@ -41,7 +41,7 @@ class _CommonCaseFormMixin(object):
     def validate_situs_state(self, field):
         if field.data not in products_service.get_all_statecodes():
             raise validators.ValidationError('Invalid State')
-        # TODO: Validate product-state mismatch
+            # TODO: Validate product-state mismatch
 
     def validate_products(self, field):
         pass
@@ -63,12 +63,13 @@ class SSNField(StringField):
                 if char.isdigit():
                     self.data += char
 
+
 class Editable(object):
     def __call__(self, field, **kwargs):
         kwargs.setdefault('id', field.id)
         # kwargs.setdefault('onsubmit', 'return false;')
         element = HTMLString(u'<div contenteditable="true" %s>%s</div>' %
-        (html_params(**kwargs), unicode(field._value())))
+                             (html_params(**kwargs), unicode(field._value())))
         hidden = HTMLString(u'<input type="hidden" id="{id}-value" '
                             u'name="{name}" onclick="document.getElementById('
                             u'\'{id}-value\').value = document.getElementById('
@@ -103,6 +104,8 @@ class CensusRecordForm(Form):
     employee_weight_lbs = StringField('Employee Weight in Lbs')
     employee_smoker = SelectField('Employee is Smoker',
                                   choices=[('', ''), ('N', 'No'), ('Y', 'Yes')])
+    occupation_class = SelectField('Employee Occupation',
+                                   default='')
 
     spouse_first = StringField('Spouse First')
     spouse_last = StringField('Spouse Last')
@@ -125,8 +128,19 @@ class CensusRecordForm(Form):
     spouse_smoker = SelectField('Spouse is Smoker',
                                 choices=[('', ''), ('N', 'No'), ('Y', 'Yes')])
 
+    def __init__(self, *args, **kwargs):
+        super(CensusRecordForm, self).__init__(*args, **kwargs)
 
-for x in range(1, 6+1):
+        self.occupation_class.choices = [(None, '(Choose Occupation)')]
+
+        if 'obj' in kwargs and hasattr(kwargs['obj'].case, 'occupation_class_settings') and kwargs['obj']\
+                .case.occupation_class_settings is not None:
+            occupations = [oc['label'] for oc in kwargs['obj'].case.occupation_class_settings]
+            for occupation in occupations:
+                self.occupation_class.choices.append((occupation, occupation))
+
+
+for x in range(1, 6 + 1):
     setattr(CensusRecordForm, 'child{}_first'.format(x),
             StringField('Child {} First'.format(x)))
     setattr(CensusRecordForm, 'child{}_last'.format(x),
@@ -184,7 +198,7 @@ class SelfEnrollmentSetupForm(Form):
         (SelfEnrollmentSetup.EMAIL_GREETING_BLANK, "Leave blank"),
     ])
     email_subject = StringField('Targeted Email Subject',
-                                     [validators.InputRequired()])
+                                [validators.InputRequired()])
 
     email_message = EditableField('Targeted Email Message', [validators.InputRequired()])
     use_landing_page = BooleanField('Enabled')
@@ -201,5 +215,5 @@ class SelfEnrollmentSetupForm(Form):
                     # these products
                     if self.CASE_GENERIC in self.self_enrollment_type.choices:
                         self.self_enrollment_type.choices.remove(
-                                self.CASE_GENERIC)
+                            self.CASE_GENERIC)
                     break

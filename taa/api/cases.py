@@ -452,7 +452,7 @@ def update_census_record(case_id, census_record_id):
         abort(401)
         return
     census_record = case_service.get_record_if_allowed(census_record_id)
-    form = CensusRecordForm()
+    form = CensusRecordForm(obj=census_record)
     if form.validate_on_submit():
         return case_service.update_census_record(census_record, form.data)
     raise TAAFormError(form.errors)
