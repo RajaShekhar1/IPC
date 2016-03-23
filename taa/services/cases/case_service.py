@@ -16,6 +16,7 @@ from taa.services import RequiredFeature, LookupService
 from taa.services.agents.models import Agent
 
 
+# noinspection PyMethodMayBeStatic
 class CaseService(DBService):
     __model__ = Case
 
@@ -618,3 +619,6 @@ class CaseService(DBService):
             return True
         else:
             return agent.id == case.agent_id
+
+    def requires_occupation(self, case):
+        return len(case.products) > 0 and any(p for p in case.products if p.requires_occupation())
