@@ -399,6 +399,7 @@ def get_product_application_forms():
     app_forms['FPP-Gov'] = app_forms['FPPTI']
     app_forms['FPPTIY'] = app_forms['FPPTI']
     app_forms['FPPTIB'] = app_forms['FPPTI']
+    app_forms['FPPTIW'] = app_forms['FPPTI']
 
     return app_forms
 
