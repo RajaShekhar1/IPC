@@ -140,7 +140,7 @@ function SimpleCoverageOption(options) {
   self.serialize_data = function () {
     return {
       premium: self.premium,
-      face_value: self.coverage_tier
+      coverage_selection: self.coverage_tier
     }
   }
 }

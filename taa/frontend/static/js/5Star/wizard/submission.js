@@ -128,6 +128,8 @@ function build_wizard_results_for_product_coverage(product_cov) {
 
   var did_decline = (root.coverage_vm.has_multiple_products()) ? product_cov.did_decline() : root.did_decline();
 
+  var occupation = Array.isArray(root.selected_occupation()) ? root.selected_occupation()[0].label : undefined;
+
   var wizard_results = {
     product_id: product_cov.product.product_data.id,
     case_id: root.enrollment_case.id,
@@ -135,6 +137,7 @@ function build_wizard_results_for_product_coverage(product_cov) {
     enrollState: root.enrollState(),
     payment_mode: root.coverage_vm.payment_mode().frequency,
     payment_mode_text: root.coverage_vm.payment_mode().label,
+    occupation_class: occupation,
 
     method: (root.is_in_person_application()) ? 'in_person' : 'self_enroll_email',
     did_decline: did_decline,
