@@ -1281,17 +1281,13 @@ we load from the server at run time for page speed
               <div class="form-panel modal-panel form-horizontal">
                 <div class="form-group">
                   <div class="control-label col-sm-3">
-                    <label>Send To</label>
+                    <label for="send_type">Send To</label>
                   </div>
                   <div class="col-sm-9">
-                    <select class="form-control" data-bind="value: send_type" name="send_type">
-                      <option data-bind="text: numbers.not_sent()+' employees who have not been sent a link'"
-                              value="not-sent"></option>
-                      <option
-                          data-bind="text: numbers.not_enrolled()+' employees who have neither enrolled nor declined'"
-                          value='not-enrolled'></option>
-                      <option data-bind="text: numbers.declined()+' employees who have declined'"
-                              value='declined'></option>
+                    <select class="form-control" data-bind="value: send_type" id="send_type" name="send_type">
+                      <option value="not-sent">Employees who have not been sent a link</option>
+                      <option value='not-enrolled'>Employees who have neither enrolled nor declined</option>
+                      <option value='declined'>Employees who have declined</option>
                     </select>
                   </div>
                 </div>

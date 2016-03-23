@@ -528,7 +528,12 @@ def get_census_records_for_status(case, status=None):
         return result
     if status is None:
         return result if case.census_records is None else case.census_records
-    for record in case.census_records:
+
+    case_census_records = case.census_records
+    if case_service.requires_occupation(case):
+        case_census_records = [cr for cr in case_census_records if cr.occupation_class is not None]
+
+    for record in case_census_records:
         if status == 'not-sent':
             if len(self_enrollment_email_service.get_for_census_record(record)) == 0:
                 result.append(record)
