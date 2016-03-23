@@ -18,7 +18,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
   });
 
-  self.company_name = ko.observable(case_data.company_name || "").extend({rateLimit: 1000});
+  self.company_name = ko.observable(case_data.company_name || "").extend({
+    rateLimit: 1000
+  });
 
   self.group_number = ko.observable(case_data.group_number || "");
 
@@ -158,19 +160,18 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   //region Product Rate Levels
   self.get_rate_levels_for_product_code = function (product_code) {
-    if (_.has(self.product_rate_levels, product_code)) {
-      return self.product_rate_levels[product_code];
-    } else {
-      return [];
+      if (_.has(self.product_rate_levels, product_code)) {
+        return self.product_rate_levels[product_code];
+      } else {
+        return [];
+      }
     }
-  }
-  //endregion
+    //endregion
 
   self.enrollment_period_type = ko.observable(case_data.enrollment_period_type);
   self.enrollment_periods = ko.observableArray($.map(case_data.enrollment_periods, function (p) {
-      return new CaseEnrollmentPeriod(p);
-    }
-  ));
+    return new CaseEnrollmentPeriod(p);
+  }));
   self.situs_city = ko.observable(case_data.situs_city);
 
   self.state_choices = settings.all_states;
@@ -209,10 +210,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   // Note: saving just the statecode here, not the state object
   set_storage_from_observable('enrollment_state_override.' + self.case_id, self.get_enrollment_state_override);
 
-
   function get_default_state_override() {
 
-    var case_default_statecode = (self.situs_state())? self.situs_state().statecode : "";
+    var case_default_statecode = (self.situs_state()) ? self.situs_state().statecode : "";
 
     // Use the default statecode unless we have session storage value for this case
     var statecode = get_storage_or_default('enrollment_state_override.' + self.case_id, case_default_statecode);
@@ -224,7 +224,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       return get_state_from_statecode(statecode);
     }
   }
-
 
   function get_storage_or_default(key, default_val) {
     if (window.sessionStorage.getItem(key)) {
@@ -240,7 +239,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     });
   }
 
-
   // Reset the overrides when the case values change
   self.situs_city.subscribe(function (new_val) {
     self.enrollment_city_override(new_val);
@@ -250,7 +248,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.selected_statecode = ko.pureComputed(function () {
-    return (self.situs_state())? self.situs_state().statecode : null;
+    return (self.situs_state()) ? self.situs_state().statecode : null;
   });
   self.is_active = ko.observable(case_data.active);
   self.owner_agent_id = ko.observable(case_data.agent_id || "");
@@ -270,10 +268,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.partner_agents = ko.observable(
-    (case_data.partner_agents)? _.map(_.pluck(case_data.partner_agents, "id"), function (id) {
+    (case_data.partner_agents) ? _.map(_.pluck(case_data.partner_agents, "id"), function (id) {
       return id + "";
     }) : []);
-
 
   // Disable bad combos of states and products
   self.state_product_limiter = new ProductStatesLimiterViewModel(settings.product_state_mapping, self.situs_state, self.state_choices, self.products, self.product_choices);
@@ -285,7 +282,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     var is_valid = ko.computed(function () {
       return self.state_product_limiter.is_valid_product_for_state(item, self.situs_state());
     });
-    ko.applyBindingAccessorsToNode(option, {enable: is_valid}, item);
+    ko.applyBindingAccessorsToNode(option, {
+      enable: is_valid
+    }, item);
   };
 
   // Track whether or not we are editing products.
@@ -360,7 +359,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   }));
   // This is just the Integer representation of the payment_mode observable, or null if none is selected.
   self.selected_payment_mode = ko.pureComputed(function () {
-    return (self.payment_mode())? parseInt(self.payment_mode().mode) : null;
+    return (self.payment_mode()) ? parseInt(self.payment_mode().mode) : null;
   });
 
   // Bank Draft Form option
@@ -403,11 +402,16 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   // Mappings available to the user -- used in case.html to populate mapping dropdown
   // A 'null' is implicit
-  self.available_occupation_mappings = [
-    {value: 1, label: '1'},
-    {value: 2, label: '2'},
-    {value: 3, label: '3'}
-  ];
+  self.available_occupation_mappings = [{
+    value: 1,
+    label: '1'
+  }, {
+    value: 2,
+    label: '2'
+  }, {
+    value: 3,
+    label: '3'
+  }];
 
   self.hi_occupation_classes = [];
 
@@ -455,7 +459,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
   };
 
-
   function is_product_active(product) {
     for (var i in self.products()) {
       if (i == 'first') {
@@ -467,7 +470,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
     return false;
   }
-
 
   function is_occupation_class_active(label) {
     for (var i in self.occupation_classes()) {
@@ -509,7 +511,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.serialize_occ_mapping = function () {
     var data = {};
     for (var product_id in self.occ_mapping_cache) {
-      if (!is_product_active({id: product_id})) {
+      if (!is_product_active({
+          id: product_id
+        })) {
         continue;
       }
       if (!(product_id in data)) {
@@ -526,7 +530,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
     return data;
   };
-
 
   self.occupation_classes_for_product = function (product) {
     var r = [];
@@ -553,7 +556,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
     return r;
   };
-
 
   // cache the instances of the riders here.
   self._case_rider_configurations_by_product = {};
@@ -701,6 +703,49 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }, true);
   };
 
+  self.product_split_percentage_computeds = {};
+
+  self.get_product_split_percentage_complete_computed = function (product_id) {
+    if (!product_id) {
+      return null;
+    }
+
+    var computed;
+    if (_.has(self.product_split_percentage_computeds, product_id)) {
+      computed = self.product_split_percentage_computeds[product_id];
+    } else {
+      computed = ko.pureComputed(function () {
+        var total = _.chain(self.selected_agent_splits())
+          .filter(function (split) {
+            return split.product_id === product_id;
+          })
+          .sum(function (split) {
+            return split.split_percentage();
+          })
+          .value();
+        return total === 100;
+      });
+      self.product_split_percentage_computeds[product_id] = computed;
+    }
+    return computed;
+  };
+
+  self.is_split_percentage_complete = function (product_id) {
+    if (!self.has_agent_splits()) {
+      return true;
+    }
+
+    var total = _.chain(self.selected_agent_splits())
+      .filter(function (split) {
+        return split.product_id === product_id;
+      })
+      .sum(function (split) {
+        return split.split_percentage;
+      })
+      .value();
+    return total === 100;
+  };
+
   self.get_agent_splits_completion_status = function (product_id) {
     if (!self.has_agent_splits()) {
       return "Complete";
@@ -730,9 +775,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       return false;
     }
 
-    return _.some(self.selected_agent_splits(), {agent_id: agent.id});
+    return _.some(self.selected_agent_splits(), {
+      agent_id: agent.id
+    });
   };
-
 
   self.agents_with_percentage = ko.computed(function () {
     return _.filter(self.case_agents(), function (agent) {
@@ -761,8 +807,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
         return true;
       }
       return self.case_agents().filter(function (elem) {
-          return elem.id === this.agent_id;
-        }.bind(this)).length > 0;
+        return elem.id === this.agent_id;
+      }.bind(this)).length > 0;
     }, this);
     this.product_name = (function () {
       var cur_product = self.products().filter(function (elem) {
@@ -774,7 +820,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       return {
         agent_id: this.agent_id,
         product_id: this.product_id,
-        split_percentage: this.split_percentage(),
+        split_percentage: this.split_percentage() || null,
         commission_subcount_code: this.commission_subcount_code()
       };
     };
@@ -803,7 +849,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       return split;
     }
   };
-  0
+
   self.has_products = ko.computed(function () {
     return !!self.products() && self.products().length > 0;
   });
@@ -812,8 +858,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return case_data.agent_splits.filter(function (elem) {
       // Ignore splits for products we don't have.
       return _.find(self.products(), function (product) {
-          return product.id === elem.product_id;
-        }) !== undefined;
+        return product.id === elem.product_id;
+      }) !== undefined;
     }).map(function (elem) {
       return new AgentSplit(elem.agent_id, elem.product_id, elem.commission_subcount_code, elem.split_percentage);
     });
@@ -823,7 +869,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     var agentIds = _.chain(case_data.agent_splits)
       .filter(function (split) {
         // Grab only splits that have a split percentage
-        return !!split.split_percentage && _.find(self.case_agents(), {id: split.agent_id});
+        return !!split.split_percentage && _.find(self.case_agents(), {
+          id: split.agent_id
+        });
       })
       .map(function (split) {
         // Grab the agent ids
@@ -838,7 +886,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
     return agentIds;
   }
-
 
   // Self-enrollment
   self.is_self_enrollment = ko.observable(case_data.is_self_enrollment);
@@ -856,7 +903,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   // Make sure there is at least one open enrollment period
   if (!self.get_open_enrollment_period()) {
-    self.enrollment_periods.push(new CaseEnrollmentPeriod({case_id: case_data.id, period_type: "open_with_start"}));
+    self.enrollment_periods.push(new CaseEnrollmentPeriod({
+      case_id: case_data.id,
+      period_type: "open_with_start"
+    }));
   }
   // Make at least four annual enrollment periods by default
   if (self.annual_enrollment_periods().length < 4) {
@@ -917,7 +967,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   // observe the annual period start dates for auto-filling algorithm
   var first_period = self.annual_enrollment_periods()[0];
-  first_period.start_date.extend({notify: 'always'});
+  first_period.start_date.extend({
+    notify: 'always'
+  });
   first_period.start_date.subscribe(function (val) {
     compute_quarterly_dates(first_period, val);
   });
@@ -936,7 +988,11 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
           bootbox.dialog({
             title: "Invalid Date",
             message: "The value '" + val + "' is not a valid start or end date. Provide a month and date formatted as 'MM/DD'.",
-            buttons: {main: {label: "OK"}}
+            buttons: {
+              main: {
+                label: "OK"
+              }
+            }
           });
         }
       });
@@ -1059,7 +1115,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.check_unique_name = function (current_value, callback) {
-    $.get(urls.get_cases_api_url(case_data.id), {by_name: current_value}, function (result) {
+    $.get(urls.get_cases_api_url(case_data.id), {
+      by_name: current_value
+    }, function (result) {
       // Must have either 0 cases with this name, or 1 (the current case)
       var is_unique = (result.data.length === 0 || current_value === case_data.company_name);
       callback(is_unique);
@@ -1102,14 +1160,12 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }, 0);
   };
 
-
   self.validate = function () {
 
     hide_all_errors();
 
     // hide missing date errors
     _.invoke(self.annual_enrollment_periods(), "error", "");
-
 
     // all other errors
     var errors = {};
@@ -1131,8 +1187,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       if (end !== '') {
         if (!is_valid_date(end)) {
           add_case_error(errors, "open_enrollment_end_date", "Enter valid End Date");
-        }
-        else if (start === '') {
+        } else if (start === '') {
           add_case_error(errors, "open_enrollment_start_date", "Enter valid Start Date or both dates blank");
         }
       }
@@ -1163,7 +1218,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     var start_date_present = period.start_date() !== "";
     var end_date_present = period.end_date() !== "";
     // XOR - one or the other, but not both the same
-    return (start_date_present? !end_date_present : end_date_present);
+    return (start_date_present ? !end_date_present : end_date_present);
   };
   self.any_annual_period_missing_a_component = function () {
     return _.any(self.annual_enrollment_periods(), self.missing_annual_period_predicate);
@@ -1182,8 +1237,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       partner_agents: partner_agents,
       enrollment_period_type: self.enrollment_period_type(),
       situs_city: self.situs_city(),
-      situs_state: self.selected_statecode()? self.selected_statecode() : "",
-      payment_mode: self.selected_payment_mode()? self.selected_payment_mode() : null,
+      situs_state: self.selected_statecode() ? self.selected_statecode() : "",
+      payment_mode: self.selected_payment_mode() ? self.selected_payment_mode() : null,
       agent_id: self.owner_agent_id(),
       can_partners_download_enrollments: self.can_partners_download_enrollments(),
       is_self_enrollment: self.is_self_enrollment(),
@@ -1237,7 +1292,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     });
 
     var htmlstr = Array.prototype.reduce.call(base, function (html, node) {
-      return html + ( node.outerHTML || node.nodeValue );
+      return html + (node.outerHTML || node.nodeValue);
     }, "");
 
     return htmlstr;
@@ -1270,7 +1325,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     // Filter out any splits for agents that have been removed from the case
     serialized_records = _.filter(serialized_records, function (split) {
       // The null check ensures that the Writing Agent, which is denoted by a null id
-      return _.some(self.case_agents(), {'id': split.agent_id}) || split.agent_id === null;
+      return _.some(self.case_agents(), {
+        'id': split.agent_id
+      }) || split.agent_id === null;
     });
     return serialized_records.reduce(function (start, elem) {
       if (elem.split_percentage() || elem.commission_subcount_code()) {
@@ -1282,7 +1339,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.loading_modal = ko.observable(null);
 
-
   self.save_settings = function (cb) {
     self.flash_messages.clear();
 
@@ -1291,7 +1347,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
 
     function show_save_dialog() {
-      self.loading_modal({message: "Saving case..."});
+      self.loading_modal({
+        message: "Saving case..."
+      });
 
       // Make sure case can be activated
       if (self.is_active() && !self.can_activate_case()) {
@@ -1357,7 +1415,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
         done = $.when(case_request, periods_request, self_enroll_request);
       }
 
-      if (cb && typeof(cb) === "function") {
+      if (cb && typeof (cb) === "function") {
         cb(done);
         self.loading_modal(null);
         return;
@@ -1435,7 +1493,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   if (self.can_edit_case) {
     $(window).bind("beforeunload", function () {
-      return self.has_unsaved_data()? "You have made changes without saving. Do you you wish to leave this page and lose all changes?" : undefined;
+      return self.has_unsaved_data() ? "You have made changes without saving. Do you you wish to leave this page and lose all changes?" : undefined;
     });
   }
 
@@ -1444,7 +1502,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     reset_upload_modal(el);
     el.modal("show");
   };
-
 
   self.has_unsaved_data = ko.computed(function () {
     return self.is_data_dirty();
@@ -1477,7 +1534,11 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     });
 
     // If switching to another tab, we check for dirty and warn the user
-    this.before({except: {path: '#setup'}}, function () {
+    this.before({
+      except: {
+        path: '#setup'
+      }
+    }, function () {
 
       if (self.has_unsaved_data()) {
         bootbox.dialog({
@@ -1485,20 +1546,25 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
           message: "You have made changes without saving. Please save your changes or discard before leaving this page.",
           buttons: {
             main: {
-              label: "Save", className: 'btn-primary', callback: function () {
+              label: "Save",
+              className: 'btn-primary',
+              callback: function () {
                 self.save_settings();
               }
             },
             danger: {
-              label: "Discard Changes", className: 'btn-danger', callback: function () {
+              label: "Discard Changes",
+              className: 'btn-danger',
+              callback: function () {
                 // disable the page unload check
                 self.is_data_dirty(false);
                 window.location.reload();
               }
             },
             cancel: {
-              label: "Cancel", className: 'btn-default', callback: function () {
-              }
+              label: "Cancel",
+              className: 'btn-default',
+              callback: function () {}
             }
           }
         });
@@ -1566,7 +1632,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       self.exit_print_mode();
       api_tab.tab('show');
     });
-
 
     this.get("#print", function () {
       if (self.report_viewmodel()) {

@@ -683,7 +683,19 @@
                                         <h2 class="header lighter blue">Current Splits</h2>
                                         <div class="form-group"
                                              data-bind="foreach: { data: $root.products, as: 'product' }">
-                                          <h3 class="col-sm-12" data-bind="text: product.name"></h3>
+                                          <h3 class="col-xs-12">
+                                            <span data-bind="text: product.name"></span>
+                                            <span class="label label-success"
+                                                  data-bind="if: $root.get_product_split_percentage_complete_computed(product.id)">
+                                              <i class="ace-icon fa fa-check"></i>
+                                              <span>Complete</span>
+                                            </span>
+                                            <span class="label label-danger"
+                                                  data-bind="ifnot: $root.get_product_split_percentage_complete_computed(product.id)">
+                                              <i class="ace-icon fa fa-exclamation"></i>
+                                              <span>Incomplete</span>
+                                            </span>
+                                          </h3>
                                           <br>
                                           <h4 class="col-sm-8">Agent</h4>
                                           <h4 class="col-sm-4">%</h4>
