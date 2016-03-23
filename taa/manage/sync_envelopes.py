@@ -162,9 +162,13 @@ class EnvelopeSync(object):
 
         self.progress_count += self.skip_count
 
-        envelopes_to_process = reversed(completed[self.skip_count:])
+        envelopes_to_process = reversed(completed)
 
         for i, envelope_data in enumerate(envelopes_to_process):
+            if i < self.skip_count:
+                print("{}/{} Skipping...".format(i+1, len(completed)))
+                continue
+
             current_time = datetime.now()
 
             env = DocusignEnvelope(envelope_data['envelopeUri'], fetch_tabs=True)
