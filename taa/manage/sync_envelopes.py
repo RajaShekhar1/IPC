@@ -160,6 +160,8 @@ class EnvelopeSync(object):
         if not self.skip_count:
             self.skip_count = 0
 
+        self.progress_count += self.skip_count
+
         envelopes_to_process = reversed(completed[self.skip_count:])
 
         for i, envelope_data in enumerate(envelopes_to_process):
