@@ -100,7 +100,7 @@ var product_rates_service = (function() {
 
     find_applicant_coverage_option: function(applicant_type, coverage_amount) {
       if (!coverage_amount) {
-        return new NullCoverageOption();
+        return null_coverage;
       }
       var option = _.find(this.applicant_coverage_options[applicant_type](), function(opt) {
         return opt.face_value === parseInt(coverage_amount);
@@ -108,7 +108,7 @@ var product_rates_service = (function() {
       if (option) {
         return option;
       } else {
-        return new NullCoverageOption();
+        return null_coverage;
       }
     },
 

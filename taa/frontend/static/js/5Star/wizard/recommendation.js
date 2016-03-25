@@ -11,7 +11,7 @@ function RecommendationSet(name, recommendations) {
   self.get_recommended_applicant_coverage = function(applicant_type) {
     var rec = self.get_applicant_recommendation(applicant_type);
     if (!rec) {
-      return new NullCoverageOption();
+      return null_coverage;
     }
     return rec.recommended_coverage;
   };
