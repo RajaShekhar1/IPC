@@ -277,6 +277,10 @@ class ProductService(DBService):
 
                 # Limit to GI levels?
                 if product.are_rates_limited_to_GI():
+                    age = self.get_applicant_age(applicant_type, demographics)
+                    smoker = self.get_applicant_smoker_status(applicant_type, demographics)
+                    height = self.get_applicant_height(applicant_type, demographics)
+                    weight = self.get_applicant_weight(applicant_type, demographics)
                     limit = GILimitedRatesDecorator.get_gi_limit_for_product(product, applicant_type, age, smoker, height, weight)
 
                     if not limit:
@@ -320,6 +324,33 @@ class ProductService(DBService):
             demographics_age = demographics.get('child_age', 0)
         return demographics_age
 
+    def get_applicant_smoker_status(self, applicant_type, demographics):
+        mapping = {
+            APPLICANT_EMPLOYEE: 'employee_smoker',
+            APPLICANT_SPOUSE: 'spouse_smoker',
+        }
+        return self.get_demographics_value(mapping.get(applicant_type), demographics, default=False)
+
+    def get_applicant_height(self, applicant_type, demographics):
+        mapping = {
+            APPLICANT_EMPLOYEE: 'employee_height',
+            APPLICANT_SPOUSE: 'spouse_height',
+        }
+        return self.get_demographics_value(mapping.get(applicant_type), demographics, default=None)
+
+    def get_applicant_weight(self, applicant_type, demographics):
+        mapping = {
+            APPLICANT_EMPLOYEE: 'employee_weight',
+            APPLICANT_SPOUSE: 'spouse_weight',
+        }
+        return self.get_demographics_value(mapping.get(applicant_type), demographics, default=None)
+
+    def get_demographics_value(self, key, demographics, default):
+        if not key:
+            return default
+        else:
+            return demographics.get(key)
+
     def calc_rates_by_premium(self, product, applicant_type, demographics, riders):
         rate_plan = load_rate_plan_for_base_product(product.get_base_product_code())
         applicant_query = self.build_applicant_query_for_demographics(product, applicant_type, demographics, riders)
@@ -349,6 +380,9 @@ class ProductService(DBService):
 
         rate_plan = load_rate_plan_for_base_product(product.get_base_product_code())
         return rate_plan.calculate_premium(applicant_query)
+
+
+
 
 class ProductCriteriaService(DBService):
     __model__ = GuaranteeIssueCriteria

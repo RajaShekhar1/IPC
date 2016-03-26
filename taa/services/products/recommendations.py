@@ -41,16 +41,18 @@ def get_recommendations(product, **demographics):
                   )
 
 
-
 def lookup(product, employee_age, spouse_age=None):
     init_from_data_files()
     return RECOMMENDATIONS[product].get(employee_age, DEFAULT_RECOMMENDATIONS)
 
 
-
 def compute_gi_limited_recommendations(product, demographics):
     from rates import get_rates
     rates = get_rates(product, **demographics)
+
+    if product.get_base_product_code() == 'Group CI':
+        # FIXME: Temporary "kludge" to fix issues with 50% spouse limit. Use a static table instead of computation.
+        return lookup((product.get_base_product_code(), 'limited'), employee_age=demographics['employee_age'], spouse_age=demographics.get('spouse_age'))
 
     top_emp = get_top_coverage(rates.get('employee'))
     middle_emp = get_middle_coverage(rates.get('employee'))
@@ -134,7 +136,9 @@ def init_from_data_files():
             ('Group CI', 'nonsmoker'):
                 build(os.path.join(DATA_DIR, 'CIEMP_NONsmoker_suggested_rates.csv')),
             ('Group CI', 'smoker'):
-                build(os.path.join(DATA_DIR, 'CIEMP_smoker_suggested_rates.csv'))
+                build(os.path.join(DATA_DIR, 'CIEMP_smoker_suggested_rates.csv')),
+            ('Group CI', 'limited'):
+                build(os.path.join(DATA_DIR, 'CIEMP_limited_suggested_rates.csv')),
         }
 
 def build(csv_path):

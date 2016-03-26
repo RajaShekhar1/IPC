@@ -102,7 +102,10 @@ var product_rates_service = (function() {
       if (!coverage_amount) {
         return null_coverage;
       }
-      var option = _.find(this.applicant_coverage_options[applicant_type](), function(opt) {
+
+      var all_options = this._get_all_options_by_applicant_type(applicant_type);
+
+      var option = _.find(all_options, function(opt) {
         return opt.face_value === parseInt(coverage_amount);
       });
       if (option) {

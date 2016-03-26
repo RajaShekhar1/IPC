@@ -470,9 +470,27 @@ var wizard_viewmodel = (function () {
     // Subscribe to changes to applicant coverage options to ensure we move down to the next appropriate level.
     //  Timeout is used since we need most everything defined before it tries to evaluate the coverage options computed,
     //   since many parts of the UI depend on the coverage options.
+    self.applicant_subscriptions = [];
+
     window.setTimeout(function() {
+
+      // Any time one of the applicant coverages changes
+      self.applicant_coverage_selections.subscribe(observe_coverage_option_changes, 0);
+
+      // Also do it once on load, in case there are no applicant changes made.
+      observe_coverage_option_changes()
+    });
+
+    function observe_coverage_option_changes() {
+
+      // Clear out any previous subscriptions
+      _.each(self.applicant_subscriptions, function(subscription) {
+        subscription.dispose();
+      });
+      self.applicant_subscriptions = [];
+
       _.each(self.applicant_coverage_selections(), function(acov) {
-        acov.get_coverage_options.subscribe(function(new_options) {
+        var subscription = acov.get_coverage_options.subscribe(function(new_options) {
 
           var selected_cov = acov.coverage_option();
           if (!selected_cov.is_valid()) {
@@ -484,7 +502,7 @@ var wizard_viewmodel = (function () {
           if (!_.contains(new_options, selected_cov)) {
             // Select the next best coverage option.
             //  use the option with the largest coverage that is lower than current coverage.
-            var filtered_options = _.filter(new_options, function(o) {return o.face_value < selected_cov.face_value;});
+            var filtered_options = _.filter(new_options, function(o) {return o.face_value <= selected_cov.face_value;});
             var best_option = _.max(filtered_options, function (o) {
                 return o.face_value;
               }
@@ -510,10 +528,12 @@ var wizard_viewmodel = (function () {
             }, 0);
 
           }
+        });
+        self.applicant_subscriptions.push(subscription);
+    });
+  }
 
-        })
-      });
-    }, 0);
+
   }
 
   ProductCoverageViewModel.prototype = {
