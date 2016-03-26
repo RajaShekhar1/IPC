@@ -293,8 +293,6 @@ Product.prototype = {
     function get_employee_total_cumulative_coverage() {
       // Add together existing coverage applications and the current application.
 
-      // FIXME: access to global window vm in this function.
-
       var emp_coverage_option = window.vm.coverage_vm.get_applicant_coverage_option_for_product(window.vm.employee(), self);
       var emp_existing_coverage_amount = window.vm.employee().get_existing_coverage_amount_for_product(self);
       var emp_current_coverage_amount = (emp_coverage_option.is_valid() ? emp_coverage_option.face_value : 0);
@@ -302,7 +300,6 @@ Product.prototype = {
     }
 
     function has_employee_selected_coverage() {
-      // FIXME: access to global window vm in this function.
 
       var applicant_coverage = window.vm.coverage_vm.get_applicant_coverage_for_product(window.vm.employee(), self);
       return applicant_coverage.has_selected_coverage();
@@ -310,14 +307,13 @@ Product.prototype = {
 
     function has_employee_answered_required_question_yes() {
       // TODO: Move this check to validate step?
+      // Right now (March 2016), this is not important to check according to Bill.
       //self.root.employee().has_answered_any_question_yes();
       return false;
     }
 
     self.filter_spouse_coverage_options = function (all_options) {
       // Filter spouse options based on employee selection.
-
-      // FIXME: access to global window vm in this function.
 
       // Get the 5,000 to 100,000 coverage options to start with.
       var base_options = self.filter_base_rate_options(all_options);
