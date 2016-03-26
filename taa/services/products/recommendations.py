@@ -63,11 +63,11 @@ def compute_gi_limited_recommendations(product, demographics):
     bottom_ch = get_bottom_coverage(rates.get('children'))
 
     # We need to get the top, middle, and bottom values to fill the grid of recommendations.
-    return {
-        'good': {'employee': middle_emp, 'spouse': bottom_sp, 'children': None},
-        'better': {'employee': middle_emp, 'spouse': middle_sp, 'children': bottom_ch},
-        'best': {'employee': top_emp, 'spouse': top_sp, 'children': top_ch}
-    }
+    return [
+        {'name': 'good', 'coverages': {'employee': middle_emp, 'spouse': bottom_sp, 'children': None}},
+        {'name': 'better', 'coverages': {'employee': middle_emp, 'spouse': middle_sp, 'children': bottom_ch}},
+        {'name': 'best', 'coverages': {'employee': top_emp, 'spouse': top_sp, 'children': top_ch}},
+    ]
 
 
 def get_top_coverage(rate_list):

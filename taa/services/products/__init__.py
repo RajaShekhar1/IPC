@@ -1,5 +1,7 @@
 from flask import abort
 from flask_stormpath import current_user
+from taa.services.products.rates import GILimitedRatesDecorator
+
 from taa.services.products.RatePlan import ApplicantQuery, APPLICANT_CHILD, ApplicantQueryOptions, \
     load_rate_plan_for_base_product, ApplicantDemographics, APPLICANT_SPOUSE, APPLICANT_EMPLOYEE, COVERAGE_SELECTION_EE, \
     COVERAGE_SELECTION_ES, COVERAGE_SELECTION_EF, COVERAGE_SELECTION_EC
@@ -250,9 +252,6 @@ class ProductService(DBService):
                 ]
             }}
 
-            #for coverage_tier in coverage_tiers:
-            #    query = ApplicantQuery()
-
             return rate_response
         else:
             # Use the new rates calculator for all the other products.
@@ -275,6 +274,18 @@ class ProductService(DBService):
                     rates_by_coverage = filter(lambda r: int(r['coverage']) <= 20000, rates_by_coverage)
 
                 rate_response[applicant_type]['byface'] = rates_by_coverage
+
+                # Limit to GI levels?
+                if product.are_rates_limited_to_GI():
+                    limit = GILimitedRatesDecorator.get_gi_limit_for_product(product, applicant_type, age, smoker, height, weight)
+
+                    if not limit:
+                        # We don't allow enrollment for this applicant type
+                        rate_response[applicant_type] = {'bypremium': [], 'byface': []}
+                    else:
+                        if 'bypremium' in rate_response[applicant_type]:
+                            rate_response[applicant_type]['bypremium'] = filter(lambda rate: rate['coverage'] <= limit, rate_response[applicant_type]['bypremium'])
+                        rate_response[applicant_type]['byface'] = filter(lambda rate: rate['coverage'] <= limit, rate_response[applicant_type]['byface'])
 
             return rate_response
 
