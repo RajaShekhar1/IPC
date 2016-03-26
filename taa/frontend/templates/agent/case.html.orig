@@ -360,38 +360,38 @@
 
                               <div class="row">
 
-                                <div class="form-group"
-                                     data-bind="visible: $root.is_case_occupation_class_eligible()">
+                                  <div class="form-group"
+                                       data-bind="visible: $root.is_case_occupation_class_eligible()">
 
-                                  <label class="col-md-3 control-label">Occupation Classes</label>
-                                  <div class="col-md-9">
-                                    <div>
-                                      <div
-                                          data-bind="template: { name: 'occupationClassTemplate', foreach: occupation_classes, as: 'occupation_class' }"></div>
-                                      <script type="text/html" id="occupationClassTemplate">
+                                    <label class="col-md-3 control-label">Occupation Classes</label>
+                                    <div class="col-md-9">
+                                      <div>
+                                        <div
+                                            data-bind="template: { name: 'occupationClassTemplate', foreach: occupation_classes, as: 'occupation_class' }"></div>
+                                        <script type="text/html" id="occupationClassTemplate">
+                                          <div>
+                                            <span data-bind="text: label"></span>
+                                            <span> </span>
+                                            <button class="btn btn-sm btn-white btn-inverse middle"
+                                                    title="Click to delete this occupation class"
+                                                    data-bind="click: $parent.removeOccupationClass">
+                                              <i class="ace-icon fa fa-trash-o"></i>
+                                            </button>
+                                          </div>
+                                        </script>
                                         <div>
-                                          <span data-bind="text: label"></span>
-                                          <span> </span>
-                                          <button class="btn btn-sm btn-white btn-inverse middle"
-                                                  title="Click to delete this occupation class"
-                                                  data-bind="click: $parent.removeOccupationClass">
-                                            <i class="ace-icon fa fa-trash-o"></i>
+                                          <input class="ace" size="10" id="new-occupation-class"
+                                                 data-bind="textInput: new_occupation_class">
+                                          <button class="btn btn-sm btn-success" data-bind="click: addOccupationClass,
+                                        enable: is_new_occupation_class_valid">
+                                            <i class="ace-icon fa fa-plus white"></i>
+                                            Add new
                                           </button>
                                         </div>
-                                      </script>
-                                      <div>
-                                        <input class="ace" size="10" id="new-occupation-class"
-                                               data-bind="textInput: new_occupation_class">
-                                        <button class="btn btn-sm btn-success" data-bind="click: addOccupationClass,
-                                        enable: is_new_occupation_class_valid">
-                                          <i class="ace-icon fa fa-plus white"></i>
-                                          Add new
-                                        </button>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
 
                               <div class="row">
                                 <div class="col-sm-10 col-md-offset-1">
@@ -416,20 +416,43 @@
 
                                       {# Occupation Class Mappings #}
                                       <div class="form-group"
+<<<<<<< HEAD
+                                           data-bind="visible: $parent.case_riders_for_product($data).length === 0 && !$root.is_product_occupation_class_eligible(product)">
+                                        This product has no configuration options
+                                      </div>
+
+                                      {# Occupation Class Mappings #}
+                                      <div class="form-group"
                                            data-bind="visible: $root.is_product_occupation_class_eligible(product)">
                                         <h4 class="header lighter blue">Occupation Classes</h4>
-                                        <table
-                                            data-bind="foreach: { data: $parent.occupation_classes_for_product($data), as: 'occupation' }">
+                                        <table data-bind="foreach: { data: $parent.occupation_classes_for_product($data), as: 'occupation' }">
                                           <tr>
-                                            <td style="padding: 0.5em 1em;">&bull; <span
-                                                data-bind="text: occupation.label"></span>
+                                            <td style="padding: 0.5em 1em;">&bull; <span data-bind="text: occupation.label"></span>
                                             </td>
                                             <td>
-                                              <select data-bind="options: $root.get_rate_levels_for_product_code(product.base_product_type),
-                                                optionsText: 'name',
+                                              <select data-bind="options: $root.available_occupation_mappings,
+                                                optionsText: 'label',
                                                 optionsValue: 'value',
                                                 value: value,
                                                 optionsCaption: 'Not mapped'">
+                                              </select>
+                                            </td>
+                                          </tr>
+                                        </table>
+=======
+                                           data-bind="visible: $root.is_product_occupation_class_eligible(product)">
+                                        <h4 class="header lighter blue">Occupation Classes</h4>
+                                        <table data-bind="foreach: $parent.occupation_classes_for_product($data)">
+                                          <tr>
+                                            <td style="padding: 0.5em 1em;">&bull; <span
+                                                data-bind="text: label"></span>
+                                            </td>
+                                            <td>
+                                              <select data-bind="options: $root.available_occupation_mappings,
+                                            optionsText: 'label',
+                                            optionsValue: 'value',
+                                            value: value,
+                                            optionsCaption: 'Not mapped'">
                                               </select>
                                             </td>
                                           </tr>
@@ -440,6 +463,7 @@
                                       <div class="form-group"
                                            data-bind="visible: $parent.case_riders_for_product($data).length === 0 && !$root.is_product_occupation_class_eligible(product)">
                                         This product has no configuration options
+>>>>>>> master
                                       </div>
 
                                     </div>
@@ -1727,8 +1751,7 @@ we load from the server at run time for page speed
           {{ case |tojson|safe }},
           {{ product_choices |tojson|safe }},
           {{ 'true' if can_edit_case else 'false'}},
-          settings,
-          {{ product_rate_levels | tojson | safe }}
+          settings
       );
 
       // Initialize new View Models for knockout

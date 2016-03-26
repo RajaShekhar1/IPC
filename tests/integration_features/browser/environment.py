@@ -1,4 +1,3 @@
-
 from selenium import webdriver
 
 from taa import db, app
@@ -10,12 +9,12 @@ from taa.manage.docusign2taa import DocusignImportCommand
 def before_all(context):
     context.browser = webdriver.Firefox()
 
+
 def after_all(context):
     context.browser.quit()
 
 
 def before_scenario(context, scenario):
-
     # Create all tables
     db.drop_all()
     db.create_all()

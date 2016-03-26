@@ -120,10 +120,12 @@ rider_config_fpp_gov = """
 
 rider_config_ci = """
 ---
-- name: "Waiver of Premium"
-  code: "WP"
-  is_group_level: false
-  user_facing_name: "Waiver of Premium Benefit"
+# No riders
+[]
+# - name: "Waiver of Premium"
+#   code: "WP"
+#   is_group_level: false
+#   user_facing_name: "Waiver of Premium Benefit"
 
 """
 

@@ -1,377 +1,384 @@
-
-
 <div class="step-pane active" id="step1" data-step="1">
   <form id="step1-form">
 
-  <h4 class="lighter block green">Initial information required to select a benefit plan</h4>
+    <h4 class="lighter block green">Initial information required to select a benefit plan</h4>
 
-  <div data-bind="visible: is_applicant_editor_visible">
-    {# Employee Section #}
-    <div>
-      <div class="row">
-        <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="eeBenefitFName">
-          Employee
-        </label>
-
-        <div class="form-group col-xs-12 col-sm-10">
-          <input type="text" style="width: 45%" id="eeBenefitFName" name="eeBenefitFName"
-                 data-bind="value: employee().first" placeholder="First Name">
-          <input type="text" style="width: 45%" id="eeBenefitLName" name="eeBenefitLName"
-                 data-bind="value: employee().last" placeholder="Last Name">
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-          <label style="margin-right: 1em;" for="eeDOB">
-            Date of Birth
-          </label>
-
-          <input class="input-mask-date" name="eeBenefitDOB"
-                 data-bind="value: employee().birthdate" type="text" id="eeDOB"
-                 placeholder="MM/DD/YYYY">
-        </div>
-
-        <div class="col-xs-12 visible-xs">&nbsp;</div>
-
-        <div class="form-group col-xs-12 col-sm-4">
-          <div class="">
-            <label style="margin-right: 3em;">
-              <input type="checkbox" class="ace" data-bind="checked: should_show_spouse">
-              <span class="lbl padding-8 is_married">Married</span>
-            </label>
-
-            <label>
-              <input type="checkbox" class="ace" data-bind="checked: should_include_children">
-              <span class="lbl padding-8 include_children">Include Children<span data-bind="visible: should_allow_grandchildren">/Grandchildren</span></span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div data-bind="template: {name: 'extended-questions-template', data: employee}"></div>
-    </div>
-
-
-    {# Spouse Section #}
-    <div data-bind="slideDownIf: should_show_spouse">
-      <div class="row">
-        <label class="col-xs-12 col-sm-2 no-padding-right text-right" for="spFName">
-          Spouse
-        </label>
-
-        <div class="form-group col-xs-12 col-sm-10">
-          <input type="text" style="width: 45%" id="spFName" name="spFName"
-                 data-bind="value: spouse().first" placeholder="First Name">
-          <input type="text" style="width: 45%" id="spLName" name="spLName"
-                 data-bind="value: spouse().last" placeholder="Last Name">
-        </div>
-      </div>
-
-      <div class="row">
-
-        <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-          <label style="margin-right: 1em;" for="spDOB">
-            Date of Birth
-          </label>
-
-          <input class="input-mask-date" name="spDOB"
-                 data-bind="value: spouse().birthdate" type="text" id="spDOB"
-                 placeholder="MM/DD/YYYY">
-        </div>
-
-      </div>
-
-      <div data-bind="template: {name: 'extended-questions-template', data: spouse}"></div>
-    </div>
-
-
-    {# template for extended questions  #}
-    <script type="text/html" id="extended-questions-template">
-      <!--ko if: $root.should_show_extended_questions() -->
-      <div class="row">
-        <!--ko if: $root.should_show_gender() -->
-        <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-          <div class="">
-            <label style="margin-right: 1em;">
-              <input type="radio" value="male" class="ace"
-                     data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
-              <span class="lbl"> Male</span>
-            </label>
-            <label>
-              <input type="radio" value="female" class="ace"
-                     data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
-              <span class="lbl"> Female</span>
-            </label>
-          </div>
-        </div>
-        <!--/ko-->
-        <!--ko if: $root.should_show_smoker() -->
-        <div class="form-group col-xs-12 col-sm-5">
-          <label style="margin-right: 1em;">
-            <input type="radio" class="ace"
-                   data-bind="checked: is_smoker, checkedValue: false, attr: {name: 'tobacco-'+$data._id}">
-            <span class="lbl"> Non-Smoker</span>
-          </label>
-          <label>
-            <input type="radio" class="ace"
-                   data-bind="checked: is_smoker, checkedValue: true, attr: {name: 'tobacco-'+$data._id}">
-            <span class="lbl"> Smoker</span>
-          </label>
-        </div>
-        <!--/ko-->
-      </div>
-      <div class="row">
-        <!--ko if: $root.should_show_height() -->
-        <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-          <height-select class="height" params="value: height, name_suffix: $data._id+''"></height-select>
-        </div>
-        <!--/ko-->
-        <!--ko if: $root.should_show_weight() -->
-        <div class="form-group col-sm-4">
-          <label class="">
-            Weight: <input type="number" class="text-right" max="9999" min="0"
-                           data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
-          </label>
-        </div>
-        <!--/ko-->
-      </div>
-      <!--/ko-->
-    </script>
-
-    {# Children Data #}
-    <div data-bind="slideDownIf: should_include_children">
-      <!--ko foreach: {data: children, afterAdd: rendered_child, beforeRemove: removing_child} -->
-      <div data-bind="attr: {'class':'child-'+$index()}">
+    <div data-bind="visible: is_applicant_editor_visible">
+      {# Employee Section #}
+      <div>
         <div class="row">
-          <label class="text-right control-label col-xs-12 col-sm-2 no-padding-right"
-                 data-bind="attr: {for: 'child-first-'+$index()}">
-            Child<span data-bind="visible: $parent.should_allow_grandchildren">/Grandchild</span> <span data-bind="text: $index() + 1"></span>
+          <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="eeBenefitFName">
+            Employee
           </label>
 
           <div class="form-group col-xs-12 col-sm-10">
-            <input type="text" style="width: 45%" class="child_first"
-                   data-bind="value: first, attr: {id: 'child-first-'+$index()}"
-                   placeholder="First Name"/>
-
-            <input type="text" style="width: 45%" class="child_last" data-bind="value: last"
-                   placeholder="Last Name"/>
-
-            <div class="pull-right">
-              <button type="button" class="btn btn-xs btn-danger" data-bind="click: $root.remove_child">
-                <i class="ace-icon glyphicon-minus"></i>
-              </button>
-            </div>
+            <input type="text" style="width: 45%" id="eeBenefitFName" name="eeBenefitFName"
+                   data-bind="value: employee().first" placeholder="First Name">
+            <input type="text" style="width: 45%" id="eeBenefitLName" name="eeBenefitLName"
+                   data-bind="value: employee().last" placeholder="Last Name">
           </div>
         </div>
 
         <div class="row">
           <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
-            <label style="margin-right: 1em;" data-bind="attr: {for: 'child-dob-'+$index()}">
+            <label style="margin-right: 1em;" for="eeDOB">
               Date of Birth
             </label>
 
-            <input class="input-mask-date child_birthdate" data-bind="
-                          value: birthdate,
-                          attr: {id: 'child-dob-'+$index()},
-                          maskedInput: '99/99/9999'
-                          " type="text" placeholder="MM/DD/YYYY">
-
+            <input class="input-mask-date" name="eeBenefitDOB"
+                   data-bind="value: employee().birthdate" type="text" id="eeDOB"
+                   placeholder="MM/DD/YYYY">
           </div>
 
-        </div>
-      </div>
-      <!--/ko-->
+          <div class="col-xs-12 visible-xs">&nbsp;</div>
 
-      <div class="row" id="addChildBtn">
-        <div class="col-xs-12 col-sm-offset-1 col-sm-2">
-          <button class="btn btn-default btn-sm" type="button" data-bind="click: add_child">
-            Add Child <span data-bind="if: should_allow_grandchildren">/Grandchild</span>
-          </button>
-        </div>
-      </div>
+          <div class="form-group col-xs-12 col-sm-4">
+            <div class="">
+              <label style="margin-right: 3em;">
+                <input type="checkbox" class="ace" data-bind="checked: should_show_spouse">
+                <span class="lbl padding-8 is_married">Married</span>
+              </label>
 
-    </div>
-
-    {# Payment Mode Selection #}
-    <div style="margin-top: 1.5em;" data-bind="visible: coverage_vm.can_change_payment_mode">
-      <div class="row">
-        <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="paymentMode">
-          Payment Mode
-        </label>
-
-        <div class="form-group col-xs-12 col-sm-10">
-          <select name="paymentMode" id="paymentMode"
-                  data-bind="
-                  value: coverage_vm.payment_mode,
-                  options: coverage_vm.payment_modes,
-                  optionsText: 'label',
-                  optionsCaption: '(Select Payment Mode)'"></select>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {# Change applicant data button #}
-  <div class="row" data-bind="visible: !is_applicant_editor_visible()">
-    <div class="row">
-      <!--ko foreach: {data: coverage_vm.applicants_in_table(), as: 'applicant'}-->
-        <div class="col-xs-12 col-sm-11 col-sm-offset-1">
-          <span data-bind="text: applicant.name()"></span>, Age <span data-bind="text: applicant.get_age()"></span>
-        </div>
-      <!--/ko-->
-    </div>
-    <div class="align-center">
-      <button type="button" class="btn btn-default btn-sm"
-              data-bind="click: show_applicant_editor">
-        Change Applicant Data
-      </button>
-    </div>
-  </div>
-
-  {# Show Coverage Options Button #}
-  <div class="row" data-bind="visible: !is_coverage_selection_visible()">
-    <div class="align-center">
-      <button type="button" id="show-coverage-options" class="btn btn-primary btn-lg show-rates"
-              data-bind="click: show_coverage_selection_table">
-        Show Coverage Options
-      </button>
-    </div>
-  </div>
-
-  {#  Rates/Recommended Coverage and Selected Plan Table #}
-  <div class="center recommended-coverage-table" data-bind="visible: is_coverage_selection_visible,
-        css: {'ci-recommendations': should_show_critical_illness_styling}">
-
-
-    <h4 class="lighter block green text-left">Select Coverage</h4>
-
-    <div class="center">
-      <div data-bind="visible: is_rate_table_loading">
-        <i class="icon-spinner icon-spin grey bigger-125"></i>
-        Loading Coverage Selection ...
-        <br>
-      </div>
-    </div>
-
-
-    <div style="border: 2px solid #ddd;" data-bind="visible: !is_rate_table_loading(), with: coverage_vm">
-
-      <div data-bind="if: has_multiple_products">
-
-        {# Summary table for multi-product enrollments. #}
-        <div data-bind="template: 'multi-product-selected-coverage-table'">
-        </div>
-
-        <div class="row">
-          <div class="col-xs-1">
-            <button type="button" class="btn btn-default"  data-bind="click: go_to_previous_product,
-                    visible: previous_product() !== null" style="height: 20em;">
-              <span class="ace-icon glyphicon glyphicon-chevron-left"></span>
-            </button>
-          </div>
-
-
-          <div class="col-xs-10 ">
-
-            <h3 data-bind="text: current_product().format_product_name()"></h3>
-            <div  data-bind="slideDownIf: !current_product().did_decline()">
-              <div class="" data-bind="
-                template: {name: current_product().get_coverage_selection_template(), data: current_product()}
-                ">
-              </div>
-            </div>
-          </div>
-
-          <div class="col-xs-1">
-            <button type="button" class="btn btn-default"  data-bind="click: go_to_next_product,
-                      visible: next_product() !== null" style="height: 20em;">
-              <span class="ace-icon glyphicon glyphicon-chevron-right"></span>
-            </button>
-          </div>
-        </div>
-
-        {# Decline option for product #}
-        <div class="row">
-          <div class="col-xs-12 text-center red">
-            <div class="decline-option">
-              <label><input type="checkbox" data-bind="checked: current_product().did_decline"> I decline to enroll in
-                <span data-bind="text: current_product().format_product_name()"></span> at this time
+              <label>
+                <input type="checkbox" class="ace" data-bind="checked: should_include_children">
+                <span class="lbl padding-8 include_children">Include Children<span
+                    data-bind="visible: should_allow_grandchildren">/Grandchildren</span></span>
               </label>
             </div>
           </div>
         </div>
 
-
-      </div>
-
-      <div data-bind="if: !has_multiple_products()">
-
-        <div class="row">
-          <div class="col-xs-12 ">
-
-            <h3 data-bind="text: current_product().format_product_name()"></h3>
-            <div  data-bind="slideDownIf: !$root.did_decline()">
-{#              <ul class="list-unstyled" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">#}
-{#                <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">#}
-{#                  <span class="step" data-bind="text: $index() + 1"></span>#}
-{#                  <span class="title" data-bind="text: product_coverage.format_product_name()"></span>#}
-{#                </li>#}
-{#              </ul>#}
-
-              <div class="" data-bind="
-                template: {name: current_product().get_coverage_selection_template(), data: current_product()}
-                ">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {# Decline option for product #}
-{#        <div class="row">#}
-{#          <div class="col-xs-12 text-center red">#}
-{#            <div class="decline-option">#}
-{#              <label><input type="checkbox" data-bind="checked: current_product().did_decline"> I decline to enroll in#}
-{#                <span data-bind="text: current_product().format_product_name()"></span> at this time#}
-{#              </label>#}
-{#            </div>#}
+{#        <div class="row" data-bind="if: should_show_occupation">#}
+{#          <div class="form-group col-xs-11 col-xs-offset col-sm-4 col-sm-offset-2">#}
+{#            <label for="occupation">Occupation</label>#}
+{#            <select id="occupation" name="occupation" class="ace"#}
+{#                    data-bind="options: occupations, optionsText: 'label', selectedOptions: selected_occupation, optionsCaption: '(Choose Occupation)'"></select>#}
 {#          </div>#}
 {#        </div>#}
 
+      </div>
 
-        {# Decline any products option #}
-        <div class="row" data-bind="visible: !$root.coverage_vm.has_multiple_products()">
-          <div class="col-xs-12 text-center red" data-bind="if: $root.can_decline">
-            <div class="decline-option">
-              <label><input type="checkbox" data-bind="checked: $root.did_decline"> I decline to enroll in any of the 5Star
-                products at this time</label>
+
+      {# Spouse Section #}
+      <div data-bind="slideDownIf: should_show_spouse">
+        <div class="row">
+          <label class="col-xs-12 col-sm-2 no-padding-right text-right" for="spFName">
+            Spouse
+          </label>
+
+          <div class="form-group col-xs-12 col-sm-10">
+            <input type="text" style="width: 45%" id="spFName" name="spFName"
+                   data-bind="value: spouse().first" placeholder="First Name">
+            <input type="text" style="width: 45%" id="spLName" name="spLName"
+                   data-bind="value: spouse().last" placeholder="Last Name">
+          </div>
+        </div>
+
+        <div class="row">
+
+          <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
+            <label style="margin-right: 1em;" for="spDOB">
+              Date of Birth
+            </label>
+
+            <input class="input-mask-date" name="spDOB"
+                   data-bind="value: spouse().birthdate" type="text" id="spDOB"
+                   placeholder="MM/DD/YYYY">
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {# template for extended questions  #}
+      <script type="text/html" id="extended-questions-template">
+        <!--ko if: $root.should_show_extended_questions() -->
+        <div class="row">
+          <!--ko if: $root.should_show_gender() -->
+          <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
+            <div class="">
+              <label style="margin-right: 1em;">
+                <input type="radio" value="male" class="ace"
+                       data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
+                <span class="lbl"> Male</span>
+              </label>
+              <label>
+                <input type="radio" value="female" class="ace"
+                       data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
+                <span class="lbl"> Female</span>
+              </label>
             </div>
           </div>
+          <!--/ko-->
+          <!--ko if: $root.should_show_smoker() -->
+          <div class="form-group col-xs-12 col-sm-5">
+            <label style="margin-right: 1em;">
+              <input type="radio" class="ace"
+                     data-bind="checked: is_smoker, checkedValue: false, attr: {name: 'tobacco-'+$data._id}">
+              <span class="lbl"> Non-Smoker</span>
+            </label>
+            <label>
+              <input type="radio" class="ace"
+                     data-bind="checked: is_smoker, checkedValue: true, attr: {name: 'tobacco-'+$data._id}">
+              <span class="lbl"> Smoker</span>
+            </label>
+          </div>
+          <!--/ko-->
+        </div>
+        <div class="row">
+          <!--ko if: $root.should_show_height() -->
+          <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
+            <height-select class="height" params="value: height, name_suffix: $data._id+''"></height-select>
+          </div>
+          <!--/ko-->
+          <!--ko if: $root.should_show_weight() -->
+          <div class="form-group col-sm-4">
+            <label class="">
+              Weight: <input type="number" class="text-right" max="9999" min="0"
+                             data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
+            </label>
+          </div>
+          <!--/ko-->
+        </div>
+        <!--/ko-->
+      </script>
+
+      {# Children Data #}
+      <div data-bind="slideDownIf: should_include_children">
+        <!--ko foreach: {data: children, afterAdd: rendered_child, beforeRemove: removing_child} -->
+        <div data-bind="attr: {'class':'child-'+$index()}">
+          <div class="row">
+            <label class="text-right control-label col-xs-12 col-sm-2 no-padding-right"
+                   data-bind="attr: {for: 'child-first-'+$index()}">
+              Child<span data-bind="visible: $parent.should_allow_grandchildren">/Grandchild</span> <span
+                data-bind="text: $index() + 1"></span>
+            </label>
+
+            <div class="form-group col-xs-12 col-sm-10">
+              <input type="text" style="width: 45%" class="child_first"
+                     data-bind="value: first, attr: {id: 'child-first-'+$index(), name: 'child-first-' + $index() }"
+                     placeholder="First Name"/>
+
+              <input type="text" style="width: 45%" class="child_last"
+                     data-bind="value: last, attr: { id: 'child-last-'+$index(), name: 'child-last-' + $index() }"
+                     placeholder="Last Name"/>
+
+              <div class="pull-right">
+                <button type="button" class="btn btn-xs btn-danger" data-bind="click: $root.remove_child">
+                  <i class="ace-icon glyphicon-minus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
+              <label style="margin-right: 1em;" data-bind="attr: {for: 'child-dob-'+$index()}">
+                Date of Birth
+              </label>
+
+              <input class="input-mask-date child_birthdate" data-bind="
+                          value: birthdate,
+                          attr: {id: 'child-dob-'+$index(), name: 'child-dob-' + $index() },
+                          maskedInput: '99/99/9999'
+                          " type="text" placeholder="MM/DD/YYYY">
+
+            </div>
+
+          </div>
+        </div>
+        <!--/ko-->
+
+        <div class="row" id="addChildBtn">
+          <div class="col-xs-12 col-sm-offset-1 col-sm-2">
+            <button class="btn btn-default btn-sm" type="button" data-bind="click: add_child">
+              Add Child <span data-bind="if: should_allow_grandchildren">/Grandchild</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      {# Payment Mode Selection #}
+      <div style="margin-top: 1.5em;" data-bind="visible: coverage_vm.can_change_payment_mode">
+        <div class="row">
+          <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="paymentMode">
+            Payment Mode
+          </label>
+
+          <div class="form-group col-xs-12 col-sm-10">
+            <select name="paymentMode" id="paymentMode"
+                    data-bind="
+                  value: coverage_vm.payment_mode,
+                  options: coverage_vm.payment_modes,
+                  optionsText: 'label',
+                  optionsCaption: '(Select Payment Mode)'"></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Change applicant data button #}
+    <div class="row" data-bind="visible: !is_applicant_editor_visible()">
+      <div class="row">
+        <!--ko foreach: {data: coverage_vm.applicants_in_table(), as: 'applicant'}-->
+        <div class="col-xs-12 col-sm-11 col-sm-offset-1">
+          <span data-bind="text: applicant.name()"></span>, Age <span data-bind="text: applicant.get_age()"></span>
+        </div>
+        <!--/ko-->
+      </div>
+      <div class="align-center">
+        <button type="button" class="btn btn-default btn-sm"
+                data-bind="click: show_applicant_editor">
+          Change Applicant Data
+        </button>
+      </div>
+    </div>
+
+    {# Show Coverage Options Button #}
+    <div class="row" data-bind="visible: !is_coverage_selection_visible()">
+      <div class="align-center">
+        <button type="button" id="show-coverage-options" class="btn btn-primary btn-lg show-rates"
+                data-bind="click: show_coverage_selection_table">
+          Show Coverage Options
+        </button>
+      </div>
+    </div>
+
+    {#  Rates/Recommended Coverage and Selected Plan Table #}
+    <div class="center recommended-coverage-table" data-bind="visible: is_coverage_selection_visible,
+        css: {'ci-recommendations': should_show_critical_illness_styling}">
+
+
+      <h4 class="lighter block green text-left">Select Coverage</h4>
+
+      <div class="center">
+        <div data-bind="visible: is_rate_table_loading">
+          <i class="icon-spinner icon-spin grey bigger-125"></i>
+          Loading Coverage Selection ...
+          <br>
+        </div>
+      </div>
+
+
+      <div data-bind="visible: !is_rate_table_loading(), with: coverage_vm">
+
+        <div class="multi-widget" data-bind="if: has_multiple_products">
+
+          {# Summary table for multi-product enrollments. #}
+          <div data-bind="template: 'multi-product-selected-coverage-table'">
+          </div>
+
+          <div class="row">
+            <div class="col-xs-1">
+              <button type="button" class="btn btn-default" data-bind="click: go_to_previous_product,
+                    visible: previous_product() !== null" style="height: 20em;">
+                <span class="ace-icon glyphicon glyphicon-chevron-left"></span>
+              </button>
+            </div>
+
+
+            <div class="col-xs-10 ">
+
+              <h3 data-bind="text: current_product().format_product_name()"></h3>
+              <div data-bind="slideDownIf: !current_product().did_decline()">
+                <div class=""
+                     data-bind="template: {name: current_product().get_coverage_selection_template(), data: current_product}">
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xs-1">
+              <button type="button" class="btn btn-default" data-bind="click: go_to_next_product,
+                      visible: next_product() !== null" style="height: 20em;">
+                <span class="ace-icon glyphicon glyphicon-chevron-right"></span>
+              </button>
+            </div>
+          </div>
+
+          {# Decline option for product #}
+          <div class="row">
+            <div class="col-xs-12 text-center red">
+              <div class="decline-option">
+                <label><input type="checkbox" data-bind="checked: current_product().did_decline"> I decline to enroll in
+                  <span data-bind="text: current_product().format_product_name()"></span> at this time
+                </label>
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+
+        <div data-bind="if: !has_multiple_products()">
+
+          <div class="row">
+            <div class="col-xs-12 ">
+
+              <h3 data-bind="text: current_product().format_product_name()"></h3>
+              <div data-bind="slideDownIf: !$root.did_decline()">
+                {#              <ul class="list-unstyled" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">#}
+                {#                <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">#}
+                {#                  <span class="step" data-bind="text: $index() + 1"></span>#}
+                {#                  <span class="title" data-bind="text: product_coverage.format_product_name()"></span>#}
+                {#                </li>#}
+                {#              </ul>#}
+
+                <div class="" data-bind="
+                template: {name: current_product().get_coverage_selection_template(), data: current_product()}
+                ">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Decline option for product #}
+          {#        <div class="row">#}
+          {#          <div class="col-xs-12 text-center red">#}
+          {#            <div class="decline-option">#}
+          {#              <label><input type="checkbox" data-bind="checked: current_product().did_decline"> I decline to enroll in#}
+          {#                <span data-bind="text: current_product().format_product_name()"></span> at this time#}
+          {#              </label>#}
+          {#            </div>#}
+          {#          </div>#}
+          {#        </div>#}
+
+
+          {# Decline any products option #}
+          <div class="row" data-bind="visible: !$root.coverage_vm.has_multiple_products()">
+            <div class="col-xs-12 text-center red" data-bind="if: $root.can_decline">
+              <div class="decline-option">
+                <label><input type="checkbox" data-bind="checked: $root.did_decline"> I decline to enroll in any of the
+                  5Star
+                  products at this time</label>
+              </div>
+            </div>
+          </div>
+
         </div>
 
       </div>
 
     </div>
 
-  </div>
-
-  <br/>
-
-
-
-
+    <br/>
 
 
     <div class="row">
       <div class="col-xs-12">
 
         {# Total Modal Premium for All Products #}
-        <div class="pull-right" data-bind="if: is_coverage_selection_visible() && coverage_vm.payment_mode() && coverage_vm.has_multiple_products()">
-          <h4 class="light">Total <span data-bind="text: coverage_vm.payment_mode().display()"></span> premium all products: <strong data-bind="text: coverage_vm.format_grand_total_premium()"></strong></h4>
+        <div class="pull-right"
+             data-bind="if: is_coverage_selection_visible() && coverage_vm.payment_mode() && coverage_vm.has_multiple_products()">
+          <h4 class="light">Total <span data-bind="text: coverage_vm.payment_mode().display()"></span> premium all
+            products: <strong data-bind="text: coverage_vm.format_grand_total_premium()"></strong></h4>
         </div>
 
-        <div class="pull-right" data-bind="if: is_coverage_selection_visible() && coverage_vm.payment_mode() && !coverage_vm.has_multiple_products()">
-          <h4 class="light">Total <span data-bind="text: coverage_vm.payment_mode().display()"></span> premium: <span data-bind="text: coverage_vm.format_grand_total_premium()"></span></h4>
+        <div class="pull-right"
+             data-bind="if: is_coverage_selection_visible() && coverage_vm.payment_mode() && !coverage_vm.has_multiple_products()">
+          <h4 class="light">Total <span data-bind="text: coverage_vm.payment_mode().display()"></span> premium: <span
+              data-bind="text: coverage_vm.format_grand_total_premium()"></span></h4>
         </div>
 
       </div>
@@ -390,17 +397,11 @@
   </form>
 
 
-
-
 </div>
-
 
 
 {# Runs in the context of a ProductCoverageViewModel #}
 <script type="text/html" id="recommendation_coverage_selection">
-{#  <h3 class="header smaller red">#}
-{#    Recommended Coverage for <span data-bind="text: format_product_name()"></span>#}
-{#  </h3>#}
   <div class="row">
 
     <div class="col-xs-4 col-sm-3 pricing-span-header">
@@ -412,7 +413,8 @@
         {# Names of Individuals to Be Covered #}
         <div class="widget-body">
           <div class="widget-main no-padding">
-            <ul class="list-unstyled list-striped js" data-bind="foreach: {data: applicant_coverage_selections, as: 'applicant_coverage'}">
+            <ul class="list-unstyled list-striped js"
+                data-bind="foreach: {data: applicant_coverage_selections, as: 'applicant_coverage'}">
               <li data-bind="text: applicant_coverage.format_name()"></li>
             </ul>
           </div>
@@ -422,38 +424,38 @@
 
     <div class="col-xs-8 col-sm-9 pricing-span-body">
       <!--ko foreach: {data: available_recommendations, as: 'recommendation_set'} -->
-        <div class="pricing-span"  data-bind="css: {
+      <div class="pricing-span" data-bind="css: {
               'good': recommendation_set.name === 'good',
               'better': recommendation_set.name === 'better',
               'best': recommendation_set.name === 'best'
             }">
-          <div class="widget-box pricing-box-small" data-bind="css: {
+        <div class="widget-box pricing-box-small" data-bind="css: {
               'widget-color-red3': recommendation_set.name === 'good',
               'widget-color-orange': recommendation_set.name === 'better',
               'widget-color-blue': recommendation_set.name === 'best'
             },click: function() {$parent.select_recommended_coverage(recommendation_set);}">
-            <div class="widget-header center no-padding">
-              <h5 class="bigger lighter" data-bind="text: recommendation_set.name"></h5>
-            </div>
+          <div class="widget-header center no-padding">
+            <h5 class="bigger lighter" data-bind="text: recommendation_set.name"></h5>
+          </div>
 
-            <div class="widget-body">
-              <div class="widget-main no-padding" data-bind="
+          <div class="widget-body">
+            <div class="widget-main no-padding" data-bind="
                     template: {name: 'recommendations_template', data: recommendation_set}
                     ">
-              </div>
+            </div>
 
-              <div data-bind="click: function() {$parent.select_recommended_coverage(recommendation_set);}">
-                <a class="btn btn-block btn-sm btn-danger" data-bind="css: {
+            <div data-bind="click: function() {$parent.select_recommended_coverage(recommendation_set);}">
+              <a class="btn btn-block btn-sm btn-danger" data-bind="css: {
                   'btn-danger': recommendation_set.name === 'good',
                   'btn-warning': recommendation_set.name === 'better',
                   'btn-primary': recommendation_set.name === 'best'
                 }">
-                  <span>Select</span>
-                </a>
-              </div>
+                <span>Select</span>
+              </a>
             </div>
           </div>
         </div>
+      </div>
       <!--/ko-->
 
       {# Customize #}
@@ -467,15 +469,15 @@
             <div class="widget-main no-padding">
               <ul class="list-unstyled list-striped pricing-table" data-bind="
                 foreach: { data: applicant_coverage_selections, as: 'applicant_coverage'}">
-                  <li>
-                    <select class="emp-coverage" data-bind="
+                <li>
+                  <select class="emp-coverage" data-bind="
                           options: applicant_coverage.get_coverage_options,
                           optionsCaption: '',
                           optionsText: CoverageOption.display_benefit_option,
                           value: customized_coverage_option
                           ">
-                    </select>
-                  </li>
+                  </select>
+                </li>
               </ul>
             </div>
           </div>
@@ -506,11 +508,60 @@
 
 </script>
 
+
+<script id="simple_coverage_selection" type="text/html">
+  <a href="#" data-bind="attr: { href: $data.product.product_data.brochure_url }">See this brochure for details</a>
+  <div class="row">
+    <div class="col-xs-4 col-sm-3 col-xs-offset-2 col-sm-offset-3 pricing-span-header">
+      <div class="widget-box transparent">
+        <div class="widget-header">
+          <h5 class="bigger lighter">Covered</h5>
+        </div>
+        <div class="widget-body">
+          <div class="widget-main no-padding">
+            <ul class="list-unstyled list-striped js"
+                data-bind="foreach: { data: product.get_coverage_tiers(), as: 'coverage_tier' }">
+              <li>
+                <label>
+                  <span data-bind="text: $parent.get_label_for_coverage_tier(coverage_tier)"></span>
+                  <br>
+                  <input type="radio" name="coverage-type"
+                         data-bind="checked: $parent.selected_simple_coverage_value, value: coverage_tier">
+                </label>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-4 col-sm-3 pricing-span-body">
+      <div class="pricing-span best">
+        <div class="widget-box pricing-box-small widget-color-blue">
+          <div class="widget-header center no-padding">
+            <h5 class="bugger lighter">Premium</h5>
+          </div>
+          <div class="widget-body">
+            <div class="widget-main no-padding">
+              <ul class="list-unstyled list-striped pricing-table"
+                  data-bind="foreach: { data: product.get_coverage_tiers(), as: 'coverage_tier' }">
+                <li data-bind="text: $parent.get_coverage_rate_for_tier(coverage_tier)"></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-bind="template: {name: 'riders-template', data: $data}"></div>
+
+</script>
+
 <script type="text/html" id="riders-template">
   <br>
 
   {# Riders Selection #}
-  <div class="row" data-bind="if: visible_rider_options().length > 0"  >
+  <div class="row" data-bind="if: visible_rider_options().length > 0">
 
     <div class="col-sm-3">
       <h5>Additional Benefits</h5>
@@ -519,27 +570,27 @@
 
       <table class="table table-striped table-bordered">
         <thead>
-          <tr>
-            <th></th>
-            <th>Add these benefits?</th>
-            <th>Premium</th>
-          </tr>
+        <tr>
+          <th></th>
+          <th>Add these benefits?</th>
+          <th>Premium</th>
+        </tr>
         </thead>
         <tbody data-bind="foreach: visible_rider_options">
-          <tr>
-            <td><input type="checkbox" data-bind="checked: is_selected, enable: can_user_select"></td>
-            <td class="text-left">
+        <tr>
+          <td><input type="checkbox" data-bind="checked: is_selected, enable: can_user_select"></td>
+          <td class="text-left">
               <span data-bind="if: has_rider_modal()">
                 <a class="pointer" data-bind="click: show_rider_info, html: format_rider_name()"></a>
               </span>
               <span data-bind="if: !has_rider_modal()">
                 <span data-bind="html: format_rider_name()"></span>
               </span>
-               for
-              <span data-bind='text: format_applicant_name()'></span>
-            </td>
-            <td class="text-center" data-bind="html: format_premium()"></td>
-          </tr>
+            for
+            <span data-bind='text: format_applicant_name()'></span>
+          </td>
+          <td class="text-center" data-bind="html: format_premium()"></td>
+        </tr>
         </tbody>
       </table>
     </div>
@@ -551,124 +602,140 @@
 
   <table class="table table-striped table-responsive summary-table" data-bind="with: coverage_summary_vm">
     <thead>
-      <tr>
-        <th style="width: 10%"></th>
-        <!--ko foreach: {data: product_coverages}-->
-          <th class="text-center selectable" data-bind="
+    <tr>
+      <th style="width: 10%"></th>
+      <!--ko foreach: {data: product_coverages}-->
+      <th class="text-center selectable" data-bind="
               click: $root.coverage_vm.select_product,
               css: {'active-product': $root.coverage_vm.current_product() === $data},
-              attr: {style: 'width: '+((100-10-6)/($root.products.length))+'%'}
+              attr: {style: 'width: '+((100-10-6)/($root.products.length))+'%', id: 'coverage-header-' + $data.product.product_type }
               ">
-            <div class="circled-number" data-bind="text: $index()+1"></div>
-            <span data-bind="text: product.product_data.name"></span>
-          </th>
-        <!--/ko-->
-        <th class="text-center" style="width: 6%">Total</th>
-      </tr>
+        <div class="circled-number" data-bind="text: $index()+1"></div>
+        <span data-bind="text: product.product_data.name"></span>
+      </th>
+      <!--/ko-->
+      <th class="text-center" style="width: 6%">Total</th>
+    </tr>
     </thead>
     <tbody>
-      <!--ko foreach: {data: valid_applicants, as: 'applicant'} -->
+    <!--ko foreach: {data: valid_applicants, as: 'applicant'} -->
 
-        <tr>
-          <td data-bind="text: applicant.name"></td>
-          <!--ko foreach: {data: $parent.product_coverages, as: 'product_coverage'} -->
-            <!--ko if: product_coverage.did_decline-->
-              <td class="selectable" data-bind="click: $root.coverage_vm.select_product,
+    <tr>
+      <td data-bind="text: applicant.name"></td>
+      <!--ko foreach: {data: $parent.product_coverages, as: 'product_coverage'} -->
+      <!--ko if: product_coverage.did_decline-->
+      <td class="selectable" data-bind="click: $root.coverage_vm.select_product,
               css: {'active-product': $root.coverage_vm.current_product() === $data}">
-                <strong>Declined</strong>
-              </td>
-            <!--/ko-->
+        <strong>Declined</strong>
+      </td>
+      <!--/ko-->
 
-            <!--ko if: !product_coverage.did_decline()-->
-            <td class="selectable" data-bind="
+      <!--ko if: !product_coverage.did_decline()-->
+      <td class="selectable" data-bind="
               with: $parents[2].get_applicant_coverage_option_for_product(applicant, product),
               click: $root.coverage_vm.select_product,
               css: {'active-product': $root.coverage_vm.current_product() === $data}
               ">
-              <!--ko if: !$root.coverage_vm.get_applicant_coverage_for_product(applicant, product_coverage.product).did_select_option()-->
-                 <span>Select Coverage</span>
-              <!--/ko-->
-              <!--ko if: $root.coverage_vm.get_applicant_coverage_for_product(applicant, product_coverage.product).did_select_option()-->
-                <strong data-bind="html: format_face_value()"></strong>
-                <div data-bind="html: format_premium_option()"></div>
-              <!--/ko-->
-            </td>
-            <!--/ko-->
-          <!--/ko-->
-          <td data-bind="text: $parents[1].format_total_premium_for_applicant(applicant)"></td>
-        </tr>
+        <!--ko if: !$root.coverage_vm.get_applicant_coverage_for_product(applicant, product_coverage.product).did_select_option()-->
+        <span>Select Coverage</span>
+        <!--/ko-->
+        <!--ko if: $root.coverage_vm.get_applicant_coverage_for_product(applicant, product_coverage.product).did_select_option()-->
+        <div data-bind="ifnot: $parent.product.has_simple_coverage()">
+          <strong data-bind="html: format_face_value()"></strong>
+          <div data-bind="html: format_premium_option()"></div>
+        </div>
+        <div data-bind="if: $parent.product.has_simple_coverage()">
+          <strong data-bind="text: $parent.get_coverage_status(applicant)"></strong>
+          <br data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType">
+          <span data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType, text: format_premium_option()"></span>
+        </div>
+        <!--/ko-->
+      </td>
       <!--/ko-->
+      <!--/ko-->
+      <td data-bind="text: $parents[1].format_total_premium_for_applicant(applicant)"></td>
+    </tr>
+    <!--/ko-->
     </tbody>
   </table>
-
 </script>
 
 {# This is for step 6, but it is so similar to the above summary table for step 1 that I want to leave it here. #}
 <script type="text/html" id="multi-product-summary-table">
   <table class="table table-striped table-bordered table-responsive summary-table" data-bind="with: coverage_summary_vm"
-      style="border-top-width: 1px;">
+         style="border-top-width: 1px;">
     <thead>
-      <tr>
-        <th></th>
-        <!--ko foreach: {data: product_coverages}-->
-          <th class="text-center">
-            <div class="circled-number" data-bind="text: $index()+1, visible: $root.coverage_vm.has_multiple_products()"></div>
-            <span data-bind="text: product.product_data.name"></span>
-          </th>
-        <!--/ko-->
-        <th class="text-center">Total</th>
-      </tr>
+    <tr>
+      <th></th>
+      <!--ko foreach: {data: product_coverages}-->
+      <th class="text-center">
+        <div class="circled-number"
+             data-bind="text: $index()+1, visible: $root.coverage_vm.has_multiple_products()"></div>
+        <span data-bind="text: product.product_data.name"></span>
+      </th>
+      <!--/ko-->
+      <th class="text-center">Total</th>
+    </tr>
     </thead>
     <tbody>
-      <!--ko foreach: {data: valid_applicants, as: 'applicant'} -->
-        <tr>
-          <td class="text-center" data-bind="text: applicant.name"></td>
-          <!--ko foreach: {data: $parent.product_coverages, as: 'product_coverage'} -->
-            <!--ko if: product_coverage.did_decline-->
-              <td class="text-center">
-                <strong>Declined</strong>
-              </td>
-            <!--/ko-->
-
-            <!--ko if: !product_coverage.did_decline()-->
-            <td class="text-center" data-bind="with: $parents[2].get_applicant_coverage_option_for_product(applicant, product)">
-
-              <!--ko if: product_coverage.has_completed_selection()-->
-                <strong data-bind="html: format_face_value()"></strong>
-                <div data-bind="html: format_premium_option()"></div>
-              <!--/ko-->
-            </td>
-            <!--/ko-->
-          <!--/ko-->
-          <td class="text-center" data-bind="text: $parents[1].format_total_premium_for_applicant(applicant)"></td>
-        </tr>
+    <!--ko foreach: {data: valid_applicants, as: 'applicant'} -->
+    <tr>
+      <td class="text-center" data-bind="text: applicant.name"></td>
+      <!--ko foreach: {data: $parent.product_coverages, as: 'product_coverage'} -->
+      <!--ko if: product_coverage.did_decline-->
+      <td class="text-center">
+        <strong>Declined</strong>
+      </td>
       <!--/ko-->
-      {# Totals #}
-      <tfoot>
-        <tr>
 
-          <th class="text-center">
-            <span data-bind="visible: $root.coverage_vm.has_multiple_products()">Totals:</span>
-          </th>
+      <!--ko if: !product_coverage.did_decline()-->
+      <td class="text-center"
+          data-bind="with: $parents[2].get_applicant_coverage_option_for_product(applicant, product)">
 
-          <!--ko foreach: {data: $parent.products, as: 'product'} -->
-            <!--ko if: $root.coverage_vm.has_multiple_products()-->
-              <th  class="text-center" data-bind="text: $parents[1].format_total_premium_for_product(product)"></th>
-            <!--/ko-->
-            <!--ko if: !$root.coverage_vm.has_multiple_products()-->
-              <th></th>
-            <!--/ko-->
-          <!--/ko-->
-          <th class="text-center" data-bind="text: $parent.format_grand_total_premium()"></th>
-        </tr>
-      </tfoot>
+        <!--ko if: product_coverage.has_completed_selection()-->
+        <div data-bind="ifnot: product_coverage.product.has_simple_coverage()">
+          <strong data-bind="html: format_face_value()"></strong>
+          <div data-bind="html: format_premium_option()"></div>
+        </div>
+        <div data-bind="if: $parent.product.has_simple_coverage()">
+          <strong data-bind="text: $parent.get_coverage_status(applicant)"></strong>
+          <br data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType">
+          <span data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType, text: format_premium_option()"></span>
+        </div>
+        <!--/ko-->
+      </td>
+      <!--/ko-->
+      <!--/ko-->
+      <td class="text-center" data-bind="text: $parents[1].format_total_premium_for_applicant(applicant)"></td>
+    </tr>
+    <!--/ko-->
+    {# Totals #}
+    <tfoot>
+    <tr>
+
+      <th class="text-center">
+        <span data-bind="visible: $root.coverage_vm.has_multiple_products()">Totals:</span>
+      </th>
+
+      <!--ko foreach: {data: $parent.products, as: 'product'} -->
+      <!--ko if: $root.coverage_vm.has_multiple_products()-->
+      <th class="text-center" data-bind="text: $parents[1].format_total_premium_for_product(product)"></th>
+      <!--/ko-->
+      <!--ko if: !$root.coverage_vm.has_multiple_products()-->
+      <th></th>
+      <!--/ko-->
+      <!--/ko-->
+      <th class="text-center" data-bind="text: $parent.format_grand_total_premium()"></th>
+    </tr>
+    </tfoot>
     </tbody>
   </table>
 </script>
 
 {# Recommendation table column #}
 <script type="text/html" id="recommendations_template">
-  <ul class="list-unstyled list-striped pricing-table" data-bind="foreach: {data: $parents[1].applicant_coverage_selections(), as: 'applicant_coverage'}">
+  <ul class="list-unstyled list-striped pricing-table"
+      data-bind="foreach: {data: $parents[1].applicant_coverage_selections(), as: 'applicant_coverage'}">
     <li data-bind="template: {name: 'recommend_coverage_option_template',
                                   data: applicant_coverage}">
     </li>
@@ -686,19 +753,20 @@
 
 {# Single-product selected coverage column #}
 <script type="text/html" id="selected_coverage_template">
-  <ul class="list-unstyled list-striped pricing-table" data-bind="foreach: {data: applicant_coverage_selections(), as: 'applicant_coverage'}">
+  <ul class="list-unstyled list-striped pricing-table"
+      data-bind="foreach: {data: applicant_coverage_selections(), as: 'applicant_coverage'}">
     <li data-bind="template: {name: 'selected_coverage_option_template',
                                   data: applicant_coverage}">
     </li>
   </ul>
-{#  <div class="price" data-bind="visible: get_total_premium() > 0.0">#}
-{#        <span class="label label-lg label-inverse arrowed-in arrowed-in-right">#}
-{#          <span data-bind="text: formatted_total_premium()"></span>#}
-{#          <small>#}
-{#            <span data-bind="text: formatted_payment_mode()"></span>#}
-{#          </small>#}
-{#        </span>#}
-{#  </div>#}
+  {#  <div class="price" data-bind="visible: get_total_premium() > 0.0">#}
+  {#        <span class="label label-lg label-inverse arrowed-in arrowed-in-right">#}
+  {#          <span data-bind="text: formatted_total_premium()"></span>#}
+  {#          <small>#}
+  {#            <span data-bind="text: formatted_payment_mode()"></span>#}
+  {#          </small>#}
+  {#        </span>#}
+  {#  </div>#}
 </script>
 
 
@@ -712,7 +780,6 @@
   <strong data-bind="html: applicant_coverage.format_selected_coverage()"></strong>
   <div data-bind="html: applicant_coverage.format_selected_premium()"></div>
 </script>
-
 
 <script type="text/html" id="blank_template">
 </script>

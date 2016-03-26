@@ -1,6 +1,8 @@
 
 from .states import all_statecodes
 
+from taa.helpers import JsonSerializable
+
 
 class ProductFormService(object):
 
@@ -56,19 +58,20 @@ class ApplicationForm(object):
         self.docusign_template_id = docusign_template_id
 
 
-from taa.helpers import JsonSerializable
 class SOHQuestion(JsonSerializable):
-    def __init__(self, label, question, skip_if_coverage_at_most=None):
+    def __init__(self, label, question, skip_if_coverage_at_most=None, is_ignored=False):
         self.label = label
         self.question = question
         self.skip_if_coverage_at_most = skip_if_coverage_at_most
         self.is_spouse_only = False
+        self.is_ignored = is_ignored
 
     def to_json(self):
         return dict(
             label=self.label,
             question_text=self.question,
             skip_if_coverage_at_most=self.skip_if_coverage_at_most,
+            is_ignored=self.is_ignored,
         )
 
 
@@ -180,6 +183,12 @@ group_ci_ever_rejected_question = SOHQuestion("Ever been rejected",
                                               skip_if_coverage_at_most=10000,
 )
 
+group_ci_ca_health_insurance_question = SOHQuestion("Existing Comprehensive Coverage",
+                                                    "Is the proposed insured covered by an individual or group insurance policy that provides medical, hospital, and surgical coverage? (Persons without comprehensive medical coverage are not eligible for this coverage.)",
+                                                    skip_if_coverage_at_most=10000,
+                                                    is_ignored=True,
+)
+
 
 states_without_FPPTI_only = ['IN']
 states_without_FPPCI_only = ['CT', 'PA']
@@ -191,11 +200,15 @@ TEMPLATE_ID_FPP_GENERIC = 'E26A7761-1ACF-4993-A2A1-2D021B79E68C'
 
 
 def get_product_application_forms():
-    group_ci_generic_soh_questions = [group_ci_family_member_history_question, group_ci_diagnosed_question,
+    group_ci_generic_soh_questions = [group_ci_family_member_history_question,
+                                      group_ci_diagnosed_question,
                                       group_ci_heart_question,
-                                      group_ci_hypertension_question, group_ci_lung_question, group_ci_skin_question,
+                                      group_ci_hypertension_question,
+                                      group_ci_lung_question,
+                                      group_ci_skin_question,
                                       group_ci_hpv_question,
-                                      group_ci_abnormal_question, group_ci_ever_rejected_question,
+                                      group_ci_abnormal_question,
+                                      group_ci_ever_rejected_question,
                                       ]
 
     app_forms = {
@@ -321,10 +334,49 @@ def get_product_application_forms():
             ApplicationForm(
                 'Group CI CA',
                 ["CA"],
-                group_ci_generic_soh_questions,
+                [
+                    # This question is specific to CA, but ignored for now.
+                    group_ci_ca_health_insurance_question,
+                    group_ci_family_member_history_question,
+                    group_ci_diagnosed_question,
+                    group_ci_heart_question,
+                    group_ci_hypertension_question,
+                    group_ci_lung_question,
+                    group_ci_skin_question,
+                    group_ci_hpv_question,
+                    SOHQuestion("Abnormal Results",
+                                "In the past 2 (TWO) years, has the proposed insured had any diagnostic tests conducted which were ordered by a member of the medical profession for which the results are pending? (If \"yes\", explain reason on a separate page.)",
+                                skip_if_coverage_at_most=10000,
+                                ),
+                    SOHQuestion("Ever been rejected",
+                                "Has the proposed insured ever applied for and been rejected for a Critical Illness, Cancer, Heart or Stroke insurance policy? If \"yes\", please provide the reasons for the prior adverse underwriting decision on a separate 8 1/2 x 11 piece of paper.",
+                                skip_if_coverage_at_most=10000,
+                                ),
+                ],
                 is_generic=False,
                 docusign_template_id='ADE890CA-3471-476C-8BAD-CD7F6EF9217D',
             ),
+
+            ApplicationForm(
+                'Group CI NC',
+                ["NC"],
+                [
+                    group_ci_family_member_history_question,
+                    SOHQuestion("Ever Diagnosed or Treated",
+                                "Has the proposed insured ever been diagnosed or treated for any of the following: Heart Attack, Angioplasty, Coronary Artery Bypass, Stroke, Transient Ischemic Attack, Cancer (excluding non-invasive, non-melanoma Skin Cancer), End-Stage Renal Disease, Liver Cirrhosis, Hepatitis B or C (including Carrier), Multiple Sclerosis, Paralysis, Diabetes (other than during pregnancy), Organ or Bone Marrow Transplant, Alzheimer's or Senile Dementia, HIV, AIDS (Acquired Immune De ciency Syndrome), or AIDS-Related Complex (ARC)?",
+                                ),
+                    group_ci_heart_question,
+                    group_ci_hypertension_question,
+                    group_ci_lung_question,
+                    group_ci_skin_question,
+                    group_ci_hpv_question,
+                    group_ci_abnormal_question,
+                    group_ci_ever_rejected_question,
+                ],
+                is_generic=False,
+                docusign_template_id='D497B7E0-A3BC-4C35-9182-85F3157C7BAE',
+            ),
+
             ApplicationForm(
                 'Group CI CO',
                 ["CO"],
@@ -333,25 +385,26 @@ def get_product_application_forms():
                 docusign_template_id='4D8B3FE5-1CBB-4682-B245-E7C6AE469399',
             ),
             ApplicationForm(
+                'Group CI DC',
+                ["DC"],
+                group_ci_generic_soh_questions,
+                is_generic=False,
+                docusign_template_id='C6820A2C-B42C-49D3-9FF8-32DC858D1FC4',
+            ),
+            ApplicationForm(
+                'Group CI HI',
+                ["HI"],
+                group_ci_generic_soh_questions,
+                is_generic=False,
+                docusign_template_id='A50B0BD1-8D53-45BB-91EF-F18FF3B89014',
+            ),
+
+            ApplicationForm(
                 'Group CI KS',
                 ["KS"],
                 group_ci_generic_soh_questions,
                 is_generic=False,
                 docusign_template_id='C777942F-A126-4E31-8496-2920F1AB2599',
-            ),
-            ApplicationForm(
-                'Group CI KY',
-                ["KY"],
-                group_ci_generic_soh_questions,
-                is_generic=False,
-                docusign_template_id='C362F325-D174-4EDC-835E-21B3CFBA515E',
-            ),
-            ApplicationForm(
-                'Group CI NC',
-                ["NC"],
-                group_ci_generic_soh_questions,
-                is_generic=False,
-                docusign_template_id='D497B7E0-A3BC-4C35-9182-85F3157C7BAE',
             ),
             ApplicationForm(
                 'Group CI NE',
@@ -384,13 +437,11 @@ def get_product_application_forms():
             ),
         ],
         'ACC': [
-            ApplicationForm('Generic', [s for s in all_statecodes if s not in
-                                        states_without_FPP + states_without_FPPTI_only + states_with_custom_fpp_forms],
+            ApplicationForm('Generic', ACC_STATECODES,
                             [], is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC)
         ],
         'HI': [
-            ApplicationForm('Generic', [s for s in all_statecodes if s not in
-                                        states_without_FPP + states_without_FPPTI_only + states_with_custom_fpp_forms],
+            ApplicationForm('Generic', HI_STATECODES,
                             [], is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC)
         ],
     }
@@ -403,6 +454,85 @@ def get_product_application_forms():
 
     return app_forms
 
+
+HI_STATECODES = [
+    'AL',
+    'AK',
+    'AZ',
+    'AR',
+    'DE',
+    'FL',
+    'GA',
+    'IL',
+    'IN',
+    'IA',
+    'KS',
+    'KY',
+    'LA',
+    'ME',
+    'MI',
+    'MS',
+    'MO',
+    'MT',
+    'NE',
+    'NV',
+    'NC',
+    'OH',
+    'OK',
+    'OR',
+    'PA',
+    'RI',
+    'SC',
+    'TN',
+    'TX',
+    'UT',
+    'VA',
+    'WV',
+    'WI',
+]
+
+ACC_STATECODES = [
+    'AL',
+    'AK',
+    'AZ',
+    'AR',
+    'CO',
+    'DE',
+    'DC',
+    'FL',
+    'GA',
+    'HI',
+    'ID',
+    'IL',
+    'IN',
+    'IA',
+    'KS',
+    'KY',
+    'LA',
+    'MI',
+    'MS',
+    'MO',
+    'MT',
+    'NE',
+    'NV',
+    'NM',
+    'NC',
+    'ND',
+    'OH',
+    'OK',
+    'OR',
+    'RI',
+    'SC',
+    'SD',
+    'TN',
+    'TX',
+    'UT',
+    'VT',
+    'VA',
+    'WV',
+    'WI',
+    'WY',
+]
 
 class ReplacementForm(object):
     def __init__(self, statecodes, docusign_template_id, paragraphs):

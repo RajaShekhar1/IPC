@@ -512,6 +512,7 @@ Feature: Compute rates for products and associated riders.
       | 18  | 12   | $20,067 | $30,100 | $40,134 | $50,167 | $60,201 | $70,234 | $80,268 | $90,301 | $100,334 |
       | 23  | 12   | $20,067 | $30,100 | $40,134 | $50,167 | $60,201 | $70,234 | $80,268 | $90,301 | $100,334 |
 
+#
   Scenario: FPP-Gov product + WP Rider
     Given I want rates for the 'FPP-Gov' product
     When I lookup premiums by coverage with the above data for the following ages

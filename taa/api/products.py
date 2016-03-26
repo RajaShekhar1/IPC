@@ -101,15 +101,18 @@ def get_product_rates(product_id):
     payment_mode = data.get('payment_mode')
     rider_codes = data.get('rider_codes', [])
     statecode = data.get('statecode', None)
+    rate_level = data.get('rate_level', None)
 
     demographics = dict(
         employee_age=employee['age'],
         employee_height=employee['height'],
         employee_weight=employee['weight'],
         employee_gender=employee['gender'],
-        employee_smoker=employee['is_smoker'],
+        # Default smoker to False if not provided so we can return some rates.
+        employee_smoker=employee['is_smoker'] if employee['is_smoker'] else False,
         spouse_age=spouse['age'] if spouse else None,
-        spouse_smoker=spouse['is_smoker'] if spouse else None,
+        # Default smoker to False if not provided so we can return some rates.
+        spouse_smoker=spouse['is_smoker'] if spouse and spouse['is_smoker'] is not None else False,
         spouse_gender=spouse['gender'] if spouse else None,
         spouse_height=spouse['height'] if spouse else None,
         spouse_weight=spouse['weight'] if spouse else None,
@@ -118,7 +121,7 @@ def get_product_rates(product_id):
     )
 
     # Return rates and recommendations
-    rates = product_service.get_rates(product, demographics, riders=rider_codes)
+    rates = product_service.get_rates(product, demographics, riders=rider_codes, rate_level=rate_level)
 
     recommendations = product_service.get_recommendations(
         product, demographics

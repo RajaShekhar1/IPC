@@ -1,4 +1,3 @@
-
 from flask import abort, render_template
 import mandrill
 from taa import mandrill_flask
@@ -34,15 +33,14 @@ class SelfEnrollmentEmailService(DBService):
 
     def get_batches_for_case(self, case):
         return db.session.query(SelfEnrollmentEmailBatch
-        ).filter(SelfEnrollmentEmailBatch.case_id==case.id
-        ).all()
+                                ).filter(SelfEnrollmentEmailBatch.case_id == case.id
+                                         ).all()
 
     def get_batch_for_case(self, case, batch_id):
         return db.session.query(SelfEnrollmentEmailBatchWithEmails
-        ).get(batch_id)
+                                ).get(batch_id)
 
     def create_batch_for_case(self, case, census_records, url_root):
-
 
         setup = case.self_enrollment_setup
         agent = self.agent_service.get_logged_in_agent()
@@ -52,10 +50,10 @@ class SelfEnrollmentEmailService(DBService):
         batch = self.self_enrollment_batch_service.create(**dict(
             email_from_address=setup.email_sender_email,
             email_from_name=setup.email_sender_name,
-            email_subject= setup.email_subject if setup.email_subject else 'Benefit Enrollment - your action needed',
-            email_body= setup.email_message,
-            agent_id = agent.id,
-            case_id = case.id
+            email_subject=setup.email_subject if setup.email_subject else 'Benefit Enrollment - your action needed',
+            email_body=setup.email_message,
+            agent_id=agent.id,
+            case_id=case.id
         ))
 
         results = []
@@ -63,7 +61,7 @@ class SelfEnrollmentEmailService(DBService):
         for record in census_records:
             if record.employee_email is None or '@' not in record.employee_email:
                 # Census record does not has a valid email; TODO insert into email log in as failure.
-                #results.append("{} {} did not have a valid email.".format(record.employee_first, record.employee_last))
+                # results.append("{} {} did not have a valid email.".format(record.employee_first, record.employee_last))
                 continue
 
             # Get previously generated link if available
@@ -71,7 +69,7 @@ class SelfEnrollmentEmailService(DBService):
             if link is None:
                 # Otherwise generate one
                 link = self.self_enrollment_link_service.generate_link(url_root,
-                                                                  case, record)
+                                                                       case, record)
             if link is None:
                 abort(500, "Could not retrieve or create self-enrollment link")
 
@@ -96,7 +94,7 @@ class SelfEnrollmentEmailService(DBService):
             greeting=self.build_email_greeting(census_record),
             enrollment_url=link.url,
             company_name=case.company_name,
-            products = case.products
+            products=case.products
         )
 
     def build_email_greeting(self, record):
@@ -143,13 +141,13 @@ class SelfEnrollmentEmailService(DBService):
                 auto_text=True,
             )
         except mandrill.Error as e:
-            print("Exception sending email: %s - %s; to %s"%(e.__class__, e, to_email))
+            print("Exception sending email: %s - %s; to %s" % (e.__class__, e, to_email))
             return False
         except requests.exceptions.HTTPError as e:
-            print("Exception sending email: %s - %s; to %s"%(e.__class__, e, to_email))
+            print("Exception sending email: %s - %s; to %s" % (e.__class__, e, to_email))
             return False
         except Exception as e:
-            print "Exception sending email: %s - %s"%(e.__class__, e)
+            print "Exception sending email: %s - %s" % (e.__class__, e)
             return False
 
         return True
@@ -182,7 +180,6 @@ class SelfEnrollmentEmailService(DBService):
         # Queue up the task to be run in the background
         tasks.send_email.delay(email_log_id)
 
-
     def create_pending_email(self, agent, link, census, batch, **kwargs):
         # Create a pending record in the database
         return self.create(**dict(
@@ -192,7 +189,7 @@ class SelfEnrollmentEmailService(DBService):
             email_to_address=kwargs.get('to_email'),
             email_to_name=kwargs.get('to_name'),
             email_body=kwargs.get('email_body'),
-            batch_id = batch.id,
+            batch_id=batch.id,
             is_success=False,
             status=SelfEnrollmentEmailLog.STATUS_PENDING
         ))

@@ -1,14 +1,14 @@
 """empty message
 
 Revision ID: 22f640bc441b
-Revises: ('7843e5b81cc', '16979e4fab81')
+Revises: '7843e5b81cc'
 Create Date: 2016-02-19 15:50:09.955817
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '22f640bc441b'
-down_revision = ('7843e5b81cc', '16979e4fab81')
+down_revision = '7843e5b81cc'
 
 from alembic import op
 import sqlalchemy as sa

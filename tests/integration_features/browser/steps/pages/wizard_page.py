@@ -1,13 +1,11 @@
-
 import time
 
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
-from page import PageBase, PageError
+from page import PageBase
 
 
 class WizardPage(PageBase):
@@ -71,7 +69,6 @@ class WizardPage(PageBase):
     SP_CONT_BENE_SSN = ".sp-cont-bene-ssn"
     SP_CONT_BENE_DOB = ".sp-cont-bene-dob"
 
-
     CH1_FIRST = '.child-0 .child_first'
     CH1_LAST = '.child-0 .child_last'
 
@@ -93,6 +90,7 @@ class WizardPage(PageBase):
     ENROLL_CITY = "#enrollCity"
     ACK_DISCLOSURE = "#confirmDisclaimer"
     ACK_PAYROLL_DEDUCTION = "#confirmPayrollDeductions"
+
     def test_navigation_succeeded(self):
         return EC.visibility_of_element_located((By.CSS_SELECTOR, '.page-content'))
 
@@ -159,30 +157,36 @@ class WizardPage(PageBase):
             value = data.get(value_key)
 
             if value and not js_observable_name:
-                self.lookup(field).send_keys(value)
+                for ele in self.lookup_multiple(field):
+                    ele.send_keys(value)
+                self.browser.execute_script("""
+                    $('{selector}').blur();
+                """.format(selector=field))
             elif value and js_observable_name:
                 self.browser.execute_script("""
                 window.vm.{0}("{1}")
                 """.format(js_observable_name, value))
-        self.lookup('body').click()
+            time.sleep(0.25)
+            self.lookup('body').click()
+            time.sleep(0.25)
 
     def enter_employee_val_js(self, attr, val):
         self.browser.execute_script("""
             window.vm.employee().{0}("{1}");
             """.format(attr, val)
-        )
+                                    )
 
     def enter_spouse_val_js(self, attr, val):
         self.browser.execute_script("""
             window.vm.spouse().{0}("{1}");
             """.format(attr, val)
-        )
+                                    )
 
     def enter_child_val_js(self, child_num, attr, val):
         self.browser.execute_script("""
             window.vm.children()[{0}].{1}("{2}");
             """.format(child_num, attr, val)
-        )
+                                    )
 
     def click_show_rates(self):
         self.lookup('button.show-rates').click()
@@ -405,9 +409,17 @@ class WizardPage(PageBase):
             if el and el.is_displayed():
                 el.click()
 
+    def select_coverage_options(self, product_coverage_pairs):
+        self.wait_until_recommended_coverage_visible()
+        time.sleep(0.25)
+        for product_code, coverage_type in product_coverage_pairs:
+            coverage_header_id = '#coverage-header-{0}'.format(product_code.upper())
+            recommended_coverage_div = 'div.pricing-span.{0}'.format(coverage_type.lower())
+            self.lookup(coverage_header_id).click()
+            self.lookup(recommended_coverage_div).click()
+            time.sleep(0.25)
+        self.click_next()
 
-
-
-
-
-
+    def wait_until_recommended_coverage_visible(self):
+        return self.wait_until_condition(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, '.recommended-coverage-table')))

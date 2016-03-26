@@ -326,6 +326,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
             state=self.employee_state,
             zip=self.employee_zip,
             existing_coverages=employee_coverages,
+            occupation=self.occupation_class,
         )
 
     def get_spouse_data(self):

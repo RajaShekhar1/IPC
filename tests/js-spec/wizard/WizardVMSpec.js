@@ -108,11 +108,13 @@ describe("Wizard ViewModel", function() {
     test_data.applicants.push(ch);
     var wizard = create_wizard(test_data);
 
+    var children = wizard.children();
+
     var child = wizard.children()[0];
     wizard.remove_child(child);
 
     // The wizard adds an extra blank child, so it will still be there when we remove this child
-    expect(wizard.children().length).toEqual(1);
+    expect(wizard.children().length).toEqual(0);
   });
 
   it("should set should_include_children to false when the last child is removed", function() {
