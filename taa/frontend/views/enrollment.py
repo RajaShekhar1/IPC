@@ -454,6 +454,9 @@ def process_wizard_submission(case, wizard_results):
     enrollment_application = get_or_create_enrollment(case, census_record, standardized_data, wizard_results)
     db.session.commit()
 
+    submission_service = LookupService('EnrollmentSubmissionService')
+    submission_service.create_submissions_for_enrollment_application(enrollment_application)
+
     return enrollment_application
 
 

@@ -145,8 +145,20 @@ class EnrollmentSubmissionService(object):
         return db.sessions.query(EnrollmentSubmission).where(
             EnrollmentSubmission.status == EnrollmentSubmission.STATUS_FAILURE)
 
+    def create_submissions_for_enrollment_application(self, enrollment_application):
+        for product in [p for p in enrollment_application.case.products if p.get_base_product() in ['HI', 'ACC']]:
+            submission = db.session.query(EnrollmentSubmission) \
+                .filter(EnrollmentSubmission.product_id == product.id) \
+                .filter(EnrollmentSubmission.enrollment_application_id == enrollment_application.id) \
+                .first()
+            if submission is not None:
+                continue
+            submission = EnrollmentSubmission(enrollment_application_id=enrollment_application.id, product_id=product.id)
+            db.session.add(submission)
+        db.session.commit()
+
     def submit_hi_acc_application(self, enrollment_application):
-        # TODO: Implement the sending of CSV exports of an enrollment application to Dell
+        # TODO: Implement the sending of CSV export of enrollment applications to Dell
         pass
 
 

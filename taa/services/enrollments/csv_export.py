@@ -1,7 +1,6 @@
 import csv
 import json
-from taa.services.products import ProductService
-from taa.services.cases import CaseService
+from taa.services import LookupService
 
 import dateutil.parser
 
@@ -71,7 +70,8 @@ def export_acc_hi(enrollments, export_targets=None):
         ])
     w.writerow(header)
 
-    products_service = ProductService()
+    products_service = LookupService('ProductService')
+    case_service = LookupService('CaseService')
 
     # Data rows
     for enrollment in enrollments:
@@ -91,7 +91,7 @@ def export_acc_hi(enrollments, export_targets=None):
             if employee is None:
                 continue
 
-            rate_level = CaseService().get_classification_for_label(data.get('occupation_class'), case,
+            rate_level = case_service.get_classification_for_label(data.get('occupation_class'), case,
                                                                     int(data['product_id']))
 
             # Member coverage info
@@ -126,15 +126,17 @@ def export_acc_hi(enrollments, export_targets=None):
             ]
             # Agent(s) info
             agent_splits = [s for s in case_service.get_agent_splits_setup(case) if s.product_id == product.id]
-            writing_agent_split = next(s for s in agent_splits if s.product_id == product.id and s.agent_id == None)
-            writing_agent_id = writing_agent_split.agent_id if writing_agent_split.agent_id is not None else case.agent_id
-            writing_agent = next(a for a in agents if a.id == writing_agent_id)
+            writing_agent_split = get_writing_agent_split_for_product(agent_splits, product)
+            writing_agent = get_writing_agent_for_case(case, product, agents, agent_splits)
             agent_spaces = 4
 
-            split_agents = [a for a in agents if a.id is not None]
+            split_agents = [s for s in agents if s.id is not None]
 
-            row.extend([writing_agent.agent_code, writing_agent_split.split_percentage,
-                        writing_agent_split.commission_subcount_code])
+            if writing_agent is not None:
+                row.extend([writing_agent.agent_code, writing_agent_split.split_percentage,
+                            writing_agent_split.commission_subcount_code])
+            else:
+                row.extend(['', '', ''])
             for agent in split_agents:
                 split = next(s for s in agent_splits if s.agent_id == agent.id)
                 row.extend([agent.agent_code, split.split_percentage, split.commission_subcount_code])
@@ -182,3 +184,15 @@ def export_acc_hi(enrollments, export_targets=None):
             row.extend([''] * dep_spaces * 7)
             w.writerow(row)
     return output.getvalue()
+
+
+def get_writing_agent_for_case(case, product, agents, agent_splits):
+    split = get_writing_agent_split_for_product(agent_splits, product)
+    if split is None:
+        return None
+    agent_id = split.agent_id if split.agent_id is not None else case.agent_id
+    return next(a for a in agents if a.id == agent_id)
+
+
+def get_writing_agent_split_for_product(agent_splits, product):
+    return next((s for s in agent_splits if s.product_id == product.id and s.agent_id is None), None)
