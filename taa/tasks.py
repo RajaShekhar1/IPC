@@ -6,6 +6,7 @@ from taa.services.users import UserService
 from taa import db, mandrill_flask, app as taa_app
 from taa.services import LookupService
 from taa.services.enrollments import SelfEnrollmentEmailLog
+from taa.services.enrollments.models import EnrollmentSubmission, SubmissionLog
 
 app = celery.Celery('tasks')
 app.config_from_object('taa.config_defaults')
@@ -95,3 +96,27 @@ def send_admin_error_email(error_message, errors):
         # Swallow this
         pass
 
+
+# noinspection PyBroadException
+@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+def process_hi_acc_enrollments(task, start_time=None, end_time=None):
+    submission_service = LookupService('EnrollmentSubmissionService')
+
+    enrollment_applications = submission_service.get_pending_hi_acc_enrollments_between_dates(start_time, end_time)
+
+    for application in enrollment_applications:
+        try:
+            products = application.case.products
+            for product in products:
+                submission = submission_service.get_submission_or_none(application.id, product.id)
+                if submission is None:
+                    submission = EnrollmentSubmission(enrollment_application_id=application.id, product_id=product.id)
+                    db.session.add(submission)
+                submission_log = SubmissionLog(submission.id)
+
+        except:
+            # Keep chugging along on other submissions
+            continue
+
+
+    failed_submissions = submission_service.get_failed_submissions()

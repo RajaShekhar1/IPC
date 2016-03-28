@@ -11,9 +11,12 @@ from taa.config_defaults import DOCUSIGN_CC_RECIPIENTS
 from taa.services import RequiredFeature
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
 from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient, CarbonCopyRecipient
-from taa.services.enrollments.models import EnrollmentImportBatchItem
+from taa.services.enrollments.models import EnrollmentImportBatchItem, EnrollmentSubmission, SubmissionLog, \
+    EnrollmentApplication
+from sqlalchemy import or_
 
 
+# noinspection PyMethodMayBeStatic
 class EnrollmentSubmissionService(object):
     enrollment_application_service = RequiredFeature('EnrollmentApplicationService')
     enrollment_batch_service = RequiredFeature('EnrollmentImportBatchService')
@@ -21,6 +24,9 @@ class EnrollmentSubmissionService(object):
 
     def submit_wizard_enrollment(self, enrollment_application):
         tasks.process_wizard_enrollment.delay(enrollment_application.id)
+
+    def submit_hi_acc_enrollments(self, start_time=None, end_time=None):
+        tasks.process_hi_acc_enrollments.delay(start_time, end_time)
 
     def process_wizard_submission(self, enrollment_application_id):
 
@@ -32,7 +38,9 @@ class EnrollmentSubmissionService(object):
         if not envelope:
             # Create the envelope
             standardized_data = json.loads(enrollment_application.standardized_data)
-            in_person_signer, envelope = self.docusign_service.create_multiproduct_envelope(standardized_data, enrollment_application.case, enrollment_application)
+            in_person_signer, envelope = self.docusign_service.create_multiproduct_envelope(standardized_data,
+                                                                                            enrollment_application.case,
+                                                                                            enrollment_application)
 
             # Save envelope ID on enrollment
             self.enrollment_application_service.save_docusign_envelope(enrollment_application, envelope)
@@ -114,9 +122,25 @@ class EnrollmentSubmissionService(object):
         batch_item.processed_time = datetime.now()
         db.session.commit()
 
+    # noinspection PyComparisonWithNone
+    def get_pending_hi_acc_enrollments_between_dates(self, start_time=None, end_time=None):
+        query = db.session.query(EnrollmentApplication) \
+            .outerjoin(EnrollmentSubmission) \
+            .filter(or_(EnrollmentSubmission.id.is_(None), EnrollmentSubmission.status.in_(
+                [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING])))
+        if start_time is not None:
+            query = query.filter(EnrollmentApplication.signature_time > start_time)
+        if end_time is not None:
+            query = query.filter(EnrollmentApplication.signature_time < end_time)
+        return query.all()
+
+
+def get_failed_submissions(self):
+    return db.sessions.query(EnrollmentSubmission).where(
+        EnrollmentSubmission.status == EnrollmentSubmission.STATUS_FAILURE)
+
 
 class EnrollmentSubmissionProcessor(object):
-
     pdf_generator_service = RequiredFeature('ImagedFormGeneratorService')
     docusign_service = RequiredFeature('DocuSignService')
 
@@ -137,15 +161,16 @@ class EnrollmentSubmissionProcessor(object):
         enrollment_record.docusign_envelope_id = envelope.uri
 
     def generate_envelope_components(self, enrollment_record):
-        data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data), case=enrollment_record.case, enrollment_record=enrollment_record)
+        data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data), case=enrollment_record.case,
+                                       enrollment_record=enrollment_record)
         recipients = self._create_import_recipients(enrollment_record.case, data_wrap)
 
         product = data_wrap.get_product()
 
         # Add back in for HI/ACC
-        #if not product.does_generate_form():
+        # if not product.does_generate_form():
         #    return [], data_wrap
-        
+
         if product.is_fpp():
             components = self.docusign_service.create_fpp_envelope_components(
                 data_wrap,
@@ -166,11 +191,11 @@ class EnrollmentSubmissionProcessor(object):
         signing_agent = enrollment_data.get_signing_agent()
         recipients = [
             AgentDocuSignRecipient(signing_agent, name=signing_agent.name(),
-                                  email=signing_agent.email,
-                                  exclude_from_envelope=True),
+                                   email=signing_agent.email,
+                                   exclude_from_envelope=True),
             EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
-                                     email=enrollment_data.get_employee_email(),
-                                     exclude_from_envelope=True),
+                                      email=enrollment_data.get_employee_email(),
+                                      exclude_from_envelope=True),
         ]
         recipients += self._get_carbon_copy_recipients()
         return recipients
@@ -179,4 +204,4 @@ class EnrollmentSubmissionProcessor(object):
         return [
             CarbonCopyRecipient(name, email)
             for name, email in DOCUSIGN_CC_RECIPIENTS
-        ]
+            ]
