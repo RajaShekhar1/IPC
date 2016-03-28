@@ -134,10 +134,20 @@ class EnrollmentSubmissionService(object):
             query = query.filter(EnrollmentApplication.signature_time < end_time)
         return query.all()
 
+    def get_pending_submissions(self, product_id=None):
+        query = db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.status.in_(
+                [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING]))
+        if product_id is not None:
+            query.filter(EnrollmentSubmission.product_id == product_id)
+        return query.all()
 
-def get_failed_submissions(self):
-    return db.sessions.query(EnrollmentSubmission).where(
-        EnrollmentSubmission.status == EnrollmentSubmission.STATUS_FAILURE)
+    def get_failed_submissions(self):
+        return db.sessions.query(EnrollmentSubmission).where(
+            EnrollmentSubmission.status == EnrollmentSubmission.STATUS_FAILURE)
+
+    def submit_hi_acc_application(self, enrollment_application):
+        # TODO: Implement the sending of CSV exports of an enrollment application to Dell
+        pass
 
 
 class EnrollmentSubmissionProcessor(object):

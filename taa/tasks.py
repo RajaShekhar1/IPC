@@ -7,6 +7,7 @@ from taa import db, mandrill_flask, app as taa_app
 from taa.services import LookupService
 from taa.services.enrollments import SelfEnrollmentEmailLog
 from taa.services.enrollments.models import EnrollmentSubmission, SubmissionLog
+from taa.services.enrollments.csv_export import *
 
 app = celery.Celery('tasks')
 app.config_from_object('taa.config_defaults')
@@ -55,7 +56,6 @@ FIVE_MINUTES = 5 * 60
 
 @app.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def process_enrollment_upload(task, batch_id):
-
     submission_service = LookupService("EnrollmentSubmissionService")
     errors = submission_service.process_import_submission_batch(batch_id)
     if errors:
@@ -66,7 +66,6 @@ def process_enrollment_upload(task, batch_id):
 
 @app.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def process_wizard_enrollment(task, enrollment_id):
-
     submission_service = LookupService("EnrollmentSubmissionService")
     envelope = submission_service.process_wizard_submission(enrollment_id)
     if not envelope:
@@ -99,24 +98,35 @@ def send_admin_error_email(error_message, errors):
 
 # noinspection PyBroadException
 @app.task(bind=True, default_retry_delay=FIVE_MINUTES)
-def process_hi_acc_enrollments(task, start_time=None, end_time=None):
+def process_hi_acc_enrollments(task):
     submission_service = LookupService('EnrollmentSubmissionService')
 
-    enrollment_applications = submission_service.get_pending_hi_acc_enrollments_between_dates(start_time, end_time)
+    try:
+        # Set all the submissions to be processing so they do not get pulled in by another worker thread
+        submissions = submission_service.get_pending_submissions()
+        for submission in submissions:
+            submission.set_status_processing()
+        db.session.commit()
 
-    for application in enrollment_applications:
-        try:
-            products = application.case.products
-            for product in products:
-                submission = submission_service.get_submission_or_none(application.id, product.id)
-                if submission is None:
-                    submission = EnrollmentSubmission(enrollment_application_id=application.id, product_id=product.id)
-                    db.session.add(submission)
-                submission_log = SubmissionLog(submission.id)
+        # Create submission logs for each submission and accumulate all the enrollment applications
+        applications = list()
+        logs = list()
+        for submission in submissions:
+            log = SubmissionLog(enrollment_submission_id=submission.id, status=SubmissionLog.STATUS_PROCESSING)
+            logs.append(log)
+            db.session.add(log)
+            if submission.enrollment_application not in applications:
+                applications.append(submission.enrollment_application)
+        db.session.commit()
 
-        except:
-            # Keep chugging along on other submissions
-            continue
+        csv = export_acc_hi(applications)
+        # TODO: Send CSV to dell
 
+        for submission in submissions:
+            submission.set_status_success()
+        for log in logs:
+            log.set_status_success()
+        db.session.commit()
 
-    failed_submissions = submission_service.get_failed_submissions()
+    except Exception:
+        task.retry()
