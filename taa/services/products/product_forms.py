@@ -430,7 +430,10 @@ def get_product_application_forms():
 
             ApplicationForm(
                 'Group CI Generic',
-                ["AL", "AZ", "AR", "GA", "IN", "IA", "LA", "MA", "MI", "MS", "NE", "NV", "NM", "OK", "SC", "TX", "UT", "WI"],
+                ["AL", "AZ", "AR", "GA", "IN", "IA", "LA", "MA", "MI", "MS", "NE", "NV", "NM", "OK", "SC", "TX", "UT", "WI",
+                 # FIXME: Temporary AOBG hack
+                 "FL", "CT", 'DE', 'ID', 'ME', 'MD', 'MN', 'MT', 'NH', 'ND', 'OH', 'SD', 'TN', 'WV', 'WY',
+                 ],
                 group_ci_generic_soh_questions,
                 is_generic=True,
                 docusign_template_id='B57234AB-5EA5-48D4-984F-D3BF07793B9B',
