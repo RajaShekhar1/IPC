@@ -1,4 +1,5 @@
 import locale
+
 # Make sure this is set for the whole app for formatting dates, times, currency, etc.
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
@@ -14,6 +15,7 @@ from .helpers import JSONEncoder
 # Globals
 app = None
 db = None
+""":type : SQLAlchemy"""
 mandrill_flask = None
 stormpath_manager = None
 
@@ -23,8 +25,8 @@ def create_app(bind=None):
     global app
 
     app = Flask(__name__,
-            template_folder='frontend/templates',
-            static_folder='frontend/static')
+                template_folder='frontend/templates',
+                static_folder='frontend/static')
 
     # Load the config from environment variables, defaulting to some dev settings
     app.config.from_object('taa.config_defaults')
@@ -88,5 +90,6 @@ def create_app(bind=None):
     init_assets(app)
 
     return app
+
 
 create_app()

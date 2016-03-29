@@ -104,57 +104,23 @@ def send_admin_error_email(error_message, errors):
 @app.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def process_hi_acc_enrollments(task):
     submission_service = LookupService('EnrollmentSubmissionService')
+    """:type : taa.services.enrollments.enrollment_submission.EnrollmentSubmissionService"""
 
     # Set all the submissions to be processing so they do not get pulled in by another worker thread
     submissions = submission_service.get_pending_submissions()
-    for submission in submissions:
-        submission.set_status_processing()
-    db.session.commit()
+    submission_service.set_submissions_status(EnrollmentSubmission.STATUS_PROCESSING, submissions)
 
     # Create submission logs for each submission and accumulate all the enrollment applications
-    applications = list()
-    logs = list()
-    for submission in submissions:
-        # noinspection PyArgumentList
-        log = SubmissionLog(enrollment_submission_id=submission.id, status=SubmissionLog.STATUS_PROCESSING)
-        logs.append(log)
-        db.session.add(log)
-        if submission.enrollment_application not in applications:
-            applications.append(submission.enrollment_application)
-    db.session.commit()
+    applications = submission_service.get_applications_for_submissions(submissions)
+    submission_logs = submission_service.create_logs_for_submissions(submissions, SubmissionLog.STATUS_PROCESSING)
 
     try:
         csv_data = export_hi_acc_enrollments(applications)
-        try:
-            # TODO: Send CSV to Dell instead of saving to a file
-            today = datetime.today()
-            filename = '/Users/mnowak/temp/five-star/enrollment-submissions_%04d-%02d-%02d.csv' % (
-                today.year, today.month, today.day)
-            with open(filename, 'w+') as csv_file:
-                csv_file.write(csv_data)
-                csv_file.close()
-        except Exception as ex:
-            for submission in submissions:
-                submission.set_status_failure()
-            for log in logs:
-                log.set_status_failure()
-                log.message = 'Sending to Dell failed with exception: "%s"\n%s' % ex.message, traceback.format_exc()
-            db.session.commit()
-            email_exception(taa_app, ex)
-            return
-
-        for submission in submissions:
-            submission.set_status_success()
-        for log in logs:
-            log.set_status_success()
-        db.session.commit()
-
+        submit_submission = submission_service.create_submission_for_csv(csv_data, applications)
+        submission_service.set_submissions_status(EnrollmentSubmission.STATUS_SUCCESS, submissions, submission_logs)
+        submit_csv_to_dell.delay(submission_id=submit_submission.id)
     except Exception as ex:
-        for submission in submissions:
-            submission.set_status_failure()
-        for log in logs:
-            log.set_status_failure()
-        db.session.commit()
+        submission_service.set_submissions_status(EnrollmentSubmission.STATUS_FAILURE, submissions, submission_logs)
         email_exception(taa_app, ex)
 
 

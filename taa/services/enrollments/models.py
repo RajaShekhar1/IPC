@@ -7,6 +7,17 @@ from taa import db
 from taa.helpers import JsonSerializable
 from taa.services.cases import CaseCensus, CaseService
 
+"""Association table for EnrollmentApplication and EnrollmentSubmission"""
+enrollment_application_submission_association_table = db.Table('enrollment_application_submissions',
+                                                               db.Model.metadata,
+                                                               db.Column('enrollment_application_id', db.Integer,
+                                                                         db.ForeignKey('enrollment_applications.id'),
+                                                                         primary_key=True),
+                                                               db.Column('enrollment_submission_id', db.Integer,
+                                                                         db.ForeignKey('enrollment_submissions.id'),
+                                                                         primary_key=True)
+                                                               )
+
 
 class EnrollmentSerializer(JsonSerializable):
     __json_hidden__ = ['census_record', 'case']
@@ -81,6 +92,9 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     agent_signing_datetime = db.Column(db.DateTime)
     applicant_signing_status = db.Column(db.Unicode(32))
     applicant_signing_datetime = db.Column(db.DateTime)
+
+    enrollment_submissions = db.relationship('EnrollmentSubmission',
+                                             secondary=enrollment_application_submission_association_table)
 
     SIGNING_STATUS_PENDING = u'pending'
     SIGNING_STATUS_DECLINED = u'declined_to_sign'
@@ -406,13 +420,15 @@ class EnrollmentSubmission(JsonSerializable, db.Model):
 
     # Database Columns
     id = db.Column(db.Integer, primary_key=True)
-    enrollment_application_id = db.Column(db.Integer, db.ForeignKey('enrollment_applications.id'))
-    enrollment_application = db.relationship('EnrollmentApplication', backref='submissions')
-    processing_time = db.Column(db.DateTime, server_default=db.func.now())
+    enrollment_applications = db.relationship('EnrollmentApplication',
+                                              secondary=enrollment_application_submission_association_table)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
     status = db.Column(db.Unicode(32), server_default=STATUS_PENDING)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
     product = db.relationship('Product')
     submission_logs = db.relationship('SubmissionLog', back_populates='enrollment_submission')
+    data = db.Column(db.UnicodeText)
+    submission_type = db.Column(db.Unicode(32))
 
     def set_status_success(self):
         self.status = SubmissionLog.STATUS_SUCCESS

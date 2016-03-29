@@ -122,19 +122,14 @@ class EnrollmentSubmissionService(object):
         batch_item.processed_time = datetime.now()
         db.session.commit()
 
-    # noinspection PyComparisonWithNone
-    def get_pending_hi_acc_enrollments_between_dates(self, start_time=None, end_time=None):
-        query = db.session.query(EnrollmentApplication) \
-            .outerjoin(EnrollmentSubmission) \
-            .filter(or_(EnrollmentSubmission.id.is_(None), EnrollmentSubmission.status.in_(
-            [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING])))
-        if start_time is not None:
-            query = query.filter(EnrollmentApplication.signature_time > start_time)
-        if end_time is not None:
-            query = query.filter(EnrollmentApplication.signature_time < end_time)
-        return query.all()
-
     def get_pending_submissions(self, product_id=None):
+        """
+        Get all submissions that are either pending or failed
+        :param product_id: Optional ID of the product to get submissions for
+        :type product_id: int
+        :return: All pending or failed submissions
+        :rtype: list[EnrollmentSubmission]
+        """
         query = db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.status.in_(
             [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING]))
         if product_id is not None:
@@ -150,21 +145,24 @@ class EnrollmentSubmissionService(object):
         :param end_date: End date
         :type end_date: datetime.datetime
         """
-
         query = db.session.query(EnrollmentApplication).join(EnrollmentSubmission)
 
         if start_date is not None:
-            query.filter(EnrollmentSubmission.processing_time > start_date)
+            query.filter(EnrollmentSubmission.created_at > start_date)
         if end_date is not None:
-            query.filter(EnrollmentSubmission.processing_time < end_date)
+            query.filter(EnrollmentSubmission.created_at < end_date)
 
         return query.all()
 
-    def get_failed_submissions(self):
-        return db.sessions.query(EnrollmentSubmission).where(
-            EnrollmentSubmission.status == EnrollmentSubmission.STATUS_FAILURE)
-
     def create_submissions_for_enrollment_application(self, enrollment_application):
+        """
+        Create submissions for necessary products for the given EnrollmentApplication
+        :param enrollment_application: EnrollmentApplication to create submissions for
+        :type enrollment_application: EnrollmentApplication
+        :rtype: list[EnrollmentSubmission]
+        """
+        submissions = list()
+        """:type: list[EnrollmentSubmission]"""
         for product in [p for p in enrollment_application.case.products if p.get_base_product() in ['HI', 'ACC']]:
             submission = db.session.query(EnrollmentSubmission) \
                 .filter(EnrollmentSubmission.product_id == product.id) \
@@ -172,10 +170,14 @@ class EnrollmentSubmissionService(object):
                 .first()
             if submission is not None:
                 continue
-            submission = EnrollmentSubmission(enrollment_application_id=enrollment_application.id,
-                                              product_id=product.id)
+            # noinspection PyArgumentList
+            submission = EnrollmentSubmission(product_id=product.id)
+            submission.enrollment_applications.append(enrollment_application)
+            submission.submission_type = EnrollmentSubmission.TYPE_GENERATE_CSV
+            submissions.append(submission)
             db.session.add(submission)
         db.session.commit()
+        return submissions
 
     def submit_hi_acc_export_to_dell(self, csv_data):
         """
@@ -194,6 +196,76 @@ class EnrollmentSubmissionService(object):
         :rtype: EnrollmentSubmission
         """
         return db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.id == submission_id).first()
+
+    def create_submission_for_csv(self, csv_data, applications):
+        """
+        Create a new EnrollmentSubmission for submitting csv data to dell
+        :param csv_data: String containing the CSV's data
+        :type csv_data: str
+        :param applications: Enrollment applications that the new submission should be related to
+        :type applications: list[EnrollmentApplication]
+        :rtype: EnrollmentSubmission
+        """
+        # noinspection PyArgumentList
+        submission = EnrollmentSubmission(data=csv_data)
+        for application in applications:
+            submission.enrollment_applications.append(application)
+        db.session.add(submission)
+        db.session.commit()
+        return submission
+
+    def set_submissions_status(self, status, submissions=None, submission_logs=None):
+        """
+        Set the status
+        :param status: Status to set for the submissions and logs
+        :type status: str
+        :param submissions: Submissions to set the status for
+        :type submissions: list[EnrollmentSubmission]
+        :param submission_logs: Logs to set the status for
+        :type submission_logs: list[SubmissionLog]
+        """
+        submissions = submissions if submissions is not None else list()
+        submission_logs = submission_logs if submission_logs is not None else list()
+
+        for submission in submissions:
+            submission.status = status
+        for log in submission_logs:
+            log.status = status
+        db.session.commit()
+
+    def get_applications_for_submissions(self, submissions):
+        """
+        Get a list of unique applications in the given submissions
+        :param submissions: EnrollmentSubmissions to grab applications from
+        :type submissions: list[EnrollmentSubmission]
+        :rtype: list[EnrollmentApplication]
+        """
+        applications = list()
+        for submission in submissions:
+            for application in submission.enrollment_applications:
+                if application not in applications:
+                    applications.append(application)
+        return applications
+
+    def create_logs_for_submissions(self, submissions, status=None):
+        """
+        Create a log entry for each
+        :param submissions: Submissions to create logs for
+        :type submissions: list[EnrollmentSubmission]
+        :param status: Optional status to set the new SubmissionLogs to
+        :type status: str
+        :rtype: list[SubmissionLog]
+        """
+        submission_logs = list()
+        for submission in submissions:
+            # noinspection PyArgumentList
+            submission_log = SubmissionLog(enrollment_submission_id=submission.id)
+            if status is not None:
+                submission_log.status = status
+            db.session.add(submission_log)
+            submission_logs.append(submission_log)
+        db.session.commit()
+        return submission_logs
 
 
 class EnrollmentSubmissionProcessor(object):
