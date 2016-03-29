@@ -11,6 +11,7 @@ from taa.services.enrollments.models import EnrollmentSubmission, SubmissionLog
 from taa.services.enrollments.csv_export import *
 import traceback
 from taa.errors import email_exception
+import time
 
 app = celery.Celery('tasks')
 app.config_from_object('taa.config_defaults')
@@ -176,6 +177,11 @@ def submit_csv_to_dell(task, submission_id):
 
     try:
         submission_service.submit_hi_acc_export_to_dell(submission.data)
+        submission.set_status_success()
+        log.set_status_success()
+        log.message = time.strftime(
+            'HI and ACC enrollment applications were successfully submitted to Dell on %x at %X %Z.')
+        db.session.commit()
     except Exception as ex:
         submission.set_status_failure()
         log.set_status_failure()
