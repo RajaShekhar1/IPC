@@ -456,11 +456,12 @@ def get_product_application_forms():
                 #  'WA',
                 #  'WV',
                 #  'WY',
+
+                #  'KY',
+
                 #  ],
                 # Hack part 2: use the FPP states + IN
-                [s for s in all_statecodes if s not in
-                 # These states do not do the TI product or have a custom form.
-                 states_without_FPP + states_without_FPPTI_only + states_with_custom_fpp_forms] + ['IN'],
+                [s for s in all_statecodes],
                 group_ci_generic_soh_questions,
                 is_generic=True,
                 docusign_template_id='B57234AB-5EA5-48D4-984F-D3BF07793B9B',
