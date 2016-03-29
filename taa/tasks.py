@@ -138,7 +138,7 @@ def process_hi_acc_enrollments(task):
                 submission.set_status_failure()
             for log in logs:
                 log.set_status_failure()
-                log.message = 'Sending to Dell failed with exception: "%s"\n' % ex.message, traceback.format_exc()
+                log.message = 'Sending to Dell failed with exception: "%s"\n%s' % ex.message, traceback.format_exc()
             db.session.commit()
             email_exception(app, ex)
             return
