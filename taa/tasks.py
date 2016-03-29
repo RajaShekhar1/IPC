@@ -10,7 +10,6 @@ from taa.services.enrollments import SelfEnrollmentEmailLog
 from taa.services.enrollments.models import EnrollmentSubmission, SubmissionLog
 from taa.services.enrollments.csv_export import *
 import traceback
-from taa import app
 from taa.errors import email_exception
 
 app = celery.Celery('tasks')
@@ -140,7 +139,7 @@ def process_hi_acc_enrollments(task):
                 log.set_status_failure()
                 log.message = 'Sending to Dell failed with exception: "%s"\n%s' % ex.message, traceback.format_exc()
             db.session.commit()
-            email_exception(app, ex)
+            email_exception(taa_app, ex)
             return
 
         for submission in submissions:
@@ -155,4 +154,31 @@ def process_hi_acc_enrollments(task):
         for log in logs:
             log.set_status_failure()
         db.session.commit()
-        email_exception(app, ex)
+        email_exception(taa_app, ex)
+
+
+# noinspection PyBroadException
+@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+def submit_csv_to_dell(task, submission_id):
+    """
+    Task to submit a csv item to dell for processing
+    :param task:
+    :type task: celery.task
+    :param submission_id:
+    :type submission_id: int
+    """
+
+    submission_service = LookupService('EnrollmentSubmissionService')
+    """:type : taa.services.enrollments.enrollment_submission.EnrollmentSubmissionService"""
+    submission = submission_service.get_submission_by_id(submission_id)
+    # noinspection PyArgumentList
+    log = SubmissionLog(enrollment_submission_id=submission_id, status=SubmissionLog.STATUS_PROCESSING)
+
+    try:
+        submission_service.submit_hi_acc_export_to_dell(submission.data)
+    except Exception as ex:
+        submission.set_status_failure()
+        log.set_status_failure()
+        log.message = 'Error sending CSV to Dell with message "%s"\n%s' % ex.message, traceback.format_exc()
+        db.session.commit()
+        task.retry()

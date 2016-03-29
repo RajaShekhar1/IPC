@@ -20,8 +20,9 @@ def export_hi_acc_enrollments_between(start_time=None, end_time=None):
     """
 
     application_service = LookupService('EnrollmentSubmissionService')
-    """ @type : taa.services.enrollments.enrollment_submission.EnrollmentSubmissionService"""
+    """ :type : taa.services.enrollments.enrollment_submission.EnrollmentSubmissionService"""
     applications = application_service.get_enrollment_applications_between(start_time, end_time)
+
     return export_hi_acc_enrollments(applications)
 
 

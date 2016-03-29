@@ -127,7 +127,7 @@ class EnrollmentSubmissionService(object):
         query = db.session.query(EnrollmentApplication) \
             .outerjoin(EnrollmentSubmission) \
             .filter(or_(EnrollmentSubmission.id.is_(None), EnrollmentSubmission.status.in_(
-                [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING])))
+            [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING])))
         if start_time is not None:
             query = query.filter(EnrollmentApplication.signature_time > start_time)
         if end_time is not None:
@@ -136,7 +136,7 @@ class EnrollmentSubmissionService(object):
 
     def get_pending_submissions(self, product_id=None):
         query = db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.status.in_(
-                [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING]))
+            [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING]))
         if product_id is not None:
             query.filter(EnrollmentSubmission.product_id == product_id)
         return query.all()
@@ -172,13 +172,28 @@ class EnrollmentSubmissionService(object):
                 .first()
             if submission is not None:
                 continue
-            submission = EnrollmentSubmission(enrollment_application_id=enrollment_application.id, product_id=product.id)
+            submission = EnrollmentSubmission(enrollment_application_id=enrollment_application.id,
+                                              product_id=product.id)
             db.session.add(submission)
         db.session.commit()
 
-    def submit_hi_acc_application(self, enrollment_application):
-        # TODO: Implement the sending of CSV export of enrollment applications to Dell
+    def submit_hi_acc_export_to_dell(self, csv_data):
+        """
+        Submit csv data to dell for processing
+        :param csv_data: String containing the CSV file's data
+        :type csv_data: str
+        """
+        # TODO: Implement sending to Dell
         pass
+
+    def get_submission_by_id(self, submission_id):
+        """
+        Get an EnrollmentSubmission by ID
+        :param submission_id: ID of the EnrollmentSubmission
+        :type submission_id: int
+        :rtype: EnrollmentSubmission
+        """
+        return db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.id == submission_id).first()
 
 
 class EnrollmentSubmissionProcessor(object):
