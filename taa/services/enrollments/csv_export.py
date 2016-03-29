@@ -4,14 +4,28 @@ from taa.services import LookupService
 
 import dateutil.parser
 
-__all__ = ['export_acc_hi']
+__all__ = ['export_hi_acc_enrollments']
 
 DEFAULT_EXPORT_TARGETS = ['ACC', 'HI']
 AGENT_SPACES = 4
 DEPENDENT_SPACES = 4
 
 
-def export_acc_hi(enrollments, export_targets=None):
+def export_hi_acc_enrollments_between(start_time=None, end_time=None):
+    """
+    :param start_time: Start time to filter by
+    :type start_time: datetime
+    :param end_time: End time to filter by
+    :type end_time: datetime
+    """
+
+    application_service = LookupService('EnrollmentSubmissionService')
+    """ @type : taa.services.enrollments.enrollment_submission.EnrollmentSubmissionService"""
+    applications = application_service.get_enrollment_applications_between(start_time, end_time)
+    return export_hi_acc_enrollments(applications)
+
+
+def export_hi_acc_enrollments(enrollments, export_targets=None):
     if export_targets is None:
         export_targets = DEFAULT_EXPORT_TARGETS
     output = csv.StringIO()
@@ -71,7 +85,9 @@ def export_acc_hi(enrollments, export_targets=None):
     w.writerow(header)
 
     products_service = LookupService('ProductService')
+    """:type : taa.services.products.ProductService"""
     case_service = LookupService('CaseService')
+    """:type : taa.services.cases.case_service.CaseService"""
 
     # Data rows
     for enrollment in enrollments:

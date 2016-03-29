@@ -1,4 +1,5 @@
 # Celery tasks
+from datetime import datetime
 
 import celery
 from taa.services.users import UserService
@@ -112,6 +113,7 @@ def process_hi_acc_enrollments(task):
         applications = list()
         logs = list()
         for submission in submissions:
+            # noinspection PyArgumentList
             log = SubmissionLog(enrollment_submission_id=submission.id, status=SubmissionLog.STATUS_PROCESSING)
             logs.append(log)
             db.session.add(log)
@@ -119,8 +121,14 @@ def process_hi_acc_enrollments(task):
                 applications.append(submission.enrollment_application)
         db.session.commit()
 
-        csv = export_acc_hi(applications)
-        # TODO: Send CSV to dell
+        csv_data = export_hi_acc_enrollments(applications)
+        # TODO: Send CSV to Dell instead of saving to a file
+        today = datetime.today()
+        filename = '/Users/mnowak/temp/five-star/enrollment-submissions_%04d-%02d-%02d.csv' % (
+            today.year, today.month, today.day)
+        with open(filename, 'w+') as csv_file:
+            csv_file.write(csv_data)
+            csv_file.close()
 
         for submission in submissions:
             submission.set_status_success()
