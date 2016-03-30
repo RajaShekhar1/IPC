@@ -7,7 +7,6 @@ from flask import (
 )
 from flask.ext.stormpath import groups_required, StormpathError, current_user
 
-
 from taa import app
 from nav import get_nav_menu
 from taa.models import db
@@ -19,8 +18,9 @@ from taa.services.users.UserService import search_stormpath_accounts, get_stormp
 agent_service = LookupService('AgentService')
 api_token_service = LookupService('ApiTokenService')
 
+
 #  14-Jun-17 WSD
-@app.route('/admin', methods = ['GET', 'POST'])
+@app.route('/admin', methods=['GET', 'POST'])
 @groups_required(['admins', 'home_office'], all=False)
 def admin():
     accounts = []
@@ -34,14 +34,16 @@ def admin():
              'agent_code': acc.custom_data.get('agent_code'),
              'signing_name': acc.custom_data.get('signing_name'),
              'status': "Activated" if acc.custom_data.get('activated') else "Not Activated",
-         })
-        #print dumps(dict(acc.custom_data), indent=2, sort_keys=True)
+             })
+        # print dumps(dict(acc.custom_data), indent=2, sort_keys=True)
 
-    #show the un-activated accounts first
+    # show the un-activated accounts first
     accounts = sorted(accounts, reverse=True, key=(lambda x: x['status']))
-    return render_template('admin/admin.html', accounts=accounts, nav_menu=get_nav_menu(), is_user_admin=agent_service.is_user_admin(current_user))
+    return render_template('admin/admin.html', accounts=accounts, nav_menu=get_nav_menu(),
+                           is_user_admin=agent_service.is_user_admin(current_user))
 
-@app.route('/edituser', methods = ['GET', 'POST'])
+
+@app.route('/edituser', methods=['GET', 'POST'])
 @groups_required(['admins', 'home_office'], all=False)
 def updateUser():
     user_email = request.args['user']
@@ -73,7 +75,7 @@ def updateUser():
             form.ds_apikey.data = custom_data['ds_apikey'] if 'ds_apikey' in keyset else ""
             form.signing_name.data = custom_data['signing_name'] if 'signing_name' in keyset else ""
             form.activated.data = custom_data['activated'] if 'activated' in keyset else False
-            #form.status.data = "Activated" if custom_data['activated'] else "Not Activated"
+            # form.status.data = "Activated" if custom_data['activated'] else "Not Activated"
 
     sp_app = get_stormpath_application()
     all_groups = {g.name: g for g in sp_app.groups}
@@ -129,13 +131,13 @@ def updateUser():
                 for group in groups:
                     matching_groups = [item
                                        for item in sp_app.groups.items
-                                       if item.name==group]
+                                       if item.name == group]
                     if not matching_groups:
                         continue
                     sp_group = matching_groups[0]
                     existing_membership = [acct_mem
                                            for acct_mem in sp_group.account_memberships
-                                           if acct_mem.account.email==account.email]
+                                           if acct_mem.account.email == account.email]
                     if not existing_membership:
                         # Add this account to the group
                         sp_group.add_account(account)
@@ -164,11 +166,9 @@ def updateUser():
                         flash('>> Problem sending activation email <<')
                         print('>> Problem sending activation email <<')
 
-
             return redirect(url_for('admin'))
         except StormpathError as err:
             flash(err.message['message'])
-
 
     return render_template('admin/update-user.html',
                            form=form,
@@ -176,9 +176,16 @@ def updateUser():
                            groups=all_group_names,
                            token=token,
                            nav_menu=get_nav_menu()
-    )
+                           )
 
-@app.route('/enrollment-import-batches', methods = ['GET'])
+
+@app.route('/enrollment-import-batches', methods=['GET'])
 @groups_required(['admins'])
 def view_import_batches():
     return render_template('admin/enrollment_batches.html', nav_menu=get_nav_menu())
+
+
+@app.route('/enrollment-submissions', methods=['GET'])
+@groups_required(['admins'])
+def view_submission_logs():
+    return render_template('admin/enrollment_submissions.html', nav_menu=get_nav_menu())
