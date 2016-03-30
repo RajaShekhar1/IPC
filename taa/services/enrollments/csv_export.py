@@ -17,6 +17,7 @@ def export_hi_acc_enrollments_between(start_time=None, end_time=None):
     :type start_time: datetime
     :param end_time: End time to filter by
     :type end_time: datetime
+    :rtype: str
     """
 
     application_service = LookupService('EnrollmentSubmissionService')
@@ -27,6 +28,14 @@ def export_hi_acc_enrollments_between(start_time=None, end_time=None):
 
 
 def export_hi_acc_enrollments(enrollments, export_targets=None):
+    """
+    Create a CSV export from the specified enrollments
+    :param enrollments: Enrollments to create the CSV for
+    :type enrollments: list[EnrollmentApplication]
+    :param export_targets: Target base product types
+    :type export_targets: list[str]
+    :return:
+    """
     if export_targets is None:
         export_targets = DEFAULT_EXPORT_TARGETS
     output = csv.StringIO()
@@ -109,7 +118,7 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                 continue
 
             rate_level = case_service.get_classification_for_label(data.get('occupation_class'), case,
-                                                                    int(data['product_id']))
+                                                                   int(data['product_id']))
 
             # Member coverage info
             row = [
@@ -204,6 +213,19 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
 
 
 def get_writing_agent_for_case(case, product, agents, agent_splits):
+    """
+    Get the writing agent for the specified case, product, and agent_splits
+    :param case: Case to get the agent for
+    :type case: taa.services.cases.models.Case
+    :param product: Product to get the writing agent for
+    :type product: taa.services.products.models.Product
+    :param agents: All agents on the case
+    :type agents: list[taa.services.agents.models.Agent]
+    :param agent_splits: Agent splits for the case
+    :type agent_splits: list[taa.services.cases.models.AgentSplitsSetup]
+    :return: Writing Agent for the specified product
+    :rtype: taa.services.agents.models.Agent
+    """
     split = get_writing_agent_split_for_product(agent_splits, product)
     if split is None:
         return None

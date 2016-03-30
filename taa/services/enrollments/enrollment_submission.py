@@ -4,6 +4,9 @@ import json
 import traceback
 
 from PyPDF2 import PdfFileReader, PdfFileWriter
+from StringIO import StringIO
+
+import gnupg
 
 import taa.tasks as tasks
 from taa import db
@@ -13,7 +16,11 @@ from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
 from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient, CarbonCopyRecipient
 from taa.services.enrollments.models import EnrollmentImportBatchItem, EnrollmentSubmission, SubmissionLog, \
     EnrollmentApplication
-from sqlalchemy import or_
+from ftplib import FTP
+from taa.config_defaults import DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, GNUPG_DIR, DELL_FTP_PGP_KEY, \
+    DELL_FTP_WORKING_DIRECTORY
+
+
 
 
 # noinspection PyMethodMayBeStatic
@@ -21,6 +28,9 @@ class EnrollmentSubmissionService(object):
     enrollment_application_service = RequiredFeature('EnrollmentApplicationService')
     enrollment_batch_service = RequiredFeature('EnrollmentImportBatchService')
     docusign_service = RequiredFeature('DocuSignService')
+
+    __gpg = None
+    """:type: gnupg.GPG"""
 
     def submit_wizard_enrollment(self, enrollment_application):
         tasks.process_wizard_enrollment.delay(enrollment_application.id)
@@ -179,14 +189,56 @@ class EnrollmentSubmissionService(object):
         db.session.commit()
         return submissions
 
+    def __initialize_pgp_key(self, gpg):
+        """
+        Initialize the GPG instance with out public key
+        :param gpg: GPG to load the key into
+        :type gpg: gnupg.GPG
+        """
+        result = gpg.import_keys(DELL_FTP_PGP_KEY)
+        if not result.ok:
+            raise Exception
+
+    def __initialize_gpg(self):
+        gpg = gnupg.GPG(binary=GNUPG_DIR)
+        self.__initialize_pgp_key(gpg)
+
+    def pgp_encrypt_string(self, data, recipient_email):
+        """
+        Encrypt the given data with PGP and return the encrypted result
+        :param data: Data to encrypt
+        :type data: str
+        :type recipient_email: Email to sign the key with
+        :type recipient_email: str
+        :rtype: str
+        """
+        # noinspection PyBroadException
+        try:
+            if self.__gpg is None:
+                self.__initialize_gpg()
+            key = None
+            for k in self.__gpg.list_keys():
+                for sig in k['sigs'].keys():
+                    if recipient_email in sig:
+                        key = k
+            if key is None:
+                return None
+            return self.__gpg.encrypt(data, key['keyid'])
+        except Exception:
+            return None
+
     def submit_hi_acc_export_to_dell(self, csv_data):
         """
         Submit csv data to dell for processing
         :param csv_data: String containing the CSV file's data
         :type csv_data: str
         """
-        # TODO: Implement sending to Dell
-        pass
+        ftp = FTP(DELL_FTP_HOSTNAME)
+        ftp.login(DELL_FTP_USERNAME, DELL_FTP_PASSWORD)
+        string_buffer = StringIO(csv_data)
+        # TODO: Change the name of the file to something more appropriate
+        ftp.storlines('STOR name.csv', string_buffer)
+        ftp.close()
 
     def get_submission_by_id(self, submission_id):
         """

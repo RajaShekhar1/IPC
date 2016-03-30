@@ -140,17 +140,18 @@ def submit_csv_to_dell(task, submission_id):
     submission = submission_service.get_submission_by_id(submission_id)
     # noinspection PyArgumentList
     log = SubmissionLog(enrollment_submission_id=submission_id, status=SubmissionLog.STATUS_PROCESSING)
+    db.session.add(log)
 
     try:
         submission_service.submit_hi_acc_export_to_dell(submission.data)
-        submission.set_status_success()
-        log.set_status_success()
+        submission.status = EnrollmentSubmission.STATUS_SUCCESS
+        log.status = SubmissionLog.STATUS_SUCCESS
         log.message = time.strftime(
             'HI and ACC enrollment applications were successfully submitted to Dell on %x at %X %Z.')
         db.session.commit()
     except Exception as ex:
-        submission.set_status_failure()
-        log.set_status_failure()
-        log.message = 'Error sending CSV to Dell with message "%s"\n%s' % ex.message, traceback.format_exc()
+        submission.status = EnrollmentSubmission.STATUS_FAILURE
+        log.status = SubmissionLog.STATUS_FAILURE
+        log.message = 'Error sending CSV to Dell with message "%s"\n%s' % (ex.message, traceback.format_exc())
         db.session.commit()
         task.retry()

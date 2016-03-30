@@ -430,19 +430,10 @@ class EnrollmentSubmission(JsonSerializable, db.Model):
     data = db.Column(db.UnicodeText)
     submission_type = db.Column(db.Unicode(32))
 
-    def set_status_success(self):
-        self.status = SubmissionLog.STATUS_SUCCESS
-
-    def set_status_failure(self):
-        self.status = SubmissionLog.STATUS_SUCCESS
-
-    def set_status_processing(self):
-        self.status = SubmissionLog.STATUS_PROCESSING
-
-    def set_status_pending(self):
-        self.status = SubmissionLog.STATUS_PENDING
-
     def is_successful(self):
+        """
+        :rtype: bool
+        """
         return self.status == SubmissionLog.STATUS_SUCCESS
 
 
@@ -463,19 +454,10 @@ class SubmissionLog(JsonSerializable, db.Model):
     status = db.Column(db.Unicode(32), server_default=STATUS_SUCCESS)
     message = db.Column(db.UnicodeText)
 
-    def set_status_success(self):
-        self.status = SubmissionLog.STATUS_SUCCESS
-
-    def set_status_failure(self):
-        self.status = SubmissionLog.STATUS_SUCCESS
-
-    def set_status_processing(self):
-        self.status = SubmissionLog.STATUS_PROCESSING
-
-    def set_status_pending(self):
-        self.status = SubmissionLog.STATUS_PENDING
-
     def is_successful(self):
+        """
+        :rtype: bool
+        """
         return self.status == SubmissionLog.STATUS_SUCCESS
 
 
