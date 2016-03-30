@@ -177,6 +177,13 @@ class EnrollmentImportService(object):
             output['replacement_is_terminating'] = False
             output['replacement_using_funds'] = False
             output['replacement_policies'] = []
+        
+        output.update(
+            standardize_wizard_names(product_data, "employee")
+        )
+        output.update(
+            standardize_wizard_names(product_data, "spouse")
+        )
 
         # Update beneficiary data to new format
         output.update(
@@ -222,6 +229,12 @@ def standardize_legacy_beneficiaries(data, out_prefix, prefix):
 
     return out_data
 
+def standardize_wizard_names(data, prefix):
+    out_data = {}
+    out_data[prefix] = data.get(prefix)
+    out_data[prefix]["first"] = data.get(prefix).get("first").strip()
+    out_data[prefix]["last"] = data.get(prefix).get("last").strip()
+    return out_data
 
 def standardize_wizard_beneficiaries(data, out_prefix):
     out_data = {}
