@@ -183,3 +183,4 @@ function NullCoverageOption() {
   };
 }
 
+var null_coverage = new NullCoverageOption();

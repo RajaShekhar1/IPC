@@ -21,8 +21,6 @@ from taa.config_defaults import DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_P
     DELL_FTP_WORKING_DIRECTORY, DELL_FTP_PGP_KEY_ID
 
 
-
-
 # noinspection PyMethodMayBeStatic
 class EnrollmentSubmissionService(object):
     enrollment_application_service = RequiredFeature('EnrollmentApplicationService')
@@ -181,7 +179,8 @@ class EnrollmentSubmissionService(object):
             if submission is not None:
                 continue
             # noinspection PyArgumentList
-            submission = EnrollmentSubmission(product_id=product.id)
+            submission = EnrollmentSubmission(product_id=product.id,
+                                              submission_type=EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION)
             submission.enrollment_applications.append(enrollment_application)
             submission.submission_type = EnrollmentSubmission.TYPE_GENERATE_CSV
             submissions.append(submission)
@@ -214,7 +213,7 @@ class EnrollmentSubmissionService(object):
         """
         # noinspection PyBroadException
         try:
-            return self.__gpg.encrypt(data, key['keyid'])
+            return self.__gpg.encrypt(data, recipient_id)
         except Exception:
             return None
 
@@ -251,7 +250,8 @@ class EnrollmentSubmissionService(object):
         :rtype: EnrollmentSubmission
         """
         # noinspection PyArgumentList
-        submission = EnrollmentSubmission(data=csv_data)
+        submission = EnrollmentSubmission(data=csv_data,
+                                          submission_type=EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_EXPORT_TO_DELL)
         for application in applications:
             submission.enrollment_applications.append(application)
         db.session.add(submission)

@@ -418,6 +418,10 @@ class EnrollmentSubmission(JsonSerializable, db.Model):
     STATUS_FAILURE = u'failure'
     STATUS_SUCCESS = u'success'
 
+    # Submission Type Enum Values
+    SUBMISSION_TYPE_HI_ACC_CSV_GENERATION = u'HI_ACC_CSV_GENERATION'
+    SUBMISSION_TYPE_HI_ACC_EXPORT_TO_DELL = u'HI_ACC_EXPORT_TO_DELL'
+
     # Database Columns
     id = db.Column(db.Integer, primary_key=True)
     enrollment_applications = db.relationship('EnrollmentApplication',

@@ -90,9 +90,8 @@ class GroupCITemplate(DocuSignServerTemplate):
         # To get the legacy code below to work, make this a local variable.
         enrollment_data = self.data
 
-        idType = enrollment_data.get_id_type()
         idToken = enrollment_data.get_id_token()
-        idTokenStr = 'Authentication via ' + idType + ': ' + idToken
+        idTokenStr = 'Authentication via Date of Hire: ' + idToken
 
         SOH_RadiosList = []
         SOH_GI_Tabs = []
@@ -145,6 +144,9 @@ class GroupCITemplate(DocuSignServerTemplate):
         agent_signing_name = enrollment_data.get_agent_signing_name()
 
         eeTabsList = make_applicant_tabs('ee', enrollment_data['employee'])
+
+        eeEmail = enrollment_data['employee']['email'] if enrollment_data['employee']['email'] else ''
+
         eeTabsList += [
             make_tab('eeEnrollCityState', u'{}, {}'.format(
                 enrollment_data['enrollCity'], enrollment_data['enrollState'])),
@@ -164,7 +166,7 @@ class GroupCITemplate(DocuSignServerTemplate):
             make_tab('eeOtherOwnerSSN',
                      enrollment_data['employee_other_owner_ssn'] if (
                          enrollment_data['employee_owner'] == 'other') else ''),
-            make_tab('eeEmail', enrollment_data.get_employee_email())
+            make_tab('eeEmail', eeEmail)
         ]
 
         eeTabsList += make_contact_tabs('ee', enrollment_data['employee'])
