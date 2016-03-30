@@ -20,7 +20,7 @@ enrollment_application_submission_association_table = db.Table('enrollment_appli
 
 
 class EnrollmentSerializer(JsonSerializable):
-    __json_hidden__ = ['census_record', 'case']
+    __json_hidden__ = ['census_record', 'case', 'enrollment_submissions']
 
 
 class EnrollmentApplication(EnrollmentSerializer, db.Model):
@@ -409,7 +409,11 @@ class EnrollmentImportBatchItem(EnrollmentImportBatchItemSerializer, db.Model):
     processed_time = db.Column(db.DateTime, server_default=db.func.now())
 
 
-class EnrollmentSubmission(JsonSerializable, db.Model):
+class EnrollmentSubmissionItemSerializer(JsonSerializable):
+    __json_hidden__ = []
+
+
+class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
     __tablename__ = 'enrollment_submissions'
 
     # Status Enum Values
@@ -419,8 +423,8 @@ class EnrollmentSubmission(JsonSerializable, db.Model):
     STATUS_SUCCESS = u'success'
 
     # Submission Type Enum Values
-    SUBMISSION_TYPE_HI_ACC_CSV_GENERATION = u'HI_ACC_CSV_GENERATION'
-    SUBMISSION_TYPE_HI_ACC_EXPORT_TO_DELL = u'HI_ACC_EXPORT_TO_DELL'
+    SUBMISSION_TYPE_HI_ACC_CSV_GENERATION = u'HI and ACC CSV Generation'
+    SUBMISSION_TYPE_HI_ACC_EXPORT_TO_DELL = u'HI and ACC CSV submission to Dell'
 
     # Database Columns
     id = db.Column(db.Integer, primary_key=True)
@@ -441,7 +445,11 @@ class EnrollmentSubmission(JsonSerializable, db.Model):
         return self.status == SubmissionLog.STATUS_SUCCESS
 
 
-class SubmissionLog(JsonSerializable, db.Model):
+class SubmissionLogItemSerializer(JsonSerializable):
+    __json_hidden__ = ['enrollment_submission']
+
+
+class SubmissionLog(SubmissionLogItemSerializer, db.Model):
     __tablename__ = 'submission_logs'
 
     # Status Enum Values

@@ -144,21 +144,22 @@ class EnrollmentSubmissionService(object):
             query.filter(EnrollmentSubmission.product_id == product_id)
         return query.all()
 
-    def get_enrollment_applications_between(self, start_date=None, end_date=None):
+    def get_submissions(self, start_date=None, end_date=None):
         """
-        Get the enrollments between the specified dates.
-        If None the date will not filter by the start or end
-        :param start_date: Start date
-        :type start_date: datetime.datetime
-        :param end_date: End date
-        :type end_date: datetime.datetime
+        Get all submissions which can optionally be filtered by start and end dates
+        :param start_date: Start filter date
+        :type start_date: datetime.date | datetime.time | datetime.datetime
+        :param end_date: End filter date
+        :type end_date: datetime.date | datetime.time | datetime.datetime
+        :return: Submissions that meet the filtering criteria
+        :rtype: list[EnrollmentSubmission]
         """
-        query = db.session.query(EnrollmentApplication).join(EnrollmentSubmission)
+        query = db.session.query(EnrollmentSubmission).order_by(EnrollmentSubmission.created_at)
 
         if start_date is not None:
-            query.filter(EnrollmentSubmission.created_at > start_date)
+            query = query.filter(EnrollmentSubmission.created_at > start_date)
         if end_date is not None:
-            query.filter(EnrollmentSubmission.created_at < end_date)
+            query = query.filter(EnrollmentSubmission.created_at < end_date)
 
         return query.all()
 
