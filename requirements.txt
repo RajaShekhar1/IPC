@@ -82,3 +82,4 @@ unittest2==1.1.0
 webassets==0.10.1
 Werkzeug==0.10.4
 WTForms==2.0.2
+gnupg==2.0.2
