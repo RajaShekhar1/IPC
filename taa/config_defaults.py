@@ -106,6 +106,7 @@ DELL_FTP_HOSTNAME = env_get_text('DELL_FTP_HOSTNAME', 'ftp.delmarsd.com')
 DELL_FTP_USERNAME = env_get_text('DELL_FTP_USERNAME', 'five-star-taa')
 DELL_FTP_PASSWORD = env_get_text('DELL_FTP_PASSWORD', 'take-an-app')
 DELL_FTP_WORKING_DIRECTORY = env_get_text('DELL_FTP_WORKING_DIRECTORY', 'enrollments')
+DELL_FTP_PGP_KEY_ID = env_get_text('DELL_FTP_PGP_KEY_ID', '3A74219B887E37BA')
 DELL_FTP_PGP_KEY = env_get_text('DELL_FTP_PGP_KEY', """-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: GnuPG v1
 

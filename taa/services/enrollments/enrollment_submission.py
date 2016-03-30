@@ -18,7 +18,7 @@ from taa.services.enrollments.models import EnrollmentImportBatchItem, Enrollmen
     EnrollmentApplication
 from ftplib import FTP
 from taa.config_defaults import DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, GNUPG_DIR, DELL_FTP_PGP_KEY, \
-    DELL_FTP_WORKING_DIRECTORY
+    DELL_FTP_WORKING_DIRECTORY, DELL_FTP_PGP_KEY_ID
 
 
 
@@ -203,26 +203,17 @@ class EnrollmentSubmissionService(object):
         gpg = gnupg.GPG(binary=GNUPG_DIR)
         self.__initialize_pgp_key(gpg)
 
-    def pgp_encrypt_string(self, data, recipient_email):
+    def pgp_encrypt_string(self, data, recipient_id=DELL_FTP_PGP_KEY_ID):
         """
         Encrypt the given data with PGP and return the encrypted result
         :param data: Data to encrypt
         :type data: str
-        :type recipient_email: Email to sign the key with
-        :type recipient_email: str
+        :type recipient_id: Id for the key to sign with
+        :type recipient_id: str
         :rtype: str
         """
         # noinspection PyBroadException
         try:
-            if self.__gpg is None:
-                self.__initialize_gpg()
-            key = None
-            for k in self.__gpg.list_keys():
-                for sig in k['sigs'].keys():
-                    if recipient_email in sig:
-                        key = k
-            if key is None:
-                return None
             return self.__gpg.encrypt(data, key['keyid'])
         except Exception:
             return None
@@ -235,9 +226,10 @@ class EnrollmentSubmissionService(object):
         """
         ftp = FTP(DELL_FTP_HOSTNAME)
         ftp.login(DELL_FTP_USERNAME, DELL_FTP_PASSWORD)
-        string_buffer = StringIO(csv_data)
+        ftp.cwd(DELL_FTP_WORKING_DIRECTORY)
+        encrypted_data = StringIO(self.pgp_encrypt_string(csv_data))
         # TODO: Change the name of the file to something more appropriate
-        ftp.storlines('STOR name.csv', string_buffer)
+        ftp.storlines('STOR name.csv.pgp', encrypted_data)
         ftp.close()
 
     def get_submission_by_id(self, submission_id):
