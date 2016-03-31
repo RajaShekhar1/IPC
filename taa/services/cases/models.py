@@ -296,7 +296,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     child6_first = db.Column(db.String(256))
     child6_last = db.Column(db.String(256))
     child6_birthdate = db.Column(db.Date)
-    occupation_class = db.Column(db.String(256))
+    occupation_class = db.Column(db.String(256), nullable=False, server_default='Default')
 
     def get_smoker_boolean(self, value):
         if value == 'Y':

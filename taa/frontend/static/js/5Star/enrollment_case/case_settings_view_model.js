@@ -379,6 +379,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   // Call Center Workflow
   self.should_use_call_center_workflow = ko.observable(case_data.should_use_call_center_workflow);
 
+  // There should always be a default occupation class setting
+  if (!_.any(case_data.occupation_class_settings, function (occupation) { return occupation.label.toLowerCase() === 'default' })) {
+    case_data.occupation_class_settings.unshift({ label: 'Default', level: 1 });
+  }
   // Occupation classes
   self.occupation_classes = ko.observableArray(_.map(case_data.occupation_class_settings, function (occupation) {
     return new OccupationVM(occupation.label, occupation.level);
@@ -400,19 +404,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     });
     return (self.new_occupation_class() !== '' && index === -1);
   });
-
-  // Mappings available to the user -- used in case.html to populate mapping dropdown
-  // A 'null' is implicit
-  self.available_occupation_mappings = [{
-    value: 1,
-    label: '1'
-  }, {
-    value: 2,
-    label: '2'
-  }, {
-    value: 3,
-    label: '3'
-  }];
 
   self.hi_occupation_classes = [];
 
