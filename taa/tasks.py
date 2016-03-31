@@ -107,12 +107,17 @@ def process_hi_acc_enrollments(task):
     """:type : taa.services.enrollments.enrollment_submission.EnrollmentSubmissionService"""
 
     # Set all the submissions to be processing so they do not get pulled in by another worker thread
-    submissions = submission_service.get_pending_submissions()
+    submissions = submission_service.get_pending_or_failed_csv_submissions()
+    if submissions is None or len(submissions) == 0:
+        return
     submission_service.set_submissions_status(EnrollmentSubmission.STATUS_PROCESSING, submissions)
 
     # Create submission logs for each submission and accumulate all the enrollment applications
-    applications = submission_service.get_applications_for_submissions(submissions)
     submission_logs = submission_service.create_logs_for_submissions(submissions, SubmissionLog.STATUS_PROCESSING)
+    applications = submission_service.get_applications_for_submissions(submissions)
+    if applications is None or len(applications) == 0:
+        submission_service.set_submissions_status(EnrollmentSubmission.STATUS_SUCCESS, submissions, submission_logs)
+        return
 
     try:
         csv_data = export_hi_acc_enrollments(applications)

@@ -58,7 +58,7 @@ def run_migrations_online():
 
     alembic_config = config.get_section(config.config_ini_section)
     alembic_config['sqlalchemy.url'] = app.config['SQLALCHEMY_DATABASE_URI']
-    
+
     engine = engine_from_config(
                 alembic_config,
                 prefix='sqlalchemy.',
@@ -67,7 +67,8 @@ def run_migrations_online():
     connection = engine.connect()
     context.configure(
                 connection=connection,
-                target_metadata=target_metadata
+                target_metadata=target_metadata,
+                compare_type=True
                 )
 
     try:
