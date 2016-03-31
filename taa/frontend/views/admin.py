@@ -14,6 +14,7 @@ from taa.old_model.Registration import TAA_UserForm
 from taa.old_model.Enrollment import AgentActivationEmail
 from taa.services import LookupService
 from taa.services.users.UserService import search_stormpath_accounts, get_stormpath_application
+from datetime import date, timedelta
 
 agent_service = LookupService('AgentService')
 api_token_service = LookupService('ApiTokenService')
@@ -185,7 +186,53 @@ def view_import_batches():
     return render_template('admin/enrollment_batches.html', nav_menu=get_nav_menu())
 
 
+def create_application_dictionary_for_submissions_view(application):
+    """
+    Create a dictionary for use in JSON Serialization for a submission item
+    :param application: Application to create the dictionary for
+    :type application: taa.services.enrollments.models.EnrollmentApplication
+    :rtype: dict
+    """
+    return {
+        'id': application.id,
+        'case': application.case,
+        'census_record': application.census_record,
+        'writing_agent': {'id': application.agent_id, 'name': application.agent_name, 'code': application.agent_code},
+    }
+
+
+def create_submission_dictionary_for_submissions_view(submission):
+    """
+    Create a dictionary for use in JSON Serialization for a submission item
+    :param submission: Submission to create the dictionary for
+    :type submission: taa.services.enrollments.models.EnrollmentSubmission
+    :rtype: dict
+    """
+    return {
+        'id': submission.id,
+        'enrollment_applications': map(create_application_dictionary_for_submissions_view,
+                                       submission.enrollment_applications),
+        'created_at': submission.created_at,
+        'submission_logs': submission.submission_logs,
+        'data': submission.data,
+        'submission_type': submission.submission_type,
+    }
+
+
 @app.route('/enrollment-submissions', methods=['GET'])
 @groups_required(['admins'])
 def view_submission_logs():
-    return render_template('admin/enrollment_submissions.html', nav_menu=get_nav_menu())
+    start_date = request.args.get('start_date') if 'start_date' in request.args else date.today() + timedelta(days=1)
+    end_date = request.args.get('end_date') if 'end_date' in request.args else date.today() - timedelta(days=30)
+
+    submission_service = LookupService('EnrollmentSubmissionService')
+    """:type: taa.services.enrollments.enrollment_submission.EnrollmentSubmissionService"""
+
+    submissions = submission_service.get_submissions()
+    submissions = map(create_submission_dictionary_for_submissions_view, submissions)
+
+    view_model = dict()
+    view_model['submissions'] = submissions
+    view_model['start_date'] = start_date
+    view_model['end_date'] = end_date
+    return render_template('admin/enrollment_submissions.html', nav_menu=get_nav_menu(), **view_model)
