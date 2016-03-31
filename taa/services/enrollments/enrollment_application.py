@@ -14,7 +14,7 @@ from enrollment_application_coverages import (
     select_most_recent_coverage,
 )
 from taa.helpers import UnicodeCsvWriter
-from models import EnrollmentApplication, EnrollmentApplicationCoverage
+from models import EnrollmentApplication, EnrollmentApplicationCoverage, EnrollmentSubmission
 from taa import JSONEncoder
 from taa.core import DBService, db
 from taa.services import RequiredFeature
@@ -619,6 +619,19 @@ class EnrollmentApplicationService(DBService):
     def get_enrollments_by_date(self, from_, to_):
         return self.__model__.query.filter(self.__model__.signature_time >= from_,
                                            self.__model__.signature_time <= to_)
+
+    # noinspection PyMethodMayBeStatic
+    def get_applications_by_submission_date(self, start_date=None, end_date=None):
+        query = db.session.query(EnrollmentApplication) \
+            .join(EnrollmentApplication.enrollment_submissions) \
+            .filter(EnrollmentSubmission.submission_type == EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION)
+
+        if start_date is not None:
+            query.filter(EnrollmentSubmission.created_at >= start_date)
+        if end_date is not None:
+            query.filter(EnrollmentSubmission.created_at <= end_date)
+
+        return query.all()
 
     def sync_enrollment_with_docusign(self, enrollment_application_id):
         enrollment_application = self.get(enrollment_application_id)
