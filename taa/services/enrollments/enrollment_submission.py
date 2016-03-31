@@ -268,8 +268,8 @@ class EnrollmentSubmissionService(object):
         ftp.login(DELL_FTP_USERNAME, DELL_FTP_PASSWORD)
         ftp.cwd(DELL_FTP_WORKING_DIRECTORY)
         encrypted_data = StringIO(self.pgp_encrypt_string(csv_data))
-        # TODO: Change the name of the file to something more appropriate
-        ftp.storlines('STOR name.csv.pgp', encrypted_data)
+        command = 'STOR enrollment_submissions_%s.csv.pgp' % datetime.utcnow().strftime('%Y-%m-%dT%H%M%S')
+        ftp.storlines(command, encrypted_data)
         ftp.close()
 
     def get_submission_by_id(self, submission_id):
