@@ -154,7 +154,7 @@ class EnrollmentSubmissionService(object):
         :return: Submissions that meet the filtering criteria
         :rtype: list[EnrollmentSubmission]
         """
-        query = db.session.query(EnrollmentSubmission).order_by(EnrollmentSubmission.created_at)
+        query = db.session.query(EnrollmentSubmission).order_by(EnrollmentSubmission.created_at.desc())
 
         if start_date is not None:
             query = query.filter(EnrollmentSubmission.created_at > start_date)

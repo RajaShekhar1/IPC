@@ -42,7 +42,7 @@
         <th>Id</th>
         <th>Status</th>
         <th>Time</th>
-        <th></th>
+        <th>Message</th>
         <th></th>
       </tr>
       <!-- ko foreach: logs -->
@@ -52,8 +52,8 @@
         <td><span class="label"
                   data-bind="text: _.capitalize($data.status), css: get_submission_status_label_class($data.status)"></span>
         </td>
-        <td data-bind="text: format_datetime(moment($data.created_at))"></td>
-        <td></td>
+        <td data-bind="text: format_datetime($data.time)"></td>
+        <td data-bind="text: message"></td>
         <td></td>
       </tr>
       <!-- /ko -->
@@ -66,8 +66,8 @@
       <tr class="collapse" data-bind="css: 'applications_' + $data.id">
         <th></th>
         <th>Id</th>
-        <th>Status</th>
-        <th>Time</th>
+        <th>Case</th>
+        <th>Products</th>
         <th></th>
         <th></th>
       </tr>
@@ -75,10 +75,9 @@
       <tr class="collapse" data-bind="css: 'applications_' + $parent.id">
         <td></td>
         <td data-bind="text: id"></td>
-        <td><span class="label"
-                  data-bind="text: _.capitalize($data.status), css: get_submission_status_label_class($data.status)"></span>
-        </td>
-        <td data-bind="text: format_datetime(moment($data.time))"></td>
+        <td data-bind="with: $data.case"><a
+            data-bind="attr: { 'href': '/enrollment-case/' + id }, text: company_name"></a></td>
+        <td data-bind="text: create_product_display_string($data.case)"></td>
         <td></td>
         <td></td>
       </tr>
@@ -90,6 +89,12 @@
 
 {% block page_js %}
   <script>
+    function create_product_display_string(case_data) {
+      var product_codes = _.map(case_data.products, function (product) { return product.code; });
+      product_codes = _.sortBy(product_codes);
+      return product_codes.join(', ');
+    }
+
     function format_datetime(datetime) {
       return datetime.format('YYYY-MM-DD') + ' at ' + datetime.format('h:mm a');
     }
@@ -126,8 +131,16 @@
       self.status_display = _.capitalize(self.status);
       self.label_class = get_submission_status_label_class(self.status);
 
-      self.logs = submission.submission_logs;
-      self.applications = submission.enrollment_applications;
+      self.logs = _.chain(submission.submission_logs)
+          .map(function (log) {
+            log.time = moment(log.processing_time);
+            return log;
+          })
+          .sortByOrder(['time'], ['desc'])
+          .value();
+      self.applications = _.chain(submission.enrollment_applications)
+          .sortBy('id')
+          .value();
 
       self.has_logs = self.logs.length > 0;
       self.has_applications = self.applications.length > 0;
@@ -149,9 +162,6 @@
     }
 
     var submissions = {{ submissions | tojson | safe }};
-    _.forEach(submissions, function (submission) {
-      submission.created_at = moment(submission.created_at);
-    });
     var viewModel = new SubmissionsViewModel(submissions);
     window.viewModel = viewModel;
     ko.applyBindings(viewModel);

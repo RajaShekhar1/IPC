@@ -186,6 +186,39 @@ def view_import_batches():
     return render_template('admin/enrollment_batches.html', nav_menu=get_nav_menu())
 
 
+def create_application_dictionary_for_submissions_view(application):
+    """
+    Create a dictionary for use in JSON Serialization for a submission item
+    :param application: Application to create the dictionary for
+    :type application: taa.services.enrollments.models.EnrollmentApplication
+    :rtype: dict
+    """
+    return {
+        'id': application.id,
+        'case': application.case,
+        'census_record': application.census_record,
+        'writing_agent': {'id': application.agent_id, 'name': application.agent_name, 'code': application.agent_code},
+    }
+
+
+def create_submission_dictionary_for_submissions_view(submission):
+    """
+    Create a dictionary for use in JSON Serialization for a submission item
+    :param submission: Submission to create the dictionary for
+    :type submission: taa.services.enrollments.models.EnrollmentSubmission
+    :rtype: dict
+    """
+    return {
+        'id': submission.id,
+        'enrollment_applications': map(create_application_dictionary_for_submissions_view,
+                                       submission.enrollment_applications),
+        'created_at': submission.created_at,
+        'submission_logs': submission.submission_logs,
+        'data': submission.data,
+        'submission_type': submission.submission_type,
+    }
+
+
 @app.route('/enrollment-submissions', methods=['GET'])
 @groups_required(['admins'])
 def view_submission_logs():
@@ -196,6 +229,7 @@ def view_submission_logs():
     """:type: taa.services.enrollments.enrollment_submission.EnrollmentSubmissionService"""
 
     submissions = submission_service.get_submissions()
+    submissions = map(create_submission_dictionary_for_submissions_view, submissions)
 
     view_model = dict()
     view_model['submissions'] = submissions
