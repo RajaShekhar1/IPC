@@ -2266,39 +2266,6 @@ var wizard_viewmodel = (function () {
 
     //region HI/ACC Helpers
 
-    self.get_simple_coverage_options = ko.pureComputed(function () {
-      // FIXME: code not finished or being called yet
-      var options = [
-        {
-          label: self.employee().first(),
-          coverage: new SimpleCoverageOption({premium: 1.00, value: 'EE'})
-        }
-      ];
-
-      if (self.should_include_spouse_in_table()) {
-        options.push({
-          label: self.employee().first() + ' + ' + self.spouse().first(),
-          coverage: new SimpleCoverageOption({premium: 2.00, value: 'ES'})
-        });
-      }
-
-      if (self.should_include_children_in_table()) {
-        options.push({
-          label: self.employee().first() + ' + Children',
-          coverage: new SimpleCoverageOption({premium: 1.50, value: 'EC'})
-        });
-      }
-
-      if (self.should_include_spouse_in_table() && self.should_include_children_in_table()) {
-        options.push({
-          label: 'All Family',
-          coverage: new SimpleCoverageOption({premium: 2.50, value: 'EF'})
-        });
-      }
-
-      return options;
-    });
-
     self.has_spouse = ko.computed(function () {
       return !!self.spouse();
     });
