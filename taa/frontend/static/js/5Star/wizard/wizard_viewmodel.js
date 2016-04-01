@@ -1064,6 +1064,9 @@ var wizard_viewmodel = (function () {
     self.selected_occupation = ko.observable(_.find(self.occupations(), function (occupation) {
       return !!self.employee().occupation && self.employee().occupation === occupation.label;
     }));
+    if (!self.selected_occupation()) {
+      self.selected_occupation(_.find(self.occupations(), function (occupation) { return occupation.label === 'Default'; }));
+    }
     self.requires_occupation = _.any(self.products, function (product_view_model) { return product_view_model.requires_occupation();});
     self.should_show_occupation = self.requires_occupation && !self.selected_occupation() && self.options.is_in_person;
     //endregion

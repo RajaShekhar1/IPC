@@ -130,18 +130,24 @@ class EnrollmentSubmissionService(object):
         batch_item.processed_time = datetime.now()
         db.session.commit()
 
-    def get_pending_submissions(self, product_id=None):
+    def get_pending_csv_submission(self):
+        """
+        Get the pending csv generation submission record if it exists
+        :rtype: EnrollmentSubmission
+        """
+        return db.session.query(EnrollmentSubmission) \
+            .filter(EnrollmentSubmission.submission_type == EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION) \
+            .filter(EnrollmentSubmission.status == EnrollmentSubmission.STATUS_PENDING) \
+            .first()
+
+    def get_pending_or_failed_csv_submissions(self):
         """
         Get all submissions that are either pending or failed
-        :param product_id: Optional ID of the product to get submissions for
-        :type product_id: int
         :return: All pending or failed submissions
         :rtype: list[EnrollmentSubmission]
         """
         query = db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.status.in_(
             [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING]))
-        if product_id is not None:
-            query.filter(EnrollmentSubmission.product_id == product_id)
         return query.all()
 
     def get_submissions(self, start_date=None, end_date=None):
@@ -163,30 +169,64 @@ class EnrollmentSubmissionService(object):
 
         return query.all()
 
-    def create_submissions_for_enrollment_application(self, enrollment_application):
+    def create_docusign_submission_for_application(self, application):
+        """
+        Create and submit a submission for Docusign
+        :param application: Application to create the docusign submission for
+        :type application: EnrollmentApplication
+        :return: New submission object if the application requires a docusign submission
+        :rtype: EnrollmentSubmission
+        """
+        if 'Group CI' not in [p for p in application.case.products]:
+            return None
+
+        # noinspection PyArgumentList
+        submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.SUBMISSION_TYPE_SUBMIT_DOCUSIGN)
+        submission.enrollment_applications.append(application)
+        db.session.add(submission)
+        db.session.commit()
+        return submission
+
+    def create_csv_generation_submission_for_application(self, application):
+        """
+        Create or add an application to the next pending csv generation submission if the product should be in the next
+        csv generation batch as determined by the case having either an HI or ACC product on it.
+        :param application: Application to create the csv generation submission for
+        :type application: EnrollmentApplication
+        :rtype: EnrollmentSubmission
+        """
+        if not any(code in (p.get_base_product_code() for p in application.case.products) for code in ['HI', 'ACC']):
+            return None
+        submission = self.get_pending_csv_submission()
+        if submission is None:
+            # noinspection PyArgumentList
+            submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION)
+            db.session.add(submission)
+        submission.enrollment_applications.append(application)
+        db.session.commit()
+        return submission
+
+    def create_submissions_for_application(self, application):
         """
         Create submissions for necessary products for the given EnrollmentApplication
-        :param enrollment_application: EnrollmentApplication to create submissions for
-        :type enrollment_application: EnrollmentApplication
+        :param application: EnrollmentApplication to create submissions for
+        :type application: EnrollmentApplication
         :rtype: list[EnrollmentSubmission]
         """
         submissions = list()
         """:type: list[EnrollmentSubmission]"""
-        for product in [p for p in enrollment_application.case.products if p.get_base_product() in ['HI', 'ACC']]:
-            submission = db.session.query(EnrollmentSubmission) \
-                .filter(EnrollmentSubmission.product_id == product.id) \
-                .filter(EnrollmentSubmission.enrollment_application_id == enrollment_application.id) \
-                .first()
-            if submission is not None:
-                continue
-            # noinspection PyArgumentList
-            submission = EnrollmentSubmission(product_id=product.id,
-                                              submission_type=EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION)
-            submission.enrollment_applications.append(enrollment_application)
-            submission.submission_type = EnrollmentSubmission.TYPE_GENERATE_CSV
+
+        # Create or add to pending CSV generation submission. None if its case doesn't contain and HI or ACC products
+        submission = self.create_csv_generation_submission_for_application(application)
+        if submission is not None:
             submissions.append(submission)
-            db.session.add(submission)
-        db.session.commit()
+
+        # TODO: Uncomment this when the docusign submission is fully switched over to this
+        # Create a docusign submission. None if its case doesn't have Group CI as one of its products
+        # submission = self.create_docusign_submission_for_application(application)
+        # if submission is not None:
+        #     submission.append(submission)
+
         return submissions
 
     def __initialize_pgp_key(self, gpg):
@@ -228,8 +268,8 @@ class EnrollmentSubmissionService(object):
         ftp.login(DELL_FTP_USERNAME, DELL_FTP_PASSWORD)
         ftp.cwd(DELL_FTP_WORKING_DIRECTORY)
         encrypted_data = StringIO(self.pgp_encrypt_string(csv_data))
-        # TODO: Change the name of the file to something more appropriate
-        ftp.storlines('STOR name.csv.pgp', encrypted_data)
+        command = 'STOR enrollment_submissions_%s.csv.pgp' % datetime.utcnow().strftime('%Y-%m-%dT%H%M%S')
+        ftp.storlines(command, encrypted_data)
         ftp.close()
 
     def get_submission_by_id(self, submission_id):

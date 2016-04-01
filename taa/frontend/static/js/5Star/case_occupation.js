@@ -1,8 +1,8 @@
-var OccupationVM = (function (label, level, product_id) {
+var OccupationVM = (function (label, level, has_applicants) {
   'use strict';
   var self = this;
 
-  self.product_id = product_id || null;
+  self.has_applicants = !!has_applicants;
   self.label = label;
 
   self.serialize_object = function () {

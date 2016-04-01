@@ -367,23 +367,24 @@
                                   <div class="col-md-9">
                                     <div>
                                       <div
-                                          data-bind="template: { name: 'occupationClassTemplate', foreach: occupation_classes, as: 'occupation_class' }"></div>
-                                      <script type="text/html" id="occupationClassTemplate">
+                                          data-bind="template: { foreach: occupation_classes, as: 'occupation_class' }">
                                         <div>
                                           <span data-bind="text: label"></span>
                                           <span> </span>
+                                          <!-- ko if: occupation_class.label !== 'Default' -->
                                           <button class="btn btn-sm btn-white btn-inverse middle"
                                                   title="Click to delete this occupation class"
                                                   data-bind="click: $parent.removeOccupationClass">
                                             <i class="ace-icon fa fa-trash-o"></i>
                                           </button>
+                                          <!-- /ko -->
                                         </div>
-                                      </script>
+                                      </div>
                                       <div>
                                         <input class="ace" size="10" id="new-occupation-class"
-                                               data-bind="textInput: new_occupation_class">
+                                               data-bind="textInput: new_occupation_class, submit: addOccupationClass">
                                         <button class="btn btn-sm btn-success" data-bind="click: addOccupationClass,
-                                        enable: is_new_occupation_class_valid">
+                                            enable: is_new_occupation_class_valid">
                                           <i class="ace-icon fa fa-plus white"></i>
                                           Add new
                                         </button>
@@ -1109,6 +1110,31 @@ we load from the server at run time for page speed
     </div>
 
 
+    {# Modal for deleting an occupation class that has applicants #}
+    <div id="occupation-deletion-warning" class="modal fade">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Delete Occupation Class</h4>
+          </div>
+          <div class="modal-body">
+            <p><strong>WARNING:</strong> Removing this Occupation Class will also remove it from any census record using
+              that designation. Do you still want to delete this?</p>
+          </div>
+          <div class="modal-footer">
+            <div class="pull-right">
+              <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button class="btn btn-warning" data-dismiss="modal" data-bind="click: confirm_remove_occupation_class">
+                Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 
@@ -1258,6 +1284,8 @@ we load from the server at run time for page speed
       <!--/ko-->
     </div>
   </script>
+
+
 
   <loading-modal params="options: loading_modal"></loading-modal>
 
@@ -1762,6 +1790,14 @@ we load from the server at run time for page speed
 
       // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change.
       window.case_settings.is_data_dirty(false);
+
+      // Function to prevent remove occupation being called when enter is pressed on the add occupation text input
+      $('#new-occupation-class').keypress(function (e) {
+        if (e.which == 13) {
+          e.preventDefault();
+          window.case_settings.addOccupationClass();
+        }
+      });
     });
   </script>
 {% endblock %}

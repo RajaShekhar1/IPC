@@ -425,18 +425,19 @@ class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
     # Submission Type Enum Values
     SUBMISSION_TYPE_HI_ACC_CSV_GENERATION = u'HI and ACC CSV Generation'
     SUBMISSION_TYPE_HI_ACC_EXPORT_TO_DELL = u'HI and ACC CSV submission to Dell'
+    SUBMISSION_TYPE_SUBMIT_DOCUSIGN = u'Submit to Docusign'
 
     # Database Columns
     id = db.Column(db.Integer, primary_key=True)
     enrollment_applications = db.relationship('EnrollmentApplication',
                                               secondary=enrollment_application_submission_association_table)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-    status = db.Column(db.Unicode(32), server_default=STATUS_PENDING)
+    status = db.Column(db.Unicode(64), server_default=STATUS_PENDING)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
     product = db.relationship('Product')
     submission_logs = db.relationship('SubmissionLog', back_populates='enrollment_submission')
     data = db.Column(db.UnicodeText)
-    submission_type = db.Column(db.Unicode(32))
+    submission_type = db.Column(db.Unicode(64))
 
     def is_successful(self):
         """
@@ -463,7 +464,7 @@ class SubmissionLog(SubmissionLogItemSerializer, db.Model):
     enrollment_submission_id = db.Column(db.Integer, db.ForeignKey('enrollment_submissions.id'))
     enrollment_submission = db.relationship('EnrollmentSubmission', back_populates='submission_logs')
     processing_time = db.Column(db.DateTime, server_default=db.func.now())
-    status = db.Column(db.Unicode(32), server_default=STATUS_SUCCESS)
+    status = db.Column(db.Unicode(64), server_default=STATUS_SUCCESS)
     message = db.Column(db.UnicodeText)
 
     def is_successful(self):

@@ -455,7 +455,7 @@ def process_wizard_submission(case, wizard_results):
     db.session.commit()
 
     submission_service = LookupService('EnrollmentSubmissionService')
-    submission_service.create_submissions_for_enrollment_application(enrollment_application)
+    submission_service.create_submissions_for_application(enrollment_application)
 
     return enrollment_application
 
