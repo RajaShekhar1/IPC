@@ -638,10 +638,9 @@ class CaseService(DBService):
         return occupation_classes
 
     def remove_occupation_class_from_census_records(self, case_id, label):
-        db.engine.execute(sa.text(
-            """UPDATE case_census SET occupation_class = 'Default'
+        db.engine.execute(sa.text("""UPDATE case_census SET occupation_class = 'Default'
                WHERE case_id = :case_id AND occupation_class = :occupation_class"""),
-            case_id=case_id, occupation_class=label)
+                          case_id=case_id, occupation_class=label)
 
     def update_census_occupation_classes(self, case_id, occupation_classes):
         """
