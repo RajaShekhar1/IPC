@@ -368,17 +368,17 @@
                                     <div>
                                       <div
                                           data-bind="template: { foreach: occupation_classes, as: 'occupation_class' }">
-                                          <div>
-                                            <span data-bind="text: label"></span>
-                                            <span> </span>
-                                            <!-- ko if: occupation_class.label !== 'Default' -->
-                                            <button class="btn btn-sm btn-white btn-inverse middle"
-                                                    title="Click to delete this occupation class"
-                                                    data-bind="click: $parent.removeOccupationClass">
-                                              <i class="ace-icon fa fa-trash-o"></i>
-                                            </button>
-                                            <!-- /ko -->
-                                          </div>
+                                        <div>
+                                          <span data-bind="text: label"></span>
+                                          <span> </span>
+                                          <!-- ko if: occupation_class.label !== 'Default' -->
+                                          <button class="btn btn-sm btn-white btn-inverse middle"
+                                                  title="Click to delete this occupation class"
+                                                  data-bind="click: $parent.removeOccupationClass">
+                                            <i class="ace-icon fa fa-trash-o"></i>
+                                          </button>
+                                          <!-- /ko -->
+                                        </div>
                                       </div>
                                       <div>
                                         <input class="ace" size="10" id="new-occupation-class"
@@ -1110,6 +1110,31 @@ we load from the server at run time for page speed
     </div>
 
 
+    {# Modal for deleting an occupation class that has applicants #}
+    <div id="occupation-deletion-warning" class="modal fade">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Delete Occupation Class</h4>
+          </div>
+          <div class="modal-body">
+            <p><strong>WARNING:</strong> Removing this Occupation Class will also remove it from any census record using
+              that designation. Do you still want to delete this?</p>
+          </div>
+          <div class="modal-footer">
+            <div class="pull-right">
+              <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button class="btn btn-warning" data-dismiss="modal" data-bind="click: confirm_remove_occupation_class">
+                Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 
@@ -1259,6 +1284,8 @@ we load from the server at run time for page speed
       <!--/ko-->
     </div>
   </script>
+
+
 
   <loading-modal params="options: loading_modal"></loading-modal>
 

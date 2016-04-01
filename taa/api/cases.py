@@ -129,6 +129,9 @@ def update_case(case_id):
         del data['partner_agents']
         del data['product_settings']
 
+        # Set removed occupation classes to default
+        case_service.update_removed_occupation_classes(data['occupation_class_settings'])
+
         # Update case table
         return case_service.update(case, **data)
 

@@ -57,7 +57,7 @@ class CaseService(DBService):
             query = query.filter(db.or_(
                 Case.agent_id == by_agent,
                 Case.partner_agents.any(Agent.id == by_agent)
-                )
+            )
             )
 
         # Pre-load products, owner agent, and enrollment periods to speed up most subsequent operations
@@ -87,7 +87,7 @@ class CaseService(DBService):
         return sorted(case.products, cmp=lambda x, y: cmp(x.name, y.name))
 
     def get_rider_codes(self):
-        return [] # [c.code for c in self.case_riders.split(",")]
+        return []  # [c.code for c in self.case_riders.split(",")]
 
     def update_product_settings(self, case, product_settings):
         # TODO: validate the product settings before saving.
@@ -110,9 +110,9 @@ class CaseService(DBService):
             api_product = next(p for p in products if p['id'] == product.id)
             if api_product is not None and api_product['ordinal'] is not None:
                 ordinal = int(api_product['ordinal'])
-                query = update(case_products)\
-                    .where(case_products.c.case_id == case.id)\
-                    .where(case_products.c.product_id == product.id)\
+                query = update(case_products) \
+                    .where(case_products.c.case_id == case.id) \
+                    .where(case_products.c.product_id == product.id) \
                     .values({'ordinal': ordinal})
                 db.session.execute(query)
 
@@ -155,7 +155,7 @@ class CaseService(DBService):
 
         # If the enrolling agent is no longer part of the case, remove him
         if (case.self_enrollment_setup and
-                case.self_enrollment_setup.enrolling_agent not in self.get_agents_for_case(case)):
+                    case.self_enrollment_setup.enrolling_agent not in self.get_agents_for_case(case)):
             self.update_enrolling_agent(case, agent_id=None)
             db.session.flush()
 
@@ -197,11 +197,11 @@ class CaseService(DBService):
         for period in periods:
             if period['period_type'] == (CaseOpenEnrollmentPeriod.PERIOD_TYPE
                                          and case.enrollment_period_type !=
-                                         Case.OPEN_ENROLLMENT_TYPE):
+                    Case.OPEN_ENROLLMENT_TYPE):
                 case.enrollment_period_type = Case.OPEN_ENROLLMENT_TYPE
             elif period['period_type'] == (CaseAnnualEnrollmentPeriod.PERIOD_TYPE
                                            and case.enrollment_period_type !=
-                                           Case.ANNUAL_ENROLLMENT_TYPE):
+                    Case.ANNUAL_ENROLLMENT_TYPE):
                 case.enrollment_period_type = Case.ANNUAL_ENROLLMENT_TYPE
         # Remove existing periods
         self.enrollment_periods.remove_all_for_case(case)
@@ -226,8 +226,8 @@ class CaseService(DBService):
         # Eager load enrollment applications, coverages, and associated products
         query = query.outerjoin('enrollment_applications').options(
             db.contains_eager('enrollment_applications'
-                ).subqueryload('coverages'
-                ).joinedload('product')
+                              ).subqueryload('coverages'
+                                             ).joinedload('product')
         )
 
         if filter_agent:
@@ -263,12 +263,12 @@ class CaseService(DBService):
         return query.all()
 
     def retrieve_census_data_for_table(self, case,
-            agent_id=None,
-            offset=0,
-            limit=None,
-            search_text=None,
-            order_column=None,
-            order_dir=None):
+                                       agent_id=None,
+                                       offset=0,
+                                       limit=None,
+                                       search_text=None,
+                                       order_column=None,
+                                       order_dir=None):
         from taa.services.enrollments.models import EnrollmentApplication
 
         # Need the following data columns:
@@ -328,7 +328,7 @@ class CaseService(DBService):
                                                                   ).where(valid_enrollment_status
                                                                           ).where(
                     EnrollmentApplication.census_record_id == CaseCensus.id
-                    ).correlate(CaseCensus),
+                ).correlate(CaseCensus),
                 EnrollmentApplication.census_record_id == CaseCensus.id
             )
         )
@@ -341,8 +341,6 @@ class CaseService(DBService):
     def retrieve_census_filtered_count_for_table(self, case, agent_id=None, search_text=None):
         query = self.retrieve_census_data_for_table(case=case, agent_id=agent_id, search_text=search_text)
         return query.count()
-
-
 
     def match_census_record_to_wizard_data(self, enrollment_data):
         """
@@ -454,10 +452,10 @@ class CaseService(DBService):
     def process_uploaded_census_data(self, case, merge_type, file_obj):
         if merge_type == 'merge-skip':
             return self.merge_census_data(case, self._create_file_buffer(file_obj),
-                                                             replace_matching=False)
+                                          replace_matching=False)
         elif merge_type == 'merge-replace':
             return self.merge_census_data(case, self._create_file_buffer(file_obj),
-                                                             replace_matching=True)
+                                          replace_matching=True)
         else:
             return self.replace_census_data(case, self._create_file_buffer(file_obj))
 
@@ -578,8 +576,8 @@ class CaseService(DBService):
         setup = self.self_enrollment.create(**{
             'case_id': case.id,
             'self_enrollment_type': SelfEnrollmentSetup.TYPE_CASE_GENERIC,
-            'use_email':True,
-            'use_landing_page':True,
+            'use_email': True,
+            'use_landing_page': True,
         })
 
         return case
@@ -622,3 +620,39 @@ class CaseService(DBService):
 
     def requires_occupation(self, case):
         return len(case.products) > 0 and any(p for p in case.products if p.requires_occupation())
+
+    def get_occupation_classes_in_use(self, case_id):
+        """
+        Query all the occupation classes that are in use in a census_record
+        :param case_id: Id of the case to query for
+        :type case_id: int
+        :rtype: set[str]
+        """
+        query = sa.text("""SELECT DISTINCT occupation_class FROM case_census
+                WHERE case_id = :case_id AND occupation_class IS NOT NULL AND occupation_class != 'Default'""")
+        results = db.engine.execute(query, case_id=case_id)
+
+        occupation_classes = set()
+        for row in results:
+            occupation_classes.add(row[0])
+        return occupation_classes
+
+    def remove_occupation_class_from_census_records(self, case_id, label):
+        db.engine.execute(sa.text(
+            """UPDATE case_census SET occupation_class = 'Default'
+               WHERE case_id = :case_id AND occupation_class = :occupation_class"""),
+            case_id=case_id, occupation_class=label)
+
+    def update_census_occupation_classes(self, case_id, occupation_classes):
+        """
+        Update the census record occupation classes if any have been removed
+        :param case_id: Id of the case to update census records for
+        :type case_id: int
+        :param occupation_classes: Occupation classes to update
+        :type occupation_classes: list[dict]
+        """
+        new_labels = set(oc['label'] for oc in occupation_classes)
+        old_labels = set(self.get_occupation_classes_in_use(case_id))
+        removed_labels = new_labels - old_labels
+        for label in removed_labels:
+            self.remove_occupation_class_from_census_records(case_id, label)
