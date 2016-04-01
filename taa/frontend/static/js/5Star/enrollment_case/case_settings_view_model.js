@@ -831,9 +831,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   //  exists, otherwise creates a new one.
   self.get_or_create_split = function (agent_id, product_id) {
 
-    var existing_split = self.selected_agent_splits().filter(function (elem) {
-      return elem.agent_id === agent_id && elem.product_id === product_id;
-    }).first();
+    var existing_split = _.find(self.selected_agent_splits.peek(), function (elem) {
+      return elem.product_id === product_id && elem.agent_id === agent_id;
+    });
 
     if (existing_split) {
       return existing_split;
