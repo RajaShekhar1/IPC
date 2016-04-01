@@ -367,25 +367,24 @@
                                   <div class="col-md-9">
                                     <div>
                                       <div
-                                          data-bind="template: { name: 'occupationClassTemplate', foreach: occupation_classes, as: 'occupation_class' }"></div>
-                                      <script type="text/html" id="occupationClassTemplate">
-                                        <div>
-                                          <span data-bind="text: label"></span>
-                                          <span> </span>
-                                          <!-- ko if: occupation_class.label !== 'Default' -->
-                                          <button class="btn btn-sm btn-white btn-inverse middle"
-                                                  title="Click to delete this occupation class"
-                                                  data-bind="click: $parent.removeOccupationClass">
-                                            <i class="ace-icon fa fa-trash-o"></i>
-                                          </button>
-                                          <!-- /ko -->
-                                        </div>
-                                      </script>
+                                          data-bind="template: { foreach: occupation_classes, as: 'occupation_class' }">
+                                          <div>
+                                            <span data-bind="text: label"></span>
+                                            <span> </span>
+                                            <!-- ko if: occupation_class.label !== 'Default' -->
+                                            <button class="btn btn-sm btn-white btn-inverse middle"
+                                                    title="Click to delete this occupation class"
+                                                    data-bind="click: $parent.removeOccupationClass">
+                                              <i class="ace-icon fa fa-trash-o"></i>
+                                            </button>
+                                            <!-- /ko -->
+                                          </div>
+                                      </div>
                                       <div>
                                         <input class="ace" size="10" id="new-occupation-class"
-                                               data-bind="textInput: new_occupation_class">
+                                               data-bind="textInput: new_occupation_class, submit: addOccupationClass">
                                         <button class="btn btn-sm btn-success" data-bind="click: addOccupationClass,
-                                        enable: is_new_occupation_class_valid">
+                                            enable: is_new_occupation_class_valid">
                                           <i class="ace-icon fa fa-plus white"></i>
                                           Add new
                                         </button>
@@ -1764,6 +1763,14 @@ we load from the server at run time for page speed
 
       // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change.
       window.case_settings.is_data_dirty(false);
+
+      // Function to prevent remove occupation being called when enter is pressed on the add occupation text input
+      $('#new-occupation-class').keypress(function (e) {
+        if (e.which == 13) {
+          e.preventDefault();
+          window.case_settings.addOccupationClass();
+        }
+      });
     });
   </script>
 {% endblock %}
