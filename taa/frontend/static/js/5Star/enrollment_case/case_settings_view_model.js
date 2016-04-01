@@ -10,6 +10,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.report_viewmodel = ko.observable(null);
 
+  self.is_data_dirty = ko.observable();
+
   self.report_viewmodel.subscribe(function (val) {
     if (val && window.location.hash == "#reports") {
       // try to load reports and enrollments
@@ -392,10 +394,12 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.addOccupationClass = function () {
     self.occupation_classes.push(new OccupationVM(self.new_occupation_class()));
     self.new_occupation_class('');
+    self.is_data_dirty(true);
   };
 
   self.removeOccupationClass = function (occupation_class) {
     self.occupation_classes.remove(occupation_class);
+    self.is_data_dirty(true);
   };
 
   self.is_new_occupation_class_valid = ko.pureComputed(function () {
@@ -441,6 +445,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
         label: label,
         value: ko.observable(value)
       };
+      self.occ_mapping_cache[product_id][label].value.subscribe(function () {
+        self.is_data_dirty(true);
+      });
     }
   };
 
@@ -749,8 +756,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       return "Incomplete";
     }
   };
-
-  self.is_data_dirty = ko.observable();
 
   //region Percentage Functions
 
