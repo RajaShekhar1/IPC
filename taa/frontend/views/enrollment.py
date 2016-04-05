@@ -421,6 +421,19 @@ def submit_wizard_data():
     wizard_results = data['wizard_results']
     print("[ENROLLMENT SUBMITTED]")
 
+    # Hotfix 4/5/2016: Attempt to track down user data that is causing blank address data.
+    emp_data = wizard_results[0].get('employee', {})
+    if emp_data.get('address1', '') == '' or emp_data.get('city', '') == '' or emp_data.get('zip', '') == '':
+        print("[MISSING ADDRESS ERROR DEBUG]")
+        raise ValueError("The address was missing in the wizard submission data, refusing to create enrollment data.")
+
+    # As part of above debugging, log the user-agent.
+    user_agent = request.user_agent
+    print("[Platform: '{}', browser: '{}', version: '{}', language: '{}', user_agent: '{}']".format(
+        user_agent.platform, user_agent.browser, user_agent.version, user_agent.language,
+        request.headers.get('User-Agent')
+    ))
+
     try:
         enrollment = process_wizard_submission(case, wizard_results)
 
