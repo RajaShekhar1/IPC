@@ -382,20 +382,21 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.should_use_call_center_workflow = ko.observable(case_data.should_use_call_center_workflow);
 
   // There should always be a default occupation class setting
-  if (!case_data.occupation_class_settings) {
+  if (!Array.isArray(case_data.occupation_class_settings)) {
     case_data.occupation_class_settings = [];
   }
-  if (!_.any(case_data.occupation_class_settings, function (occupation) { return occupation.label.toLowerCase() === 'default' })) {
-    case_data.occupation_class_settings.unshift({label: 'Default', level: 1});
+  if (!_.any(case_data.occupation_class_settings, function (occupation) { return occupation.label.toLowerCase() === DEFAULT_OCCUPATION_LABEL.toLowerCase(); })) {
+    case_data.occupation_class_settings.unshift({label: DEFAULT_OCCUPATION_LABEL, level: 1});
   }
   // Occupation classes
-  self.occupation_classes = ko.observableArray(_.map(case_data.occupation_class_settings, function (occupation) {
+  self.occupation_classes = ko.observableArray(sort_occupations(_.map(case_data.occupation_class_settings, function (occupation) {
     return new OccupationVM(occupation.label, occupation.level, occupation.has_applicants);
-  }));
+  })));
   self.new_occupation_class = ko.observable('');
 
   self.addOccupationClass = function () {
     self.occupation_classes.push(new OccupationVM(self.new_occupation_class()));
+    self.occupation_classes(sort_occupations(self.occupation_classes()));
     self.new_occupation_class('');
     self.is_data_dirty(true);
   };

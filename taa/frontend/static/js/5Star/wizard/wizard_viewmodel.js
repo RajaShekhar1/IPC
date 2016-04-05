@@ -472,7 +472,7 @@ var wizard_viewmodel = (function () {
     //   since many parts of the UI depend on the coverage options.
     self.applicant_subscriptions = [];
 
-    window.setTimeout(function() {
+    window.setTimeout(function () {
 
       // Any time one of the applicant coverages changes
       self.applicant_coverage_selections.subscribe(observe_coverage_option_changes, 0);
@@ -484,13 +484,13 @@ var wizard_viewmodel = (function () {
     function observe_coverage_option_changes() {
 
       // Clear out any previous subscriptions
-      _.each(self.applicant_subscriptions, function(subscription) {
+      _.each(self.applicant_subscriptions, function (subscription) {
         subscription.dispose();
       });
       self.applicant_subscriptions = [];
 
-      _.each(self.applicant_coverage_selections(), function(acov) {
-        var subscription = acov.get_coverage_options.subscribe(function(new_options) {
+      _.each(self.applicant_coverage_selections(), function (acov) {
+        var subscription = acov.get_coverage_options.subscribe(function (new_options) {
 
           var selected_cov = acov.coverage_option();
           if (!selected_cov.is_valid()) {
@@ -502,14 +502,14 @@ var wizard_viewmodel = (function () {
           if (!_.contains(new_options, selected_cov)) {
             // Select the next best coverage option.
             //  use the option with the largest coverage that is lower than current coverage.
-            var filtered_options = _.filter(new_options, function(o) {return o.face_value <= selected_cov.face_value;});
+            var filtered_options = _.filter(new_options, function (o) {return o.face_value <= selected_cov.face_value;});
             var best_option = _.max(filtered_options, function (o) {
                 return o.face_value;
               }
             );
 
             // Set the option, but do so after this current dependency chain has finished firing.
-            window.setTimeout(function() {
+            window.setTimeout(function () {
               // Last, since this code can run after OTHER code has changed the current coverage (clicking around on recommendations, for instance),
               //  check to see if we still need to change the coverage.
               // if (acov.coverage_option() !== selected_cov && _.contains(acov.get_coverage_options(), acov.coverage_option())) {
@@ -530,8 +530,8 @@ var wizard_viewmodel = (function () {
           }
         });
         self.applicant_subscriptions.push(subscription);
-    });
-  }
+      });
+    }
 
 
   }
@@ -737,7 +737,7 @@ var wizard_viewmodel = (function () {
 
       // Just see if a selection was made, even if the selection is NullCoverageOption.
       return (this.customized_coverage_option() !== null &&
-          // The selection dropdown sets this to undefined directly
+        // The selection dropdown sets this to undefined directly
         this.customized_coverage_option() !== undefined) ||
         this.recommended_coverage_option() !== null;
     }, this);
@@ -1058,9 +1058,9 @@ var wizard_viewmodel = (function () {
     init_jquery_validator();
 
     //region Occupations and helper functions for working with occupations
-    self.occupations = ko.observableArray(_.map(options.case_data.occupations, function (occupation) {
+    self.occupations = ko.observableArray(sort_occupations(_.map(options.case_data.occupations, function (occupation) {
       return new OccupationVM(occupation.label, occupation.level);
-    }));
+    })));
     self.selected_occupation = ko.observable(_.find(self.occupations(), function (occupation) {
       return !!self.employee().occupation && self.employee().occupation === occupation.label;
     }));
@@ -1606,13 +1606,13 @@ var wizard_viewmodel = (function () {
     });
 
     self.should_show_step_two = ko.pureComputed(function () {
-      return _.any(self.coverage_vm.selected_product_coverages(), function(product_coverage) {
+      return _.any(self.coverage_vm.selected_product_coverages(), function (product_coverage) {
         return product_coverage.product.should_show_step_two();
       });
     });
 
     self.should_show_step_four = ko.pureComputed(function () {
-      return _.any(self.coverage_vm.selected_product_coverages(), function(product_coverage) {
+      return _.any(self.coverage_vm.selected_product_coverages(), function (product_coverage) {
         return product_coverage.product.should_show_step_four();
       });
     });

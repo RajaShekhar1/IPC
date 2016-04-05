@@ -369,15 +369,14 @@
                                       <div
                                           data-bind="template: { foreach: occupation_classes, as: 'occupation_class' }">
                                         <div>
-                                          <span data-bind="text: label"></span>
-                                          <span> </span>
                                           <!-- ko if: occupation_class.label !== 'Default' -->
-                                          <button class="btn btn-sm btn-white btn-inverse middle"
+                                          <button class="btn btn-xs btn-danger middle"
                                                   title="Click to delete this occupation class"
                                                   data-bind="click: $parent.removeOccupationClass">
                                             <i class="ace-icon fa fa-trash-o"></i>
                                           </button>
                                           <!-- /ko -->
+                                          <span data-bind="text: label"></span>
                                         </div>
                                       </div>
                                       <div>
