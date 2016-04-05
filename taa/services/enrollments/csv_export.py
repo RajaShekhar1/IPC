@@ -75,12 +75,7 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
             'Commission Agent_{:02}'.format(index),
             'Subcount Code_{:02}'.format(index),
         ])
-    header.extend([
-        'Owner/Payor/Insured First Name',
-        'Owner/Payor/Insured Middle Initial',
-        'Owner/Payor/Insured Last Name',
-        'Owner/Payor/Insured Social Security Number',
-    ])
+
     # Dependent info header
     for index in range(1, DEPENDENT_SPACES + 1):
         header.extend([
@@ -128,11 +123,11 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                 case.payment_mode if case.payment_mode >= 0 else '',
                 case.issue_date.strftime('%m%d%Y') if hasattr(case, 'issue_date') else '',
                 'A',
-                data.get('signed_at_state'),
+                data.get('signed_at_state') if data.get('signed_at_state') else data.get('enrollState'),
                 enrollment.signature_time.date().strftime('%m%d%Y'),
-                # TODO: this function needs to be written
-                rate_level,
+                employee.get('occupation_class'),
                 employee['first'].upper(),
+                # No middle initial
                 '',
                 employee['last'].upper(),
                 employee['address1'].upper(),
@@ -159,22 +154,21 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
             split_agents = [s for s in agents if s.id is not None]
 
             if writing_agent is not None:
-                row.extend([writing_agent.agent_code, writing_agent_split.split_percentage,
+                row.extend([writing_agent.agent_code,
+                            writing_agent_split.split_percentage,
                             writing_agent_split.commission_subcount_code])
             else:
                 row.extend(['', '', ''])
             for agent in split_agents:
-                split = next(s for s in agent_splits if s.agent_id == agent.id)
-                row.extend([agent.agent_code, split.split_percentage, split.commission_subcount_code])
+                split = next((s for s in agent_splits if s.agent_id == agent.id), None)
+                if split:
+                    row.extend([agent.agent_code, split.split_percentage, split.commission_subcount_code])
+                else:
+                    row.extend([agent.agent_code, "", ""])
+
             row.extend([''] * (agent_spaces - len(agents)) * 2)
 
             # Dependent info
-            row.extend([
-                employee['first'].upper(),
-                '',
-                employee['last'].upper(),
-                employee['ssn'],
-            ])
             dep_spaces = 4
             if coverage.coverage_selection in ['ES', 'EF']:
                 # Spouse is first dependent
