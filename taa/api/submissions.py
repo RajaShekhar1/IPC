@@ -9,10 +9,10 @@ blueprint = Blueprint('submissions', __name__, url_prefix='/submissions')
 api_groups = ['admins']
 
 
-@route(blueprint, '/csv', methods=['GET'])
+@route(blueprint, '/hi_acc_csv', methods=['GET'])
 @login_required
 @groups_required(api_groups, all=False)
-def get_submissions():
+def get_hi_acc_submissions():
     # noinspection PyBroadException
     try:
         start_date = datetime.datetime.strptime(request.args.get('start_date'),
