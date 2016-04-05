@@ -530,6 +530,10 @@ var wizard_products = (function () {
   HIProduct.prototype.should_show_step_four = function () {
     return false;
   };
+
+  HIProduct.prototype.should_show_step_5 = function () {
+    return false;
+  };
   //endregion
 
   //region ACCProduct
