@@ -88,9 +88,9 @@ class CensusRecordForm(Form):
     employee_gender = SelectField('Employee Gender', [validators.optional()],
                                   choices=[('', ''), ('male', 'Male'),
                                            ('female', 'Female')])
-    employee_ssn = SSNField('Employee SSN', [validators.InputRequired()])
+    employee_ssn = SSNField('Employee SSN')
     employee_birthdate = DateField('Employee Birthdate',
-                                   [validators.InputRequired()])
+                                   [validators.optional()])
     employee_email = StringField('Employee Email', [validators.optional()])
     employee_phone = StringField('Employee Phone')
     employee_street_address = StringField('Employee Street Address')
@@ -112,8 +112,8 @@ class CensusRecordForm(Form):
     spouse_gender = SelectField('Spouse Gender', [validators.optional()],
                                 choices=[('', ''), ('male', 'Male'),
                                          ('female', 'Female')])
-    spouse_ssn = SSNField('Spouse SSN')
-    spouse_birthdate = DateField('Spouse Birthdate')
+    spouse_ssn = SSNField('Spouse SSN', [validators.optional()])
+    spouse_birthdate = DateField('Spouse Birthdate', [validators.optional()])
     spouse_email = StringField('Spouse Email')
     spouse_phone = StringField('Spouse Phone')
     spouse_street_address = StringField('Spouse Street Address')
