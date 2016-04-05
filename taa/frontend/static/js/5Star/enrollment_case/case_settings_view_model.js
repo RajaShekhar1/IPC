@@ -382,6 +382,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.should_use_call_center_workflow = ko.observable(case_data.should_use_call_center_workflow);
 
   // There should always be a default occupation class setting
+  if (!case_data.occupation_class_settings) {
+    case_data.occupation_class_settings = [];
+  }
   if (!_.any(case_data.occupation_class_settings, function (occupation) { return occupation.label.toLowerCase() === 'default' })) {
     case_data.occupation_class_settings.unshift({label: 'Default', level: 1});
   }

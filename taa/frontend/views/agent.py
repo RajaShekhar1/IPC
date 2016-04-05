@@ -95,8 +95,9 @@ def manage_case(case_id):
     for product in case.products:
         setattr(product, 'case_id', case.id)
     occupation_classes_in_use = case_service.get_occupation_classes_in_use(case.id)
-    for occupation_class in case.occupation_class_settings:
-        occupation_class['has_applicants'] = occupation_class.get('label') in occupation_classes_in_use
+    if case.occupation_class_settings is not None and occupation_classes_in_use is not None:
+        for occupation_class in case.occupation_class_settings:
+            occupation_class['has_applicants'] = occupation_class.get('label') in occupation_classes_in_use
 
     vars = {'case': case, 'can_edit_case': False}
 
