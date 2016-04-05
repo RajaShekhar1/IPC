@@ -1082,6 +1082,18 @@ var wizard_viewmodel = (function () {
       return wizard.currentStep;
     };
 
+    self.applicant_types = ko.pureComputed(function () {
+      return _.chain(self.applicant_list.applicants())
+        .filter(function (applicant) {
+          return applicant.type === wizard_applicant.Applicant.EmployeeType ||
+            (applicant.type === wizard_applicant.Applicant.ChildType && self.should_include_children_in_table()) ||
+            (applicant.type === wizard_applicant.Applicant.SpouseType && self.should_include_spouse_in_table());
+        })
+        .map(function (applicant) { return applicant.type; })
+        .uniq()
+        .value();
+    });
+
     // Step 1 ViewModel observables
     self.should_include_spouse_in_table = ko.computed(function () {
       return self.should_show_spouse() && self.spouse().is_valid();
@@ -1090,6 +1102,17 @@ var wizard_viewmodel = (function () {
     self.should_include_children_in_table = ko.computed(function () {
       return (self.should_include_children() && self.applicant_list.has_valid_children());
     });
+
+    self.reset_simple_coverage_options = function () {
+      _.forEach(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_viewmodel) {
+        if (product_coverage_viewmodel.product.has_simple_coverage()) {
+          product_coverage_viewmodel.selected_simple_coverage_option(new NullCoverageOption());
+        }
+      });
+    };
+
+    self.should_include_spouse_in_table.subscribe(self.reset_simple_coverage_options);
+    self.should_include_children_in_table.subscribe(self.reset_simple_coverage_options);
 
     // Main step1 viewmodel - handles selecting coverage of products.
     self.coverage_vm = new CoverageVM(self.products, self.applicant_list, options.case_data, options.payment_modes,

@@ -432,8 +432,7 @@
 
           <div class="widget-body">
             <div class="widget-main no-padding" data-bind="
-                    template: {name: 'recommendations_template', data: recommendation_set}
-                    ">
+                    template: {name: 'recommendations_template', data: recommendation_set}">
             </div>
 
             <div data-bind="click: function() {$parent.select_recommended_coverage(recommendation_set);}">
@@ -512,7 +511,7 @@
         <div class="widget-body">
           <div class="widget-main no-padding">
             <ul class="list-unstyled list-striped js"
-                data-bind="foreach: { data: product.get_coverage_tiers(), as: 'coverage_tier' }">
+                data-bind="foreach: { data: product.get_coverage_tiers($root.applicant_types()), as: 'coverage_tier' }">
               <li>
                 <label>
                   <span data-bind="text: $parent.get_label_for_coverage_tier(coverage_tier)"></span>
@@ -535,7 +534,7 @@
           <div class="widget-body">
             <div class="widget-main no-padding">
               <ul class="list-unstyled list-striped pricing-table"
-                  data-bind="foreach: { data: product.get_coverage_tiers(), as: 'coverage_tier' }">
+                  data-bind="foreach: { data: product.get_coverage_tiers($root.applicant_types()), as: 'coverage_tier' }">
                 <li data-bind="text: $parent.get_coverage_rate_for_tier(coverage_tier)"></li>
               </ul>
             </div>
