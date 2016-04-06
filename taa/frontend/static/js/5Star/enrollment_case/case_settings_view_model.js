@@ -545,7 +545,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.occupation_classes_for_product = function (product) {
-    var r = [];
+    var occupation_mappings = [];
     if (!(product.id in self.occ_mapping_cache)) {
       for (var i in self.occupation_classes()) {
         if (i == 'first') {
@@ -564,10 +564,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
     for (var label in self.occ_mapping_cache[product.id]) {
       if (is_product_active(product) && is_occupation_class_active(label)) {
-        r.push(self.occ_mapping_cache[product.id][label]);
+        occupation_mappings.push(self.occ_mapping_cache[product.id][label]);
       }
     }
-    return r;
+    return sort_occupations(occupation_mappings);
   };
 
   // cache the instances of the riders here.

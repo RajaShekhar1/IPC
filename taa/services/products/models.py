@@ -100,6 +100,9 @@ class Product(ProductJsonSerializable, db.Model):
         # Temporary solution to identify products that include output in PDFs
         return self.is_fpp() or self.get_base_product_code() == "Group CI"
 
+    def requires_dell_csv_submission(self):
+        return self.get_base_product_code() in ['HI', 'ACC']
+
     def is_base_fpp_gov(self):
         return self.get_base_product().is_fpp_gov if self.get_base_product() else self.is_fpp_gov
 
