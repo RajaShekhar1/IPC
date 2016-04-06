@@ -1460,7 +1460,7 @@ var wizard_viewmodel = (function () {
     function requires_additional_employee_information() {
       return _.any(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_view_model) {
         var product = product_coverage_view_model.product;
-        var requires_additional_information = product.requires_gender() || product.requires_height() || product.requires_weight() || product.requires_is_smoker();
+        var requires_additional_information = !product_coverage_view_model.did_decline() && (product.requires_gender() || product.requires_height() || product.requires_weight() || product.requires_is_smoker());
         return requires_additional_information && product_coverage_view_model.did_select_employee_coverage();
       });
     }
@@ -1471,7 +1471,7 @@ var wizard_viewmodel = (function () {
       }
       return _.any(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_view_model) {
         var product = product_coverage_view_model.product;
-        var requires_additional_information = product.requires_gender() || product.requires_height() || product.requires_weight() || product.requires_is_smoker();
+        var requires_additional_information = !product_coverage_view_model.did_decline() && (product.requires_gender() || product.requires_height() || product.requires_weight() || product.requires_is_smoker());
         return requires_additional_information && product_coverage_view_model.did_select_spouse_coverage();
       });
     }
