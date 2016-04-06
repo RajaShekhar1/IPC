@@ -1259,6 +1259,12 @@ var wizard_viewmodel = (function () {
     //endregion
 
     self.show_height_weight_dialog_if_applicants_invalid = function () {
+      var products_require_additional_information = _.any(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_viewmodel) {
+        return product_coverage_viewmodel.product.requires_additional_information() && !product_coverage_viewmodel.did_decline();
+      });
+      if (!products_require_additional_information) {
+        return false;
+      }
       var is_employee_invalid = _.any(self.products, function (product) {
         return !is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.employee()) && product.requires_additional_information();
       });
