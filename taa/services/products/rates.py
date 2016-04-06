@@ -249,10 +249,13 @@ class GILimitedRatesDecorator(Rates):
             return rates
 
     def get_GI_limit(self, applicant_type, age, smoker, height, weight):
+        return self.get_gi_limit_for_product(self.product, applicant_type, age, smoker, height, weight)
 
-        gi_criteria = self.product.gi_criteria
+    @classmethod
+    def get_gi_limit_for_product(cls, product, applicant_type, age, smoker, height, weight):
+
         criteria_for_applicant = filter(lambda c: c.applicant_type.lower() == applicant_type,
-                                        gi_criteria)
+                                        product.gi_criteria)
 
         def filter_criteria_min_max(property_min, property_max, value):
             def _f(criteria):
@@ -261,6 +264,8 @@ class GILimitedRatesDecorator(Rates):
                     return True
                 else:
                     return value >= getattr(criteria, property_min) and value <= getattr(criteria, property_max)
+
+            return _f
 
         filter_age = filter_criteria_min_max('age_min', 'age_max', age)
         filter_height = filter_criteria_min_max('height_min', 'height_max', height)
@@ -274,7 +279,6 @@ class GILimitedRatesDecorator(Rates):
 
         # Use the highest number that is allowed for this applicant
         return max(criteria_for_applicant, key=lambda c: c.guarantee_issue_amount).guarantee_issue_amount
-
 
 def get_height_weight_table_for_product(product):
     global ELIGIBILITIES

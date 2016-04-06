@@ -312,15 +312,6 @@ var StandardHealthQuestion = function (question, product_coverage) {
     return self.show_yes_dialogue();
   };
 
-  //self.show_yes_dialogue = function () {
-  //  if (self.does_yes_stop_app()) {
-  //    handle_question_yes();
-  //  } else {
-  //    // do nothing
-  //  }
-  //};
-
-
   self.show_yes_dialogue = function (applicant, message) {
     if (!self.does_yes_stop_app()) {
       // No need to show anything, return.
@@ -536,6 +527,11 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
   };
 
   self.show_yes_dialogue = function (applicant, message) {
+
+    if (!self.does_yes_stop_app()) {
+      // No need to show anything, return.
+      return;
+    }
 
     // If we get here, we know the applicant doesn't completely qualify for GI
     //   with the coverage selected, and has answered 'Yes' to a question.
@@ -773,7 +769,12 @@ GIHealthQuestion.prototype.should_skip_if_GI_criteria_met = function () {
 GIHealthQuestion.prototype.does_yes_stop_app = function () {
   var self = this;
 
-  // If GI, clicking YES always stops (but will show the reduce/remove dialogue if optional).
+  if (self.question.is_ignored) {
+    // Some questions are always ignored.
+    return false;
+  }
+
+  // Otherwise, clicking YES always stops (but will show the reduce/remove dialogue if optional).
   return true;
 };
 

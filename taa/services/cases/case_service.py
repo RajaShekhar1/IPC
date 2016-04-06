@@ -16,6 +16,7 @@ from taa.services import RequiredFeature, LookupService
 from taa.services.agents.models import Agent
 
 
+# noinspection PyMethodMayBeStatic
 class CaseService(DBService):
     __model__ = Case
 
@@ -603,13 +604,14 @@ class CaseService(DBService):
                 classifications.append(c['label'])
         return classifications
 
-    def get_classification_for_label(self, label, case):
-        if case.product_settings is None:
+    def get_classification_for_label(self, label, case, product_id):
+        if case.product_settings is None or label is None or product_id is None:
             return None
-        mapping = case.product_settings['classification_mappings']
-        for k, v in mapping:
-            if k.lower() == label.lower():
-                return v
+        mappings = case.product_settings['classification_mappings']
+        mapping = next(mappings[key] for key in mappings if int(key) == int(product_id))
+        for key in mapping:
+            if key.lower() == label.lower():
+                return mapping[key]
         return None
 
     def is_agent_allowed_to_view_case_setup(self, agent, case):
@@ -617,3 +619,6 @@ class CaseService(DBService):
             return True
         else:
             return agent.id == case.agent_id
+
+    def requires_occupation(self, case):
+        return len(case.products) > 0 and any(p for p in case.products if p.requires_occupation())

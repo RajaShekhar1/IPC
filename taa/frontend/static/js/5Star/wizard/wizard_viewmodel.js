@@ -145,10 +145,10 @@ var wizard_viewmodel = (function () {
     },
     get_applicant_coverage_option_for_product: function (applicant, product) {
       if (applicant.type == wizard_applicant.Applicant.SpouseType && !this.should_include_spouse()) {
-        return new NullCoverageOption();
+        return null_coverage;
       }
       if (applicant.type == wizard_applicant.Applicant.ChildType && !this.should_include_children()) {
-        return new NullCoverageOption();
+        return null_coverage;
       }
       var applicant_coverage_selection = this.get_applicant_coverage_for_product(applicant, product);
       return applicant_coverage_selection.get_selected_coverage();
@@ -466,6 +466,74 @@ var wizard_viewmodel = (function () {
       return spouse_answer.value();
     }
 
+
+    // Subscribe to changes to applicant coverage options to ensure we move down to the next appropriate level.
+    //  Timeout is used since we need most everything defined before it tries to evaluate the coverage options computed,
+    //   since many parts of the UI depend on the coverage options.
+    self.applicant_subscriptions = [];
+
+    window.setTimeout(function() {
+
+      // Any time one of the applicant coverages changes
+      self.applicant_coverage_selections.subscribe(observe_coverage_option_changes, 0);
+
+      // Also do it once on load, in case there are no applicant changes made.
+      observe_coverage_option_changes()
+    });
+
+    function observe_coverage_option_changes() {
+
+      // Clear out any previous subscriptions
+      _.each(self.applicant_subscriptions, function(subscription) {
+        subscription.dispose();
+      });
+      self.applicant_subscriptions = [];
+
+      _.each(self.applicant_coverage_selections(), function(acov) {
+        var subscription = acov.get_coverage_options.subscribe(function(new_options) {
+
+          var selected_cov = acov.coverage_option();
+          if (!selected_cov.is_valid()) {
+            // Nothing to do when nothing is selected.
+            return;
+          }
+
+          // See if the selected coverage is still in the options.
+          if (!_.contains(new_options, selected_cov)) {
+            // Select the next best coverage option.
+            //  use the option with the largest coverage that is lower than current coverage.
+            var filtered_options = _.filter(new_options, function(o) {return o.face_value <= selected_cov.face_value;});
+            var best_option = _.max(filtered_options, function (o) {
+                return o.face_value;
+              }
+            );
+
+            // Set the option, but do so after this current dependency chain has finished firing.
+            window.setTimeout(function() {
+              // Last, since this code can run after OTHER code has changed the current coverage (clicking around on recommendations, for instance),
+              //  check to see if we still need to change the coverage.
+              // if (acov.coverage_option() !== selected_cov && _.contains(acov.get_coverage_options(), acov.coverage_option())) {
+              //   // Do nothing
+              //   return;
+              // }
+
+              //acov.recommended_coverage_option(null);
+              if (acov.customized_coverage_option()) {
+                acov.customized_coverage_option(best_option);
+              } else if (!_.contains(acov.get_coverage_options(), acov.coverage_option())) {
+                acov.recommended_coverage_option(null);
+                acov.customized_coverage_option(best_option);
+              }
+
+            }, 0);
+
+          }
+        });
+        self.applicant_subscriptions.push(subscription);
+    });
+  }
+
+
   }
 
   ProductCoverageViewModel.prototype = {
@@ -624,7 +692,7 @@ var wizard_viewmodel = (function () {
       } else {
         return 'Select Coverage';
       }
-    },
+    }
   };
 
   function ApplicantCoverageSelectionVM(applicant, product_coverage) {
@@ -636,13 +704,14 @@ var wizard_viewmodel = (function () {
     this.recommended_coverage_option = ko.observable(null);
 
     this.coverage_option = ko.computed(function () {
+
       // Check to see if the applicant is currently valid.
       if (!this.applicant.is_valid()) {
-        return new NullCoverageOption();
+        return null_coverage;
       } else if (this.applicant.type === wizard_applicant.Applicant.SpouseType && !this.product_coverage.root.should_include_spouse_in_table()) {
-        return new NullCoverageOption();
+        return null_coverage;
       } else if (this.applicant.type === wizard_applicant.Applicant.ChildType && !this.product_coverage.root.should_include_children_in_table()) {
-        return new NullCoverageOption();
+        return null_coverage;
       }
 
       if (this.product.has_simple_coverage()) {
@@ -718,7 +787,7 @@ var wizard_viewmodel = (function () {
     },
 
     _get_coverage_options: function () {
-      var options = [new NullCoverageOption()];
+      var options = [null_coverage];
       options = $.merge(options,
         product_rates_service.get_product_coverage_options_for_applicant(this.product, this.applicant)()
       );
@@ -1055,10 +1124,6 @@ var wizard_viewmodel = (function () {
       return (self.is_show_rates_clicked() && self.can_display_rates_table());
     });
 
-    self.get_coverage_value = function (product_id, coverage_tier) {
-
-    };
-
     self.is_applicant_editor_visible = ko.pureComputed(function () {
       return !self.is_recommended_table_visible();
     });
@@ -1252,6 +1317,22 @@ var wizard_viewmodel = (function () {
       }
       return result;
     }
+
+    self.show_height_weight_dialog_if_applicants_invalid = function () {
+      var is_employee_invalid = _.any(self.products, function (product) {
+        return !is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.employee()) && product.requires_additional_information();
+      });
+      if (is_employee_invalid) {
+        show_height_weight_error(_.first(self.products, function (product) { return product.requires_additional_information(); }), self.employee());
+        return;
+      }
+      var is_spouse_invalid = _.any(self.products, function (product) {
+        return (self.should_show_spouse() && !is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.spouse())) && product.requires_additional_information();
+      });
+      if (is_spouse_invalid) {
+        show_height_weight_error(_.first(self.products, function (product) { return product.requires_additional_information(); }), self.spouse());
+      }
+    };
 
     var observables = [self.employee().height, self.employee().weight];
     if (self.should_show_spouse()) {
@@ -1770,16 +1851,18 @@ var wizard_viewmodel = (function () {
         $('#smoking-status-dialog').modal('show');
 
         // Grab all coverage selections that need to be updated
-        var old_selected_coverage_options = _.chain(self.coverage_vm.product_coverage_viewmodels())
+        var applicant_coverage_selection_view_models = _.chain(self.coverage_vm.product_coverage_viewmodels())
           .map(function (view_model) {
             return view_model._get_applicant_coverage_selections();
           })
           .flatten()
           .filter(function (applicant_coverage_vm) {
-            return applicant_coverage_vm.coverage_option().face_value > 0 &&
-              applicant_coverage_vm.product_coverage.product.requires_is_smoker();
+            return applicant_coverage_vm.product_coverage.product.requires_is_smoker();
           })
           .value();
+        var old_selected_coverage_options = _.map(applicant_coverage_selection_view_models, function (applicant_coverage_selection_view_model) {
+          return applicant_coverage_selection_view_model.coverage_option();
+        });
 
         // Tell the dialog to show its loading components and refresh the rates
         self.smoker_status_changed_dialog_loading(true);
@@ -1800,8 +1883,8 @@ var wizard_viewmodel = (function () {
             subscription = null;
           }
 
-          _.forEach(old_selected_coverage_options, function (applicant_coverage_selection_view_model) {
-            var old_coverage_option = applicant_coverage_selection_view_model.coverage_option();
+          _.forEach(applicant_coverage_selection_view_models, function (applicant_coverage_selection_view_model) {
+            var old_coverage_option = _.find(old_selected_coverage_options, function (coverage_option) { return coverage_option.applicant_type === applicant_coverage_selection_view_model.applicant.type; });
             var view_model = _.find(
               self.coverage_vm.product_coverage_viewmodels(),
               function (view_model) {
@@ -1809,6 +1892,11 @@ var wizard_viewmodel = (function () {
               }
             );
             var new_coverage_options = view_model.get_coverage_options_for_applicant(applicant_coverage_selection_view_model.applicant);
+            if (!old_coverage_option) {
+              old_coverage_option = _.find(new_coverage_options, function (new_coverage_option) {
+                return new_coverage_option.face_value === 0;
+              });
+            }
             var coverage_option = _.chain(new_coverage_options)
               .find(function (coverage_option) {
                 return coverage_option.face_value === old_coverage_option.face_value;

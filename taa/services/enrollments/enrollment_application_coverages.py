@@ -37,7 +37,8 @@ class EnrollmentApplicationCoverageService(DBService):
             weight_pounds=(applicant_data['weight']
                            if applicant_data['weight'] else None),
             is_smoker=applicant_data.get('is_smoker'),
-            coverage_face_value=applicant_coverage['face_value'],
+            coverage_face_value=applicant_coverage.get('face_value'),
+            coverage_selection=applicant_coverage.get('coverage_selection'),
             weekly_premium=weekly_premium,
             biweekly_premium=biweekly_premium,
             semimonthly_premium=semimonthly_premium,

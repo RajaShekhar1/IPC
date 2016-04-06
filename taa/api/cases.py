@@ -452,7 +452,7 @@ def update_census_record(case_id, census_record_id):
         abort(401)
         return
     census_record = case_service.get_record_if_allowed(census_record_id)
-    form = CensusRecordForm()
+    form = CensusRecordForm(obj=census_record)
     if form.validate_on_submit():
         return case_service.update_census_record(census_record, form.data)
     raise TAAFormError(form.errors)
@@ -528,7 +528,12 @@ def get_census_records_for_status(case, status=None):
         return result
     if status is None:
         return result if case.census_records is None else case.census_records
-    for record in case.census_records:
+
+    case_census_records = case.census_records
+    if case_service.requires_occupation(case):
+        case_census_records = [cr for cr in case_census_records if cr.occupation_class is not None]
+
+    for record in case_census_records:
         if status == 'not-sent':
             if len(self_enrollment_email_service.get_for_census_record(record)) == 0:
                 result.append(record)

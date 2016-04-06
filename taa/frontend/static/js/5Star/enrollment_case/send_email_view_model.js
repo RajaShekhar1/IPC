@@ -45,12 +45,8 @@ var SendEmailsModalViewModel = function SendEmailsModalViewModel(case_settings_v
   self.send_emails = function() {
 
     self.errors([]);
-    if(self.num_emails_to_send() == 0) {
-      self.errors.push("There are no census records that match the selected criteria.");
-      return false;
-    }
 
-    if(!confirm("You are about to send "+self.num_emails_to_send()+" emails. Are you sure?")) {
+    if(!confirm("You are about to send out emails. Are you sure?")) {
       return false;
     }
 

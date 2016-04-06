@@ -1,11 +1,11 @@
 import csv
 import json
+from taa.services.products import ProductService
+from taa.services.cases import CaseService
 
 import dateutil.parser
 
-
 __all__ = ['export_acc_hi']
-
 
 DEFAULT_EXPORT_TARGETS = ['ACC', 'HI']
 AGENT_SPACES = 4
@@ -18,7 +18,7 @@ def export_acc_hi(enrollments, export_targets=None):
     output = csv.StringIO()
     w = csv.writer(output)
     # Member coverage info header
-    header =[
+    header = [
         'Group Name',
         'Group Number',
         'Location',
@@ -50,6 +50,7 @@ def export_acc_hi(enrollments, export_targets=None):
         header.extend([
             'Agent_{}'.format(index),
             'Commission Agent_{:02}'.format(index),
+            'Subcount Code_{:02}'.format(index),
         ])
     header.extend([
         'Owner/Payor/Insured First Name',
@@ -70,99 +71,114 @@ def export_acc_hi(enrollments, export_targets=None):
         ])
     w.writerow(header)
 
+    products_service = ProductService()
+
     # Data rows
     for enrollment in enrollments:
         case = enrollment.case
-        data = json.loads(enrollment.standardized_data or '{}')
-        employee = data.get('employee')
-        spouse = data.get('spouse')
-        children = data.get('children')
-        coverages = enrollment.coverages
-        agents = [case.owner_agent]
-        agents.extend(case.partner_agents)
-        if employee is None:
-            continue
-        for coverage in coverages:
-            if (coverage.product.code not in export_targets or
-                    coverage.applicant_type != 'employee'):
-                continue
-        # Member coverage info
-        row = [
-            case.company_name.upper(),
-            case.group_number.upper(),
-            case.format_location().upper(),
-            case.payment_mode if case.payment_mode >= 0 else '',
-            case.issue_date.strftime('%m%d%Y') if hasattr(case, 'issue_date') else '',
-            'A',
-            data.get('signed_at_state'),
-            enrollment.signature_time.date().strftime('%m%d%Y'),
-            # TODO: this function needs to be written
-            data.get('occupation_class'),
-            employee['first'].upper(),
-            '',
-            employee['last'].upper(),
-            employee['address1'].upper(),
-            employee['city'].upper(),
-            employee['state'].upper(),
-            employee['zip'],
-            employee['phone'],
-            employee['ssn'],
-            dateutil.parser.parse(employee['birthdate']).strftime('%m%d%Y'),
-            employee['gender'].upper(),
-            'Y' if employee['is_smoker'] else 'N',
-            'SELF',
-            data.get('employee_beneficiary1_name').upper(),
-            data.get('employee_beneficiary1_relationship').upper(),
-            coverage.coverage_selection if coverage.product.code == 'ACC' else '',
-            coverage.coverage_selection if coverage.product.code == 'HI' else '',
-        ]
-        # Agent(s) info
-        agent_spaces = 4
-        commission_per = 100 / min(len(agents), agent_spaces)
-        for agent in agents[:agent_spaces]:
-            row.extend([agent.agent_code, commission_per])
-            agent_spaces -= 1
-        row.extend([''] * agent_spaces * 2)
+        json_data = json.loads(enrollment.standardized_data or '{}')
+        if isinstance(json_data, dict):
+            json_data = [json_data]
+        for data in json_data:
+            product = products_service.get(data['product_id'])
 
-        # Dependent info
-        row.extend([
-            employee['first'].upper(),
-            '',
-            employee['last'].upper(),
-            employee['ssn'],
-        ])
-        dep_spaces = 4
-        if coverage.coverage_selection in ['ES', 'EF']:
-            # Spouse is first dependent
+            employee = data.get('employee')
+            spouse = data.get('spouse')
+            children = data.get('children')
+            coverage = next(c for c in enrollment.coverages if c.product_id == data.get('product_id'))
+            agents = [case.owner_agent]
+            agents.extend(case.partner_agents)
+            if employee is None:
+                continue
+
+            rate_level = CaseService().get_classification_for_label(data.get('occupation_class'), case,
+                                                                    int(data['product_id']))
+
+            # Member coverage info
+            row = [
+                case.company_name.upper(),
+                case.group_number.upper(),
+                case.format_location().upper(),
+                case.payment_mode if case.payment_mode >= 0 else '',
+                case.issue_date.strftime('%m%d%Y') if hasattr(case, 'issue_date') else '',
+                'A',
+                data.get('signed_at_state'),
+                enrollment.signature_time.date().strftime('%m%d%Y'),
+                # TODO: this function needs to be written
+                rate_level,
+                employee['first'].upper(),
+                '',
+                employee['last'].upper(),
+                employee['address1'].upper(),
+                employee['city'].upper(),
+                employee['state'].upper(),
+                employee['zip'],
+                employee['phone'],
+                employee['ssn'],
+                dateutil.parser.parse(employee['birthdate']).strftime('%m%d%Y'),
+                employee['gender'].upper(),
+                'Y' if employee['is_smoker'] else 'N',
+                'SELF',
+                data.get('employee_beneficiary1_name').upper(),
+                data.get('employee_beneficiary1_relationship').upper(),
+                coverage.coverage_selection if coverage.product.code == 'ACC' else '',
+                coverage.coverage_selection if coverage.product.code == 'HI' else '',
+            ]
+            # Agent(s) info
+            agent_splits = [s for s in case_service.get_agent_splits_setup(case) if s.product_id == product.id]
+            writing_agent_split = next(s for s in agent_splits if s.product_id == product.id and s.agent_id == None)
+            writing_agent_id = writing_agent_split.agent_id if writing_agent_split.agent_id is not None else case.agent_id
+            writing_agent = next(a for a in agents if a.id == writing_agent_id)
+            agent_spaces = 4
+
+            split_agents = [a for a in agents if a.id is not None]
+
+            row.extend([writing_agent.agent_code, writing_agent_split.split_percentage,
+                        writing_agent_split.commission_subcount_code])
+            for agent in split_agents:
+                split = next(s for s in agent_splits if s.agent_id == agent.id)
+                row.extend([agent.agent_code, split.split_percentage, split.commission_subcount_code])
+            row.extend([''] * (agent_spaces - len(agents)) * 2)
+
+            # Dependent info
             row.extend([
-                spouse['first'].upper(),
+                employee['first'].upper(),
                 '',
-                spouse['last'].upper(),
-                spouse['gender'].upper(),
-                'SPOUSE',
-                dateutil.parser.parse(spouse['birthdate']).strftime('%m/%d/%Y'),
-                # TODO: Determine how to populate 'handicapped' field
-                '',
+                employee['last'].upper(),
+                employee['ssn'],
             ])
-            dep_spaces -= 1
-        if coverage.coverage_selection in ['EF', 'EC']:
-            # Children fill up remaining dependent space(s)
-            for index in range(dep_spaces):
-                if index >= len(children):
-                    # Not enough children to continue
-                    break
-                child = children[index]
+            dep_spaces = 4
+            if coverage.coverage_selection in ['ES', 'EF']:
+                # Spouse is first dependent
                 row.extend([
-                    child['first'].upper(),
+                    spouse['first'].upper(),
                     '',
-                    child['last'].upper(),
-                    child['gender'].upper(),
-                    'CHILD',
-                    dateutil.parser.parse(child['birthdate']).strftime('%m/%d/%Y'),
+                    spouse['last'].upper(),
+                    spouse['gender'].upper(),
+                    'SPOUSE',
+                    dateutil.parser.parse(spouse['birthdate']).strftime('%m/%d/%Y'),
                     # TODO: Determine how to populate 'handicapped' field
                     '',
                 ])
                 dep_spaces -= 1
-        row.extend([''] * dep_spaces * 7)
-        w.writerow(row)
+            if coverage.coverage_selection in ['EF', 'EC']:
+                # Children fill up remaining dependent space(s)
+                for index in range(dep_spaces):
+                    if index >= len(children):
+                        # Not enough children to continue
+                        break
+                    child = children[index]
+                    row.extend([
+                        child['first'].upper(),
+                        '',
+                        child['last'].upper(),
+                        child.get('gender').lower() if child.get('gender') is not None else '',
+                        'CHILD',
+                        dateutil.parser.parse(child['birthdate']).strftime('%m/%d/%Y'),
+                        # TODO: Determine how to populate 'handicapped' field
+                        '',
+                    ])
+                    dep_spaces -= 1
+            row.extend([''] * dep_spaces * 7)
+            w.writerow(row)
     return output.getvalue()

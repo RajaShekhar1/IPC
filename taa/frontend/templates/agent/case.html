@@ -428,8 +428,8 @@
                                               <select data-bind="options: $root.get_rate_levels_for_product_code(product.base_product_type),
                                                 optionsText: 'name',
                                                 optionsValue: 'value',
-                                                value: value,
-                                                optionsCaption: 'Not mapped'">
+                                                value: value">
+                                                value: value">
                                               </select>
                                             </td>
                                           </tr>
@@ -683,7 +683,19 @@
                                         <h2 class="header lighter blue">Current Splits</h2>
                                         <div class="form-group"
                                              data-bind="foreach: { data: $root.products, as: 'product' }">
-                                          <h3 class="col-sm-12" data-bind="text: product.name"></h3>
+                                          <h3 class="col-xs-12">
+                                            <span data-bind="text: product.name"></span>
+                                            <span class="label label-success"
+                                                  data-bind="if: $root.get_product_split_percentage_complete_computed(product.id)">
+                                              <i class="ace-icon fa fa-check"></i>
+                                              <span>Complete</span>
+                                            </span>
+                                            <span class="label label-danger"
+                                                  data-bind="ifnot: $root.get_product_split_percentage_complete_computed(product.id)">
+                                              <i class="ace-icon fa fa-exclamation"></i>
+                                              <span>Incomplete</span>
+                                            </span>
+                                          </h3>
                                           <br>
                                           <h4 class="col-sm-8">Agent</h4>
                                           <h4 class="col-sm-4">%</h4>
@@ -1269,17 +1281,13 @@ we load from the server at run time for page speed
               <div class="form-panel modal-panel form-horizontal">
                 <div class="form-group">
                   <div class="control-label col-sm-3">
-                    <label>Send To</label>
+                    <label for="send_type">Send To</label>
                   </div>
                   <div class="col-sm-9">
-                    <select class="form-control" data-bind="value: send_type" name="send_type">
-                      <option data-bind="text: numbers.not_sent()+' employees who have not been sent a link'"
-                              value="not-sent"></option>
-                      <option
-                          data-bind="text: numbers.not_enrolled()+' employees who have neither enrolled nor declined'"
-                          value='not-enrolled'></option>
-                      <option data-bind="text: numbers.declined()+' employees who have declined'"
-                              value='declined'></option>
+                    <select class="form-control" data-bind="value: send_type" id="send_type" name="send_type">
+                      <option value="not-sent">Employees who have not been sent a link</option>
+                      <option value='not-enrolled'>Employees who have neither enrolled nor declined</option>
+                      <option value='declined'>Employees who have declined</option>
                     </select>
                   </div>
                 </div>

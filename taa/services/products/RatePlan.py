@@ -353,11 +353,12 @@ def build_rider_constraint(rider_code):
 
 
 class RatePlan(object):
-    def __init__(self, coverage_options, eligibility_constraint=None, rate_levels=None):
+    def __init__(self, coverage_options, eligibility_constraint=None, rate_levels=None, max_coverage_amount=None):
         self.coverage_options = coverage_options
         self.cost_components = []
         self.eligibility_constraint = eligibility_constraint
         self.rate_levels = rate_levels
+        self.max_coverage_amount = max_coverage_amount
 
     def get_coverage_options_by_face(self, applicant_query):
         return [option.get_face_amount() for option in self.coverage_options if option.is_by_face()]
@@ -413,8 +414,14 @@ class RatePlan(object):
         rates = []
         for premium in self.get_premium_options(applicant_query.get_mode()):
             applicant_query.rate_options = ApplicantQueryOptions({'by_premium': premium})
+            coverage_amount = int(self.calculate_coverage(applicant_query))
+
+            # Sometimes a premium level results in a coverage that is too big for a given product's rate plan.
+            if not self.is_coverage_amount_allowed(coverage_amount):
+                continue
+
             rates.append({
-                'coverage': int(self.calculate_coverage(applicant_query)),
+                'coverage': coverage_amount,
                 'premium': float(premium),
                 'payment_mode': applicant_query.get_mode(),
             })
@@ -520,8 +527,13 @@ class RatePlan(object):
                 rate_levels = list()
                 for rate_level in rate_plan_data['rate_levels']:
                     rate_levels.append({'name': rate_level['name'], 'value': rate_level['value']})
+                    
+                    
+            max_coverage_amount = rate_plan_data.get('max_coverage_amount', None)
 
-            rate_plan = RatePlan(coverage_options=standard_coverage_options, rate_levels=rate_levels)
+
+
+            rate_plan = RatePlan(coverage_options=standard_coverage_options, rate_levels=rate_levels, max_coverage_amount=max_coverage_amount)
             for cost_component_def in rate_plan_data['cost_components']:
 
                 if cost_component_def['type'] == "ACPT Lookup":
@@ -558,6 +570,14 @@ class RatePlan(object):
         for key, val in rate_table_def['table'].iteritems():
             table_mapping[int(key)] = Decimal(val)
         return table_mapping
+
+    def is_coverage_amount_allowed(self, coverage_amount):
+
+        if self.max_coverage_amount is None:
+            return True
+
+        return coverage_amount < self.max_coverage_amount
+
 
 
 def load_rate_plan_for_base_product(base_product_code):

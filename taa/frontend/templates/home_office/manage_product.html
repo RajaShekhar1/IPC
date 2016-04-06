@@ -473,8 +473,7 @@ $(function() {
 
       self.base_product(base_product);
 
-      // TODO: This is a bit fragile, but is a workaround for now.
-      return base_product.name != "Group Critical Illness";
+      return true;
     });
 
     self.base_product_id.subscribe(function(new_id) {

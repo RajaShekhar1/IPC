@@ -312,6 +312,9 @@ def self_enrollment(company_name, uuid):
                 is_self_enrollable = False
                 break
 
+    if case_service.requires_occupation(case) and census_record.occupation_class not in map(lambda cr: cr['label'], case.occupation_class_settings):
+        is_self_enrollable = False
+
     vars = {'is_valid': False, 'allowed_states': []}
     if setup is not None and is_self_enrollable:
         session['is_self_enroll'] = True
@@ -420,6 +423,19 @@ def submit_wizard_data():
     data = request.json
     wizard_results = data['wizard_results']
     print("[ENROLLMENT SUBMITTED]")
+
+    # Hotfix 4/5/2016: Attempt to track down user data that is causing blank address data.
+    emp_data = wizard_results[0].get('employee', {})
+    if emp_data.get('address1', '') == '' or emp_data.get('city', '') == '' or emp_data.get('zip', '') == '':
+        print("[MISSING ADDRESS ERROR DEBUG]")
+        raise ValueError("The address was missing in the wizard submission data, refusing to create enrollment data.")
+
+    # As part of above debugging, log the user-agent.
+    user_agent = request.user_agent
+    print("[Platform: '{}', browser: '{}', version: '{}', language: '{}', user_agent: '{}']".format(
+        user_agent.platform, user_agent.browser, user_agent.version, user_agent.language,
+        request.headers.get('User-Agent')
+    ))
 
     try:
         enrollment = process_wizard_submission(case, wizard_results)
