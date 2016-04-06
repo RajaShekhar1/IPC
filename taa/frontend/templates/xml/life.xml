@@ -3,16 +3,17 @@
         <PlanName>{{ policy.product_type }}</PlanName>
         <IndicatorCode tc="{{ policy.indicator_code }}">{{ policy.indicator }}</IndicatorCode>
         <CurrentAmt>{{ enrollee.coverage.face_value or '0' }}</CurrentAmt>
-        {#
+        {% if 'WP' in policy.riders -%}
         <CovOption>
             <PlanName>Waiver of Premium</PlanName>
-            <OptionAmt>20000.00</OptionAmt>
+            <OptionAmt>{{ enrollee.coverage.face_value or '0' }}</OptionAmt>
         </CovOption>
+        {% elif 'QOL3' in policy.riders or 'QOL4' in policy.riders -%}
         <CovOption>
-            <PlanName>Long Term Care</PlanName>
-            <OptionAmt>20000.00</OptionAmt>
+            <PlanName>Quality of Life</PlanName>
+            <OptionAmt>{{ enrollee.coverage.face_value or '0' }}</OptionAmt>
         </CovOption>
-        #}
+        {% endif -%}
         <LifeParticipant id="LifeParticipant_PrimaryInsured" PartyID="Party_PrimaryInsured">
             <LifeParticipantRoleCode tc="1">Primary Insured</LifeParticipantRoleCode>
         </LifeParticipant>
@@ -38,9 +39,11 @@
             </LifeParticipant>
         {% endfor -%}
     </Coverage>
-{#    <Coverage>#}
-{#        <PlanName>FPPAIO</PlanName>#}
-{#        <IndicatorCode tc="2">Rider</IndicatorCode>#}
-{#        <CurrentNumberOfUnits>000</CurrentNumberOfUnits>#}
-{#    </Coverage>#}
+    {% if 'AIR' in policy.riders -%}
+    <Coverage>
+        <PlanName>FPPAIO</PlanName>
+        <IndicatorCode tc="2">Rider</IndicatorCode>
+        <CurrentNumberOfUnits>052</CurrentNumberOfUnits>
+    </Coverage>
+    {% endif -%}
 </Life>
