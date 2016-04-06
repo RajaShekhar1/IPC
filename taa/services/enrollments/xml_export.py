@@ -10,6 +10,7 @@ from decimal import Decimal
 from flask import current_app, render_template
 
 from .models import db
+from taa import app
 from taa.services.agents.models import Agent
 from taa.services import RequiredFeature
 from taa.services.products.plan_codes import get_plan_code
@@ -56,7 +57,8 @@ def generate_xml(data, case, template, form_for='employee', pdf_bytes=None):
     vars = get_variables(data, case, form_for, pdf_bytes)
     if vars['enrollee']['coverage']['face_value'] is None:
         return None
-    return render_template(template, **vars)
+    with app.test_request_context():
+        return render_template(template, **vars)
 
 
 def get_variables(data, case, form_for, pdf_bytes):
@@ -119,6 +121,10 @@ def get_variables(data, case, form_for, pdf_bytes):
         q['answer'] = YESNO.get(q['answer'].lower() if q['answer'] is not None
                                 else None)
 
+    try:
+        is_debug = current_app.config['DEBUG']
+    except:
+        is_debug = True
     vars = {
         'meta': {
             'submitted_at': now,
@@ -141,7 +147,7 @@ def get_variables(data, case, form_for, pdf_bytes):
             'vendor_code': 'xxx',
             'extension_code': 'xxxx',
             'company_num': COMPANY_NUMBERS['test']
-                                if current_app.config['DEBUG']
+                                if is_debug
                                 else COMPANY_NUMBERS['production'],
             'app_code': 'New Enrollee',
         },
@@ -188,7 +194,7 @@ def get_variables(data, case, form_for, pdf_bytes):
     if enrollee['is_child']:
         # For children, assume employee is primary beneficiary
         vars['enrollee']['beneficiaries'] = {
-            'primary': [
+            'beneficiary': [
                 {
                     'birthdate': data['employee']['birthdate'],
                     'ssn': data['employee']['ssn'],
@@ -198,7 +204,7 @@ def get_variables(data, case, form_for, pdf_bytes):
                     'relationship': 'father' if data['employee']['gender'].lower() == 'male' else 'mother',
                 }
             ],
-            'contingent': []
+            'contingent_beneficiary': []
         }
     else:
         vars['enrollee']['beneficiaries'] = {}
@@ -233,7 +239,7 @@ def get_variables(data, case, form_for, pdf_bytes):
     vars['relationships']['owner_to_primary'] = RELATIONSHIP_ROLES.get(owner)
     for type_ in ['beneficiary', 'contingent_beneficiary']:
         for beneficiary in vars['enrollee']['beneficiaries'][type_]:
-            key = 'owner_to_{}_beneficiary'.format(type_)
+            key = 'owner_to_{}'.format(type_)
             if key not in vars['relationships']:
                 vars['relationships'][key] = []
             vars['relationships'][key].append(RELATIONSHIP_ROLES.get(beneficiary['relationship']))
@@ -243,15 +249,36 @@ def get_variables(data, case, form_for, pdf_bytes):
     return vars
 
 
-def make_applicant_query(data, form_for, enrollee, case):
-    rider_settings = case.product_settings.get('riders', [])
+def get_riders(case, data, form_for, case_override=False):
     riders = []
-    for rider in rider_settings:
-        if rider['is_selected']:
-            riders.append(rider['rider_code'])
-    riders = ['QOL4']
+    if case_override:
+        # Get riders from case
+        rider_settings = case.product_settings.get('riders', [])
+        for rider in rider_settings:
+            if rider['is_selected']:
+                riders.append(rider['rider_code'])
+    else:
+        # Get riders from enrollment data
+        if form_for == 'employee':
+            prefix = 'emp'
+        elif form_for == 'spouse':
+            prefix = 'sp'
+        else:
+            return []
+        for csv_rider in ['air', 'wp', 'qol3', 'qol4']:
+            r = data.get('{}_rider_{}'.format(prefix, csv_rider))
+            if r is not None and r.upper() == 'Y':
+                riders.append(csv_rider.upper())
+    if data['product_type'] == 'FPPCI':
+        # TODO: delete
+        riders = []
+    return riders
+
+
+def make_applicant_query(data, form_for, enrollee, case):
+    riders = get_riders(case, data, form_for)
     return ApplicantQuery(
-            applicant_type=form_for,
+            applicant_type='child' if form_for.startswith('ch') else form_for,
             product_options={'riders': riders},
             demographics=ApplicantDemographics(
                     demographics_object={'applicant_type': form_for}),
@@ -292,6 +319,7 @@ def get_policy_info(data, form_for, enrollee, case):
         policy.update({'product_code': 'Term'})
     else:
         policy.update({'product_code': 'Family Protection'})
+    policy['riders'] = get_riders(case, data, form_for)
     return policy
 
 
