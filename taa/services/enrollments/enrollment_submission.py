@@ -195,7 +195,7 @@ class EnrollmentSubmissionService(object):
         :type application: EnrollmentApplication
         :rtype: EnrollmentSubmission
         """
-        if not any(code in (p.get_base_product_code() for p in application.case.products) for code in ['HI', 'ACC']):
+        if not any(p for p in application.case.products if p.requires_dell_csv_submission()):
             return None
         submission = self.get_pending_csv_submission()
         if submission is None:
