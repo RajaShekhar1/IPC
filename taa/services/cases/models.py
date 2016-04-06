@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from sqlalchemy.dialects.postgresql import JSON
+import json
 
 from taa import db
 from taa.helpers import JsonSerializable
@@ -388,6 +389,34 @@ class CaseCensus(CensusRecordSerializer, db.Model):
 
     def get_pending_enrollments(self):
         return filter(lambda e: e.is_pending(), self.enrollment_applications)
+
+    def get_product_ids(self):
+        """
+        Get a set of product ids that represent all products  for this census record
+        :return: Set of ids for products
+        :type: set[int]
+        """
+        product_ids = set()
+        for application in self.enrollment_applications:
+            data = json.loads(application.standardized_data)
+            for entry in data:
+                product_ids.add(int(entry.get('product_id')))
+        return product_ids
+
+    def get_accepted_product_ids(self):
+        """
+        Get a set of product ids that represent all products that are accepted for this census record
+        :return: Set of ids for products that were accepted
+        :type: set[int]
+        """
+        if self.standardized_data is None or len(self.standardized_data) == 0:
+            return set()
+        product_ids = set()
+        for application in self.enrollment_applications:
+            data = json.loads(application.standardized_data)
+            if not data.get('did_decline', True):
+                product_ids.add(int(data.get('product_id')))
+        return product_ids
 
 
 class AgentSplitsSerializer(JsonSerializable):
