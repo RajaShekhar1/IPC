@@ -123,6 +123,16 @@
                     <AddressStateTC tc="{{ enrollee.state_code }}">{{ enrollee.state }}</AddressStateTC>
                     <Zip>{{ enrollee.zip }}</Zip>
                 </Address>
+                <Phone>
+                    <AreaCode>{{ enrollee.phone[:3] }}</AreaCode>
+                    <DialNumber>{{ enrollee.phone[3:] }}</DialNumber>
+                </Phone>
+                <EMailAddress>
+                    <AddrLine>{{ enrollee.email }}</AddrLine>
+                    <OLifEExtension>
+                        <eDeliveryOptIn>NN</eDeliveryOptIn>
+                    </OLifEExtension>
+                </EMailAddress>
                 <Employment>
                     <HireDate>{{ employee.hire_date }}</HireDate>
                     <ActivelyAtWorkInd tc="1">True</ActivelyAtWorkInd>
@@ -165,6 +175,16 @@
                     <AddressStateTC tc="{{ employee.state_code }}">{{ employee.state }}</AddressStateTC>
                     <Zip>{{ employee.zip }}</Zip>
                 </Address>
+                <Phone>
+                    <AreaCode>{{ employee.phone[:3] }}</AreaCode>
+                    <DialNumber>{{ employee.phone[3:] }}</DialNumber>
+                </Phone>
+                <EMailAddress>
+                    <AddrLine>{{ employee.email }}</AddrLine>
+                    <OLifEExtension>
+                        <eDeliveryOptIn>NN</eDeliveryOptIn>
+                    </OLifEExtension>
+                </EMailAddress>
                 <Risk>
                     <ExistingInsuranceInd tc="{{ policy.existing_insurance_code }}">{{ policy.existing_insurance }}</ExistingInsuranceInd>
                 </Risk>
@@ -189,6 +209,16 @@
                     <AddressStateTC tc="{{ employee.state_code }}">{{ employee.state }}</AddressStateTC>
                     <Zip>{{ employee.zip }}</Zip>
                 </Address>
+                <Phone>
+                    <AreaCode>{{ employee.phone[:3] }}</AreaCode>
+                    <DialNumber>{{ employee.phone[3:] }}</DialNumber>
+                </Phone>
+                <EMailAddress>
+                    <AddrLine>{{ employee.email }}</AddrLine>
+                    <OLifEExtension>
+                        <eDeliveryOptIn>NN</eDeliveryOptIn>
+                    </OLifEExtension>
+                </EMailAddress>
             </Party>
             {% for beneficiary in enrollee.beneficiaries.beneficiary -%}
             <Party id="Party_PrimaryBene_{{ loop.index }}">
@@ -241,7 +271,7 @@
                 <RelatedObjectType tc="6">Party</RelatedObjectType>
                 <RelationRoleCode tc="{{ relationships.owner_to_primary.code }}">{{ relationships.owner_to_primary.name }}</RelationRoleCode>
             </Relation>
-            {% for beneficiary in relationships.owner_to_primary_beneficiary -%}
+            {% for beneficiary in relationships.owner_to_beneficiary -%}
             <Relation id="Relation_PrimaryBene{{ loop.index }}ToPrimaryInsured" OriginatingObjectID="Party_PrimaryInsured" RelatedObjectID="Party_PrimaryBene_{{ loop.index }}">
                 <OriginatingObjectType tc="6">Party</OriginatingObjectType>
                 <RelatedObjectType tc="6">Party</RelatedObjectType>
