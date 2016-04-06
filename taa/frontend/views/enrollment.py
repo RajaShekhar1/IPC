@@ -304,13 +304,6 @@ def self_enrollment(company_name, uuid):
     case = self_enrollment_link_service.get_case_for_link(uuid)
 
     is_self_enrollable = True
-    if setup.self_enrollment_type == setup.TYPE_CASE_GENERIC:
-        for product in case.products:
-            if product.code in ['ACC', 'HI']:
-                # Disallow generic-link self-enrollment cases containing
-                # these products
-                is_self_enrollable = False
-                break
 
     if case_service.requires_occupation(case) and census_record.occupation_class not in map(lambda cr: cr['label'],
                                                                                             case.occupation_class_settings):
