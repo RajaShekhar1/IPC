@@ -106,6 +106,28 @@ class Product(ProductJsonSerializable, db.Model):
     def is_base_fpp_gov(self):
         return self.get_base_product().is_fpp_gov if self.get_base_product() else self.is_fpp_gov
 
+    def is_simple_coverage(self):
+        return self.get_base_product_code() in ['HI', 'ACC']
+
+    def is_applicant_covered(self, applicant_type, coverage_tier):
+        """
+        Check if an applicant is covered by the coverage tier
+        :param applicant_type:
+        :param coverage_tier:
+        """
+        if not self.is_simple_coverage():
+            return False
+        if coverage_tier == 'EE':
+            return applicant_type == u'employee'
+        elif coverage_tier == 'ES':
+            return applicant_type in [u'employee', u'spouse']
+        elif coverage_tier == 'EC':
+            return applicant_type in [u'employee', u'children']
+        elif coverage_tier == 'EF':
+            return applicant_type in [u'employee', u'spouse', u'children']
+        else:
+            return False
+
     def should_use_base_product_settings(self):
         use_base_product_settings = getattr(self, "use_base_product_settings")
         if use_base_product_settings is not None:

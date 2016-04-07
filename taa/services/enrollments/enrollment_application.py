@@ -515,26 +515,36 @@ class EnrollmentApplicationService(DBService):
         product_ids = census_record.get_product_ids()
         # Keep this conversion of the set to tuple to prevent SQLAlchemy from throwing an exception due to not being
         # able to accept lists or sets
-        product_ids = tuple(product_ids)
-        product_list = product_service.get_all(product_ids)
+        product_ids = product_ids
+        product_list = list()
+        for product_id in product_ids:
+            product_list.append(product_service.get(product_id))
         for x in range(6):
             if x < len(product_list):
                 product = product_list[x]
+                """:type: taa.services.products.Product"""
             else:
                 product = None
             prefix = 'product_{0}'.format(x + 1)
             product_data = {u'{}_name'.format(prefix): product.name if product else ''}
 
             total_product_premium = Decimal('0.00')
+
             for applicant_abbr, applicant_coverages in (('emp',
                                                          employee_coverage),
                                                         ('sp',
                                                          spouse_coverage),
                                                         ('ch',
                                                          children_coverage)):
+
                 if applicant_coverages.get(product):
                     applicant_coverage = applicant_coverages[product]
-                    coverage = applicant_coverage.coverage_face_value
+                    if product is not None and product.is_simple_coverage():
+                        coverage = 'Covered' if product.is_applicant_covered(applicant_coverage.applicant_type,
+                                                                             applicant_coverage.coverage_selection) \
+                            else 'Not Covered'
+                    else:
+                        coverage = applicant_coverage.coverage_face_value
                     premium = applicant_coverage.get_premium()
                     annualized_premium = applicant_coverage.get_annualized_premium()
                 else:
