@@ -1,5 +1,7 @@
 import csv
 import json
+
+from taa.services.cases import AgentSplitsSetup
 from taa.services import LookupService
 
 import dateutil.parser
@@ -147,26 +149,29 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
             ]
             # Agent(s) info
             agent_splits = [s for s in case_service.get_agent_splits_setup(case) if s.product_id == product.id]
-            writing_agent_split = get_writing_agent_split_for_product(agent_splits, product)
-            writing_agent = get_writing_agent_for_case(case, product, agents, agent_splits)
+            writing_agent_split = get_writing_agent_split_for_product(agent_splits, product, enrollment)
+            writing_agent = get_writing_agent_for_case(case, product, agents, agent_splits, enrollment)
             agent_spaces = 4
 
-            split_agents = [s for s in agents if s.id is not None]
+            def is_valid_agent_for_split(agent):
+                split = next((s for s in agent_splits if s.agent_id == agent.id), None)
+                return split is not None and split.split_percentage is not None and split.split_percentage > 0
 
-            if writing_agent is not None:
-                row.extend([writing_agent.agent_code,
-                            writing_agent_split.split_percentage,
-                            writing_agent_split.commission_subcount_code])
-            else:
-                row.extend(['', '', ''])
-            for agent in split_agents:
+            split_agents = filter(is_valid_agent_for_split, agents)
+
+            row.extend([writing_agent.agent_code,
+                        writing_agent_split.split_percentage,
+                        writing_agent_split.commission_subcount_code])
+            agent_spaces -= 1
+            for agent in split_agents[:agent_spaces]:
                 split = next((s for s in agent_splits if s.agent_id == agent.id), None)
                 if split:
                     row.extend([agent.agent_code, split.split_percentage, split.commission_subcount_code])
                 else:
                     row.extend([agent.agent_code, "", ""])
 
-            row.extend([''] * (agent_spaces - len(agents)) * 2)
+            if agent_spaces > 0:
+                row.extend([''] * (agent_spaces - len(agents)) * 2)
 
             # Dependent info
             dep_spaces = 4
@@ -206,7 +211,7 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
     return output.getvalue()
 
 
-def get_writing_agent_for_case(case, product, agents, agent_splits):
+def get_writing_agent_for_case(case, product, agents, agent_splits, enrollment):
     """
     Get the writing agent for the specified case, product, and agent_splits
     :param case: Case to get the agent for
@@ -220,12 +225,27 @@ def get_writing_agent_for_case(case, product, agents, agent_splits):
     :return: Writing Agent for the specified product
     :rtype: taa.services.agents.models.Agent
     """
-    split = get_writing_agent_split_for_product(agent_splits, product)
+    split = get_writing_agent_split_for_product(agent_splits, product, enrollment)
     if split is None:
         return None
     agent_id = split.agent_id if split.agent_id is not None else case.agent_id
-    return next(a for a in agents if a.id == agent_id)
+    return next((a for a in agents if a.id == agent_id), None)
 
 
-def get_writing_agent_split_for_product(agent_splits, product):
-    return next((s for s in agent_splits if s.product_id == product.id and s.agent_id is None), None)
+def get_writing_agent_split_for_product(agent_splits, product, enrollment):
+    """
+    :type agent_splits: list[AgentSplitsSetup]
+    :type product: taa.services.products.Product
+    :type enrollment: taa.services.enrollments.EnrollmentApplication
+    :rtype: AgentSplitsSetup
+    """
+    agent_split = next((s for s in agent_splits if s.product_id == product.id and s.agent_id is None), None)
+    if agent_split is None:
+        # noinspection PyArgumentList
+        agent_split = AgentSplitsSetup(
+            split_percentage=100,
+            agent_id=enrollment.agent_id,
+            product_id=product.id,
+            commission_subcount_code=''
+        )
+    return agent_split
