@@ -536,21 +536,22 @@ class EnrollmentApplicationService(DBService):
                                                          spouse_coverage),
                                                         ('ch',
                                                          children_coverage)):
-
+                coverage = ''
+                premium = ''
+                annualized_premium = ''
                 if applicant_coverages.get(product):
                     applicant_coverage = applicant_coverages[product]
                     if product is not None and product.is_simple_coverage():
-                        coverage = 'Covered' if product.is_applicant_covered(applicant_coverage.applicant_type,
-                                                                             applicant_coverage.coverage_selection) \
-                            else 'Not Covered'
+                        coverage = 'Included' if product.is_applicant_covered(applicant_coverage.applicant_type,
+                                                                              applicant_coverage.coverage_selection) \
+                            else 'Not Included '
+                        if applicant_coverage.applicant_type == 'employee':
+                            premium = applicant_coverage.get_premium()
+                            annualized_premium = applicant_coverage.get_annualized_premium()
                     else:
                         coverage = applicant_coverage.coverage_face_value
-                    premium = applicant_coverage.get_premium()
-                    annualized_premium = applicant_coverage.get_annualized_premium()
-                else:
-                    coverage = ''
-                    premium = ''
-                    annualized_premium = ''
+                        premium = applicant_coverage.get_premium()
+                        annualized_premium = applicant_coverage.get_annualized_premium()
 
                 product_data.update({
                     '{}_{}_coverage'.format(prefix, applicant_abbr): coverage,
