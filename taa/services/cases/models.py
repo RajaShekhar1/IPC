@@ -121,6 +121,9 @@ class Case(CaseSerializer, db.Model):
         else:
             return self.can_partners_download_enrollments
 
+    def requires_classification(self):
+        return any(p for p in self.products if p.requires_occupation())
+
 
 class PeriodSerializer(JsonSerializable):
     __json_hidden__ = ['case']
