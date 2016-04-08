@@ -136,6 +136,14 @@ def in_person_enrollment():
 
 
 def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False):
+
+    # As part of address debugging, log the user-agent.
+    user_agent = request.user_agent
+    print("[BEGINNING ENROLLMENT] [Platform: '{}', browser: '{}', version: '{}', language: '{}', user_agent: '{}']".format(
+        user_agent.platform, user_agent.browser, user_agent.version, user_agent.language,
+        request.headers.get('User-Agent')
+    ))
+
     # Defaults for session enrollment variables.
     session['active_case_id'] = case.id
     session['enrolling_census_record_id'] = None
@@ -433,7 +441,7 @@ def submit_wizard_data():
     if emp_data.get('address1', '') == '' or emp_data.get('city', '') == '' or emp_data.get('zip', '') == '':
         print("[MISSING ADDRESS ERROR DEBUG]")
         raise ValueError("The address was missing in the wizard submission data, refusing to create enrollment data. Received: {}".format(wizard_results))
-    
+
     try:
         enrollment = process_wizard_submission(case, wizard_results)
 
