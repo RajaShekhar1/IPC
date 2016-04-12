@@ -440,8 +440,9 @@ def submit_wizard_data():
     emp_data = wizard_results[0].get('employee', {})
     if emp_data.get('address1', '') == '' or emp_data.get('city', '') == '' or emp_data.get('zip', '') == '':
         print("[MISSING ADDRESS ERROR DEBUG]")
-        raise ValueError("The address was missing in the wizard submission data, refusing to create enrollment data. Received: {}".format(wizard_results))
-
+        print("Received: {}".format(wizard_results))
+        raise ValueError("The address was missing in the wizard submission data, refusing to create enrollment data.")
+    
     try:
         enrollment = process_wizard_submission(case, wizard_results)
 
