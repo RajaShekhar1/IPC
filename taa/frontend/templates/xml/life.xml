@@ -8,9 +8,10 @@
             <PlanName>Waiver of Premium</PlanName>
             <OptionAmt>{{ enrollee.coverage.face_value or '0' }}</OptionAmt>
         </CovOption>
-        {% elif 'QOL3' in policy.riders or 'QOL4' in policy.riders -%}
+        {% endif -%}
+        {% if 'QOL3' in policy.riders or 'QOL4' in policy.riders -%}
         <CovOption>
-            <PlanName>Quality of Life</PlanName>
+            <PlanName>Long Term Care</PlanName>
             <OptionAmt>{{ enrollee.coverage.face_value or '0' }}</OptionAmt>
         </CovOption>
         {% endif -%}
