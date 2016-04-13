@@ -91,7 +91,7 @@
                             <SignatureRoleCode tc="15">Primary Agent</SignatureRoleCode>
                             <SignatureDate>{{ primary_agent.signature_date|truncate(10, end='') }}</SignatureDate>
                             {# PDF application form does not have Agent Signature State specified. Value below corresponds to Owner Signature State. Please see if you need to send a different value in next field #}
-                            <SignatureState tc="17">{{ primary_agent.signature_state }}</SignatureState>
+                            <SignatureState tc="{{ primary_agent.signature_state_code }}">{{ primary_agent.signature_state }}</SignatureState>
                             <SignatureOK tc="1">True</SignatureOK>
                         </SignatureInfo>
                     </ApplicationInfo>
@@ -113,6 +113,16 @@
                     <BirthDate>{{ enrollee.birthdate }}</BirthDate>
                     {# PDF Application does not list Smoker Class. Vendor needs to send this info in folllowing field. #}
                     <SmokerStat tc="{{ enrollee.smoker_code }}">{{ enrollee.smoker }}</SmokerStat>
+                    {% if enrollee.height -%}
+                    <Height2>
+                        <MeasureValue>{{ enrollee.height }}</MeasureValue>
+                    </Height2>
+                    {% endif -%}
+                    {% if enrollee.weight -%}
+                    <Weight2>
+                        <MeasureValue>{{ enrollee.weight }}</MeasureValue>
+                    </Weight2>
+                    {% endif -%}
                 </Person>
                 <Address>
                     <Line1>{{ enrollee.address1 }}</Line1>
@@ -123,19 +133,23 @@
                     <AddressStateTC tc="{{ enrollee.state_code }}">{{ enrollee.state }}</AddressStateTC>
                     <Zip>{{ enrollee.zip }}</Zip>
                 </Address>
+                {% if enrollee.phone|length > 0 -%}
                 <Phone>
                     <AreaCode>{{ enrollee.phone[:3] }}</AreaCode>
                     <DialNumber>{{ enrollee.phone[3:] }}</DialNumber>
                 </Phone>
+                {% endif -%}
+                {% if enrollee.email|length > 0 -%}
                 <EMailAddress>
                     <AddrLine>{{ enrollee.email }}</AddrLine>
                     <OLifEExtension>
                         <eDeliveryOptIn>NN</eDeliveryOptIn>
                     </OLifEExtension>
                 </EMailAddress>
+                {% endif -%}
                 <Employment>
                     <HireDate>{{ employee.hire_date }}</HireDate>
-                    <ActivelyAtWorkInd tc="1">True</ActivelyAtWorkInd>
+                    <ActivelyAtWorkInd tc="{{ employee.actively_at_work_code }}">{{ employee.actively_at_work }}</ActivelyAtWorkInd>
                     <EmployerName>{{ case.company_name }}</EmployerName>
                     <EmployeeID></EmployeeID>
                     <OLifeExtension>
@@ -152,6 +166,18 @@
                             <Response>{{ question.answer }}</Response>
                         </Question>
                         {% endfor -%}
+                        {% if enrollee.spouse_treated_6_months -%}
+                        <Question>
+                            <QuestionNumber>SP1</QuestionNumber>
+                            <Response>{{ enrollee.spouse_treated_6_months }}</Response>
+                        </Question>
+                        {% endif -%}
+                        {% if enrollee.spouse_disabled_6_months -%}
+                        <Question>
+                            <QuestionNumber>SP2</QuestionNumber>
+                            <Response>{{ enrollee.spouse_disabled_6_months }}</Response>
+                        </Question>
+                        {% endif -%}
                     </OLifeExtension>
                 </Risk>
             </Party>
@@ -175,16 +201,20 @@
                     <AddressStateTC tc="{{ employee.state_code }}">{{ employee.state }}</AddressStateTC>
                     <Zip>{{ employee.zip }}</Zip>
                 </Address>
+                {% if employee.phone|length > 0 -%}
                 <Phone>
                     <AreaCode>{{ employee.phone[:3] }}</AreaCode>
                     <DialNumber>{{ employee.phone[3:] }}</DialNumber>
                 </Phone>
+                {% endif -%}
+                {% if employee.email|length > 0 -%}
                 <EMailAddress>
                     <AddrLine>{{ employee.email }}</AddrLine>
                     <OLifEExtension>
                         <eDeliveryOptIn>NN</eDeliveryOptIn>
                     </OLifEExtension>
                 </EMailAddress>
+                {% endif -%}
                 <Risk>
                     <ExistingInsuranceInd tc="{{ policy.existing_insurance_code }}">{{ policy.existing_insurance }}</ExistingInsuranceInd>
                 </Risk>
@@ -209,16 +239,20 @@
                     <AddressStateTC tc="{{ employee.state_code }}">{{ employee.state }}</AddressStateTC>
                     <Zip>{{ employee.zip }}</Zip>
                 </Address>
+                {% if employee.phone|length > 0 -%}
                 <Phone>
                     <AreaCode>{{ employee.phone[:3] }}</AreaCode>
                     <DialNumber>{{ employee.phone[3:] }}</DialNumber>
                 </Phone>
+                {% endif -%}
+                {% if employee.email|length > 0 -%}
                 <EMailAddress>
                     <AddrLine>{{ employee.email }}</AddrLine>
                     <OLifEExtension>
                         <eDeliveryOptIn>NN</eDeliveryOptIn>
                     </OLifEExtension>
                 </EMailAddress>
+                {% endif -%}
             </Party>
             {% for beneficiary in enrollee.beneficiaries.beneficiary -%}
             <Party id="Party_PrimaryBene_{{ loop.index }}">

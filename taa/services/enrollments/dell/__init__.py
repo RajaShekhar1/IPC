@@ -35,13 +35,31 @@ MAX_CONTINGENT_BENEFICIARIES = 9
 
 GENDER = {
     'male': '1',
-    'female': '2'
+    'female': '2',
+    'm': '1',
+    'f': '2',
+    'M': '1',
+    'F': '2'
 }
 
 YESNO = {
     None: '0',
     'no': '0',
-    'yes': '1'
+    'yes': '1',
+    'n': '0',
+    'y': '1',
+    'N': '0',
+    'Y': '1'
+}
+
+YESNO_SOH = {
+    None: '',
+    'no': '1',
+    'yes': '0',
+    'n': '1',
+    'y': '0',
+    'N': '1',
+    'Y': '0'
 }
 
 BOOLEAN = {

@@ -127,7 +127,7 @@ class EnrollmentSubmissionService(object):
             'company_name': enrollment_record.case.company_name,
             'group_number': enrollment_record.case.group_number,
         }
-        xml = generate_xml(data, enrollment_record.case, 'xml/base.xml',
+        xml = generate_xml(data, enrollment_record, 'xml/base.xml',
                            form_for, pdf_bytes)
         return xml
 
@@ -193,7 +193,7 @@ class EnrollmentSubmissionProcessor(object):
         # Add back in for HI/ACC
         #if not product.does_generate_form():
         #    return [], data_wrap
-        
+
         if product.is_fpp():
             components = self.docusign_service.create_fpp_envelope_components(
                 data_wrap,

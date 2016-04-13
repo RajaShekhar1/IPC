@@ -53,15 +53,15 @@ def generate_from_enrollment(enrollment_id, census_record_id,
                         form_for='employee')
 
 
-def generate_xml(data, case, template, form_for='employee', pdf_bytes=None):
-    vars = get_variables(data, case, form_for, pdf_bytes)
+def generate_xml(data, enrollment, template, form_for='employee', pdf_bytes=None):
+    vars = get_variables(data, enrollment, form_for, pdf_bytes)
     if vars['enrollee']['coverage']['face_value'] is None:
         return None
     with app.test_request_context():
         return render_template(template, **vars)
 
 
-def get_variables(data, case, form_for, pdf_bytes):
+def get_variables(data, enrollment, form_for, pdf_bytes):
     """
     Get the variables needed to populate Dell's ACORD XML template
 
@@ -80,6 +80,10 @@ def get_variables(data, case, form_for, pdf_bytes):
         enrollee['is_spouse'] = False
         enrollee['is_child'] = False
         enrollee['coverage'] = data['employee_coverage']
+        enrollee['height'] = data['emp_height_inches']
+        enrollee['weight'] = data['emp_weight_pounds']
+        enrollee['spouse_disabled_6_months'] = YESNO[data.get('sp_disabled_6_months', 'N')]
+        enrollee['spouse_treated_6_months'] = YESNO[data.get('sp_treated_6_months', 'N')]
     elif form_for == 'spouse':
         try:
             enrollee = data['spouse']
@@ -87,6 +91,8 @@ def get_variables(data, case, form_for, pdf_bytes):
             enrollee['is_spouse'] = True
             enrollee['is_child'] = False
             enrollee['coverage'] = data['spouse_coverage']
+            enrollee['height'] = data['sp_height_inches']
+            enrollee['weight'] = data['sp_weight_pounds']
         except KeyError:
             raise ValueError(
                 "Attempted to enroll for spouse, but employee has no "
@@ -99,6 +105,8 @@ def get_variables(data, case, form_for, pdf_bytes):
             enrollee['is_spouse'] = False
             enrollee['is_child'] = True
             enrollee['coverage'] = data['child_coverages'][child_index]
+            enrollee['height'] = None
+            enrollee['weight'] = None
         except (KeyError, IndexError):
             raise ValueError(
                 "Attempted to enroll for child #{}, but employee has no such "
@@ -118,8 +126,8 @@ def get_variables(data, case, form_for, pdf_bytes):
     enrollee['smoker_code'] = smoker['code']
     enrollee['smoker'] = smoker['name']
     for q in enrollee['soh_questions']:
-        q['answer'] = YESNO.get(q['answer'].lower() if q['answer'] is not None
-                                else None)
+        q['answer'] = YESNO_SOH.get(q['answer'].lower() if q['answer'] is not None
+                                    else None)
 
     try:
         is_debug = current_app.config['DEBUG']
@@ -180,13 +188,16 @@ def get_variables(data, case, form_for, pdf_bytes):
     vars['employee']['state_code'] = state['code']
 
     vars['employee']['hire_date'] = data['identityToken']
+    vars['employee']['actively_at_work'] = data['actively_at_work'] or 'Y'
+    vars['employee']['actively_at_work_code'] = YESNO[data['actively_at_work']]
 
-    policy = get_policy_info(data, form_for, enrollee, case)
+    policy = get_policy_info(data, form_for, enrollee, enrollment.case)
     vars['policy'].update(policy)
 
-    vars['agents'] = get_agents(data, case)
+    vars['agents'] = get_agents(data, enrollment, form_for)
     vars['primary_agent'] = vars['agents'][0]
     vars['primary_agent']['signature_state'] = vars['policy']['enroll_state']
+    vars['primary_agent']['signature_state_code'] = STATE_CODES[vars['policy']['enroll_state']]['code']
     vars['primary_agent']['signature_date'] = data['time_stamp']
     vars['enrollee']['signature_date'] = data['time_stamp']
 
@@ -304,8 +315,6 @@ def get_policy_info(data, form_for, enrollee, case):
         'indicator': 'Base',
         'is_life': True,
     }
-    if form_for.startswith('child'):
-        policy['product_type'] += 'D'
     if policy['is_replacement']:
         replacement_type = REPLACEMENT_TYPES['external']
     else:
@@ -323,11 +332,16 @@ def get_policy_info(data, form_for, enrollee, case):
     return policy
 
 
-def get_agents(data, case):
+def get_agents(data, enrollment, form_for):
     agents = []
+    case = enrollment.case
     if case.agent_splits is not None:
         # Case has agent splits
-        for split in case.agent_splits:
+        # for split in case.agent_splits:
+        for split in [s for s in case.agent_splits
+                      if s.product_id in [c.product_id
+                                          for c in enrollment.coverages
+                                          if c.applicant_type == 'employee']]:
             if split.agent is None:
                 # Writing agent (null agent) is placeholder for enrolling agent
                 agent = Agent.query.filter_by(
