@@ -91,8 +91,6 @@ def get_adult_plan_code(applicant_type, base_product_code, riders, state):
 def get_child_plan_code(base_product_code, state_code):
     if base_product_code == PRODUCT_CODE_FPPCI:
         plan_code = 'INDFPD'
-        if state_code in ['UT', 'MD']:
-            plan_code += '/'
     else:
         plan_code = 'FPPT'
 
@@ -100,6 +98,8 @@ def get_child_plan_code(base_product_code, state_code):
             plan_code += 'ID' + base_product_code[-1]
         else:
             plan_code += 'ID'
+    if state_code in ['UT', 'MD']:
+        plan_code += '/'
     return plan_code
 
 

@@ -177,7 +177,7 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | N   | N  | Y    | N    | Spouse         | FPPTI             | MD    | FPQTI3/MD |
       | N   | N  | N    | Y    | Spouse         | FPPTI             | MD    | FPQTI4/MD |
 
-      | N   | N  | N    | N    | Child          | FPPTI             | MD    | FPPTID MD |
+      | N   | N  | N    | N    | Child          | FPPTI             | MD    | FPPTID/MD |
 
     Examples: Employee, Spouse, or Child with single rider in UT
       | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code |
@@ -193,7 +193,7 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | N   | N  | Y    | N    | Spouse         | FPPTI             | UT    | FPQTI3/UT |
       | N   | N  | N    | Y    | Spouse         | FPPTI             | UT    | FPQTI4/UT |
 
-      | N   | N  | N    | N    | Child          | FPPTI             | UT    | FPPTID UT |
+      | N   | N  | N    | N    | Child          | FPPTI             | UT    | FPPTID/UT |
 
     Examples: Employee or Spouse with multiple riders in MD
       | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code  |
