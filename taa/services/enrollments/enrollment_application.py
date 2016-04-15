@@ -425,6 +425,20 @@ class EnrollmentApplicationService(DBService):
     def get_census_data(self, census_record):
         return census_record.to_json()
 
+    def get_standardized_enrollment_json(self, census_record):
+        "Normalizes the JSON data as a list of standardized enrollment data."
+        
+        out = []
+        for enrollment_application in census_record.enrollment_applications:
+            json_data = json.loads(enrollment_application.standardized_data)
+
+            if isinstance(json_data, list):
+                out += json_data
+            else:
+                out += [json_data]
+
+        return out
+
     def get_enrollment_data(self, census_record):
         # TODO: Only get_enrollment_status is using this right now,
         #        should merge these functions and remove extraneous code
