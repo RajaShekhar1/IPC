@@ -103,6 +103,9 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
         if isinstance(json_data, dict):
             json_data = [json_data]
         for data in json_data:
+            # Skip over anyways
+            if data.get('did_decline', True):
+                continue
             product = products_service.get(data['product_id'])
 
             employee = data.get('employee')

@@ -147,22 +147,9 @@ class EnrollmentApplicationService(DBService):
             agent_id = None
 
         # Use the first record in a multiproduct setting to create the main enrollment record.
-        if isinstance(wizard_data, list):
-            data = wizard_data[0]
-            if all(map(lambda d: d['did_decline'], wizard_data)):
-                application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
-            elif census_record.case.should_use_call_center_workflow:
-                application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
-            else:
-                application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
-        else:
-            data = wizard_data
-            if data['did_decline']:
-                application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
-            else:
-                # We are likely importing the data and we don't have to say 'pending' since there is no signing process.
-                application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+        application_status = self.get_application_status(census_record, wizard_data)
 
+        data = self.get_first_wizard_data_record(wizard_data)
         given_sig_time = data.get('time_stamp')
         signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
 
@@ -232,6 +219,31 @@ class EnrollmentApplicationService(DBService):
             spouse_beneficiary_birthdate=sp_beneficiary_dob,
         )
         return self.create(**enrollment_data)
+
+    def get_application_status(self, census_record, wizard_data):
+        product_service = LookupService('ProductService')
+        """:type: taa.services.products.ProductService"""
+        data = self.get_first_wizard_data_record(wizard_data)
+
+        if isinstance(wizard_data, list):
+            accepted_product_ids = list(d['product_id'] for d in wizard_data if not d['did_decline'])
+            accepted_products = product_service.get_all(*accepted_product_ids)
+            """:type: list[taa.services.products.Product]"""
+            if all(map(lambda d: d['did_decline'], wizard_data)):
+                return EnrollmentApplication.APPLICATION_STATUS_DECLINED
+            elif len(accepted_products) > 0 and all(not p.requires_signature() for p in accepted_products):
+                return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+            elif census_record.case.should_use_call_center_workflow:
+                return EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
+            else:
+                return EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
+        else:
+            if data['did_decline']:
+                application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
+            else:
+                # We are likely importing the data and we don't have to say 'pending' since there is no signing process.
+                application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+        return application_status
 
     def _strip_ssn(self, ssn):
         return ssn.replace('-', '').strip() if ssn else ''
@@ -656,6 +668,12 @@ class EnrollmentApplicationService(DBService):
 
     # Need to commit all database changes.
     db.session.commit()
+
+    def get_first_wizard_data_record(self, wizard_data):
+        if isinstance(wizard_data, list):
+            return wizard_data[0]
+        else:
+            return wizard_data
 
 
 def export_string(val):
