@@ -202,6 +202,9 @@ class Product(ProductJsonSerializable, db.Model):
     def requires_occupation(self):
         return self.get_base_product_code() == 'HI' or self.get_base_product_code() == 'ACC'
 
+    def requires_signature(self):
+        return self.get_base_product_code() not in ['HI', 'ACC']
+
 # Relate custom products to agents - who can see these products
 product_agents = db.Table('product_agents', db.metadata,
     db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True),
