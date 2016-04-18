@@ -1,7 +1,7 @@
 var health_questions = (function () {
   'use strict';
   // View model for step 2
-  function ProductHealthQuestions(product_coverage, spouse_questions, all_health_questions, employee_questions, applicant_list) {
+  function ProductHealthQuestions(product_coverage, spouse_questions, all_health_questions, employee_questions, applicant_list, omit_actively_at_work) {
     var self = this;
     self.product_coverage = product_coverage;
     self.applicant_list = applicant_list;
@@ -12,8 +12,8 @@ var health_questions = (function () {
     // TODO: Double check that this need to be computed since the ProductHealthQuestions object is instantiated once for each product.
     self.health_questions = ko.pureComputed(function () {
       var questions = [];
-      var emp_questions = health_questions.process_employee_question_data(employee_questions, self.product_coverage, self.employee);
-      var sp_questions = health_questions.process_spouse_question_data(spouse_questions, self.product_coverage, self.spouse);
+      var emp_questions = health_questions.process_employee_question_data(employee_questions, self.product_coverage, self.employee, omit_actively_at_work);
+      var sp_questions = health_questions.process_spouse_question_data(spouse_questions, self.product_coverage, self.spouse, omit_actively_at_work);
       var soh_questions = health_questions.process_health_question_data(all_health_questions, self.product_coverage);
       $.merge(questions, emp_questions);
       $.merge(questions, sp_questions);
@@ -133,10 +133,11 @@ var health_questions = (function () {
 
 
   // Create the spouse-specific HealthQuestion objects from the raw data provided by the server.
-  function process_applicant_question_data(question_data_by_product, product_coverage, applicant) {
+  function process_applicant_question_data(question_data_by_product, product_coverage, applicant, omit_actively_at_work) {
     // Build up the master list of questions for this product
     var questions = [];
     var product_data = product_coverage.product.product_data;
+    var omit_actively_at_work_question = typeof omit_actively_at_work !== 'undefined' ? !!omit_actively_at_work : false;
 
     _.each(question_data_by_product, function (product_questions, product_id) {
       if (product_id == product_data.id) {
@@ -168,8 +169,10 @@ var health_questions = (function () {
             return new StandardHealthQuestion(question_data, product_coverage);
           }
         }
-
-        questions = _.map(product_questions, question_factory);
+        questions = _.chain(product_questions)
+          .filter(function (question) { return !(question.label === 'Employee Actively at Work' && omit_actively_at_work_question); })
+          .map(question_factory)
+          .value();
       }
     });
     return questions;

@@ -1593,7 +1593,8 @@ var wizard_viewmodel = (function () {
           options.spouse_questions,
           options.health_questions,
           options.employee_questions,
-          self.applicant_list
+          self.applicant_list,
+          self.enrollment_case.omit_actively_at_work
         );
       });
     });
