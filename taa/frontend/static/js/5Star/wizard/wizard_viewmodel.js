@@ -1057,7 +1057,7 @@ var wizard_viewmodel = (function () {
 
     self.should_show_actively_at_work = function (product) {
       return _.startsWith(product.product_data.base_product_type, "FPP")
-        && !self.enrollment_case.omit_actively_at_work;
+        && !self.enrollment_case.omit_actively_at_work && !product.product_data.is_guaranteed_issue;
     };
 
     init_applicants();
@@ -1591,7 +1591,9 @@ var wizard_viewmodel = (function () {
         return new health_questions.ProductHealthQuestions(
           product_cov,
           options.spouse_questions,
-          options.health_questions
+          options.health_questions,
+          options.employee_questions,
+          self.applicant_list
         );
       });
     });

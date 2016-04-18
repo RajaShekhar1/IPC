@@ -224,8 +224,12 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         soh_questions[product.id] = StatementOfHealthQuestionService().get_health_questions(product, state)
 
     spouse_questions = {}
+    employee_questions = {}
+    health_question_service = LookupService('StatementOfHealthQuestionService')
+    """:type: taa.services.products.StatementOfHealthQuestionService"""
     for product in products:
-        spouse_questions[product.id] = StatementOfHealthQuestionService().get_spouse_questions(product, state)
+        employee_questions[product.id] = health_question_service.get_employee_questions(product, state)
+        spouse_questions[product.id] = health_question_service.get_spouse_questions(product, state)
 
     # New wizard formatting for multiproduct.
     applicants = []
@@ -276,6 +280,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         applicants=applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in case.products],
         payment_modes=payment_mode_choices,
+        employee_questions=employee_questions,
         spouse_questions=spouse_questions,
         health_questions=soh_questions,
         any_fpp_product=any_fpp_product,

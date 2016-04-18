@@ -1,15 +1,22 @@
 var health_questions = (function () {
   'use strict';
   // View model for step 2
-  function ProductHealthQuestions(product_coverage, spouse_questions, all_health_questions) {
+  function ProductHealthQuestions(product_coverage, spouse_questions, all_health_questions, employee_questions, applicant_list) {
     var self = this;
     self.product_coverage = product_coverage;
+    self.applicant_list = applicant_list;
+    self.employee = _.find(applicant_list.applicants(), function (applicant) { return applicant.type === wizard_applicant.Applicant.EmployeeType; });
+    self.spouse = _.find(applicant_list.applicants(), function (applicant) { return applicant.type === wizard_applicant.Applicant.SpouseType; });
 
     // SOH Questions (depends on product)
     // TODO: Double check that this need to be computed since the ProductHealthQuestions object is instantiated once for each product.
     self.health_questions = ko.pureComputed(function () {
-      var questions = health_questions.process_spouse_question_data(spouse_questions, self.product_coverage);
+      var questions = [];
+      var emp_questions = health_questions.process_employee_question_data(employee_questions, self.product_coverage, self.employee);
+      var sp_questions = health_questions.process_spouse_question_data(spouse_questions, self.product_coverage, self.spouse);
       var soh_questions = health_questions.process_health_question_data(all_health_questions, self.product_coverage);
+      $.merge(questions, emp_questions);
+      $.merge(questions, sp_questions);
       $.merge(questions, soh_questions);
       return questions;
     });
@@ -126,7 +133,7 @@ var health_questions = (function () {
 
 
   // Create the spouse-specific HealthQuestion objects from the raw data provided by the server.
-  function process_spouse_question_data(question_data_by_product, product_coverage) {
+  function process_applicant_question_data(question_data_by_product, product_coverage, applicant) {
     // Build up the master list of questions for this product
     var questions = [];
     var product_data = product_coverage.product.product_data;
@@ -136,9 +143,25 @@ var health_questions = (function () {
         var question_factory;
         if (product_coverage.product.product_data.is_guaranteed_issue) {
           question_factory = function (question_data) {
-            return new GIHealthQuestion(product_coverage.product, question_data, product_coverage,
+            if (question_data.label === 'Employee Actively at Work') {
+              return new AawGIHealthQuestion(
+                product_coverage.product,
+                question_data,
+                product_coverage,
+                product_data.gi_criteria,
+                product_data.statement_of_health_bypass_type,
+                product_data.bypassed_soh_questions,
+                applicant
+              );
+            }
+            return new GIHealthQuestion(
+              product_coverage.product,
+              question_data,
+              product_coverage,
               product_data.gi_criteria,
-              product_data.statement_of_health_bypass_type, product_data.bypassed_soh_questions);
+              product_data.statement_of_health_bypass_type,
+              product_data.bypassed_soh_questions
+            );
           };
         } else {
           question_factory = function (question_data) {
@@ -226,7 +249,8 @@ var health_questions = (function () {
     ProductHealthQuestions: ProductHealthQuestions,
     HealthQuestionResponse: HealthQuestionResponse,
     process_health_question_data: process_health_question_data,
-    process_spouse_question_data: process_spouse_question_data
+    process_spouse_question_data: process_applicant_question_data,
+    process_employee_question_data: process_applicant_question_data
   };
 })();
 
@@ -776,6 +800,19 @@ GIHealthQuestion.prototype.does_yes_stop_app = function () {
 
   // Otherwise, clicking YES always stops (but will show the reduce/remove dialogue if optional).
   return true;
+};
+
+function AawGIHealthQuestion (product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions, employee) {
+  'use strict';
+  var self = this;
+  GIHealthQuestion.call(self, product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions);
+  self.employee = employee;
+}
+
+AawGIHealthQuestion.prototype = Object.create(GIHealthQuestion.prototype);
+
+AawGIHealthQuestion.prototype.get_question_text = function () {
+  return 'Is ' + this.employee.first() + ' <a href="#actively_at_work_modal" data-toggle="modal">actively at work?</a>';
 };
 
 function HealthQuestionAnswer(question, button_group, question_object) {
