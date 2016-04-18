@@ -376,8 +376,13 @@ class EnrollmentDataWrap(object):
         return self.case.should_use_call_center_workflow
 
     def get_actively_at_work(self):
-        if self.get_product().is_fpp() and self.case.omit_actively_at_work:
-            return ''
+        product = self.get_product()
+        # TODO: Possibly change the output value of this in the future
+        if product.is_fpp() and product.is_guaranteed_issue() and self.case.omit_actively_at_work:
+            return 'GI'
+        else:
+            if product.is_fpp() and self.case.omit_actively_at_work and not product.is_guaranteed_issue():
+                return ''
         return 'yes' if self.data['is_employee_actively_at_work'] else 'no'
 
 # For employee signing sessions

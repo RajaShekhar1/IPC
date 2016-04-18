@@ -137,7 +137,7 @@ var health_questions = (function () {
     // Build up the master list of questions for this product
     var questions = [];
     var product_data = product_coverage.product.product_data;
-    var omit_actively_at_work_question = typeof omit_actively_at_work !== 'undefined' ? !!omit_actively_at_work : false;
+    var omit_actively_at_work_question = typeof omit_actively_at_work !== 'undefined'? !!omit_actively_at_work : false;
 
     _.each(question_data_by_product, function (product_questions, product_id) {
       if (product_id == product_data.id) {
@@ -170,7 +170,15 @@ var health_questions = (function () {
           }
         }
         questions = _.chain(product_questions)
-          .filter(function (question) { return !(question.label === 'Employee Actively at Work' && omit_actively_at_work_question); })
+          .filter(function (question) {
+            if (question.label === 'Employee Actively at Work') {
+              if (product_data.is_guaranteed_issue) {
+                return !omit_actively_at_work_question;
+              }
+              return false;
+            }
+            return true;
+          })
           .map(question_factory)
           .value();
       }
@@ -805,7 +813,7 @@ GIHealthQuestion.prototype.does_yes_stop_app = function () {
   return true;
 };
 
-function AawGIHealthQuestion (product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions, employee) {
+function AawGIHealthQuestion(product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions, employee) {
   'use strict';
   var self = this;
   GIHealthQuestion.call(self, product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions);
