@@ -51,7 +51,7 @@ var health_questions = (function () {
       var product_name = self.product_coverage.format_product_name();
 
       // Default the message to the one used for knockout questions
-      message = message || "A \"yes\" response to this question disqualifies this person from obtaining coverage for " +
+      message = message || "A \"" + self.action_name + "\" response to this question disqualifies this person from obtaining coverage for " +
         "'" + product_name + "'. You may proceed with this application after removing this individual from the " +
         "coverage selection before proceeding.";
 
@@ -145,7 +145,7 @@ var health_questions = (function () {
         if (product_coverage.product.product_data.is_guaranteed_issue) {
           question_factory = function (question_data) {
             if (question_data.label === 'Employee Actively at Work') {
-              return new AawGIHealthQuestion(
+              return new ActivelyAtWorkGiHealthQuestion(
                 product_coverage.product,
                 question_data,
                 product_coverage,
@@ -300,6 +300,14 @@ function decline_product_if_no_coverage(product_coverage) {
     window.vm.set_wizard_step(1);
   }
 }
+
+var HealthQuestions = {
+  Responses: {
+    get Yes() { return 'yes'; },
+    get No() { return 'no'; }
+  }
+};
+
 var StandardHealthQuestion = function (question, product_coverage) {
   // A viewmodel that keeps track of which applicants need to answer which health questions
   var self = this;
@@ -385,7 +393,7 @@ var StandardHealthQuestion = function (question, product_coverage) {
     var product_name = self.product_coverage.format_product_name();
 
     // Default the message to the one used for knockout questions
-    message = message || "A \"yes\" response to this question disqualifies this person from obtaining coverage for '" + product_name + "'.";
+    message = message || "A \"" + self.action_name + "\" response to this question disqualifies this person from obtaining coverage for '" + product_name + "'.";
 
     bootbox.dialog({
       message: message + " You may proceed with this application after removing this individual from the coverage selection before proceeding.",
@@ -400,6 +408,7 @@ var StandardHealthQuestion = function (question, product_coverage) {
       return self.does_applicant_need_to_answer(app_cov.applicant);
     });
   });
+  Object.defineProperty(self, 'action_name', {value: HealthQuestions.Responses.Yes, configurable: true});
 };
 
 StandardHealthQuestion.prototype.is_spouse_only = function () {
@@ -446,12 +455,14 @@ StandardHealthQuestion.prototype.can_applicant_skip_due_to_GI = function (applic
 };
 
 StandardHealthQuestion.prototype.get_yes_highlight = function () {
-  return (this.does_yes_stop_app())? 'stop' : 'checkmark';
+  return this.does_yes_stop_app()? 'stop' : 'checkmark';
+};
+StandardHealthQuestion.prototype.get_no_highlight = function () {
+  return 'checkmark';
 };
 StandardHealthQuestion.prototype.does_yes_stop_app = function () {
   return !this.question.is_ignored;
 };
-
 
 var GIHealthQuestion = function (product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions) {
   'use strict';
@@ -462,6 +473,7 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
   self.applicant_criteria = applicant_criteria;
   self.skip_mode = skip_mode;
   self.skipped_questions = skipped_questions;
+  Object.defineProperty(self, 'action_name', { value: HealthQuestions.Responses.Yes, configurable: true });
 
 
   self.get_criteria = function (applicant_type) {
@@ -604,10 +616,10 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
     var display_message;
     if (should_show_reduce_coverage_option(applicant)) {
       add_reduce_option(applicant, button_options);
-      display_message = create_reduce_dialogue_message(applicant);
+      display_message = create_reduce_dialogue_message(applicant, self.action_name);
     } else {
       var product_name = self.product_coverage.format_product_name();
-      message = message || "A \"yes\" response to this question disqualifies this person from obtaining coverage for '" + product_name + "'.";
+      message = message || "A \"" + self.action_name + "\" response to this question disqualifies this person from obtaining coverage for '" + product_name + "'.";
       display_message = message + " You may proceed with this application after removing this individual from the coverage selection before proceeding.";
     }
 
@@ -618,12 +630,13 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
   };
 
 
-  function create_reduce_dialogue_message(applicant) {
+  function create_reduce_dialogue_message(applicant, action_name) {
     var face_amount = format_face_value(get_cumulative_coverage(applicant));
     var gi_amount = get_reduced_coverage_criteria(applicant).guarantee_issue_amount;
     var formatted_gi_amount = format_face_value(gi_amount);
+    action_name = typeof action_name !== 'undefined' ? action_name : 'yes';
 
-    return 'A "yes" response to this question prohibits this person from obtaining the selected ' + face_amount + ' of coverage. You may proceed, however, by reducing your coverage to the guaranteed coverage amount of ' + formatted_gi_amount + '.' +
+    return 'A "' + action_name + '" response to this question prohibits this person from obtaining the selected ' + face_amount + ' of coverage. You may proceed, however, by reducing your coverage to the guaranteed coverage amount of ' + formatted_gi_amount + '.' +
       '<br><br>Alternatively, you may remove this individual from the coverage selection altogether (in Step 1) before proceeding with the rest of the application.';
   }
 
@@ -747,7 +760,6 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
       return self.does_applicant_need_to_answer(app_cov.applicant);
     });
   });
-
 };
 GIHealthQuestion.prototype = Object.create(StandardHealthQuestion.prototype);
 
@@ -813,17 +825,26 @@ GIHealthQuestion.prototype.does_yes_stop_app = function () {
   return true;
 };
 
-function AawGIHealthQuestion(product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions, employee) {
+function ActivelyAtWorkGiHealthQuestion(product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions, employee) {
   'use strict';
   var self = this;
   GIHealthQuestion.call(self, product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions);
   self.employee = employee;
+  Object.defineProperty(self, 'action_name', { value: HealthQuestions.Responses.No });
 }
 
-AawGIHealthQuestion.prototype = Object.create(GIHealthQuestion.prototype);
+ActivelyAtWorkGiHealthQuestion.prototype = Object.create(GIHealthQuestion.prototype);
 
-AawGIHealthQuestion.prototype.get_question_text = function () {
+ActivelyAtWorkGiHealthQuestion.prototype.get_question_text = function () {
   return 'Is ' + this.employee.first() + ' <a href="#actively_at_work_modal" data-toggle="modal">actively at work?</a>';
+};
+
+ActivelyAtWorkGiHealthQuestion.prototype.get_yes_highlight = function () {
+  return 'checkmark';
+};
+
+ActivelyAtWorkGiHealthQuestion.prototype.get_no_highlight = function () {
+  return 'stop';
 };
 
 function HealthQuestionAnswer(question, button_group, question_object) {
