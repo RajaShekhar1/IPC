@@ -441,7 +441,21 @@ def submit_wizard_data():
     if emp_data.get('address1', '') == '' or emp_data.get('city', '') == '' or emp_data.get('zip', '') == '':
         print("[MISSING ADDRESS ERROR DEBUG]")
         print("Received: {}".format(wizard_results))
-        raise ValueError("The address was missing in the wizard submission data, refusing to create enrollment data.")
+
+        # Hotfix 4/16/2016: See if the alternative method of getting the data is present
+        if wizard_results[0].get('address_alternate'):
+            alt_address = wizard_results[0].get('address_alternate')
+            if alt_address.get('street1', '') != '' and alt_address.get('city', '') != '' and alt_address.get('zip', '') != '':
+                print("[ALTERNATE ADDRESS DEBUG SUCCEEDED: GOT {}]".format(alt_address))
+
+                from taa.tasks import send_admin_error_email
+                send_admin_error_email("ALTERNATE ADDRESS DEBUG SUCCEEDED", [])
+            else:
+                # Still a problem if we get here
+                raise ValueError("The address was missing in the wizard submission data, refusing to create enrollment data.")
+        else:
+            # Still a problem if we get here
+            raise ValueError("The address was missing in the wizard submission data, refusing to create enrollment data.")
     
     try:
         enrollment = process_wizard_submission(case, wizard_results)
