@@ -818,9 +818,10 @@ var wizard_viewmodel = (function () {
     },
 
     get_total_premium: function () {
-      // If this is an FPP product, and the applicant is a children group, we multiply the selected premium by the number of children.
+      // If this is an FPP product, and the applicant is a children group, we multiply the selected premium by the number of valid children.
       if (this.applicant.type === wizard_applicant.Applicant.ChildType && this.product.is_fpp_product()) {
-        return this.coverage_option().premium * this.applicant.applicants().length;
+        var num_valid_children = window.vm.applicant_list.get_valid_children().length;
+        return this.coverage_option().premium * num_valid_children;
       }
 
       return this.coverage_option().premium;
