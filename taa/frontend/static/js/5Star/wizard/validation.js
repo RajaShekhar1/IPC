@@ -331,12 +331,7 @@ function init_validation(ui) {
     }
   });
   $.validator.addMethod('city-state-zip-required', function () {
-    console.log('Employee City: ' + ui.employee().city());
-    console.log('Employee State: ' + ui.employee().state());
-    console.log('Employee Zip: ' + ui.employee().zip());
-
     var result = !!ui.employee().city() && !!ui.employee().state() && !!ui.employee().zip();
-    console.log('Location Validation Result: '  + result);
     return result;
   }, "required");
 
