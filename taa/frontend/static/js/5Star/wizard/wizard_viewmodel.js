@@ -1061,6 +1061,10 @@ var wizard_viewmodel = (function () {
         && !self.enrollment_case.omit_actively_at_work && !product.product_data.is_guaranteed_issue;
     };
 
+    self.requires_actively_at_work = ko.pureComputed(function () {
+      return !self.enrollment_case.omit_actively_at_work && self.did_select_any_fpp_product();
+    });
+
     init_applicants();
 
     init_jquery_validator();
