@@ -1056,7 +1056,12 @@ var wizard_viewmodel = (function () {
 
     _.defaults(self.enrollment_case, {omit_actively_at_work: false});
 
-    self.should_show_actively_at_work = function (product) {
+    self.should_show_actively_at_work = function (product, applicant) {
+      applicant = typeof applicant !== 'undefined' ? applicant : null;
+      if (applicant) {
+      return applicant.type === wizard_applicant.Applicant.EmployeeType && _.startsWith(product.product_data.base_product_type, "FPP")
+        && !self.enrollment_case.omit_actively_at_work && !product.product_data.is_guaranteed_issue;
+      }
       return _.startsWith(product.product_data.base_product_type, "FPP")
         && !self.enrollment_case.omit_actively_at_work && !product.product_data.is_guaranteed_issue;
     };
@@ -1599,7 +1604,8 @@ var wizard_viewmodel = (function () {
           options.health_questions,
           options.employee_questions,
           self.applicant_list,
-          self.enrollment_case.omit_actively_at_work
+          self.enrollment_case.omit_actively_at_work,
+          self.is_employee_actively_at_work
         );
       });
     });

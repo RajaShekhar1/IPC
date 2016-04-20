@@ -297,55 +297,6 @@
 
         <table class="table table-striped">
           <tbody>
-          <!--ko if: $root.should_show_actively_at_work(product_health_questions.product_coverage.product)-->
-
-          <tr>
-            <td>
-              <div class="row">
-                <div class="col-xs-12 col-sm-6">
-                  Is <span data-bind="text:$root.employee().name"></span> <a href="#actively_at_work_modal"
-                                                                             data-toggle="modal">actively at work?</a>
-                </div>
-                <div class="col-xs-12 col-sm-6">
-
-                  <div class="row">
-                    <div class="col-sm-3 btn-group no-padding-right">
-                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: new NonHealthQuestion('actively_at_work'),
-                                                      is_required: true,
-                                                      val: 'Yes',
-                                                      highlight: 'checkmark',
-                                                      onclick: function() {$root.is_employee_actively_at_work(true)},
-                                                      is_selected: $root.is_employee_actively_at_work() === true
-                                                      }">
-                        Yes
-                      </button>
-                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                      question: new NonHealthQuestion('actively_at_work'),
-                                                      is_required: true,
-                                                      val: 'No',
-                                                      highlight: 'checkmark',
-                                                      onclick: function() {$root.is_employee_actively_at_work(false)},
-                                                      is_selected: $root.is_employee_actively_at_work() === false
-                                                      }">
-                        No
-                      </button>
-                    </div>
-                    <div class="col-sm-3 btn-group no-padding-right"
-                         data-bind="if: product_health_questions.product_coverage.did_select_spouse_coverage"></div>
-
-
-                  </div>
-                </div>
-
-
-              </div>
-            </td>
-
-
-          </tr>
-          <!--/ko-->
-
           <!--ko foreach: product_health_questions.health_button_rows -->
           <tr data-bind="visible: question.does_any_applicant_need_to_answer">
             <td>
@@ -404,48 +355,6 @@
 
         <table class="table table-striped">
           <tbody>
-          <!--ko if: $root.should_show_actively_at_work(product_health_questions.product_coverage.product) -->
-          <tr>
-            <td>
-              <div class="row">
-                <div class="col-xs-12 col-sm-6">
-                  Is <span data-bind="text:$root.employee().name"></span> <a href="#actively_at_work_modal"
-                                                                             data-toggle="modal">actively at work?</a>
-                </div>
-
-                <div class="col-xs-12 col-sm-6">
-                  <div class="person-answer-small row">
-                    <div class="col-xs-3 col-xs-offset-2" data-bind="text: $root.employee().name()"></div>
-                    <div class="col-xs-7 btn-group">
-
-                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                              question: new NonHealthQuestion('actively_at_work'),
-                                                              product_health_questions: product_health_questions,
-                                                              is_required: true,
-                                                              val: 'Yes',
-                                                              highlight: 'checkmark',
-                                                              onclick: function() {$root.is_employee_actively_at_work(true)}
-                                                              }">
-                        Yes
-                      </button>
-                      <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                                                              question: new NonHealthQuestion('actively_at_work'),
-                                                              product_health_questions: product_health_questions,
-                                                              is_required: true,
-                                                              val: 'No',
-                                                              highlight: 'checkmark',
-                                                              onclick: function() {$root.is_employee_actively_at_work(false)}
-                                                              }">
-                        No
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </td>
-          </tr>
-          <!--/ko-->
-
           <!--ko foreach: product_health_questions.health_button_rows-->
           <tr data-bind="visible: question.does_any_applicant_need_to_answer">
             <td>
