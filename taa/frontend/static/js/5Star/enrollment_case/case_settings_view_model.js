@@ -1,5 +1,8 @@
 var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_case, settings, product_rate_levels) {
   var self = this;
+
+  _.defaults(case_data, {omit_actively_at_work: false});
+
   self.case_id = case_data.id;
   self.case_token = case_data.case_token;
   self.product_rate_levels = product_rate_levels || {};
@@ -43,6 +46,15 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     self.is_data_dirty(true);
     self.update_product_ordinals();
   });
+
+  self.has_fpp_products = ko.pureComputed(function () {
+    return _.any(self.products(), function (product) {
+      return _.startsWith(product.base_product_type, "FPP");
+    });
+  });
+
+  self.omit_actively_at_work = ko.observable(case_data.omit_actively_at_work);
+  self.omit_actively_at_work.subscribe(function () { self.is_data_dirty(true); });
 
   self.has_product_sort_selections = ko.pureComputed(function () {
     return !!self.sort_selected_products() && self.sort_selected_products().length > 0;
@@ -1246,7 +1258,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       is_stp: Boolean(self.has_agent_splits()),
       occupation_class_settings: _.map(self.occupation_classes(), function (occupation_class) {
         return occupation_class.serialize_object();
-      })
+      }),
+      omit_actively_at_work: self.omit_actively_at_work()
     };
   };
 

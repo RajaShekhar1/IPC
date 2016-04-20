@@ -20,19 +20,25 @@ var health_question_buttons = (function() {
     self.question = question;
     self.applicant = applicant;
     self.response = response;
+    self.options = _.defaults(options, { 'yes_text': 'Yes', 'no_text': 'No' });
 
     self.yes_text = options.yes_text || "Yes";
     self.no_text = options.yes_text || "No";
     self.yes_highlight = self.question.get_yes_highlight();
-    self.no_highlight = "checkmark";
+    self.no_highlight = self.question.get_no_highlight();
 
     self.handle_yes = function() {
       //console.log('Yes', self);
       self.response.value('Yes');
-      self.question.show_yes_dialogue(self.applicant);
+      if (self.question.action_name === HealthQuestions.Responses.Yes) {
+        self.question.show_yes_dialogue(self.applicant);
+      }
     };
     self.handle_no = function() {
       self.response.value('No');
+      if (self.question.action_name === HealthQuestions.Responses.No) {
+        self.question.show_yes_dialogue(self.applicant);
+      }
     };
 
     self.does_applicant_need_to_answer = ko.pureComputed(function() {
@@ -91,7 +97,7 @@ var health_question_buttons = (function() {
     }
 
     // fpp form
-    if (window.vm.did_select_any_fpp_product()) {
+    if (window.vm.requires_actively_at_work()) {
       if (window.vm.is_employee_actively_at_work() === null) {
         return false;
       }

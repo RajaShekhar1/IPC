@@ -82,6 +82,8 @@ class Case(CaseSerializer, db.Model):
     # Call center workflow setting
     should_use_call_center_workflow = db.Column(db.Boolean, server_default='FALSE', nullable=False)
 
+    omit_actively_at_work = db.Column(db.Boolean, server_default='FALSE', nullable=False)
+
     def get_product_names(self):
         return ','.join(p.name for p in self.products)
 

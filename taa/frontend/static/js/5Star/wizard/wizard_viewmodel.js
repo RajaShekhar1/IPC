@@ -1053,6 +1053,17 @@ var wizard_viewmodel = (function () {
     self.is_rate_table_loading = product_rates_service.is_loading_rates;
     self.is_show_rates_clicked = ko.observable(false);
 
+    _.defaults(self.enrollment_case, {omit_actively_at_work: false});
+
+    self.should_show_actively_at_work = function (product) {
+      return _.startsWith(product.product_data.base_product_type, "FPP")
+        && !self.enrollment_case.omit_actively_at_work && !product.product_data.is_guaranteed_issue;
+    };
+
+    self.requires_actively_at_work = ko.pureComputed(function () {
+      return !self.enrollment_case.omit_actively_at_work && self.did_select_any_fpp_product();
+    });
+
     init_applicants();
 
     init_jquery_validator();
@@ -1616,7 +1627,10 @@ var wizard_viewmodel = (function () {
         return new health_questions.ProductHealthQuestions(
           product_cov,
           options.spouse_questions,
-          options.health_questions
+          options.health_questions,
+          options.employee_questions,
+          self.applicant_list,
+          self.enrollment_case.omit_actively_at_work
         );
       });
     });

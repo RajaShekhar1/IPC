@@ -136,6 +136,14 @@ def in_person_enrollment():
 
 
 def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False):
+
+    # As part of address debugging, log the user-agent.
+    user_agent = request.user_agent
+    print("[BEGINNING ENROLLMENT] [Platform: '{}', browser: '{}', version: '{}', language: '{}', user_agent: '{}']".format(
+        user_agent.platform, user_agent.browser, user_agent.version, user_agent.language,
+        request.headers.get('User-Agent')
+    ))
+
     # Defaults for session enrollment variables.
     session['active_case_id'] = case.id
     session['enrolling_census_record_id'] = None
@@ -216,8 +224,12 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         soh_questions[product.id] = StatementOfHealthQuestionService().get_health_questions(product, state)
 
     spouse_questions = {}
+    employee_questions = {}
+    health_question_service = LookupService('StatementOfHealthQuestionService')
+    """:type: taa.services.products.StatementOfHealthQuestionService"""
     for product in products:
-        spouse_questions[product.id] = StatementOfHealthQuestionService().get_spouse_questions(product, state)
+        employee_questions[product.id] = health_question_service.get_employee_questions(product, state)
+        spouse_questions[product.id] = health_question_service.get_spouse_questions(product, state)
 
     # New wizard formatting for multiproduct.
     applicants = []
@@ -263,10 +275,12 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'record_id': record_id,
             'product_height_weight_tables': height_weight_tables,
             'occupations': occupations,
+            'omit_actively_at_work': case.omit_actively_at_work,
         },
         applicants=applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in case.products],
         payment_modes=payment_mode_choices,
+        employee_questions=employee_questions,
         spouse_questions=spouse_questions,
         health_questions=soh_questions,
         any_fpp_product=any_fpp_product,
@@ -418,6 +432,20 @@ def submit_wizard_data():
     wizard_results = data['wizard_results']
     print("[ENROLLMENT SUBMITTED]")
 
+    # As part of address debugging, log the user-agent.
+    user_agent = request.user_agent
+    print("[Platform: '{}', browser: '{}', version: '{}', language: '{}', user_agent: '{}']".format(
+        user_agent.platform, user_agent.browser, user_agent.version, user_agent.language,
+        request.headers.get('User-Agent')
+    ))
+
+    # Hotfix 4/5/2016: Attempt to track down user data that is causing blank address data.
+    emp_data = wizard_results[0].get('employee', {})
+    if emp_data.get('address1', '') == '' or emp_data.get('city', '') == '' or emp_data.get('zip', '') == '':
+        print("[MISSING ADDRESS ERROR DEBUG]")
+        print("Received: {}".format(wizard_results))
+        raise ValueError("The address was missing in the wizard submission data, refusing to create enrollment data.")
+    
     try:
         enrollment = process_wizard_submission(case, wizard_results)
 

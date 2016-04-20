@@ -5,13 +5,11 @@ from dateutil.relativedelta import *
 from datetime import date
 from decimal import Decimal
 
-
 from taa.services.docusign.service import DocuSignServerTemplate, DocuSignTextTab, DocuSignRadioTab
 from taa.services.docusign.DocuSign_config import get_template_id
 
 
 class FPPTemplate(DocuSignServerTemplate):
-
     def __init__(self, recipients, enrollment_data, use_docusign_renderer):
 
         product_code = enrollment_data.get_product().get_base_product_code()
@@ -43,7 +41,7 @@ class FPPTemplate(DocuSignServerTemplate):
         # NAIC states and MI have a special rule to attach the form if the replacement question is 'No'
         from taa.services.products.product_forms import generic_fpp_replacement_form
         if (self.data['enrollState'] in (generic_fpp_replacement_form.statecodes + ['MI'])
-                and not self.data['replacing_insurance']):
+            and not self.data['replacing_insurance']):
             return True
 
         # Self-enroll needs to be given the form if the existing question is Yes.
@@ -91,11 +89,19 @@ class FPPTemplate(DocuSignServerTemplate):
         elif self.data.should_use_call_center_workflow() and purpose == self.DOCUSIGN_TABS:
 
             # find the existingInsAgent and replaceAgent tabs and set the value to what the employee indicated as a default.
-            existing_tab_yes = next(ifilter(lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'existingInsAgent' and t.value == "yes", tabs), None)
-            existing_tab_no = next(ifilter(lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'existingInsAgent' and t.value == "no", tabs), None)
+            existing_tab_yes = next(ifilter(
+                lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'existingInsAgent' and t.value == "yes",
+                tabs), None)
+            existing_tab_no = next(ifilter(
+                lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'existingInsAgent' and t.value == "no",
+                tabs), None)
 
-            replace_tab_yes = next(ifilter(lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'replaceAgent' and t.value == "yes", tabs), None)
-            replace_tab_no = next(ifilter(lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'replaceAgent' and t.value == "no", tabs), None)
+            replace_tab_yes = next(ifilter(
+                lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'replaceAgent' and t.value == "yes",
+                tabs), None)
+            replace_tab_no = next(ifilter(
+                lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'replaceAgent' and t.value == "no", tabs),
+                                  None)
 
             if existing_tab_yes:
                 existing_tab_yes.is_selected = self.data['existing_insurance']
@@ -136,8 +142,7 @@ class FPPTemplate(DocuSignServerTemplate):
 
             # only include Owner checkbox if coverage was selected
             if ((prefix_short == "ee" and self.data.did_employee_select_coverage())
-                    or (prefix_short == "sp" and self.data.did_spouse_select_coverage())):
-
+                or (prefix_short == "sp" and self.data.did_spouse_select_coverage())):
                 tabs.append(DocuSignRadioTab(prefix_short + "Owner", self.data[prefix_long + "_owner"]))
         return tabs
 
@@ -183,12 +188,14 @@ class FPPTemplate(DocuSignServerTemplate):
         if self.data.did_spouse_select_coverage():
             # Special treatment for first two questions (non-health questions)
             if self.data['has_spouse_been_treated_6_months'] in ['Yes', 'No']:
-                sp_tabs_list += [DocuSignRadioTab('spouse_hospital_six_months', self.data['has_spouse_been_treated_6_months'].lower())]
+                sp_tabs_list += [DocuSignRadioTab('spouse_hospital_six_months',
+                                                  self.data['has_spouse_been_treated_6_months'].lower())]
             elif str(self.data['has_spouse_been_treated_6_months']).upper() == 'GI':
                 sp_tabs_list += [DocuSignTextTab('spouse_hospital_six_months_gi', 'GI')]
 
             if self.data['has_spouse_been_disabled_6_months'] in ['Yes', 'No']:
-                sp_tabs_list += [DocuSignRadioTab('spouse_disability_six_months', self.data['has_spouse_been_disabled_6_months'].lower())]
+                sp_tabs_list += [DocuSignRadioTab('spouse_disability_six_months',
+                                                  self.data['has_spouse_been_disabled_6_months'].lower())]
             elif str(self.data['has_spouse_been_disabled_6_months']).upper() == 'GI':
                 sp_tabs_list += [DocuSignTextTab('spouse_disability_six_months_gi', 'GI')]
 
@@ -205,8 +212,8 @@ class FPPTemplate(DocuSignServerTemplate):
                 continue
 
             tabs += self.add_child_data_tabs(i)
-            tabs += self.generate_SOH_tabs("c%s"%(i+1), self.data.get_child_soh_questions(i))
-            tabs += self.generate_SOH_GI_tabs("c%s"%(i+1), self.data.get_child_soh_questions(i))
+            tabs += self.generate_SOH_tabs("c%s" % (i + 1), self.data.get_child_soh_questions(i))
+            tabs += self.generate_SOH_GI_tabs("c%s" % (i + 1), self.data.get_child_soh_questions(i))
 
         if self.is_child_attachment_form_needed():
             tabs += [DocuSignTextTab('extra_children_notice', "SEE ATTACHED FOR ADDITIONAL CHILDREN")]
@@ -224,8 +231,10 @@ class FPPTemplate(DocuSignServerTemplate):
             DocuSignTextTab(child_prefix + "LName", child_data['last']),
             DocuSignTextTab(child_prefix + "DOB", child_data['birthdate']),
             DocuSignTextTab(child_prefix + "SSN", self.format_ssn(child_data['ssn'])),
-            DocuSignTextTab(child_prefix + "Coverage", format(Decimal(unicode(child_coverage["face_value"]), 'utf-8'), ",.0f") if child_coverage else ""),
-            DocuSignTextTab(child_prefix + "Premium", format(Decimal(unicode(child_coverage["premium"]), 'utf-8'), ",.2f") if child_coverage else ""),
+            DocuSignTextTab(child_prefix + "Coverage", format(Decimal(unicode(child_coverage["face_value"]), 'utf-8'),
+                                                              ",.0f") if child_coverage else ""),
+            DocuSignTextTab(child_prefix + "Premium", format(Decimal(unicode(child_coverage["premium"]), 'utf-8'),
+                                                             ",.2f") if child_coverage else ""),
             DocuSignRadioTab(child_prefix + "Gender", child_data["gender"]),
         ]
 
@@ -278,7 +287,6 @@ class FPPTemplate(DocuSignServerTemplate):
                 (long_prefix == "spouse" and not self.data.did_spouse_select_coverage())):
             return tabs
 
-
         if self.data.has_multiple_beneficiaries():
             # All beneficiary data is attached to a separate document in this case.
             tabs.append(DocuSignTextTab('eeBene_notice', 'SEE ATTACHED'))
@@ -292,7 +300,7 @@ class FPPTemplate(DocuSignServerTemplate):
         if contingent_type_key in self.data and self.data[contingent_type_key] == 'spouse':
             spouse_data = self.data["employee"] if long_prefix == "spouse" else self.data["spouse"]
             tabs += self.make_beneficiary_tabs(
-                prefix=short_prefix+"Cont",
+                prefix=short_prefix + "Cont",
                 name=spouse_data["first"] + " " + spouse_data["last"],
                 relationship="Spouse",
                 dob=spouse_data.get("birthdate", ''),
@@ -301,16 +309,16 @@ class FPPTemplate(DocuSignServerTemplate):
         elif contingent_type_key in self.data and self.data[contingent_type_key] == 'other':
             key_prefix = '{}_contingent_beneficiary1'.format(long_prefix)
             bene_name = self.data['{}_name'.format(key_prefix)]
-            bene_rel = self.data[key_prefix+'_relationship']
-            bene_ssn = self.data[key_prefix+'_ssn']
-            bene_dob = self.data[key_prefix+'_dob']
+            bene_rel = self.data[key_prefix + '_relationship']
+            bene_ssn = self.data[key_prefix + '_ssn']
+            bene_dob = self.data[key_prefix + '_dob']
 
             tabs += self.make_beneficiary_tabs(prefix='{}Cont'.format(short_prefix),
-                                       name=bene_name,
-                                       relationship=bene_rel,
-                                       ssn=bene_ssn,
-                                       dob=bene_dob,
-            )
+                                               name=bene_name,
+                                               relationship=bene_rel,
+                                               ssn=bene_ssn,
+                                               dob=bene_dob,
+                                               )
 
         return tabs
 
@@ -327,11 +335,11 @@ class FPPTemplate(DocuSignServerTemplate):
             )
         else:
             return self.make_beneficiary_tabs(
-                prefix = short_prefix,
-                name = self.data.get("{}_beneficiary1_name".format(long_prefix), ''),
-                relationship = self.data.get("{}_beneficiary1_relationship".format(long_prefix), ''),
-                dob = self.data.get("{}_beneficiary1_dob".format(long_prefix), ''),
-                ssn = self.data.get("{}_beneficiary1_ssn".format(long_prefix), ''),
+                prefix=short_prefix,
+                name=self.data.get("{}_beneficiary1_name".format(long_prefix), ''),
+                relationship=self.data.get("{}_beneficiary1_relationship".format(long_prefix), ''),
+                dob=self.data.get("{}_beneficiary1_dob".format(long_prefix), ''),
+                ssn=self.data.get("{}_beneficiary1_ssn".format(long_prefix), ''),
             )
 
     def make_payment_mode_tabs(self):
@@ -347,11 +355,12 @@ class FPPTemplate(DocuSignServerTemplate):
         agent_signing_name = self.data.get_agent_signing_name()
 
         if self.data['spouse_owner'] == "other":
-            spouse_owner_notice = u"SPOUSE POLICY OWNER: {}, {}".format(self.data['spouse_other_owner_name'], self.data['spouse_other_owner_ssn'])
+            spouse_owner_notice = u"SPOUSE POLICY OWNER: {}, {}".format(self.data['spouse_other_owner_name'],
+                                                                        self.data['spouse_other_owner_ssn'])
         elif self.data['spouse_owner'] == "self":
             # Spouse data
             spouse_owner_notice = u"SPOUSE POLICY OWNER: {}, {}".format(self.data.get_spouse_name(),
-                                                                       self.data.get_spouse_ssn())
+                                                                        self.data.get_spouse_ssn())
         else:
             spouse_owner_notice = ""
 
@@ -374,21 +383,24 @@ class FPPTemplate(DocuSignServerTemplate):
                     rider_tabs.append(DocuSignRadioTab(tab_name, 'yes'))
 
         return [
-            DocuSignTextTab('eeEnrollCityState', self.data["enrollCity"] + ", " + self.data["enrollState"]),
-            DocuSignTextTab('eeEnrollCity', self.data['enrollCity']),
-            DocuSignTextTab('eeEnrollState', self.data['enrollState']),
-            DocuSignTextTab('date_of_hire', self.data['identityToken']),
-            DocuSignTextTab('agentCode', agent_code),
-            DocuSignTextTab('agentSignName', agent_signing_name),
-            DocuSignTextTab('Employer', self.data.get_employer_name()),
-            DocuSignTextTab('eeOtherOwnerName', self.data["employee_other_owner_name"] if self.data["employee_owner"] == "other" else  ""),
-            DocuSignTextTab('eeOtherOwnerName2', self.data["employee_other_owner_name"] if self.data["employee_owner"] == "other" else  ""),
-            DocuSignTextTab('eeOtherOwnerSSN', self.data["employee_other_owner_ssn"] if self.data["employee_owner"] == "other" else  ""),
-            DocuSignTextTab('spouse_owner_notice', spouse_owner_notice),
-            DocuSignTextTab('eeEmailPart1', ee_email_part_1),
-            DocuSignTextTab('eeEmailPart2', ee_email_part_2),
-            DocuSignRadioTab('actively_at_work', "yes" if self.data['is_employee_actively_at_work'] else "no"),
-        ] + rider_tabs
+                   DocuSignTextTab('eeEnrollCityState', self.data["enrollCity"] + ", " + self.data["enrollState"]),
+                   DocuSignTextTab('eeEnrollCity', self.data['enrollCity']),
+                   DocuSignTextTab('eeEnrollState', self.data['enrollState']),
+                   DocuSignTextTab('date_of_hire', self.data['identityToken']),
+                   DocuSignTextTab('agentCode', agent_code),
+                   DocuSignTextTab('agentSignName', agent_signing_name),
+                   DocuSignTextTab('Employer', self.data.get_employer_name()),
+                   DocuSignTextTab('eeOtherOwnerName', self.data["employee_other_owner_name"] if self.data[
+                                                                                                     "employee_owner"] == "other" else  ""),
+                   DocuSignTextTab('eeOtherOwnerName2', self.data["employee_other_owner_name"] if self.data[
+                                                                                                      "employee_owner"] == "other" else  ""),
+                   DocuSignTextTab('eeOtherOwnerSSN', self.data["employee_other_owner_ssn"] if self.data[
+                                                                                                   "employee_owner"] == "other" else  ""),
+                   DocuSignTextTab('spouse_owner_notice', spouse_owner_notice),
+                   DocuSignTextTab('eeEmailPart1', ee_email_part_1),
+                   DocuSignTextTab('eeEmailPart2', ee_email_part_2),
+                   DocuSignRadioTab('actively_at_work', self.data.get_actively_at_work()),
+               ] + rider_tabs
 
     def make_contact_tabs(self, prefix, data):
 
@@ -407,7 +419,7 @@ class FPPTemplate(DocuSignServerTemplate):
             address = data['address1']
 
         return [
-            DocuSignTextTab(prefix+'Address', address),
+            DocuSignTextTab(prefix + 'Address', address),
             DocuSignTextTab(prefix + 'City', data['city']),
             DocuSignTextTab(prefix + 'State', data['state']),
             DocuSignTextTab(prefix + 'Zip', data['zip']),
@@ -416,11 +428,11 @@ class FPPTemplate(DocuSignServerTemplate):
     def make_beneficiary_tabs(self, prefix, name, relationship, dob, ssn):
 
         return [
-            DocuSignTextTab(prefix+"BeneFullName", name),
-            DocuSignTextTab(prefix+"BeneAge", self.get_age_from_dob(dob)),
-            DocuSignTextTab(prefix+"BeneRelationship", relationship),
-            DocuSignTextTab(prefix+"BeneDOB", dob),
-            DocuSignTextTab(prefix+"BeneSSN", self.format_ssn(ssn)),
+            DocuSignTextTab(prefix + "BeneFullName", name),
+            DocuSignTextTab(prefix + "BeneAge", self.get_age_from_dob(dob)),
+            DocuSignTextTab(prefix + "BeneRelationship", relationship),
+            DocuSignTextTab(prefix + "BeneDOB", dob),
+            DocuSignTextTab(prefix + "BeneSSN", self.format_ssn(ssn)),
         ]
 
     def format_ssn(self, ssn):
@@ -438,10 +450,9 @@ class FPPTemplate(DocuSignServerTemplate):
             ''.join(digits[5:9])
         )
 
-
     def get_age_from_dob(self, dob):
         if dob and dateutil_parse(dob):
-            return "%d"%relativedelta(date.today(), dateutil_parse(dob)).years
+            return "%d" % relativedelta(date.today(), dateutil_parse(dob)).years
         else:
             return ""
 
@@ -451,9 +462,9 @@ class FPPTemplate(DocuSignServerTemplate):
         radio_tabs = []
         for i, soh_question in enumerate(q for q in soh_questions if not q.get('is_spouse_only')):
             if soh_question['answer'] and soh_question['answer'].lower() == "no":
-                radio_tabs.append(DocuSignRadioTab(prefix + "SOH" + str(i+1), "no"))
+                radio_tabs.append(DocuSignRadioTab(prefix + "SOH" + str(i + 1), "no"))
             elif soh_question['answer'] and soh_question['answer'].lower() == "yes":
-                radio_tabs.append(DocuSignRadioTab(prefix + "SOH" + str(i+1), "yes"))
+                radio_tabs.append(DocuSignRadioTab(prefix + "SOH" + str(i + 1), "yes"))
 
         return radio_tabs
 
@@ -466,7 +477,7 @@ class FPPTemplate(DocuSignServerTemplate):
             else:
                 answer = ""
 
-            tabs.append(DocuSignTextTab("{prefix}SOH{i}gi".format(prefix=prefix, i=i+1), answer))
+            tabs.append(DocuSignTextTab("{prefix}SOH{i}gi".format(prefix=prefix, i=i + 1), answer))
 
         return tabs
 
@@ -500,4 +511,3 @@ class FPPTemplate(DocuSignServerTemplate):
             return 'FPPCI'
 
         return "FPPTI"
-
