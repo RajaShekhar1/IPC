@@ -167,16 +167,21 @@ var health_questions = (function () {
           };
         } else {
           question_factory = function (question_data) {
+            if (question_data.label === 'Employee Actively at Work') {
+              return new ActivelyAtWorkHealthQuestion(
+                question_data,
+                product_coverage,
+                applicant,
+                actively_at_work_observable
+              );
+            }
             return new StandardHealthQuestion(question_data, product_coverage);
           }
         }
         questions = _.chain(product_questions)
           .filter(function (question) {
             if (question.label === 'Employee Actively at Work') {
-              if (product_data.is_guaranteed_issue) {
-                return !omit_actively_at_work_question;
-              }
-              return false;
+              return !omit_actively_at_work_question;
             }
             return true;
           })
@@ -833,6 +838,40 @@ GIHealthQuestion.prototype.does_yes_stop_app = function () {
 
   // Otherwise, clicking YES always stops (but will show the reduce/remove dialogue if optional).
   return true;
+};
+
+function ActivelyAtWorkHealthQuestion(question, product_coverage, employee, actively_at_work_observable) {
+  "use strict";
+  var self = this;
+  StandardHealthQuestion.call(self, question, product_coverage);
+  self.employee = employee;
+  self.value = actively_at_work_observable || ko.observable(null);
+  Object.defineProperty(self, 'action_name', {value: HealthQuestions.Responses.No});
+  Object.defineProperty(self, 'has_static_value', {value: true});
+  self.does_spouse_need_to_answer = function () {
+    return false;
+  };
+  self.does_child_need_to_answer = function () {
+    return false;
+  };
+}
+
+ActivelyAtWorkHealthQuestion.prototype = Object.create(StandardHealthQuestion.prototype);
+
+ActivelyAtWorkHealthQuestion.prototype.get_question_text = function () {
+  return 'Is ' + this.employee.first() + ' <a href="#actively_at_work_modal" data-toggle="modal">actively at work?</a>';
+};
+
+ActivelyAtWorkHealthQuestion.prototype.get_yes_highlight = function () {
+  return 'checkmark';
+};
+
+ActivelyAtWorkHealthQuestion.prototype.get_no_highlight = function () {
+  return 'stop';
+};
+
+ActivelyAtWorkHealthQuestion.prototype.does_yes_stop_app = function () {
+  return false;
 };
 
 function ActivelyAtWorkGiHealthQuestion(product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions, employee, actively_at_work_observable) {
