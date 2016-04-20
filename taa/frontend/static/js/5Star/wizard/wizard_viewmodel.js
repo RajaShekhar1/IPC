@@ -1603,7 +1603,8 @@ var wizard_viewmodel = (function () {
           options.health_questions,
           options.employee_questions,
           self.applicant_list,
-          self.enrollment_case.omit_actively_at_work
+          self.enrollment_case.omit_actively_at_work,
+          self.is_employee_actively_at_work
         );
       });
     });

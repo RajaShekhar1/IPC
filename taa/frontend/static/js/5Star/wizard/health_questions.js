@@ -1,7 +1,7 @@
 var health_questions = (function () {
   'use strict';
   // View model for step 2
-  function ProductHealthQuestions(product_coverage, spouse_questions, all_health_questions, employee_questions, applicant_list, omit_actively_at_work) {
+  function ProductHealthQuestions(product_coverage, spouse_questions, all_health_questions, employee_questions, applicant_list, omit_actively_at_work, omit_actively_at_work_observable) {
     var self = this;
     self.product_coverage = product_coverage;
     self.applicant_list = applicant_list;
@@ -12,8 +12,8 @@ var health_questions = (function () {
     // TODO: Double check that this need to be computed since the ProductHealthQuestions object is instantiated once for each product.
     self.health_questions = ko.pureComputed(function () {
       var questions = [];
-      var emp_questions = health_questions.process_employee_question_data(employee_questions, self.product_coverage, self.employee, omit_actively_at_work);
-      var sp_questions = health_questions.process_spouse_question_data(spouse_questions, self.product_coverage, self.spouse, omit_actively_at_work);
+      var emp_questions = health_questions.process_employee_question_data(employee_questions, self.product_coverage, self.employee, omit_actively_at_work, omit_actively_at_work_observable);
+      var sp_questions = health_questions.process_spouse_question_data(spouse_questions, self.product_coverage, self.spouse, omit_actively_at_work, omit_actively_at_work_observable);
       var soh_questions = health_questions.process_health_question_data(all_health_questions, self.product_coverage);
       $.merge(questions, emp_questions);
       $.merge(questions, sp_questions);
@@ -133,7 +133,7 @@ var health_questions = (function () {
 
 
   // Create the spouse-specific HealthQuestion objects from the raw data provided by the server.
-  function process_applicant_question_data(question_data_by_product, product_coverage, applicant, omit_actively_at_work) {
+  function process_applicant_question_data(question_data_by_product, product_coverage, applicant, omit_actively_at_work, actively_at_work_observable) {
     // Build up the master list of questions for this product
     var questions = [];
     var product_data = product_coverage.product.product_data;
@@ -152,7 +152,8 @@ var health_questions = (function () {
                 product_data.gi_criteria,
                 product_data.statement_of_health_bypass_type,
                 product_data.bypassed_soh_questions,
-                applicant
+                applicant,
+                actively_at_work_observable
               );
             }
             return new GIHealthQuestion(
@@ -356,7 +357,7 @@ var StandardHealthQuestion = function (question, product_coverage) {
   };
 
   self.show_yes_dialogue = function (applicant, message) {
-    if (!self.does_yes_stop_app()) {
+    if (!self.does_question_stop_app()) {
       // No need to show anything, return.
       return;
     }
@@ -409,6 +410,7 @@ var StandardHealthQuestion = function (question, product_coverage) {
     });
   });
   Object.defineProperty(self, 'action_name', {value: HealthQuestions.Responses.Yes, configurable: true});
+  Object.defineProperty(self, 'has_static_value', {value: false, configurable: true});
 };
 
 StandardHealthQuestion.prototype.is_spouse_only = function () {
@@ -454,6 +456,10 @@ StandardHealthQuestion.prototype.can_applicant_skip_due_to_GI = function (applic
   }
 };
 
+StandardHealthQuestion.prototype.does_question_stop_app = function () {
+  return this.does_yes_stop_app() || this.does_no_stop_app();
+};
+
 StandardHealthQuestion.prototype.get_yes_highlight = function () {
   return this.does_yes_stop_app()? 'stop' : 'checkmark';
 };
@@ -462,6 +468,9 @@ StandardHealthQuestion.prototype.get_no_highlight = function () {
 };
 StandardHealthQuestion.prototype.does_yes_stop_app = function () {
   return !this.question.is_ignored;
+};
+StandardHealthQuestion.prototype.does_no_stop_app = function () {
+  return this.action_name === HealthQuestions.Responses.No;
 };
 
 var GIHealthQuestion = function (product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions) {
@@ -474,6 +483,7 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
   self.skip_mode = skip_mode;
   self.skipped_questions = skipped_questions;
   Object.defineProperty(self, 'action_name', {value: HealthQuestions.Responses.Yes, configurable: true});
+  Object.defineProperty(self, 'has_static_value', {value: false, configurable: true});
 
 
   self.get_criteria = function (applicant_type) {
@@ -575,7 +585,7 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
 
   self.show_yes_dialogue = function (applicant, message) {
 
-    if (!self.does_yes_stop_app()) {
+    if (!self.does_question_stop_app()) {
       // No need to show anything, return.
       return;
     }
@@ -825,12 +835,14 @@ GIHealthQuestion.prototype.does_yes_stop_app = function () {
   return true;
 };
 
-function ActivelyAtWorkGiHealthQuestion(product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions, employee) {
+function ActivelyAtWorkGiHealthQuestion(product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions, employee, actively_at_work_observable) {
   'use strict';
   var self = this;
   GIHealthQuestion.call(self, product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions);
   self.employee = employee;
+  self.value = actively_at_work_observable || ko.observable(null);
   Object.defineProperty(self, 'action_name', {value: HealthQuestions.Responses.No});
+  Object.defineProperty(self, 'has_static_value', {value: true});
   self.does_spouse_need_to_answer = function () {
     return false;
   };
@@ -851,6 +863,10 @@ ActivelyAtWorkGiHealthQuestion.prototype.get_yes_highlight = function () {
 
 ActivelyAtWorkGiHealthQuestion.prototype.get_no_highlight = function () {
   return 'stop';
+};
+
+ActivelyAtWorkGiHealthQuestion.prototype.does_yes_stop_app = function () {
+  return false;
 };
 
 function HealthQuestionAnswer(question, button_group, question_object) {
