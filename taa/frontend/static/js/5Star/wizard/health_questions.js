@@ -473,7 +473,7 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
   self.applicant_criteria = applicant_criteria;
   self.skip_mode = skip_mode;
   self.skipped_questions = skipped_questions;
-  Object.defineProperty(self, 'action_name', { value: HealthQuestions.Responses.Yes, configurable: true });
+  Object.defineProperty(self, 'action_name', {value: HealthQuestions.Responses.Yes, configurable: true});
 
 
   self.get_criteria = function (applicant_type) {
@@ -634,7 +634,7 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
     var face_amount = format_face_value(get_cumulative_coverage(applicant));
     var gi_amount = get_reduced_coverage_criteria(applicant).guarantee_issue_amount;
     var formatted_gi_amount = format_face_value(gi_amount);
-    action_name = typeof action_name !== 'undefined' ? action_name : 'yes';
+    action_name = typeof action_name !== 'undefined'? action_name : 'yes';
 
     return 'A "' + action_name + '" response to this question prohibits this person from obtaining the selected ' + face_amount + ' of coverage. You may proceed, however, by reducing your coverage to the guaranteed coverage amount of ' + formatted_gi_amount + '.' +
       '<br><br>Alternatively, you may remove this individual from the coverage selection altogether (in Step 1) before proceeding with the rest of the application.';
@@ -830,7 +830,13 @@ function ActivelyAtWorkGiHealthQuestion(product, question, product_coverage, app
   var self = this;
   GIHealthQuestion.call(self, product, question, product_coverage, applicant_criteria, skip_mode, skipped_questions);
   self.employee = employee;
-  Object.defineProperty(self, 'action_name', { value: HealthQuestions.Responses.No });
+  Object.defineProperty(self, 'action_name', {value: HealthQuestions.Responses.No});
+  self.does_spouse_need_to_answer = function () {
+    return false;
+  };
+  self.does_child_need_to_answer = function () {
+    return false;
+  };
 }
 
 ActivelyAtWorkGiHealthQuestion.prototype = Object.create(GIHealthQuestion.prototype);
