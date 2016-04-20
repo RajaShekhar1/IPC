@@ -430,32 +430,10 @@ def submit_wizard_data():
     print("[ENROLLMENT SUBMITTED]")
 
     # As part of address debugging, log the user-agent.
-    user_agent = request.user_agent
-    print("[Platform: '{}', browser: '{}', version: '{}', language: '{}', user_agent: '{}']".format(
-        user_agent.platform, user_agent.browser, user_agent.version, user_agent.language,
-        request.headers.get('User-Agent')
-    ))
+    log_user_agent()
 
     # Hotfix 4/5/2016: Attempt to track down user data that is causing blank address data.
-    emp_data = wizard_results[0].get('employee', {})
-    if emp_data.get('address1', '') == '' or emp_data.get('city', '') == '' or emp_data.get('zip', '') == '':
-        print("[MISSING ADDRESS ERROR DEBUG]")
-        print("Received: {}".format(wizard_results))
-
-        # Hotfix 4/16/2016: See if the alternative method of getting the data is present
-        if wizard_results[0].get('address_alternate'):
-            alt_address = wizard_results[0].get('address_alternate')
-            if alt_address.get('street1', '') != '' and alt_address.get('city', '') != '' and alt_address.get('zip', '') != '':
-                print("[ALTERNATE ADDRESS DEBUG SUCCEEDED: GOT {}]".format(alt_address))
-
-                from taa.tasks import send_admin_error_email
-                send_admin_error_email("ALTERNATE ADDRESS DEBUG SUCCEEDED", [])
-            else:
-                # Still a problem if we get here
-                raise ValueError("The address was missing in the wizard submission data, refusing to create enrollment data.")
-        else:
-            # Still a problem if we get here
-            raise ValueError("The address was missing in the wizard submission data, refusing to create enrollment data.")
+    fix_missing_address_bug(wizard_results)
     
     try:
         enrollment = process_wizard_submission(case, wizard_results)
@@ -475,6 +453,48 @@ def submit_wizard_data():
     except Exception:
         print(u"[ENROLLMENT SUBMISSION ERROR]: (case {}) {}".format(case_id, wizard_results))
         raise
+
+
+def log_user_agent():
+    user_agent = request.user_agent
+    print("[Platform: '{}', browser: '{}', version: '{}', language: '{}', user_agent: '{}']".format(
+        user_agent.platform, user_agent.browser, user_agent.version, user_agent.language,
+        request.headers.get('User-Agent')
+    ))
+
+
+def fix_missing_address_bug(wizard_results):
+    """
+    Due to some strange client-specific bugs, we occasionally get missing employee address data. The workaround
+    sends the data in a different object. If the workaround is successful, we patch that data in, otherwise we
+    reject the submission.
+    """
+    emp_data = wizard_results[0].get('employee', {})
+    if emp_data.get('address1', '') == '' or emp_data.get('city', '') == '' or emp_data.get('zip', '') == '':
+        print("[MISSING ADDRESS ERROR DEBUG]")
+        print("Received: {}".format(wizard_results))
+
+        # Hotfix 4/16/2016: See if the alternative method of getting the data is present
+        if wizard_results[0].get('address_alternate'):
+            alt_address = wizard_results[0].get('address_alternate')
+            if alt_address.get('street1', '') != '' and alt_address.get('city', '') != '' and alt_address.get('zip',
+                                                                                                              '') != '':
+                print("[ALTERNATE ADDRESS DEBUG SUCCEEDED: GOT {}]".format(alt_address))
+                # Patch in the alternate address in the employee data.
+                for wizard_result in wizard_results:
+                    wizard_result['employee']['address1'] = alt_address.get('street1', '')
+                    wizard_result['employee']['address2'] = alt_address.get('street2', '')
+                    wizard_result['employee']['city'] = alt_address.get('city', '')
+                    wizard_result['employee']['zip'] = alt_address.get('zip', '')
+
+            else:
+                # Still a problem if we get here
+                raise ValueError(
+                    "The address was missing in the wizard submission data, refusing to create enrollment data.")
+        else:
+            # Still a problem if we get here
+            raise ValueError(
+                "The address was missing in the wizard submission data, refusing to create enrollment data.")
 
 
 def process_wizard_submission(case, wizard_results):
