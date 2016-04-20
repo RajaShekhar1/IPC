@@ -43,7 +43,7 @@ function init_validation(ui) {
         }
 
         var selected_option = applicant_coverage.get_selected_coverage();
-        var applied_coverage_amount = (selected_option.is_valid()) ? selected_option.face_value : 0;
+        var applied_coverage_amount = (selected_option.is_valid())? selected_option.face_value : 0;
         var max_coverage_amount = applicant_coverage.product.get_maximum_coverage_amount(applicant_coverage.applicant);
 
         var name = applicant.name();
@@ -129,7 +129,8 @@ function init_validation(ui) {
       }
     }
     if (info.step === 3 && info.direction === 'next') {
-      if (!$('#step3-form').valid()) {
+      is_valid = $('#step3-form').valid();
+      if (!is_valid) {
         e.preventDefault();
         return;
       }
@@ -177,7 +178,9 @@ function init_validation(ui) {
 
   }).on('finished.fu.wizard', function (e) {
 
-    if (!$('#step6-form').valid()) return false;
+    if (!$('#step6-form').valid()) {
+      return false;
+    }
 
     // jQuery validator rule should be handling this, but it's not, so force a popup here
     if (ui.should_confirm_disclosure_notice()
@@ -327,6 +330,15 @@ function init_validation(ui) {
       }
     }
   });
+  $.validator.addMethod('city-state-zip-required', function () {
+    console.log('Employee City: ' + ui.employee().city());
+    console.log('Employee State: ' + ui.employee().state());
+    console.log('Employee Zip: ' + ui.employee().zip());
+
+    var result = !!ui.employee().city() && !!ui.employee().state() && !!ui.employee().zip();
+    console.log('Location Validation Result: '  + result);
+    return result;
+  }, "required");
 
   $('#step3-form').validate({
     errorElement: 'div',
@@ -345,9 +357,9 @@ function init_validation(ui) {
       eeGender: {required: true},
       eessn: {required: true},
       eeStreet1: {required: true},
-      eeCity: {required: true},
-      eeState: {required: true},
-      eeZip: {required: true},
+      eeCity: {'city-state-zip-required': true},
+      eeState: {'city-state-zip-required': true},
+      eeZip: {'city-state-zip-required': true},
       eeOwner: {required: true}
     },
 
@@ -518,18 +530,28 @@ function wizard_validate_success(e) {
 function wizard_error_placement(error, element) {
   if (element.is(':checkbox') || element.is(':radio')) {
     var controls = element.closest('div[class*="col-"]');
-    if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
-    else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
-  }
-  else if (element.is('.select2')) {
+    if (controls.find(':checkbox,:radio').length > 1) {
+      controls.append(error);
+    } else {
+      error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
+    }
+  } else if (element.is('.select2')) {
     error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
-  }
-  else if (element.is('.chosen-select')) {
+  } else if (element.is('.chosen-select')) {
     error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
+  } else if (element.is('#eeStreet1')) {
+    $('#street-error-anchor').remove();
+    var street_error_element = $('<div class="col-xs-12 col-sm-9 col-sm-offset-3" id="street-error-anchor"></div>');
+    street_error_element.insertAfter(element.parent().parent()).append(error);
+  } else if (element.is('#eeCity') || element.is('#eeState') || element.is('#eeZip')) {
+    $('#city-state-zip-error-anchor').remove();
+    var city_state_zip_element = $('<div class="col-xs-12 col-sm-9 col-sm-offset-3" id="city-state-zip-error-anchor"></div>');
+    city_state_zip_element.insertAfter(element.parent()).append(error);
   } else if (element.closest('.form-group').length > 0) {
     error.appendTo(element.closest('.form-group'));
+  } else {
+    error.insertAfter(element);
   }
-  else error.insertAfter(element);
   //else error.insertAfter(element.parent());
 }
 

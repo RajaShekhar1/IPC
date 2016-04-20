@@ -235,13 +235,13 @@ class EnrollmentSubmissionService(object):
         :param gpg: GPG to load the key into
         :type gpg: gnupg.GPG
         """
-        result = gpg.import_keys(DELL_FTP_PGP_KEY)
-        if not result.ok:
+        import_result = gpg.import_keys(DELL_FTP_PGP_KEY)
+        if len(import_result.results) == 0 or not all((r.get('status').strip() in import_result._ok_reason.values() for r in import_result.results)):
             raise Exception
 
     def __initialize_gpg(self):
-        gpg = gnupg.GPG(binary=GNUPG_DIR)
-        self.__initialize_pgp_key(gpg)
+        self.__gpg = gnupg.GPG(binary=GNUPG_DIR)
+        self.__initialize_pgp_key(self.__gpg)
 
     def pgp_encrypt_string(self, data, recipient_id=DELL_FTP_PGP_KEY_ID):
         """
@@ -253,9 +253,11 @@ class EnrollmentSubmissionService(object):
         :rtype: str
         """
         # noinspection PyBroadException
+        if self.__gpg is None:
+            self.__initialize_gpg()
         try:
             return self.__gpg.encrypt(data, recipient_id)
-        except Exception:
+        except Exception as exception:
             return None
 
     def submit_hi_acc_export_to_dell(self, csv_data):

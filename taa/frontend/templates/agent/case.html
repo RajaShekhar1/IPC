@@ -321,7 +321,16 @@
                                     </label>
                                   </div>
                                 </div>
-
+                                <div class="row" data-bind="visible: has_fpp_products">
+                                  <div class="form-group">
+                                    <div class="col-xs-offset-3 col-xs-9">
+                                      <input id="omit-actively-at-work" name="omit-actively-at-work" class="ace"
+                                             type="checkbox" data-bind="checked: omit_actively_at_work">
+                                      <label class="lbl" for="omit-actively-at-work"> Omit 'Actively at Work'
+                                        question</label>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             {% endif %}
                             {% if not case_has_enrollments %}
@@ -1128,7 +1137,7 @@ we load from the server at run time for page speed
           <div class="modal-footer">
             <div class="pull-right">
               <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-              <button class="btn btn-warning" data-dismiss="modal" data-bind="click: confirm_remove_occupation_class">
+              <button class="btn btn-warning" data-dismiss="modal" data-bind="click: $root.confirm_remove_occupation_class">
                 Proceed
               </button>
             </div>

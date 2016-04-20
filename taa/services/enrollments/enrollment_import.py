@@ -178,6 +178,13 @@ class EnrollmentImportService(object):
             output['replacement_using_funds'] = False
             output['replacement_policies'] = []
 
+        output.update(
+            standardize_wizard_names(product_data, "employee")
+        )
+        output.update(
+            standardize_wizard_names(product_data, "spouse")
+        )
+
         # Update beneficiary data to new format
         output.update(
             standardize_wizard_beneficiaries(product_data, "employee")
@@ -220,6 +227,17 @@ def standardize_legacy_beneficiaries(data, out_prefix, prefix):
     out_data["{}_beneficiary1_ssn".format(out_prefix)] = val_or_blank(data, "{}_bene_ssn".format(prefix))
     out_data["{}_beneficiary1_percentage".format(out_prefix)] = 100
 
+    return out_data
+
+
+def standardize_wizard_names(data, prefix):
+    # Strip off unnecessary spaces on names.
+
+    out_data = {}
+    out_data[prefix] = data.get(prefix)
+    if out_data[prefix]:
+        out_data[prefix]["first"] = out_data[prefix].get("first", "").strip()
+        out_data[prefix]["last"] = out_data[prefix].get("last", "").strip()
     return out_data
 
 

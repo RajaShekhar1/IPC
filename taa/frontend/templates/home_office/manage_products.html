@@ -4,11 +4,11 @@
 
 {% block content %}
     <h1 class="header lighter">Manage Products</h1>
-    
+
     <div class="row">
         <div class="col-xs-12">
             <div class="table-header clearfix">
-                
+
                 <div class="pull-right">
                     <a class="btn btn-info" data-toggle="modal" data-target="#new-modal">
                         <i class="ace-icon fa fa-plus"></i>
@@ -29,7 +29,7 @@
                                 <th>Type</th>
                             </tr>
                         </thead>
-                        <tbody> 
+                        <tbody>
                         {% for product in products %}
                             <tr>
                                 <td><a href="{{ url_for("manage_custom_product", product_id=product.id) }}">{{ product.name }}</a></td>
@@ -40,10 +40,10 @@
                     </table>
                 </div>
             {% endif %}
-            
+
         </div>
     </div>
-        
+
     <form class="new-form form-horizontal" data-bind="submit: create_product">
     <div id="new-modal" class="modal fade">
         <div class="modal-dialog">
@@ -62,13 +62,13 @@
                                     minlength="1" required data-bind="textInput: product_name">
                             </div>
                             <div class="col-md-1">
-                                <div class="ace-icon fa fa-spinner fa-spin grey bigger-150" 
+                                <div class="ace-icon fa fa-spinner fa-spin grey bigger-150"
                                      data-bind="visible: product_name.is_checking"></div>
-                                <div class="ace-icon fa fa-check green bigger-150" 
+                                <div class="ace-icon fa fa-check green bigger-150"
                                      data-bind="visible: product_name.is_unique() && !product_name.is_checking()"></div>
                             </div>
                         </div>
-                        <div class="row"> 
+                        <div class="row">
                             <div class="col-md-8 col-md-offset-3">
                                 <div class="error" data-bind="visible: product_name.has_been_checked, text: get_form_error"></div>
                             </div>
@@ -89,7 +89,7 @@
                         Creating new custom product...
                     </div>
                 </div>
-                    
+
                 <div class="modal-footer">
                     <div class="form-buttons" data-bind="visible: !is_creating()">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
@@ -104,11 +104,11 @@
         </div>
         <!-- /.modal-dialog -->
     </div>
-        
+
     </form>
-    
-    
-    
+
+
+
 {% endblock %}
 
 
@@ -119,12 +119,12 @@ $(function() {
     new_form.validate({
         messages: {name: "Product name is required"}
     });
-    
+
     function ManageProductsPage(base_product_options) {
         var self = this;
-        
+
         self.is_creating = ko.observable(false);
-        
+
         // update the value at most once every one second so we can check all at once 
         self.product_name = ko.observable(null).extend({ rateLimit: 250 });
         self.product_name.has_been_checked = ko.observable(false);
@@ -141,11 +141,11 @@ $(function() {
                 self.product_name.is_checking_request().abort();
                 self.product_name.is_checking_request(null);
             }
-            
+
             // Reset tracking vars
             self.product_name.is_checking(true);
             self.product_name.has_been_checked(false);
-            
+
             self.product_name.is_checking_request(
                 $.get("{{ url_for("products.get_products") }}", {by_name: value}, function(result) {
                     self.product_name.is_unique(result.data.length == 0);
@@ -154,16 +154,16 @@ $(function() {
                 }, "json")
             );
         };
-        
+
         self.is_create_button_enabled = ko.computed(function() {
-            return (self.product_name() != "" && self.product_name.is_checking() == false && 
+            return (self.product_name() != "" && self.product_name.is_checking() == false &&
                     self.product_name.is_unique() == true &&
                     self.base_product_id() != null
             );
         });
-        
+
         self.product_name.subscribe(self.check_name_uniqueness);
-        
+
         self.get_form_error = ko.computed(function() {
             if ($.trim(self.product_name()) == "") {
                 return "Product name is required.";
@@ -172,11 +172,11 @@ $(function() {
             }
             return "";
         });
-        
+
         self.create_product = function() {
             // validate UI
             new_form.valid();
-            
+
             var errors = self.get_form_error();
             if (errors) {
                 return false;
@@ -185,10 +185,10 @@ $(function() {
                 product_name: self.product_name(),
                 base_product_id: self.base_product_id()
             };
-            
+
             // Show loading modal while we are creating the product
             self.is_creating(true);
-            
+
             $.ajax("{{ url_for("products.create_product") }}", {
                 type: 'POST',
                 processData: false,
@@ -206,14 +206,14 @@ $(function() {
             });
         };
     }
-    
+
     $("#table-list").dataTable({
         "order": [[ 1, 'asc' ], [0, 'asc']]
     });
-    
+
     var form = new ManageProductsPage({{ base_product_options |tojson|safe }});
     window.form = form;
-    ko.applyBindings(form); 
+    ko.applyBindings(form);
 });
 </script>
 {% endblock %}

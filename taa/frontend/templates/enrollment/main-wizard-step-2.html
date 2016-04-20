@@ -7,55 +7,56 @@
 
     <script id="extended-information-template" type="text/html">
       <div class="row">
-          <h4 class="col-xs-12">Additional Qualification Questions for <span data-bind="text: first() + ' ' + last()"></span></h4>
-        </div>
-        <div class="form-group">
-          <!--ko if: $root.should_show_gender() -->
-          <div class="col-xs-10 col-sm-4">
-            <div>
-              <label style="margin-right: 1em;">
-                <input type="radio" value="male" class="ace"
-                       data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
-                <span class="lbl"> Male</span>
-              </label>
-              <label>
-                <input type="radio" value="female" class="ace"
-                       data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
-                <span class="lbl"> Female</span>
-              </label>
-            </div>
-          </div>
-          <!--/ko-->
-          <!--ko if: $root.should_show_smoker() -->
-          <div class="col-xs-10 col-sm-4">
+        <h4 class="col-xs-12">Additional Qualification Questions for <span
+            data-bind="text: first() + ' ' + last()"></span></h4>
+      </div>
+      <div class="form-group">
+        <!--ko if: $root.should_show_gender() -->
+        <div class="col-xs-10 col-sm-4">
+          <div>
             <label style="margin-right: 1em;">
-              <input type="radio" class="ace"
-                     data-bind="checked: is_smoker, checkedValue: false, attr: {name: 'tobacco-'+$data._id}">
-              <span class="lbl"> Non-Smoker</span>
+              <input type="radio" value="male" class="ace"
+                     data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
+              <span class="lbl"> Male</span>
             </label>
             <label>
-              <input type="radio" class="ace"
-                     data-bind="checked: is_smoker, checkedValue: true, attr: {name: 'tobacco-'+$data._id}">
-              <span class="lbl"> Smoker</span>
+              <input type="radio" value="female" class="ace"
+                     data-bind="checked: gender, attr: {name: 'gender-'+$data._id}">
+              <span class="lbl"> Female</span>
             </label>
           </div>
-          <!--/ko-->
         </div>
-        <div class="form-group" data-bind="attr: { id: type.toLowerCase() + '-height-weight' }">
-          <!--ko if: $root.should_show_height() -->
-          <div class="col-xs-10 col-sm-4">
-            <height-select class="height" params="value: height, name_suffix: $data._id+''"></height-select>
-          </div>
-          <!--/ko-->
-          <!--ko if: $root.should_show_weight() -->
-          <div class="col-xs-10 col-sm-4">
-            <label class="">
-              Weight: <input type="number" class="text-right" max="9999" min="0"
-                             data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
-            </label>
-          </div>
-          <!--/ko-->
+        <!--/ko-->
+        <!--ko if: $root.should_show_smoker() -->
+        <div class="col-xs-10 col-sm-4">
+          <label style="margin-right: 1em;">
+            <input type="radio" class="ace"
+                   data-bind="checked: is_smoker, checkedValue: false, attr: {name: 'tobacco-'+$data._id}">
+            <span class="lbl"> Non-Smoker</span>
+          </label>
+          <label>
+            <input type="radio" class="ace"
+                   data-bind="checked: is_smoker, checkedValue: true, attr: {name: 'tobacco-'+$data._id}">
+            <span class="lbl"> Smoker</span>
+          </label>
         </div>
+        <!--/ko-->
+      </div>
+      <div class="form-group" data-bind="attr: { id: type.toLowerCase() + '-height-weight' }">
+        <!--ko if: $root.should_show_height() -->
+        <div class="col-xs-10 col-sm-4">
+          <height-select class="height" params="value: height, name_suffix: $data._id+''"></height-select>
+        </div>
+        <!--/ko-->
+        <!--ko if: $root.should_show_weight() -->
+        <div class="col-xs-10 col-sm-4">
+          <label class="">
+            Weight: <input type="number" class="text-right" max="9999" min="0"
+                           data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
+          </label>
+        </div>
+        <!--/ko-->
+      </div>
     </script>
 
     <div id="extended-questions" data-bind="if: $root.requires_additional_information">
@@ -295,7 +296,7 @@
 
         <table class="table table-striped">
           <tbody>
-          <!--ko if: product_health_questions.product_coverage.product.is_fpp_product()-->
+          <!--ko if: $root.should_show_actively_at_work(product_health_questions.product_coverage.product)-->
 
           <tr>
             <td>
@@ -308,7 +309,6 @@
 
                   <div class="row">
                     <div class="col-sm-3 btn-group no-padding-right">
-
                       <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                                                       question: new NonHealthQuestion('actively_at_work'),
                                                       is_required: true,
@@ -403,7 +403,7 @@
 
         <table class="table table-striped">
           <tbody>
-          <!--ko if: product_health_questions.product_coverage.product.is_fpp_product()-->
+          <!--ko if: $root.should_show_actively_at_work(product_health_questions.product_coverage.product) -->
           <tr>
             <td>
               <div class="row">
