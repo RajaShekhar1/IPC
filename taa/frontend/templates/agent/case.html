@@ -372,22 +372,25 @@
                                 <div class="form-group"
                                      data-bind="visible: $root.is_case_occupation_class_eligible()">
 
-                                  <label class="col-md-3 control-label">Occupation Classes</label>
-                                  <div class="col-md-9">
+                                  <h4 class="col-md-3 control-label">Occupation Classes</h4>
+                                  <div class="col-md-4">
                                     <div>
-                                      <div
-                                          data-bind="template: { foreach: occupation_classes, as: 'occupation_class' }">
-                                        <div>
+
+                                      <div data-bind="template: { foreach: occupation_classes, as: 'occupation_class' }">
+                                        <div class="row" >
                                           <!-- ko if: occupation_class.label !== 'Default' -->
-                                          <button class="btn btn-xs btn-danger middle"
-                                                  title="Click to delete this occupation class"
-                                                  data-bind="click: $parent.removeOccupationClass">
-                                            <i class="ace-icon fa fa-trash-o"></i>
-                                          </button>
+                                            <div class="col-xs-1">
+                                              <h6 style="margin: 3px auto"><i class="ace-icon fa fa-trash-o text-danger"
+                                                     style="cursor: pointer;"
+                                                     data-bind="click: $parent.removeOccupationClass"></i>&nbsp;&nbsp;
+                                                </h6>
+                                            </div>
+                                            <div class="col-xs-11"><h6 style="margin: 3px auto" data-bind="text: occupation_class.label"></h6></div>
                                           <!-- /ko -->
-                                          <span data-bind="text: label"></span>
+
                                         </div>
                                       </div>
+
                                       <div>
                                         <input class="ace" size="10" id="new-occupation-class"
                                                data-bind="textInput: new_occupation_class, submit: addOccupationClass">
