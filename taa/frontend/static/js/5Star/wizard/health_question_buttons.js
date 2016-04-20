@@ -97,7 +97,7 @@ var health_question_buttons = (function() {
     }
 
     // fpp form
-    if (window.vm.did_select_any_fpp_product()) {
+    if (window.vm.requires_actively_at_work()) {
       if (window.vm.is_employee_actively_at_work() === null) {
         return false;
       }
