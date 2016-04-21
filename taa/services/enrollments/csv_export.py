@@ -188,7 +188,7 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                     spouse.get('first', '').upper(),
                     '',
                     spouse.get('last', '').upper(),
-                    spouse.get('gender', '').upper(),
+                    spouse.get('gender', '').upper() if spouse.get('gender', None) is not None else '',
                     'SPOUSE',
                     dateutil.parser.parse(spouse['birthdate']).strftime('%m/%d/%Y'),
                     # TODO: Determine how to populate 'handicapped' field
