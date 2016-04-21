@@ -75,7 +75,6 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
         header.extend([
             'Agent_{}'.format(index),
             'Commission Agent_{:02}'.format(index),
-            'Subcount Code_{:02}'.format(index),
         ])
 
     # Dependent info header
@@ -163,15 +162,20 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
             split_agents = filter(is_valid_agent_for_split, agents)
 
             row.extend([writing_agent.agent_code,
-                        writing_agent_split.split_percentage,
-                        writing_agent_split.commission_subcount_code])
+                        writing_agent_split.split_percentage])
             agent_spaces -= 1
-            for agent in split_agents[:agent_spaces]:
+            for idx in range(3):
+                if idx >= len(split_agents):
+                    row.extend(['', ''])
+                    print('Empty Agent %d: Extending by two' % idx)
+                    continue
+                agent = split_agents[idx]
                 split = next((s for s in agent_splits if s.agent_id == agent.id), None)
                 if split:
-                    row.extend([agent.agent_code, split.split_percentage, split.commission_subcount_code])
+                    row.extend([agent.agent_code, split.split_percentage])
                 else:
-                    row.extend([agent.agent_code, "", ""])
+                    row.extend([agent.agent_code, ""])
+                print('Found Agent %d: Extending by info' % idx)
 
             if agent_spaces > 0:
                 row.extend([''] * (agent_spaces - len(agents)) * 2)
