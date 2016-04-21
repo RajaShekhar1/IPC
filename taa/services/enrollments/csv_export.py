@@ -75,7 +75,6 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
         header.extend([
             'Agent_{}'.format(index),
             'Commission Agent_{:02}'.format(index),
-            'Subcount Code_{:02}'.format(index),
         ])
 
     # Dependent info header
@@ -131,19 +130,19 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                 data.get('signed_at_state') if data.get('signed_at_state') else data.get('enrollState'),
                 enrollment.signature_time.date().strftime('%m%d%Y'),
                 employee.get('occupation_class'),
-                employee['first'].upper(),
+                employee.get('first', '').upper(),
                 # No middle initial
                 '',
-                employee['last'].upper(),
-                employee['address1'].upper(),
-                employee['city'].upper(),
-                employee['state'].upper(),
+                employee.get('last', '').upper(),
+                employee.get('address1', '').upper(),
+                employee.get('city', '').upper(),
+                employee.get('state', '').upper(),
                 employee['zip'],
                 employee['phone'],
                 employee['ssn'],
                 dateutil.parser.parse(employee['birthdate']).strftime('%m%d%Y'),
-                employee['gender'].upper(),
-                'Y' if employee['is_smoker'] else 'N',
+                employee.get('gender', '').upper(),
+                'Y' if employee.get('is_smoker', False) else 'N',
                 'SELF',
                 data.get('employee_beneficiary1_name').upper(),
                 data.get('employee_beneficiary1_relationship').upper(),
@@ -163,15 +162,20 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
             split_agents = filter(is_valid_agent_for_split, agents)
 
             row.extend([writing_agent.agent_code,
-                        writing_agent_split.split_percentage,
-                        writing_agent_split.commission_subcount_code])
+                        writing_agent_split.split_percentage])
             agent_spaces -= 1
-            for agent in split_agents[:agent_spaces]:
+            for idx in range(3):
+                if idx >= len(split_agents):
+                    row.extend(['', ''])
+                    print('Empty Agent %d: Extending by two' % idx)
+                    continue
+                agent = split_agents[idx]
                 split = next((s for s in agent_splits if s.agent_id == agent.id), None)
                 if split:
-                    row.extend([agent.agent_code, split.split_percentage, split.commission_subcount_code])
+                    row.extend([agent.agent_code, split.split_percentage])
                 else:
-                    row.extend([agent.agent_code, "", ""])
+                    row.extend([agent.agent_code, ""])
+                print('Found Agent %d: Extending by info' % idx)
 
             if agent_spaces > 0:
                 row.extend([''] * (agent_spaces - len(agents)) * 2)
@@ -181,10 +185,10 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
             if coverage.coverage_selection in ['ES', 'EF']:
                 # Spouse is first dependent
                 row.extend([
-                    spouse['first'].upper(),
+                    spouse.get('first', '').upper(),
                     '',
-                    spouse['last'].upper(),
-                    spouse['gender'].upper(),
+                    spouse.get('last', '').upper(),
+                    spouse.get('gender', '').upper(),
                     'SPOUSE',
                     dateutil.parser.parse(spouse['birthdate']).strftime('%m/%d/%Y'),
                     # TODO: Determine how to populate 'handicapped' field
@@ -199,9 +203,9 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                         break
                     child = children[index]
                     row.extend([
-                        child['first'].upper(),
+                        child.get('first', '').upper(),
                         '',
-                        child['last'].upper(),
+                        child.get('last', '').upper(),
                         child.get('gender').lower() if child.get('gender') is not None else '',
                         'CHILD',
                         dateutil.parser.parse(child['birthdate']).strftime('%m/%d/%Y'),
