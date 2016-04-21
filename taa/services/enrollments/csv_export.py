@@ -130,19 +130,19 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                 data.get('signed_at_state') if data.get('signed_at_state') else data.get('enrollState'),
                 enrollment.signature_time.date().strftime('%m%d%Y'),
                 employee.get('occupation_class'),
-                employee['first'].upper(),
+                employee.get('first', '').upper(),
                 # No middle initial
                 '',
-                employee['last'].upper(),
-                employee['address1'].upper(),
-                employee['city'].upper(),
-                employee['state'].upper(),
+                employee.get('last', '').upper(),
+                employee.get('address1', '').upper(),
+                employee.get('city', '').upper(),
+                employee.get('state', '').upper(),
                 employee['zip'],
                 employee['phone'],
                 employee['ssn'],
                 dateutil.parser.parse(employee['birthdate']).strftime('%m%d%Y'),
-                employee['gender'].upper(),
-                'Y' if employee['is_smoker'] else 'N',
+                employee.get('gender', '').upper(),
+                'Y' if employee.get('is_smoker', False) else 'N',
                 'SELF',
                 data.get('employee_beneficiary1_name').upper(),
                 data.get('employee_beneficiary1_relationship').upper(),
@@ -185,10 +185,10 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
             if coverage.coverage_selection in ['ES', 'EF']:
                 # Spouse is first dependent
                 row.extend([
-                    spouse['first'].upper(),
+                    spouse.get('first', '').upper(),
                     '',
-                    spouse['last'].upper(),
-                    spouse['gender'].upper(),
+                    spouse.get('last', '').upper(),
+                    spouse.get('gender', '').upper(),
                     'SPOUSE',
                     dateutil.parser.parse(spouse['birthdate']).strftime('%m/%d/%Y'),
                     # TODO: Determine how to populate 'handicapped' field
@@ -203,9 +203,9 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                         break
                     child = children[index]
                     row.extend([
-                        child['first'].upper(),
+                        child.get('first', '').upper(),
                         '',
-                        child['last'].upper(),
+                        child.get('last', '').upper(),
                         child.get('gender').lower() if child.get('gender') is not None else '',
                         'CHILD',
                         dateutil.parser.parse(child['birthdate']).strftime('%m/%d/%Y'),
