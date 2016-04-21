@@ -75,6 +75,7 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
         header.extend([
             'Agent_{}'.format(index),
             'Commission Agent_{:02}'.format(index),
+            'Subcount Code_{:02}'.format(index)
         ])
 
     # Dependent info header
@@ -104,6 +105,8 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
         for data in json_data:
             # Skip over anyways
             if data.get('did_decline', True):
+                continue
+            if data.get('product_id', None) is None:
                 continue
             product = products_service.get(data['product_id'])
 
@@ -161,24 +164,18 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
 
             split_agents = filter(is_valid_agent_for_split, agents)
 
-            row.extend([writing_agent.agent_code,
-                        writing_agent_split.split_percentage])
+            row.extend(get_agent_cells(writing_agent, writing_agent_split))
             agent_spaces -= 1
             for idx in range(3):
                 if idx >= len(split_agents):
-                    row.extend(['', ''])
-                    print('Empty Agent %d: Extending by two' % idx)
+                    row.extend(['', '', ''])
                     continue
                 agent = split_agents[idx]
                 split = next((s for s in agent_splits if s.agent_id == agent.id), None)
                 if split:
-                    row.extend([agent.agent_code, split.split_percentage])
+                    row.extend(get_agent_cells(agent, split))
                 else:
-                    row.extend([agent.agent_code, ""])
-                print('Found Agent %d: Extending by info' % idx)
-
-            if agent_spaces > 0:
-                row.extend([''] * (agent_spaces - len(agents)) * 2)
+                    row.extend([agent.agent_code, '', ''])
 
             # Dependent info
             dep_spaces = 4
@@ -216,6 +213,10 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
             row.extend([''] * dep_spaces * 7)
             w.writerow(row)
     return output.getvalue()
+
+
+def get_agent_cells(agent, split):
+    return [agent.agent_code, split.split_percentage, split.commission_subcount_code]
 
 
 def get_writing_agent_for_case(case, product, agents, agent_splits, enrollment):
