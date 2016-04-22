@@ -267,6 +267,7 @@ class EnrollmentSubmissionService(object):
         :type csv_data: str
         """
         ftp = FTP(DELL_FTP_HOSTNAME)
+        ftp.set_pasv(False)
         ftp.login(DELL_FTP_USERNAME, DELL_FTP_PASSWORD)
         ftp.cwd(DELL_FTP_WORKING_DIRECTORY)
         encrypted_data = StringIO(self.pgp_encrypt_string(csv_data))
