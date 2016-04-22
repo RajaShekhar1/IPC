@@ -242,6 +242,17 @@ function build_wizard_results_for_product_coverage(product_cov) {
   // Rider data
   wizard_results.rider_data = product_cov.selected_riders.serialize_data();
 
+
+  // Alternative bug fix for missing address data on particular agent's computers.
+  //   Grab the employee address data directly without using the binding library.
+  wizard_results.address_alternate = {
+    street1: $("#eeStreet1").val(),
+    street2: $("#eeStreet2").val(),
+    city: $("#eeCity").val(),
+    state: $("#eeState").val(),
+    zip: $("#eeZip").val()
+  };
+
   return wizard_results;
 }
 

@@ -818,9 +818,10 @@ var wizard_viewmodel = (function () {
     },
 
     get_total_premium: function () {
-      // If this is an FPP product, and the applicant is a children group, we multiply the selected premium by the number of children.
+      // If this is an FPP product, and the applicant is a children group, we multiply the selected premium by the number of valid children.
       if (this.applicant.type === wizard_applicant.Applicant.ChildType && this.product.is_fpp_product()) {
-        return this.coverage_option().premium * this.applicant.applicants().length;
+        var num_valid_children = window.vm.applicant_list.get_valid_children().length;
+        return this.coverage_option().premium * num_valid_children;
       }
 
       return this.coverage_option().premium;
@@ -1055,13 +1056,25 @@ var wizard_viewmodel = (function () {
 
     _.defaults(self.enrollment_case, {omit_actively_at_work: false});
 
-    self.should_show_actively_at_work = function (product) {
+    self.should_show_actively_at_work = function (product, applicant) {
+      applicant = typeof applicant !== 'undefined'? applicant : null;
+      if (applicant) {
+        return applicant.type === wizard_applicant.Applicant.EmployeeType && _.startsWith(product.product_data.base_product_type, "FPP")
+          && !self.enrollment_case.omit_actively_at_work && !product.product_data.is_guaranteed_issue;
+      }
       return _.startsWith(product.product_data.base_product_type, "FPP")
         && !self.enrollment_case.omit_actively_at_work && !product.product_data.is_guaranteed_issue;
     };
 
     self.requires_actively_at_work = ko.pureComputed(function () {
-      return !self.enrollment_case.omit_actively_at_work && self.did_select_any_fpp_product();
+      return !self.enrollment_case.omit_actively_at_work &&
+        self.did_select_any_fpp_product() &&
+        _.chain(vm.selected_product_health_questions())
+          .map(function (q) { return q.health_questions(); })
+          .flatten()
+          .filter(function (question) { return question.question.label === 'Employee Actively at Work'; })
+          .any(function (question) { return question.does_any_applicant_need_to_answer(); })
+          .value();
     });
 
     init_applicants();
@@ -1441,6 +1454,15 @@ var wizard_viewmodel = (function () {
       return (self.has_show_rates_been_clicked() && self.can_display_rates_table());
     });
 
+
+    self.step_one_validation_error = ko.observable(null);
+    self.has_step_one_validation_error = ko.pureComputed(function () { return !!self.step_one_validation_error(); });
+    self.is_coverage_selection_visible.subscribe(function (value) {
+      if (value) {
+        self.step_one_validation_error(null);
+      }
+    });
+
     self.should_display_show_rates_button = ko.pureComputed(function () {
       return !self.is_coverage_selection_visible();
     });
@@ -1609,6 +1631,10 @@ var wizard_viewmodel = (function () {
       self.attempted_advance_step(true);
     };
 
+    self.show_coverage_options_visibility_error = function () {
+      self.attempted_advance_step(true);
+    };
+
     // Just for step 1 ...
     self.is_coverage_selection_valid = function () {
       return _.all(self.coverage_vm.product_coverage_viewmodels(), function (prod_cov) {
@@ -1630,7 +1656,8 @@ var wizard_viewmodel = (function () {
           options.health_questions,
           options.employee_questions,
           self.applicant_list,
-          self.enrollment_case.omit_actively_at_work
+          self.enrollment_case.omit_actively_at_work,
+          self.is_employee_actively_at_work
         );
       });
     });
@@ -2177,6 +2204,7 @@ var wizard_viewmodel = (function () {
           sp_height: "height_feet_1 height_inches_1"
         }
       });
+
 
       self.validators = {};
       self.validators.step1 = self.validator;

@@ -24,11 +24,12 @@ function init_validation(ui) {
       // trigger jquery validation
       is_valid = ui.validator.form();
 
-      if (!ui.is_coverage_selection_valid()) {
-
-        ui.show_no_selection_error();
+      if (!ui.is_coverage_selection_visible()) {
+        ui.step_one_validation_error('Please click \"Show Coverage Options\"');
         e.preventDefault();
         return;
+      } else {
+        ui.step_one_validation_error(null);
       }
 
       function validate_coverage_amount(applicant_coverage) {
@@ -79,6 +80,12 @@ function init_validation(ui) {
           return false;
         }
       });
+
+      if (!ui.is_coverage_selection_visible()) {
+        ui.show_coverage_options_visibility_error();
+        e.preventDefault();
+        return false;
+      }
 
       if (is_valid) {
         // Scroll to top of page when moving to step 2.
@@ -331,12 +338,7 @@ function init_validation(ui) {
     }
   });
   $.validator.addMethod('city-state-zip-required', function () {
-    console.log('Employee City: ' + ui.employee().city());
-    console.log('Employee State: ' + ui.employee().state());
-    console.log('Employee Zip: ' + ui.employee().zip());
-
     var result = !!ui.employee().city() && !!ui.employee().state() && !!ui.employee().zip();
-    console.log('Location Validation Result: '  + result);
     return result;
   }, "required");
 
