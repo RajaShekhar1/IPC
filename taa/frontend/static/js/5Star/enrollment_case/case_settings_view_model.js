@@ -1524,6 +1524,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
   };
 
+  self.has_general_product_configuration_options = ko.pureComputed(function () {
+    return self.has_fpp_products() || self.is_case_occupation_class_eligible();
+  });
+
   // Tabs
   var setup_tab = $('#case-nav-tabs a[href="#setup"]');
   var enrollment_tab = $('#case-nav-tabs a[href="#enrollment"]');
