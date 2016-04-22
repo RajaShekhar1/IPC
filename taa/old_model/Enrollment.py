@@ -52,7 +52,7 @@ class EmailGenerator(object):
         See https://mandrillapp.com/api/docs/messages.python.html
         """
         if not from_address:
-            from_address = app.config.get('MANDRILL_DEFAULT_FROM')
+            from_address = app.config.get('EMAIL_FROM_ADDRESS')
         try:
             result = mandrill_flask.send_email(
                 from_email=from_address,

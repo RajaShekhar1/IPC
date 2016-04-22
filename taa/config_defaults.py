@@ -62,14 +62,15 @@ else:
     ]
 
 # Email
-EMAIL_SMTP_SERVER = "smtp.mandrillapp.com"
+EMAIL_SMTP_SERVER = "smtp.sparkpostmail.com"
 EMAIL_SMTP_PORT = 587
-EMAIL_SMTP_USERNAME = env_get_text('MANDRILL_SMTP_USERNAME', "taa_mandrill")
-EMAIL_SMTP_PASSWORD =  env_get_text('MANDRILL_SMTP_PASSWORD', "-h0QL63ppE05jaU3aWvRjg")
-EMAIL_FROM_ADDRESS = "enrollment@5StarEnroll.com"
+EMAIL_SMTP_USERNAME = env_get_text('EMAIL_SMTP_USERNAME', "SMTP_Injection")
+EMAIL_SMTP_PASSWORD =  env_get_text('EMAIL_SMTP_PASSWORD', "9e628c0282fa64a3a8ae62338e03d96f47b5682b")
+EMAIL_FROM_ADDRESS = env_get_text('EMAIL_FROM_ADDRESS', "enrollment@5StarEnroll.com")
 
-MANDRILL_API_KEY = env_get_text('MANDRILL_API_KEY', "-h0QL63ppE05jaU3aWvRjg")
-MANDRILL_DEFAULT_FROM = env_get_text('MANDRILL_DEFAULT_FROM', "enrollment@5StarEnroll.com")
+SPARKPOST_API_KEY = "9e628c0282fa64a3a8ae62338e03d96f47b5682b"
+#MANDRILL_API_KEY = env_get_text('MANDRILL_API_KEY', "-h0QL63ppE05jaU3aWvRjg")
+#MANDRILL_DEFAULT_FROM = env_get_text('MANDRILL_DEFAULT_FROM', "enrollment@5StarEnroll.com")
 
 # Celery message broker (background task runner)
 BROKER_URL = env_get_text('CELERY_BROKER_URL', "amqp://")
