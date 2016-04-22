@@ -72,11 +72,6 @@ var health_questions = (function () {
         return false;
       }
 
-      // FPP always has the employee question (actively at work)
-      if (self.product_coverage.product.is_fpp_product()) {
-        return true;
-      }
-
       return _.any(self.health_questions(), function (question) {
         return question.does_any_applicant_need_to_answer();
       });
@@ -309,10 +304,11 @@ function decline_product_if_no_coverage(product_coverage) {
 
 var HealthQuestions = {
   Responses: {
-    get Yes() { return 'yes'; },
-    get No() { return 'no'; }
   }
 };
+
+Object.defineProperty(HealthQuestions.Responses, 'Yes', { value: 'yes' });
+Object.defineProperty(HealthQuestions.Responses, 'No', { value: 'no' });
 
 var StandardHealthQuestion = function (question, product_coverage) {
   // A viewmodel that keeps track of which applicants need to answer which health questions
