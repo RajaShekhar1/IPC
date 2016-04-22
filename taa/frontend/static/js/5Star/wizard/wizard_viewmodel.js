@@ -1056,17 +1056,24 @@ var wizard_viewmodel = (function () {
     _.defaults(self.enrollment_case, {omit_actively_at_work: false});
 
     self.should_show_actively_at_work = function (product, applicant) {
-      applicant = typeof applicant !== 'undefined' ? applicant : null;
+      applicant = typeof applicant !== 'undefined'? applicant : null;
       if (applicant) {
-      return applicant.type === wizard_applicant.Applicant.EmployeeType && _.startsWith(product.product_data.base_product_type, "FPP")
-        && !self.enrollment_case.omit_actively_at_work && !product.product_data.is_guaranteed_issue;
+        return applicant.type === wizard_applicant.Applicant.EmployeeType && _.startsWith(product.product_data.base_product_type, "FPP")
+          && !self.enrollment_case.omit_actively_at_work && !product.product_data.is_guaranteed_issue;
       }
       return _.startsWith(product.product_data.base_product_type, "FPP")
         && !self.enrollment_case.omit_actively_at_work && !product.product_data.is_guaranteed_issue;
     };
 
     self.requires_actively_at_work = ko.pureComputed(function () {
-      return !self.enrollment_case.omit_actively_at_work && self.did_select_any_fpp_product();
+      return !self.enrollment_case.omit_actively_at_work &&
+        self.did_select_any_fpp_product() &&
+        _.chain(vm.selected_product_health_questions())
+          .map(function (q) { return q.health_questions(); })
+          .flatten()
+          .filter(function (question) { return question.question.label === 'Employee Actively at Work'; })
+          .any(function (question) { return question.does_any_applicant_need_to_answer(); })
+          .value();
     });
 
     init_applicants();

@@ -72,11 +72,6 @@ var health_questions = (function () {
         return false;
       }
 
-      // FPP always has the employee question (actively at work)
-      if (self.product_coverage.product.is_fpp_product()) {
-        return true;
-      }
-
       return _.any(self.health_questions(), function (question) {
         return question.does_any_applicant_need_to_answer();
       });
