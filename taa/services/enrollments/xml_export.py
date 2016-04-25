@@ -212,7 +212,11 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
                     'first': data['employee']['first'],
                     'last': data['employee']['last'],
                     'percentage': '100',
-                    'relationship': 'father' if data['employee']['gender'].lower() == 'male' else 'mother',
+                    'relationship':
+                        'father' if data['employee']['gender'].lower() == 'male'
+                        else 'mother' if data['employee']['gender'].lower() == 'female'
+                        else 'parent',
+                    # 'relationship': 'child',
                 }
             ],
             'contingent_beneficiary': []
@@ -246,7 +250,12 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
     vars['relationships'] = {}
     owner = ('self' if enrollee['is_employee'] else
              'spouse' if enrollee['is_spouse'] else
-             'child' if enrollee['is_child'] else None)
+             'parent' if enrollee['is_child'] else None)
+    if owner == 'parent':
+        if data['employee']['gender'].lower() == 'male':
+            owner = 'father'
+        elif data['employee']['gender'].lower() == 'female':
+            owner = 'mother'
     vars['relationships']['owner_to_primary'] = RELATIONSHIP_ROLES.get(owner)
     for type_ in ['beneficiary', 'contingent_beneficiary']:
         for beneficiary in vars['enrollee']['beneficiaries'][type_]:
