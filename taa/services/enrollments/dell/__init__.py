@@ -288,6 +288,7 @@ STATE_CODES = {
 }
 
 SMOKER_CODES = {
+    None: {'code': '1', 'name': 'Never used tobacco in any form.'},
     False: {'code': '1', 'name': 'Never used tobacco in any form.'},
     True: {'code': '3', 'name': 'Smoker'},
 }
