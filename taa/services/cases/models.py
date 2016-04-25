@@ -81,6 +81,8 @@ class Case(CaseSerializer, db.Model):
     # Call center workflow setting
     should_use_call_center_workflow = db.Column(db.Boolean, server_default='FALSE', nullable=False)
 
+    omit_actively_at_work = db.Column(db.Boolean, server_default='FALSE', nullable=False)
+
     def get_product_names(self):
         return ','.join(p.name for p in self.products)
 
@@ -296,7 +298,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     child6_first = db.Column(db.String(256))
     child6_last = db.Column(db.String(256))
     child6_birthdate = db.Column(db.Date)
-    occupation_class = db.Column(db.String(256))
+    occupation_class = db.Column(db.String(256), server_default='Default')
 
     def get_smoker_boolean(self, value):
         if value == 'Y':

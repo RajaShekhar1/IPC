@@ -321,7 +321,6 @@
                                     </label>
                                   </div>
                                 </div>
-
                               </div>
                             {% endif %}
                             {% if not case_has_enrollments %}
@@ -359,34 +358,49 @@
                               <h4 class="header lighter blue">Product Configuration</h4>
 
                               <div class="row">
+                                <div class="col-xs-10 col-md-offset-1">
+                                  <div class="panel panel-default">
+                                    <div class="panel-heading panel-title">General Product Settings</div>
+                                    <div class="panel-body">
 
-                                <div class="form-group"
-                                     data-bind="visible: $root.is_case_occupation_class_eligible()">
+                                      <div class="form-group col-xs-10 col-md-offset-1"
+                                           data-bind="visible: has_fpp_products">
+                                        <input id="omit-actively-at-work" name="omit-actively-at-work" class="ace"
+                                               type="checkbox" data-bind="checked: omit_actively_at_work">
+                                        <label class="lbl" for="omit-actively-at-work"> Omit 'Actively at Work'
+                                          question</label>
+                                      </div>
 
-                                  <label class="col-md-3 control-label">Occupation Classes</label>
-                                  <div class="col-md-9">
-                                    <div>
-                                      <div
-                                          data-bind="template: { name: 'occupationClassTemplate', foreach: occupation_classes, as: 'occupation_class' }"></div>
-                                      <script type="text/html" id="occupationClassTemplate">
+                                      <div class="row">
+                                        <h4 class="header lighter blue col-xs-12">Occupation Classes</h4>
+                                      </div>
+                                      <div class="form-group col-xs-10 col-md-offset-1"
+                                           data-bind="visible: $root.is_case_occupation_class_eligible()">
+
                                         <div>
-                                          <span data-bind="text: label"></span>
-                                          <span> </span>
-                                          <button class="btn btn-sm btn-white btn-inverse middle"
-                                                  title="Click to delete this occupation class"
-                                                  data-bind="click: $parent.removeOccupationClass">
-                                            <i class="ace-icon fa fa-trash-o"></i>
+                                          <input class="ace" size="10" id="new-occupation-class"
+                                                 data-bind="textInput: new_occupation_class">
+                                          <button class="btn btn-xs btn-success" data-bind="click: addOccupationClass,
+                                        enable: is_new_occupation_class_valid">
+                                            <i class="ace-icon fa fa-plus white"></i>
+                                            Add new
                                           </button>
                                         </div>
-                                      </script>
-                                      <div>
-                                        <input class="ace" size="10" id="new-occupation-class"
-                                               data-bind="textInput: new_occupation_class">
-                                        <button class="btn btn-sm btn-success" data-bind="click: addOccupationClass,
-                                        enable: is_new_occupation_class_valid">
-                                          <i class="ace-icon fa fa-plus white"></i>
-                                          Add new
-                                        </button>
+                                        <div>
+                                          <div
+                                              data-bind="template: { name: 'occupationClassTemplate', foreach: occupation_classes, as: 'occupation_class' }"></div>
+                                          <script type="text/html" id="occupationClassTemplate">
+                                            <div>
+                                              <span data-bind="text: label"></span>
+                                              <span> </span>
+                                              <button class="btn btn-sm btn-white btn-inverse middle"
+                                                      title="Click to delete this occupation class"
+                                                      data-bind="visible: label !== 'Default', click: $parent.removeOccupationClass">
+                                                <i class="ace-icon fa fa-trash-o"></i>
+                                              </button>
+                                            </div>
+                                          </script>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -417,7 +431,7 @@
                                       {# Occupation Class Mappings #}
                                       <div class="form-group"
                                            data-bind="visible: $root.is_product_occupation_class_eligible(product)">
-                                        <h4 class="header lighter blue">Occupation Classes</h4>
+                                        <h4 class="header lighter blue">Occupation Class Mappings</h4>
                                         <table
                                             data-bind="foreach: { data: $parent.occupation_classes_for_product($data), as: 'occupation' }">
                                           <tr>

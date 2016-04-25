@@ -91,6 +91,10 @@
 
                   </div>
 
+                  <div data-bind="if: has_step_one_validation_error">
+                    <span class="pull-right error" data-bind="text: step_one_validation_error"></span>
+                  </div>
+
                   <hr/>
                   <div class="wizard-actions">
                     <button class="btn btn-default btn-xs pull-left"
