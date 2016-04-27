@@ -72,6 +72,7 @@ soap2py==1.16
 SQLAlchemy==1.0.12
 SQLAlchemy-Utils==0.30.11
 stormpath==2.1.1
+sparkpost==1.2.0
 sure==1.2.12
 testtools==1.8.0
 traceback2==1.4.0

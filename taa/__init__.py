@@ -7,14 +7,12 @@ from flask_sslify import SSLify
 from flask_sqlalchemy import SQLAlchemy
 from flask.ext.stormpath import StormpathManager
 from flask.ext.compress import Compress
-from flask.ext.mandrill import Mandrill
 
 from .helpers import JSONEncoder
 
 # Globals
 app = None
 db = None
-mandrill_flask = None
 stormpath_manager = None
 
 
@@ -29,16 +27,11 @@ def create_app(bind=None):
     # Load the config from environment variables, defaulting to some dev settings
     app.config.from_object('taa.config_defaults')
 
-    # Mandrill emailing
-    global mandrill_flask
-    mandrill_flask = Mandrill(app)
-
     # Exception error handling
-    #   (Import after the mandrill import line for dependency correctness)
     from .errors import init_exception_emails
     init_exception_emails(app, ['zmason@delmarsd.com', 'bdavis@thumbprintcpm.com'])
 
-    # Init compression (only active if debug is False)
+# Init compression (only active if debug is False)
     Compress(app)
 
     # Init SSL redirect (only if debug is False AND IS_SSL is true)

@@ -1,3 +1,5 @@
+
+
 # A basic IoC service-locator-like pattern from
 #  http://code.activestate.com/recipes/413268-dependency-injection-the-python-way/
 class FeatureBroker:
@@ -31,10 +33,12 @@ services_broker = FeatureBroker(allowReplace=True)
 # Assertions about services / features
 def NoAssertion(obj): return True
 
+
 def IsInstanceOf(*classes):
     def test(obj):
         return isinstance(obj, classes)
     return test
+
 
 def HasAttributes(*attributes):
     def test(obj):
@@ -42,6 +46,7 @@ def HasAttributes(*attributes):
             if not hasattr(obj, each): return False
         return True
     return test
+
 
 def HasMethods(*methods):
     def test(obj):
@@ -53,6 +58,7 @@ def HasMethods(*methods):
             if not callable(attr): return False
         return True
     return test
+
 
 # A request to retrieve a service / feature, declaring assertions about that feature.
 class RequiredFeature(object):
@@ -77,6 +83,7 @@ class RequiredFeature(object):
             "The value %r of %r does not match the specified criteria" \
             % (obj, self.feature)
         return obj
+
 
 class ServiceProxy(object):
     """
@@ -131,6 +138,7 @@ def initialize_services():
         merge_pdfs,
     )
     from taa.services.enrollments import EnrollmentRecordParser
+    import taa.services.mailer as MailerService
     from taa.services.products import (
         ProductService,
         ProductFormService,
@@ -176,3 +184,5 @@ def initialize_services():
 
     services_broker.Provide('DocuSignService', DocuSignService())
     services_broker.Provide('DocuSignTransport', lambda: DocuSignTransport)
+
+    services_broker.Provide('MailerService', MailerService)

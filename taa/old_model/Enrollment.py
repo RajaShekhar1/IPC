@@ -1,11 +1,11 @@
 import random
 from datetime import datetime
 
-import mandrill
 from flask import url_for, render_template
 from dateutil.relativedelta import relativedelta
 
-from taa import mandrill_flask, app
+from taa.services import LookupService
+from taa import app
 
 
 class Enrollment(object):
@@ -45,27 +45,27 @@ class EnrollmentRequest(object):
         
     def generate_url(self):
         return url_for("email_link_handler", token=self.token, _external=True)
-     
+
+
 class EmailGenerator(object):
     def send(self, recipient, subject, html, from_address=None):
-        """
-        See https://mandrillapp.com/api/docs/messages.python.html
-        """
+        mailer = LookupService('MailerService')
         if not from_address:
             from_address = app.config.get('EMAIL_FROM_ADDRESS')
         try:
-            result = mandrill_flask.send_email(
+            result = mailer.send_email(
                 from_email=from_address,
                 subject=subject,
                 html=html,
-                to=[dict(email=recipient)],
+                to=[recipient],
             )
-        except mandrill.Error as e:
+        except mailer.Error as e:
             print u"Error sending email: %s - %s" % (e.__class__, e)
             raise 
         except Exception as e:
             print u"Exception sending email: %s - %s"%(e.__class__, e)
-        
+
+
 class EnrollmentEmail(object):
     def send_enrollment_request(self, enrollment_request):
         
