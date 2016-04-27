@@ -170,7 +170,7 @@ class EnrollmentProcessor(object):
         user_name = self.get_status_email_name(user_href)
 
         self._send_email(
-            from_email="5Star Enrollment <support@5Starenroll.com>",
+            from_email="5Star Enrollment <support@5StarEnroll.com>",
             to_email=self.get_status_email(user_href),
             to_name=user_name,
             subject=email_subject,
