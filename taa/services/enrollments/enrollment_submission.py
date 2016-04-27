@@ -133,7 +133,6 @@ class EnrollmentSubmissionService(object):
     def get_pending_csv_submission(self):
         """
         Get the pending csv generation submission record if it exists
-        :rtype: EnrollmentSubmission
         """
         return db.session.query(EnrollmentSubmission) \
             .filter(EnrollmentSubmission.submission_type == EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION) \
@@ -143,8 +142,6 @@ class EnrollmentSubmissionService(object):
     def get_pending_or_failed_csv_submissions(self):
         """
         Get all submissions that are either pending or failed
-        :return: All pending or failed submissions
-        :rtype: list[EnrollmentSubmission]
         """
         query = db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.status.in_(
             [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING]))
@@ -153,12 +150,6 @@ class EnrollmentSubmissionService(object):
     def get_submissions(self, start_date=None, end_date=None):
         """
         Get all submissions which can optionally be filtered by start and end dates
-        :param start_date: Start filter date
-        :type start_date: datetime.date | datetime.time | datetime.datetime
-        :param end_date: End filter date
-        :type end_date: datetime.date | datetime.time | datetime.datetime
-        :return: Submissions that meet the filtering criteria
-        :rtype: list[EnrollmentSubmission]
         """
         query = db.session.query(EnrollmentSubmission).order_by(EnrollmentSubmission.created_at.desc())
 
@@ -172,15 +163,10 @@ class EnrollmentSubmissionService(object):
     def create_docusign_submission_for_application(self, application):
         """
         Create and submit a submission for Docusign
-        :param application: Application to create the docusign submission for
-        :type application: EnrollmentApplication
-        :return: New submission object if the application requires a docusign submission
-        :rtype: EnrollmentSubmission
         """
         if 'Group CI' not in [p for p in application.case.products]:
             return None
 
-        # noinspection PyArgumentList
         submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.SUBMISSION_TYPE_SUBMIT_DOCUSIGN)
         submission.enrollment_applications.append(application)
         db.session.add(submission)
@@ -191,9 +177,6 @@ class EnrollmentSubmissionService(object):
         """
         Create or add an application to the next pending csv generation submission if the product should be in the next
         csv generation batch as determined by the case having either an HI or ACC product on it.
-        :param application: Application to create the csv generation submission for
-        :type application: EnrollmentApplication
-        :rtype: EnrollmentSubmission
         """
         if not any(p for p in application.case.products if p.requires_dell_csv_submission()):
             return None
@@ -209,9 +192,6 @@ class EnrollmentSubmissionService(object):
     def create_submissions_for_application(self, application):
         """
         Create submissions for necessary products for the given EnrollmentApplication
-        :param application: EnrollmentApplication to create submissions for
-        :type application: EnrollmentApplication
-        :rtype: list[EnrollmentSubmission]
         """
         submissions = list()
         """:type: list[EnrollmentSubmission]"""
@@ -232,8 +212,6 @@ class EnrollmentSubmissionService(object):
     def __initialize_pgp_key(self, gpg):
         """
         Initialize the GPG instance with out public key
-        :param gpg: GPG to load the key into
-        :type gpg: gnupg.GPG
         """
         import_result = gpg.import_keys(DELL_FTP_PGP_KEY)
         if len(import_result.results) == 0 or not all((r.get('status').strip() in import_result._ok_reason.values() for r in import_result.results)):
@@ -246,13 +224,8 @@ class EnrollmentSubmissionService(object):
     def pgp_encrypt_string(self, data, recipient_id=DELL_FTP_PGP_KEY_ID):
         """
         Encrypt the given data with PGP and return the encrypted result
-        :param data: Data to encrypt
-        :type data: str
-        :type recipient_id: Id for the key to sign with
-        :type recipient_id: str
-        :rtype: str
         """
-        # noinspection PyBroadException
+
         if self.__gpg is None:
             self.__initialize_gpg()
         try:
@@ -263,35 +236,25 @@ class EnrollmentSubmissionService(object):
     def submit_hi_acc_export_to_dell(self, csv_data):
         """
         Submit csv data to dell for processing
-        :param csv_data: String containing the CSV file's data
-        :type csv_data: str
         """
         ftp = FTP(DELL_FTP_HOSTNAME)
         ftp.set_pasv(False)
         ftp.login(DELL_FTP_USERNAME, DELL_FTP_PASSWORD)
         ftp.cwd(DELL_FTP_WORKING_DIRECTORY)
         encrypted_data = StringIO(self.pgp_encrypt_string(csv_data))
-        command = 'STOR enrollment_submissions_%s.csv.pgp' % datetime.utcnow().strftime('%Y-%m-%dT%H%M%S')
+        command = 'STOR enrollment_submissions_%s.csv.pgp' % datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
         ftp.storlines(command, encrypted_data)
         ftp.close()
 
     def get_submission_by_id(self, submission_id):
         """
         Get an EnrollmentSubmission by ID
-        :param submission_id: ID of the EnrollmentSubmission
-        :type submission_id: int
-        :rtype: EnrollmentSubmission
         """
         return db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.id == submission_id).first()
 
     def create_submission_for_csv(self, csv_data, applications):
         """
         Create a new EnrollmentSubmission for submitting csv data to dell
-        :param csv_data: String containing the CSV's data
-        :type csv_data: str
-        :param applications: Enrollment applications that the new submission should be related to
-        :type applications: list[EnrollmentApplication]
-        :rtype: EnrollmentSubmission
         """
         # noinspection PyArgumentList
         submission = EnrollmentSubmission(data=csv_data,
@@ -305,12 +268,6 @@ class EnrollmentSubmissionService(object):
     def set_submissions_status(self, status, submissions=None, submission_logs=None):
         """
         Set the status
-        :param status: Status to set for the submissions and logs
-        :type status: str
-        :param submissions: Submissions to set the status for
-        :type submissions: list[EnrollmentSubmission]
-        :param submission_logs: Logs to set the status for
-        :type submission_logs: list[SubmissionLog]
         """
         submissions = submissions if submissions is not None else list()
         submission_logs = submission_logs if submission_logs is not None else list()
@@ -324,9 +281,6 @@ class EnrollmentSubmissionService(object):
     def get_applications_for_submissions(self, submissions):
         """
         Get a list of unique applications in the given submissions
-        :param submissions: EnrollmentSubmissions to grab applications from
-        :type submissions: list[EnrollmentSubmission]
-        :rtype: list[EnrollmentApplication]
         """
         applications = list()
         for submission in submissions:
@@ -338,11 +292,6 @@ class EnrollmentSubmissionService(object):
     def create_logs_for_submissions(self, submissions, status=None):
         """
         Create a log entry for each
-        :param submissions: Submissions to create logs for
-        :type submissions: list[EnrollmentSubmission]
-        :param status: Optional status to set the new SubmissionLogs to
-        :type status: str
-        :rtype: list[SubmissionLog]
         """
         submission_logs = list()
         for submission in submissions:

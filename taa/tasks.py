@@ -100,11 +100,9 @@ def send_admin_error_email(error_message, errors):
         pass
 
 
-# noinspection PyBroadException
 @app.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def process_hi_acc_enrollments(task):
     submission_service = LookupService('EnrollmentSubmissionService')
-    """:type : taa.services.enrollments.enrollment_submission.EnrollmentSubmissionService"""
 
     # Set all the submissions to be processing so they do not get pulled in by another worker thread
     submissions = submission_service.get_pending_or_failed_csv_submissions()
@@ -129,22 +127,17 @@ def process_hi_acc_enrollments(task):
         email_exception(taa_app, ex)
 
 
-# noinspection PyBroadException
 @app.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def submit_csv_to_dell(task, submission_id):
     """
     Task to submit a csv item to dell for processing
-    :param task:
-    :type task: celery.task
-    :param submission_id:
-    :type submission_id: int
     """
 
     submission_service = LookupService('EnrollmentSubmissionService')
-    """:type : taa.services.enrollments.enrollment_submission.EnrollmentSubmissionService"""
     submission = submission_service.get_submission_by_id(submission_id)
-    # noinspection PyArgumentList
-    log = SubmissionLog(enrollment_submission_id=submission_id, status=SubmissionLog.STATUS_PROCESSING)
+    log = SubmissionLog()
+    log.enrollment_submission_id = submission_id
+    log.status = SubmissionLog.STATUS_PROCESSING
     db.session.add(log)
 
     try:
