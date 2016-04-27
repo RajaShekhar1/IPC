@@ -1,10 +1,9 @@
 import traceback
 
 from flask import request, Response
-
-from taa import mandrill_flask
 from flask_stormpath import current_user
 
+from services import LookupService
 
 error_sender = ''
 error_recipients = []
@@ -60,7 +59,8 @@ def email_exception(app, exception):
 
     msg = '\n'.join(msg_contents) + '\n'
 
-    mandrill_flask.send_email(
+    mailer = LookupService('MailerService')
+    mailer.send_email(
         from_email=error_sender,
         subject=u'5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
         to=[{'email': e} for e in error_recipients],
