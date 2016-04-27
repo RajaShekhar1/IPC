@@ -183,3 +183,4 @@ class UnicodeCsvWriter:
     def writerows(self, rows):
         for row in rows:
             self.writerow(row)
+

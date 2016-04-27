@@ -1,6 +1,4 @@
 from flask import abort, render_template
-import mandrill
-from taa import mandrill_flask
 import requests
 
 from taa.core import DBService, db
@@ -10,7 +8,7 @@ from models import (
     SelfEnrollmentEmailBatchWithEmails,
 )
 from taa.services.cases.models import SelfEnrollmentSetup
-from taa.services import RequiredFeature
+from taa.services import RequiredFeature, LookupService
 
 
 class SelfEnrollmentEmailBatchService(DBService):
@@ -131,16 +129,17 @@ class SelfEnrollmentEmailService(DBService):
 
     def _send_email(self, from_email, from_name, to_email, to_name, subject,
                     body):
+
+        mailer = LookupService('MailerService')
         try:
-            mandrill_flask.send_email(
-                to=[{'email': to_email, 'name': to_name}],
+            mailer.send_email(
+                to=["{} <{}>".format(to_name, to_email)],
                 from_email=from_email,
                 from_name=from_name,
                 subject=subject,
                 html=body,
-                auto_text=True,
             )
-        except mandrill.Error as e:
+        except mailer.Error as e:
             print("Exception sending email: %s - %s; to %s" % (e.__class__, e, to_email))
             return False
         except requests.exceptions.HTTPError as e:

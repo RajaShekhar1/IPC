@@ -4,7 +4,7 @@ from datetime import datetime
 import celery
 from taa.services.users import UserService
 
-from taa import db, mandrill_flask, app as taa_app
+from taa import db, app as taa_app
 from taa.services import LookupService
 from taa.services.enrollments import SelfEnrollmentEmailLog
 from taa.services.enrollments.models import EnrollmentSubmission, SubmissionLog
@@ -87,13 +87,13 @@ def send_admin_error_email(error_message, errors):
 
         # Get stormpath admins
         for account in UserService().get_admin_users():
-            mandrill_flask.send_email(
-                to=[{'email': account.email, 'name': account.full_name}],
+            mailer = LookupService('MailerService')
+            mailer.send_email(
+                to=["{name} <{email}>".format(**{'email': account.email, 'name': account.full_name})],
                 from_email="errors@5StarEnroll.com",
                 from_name=u"TAA Error {}".format(taa_app.config['HOSTNAME']),
                 subject=u"5Star Import Error ({})".format(taa_app.config['HOSTNAME']),
                 html=body,
-                auto_text=True,
             )
     except Exception:
         # Swallow this
