@@ -102,13 +102,6 @@ var health_question_buttons = (function () {
       return false;
     }
 
-    // fpp form
-    if (window.vm.requires_actively_at_work()) {
-      if (window.vm.is_employee_actively_at_work() === null) {
-        return false;
-      }
-    }
-
     var valid = true;
 
 

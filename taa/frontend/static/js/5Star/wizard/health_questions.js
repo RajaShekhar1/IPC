@@ -140,16 +140,7 @@ var health_questions = (function () {
         if (product_coverage.product.product_data.is_guaranteed_issue) {
           question_factory = function (question_data) {
             if (question_data.label === 'Employee Actively at Work') {
-              return new ActivelyAtWorkGiHealthQuestion(
-                product_coverage.product,
-                question_data,
-                product_coverage,
-                product_data.gi_criteria,
-                product_data.statement_of_health_bypass_type,
-                product_data.bypassed_soh_questions,
-                applicant,
-                actively_at_work_observable
-              );
+              return null;
             }
             return new GIHealthQuestion(
               product_coverage.product,
@@ -163,12 +154,7 @@ var health_questions = (function () {
         } else {
           question_factory = function (question_data) {
             if (question_data.label === 'Employee Actively at Work') {
-              return new ActivelyAtWorkHealthQuestion(
-                question_data,
-                product_coverage,
-                applicant,
-                actively_at_work_observable
-              );
+              return null;
             }
             return new StandardHealthQuestion(question_data, product_coverage);
           }
