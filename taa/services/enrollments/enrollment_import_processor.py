@@ -2,12 +2,11 @@ from datetime import datetime
 import hashlib
 
 from flask import abort, render_template
-import mandrill
 import requests
 
-from taa import mandrill_flask, app
+from taa import app
 from taa.core import TAAFormError, db, DBService
-from taa.services import RequiredFeature
+from taa.services import RequiredFeature, LookupService
 from taa.services.enrollments.models import EnrollmentImportBatch, EnrollmentImportBatchItem
 
 
@@ -171,8 +170,7 @@ class EnrollmentProcessor(object):
         user_name = self.get_status_email_name(user_href)
 
         self._send_email(
-            from_email="support@5Starenroll.com",
-            from_name="5Star Enrollment",
+            from_email="5Star Enrollment <support@5StarEnroll.com>",
             to_email=self.get_status_email(user_href),
             to_name=user_name,
             subject=email_subject,
@@ -197,18 +195,17 @@ class EnrollmentProcessor(object):
         """Who to send errors to. Pull it from the auth_token"""
         return self.user_service.get_stormpath_user_by_href(user_href)
 
-    def _send_email(self, from_email, from_name, to_email, to_name, subject,
-                    body):
+    def _send_email(self, from_email, to_email, to_name, subject, body):
+        mailer = LookupService('MailerService')
         try:
-            mandrill_flask.send_email(
-                to=[{'email': to_email, 'name': to_name}],
+            mailer.send_email(
+                to=["{} <{}>".format(to_name, to_email)],
                 from_email=from_email,
-                from_name=from_name,
                 subject=subject,
                 html=body,
                 auto_text=True,
             )
-        except mandrill.Error as e:
+        except mailer.Error as e:
             print("Exception sending email: %s - %s; to %s"%(e.__class__, e, to_email))
             return False
         except requests.exceptions.HTTPError as e:
