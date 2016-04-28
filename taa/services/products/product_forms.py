@@ -47,7 +47,6 @@ class ProductFormService(object):
 
     def get_employee_questions(self):
         return [
-            fpp_employee_actively_at_work
         ]
 
 
