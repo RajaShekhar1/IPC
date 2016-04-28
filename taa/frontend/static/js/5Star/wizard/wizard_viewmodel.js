@@ -1067,14 +1067,7 @@ var wizard_viewmodel = (function () {
     };
 
     self.requires_actively_at_work = ko.pureComputed(function () {
-      return !self.enrollment_case.omit_actively_at_work &&
-        self.did_select_any_fpp_product() &&
-        _.chain(vm.selected_product_health_questions())
-          .map(function (q) { return q.health_questions(); })
-          .flatten()
-          .filter(function (question) { return question.question.label === 'Employee Actively at Work'; })
-          .any(function (question) { return question.does_any_applicant_need_to_answer(); })
-          .value();
+      return !self.enrollment_case.omit_actively_at_work;
     });
 
     init_applicants();
@@ -1379,13 +1372,21 @@ var wizard_viewmodel = (function () {
     // Recommendations table visibility
     self.has_show_rates_been_clicked = ko.observable(false);
 
+    self.is_employee_actively_at_work = ko.observable(null);
+    self.show_aaw_error = ko.observable(false);
+
+    self.is_aaw_answered = ko.pureComputed(function () {
+      return self.is_employee_actively_at_work() === true || self.is_employee_actively_at_work() === false;
+    });
+
     self.can_display_rates_table = ko.computed(function () {
       // TODO: Reimplement
       // && product validation
       var is_employee_valid = self.applicant_list.has_valid_employee();
       var is_payment_valid = self.coverage_vm.is_payment_mode_valid();
       var has_limit_errors = self.any_limit_error();
-      return is_employee_valid && is_payment_valid && !has_limit_errors;
+      var is_aaw_selected = (self.requires_actively_at_work() && self.is_employee_actively_at_work() === true) || !self.requires_actively_at_work();
+      return is_employee_valid && is_payment_valid && !has_limit_errors && is_aaw_selected;
     });
 
     // User indicates he is ready to show the coverage selection options.
@@ -1404,6 +1405,11 @@ var wizard_viewmodel = (function () {
 
       // Trigger the jQuery validator. This test allows jasmine tests to work without DOM node present for form.
       valid_form = self.validator.form() && valid_form;
+      if (self.is_aaw_answered()) {
+        self.show_aaw_error(false);
+      } else {
+        self.show_aaw_error(true);
+      }
 
       if (valid_form) {
         self.has_show_rates_been_clicked(true);
@@ -1613,7 +1619,6 @@ var wizard_viewmodel = (function () {
     // STEP 2 data and methods.
     self.existing_insurance = ko.observable(null);
     self.replacing_insurance = ko.observable(null);
-    self.is_employee_actively_at_work = ko.observable(null);
 
     // Todo - Move to health_questions.js, and cache the ProductHealthQuestions objects if necessary.
     self.selected_product_health_questions = ko.computed(function () {
@@ -2355,6 +2360,49 @@ var wizard_viewmodel = (function () {
       } else {
         return self.employee().first();
       }
+    });
+    //endregion
+
+    //region Actively at Work
+    self.aaw_yes_class = ko.pureComputed(function () {
+      return self.is_employee_actively_at_work() === true ? 'btn-success' : '';
+    });
+    self.aaw_no_class = ko.pureComputed(function () {
+      return self.is_employee_actively_at_work() === false ? 'btn-danger' : '';
+    });
+
+    self.aaw_yes = function () {
+      self.is_employee_actively_at_work(true);
+    };
+    self.aaw_no = function () {
+      self.is_employee_actively_at_work(false);
+      bootbox.dialog({
+        title: 'Actively at Work',
+        message: 'All enrollments require the primary applicant to be "Actively at work". You may not proceed with this enrollment.',
+        buttons: {
+          stop: {
+            className: 'btn-danger',
+            label: 'Stop Enrollment',
+            callback: function () {
+              window.location.href = '/enrollment-cases';
+            }
+          },
+          continue: {
+            label: 'Ignore and Continue',
+            className: 'btn-default'
+          }
+        }
+      });
+    };
+
+    self.aaw_is_yes = ko.pureComputed(function () {
+      return self.is_employee_actively_at_work() === true;
+    });
+    self.aaw_is_no = ko.pureComputed(function () {
+      return self.is_employee_actively_at_work() === false;
+    });
+    self.employee_or_first = ko.pureComputed(function () {
+      return self.employee().first() ? self.employee().first() : 'employee';
     });
     //endregion
 
