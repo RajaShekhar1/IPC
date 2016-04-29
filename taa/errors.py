@@ -63,7 +63,7 @@ def email_exception(app, exception):
     mailer.send_email(
         from_email=error_sender,
         subject=u'5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
-        to=[{'email': e} for e in error_recipients],
+        to=[e for e in error_recipients],
         text=msg,
     )
 

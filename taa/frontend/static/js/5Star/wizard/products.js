@@ -23,7 +23,7 @@ var wizard_products = (function () {
 
     var base_type = product_data.base_product_type;
     var base_product;
-    if (base_type === "FPPTI") {
+    if (base_type === "FPPTI" || base_type === "FPPTIW" || base_type == "FPPTIB" || base_type == "FPPTIY") {
       base_product = new FPPTIProduct(product_data);
     } else if (base_type === "FPPCI") {
       base_product = new FPPCIProduct(product_data);
