@@ -6,7 +6,7 @@ import dateutil.parser
 import sqlalchemy as sa
 from flask import abort
 from flask_stormpath import current_user
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, eagerload
 
 from models import (Case, CaseCensus, CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod,
                     SelfEnrollmentSetup)
@@ -218,7 +218,8 @@ class CaseService(DBService):
                            filter_birthdate=None,
                            filter_emp_first=None,
                            filter_emp_last=None,
-                           filter_agent=None):
+                           filter_agent=None,
+                           include_enrollment_links=False):
         from taa.services.enrollments.models import EnrollmentApplication
         query = self.census_records.find(case_id=case.id)
 
@@ -228,6 +229,9 @@ class CaseService(DBService):
                 ).subqueryload('coverages'
                 ).joinedload('product')
         )
+
+        if include_enrollment_links:
+            query = query.options(eagerload('self_enrollment_links'))
 
         if filter_agent:
             # Only show enrolled census records where this agent was the enrolling agent.

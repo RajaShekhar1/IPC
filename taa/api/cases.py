@@ -388,11 +388,11 @@ def census_records(case_id):
 @groups_required(['admins'], all=False)
 def census_record_links(case_id):
     case = case_service.get_if_allowed(case_id)
-    data = case_service.get_census_records(case)
+    census_records = case_service.get_census_records(case, include_enrollment_links=True)
 
     # Custom serialization
     census_record_service = LookupService('CensusRecordService')
-    return census_record_service.serialize_with_tokens(case, data, request.url_root)
+    return census_record_service.serialize_with_tokens(case, census_records, request.url_root)
 
 
 @route(bp, '/<case_id>/census_records', methods=['POST'])
