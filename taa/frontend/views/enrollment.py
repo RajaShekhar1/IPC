@@ -312,7 +312,9 @@ def self_enrollment(company_name, uuid):
     case = self_enrollment_link_service.get_case_for_link(uuid)
 
     is_self_enrollable = True
-    if setup.self_enrollment_type == setup.TYPE_CASE_GENERIC:
+
+    # Determine if we need to disallow due to products.
+    if case and setup and setup.self_enrollment_type == setup.TYPE_CASE_GENERIC:
         for product in case.products:
             if product.code in ['ACC', 'HI']:
                 # Disallow generic-link self-enrollment cases containing
