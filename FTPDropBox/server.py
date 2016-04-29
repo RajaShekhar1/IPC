@@ -1,18 +1,18 @@
 #!/usr/bin/python
-import pyftpdlib
-from pyftpdlib.authorizers import DummyAuthorizer, AuthenticationFailed
-from pyftpdlib.handlers import TLS_FTPHandler
-from pyftpdlib.servers import FTPServer
-from pyftpdlib.filesystems import AbstractedFS, FilesystemError
-import os
 import requests
 import sys
 from io import BytesIO
 from StringIO import StringIO
-from taa.services.data_import.file_import import FlatFileSpec
-from taa.services.users.UserService import UserService
 
+from pyftpdlib.authorizers import DummyAuthorizer, AuthenticationFailed
+from pyftpdlib.handlers import TLS_FTPHandler
+from pyftpdlib.servers import FTPServer
+from pyftpdlib.filesystems import AbstractedFS, FilesystemError
 from stormpath.error import Error as StormpathError
+
+from taa.services.users.UserService import UserService
+from taa.services.data_import.file_import import FlatFileSpec
+
 
 class TAAFileHandler(AbstractedFS):
     def listdir(self, path):

@@ -51,16 +51,18 @@
           <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
             <label>Is <span data-bind="text: $root.employee_or_first"></span> <a href="#actively_at_work_modal" data-toggle="modal">actively at work?</a> </label>
             <div class="btn-group">
-              <button class="btn btn-default btn-xs" data-bind="click: $root.aaw_yes, css: $root.aaw_yes_class">
+              <button class="btn btn-default btn-xs aaw-yes" data-bind="click: $root.aaw_yes, css: $root.aaw_yes_class">
                 <i class="icon glyphicon glyphicon-ok" data-bind="visible: $root.aaw_is_yes"></i>
                 Yes
               </button>
-              <button class="btn btn-default btn-xs" data-bind="click: $root.aaw_no, css: $root.aaw_no_class">
+              <button class="btn btn-default btn-xs aaw-no" data-bind="click: $root.aaw_no, css: $root.aaw_no_class">
                 <i class="icon glyphicon glyphicon-remove" data-bind="visible: $root.aaw_is_no"></i>
                 No
               </button>
             </div>
             <div class="error" data-bind="visible: $root.show_aaw_error">Actively at Work must be answered</div>
+            <div class="error" data-bind="visible: $root.show_aaw_response_error">Cannot obtain coverage unless "actively at work"<br>- either change status or select "Cancel" below</div>
+
           </div>
         </div>
 

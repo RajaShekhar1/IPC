@@ -1,4 +1,5 @@
 taa.egg-info/PKG-INFO
 taa.egg-info/SOURCES.txt
 taa.egg-info/dependency_links.txt
+taa.egg-info/pbr.json
 taa.egg-info/top_level.txt
