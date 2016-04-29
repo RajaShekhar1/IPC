@@ -10,8 +10,8 @@ class SelfEnrollmentLinkService(DBService):
     __model__ = SelfEnrollmentLink
 
     def get_for_census_record(self, census_record):
-        # record = CaseService.get_census_record(census_record_id)
-        return self.find(census_record_id=census_record.id).first()
+        # Get the first one if it exists
+        return next((link for link in census_record.self_enrollment_links), None)
 
     @staticmethod
     def _slugify(s):
