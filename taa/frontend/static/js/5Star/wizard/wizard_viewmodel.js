@@ -1411,6 +1411,10 @@ var wizard_viewmodel = (function () {
       return self.is_employee_actively_at_work() === true || self.is_employee_actively_at_work() === false;
     });
 
+    self.show_aaw_response_error = ko.pureComputed(function() {
+      return !self.show_aaw_error() && self.is_employee_actively_at_work() === false;
+    });
+
     self.can_display_rates_table = ko.computed(function () {
       // TODO: Reimplement
       // && product validation
@@ -2382,11 +2386,9 @@ var wizard_viewmodel = (function () {
           stop: {
             className: 'btn-danger',
             label: 'Stop Enrollment',
-            callback: function () {
-              window.location.href = '/enrollment-cases';
-            }
+            callback: self.exit_application
           },
-          continue: {
+          "continue": {
             label: 'Ignore and Continue',
             className: 'btn-default'
           }

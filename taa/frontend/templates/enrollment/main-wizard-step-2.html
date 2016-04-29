@@ -266,7 +266,7 @@
     <!--ko foreach: {data: $root.selected_product_health_questions(), as: 'product_health_questions'} -->
     {# Only show questions if there are some for this product. #}
     <div data-bind="visible: product_health_questions.do_any_health_questions_need_answering()">
-      <h3 class="lighter block green">Please answer each question below regarding to apply for <span
+      <h3 class="lighter block green">Please answer each question below regarding <span
           data-bind="text: product_health_questions.product_coverage.product.product_data.name"></span></h3>
 
       <div class="hidden-xs hidden-sm">
