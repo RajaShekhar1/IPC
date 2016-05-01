@@ -136,6 +136,26 @@ class CensusRecordService(DBService):
         return record
 
     def remove_all_for_case(self, case):
+
+        # Need to delete all links as well.
+        # We do this here as well as CaseService delete_census_record for performance when replacing
+        #  a very large census.
+        from taa.services.enrollments.models import SelfEnrollmentLink, SelfEnrollmentEmailLog
+
+        # Delete all self enrollment links and email logs for this case
+        db.session.query(SelfEnrollmentLink
+            ).filter(SelfEnrollmentLink.census_record.has(CaseCensus.case_id == case.id)
+            # It complains about not being able to evaluate the conditions in the Python session, so skip that here.
+            ).delete(synchronize_session='fetch')
+        db.session.query(SelfEnrollmentEmailLog
+            ).filter(SelfEnrollmentEmailLog.census_record.has(CaseCensus.case_id == case.id)
+            # It complains about not being able to evaluate the conditions in the Python session, so skip that here.
+            ).delete(synchronize_session='fetch')
+
+        # We don't try to delete for enrollments because we don't allow deleting all the
+        #  census records if enrollments exist
+
+        # Delete the census for this case.
         self.find(case_id=case.id).delete()
 
     def update_from_enrollment(self, record, data):

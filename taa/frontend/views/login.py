@@ -89,15 +89,14 @@ def register_taa():
 
                 return redirect(url_for('confirmRegistration'))
             except StormpathError as err:
-                flash(err.message['message'])
-                email_exception(app, err)
+                flash(err.message.get('message', 'There was a problem with the registration process, please try again later.'))
 
     return render_template('user_account/register.html', form=form, nav_menu=get_nav_menu())
 
 @app.route("/registration_confirmed")
 def confirmRegistration():
     return render_template('user_account/registration_complete.html',
-                           name = session['registered_name'],
+                           name = session.get('registered_name', ''),
                            nav_menu=get_nav_menu(),
                            )
 
