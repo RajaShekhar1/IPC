@@ -495,9 +495,11 @@ class CaseService(DBService):
             enrollment_service = EnrollmentApplicationService()
             enrollment_service.delete_enrollment_data(record)
 
-        # Remove the attached email logs, if any.
+        # Remove the attached email logs and links, if any.
         for log in record.email_logs:
             db.session.delete(log)
+        for link in record.self_enrollment_links:
+            db.session.delete(link)
 
         return self.census_records.delete(record)
 
