@@ -15,9 +15,14 @@ PRODUCT_CODE_FPPTIB = u'FPPTIB'
 PRODUCT_CODE_FPPTIY = u'FPPTIY'
 PRODUCT_CODE_FPPCI = u'FPPCI'
 
+PRODUCT_CODE_FPPTIG_INVALID = u'FPPTIG/INVALID'
+
 
 
 def get_plan_code(base_product_code, applicant_query):
+    if base_product_code == 'FPP-Gov':
+        # Convert 5Star representation to Dell representation
+        base_product_code = PRODUCT_CODE_FPPTIG
     applicant_type = applicant_query.get_applicant_type()
     riders = applicant_query.get_riders()
     state = applicant_query.state
@@ -46,7 +51,6 @@ def add_state_modification(base_product_code, plan_code, state):
 
 
 def get_adult_plan_code(applicant_type, base_product_code, riders, state):
-
     plan_code = base_product_code
 
     if base_product_code == PRODUCT_CODE_FPPCI:
@@ -54,6 +58,10 @@ def get_adult_plan_code(applicant_type, base_product_code, riders, state):
         if state == 'MD' or state == 'UT':
             plan_code += '/'
         return plan_code
+
+    # FPPTIG can never have AIR
+    if 'AIR' in riders and base_product_code == PRODUCT_CODE_FPPTIG:
+        return PRODUCT_CODE_FPPTIG_INVALID
 
     if len(riders) == 1:
         if 'AIR' in riders:
@@ -74,7 +82,7 @@ def get_adult_plan_code(applicant_type, base_product_code, riders, state):
                 plan_code += '/'
         elif 'AIR' in riders and 'QOL4' in riders:
             plan_code = get_air_code(base_product_code)
-            if base_product_code != PRODUCT_CODE_FPPTI and base_product_code != PRODUCT_CODE_FPPTIG and state != 'MD' and state != 'UT':
+            if base_product_code != PRODUCT_CODE_FPPTI and state != 'MD' and state != 'UT':
                 plan_code += '/'
             if plan_code != '':
                 plan_code += '4'
@@ -105,10 +113,7 @@ def get_child_plan_code(base_product_code, state_code):
 
 def get_air_code(base_product_code):
     plan_code = 'FPAT'
-    if base_product_code == PRODUCT_CODE_FPPTIG:
-        plan_code = ''
-    else:
-        plan_code += base_product_code[-1]
+    plan_code += base_product_code[-1]
     return plan_code
 
 

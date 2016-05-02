@@ -38,18 +38,18 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
 
 
     Examples: Employee or Spouse with AIR rider
-      | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code |
-      | Y   | N  | N    | N    | Employee       | FPPTI             | MI    | FPATI     |
-      | Y   | N  | N    | N    | Employee       | FPPTIG            | MI    | None      |
-      | Y   | N  | N    | N    | Employee       | FPPTIW            | MI    | FPATW     |
-      | Y   | N  | N    | N    | Employee       | FPPTIB            | MI    | FPATB     |
-      | Y   | N  | N    | N    | Employee       | FPPTIY            | MI    | FPATY     |
+      | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code      |
+      | Y   | N  | N    | N    | Employee       | FPPTI             | MI    | FPATI          |
+      | Y   | N  | N    | N    | Employee       | FPPTIG            | MI    | FPPTIG/INVALID |
+      | Y   | N  | N    | N    | Employee       | FPPTIW            | MI    | FPATW          |
+      | Y   | N  | N    | N    | Employee       | FPPTIB            | MI    | FPATB          |
+      | Y   | N  | N    | N    | Employee       | FPPTIY            | MI    | FPATY          |
 
-      | Y   | N  | N    | N    | Spouse         | FPPTI             | MI    | FPATI     |
-      | Y   | N  | N    | N    | Spouse         | FPPTIG            | MI    | None      |
-      | Y   | N  | N    | N    | Spouse         | FPPTIW            | MI    | FPATW     |
-      | Y   | N  | N    | N    | Spouse         | FPPTIB            | MI    | FPATB     |
-      | Y   | N  | N    | N    | Spouse         | FPPTIY            | MI    | FPATY     |
+      | Y   | N  | N    | N    | Spouse         | FPPTI             | MI    | FPATI          |
+      | Y   | N  | N    | N    | Spouse         | FPPTIG            | MI    | FPPTIG/INVALID |
+      | Y   | N  | N    | N    | Spouse         | FPPTIW            | MI    | FPATW          |
+      | Y   | N  | N    | N    | Spouse         | FPPTIB            | MI    | FPATB          |
+      | Y   | N  | N    | N    | Spouse         | FPPTIY            | MI    | FPATY          |
 
     Examples: Employee or Spouse with WP rider
       | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code |
@@ -73,7 +73,7 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | N   | N  | Y    | N    | Employee       | FPPTIB            | MI    | FPQTIB/3  |
       | N   | N  | Y    | N    | Employee       | FPPTIY            | MI    | FPQTIY/3  |
 
-      | N   | N  | Y    | N    | Spouse         | FPPTI             | MI    | FPQTI3   |
+      | N   | N  | Y    | N    | Spouse         | FPPTI             | MI    | FPQTI3    |
       | N   | N  | Y    | N    | Spouse         | FPPTIG            | MI    | FPQTIG/3  |
       | N   | N  | Y    | N    | Spouse         | FPPTIW            | MI    | FPQTIW/3  |
       | N   | N  | Y    | N    | Spouse         | FPPTIB            | MI    | FPQTIB/3  |
@@ -94,46 +94,46 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | N   | N  | N    | Y    | Spouse         | FPPTIY            | MI    | FPQTIY/4  |
 
     Examples: Employee or Spouse with AIR and WP riders is never allowed.
-      | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code |
-      | Y   | Y  | N    | N    | Employee       | FPPTI             | MI    | None      |
-      | Y   | Y  | N    | N    | Employee       | FPPTIG            | MI    | None      |
-      | Y   | Y  | N    | N    | Employee       | FPPTIW            | MI    | None      |
-      | Y   | Y  | N    | N    | Employee       | FPPTIB            | MI    | None      |
-      | Y   | Y  | N    | N    | Employee       | FPPTIY            | MI    | None      |
+      | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code      |
+      | Y   | Y  | N    | N    | Employee       | FPPTI             | MI    | None           |
+      | Y   | Y  | N    | N    | Employee       | FPPTIG            | MI    | FPPTIG/INVALID |
+      | Y   | Y  | N    | N    | Employee       | FPPTIW            | MI    | None           |
+      | Y   | Y  | N    | N    | Employee       | FPPTIB            | MI    | None           |
+      | Y   | Y  | N    | N    | Employee       | FPPTIY            | MI    | None           |
 
-      | Y   | Y  | N    | N    | Spouse         | FPPTI             | MI    | None      |
-      | Y   | Y  | N    | N    | Spouse         | FPPTIG            | MI    | None      |
-      | Y   | Y  | N    | N    | Spouse         | FPPTIW            | MI    | None      |
-      | Y   | Y  | N    | N    | Spouse         | FPPTIB            | MI    | None      |
-      | Y   | Y  | N    | N    | Spouse         | FPPTIY            | MI    | None      |
+      | Y   | Y  | N    | N    | Spouse         | FPPTI             | MI    | None           |
+      | Y   | Y  | N    | N    | Spouse         | FPPTIG            | MI    | FPPTIG/INVALID |
+      | Y   | Y  | N    | N    | Spouse         | FPPTIW            | MI    | None           |
+      | Y   | Y  | N    | N    | Spouse         | FPPTIB            | MI    | None           |
+      | Y   | Y  | N    | N    | Spouse         | FPPTIY            | MI    | None           |
 
     Examples: Employee or Spouse with AIR rider and the QOL3 rider is same as AIR code
-      | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code |
-      | Y   | N  | Y    | N    | Employee       | FPPTI             | MI    | FPATI     |
-      | Y   | N  | Y    | N    | Employee       | FPPTIG            | MI    | None      |
-      | Y   | N  | Y    | N    | Employee       | FPPTIW            | MI    | FPATW     |
-      | Y   | N  | Y    | N    | Employee       | FPPTIB            | MI    | FPATB     |
-      | Y   | N  | Y    | N    | Employee       | FPPTIY            | MI    | FPATY     |
+      | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code      |
+      | Y   | N  | Y    | N    | Employee       | FPPTI             | MI    | FPATI          |
+      | Y   | N  | Y    | N    | Employee       | FPPTIG            | MI    | FPPTIG/INVALID |
+      | Y   | N  | Y    | N    | Employee       | FPPTIW            | MI    | FPATW          |
+      | Y   | N  | Y    | N    | Employee       | FPPTIB            | MI    | FPATB          |
+      | Y   | N  | Y    | N    | Employee       | FPPTIY            | MI    | FPATY          |
 
-      | Y   | N  | Y    | N    | Spouse         | FPPTI             | MI    | FPATI     |
-      | Y   | N  | Y    | N    | Spouse         | FPPTIG            | MI    | None      |
-      | Y   | N  | Y    | N    | Spouse         | FPPTIW            | MI    | FPATW     |
-      | Y   | N  | Y    | N    | Spouse         | FPPTIB            | MI    | FPATB     |
-      | Y   | N  | Y    | N    | Spouse         | FPPTIY            | MI    | FPATY     |
+      | Y   | N  | Y    | N    | Spouse         | FPPTI             | MI    | FPATI          |
+      | Y   | N  | Y    | N    | Spouse         | FPPTIG            | MI    | FPPTIG/INVALID |
+      | Y   | N  | Y    | N    | Spouse         | FPPTIW            | MI    | FPATW          |
+      | Y   | N  | Y    | N    | Spouse         | FPPTIB            | MI    | FPATB          |
+      | Y   | N  | Y    | N    | Spouse         | FPPTIY            | MI    | FPATY          |
 
     Examples: Employee or Spouse with AIR rider and the QOL4 rider.
-      | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code |
-      | Y   | N  | N    | Y    | Employee       | FPPTI             | MI    | FPATI4    |
-      | Y   | N  | N    | Y    | Employee       | FPPTIG            | MI    | None      |
-      | Y   | N  | N    | Y    | Employee       | FPPTIW            | MI    | FPATW/4   |
-      | Y   | N  | N    | Y    | Employee       | FPPTIB            | MI    | FPATB/4   |
-      | Y   | N  | N    | Y    | Employee       | FPPTIY            | MI    | FPATY/4   |
+      | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code      |
+      | Y   | N  | N    | Y    | Employee       | FPPTI             | MI    | FPATI4         |
+      | Y   | N  | N    | Y    | Employee       | FPPTIG            | MI    | FPPTIG/INVALID |
+      | Y   | N  | N    | Y    | Employee       | FPPTIW            | MI    | FPATW/4        |
+      | Y   | N  | N    | Y    | Employee       | FPPTIB            | MI    | FPATB/4        |
+      | Y   | N  | N    | Y    | Employee       | FPPTIY            | MI    | FPATY/4        |
 
-      | Y   | N  | N    | Y    | Spouse         | FPPTI             | MI    | FPATI4    |
-      | Y   | N  | N    | Y    | Spouse         | FPPTIG            | MI    | None      |
-      | Y   | N  | N    | Y    | Spouse         | FPPTIW            | MI    | FPATW/4   |
-      | Y   | N  | N    | Y    | Spouse         | FPPTIB            | MI    | FPATB/4   |
-      | Y   | N  | N    | Y    | Spouse         | FPPTIY            | MI    | FPATY/4   |
+      | Y   | N  | N    | Y    | Spouse         | FPPTI             | MI    | FPATI4         |
+      | Y   | N  | N    | Y    | Spouse         | FPPTIG            | MI    | FPPTIG/INVALID |
+      | Y   | N  | N    | Y    | Spouse         | FPPTIW            | MI    | FPATW/4        |
+      | Y   | N  | N    | Y    | Spouse         | FPPTIB            | MI    | FPATB/4        |
+      | Y   | N  | N    | Y    | Spouse         | FPPTIY            | MI    | FPATY/4        |
 
     Examples: Employee or Spouse with QOL3 rider + WP is same as QOL3
       | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code |
@@ -143,7 +143,7 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | N   | Y  | Y    | N    | Employee       | FPPTIB            | MI    | FPQTIB/3  |
       | N   | Y  | Y    | N    | Employee       | FPPTIY            | MI    | FPQTIY/3  |
 
-      | N   | Y  | Y    | N    | Spouse         | FPPTI             | MI    | FPQTI3   |
+      | N   | Y  | Y    | N    | Spouse         | FPPTI             | MI    | FPQTI3    |
       | N   | Y  | Y    | N    | Spouse         | FPPTIG            | MI    | FPQTIG/3  |
       | N   | Y  | Y    | N    | Spouse         | FPPTIW            | MI    | FPQTIW/3  |
       | N   | Y  | Y    | N    | Spouse         | FPPTIB            | MI    | FPQTIB/3  |
@@ -157,7 +157,7 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | N   | Y  | N    | Y    | Employee       | FPPTIB            | MI    | FPQTIB/4  |
       | N   | Y  | N    | Y    | Employee       | FPPTIY            | MI    | FPQTIY/4  |
 
-      | N   | Y  | N    | Y    | Spouse         | FPPTI             | MI    | FPQTI4   |
+      | N   | Y  | N    | Y    | Spouse         | FPPTI             | MI    | FPQTI4    |
       | N   | Y  | N    | Y    | Spouse         | FPPTIG            | MI    | FPQTIG/4  |
       | N   | Y  | N    | Y    | Spouse         | FPPTIW            | MI    | FPQTIW/4  |
       | N   | Y  | N    | Y    | Spouse         | FPPTIB            | MI    | FPQTIB/4  |
@@ -206,8 +206,8 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | Y   | Y  | N    | N    | Spouse         | FPPTI             | MD    | None       |
       | Y   | N  | Y    | N    | Spouse         | FPPTI             | MD    | FPATI/MD   |
       | Y   | N  | N    | Y    | Spouse         | FPPTI             | MD    | FPATI4/MD  |
-      | N   | Y  | Y    | N    | Spouse         | FPPTI             | MD    | FPQTI3/MD |
-      | N   | Y  | N    | Y    | Spouse         | FPPTI             | MD    | FPQTI4/MD |
+      | N   | Y  | Y    | N    | Spouse         | FPPTI             | MD    | FPQTI3/MD  |
+      | N   | Y  | N    | Y    | Spouse         | FPPTI             | MD    | FPQTI4/MD  |
 
     Examples: Employee or Spouse with multiple riders in MD
       | AIR | WP | QOL3 | QOL4 | Applicant Type | Base Product Code | State | Plan Code  |
@@ -220,8 +220,8 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | Y   | Y  | N    | N    | Spouse         | FPPTI             | UT    | None       |
       | Y   | N  | Y    | N    | Spouse         | FPPTI             | UT    | FPATI/UT   |
       | Y   | N  | N    | Y    | Spouse         | FPPTI             | UT    | FPATI4/UT  |
-      | N   | Y  | Y    | N    | Spouse         | FPPTI             | UT    | FPQTI3/UT |
-      | N   | Y  | N    | Y    | Spouse         | FPPTI             | UT    | FPQTI4/UT |
+      | N   | Y  | Y    | N    | Spouse         | FPPTI             | UT    | FPQTI3/UT  |
+      | N   | Y  | N    | Y    | Spouse         | FPPTI             | UT    | FPQTI4/UT  |
 
 
     Examples: FPPCI plan code combinations
@@ -229,6 +229,6 @@ Feature: Lookup product plan codes for submitting to the Third-Party Administrat
       | N   | N  | N    | N    | Employee       | FPPCI             | MI    | INDFPP    |
       | N   | N  | N    | N    | Spouse         | FPPCI             | MI    | INDFPP    |
       | N   | N  | N    | N    | Child          | FPPCI             | MI    | INDFPD    |
-      | N   | N  | N    | N    | Employee       | FPPCI             | UT    | INDFPP/UT    |
-      | N   | N  | N    | N    | Spouse         | FPPCI             | UT    | INDFPP/UT    |
-      | N   | N  | N    | N    | Child          | FPPCI             | UT    | INDFPD/UT    |
+      | N   | N  | N    | N    | Employee       | FPPCI             | UT    | INDFPP/UT |
+      | N   | N  | N    | N    | Spouse         | FPPCI             | UT    | INDFPP/UT |
+      | N   | N  | N    | N    | Child          | FPPCI             | UT    | INDFPD/UT |
