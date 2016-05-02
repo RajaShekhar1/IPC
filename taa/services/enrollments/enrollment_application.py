@@ -430,6 +430,9 @@ class EnrollmentApplicationService(DBService):
         
         out = []
         for enrollment_application in census_record.enrollment_applications:
+            if not enrollment_application.standardized_data:
+                continue
+            
             json_data = json.loads(enrollment_application.standardized_data)
 
             if isinstance(json_data, list):
