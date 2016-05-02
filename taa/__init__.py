@@ -1,4 +1,5 @@
 import locale
+
 # Make sure this is set for the whole app for formatting dates, times, currency, etc.
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
@@ -13,6 +14,7 @@ from .helpers import JSONEncoder
 # Globals
 app = None
 db = None
+""":type : SQLAlchemy"""
 stormpath_manager = None
 
 
@@ -21,8 +23,8 @@ def create_app(bind=None):
     global app
 
     app = Flask(__name__,
-            template_folder='frontend/templates',
-            static_folder='frontend/static')
+                template_folder='frontend/templates',
+                static_folder='frontend/static')
 
     # Load the config from environment variables, defaulting to some dev settings
     app.config.from_object('taa.config_defaults')
@@ -56,10 +58,12 @@ def create_app(bind=None):
     from api.products import bp as products_api
     from api.enrollments import bp as enrollments_api
     from api.envelopes import bp as envelopes_api
+    from api.submissions import blueprint as submissions_api
     app.register_blueprint(cases_api)
     app.register_blueprint(products_api)
     app.register_blueprint(enrollments_api)
     app.register_blueprint(envelopes_api)
+    app.register_blueprint(submissions_api)
 
     # API custom JSON encoder
     app.json_encoder = JSONEncoder
@@ -81,5 +85,6 @@ def create_app(bind=None):
     init_assets(app)
 
     return app
+
 
 create_app()

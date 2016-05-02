@@ -13,6 +13,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.report_viewmodel = ko.observable(null);
 
+  self.is_data_dirty = ko.observable();
+
   self.report_viewmodel.subscribe(function (val) {
     if (val && window.location.hash == "#reports") {
       // try to load reports and enrollments
@@ -391,19 +393,44 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   // Call Center Workflow
   self.should_use_call_center_workflow = ko.observable(case_data.should_use_call_center_workflow);
 
+  // There should always be a default occupation class setting
+  if (!Array.isArray(case_data.occupation_class_settings)) {
+    case_data.occupation_class_settings = [];
+  }
+  if (!_.any(case_data.occupation_class_settings, function (occupation) { return occupation.label.toLowerCase() === DEFAULT_OCCUPATION_LABEL.toLowerCase(); })) {
+    case_data.occupation_class_settings.unshift({label: DEFAULT_OCCUPATION_LABEL, level: 1});
+  }
   // Occupation classes
-  self.occupation_classes = ko.observableArray(_.map(case_data.occupation_class_settings, function (occupation) {
-    return new OccupationVM(occupation.label, occupation.level);
-  }));
+  self.occupation_classes = ko.observableArray(sort_occupations(_.map(case_data.occupation_class_settings, function (occupation) {
+    return new OccupationVM(occupation.label, occupation.level, occupation.has_applicants);
+  })));
   self.new_occupation_class = ko.observable('');
 
   self.addOccupationClass = function () {
     self.occupation_classes.push(new OccupationVM(self.new_occupation_class()));
+    self.occupation_classes(sort_occupations(self.occupation_classes()));
     self.new_occupation_class('');
+    self.is_data_dirty(true);
+  };
+
+  self.pending_delete_occupation_class = ko.observable(null);
+
+  self.confirm_remove_occupation_class = function () {
+    var occupation_class = self.pending_delete_occupation_class();
+    if (occupation_class) {
+      self.occupation_classes.remove(occupation_class);
+      self.is_data_dirty(true);
+    }
   };
 
   self.removeOccupationClass = function (occupation_class) {
-    self.occupation_classes.remove(occupation_class);
+    if (occupation_class.has_applicants) {
+      self.pending_delete_occupation_class(occupation_class);
+      $('#occupation-deletion-warning').modal('show');
+    } else {
+      self.occupation_classes.remove(occupation_class);
+      self.is_data_dirty(true);
+    }
   };
 
   self.is_new_occupation_class_valid = ko.pureComputed(function () {
@@ -412,19 +439,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     });
     return (self.new_occupation_class() !== '' && index === -1);
   });
-
-  // Mappings available to the user -- used in case.html to populate mapping dropdown
-  // A 'null' is implicit
-  self.available_occupation_mappings = [{
-    value: 1,
-    label: '1'
-  }, {
-    value: 2,
-    label: '2'
-  }, {
-    value: 3,
-    label: '3'
-  }];
 
   self.hi_occupation_classes = [];
 
@@ -462,6 +476,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
         label: label,
         value: ko.observable(value)
       };
+      self.occ_mapping_cache[product_id][label].value.subscribe(function () {
+        self.is_data_dirty(true);
+      });
     }
   };
 
@@ -540,7 +557,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.occupation_classes_for_product = function (product) {
-    var r = [];
+    var occupation_mappings = [];
     if (!(product.id in self.occ_mapping_cache)) {
       for (var i in self.occupation_classes()) {
         if (i == 'first') {
@@ -559,10 +576,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
     for (var label in self.occ_mapping_cache[product.id]) {
       if (is_product_active(product) && is_occupation_class_active(label)) {
-        r.push(self.occ_mapping_cache[product.id][label]);
+        occupation_mappings.push(self.occ_mapping_cache[product.id][label]);
       }
     }
-    return r;
+    return sort_occupations(occupation_mappings);
   };
 
   // cache the instances of the riders here.
@@ -771,8 +788,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
   };
 
-  self.is_data_dirty = ko.observable();
-
   //region Percentage Functions
 
   self.agent_has_percentage = function (agent) {
@@ -832,9 +847,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   //  exists, otherwise creates a new one.
   self.get_or_create_split = function (agent_id, product_id) {
 
-    var existing_split = self.selected_agent_splits().filter(function (elem) {
-      return elem.agent_id === agent_id && elem.product_id === product_id;
-    }).first();
+    var existing_split = _.find(self.selected_agent_splits.peek(), function (elem) {
+      return elem.product_id === product_id && elem.agent_id === agent_id;
+    });
 
     if (existing_split) {
       return existing_split;
@@ -1508,6 +1523,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       self.report_viewmodel().exit_print_preview();
     }
   };
+
+  self.has_general_product_configuration_options = ko.pureComputed(function () {
+    return self.has_fpp_products() || self.is_case_occupation_class_eligible();
+  });
 
   // Tabs
   var setup_tab = $('#case-nav-tabs a[href="#setup"]');

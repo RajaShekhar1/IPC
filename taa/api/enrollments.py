@@ -8,7 +8,7 @@ from flask_stormpath import login_required, groups_required
 
 from taa.api import route
 from taa.services import LookupService
-from taa.services.enrollments.csv_export import export_acc_hi
+from taa.services.enrollments.csv_export import export_hi_acc_enrollments
 
 
 bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
@@ -162,7 +162,7 @@ def render_acc_hi_csv(from_, to_):
     enrollments = enrollment_application_service.get_enrollments_by_date(
             from_, to_).filter(
             enrollment_application_service.__model__.case_id.in_(case_ids)).all()
-    data = export_acc_hi(enrollments)
+    data = export_hi_acc_enrollments(enrollments)
     response = make_response(data)
     response.headers['Content-Type'] = 'text/csv'
     response.headers['Content-Disposition'] = 'inline; filename=acc-hi_{}~{}.csv'.format(from_, to_)

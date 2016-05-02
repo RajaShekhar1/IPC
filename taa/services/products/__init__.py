@@ -1,5 +1,8 @@
 from flask import abort
 from flask_stormpath import current_user
+
+from ..cases import Case, CaseCensus
+from ..enrollments import EnrollmentApplication
 from taa.services.products.rates import GILimitedRatesDecorator
 
 from taa.services.products.RatePlan import ApplicantQuery, APPLICANT_CHILD, ApplicantQueryOptions, \
@@ -380,8 +383,6 @@ class ProductService(DBService):
 
         rate_plan = load_rate_plan_for_base_product(product.get_base_product_code())
         return rate_plan.calculate_premium(applicant_query)
-
-
 
 
 class ProductCriteriaService(DBService):

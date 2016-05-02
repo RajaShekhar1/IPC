@@ -87,6 +87,11 @@ function init_validation(ui) {
         return false;
       }
 
+      if (ui.requires_actively_at_work() && ui.is_employee_actively_at_work() === null) {
+        e.preventDefault();
+        return false;
+      }
+
       if (is_valid) {
         // Scroll to top of page when moving to step 2.
         $(document.body).scrollTop(0);

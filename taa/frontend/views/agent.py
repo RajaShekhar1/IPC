@@ -94,6 +94,11 @@ def manage_case(case_id):
     case = case_service.get_if_allowed(case_id)
     for product in case.products:
         setattr(product, 'case_id', case.id)
+    occupation_classes_in_use = case_service.get_occupation_classes_in_use(case.id)
+    if case.occupation_class_settings is not None and occupation_classes_in_use is not None:
+        for occupation_class in case.occupation_class_settings:
+            occupation_class['has_applicants'] = occupation_class.get('label') in occupation_classes_in_use
+
     vars = {'case': case, 'can_edit_case': False}
 
     agent = agent_service.get_logged_in_agent()
@@ -232,6 +237,7 @@ def edit_census_record(case_id, census_record_id):
 
     case = case_service.get_if_allowed(case_id)
     census_record = case_service.get_census_record(case, census_record_id)
+    """:type: taa.services.cases.models.CaseCensus"""
     record_form = CensusRecordForm(obj=census_record)
     agent = agent_service.get_logged_in_agent()
     # Get the child entries out

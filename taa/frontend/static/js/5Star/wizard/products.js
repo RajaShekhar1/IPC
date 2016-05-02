@@ -23,7 +23,7 @@ var wizard_products = (function () {
 
     var base_type = product_data.base_product_type;
     var base_product;
-    if (base_type === "FPPTI") {
+    if (base_type === "FPPTI" || base_type === "FPPTIW" || base_type == "FPPTIB" || base_type == "FPPTIY") {
       base_product = new FPPTIProduct(product_data);
     } else if (base_type === "FPPCI") {
       base_product = new FPPCIProduct(product_data);
@@ -47,8 +47,9 @@ var wizard_products = (function () {
 
 // Model for different insurance products
 // Product is abstract base class
-function Product() {}
-Product.prototype = {
+  function Product() {}
+
+  Product.prototype = {
 
     // Override if necessary
 
@@ -295,7 +296,7 @@ Product.prototype = {
 
       var emp_coverage_option = window.vm.coverage_vm.get_applicant_coverage_option_for_product(window.vm.employee(), self);
       var emp_existing_coverage_amount = window.vm.employee().get_existing_coverage_amount_for_product(self);
-      var emp_current_coverage_amount = (emp_coverage_option.is_valid() ? emp_coverage_option.face_value : 0);
+      var emp_current_coverage_amount = (emp_coverage_option.is_valid()? emp_coverage_option.face_value : 0);
       return emp_existing_coverage_amount + emp_current_coverage_amount;
     }
 
@@ -501,13 +502,17 @@ Product.prototype = {
     return true;
   };
 
-  HIProduct.prototype.get_coverage_tiers = function () {
-    return [
-      'EE',
-      'ES',
-      'EC',
-      'EF'
-    ];
+  HIProduct.prototype.get_coverage_tiers = function (applicant_types) {
+    var hi_coverage_tiers = ['EE', 'ES', 'EC', 'EF'];
+    if (Array.isArray(applicant_types)) {
+      if (!_.any(applicant_types, function (applicant_type) { return applicant_type === wizard_applicant.Applicant.SpouseType })) {
+        _.remove(hi_coverage_tiers, function (tier) { return tier === 'ES' || tier === 'EF'; })
+      }
+      if (!_.any(applicant_types, function (applicant_type) { return applicant_type === wizard_applicant.Applicant.ChildType; })) {
+        _.remove(hi_coverage_tiers, function (tier) { return tier === 'EC' || tier === 'EF'; })
+      }
+    }
+    return hi_coverage_tiers;
   };
 
   HIProduct.prototype.create_coverage_option = function (options) {
@@ -523,6 +528,10 @@ Product.prototype = {
   };
 
   HIProduct.prototype.should_show_step_four = function () {
+    return false;
+  };
+
+  HIProduct.prototype.should_show_step_5 = function () {
     return false;
   };
   //endregion
@@ -547,13 +556,17 @@ Product.prototype = {
     return true;
   };
 
-  ACCProduct.prototype.get_coverage_tiers = function () {
-    return [
-      'EE',
-      'ES',
-      'EC',
-      'EF'
-    ];
+  ACCProduct.prototype.get_coverage_tiers = function (applicant_types) {
+    var acc_coverage_tiers = ['EE', 'ES', 'EC', 'EF'];
+    if (Array.isArray(applicant_types)) {
+      if (!_.any(applicant_types, function (applicant_type) { return applicant_type === wizard_applicant.Applicant.SpouseType })) {
+        _.remove(acc_coverage_tiers, function (tier) { return tier === 'ES' || tier === 'EF'; })
+      }
+      if (!_.any(applicant_types, function (applicant_type) { return applicant_type === wizard_applicant.Applicant.ChildType; })) {
+        _.remove(acc_coverage_tiers, function (tier) { return tier === 'EC' || tier === 'EF'; })
+      }
+    }
+    return acc_coverage_tiers;
   };
 
   ACCProduct.prototype.create_coverage_option = function (options) {

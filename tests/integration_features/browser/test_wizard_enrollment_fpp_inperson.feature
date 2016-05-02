@@ -21,8 +21,8 @@ Feature: An employee takes an app using the wizard with an Agent assisting
   Scenario: Employee selects coverage for himself and is not in the census.
     Given I begin a new empty enrollment for the case 'Test Case'
     When I enter the following information into the wizard step 1
-      | emp_first | emp_last  | emp_birthdate | emp_coverage |
-      | Joe       | Testerson | 02/29/1980    | better       |
+      | emp_first | emp_last  | emp_birthdate | emp_coverage | actively_at_work |
+      | Joe       | Testerson | 02/29/1980    | better       | Y                |
     And I select 'No' for every question on step 2 of the wizard
     And I enter the following data for step 3 of the wizard
       | emp_gender | emp_street1 | emp_city | emp_state | emp_zip |
@@ -39,8 +39,8 @@ Feature: An employee takes an app using the wizard with an Agent assisting
   Scenario: Employee, Spouse, and a Child select coverage.
     Given I begin a new empty enrollment for the case 'Test Case'
     When I enter the following information into the wizard step 1
-      | emp_first | emp_last | emp_birthdate | emp_coverage | is_married | include_children | sp_first | sp_last | sp_birthdate | ch1_first | ch1_last | ch1_birthdate |
-      | Joe       | Tester   | 02/29/1980    | best         | Y          | Y                | Jane     | Tester  | 03/29/1985   | Johnny    | Tester   | 10/10/2000    |
+      | emp_first | emp_last | emp_birthdate | emp_coverage | actively_at_work | is_married | include_children | sp_first | sp_last | sp_birthdate | ch1_first | ch1_last | ch1_birthdate |
+      | Joe       | Tester   | 02/29/1980    | best         | Y                | Y          | Y                | Jane     | Tester  | 03/29/1985   | Johnny    | Tester   | 10/10/2000    |
     And I select 'No' for every question on step 2 of the wizard
     And I enter the following data for step 3 of the wizard
       | emp_gender | emp_street1 | emp_city | emp_state | emp_zip |
@@ -59,8 +59,8 @@ Feature: An employee takes an app using the wizard with an Agent assisting
   Scenario: Other beneficiaries and contingent beneficiaries are provided
     Given I begin a new empty enrollment for the case 'Test Case'
     When I enter the following information into the wizard step 1
-      | emp_first | emp_last | emp_birthdate | emp_coverage | is_married | include_children | sp_first | sp_last | sp_birthdate |
-      | Joe       | Tester   | 02/29/1980    | best         | Y          | N                | Jane     | Tester  | 03/29/1985   |
+      | emp_first | emp_last | emp_birthdate | emp_coverage | actively_at_work | is_married | include_children | sp_first | sp_last | sp_birthdate |
+      | Joe       | Tester   | 02/29/1980    | best         | Y                | Y          | N                | Jane     | Tester  | 03/29/1985   |
     And I select 'No' for every question on step 2 of the wizard
     And I enter the following data for step 3 of the wizard
       | emp_gender | emp_street1 | emp_city | emp_state | emp_zip |
@@ -79,8 +79,8 @@ Feature: An employee takes an app using the wizard with an Agent assisting
   Scenario: Employee enrolls for multiple products
     Given I begin a new empty enrollment for the case 'Family Multi-Protection Plan Test Case'
     When I enter the following information into the wizard step 1
-      | emp_first | emp_last | emp_birthdate | is_married | include_children | sp_first | sp_last | sp_birthdate |
-      | Joe       | Tester   | 02/29/1980    | Y          | N                | Jane     | Tester  | 03/29/1985   |
+      | emp_first | emp_last | emp_birthdate | actively_at_work | is_married | include_children | sp_first | sp_last | sp_birthdate |
+      | Joe       | Tester   | 02/29/1980    | Y                | Y          | N                | Jane     | Tester  | 03/29/1985   |
     And I select the following recommended coverages
       | product_code | coverage |
       | FPPTI        | best     |

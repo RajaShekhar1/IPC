@@ -3,16 +3,13 @@
   <form class="form-horizontal" id="step4-form">
     <!-- ko ifnot: should_show_step_four -->
     <div>
-      <h3 class="lighter block green text-center ">This step does not apply - no products selected require this step.</h3>
+      <h3 class="lighter block green text-center">This step does not apply to this enrollment.</h3>
     </div>
     <!-- /ko -->
     <!-- ko if: should_show_step_four -->
     <div id="noSpouseNoChildrenBlock"
          data-bind="visible: !coverage_vm.did_select_spouse_coverage() && !coverage_vm.did_select_children_coverage()">
-      <h4 class="green center">
-        This step does not apply - no spouse or children have been selected for coverage in this
-        application.
-      </h4>
+      <h3 class="lighter block green text-center">This step does not apply to this enrollment.</h3>
     </div>
 
     <div id="SpouseInfoBlock" data-bind="visible: coverage_vm.did_select_spouse_coverage()">
