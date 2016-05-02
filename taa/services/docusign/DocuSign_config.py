@@ -57,6 +57,7 @@ def get_template_id(product_type, state):
                 'FPP-Gov':'857F9448-88B2-4DA1-AFCB-8F5B354E137F',
                 'FPPTIY':'857F9448-88B2-4DA1-AFCB-8F5B354E137F',
                 'FPPTIB':'857F9448-88B2-4DA1-AFCB-8F5B354E137F',
+                'FPPTIW':'857F9448-88B2-4DA1-AFCB-8F5B354E137F',
                 'Group CI':'8A95ABEA-707C-4C69-9929-7CCDD8173ED6'}.get(product_type)
 
     return ProductFormService().get_application_form_template_id(product_type, state)
