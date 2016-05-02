@@ -16,6 +16,8 @@ from flask.ext.stormpath import (
     user,
 )
 
+from stormpath.error import Error
+
 from taa import app
 from taa.errors import email_exception
 from .nav import get_nav_menu
@@ -88,8 +90,8 @@ def register_taa():
                 session['registered_name'] = data['given_name']
 
                 return redirect(url_for('confirmRegistration'))
-            except StormpathError as err:
-                flash(err.message.get('message', 'There was a problem with the registration process, please try again later.'))
+            except Error as err:
+                flash(err.message)
 
     return render_template('user_account/register.html', form=form, nav_menu=get_nav_menu())
 
@@ -148,12 +150,8 @@ def login():
                 flash(account.given_name + ", your account (" + account.email + ") has not yet been activated.  Please wait for an email confirmation from the Enrollment Administrator.  If you submitted your registration more than 24 hours ago, feel free to contact admin@5StarEnroll.com with any questions.  Thank you.")
                 return redirect(url_for('login'))
 
-        except StormpathError, err:
-            if not isinstance(err.message, str) and 'message' in err.message:
-                flash(err.message['message'], 'error')
-            else:
-                flash(apology_message, "error")
-                email_exception(app, err)
+        except Error, err:
+            flash(err.message, 'error')
 
         except Exception, err:
             flash(apology_message, "error")
@@ -217,12 +215,9 @@ def reauth():
             session['active_case_id'] = session_data.get('active_case_id')
             session['enrolling_census_record_id'] = session_data.get('enrolling_census_record_id')
 
-    except StormpathError, err:
+    except Error, err:
         is_error = True
-        if isinstance(err.message, str):
-            error_message = err.message
-        else:
-            error_message = err.message['message']
+        error_message = err.message
 
     resp = {
         'error': is_error,
@@ -232,6 +227,7 @@ def reauth():
     data = jsonify(**resp)
 
     return data
+
 
 @app.route("/exit")
 def taa_logout():

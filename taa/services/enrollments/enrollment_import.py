@@ -235,9 +235,9 @@ def standardize_wizard_names(data, prefix):
 
     out_data = {}
     out_data[prefix] = data.get(prefix)
-    if out_data[prefix]:
-        out_data[prefix]["first"] = out_data[prefix].get("first", "").strip()
-        out_data[prefix]["last"] = out_data[prefix].get("last", "").strip()
+    if out_data[prefix] and out_data[prefix].get('first') and out_data[prefix].get('last'):
+        out_data[prefix]["first"] = out_data[prefix]["first"].strip()
+        out_data[prefix]["last"] = out_data[prefix]["last"].strip()
     return out_data
 
 
