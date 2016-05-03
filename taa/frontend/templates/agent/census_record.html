@@ -120,7 +120,7 @@
                   {{ render_field_with_errors(form.employee_last) }}
                   {{ render_field_with_errors(form.employee_gender) }}
 
-                  {{ render_field_with_errors(form.employee_ssn, length=9) }}
+                  {{ render_field_with_errors(form.employee_ssn, maxlength=9) }}
                   {{ render_field_with_errors(form.employee_birthdate) }}
                   {{ render_field_with_errors(form.employee_email) }}
                   {{ render_field_with_errors(form.employee_phone) }}
@@ -143,7 +143,7 @@
                   {{ render_field_with_errors(form.spouse_last) }}
                   {{ render_field_with_errors(form.spouse_gender) }}
 
-                  {{ render_field_with_errors(form.spouse_ssn, length=9) }}
+                  {{ render_field_with_errors(form.spouse_ssn, maxlength=9) }}
                   {{ render_field_with_errors(form.spouse_birthdate) }}
                   {{ render_field_with_errors(form.spouse_email) }}
                   {{ render_field_with_errors(form.spouse_phone) }}
@@ -411,7 +411,7 @@
                           window.location.href = "{{ url_for('manage_case', case_id=case.id) }}#enrollment";
                       },
                       error: function(xhr) {
-                          console.log(xhr.responseJSON.errors)
+                          alert("We're sorry, there was a problem saving the data on the server.");
                       }
                   });
               } catch(e) {
