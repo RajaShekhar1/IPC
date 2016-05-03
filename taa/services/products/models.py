@@ -6,6 +6,7 @@ from taa import db
 from taa.helpers import JsonSerializable
 from taa.services.products.product_forms import ProductFormService
 from taa.services.products.riders import RiderService
+
 product_form_service = ProductFormService()
 
 
@@ -47,7 +48,7 @@ product_restricted_agents = db.Table('product_restricted_agents', db.metadata,
                                                primary_key=True),
                                      db.Column('agent_id', db.Integer, db.ForeignKey('agents.id'),
                                                primary_key=True),
-)
+                                     )
 db.Index('ix_product_restricted_agents_agent', product_restricted_agents.c.agent_id)
 
 
@@ -63,13 +64,16 @@ class Product(ProductJsonSerializable, db.Model):
     brochure_name = db.Column(db.Unicode(256))
     is_fpp_gov = db.Column(db.Boolean, nullable=False, server_default='FALSE')
 
+    # Monthly Flat Fee for Membership Products
+    flat_fee = db.Column(db.Numeric, nullable=True)
+
     # Boolean that controls whether on not this can be enrolled by agents
     visible_to_agents = db.Column(db.Boolean, nullable=False, server_default='True')
 
     product_type = db.Column(db.String(16), nullable=False, default=u'base', server_default=u'base')
 
     restricted_agents = db.relationship('Agent', secondary=product_restricted_agents,
-                             backref=db.backref('restricted_products', lazy='dynamic'))
+                                        backref=db.backref('restricted_products', lazy='dynamic'))
 
     __mapper_args__ = {
         'polymorphic_on': product_type,
@@ -205,12 +209,14 @@ class Product(ProductJsonSerializable, db.Model):
     def requires_signature(self):
         return self.get_base_product_code() not in ['HI', 'ACC']
 
+
 # Relate custom products to agents - who can see these products
 product_agents = db.Table('product_agents', db.metadata,
-    db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True),
-    db.Column('agent_id', db.Integer, db.ForeignKey('agents.id'), primary_key=True),
-)
+                          db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True),
+                          db.Column('agent_id', db.Integer, db.ForeignKey('agents.id'), primary_key=True),
+                          )
 db.Index('ix_product_agents_agent', product_agents.c.agent_id)
+
 
 class CustomProductSerializer(ProductJsonSerializable):
     __json_hidden__ = ['cases', 'customized_products', 'base_product']
@@ -230,9 +236,9 @@ class CustomGuaranteeIssueProduct(CustomProductSerializer, Product):
     __mapper_args__ = {'polymorphic_identity': u'GI',
                        'inherit_condition': id == Product.id}
 
-    base_product = db.relationship('Product', primaryjoin=base_product_id==Product.id, backref='customized_products')
+    base_product = db.relationship('Product', primaryjoin=base_product_id == Product.id, backref='customized_products')
     agents = db.relationship('Agent', secondary=product_agents,
-                               backref=db.backref('custom_products', lazy='dynamic'))
+                             backref=db.backref('custom_products', lazy='dynamic'))
 
     def get_base_product(self):
         # Use the linked product

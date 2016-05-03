@@ -256,6 +256,8 @@ class ProductService(DBService):
             }}
 
             return rate_response
+        elif product.get_base_product_code() in ['Static Benefit']:
+            return {'employee': {'flat_fee': product.flat_fee}}
         else:
             # Use the new rates calculator for all the other products.
             rate_response = {}
@@ -383,6 +385,18 @@ class ProductService(DBService):
 
         rate_plan = load_rate_plan_for_base_product(product.get_base_product_code())
         return rate_plan.calculate_premium(applicant_query)
+
+    def calc_rate_for_flat_fee(self, product, case):
+        """
+        :param product: Product to calculate the rate for
+        :type product: Product
+        :param case: Case to calculate the rate for
+        :type case: Case
+        """
+        if case.payment_mode == 12:
+            return product.flat_fee
+        else:
+            return round(product.flat_fee*12/case.payment_mode, 2)
 
 
 class ProductCriteriaService(DBService):
