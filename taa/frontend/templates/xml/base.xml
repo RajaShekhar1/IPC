@@ -32,7 +32,12 @@
                     <CommissionCalcActivity>
                         {% for agent in agents -%}
                             <CommissionDetail>
+                                {% if loop.first -%}
+                                {# First agent is primary (writing) agent -#}
                                 <WritingProducerID>{{ agent.code }}</WritingProducerID>
+                                {% else -%}
+                                <PaidProducerID>{{ agent.code }}</PaidProducerID>
+                                {% endif -%}
                                 <SplitPercent>{{ agent.commission_percent }}</SplitPercent>
                                 <CommissionSchedule>{{ agent.subcode or '001' }}</CommissionSchedule>
                             </CommissionDetail>
