@@ -6,6 +6,7 @@ from taa import db
 from taa.helpers import JsonSerializable
 from taa.services.products.product_forms import ProductFormService
 from taa.services.products.riders import RiderService
+from decimal import Decimal
 
 product_form_service = ProductFormService()
 
@@ -65,7 +66,7 @@ class Product(ProductJsonSerializable, db.Model):
     is_fpp_gov = db.Column(db.Boolean, nullable=False, server_default='FALSE')
 
     # Monthly Flat Fee for Membership Products
-    flat_fee = db.Column(db.Numeric, nullable=True)
+    flat_fee = db.Column(db.Numeric, nullable=False, default=Decimal('5.00'))
 
     # Boolean that controls whether on not this can be enrolled by agents
     visible_to_agents = db.Column(db.Boolean, nullable=False, server_default='True')
