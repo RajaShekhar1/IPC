@@ -301,7 +301,8 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
 def serialize_product_for_wizard(product, all_soh_questions):
     data = product.to_json()
     # Override the name to be the base product name
-    data['name'] = product.get_base_product().name
+    data['name'] = product.name
+    data['base_product_name'] = product.get_base_product().name
 
     # Override code to be the base product code and alias it to base_product_type.
     data['code'] = product.get_base_product_code()

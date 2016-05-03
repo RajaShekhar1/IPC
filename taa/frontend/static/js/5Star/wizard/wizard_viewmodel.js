@@ -543,8 +543,10 @@ var wizard_viewmodel = (function () {
 
     get_coverage_selection_template: function () {
       // in the future, products may not all use the recommendation system for coverage selection.
-      if (this.product.has_simple_coverage()) {
+      if (this.product.is_simple_coverage) {
         return 'simple_coverage_selection';
+      } else if (this.product.is_forced_coverage) {
+        return 'forced_coverage_selection';
       } else if (this.product.does_use_recommended_coverage_table()) {
         return 'recommendation_coverage_selection';
       } else {
@@ -1574,7 +1576,7 @@ var wizard_viewmodel = (function () {
             return existing_coverage.product_id === product_coverage.product.id && existing_coverage.coverage_status === 'enrolled';
           });
         });
-      }));
+      })) && self.coverage_vm.current_product().product.can_decline();
 
     });
 
