@@ -2439,6 +2439,77 @@ var wizard_viewmodel = (function () {
     });
     //endregion
 
+    //region Bank Draft Info
+    self.requires_bank_info = ko.pureComputed(function () {
+      return !!self.enrollment_case.include_bank_draft_form;
+    });
+
+    self.account_type_options = ['Checking', 'Savings'];
+
+    self.selected_account_type = ko.observable(self.account_type_options[0]);
+
+    self.account_number = ko.observable(null);
+    self.routing_number = ko.observable(null);
+    self.bank_name = ko.observable(null);
+
+    var __bank_street_one = ko.observable(null);
+    var __bank_street_two = ko.observable(null);
+    var __bank_city = ko.observable(null);
+    var __bank_state = ko.observable(null);
+    var __bank_zip = ko.observable(null);
+    var __bank_account_holder_name = ko.observable(null);
+
+    self.bank_account_holder_name = ko.computed({
+      read: function () {
+        return !!__bank_account_holder_name() ? __bank_account_holder_name() : (self.employee().first() + ' ' + self.employee().last());
+      },
+      write: function (value) {
+        __bank_account_holder_name(value);
+      }
+    });
+
+    self.bank_street_one = ko.computed({
+      read: function () {
+        return !!__bank_street_one() ? __bank_street_one() : self.employee().address1();
+      },
+      write: function (value) {
+        __bank_street_one(value);
+      }
+    });
+    self.bank_street_two = ko.computed({
+      read: function () {
+        return !!__bank_street_two() ? __bank_street_two() : self.employee().address2();
+      },
+      write: function (value) {
+        __bank_street_two(value);
+      }
+    });
+    self.bank_city = ko.computed({
+      read: function () {
+        return !!__bank_city() ? __bank_city() : self.employee().city();
+      },
+      write: function (value) {
+        __bank_city(value);
+      }
+    });
+    self.bank_state = ko.computed({
+      read: function () {
+        return !!__bank_state() ? __bank_state() : self.employee().state();
+      },
+      write: function (value) {
+        __bank_state(value);
+      }
+    });
+    self.bank_zip = ko.computed({
+      read: function () {
+        return !!__bank_zip() ? __bank_zip() : self.employee().zip();
+      },
+      write: function (value) {
+        __bank_zip(value);
+      }
+    });
+    //endregion
+
   }
 
   // TODO:  Will need to expose this function to the other modules, integrate Barrett's reauth mechanism below

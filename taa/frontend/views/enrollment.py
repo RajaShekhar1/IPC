@@ -277,6 +277,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'product_height_weight_tables': height_weight_tables,
             'occupations': occupations,
             'omit_actively_at_work': case.omit_actively_at_work,
+            'include_bank_draft_form': case.include_bank_draft_form,
         },
         applicants=applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in
