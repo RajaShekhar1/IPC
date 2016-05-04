@@ -171,8 +171,8 @@ function FlatFeeCoverageOption(options) {
     return self.applicant_type === wizard_applicant.Applicant.EmployeeType;
   });
 
-  self.premium = self.is_applicant_employee() ? parseFloat(self.flat_fee) : 0.0;
-  self.flat_fee = self.is_applicant_employee() ? parseFloat(self.flat_fee) : 0.0;
+  self.premium = self.is_applicant_employee()? parseFloat(self.flat_fee) : 0.0;
+  self.flat_fee = self.is_applicant_employee()? parseFloat(self.flat_fee) : 0.0;
 
   self.is_valid = function () {
     return true;
@@ -180,9 +180,12 @@ function FlatFeeCoverageOption(options) {
 
   self.format_premium = function () {
     if (self.is_applicant_employee()) {
-      return parseFloat(self.flat_fee).toFixed(2);
+      if (self.payment_mode.frequency === 12) {
+        return '$' + parseFloat(self.flat_fee).toFixed(2);
+      }
+      return '$' + parseFloat(self.flat_fee * 12 / self.payment_mode.frequency).toFixed(2);
     }
-    return parseFloat(self.flat_fee * 12 / self.payment_mode.frequency).toFixed(2);
+    return '$0.00';
   };
 
   self.format_premium_option = function () {
