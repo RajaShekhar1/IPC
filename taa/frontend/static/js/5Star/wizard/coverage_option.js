@@ -1,6 +1,16 @@
 function CoverageOption(options) {
   var self = this;
 
+  _.defaults(options, {
+    is_by_face: false,
+    premium: 0,
+    payment_mode: 0,
+    face_value: 0,
+    applicant_type: wizard_applicant.Applicant.EmployeeType,
+    tier: null,
+    flat_fee: 0
+  });
+
   self.is_by_face = options.is_by_face;
   self.premium = options.premium;
   // This is an observable
@@ -145,14 +155,66 @@ function SimpleCoverageOption(options) {
   }
 }
 
+function FlatFeeCoverageOption(options) {
+  var self = this;
+  _.defaults(self, options, {
+    is_by_face: false,
+    premium: 0,
+    payment_mode: payment_mode_module.create_payment_mode_by_frequency(12),
+    face_value: 0,
+    applicant_type: null,
+    tier: null,
+    flat_fee: 0
+  });
+
+  self.is_applicant_employee = ko.pureComputed(function () {
+    return self.applicant_type === wizard_applicant.Applicant.EmployeeType;
+  });
+
+  self.premium = self.is_applicant_employee() ? parseFloat(self.flat_fee) : 0.0;
+  self.flat_fee = self.is_applicant_employee() ? parseFloat(self.flat_fee) : 0.0;
+
+  self.is_valid = function () {
+    return true;
+  };
+
+  self.format_premium = function () {
+    if (self.is_applicant_employee()) {
+      return parseFloat(self.flat_fee).toFixed(2);
+    }
+    return parseFloat(self.flat_fee * 12 / self.payment_mode.frequency).toFixed(2);
+  };
+
+  self.format_premium_option = function () {
+    if (self.is_applicant_employee()) {
+      return self.format_premium() + ' ' + self.payment_mode.label.toLowerCase();
+    }
+    return '';
+  };
+
+  self.format_face_value = function () {
+    if (self.is_applicant_employee()) {
+      return 'Selected';
+    }
+    return 'Included';
+  };
+
+  self.serialize_data = function () {
+    return {
+      premium: self.premium,
+      flat_fee: self.flat_fee,
+      coverage_selection: true
+    };
+  };
+}
 
 function NullCoverageOption() {
   var self = this;
 
-    self.is_by_face = true;
-    self.premium = 0;
-    self.face_value = 0;
-    self.is_removed_from_product = ko.observable(false);
+  self.is_by_face = true;
+  self.premium = 0;
+  self.face_value = 0;
+  self.is_removed_from_product = ko.observable(false);
 
   self.is_valid = function () {
     return false;

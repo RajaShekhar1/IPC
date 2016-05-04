@@ -253,6 +253,32 @@ var wizard_viewmodel = (function () {
       }
     });
 
+    //region Membership Product Coverage
+    self.is_forced_coverage = ko.pureComputed(function () {
+      return product.is_forced_coverage;
+    });
+    
+    self.forced_coverage_option = ko.pureComputed(function () {
+      if (product.is_forced_coverage) {
+        return new FlatFeeCoverageOption({
+          flat_fee: self.product.product_data.flat_fee,
+          payment_mode: payment_mode_module.create_payment_mode_by_frequency(self.case_data.payment_mode),
+          applicant_type: wizard_applicant.Applicant.EmployeeType
+        });
+      }
+      return null;
+    });
+
+    self.dependent_forced_coverage_option = ko.pureComputed(function () {
+      if (product.is_forced_coverage) {
+        return new FlatFeeCoverageOption({
+          flat_fee: self.product.product_data.flat_fee,
+          payment_mode: payment_mode_module.create_payment_mode_by_frequency(self.case_data.payment_mode)
+        })
+      }
+      return null;
+    });
+    //endregion
 
     self.get_label_for_coverage_tier = function (coverage_tier) {
       var employee_first_name = self.employee.first();
@@ -718,6 +744,10 @@ var wizard_viewmodel = (function () {
 
       if (this.product.has_simple_coverage()) {
         return this.product_coverage.selected_simple_coverage_option();
+      }
+
+      if (this.product.is_forced_coverage) {
+        return applicant.type === wizard_applicant.Applicant.EmployeeType? this.product_coverage.forced_coverage_option() : this.product_coverage.dependent_forced_coverage_option();
       }
 
       var custom_option = this.customized_coverage_option();
@@ -1413,7 +1443,7 @@ var wizard_viewmodel = (function () {
       return self.is_employee_actively_at_work() === true || self.is_employee_actively_at_work() === false;
     });
 
-    self.show_aaw_response_error = ko.pureComputed(function() {
+    self.show_aaw_response_error = ko.pureComputed(function () {
       return !self.show_aaw_error() && self.is_employee_actively_at_work() === false;
     });
 
@@ -1570,13 +1600,13 @@ var wizard_viewmodel = (function () {
 
       // Can not decline if any applicant has applied for coverage already
       return (!_.any(self.product_coverage_viewmodels(), function (product_coverage) {
-        return _.any(self.applicant_list.applicants(), function (applicant) {
-          // Does the applicant have existing coverage for this product?
-          return _.any(applicant.existing_coverages, function (existing_coverage) {
-            return existing_coverage.product_id === product_coverage.product.id && existing_coverage.coverage_status === 'enrolled';
+          return _.any(self.applicant_list.applicants(), function (applicant) {
+            // Does the applicant have existing coverage for this product?
+            return _.any(applicant.existing_coverages, function (existing_coverage) {
+              return existing_coverage.product_id === product_coverage.product.id && existing_coverage.coverage_status === 'enrolled';
+            });
           });
-        });
-      })) && self.coverage_vm.current_product().product.can_decline();
+        })) && self.coverage_vm.current_product().product.can_decline();
 
     });
 
@@ -2370,10 +2400,10 @@ var wizard_viewmodel = (function () {
 
     //region Actively at Work
     self.aaw_yes_class = ko.pureComputed(function () {
-      return self.is_employee_actively_at_work() === true ? 'btn-success' : '';
+      return self.is_employee_actively_at_work() === true? 'btn-success' : '';
     });
     self.aaw_no_class = ko.pureComputed(function () {
-      return self.is_employee_actively_at_work() === false ? 'btn-danger' : '';
+      return self.is_employee_actively_at_work() === false? 'btn-danger' : '';
     });
 
     self.aaw_yes = function () {
@@ -2405,7 +2435,7 @@ var wizard_viewmodel = (function () {
       return self.is_employee_actively_at_work() === false;
     });
     self.employee_or_first = ko.pureComputed(function () {
-      return self.employee().first() ? self.employee().first() : 'employee';
+      return self.employee().first()? self.employee().first() : 'employee';
     });
     //endregion
 

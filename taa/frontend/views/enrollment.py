@@ -25,6 +25,7 @@ from taa.services.products.riders import RiderService
 from taa.services import LookupService
 
 product_service = LookupService('ProductService')
+""":type: taa.services.products.ProductService"""
 product_form_service = LookupService('ProductFormService')
 case_service = LookupService('CaseService')
 rider_service = RiderService()
@@ -136,10 +137,10 @@ def in_person_enrollment():
 
 
 def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False):
-
     # As part of address debugging, log the user-agent.
     user_agent = request.user_agent
-    print("[BEGINNING ENROLLMENT] [Platform: '{}', browser: '{}', version: '{}', language: '{}', user_agent: '{}']".format(
+    print(
+    "[BEGINNING ENROLLMENT] [Platform: '{}', browser: '{}', version: '{}', language: '{}', user_agent: '{}']".format(
         user_agent.platform, user_agent.browser, user_agent.version, user_agent.language,
         request.headers.get('User-Agent')
     ))
@@ -278,7 +279,8 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'omit_actively_at_work': case.omit_actively_at_work,
         },
         applicants=applicants,
-        products=[serialize_product_for_wizard(p, soh_questions) for p in case.products],
+        products=[serialize_product_for_wizard(p, soh_questions) for p in
+                  product_service.filter_products_from_membership(case, record)],
         payment_modes=payment_mode_choices,
         employee_questions=employee_questions,
         spouse_questions=spouse_questions,
@@ -328,7 +330,7 @@ def self_enrollment(company_name, uuid):
                 # these products
                 is_self_enrollable = False
                 break
-                
+
     if case_service.requires_occupation(case) and census_record.occupation_class not in map(lambda cr: cr['label'],
                                                                                             case.occupation_class_settings):
         is_self_enrollable = False
@@ -447,14 +449,15 @@ def submit_wizard_data():
 
     # Hotfix 4/5/2016: Attempt to track down user data that is causing blank address data.
     fix_missing_address_bug(wizard_results)
-    
+
     try:
         enrollment = process_wizard_submission(case, wizard_results)
 
         # Store the enrollment record ID in the session for now so we can access it on the landing page.
         session['enrollment_application_id'] = enrollment.id
 
-        accepted_products = get_accepted_products(case, get_accepted_product_ids(json.loads(enrollment.standardized_data)))
+        accepted_products = get_accepted_products(case,
+                                                  get_accepted_product_ids(json.loads(enrollment.standardized_data)))
 
         if any(p for p in accepted_products if p.does_generate_form()):
             # Queue this call for a worker process to handle.
@@ -542,7 +545,8 @@ def check_submission_status():
     standardized_enrollment_data = json.loads(enrollment.standardized_data)
 
     generates_form = any(
-        p for p in get_accepted_products(enrollment.case, get_accepted_product_ids(json.loads(enrollment.standardized_data))) if
+        p for p in
+        get_accepted_products(enrollment.case, get_accepted_product_ids(json.loads(enrollment.standardized_data))) if
         p.does_generate_form())
 
     if are_all_products_declined(received_enrollment_data):
