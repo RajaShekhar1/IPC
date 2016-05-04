@@ -208,7 +208,10 @@ class Product(ProductJsonSerializable, db.Model):
         return self.get_base_product_code() == 'HI' or self.get_base_product_code() == 'ACC'
 
     def requires_signature(self):
-        return self.get_base_product_code() not in ['HI', 'ACC']
+        return self.get_base_product_code() not in ['HI', 'ACC', 'Static Benefit']
+
+    def is_static_benefit(self):
+        return self.get_base_product_code() == 'Static Benefit'
 
 
 # Relate custom products to agents - who can see these products
