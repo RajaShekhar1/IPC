@@ -56,12 +56,15 @@
 
     <div data-bind="if: $root.requires_bank_info">
       <h3 class="green">Payment</h3>
-    <div class="form-group">
-      <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-holder-name">Account Holder Name</label>
-      <div class="col-xs-12 col-sm-9">
-        <input class="control-label col-xs-12 col-sm-9" id="bank-account-holder-name" name="bank-account-holder-name" data-bind="value: $root.bank_account_holder_name" type="text">
+      <hr>
+      <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-holder-name">Account Holder
+          Name</label>
+        <div class="col-xs-12 col-sm-9">
+          <input class="control-label col-xs-12 col-sm-9" id="bank-account-holder-name" name="bank-account-holder-name"
+                 data-bind="value: $root.bank_account_holder_name" type="text">
+        </div>
       </div>
-    </div>
       <div class="form-group">
         <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-type">Account Type</label>
         <div class="col-xs-12 col-sm-9">
@@ -129,6 +132,11 @@
           <input id="bank-zip" name="bank-zip" type="text"
                  data-bind="value: $root.bank_zip">
         </div>
+      </div>
+      <div class="space-4"></div>
+      <div class="row" data-bind="visible: $root.should_show_draft_date">
+        <span class="col-xs-12 col-sm-3 align-right">Draft Day <small>(1<sup>st</sup> through 28<sup>th</sup>)</small></span>
+        <span class="col-xs-12 col-sm-3" data-bind="text: $root.formatted_draft_date"></span>
       </div>
     </div>
 

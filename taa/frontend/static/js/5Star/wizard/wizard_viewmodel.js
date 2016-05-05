@@ -2508,6 +2508,15 @@ var wizard_viewmodel = (function () {
         __bank_zip(value);
       }
     });
+
+    self.should_show_draft_date = ko.pureComputed(function () {
+      // TODO: Update this once the draft day determination is implemented
+      return false;
+    });
+
+    self.formatted_draft_date = ko.pureComputed(function () {
+      return '24th';
+    });
     //endregion
 
   }
