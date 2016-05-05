@@ -558,15 +558,29 @@ function init_validation(ui) {
     success: wizard_validate_success,
     errorPlacement: bank_draft_error_placement,
     rules: {
-      'bank-account-holder-name': {required: true},
+      'bank-account-holder-name': {
+        required: {
+          depends: ui.requires_bank_info
+        }
+      },
       'bank-account-type': {
-        required: true
+        required: {
+          depends: ui.requires_bank_info
+        }
       },
       'bank-account-number': {
-        required: true
+        required: {
+          depends: ui.requires_bank_info
+        },
+        digits: {
+          depends: ui.requires_bank_info
+        }
       },
       'bank-routing-number': {
         required: {
+          depends: ui.requires_bank_info
+        },
+        digits: {
           depends: ui.requires_bank_info
         }
       },

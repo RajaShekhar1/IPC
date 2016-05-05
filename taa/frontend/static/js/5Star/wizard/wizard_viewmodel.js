@@ -2446,7 +2446,7 @@ var wizard_viewmodel = (function () {
 
     self.account_type_options = ['Checking', 'Savings'];
 
-    self.selected_account_type = ko.observable(self.account_type_options[0]);
+    self.selected_account_type = ko.observable(null);
 
     self.account_number = ko.observable(null);
     self.routing_number = ko.observable(null);
