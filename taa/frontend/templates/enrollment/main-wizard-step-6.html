@@ -54,90 +54,93 @@
 
     <div class="space-10"></div>
 
-    <div data-bind="if: $root.requires_bank_info">
+    <div id="bank-draft-info" data-bind="if: $root.requires_bank_info">
       <h3 class="green">Payment</h3>
       <hr>
-      <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-holder-name">Account Holder
-          Name</label>
-        <div class="col-xs-12 col-sm-9">
-          <input class="control-label col-xs-12 col-sm-9" id="bank-account-holder-name" name="bank-account-holder-name"
-                 data-bind="value: $root.bank_account_holder_name" type="text">
+      <form id="bank-draft-form">
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-holder-name">Account Holder
+            Name</label>
+          <div class="col-xs-12 col-sm-9">
+            <input class="control-label col-xs-12 col-sm-9" id="bank-account-holder-name"
+                   name="bank-account-holder-name"
+                   data-bind="value: $root.bank_account_holder_name" type="text">
+          </div>
         </div>
-      </div>
-      <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-type">Account Type</label>
-        <div class="col-xs-12 col-sm-9">
-          <select id="bank-account-type" name="bank-account-type"
-                  data-bind="options: $root.account_type_options, value: $root.selected_account_type"></select>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-type">Account Type</label>
+          <div class="col-xs-12 col-sm-9">
+            <select id="bank-account-type" name="bank-account-type"
+                    data-bind="options: $root.account_type_options, value: $root.selected_account_type"></select>
+          </div>
         </div>
-      </div>
-      <div class="space-2"></div>
-      <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-number">Account
-          Number</label>
+        <div class="space-2"></div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-number">Account
+            Number</label>
 
-        <div class="col-xs-12 col-sm-9">
-          <input class="col-xs-12 col-sm-9" id="bank-account-number" name="bank-account-number" type="text"
-                 data-bind="value: $root.account_number">
+          <div class="col-xs-12 col-sm-9">
+            <input class="col-xs-12 col-sm-9" id="bank-account-number" name="bank-account-number" type="text"
+                   data-bind="value: $root.account_number">
+          </div>
         </div>
-      </div>
-      <div class="space-2"></div>
-      <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-routing-number">Routing
-          Number</label>
-        <div class="col-xs-12 col-sm-9">
-          <input class="col-xs-12 col-sm-9" id="bank-routing-number" name="bank-routing-number" type="text"
-                 data-bind="value: $root.routing_number">
+        <div class="space-2"></div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-routing-number">Routing
+            Number</label>
+          <div class="col-xs-12 col-sm-9">
+            <input class="col-xs-12 col-sm-9" id="bank-routing-number" name="bank-routing-number" type="text"
+                   data-bind="value: $root.routing_number">
+          </div>
         </div>
-      </div>
-      <div class="space-2"></div>
-      <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-name">Bank Name</label>
-        <div class="col-xs-12 col-sm-9">
-          <input class="col-xs-12 col-sm-9" id="bank-name" name="bank-name" type="text"
-                 data-bind="value: $root.bank_name">
+        <div class="space-2"></div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-name">Bank Name</label>
+          <div class="col-xs-12 col-sm-9">
+            <input class="col-xs-12 col-sm-9" id="bank-name" name="bank-name" type="text"
+                   data-bind="value: $root.bank_name">
+          </div>
         </div>
-      </div>
-      <div class="space-2"></div>
-      <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-street-one">Street 1</label>
+        <div class="space-2"></div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-street-one">Street 1</label>
 
-        <div class="col-xs-12 col-sm-9">
-          <input class="col-xs-12 col-sm-9" id="bank-account-number" name="bank-account-number" type="text"
-                 data-bind="value: $root.bank_street_one">
+          <div class="col-xs-12 col-sm-9">
+            <input class="col-xs-12 col-sm-9" id="bank-street-one" name="bank-street-one" type="text"
+                   data-bind="value: $root.bank_street_one">
+          </div>
         </div>
-      </div>
-      <div class="space-2"></div>
-      <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-street-two">Street 2</label>
+        <div class="space-2"></div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-street-two">Street 2</label>
 
-        <div class="col-xs-12 col-sm-9">
-          <input class="col-xs-12 col-sm-9" id="bank-street-two" name="bank-street-two" type="text"
-                 data-bind="value: $root.bank_street_two">
+          <div class="col-xs-12 col-sm-9">
+            <input class="col-xs-12 col-sm-9" id="bank-street-two" name="bank-street-two" type="text"
+                   data-bind="value: $root.bank_street_two">
+          </div>
         </div>
-      </div>
-      <div class="space-2"></div>
-      <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-city">City, State, Zip</label>
-        <div class="col-xs-12 col-sm-9">
-          <input id="bank-city" name="bank-city" type="text"
-                 data-bind="value: $root.bank_city">
-          <select id="bank-state" name="bank-state" type="text"
-                  data-bind="value: $root.bank_state">
-            {% for state in states %}
-              <option value="{{ state['code'] }}">{{ state['name'] }}</option>
-            {% endfor %}
-          </select>
-          <input id="bank-zip" name="bank-zip" type="text"
-                 data-bind="value: $root.bank_zip">
+        <div class="space-2"></div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-city">City, State, Zip</label>
+          <div class="col-xs-12 col-sm-9">
+            <input id="bank-city" name="bank-city" type="text"
+                   data-bind="value: $root.bank_city">
+            <select id="bank-state" name="bank-state" type="text"
+                    data-bind="value: $root.bank_state">
+              {% for state in states %}
+                <option value="{{ state['code'] }}">{{ state['name'] }}</option>
+              {% endfor %}
+            </select>
+            <input id="bank-zip" name="bank-zip" type="text"
+                   data-bind="value: $root.bank_zip">
+          </div>
         </div>
-      </div>
-      <div class="space-4"></div>
-      <div class="row" data-bind="visible: $root.should_show_draft_date">
-        <span class="col-xs-12 col-sm-3 align-right">Draft Day <small>(1<sup>st</sup> through 28<sup>th</sup>)</small></span>
-        <span class="col-xs-12 col-sm-3" data-bind="text: $root.formatted_draft_date"></span>
-      </div>
+        <div class="space-4"></div>
+        <div class="row" data-bind="visible: $root.should_show_draft_date">
+          <span class="col-xs-12 col-sm-3 align-right">Draft Day <small>(1<sup>st</sup> through 28<sup>th</sup>)</small></span>
+          <span class="col-xs-12 col-sm-3" data-bind="text: $root.formatted_draft_date"></span>
+        </div>
+      </form>
     </div>
 
     <form class="form-horizontal" id="step6-form">
