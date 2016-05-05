@@ -1,11 +1,11 @@
-function submit_application() {
+function submit_application(wizard_vm) {
 
   // Don't allow duplicate submissions.
   window.vm.is_submitting(true);
   window.vm.submission_error("");
 
   var results = _.map(window.vm.coverage_vm.selected_product_coverages(), function(product_cov) {
-    return build_wizard_results_for_product_coverage(product_cov);
+    return build_wizard_results_for_product_coverage(product_cov, wizard_vm);
   });
 
   var please_wait_dialogue = bootbox.dialog({
@@ -121,7 +121,7 @@ function handle_remote_error_with_retry(response, retry_callback) {
 }
 
 
-function build_wizard_results_for_product_coverage(product_cov) {
+function build_wizard_results_for_product_coverage(product_cov, wizard_vm) {
   var root = window.vm;
 
   var health_questions = vm.get_product_health_questions(product_cov);
@@ -129,6 +129,19 @@ function build_wizard_results_for_product_coverage(product_cov) {
   var did_decline = (root.coverage_vm.has_multiple_products()) ? product_cov.did_decline() : root.did_decline();
 
   var occupation = Array.isArray(root.selected_occupation()) ? root.selected_occupation()[0].label : undefined;
+
+  var bank_info = {
+    account_holder_name: wizard_vm.bank_account_holder_name(),
+    account_type: wizard_vm.selected_account_type(),
+    account_number: wizard_vm.account_number(),
+    routing_number: wizard_vm.routing_number(),
+    bank_name: wizard_vm.bank_name(),
+    address_one: wizard_vm.bank_street_one(),
+    address_two: wizard_vm.bank_street_two(),
+    city: wizard_vm.bank_city(),
+    state: wizard_vm.bank_state(),
+    zip: wizard_vm.bank_zip()
+  };
 
   var wizard_results = {
     product_id: product_cov.product.product_data.id,
@@ -175,6 +188,12 @@ function build_wizard_results_for_product_coverage(product_cov) {
     spouse_contingent_beneficiary_type: product_cov.spouse_contingent_beneficiary_type(),
     spouse_contingent_beneficiary: product_cov.spouse_contingent_beneficiary().serialize()
   };
+
+  if (wizard_vm.requires_bank_info()) {
+    wizard_results.bank_info = bank_info;
+  } else {
+    wizard_results.bank_info = null;
+  }
 
   wizard_results.children = [];
   _.each(product_cov.get_covered_children(), function(child) {

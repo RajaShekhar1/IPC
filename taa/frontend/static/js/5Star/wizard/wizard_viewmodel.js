@@ -253,6 +253,32 @@ var wizard_viewmodel = (function () {
       }
     });
 
+    //region Membership Product Coverage
+    self.is_forced_coverage = ko.pureComputed(function () {
+      return product.is_forced_coverage;
+    });
+    
+    self.forced_coverage_option = ko.pureComputed(function () {
+      if (product.is_forced_coverage) {
+        return new FlatFeeCoverageOption({
+          flat_fee: self.product.product_data.flat_fee,
+          payment_mode: payment_mode_module.create_payment_mode_by_frequency(self.case_data.payment_mode),
+          applicant_type: wizard_applicant.Applicant.EmployeeType
+        });
+      }
+      return null;
+    });
+
+    self.dependent_forced_coverage_option = ko.pureComputed(function () {
+      if (product.is_forced_coverage) {
+        return new FlatFeeCoverageOption({
+          flat_fee: self.product.product_data.flat_fee,
+          payment_mode: payment_mode_module.create_payment_mode_by_frequency(self.case_data.payment_mode)
+        })
+      }
+      return null;
+    });
+    //endregion
 
     self.get_label_for_coverage_tier = function (coverage_tier) {
       var employee_first_name = self.employee.first();
@@ -543,8 +569,10 @@ var wizard_viewmodel = (function () {
 
     get_coverage_selection_template: function () {
       // in the future, products may not all use the recommendation system for coverage selection.
-      if (this.product.has_simple_coverage()) {
+      if (this.product.is_simple_coverage) {
         return 'simple_coverage_selection';
+      } else if (this.product.is_forced_coverage) {
+        return 'forced_coverage_selection';
       } else if (this.product.does_use_recommended_coverage_table()) {
         return 'recommendation_coverage_selection';
       } else {
@@ -716,6 +744,10 @@ var wizard_viewmodel = (function () {
 
       if (this.product.has_simple_coverage()) {
         return this.product_coverage.selected_simple_coverage_option();
+      }
+
+      if (this.product.is_forced_coverage) {
+        return applicant.type === wizard_applicant.Applicant.EmployeeType? this.product_coverage.forced_coverage_option() : this.product_coverage.dependent_forced_coverage_option();
       }
 
       var custom_option = this.customized_coverage_option();
@@ -1411,7 +1443,7 @@ var wizard_viewmodel = (function () {
       return self.is_employee_actively_at_work() === true || self.is_employee_actively_at_work() === false;
     });
 
-    self.show_aaw_response_error = ko.pureComputed(function() {
+    self.show_aaw_response_error = ko.pureComputed(function () {
       return !self.show_aaw_error() && self.is_employee_actively_at_work() === false;
     });
 
@@ -1568,13 +1600,13 @@ var wizard_viewmodel = (function () {
 
       // Can not decline if any applicant has applied for coverage already
       return (!_.any(self.product_coverage_viewmodels(), function (product_coverage) {
-        return _.any(self.applicant_list.applicants(), function (applicant) {
-          // Does the applicant have existing coverage for this product?
-          return _.any(applicant.existing_coverages, function (existing_coverage) {
-            return existing_coverage.product_id === product_coverage.product.id && existing_coverage.coverage_status === 'enrolled';
+          return _.any(self.applicant_list.applicants(), function (applicant) {
+            // Does the applicant have existing coverage for this product?
+            return _.any(applicant.existing_coverages, function (existing_coverage) {
+              return existing_coverage.product_id === product_coverage.product.id && existing_coverage.coverage_status === 'enrolled';
+            });
           });
-        });
-      }));
+        })) && self.coverage_vm.current_product().product.can_decline();
 
     });
 
@@ -2368,10 +2400,10 @@ var wizard_viewmodel = (function () {
 
     //region Actively at Work
     self.aaw_yes_class = ko.pureComputed(function () {
-      return self.is_employee_actively_at_work() === true ? 'btn-success' : '';
+      return self.is_employee_actively_at_work() === true? 'btn-success' : '';
     });
     self.aaw_no_class = ko.pureComputed(function () {
-      return self.is_employee_actively_at_work() === false ? 'btn-danger' : '';
+      return self.is_employee_actively_at_work() === false? 'btn-danger' : '';
     });
 
     self.aaw_yes = function () {
@@ -2403,7 +2435,87 @@ var wizard_viewmodel = (function () {
       return self.is_employee_actively_at_work() === false;
     });
     self.employee_or_first = ko.pureComputed(function () {
-      return self.employee().first() ? self.employee().first() : 'employee';
+      return self.employee().first()? self.employee().first() : 'employee';
+    });
+    //endregion
+
+    //region Bank Draft Info
+    self.requires_bank_info = ko.pureComputed(function () {
+      return !!self.enrollment_case.include_bank_draft_form;
+    });
+
+    self.account_type_options = ['Checking', 'Savings'];
+
+    self.selected_account_type = ko.observable(null);
+
+    self.account_number = ko.observable(null);
+    self.routing_number = ko.observable(null);
+    self.bank_name = ko.observable(null);
+
+    var __bank_street_one = ko.observable(null);
+    var __bank_street_two = ko.observable(null);
+    var __bank_city = ko.observable(null);
+    var __bank_state = ko.observable(null);
+    var __bank_zip = ko.observable(null);
+    var __bank_account_holder_name = ko.observable(null);
+
+    self.bank_account_holder_name = ko.computed({
+      read: function () {
+        return !!__bank_account_holder_name() ? __bank_account_holder_name() : (self.employee().first() + ' ' + self.employee().last());
+      },
+      write: function (value) {
+        __bank_account_holder_name(value);
+      }
+    });
+
+    self.bank_street_one = ko.computed({
+      read: function () {
+        return !!__bank_street_one() ? __bank_street_one() : self.employee().address1();
+      },
+      write: function (value) {
+        __bank_street_one(value);
+      }
+    });
+    self.bank_street_two = ko.computed({
+      read: function () {
+        return !!__bank_street_two() ? __bank_street_two() : self.employee().address2();
+      },
+      write: function (value) {
+        __bank_street_two(value);
+      }
+    });
+    self.bank_city = ko.computed({
+      read: function () {
+        return !!__bank_city() ? __bank_city() : self.employee().city();
+      },
+      write: function (value) {
+        __bank_city(value);
+      }
+    });
+    self.bank_state = ko.computed({
+      read: function () {
+        return !!__bank_state() ? __bank_state() : self.employee().state();
+      },
+      write: function (value) {
+        __bank_state(value);
+      }
+    });
+    self.bank_zip = ko.computed({
+      read: function () {
+        return !!__bank_zip() ? __bank_zip() : self.employee().zip();
+      },
+      write: function (value) {
+        __bank_zip(value);
+      }
+    });
+
+    self.should_show_draft_date = ko.pureComputed(function () {
+      // TODO: Update this once the draft day determination is implemented
+      return false;
+    });
+
+    self.formatted_draft_date = ko.pureComputed(function () {
+      return '24th';
     });
     //endregion
 

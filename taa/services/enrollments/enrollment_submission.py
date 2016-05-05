@@ -219,7 +219,8 @@ class EnrollmentSubmissionService(object):
         submission = self.get_pending_csv_submission()
         if submission is None:
             # noinspection PyArgumentList
-            submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION)
+            submission = EnrollmentSubmission(
+                submission_type=EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION)
             db.session.add(submission)
         submission.enrollment_applications.append(application)
         db.session.commit()
@@ -236,6 +237,9 @@ class EnrollmentSubmissionService(object):
         submission = self.create_csv_generation_submission_for_application(application)
         if submission is not None:
             submissions.append(submission)
+        submission = self.create_static_benefit_submission_for_application(application)
+        if submission is not None:
+            submissions.append(submission)
 
         # TODO: Uncomment this when the docusign submission is fully switched over to this
         # Create a docusign submission. None if its case doesn't have Group CI as one of its products
@@ -250,7 +254,8 @@ class EnrollmentSubmissionService(object):
         Initialize the GPG instance with out public key
         """
         import_result = gpg.import_keys(DELL_FTP_PGP_KEY)
-        if len(import_result.results) == 0 or not all((r.get('status').strip() in import_result._ok_reason.values() for r in import_result.results)):
+        if len(import_result.results) == 0 or not all(
+                (r.get('status').strip() in import_result._ok_reason.values() for r in import_result.results)):
             raise Exception
 
     def __initialize_gpg(self):
@@ -339,6 +344,17 @@ class EnrollmentSubmissionService(object):
             submission_logs.append(submission_log)
         db.session.commit()
         return submission_logs
+
+    def create_static_benefit_submission_for_application(self, application):
+        if not any(p for p in application.case.products if p.is_static_benefit()):
+            return None
+        # noinspection PyArgumentList
+        submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.SUBMISSION_TYPE_STATIC_BENEFIT,
+                                          status=EnrollmentSubmission.STATUS_SUCCESS)
+        submission.enrollment_applications.append(application)
+        db.session.add(submission)
+        db.session.commit()
+        return submission
 
 
 class EnrollmentSubmissionProcessor(object):

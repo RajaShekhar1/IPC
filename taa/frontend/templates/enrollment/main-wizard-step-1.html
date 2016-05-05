@@ -308,7 +308,7 @@
           </div>
 
           {# Decline option for product #}
-          <div class="row">
+          <div class="row" data-bind="visible: current_product().product.can_decline()">
             <div class="col-xs-12 text-center red">
               <div class="decline-option">
                 <label><input type="checkbox" data-bind="checked: current_product().did_decline"> I decline to enroll in
@@ -564,6 +564,47 @@
 
   <div data-bind="template: {name: 'riders-template', data: $data}"></div>
 
+</script>
+
+<script id="forced_coverage_selection" type="text/html">
+  <div class="row">
+    <div class="col-xs-4 col-sm-3 col-xs-offset-2 col-sm-offset-3 pricing-span-header">
+      <div class="widget-box transparent">
+        <div class="widget-header">
+          <h5 class="bigger lighter">Selected</h5>
+        </div>
+        <div class="widget-body">
+          <div class="widget-main no-padding">
+            <ul class="list-unstyled list-striped js">
+              <li>
+                <label>
+                  <span data-bind="text: $root.employee().first"></span>
+                  <br>
+                  <input type="radio" name="coverage-type" checked>
+                </label>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-4 col-sm-3 pricing-span-body">
+      <div class="pricing-span best">
+        <div class="widget-box pricing-box-small widget-color-blue">
+          <div class="widget-header center no-padding">
+            <h5 class="bugger lighter">Fee</h5>
+          </div>
+          <div class="widget-body">
+            <div class="widget-main no-padding">
+              <ul class="list-unstyled list-striped pricing-table">
+                <li>$<span data-bind="text: product.product_data.flat_fee"></span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </script>
 
 <script type="text/html" id="riders-template">

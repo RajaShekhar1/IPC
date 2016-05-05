@@ -42,6 +42,7 @@ class RiderConfiguration(object):
             # These don't have riders
             'ACC': StringIO(no_riders),
             'HI': StringIO(no_riders),
+            'Static Benefit': StringIO(no_riders),
             # This is just so we can serialize products in the process of being created.
             '': StringIO(rider_config_fpp),
         }
