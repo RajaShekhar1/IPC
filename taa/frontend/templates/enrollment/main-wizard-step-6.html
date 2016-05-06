@@ -11,106 +11,195 @@
       <div data-bind="template: 'multi-product-summary-table'">
       </div>
     </div>
-{#    <!--ko foreach: {data: selected_products, as: 'current_product'}-->#}
-{#    <table class="center confirm-table table table-hover" data-bind="with: selected_plan[current_product]">#}
-{#      <thead>#}
-{#      <tr class="table-striped">#}
-{#        <th class="center">Name</th>#}
-{#        <th class="center">Age</th>#}
-{#        <th class="center">Coverage</th>#}
-{#        <th class="center">Additional Riders</th>#}
-{#        <th class="center"><span data-bind="text: $root.payment_mode_text"></span> Premium</th>#}
-{#      </tr>#}
-{#      </thead>#}
-{#      <tbody>#}
-{#      <!--ko foreach: get_all_people -->#}
-{#      <tr>#}
-{#        <td data-bind="text: name"></td>#}
-{#        <td data-bind="text:get_age"></td>#}
-{#        <td data-bind="html:display_selected_coverage"></td>#}
-{#        <td></td>#}
-{#        <td data-bind="text:display_premium"></td>#}
-{#      </tr>#}
-{#      <!--ko if: $root.current_person($data) --><!-- /ko -->#}
-{#        <!--ko foreach: {data: $root.get_selected_riders, as: 'rider'} -->#}
-{#          <tr>#}
-{#            <td></td>#}
-{#            <td></td>#}
-{#            <td></td>#}
-{#            <td data-bind="text: rider.name"></td>#}
-{#            <td data-bind="text:$parent.display_riders(rider.code)"></td>#}
-{#          </tr>#}
-{#        <!--/ko-->#}
-{#      <!--/ko-->#}
-{#      <tr class="success">#}
-{#        <td></td>#}
-{#        <td></td>#}
-{#        <td></td>#}
-{#        <td><span class="text-primary bigger-110">Total</span></td>#}
-{#        <td><span class="text-primary bigger-110" data-bind="text: formatted_total_premium()"></span></td>#}
-{#      </tr>#}
-{#      </tbody>#}
-{#    </table>#}
+    {#    <!--ko foreach: {data: selected_products, as: 'current_product'}-->#}
+    {#    <table class="center confirm-table table table-hover" data-bind="with: selected_plan[current_product]">#}
+    {#      <thead>#}
+    {#      <tr class="table-striped">#}
+    {#        <th class="center">Name</th>#}
+    {#        <th class="center">Age</th>#}
+    {#        <th class="center">Coverage</th>#}
+    {#        <th class="center">Additional Riders</th>#}
+    {#        <th class="center"><span data-bind="text: $root.payment_mode_text"></span> Premium</th>#}
+    {#      </tr>#}
+    {#      </thead>#}
+    {#      <tbody>#}
+    {#      <!--ko foreach: get_all_people -->#}
+    {#      <tr>#}
+    {#        <td data-bind="text: name"></td>#}
+    {#        <td data-bind="text:get_age"></td>#}
+    {#        <td data-bind="html:display_selected_coverage"></td>#}
+    {#        <td></td>#}
+    {#        <td data-bind="text:display_premium"></td>#}
+    {#      </tr>#}
+    {#      <!--ko if: $root.current_person($data) --><!-- /ko -->#}
+    {#        <!--ko foreach: {data: $root.get_selected_riders, as: 'rider'} -->#}
+    {#          <tr>#}
+    {#            <td></td>#}
+    {#            <td></td>#}
+    {#            <td></td>#}
+    {#            <td data-bind="text: rider.name"></td>#}
+    {#            <td data-bind="text:$parent.display_riders(rider.code)"></td>#}
+    {#          </tr>#}
+    {#        <!--/ko-->#}
+    {#      <!--/ko-->#}
+    {#      <tr class="success">#}
+    {#        <td></td>#}
+    {#        <td></td>#}
+    {#        <td></td>#}
+    {#        <td><span class="text-primary bigger-110">Total</span></td>#}
+    {#        <td><span class="text-primary bigger-110" data-bind="text: formatted_total_premium()"></span></td>#}
+    {#      </tr>#}
+    {#      </tbody>#}
+    {#    </table>#}
 
     <div class="space-10"></div>
+
+    <div id="bank-draft-info" data-bind="if: $root.requires_bank_info">
+      <h3 class="green">Payment</h3>
+      <hr>
+      <form id="bank-draft-form">
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-holder-name">Account Holder
+            Name</label>
+          <div class="col-xs-12 col-sm-9">
+            <input class="control-label col-xs-12 col-sm-9" id="bank-account-holder-name"
+                   name="bank-account-holder-name"
+                   data-bind="value: $root.bank_account_holder_name" type="text">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-type">Account Type</label>
+          <div class="col-xs-12 col-sm-9">
+            <select id="bank-account-type" name="bank-account-type"
+                    data-bind="options: $root.account_type_options, value: $root.selected_account_type, optionsCaption: '(Choose Account Type)'"></select>
+          </div>
+        </div>
+        <div class="space-2"></div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-number">Account
+            Number</label>
+
+          <div class="col-xs-12 col-sm-9">
+            <input class="col-xs-12 col-sm-9" id="bank-account-number" name="bank-account-number" type="text"
+                   data-bind="value: $root.account_number">
+          </div>
+        </div>
+        <div class="space-2"></div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-routing-number">Routing
+            Number</label>
+          <div class="col-xs-12 col-sm-9">
+            <input class="col-xs-12 col-sm-9" id="bank-routing-number" name="bank-routing-number" type="text"
+                   data-bind="value: $root.routing_number">
+          </div>
+        </div>
+        <div class="space-2"></div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-name">Bank Name</label>
+          <div class="col-xs-12 col-sm-9">
+            <input class="col-xs-12 col-sm-9" id="bank-name" name="bank-name" type="text"
+                   data-bind="value: $root.bank_name">
+          </div>
+        </div>
+        <div class="space-2"></div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-street-one">Street 1</label>
+
+          <div class="col-xs-12 col-sm-9">
+            <input class="col-xs-12 col-sm-9" id="bank-street-one" name="bank-street-one" type="text"
+                   data-bind="value: $root.bank_street_one">
+          </div>
+        </div>
+        <div class="space-2"></div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-street-two">Street 2</label>
+
+          <div class="col-xs-12 col-sm-9">
+            <input class="col-xs-12 col-sm-9" id="bank-street-two" name="bank-street-two" type="text"
+                   data-bind="value: $root.bank_street_two">
+          </div>
+        </div>
+        <div class="space-2"></div>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-city">City, State, Zip</label>
+          <div class="col-xs-12 col-sm-9">
+            <input id="bank-city" name="bank-city" type="text"
+                   data-bind="value: $root.bank_city">
+            <select id="bank-state" name="bank-state" type="text"
+                    data-bind="value: $root.bank_state">
+              {% for state in states %}
+                <option value="{{ state['code'] }}">{{ state['name'] }}</option>
+              {% endfor %}
+            </select>
+            <input id="bank-zip" name="bank-zip" type="text"
+                   data-bind="value: $root.bank_zip">
+          </div>
+        </div>
+        <div class="space-4"></div>
+        <div class="row" data-bind="visible: $root.should_show_draft_date">
+          <span class="col-xs-12 col-sm-3 align-right">Draft Day <small>(1<sup>st</sup> through 28<sup>th</sup>)</small></span>
+          <span class="col-xs-12 col-sm-3" data-bind="text: $root.formatted_draft_date"></span>
+        </div>
+      </form>
+    </div>
 
     <form class="form-horizontal" id="step6-form">
       <div id="inPersonSignerToken">
         <h4 class="green">Employee Identification</h4>
-{#        <!--ko if: !insurance_product.should_use_date_of_hire_for_identity()-->#}
-{#        <div class="row">#}
-{#          <div class="col-xs-12">#}
-{#            <p>As identity confirmation, please enter either your Date of Hire, your Employee Number, or#}
-{#              your current Driver's License number.</p>#}
-{#          </div>#}
-{#        </div>#}
-{##}
-{#        <div class="row form-group">#}
-{#          <div class="hidden-xs col-sm-12">#}
-{#            <div class="col-sm-1">#}
-{#            </div>#}
-{##}
-{#            <label class="" for="tokenType">My</label>#}
-{#            <select id="tokenType" class="select1" placeholder="Select one..."#}
-{#                    data-bind="value: identityType">#}
-{#              <option value="" disabled="disabled">Select one...</option>#}
-{#              <option value="Date of Hire">Date of Hire</option>#}
-{#              <option value="Employee Num">Employee #</option>#}
-{#              <option value="Driver's License Num">Driver's License #</option>#}
-{#            </select>#}
-{#            <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>#}
-{#            <input type="text" id="ConfirmationToken" name="ConfirmationToken"#}
-{#                   data-bind="value: identityToken"/>#}
-{#          </div>#}
-{#          <!-- /.hidden-xs -->#}
-{##}
-{#          <div class="col-xs-12 hidden-sm hidden-md hidden-lg">#}
-{#            <div class="col-xs-1">#}
-{#            </div>#}
-{#            <div class="col-xs-11">#}
-{#              <label class="" for="tokenType">My</label>#}
-{#              <select id="tokenType" name="tokenType" class="select1"#}
-{#                      data-bind="value: identityType">#}
-{#                <option value="">Select one...</option>#}
-{#                <option value="Date of Hire">"Date of Hire"</option>#}
-{#                <option value="Employee Num">"Employee #"</option>#}
-{#                <option value="Driver's License Num">"Driver's License #"</option>#}
-{#              </select>#}
-{#            </div>#}
-{#          </div>#}
-{#          <div class="col-xs-12  hidden-sm hidden-md hidden-lg">#}
-{#            <div class="col-xs-12">#}
-{#              <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>#}
-{#              <input type="text" id="ConfirmationToken" name="ConfirmationToken"#}
-{#                     data-bind="value: identityToken"/>#}
-{#            </div>#}
-{#          </div>#}
-{#          <!-- /.hidden-sm -->#}
-{##}
-{#        </div>#}
-{#        <!-- /.form-group -->#}
-{#        <!--/ko-->#}
-{#        <!--ko if: insurance_product.should_use_date_of_hire_for_identity() -->#}
+        {#        <!--ko if: !insurance_product.should_use_date_of_hire_for_identity()-->#}
+        {#        <div class="row">#}
+        {#          <div class="col-xs-12">#}
+        {#            <p>As identity confirmation, please enter either your Date of Hire, your Employee Number, or#}
+        {#              your current Driver's License number.</p>#}
+        {#          </div>#}
+        {#        </div>#}
+        {##}
+        {#        <div class="row form-group">#}
+        {#          <div class="hidden-xs col-sm-12">#}
+        {#            <div class="col-sm-1">#}
+        {#            </div>#}
+        {##}
+        {#            <label class="" for="tokenType">My</label>#}
+        {#            <select id="tokenType" class="select1" placeholder="Select one..."#}
+        {#                    data-bind="value: identityType">#}
+        {#              <option value="" disabled="disabled">Select one...</option>#}
+        {#              <option value="Date of Hire">Date of Hire</option>#}
+        {#              <option value="Employee Num">Employee #</option>#}
+        {#              <option value="Driver's License Num">Driver's License #</option>#}
+        {#            </select>#}
+        {#            <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>#}
+        {#            <input type="text" id="ConfirmationToken" name="ConfirmationToken"#}
+        {#                   data-bind="value: identityToken"/>#}
+        {#          </div>#}
+        {#          <!-- /.hidden-xs -->#}
+        {##}
+        {#          <div class="col-xs-12 hidden-sm hidden-md hidden-lg">#}
+        {#            <div class="col-xs-1">#}
+        {#            </div>#}
+        {#            <div class="col-xs-11">#}
+        {#              <label class="" for="tokenType">My</label>#}
+        {#              <select id="tokenType" name="tokenType" class="select1"#}
+        {#                      data-bind="value: identityType">#}
+        {#                <option value="">Select one...</option>#}
+        {#                <option value="Date of Hire">"Date of Hire"</option>#}
+        {#                <option value="Employee Num">"Employee #"</option>#}
+        {#                <option value="Driver's License Num">"Driver's License #"</option>#}
+        {#              </select>#}
+        {#            </div>#}
+        {#          </div>#}
+        {#          <div class="col-xs-12  hidden-sm hidden-md hidden-lg">#}
+        {#            <div class="col-xs-12">#}
+        {#              <label class="" for="ConfirmationToken">&nbsp;&nbsp;...is&nbsp; </label>#}
+        {#              <input type="text" id="ConfirmationToken" name="ConfirmationToken"#}
+        {#                     data-bind="value: identityToken"/>#}
+        {#            </div>#}
+        {#          </div>#}
+        {#          <!-- /.hidden-sm -->#}
+        {##}
+        {#        </div>#}
+        {#        <!-- /.form-group -->#}
+        {#        <!--/ko-->#}
+        {#        <!--ko if: insurance_product.should_use_date_of_hire_for_identity() -->#}
         <div class="row">
           <div class="col-xs-12">
             <p>Please enter your Date of Hire/Membership:</p>
@@ -136,7 +225,7 @@
           <!-- /.hidden-sm -->
 
         </div>
-{#        <!--/ko-->#}
+        {#        <!--/ko-->#}
       </div>
       <!-- /inPersonSignerToken -->
 
@@ -167,7 +256,7 @@
       <label class="control-label col-xs-12 col-sm-12 no-padding-right">
         <input type="checkbox" id="confirmDisclaimer" name="confirmDisclaimer"
                data-bind="checked: disclaimer_notice_confirmed"/> I acknowledge the related <a
-              href="#modal-disclaimer" data-toggle="modal">Accelerated Benefit Disclosure</a>
+          href="#modal-disclaimer" data-toggle="modal">Accelerated Benefit Disclosure</a>
       </label>
     </div>
   </div>

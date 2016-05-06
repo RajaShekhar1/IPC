@@ -443,7 +443,7 @@
         self.customer_short_name_display = ko.computed(function () {
           var use_base_setting = self.use_base_product_settings.customer_short_name();
           if (use_base_setting) {
-            if (self.base_product) {
+            if (self.base_product && self.base_product()) {
               return self.base_product().customer_short_name();
             }
           }
