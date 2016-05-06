@@ -145,6 +145,9 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         request.headers.get('User-Agent')
     ))
 
+    # Ensure that record is intialized to avoid a name error
+    record = None
+
     # Defaults for session enrollment variables.
     session['active_case_id'] = case.id
     session['enrolling_census_record_id'] = None

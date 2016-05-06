@@ -205,8 +205,8 @@ class EnrollmentDataWrap(object):
             return None
 
     def did_employee_select_coverage(self):
-        return (self.data['employee_coverage'] and
-                self.data['employee_coverage']['face_value'])
+        return (self.data.get('employee_coverage', None) is not None and
+                self.data['employee_coverage'].get('face_value'))
 
     def get_employee_coverage(self):
         return format(self.data['employee_coverage']['face_value'], ',.0f')
@@ -218,8 +218,8 @@ class EnrollmentDataWrap(object):
         return decimal.Decimal(self.data['employee_coverage']['premium'])
 
     def did_spouse_select_coverage(self):
-        return (self.data['spouse_coverage'] and
-                self.data['spouse_coverage']['face_value'])
+        return (self.data.get('spouse_coverage', None) is not None and
+                self.data['spouse_coverage'].get('face_value'))
 
     def get_spouse_coverage(self):
         return format(decimal.Decimal(self.data['spouse_coverage']['face_value']), ',.0f')

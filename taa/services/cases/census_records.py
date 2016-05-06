@@ -46,7 +46,7 @@ class CensusRecordService(DBService):
         ]
 
     def get_csv_row_from_dict(self, census_record):
-        return [census_record[field.database_name]
+        return [census_record.get(field.database_name, '')
                 for field in CensusRecordParser.all_possible_fields]
 
     def format_ssn(self, ssn):
