@@ -430,6 +430,9 @@ class EnrollmentApplicationService(DBService):
 
         out = []
         for enrollment_application in census_record.enrollment_applications:
+            if not enrollment_application.standardized_data:
+                continue
+            
             json_data = json.loads(enrollment_application.standardized_data)
 
             if isinstance(json_data, list):
@@ -690,8 +693,8 @@ class EnrollmentApplicationService(DBService):
         if enrollment_application and enrollment_application.docusign_envelope_id and not enrollment_application.is_terminal_status():
             self.update_applicant_signing_status(enrollment_application)
 
-    # Need to commit all database changes.
-    db.session.commit()
+        # Need to commit all database changes.
+        db.session.commit()
 
     def get_first_wizard_data_record(self, wizard_data):
         if isinstance(wizard_data, list):

@@ -263,7 +263,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     employee_street_address2 = db.Column(db.String(256))
     employee_city = db.Column(db.String(256))
     employee_state = db.Column(db.String(2))
-    employee_zip = db.Column(db.String(5))
+    employee_zip = db.Column(db.String(15))
     # Spouse
     spouse_ssn = db.Column(db.String(9))
     spouse_first = db.Column(db.String(256))
@@ -279,7 +279,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     spouse_street_address2 = db.Column(db.String(256))
     spouse_city = db.Column(db.String(256))
     spouse_state = db.Column(db.String(2))
-    spouse_zip = db.Column(db.String(5))
+    spouse_zip = db.Column(db.String(15))
     # Child 1
     child1_first = db.Column(db.String(256))
     child1_last = db.Column(db.String(256))
