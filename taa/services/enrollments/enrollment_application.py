@@ -432,7 +432,7 @@ class EnrollmentApplicationService(DBService):
         for enrollment_application in census_record.enrollment_applications:
             if not enrollment_application.standardized_data:
                 continue
-            
+
             json_data = json.loads(enrollment_application.standardized_data)
 
             if isinstance(json_data, list):
@@ -661,15 +661,15 @@ class EnrollmentApplicationService(DBService):
         row += self.case_service.census_records.get_csv_row_from_dict(record)
         return row
 
-    def get_export_dictionary(self, record):
-        """
-        :param record:
-        :return:
-        :rtype: dict
-        """
-        return dict([(c.column_title, c.get_value(record)) for c in enrollment_columns] + zip(
-            self.case_service.census_records.get_csv_headers(),
-            self.case_service.census_records.get_csv_row_from_dict(record)))
+    def get_export_dictionary(self, census_record, application):
+        data = dict()
+        data.update(self.get_census_data(census_record))
+        data.update(self.get_unmerged_enrollment_data(census_record, application))
+        enrollment_tuples = [(c.column_title, c.get_value(data)) for c in enrollment_columns]
+        census_tuples = zip(self.case_service.census_records.get_csv_headers(),
+                            self.case_service.census_records.get_csv_row_from_dict(data))
+        data.update(dict(enrollment_tuples + census_tuples))
+        return data
 
     def get_enrollments_by_date(self, from_, to_):
         return self.__model__.query.filter(self.__model__.signature_time >= from_,

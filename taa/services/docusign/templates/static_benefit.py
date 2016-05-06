@@ -4,7 +4,7 @@ from taa.services.docusign.DocuSign_config import get_template_id
 
 
 class StaticBenefitTemplate(DocuSignServerTemplate):
-    def __init__(self, recipients, enrollment_data, use_docusign_renderer):
+    def __init__(self, recipients, enrollment_data, use_docusign_renderer, enrollment_application):
         """
         :param recipients:
         :param enrollment_data:
@@ -14,6 +14,7 @@ class StaticBenefitTemplate(DocuSignServerTemplate):
         product_id = enrollment_data.get_product().id
         state = enrollment_data["enrollState"]
         template_id = get_template_id('Static Benefit', state, product_id)
+        self.application = enrollment_application
 
         DocuSignServerTemplate.__init__(self, template_id, recipients, use_docusign_renderer)
 
@@ -23,7 +24,7 @@ class StaticBenefitTemplate(DocuSignServerTemplate):
         tabs = super(StaticBenefitTemplate, self).generate_tabs(recipient, purpose)
 
         application_service = LookupService('EnrollmentApplicationService')
-        census_export = application_service.get_export_dictionary(self.data)
+        census_export = application_service.get_export_dictionary(self.application.census_record, self.application)
 
         tabs += (DocuSignTextTab(k, v) for k, v in census_export.iteritems())
 

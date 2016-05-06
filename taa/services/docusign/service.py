@@ -70,7 +70,8 @@ class DocuSignService(object):
                                                                   should_use_docusign_renderer)
             elif product.is_static_benefit():
                 components += self.create_static_benefit_components(enrollment_data, recipients,
-                                                                    should_use_docusign_renderer)
+                                                                    should_use_docusign_renderer,
+                                                                    enrollment_application)
             else:
                 components += self.create_group_ci_envelope_components(enrollment_data, recipients,
                                                                        should_use_docusign_renderer)
@@ -232,21 +233,12 @@ class DocuSignService(object):
 
         return components
 
-    def create_static_benefit_components(self, enrollment_data, recipients, should_use_docusign_renderer):
-        """
-        Create all components for a Static Benefit Product
-        :param enrollment_data:
-         :type enrollment_data: EnrollmentDataWrap
-        :param recipients:
-         :type recipients: list
-        :param should_use_docusign_renderer:
-         :type should_use_docusign_renderer: bool
-        :return:
-        """
+    def create_static_benefit_components(self, enrollment_data, recipients, should_use_docusign_renderer,
+                                         enrollment_application):
         components = list()
 
         from taa.services.docusign.templates.static_benefit import StaticBenefitTemplate
-        form = StaticBenefitTemplate(recipients, enrollment_data, should_use_docusign_renderer)
+        form = StaticBenefitTemplate(recipients, enrollment_data, should_use_docusign_renderer, enrollment_application)
         components.append(form)
 
         if form.should_include_bank_draft() and not enrollment_data.is_import():
@@ -758,9 +750,10 @@ class DocuSignTransport(object):
     def post(self, url, data):
         full_url = urljoin(self.api_endpoint, url)
 
+        from taa.helpers import JSONEncoder
         self.last_request = req = requests.post(
             full_url,
-            data=json.dumps(data),
+            data=json.dumps(data, cls=JSONEncoder),
             headers=self._make_headers()
         )
 
