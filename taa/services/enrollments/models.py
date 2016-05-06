@@ -426,6 +426,7 @@ class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
     SUBMISSION_TYPE_HI_ACC_CSV_GENERATION = u'HI and ACC CSV Generation'
     SUBMISSION_TYPE_HI_ACC_EXPORT_TO_DELL = u'HI and ACC CSV submission to Dell'
     SUBMISSION_TYPE_SUBMIT_DOCUSIGN = u'Submit to Docusign'
+    SUBMISSION_TYPE_STATIC_BENEFIT = u'Static Benefit'
 
     # Database Columns
     id = db.Column(db.Integer, primary_key=True)

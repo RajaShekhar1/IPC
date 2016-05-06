@@ -18,6 +18,8 @@ class StatementOfHealthQuestionService(object):
 
     def get_health_questions(self, product, state):
         form = self.product_form_service.form_for_state(product, state)
+        if form is None or form.questions is None:
+            return []
         return [question for question in form.questions]
 
     def get_employee_questions(self, product, state):

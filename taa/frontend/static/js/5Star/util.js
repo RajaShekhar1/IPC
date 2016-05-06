@@ -711,6 +711,9 @@ var ProductStatesLimiterViewModel = function (product_statecode_mapping,
     if (!state) {
       return true;
     }
+    if (product.base_product_type === 'Static Benefit') {
+      return true;
+    }
     return _.contains(self.product_state_mapping[product.id], state);
   };
 
