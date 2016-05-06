@@ -58,11 +58,11 @@ var wizard_products = (function () {
 // Model for different insurance products
 // Product is abstract base class
   function Product() {
-    Object.defineProperty(this, 'has_brochure', { value: true, configurable: true });
-    Object.defineProperty(this, 'coverage_type', { value: CoverageType.Normal, configurable: true });
-    Object.defineProperty(this, 'is_simple_coverage', { get: function () { return this.coverage_type === CoverageType.Simple; } });
-    Object.defineProperty(this, 'is_normal_coverage', { get: function () { return this.coverage_type === CoverageType.Normal; } });
-    Object.defineProperty(this, 'is_forced_coverage', { get: function () { return this.coverage_type === CoverageType.Forced; } });
+    Object.defineProperty(this, 'has_brochure', {value: true, configurable: true});
+    Object.defineProperty(this, 'coverage_type', {value: CoverageType.Normal, configurable: true});
+    Object.defineProperty(this, 'is_simple_coverage', {get: function () { return this.coverage_type === CoverageType.Simple; }});
+    Object.defineProperty(this, 'is_normal_coverage', {get: function () { return this.coverage_type === CoverageType.Normal; }});
+    Object.defineProperty(this, 'is_forced_coverage', {get: function () { return this.coverage_type === CoverageType.Forced; }});
     //Object.defineProperty(this, 'can_decline', { get: function () { return this.product_data.base_product_type !== 'Static Benefit'; } });
   }
 
@@ -496,7 +496,7 @@ var wizard_products = (function () {
   //region HI Product
   function HIProduct(product_data) {
     Product.call(this);
-    Object.defineProperty(this, 'coverage_type', { value: CoverageType.Simple, configurable: true });
+    Object.defineProperty(this, 'coverage_type', {value: CoverageType.Simple, configurable: true});
     this.product_type = "HI";
     this.product_data = product_data;
   }
@@ -572,7 +572,7 @@ var wizard_products = (function () {
   //region ACCProduct
   function ACCProduct(product_data) {
     Product.call(this);
-    Object.defineProperty(this, 'coverage_type', { value: CoverageType.Simple, configurable: true });
+    Object.defineProperty(this, 'coverage_type', {value: CoverageType.Simple, configurable: true});
     this.product_type = "ACC";
     this.product_data = product_data;
   }
@@ -624,8 +624,8 @@ var wizard_products = (function () {
   //region Membership Product
   function MembershipProduct(product_data) {
     Product.call(this);
-    Object.defineProperty(this, 'has_brochure', { value: false, configurable: true });
-    Object.defineProperty(this, 'coverage_type', { value: CoverageType.Forced, configurable: true });
+    Object.defineProperty(this, 'has_brochure', {value: false, configurable: true});
+    Object.defineProperty(this, 'coverage_type', {value: CoverageType.Forced, configurable: true});
     this.product_type = "Static Benefit";
     this.product_data = product_data;
     this.flat_fee = ko.pureComputed(function () {
@@ -634,6 +634,8 @@ var wizard_products = (function () {
   }
 
   MembershipProduct.prototype = Object.create(Product.prototype);
+
+  MembershipProduct.prototype.should_show_step_5 = function () {return false;};
   //endregion
 
   return {
