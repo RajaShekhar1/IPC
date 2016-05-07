@@ -19,8 +19,8 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
     def generate_tabs(self, recipient, purpose):
         tabs = super(FPPBankDraftFormTemplate, self).generate_tabs(recipient, purpose)
 
-        if not recipient.is_employee() and not self.data.should_use_call_center_workflow():
-            return tabs
+        #if not recipient.is_employee() and not self.data.should_use_call_center_workflow():
+        #    return tabs
 
         # Going forward enrollments will have bank draft data and should grab all account information from that
         if self.has_bank_draft_info():
@@ -56,11 +56,10 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
                 DocuSignTextTab('DraftDay', self.get_draft_day()),
             ]
 
-
         return tabs
 
     def has_bank_draft_info(self):
-        return self.data.get('bank_info', None) is not None
+        return self.data.get('bank_info')
 
     def get_bank_account_type(self):
         return self.data['bank_info'].get('account_type', '')
