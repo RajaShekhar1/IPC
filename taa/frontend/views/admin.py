@@ -6,6 +6,7 @@ from flask import (
     request,
 )
 from flask.ext.stormpath import groups_required, StormpathError, current_user
+from stormpath.error import Error
 
 from taa import app
 from nav import get_nav_menu
@@ -168,8 +169,8 @@ def updateUser():
                         print('>> Problem sending activation email <<')
 
             return redirect(url_for('admin'))
-        except StormpathError as err:
-            flash(err.message['message'])
+        except Error as err:
+            flash(err.message)
 
     return render_template('admin/update-user.html',
                            form=form,
