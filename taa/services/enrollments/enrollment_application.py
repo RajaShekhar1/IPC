@@ -669,6 +669,9 @@ class EnrollmentApplicationService(DBService):
         census_tuples = zip(self.case_service.census_records.get_csv_headers(),
                             self.case_service.census_records.get_csv_row_from_dict(data))
         data.update(dict(enrollment_tuples + census_tuples))
+        for k, v in list(data.iteritems()):
+            if v is None or v.lower() == 'none':
+                data[k] = ''
         return data
 
     def get_enrollments_by_date(self, from_, to_):
