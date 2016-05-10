@@ -607,6 +607,18 @@ class EnrollmentApplicationService(DBService):
 
         enrollment_data['agent_id'] = enrollment.agent_id
 
+        json_data = json.loads(enrollment.standardized_data)
+        if len(json_data) > 0:
+            children = json_data[0]['children']
+            if len(children) > 0:
+                for idx in range(len(children)):
+                    child = children[idx]
+                    gender = child.get('gender', '')
+                    if not isinstance(gender, unicode) and not isinstance(gender, unicode):
+                        gender = unicode(gender)
+                    gender = gender if gender is not None and gender != '' and gender.lower() != 'none' else ''
+                    enrollment_data['CH%d_GENDER' % idx] = gender
+
         return enrollment_data
 
     def find_most_recent_coverage_by_product_for_applicant_type(self,
@@ -670,6 +682,8 @@ class EnrollmentApplicationService(DBService):
                             self.case_service.census_records.get_csv_row_from_dict(data))
         data.update(dict(enrollment_tuples + census_tuples))
         for k, v in list(data.iteritems()):
+            if not isinstance(v, unicode) and not isinstance(v, str):
+                v = unicode(v)
             if v is None or v.lower() == 'none':
                 data[k] = ''
         return data
