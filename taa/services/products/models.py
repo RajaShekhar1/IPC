@@ -129,6 +129,8 @@ class Product(ProductJsonSerializable, db.Model):
         :param applicant_type:
         :param coverage_tier:
         """
+        if self.is_static_benefit():
+            return True
         if not self.is_simple_coverage():
             return False
         if coverage_tier == 'EE':
