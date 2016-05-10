@@ -103,6 +103,7 @@ def update_case(case_id):
 
     form = UpdateCaseForm()
     data = get_posted_data()
+
     # Allow the owner agent to be updated only if an admin
     if 'agent_id' in data:
         if not is_admin:
@@ -134,6 +135,38 @@ def update_case(case_id):
 
     raise TAAFormError(form.errors)
 
+
+@route(bp, '/<case_id>/logo', methods=['GET'])
+@login_required
+@groups_required(api_groups, all=False)
+def get_case_logo(case_id):
+    case = case_service.get_if_allowed(case_id)
+
+    # Return the logo response
+    if case.logo_image_data:
+        return Response(case.logo_image_data)
+
+    abort(404)
+
+
+@route(bp, '/<case_id>/logo', methods=['POST'])
+@login_required
+@groups_required(api_groups, all=False)
+def update_case_logo(case_id):
+    case = case_service.get_if_allowed(case_id)
+
+    if not case_service.can_current_user_edit_case(case):
+        abort(401)
+        return
+
+    logo_file_obj = request.files.get('cover-logo')
+
+    # Update the logo
+    if logo_file_obj:
+        case_service.process_uploaded_logo_image(case, logo_file_obj)
+        return json.dumps({})
+    else:
+        abort(400, "Missing logo image data")
 
 @route(bp, '/<case_id>', methods=['DELETE'])
 @login_required

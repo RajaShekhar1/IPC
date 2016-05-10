@@ -389,6 +389,11 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       self.include_bank_draft_form(false);
     }
   });
+  
+  // Cover sheet options
+  self.include_cover_sheet = ko.observable(case_data.include_cover_sheet);
+  self.logo_url = ko.observable(case_data.cover_sheet_logo_url);
+  self.logo_src = urls.get_case_api_logo_url(case_data.id);
 
   // Call Center Workflow
   self.should_use_call_center_workflow = ko.observable(case_data.should_use_call_center_workflow);
@@ -1259,7 +1264,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       occupation_class_settings: _.map(self.occupation_classes(), function (occupation_class) {
         return occupation_class.serialize_object();
       }),
-      omit_actively_at_work: self.omit_actively_at_work()
+      omit_actively_at_work: self.omit_actively_at_work(),
+      include_cover_sheet: self.include_cover_sheet()
     };
   };
 
@@ -1369,44 +1375,59 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
         // Continue saving the case
       }
 
-      var case_request = send_json_data(
+      var requests = [];
+
+      // The main PUT request for the case data.
+      requests.push(send_json_data(
         "PUT",
         urls.get_case_api_url(case_data.id),
         self.serialize_case()
-      );
+      ));
 
-      var periods_request = send_json_data(
+      // Update the logo image if it was changed
+      var file_select = $("#cover-logo-file-input").get(0);
+      var files = file_select.files;
+      if (files.length === 1) {
+        // Add the file upload to the request.
+        var form_data = new FormData();
+        form_data.append('cover-logo', files[0], files[0].name);
+        requests.push(send_file_data(
+            "POST",
+            urls.get_case_api_logo_url(case_data.id),
+            form_data
+        ));
+      }
+
+      // Enrollment periods
+      requests.push(send_json_data(
         "PUT",
         urls.get_case_api_enrollment_periods_url(case_data.id),
         self.serialize_enrollment_periods()
-      );
-
-      var self_enroll_request;
+      ));
 
       if (self.is_self_enrollment()) {
         // Also save self enrollment settings.
-        self_enroll_request = send_json_data(
+        requests.push(send_json_data(
           "PUT",
           urls.get_case_api_self_enrollment_url(case_data.id),
           self.serialize_self_enroll()
-        );
+        ));
       }
-
-      var agent_splits_request;
 
       if (self.has_agent_splits()) {
         // Also save agent split settings.
-        agent_splits_request = send_json_data(
+        requests.push(send_json_data(
           "PUT",
           urls.get_case_api_agent_splits_url(case_data.id),
           self.serialize_agent_splits()
-        );
+        ));
       }
 
       // Self Enroll settings
       $('#save-success').hide();
       $('#save-fail').hide();
 
+      // Callbacks for when all the PUT requests are done.
       var on_success = function (case_xhr, periods_xhr, self_enroll_xhr) {
         self.is_data_dirty(false);
         self.flash_messages.flash_success("Data Saved");
@@ -1419,12 +1440,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
         self.loading_modal(null);
         self.flash_messages.flash_error("Save failed. Please correct any errors below.");
       };
-      var done;
-      if (!self.is_self_enrollment()) {
-        done = $.when(case_request, periods_request);
-      } else {
-        done = $.when(case_request, periods_request, self_enroll_request);
-      }
+
+      // Actually send the requests
+      var done = $.when.apply($.when, requests);
 
       if (cb && typeof (cb) === "function") {
         cb(done);
