@@ -61,6 +61,22 @@
                       </div>
                     </div>
 
+                    <div data-bind="if: is_static_benefit">
+                      <h4 class="header lighter">Static Benefit Options</h4>
+                      <div class="form-group">
+                        <div class="col-md-2 control-label"><label for="flat_fee_amount">Flat Fee Amount</label></div>
+                        <div class="col-md-6">
+                          <input id="flat_fee_amount" class="form-control"  data-bind='value: product().flat_fee'>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <div class="col-md-2 control-label"><label for="custom-template-id">Template ID</label></div>
+                        <div class="col-md-6">
+                          <input id="custom-template-id" class="form-control"  data-bind='value: product().template_id'>
+                        </div>
+                      </div>
+                    </div>
+
                     <h4 class="header lighter">Guarantee Issue Criteria
                       <label class="pull-right">
                         <input type="checkbox"
@@ -423,6 +439,9 @@
           return new GICriterionViewModel(c);
         }));
 
+        self.flat_fee = ko.observable(custom_product.flat_fee);
+        self.template_id = ko.observable(custom_product.template_id);
+
         self.base_product = ko.observable();
 
         if (custom_product.use_base_product_settings !== null) {
@@ -500,9 +519,6 @@
           editor.new_criterion(null);
         });
 
-        // Legacy: used to have a radio bound to this
-        self.statement_of_health_bypass_type = ko.observable("selected");
-
         // select bypassed_questions from soh_options
         var bypassed_labels = _.pluck(custom_product.bypassed_soh_questions, "question_type_label");
         self.soh_category_options = ko.computed(function () {
@@ -512,11 +528,7 @@
             return new SOHCategoryOptionViewModel(o, is_required);
           });
         });
-        /*self.soh_category_options = _.map(soh_options, function(o) {
-         var is_required = !_.contains(bypassed_labels, o);
-         return new SOHCategoryOptionViewModel(o, is_required);
-         });
-         */
+
         self.bypassed_questions = ko.computed(function () {
           return _.map(_.filter(self.soh_category_options(),
               function (o) {
@@ -561,9 +573,10 @@
             base_product_id: self.base_product_id(),
             gi_criteria: $.map(self.gi_criteria(), function (c) {return c.serialize()}),
             should_limit_rates_to_gi: self.should_limit_rates_to_gi(),
-            statement_of_health_bypass_type: self.statement_of_health_bypass_type(),
             bypassed_questions: self.bypassed_questions(),
-            agents: self.agents()
+            agents: self.agents(),
+            flat_fee: self.flat_fee(),
+            template_id: self.template_id()
           }
         }
       };
@@ -576,6 +589,7 @@
         self.customer_short_name = ko.observable(base_product.customer_short_name);
         self.brochure_name = ko.observable(base_product.brochure_name);
         self.brochure_url = ko.observable(base_product.brochure_url);
+        self.code = base_product.code;
 
         var available_by_id = _.indexBy(available_agents, 'id');
         var restricted_agents = [];
@@ -614,6 +628,16 @@
 
         self.base_product_options = $.map(base_product_options || [], function (bp) {return new BaseProductViewModel(bp, self.available_agents)});
         self.base_products_by_id = _.indexBy(self.base_product_options, 'id');
+
+
+        self.base_product = ko.pureComputed(function() {
+          return self.base_products_by_id[self.product().base_product_id()]
+        });
+
+        self.is_static_benefit = ko.pureComputed(function() {
+          var base_product = self.base_product();
+          return base_product.code === "Static Benefit";
+        });
 
         self.issue_amount_options = [];
         // Populate issue amount options
@@ -656,9 +680,8 @@
 
         self.applicant_options = ["Employee", "Spouse", "Child"];
 
-
         self.should_show_height_and_weight = ko.computed(function () {
-          var current_product = self.base_products_by_id[self.product().base_product_id()];
+          var current_product = self.base_product();
           if (!current_product) {
             return false;
           }

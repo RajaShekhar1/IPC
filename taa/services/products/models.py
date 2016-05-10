@@ -73,7 +73,7 @@ class Product(ProductJsonSerializable, db.Model):
     is_fpp_gov = db.Column(db.Boolean, nullable=False, server_default='FALSE')
 
     # Monthly Flat Fee for Membership Products
-    flat_fee = db.Column(db.Numeric, nullable=False, server_default='5')
+    flat_fee = db.Column(db.Numeric, nullable=True, server_default='5')
 
     # Boolean that controls whether on not this can be enrolled by agents
     visible_to_agents = db.Column(db.Boolean, nullable=False, server_default='True')
