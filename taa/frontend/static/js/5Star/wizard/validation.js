@@ -184,9 +184,9 @@ function init_validation(ui) {
       is_valid = true;
 
       if (ui.requires_bank_info()) {
-        is_valid = is_valid && !$('#bank-draft-form').valid();
+        is_valid = is_valid && $('#bank-draft-form').valid();
       }
-      is_valid = is_valid && !$('#step6-form').valid();
+      is_valid = is_valid && $('#step6-form').valid();
       if (!is_valid) {
         e.preventDefault();
       }
@@ -196,11 +196,12 @@ function init_validation(ui) {
     var is_valid = true;
 
     if (ui.requires_bank_info()) {
-      is_valid = is_valid && !$('#bank-draft-form').valid();
+      is_valid = is_valid && $('#bank-draft-form').valid();
     }
-    is_valid = is_valid && !$('#step6-form').valid();
+    is_valid = is_valid && $('#step6-form').valid();
     if (!is_valid) {
       e.preventDefault();
+      return;
     }
 
     // jQuery validator rule should be handling this, but it's not, so force a popup here
@@ -534,6 +535,12 @@ function init_validation(ui) {
 
   //region Bank Draft Info Validation
   function bank_draft_error_placement(error, element) {
+    var error_id = error.attr('id');
+    var container_id = error_id + '-container';
+    var old_element = $('#' + container_id);
+    if (old_element.length > 0) {
+      old_element.remove();
+    }
     if (element.is(':checkbox') || element.is(':radio')) {
       var controls = element.closest('div[class*="col-"]');
       if (controls.find(':checkbox,:radio').length > 1) {
@@ -542,10 +549,11 @@ function init_validation(ui) {
         error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
       }
     } else if ((element.is('#bank-state') || element.is('#bank-city') || element.is('#bank-zip')) && $('#bank-city-state-zip-error').length === 0) {
+      $('#bank-city-state-zip-error').remove();
       var bank_city_state_zip_error = $('<div class="col-xs-12 col-sm-9 col-sm-offset-3" id="bank-city-state-zip-error"></div>');
       bank_city_state_zip_error.insertAfter(element.parent()).append(error);
     } else {
-      var error_element = $('<div class="col-xs-12 col-sm-9 col-sm-offset-3"></div>');
+      var error_element = $('<div class="col-xs-12 col-sm-9 col-sm-offset-3" id="' + container_id + '"></div>');
       error_element.insertAfter(element.parent()).append(error);
     }
   }
