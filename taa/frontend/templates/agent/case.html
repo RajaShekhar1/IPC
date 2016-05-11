@@ -312,6 +312,15 @@
                                     </label>
                                   </div>
                                 </div>
+                                <div class="row" data-bind="if: should_show_third_party_bank_draft_checkbox">
+                                  <div class="form-group">
+                                    <label class="col-xs-9 col-xs-offset-3">
+                                      <input type="checkbox" class="ace"
+                                             data-bind="checked: requires_third_party_bank_draft">
+                                      <span class="lbl"> Deliver Bank Authorization File to 3rd Party</span>
+                                    </label>
+                                  </div>
+                                </div>
                                 <div class="row">
                                   <div class="form-group">
                                     <label class="col-xs-9 col-xs-offset-3">

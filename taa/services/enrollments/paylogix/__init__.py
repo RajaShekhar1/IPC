@@ -100,7 +100,7 @@ def create_paylogix_csv(applications):
                 data['City'],
                 data['State'],
                 data['Zip'],
-                get_deduction_week(application.signature_time),
+                get_deduction_week(application.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z')),
             ]
             csv_data.writerow(row)
 

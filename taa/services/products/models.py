@@ -225,9 +225,9 @@ class Product(ProductJsonSerializable, db.Model):
         return self.get_base_product_code() == 'Static Benefit'
 
     def requires_paylogix_export(self, enrollment_record=None):
-        requires_export = self.get_base_product() in ['Group CI', 'Static Benefit'] or self.is_fpp()
+        requires_export = (self.get_base_product() in ['Group CI', 'Static Benefit'] or self.is_fpp())
         if enrollment_record:
-            requires_export = requires_export and enrollment_record.case.requires_paylogix_export
+            requires_export = requires_export and enrollment_record.case.requires_paylogix_export and enrollment_record.case.include_bank_draft_form
         return requires_export
 
 
