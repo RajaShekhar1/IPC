@@ -67,7 +67,8 @@ class Case(CaseSerializer, db.Model):
     ANNUAL_ENROLLMENT_TYPE = u'annual'
     # This relationship defines what products are explicitly enabled for
     # a given case
-    products = db.relationship('Product', secondary=case_products, backref=db.backref('cases', lazy='dynamic'), order_by=case_products.c.ordinal)
+    products = db.relationship('Product', secondary=case_products, backref=db.backref('cases', lazy='dynamic'),
+                               order_by=case_products.c.ordinal)
     partner_agents = db.relationship('Agent', secondary=case_partner_agents,
                                      backref=db.backref('partner_cases', lazy='dynamic'))
     payment_mode = db.Column(db.Integer, nullable=True)
@@ -80,6 +81,7 @@ class Case(CaseSerializer, db.Model):
     include_bank_draft_form = db.Column(db.Boolean, nullable=False, server_default='FALSE')
     occupation_class_settings = db.Column(JSON(none_as_null=False),
                                           nullable=True)
+    requires_paylogix_export = db.Column(db.Boolean, nullable=False, server_default='FALSE')
 
     # Logo and cover sheet
     include_cover_sheet = db.Column(db.Boolean, nullable=False, server_default='TRUE')
@@ -134,6 +136,7 @@ class Case(CaseSerializer, db.Model):
 
     def has_logo(self):
         return self.logo_image_data is not None
+
 
 class PeriodSerializer(JsonSerializable):
     __json_hidden__ = ['case']
