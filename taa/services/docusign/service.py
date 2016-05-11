@@ -67,7 +67,8 @@ class DocuSignService(object):
                 continue
             if product.is_fpp():
                 components += self.create_fpp_envelope_components(enrollment_data, recipients,
-                                                                  should_use_docusign_renderer)
+                                                                  should_use_docusign_renderer,
+                                                                  all_enrollments=product_submissions)
             elif product.is_static_benefit():
                 components += self.create_static_benefit_components(enrollment_data, recipients,
                                                                     should_use_docusign_renderer,
@@ -144,16 +145,21 @@ class DocuSignService(object):
             for name, email in DOCUSIGN_CC_RECIPIENTS
             ]
 
-    def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
+    def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer,
+                                       all_enrollments=None):
         from taa.services.docusign.templates.fpp import FPPTemplate
         from taa.services.docusign.templates.fpp_replacement import FPPReplacementFormTemplate
         from taa.services.docusign.templates.fpp_bank_draft import FPPBankDraftFormTemplate
         from taa.services.docusign.documents.additional_children import ChildAttachmentForm
         from taa.services.docusign.documents.multiple_beneficiaries_attachment import MultipleBeneficiariesAttachment
         from taa.services.docusign.documents.additional_replacement_policies import AdditionalReplacementPoliciesForm
+        from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
 
         # Build the components (different PDFs) needed for signing
         components = []
+
+        if enrollment_data.case.should_include_cover_sheet:
+            components.append(CoverSheetAttachment(recipients, enrollment_data, all_enrollments))
 
         # Main form
         fpp_form = FPPTemplate(recipients, enrollment_data, should_use_docusign_renderer)

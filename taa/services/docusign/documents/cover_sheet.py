@@ -1,3 +1,4 @@
+import decimal
 import json
 from io import BytesIO
 
@@ -9,8 +10,15 @@ from PIL import Image as PILImage
 from reportlab.platypus.flowables import Spacer
 
 from PDFAttachment import PDFAttachment
-from utils import style, bold_style2, NumberedCanvas, create_attachment_header
+from utils import style, bold_style2, NumberedCanvas, create_attachment_header, bold_style
 
+small_style = ParagraphStyle(name='smallLegal',
+                             parent=style,
+                             fontName=_baseFontName,
+                             fontSize=9,
+                             leading=11,
+                             spaceBefore=4,
+                             spaceAfter=4)
 
 class CoverSheetAttachment(PDFAttachment):
     def __init__(self, recipients, enrollment_data, all_enrollments):
@@ -28,7 +36,7 @@ class CoverSheetAttachment(PDFAttachment):
 
         flowables += self.draw_summary_table()
 
-        #flowables += self.draw_legal_text()
+        flowables += self.draw_legal_text()
 
         # Signature line and name
         flowables += self.draw_signature_line()
@@ -134,58 +142,103 @@ class CoverSheetAttachment(PDFAttachment):
         ]
         styles = [
             # Put a box around the whole table
-             ('BOX', (0,0), (-1,-1), 0.5, colors.black),
-             ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-             ('GRID', (0, 1), (-1, 1), 0.5, colors.black),
+            ('BOX', (0,0), (-1,-1), 0.5, colors.black),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('GRID', (0, 1), (-1, -1), 0.5, colors.black),
+
             # Table Spans
             ('SPAN',(0,0),(-1,0)),
-            # Align first column
-            #  ('ALIGN', (0,1), (0,-1), 'CENTER'),
-            # # Align Gender col
-            #  ('ALIGN', (3,1), (3,-1), 'CENTER'),
-            # # Right-Align money columns
-            #  ('ALIGN', (5,1), (5,-1), 'RIGHT'),
+
+            ('ALIGN', (4, 2), (4, -1), 'CENTER'),
+            # right-align premium column
+            ('ALIGN', (5,2), (5,-1), 'RIGHT'),
             #  ('ALIGN', (6,1), (6,-1), 'RIGHT'),
         ]
 
-        for raw_product_data, i in enumerate(self.all_enrollments):
+        row_count = 2
+
+        total_premium = decimal.Decimal('0.00')
+
+        for i, raw_product_data in enumerate(self.all_enrollments):
+
+
             product_data = EnrollmentDataWrap(raw_product_data, self.data.case, self.data.enrollment_record)
-            table_data.append([
-                Paragraph(product_data.get_product().name, bold_style2), "", "", "", "", ""
-            ])
+            table_data += [
+                [
+                    Paragraph(product_data.get_product().name, style), "", "", "", "", ""
+                ]
 
-            table_styles.append([])
+            ]
 
+            applicants = product_data.get_applicant_data()
 
-        # for num, child in enumerate(self.children):
-        #     if child.get('gender'):
-        #         gender = "M" if child["gender"].lower()[0] == "m" else "F"
-        #     else:
-        #         gender = ""
-        #
-        #     row = [
-        #         str(num + self.starting_child_num),
-        #         Paragraph(u"{} {}".format(child['first'], child['last']), style),
-        #         child.get("ssn", ""),
-        #         gender,
-        #         child['birthdate'],
-        #         u"${}".format(child['coverage']),
-        #         u"${}".format(child['premium']),
-        #     ]
-        #     table_data.append(row)
+            for applicant in applicants:
+                table_data += [
+                    [
+                        Paragraph(applicant['name'], style),
+                        Paragraph(applicant['relationship'], style),
+                        Paragraph(applicant['coverage'], style),
+                        Paragraph(applicant['effective_date'], style),
+                        Paragraph(applicant['mode'], style),
+                        Paragraph(applicant['formatted_premium'], style),
+                    ]
+                ]
+
+                total_premium += applicant['premium']
+
+            styles += [
+                ('BACKGROUND', (0, row_count), (-1, row_count), colors.lightgrey),
+                ('SPAN', (0, row_count), (-1, row_count)),
+            #    ('GRID', (0, row_count+1), (-1, row_count+1), 0.5, colors.black),
+            ]
+
+            # The current row index is the
+            row_count += (1 + len(applicants))
+
+        # Total row
+        table_data += [
+            [
+                Paragraph("Total Premium Deduction / Draft Amount <font size='8'>*</font>", style),
+                "","","","",
+                "$ {}".format(self.data.format_money(total_premium)),
+            ]
+        ]
+        styles += [
+            ('BACKGROUND', (0, row_count), (-1, row_count), colors.lightgrey),
+            ('SPAN', (0, row_count), (-2, row_count)),
+
+            ('ALIGN', (0, row_count), (0, row_count), 'RIGHT'),
+        ]
 
         flowables += [
-            Table(table_data, style=TableStyle(styles), hAlign='LEFT')
+            Table(table_data, style=TableStyle(styles), hAlign='LEFT', colWidths=[
+                2 * inch,
+                inch,
+                inch,
+                inch,
+                inch,
+                inch,
+            ])
         ]
 
         return flowables
 
+    def draw_legal_text(self):
+
+        return [
+            Paragraph("<font size='8'>*</font> <font size='9'>(Actual amounts may very slightly due to rounding)</font>", small_style),
+            Spacer(0, .5 * inch),
+            Paragraph("""I agree that my compensation will be reduced by the amount shown above as my required contribution for the policies I have elected under the Plan, continuing for each pay period until this agreement is amended or terminated. I understand that the reduction in my cash compensation under this agreement will be in addition to any reductions under other agreements or benefit plans. In addition, pre-tax premiums, if any, paid under this Salary Redirection Agreement may reduce my future Social Security benefits, as my compensation for Social Security tax purposes has been reduced. I understand that insurance claim payments under certain health and medical coverage may be subject to Federal and State taxes when the premiums are paid for on a pre-tax basis.""",
+                      small_style),
+            Spacer(0, .1 * inch),
+            Paragraph("""I have been informed of the differences between existing and proposed new policies. I understand the terms of coverage are not an exact match. I understand that health conditions which I may presently have, (so called pre-existing conditions), may not be immediately or fully covered under a new policy. This could result in denial or delay of a claim for benefits under this new policy, whereas a similar claim might have been payable under my present policy. Pre-existing Condition mean a condition(s) for which a Covered Person has been medically diagnosed, treated by, or sought advice from, or consulted with, a Doctor before his/her effective date of coverage (or waiting period start date) under a Policy. The pre-existing condition time frame (often 12 months) is specified in each policy.""",
+                      small_style),
+        ]
 
 
 if __name__ == "__main__":
 
     from taa import db
-    from taa.services.cases import Case
     from taa.services.enrollments import EnrollmentApplication, EnrollmentApplicationService
     from taa.services.docusign.service import EnrollmentDataWrap
 
@@ -202,61 +255,3 @@ if __name__ == "__main__":
     f.write(doc._pdf_data.getvalue())
     f.close()
     print("Wrote PDF to test.pdf")
-
-    # Test drive the code
-    pass
-    # from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient
-    # from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
-    # from mock import Mock
-    #
-    # case = Mock(company_name='DelMar SD')
-    # agent = AgentDocuSignRecipient(name="Zachary Mason", email="zmason@delmarsd.com")
-    # employee = EmployeeDocuSignRecipient(name="Joe Tester", email="zach@zachmason.com")
-    # test_recipients = [
-    #     agent,
-    #     employee,
-    # ]
-    #
-    # child_attachment_form = ChildAttachmentForm(test_recipients, enrollment_data=EnrollmentDataWrap(dict(
-    #     agent_data=dict(company_name="DelMar SD"),
-    #     employee=dict(first="Test", last="Employee", ssn="123-12-1234")
-    # ), None, case))
-    #
-    # child_attachment_form.add_child(dict(
-    #     first="Joe",
-    #     last="Johnson",
-    #     birthdate="12/01/2010",
-    #     gender="male",
-    #     ssn='123-12-1234',
-    #     soh_questions=[dict(question="Have you ever eaten a lollipop?", answer="no")],
-    #     coverage=10000,
-    #     premium='10.50')
-    # )
-    # child_attachment_form.add_child(dict(
-    #     first="Susie",
-    #     last="Johnson",
-    #     birthdate="12/01/2012",
-    #     gender="female",
-    #     ssn='111-12-2222',
-    #     soh_questions=[dict(question="Have you ever eaten a lollipop?", answer="no")],
-    #     coverage=10000,
-    #     premium='10.50')
-    # )
-    # child_attachment_form.add_child(dict(
-    #     first="Christy",
-    #     last="Johnson",
-    #     birthdate="12/01/2014",
-    #     gender="female",
-    #     ssn='444-12-4321',
-    #     soh_questions=[dict(question="Have you ever eaten a lollipop?", answer="GI")],
-    #     coverage=10000,
-    #     premium='5.25')
-    # )
-    #
-    # child_attachment_form.generate()
-    # f = open('test.pdf', 'w+')
-    # f.write(child_attachment_form._pdf_data.getvalue())
-    # f.close()
-    # print("Wrote PDF to test.pdf")
-    #
-    # print("%s pages in document."%child_attachment_form.get_num_pages())
