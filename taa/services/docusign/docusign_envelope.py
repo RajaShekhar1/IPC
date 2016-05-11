@@ -334,9 +334,12 @@ class EnrollmentDataWrap(object):
             return self.data['children_soh_questions'][child_index]
 
     def get_employee_esignature(self):
-        # Replace employee signature with "John Doe voice auth on file 02:45pm"
-        esig = u"{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
-        return self.data.get('emp_sig_txt', esig)
+        if self.should_use_call_center_workflow():
+            # Replace employee signature with "John Doe voice auth on file 02:45pm"
+            esig = u"{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
+            return self.data.get('emp_sig_txt', esig)
+        else:
+            return self.data.get('emp_sig_txt', '')
 
     def get_employee_esignature_date(self):
         return self.data.get('emp_sig_date', datetime.today().strftime('%m/%d/%Y'))

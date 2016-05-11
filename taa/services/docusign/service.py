@@ -54,6 +54,11 @@ class DocuSignService(object):
 
         # Create and combine components of the envelope from each product.
         components = []
+
+        if case.include_cover_sheet:
+            from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
+            components.append(CoverSheetAttachment([in_person_signer], EnrollmentDataWrap(product_submissions[0], case, enrollment_record=enrollment_application), product_submissions))
+
         for product_submission in product_submissions:
             # Wrap the submission with an object that knows how to pull out key info.
             enrollment_data = EnrollmentDataWrap(product_submission, case, enrollment_record=enrollment_application)
@@ -67,8 +72,7 @@ class DocuSignService(object):
                 continue
             if product.is_fpp():
                 components += self.create_fpp_envelope_components(enrollment_data, recipients,
-                                                                  should_use_docusign_renderer,
-                                                                  all_enrollments=product_submissions)
+                                                                  should_use_docusign_renderer)
             elif product.is_static_benefit():
                 components += self.create_static_benefit_components(enrollment_data, recipients,
                                                                     should_use_docusign_renderer,
@@ -130,13 +134,13 @@ class DocuSignService(object):
                                              email=enrollment_data.get_employee_email())
 
         if enrollment_data.should_use_call_center_workflow():
-            recipients = [agent] + self.get_carbon_copy_recipients()
+            recipients = [agent] #+ self.get_carbon_copy_recipients()
             return agent, recipients
         else:
             recipients = [
                              employee,
                              agent,
-                         ] + self.get_carbon_copy_recipients()
+                         ] #+ self.get_carbon_copy_recipients()
             return employee, recipients
 
     def get_carbon_copy_recipients(self):
@@ -145,8 +149,7 @@ class DocuSignService(object):
             for name, email in DOCUSIGN_CC_RECIPIENTS
             ]
 
-    def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer,
-                                       all_enrollments=None):
+    def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
         from taa.services.docusign.templates.fpp import FPPTemplate
         from taa.services.docusign.templates.fpp_replacement import FPPReplacementFormTemplate
         from taa.services.docusign.templates.fpp_bank_draft import FPPBankDraftFormTemplate
@@ -157,9 +160,6 @@ class DocuSignService(object):
 
         # Build the components (different PDFs) needed for signing
         components = []
-
-        if enrollment_data.case.should_include_cover_sheet:
-            components.append(CoverSheetAttachment(recipients, enrollment_data, all_enrollments))
 
         # Main form
         fpp_form = FPPTemplate(recipients, enrollment_data, should_use_docusign_renderer)

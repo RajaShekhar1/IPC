@@ -8,6 +8,9 @@ from reportlab.lib import colors
 from reportlab.lib.styles import _baseFontNameB, _baseFontName, ParagraphStyle
 from PIL import Image as PILImage
 from reportlab.platypus.flowables import Spacer
+from taa import db
+from taa.services.enrollments import EnrollmentApplication, EnrollmentApplicationService
+from taa.services.docusign.service import EnrollmentDataWrap
 
 from PDFAttachment import PDFAttachment
 from utils import style, bold_style2, NumberedCanvas, create_attachment_header, bold_style
@@ -19,6 +22,7 @@ small_style = ParagraphStyle(name='smallLegal',
                              leading=11,
                              spaceBefore=4,
                              spaceAfter=4)
+
 
 class CoverSheetAttachment(PDFAttachment):
     def __init__(self, recipients, enrollment_data, all_enrollments):
@@ -82,8 +86,8 @@ class CoverSheetAttachment(PDFAttachment):
         emp_first = self.data.get_employee_first()
         emp_last = self.data.get_employee_last()
         emp_ssn_last = self.data.get_employee_ssn_last_digits()
-        emp_street = data.get_employee_street()
-        emp_citystatezip = data.get_employee_city_state_zip()
+        emp_street = self.data.get_employee_street()
+        emp_citystatezip = self.data.get_employee_city_state_zip()
 
         summary_flowables = [
             Paragraph("Benefit Election Summary", header_style),
@@ -149,9 +153,12 @@ class CoverSheetAttachment(PDFAttachment):
             # Table Spans
             ('SPAN',(0,0),(-1,0)),
 
-            ('ALIGN', (4, 2), (4, -1), 'CENTER'),
-            # right-align premium column
-            ('ALIGN', (5,2), (5,-1), 'RIGHT'),
+            ('ALIGN', (3, 3), (3, -1), 'CENTER'),
+            ('ALIGN', (4, 3), (4, -1), 'CENTER'),
+            #
+            # # right-align premium column
+            ('ALIGN', (2, 3), (2, -1), 'RIGHT'),
+            # ('ALIGN', (5, 3), (5, 3), 'RIGHT'),
             #  ('ALIGN', (6,1), (6,-1), 'RIGHT'),
         ]
 
@@ -177,10 +184,10 @@ class CoverSheetAttachment(PDFAttachment):
                     [
                         Paragraph(applicant['name'], style),
                         Paragraph(applicant['relationship'], style),
-                        Paragraph(applicant['coverage'], style),
-                        Paragraph(applicant['effective_date'], style),
-                        Paragraph(applicant['mode'], style),
-                        Paragraph(applicant['formatted_premium'], style),
+                        applicant['coverage'],
+                        applicant['effective_date'],
+                        applicant['mode'],
+                        applicant['formatted_premium'],
                     ]
                 ]
 
@@ -198,7 +205,7 @@ class CoverSheetAttachment(PDFAttachment):
         # Total row
         table_data += [
             [
-                Paragraph("Total Premium Deduction / Draft Amount <font size='8'>*</font>", style),
+                "Total Premium Deduction / Draft Amount *",
                 "","","","",
                 "$ {}".format(self.data.format_money(total_premium)),
             ]
@@ -207,13 +214,14 @@ class CoverSheetAttachment(PDFAttachment):
             ('BACKGROUND', (0, row_count), (-1, row_count), colors.lightgrey),
             ('SPAN', (0, row_count), (-2, row_count)),
 
-            ('ALIGN', (0, row_count), (0, row_count), 'RIGHT'),
+            ('ALIGN', (5, 0), (5, row_count), 'RIGHT'),
+            ('ALIGN', (0, row_count), (4, row_count), 'RIGHT'),
         ]
 
         flowables += [
             Table(table_data, style=TableStyle(styles), hAlign='LEFT', colWidths=[
                 2 * inch,
-                inch,
+                1.1 * inch,
                 inch,
                 inch,
                 inch,
@@ -238,9 +246,7 @@ class CoverSheetAttachment(PDFAttachment):
 
 if __name__ == "__main__":
 
-    from taa import db
-    from taa.services.enrollments import EnrollmentApplication, EnrollmentApplicationService
-    from taa.services.docusign.service import EnrollmentDataWrap
+
 
     #case = db.session.query(Case).get(1)
     enrollment = db.session.query(EnrollmentApplication).order_by(db.desc(EnrollmentApplication.id)).all()[1]
