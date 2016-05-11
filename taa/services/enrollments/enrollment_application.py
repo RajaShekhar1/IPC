@@ -430,17 +430,18 @@ class EnrollmentApplicationService(DBService):
 
         out = []
         for enrollment_application in census_record.enrollment_applications:
-            if not enrollment_application.standardized_data:
-                continue
-
-            json_data = json.loads(enrollment_application.standardized_data)
-
-            if isinstance(json_data, list):
-                out += json_data
-            else:
-                out += [json_data]
+            out += self.get_standardized_json_for_enrollment(enrollment_application)
 
         return out
+
+    def get_standardized_json_for_enrollment(self, enrollment_application):
+        if not enrollment_application.standardized_data:
+            return []
+        json_data = json.loads(enrollment_application.standardized_data)
+        if isinstance(json_data, list):
+            return json_data
+        else:
+            return [json_data]
 
     def get_enrollment_data(self, census_record):
         # TODO: Only get_enrollment_status is using this right now,
@@ -570,7 +571,7 @@ class EnrollmentApplicationService(DBService):
                 annualized_premium = ''
                 if applicant_coverages.get(product):
                     applicant_coverage = applicant_coverages[product]
-                    if product is not None and product.is_simple_coverage():
+                    if product is not None and (product.is_simple_coverage() or product.is_static_benefit()):
                         coverage = 'Included' if product.is_applicant_covered(applicant_coverage.applicant_type,
                                                                               applicant_coverage.coverage_selection) \
                             else 'Not Included '
@@ -606,6 +607,18 @@ class EnrollmentApplicationService(DBService):
             enrollment_data['docusign_envelope_id'] = None
 
         enrollment_data['agent_id'] = enrollment.agent_id
+
+        json_data = self.get_standardized_json_for_enrollment(enrollment)
+        if len(json_data) > 0:
+            children = json_data[0]['children']
+            if len(children) > 0:
+                for idx in range(len(children)):
+                    child = children[idx]
+                    gender = child.get('gender', '')
+                    if not isinstance(gender, unicode) and not isinstance(gender, unicode):
+                        gender = unicode(gender)
+                    gender = gender if gender is not None and gender != '' and gender.lower() != 'none' else ''
+                    enrollment_data['CH%d_GENDER' % idx] = gender
 
         return enrollment_data
 
@@ -669,6 +682,11 @@ class EnrollmentApplicationService(DBService):
         census_tuples = zip(self.case_service.census_records.get_csv_headers(),
                             self.case_service.census_records.get_csv_row_from_dict(data))
         data.update(dict(enrollment_tuples + census_tuples))
+        for k, v in list(data.iteritems()):
+            if not isinstance(v, unicode) and not isinstance(v, str):
+                v = unicode(v)
+            if v is None or v.lower() == 'none':
+                data[k] = ''
         return data
 
     def get_enrollments_by_date(self, from_, to_):
