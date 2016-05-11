@@ -129,6 +129,8 @@ class Product(ProductJsonSerializable, db.Model):
         :param applicant_type:
         :param coverage_tier:
         """
+        if self.is_static_benefit():
+            return True
         if not self.is_simple_coverage():
             return False
         if coverage_tier == 'EE':
@@ -221,6 +223,12 @@ class Product(ProductJsonSerializable, db.Model):
 
     def is_static_benefit(self):
         return self.get_base_product_code() == 'Static Benefit'
+
+    def requires_paylogix_export(self, enrollment_record=None):
+        requires_export = self.get_base_product() in ['Group CI', 'Static Benefit'] or self.is_fpp()
+        if enrollment_record:
+            requires_export = requires_export and enrollment_record.case.requires_paylogix_export
+        return requires_export
 
 
 # Relate custom products to agents - who can see these products

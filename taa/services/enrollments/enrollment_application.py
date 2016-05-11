@@ -18,6 +18,7 @@ from models import EnrollmentApplication, EnrollmentApplicationCoverage, Enrollm
 from taa import JSONEncoder
 from taa.core import DBService, db
 from taa.services import RequiredFeature, LookupService
+from taa.services.cases import Case
 
 
 class EnrollmentApplicationService(DBService):
@@ -430,17 +431,18 @@ class EnrollmentApplicationService(DBService):
 
         out = []
         for enrollment_application in census_record.enrollment_applications:
-            if not enrollment_application.standardized_data:
-                continue
-
-            json_data = json.loads(enrollment_application.standardized_data)
-
-            if isinstance(json_data, list):
-                out += json_data
-            else:
-                out += [json_data]
+            out += self.get_standardized_json_for_enrollment(enrollment_application)
 
         return out
+
+    def get_standardized_json_for_enrollment(self, enrollment_application):
+        if not enrollment_application.standardized_data:
+            return []
+        json_data = json.loads(enrollment_application.standardized_data)
+        if isinstance(json_data, list):
+            return json_data
+        else:
+            return [json_data]
 
     def get_enrollment_data(self, census_record):
         # TODO: Only get_enrollment_status is using this right now,
@@ -570,7 +572,7 @@ class EnrollmentApplicationService(DBService):
                 annualized_premium = ''
                 if applicant_coverages.get(product):
                     applicant_coverage = applicant_coverages[product]
-                    if product is not None and product.is_simple_coverage():
+                    if product is not None and (product.is_simple_coverage() or product.is_static_benefit()):
                         coverage = 'Included' if product.is_applicant_covered(applicant_coverage.applicant_type,
                                                                               applicant_coverage.coverage_selection) \
                             else 'Not Included '
@@ -606,6 +608,18 @@ class EnrollmentApplicationService(DBService):
             enrollment_data['docusign_envelope_id'] = None
 
         enrollment_data['agent_id'] = enrollment.agent_id
+
+        json_data = self.get_standardized_json_for_enrollment(enrollment)
+        if len(json_data) > 0:
+            children = json_data[0]['children']
+            if len(children) > 0:
+                for idx in range(len(children)):
+                    child = children[idx]
+                    gender = child.get('gender', '')
+                    if not isinstance(gender, unicode) and not isinstance(gender, unicode):
+                        gender = unicode(gender)
+                    gender = gender if gender is not None and gender != '' and gender.lower() != 'none' else ''
+                    enrollment_data['CH%d_GENDER' % idx] = gender
 
         return enrollment_data
 
@@ -669,6 +683,11 @@ class EnrollmentApplicationService(DBService):
         census_tuples = zip(self.case_service.census_records.get_csv_headers(),
                             self.case_service.census_records.get_csv_row_from_dict(data))
         data.update(dict(enrollment_tuples + census_tuples))
+        for k, v in list(data.iteritems()):
+            if not isinstance(v, unicode) and not isinstance(v, str):
+                v = unicode(v)
+            if v is None or v.lower() == 'none':
+                data[k] = ''
         return data
 
     def get_enrollments_by_date(self, from_, to_):
@@ -701,6 +720,59 @@ class EnrollmentApplicationService(DBService):
             return wizard_data[0]
         else:
             return wizard_data
+
+    def get_paylogix_info(self, enrollment_data):
+        """
+        Create a dictionary that contains information needed for the Paylogix export in a flat dict
+        :param enrollment_data: Dictionary from EnrollmentApplication.standardized_data
+        :type enrollment_data: dict
+        :return:
+        """
+        paylogix_info = {
+            'Account Holder Name': '',
+            'ACH Routing Number': '',
+            'ACH Account Number': '',
+            'ACH Account Type': '',
+            'Bank Name': '',
+            'Address One': '',
+            'Address Two': '',
+            'City': '',
+            'State': '',
+            'Zip': '',
+        }
+
+        if enrollment_data.get('bank_info', None):
+            bank_info = enrollment_data['bank_info']
+            paylogix_info['Account Holder Name'] = bank_info.get('account_holder_name', '')
+            paylogix_info['ACH Routing Number'] = bank_info.get('routing_number', '')
+            paylogix_info['ACH Account Number'] = bank_info.get('account_number', '')
+            paylogix_info['bank_name'] = bank_info.get('bank_name', '')
+            paylogix_info['Address One'] = bank_info.get('address_one', '')
+            paylogix_info['Address Two'] = bank_info.get('address_two', '')
+            paylogix_info['City'] = bank_info.get('city', '')
+            paylogix_info['State'] = bank_info.get('state', '')
+            paylogix_info['Zip'] = bank_info.get('zip', '')
+
+        return paylogix_info
+
+    def get_between_dates(self, start_date, end_date):
+        """
+        Get all Enrollment Applications between specified dates
+
+        :param start_date: Start Date
+        :param end_date: End Date
+        :return:
+        """
+        return db.session.query(EnrollmentApplication).filter(
+            start_date < EnrollmentApplication.signature_time < end_date).all()
+
+    def get_paylogix_applications_between_dates(self, start_date, end_date):
+        return db.session.query(EnrollmentApplication).filter(
+            EnrollmentApplication.signature_time > start_date and EnrollmentApplication.signature_time < end_date).join(
+            Case).filter(Case.requires_paylogix_export == True).all()
+
+    def get_paylogix_applications(self):
+        return db.session.query(EnrollmentApplication).join(Case).filter(Case.requires_paylogix_export == True).all()
 
 
 def export_string(val):

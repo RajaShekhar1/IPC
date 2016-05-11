@@ -463,6 +463,10 @@ class CaseService(DBService):
         else:
             return self.replace_census_data(case, self._create_file_buffer(file_obj))
 
+    def process_uploaded_logo_image(self, case, file_obj):
+        case.logo_image_data = self._create_file_buffer(file_obj).read()
+        db.session.commit()
+
     def _create_file_buffer(self, file_obj):
         # Read data into a buffer
         file_data = StringIO.StringIO()

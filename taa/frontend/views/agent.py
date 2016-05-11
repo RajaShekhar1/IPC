@@ -101,6 +101,9 @@ def manage_case(case_id):
 
     vars = {'case': case, 'can_edit_case': False}
 
+    # Add logo info
+    vars['has_current_logo'] = case.logo_image_data is not None
+
     agent = agent_service.get_logged_in_agent()
     if agent:
         products = product_service.get_products_for_agent(agent)
