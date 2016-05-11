@@ -29,6 +29,7 @@ product_service = LookupService('ProductService')
 self_enrollment_email_service = LookupService('SelfEnrollmentEmailService')
 self_enrollment_link_service = LookupService('SelfEnrollmentLinkService')
 enrollment_application_service = LookupService('EnrollmentApplicationService')
+""":type: taa.services.enrollments.EnrollmentApplicationService"""
 
 api_groups = ['agents', 'home_office', 'admins']
 
