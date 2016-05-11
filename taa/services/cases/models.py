@@ -132,6 +132,8 @@ class Case(CaseSerializer, db.Model):
     def requires_classification(self):
         return any(p for p in self.products if p.requires_occupation())
 
+    def has_logo(self):
+        return self.logo_image_data is not None
 
 class PeriodSerializer(JsonSerializable):
     __json_hidden__ = ['case']
