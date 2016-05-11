@@ -165,6 +165,25 @@ class EnrollmentDataWrap(object):
     def get_employee_ssn(self):
         return self.data['employee']['ssn']
 
+    def get_employee_ssn_last_digits(self):
+        if self.get_employee_ssn() and len(self.get_employee_ssn()) >= 4:
+            return self.get_employee_ssn()[-4:]
+
+        return ''
+
+    def get_employee_street(self):
+        address = self.data['employee']['address1']
+        if self.data['employee']['address2']:
+            address += ' {}'.format(self.data['employee']['address2'])
+        return address
+
+    def get_employee_city_state_zip(self):
+        return "{}, {} {}".format(
+            self.data['employee']['city'],
+            self.data['employee']['state'],
+            self.data['employee']['zip']
+        )
+
     def get_spouse_name(self):
         return u'{} {}'.format(self.data['spouse']['first'],
                               self.data['spouse']['last'])

@@ -39,7 +39,7 @@ class CaseSerializer(JsonSerializable):
         'partner_agents': lambda agents, _: [a for a in agents],
         'can_enroll': lambda _, case: case.can_enroll()
     }
-    __json_hidden__ = ['census_records', 'enrollment_records', 'batches']
+    __json_hidden__ = ['census_records', 'enrollment_records', 'batches', 'logo_image_data']
 
 
 class Case(CaseSerializer, db.Model):
@@ -80,6 +80,10 @@ class Case(CaseSerializer, db.Model):
     include_bank_draft_form = db.Column(db.Boolean, nullable=False, server_default='FALSE')
     occupation_class_settings = db.Column(JSON(none_as_null=False),
                                           nullable=True)
+
+    # Logo and cover sheet
+    include_cover_sheet = db.Column(db.Boolean, nullable=False, server_default='TRUE')
+    logo_image_data = db.deferred(db.Column(db.Binary, nullable=True))
 
     # Call center workflow setting
     should_use_call_center_workflow = db.Column(db.Boolean, server_default='FALSE', nullable=False)
@@ -128,6 +132,8 @@ class Case(CaseSerializer, db.Model):
     def requires_classification(self):
         return any(p for p in self.products if p.requires_occupation())
 
+    def has_logo(self):
+        return self.logo_image_data is not None
 
 class PeriodSerializer(JsonSerializable):
     __json_hidden__ = ['case']
