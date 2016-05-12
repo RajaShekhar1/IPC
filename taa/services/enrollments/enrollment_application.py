@@ -746,7 +746,13 @@ class EnrollmentApplicationService(DBService):
             paylogix_info['Account Holder Name'] = bank_info.get('account_holder_name', '')
             paylogix_info['ACH Routing Number'] = bank_info.get('routing_number', '')
             paylogix_info['ACH Account Number'] = bank_info.get('account_number', '')
-            paylogix_info['bank_name'] = bank_info.get('bank_name', '')
+            account_type = bank_info.get('account_type', '')
+            if account_type.lower() == 'checking':
+                account_type = 'C'
+            elif account_type.lower() == 'savings':
+                account_type = 'S'
+            paylogix_info['ACH Account Type'] = account_type
+            paylogix_info['Bank Name'] = bank_info.get('bank_name', '')
             paylogix_info['Address One'] = bank_info.get('address_one', '')
             paylogix_info['Address Two'] = bank_info.get('address_two', '')
             paylogix_info['City'] = bank_info.get('city', '')

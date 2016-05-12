@@ -55,6 +55,7 @@ def create_paylogix_csv(applications):
     csv_data = csv.writer(csv_buffer)
 
     headers = [
+        'Signature Time',
         'EE SSN',
         'Last Name',
         'First Name',
@@ -87,6 +88,7 @@ def create_paylogix_csv(applications):
             data = enrollment_service.get_paylogix_info(enrollment_item)
 
             row = [
+                application.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z'),
                 application.census_record.employee_ssn,
                 application.census_record.employee_last,
                 application.census_record.employee_first,

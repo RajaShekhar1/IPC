@@ -85,7 +85,7 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
     def get_account_address(self):
         address_one = self.get_account_address_one()
         address_two = self.get_account_address_two()
-        if len(address_two) > 0:
+        if address_two and len(address_two) > 0:
             return '%s %s' % (address_one, address_two)
         return address_one
 
