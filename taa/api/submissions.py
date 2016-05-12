@@ -2,7 +2,7 @@ from io import StringIO
 
 from flask import Blueprint, request, make_response, abort
 
-from config_defaults import PAYLOGIX_PGP_KEY_ID
+from taa.config_defaults import PAYLOGIX_PGP_KEY_ID
 from taa.api import route
 from flask_stormpath import groups_required, login_required
 import datetime
