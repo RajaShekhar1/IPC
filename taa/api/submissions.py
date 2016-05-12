@@ -1,4 +1,8 @@
+from io import StringIO
+
 from flask import Blueprint, request, make_response, abort
+
+from config_defaults import PAYLOGIX_PGP_KEY_ID
 from taa.api import route
 from flask_stormpath import groups_required, login_required
 import datetime
@@ -74,4 +78,9 @@ def paylogix_export():
         'Content-Type': 'text/csv',
         'Content-Disposition': 'attachment; filename=paylogix_export_{0}.csv'.format(date_str)
     }
-    return make_response(csv_data, 200, headers)
+
+    # Optional encryption for the download for testing purposes
+    if 'encrypt' in request.args and bool(request.args.get('encrypt', False)):
+        ftp_service = LookupService('FtpService')
+        csv_data = ftp_service.encrypt(csv_data, PAYLOGIX_PGP_KEY_ID)
+    return make_response(unicode(csv_data), 200, headers)

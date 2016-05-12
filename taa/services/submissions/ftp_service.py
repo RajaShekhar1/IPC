@@ -2,9 +2,7 @@ from io import StringIO
 
 import gnupg
 from ftplib import FTP
-from taa.config_defaults import DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, GNUPG_DIR, DELL_PGP_KEY, \
-    DELL_FTP_WORKING_DIRECTORY, DELL_FTP_PGP_KEY_ID, PAYLOGIX_FTP_HOSTNAME, PAYLOGIX_FTP_USERNAME, \
-    PAYLOGIX_FTP_PASSWORD, PAYLOGIX_PGP_KEY
+from taa.config_defaults import GNUPG_DIR, DELL_PGP_KEY, PAYLOGIX_PGP_KEY
 
 
 def pgp_add_key(pgp, key):
@@ -16,13 +14,16 @@ def pgp_add_key(pgp, key):
 
 
 class FtpService(object):
-    def __init__(self):
-        """
-        Initialize the object with a new instance of gnupg and add the Dell and Paylogix public keys to it
-        """
-        self.__gpg = gnupg.GPG(binary=GNUPG_DIR)
-        pgp_add_key(self.__gpg, DELL_PGP_KEY)
-        pgp_add_key(self.__gpg, PAYLOGIX_PGP_KEY)
+
+    def __initialize_gpg(self):
+        if not hasattr(self, '__gpg'):
+            self.__gpg = gnupg.GPG(binary=GNUPG_DIR)
+            pgp_add_key(self.__gpg, DELL_PGP_KEY)
+            pgp_add_key(self.__gpg, PAYLOGIX_PGP_KEY)
+
+    def encrypt(self, data, key_id):
+        self.__initialize_gpg()
+        return self.__gpg.encrypt(data, key_id)
 
     def send_file(self, hostname, username, password, filename, data, directory=None, key_id=None):
         """
@@ -43,6 +44,7 @@ class FtpService(object):
         if directory:
             ftp.cwd(directory)
         if key_id:
+            self.__initialize_gpg()
             data = StringIO(self.__gpg.encrypt(data, key_id))
         ftp.storbinary('STOR {0}' % filename, data)
         ftp.close()
