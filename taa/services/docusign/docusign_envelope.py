@@ -1,4 +1,4 @@
-# DocuSign API Walkthrough 08 (PYTHON) - Embedded Signing
+
 import decimal
 import random
 from datetime import datetime
@@ -228,7 +228,22 @@ class EnrollmentDataWrap(object):
                 self.data['employee_coverage'].get('face_value')))
 
     def get_employee_coverage(self):
-        return format(self.data['employee_coverage']['face_value'], ',.0f')
+        coverage = self.data['employee_coverage']
+        return self.format_coverage(coverage)
+
+    def format_coverage(self, coverage):
+        if 'face_value' in coverage:
+            return format(coverage['face_value'], ',.0f')
+        elif 'coverage_selection' in coverage:
+            coverage_selection = coverage['coverage_selection']
+            if coverage_selection == True:
+                return 'Included'
+            elif coverage_selection in ['EE', 'ES', 'EC', 'EF']:
+                return 'Included'
+            else:
+                return coverage_selection
+        else:
+            raise ValueError(coverage)
 
     def get_formatted_employee_premium(self):
         return self.format_money(self.get_employee_premium())
@@ -241,7 +256,7 @@ class EnrollmentDataWrap(object):
                 self.data['spouse_coverage'].get('face_value')))
 
     def get_spouse_coverage(self):
-        return format(decimal.Decimal(self.data['spouse_coverage']['face_value']), ',.0f')
+        return self.format_coverage(self.data['spouse_coverage'])
 
     def get_formatted_spouse_premium(self):
         return self.format_money(self.get_spouse_premium())
@@ -283,9 +298,18 @@ class EnrollmentDataWrap(object):
         covered_children = []
         for i, child in enumerate(self.data['children']):
             coverage = self.data['child_coverages'][i]
-            if coverage and coverage['face_value']:
+            if coverage and (coverage.get('face_value') or coverage.get('coverage_selection')):
                 covered_children.append(child)
         return covered_children
+
+    def get_child_coverage(self, child_num=0):
+        return self.format_coverage(self.data['child_coverages'][child_num])
+
+    def get_child_premium(self, child_num=0):
+        return decimal.Decimal(self.data['child_coverages'][child_num]['premium'])
+
+    def get_formatted_child_premium(self, child_num=0):
+        return self.format_money(self.get_child_premium(child_num))
 
     def get_employee_soh_questions(self):
         if 'soh_questions' in self.data['employee']:
@@ -310,9 +334,12 @@ class EnrollmentDataWrap(object):
             return self.data['children_soh_questions'][child_index]
 
     def get_employee_esignature(self):
-        # Replace employee signature with "John Doe voice auth on file 02:45pm"
-        esig = u"{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
-        return self.data.get('emp_sig_txt', esig)
+        if self.should_use_call_center_workflow():
+            # Replace employee signature with "John Doe voice auth on file 02:45pm"
+            esig = u"{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
+            return self.data.get('emp_sig_txt', esig)
+        else:
+            return self.data.get('emp_sig_txt', '')
 
     def get_employee_esignature_date(self):
         return self.data.get('emp_sig_date', datetime.today().strftime('%m/%d/%Y'))
@@ -403,6 +430,74 @@ class EnrollmentDataWrap(object):
             if product.is_fpp() and self.case.omit_actively_at_work and not product.is_guaranteed_issue():
                 return ''
         return 'yes' if self.data['is_employee_actively_at_work'] else 'no'
+
+    def get_applicant_data(self):
+        applicants = []
+
+        effective_date = self.enrollment_record.signature_time.strftime("%m/%d/%Y")
+        payment_mode = "{}".format(self.case.payment_mode)
+
+        if self.did_employee_select_coverage():
+            coverage = self.get_employee_coverage()
+            premium = self.get_formatted_employee_premium()
+            premium_amount = self.get_employee_premium()
+
+        else:
+            coverage = 'DECLINED'
+            premium = '-'
+            premium_amount = decimal.Decimal('0.00')
+
+        # Employee data
+        applicants.append(dict(
+            relationship="self",
+            name=self.get_employee_first(),
+            coverage=coverage,
+            premium=premium_amount,
+            formatted_premium=premium,
+            mode=payment_mode,
+            effective_date=effective_date,
+        ))
+
+        if self.data.get('spouse') and self.data['spouse']['first']:
+            if self.did_spouse_select_coverage():
+                coverage = self.get_spouse_coverage()
+                premium = self.get_formatted_spouse_premium()
+                premium_amount = self.get_spouse_premium()
+            else:
+                coverage = 'DECLINED'
+                premium = '-'
+                premium_amount = decimal.Decimal('0.00')
+
+            applicants.append(dict(
+                relationship="spouse",
+                name=self.data['spouse']['first'],
+                coverage=coverage,
+                premium=premium_amount,
+                formatted_premium=premium,
+                mode=payment_mode,
+                effective_date=effective_date,
+            ))
+
+        children = self.get_covered_children()
+        for i, child in enumerate(children):
+            if self.get_child_premium(i) >= decimal.Decimal('0.00'):
+                premium = self.get_formatted_child_premium(i)
+                premium_amount = self.get_child_premium(i)
+            else:
+                premium = '-'
+                premium_amount = decimal.Decimal('0.00')
+
+            applicants.append(dict(
+                relationship="child",
+                name=child['first'],
+                coverage=self.get_child_coverage(i),
+                premium=premium_amount,
+                formatted_premium=premium,
+                mode=payment_mode,
+                effective_date=effective_date,
+            ))
+
+        return applicants
 
 # For employee signing sessions
 def build_callback_url(wizard_data, session_type):
