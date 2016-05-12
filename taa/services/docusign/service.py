@@ -57,7 +57,7 @@ class DocuSignService(object):
 
         if case.include_cover_sheet:
             from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
-            components.append(CoverSheetAttachment([in_person_signer], EnrollmentDataWrap(product_submissions[0], case, enrollment_record=enrollment_application), product_submissions))
+            components.append(CoverSheetAttachment(recipients, EnrollmentDataWrap(product_submissions[0], case, enrollment_record=enrollment_application), product_submissions))
 
         for product_submission in product_submissions:
             # Wrap the submission with an object that knows how to pull out key info.
@@ -134,13 +134,13 @@ class DocuSignService(object):
                                              email=enrollment_data.get_employee_email())
 
         if enrollment_data.should_use_call_center_workflow():
-            recipients = [agent] #+ self.get_carbon_copy_recipients()
+            recipients = [agent] + self.get_carbon_copy_recipients()
             return agent, recipients
         else:
             recipients = [
                              employee,
                              agent,
-                         ] #+ self.get_carbon_copy_recipients()
+                         ] + self.get_carbon_copy_recipients()
             return employee, recipients
 
     def get_carbon_copy_recipients(self):
