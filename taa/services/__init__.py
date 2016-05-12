@@ -188,4 +188,4 @@ def initialize_services():
 
     services_broker.Provide('MailerService', MailerService)
 
-    services_broker.Provide('FtpService', FtpService())
+    #services_broker.Provide('FtpService', FtpService())

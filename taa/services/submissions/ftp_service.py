@@ -1,6 +1,6 @@
 from io import StringIO
 
-from gnupg import gnupg
+import gnupg
 from ftplib import FTP
 from taa.config_defaults import DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, GNUPG_DIR, DELL_PGP_KEY, \
     DELL_FTP_WORKING_DIRECTORY, DELL_FTP_PGP_KEY_ID, PAYLOGIX_FTP_HOSTNAME, PAYLOGIX_FTP_USERNAME, \
