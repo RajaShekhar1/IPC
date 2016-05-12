@@ -1,13 +1,18 @@
 var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_case, settings, product_rate_levels) {
   var self = this;
 
-  _.defaults(case_data, {omit_actively_at_work: false});
+  //region Member Variable Initialization
+  _.defaults(case_data, {
+    omit_actively_at_work: false,
+    requires_paylogix_export: false
+  });
 
   self.case_id = case_data.id;
   self.case_token = case_data.case_token;
   self.product_rate_levels = product_rate_levels || {};
 
   self.can_edit_case = can_edit_case;
+  //endregion
 
   self.report_data = ko.observable(null);
 
@@ -1239,6 +1244,18 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return _.any(self.annual_enrollment_periods(), self.missing_annual_period_predicate);
   };
 
+  //region Third Party Bank Draft Export
+  self.requires_third_party_bank_draft = ko.observable(case_data.requires_paylogix_export);
+
+  self.requires_third_party_bank_draft.subscribe(function (value) {
+    self.is_data_dirty(true);
+  });
+
+  self.should_show_third_party_bank_draft_checkbox = ko.pureComputed(function () {
+    return !!self.can_include_bank_draft_form() && !!self.include_bank_draft_form();
+  });
+  //endregion
+
   self.serialize_case = function () {
     var partner_agents = _.map(self.partner_agents(), function (id_str) {
       return parseInt(id_str);
@@ -1265,7 +1282,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
         return occupation_class.serialize_object();
       }),
       omit_actively_at_work: self.omit_actively_at_work(),
-      include_cover_sheet: self.include_cover_sheet()
+      include_cover_sheet: self.include_cover_sheet(),
+      requires_paylogix_export: self.requires_third_party_bank_draft()
     };
   };
 
@@ -1392,9 +1410,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
         var form_data = new FormData();
         form_data.append('cover-logo', files[0], files[0].name);
         requests.push(send_file_data(
-            "POST",
-            urls.get_case_api_logo_url(case_data.id),
-            form_data
+          "POST",
+          urls.get_case_api_logo_url(case_data.id),
+          form_data
         ));
       }
 
