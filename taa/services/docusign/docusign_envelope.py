@@ -1,4 +1,3 @@
-
 import decimal
 import random
 from datetime import datetime
@@ -151,7 +150,7 @@ class EnrollmentDataWrap(object):
 
     def get_employee_name(self):
         return u'{} {}'.format(self.data['employee']['first'],
-                              self.data['employee']['last'])
+                               self.data['employee']['last'])
 
     def get_employee_first(self):
         return self.data['employee']['first']
@@ -186,7 +185,7 @@ class EnrollmentDataWrap(object):
 
     def get_spouse_name(self):
         return u'{} {}'.format(self.data['spouse']['first'],
-                              self.data['spouse']['last'])
+                               self.data['spouse']['last'])
 
     def get_spouse_ssn(self):
         return self.data['spouse']['ssn']
@@ -214,7 +213,7 @@ class EnrollmentDataWrap(object):
     def random_email_id(self, token_length=10):
         chars = 'ABCDEF0123456789'
         return ''.join([random.choice(chars)
-                               for _ in range(token_length)])
+                        for _ in range(token_length)])
 
     def get_employee_date_of_hire(self):
         try:
@@ -225,7 +224,7 @@ class EnrollmentDataWrap(object):
 
     def did_employee_select_coverage(self):
         return (self.data['employee_coverage'] and (self.data['employee_coverage'].get('premium') or
-                self.data['employee_coverage'].get('face_value')))
+                                                    self.data['employee_coverage'].get('face_value')))
 
     def get_employee_coverage(self):
         coverage = self.data['employee_coverage']
@@ -253,7 +252,7 @@ class EnrollmentDataWrap(object):
 
     def did_spouse_select_coverage(self):
         return (self.data['spouse_coverage'] and (self.data['spouse_coverage'].get('premium') or
-                self.data['spouse_coverage'].get('face_value')))
+                                                  self.data['spouse_coverage'].get('face_value')))
 
     def get_spouse_coverage(self):
         return self.format_coverage(self.data['spouse_coverage'])
@@ -361,14 +360,14 @@ class EnrollmentDataWrap(object):
 
     def get_beneficiary_data(self):
         bene_data = {
-            'employee_primary':[],
-            'employee_contingent':[],
-            'spouse_primary':[],
-            'spouse_contingent':[],
+            'employee_primary': [],
+            'employee_contingent': [],
+            'spouse_primary': [],
+            'spouse_contingent': [],
         }
 
         from taa.services.enrollments import EnrollmentRecordParser
-        for num in range(1, EnrollmentRecordParser.MAX_BENEFICIARY_COUNT+1):
+        for num in range(1, EnrollmentRecordParser.MAX_BENEFICIARY_COUNT + 1):
             if self.data.get("emp_bene{}_name".format(num)):
                 bene_data['employee_primary'] += [
                     self.get_beneficiary_dict("emp_bene{}".format(num))
@@ -390,9 +389,9 @@ class EnrollmentDataWrap(object):
 
     def get_beneficiary_dict(self, prefix):
         bd = self.data["%s_birthdate" % prefix]
-        #try:
+        # try:
         #    bd = dateutil.parser.parse(bd).strftime('%F')
-        #except Exception:
+        # except Exception:
         #    pass
 
         bene_dict = dict(
@@ -499,6 +498,65 @@ class EnrollmentDataWrap(object):
 
         return applicants
 
+    def has_bank_draft_info(self):
+        return self.get('bank_info', None) is not None
+
+    def get_bank_draft_info(self):
+        return self.get('bank_info')
+
+    def requires_paylogix_export(self):
+        return self.has_bank_draft_info() and self.get_product().requires_paylogix_export(self.enrollment_record)
+
+    def get_account_holder_name(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('account_holder', '')
+
+    def get_routing_number(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('routing_number', '')
+
+    def get_account_number(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('account_number', '')
+
+    def get_account_type(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('account_type', '')
+
+    def get_account_type_shorthand(self):
+        account_type = self.get_account_type()
+        if account_type.lower() == 'checking':
+            return 'C'
+        if account_type.lower() == 'savings':
+            return 'S'
+        return account_type
+
+    def get_city_state_zip(self):
+        if not self.has_bank_draft_info():
+            return
+        bank_info = self.get_bank_draft_info()
+        return bank_info.get('city_state_zip', '')
+
+    def get_bank_name(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('bank_name', '')
+
+    def get_address_one(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('address_one', '')
+
+    def get_address_two(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('address_two', '')
+
+
 # For employee signing sessions
 def build_callback_url(wizard_data, session_type):
     is_ssl = app.config.get('IS_SSL', True)
@@ -507,11 +565,12 @@ def build_callback_url(wizard_data, session_type):
     # note: DS supplies the last parm of 'event' in the callback
     return (u'{scheme}{hostname}/application_completed'
             '?name={name}&type={session_type}'.format(
-                scheme=scheme,
-                hostname=hostname,
-                name=wizard_data['employee']['first'],
-                session_type=session_type,
+        scheme=scheme,
+        hostname=hostname,
+        name=wizard_data['employee']['first'],
+        session_type=session_type,
     ))
+
 
 def build_callcenter_callback_url(case):
     is_ssl = app.config.get('IS_SSL', True)
@@ -519,7 +578,7 @@ def build_callcenter_callback_url(case):
     scheme = 'https://' if is_ssl else 'http://'
     # note: DS supplies the last parm of 'event' in the callback
     return (u'{scheme}{hostname}/enrollment-case/{case_id}#enrollment'.format(
-                scheme=scheme,
-                hostname=hostname,
-                case_id=case.id,
+        scheme=scheme,
+        hostname=hostname,
+        case_id=case.id,
     ))

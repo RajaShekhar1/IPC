@@ -12,6 +12,7 @@ from taa.services.enrollments.csv_export import *
 import traceback
 from taa.errors import email_exception
 import time
+import taa.services.submissions as submissions
 
 app = celery.Celery('tasks')
 app.config_from_object('taa.config_defaults')
@@ -152,4 +153,37 @@ def submit_csv_to_dell(task, submission_id):
         log.status = SubmissionLog.STATUS_FAILURE
         log.message = 'Error sending CSV to Dell with message "%s"\n%s' % (ex.message, traceback.format_exc())
         db.session.commit()
+        task.retry()
+
+
+@app.tasks(bind=True, default_retry_delay=FIVE_MINUTES)
+def process_paylogix_export(task, submission_id):
+    submission_service = LookupService('EnrollmentSubmissionService')
+    """:type: taa.services.submissions.EnrollmentSubmissionService"""
+    submission = None
+    # noinspection PyBroadException
+    try:
+        submission = submission_service.get_submission_by_id(submission_id)
+        if not submission:
+            return
+        submission_service.process_paylogix_export(submission)
+    except Exception as ex:
+        submission_service.set_submissions_status([submission])
+        task.retry()
+
+
+@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+def process_paylogix_csv_generation(task):
+    submission_service = LookupService('EnrollmentSubmissionService')
+    """:type: taa.services.submissions.EnrollmentSubmissionService"""
+    submission = None
+    # noinspection PyBroadException
+    try:
+        submission = submission_service.get_pending_batch_submission(EnrollmentSubmission.TYPE_PAYLOGIX_CSV_GENERATION)
+        if not submission:
+            return
+        export_submission = submission_service.process_paylogix_csv_generation_submission(submission)
+        process_paylogix_export.delay(export_submission.id)
+    except Exception as ex:
+        submission_service.set_submissions_status([submission])
         task.retry()

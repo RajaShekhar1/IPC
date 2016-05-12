@@ -1,13 +1,15 @@
-from taa.tasks import process_hi_acc_enrollments
-from apscheduler.schedulers.blocking import BlockingScheduler
-
-#scheduler = BlockingScheduler()
+import taa.tasks as tasks
+import sys
 
 
-#@scheduler.scheduled_job('cron', hour=0)
 def schedule_hi_acc_enrollment_task():
-    process_hi_acc_enrollments.delay()
+    tasks.process_hi_acc_enrollments.delay()
 
-schedule_hi_acc_enrollment_task()
-
-#scheduler.start()
+if __name__ == '__main__':
+    if len(sys.argv) == 1:
+        schedule_hi_acc_enrollment_task()
+    command = sys.argv[1].lower()
+    if command == 'dell-export':
+        tasks.process_hi_acc_enrollments.delay()
+    elif command == 'paylogix-export':
+        tasks.process_paylogix_csv_generation.delay()

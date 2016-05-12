@@ -421,12 +421,15 @@ class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
     STATUS_PROCESSING = u'processing'
     STATUS_FAILURE = u'failure'
     STATUS_SUCCESS = u'success'
+    STATUS_QUEUED = u'queued'
 
     # Submission Type Enum Values
-    SUBMISSION_TYPE_HI_ACC_CSV_GENERATION = u'HI and ACC CSV Generation'
-    SUBMISSION_TYPE_HI_ACC_EXPORT_TO_DELL = u'HI and ACC CSV submission to Dell'
-    SUBMISSION_TYPE_SUBMIT_DOCUSIGN = u'Submit to Docusign'
-    SUBMISSION_TYPE_STATIC_BENEFIT = u'Static Benefit'
+    TYPE_DELL_CSV_GENERATION = u'HI and ACC CSV Generation'
+    TYPE_DELL_EXPORT = u'HI and ACC CSV submission to Dell'
+    TYPE_DOCUSIGN = u'Submit to Docusign'
+    TYPE_STATIC_BENEFIT = u'Static Benefit'
+    TYPE_PAYLOGIX_CSV_GENERATION = u'Paylogix CSV Generation'
+    TYPE_PAYLOGIX_EXPORT = u'Paylogix Export'
 
     # Database Columns
     id = db.Column(db.Integer, primary_key=True)

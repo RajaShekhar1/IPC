@@ -29,22 +29,12 @@ class FtpService(object):
         """
         Send a file via FTP to the specified hostname, and optionally directory.
         If key_id is present the file stored on the server will be encrypted the key that key_id references.
-
-        :param hostname: Hostname of the FTP server
-        :param username: Username to login with
-        :param password: Password to login with
-        :param filename: Filename to store the data as
-        :param data: The data to store
-        :param directory: Optional directory to store the data in
-        :param key_id: Optional public key id to use for encryption.
-        :return:
         """
         ftp = FTP(host=hostname, user=username, passwd=password)
         ftp.set_pasv(False)
         if directory:
             ftp.cwd(directory)
         if key_id:
-            self.__initialize_gpg()
-            data = StringIO(self.__gpg.encrypt(data, key_id))
+            data = StringIO(self.encrypt(data, key_id))
         ftp.storbinary('STOR {0}' % filename, data)
         ftp.close()
