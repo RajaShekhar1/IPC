@@ -16,8 +16,9 @@ from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
 from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient, CarbonCopyRecipient
 from taa.services.enrollments.models import EnrollmentImportBatchItem, EnrollmentSubmission, SubmissionLog, \
     EnrollmentApplication
+from taa.services import LookupService
 from ftplib import FTP
-from taa.config_defaults import DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, GNUPG_DIR, DELL_FTP_PGP_KEY, \
+from taa.config_defaults import DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, GNUPG_DIR, DELL_PGP_KEY, \
     DELL_FTP_WORKING_DIRECTORY, DELL_FTP_PGP_KEY_ID
 
 
@@ -217,7 +218,7 @@ class EnrollmentSubmissionService(object):
         """
         Initialize the GPG instance with out public key
         """
-        import_result = gpg.import_keys(DELL_FTP_PGP_KEY)
+        import_result = gpg.import_keys(DELL_PGP_KEY)
         if len(import_result.results) == 0 or not all(
                 (r.get('status').strip() in import_result._ok_reason.values() for r in import_result.results)):
             raise Exception
@@ -242,14 +243,10 @@ class EnrollmentSubmissionService(object):
         """
         Submit csv data to dell for processing
         """
-        ftp = FTP(DELL_FTP_HOSTNAME)
-        ftp.set_pasv(False)
-        ftp.login(DELL_FTP_USERNAME, DELL_FTP_PASSWORD)
-        ftp.cwd(DELL_FTP_WORKING_DIRECTORY)
-        encrypted_data = StringIO(self.pgp_encrypt_string(csv_data))
-        command = 'STOR enrollment_submissions_%s.csv.pgp' % datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-        ftp.storlines(command, encrypted_data)
-        ftp.close()
+        ftp_service = LookupService('FtpService')
+        filename = 'enrollment_submissions_%s.csv.pgp' % datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+        ftp_service.send_file(DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, filename, csv_data,
+                              key_id=DELL_FTP_PGP_KEY_ID)
 
     def get_submission_by_id(self, submission_id):
         """
