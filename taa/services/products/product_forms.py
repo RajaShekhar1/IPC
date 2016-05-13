@@ -493,17 +493,19 @@ def get_product_application_forms():
                 docusign_template_id='B57234AB-5EA5-48D4-984F-D3BF07793B9B',
             ),
         ],
+
+        # FIXME:  In order to get the states to be enabled for this product, these "forms" need to have a non-None template_id
         'ACC': [
             ApplicationForm('Generic', ACC_STATECODES,
-                            [], is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC)
+                            [], is_generic=True, docusign_template_id='FAKE TEMPLATE')
         ],
         'HI': [
             ApplicationForm('Generic', HI_STATECODES,
-                            [], is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC)
+                            [], is_generic=True, docusign_template_id='FAKE TEMPLATE')
         ],
         'Static Benefit': [
             ApplicationForm('Generic', all_statecodes,
-                            [], is_generic=True)
+                            [], is_generic=True, docusign_template_id='FAKE TEMPLATE')
         ]
     }
 
