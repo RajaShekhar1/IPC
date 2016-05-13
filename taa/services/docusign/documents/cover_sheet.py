@@ -123,8 +123,15 @@ class CoverSheetAttachment(PDFAttachment):
         print("Image size is: ", image.size)
         img_width, img_height = image.size
         w = min(img_width, 200)
-        scale = img_height / img_width
-        h = max(w * scale, 100)
+        orig_scale = float(img_height) / float(img_width)
+        h = min(w * orig_scale, 100)
+        if h == 100:
+            print("Reducing width from '{}' to '{}'".format(w, w * (w * orig_scale)/h))
+
+            # also decrease the width to fit
+            w *= (w * orig_scale) / h
+
+        print("Resized: ({}, {})".format(w, h))
         image_flowable = ReportLabImage(logo_file, w, h)
         return image_flowable
 

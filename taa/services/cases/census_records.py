@@ -8,6 +8,7 @@ from taa.services import RequiredFeature
 from models import CaseCensus
 from census_import import CensusRecordParser
 
+
 class CensusRecordService(DBService):
     __model__ = CaseCensus
 
