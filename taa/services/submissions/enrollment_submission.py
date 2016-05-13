@@ -9,7 +9,6 @@ from StringIO import StringIO
 import gnupg
 import taa.services.enrollments as enrollments
 
-import taa.tasks as tasks
 from taa import db
 from taa.config_defaults import DOCUSIGN_CC_RECIPIENTS
 from taa.services import RequiredFeature
@@ -33,12 +32,14 @@ class EnrollmentSubmissionService(object):
     """:type: gnupg.GPG"""
 
     def submit_wizard_enrollment(self, enrollment_application):
+        import taa.tasks as tasks
         # if True:
         #    self.process_wizard_submission(enrollment_application.id)
         # else:
         tasks.process_wizard_enrollment.delay(enrollment_application.id)
 
     def submit_hi_acc_enrollments(self, start_time=None, end_time=None):
+        import taa.tasks as tasks
         tasks.process_hi_acc_enrollments.delay(start_time, end_time)
 
     def process_wizard_submission(self, enrollment_application_id):
@@ -62,7 +63,7 @@ class EnrollmentSubmissionService(object):
         return envelope
 
     def submit_import_enrollments(self, enrollment_batch):
-
+        import taa.tasks as tasks
         # Schedule a task to process this enrollment record
         tasks.process_enrollment_upload.delay(enrollment_batch.id)
 
