@@ -602,17 +602,7 @@ function init_validation(ui) {
           depends: ui.requires_bank_info
         }
       },
-      'bank-city': {
-        required: {
-          depends: ui.requires_bank_info
-        }
-      },
-      'bank-state': {
-        required: {
-          depends: ui.requires_bank_info
-        }
-      },
-      'bank-zip': {
+      'bank-city-state-zip': {
         required: {
           depends: ui.requires_bank_info
         }
