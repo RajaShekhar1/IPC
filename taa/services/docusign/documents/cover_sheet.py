@@ -85,7 +85,6 @@ class CoverSheetAttachment(PDFAttachment):
 
         emp_first = self.data.get_employee_first()
         emp_last = self.data.get_employee_last()
-        emp_ssn_last = self.data.get_employee_ssn_last_digits()
         emp_street = self.data.get_employee_street()
         emp_citystatezip = self.data.get_employee_city_state_zip()
 
@@ -95,8 +94,6 @@ class CoverSheetAttachment(PDFAttachment):
             Paragraph(u"{} {}".format(emp_first, emp_last), header_style2),
             Paragraph(u"{}".format(emp_street), header_style2),
             Paragraph(u"{}".format(emp_citystatezip), header_style2),
-
-            Paragraph(u"SSN: ###-##-{}".format(emp_ssn_last), header_style2),
         ]
 
         if self.case.has_logo():
@@ -126,10 +123,10 @@ class CoverSheetAttachment(PDFAttachment):
         orig_scale = float(img_height) / float(img_width)
         h = min(w * orig_scale, 100)
         if h == 100:
-            print("Reducing width from '{}' to '{}'".format(w, w * (w * orig_scale)/h))
+            print("Reducing width from '{}' to '{}'".format(w, w * (h / (w * orig_scale))))
 
             # also decrease the width to fit
-            w *= (w * orig_scale) / h
+            w *= h / (w * orig_scale)
 
         print("Resized: ({}, {})".format(w, h))
         image_flowable = ReportLabImage(logo_file, w, h)
