@@ -529,9 +529,9 @@ class EnrollmentDataWrap(object):
 
     def get_account_type_shorthand(self):
         account_type = self.get_account_type()
-        if account_type.lower() == 'checking':
+        if account_type and account_type.lower() == 'checking':
             return 'C'
-        if account_type.lower() == 'savings':
+        if account_type and account_type.lower() == 'savings':
             return 'S'
         return account_type
 
