@@ -413,7 +413,7 @@ class ProductService(DBService):
         """
         if census is None:
             return case.products
-        from services.enrollments import EnrollmentApplication
+        from taa.services.enrollments import EnrollmentApplication
         applications = EnrollmentApplication.query.filter(EnrollmentApplication.census_record_id == census.id).all()
         has_membership_product = any(applications) and any(
             p for p in case.products if p.get_base_product_code() == u'Static Benefit')

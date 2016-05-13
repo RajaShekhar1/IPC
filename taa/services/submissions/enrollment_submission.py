@@ -196,28 +196,69 @@ class EnrollmentSubmissionService(object):
         db.session.commit()
         return submission
 
+    def create_submission(self, submission_type, status=EnrollmentSubmission.STATUS_PENDING, applications=None,
+                          commit=True):
+        if applications is None:
+            applications = list()
+        # noinspection PyArgumentList
+        submission = EnrollmentSubmission(submission_type=submission_type, status=status)
+        submission.enrollment_applications.extend(applications)
+        if commit:
+            db.session.add(submission)
+            db.session.commit()
+        return submission
+
+    def start_submission(self, submission):
+        submission.status = EnrollmentSubmission.STATUS_PROCESSING
+        # noinspection PyArgumentList
+        log = SubmissionLog(enrollment_submission=submission, status=EnrollmentSubmission.STATUS_PROCESSING)
+        db.session.add(log)
+        db.session.commit()
+        return log
+
+    def complete_submission(self, submission, log=None, message=None):
+        submission.status = EnrollmentSubmission.STATUS_SUCCESS
+        if log:
+            log.status = EnrollmentSubmission.STATUS_SUCCESS
+            if message:
+                log.message = message
+        db.session.commit()
+
+    def fail_submission(self, submission, log=None, message=None):
+        submission.status = EnrollmentSubmission.STATUS_FAILURE
+        if log:
+            log.status = EnrollmentSubmission.STATUS_FAILURE
+            if message:
+                log.message = message
+        db.session.commit()
+
+    def add_application_to_batch_submission(self, application, submission_type):
+        submission = self.get_pending_batch_submission(submission_type)
+        if not submission:
+            submission = self.create_batch_submission(submission_type)
+        submission.enrollment_applications.append(application)
+        db.session.commit()
+
     def create_paylogix_csv_generation_submission(self, applications):
         if isinstance(applications, EnrollmentApplication):
             applications = [applications]
         submission = self.get_pending_batch_submission(EnrollmentSubmission.TYPE_PAYLOGIX_CSV_GENERATION)
         if not submission:
             # noinspection PyArgumentList
-            submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.TYPE_PAYLOGIX_CSV_GENERATION)
-            db.session.add(submission)
+            submission = self.create_submission(EnrollmentSubmission.TYPE_PAYLOGIX_CSV_GENERATION)
         for application in applications:
             standardized_data = enrollments.load_standardized_data_from_application(application)
-            if any(EnrollmentDataWrap(d, application.case, application) for d in standardized_data if
-                   d.requires_paylogix_export()):
+            if any(EnrollmentDataWrap(d, application.case, application).requires_paylogix_export() for d in
+                   standardized_data):
                 submission.enrollment_applications.append(application)
         db.session.commit()
         return submission
 
     def create_paylogix_export_submission(self, csv_submission, data):
         # noinspection PyArgumentList
-        submission = EnrollmentSubmission(status=EnrollmentSubmission.STATUS_PENDING,
-                                          submission_type=EnrollmentSubmission.TYPE_PAYLOGIX_EXPORT, data=data)
-        for application in csv_submission.enrollment_applications:
-            submission.enrollment_applications.append(application)
+        submission = self.create_submission(EnrollmentSubmission.TYPE_PAYLOGIX_EXPORT,
+                                            applications=csv_submission.enrollment_applications, commit=False)
+        submission.data = data
         db.session.add(submission)
         db.session.commit()
         return submission
@@ -300,7 +341,7 @@ class EnrollmentSubmissionService(object):
         db.session.commit()
         return submission
 
-    def set_submissions_status(self, status, submissions=None, submission_logs=None):
+    def set_submissions_status(self, status, submissions=None, submission_logs=None, error_message=None):
         """
         Set the status
         """
@@ -311,6 +352,8 @@ class EnrollmentSubmissionService(object):
             submission.status = status
         for log in submission_logs:
             log.status = status
+            if error_message:
+                log.message = error_message
         db.session.commit()
 
     def get_applications_for_submissions(self, submissions):
@@ -352,9 +395,8 @@ class EnrollmentSubmissionService(object):
 
     def get_pending_batch_submission(self, submission_type):
         return db.session.query(EnrollmentSubmission) \
-            .filter(
-            EnrollmentSubmission.status == EnrollmentSubmission.STATUS_PENDING and
-            EnrollmentSubmission.submission_type == submission_type) \
+            .filter(EnrollmentSubmission.status == EnrollmentSubmission.STATUS_PENDING) \
+            .filter(EnrollmentSubmission.submission_type == submission_type) \
             .first()
 
     def has_pending_batch_submission(self, submission_type):
@@ -368,18 +410,14 @@ class EnrollmentSubmissionService(object):
         try:
             import taa.services.enrollments.paylogix as paylogix
             # noinspection PyArgumentList
-            log = SubmissionLog(status=SubmissionLog.STATUS_PROCESSING, enrollment_submission=submission)
-            db.session.add(log)
-            db.session.commit()
+            log = self.start_submission(submission)
             csv = paylogix.create_paylogix_csv(submission.enrollment_applications)
-            log.status = SubmissionLog.STATUS_SUCCESS
-            db.session.commit()
+            self.complete_submission(submission, log)
             # noinspection PyArgumentList
             return self.create_paylogix_export_submission(submission, csv)
         except Exception as ex:
             if log:
-                log.status = SubmissionLog.STATUS_FAILURE
-                db.session.commit()
+                self.fail_submission(submission, log, ex.message)
             raise ex
 
     def process_paylogix_export(self, submission):
@@ -388,17 +426,19 @@ class EnrollmentSubmissionService(object):
             import taa.services.enrollments.paylogix as paylogix
             import taa.services.submissions as submissions
             # noinspection PyArgumentList
-            log = SubmissionLog(status=SubmissionLog.STATUS_PROCESSING, enrollment_submission=submission)
-            db.session.add(log)
-            db.session.commit()
+            log = self.start_submission(submission)
             submissions.upload_paylogix_file(submission.data)
-            log.status = SubmissionLog.STATUS_SUCCESS
-            db.session.commit()
+            self.complete_submission(submission, log)
         except Exception as ex:
             if log:
-                log.status = SubmissionLog.STATUS_FAILURE
-                db.session.commit()
+                self.fail_submission(submission, log, ex.message)
             raise ex
+
+    def create_batch_submission(self, submission_type):
+        submission = EnrollmentSubmission(submission_type=submission_type, status=EnrollmentSubmission.STATUS_PENDING)
+        db.session.add(submission)
+        db.session.commit()
+        return submission
 
 
 class EnrollmentSubmissionProcessor(object):

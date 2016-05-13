@@ -183,5 +183,5 @@ def process_paylogix_csv_generation(task):
         export_submission = submission_service.process_paylogix_csv_generation_submission(submission)
         process_paylogix_export(submission_id=export_submission.id)
     except Exception as ex:
-        submission_service.set_submissions_status([submission])
+        submission_service.set_submissions_status([submission], error_message=ex.message)
         task.retry()
