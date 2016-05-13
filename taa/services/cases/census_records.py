@@ -146,17 +146,19 @@ class CensusRecordService(DBService):
         db.session.query(SelfEnrollmentLink
             ).filter(SelfEnrollmentLink.census_record.has(CaseCensus.case_id == case.id)
             # It complains about not being able to evaluate the conditions in the Python session, so skip that here.
-            ).delete(synchronize_session='fetch')
+            ).delete(synchronize_session=False)
         db.session.query(SelfEnrollmentEmailLog
             ).filter(SelfEnrollmentEmailLog.census_record.has(CaseCensus.case_id == case.id)
             # It complains about not being able to evaluate the conditions in the Python session, so skip that here.
-            ).delete(synchronize_session='fetch')
+            ).delete(synchronize_session=False)
 
         # We don't try to delete for enrollments because we don't allow deleting all the
         #  census records if enrollments exist
 
         # Delete the census for this case.
         self.find(case_id=case.id).delete()
+
+        db.session.commit()
 
     def update_from_enrollment(self, record, data):
         """
