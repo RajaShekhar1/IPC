@@ -35,6 +35,6 @@ class FtpService(object):
         if directory:
             ftp.cwd(directory)
         if key_id:
-            data = StringIO(self.encrypt(data, key_id))
-        ftp.storbinary('STOR {0}' % filename, data)
+            data = StringIO(unicode(self.encrypt(data, key_id)))
+        ftp.storbinary('STOR {0}'.format(filename), data)
         ftp.close()

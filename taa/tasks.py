@@ -154,7 +154,7 @@ def submit_csv_to_dell(task, submission_id):
         task.retry()
 
 
-@app.tasks(bind=True, default_retry_delay=FIVE_MINUTES)
+@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def process_paylogix_export(task, submission_id):
     submission_service = LookupService('EnrollmentSubmissionService')
     """:type: taa.services.submissions.EnrollmentSubmissionService"""
@@ -181,7 +181,7 @@ def process_paylogix_csv_generation(task):
         if not submission:
             return
         export_submission = submission_service.process_paylogix_csv_generation_submission(submission)
-        process_paylogix_export.delay(export_submission.id)
+        process_paylogix_export(submission_id=export_submission.id)
     except Exception as ex:
         submission_service.set_submissions_status([submission])
         task.retry()
