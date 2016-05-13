@@ -2,7 +2,6 @@ from flask import abort
 from flask_stormpath import current_user
 
 from ..cases import Case, CaseCensus
-from ..enrollments import EnrollmentApplication
 from taa.services.products.rates import GILimitedRatesDecorator
 
 from taa.services.products.RatePlan import ApplicantQuery, APPLICANT_CHILD, ApplicantQueryOptions, \
@@ -414,6 +413,7 @@ class ProductService(DBService):
         """
         if census is None:
             return case.products
+        from services.enrollments import EnrollmentApplication
         applications = EnrollmentApplication.query.filter(EnrollmentApplication.census_record_id == census.id).all()
         has_membership_product = any(applications) and any(
             p for p in case.products if p.get_base_product_code() == u'Static Benefit')
