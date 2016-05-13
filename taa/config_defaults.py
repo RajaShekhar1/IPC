@@ -104,10 +104,10 @@ MAX_CONTENT_LENGTH = 16777216
 GNUPG_DIR = env_get_text('GNUPG_DIR', '/usr/bin/gpg')
 
 # Dell FTP Information
-DELL_FTP_HOSTNAME = env_get_text('DELL_FTP_HOSTNAME', 'ftp03.tagtpa.com')
-DELL_FTP_USERNAME = env_get_text('DELL_FTP_USERNAME', 'fstarCorp')
-DELL_FTP_PASSWORD = env_get_text('DELL_FTP_PASSWORD', 'p7dacRuc')
-DELL_FTP_WORKING_DIRECTORY = env_get_text('DELL_FTP_WORKING_DIRECTORY', 'Testing')
+DELL_FTP_HOSTNAME = env_get_text('DELL_FTP_HOSTNAME', 'delmarsd.com')
+DELL_FTP_USERNAME = env_get_text('DELL_FTP_USERNAME', 'testftp')
+DELL_FTP_PASSWORD = env_get_text('DELL_FTP_PASSWORD', 'wRIu75P12PzVv8JqVVNLh4Nr')
+DELL_FTP_WORKING_DIRECTORY = env_get_text('DELL_FTP_WORKING_DIRECTORY', '')
 DELL_FTP_PGP_KEY_ID = env_get_text('DELL_FTP_PGP_KEY_ID', '3A74219B887E37BA')
 DELL_PGP_KEY = env_get_text('DELL_FTP_PGP_KEY', """-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: GnuPG v1
