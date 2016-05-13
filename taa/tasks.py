@@ -1,5 +1,4 @@
 # Celery tasks
-from datetime import datetime
 
 import celery
 from taa.services.users import UserService
@@ -12,7 +11,6 @@ from taa.services.enrollments.csv_export import *
 import traceback
 from taa.errors import email_exception
 import time
-import taa.services.submissions as submissions
 
 app = celery.Celery('tasks')
 app.config_from_object('taa.config_defaults')
