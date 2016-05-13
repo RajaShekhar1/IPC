@@ -501,6 +501,10 @@ def get_product_application_forms():
             ApplicationForm('Generic', HI_STATECODES,
                             [], is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC)
         ],
+        'Static Benefit': [
+            ApplicationForm('Generic', all_statecodes,
+                            [], is_generic=True)
+        ]
     }
 
     # FPP-White (FPP-Gov), FPP-Blue, and FPP-Gray use FPPTI forms

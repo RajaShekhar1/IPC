@@ -101,7 +101,7 @@ def init_basic_data():
             code=u"ACC",
             name=u"Accident Insurance Plan",
             product_type=u"base",
-            visible_to_agents=False,
+            visible_to_agents=True,
             is_fpp_gov=False,
         ),
         dict(

@@ -163,10 +163,10 @@ QdjfBCCs5u9F8N/9nkVvk7Lig8QyTiHyhxwI211Q5hrC6AhrMBk=
 -----END PGP PUBLIC KEY BLOCK-----""")
 
 # Paylogix FTP Information
-PAYLOGIX_FTP_HOSTNAME = env_get_text('PAYLOGIX_FTP_HOSTNAME', 'localhost')
-PAYLOGIX_FTP_USERNAME = env_get_text('PAYLOGIX_FTP_USERNAME', 'anonymous')
-PAYLOGIX_FTP_PASSWORD = env_get_text('PAYLOGIX_FTP_PASSWORD', '')
-# TODO: Change this to Paylogix's actual public key. For now this is just Dell's copied again
+PAYLOGIX_FTP_HOSTNAME = env_get_text('PAYLOGIX_FTP_HOSTNAME', 'delmarsd.com')
+PAYLOGIX_FTP_USERNAME = env_get_text('PAYLOGIX_FTP_USERNAME', 'testftp')
+PAYLOGIX_FTP_PASSWORD = env_get_text('PAYLOGIX_FTP_PASSWORD', 'wRIu75P12PzVv8JqVVNLh4Nr')
+PAYLOGIX_FTP_DIRECTORY = env_get_text('PAYLOGIX_FTP_DIRECTORY', '')
 PAYLOGIX_PGP_KEY_ID = env_get_text('PAYLOGIX_PGP_KEY_ID', '140A693259BBE0C8')
 PAYLOGIX_PGP_KEY = env_get_text('PAYLOGIX_PGP_KEY', """-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: PGP 7.1

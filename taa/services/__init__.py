@@ -131,7 +131,6 @@ def initialize_services():
         EnrollmentImportBatchItemService,
         EnrollmentApplicationCoverageService,
         EnrollmentReportService,
-        EnrollmentSubmissionService,
         ImagedFormGeneratorService,
         FormPDFRenderer,
         FormTemplateTabRepository,
@@ -149,7 +148,7 @@ def initialize_services():
     )
     from taa.services.users import UserService
     from taa.services.docusign import DocuSignService, DocuSignTransport
-    from taa.services.submissions import FtpService
+    from taa.services.submissions import FtpService, EnrollmentSubmissionService
 
     services_broker.Provide('CaseService', CaseService())
     services_broker.Provide('CaseEnrollmentPeriodsService', CaseEnrollmentPeriodsService())

@@ -21,6 +21,10 @@ from taa.services import RequiredFeature, LookupService
 from taa.services.cases import Case
 
 
+def load_standardized_data_from_application(application):
+    return json.loads(application.standardized_data)
+
+
 class EnrollmentApplicationService(DBService):
     __model__ = EnrollmentApplication
 
@@ -698,7 +702,7 @@ class EnrollmentApplicationService(DBService):
     def get_applications_by_submission_date(self, start_date=None, end_date=None):
         query = db.session.query(EnrollmentApplication) \
             .join(EnrollmentApplication.enrollment_submissions) \
-            .filter(EnrollmentSubmission.submission_type == EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION)
+            .filter(EnrollmentSubmission.submission_type == EnrollmentSubmission.TYPE_DELL_CSV_GENERATION)
 
         if start_date is not None:
             query.filter(EnrollmentSubmission.created_at >= start_date)
