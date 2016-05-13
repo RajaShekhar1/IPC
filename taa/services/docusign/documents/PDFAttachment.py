@@ -42,7 +42,8 @@ class PDFAttachment(BasePDFDoc):
         return tabs
 
     def is_recipient_signer(self, recipient):
-        return recipient.is_employee()
+        # Employee or agent should be listed as signer on DS envelope, even if agent isn't signing.
+        return recipient.is_employee() or recipient.is_agent()
 
     def get_signer_recipients(self):
-        return [r for r in self.recipients if r.is_employee()]
+        return [r for r in self.recipients if self.is_recipient_signer(r)]

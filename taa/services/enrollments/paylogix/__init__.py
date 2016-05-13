@@ -55,6 +55,7 @@ def create_paylogix_csv(applications):
     csv_data = csv.writer(csv_buffer)
 
     headers = [
+        'Signature Time',
         'EE SSN',
         'Last Name',
         'First Name',
@@ -65,9 +66,7 @@ def create_paylogix_csv(applications):
         'Bank Name',
         'Address One',
         'Address Two',
-        'City',
-        'State',
-        'Zip',
+        'City, State, Zip',
         'Deduction Week',
     ]
 
@@ -84,22 +83,19 @@ def create_paylogix_csv(applications):
             if not product.requires_paylogix_export():
                 continue
 
-            data = enrollment_service.get_paylogix_info(enrollment_item)
-
             row = [
+                application.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z'),
                 application.census_record.employee_ssn,
                 application.census_record.employee_last,
                 application.census_record.employee_first,
-                data['Account Holder Name'],
-                data['ACH Routing Number'],
-                data['ACH Account Number'],
-                data['ACH Account Type'],
-                data['Bank Name'],
-                data['Address One'],
-                data['Address Two'],
-                data['City'],
-                data['State'],
-                data['Zip'],
+                data_wrap.get_account_holder_name(),
+                data_wrap.get_routing_number(),
+                data_wrap.get_account_holder_name(),
+                data_wrap.get_account_type_shorthand(),
+                data_wrap.get_bank_name(),
+                data_wrap.get_address_one(),
+                data_wrap.get_address_two(),
+                data_wrap.get_city_state_zip(),
                 get_deduction_week(application.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z')),
             ]
             csv_data.writerow(row)

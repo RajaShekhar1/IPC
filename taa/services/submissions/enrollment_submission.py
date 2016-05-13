@@ -7,8 +7,8 @@ from PyPDF2 import PdfFileReader, PdfFileWriter
 from StringIO import StringIO
 
 import gnupg
+import taa.services.enrollments as enrollments
 
-import taa.tasks as tasks
 from taa import db
 from taa.config_defaults import DOCUSIGN_CC_RECIPIENTS
 from taa.services import RequiredFeature
@@ -16,8 +16,9 @@ from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
 from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient, CarbonCopyRecipient
 from taa.services.enrollments.models import EnrollmentImportBatchItem, EnrollmentSubmission, SubmissionLog, \
     EnrollmentApplication
+from taa.services import LookupService
 from ftplib import FTP
-from taa.config_defaults import DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, GNUPG_DIR, DELL_FTP_PGP_KEY, \
+from taa.config_defaults import DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, GNUPG_DIR, DELL_PGP_KEY, \
     DELL_FTP_WORKING_DIRECTORY, DELL_FTP_PGP_KEY_ID
 
 
@@ -31,9 +32,14 @@ class EnrollmentSubmissionService(object):
     """:type: gnupg.GPG"""
 
     def submit_wizard_enrollment(self, enrollment_application):
+        import taa.tasks as tasks
+        # if True:
+        #    self.process_wizard_submission(enrollment_application.id)
+        # else:
         tasks.process_wizard_enrollment.delay(enrollment_application.id)
 
     def submit_hi_acc_enrollments(self, start_time=None, end_time=None):
+        import taa.tasks as tasks
         tasks.process_hi_acc_enrollments.delay(start_time, end_time)
 
     def process_wizard_submission(self, enrollment_application_id):
@@ -57,7 +63,7 @@ class EnrollmentSubmissionService(object):
         return envelope
 
     def submit_import_enrollments(self, enrollment_batch):
-
+        import taa.tasks as tasks
         # Schedule a task to process this enrollment record
         tasks.process_enrollment_upload.delay(enrollment_batch.id)
 
@@ -171,7 +177,7 @@ class EnrollmentSubmissionService(object):
         Get the pending csv generation submission record if it exists
         """
         return db.session.query(EnrollmentSubmission) \
-            .filter(EnrollmentSubmission.submission_type == EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION) \
+            .filter(EnrollmentSubmission.submission_type == EnrollmentSubmission.TYPE_DELL_CSV_GENERATION) \
             .filter(EnrollmentSubmission.status == EnrollmentSubmission.STATUS_PENDING) \
             .first()
 
@@ -203,13 +209,13 @@ class EnrollmentSubmissionService(object):
         if 'Group CI' not in [p for p in application.case.products]:
             return None
 
-        submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.SUBMISSION_TYPE_SUBMIT_DOCUSIGN)
+        submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.TYPE_DOCUSIGN)
         submission.enrollment_applications.append(application)
         db.session.add(submission)
         db.session.commit()
         return submission
 
-    def create_csv_generation_submission_for_application(self, application):
+    def create_dell_csv_generation_submission_for_application(self, application):
         """
         Create or add an application to the next pending csv generation submission if the product should be in the next
         csv generation batch as determined by the case having either an HI or ACC product on it.
@@ -220,9 +226,76 @@ class EnrollmentSubmissionService(object):
         if submission is None:
             # noinspection PyArgumentList
             submission = EnrollmentSubmission(
-                submission_type=EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION)
+                submission_type=EnrollmentSubmission.TYPE_DELL_CSV_GENERATION)
             db.session.add(submission)
         submission.enrollment_applications.append(application)
+        db.session.commit()
+        return submission
+
+    def create_submission(self, submission_type, status=EnrollmentSubmission.STATUS_PENDING, applications=None,
+                          commit=True):
+        if applications is None:
+            applications = list()
+        # noinspection PyArgumentList
+        submission = EnrollmentSubmission(submission_type=submission_type, status=status)
+        submission.enrollment_applications.extend(applications)
+        if commit:
+            db.session.add(submission)
+            db.session.commit()
+        return submission
+
+    def start_submission(self, submission):
+        submission.status = EnrollmentSubmission.STATUS_PROCESSING
+        # noinspection PyArgumentList
+        log = SubmissionLog(enrollment_submission=submission, status=EnrollmentSubmission.STATUS_PROCESSING)
+        db.session.add(log)
+        db.session.commit()
+        return log
+
+    def complete_submission(self, submission, log=None, message=None):
+        submission.status = EnrollmentSubmission.STATUS_SUCCESS
+        if log:
+            log.status = EnrollmentSubmission.STATUS_SUCCESS
+            if message:
+                log.message = message
+        db.session.commit()
+
+    def fail_submission(self, submission, log=None, message=None):
+        submission.status = EnrollmentSubmission.STATUS_FAILURE
+        if log:
+            log.status = EnrollmentSubmission.STATUS_FAILURE
+            if message:
+                log.message = message
+        db.session.commit()
+
+    def add_application_to_batch_submission(self, application, submission_type):
+        submission = self.get_pending_batch_submission(submission_type)
+        if not submission:
+            submission = self.create_batch_submission(submission_type)
+        submission.enrollment_applications.append(application)
+        db.session.commit()
+
+    def create_paylogix_csv_generation_submission(self, applications):
+        if isinstance(applications, EnrollmentApplication):
+            applications = [applications]
+        submission = self.get_pending_batch_submission(EnrollmentSubmission.TYPE_PAYLOGIX_CSV_GENERATION)
+        if not submission:
+            # noinspection PyArgumentList
+            submission = self.create_submission(EnrollmentSubmission.TYPE_PAYLOGIX_CSV_GENERATION)
+        for application in applications:
+            standardized_data = enrollments.load_standardized_data_from_application(application)
+            if any(EnrollmentDataWrap(d, application.case, application).requires_paylogix_export() for d in
+                   standardized_data):
+                submission.enrollment_applications.append(application)
+        db.session.commit()
+        return submission
+
+    def create_paylogix_export_submission(self, csv_submission, data):
+        # noinspection PyArgumentList
+        submission = self.create_submission(EnrollmentSubmission.TYPE_PAYLOGIX_EXPORT,
+                                            applications=csv_submission.enrollment_applications, commit=False)
+        submission.data = data
+        db.session.add(submission)
         db.session.commit()
         return submission
 
@@ -234,13 +307,15 @@ class EnrollmentSubmissionService(object):
         """:type: list[EnrollmentSubmission]"""
 
         # Create or add to pending CSV generation submission. None if its case doesn't contain and HI or ACC products
-        submission = self.create_csv_generation_submission_for_application(application)
+        submission = self.create_dell_csv_generation_submission_for_application(application)
         if submission is not None:
             submissions.append(submission)
         submission = self.create_static_benefit_submission_for_application(application)
         if submission is not None:
             submissions.append(submission)
-
+        submission = self.create_paylogix_csv_generation_submission(application)
+        if submission is not None:
+            submissions.append(submission)
         # TODO: Uncomment this when the docusign submission is fully switched over to this
         # Create a docusign submission. None if its case doesn't have Group CI as one of its products
         # submission = self.create_docusign_submission_for_application(application)
@@ -253,7 +328,7 @@ class EnrollmentSubmissionService(object):
         """
         Initialize the GPG instance with out public key
         """
-        import_result = gpg.import_keys(DELL_FTP_PGP_KEY)
+        import_result = gpg.import_keys(DELL_PGP_KEY)
         if len(import_result.results) == 0 or not all(
                 (r.get('status').strip() in import_result._ok_reason.values() for r in import_result.results)):
             raise Exception
@@ -278,14 +353,10 @@ class EnrollmentSubmissionService(object):
         """
         Submit csv data to dell for processing
         """
-        ftp = FTP(DELL_FTP_HOSTNAME)
-        ftp.set_pasv(False)
-        ftp.login(DELL_FTP_USERNAME, DELL_FTP_PASSWORD)
-        ftp.cwd(DELL_FTP_WORKING_DIRECTORY)
-        encrypted_data = StringIO(self.pgp_encrypt_string(csv_data))
-        command = 'STOR enrollment_submissions_%s.csv.pgp' % datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-        ftp.storlines(command, encrypted_data)
-        ftp.close()
+        ftp_service = LookupService('FtpService')
+        filename = 'enrollment_submissions_%s.csv.pgp' % datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+        ftp_service.send_file(DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, filename, csv_data,
+                              key_id=DELL_FTP_PGP_KEY_ID)
 
     def get_submission_by_id(self, submission_id):
         """
@@ -299,14 +370,14 @@ class EnrollmentSubmissionService(object):
         """
         # noinspection PyArgumentList
         submission = EnrollmentSubmission(data=csv_data,
-                                          submission_type=EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_EXPORT_TO_DELL)
+                                          submission_type=EnrollmentSubmission.TYPE_DELL_EXPORT)
         for application in applications:
             submission.enrollment_applications.append(application)
         db.session.add(submission)
         db.session.commit()
         return submission
 
-    def set_submissions_status(self, status, submissions=None, submission_logs=None):
+    def set_submissions_status(self, status, submissions=None, submission_logs=None, error_message=None):
         """
         Set the status
         """
@@ -317,6 +388,8 @@ class EnrollmentSubmissionService(object):
             submission.status = status
         for log in submission_logs:
             log.status = status
+            if error_message:
+                log.message = error_message
         db.session.commit()
 
     def get_applications_for_submissions(self, submissions):
@@ -349,9 +422,56 @@ class EnrollmentSubmissionService(object):
         if not any(p for p in application.case.products if p.is_static_benefit()):
             return None
         # noinspection PyArgumentList
-        submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.SUBMISSION_TYPE_STATIC_BENEFIT,
+        submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.TYPE_STATIC_BENEFIT,
                                           status=EnrollmentSubmission.STATUS_SUCCESS)
         submission.enrollment_applications.append(application)
+        db.session.add(submission)
+        db.session.commit()
+        return submission
+
+    def get_pending_batch_submission(self, submission_type):
+        return db.session.query(EnrollmentSubmission) \
+            .filter(EnrollmentSubmission.status == EnrollmentSubmission.STATUS_PENDING) \
+            .filter(EnrollmentSubmission.submission_type == submission_type) \
+            .first()
+
+    def has_pending_batch_submission(self, submission_type):
+        return db.session.query(EnrollmentSubmission) \
+                   .filter(EnrollmentSubmission.status == EnrollmentSubmission.STATUS_PENDING and
+                           EnrollmentSubmission.submission_type == submission_type) \
+                   .count() > 0
+
+    def process_paylogix_csv_generation_submission(self, submission):
+        log = None
+        try:
+            import taa.services.enrollments.paylogix as paylogix
+            # noinspection PyArgumentList
+            log = self.start_submission(submission)
+            csv = paylogix.create_paylogix_csv(submission.enrollment_applications)
+            self.complete_submission(submission, log)
+            # noinspection PyArgumentList
+            return self.create_paylogix_export_submission(submission, csv)
+        except Exception as ex:
+            if log:
+                self.fail_submission(submission, log, ex.message)
+            raise ex
+
+    def process_paylogix_export(self, submission):
+        log = None
+        try:
+            import taa.services.enrollments.paylogix as paylogix
+            import taa.services.submissions as submissions
+            # noinspection PyArgumentList
+            log = self.start_submission(submission)
+            submissions.upload_paylogix_file(submission.data)
+            self.complete_submission(submission, log)
+        except Exception as ex:
+            if log:
+                self.fail_submission(submission, log, ex.message)
+            raise ex
+
+    def create_batch_submission(self, submission_type):
+        submission = EnrollmentSubmission(submission_type=submission_type, status=EnrollmentSubmission.STATUS_PENDING)
         db.session.add(submission)
         db.session.commit()
         return submission

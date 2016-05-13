@@ -70,7 +70,7 @@ def get_template_id(product_type, state, product_id=None):
                 'FPP-Gov': '857F9448-88B2-4DA1-AFCB-8F5B354E137F',
                 'FPPTIY': '857F9448-88B2-4DA1-AFCB-8F5B354E137F',
                 'FPPTIB': '857F9448-88B2-4DA1-AFCB-8F5B354E137F',
-                'FPPTIW':'857F9448-88B2-4DA1-AFCB-8F5B354E137F',
+                'FPPTIW': '857F9448-88B2-4DA1-AFCB-8F5B354E137F',
                 'Group CI': '8A95ABEA-707C-4C69-9929-7CCDD8173ED6',
                 'Static Benefit': '857F9448-88B2-4DA1-AFCB-8F5B354E137F'}.get(product_type)
 

@@ -54,6 +54,11 @@ class DocuSignService(object):
 
         # Create and combine components of the envelope from each product.
         components = []
+
+        if case.include_cover_sheet:
+            from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
+            components.append(CoverSheetAttachment(recipients, EnrollmentDataWrap(product_submissions[0], case, enrollment_record=enrollment_application), product_submissions))
+
         for product_submission in product_submissions:
             # Wrap the submission with an object that knows how to pull out key info.
             enrollment_data = EnrollmentDataWrap(product_submission, case, enrollment_record=enrollment_application)
@@ -151,6 +156,7 @@ class DocuSignService(object):
         from taa.services.docusign.documents.additional_children import ChildAttachmentForm
         from taa.services.docusign.documents.multiple_beneficiaries_attachment import MultipleBeneficiariesAttachment
         from taa.services.docusign.documents.additional_replacement_policies import AdditionalReplacementPoliciesForm
+        from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
 
         # Build the components (different PDFs) needed for signing
         components = []
