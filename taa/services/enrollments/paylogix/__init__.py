@@ -24,7 +24,7 @@ standardized_data['bank_draft'] = {
 
 FRIDAY = 5
 MAX_WEEKS_PER_MONTH = 4
-ADVANCE_DAYS = 10
+ADVANCE_DAYS = 2
 
 
 def get_deduction_week(application_date):

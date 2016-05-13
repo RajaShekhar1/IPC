@@ -556,6 +556,21 @@ class EnrollmentDataWrap(object):
             return
         return self.get_bank_draft_info().get('address_two', '')
 
+    def get_billing_city(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('billing_city', '')
+
+    def get_billing_state(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('billing_state', '')
+
+    def get_billing_zip(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('billing_zip', '')
+
 
 # For employee signing sessions
 def build_callback_url(wizard_data, session_type):

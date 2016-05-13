@@ -1,3 +1,4 @@
+<!--suppress HtmlFormInputWithoutLabel -->
 <div class="step-pane" id="step6" data-step="6">
   <h3 class="green">Confirmation</h3>
 
@@ -70,7 +71,8 @@
               </div>
             </div>
             <div class="form-group">
-              <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-street-one">Account Holder Street 1</label>
+              <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-street-one">Account Holder Street
+                1</label>
 
               <div class="col-xs-12 col-sm-9">
                 <input class="form-control col-xs-12 col-sm-9" id="bank-street-one" name="bank-street-one" type="text"
@@ -78,11 +80,27 @@
               </div>
             </div>
             <div class="form-group">
-              <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-street-two">Account Holder Street 2</label>
+              <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-street-two">Account Holder Street
+                2</label>
 
               <div class="col-xs-12 col-sm-9">
                 <input class="form-control col-xs-12 col-sm-9" id="bank-street-two" name="bank-street-two" type="text"
                        data-bind="value: $root.billing_street_two">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-xs-12 col-sm-3 align-right">Account Holder City, State, Zip</label>
+
+              <div class="col-xs-12 col-sm-9">
+                <input id="billing-city" name="billing-city" type="text"
+                       data-bind="value: $root.billing_city">
+                <select id="billing-state" name="billing-state" data-bind="value: $root.billing_state">
+                  {% for state in states %}
+                    <option value="{{ state['code'] }}">{{ state['name'] }}</option>
+                  {% endfor %}
+                </select>
+                <input id="billing-zip" name="billing-zip" type="text"
+                       data-bind="value: $root.billing_zip">
               </div>
             </div>
           </div>
@@ -102,7 +120,8 @@
                 Number</label>
 
               <div class="col-xs-12 col-sm-9">
-                <input class="form-control col-xs-12 col-sm-9" id="bank-account-number" name="bank-account-number" type="text"
+                <input class="form-control col-xs-12 col-sm-9" id="bank-account-number" name="bank-account-number"
+                       type="text"
                        data-bind="value: $root.account_number">
               </div>
             </div>
@@ -110,7 +129,8 @@
               <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-routing-number">Routing
                 Number</label>
               <div class="col-xs-12 col-sm-9">
-                <input class="form-control col-xs-12 col-sm-9" id="bank-routing-number" name="bank-routing-number" type="text"
+                <input class="form-control col-xs-12 col-sm-9" id="bank-routing-number" name="bank-routing-number"
+                       type="text"
                        data-bind="value: $root.routing_number">
               </div>
             </div>
