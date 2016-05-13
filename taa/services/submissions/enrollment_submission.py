@@ -216,7 +216,7 @@ class EnrollmentSubmissionService(object):
         # noinspection PyArgumentList
         submission = EnrollmentSubmission(status=EnrollmentSubmission.STATUS_PENDING,
                                           submission_type=EnrollmentSubmission.TYPE_PAYLOGIX_EXPORT, data=data)
-        for application in csv_submission:
+        for application in csv_submission.enrollment_applications:
             submission.enrollment_applications.append(application)
         db.session.add(submission)
         db.session.commit()
