@@ -56,86 +56,81 @@
 
     <div id="bank-draft-info" data-bind="if: $root.requires_bank_info">
       <h3 class="green">Payment</h3>
-      <hr>
-      <form id="bank-draft-form">
-        <div class="form-group">
-          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-holder-name">Account Holder
-            Name</label>
-          <div class="col-xs-12 col-sm-9">
-            <input class="control-label col-xs-12 col-sm-9" id="bank-account-holder-name"
-                   name="bank-account-holder-name"
-                   data-bind="value: $root.bank_account_holder_name" type="text">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-type">Account Type</label>
-          <div class="col-xs-12 col-sm-9">
-            <select id="bank-account-type" name="bank-account-type"
-                    data-bind="options: $root.account_type_options, value: $root.selected_account_type, optionsCaption: '(Choose Account Type)'"></select>
-          </div>
-        </div>
-        <div class="space-2"></div>
-        <div class="form-group">
-          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-number">Account
-            Number</label>
+      <form id="bank-draft-form" class="form-horizontal">
+        <div class="panel panel-default">
+          <div class="panel-heading">Account Holder Information</div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-holder-name">Account Holder
+                Name</label>
+              <div class="col-xs-12 col-sm-9 align-left">
+                <input class="form-control col-xs-12 col-sm-9" id="bank-account-holder-name"
+                       name="bank-account-holder-name"
+                       data-bind="value: $root.bank_account_holder_name" type="text">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-street-one">Account Holder Street 1</label>
 
-          <div class="col-xs-12 col-sm-9">
-            <input class="col-xs-12 col-sm-9" id="bank-account-number" name="bank-account-number" type="text"
-                   data-bind="value: $root.account_number">
-          </div>
-        </div>
-        <div class="space-2"></div>
-        <div class="form-group">
-          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-routing-number">Routing
-            Number</label>
-          <div class="col-xs-12 col-sm-9">
-            <input class="col-xs-12 col-sm-9" id="bank-routing-number" name="bank-routing-number" type="text"
-                   data-bind="value: $root.routing_number">
-          </div>
-        </div>
-        <div class="space-2"></div>
-        <div class="form-group">
-          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-name">Bank Name</label>
-          <div class="col-xs-12 col-sm-9">
-            <input class="col-xs-12 col-sm-9" id="bank-name" name="bank-name" type="text"
-                   data-bind="value: $root.bank_name">
-          </div>
-        </div>
-        <div class="space-2"></div>
-        <div class="form-group">
-          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-street-one">Street 1</label>
+              <div class="col-xs-12 col-sm-9">
+                <input class="form-control col-xs-12 col-sm-9" id="bank-street-one" name="bank-street-one" type="text"
+                       data-bind="value: $root.billing_street_one">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-street-two">Account Holder Street 2</label>
 
-          <div class="col-xs-12 col-sm-9">
-            <input class="col-xs-12 col-sm-9" id="bank-street-one" name="bank-street-one" type="text"
-                   data-bind="value: $root.bank_street_one">
+              <div class="col-xs-12 col-sm-9">
+                <input class="form-control col-xs-12 col-sm-9" id="bank-street-two" name="bank-street-two" type="text"
+                       data-bind="value: $root.billing_street_two">
+              </div>
+            </div>
           </div>
         </div>
-        <div class="space-2"></div>
-        <div class="form-group">
-          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-street-two">Street 2</label>
+        <div class="panel panel-default">
+          <div class="panel-heading">Bank Information</div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-type">Account Type</label>
+              <div class="col-xs-12 col-sm-9">
+                <select id="bank-account-type" name="bank-account-type"
+                        data-bind="options: $root.account_type_options, value: $root.selected_account_type, optionsCaption: '(Choose Account Type)'"></select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-account-number">Account
+                Number</label>
 
-          <div class="col-xs-12 col-sm-9">
-            <input class="col-xs-12 col-sm-9" id="bank-street-two" name="bank-street-two" type="text"
-                   data-bind="value: $root.bank_street_two">
+              <div class="col-xs-12 col-sm-9">
+                <input class="form-control col-xs-12 col-sm-9" id="bank-account-number" name="bank-account-number" type="text"
+                       data-bind="value: $root.account_number">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-routing-number">Routing
+                Number</label>
+              <div class="col-xs-12 col-sm-9">
+                <input class="form-control col-xs-12 col-sm-9" id="bank-routing-number" name="bank-routing-number" type="text"
+                       data-bind="value: $root.routing_number">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-name">Bank Name</label>
+              <div class="col-xs-12 col-sm-9">
+                <input class="form-control col-xs-12 col-sm-9" id="bank-name" name="bank-name" type="text"
+                       data-bind="value: $root.bank_name">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-city-state-zip">City, State,
+                Zip</label>
+              <div class="col-xs-12 col-sm-9">
+                <input class="form-control" id="bank-city-state-zip" name="bank-city-state-zip" type="text"
+                       data-bind="value: $root.bank_city_state_zip">
+              </div>
+            </div>
           </div>
         </div>
-        <div class="space-2"></div>
-        <div class="form-group">
-          <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-city">City, State, Zip</label>
-          <div class="col-xs-12 col-sm-9">
-            <input id="bank-city" name="bank-city" type="text"
-                   data-bind="value: $root.bank_city">
-            <select id="bank-state" name="bank-state" type="text"
-                    data-bind="value: $root.bank_state">
-              {% for state in states %}
-                <option value="{{ state['code'] }}">{{ state['name'] }}</option>
-              {% endfor %}
-            </select>
-            <input id="bank-zip" name="bank-zip" type="text"
-                   data-bind="value: $root.bank_zip">
-          </div>
-        </div>
-        <div class="space-4"></div>
         <div class="row" data-bind="visible: $root.should_show_draft_date">
           <span class="col-xs-12 col-sm-3 align-right">Draft Day <small>(1<sup>st</sup> through 28<sup>th</sup>)</small></span>
           <span class="col-xs-12 col-sm-3" data-bind="text: $root.formatted_draft_date"></span>

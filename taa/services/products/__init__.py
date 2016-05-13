@@ -413,13 +413,17 @@ class ProductService(DBService):
         """
         if census is None:
             return case.products
-        from services.enrollments import EnrollmentApplication
+        from taa.services.enrollments import EnrollmentApplication
         applications = EnrollmentApplication.query.filter(EnrollmentApplication.census_record_id == census.id).all()
         has_membership_product = any(applications) and any(
             p for p in case.products if p.get_base_product_code() == u'Static Benefit')
         if has_membership_product:
             return [p for p in case.products if p.get_base_product_code() != u'Static Benefit']
         return case.products
+
+    def get_ordered_products_for_case(self, case_id):
+        from taa.services.cases.models import case_products
+        return db.session.query(Product).join(case_products).join(Case).filter(Case.id == case_id).order_by(case_products.c.ordinal).all()
 
 
 class ProductCriteriaService(DBService):

@@ -406,24 +406,6 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     def get_pending_enrollments(self):
         return filter(lambda e: e.is_pending(), self.enrollment_applications)
 
-    def get_product_ids(self):
-        """
-        Get a set of product ids that represent all products for this census record
-        :return: Set of ids for products
-        :type: set[int]
-        """
-        from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
-        application_service = LookupService('EnrollmentApplicationService')
-
-        product_ids = set()
-
-        for enrollment_data in application_service.get_standardized_enrollment_json(self):
-            wrapped_data = EnrollmentDataWrap(enrollment_data, self.case)
-            product_id = wrapped_data.get_product_id()
-            product_ids.add(product_id)
-
-        return product_ids
-
 
 class AgentSplitsSerializer(JsonSerializable):
     __json_hidden__ = ['case']

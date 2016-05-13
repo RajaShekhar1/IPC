@@ -136,11 +136,9 @@ function build_wizard_results_for_product_coverage(product_cov, wizard_vm) {
     account_number: wizard_vm.account_number(),
     routing_number: wizard_vm.routing_number(),
     bank_name: wizard_vm.bank_name(),
-    address_one: wizard_vm.bank_street_one(),
-    address_two: wizard_vm.bank_street_two(),
-    city: wizard_vm.bank_city(),
-    state: wizard_vm.bank_state(),
-    zip: wizard_vm.bank_zip()
+    address_one: wizard_vm.billing_street_one(),
+    address_two: wizard_vm.billing_street_two(),
+    city_state_zip: wizard_vm.bank_city_state_zip()
   };
 
   var wizard_results = {

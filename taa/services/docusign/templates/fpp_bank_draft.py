@@ -90,16 +90,16 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
         return address_one
 
     def get_account_city(self):
-        return self.data['bank_info'].get('city', '')
+        return self.data['employee'].get('city', '')
 
     def get_account_state(self):
-        return self.data['bank_info'].get('state', '')
+        return self.data['employee'].get('state', '')
 
     def get_account_zip(self):
-        return self.data['bank_info'].get('zip', '')
+        return self.data['employee'].get('zip', '')
 
     def get_city_state_zip(self):
-        return '%s, %s %s' % (self.get_account_city(), self.get_account_state(), self.get_account_zip())
+        return self.data.get_city_state_zip()
 
     def get_monthly_premium(self):
         # For now, just add the premiums, since we know they are monthly payment mode.
