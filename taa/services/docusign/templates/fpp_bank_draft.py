@@ -90,13 +90,13 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
         return address_one
 
     def get_account_city(self):
-        return self.data['employee'].get('city', '')
+        return self.data.get_billing_city()
 
     def get_account_state(self):
-        return self.data['employee'].get('state', '')
+        return self.data.get_billing_state()
 
     def get_account_zip(self):
-        return self.data['employee'].get('zip', '')
+        return self.data.get_billing_zip()
 
     def get_city_state_zip(self):
         return self.data.get_city_state_zip()
