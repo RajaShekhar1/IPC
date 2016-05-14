@@ -84,7 +84,8 @@ class CaseService(DBService):
 
     def get_products_for_case(self, case):
         # Return the sorted list of products for this case
-        return sorted(case.products, cmp=lambda x, y: cmp(x.name, y.name))
+        # The relationship on the case is sorted explicitly in the relationship.
+        return case.products
 
     def get_rider_codes(self):
         return []  # [c.code for c in self.case_riders.split(",")]

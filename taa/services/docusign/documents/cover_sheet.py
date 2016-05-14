@@ -187,12 +187,10 @@ class CoverSheetAttachment(PDFAttachment):
                 product_header = product.name
                 applicants = product_data.get_applicant_data()
 
-
             table_data += [
                 [
                     Paragraph(product_header, style), "", "", "", "", ""
                 ]
-
             ]
 
             for applicant in applicants:
@@ -212,7 +210,7 @@ class CoverSheetAttachment(PDFAttachment):
             styles += [
                 ('BACKGROUND', (0, row_count), (-1, row_count), colors.lightgrey),
                 ('SPAN', (0, row_count), (-1, row_count)),
-            #    ('GRID', (0, row_count+1), (-1, row_count+1), 0.5, colors.black),
+                #    ('GRID', (0, row_count+1), (-1, row_count+1), 0.5, colors.black),
             ]
 
             # The current row index is the
@@ -275,7 +273,7 @@ if __name__ == "__main__":
 
 
     #case = db.session.query(Case).get(1)
-    enrollment = db.session.query(EnrollmentApplication).order_by(db.desc(EnrollmentApplication.id)).all()[1]
+    enrollment = db.session.query(EnrollmentApplication).order_by(db.desc(EnrollmentApplication.id)).all()[0]
     case = enrollment.case
     enrollment_data = json.loads(enrollment.standardized_data)
     data = EnrollmentDataWrap(enrollment_data[0], case, enrollment)
