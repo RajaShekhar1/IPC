@@ -445,13 +445,17 @@ def submit_wizard_data():
     log_user_agent()
 
     # Hotfix 4/5/2016: Attempt to track down user data that is causing blank address data.
-    fix_missing_address_bug(wizard_results)
-    
+    if not are_all_products_declined(wizard_results):
+        fix_missing_address_bug(wizard_results)
+
     try:
         enrollment = process_wizard_submission(case, wizard_results)
 
         # Store the enrollment record ID in the session for now so we can access it on the landing page.
         session['enrollment_application_id'] = enrollment.id
+
+        if are_all_products_declined(wizard_results):
+            return get_declined_response(wizard_results)
 
         accepted_products = get_accepted_products(case, get_accepted_product_ids(json.loads(enrollment.standardized_data)))
 
@@ -546,13 +550,7 @@ def check_submission_status():
 
     if are_all_products_declined(received_enrollment_data):
         # Declined enrollment, return redirect to our landing page.
-        redirect_url = url_for('ds_landing_page',
-                               event='decline',
-                               name=received_enrollment_data[0]['employee']['first'],
-                               type='inperson' if received_enrollment_data[0][
-                                                      "method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
-                               )
-        return jsonify(status="declined", redirect_url=redirect_url)
+        return get_declined_response(received_enrollment_data)
     elif not generates_form:
         return jsonify(status="ready", redirect_url='/enrollment-case/%d#enrollment' % enrollment.case.id)
     elif enrollment.docusign_envelope_id is not None:
@@ -563,6 +561,16 @@ def check_submission_status():
     else:
         # Not done processing yet
         return jsonify(status="pending")
+
+
+def get_declined_response(received_enrollment_data):
+    redirect_url = url_for('ds_landing_page',
+                           event='decline',
+                           name=received_enrollment_data[0]['employee']['first'],
+                           type='inperson' if received_enrollment_data[0][
+                                                  "method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
+                           )
+    return jsonify(status="declined", redirect_url=redirect_url)
 
 
 def are_all_products_declined(standardized_data):

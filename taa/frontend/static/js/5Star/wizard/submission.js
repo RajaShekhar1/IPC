@@ -283,7 +283,7 @@ function submit_decline() {
       });
     } else {
       // redirect
-      location = resp.redirect;
+      location = resp.redirect_url;
     }
   }, handle_remote_error, true);
 
