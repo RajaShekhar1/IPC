@@ -1,19 +1,21 @@
 import decimal
 import json
 from io import BytesIO
+from itertools import ifilter
 
+from PIL import Image as PILImage
 from reportlab.platypus import Paragraph, Table, TableStyle, Frame, Image as ReportLabImage
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.lib.styles import _baseFontNameB, _baseFontName, ParagraphStyle
-from PIL import Image as PILImage
 from reportlab.platypus.flowables import Spacer
-from taa import db
-from taa.services.enrollments import EnrollmentApplication, EnrollmentApplicationService
-from taa.services.docusign.service import EnrollmentDataWrap
 
+from taa import db
+from taa.services import LookupService
+from taa.services.enrollments import EnrollmentApplication
+from taa.services.docusign.service import EnrollmentDataWrap
 from PDFAttachment import PDFAttachment
-from utils import style, bold_style2, NumberedCanvas, create_attachment_header, bold_style
+from utils import style, bold_style2, NumberedCanvas
 
 small_style = ParagraphStyle(name='smallLegal',
                              parent=style,
@@ -170,18 +172,28 @@ class CoverSheetAttachment(PDFAttachment):
 
         total_premium = decimal.Decimal('0.00')
 
-        for i, raw_product_data in enumerate(self.all_enrollments):
+
+        # Iterate through the case products to identify declines.
+        case_service = LookupService('CaseService')
+        for i, product in enumerate(case_service.get_products_for_case(self.data.case)):
+            if product not in self.get_enrolled_products():
+                # Show Decline
+                product_header = '{} - DECLINED'.format(product.name)
+                applicants = []
+        #for i, raw_product_data in enumerate(self.all_enrollments):
+            else:
+
+                product_data = self.get_wrapped_enrollment_data_for_product(product)
+                product_header = product.name
+                applicants = product_data.get_applicant_data()
 
 
-            product_data = EnrollmentDataWrap(raw_product_data, self.data.case, self.data.enrollment_record)
             table_data += [
                 [
-                    Paragraph(product_data.get_product().name, style), "", "", "", "", ""
+                    Paragraph(product_header, style), "", "", "", "", ""
                 ]
 
             ]
-
-            applicants = product_data.get_applicant_data()
 
             for applicant in applicants:
                 table_data += [
@@ -235,6 +247,13 @@ class CoverSheetAttachment(PDFAttachment):
 
         return flowables
 
+    def get_enrolled_products(self):
+        return [d.get_product() for d in self.get_wrapped_enrollment_data()]
+
+    def get_wrapped_enrollment_data(self):
+        return [EnrollmentDataWrap(raw_product_data, self.data.case, self.data.enrollment_record)
+                for raw_product_data in self.all_enrollments]
+
     def draw_legal_text(self):
 
         return [
@@ -246,6 +265,9 @@ class CoverSheetAttachment(PDFAttachment):
             Paragraph("""I understand that access to these plans may be limited to specified open enrollment periods and that I may be required to provide evidence of insurability for any program that I have elected to waive at this time, should I chose to participate at a future point in time.  I agree that my premiums for these elected benefits will be submitted to the plan administrator by the amount shown above as my required contribution for the policies, according to the terms of my withholding agreement, until this agreement is amended or terminated.""",
                       small_style),
         ]
+
+    def get_wrapped_enrollment_data_for_product(self, product):
+        return next(ifilter(lambda d: d.get_product() == product, self.get_wrapped_enrollment_data()), None)
 
 
 if __name__ == "__main__":
