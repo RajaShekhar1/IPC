@@ -24,12 +24,21 @@ function init_validation(ui) {
       // trigger jquery validation
       is_valid = ui.validator.form();
 
+      // Make sure the coverage selection step is visible before advancing.
       if (!ui.is_coverage_selection_visible()) {
         ui.step_one_validation_error('Please click \"Show Coverage Options\"');
         e.preventDefault();
         return;
       } else {
         ui.step_one_validation_error(null);
+      }
+
+
+      // Make sure a selection has been made for each product.
+      if (!ui.is_coverage_selection_valid()) {
+        ui.show_no_selection_error();
+        e.preventDefault();
+        return;
       }
 
       function validate_coverage_amount(applicant_coverage) {
