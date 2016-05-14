@@ -249,7 +249,7 @@ function init_validation(ui) {
       return false;
     }
 
-    submit_application(ui);
+    submit_application();
 
   }).on('stepclick.fu.wizard', function (e) {
     return true; //return false;//prevent clicking on steps

@@ -1,11 +1,11 @@
-function submit_application(wizard_vm) {
+function submit_application() {
 
   // Don't allow duplicate submissions.
   window.vm.is_submitting(true);
   window.vm.submission_error("");
 
   var results = _.map(window.vm.coverage_vm.selected_product_coverages(), function (product_cov) {
-    return build_wizard_results_for_product_coverage(product_cov, wizard_vm);
+    return build_wizard_results_for_product_coverage(product_cov);
   });
 
   var please_wait_dialogue = bootbox.dialog({
@@ -121,7 +121,7 @@ function handle_remote_error_with_retry(response, retry_callback) {
 }
 
 
-function build_wizard_results_for_product_coverage(product_cov, wizard_vm) {
+function build_wizard_results_for_product_coverage(product_cov) {
   var root = window.vm;
 
   var health_questions = vm.get_product_health_questions(product_cov);
@@ -131,17 +131,17 @@ function build_wizard_results_for_product_coverage(product_cov, wizard_vm) {
   var occupation = Array.isArray(root.selected_occupation())? root.selected_occupation()[0].label : undefined;
 
   var bank_info = {
-    account_holder_name: wizard_vm.bank_account_holder_name(),
-    account_type: wizard_vm.selected_account_type(),
-    account_number: wizard_vm.account_number(),
-    routing_number: wizard_vm.routing_number(),
-    bank_name: wizard_vm.bank_name(),
-    address_one: wizard_vm.billing_street_one(),
-    address_two: wizard_vm.billing_street_two(),
-    billing_city: wizard_vm.billing_city(),
-    billing_state: wizard_vm.billing_state(),
-    billing_zip: wizard_vm.billing_zip(),
-    city_state_zip: wizard_vm.bank_city_state_zip()
+    account_holder_name: root.bank_account_holder_name(),
+    account_type: root.selected_account_type(),
+    account_number: root.account_number(),
+    routing_number: root.routing_number(),
+    bank_name: root.bank_name(),
+    address_one: root.billing_street_one(),
+    address_two: root.billing_street_two(),
+    billing_city: root.billing_city(),
+    billing_state: root.billing_state(),
+    billing_zip: root.billing_zip(),
+    city_state_zip: root.bank_city_state_zip()
   };
 
   var wizard_results = {
@@ -190,7 +190,7 @@ function build_wizard_results_for_product_coverage(product_cov, wizard_vm) {
     spouse_contingent_beneficiary: product_cov.spouse_contingent_beneficiary().serialize()
   };
 
-  if (wizard_vm.requires_bank_info()) {
+  if (root.requires_bank_info()) {
     wizard_results.bank_info = bank_info;
   } else {
     wizard_results.bank_info = null;
