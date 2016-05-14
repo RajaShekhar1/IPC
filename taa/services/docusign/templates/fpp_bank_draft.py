@@ -19,7 +19,7 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
     def generate_tabs(self, recipient, purpose):
         tabs = super(FPPBankDraftFormTemplate, self).generate_tabs(recipient, purpose)
 
-        #if not recipient.is_employee() and not self.data.should_use_call_center_workflow():
+        # if not recipient.is_employee() and not self.data.should_use_call_center_workflow():
         #    return tabs
 
         # Going forward enrollments will have bank draft data and should grab all account information from that
@@ -112,12 +112,30 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
             # Default to today if we don't have the hire date.
             hire_date = datetime.today()
 
+        if self.data.case.requires_paylogix_export:
+            return self.get_paylogix_draft_day(hire_date)
+        else:
+            return self.get_normal_draft_day(hire_date)
+
+    def get_normal_draft_day(self, hire_date):
         # Use the day 14 days after the hire date as the draft day.
         draft_date = hire_date + relativedelta(days=14)
-
         # Default day to the first if not in the range 1 to 28.
         draft_day_of_month = draft_date.day
         if draft_day_of_month <= 28:
-            return draft_day_of_month
+            draft_day = draft_day_of_month
         else:
-            return 1
+            draft_day = 1
+        return draft_day
+
+    def get_paylogix_draft_day(self, hire_date):
+        from taa.services.enrollments.paylogix import get_deduction_week
+        deduction_week = get_deduction_week(hire_date)
+        if deduction_week == 1:
+            return '1st Friday'
+        elif deduction_week == 2:
+            return '2nd Friday'
+        elif deduction_week == 3:
+            return '3rd Friday'
+        else:
+            return '{}th Friday'.format(deduction_week)
