@@ -1,4 +1,9 @@
 import datetime
+# Get the base string type
+try:
+  basestring
+except NameError:
+  basestring = str
 
 import dateutil.parser
 import csv
@@ -35,7 +40,11 @@ def get_deduction_week(application_date):
 
 
 def get_draft_day(application_date):
-    app_date = dateutil.parser.parse(application_date)
+    if isinstance(application_date, basestring):
+        app_date = dateutil.parser.parse(application_date)
+    else:
+        app_date = application_date
+
     adv_date = app_date + datetime.timedelta(days=ADVANCE_DAYS)
     dow = adv_date.isoweekday()
     draft_date = adv_date + datetime.timedelta(days=FRIDAY - dow)
