@@ -110,6 +110,9 @@ class Product(ProductJsonSerializable, db.Model):
     def is_fpp(self):
         return self.get_base_product_code().lower().startswith('fpp')
 
+    def is_static_benefit(self):
+        return self.get_base_product_code() == Product.TYPE_STATIC_BENEFIT
+
     def does_generate_form(self):
         # Temporary solution to identify products that include output in PDFs
         return self.is_fpp() or self.get_base_product_code() in [Product.TYPE_GROUP_CI, Product.TYPE_STATIC_BENEFIT]
@@ -178,19 +181,19 @@ class Product(ProductJsonSerializable, db.Model):
 
         return state_replacement_paragraphs
 
-    def get_brochure_name(self):
-        use_base_product_settings = self.should_use_base_product_settings()
-        if use_base_product_settings.get("brochure_name"):
-            base_product = getattr(self, "base_product")
-            return getattr(base_product, "brochure_name")
-        return getattr(self, "brochure_name")
-
-    def get_brochure_url(self):
-        use_base_product_settings = self.should_use_base_product_settings()
-        if use_base_product_settings.get("brochure_url"):
-            base_product = getattr(self, "base_product")
-            return getattr(base_product, "brochure_url")
-        return getattr(self, "brochure_url")
+    # def get_brochure_name(self):
+    #     use_base_product_settings = self.should_use_base_product_settings()
+    #     if use_base_product_settings.get("brochure_name"):
+    #         base_product = getattr(self, "base_product")
+    #         return getattr(base_product, "brochure_name")
+    #     return getattr(self, "brochure_name")
+    #
+    # def get_brochure_url(self):
+    #     use_base_product_settings = self.should_use_base_product_settings()
+    #     if use_base_product_settings.get("brochure_url"):
+    #         base_product = getattr(self, "base_product")
+    #         return getattr(base_product, "brochure_url")
+    #     return getattr(self, "brochure_url")
 
     def get_brochure_name(self):
         if self.brochure_name:
@@ -216,19 +219,19 @@ class Product(ProductJsonSerializable, db.Model):
         return False
 
     def requires_occupation(self):
-        return self.get_base_product_code() == 'HI' or self.get_base_product_code() == 'ACC'
+        return self.get_base_product_code() == self.TYPE_HI or self.get_base_product_code() == self.TYPE_ACC
 
     def requires_signature(self):
-        return self.get_base_product_code() not in ['HI', 'ACC']
+        return self.get_base_product_code() not in [self.TYPE_HI, self.TYPE_ACC]
 
-    def is_static_benefit(self):
-        return self.get_base_product_code() == 'Static Benefit'
+    def requires_paylogix_export(self, enrollment_record):
+        return enrollment_record.case.requires_paylogix_export and enrollment_record.case.include_bank_draft_form
 
-    def requires_paylogix_export(self, enrollment_record=None):
-        requires_export = (self.get_base_product() in ['Group CI', 'Static Benefit'] or self.is_fpp())
-        if enrollment_record:
-            requires_export = requires_export and enrollment_record.case.requires_paylogix_export and enrollment_record.case.include_bank_draft_form
-        return requires_export
+    def is_employee_premium_only(self):
+        """
+        Is this product only billed to the employee?
+        """
+        return self.get_base_product_code() in [self.TYPE_STATIC_BENEFIT, self.TYPE_ACC, self.TYPE_HI]
 
 
 # Relate custom products to agents - who can see these products

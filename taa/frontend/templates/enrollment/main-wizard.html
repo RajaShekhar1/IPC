@@ -338,7 +338,7 @@
                   {% set base_product_code = wizard_data.fpp_base_product_code %}
                   {% set fpp_state = wizard_data.case_data.situs_state %}
 
-                  {% if base_product_code=='FPPTI' or base_product_code == 'FPP-Gov' %}
+                  {% if base_product_code in ['FPPTI', 'FPP-Gov', 'FPPTIB', 'FPPTIW', 'FPPTIY'] %}
                     {% if fpp_state == 'TX' %}
                       {% set disclosure_url = url_for ('FPPTI_disclosure_TX') %}
                     {% elif fpp_state == 'KS' %}
@@ -350,7 +350,7 @@
                     {% else %}
                       {% set disclosure_url = url_for ('FPPTI_disclosure_generic') %}
                     {% endif %}
-                  {% elif base_product_code=='FPPCI' %}
+                  {% elif base_product_code == 'FPPCI' %}
                     {% if fpp_state == 'KS' %}
                       {% set disclosure_url = url_for ('FPPCI_disclosure_KS') %}
                     {% elif fpp_state == 'VA' %}

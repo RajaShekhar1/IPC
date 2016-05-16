@@ -1,4 +1,9 @@
 import datetime
+# Get the base string type
+try:
+  basestring
+except NameError:
+  basestring = str
 
 import dateutil.parser
 import csv
@@ -24,7 +29,7 @@ standardized_data['bank_draft'] = {
 
 FRIDAY = 5
 MAX_WEEKS_PER_MONTH = 4
-ADVANCE_DAYS = 10
+ADVANCE_DAYS = 2
 
 
 def get_deduction_week(application_date):
@@ -35,7 +40,11 @@ def get_deduction_week(application_date):
 
 
 def get_draft_day(application_date):
-    app_date = dateutil.parser.parse(application_date)
+    if isinstance(application_date, basestring):
+        app_date = dateutil.parser.parse(application_date)
+    else:
+        app_date = application_date
+
     adv_date = app_date + datetime.timedelta(days=ADVANCE_DAYS)
     dow = adv_date.isoweekday()
     draft_date = adv_date + datetime.timedelta(days=FRIDAY - dow)
@@ -80,7 +89,7 @@ def create_paylogix_csv(applications):
         for enrollment_item in enrollment_data:
             data_wrap = EnrollmentDataWrap(enrollment_item, application.case, application)
             product = data_wrap.get_product()
-            if not product.requires_paylogix_export() or not data_wrap.has_bank_draft_info():
+            if not product.requires_paylogix_export(application) or not data_wrap.has_bank_draft_info():
                 continue
 
             row = [
