@@ -45,7 +45,7 @@ class TestFTPDropBox(TestCase):
         self.http_pipe = Popen(http_cmd.split(), stdout=PIPE)
 
         # Give the server a second to start up
-        time.sleep(3)
+        time.sleep(5)
 
     def tearDown(self):
         # Kill both subprocesses after each test.

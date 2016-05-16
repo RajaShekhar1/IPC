@@ -43,9 +43,10 @@ def enroll_start():
     if session.get('active_case_id') and should_show_next_applicant:
         # We no longer use the separate setup enrollment page, forward agent to manage_case page
         case = case_service.get_if_allowed(session['active_case_id'])
-        return redirect(location=url_for('manage_case', case_id=case.id)+"#enrollment")
+        return redirect(location=url_for('manage_case', case_id=case.id) + "#enrollment")
 
     abort(404)
+
 
 #
 # # Wizard
@@ -136,6 +137,13 @@ def in_person_enrollment():
 
 def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False):
 
+    # As part of address debugging, log the user-agent.
+    user_agent = request.user_agent
+    print("[BEGINNING ENROLLMENT] [Platform: '{}', browser: '{}', version: '{}', language: '{}', user_agent: '{}']".format(
+        user_agent.platform, user_agent.browser, user_agent.version, user_agent.language,
+        request.headers.get('User-Agent')
+    ))
+
     # Defaults for session enrollment variables.
     session['active_case_id'] = case.id
     session['enrolling_census_record_id'] = None
@@ -186,6 +194,9 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         state = override_state if override_state else data['enrollmentState']
         city = override_city if override_city else data['enrollmentCity']
 
+        if 'occupation_class' not in data:
+            data['occupation_class'] = None
+
         company_name = data['companyName']
         group_number = data['groupNumber']
         products = case.products
@@ -195,12 +206,14 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             email=data['email'],
             ssn=data.get('ssn', ''),
             state=state,
+            occupation=data['occupation_class'],
         )
         spouse_data = None
         children_data = []
 
     # Validate that we can enroll in the product for this state - do we have a form?
-    if not any(product_form_service.form_for_product_code_and_state(p.get_base_product_code(), state) for p in products):
+    if not any(
+            product_form_service.form_for_product_code_and_state(p.get_base_product_code(), state) for p in products):
         # Change the state back to the case state to allow them to continue?
         state = case.situs_state
 
@@ -211,8 +224,12 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         soh_questions[product.id] = StatementOfHealthQuestionService().get_health_questions(product, state)
 
     spouse_questions = {}
+    employee_questions = {}
+    health_question_service = LookupService('StatementOfHealthQuestionService')
+    """:type: taa.services.products.StatementOfHealthQuestionService"""
     for product in products:
-        spouse_questions[product.id] = StatementOfHealthQuestionService().get_spouse_questions(product, state)
+        employee_questions[product.id] = health_question_service.get_employee_questions(product, state)
+        spouse_questions[product.id] = health_question_service.get_spouse_questions(product, state)
 
     # New wizard formatting for multiproduct.
     applicants = []
@@ -233,6 +250,16 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     if any_fpp_product:
         fpp_base_product_code = fpp_products[0].get_base_product_code()
 
+    occupations = case.occupation_class_settings if case.occupation_class_settings else []
+
+    from taa.services.products.rates import get_height_weight_table_for_product
+
+    height_weight_tables = dict()
+    for product in products:
+        table = get_height_weight_table_for_product(product)
+        if table is not None:
+            height_weight_tables[product.get_base_product_code()] = table
+
     wizard_data = dict(
         is_in_person=not is_self_enroll,
         case_data={
@@ -246,14 +273,18 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'product_settings': case.product_settings if case.product_settings else {},
             'account_href': current_user.get_id(),
             'record_id': record_id,
+            'product_height_weight_tables': height_weight_tables,
+            'occupations': occupations,
+            'omit_actively_at_work': case.omit_actively_at_work,
         },
-        applicants= applicants,
+        applicants=applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in case.products],
         payment_modes=payment_mode_choices,
+        employee_questions=employee_questions,
         spouse_questions=spouse_questions,
         health_questions=soh_questions,
         any_fpp_product=any_fpp_product,
-        fpp_base_product_code=fpp_base_product_code
+        fpp_base_product_code=fpp_base_product_code,
     )
 
     # Commit any changes made (none right now)
@@ -287,13 +318,19 @@ def self_enrollment(company_name, uuid):
     case = self_enrollment_link_service.get_case_for_link(uuid)
 
     is_self_enrollable = True
-    if setup.self_enrollment_type == setup.TYPE_CASE_GENERIC:
+
+    # Determine if we need to disallow due to products.
+    if case and setup and setup.self_enrollment_type == setup.TYPE_CASE_GENERIC:
         for product in case.products:
             if product.code in ['ACC', 'HI']:
                 # Disallow generic-link self-enrollment cases containing
                 # these products
                 is_self_enrollable = False
                 break
+                
+    if case_service.requires_occupation(case) and census_record.occupation_class not in map(lambda cr: cr['label'],
+                                                                                            case.occupation_class_settings):
+        is_self_enrollable = False
 
     vars = {'is_valid': False, 'allowed_states': []}
     if setup is not None and is_self_enrollable:
@@ -316,8 +353,8 @@ def self_enrollment(company_name, uuid):
             selected_city = census_record.employee_city or census_record.case.situs_city
             vars.update(
                 {'is_enrolled':
-                 enrollment_service.get_enrollment_status(
-                     census_record) == 'enrolled'})
+                     enrollment_service.get_enrollment_status(
+                         census_record) == 'enrolled'})
         else:
             selected_state = setup.case.situs_state
             selected_city = setup.case.situs_city
@@ -338,7 +375,8 @@ def self_enrollment(company_name, uuid):
         vars.update({
             'page_title': u'Enrollment service for {} not available'.format(case.company_name),
             'error_message': u'''We're sorry for the inconvenience, but {} is not currently accepting benefit enrollments.<br><br>
-            Please contact your enrollment or benefit representative if you have any questions.'''.format(case.company_name)
+            Please contact your enrollment or benefit representative if you have any questions.'''.format(
+                case.company_name)
 
         })
     else:
@@ -349,6 +387,7 @@ def self_enrollment(company_name, uuid):
         })
 
     return render_template('enrollment/landing_page.html', **vars)
+
 
 # Begin application from self-enrollment landing page.
 @app.route('/self-enrollment', methods=['POST'])
@@ -392,7 +431,6 @@ def get_case_enrollment_data(case):
 
 @app.route('/submit-wizard-data', methods=['POST'])
 def submit_wizard_data():
-
     if session.get('active_case_id') is None:
         abort(401)
 
@@ -403,15 +441,28 @@ def submit_wizard_data():
     wizard_results = data['wizard_results']
     print("[ENROLLMENT SUBMITTED]")
 
+    # As part of address debugging, log the user-agent.
+    log_user_agent()
+
+    # Hotfix 4/5/2016: Attempt to track down user data that is causing blank address data.
+    if not are_all_products_declined(wizard_results):
+        fix_missing_address_bug(wizard_results)
+
     try:
         enrollment = process_wizard_submission(case, wizard_results)
 
         # Store the enrollment record ID in the session for now so we can access it on the landing page.
         session['enrollment_application_id'] = enrollment.id
 
-        # Queue this call for a worker process to handle.
-        enrollment_submission_service = LookupService('EnrollmentSubmissionService')
-        enrollment_submission_service.submit_wizard_enrollment(enrollment)
+        if are_all_products_declined(wizard_results):
+            return get_declined_response(wizard_results)
+
+        accepted_products = get_accepted_products(case, get_accepted_product_ids(json.loads(enrollment.standardized_data)))
+
+        if any(p for p in accepted_products if p.does_generate_form()):
+            # Queue this call for a worker process to handle.
+            enrollment_submission_service = LookupService('EnrollmentSubmissionService')
+            enrollment_submission_service.submit_wizard_enrollment(enrollment)
 
         return jsonify(**{
             'error': False,
@@ -423,6 +474,48 @@ def submit_wizard_data():
         raise
 
 
+def log_user_agent():
+    user_agent = request.user_agent
+    print("[Platform: '{}', browser: '{}', version: '{}', language: '{}', user_agent: '{}']".format(
+        user_agent.platform, user_agent.browser, user_agent.version, user_agent.language,
+        request.headers.get('User-Agent')
+    ))
+
+
+def fix_missing_address_bug(wizard_results):
+    """
+    Due to some strange client-specific bugs, we occasionally get missing employee address data. The workaround
+    sends the data in a different object. If the workaround is successful, we patch that data in, otherwise we
+    reject the submission.
+    """
+    emp_data = wizard_results[0].get('employee', {})
+    if emp_data.get('address1', '') == '' or emp_data.get('city', '') == '' or emp_data.get('zip', '') == '':
+        print("[MISSING ADDRESS ERROR DEBUG]")
+        print("Received: {}".format(wizard_results))
+
+        # Hotfix 4/16/2016: See if the alternative method of getting the data is present
+        if wizard_results[0].get('address_alternate'):
+            alt_address = wizard_results[0].get('address_alternate')
+            if alt_address.get('street1', '') != '' and alt_address.get('city', '') != '' and alt_address.get('zip',
+                                                                                                              '') != '':
+                print("[ALTERNATE ADDRESS DEBUG SUCCEEDED: GOT {}]".format(alt_address))
+                # Patch in the alternate address in the employee data.
+                for wizard_result in wizard_results:
+                    wizard_result['employee']['address1'] = alt_address.get('street1', '')
+                    wizard_result['employee']['address2'] = alt_address.get('street2', '')
+                    wizard_result['employee']['city'] = alt_address.get('city', '')
+                    wizard_result['employee']['zip'] = alt_address.get('zip', '')
+
+            else:
+                # Still a problem if we get here
+                raise ValueError(
+                    "The address was missing in the wizard submission data, refusing to create enrollment data.")
+        else:
+            # Still a problem if we get here
+            raise ValueError(
+                "The address was missing in the wizard submission data, refusing to create enrollment data.")
+
+
 def process_wizard_submission(case, wizard_results):
     # Standardize the wizard data for submission processing
     standardized_data = enrollment_import_service.standardize_wizard_data(wizard_results)
@@ -432,6 +525,9 @@ def process_wizard_submission(case, wizard_results):
     census_record = get_or_create_census_record(case, enrollment_data)
     enrollment_application = get_or_create_enrollment(case, census_record, standardized_data, wizard_results)
     db.session.commit()
+
+    submission_service = LookupService('EnrollmentSubmissionService')
+    submission_service.create_submissions_for_application(enrollment_application)
 
     return enrollment_application
 
@@ -448,14 +544,15 @@ def check_submission_status():
     received_enrollment_data = json.loads(enrollment.received_data)
     standardized_enrollment_data = json.loads(enrollment.standardized_data)
 
+    generates_form = any(
+        p for p in get_accepted_products(enrollment.case, get_accepted_product_ids(json.loads(enrollment.standardized_data))) if
+        p.does_generate_form())
+
     if are_all_products_declined(received_enrollment_data):
         # Declined enrollment, return redirect to our landing page.
-        redirect_url = url_for('ds_landing_page',
-                       event='decline',
-                       name=received_enrollment_data[0]['employee']['first'],
-                       type='inperson' if received_enrollment_data[0]["method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
-                       )
-        return jsonify(status="declined", redirect_url=redirect_url)
+        return get_declined_response(received_enrollment_data)
+    elif not generates_form:
+        return jsonify(status="ready", redirect_url='/enrollment-case/%d#enrollment' % enrollment.case.id)
     elif enrollment.docusign_envelope_id is not None:
         # Done processing this envelope, get the signing URL
         envelope = DocusignEnvelope(enrollment.docusign_envelope_id, enrollment_record=enrollment)
@@ -466,8 +563,26 @@ def check_submission_status():
         return jsonify(status="pending")
 
 
+def get_declined_response(received_enrollment_data):
+    redirect_url = url_for('ds_landing_page',
+                           event='decline',
+                           name=received_enrollment_data[0]['employee']['first'],
+                           type='inperson' if received_enrollment_data[0][
+                                                  "method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
+                           )
+    return jsonify(status="declined", redirect_url=redirect_url)
+
+
 def are_all_products_declined(standardized_data):
     return all(map(lambda data: data.get('did_decline'), standardized_data))
+
+
+def get_accepted_product_ids(standardized_data):
+    return [int(d['product_id']) for d in standardized_data if not d.get('did_decline', False)]
+
+
+def get_accepted_products(case, accepted_product_ids):
+    return [p for p in case.products if p.id in accepted_product_ids]
 
 
 # def submit_enrollment_to_docusign(case, enrollment_application, enrollment_data, standardized_data, wizard_results):
@@ -482,7 +597,7 @@ def are_all_products_declined(standardized_data):
 def get_enrollment_agent(case):
     # For self-enroll situations, the owner agent is used
     agent = agent_service.get_logged_in_agent()
-    if (agent is None and session.get('is_self_enroll')):
+    if agent is None:
         agent = case.owner_agent
     return agent
 
@@ -553,6 +668,7 @@ def ds_landing_page():
                            ds_event=ds_event,
                            nav_menu=get_nav_menu(),
                            )
+
 
 # TODO: just use this route in the future rather than adding more individual
 # routes for files
@@ -625,18 +741,20 @@ def FPPCI_disclosure_VA():
         'pdfs/FPPCI_disclosure_VA.pdf')
 
 
-#Public flat file documenation endpoints
+# Public flat file documenation endpoints
 @app.route('/flat_file_documentation.pdf')
 def flat_file_documentation():
     return send_from_directory(
         os.path.join(app.root_path, 'frontend', 'static'),
         'pdfs/documentation/flat_file_documentation.pdf')
 
+
 @app.route('/flat_file_documentation.html')
 def flat_file_documentation_html():
     from taa.services.data_import.file_import import FlatFileDocumentation
     documentation = FlatFileDocumentation.generate_html_docs()
     return Response(documentation)
+
 
 @app.route('/delimited_file_import_documentation.html')
 def delimited_file_documentation_html():

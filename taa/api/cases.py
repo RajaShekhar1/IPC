@@ -204,7 +204,6 @@ def enrollment_records(case_id):
     """
     case = case_service.get_if_allowed(case_id)
 
-
     if request.args.get('draw'):
         # Do a datatables response with pagination and search text.
         offset = int(request.args.get('start', 0))
@@ -240,7 +239,7 @@ def enrollment_records(case_id):
             census_record_id=row.census_record_id,
             employee_first=row.employee_first,
             employee_last=row.employee_last,
-            #employee_email=row.employee_email,
+            # employee_email=row.employee_email,
             agent_name=row.agent_name,
             employee_birthdate=row.employee_birthdate,
             enrollment_status=row.enrollment_status,
@@ -252,11 +251,11 @@ def enrollment_records(case_id):
             # DataTables docs recommends casting this to int to prevent XSS
             draw=int(request.args['draw']),
             recordsTotal=enrollment_application_service.retrieve_enrollments_total_visible_count_for_table(case),
-            recordsFiltered=enrollment_application_service.retrieve_enrollments_filtered_count_for_table(case, search_text),
+            recordsFiltered=enrollment_application_service.retrieve_enrollments_filtered_count_for_table(case,
+                                                                                                         search_text),
         )
 
         return Response(response=json.dumps(resp_data, cls=JSONEncoder), content_type='application/json')
-
 
     census_records = case_service.get_current_user_census_records(case)
     data = enrollment_application_service.get_enrollment_records_for_census_records(census_records)
@@ -328,7 +327,6 @@ def census_records(case_id):
     if args['filter_ssn'] or args['filter_birthdate']:
         return case_service.get_census_records(case, **args)
 
-
     # DataTables parameters
     offset = int(request.args.get('start', 0))
     limit = int(request.args.get('length', None))
@@ -390,11 +388,11 @@ def census_records(case_id):
 @groups_required(['admins'], all=False)
 def census_record_links(case_id):
     case = case_service.get_if_allowed(case_id)
-    data = case_service.get_census_records(case)
+    census_records = case_service.get_census_records(case, include_enrollment_links=True)
 
     # Custom serialization
     census_record_service = LookupService('CensusRecordService')
-    return census_record_service.serialize_with_tokens(case, data, request.url_root)
+    return census_record_service.serialize_with_tokens(case, census_records, request.url_root)
 
 
 @route(bp, '/<case_id>/census_records', methods=['POST'])
@@ -406,7 +404,7 @@ def post_census_records(case_id):
     data = get_posted_data()
     file_obj = request.files.get('csv-file')
     if not file_obj:
-        ## TODO: create the ad-hoc record after an enrollment, not before.
+        # TODO: create the ad-hoc record after an enrollment, not before.
         # Attempt to process an ad-hoc post. Currently only SSN is required, and anyone who can
         #  view / enroll the case can do this
         return case_service.create_ad_hoc_census_record(case, ssn=data['ssn'])
@@ -454,7 +452,7 @@ def update_census_record(case_id, census_record_id):
         abort(401)
         return
     census_record = case_service.get_record_if_allowed(census_record_id)
-    form = CensusRecordForm()
+    form = CensusRecordForm(obj=census_record)
     if form.validate_on_submit():
         return case_service.update_census_record(census_record, form.data)
     raise TAAFormError(form.errors)
@@ -530,7 +528,12 @@ def get_census_records_for_status(case, status=None):
         return result
     if status is None:
         return result if case.census_records is None else case.census_records
-    for record in case.census_records:
+
+    case_census_records = case.census_records
+    if case_service.requires_occupation(case):
+        case_census_records = [cr for cr in case_census_records if cr.occupation_class is not None]
+
+    for record in case_census_records:
         if status == 'not-sent':
             if len(self_enrollment_email_service.get_for_census_record(record)) == 0:
                 result.append(record)

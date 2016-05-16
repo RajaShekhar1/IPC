@@ -26,7 +26,7 @@ class EnrollmentImportService(object):
                 auth_token=auth_token,
             )
         except TAAFormError:
-            #TODO: There might be some logic needed here
+            # TODO: There might be some logic needed here
             pass
 
         if user_href:
@@ -178,18 +178,25 @@ class EnrollmentImportService(object):
             output['replacement_using_funds'] = False
             output['replacement_policies'] = []
 
+        output.update(
+            standardize_wizard_names(product_data, "employee")
+        )
+        output.update(
+            standardize_wizard_names(product_data, "spouse")
+        )
+
         # Update beneficiary data to new format
         output.update(
-                standardize_wizard_beneficiaries(product_data, "employee")
+            standardize_wizard_beneficiaries(product_data, "employee")
         )
         output.update(
-                standardize_wizard_beneficiaries(product_data, "spouse")
+            standardize_wizard_beneficiaries(product_data, "spouse")
         )
         output.update(
-                standardize_wizard_contingent_beneficiaries(product_data, "employee_contingent")
+            standardize_wizard_contingent_beneficiaries(product_data, "employee_contingent")
         )
         output.update(
-                standardize_wizard_contingent_beneficiaries(product_data, "spouse_contingent")
+            standardize_wizard_contingent_beneficiaries(product_data, "spouse_contingent")
         )
         return output
 
@@ -202,8 +209,6 @@ def val_or_blank(data, name):
 
 
 def build_beneficiary_data(data, out_prefix, prefix):
-
-
     if data.get("{}_bene_name".format(prefix)):
         return standardize_legacy_beneficiaries(data, out_prefix, prefix)
     else:
@@ -216,12 +221,23 @@ def standardize_legacy_beneficiaries(data, out_prefix, prefix):
     # Legacy format with only one beneficiary per type at 100%
     out_data["{}_beneficiary1_name".format(out_prefix)] = val_or_blank(data, "{}_bene_name".format(prefix))
     out_data["{}_beneficiary1_relationship".format(out_prefix)] = val_or_blank(data,
-                                                                                   "{}_bene_relationship".format(
-                                                                                       prefix))
+                                                                               "{}_bene_relationship".format(
+                                                                                   prefix))
     out_data["{}_beneficiary1_dob".format(out_prefix)] = val_or_blank(data, "{}_bene_birthdate".format(prefix))
     out_data["{}_beneficiary1_ssn".format(out_prefix)] = val_or_blank(data, "{}_bene_ssn".format(prefix))
     out_data["{}_beneficiary1_percentage".format(out_prefix)] = 100
 
+    return out_data
+
+
+def standardize_wizard_names(data, prefix):
+    # Strip off unnecessary spaces on names.
+
+    out_data = {}
+    out_data[prefix] = data.get(prefix)
+    if out_data[prefix] and out_data[prefix].get('first') and out_data[prefix].get('last'):
+        out_data[prefix]["first"] = out_data[prefix]["first"].strip()
+        out_data[prefix]["last"] = out_data[prefix]["last"].strip()
     return out_data
 
 
@@ -230,7 +246,8 @@ def standardize_wizard_beneficiaries(data, out_prefix):
 
     # Wizard contingent beneficiaries are in a different input format
     out_data["{}_beneficiary1_name".format(out_prefix)] = data.get('{}_beneficiary_name'.format(out_prefix), '')
-    out_data["{}_beneficiary1_relationship".format(out_prefix)] = data.get('{}_beneficiary_relationship'.format(out_prefix), '')
+    out_data["{}_beneficiary1_relationship".format(out_prefix)] = data.get(
+        '{}_beneficiary_relationship'.format(out_prefix), '')
     out_data["{}_beneficiary1_dob".format(out_prefix)] = data.get('{}_beneficiary_dob'.format(out_prefix), '')
     out_data["{}_beneficiary1_ssn".format(out_prefix)] = data.get('{}_beneficiary_ssn'.format(out_prefix), '')
 
@@ -308,11 +325,11 @@ def build_person(data, prefix, product, state, soh_service):
     )
 
     questions = soh_service.get_health_questions(product, state)
-    for q_num in range(1, len(questions)+1):
+    for q_num in range(1, len(questions) + 1):
         answer = data.get("{}_question_{}_answer".format(prefix, q_num))
         if answer:
             base_dict["soh_questions"].append(dict(
-                question=questions[q_num-1].question,
+                question=questions[q_num - 1].question,
                 answer=standardize_answer(answer)
             ))
     return base_dict

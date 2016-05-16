@@ -64,7 +64,7 @@ class CensusRecordService(DBService):
         existing_by_ssn = {r.employee_ssn: r for r in existing}
         # Parse the uploaded file and validate it. If we are in add-only mode,
         # pass in the existing SSN dict.
-        parser = CensusRecordParser()
+        parser = CensusRecordParser(case)
         parser.process_file(file_data,
                             error_if_matching=(existing_by_ssn if
                                                not replace_matching else None))
@@ -96,7 +96,7 @@ class CensusRecordService(DBService):
 
     def replace_census_data(self, case, file_stream):
         # Process the upload before deleting the current data
-        parser = CensusRecordParser()
+        parser = CensusRecordParser(case)
         parser.process_file(file_stream)
         # Bail out if any errors
         if parser.errors:
@@ -136,6 +136,26 @@ class CensusRecordService(DBService):
         return record
 
     def remove_all_for_case(self, case):
+
+        # Need to delete all links as well.
+        # We do this here as well as CaseService delete_census_record for performance when replacing
+        #  a very large census.
+        from taa.services.enrollments.models import SelfEnrollmentLink, SelfEnrollmentEmailLog
+
+        # Delete all self enrollment links and email logs for this case
+        db.session.query(SelfEnrollmentLink
+            ).filter(SelfEnrollmentLink.census_record.has(CaseCensus.case_id == case.id)
+            # It complains about not being able to evaluate the conditions in the Python session, so skip that here.
+            ).delete(synchronize_session='fetch')
+        db.session.query(SelfEnrollmentEmailLog
+            ).filter(SelfEnrollmentEmailLog.census_record.has(CaseCensus.case_id == case.id)
+            # It complains about not being able to evaluate the conditions in the Python session, so skip that here.
+            ).delete(synchronize_session='fetch')
+
+        # We don't try to delete for enrollments because we don't allow deleting all the
+        #  census records if enrollments exist
+
+        # Delete the census for this case.
         self.find(case_id=case.id).delete()
 
     def update_from_enrollment(self, record, data):

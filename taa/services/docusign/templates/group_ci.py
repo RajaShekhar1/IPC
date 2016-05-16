@@ -90,9 +90,8 @@ class GroupCITemplate(DocuSignServerTemplate):
         # To get the legacy code below to work, make this a local variable.
         enrollment_data = self.data
 
-        idType = enrollment_data.get_id_type()
         idToken = enrollment_data.get_id_token()
-        idTokenStr = 'Authentication via ' + idType + ': ' + idToken
+        idTokenStr = 'Authentication via Date of Hire: ' + idToken
 
         SOH_RadiosList = []
         SOH_GI_Tabs = []
@@ -101,8 +100,8 @@ class GroupCITemplate(DocuSignServerTemplate):
         if enrollment_data['employee_coverage']:
             if enrollment_data['employee_coverage']['face_value']:
                 employeeCoverage = format(
-                    enrollment_data['employee_coverage']['face_value'], ',.0f')
-                eePremium = format(enrollment_data['employee_coverage']['premium'], ',.2f')
+                    float(enrollment_data['employee_coverage']['face_value']), ',.0f')
+                eePremium = format(float(enrollment_data['employee_coverage']['premium']), ',.2f')
                 SOH_RadiosList += generate_SOHRadios(
                     'ee', enrollment_data.get_employee_soh_questions())
                 SOH_GI_Tabs += generate_SOH_GI_tabs(
@@ -117,8 +116,8 @@ class GroupCITemplate(DocuSignServerTemplate):
         if enrollment_data['spouse_coverage']:
             if enrollment_data['spouse_coverage']['face_value']:
                 spouseCoverage = format(
-                    enrollment_data['spouse_coverage']['face_value'], ',.0f')
-                spPremium = format(enrollment_data['spouse_coverage']['premium'], ',.2f')
+                    float(enrollment_data['spouse_coverage']['face_value']), ',.0f')
+                spPremium = format(float(enrollment_data['spouse_coverage']['premium']), ',.2f')
                 SOH_RadiosList += generate_SOHRadios(
                     'sp', enrollment_data.get_spouse_soh_questions())
                 SOH_GI_Tabs += generate_SOH_GI_tabs(
@@ -145,6 +144,9 @@ class GroupCITemplate(DocuSignServerTemplate):
         agent_signing_name = enrollment_data.get_agent_signing_name()
 
         eeTabsList = make_applicant_tabs('ee', enrollment_data['employee'])
+
+        eeEmail = enrollment_data['employee']['email'] if enrollment_data['employee']['email'] else ''
+
         eeTabsList += [
             make_tab('eeEnrollCityState', u'{}, {}'.format(
                 enrollment_data['enrollCity'], enrollment_data['enrollState'])),
@@ -164,7 +166,7 @@ class GroupCITemplate(DocuSignServerTemplate):
             make_tab('eeOtherOwnerSSN',
                      enrollment_data['employee_other_owner_ssn'] if (
                          enrollment_data['employee_owner'] == 'other') else ''),
-            make_tab('eeEmail', enrollment_data.get_employee_email())
+            make_tab('eeEmail', eeEmail)
         ]
 
         eeTabsList += make_contact_tabs('ee', enrollment_data['employee'])
@@ -379,12 +381,12 @@ def generate_ChildTabsEntry (child_index, wizard_data):
         },
         {
             'tabLabel': childStr + 'Coverage',
-            'value': format(child_coverage['face_value'], ',.0f') if child_coverage else ''
+            'value': format(float(child_coverage['face_value']), ',.0f') if child_coverage else ''
         },
         {
             'tabLabel': childStr + 'Premium',
             'value':
-                format(child_coverage['premium'], ',.2f') if child_coverage else ''
+                format(float(child_coverage['premium']), ',.2f') if child_coverage else ''
         },
     ]
     return tabsList
@@ -414,8 +416,8 @@ def make_applicant_tabs(prefix, data):
         make_tab(prefix + 'SSN', data['ssn']),
     ]
     if data.get('height'):
-        height_ft = '%s' % int(data['height']/12.0)
-        height_in = '%s' % int(data['height']%12.0)
+        height_ft = '%s' % int(float(data['height'])/12.0)
+        height_in = '%s' % int(float(data['height'])%12.0)
         tabs += [
             make_tab(prefix + 'HeightFt', height_ft),
             make_tab(prefix + 'HeightIn', height_in),

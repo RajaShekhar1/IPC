@@ -11,7 +11,7 @@ function RecommendationSet(name, recommendations) {
   self.get_recommended_applicant_coverage = function(applicant_type) {
     var rec = self.get_applicant_recommendation(applicant_type);
     if (!rec) {
-      return new NullCoverageOption();
+      return null_coverage;
     }
     return rec.recommended_coverage;
   };
@@ -33,9 +33,20 @@ function RecommendationSet(name, recommendations) {
 
   self.get_total_premium = function() {
     var total = 0.0;
-    _.each(self.recommendations, function(rec) {
-      total += rec.get_total_premium();
-    });
+    // _.each(self.recommendations, function(rec) {
+    //   total += rec.get_total_premium();
+    // });
+
+    if (vm.employee().is_valid()) {
+      total += self.get_applicant_recommendation(wizard_applicant.Applicant.EmployeeType).get_total_premium();
+    }
+    if (vm.should_include_spouse_in_table()) {
+      total += self.get_applicant_recommendation(wizard_applicant.Applicant.SpouseType).get_total_premium();
+    }
+    if (vm.should_include_children()) {
+      total += self.get_applicant_recommendation(wizard_applicant.Applicant.ChildType).get_total_premium();
+    }
+
     return total;
   };
 }

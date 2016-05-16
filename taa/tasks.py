@@ -1,11 +1,17 @@
 # Celery tasks
+from datetime import datetime
 
 import celery
 from taa.services.users import UserService
 
-from taa import db, mandrill_flask, app as taa_app
+from taa import db, app as taa_app
 from taa.services import LookupService
 from taa.services.enrollments import SelfEnrollmentEmailLog
+from taa.services.enrollments.models import EnrollmentSubmission, SubmissionLog
+from taa.services.enrollments.csv_export import *
+import traceback
+from taa.errors import email_exception
+import time
 
 app = celery.Celery('tasks')
 app.config_from_object('taa.config_defaults')
@@ -54,7 +60,6 @@ FIVE_MINUTES = 5 * 60
 
 @app.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def process_enrollment_upload(task, batch_id):
-
     submission_service = LookupService("EnrollmentSubmissionService")
     errors = submission_service.process_import_submission_batch(batch_id)
     if errors:
@@ -65,7 +70,6 @@ def process_enrollment_upload(task, batch_id):
 
 @app.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def process_wizard_enrollment(task, enrollment_id):
-
     submission_service = LookupService("EnrollmentSubmissionService")
     envelope = submission_service.process_wizard_submission(enrollment_id)
     if not envelope:
@@ -83,15 +87,69 @@ def send_admin_error_email(error_message, errors):
 
         # Get stormpath admins
         for account in UserService().get_admin_users():
-            mandrill_flask.send_email(
-                to=[{'email': account.email, 'name': account.full_name}],
+            mailer = LookupService('MailerService')
+            mailer.send_email(
+                to=["{name} <{email}>".format(**{'email': account.email, 'name': account.full_name})],
                 from_email="errors@5StarEnroll.com",
                 from_name=u"TAA Error {}".format(taa_app.config['HOSTNAME']),
                 subject=u"5Star Import Error ({})".format(taa_app.config['HOSTNAME']),
                 html=body,
-                auto_text=True,
             )
     except Exception:
         # Swallow this
         pass
 
+
+@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+def process_hi_acc_enrollments(task):
+    submission_service = LookupService('EnrollmentSubmissionService')
+
+    # Set all the submissions to be processing so they do not get pulled in by another worker thread
+    submissions = submission_service.get_pending_or_failed_csv_submissions()
+    if submissions is None or len(submissions) == 0:
+        return
+    submission_service.set_submissions_status(EnrollmentSubmission.STATUS_PROCESSING, submissions)
+
+    # Create submission logs for each submission and accumulate all the enrollment applications
+    submission_logs = submission_service.create_logs_for_submissions(submissions, SubmissionLog.STATUS_PROCESSING)
+    applications = submission_service.get_applications_for_submissions(submissions)
+    if applications is None or len(applications) == 0:
+        submission_service.set_submissions_status(EnrollmentSubmission.STATUS_SUCCESS, submissions, submission_logs)
+        return
+
+    try:
+        csv_data = export_hi_acc_enrollments(applications)
+        submit_submission = submission_service.create_submission_for_csv(csv_data, applications)
+        submission_service.set_submissions_status(EnrollmentSubmission.STATUS_SUCCESS, submissions, submission_logs)
+        submit_csv_to_dell.delay(submission_id=submit_submission.id)
+    except Exception as ex:
+        submission_service.set_submissions_status(EnrollmentSubmission.STATUS_FAILURE, submissions, submission_logs)
+        email_exception(taa_app, ex)
+
+
+@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+def submit_csv_to_dell(task, submission_id):
+    """
+    Task to submit a csv item to dell for processing
+    """
+
+    submission_service = LookupService('EnrollmentSubmissionService')
+    submission = submission_service.get_submission_by_id(submission_id)
+    log = SubmissionLog()
+    log.enrollment_submission_id = submission_id
+    log.status = SubmissionLog.STATUS_PROCESSING
+    db.session.add(log)
+
+    try:
+        submission_service.submit_hi_acc_export_to_dell(submission.data)
+        submission.status = EnrollmentSubmission.STATUS_SUCCESS
+        log.status = SubmissionLog.STATUS_SUCCESS
+        log.message = time.strftime(
+            'HI and ACC enrollment applications were successfully submitted to Dell on %x at %X %Z.')
+        db.session.commit()
+    except Exception as ex:
+        submission.status = EnrollmentSubmission.STATUS_FAILURE
+        log.status = SubmissionLog.STATUS_FAILURE
+        log.message = 'Error sending CSV to Dell with message "%s"\n%s' % (ex.message, traceback.format_exc())
+        db.session.commit()
+        task.retry()

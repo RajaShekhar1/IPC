@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta
 
 from sqlalchemy.dialects.postgresql import JSON
+import json
+
+from taa.services import LookupService
 
 from taa import db
 from taa.helpers import JsonSerializable
@@ -81,6 +84,8 @@ class Case(CaseSerializer, db.Model):
     # Call center workflow setting
     should_use_call_center_workflow = db.Column(db.Boolean, server_default='FALSE', nullable=False)
 
+    omit_actively_at_work = db.Column(db.Boolean, server_default='FALSE', nullable=False)
+
     def get_product_names(self):
         return ','.join(p.name for p in self.products)
 
@@ -119,6 +124,9 @@ class Case(CaseSerializer, db.Model):
             return True
         else:
             return self.can_partners_download_enrollments
+
+    def requires_classification(self):
+        return any(p for p in self.products if p.requires_occupation())
 
 
 class PeriodSerializer(JsonSerializable):
@@ -296,7 +304,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     child6_first = db.Column(db.String(256))
     child6_last = db.Column(db.String(256))
     child6_birthdate = db.Column(db.Date)
-    occupation_class = db.Column(db.String(256))
+    occupation_class = db.Column(db.String(256), nullable=False, server_default='Default')
 
     def get_smoker_boolean(self, value):
         if value == 'Y':
@@ -326,6 +334,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
             state=self.employee_state,
             zip=self.employee_zip,
             existing_coverages=employee_coverages,
+            occupation=self.occupation_class,
         )
 
     def get_spouse_data(self):
@@ -387,6 +396,24 @@ class CaseCensus(CensusRecordSerializer, db.Model):
 
     def get_pending_enrollments(self):
         return filter(lambda e: e.is_pending(), self.enrollment_applications)
+
+    def get_product_ids(self):
+        """
+        Get a set of product ids that represent all products for this census record
+        :return: Set of ids for products
+        :type: set[int]
+        """
+        from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
+        application_service = LookupService('EnrollmentApplicationService')
+
+        product_ids = set()
+
+        for enrollment_data in application_service.get_standardized_enrollment_json(self):
+            wrapped_data = EnrollmentDataWrap(enrollment_data, self.case)
+            product_id = wrapped_data.get_product_id()
+            product_ids.add(product_id)
+
+        return product_ids
 
 
 class AgentSplitsSerializer(JsonSerializable):

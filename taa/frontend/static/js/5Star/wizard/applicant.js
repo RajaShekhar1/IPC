@@ -21,7 +21,8 @@ var wizard_applicant = (function () {
       city: "",
       state: "",
       zip: "",
-      existing_coverages: []
+      existing_coverages: [],
+      occupation: undefined
     };
     var applicant_data = $.extend({}, defaults, options);
 
@@ -41,7 +42,7 @@ var wizard_applicant = (function () {
 
     // Extended questions
     self.height = ko.observable(parseFloat(applicant_data.height) ? parseFloat(applicant_data.height) : null);
-    self.weight = ko.observable(applicant_data.weight);
+    self.weight = ko.observable(applicant_data.weight || null);
     self.is_smoker = ko.observable(applicant_data.is_smoker);
 
     self.height_error = ko.observable(null);
@@ -52,6 +53,7 @@ var wizard_applicant = (function () {
     self.city = ko.observable(applicant_data.city);
     self.state = ko.observable(applicant_data.state);
     self.zip = ko.observable(applicant_data.zip);
+    self.occupation = applicant_data.occupation;
 
     // From previous application(s)
     self.existing_coverages = applicant_data.existing_coverages || [];

@@ -6,7 +6,7 @@ from flask import (
     request,
 )
 from flask.ext.stormpath import groups_required, StormpathError, current_user
-
+from stormpath.error import Error
 
 from taa import app
 from nav import get_nav_menu
@@ -15,12 +15,14 @@ from taa.old_model.Registration import TAA_UserForm
 from taa.old_model.Enrollment import AgentActivationEmail
 from taa.services import LookupService
 from taa.services.users.UserService import search_stormpath_accounts, get_stormpath_application
+from datetime import date, timedelta, datetime
 
 agent_service = LookupService('AgentService')
 api_token_service = LookupService('ApiTokenService')
 
+
 #  14-Jun-17 WSD
-@app.route('/admin', methods = ['GET', 'POST'])
+@app.route('/admin', methods=['GET', 'POST'])
 @groups_required(['admins', 'home_office'], all=False)
 def admin():
 
@@ -53,7 +55,8 @@ def admin():
     return render_template('admin/admin.html', accounts=accounts, nav_menu=get_nav_menu(), is_user_admin=agent_service.is_user_admin(current_user))
 
 
-@app.route('/edituser', methods = ['GET', 'POST'])
+
+@app.route('/edituser', methods=['GET', 'POST'])
 @groups_required(['admins', 'home_office'], all=False)
 def updateUser():
     user_email = request.args['user']
@@ -85,7 +88,7 @@ def updateUser():
             form.ds_apikey.data = custom_data['ds_apikey'] if 'ds_apikey' in keyset else ""
             form.signing_name.data = custom_data['signing_name'] if 'signing_name' in keyset else ""
             form.activated.data = custom_data['activated'] if 'activated' in keyset else False
-            #form.status.data = "Activated" if custom_data['activated'] else "Not Activated"
+            # form.status.data = "Activated" if custom_data['activated'] else "Not Activated"
 
     sp_app = get_stormpath_application()
     all_groups = {g.name: g for g in sp_app.groups}
@@ -141,13 +144,13 @@ def updateUser():
                 for group in groups:
                     matching_groups = [item
                                        for item in sp_app.groups.items
-                                       if item.name==group]
+                                       if item.name == group]
                     if not matching_groups:
                         continue
                     sp_group = matching_groups[0]
                     existing_membership = [acct_mem
                                            for acct_mem in sp_group.account_memberships
-                                           if acct_mem.account.email==account.email]
+                                           if acct_mem.account.email == account.email]
                     if not existing_membership:
                         # Add this account to the group
                         sp_group.add_account(account)
@@ -176,11 +179,9 @@ def updateUser():
                         flash('>> Problem sending activation email <<')
                         print('>> Problem sending activation email <<')
 
-
             return redirect(url_for('admin'))
-        except StormpathError as err:
-            flash(err.message['message'])
-
+        except Error as err:
+            flash(err.message)
 
     return render_template('admin/update-user.html',
                            form=form,
@@ -188,9 +189,62 @@ def updateUser():
                            groups=all_group_names,
                            token=token,
                            nav_menu=get_nav_menu()
-    )
+                           )
 
-@app.route('/enrollment-import-batches', methods = ['GET'])
+
+@app.route('/enrollment-import-batches', methods=['GET'])
 @groups_required(['admins'])
 def view_import_batches():
     return render_template('admin/enrollment_batches.html', nav_menu=get_nav_menu())
+
+
+def create_application_dictionary_for_submissions_view(application):
+    """
+    Create a dictionary for use in JSON Serialization for a submission item
+    :param application: Application to create the dictionary for
+    :type application: taa.services.enrollments.models.EnrollmentApplication
+    :rtype: dict
+    """
+    return {
+        'id': application.id,
+        'case': application.case,
+        'census_record': application.census_record,
+        'writing_agent': {'id': application.agent_id, 'name': application.agent_name, 'code': application.agent_code},
+    }
+
+
+def create_submission_dictionary_for_submissions_view(submission):
+    """
+    Create a dictionary for use in JSON Serialization for a submission item
+    :param submission: Submission to create the dictionary for
+    :type submission: taa.services.enrollments.models.EnrollmentSubmission
+    :rtype: dict
+    """
+    return {
+        'id': submission.id,
+        'enrollment_applications': map(create_application_dictionary_for_submissions_view,
+                                       submission.enrollment_applications),
+        'created_at': submission.created_at,
+        'submission_logs': submission.submission_logs,
+        'data': submission.data,
+        'submission_type': submission.submission_type,
+    }
+
+
+@app.route('/enrollment-submissions', methods=['GET'])
+@groups_required(['admins'])
+def view_submission_logs():
+    start_date = datetime.strptime(request.args.get('start_date'), '%Y-%m-%d') if 'start_date' in request.args else date.today() - timedelta(days=30)
+    end_date = datetime.strptime(request.args.get('end_date'), '%Y-%m-%d') if 'end_date' in request.args else date.today() + timedelta(days=1)
+
+    submission_service = LookupService('EnrollmentSubmissionService')
+    """:type: taa.services.enrollments.enrollment_submission.EnrollmentSubmissionService"""
+
+    submissions = submission_service.get_submissions(start_date, end_date)
+    submissions = map(create_submission_dictionary_for_submissions_view, submissions)
+
+    view_model = dict()
+    view_model['submissions'] = submissions
+    view_model['start_date'] = start_date
+    view_model['end_date'] = end_date
+    return render_template('admin/enrollment_submissions.html', nav_menu=get_nav_menu(), **view_model)

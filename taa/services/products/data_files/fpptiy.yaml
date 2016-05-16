@@ -1,8 +1,9 @@
 ---
 # FPPTI "Y" Rate Plan
 
-
 name: "FPPTIY"
+
+max_coverage_amount: 150000
 
 cost_components:
   - name: "Adult Premium"

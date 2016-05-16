@@ -25,11 +25,14 @@ class SyncEnvelopesCommand(Command):
                help="One of 'pending' or 'complete'"),
         Option('-r', '--rate-limit', dest='rate_limit', required=False, type=int,
                help="Set the API rate limiter in requests/hr"),
+        Option('-s', '--skip', dest='skip_count', required=False, type=int,
+               help="Skip over the first skip_count envelopes"),
+
     )
 
-    def run(self, sync_type, rate_limit=None):
+    def run(self, sync_type, rate_limit=None, skip_count=None):
 
-        envelope_sync = EnvelopeSync()
+        envelope_sync = EnvelopeSync(skip_count=skip_count)
         if sync_type == "pending":
             envelope_sync.sync_out_for_sig()
         elif sync_type == "complete":
@@ -42,11 +45,12 @@ class SyncEnvelopesCommand(Command):
 
 
 class EnvelopeSync(object):
-    def __init__(self):
+    def __init__(self, skip_count=None):
         self.num_linked = 0
         self.num_already_linked = 0
         self.num_skipped = 0
         self.num_total = 0
+        self.skip_count = skip_count
 
         self.progress_count = 0
 
@@ -68,6 +72,8 @@ class EnvelopeSync(object):
     def sync_out_for_sig(self):
         out_for_sig = self.get_all_out_for_signature_envelopes()
         self.num_total = len(out_for_sig)
+
+
         for envelope_data in out_for_sig:
             self.progress_count += 1
 
@@ -146,9 +152,23 @@ class EnvelopeSync(object):
         start_time = datetime.now()
         current_wait = 8
 
+
         if not rate_limiter:
             rate_limiter = APIRateLimiter(500)
-        for i, envelope_data in enumerate(reversed(completed)):
+
+
+        if not self.skip_count:
+            self.skip_count = 0
+
+        self.progress_count += self.skip_count
+
+        envelopes_to_process = reversed(completed)
+
+        for i, envelope_data in enumerate(envelopes_to_process):
+            if i < self.skip_count:
+                print("{}/{} Skipping...".format(i+1, len(completed)))
+                continue
+
             current_time = datetime.now()
 
             env = DocusignEnvelope(envelope_data['envelopeUri'], fetch_tabs=True)

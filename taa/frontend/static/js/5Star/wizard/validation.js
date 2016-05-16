@@ -8,8 +8,9 @@ function init_validation(ui) {
       return true;
     }
 
-    if (info.step === 1) {
+    var is_valid;
 
+    if (info.step === 1) {
       // Clear step2 health question error when we attempt to validate step 1
       $("#health_questions_error").html("");
 
@@ -21,10 +22,20 @@ function init_validation(ui) {
       }
 
       // trigger jquery validation
-      var is_valid = ui.validator.form();
+      is_valid = ui.validator.form();
 
+      // Make sure the coverage selection step is visible before advancing.
+      if (!ui.is_coverage_selection_visible()) {
+        ui.step_one_validation_error('Please click \"Show Coverage Options\"');
+        e.preventDefault();
+        return;
+      } else {
+        ui.step_one_validation_error(null);
+      }
+
+
+      // Make sure a selection has been made for each product.
       if (!ui.is_coverage_selection_valid()) {
-
         ui.show_no_selection_error();
         e.preventDefault();
         return;
@@ -42,7 +53,7 @@ function init_validation(ui) {
         }
 
         var selected_option = applicant_coverage.get_selected_coverage();
-        var applied_coverage_amount = (selected_option.is_valid()) ? selected_option.face_value : 0;
+        var applied_coverage_amount = (selected_option.is_valid())? selected_option.face_value : 0;
         var max_coverage_amount = applicant_coverage.product.get_maximum_coverage_amount(applicant_coverage.applicant);
 
         var name = applicant.name();
@@ -59,7 +70,6 @@ function init_validation(ui) {
           alert(msg);
           return false;
         }
-
 
         return true;
       }
@@ -80,6 +90,17 @@ function init_validation(ui) {
         }
       });
 
+      if (!ui.is_coverage_selection_visible()) {
+        ui.show_coverage_options_visibility_error();
+        e.preventDefault();
+        return false;
+      }
+
+      if (ui.requires_actively_at_work() && ui.is_employee_actively_at_work() === null) {
+        e.preventDefault();
+        return false;
+      }
+
       if (is_valid) {
         // Scroll to top of page when moving to step 2.
         $(document.body).scrollTop(0);
@@ -88,13 +109,16 @@ function init_validation(ui) {
         e.preventDefault();
       }
     }
-    if (info.step == 2 && info.direction == 'next') {
-      var is_valid = true;
+    if (info.step === 2 && info.direction === 'next') {
+      var validator = ui.validators.step2;
+
+      // trigger jquery validation
+      is_valid = validator.form();
 
       // validate replacement form
       if (ui.did_select_any_fpp_product() &&
         (ui.should_show_replacement_form())) {
-        is_valid &= $('#questions-form').valid();
+        is_valid = $('#questions-form').valid() && is_valid;
       }
 
       if (ui.did_select_any_fpp_product() &&
@@ -115,7 +139,7 @@ function init_validation(ui) {
       }
 
       // validate questions
-      is_valid &= health_question_buttons.are_health_questions_valid();
+      is_valid = health_question_buttons.are_health_questions_valid() && is_valid;
 
       if (!is_valid) {
         $("#health_questions_error").html("Please answer all questions for all applicants.  Invalid responses may prevent you from continuing this online application; if so, please see your agent or enrollment professional.");
@@ -125,13 +149,14 @@ function init_validation(ui) {
         $("#health_questions_error").html("");
       }
     }
-    if (info.step == 3 && info.direction == 'next') {
-      if (!$('#step3-form').valid()) {
+    if (info.step === 3 && info.direction === 'next') {
+      is_valid = $('#step3-form').valid();
+      if (!is_valid) {
         e.preventDefault();
         return;
       }
     }
-    if (info.step == 4 && info.direction == 'next') {
+    if (info.step === 4 && info.direction === 'next') {
       if (!$('#step4-form').valid()) {
         e.preventDefault();
         return;
@@ -148,7 +173,7 @@ function init_validation(ui) {
 
       var has_beneficiary_errors = _.any(ui.coverage_vm.product_coverage_viewmodels(), function has_beneficiary_errors(product_coverage_vm) {
         if (product_coverage_vm.employee_contingent_beneficiary_type() === 'other') {
-          return !!product_coverage_vm.employee_other_beneficiary().date_of_birth_validation_error() ||  !!product_coverage_vm.employee_contingent_beneficiary().date_of_birth_validation_error();
+          return !!product_coverage_vm.employee_other_beneficiary().date_of_birth_validation_error() || !!product_coverage_vm.employee_contingent_beneficiary().date_of_birth_validation_error();
         }
         return !!product_coverage_vm.employee_other_beneficiary().date_of_birth_validation_error();
       });
@@ -174,7 +199,9 @@ function init_validation(ui) {
 
   }).on('finished.fu.wizard', function (e) {
 
-    if (!$('#step6-form').valid()) return false;
+    if (!$('#step6-form').valid()) {
+      return false;
+    }
 
     // jQuery validator rule should be handling this, but it's not, so force a popup here
     if (ui.should_confirm_disclosure_notice()
@@ -259,7 +286,6 @@ function init_validation(ui) {
 
     },
 
-
     highlight: wizard_validate_highlight,
     success: wizard_validate_success,
     errorPlacement: wizard_error_placement
@@ -325,7 +351,10 @@ function init_validation(ui) {
       }
     }
   });
-
+  $.validator.addMethod('city-state-zip-required', function () {
+    var result = !!ui.employee().city() && !!ui.employee().state() && !!ui.employee().zip();
+    return result;
+  }, "required");
 
   $('#step3-form').validate({
     errorElement: 'div',
@@ -344,9 +373,9 @@ function init_validation(ui) {
       eeGender: {required: true},
       eessn: {required: true},
       eeStreet1: {required: true},
-      eeCity: {required: true},
-      eeState: {required: true},
-      eeZip: {required: true},
+      eeCity: {'city-state-zip-required': true},
+      eeState: {'city-state-zip-required': true},
+      eeZip: {'city-state-zip-required': true},
       eeOwner: {required: true}
     },
 
@@ -464,7 +493,6 @@ function init_validation(ui) {
     $.validator.addClassRules(className, {required: {depends: depends_func}})
   }
 
-
   $('#step5-form').validate({
     errorElement: 'div',
     errorClass: 'help-block',
@@ -504,9 +532,7 @@ function init_validation(ui) {
     errorPlacement: wizard_error_placement
   });
 
-
 }
-
 
 function wizard_validate_highlight(e) {
   $(e).closest('.form-group').removeClass('has-info').addClass('has-error');
@@ -520,17 +546,40 @@ function wizard_validate_success(e) {
 function wizard_error_placement(error, element) {
   if (element.is(':checkbox') || element.is(':radio')) {
     var controls = element.closest('div[class*="col-"]');
-    if (controls.find(':checkbox,:radio').length > 1) controls.append(error);
-    else error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
-  }
-  else if (element.is('.select2')) {
+    if (controls.find(':checkbox,:radio').length > 1) {
+      controls.append(error);
+    } else {
+      error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
+    }
+  } else if (element.is('.select2')) {
     error.insertAfter(element.siblings('[class*="select2-container"]:eq(0)'));
-  }
-  else if (element.is('.chosen-select')) {
+  } else if (element.is('.chosen-select')) {
     error.insertAfter(element.siblings('[class*="chosen-container"]:eq(0)'));
+  } else if (element.is('#eeStreet1')) {
+    $('#street-error-anchor').remove();
+    var street_error_element = $('<div class="col-xs-12 col-sm-9 col-sm-offset-3" id="street-error-anchor"></div>');
+    street_error_element.insertAfter(element.parent().parent()).append(error);
+  } else if (element.is('#eeCity') || element.is('#eeState') || element.is('#eeZip')) {
+    $('#city-state-zip-error-anchor').remove();
+    var city_state_zip_element = $('<div class="col-xs-12 col-sm-9 col-sm-offset-3" id="city-state-zip-error-anchor"></div>');
+    city_state_zip_element.insertAfter(element.parent()).append(error);
   } else if (element.closest('.form-group').length > 0) {
     error.appendTo(element.closest('.form-group'));
+  } else {
+    error.insertAfter(element);
   }
-  else error.insertAfter(element);
   //else error.insertAfter(element.parent());
+}
+
+function step_two_error_placement(error, element) {
+  'use strict';
+  if ((element.is('[name="height_feet_0"]') || element.is('[name="height_inches_0"]') || element.is('[name="weight_0"]')) &&
+    $('#weight_0-error').length === 0 && $('#height_feet_0-error').length === 0 && $('#height_inches_0-error').length === 0) {
+    error.appendTo($('#employee-height-weight'));
+  } else if ((element.is('[name="height_feet_1"]') || element.is('[name="height_inches_1"]') || element.is('[name="weight_1"]')) &&
+    $('#weight_1-error').length === 0 && $('#height_feet_1-error').length === 0 && $('#height_inches_1-error').length === 0) {
+    error.appendTo($('#spouse-height-weight'));
+  } else if (element.is('[name="tobacco-0"]') || element.is('[name="tobacco-1"]') || element.is('[name="gender-0"]') || element.is('[name="gender-1"]')) {
+    error.appendTo(element.parent().parent());
+  }
 }

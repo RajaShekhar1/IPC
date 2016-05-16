@@ -4,6 +4,9 @@ import json
 import traceback
 
 from PyPDF2 import PdfFileReader, PdfFileWriter
+from StringIO import StringIO
+
+import gnupg
 
 import taa.tasks as tasks
 from taa import db
@@ -11,16 +14,27 @@ from taa.config_defaults import DOCUSIGN_CC_RECIPIENTS
 from taa.services import RequiredFeature
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
 from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient, CarbonCopyRecipient
-from taa.services.enrollments.models import EnrollmentImportBatchItem
+from taa.services.enrollments.models import EnrollmentImportBatchItem, EnrollmentSubmission, SubmissionLog, \
+    EnrollmentApplication
+from ftplib import FTP
+from taa.config_defaults import DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, GNUPG_DIR, DELL_FTP_PGP_KEY, \
+    DELL_FTP_WORKING_DIRECTORY, DELL_FTP_PGP_KEY_ID
 
 
+# noinspection PyMethodMayBeStatic
 class EnrollmentSubmissionService(object):
     enrollment_application_service = RequiredFeature('EnrollmentApplicationService')
     enrollment_batch_service = RequiredFeature('EnrollmentImportBatchService')
     docusign_service = RequiredFeature('DocuSignService')
 
+    __gpg = None
+    """:type: gnupg.GPG"""
+
     def submit_wizard_enrollment(self, enrollment_application):
         tasks.process_wizard_enrollment.delay(enrollment_application.id)
+
+    def submit_hi_acc_enrollments(self, start_time=None, end_time=None):
+        tasks.process_hi_acc_enrollments.delay(start_time, end_time)
 
     def process_wizard_submission(self, enrollment_application_id):
 
@@ -32,7 +46,9 @@ class EnrollmentSubmissionService(object):
         if not envelope:
             # Create the envelope
             standardized_data = json.loads(enrollment_application.standardized_data)
-            in_person_signer, envelope = self.docusign_service.create_multiproduct_envelope(standardized_data, enrollment_application.case, enrollment_application)
+            in_person_signer, envelope = self.docusign_service.create_multiproduct_envelope(standardized_data,
+                                                                                            enrollment_application.case,
+                                                                                            enrollment_application)
 
             # Save envelope ID on enrollment
             self.enrollment_application_service.save_docusign_envelope(enrollment_application, envelope)
@@ -114,9 +130,182 @@ class EnrollmentSubmissionService(object):
         batch_item.processed_time = datetime.now()
         db.session.commit()
 
+    def get_pending_csv_submission(self):
+        """
+        Get the pending csv generation submission record if it exists
+        """
+        return db.session.query(EnrollmentSubmission) \
+            .filter(EnrollmentSubmission.submission_type == EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION) \
+            .filter(EnrollmentSubmission.status == EnrollmentSubmission.STATUS_PENDING) \
+            .first()
+
+    def get_pending_or_failed_csv_submissions(self):
+        """
+        Get all submissions that are either pending or failed
+        """
+        query = db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.status.in_(
+            [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING]))
+        return query.all()
+
+    def get_submissions(self, start_date=None, end_date=None):
+        """
+        Get all submissions which can optionally be filtered by start and end dates
+        """
+        query = db.session.query(EnrollmentSubmission).order_by(EnrollmentSubmission.created_at.desc())
+
+        if start_date is not None:
+            query = query.filter(EnrollmentSubmission.created_at > start_date)
+        if end_date is not None:
+            query = query.filter(EnrollmentSubmission.created_at < end_date)
+
+        return query.all()
+
+    def create_docusign_submission_for_application(self, application):
+        """
+        Create and submit a submission for Docusign
+        """
+        if 'Group CI' not in [p for p in application.case.products]:
+            return None
+
+        submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.SUBMISSION_TYPE_SUBMIT_DOCUSIGN)
+        submission.enrollment_applications.append(application)
+        db.session.add(submission)
+        db.session.commit()
+        return submission
+
+    def create_csv_generation_submission_for_application(self, application):
+        """
+        Create or add an application to the next pending csv generation submission if the product should be in the next
+        csv generation batch as determined by the case having either an HI or ACC product on it.
+        """
+        if not any(p for p in application.case.products if p.requires_dell_csv_submission()):
+            return None
+        submission = self.get_pending_csv_submission()
+        if submission is None:
+            # noinspection PyArgumentList
+            submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION)
+            db.session.add(submission)
+        submission.enrollment_applications.append(application)
+        db.session.commit()
+        return submission
+
+    def create_submissions_for_application(self, application):
+        """
+        Create submissions for necessary products for the given EnrollmentApplication
+        """
+        submissions = list()
+        """:type: list[EnrollmentSubmission]"""
+
+        # Create or add to pending CSV generation submission. None if its case doesn't contain and HI or ACC products
+        submission = self.create_csv_generation_submission_for_application(application)
+        if submission is not None:
+            submissions.append(submission)
+
+        # TODO: Uncomment this when the docusign submission is fully switched over to this
+        # Create a docusign submission. None if its case doesn't have Group CI as one of its products
+        # submission = self.create_docusign_submission_for_application(application)
+        # if submission is not None:
+        #     submission.append(submission)
+
+        return submissions
+
+    def __initialize_pgp_key(self, gpg):
+        """
+        Initialize the GPG instance with out public key
+        """
+        import_result = gpg.import_keys(DELL_FTP_PGP_KEY)
+        if len(import_result.results) == 0 or not all((r.get('status').strip() in import_result._ok_reason.values() for r in import_result.results)):
+            raise Exception
+
+    def __initialize_gpg(self):
+        self.__gpg = gnupg.GPG(binary=GNUPG_DIR)
+        self.__initialize_pgp_key(self.__gpg)
+
+    def pgp_encrypt_string(self, data, recipient_id=DELL_FTP_PGP_KEY_ID):
+        """
+        Encrypt the given data with PGP and return the encrypted result
+        """
+
+        if self.__gpg is None:
+            self.__initialize_gpg()
+        try:
+            return self.__gpg.encrypt(data, recipient_id)
+        except Exception as exception:
+            return None
+
+    def submit_hi_acc_export_to_dell(self, csv_data):
+        """
+        Submit csv data to dell for processing
+        """
+        ftp = FTP(DELL_FTP_HOSTNAME)
+        ftp.set_pasv(False)
+        ftp.login(DELL_FTP_USERNAME, DELL_FTP_PASSWORD)
+        ftp.cwd(DELL_FTP_WORKING_DIRECTORY)
+        encrypted_data = StringIO(self.pgp_encrypt_string(csv_data))
+        command = 'STOR enrollment_submissions_%s.csv.pgp' % datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+        ftp.storlines(command, encrypted_data)
+        ftp.close()
+
+    def get_submission_by_id(self, submission_id):
+        """
+        Get an EnrollmentSubmission by ID
+        """
+        return db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.id == submission_id).first()
+
+    def create_submission_for_csv(self, csv_data, applications):
+        """
+        Create a new EnrollmentSubmission for submitting csv data to dell
+        """
+        # noinspection PyArgumentList
+        submission = EnrollmentSubmission(data=csv_data,
+                                          submission_type=EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_EXPORT_TO_DELL)
+        for application in applications:
+            submission.enrollment_applications.append(application)
+        db.session.add(submission)
+        db.session.commit()
+        return submission
+
+    def set_submissions_status(self, status, submissions=None, submission_logs=None):
+        """
+        Set the status
+        """
+        submissions = submissions if submissions is not None else list()
+        submission_logs = submission_logs if submission_logs is not None else list()
+
+        for submission in submissions:
+            submission.status = status
+        for log in submission_logs:
+            log.status = status
+        db.session.commit()
+
+    def get_applications_for_submissions(self, submissions):
+        """
+        Get a list of unique applications in the given submissions
+        """
+        applications = list()
+        for submission in submissions:
+            for application in submission.enrollment_applications:
+                if application not in applications:
+                    applications.append(application)
+        return applications
+
+    def create_logs_for_submissions(self, submissions, status=None):
+        """
+        Create a log entry for each
+        """
+        submission_logs = list()
+        for submission in submissions:
+            # noinspection PyArgumentList
+            submission_log = SubmissionLog(enrollment_submission_id=submission.id)
+            if status is not None:
+                submission_log.status = status
+            db.session.add(submission_log)
+            submission_logs.append(submission_log)
+        db.session.commit()
+        return submission_logs
+
 
 class EnrollmentSubmissionProcessor(object):
-
     pdf_generator_service = RequiredFeature('ImagedFormGeneratorService')
     docusign_service = RequiredFeature('DocuSignService')
 
@@ -137,13 +326,16 @@ class EnrollmentSubmissionProcessor(object):
         enrollment_record.docusign_envelope_id = envelope.uri
 
     def generate_envelope_components(self, enrollment_record):
-        data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data), case=enrollment_record.case, enrollment_record=enrollment_record)
+        data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data), case=enrollment_record.case,
+                                       enrollment_record=enrollment_record)
         recipients = self._create_import_recipients(enrollment_record.case, data_wrap)
 
         product = data_wrap.get_product()
-        if not product.does_generate_form():
-            return [], data_wrap
-        
+
+        # Add back in for HI/ACC
+        # if not product.does_generate_form():
+        #    return [], data_wrap
+
         if product.is_fpp():
             components = self.docusign_service.create_fpp_envelope_components(
                 data_wrap,
@@ -154,7 +346,7 @@ class EnrollmentSubmissionProcessor(object):
             components = self.docusign_service.create_group_ci_envelope_components(
                 data_wrap,
                 recipients,
-                should_user_docusign_renderer=False,
+                should_use_docusign_renderer=False,
             )
         return components, data_wrap
 
@@ -164,11 +356,11 @@ class EnrollmentSubmissionProcessor(object):
         signing_agent = enrollment_data.get_signing_agent()
         recipients = [
             AgentDocuSignRecipient(signing_agent, name=signing_agent.name(),
-                                  email=signing_agent.email,
-                                  exclude_from_envelope=True),
+                                   email=signing_agent.email,
+                                   exclude_from_envelope=True),
             EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
-                                     email=enrollment_data.get_employee_email(),
-                                     exclude_from_envelope=True),
+                                      email=enrollment_data.get_employee_email(),
+                                      exclude_from_envelope=True),
         ]
         recipients += self._get_carbon_copy_recipients()
         return recipients
@@ -177,4 +369,4 @@ class EnrollmentSubmissionProcessor(object):
         return [
             CarbonCopyRecipient(name, email)
             for name, email in DOCUSIGN_CC_RECIPIENTS
-        ]
+            ]

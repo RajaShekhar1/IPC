@@ -35,6 +35,12 @@ def init_brochures():
         dict(product='FPPTIB',
              link='http://5starlifeinsurance.com/wp-content/uploads/2015/02/5Star-Life-FPP-TI-brochure.pdf',
              brochure_name='Family Protection Plan with Terminal Illness Benefit'),
+        dict(product='HI',
+             link='http://5starlifeinsurance.com/wp-content/uploads/2016/02/HI-R116.pdf',
+             brochure_name='Family Healthcare Indemnity Plan'),
+        dict(product='ACC',
+             link='http://5starlifeinsurance.com/wp-content/uploads/2016/02/ACC_R116.pdf',
+             brochure_name='Accident Insurance Plan')
     ]
     for brochure_link in brochures:
         product = product_service.find(code=brochure_link['product']).first()

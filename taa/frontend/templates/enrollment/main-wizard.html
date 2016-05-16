@@ -91,6 +91,10 @@
 
                   </div>
 
+                  <div data-bind="if: has_step_one_validation_error">
+                    <span class="pull-right error" data-bind="text: step_one_validation_error"></span>
+                  </div>
+
                   <hr/>
                   <div class="wizard-actions">
                     <button class="btn btn-default btn-xs pull-left"
@@ -334,7 +338,7 @@
                   {% set base_product_code = wizard_data.fpp_base_product_code %}
                   {% set fpp_state = wizard_data.case_data.situs_state %}
 
-                  {% if base_product_code=='FPPTI' or base_product_code == 'FPP-Gov' %}
+                  {% if base_product_code in ['FPPTI', 'FPP-Gov', 'FPPTIB', 'FPPTIW', 'FPPTIY'] %}
                     {% if fpp_state == 'TX' %}
                       {% set disclosure_url = url_for ('FPPTI_disclosure_TX') %}
                     {% elif fpp_state == 'KS' %}
@@ -346,7 +350,7 @@
                     {% else %}
                       {% set disclosure_url = url_for ('FPPTI_disclosure_generic') %}
                     {% endif %}
-                  {% elif base_product_code=='FPPCI' %}
+                  {% elif base_product_code == 'FPPCI' %}
                     {% if fpp_state == 'KS' %}
                       {% set disclosure_url = url_for ('FPPCI_disclosure_KS') %}
                     {% elif fpp_state == 'VA' %}
@@ -403,7 +407,7 @@
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
           <h4 class="modal-title">
-	  
+
                   <span id="modal_text_existing_warning_title" style="display: none;">
                     Existing Insurance Notice</span>
                   <span id="modal_text_replacement_title" style="display: none;">
@@ -431,6 +435,46 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+  </div>
+
+  <div id="smoking-status-dialog" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Smoker Status</h4>
+        </div>
+        <div class="modal-body">
+          <div data-bind="ifnot: $root.smoker_status_changed_dialog_loading">
+            <ul class="list-unstyled" data-bind="foreach: $root.smoker_status_changed_messages">
+              <li>
+                <span data-bind="text: $data"></span>
+                <span data-bind="
+                  visible: $root.smoker_status_changed_messages().length === 1">
+                  If you need to see alternative amounts please return to step 1.</span>
+              </li>
+            </ul>
+            <p data-bind="
+              visible: $root.smoker_status_changed_messages().length > 1">
+              If you need to see alternative amounts please return to step 1.
+            </p>
+          </div>
+          <div data-bind="if: $root.smoker_status_changed_dialog_loading">
+            <p>Tobacco status change - updating premium rate; please wait...</p>
+            <div class="text-center">
+              <i class="ace-icon fa fa-spinner fa-spin fa-3x"></i>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-bind="
+            click: $root.on_smoker_status_changed_dialog,
+            disable: $root.smoker_status_changed_dialog_loading">Ok
+          </button>
         </div>
       </div>
       <!-- /.modal-content -->
@@ -472,5 +516,3 @@
     });
   </script>
 {% endblock %}
-
-

@@ -80,13 +80,14 @@ var agent_inbox = (function() {
           data: function(row) {
             return "<a href='/enrollment-case/" + row.case_id + "/census/" + row.census_record_id +"'>" + row.employee_last + "</a>";
           }
-        },
-        {
-          data: "products"
-        },
-        {
-          data: "coverage"
         }
+        // TODO: Re-enable after pagination is added to table.
+        // {
+        //   data: "products"
+        // },
+        // {
+        //   data: "coverage"
+        // }
 
       ]
     };
@@ -140,14 +141,13 @@ var agent_inbox = (function() {
       self.formatted_timestamp = format_time();
     }
 
-    //self.timestamp = envelope.timestamp;
-    //self.formatted_timestamp = moment(envelope.timestamp).format("MM/DD/YYYY h:mma");
     self.group = envelope.group;
     self.agent = envelope.agent;
     self.employee_first = envelope.employee_first;
     self.employee_last = envelope.employee_last;
-    self.products = envelope.products;
-    self.coverage = envelope.coverage;
+    // TODO: Re-enable after pagination is addded
+    // self.products = envelope.products;
+    // self.coverage = envelope.coverage;
     self.agent_id = envelope.agent_id;
 
     self.is_pending = function() {
