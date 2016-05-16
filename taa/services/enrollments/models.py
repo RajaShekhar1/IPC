@@ -133,6 +133,25 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     def is_voided(self):
         return self.application_status == self.APPLICATION_STATUS_VOIDED
 
+    def get_enrolled_product_ids(self):
+        """
+        Get a set of product ids that represent all products for this census record
+        :return: Set of ids for products
+        :type: set[int]
+        """
+        from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
+        from taa.services import LookupService
+        application_service = LookupService('EnrollmentApplicationService')
+
+        product_ids = set()
+
+        for enrollment_data in application_service.get_standardized_json_for_enrollment(self):
+            wrapped_data = EnrollmentDataWrap(enrollment_data, self.case, self)
+            product_id = wrapped_data.get_product_id()
+            product_ids.add(product_id)
+
+        return product_ids
+
 
 class EnrollmentApplicationCoverageSerializer(JsonSerializable):
     __json_hidden__ = ['enrollment']

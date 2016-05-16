@@ -2451,61 +2451,62 @@ var wizard_viewmodel = (function () {
     self.account_number = ko.observable(null);
     self.routing_number = ko.observable(null);
     self.bank_name = ko.observable(null);
+    self.bank_city_state_zip = ko.observable(null);
 
-    var __bank_street_one = ko.observable(null);
-    var __bank_street_two = ko.observable(null);
-    var __bank_city = ko.observable(null);
-    var __bank_state = ko.observable(null);
-    var __bank_zip = ko.observable(null);
-    var __bank_account_holder_name = ko.observable(null);
+    var __billing_street_one = ko.observable(null);
+    var __billing_street_two = ko.observable(null);
+    var __billing_account_holder_name = ko.observable(null);
+    var __billing_city = ko.observable(null);
+    var __billing_state = ko.observable(null);
+    var __billing_zip = ko.observable(null);
 
     self.bank_account_holder_name = ko.computed({
       read: function () {
-        return !!__bank_account_holder_name() ? __bank_account_holder_name() : (self.employee().first() + ' ' + self.employee().last());
+        return !!__billing_account_holder_name() ? __billing_account_holder_name() : (self.employee().first() + ' ' + self.employee().last());
       },
       write: function (value) {
-        __bank_account_holder_name(value);
+        __billing_account_holder_name(value);
       }
     });
 
-    self.bank_street_one = ko.computed({
+    self.billing_street_one = ko.computed({
       read: function () {
-        return !!__bank_street_one() ? __bank_street_one() : self.employee().address1();
+        return !!__billing_street_one() ? __billing_street_one() : self.employee().address1();
       },
       write: function (value) {
-        __bank_street_one(value);
+        __billing_street_one(value);
       }
     });
-    self.bank_street_two = ko.computed({
+    self.billing_street_two = ko.computed({
       read: function () {
-        return !!__bank_street_two() ? __bank_street_two() : self.employee().address2();
+        return !!__billing_street_two() ? __billing_street_two() : self.employee().address2();
       },
       write: function (value) {
-        __bank_street_two(value);
+        __billing_street_two(value);
       }
     });
-    self.bank_city = ko.computed({
+    self.billing_city = ko.computed({
       read: function () {
-        return !!__bank_city() ? __bank_city() : self.employee().city();
+        return !!__billing_city() ? __billing_city() : self.employee().city();
       },
       write: function (value) {
-        __bank_city(value);
+        __billing_city(value);
       }
     });
-    self.bank_state = ko.computed({
+    self.billing_state = ko.computed({
       read: function () {
-        return !!__bank_state() ? __bank_state() : self.employee().state();
+        return !!__billing_state() ? __billing_state() : self.employee().state();
       },
       write: function (value) {
-        __bank_state(value);
+        __billing_state(value);
       }
     });
-    self.bank_zip = ko.computed({
+    self.billing_zip = ko.computed({
       read: function () {
-        return !!__bank_zip() ? __bank_zip() : self.employee().zip();
+        return !!__billing_zip() ? __billing_zip() : self.employee().zip();
       },
       write: function (value) {
-        __bank_zip(value);
+        __billing_zip(value);
       }
     });
 

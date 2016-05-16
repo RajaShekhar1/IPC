@@ -431,7 +431,7 @@ class EnrollmentApplicationService(DBService):
         return census_record.to_json()
 
     def get_standardized_enrollment_json(self, census_record):
-        "Normalizes the JSON data as a list of standardized enrollment data."
+        """Normalizes the JSON data as a list of standardized enrollment data."""
 
         out = []
         for enrollment_application in census_record.enrollment_applications:
@@ -547,18 +547,17 @@ class EnrollmentApplicationService(DBService):
         """:type: taa.services.products.ProductService"""
 
         # Export coverages for at most six products
-        product_ids = census_record.get_product_ids()
+        product_ids = enrollment.get_enrolled_product_ids()
         # Keep this conversion of the set to tuple to prevent SQLAlchemy from throwing an exception due to not being
         # able to accept lists or sets
-        product_ids = product_ids
-        product_list = list()
-        for product_id in product_ids:
-            product_list.append(product_service.get(product_id))
+        products = product_service.get_ordered_products_for_case(enrollment.case.id)
         for x in range(6):
-            if x < len(product_list):
-                product = product_list[x]
+            if x < len(products):
+                product = products[x]
                 """:type: taa.services.products.Product"""
             else:
+                product = None
+            if product and product.id not in product_ids:
                 product = None
             prefix = 'product_{0}'.format(x + 1)
             product_data = {u'{}_name'.format(prefix): product.name if product else ''}
@@ -600,6 +599,9 @@ class EnrollmentApplicationService(DBService):
 
                 if annualized_premium and annualized_premium > Decimal('0.00'):
                     total_annual_premium += annualized_premium
+
+                if total_product_premium == Decimal('0.00'):
+                    total_product_premium = ''
 
             enrollment_data.update(product_data)
             enrollment_data['{}_total_premium'.format(prefix)] = total_product_premium

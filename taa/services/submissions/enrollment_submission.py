@@ -354,9 +354,9 @@ class EnrollmentSubmissionService(object):
         Submit csv data to dell for processing
         """
         ftp_service = LookupService('FtpService')
-        filename = 'enrollment_submissions_%s.csv.pgp' % datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+        filename = 'enrollment_submissions_%s.csv.pgp' % datetime.now().strftime('%Y-%m-%d')
         ftp_service.send_file(DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, filename, csv_data,
-                              key_id=DELL_FTP_PGP_KEY_ID)
+                              directory=DELL_FTP_WORKING_DIRECTORY, key_id=DELL_FTP_PGP_KEY_ID)
 
     def get_submission_by_id(self, submission_id):
         """
@@ -471,86 +471,86 @@ class EnrollmentSubmissionService(object):
             raise ex
 
     def create_batch_submission(self, submission_type):
-        submission = EnrollmentSubmission(submission_type=submission_type, status=EnrollmentSubmission.STATUS_PENDING)
+        submission = EnrollmentSubmission(submission_type=submission_type,
+                                          status=EnrollmentSubmission.STATUS_PENDING)
         db.session.add(submission)
         db.session.commit()
         return submission
 
+    class EnrollmentSubmissionProcessor(object):
+        pdf_generator_service = RequiredFeature('ImagedFormGeneratorService')
+        docusign_service = RequiredFeature('DocuSignService')
 
-class EnrollmentSubmissionProcessor(object):
-    pdf_generator_service = RequiredFeature('ImagedFormGeneratorService')
-    docusign_service = RequiredFeature('DocuSignService')
+        def _should_submit_to_dell(self, case):
+            return True
 
-    def _should_submit_to_dell(self, case):
-        return True
+        def submit(self, enrollment_record):
+            if self._should_submit_to_dell(enrollment_record.case):
+                self.submit_to_dell(enrollment_record)
+            else:
+                self.submit_to_docusign(enrollment_record)
 
-    def submit(self, enrollment_record):
-        if self._should_submit_to_dell(enrollment_record.case):
-            self.submit_to_dell(enrollment_record)
-        else:
-            self.submit_to_docusign(enrollment_record)
+        def submit_to_dell(self, enrollment_record):
+            raise NotImplementedError()
 
-    def submit_to_dell(self, enrollment_record):
-        raise NotImplementedError()
+        def submit_to_docusign(self, enrollment_record):
 
-    def submit_to_docusign(self, enrollment_record):
+            components, data_wrap = self.generate_envelope_components(enrollment_record)
 
-        components, data_wrap = self.generate_envelope_components(enrollment_record)
-
-        # Generate envelope
-        envelope = self.docusign_service.create_envelope(
-            email_subject=u"Enrollment imported: {} for {} ({})".format(
-                data_wrap.get_product_code(),
-                data_wrap.get_employee_name(),
-                data_wrap.get_employer_name()),
-            components=components
-        )
-
-        # Save the envelope ID on the enrollment record
-        enrollment_record.docusign_envelope_id = envelope.uri
-
-    def generate_envelope_components(self, enrollment_record):
-        data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data), case=enrollment_record.case,
-                                       enrollment_record=enrollment_record)
-        recipients = self._create_import_recipients(enrollment_record.case, data_wrap)
-
-        product = data_wrap.get_product()
-
-        # Add back in for HI/ACC
-        # if not product.does_generate_form():
-        #    return [], data_wrap
-
-        if product.is_fpp():
-            components = self.docusign_service.create_fpp_envelope_components(
-                data_wrap,
-                recipients,
-                should_use_docusign_renderer=False,
+            # Generate envelope
+            envelope = self.docusign_service.create_envelope(
+                email_subject=u"Enrollment imported: {} for {} ({})".format(
+                    data_wrap.get_product_code(),
+                    data_wrap.get_employee_name(),
+                    data_wrap.get_employer_name()),
+                components=components
             )
-        else:
-            components = self.docusign_service.create_group_ci_envelope_components(
-                data_wrap,
-                recipients,
-                should_use_docusign_renderer=False,
-            )
-        return components, data_wrap
 
-    def _create_import_recipients(self, case, enrollment_data):
+            # Save the envelope ID on the enrollment record
+            enrollment_record.docusign_envelope_id = envelope.uri
 
-        # Exclude both from the envelope, use them only for tab generation purposes
-        signing_agent = enrollment_data.get_signing_agent()
-        recipients = [
-            AgentDocuSignRecipient(signing_agent, name=signing_agent.name(),
-                                   email=signing_agent.email,
-                                   exclude_from_envelope=True),
-            EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
-                                      email=enrollment_data.get_employee_email(),
-                                      exclude_from_envelope=True),
-        ]
-        recipients += self._get_carbon_copy_recipients()
-        return recipients
+        def generate_envelope_components(self, enrollment_record):
+            data_wrap = EnrollmentDataWrap(json.loads(enrollment_record.standardized_data), case=enrollment_record.case,
+                                           enrollment_record=enrollment_record)
+            recipients = self._create_import_recipients(enrollment_record.case, data_wrap)
 
-    def _get_carbon_copy_recipients(self):
-        return [
-            CarbonCopyRecipient(name, email)
-            for name, email in DOCUSIGN_CC_RECIPIENTS
+            product = data_wrap.get_product()
+
+            # Add back in for HI/ACC
+            # if not product.does_generate_form():
+            #    return [], data_wrap
+
+            if product.is_fpp():
+                components = self.docusign_service.create_fpp_envelope_components(
+                    data_wrap,
+                    recipients,
+                    should_use_docusign_renderer=False,
+                )
+            else:
+                components = self.docusign_service.create_group_ci_envelope_components(
+                    data_wrap,
+                    recipients,
+                    should_use_docusign_renderer=False,
+                )
+            return components, data_wrap
+
+        def _create_import_recipients(self, case, enrollment_data):
+
+            # Exclude both from the envelope, use them only for tab generation purposes
+            signing_agent = enrollment_data.get_signing_agent()
+            recipients = [
+                AgentDocuSignRecipient(signing_agent, name=signing_agent.name(),
+                                       email=signing_agent.email,
+                                       exclude_from_envelope=True),
+                EmployeeDocuSignRecipient(name=enrollment_data.get_employee_name(),
+                                          email=enrollment_data.get_employee_email(),
+                                          exclude_from_envelope=True),
             ]
+            recipients += self._get_carbon_copy_recipients()
+            return recipients
+
+        def _get_carbon_copy_recipients(self):
+            return [
+                CarbonCopyRecipient(name, email)
+                for name, email in DOCUSIGN_CC_RECIPIENTS
+                ]

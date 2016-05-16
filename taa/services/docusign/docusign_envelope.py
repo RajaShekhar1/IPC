@@ -529,9 +529,9 @@ class EnrollmentDataWrap(object):
 
     def get_account_type_shorthand(self):
         account_type = self.get_account_type()
-        if account_type.lower() == 'checking':
+        if account_type and account_type.lower() == 'checking':
             return 'C'
-        if account_type.lower() == 'savings':
+        if account_type and account_type.lower() == 'savings':
             return 'S'
         return account_type
 
@@ -555,6 +555,21 @@ class EnrollmentDataWrap(object):
         if not self.has_bank_draft_info():
             return
         return self.get_bank_draft_info().get('address_two', '')
+
+    def get_billing_city(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('billing_city', '')
+
+    def get_billing_state(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('billing_state', '')
+
+    def get_billing_zip(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('billing_zip', '')
 
 
 # For employee signing sessions
