@@ -224,17 +224,15 @@ class Product(ProductJsonSerializable, db.Model):
     def requires_signature(self):
         return self.get_base_product_code() not in [self.TYPE_HI, self.TYPE_ACC]
 
-    def requires_paylogix_export(self, enrollment_record=None):
-        requires_export = (self.get_base_product() in [self.TYPE_GROUP_CI, self.TYPE_STATIC_BENEFIT] or self.is_fpp())
-        if enrollment_record:
-            requires_export = requires_export and enrollment_record.case.requires_paylogix_export and enrollment_record.case.include_bank_draft_form
-        return requires_export
+    def requires_paylogix_export(self, enrollment_record):
+        return enrollment_record.case.requires_paylogix_export and enrollment_record.case.include_bank_draft_form
 
     def is_employee_premium_only(self):
         """
         Is this product only billed to the employee?
         """
         return self.get_base_product_code() in [self.TYPE_STATIC_BENEFIT, self.TYPE_ACC, self.TYPE_HI]
+
 
 # Relate custom products to agents - who can see these products
 product_agents = db.Table('product_agents', db.metadata,
