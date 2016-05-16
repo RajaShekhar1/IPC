@@ -1,19 +1,21 @@
 import decimal
 import json
 from io import BytesIO
+from itertools import ifilter
 
+from PIL import Image as PILImage
 from reportlab.platypus import Paragraph, Table, TableStyle, Frame, Image as ReportLabImage
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.lib.styles import _baseFontNameB, _baseFontName, ParagraphStyle
-from PIL import Image as PILImage
 from reportlab.platypus.flowables import Spacer
-from taa import db
-from taa.services.enrollments import EnrollmentApplication, EnrollmentApplicationService
-from taa.services.docusign.service import EnrollmentDataWrap
 
+from taa import db
+from taa.services import LookupService
+from taa.services.enrollments import EnrollmentApplication
+from taa.services.docusign.service import EnrollmentDataWrap
 from PDFAttachment import PDFAttachment
-from utils import style, bold_style2, NumberedCanvas, create_attachment_header, bold_style
+from utils import style, bold_style2, NumberedCanvas
 
 small_style = ParagraphStyle(name='smallLegal',
                              parent=style,
@@ -85,7 +87,6 @@ class CoverSheetAttachment(PDFAttachment):
 
         emp_first = self.data.get_employee_first()
         emp_last = self.data.get_employee_last()
-        emp_ssn_last = self.data.get_employee_ssn_last_digits()
         emp_street = self.data.get_employee_street()
         emp_citystatezip = self.data.get_employee_city_state_zip()
 
@@ -95,8 +96,6 @@ class CoverSheetAttachment(PDFAttachment):
             Paragraph(u"{} {}".format(emp_first, emp_last), header_style2),
             Paragraph(u"{}".format(emp_street), header_style2),
             Paragraph(u"{}".format(emp_citystatezip), header_style2),
-
-            Paragraph(u"SSN: ###-##-{}".format(emp_ssn_last), header_style2),
         ]
 
         if self.case.has_logo():
@@ -123,8 +122,15 @@ class CoverSheetAttachment(PDFAttachment):
         print("Image size is: ", image.size)
         img_width, img_height = image.size
         w = min(img_width, 200)
-        scale = img_height / img_width
-        h = max(w * scale, 100)
+        orig_scale = float(img_height) / float(img_width)
+        h = min(w * orig_scale, 100)
+        if h == 100:
+            print("Reducing width from '{}' to '{}'".format(w, w * (h / (w * orig_scale))))
+
+            # also decrease the width to fit
+            w *= h / (w * orig_scale)
+
+        print("Resized: ({}, {})".format(w, h))
         image_flowable = ReportLabImage(logo_file, w, h)
         return image_flowable
 
@@ -166,18 +172,26 @@ class CoverSheetAttachment(PDFAttachment):
 
         total_premium = decimal.Decimal('0.00')
 
-        for i, raw_product_data in enumerate(self.all_enrollments):
 
+        # Iterate through the case products to identify declines.
+        case_service = LookupService('CaseService')
+        for i, product in enumerate(case_service.get_products_for_case(self.data.case)):
+            if product not in self.get_enrolled_products():
+                # Show Decline
+                product_header = '{} - DECLINED'.format(product.name)
+                applicants = []
+        #for i, raw_product_data in enumerate(self.all_enrollments):
+            else:
 
-            product_data = EnrollmentDataWrap(raw_product_data, self.data.case, self.data.enrollment_record)
+                product_data = self.get_wrapped_enrollment_data_for_product(product)
+                product_header = product.name
+                applicants = product_data.get_applicant_data()
+
             table_data += [
                 [
-                    Paragraph(product_data.get_product().name, style), "", "", "", "", ""
+                    Paragraph(product_header, style), "", "", "", "", ""
                 ]
-
             ]
-
-            applicants = product_data.get_applicant_data()
 
             for applicant in applicants:
                 table_data += [
@@ -196,7 +210,7 @@ class CoverSheetAttachment(PDFAttachment):
             styles += [
                 ('BACKGROUND', (0, row_count), (-1, row_count), colors.lightgrey),
                 ('SPAN', (0, row_count), (-1, row_count)),
-            #    ('GRID', (0, row_count+1), (-1, row_count+1), 0.5, colors.black),
+                #    ('GRID', (0, row_count+1), (-1, row_count+1), 0.5, colors.black),
             ]
 
             # The current row index is the
@@ -231,6 +245,13 @@ class CoverSheetAttachment(PDFAttachment):
 
         return flowables
 
+    def get_enrolled_products(self):
+        return [d.get_product() for d in self.get_wrapped_enrollment_data()]
+
+    def get_wrapped_enrollment_data(self):
+        return [EnrollmentDataWrap(raw_product_data, self.data.case, self.data.enrollment_record)
+                for raw_product_data in self.all_enrollments]
+
     def draw_legal_text(self):
 
         return [
@@ -243,13 +264,16 @@ class CoverSheetAttachment(PDFAttachment):
                       small_style),
         ]
 
+    def get_wrapped_enrollment_data_for_product(self, product):
+        return next(ifilter(lambda d: d.get_product() == product, self.get_wrapped_enrollment_data()), None)
+
 
 if __name__ == "__main__":
 
 
 
     #case = db.session.query(Case).get(1)
-    enrollment = db.session.query(EnrollmentApplication).order_by(db.desc(EnrollmentApplication.id)).all()[1]
+    enrollment = db.session.query(EnrollmentApplication).order_by(db.desc(EnrollmentApplication.id)).all()[0]
     case = enrollment.case
     enrollment_data = json.loads(enrollment.standardized_data)
     data = EnrollmentDataWrap(enrollment_data[0], case, enrollment)

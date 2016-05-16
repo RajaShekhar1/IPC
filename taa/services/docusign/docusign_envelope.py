@@ -1,3 +1,4 @@
+import json
 import decimal
 import random
 from datetime import datetime
@@ -251,6 +252,15 @@ class EnrollmentDataWrap(object):
         return decimal.Decimal(self.data['employee_coverage']['premium'])
 
     def did_spouse_select_coverage(self):
+
+        # Special case for static benefit
+        if self.get_product().is_static_benefit() and self.did_employee_select_coverage():
+            return True
+
+        elif self.get_product().is_simple_coverage() and self.get_product().is_applicant_covered('spouse',
+                                                                                                 self.data['spouse_coverage']['coverage_selection']):
+            return True
+
         return (self.data['spouse_coverage'] and (self.data['spouse_coverage'].get('premium') or
                                                   self.data['spouse_coverage'].get('face_value')))
 
@@ -261,6 +271,8 @@ class EnrollmentDataWrap(object):
         return self.format_money(self.get_spouse_premium())
 
     def get_spouse_premium(self):
+        if self.get_product().is_employee_premium_only():
+            return decimal.Decimal('0.00')
         return decimal.Decimal(self.data['spouse_coverage']['premium'])
 
     def format_money(self, amount):
@@ -305,6 +317,8 @@ class EnrollmentDataWrap(object):
         return self.format_coverage(self.data['child_coverages'][child_num])
 
     def get_child_premium(self, child_num=0):
+        if self.get_product().is_employee_premium_only():
+            return decimal.Decimal('0.00')
         return decimal.Decimal(self.data['child_coverages'][child_num]['premium'])
 
     def get_formatted_child_premium(self, child_num=0):
@@ -477,9 +491,10 @@ class EnrollmentDataWrap(object):
                 effective_date=effective_date,
             ))
 
-        children = self.get_covered_children()
-        for i, child in enumerate(children):
-            if self.get_child_premium(i) >= decimal.Decimal('0.00'):
+        for i, child in enumerate(self.data['children']):
+            is_covered = child in self.get_covered_children()
+
+            if is_covered: #self.get_child_premium(i) >= decimal.Decimal('0.00'):
                 premium = self.get_formatted_child_premium(i)
                 premium_amount = self.get_child_premium(i)
             else:
@@ -489,7 +504,7 @@ class EnrollmentDataWrap(object):
             applicants.append(dict(
                 relationship="child",
                 name=child['first'],
-                coverage=self.get_child_coverage(i),
+                coverage=self.get_child_coverage(i) if is_covered else 'DECLINED',
                 premium=premium_amount,
                 formatted_premium=premium,
                 mode=payment_mode,
@@ -570,6 +585,15 @@ class EnrollmentDataWrap(object):
         if not self.has_bank_draft_info():
             return
         return self.get_bank_draft_info().get('billing_zip', '')
+
+    def get_case_riders(self):
+        #
+        if not self.case.product_settings:
+            return []
+
+        product_settings = json.loads(self.case.product_settings)
+        rider_settings = product_settings.get('riders', [])
+
 
 
 # For employee signing sessions

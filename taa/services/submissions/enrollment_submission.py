@@ -33,9 +33,9 @@ class EnrollmentSubmissionService(object):
 
     def submit_wizard_enrollment(self, enrollment_application):
         import taa.tasks as tasks
-        # if True:
+        #if True:
         #    self.process_wizard_submission(enrollment_application.id)
-        # else:
+        #else:
         tasks.process_wizard_enrollment.delay(enrollment_application.id)
 
     def submit_hi_acc_enrollments(self, start_time=None, end_time=None):
