@@ -89,7 +89,7 @@ def create_paylogix_csv(applications):
         for enrollment_item in enrollment_data:
             data_wrap = EnrollmentDataWrap(enrollment_item, application.case, application)
             product = data_wrap.get_product()
-            if not product.requires_paylogix_export() or not data_wrap.has_bank_draft_info():
+            if not product.requires_paylogix_export(application) or not data_wrap.has_bank_draft_info():
                 continue
 
             row = [
