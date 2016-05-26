@@ -8,7 +8,7 @@ from flask import abort
 from flask_stormpath import current_user
 from sqlalchemy.orm import joinedload, eagerload
 
-from models import (Case, CaseCensus, CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod,
+from models import (Case, CaseCensus, CaseOpenEnrollmentPeriod, CaseOngoingEnrollmentPeriod,
                     SelfEnrollmentSetup)
 from taa.core import DBService
 from taa.core import db
@@ -195,15 +195,17 @@ class CaseService(DBService):
     def update_enrollment_periods(self, case, periods):
         # Make sure the case enrollment type is updated to match the type of
         # the uploaded periods
-        for period in periods:
-            if period['period_type'] == (CaseOpenEnrollmentPeriod.PERIOD_TYPE
-                                         and case.enrollment_period_type !=
-                    Case.OPEN_ENROLLMENT_TYPE):
-                case.enrollment_period_type = Case.OPEN_ENROLLMENT_TYPE
-            elif period['period_type'] == (CaseAnnualEnrollmentPeriod.PERIOD_TYPE
-                                           and case.enrollment_period_type !=
-                    Case.ANNUAL_ENROLLMENT_TYPE):
-                case.enrollment_period_type = Case.ANNUAL_ENROLLMENT_TYPE
+        # TODO: Remove
+        # for period in periods:
+        #     if period['period_type'] == (CaseOpenEnrollmentPeriod.PERIOD_TYPE
+        #                                  and case.enrollment_period_type !=
+        #             Case.OPEN_ENROLLMENT_TYPE):
+        #         case.enrollment_period_type = Case.OPEN_ENROLLMENT_TYPE
+        #     elif period['period_type'] == (CaseOngoingEnrollmentPeriod.PERIOD_TYPE
+        #                                    and case.enrollment_period_type !=
+        #             Case.ONGOING_ENROLLMENT_TYPE):
+        #         case.enrollment_period_type = Case.ONGOING_ENROLLMENT_TYPE
+
         # Remove existing periods
         self.enrollment_periods.remove_all_for_case(case)
         # Add the new enrollment period

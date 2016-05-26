@@ -202,75 +202,126 @@
                               </div>
                             </div>
                             <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
-                              <h3 class="header lighter blue">Enrollment Periods</h3>
+                              <h3 class="header lighter blue">Enrollment Period</h3>
                               <div>
                                 <div class="panel form-group">
                                   <div class="panel-heading">
                                     <label>
-                                      <input data-bind="checked: enrollment_period_type" type="radio" class="ace"
+                                      <input data-bind="checked: has_open_enrollment" type="checkbox" class="ace"
                                              name="enrollment_period_type" value="open">
-                                      <span class="lbl padding-8">Enrollment Period with End Date</span><br/>
+                                      <span class="lbl padding-8">
+                                        Open enrollment from
+                                        <input data-bind="disable: !has_open_enrollment(), value: get_open_enrollment_period().start_date" type="text"
+                                             placeholder="MM/DD/YYYY" class="input-small input-mask-date"
+                                             name="open_enrollment_start_date">
+                                        to
+                                        <input data-bind="disable: !has_open_enrollment(), value: get_open_enrollment_period().end_date" type="text"
+                                               placeholder="MM/DD/YYYY" class="input-small input-mask-date"
+                                               name="open_enrollment_end_date">
+                                           </span><br/>
                                       <small
-                                          data-bind="visible: !today_between() && enrollment_period_type() === 'open'">
+                                          data-bind="visible: has_open_enrollment() && !today_between()">
                                         <em class="text-danger">Currently not active since outside date range</em>
                                       </small>
                                     </label>
-                                  </div>
-                                  <div class="panel-body" data-bind="slideDownIf: is_open_enrollment">
-                                    <div class="row">
-                                      <div class="col-md-6">
-                                        <label>
-                                          Start Date:
-                                          <input data-bind="value: get_open_enrollment_period().start_date" type="text"
-                                                 placeholder="MM/DD/YYYY" class="input-mask-date"
-                                                 name="open_enrollment_start_date">
-                                        </label>
-                                      </div>
-                                      <div class="col-md-6">
-                                        <label>
-                                          End Date:
-                                          <input data-bind="value: get_open_enrollment_period().end_date" type="text"
-                                                 placeholder="MM/DD/YYYY" class="input-mask-date"
-                                                 name="open_enrollment_end_date">
-                                        </label>
-                                      </div>
-                                    </div>
                                   </div>
                                 </div>
                                 <div class="panel form-group">
                                   <div class="panel-heading">
                                     <label>
-                                      <input data-bind="checked: enrollment_period_type" type="radio" class="ace"
-                                             name="enrollment_period_type" value="annual">
-                                      <span class="lbl padding-8">Annual Periods</span><br/>
-                                      <small
-                                          data-bind="visible: !annual_today_between() && enrollment_period_type() == 'annual'">
-                                        <em class="text-danger">Currently not active since outside date range</em>
-                                      </small>
+                                      <input data-bind="checked: has_ongoing_enrollment" type="checkbox" class="ace"
+                                             name="enrollment_period_type" value="ongoing">
+                                      <span class="lbl padding-8">and ongoing enrollments thereafter.</span><br/>
                                     </label>
                                   </div>
-                                  <div class="panel-body" data-bind="slideDownIf: is_annual_enrollment()">
-                                    <!--ko foreach: annual_enrollment_periods-->
-                                    <div class="row">
-                                      <div class="col-md-6">
-                                        <label class="">
-                                          Start Date:
-                                          <input type="text" data-bind="value: start_date" class="input-mask-month-day"
-                                                 placeholder="MM/DD">
-                                        </label>
-                                      </div>
-                                      <div class="col-md-6">
-                                        <label class="">
-                                          End Date:
-                                          <input type="text" data-bind="value: end_date" class="input-mask-month-day"
-                                                 placeholder="MM/DD">
-                                        </label>
-                                      </div>
-                                    </div>
-                                    <div class="error" data-bind="text: error, visible: error() != ''"></div>
-                                    <!--/ko-->
-                                  </div>
                                 </div>
+                              </div>
+                              <div data-bind="slideDownIf: has_ongoing_enrollment() || has_open_enrollment()">
+                                <h3 class="header lighter blue">Policy Effective Date</h3>
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th><small class="col-md-6 text-center">open</small></th>
+                                      <th><small class="col-md-6 text-center">ongoing</small></th>
+                                      <th></th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <tr>
+                                      <td class="text-center">
+                                        <label>
+                                          <input type="radio" data-bind="disable: !has_open_enrollment(), checked: open_enrollment_type" value="static_date" name="open" />
+                                        </label>
+                                      </td>
+                                      <td class="text-center">
+                                        <label class="text-center">
+                                          <input type="radio" data-bind="disable: !has_ongoing_enrollment(), checked: ongoing_enrollment_type" value="static_date" name="ongoing" />
+                                        </label>
+                                      </td>
+                                      <td class="text-right">
+                                        <small>Static date <input type="text" class="input-small input-mask-month-day"
+                                               placeholder="MM/DD/YYYY"> or 'today', whichever is later</small>
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td class="text-center">
+                                        <label>
+                                          <input type="radio" data-bind="disable: !has_open_enrollment(), checked: open_enrollment_type" value="first_of_month" name="open" />
+                                        </label>
+                                      </td>
+                                      <td class="text-center">
+                                        <label class="text-center">
+                                          <input type="radio" data-bind="disable: !has_ongoing_enrollment(), checked: ongoing_enrollment_type" value="first_of_month" name="ongoing" />
+                                        </label>
+                                      </td>
+                                      <td class="text-right">
+                                        <small>1st of month if received before 15th of prior month</small>
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td class="text-center">
+                                        <label>
+                                          <input type="radio" data-bind="disable: !has_open_enrollment(), checked: open_enrollment_type" value="enroller_choice" name="open" />
+                                        </label>
+                                      </td>
+                                      <td class="text-center">
+                                        <label class="text-center">
+                                          <input type="radio" data-bind="disable: !has_ongoing_enrollment(), checked: ongoing_enrollment_type" value="enroller_choice" name="ongoing" />
+                                        </label>
+                                      </td>
+                                      <td class="text-right">
+                                        <strong><small>Enroller picks;</small></strong>
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td></td>
+                                      <td></td>
+                                      <td class="text-right">
+                                        <small>defaults to <input type="number" class="input-mini" /> days from enrollment</small>
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td></td>
+                                      <td></td>
+                                      <td class="text-right"><small>but no less than <input type="number" class="input-mini" /> days from enrollment</small></td>
+                                    </tr>
+                                    <tr>
+                                      <td class="text-center">
+                                        <label>
+                                          <input type="radio" data-bind="disable: !has_open_enrollment(), checked: open_enrollment_type" value="first_friday" name="open" />
+                                        </label>
+                                      </td>
+                                      <td class="text-center">
+                                        <label class="text-center">
+                                          <input type="radio" data-bind="disable: !has_ongoing_enrollment(), checked: ongoing_enrollment_type" value="first_friday" name="ongoing" />
+                                        </label>
+                                      </td>
+                                      <td class="text-right">
+                                        <small>The first Friday following <input type="number" class="input-mini" /> days from enrollment</small>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
                               </div>
                             </div>
                           </div>
