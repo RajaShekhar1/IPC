@@ -289,8 +289,7 @@ class CensusRecordParser(object):
     employee_last = CensusRecordField('EMP_LAST', 'employee_last', preprocess_string, [required_validator])
     employee_ssn = CensusRecordField('EMP_SSN', 'employee_ssn', preprocess_numbers, [ssn_validator])
     employee_gender = CensusRecordField('EMP_GENDER', 'employee_gender', preprocess_gender, [gender_validator])
-    employee_birthdate = CensusRecordField('EMP_BIRTHDATE', 'employee_birthdate', preprocess_date,
-                                           [required_validator, birthdate_validator])
+    employee_birthdate = CensusRecordField('EMP_BIRTHDATE', 'employee_birthdate', preprocess_date, [birthdate_validator])
     employee_email = CensusRecordField('EMP_EMAIL', 'employee_email', preprocess_string, [email_validator])
     employee_phone = CensusRecordField('EMP_PHONE', 'employee_phone', preprocess_string, [])
     employee_address1 = CensusRecordField('EMP_ADDRESS1', 'employee_street_address', preprocess_string, [])
