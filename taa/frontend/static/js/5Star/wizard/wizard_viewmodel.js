@@ -1054,17 +1054,36 @@ var wizard_viewmodel = (function () {
     self.is_rate_table_loading = product_rates_service.is_loading_rates;
     self.is_show_rates_clicked = ko.observable(false);
 
+    _.defaults(self.enrollment_case, {omit_actively_at_work: false});
+
+    self.should_show_actively_at_work = function (product, applicant) {
+      applicant = typeof applicant !== 'undefined'? applicant : null;
+      if (applicant) {
+        return applicant.type === wizard_applicant.Applicant.EmployeeType && _.startsWith(product.product_data.base_product_type, "FPP")
+          && !self.enrollment_case.omit_actively_at_work && !product.product_data.is_guaranteed_issue;
+      }
+      return _.startsWith(product.product_data.base_product_type, "FPP")
+        && !self.enrollment_case.omit_actively_at_work && !product.product_data.is_guaranteed_issue;
+    };
+
+    self.requires_actively_at_work = ko.pureComputed(function () {
+      return !self.enrollment_case.omit_actively_at_work;
+    });
+
     init_applicants();
 
     init_jquery_validator();
 
     //region Occupations and helper functions for working with occupations
-    self.occupations = ko.observableArray(_.map(options.case_data.occupations, function (occupation) {
+    self.occupations = ko.observableArray(sort_occupations(_.map(options.case_data.occupations, function (occupation) {
       return new OccupationVM(occupation.label, occupation.level);
-    }));
+    })));
     self.selected_occupation = ko.observable(_.find(self.occupations(), function (occupation) {
       return !!self.employee().occupation && self.employee().occupation === occupation.label;
     }));
+    if (!self.selected_occupation()) {
+      self.selected_occupation(_.find(self.occupations(), function (occupation) { return occupation.label === 'Default'; }));
+    }
     self.requires_occupation = _.any(self.products, function (product_view_model) { return product_view_model.requires_occupation();});
     self.should_show_occupation = self.requires_occupation && !self.selected_occupation() && self.options.is_in_person;
     //endregion
@@ -1080,6 +1099,18 @@ var wizard_viewmodel = (function () {
       return wizard.currentStep;
     };
 
+    self.applicant_types = ko.pureComputed(function () {
+      return _.chain(self.applicant_list.applicants())
+        .filter(function (applicant) {
+          return applicant.type === wizard_applicant.Applicant.EmployeeType ||
+            (applicant.type === wizard_applicant.Applicant.ChildType && self.should_include_children_in_table()) ||
+            (applicant.type === wizard_applicant.Applicant.SpouseType && self.should_include_spouse_in_table());
+        })
+        .map(function (applicant) { return applicant.type; })
+        .uniq()
+        .value();
+    });
+
     // Step 1 ViewModel observables
     self.should_include_spouse_in_table = ko.computed(function () {
       return self.should_show_spouse() && self.spouse().is_valid();
@@ -1088,6 +1119,17 @@ var wizard_viewmodel = (function () {
     self.should_include_children_in_table = ko.computed(function () {
       return (self.should_include_children() && self.applicant_list.has_valid_children());
     });
+
+    self.reset_simple_coverage_options = function () {
+      _.forEach(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_viewmodel) {
+        if (product_coverage_viewmodel.product.has_simple_coverage()) {
+          product_coverage_viewmodel.selected_simple_coverage_option(new NullCoverageOption());
+        }
+      });
+    };
+
+    self.should_include_spouse_in_table.subscribe(self.reset_simple_coverage_options);
+    self.should_include_children_in_table.subscribe(self.reset_simple_coverage_options);
 
     // Main step1 viewmodel - handles selecting coverage of products.
     self.coverage_vm = new CoverageVM(self.products, self.applicant_list, options.case_data, options.payment_modes,
@@ -1234,6 +1276,12 @@ var wizard_viewmodel = (function () {
     //endregion
 
     self.show_height_weight_dialog_if_applicants_invalid = function () {
+      var products_require_additional_information = _.any(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_viewmodel) {
+        return product_coverage_viewmodel.product.requires_additional_information() && !product_coverage_viewmodel.did_decline();
+      });
+      if (!products_require_additional_information) {
+        return false;
+      }
       var is_employee_invalid = _.any(self.products, function (product) {
         return !is_applicant_weight_valid(self.enrollment_case.product_height_weight_tables, product, self.employee()) && product.requires_additional_information();
       });
@@ -1356,13 +1404,25 @@ var wizard_viewmodel = (function () {
     // Recommendations table visibility
     self.has_show_rates_been_clicked = ko.observable(false);
 
+    self.is_employee_actively_at_work = ko.observable(null);
+    self.show_aaw_error = ko.observable(false);
+
+    self.is_aaw_answered = ko.pureComputed(function () {
+      return self.is_employee_actively_at_work() === true || self.is_employee_actively_at_work() === false;
+    });
+
+    self.show_aaw_response_error = ko.pureComputed(function() {
+      return !self.show_aaw_error() && self.is_employee_actively_at_work() === false;
+    });
+
     self.can_display_rates_table = ko.computed(function () {
       // TODO: Reimplement
       // && product validation
       var is_employee_valid = self.applicant_list.has_valid_employee();
       var is_payment_valid = self.coverage_vm.is_payment_mode_valid();
       var has_limit_errors = self.any_limit_error();
-      return is_employee_valid && is_payment_valid && !has_limit_errors;
+      var is_aaw_selected = (self.requires_actively_at_work() && self.is_employee_actively_at_work() === true) || !self.requires_actively_at_work();
+      return is_employee_valid && is_payment_valid && !has_limit_errors && is_aaw_selected;
     });
 
     // User indicates he is ready to show the coverage selection options.
@@ -1381,6 +1441,11 @@ var wizard_viewmodel = (function () {
 
       // Trigger the jQuery validator. This test allows jasmine tests to work without DOM node present for form.
       valid_form = self.validator.form() && valid_form;
+      if (self.is_aaw_answered()) {
+        self.show_aaw_error(false);
+      } else {
+        self.show_aaw_error(true);
+      }
 
       if (valid_form) {
         self.has_show_rates_been_clicked(true);
@@ -1438,7 +1503,7 @@ var wizard_viewmodel = (function () {
     function requires_additional_employee_information() {
       return _.any(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_view_model) {
         var product = product_coverage_view_model.product;
-        var requires_additional_information = product.requires_gender() || product.requires_height() || product.requires_weight() || product.requires_is_smoker();
+        var requires_additional_information = !product_coverage_view_model.did_decline() && (product.requires_gender() || product.requires_height() || product.requires_weight() || product.requires_is_smoker());
         return requires_additional_information && product_coverage_view_model.did_select_employee_coverage();
       });
     }
@@ -1449,7 +1514,7 @@ var wizard_viewmodel = (function () {
       }
       return _.any(self.coverage_vm.product_coverage_viewmodels(), function (product_coverage_view_model) {
         var product = product_coverage_view_model.product;
-        var requires_additional_information = product.requires_gender() || product.requires_height() || product.requires_weight() || product.requires_is_smoker();
+        var requires_additional_information = !product_coverage_view_model.did_decline() && (product.requires_gender() || product.requires_height() || product.requires_weight() || product.requires_is_smoker());
         return requires_additional_information && product_coverage_view_model.did_select_spouse_coverage();
       });
     }
@@ -1590,7 +1655,6 @@ var wizard_viewmodel = (function () {
     // STEP 2 data and methods.
     self.existing_insurance = ko.observable(null);
     self.replacing_insurance = ko.observable(null);
-    self.is_employee_actively_at_work = ko.observable(null);
 
     // Todo - Move to health_questions.js, and cache the ProductHealthQuestions objects if necessary.
     self.selected_product_health_questions = ko.computed(function () {
@@ -1598,7 +1662,11 @@ var wizard_viewmodel = (function () {
         return new health_questions.ProductHealthQuestions(
           product_cov,
           options.spouse_questions,
-          options.health_questions
+          options.health_questions,
+          options.employee_questions,
+          self.applicant_list,
+          self.enrollment_case.omit_actively_at_work,
+          self.is_employee_actively_at_work
         );
       });
     });
@@ -2281,39 +2349,6 @@ var wizard_viewmodel = (function () {
 
     //region HI/ACC Helpers
 
-    self.get_simple_coverage_options = ko.pureComputed(function () {
-      // FIXME: code not finished or being called yet
-      var options = [
-        {
-          label: self.employee().first(),
-          coverage: new SimpleCoverageOption({premium: 1.00, value: 'EE'})
-        }
-      ];
-
-      if (self.should_include_spouse_in_table()) {
-        options.push({
-          label: self.employee().first() + ' + ' + self.spouse().first(),
-          coverage: new SimpleCoverageOption({premium: 2.00, value: 'ES'})
-        });
-      }
-
-      if (self.should_include_children_in_table()) {
-        options.push({
-          label: self.employee().first() + ' + Children',
-          coverage: new SimpleCoverageOption({premium: 1.50, value: 'EC'})
-        });
-      }
-
-      if (self.should_include_spouse_in_table() && self.should_include_children_in_table()) {
-        options.push({
-          label: 'All Family',
-          coverage: new SimpleCoverageOption({premium: 2.50, value: 'EF'})
-        });
-      }
-
-      return options;
-    });
-
     self.has_spouse = ko.computed(function () {
       return !!self.spouse();
     });
@@ -2328,6 +2363,47 @@ var wizard_viewmodel = (function () {
       } else {
         return self.employee().first();
       }
+    });
+    //endregion
+
+    //region Actively at Work
+    self.aaw_yes_class = ko.pureComputed(function () {
+      return self.is_employee_actively_at_work() === true ? 'btn-success' : '';
+    });
+    self.aaw_no_class = ko.pureComputed(function () {
+      return self.is_employee_actively_at_work() === false ? 'btn-danger' : '';
+    });
+
+    self.aaw_yes = function () {
+      self.is_employee_actively_at_work(true);
+    };
+    self.aaw_no = function () {
+      self.is_employee_actively_at_work(false);
+      bootbox.dialog({
+        title: 'Actively at Work',
+        message: 'All enrollments require the primary applicant to be "Actively at work". You may not proceed with this enrollment.',
+        buttons: {
+          stop: {
+            className: 'btn-danger',
+            label: 'Stop Enrollment',
+            callback: self.exit_application
+          },
+          "continue": {
+            label: 'Ignore and Continue',
+            className: 'btn-default'
+          }
+        }
+      });
+    };
+
+    self.aaw_is_yes = ko.pureComputed(function () {
+      return self.is_employee_actively_at_work() === true;
+    });
+    self.aaw_is_no = ko.pureComputed(function () {
+      return self.is_employee_actively_at_work() === false;
+    });
+    self.employee_or_first = ko.pureComputed(function () {
+      return self.employee().first() ? self.employee().first() : 'employee';
     });
     //endregion
 

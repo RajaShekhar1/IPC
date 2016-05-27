@@ -321,7 +321,6 @@
                                     </label>
                                   </div>
                                 </div>
-
                               </div>
                             {% endif %}
                             {% if not case_has_enrollments %}
@@ -358,35 +357,51 @@
                             <div class="col-sm-12">
                               <h4 class="header lighter blue">Product Configuration</h4>
 
-                              <div class="row">
+                              <div class="row" data-bind="if: has_general_product_configuration_options">
+                                <div class="col-xs-10 col-md-offset-1">
+                                  <div class="panel panel-default">
+                                    <div class="panel-heading panel-title">General Product Settings</div>
+                                    <div class="panel-body">
 
-                                <div class="form-group"
-                                     data-bind="visible: $root.is_case_occupation_class_eligible()">
+                                      <div class="form-group col-xs-10 col-md-offset-1"
+                                           data-bind="visible: $root.has_fpp_products">
+                                        <input id="omit-actively-at-work" name="omit-actively-at-work" class="ace"
+                                               type="checkbox" data-bind="checked: omit_actively_at_work">
+                                        <label class="lbl" for="omit-actively-at-work"> Omit 'Actively at Work'
+                                          question</label>
+                                      </div>
 
-                                  <label class="col-md-3 control-label">Occupation Classes</label>
-                                  <div class="col-md-9">
-                                    <div>
-                                      <div
-                                          data-bind="template: { name: 'occupationClassTemplate', foreach: occupation_classes, as: 'occupation_class' }"></div>
-                                      <script type="text/html" id="occupationClassTemplate">
+                                      <div class="row"
+                                           data-bind="if: $root.is_case_occupation_class_eligible()">
+                                        <h4 class="header lighter blue col-xs-12">Occupation Classes</h4>
+                                      </div>
+                                      <div class="form-group col-xs-10 col-md-offset-1"
+                                           data-bind="if: $root.is_case_occupation_class_eligible()">
+
                                         <div>
-                                          <span data-bind="text: label"></span>
-                                          <span> </span>
-                                          <button class="btn btn-sm btn-white btn-inverse middle"
-                                                  title="Click to delete this occupation class"
-                                                  data-bind="click: $parent.removeOccupationClass">
-                                            <i class="ace-icon fa fa-trash-o"></i>
+                                          <input class="ace" size="10" id="new-occupation-class"
+                                                 data-bind="textInput: new_occupation_class">
+                                          <button class="btn btn-xs btn-success" data-bind="click: addOccupationClass,
+                                        enable: is_new_occupation_class_valid">
+                                            <i class="ace-icon fa fa-plus white"></i>
+                                            Add new
                                           </button>
                                         </div>
-                                      </script>
-                                      <div>
-                                        <input class="ace" size="10" id="new-occupation-class"
-                                               data-bind="textInput: new_occupation_class">
-                                        <button class="btn btn-sm btn-success" data-bind="click: addOccupationClass,
-                                        enable: is_new_occupation_class_valid">
-                                          <i class="ace-icon fa fa-plus white"></i>
-                                          Add new
-                                        </button>
+                                        <div>
+                                          <div
+                                              data-bind="template: { name: 'occupationClassTemplate', foreach: occupation_classes, as: 'occupation_class' }"></div>
+                                          <script type="text/html" id="occupationClassTemplate">
+                                            <div>
+                                              <span data-bind="text: label"></span>
+                                              <span> </span>
+                                              <button class="btn btn-sm btn-white btn-inverse middle"
+                                                      title="Click to delete this occupation class"
+                                                      data-bind="visible: label !== 'Default', click: $parent.removeOccupationClass">
+                                                <i class="ace-icon fa fa-trash-o"></i>
+                                              </button>
+                                            </div>
+                                          </script>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -417,7 +432,7 @@
                                       {# Occupation Class Mappings #}
                                       <div class="form-group"
                                            data-bind="visible: $root.is_product_occupation_class_eligible(product)">
-                                        <h4 class="header lighter blue">Occupation Classes</h4>
+                                        <h4 class="header lighter blue">Occupation Class Mappings</h4>
                                         <table
                                             data-bind="foreach: { data: $parent.occupation_classes_for_product($data), as: 'occupation' }">
                                           <tr>
@@ -428,8 +443,8 @@
                                               <select data-bind="options: $root.get_rate_levels_for_product_code(product.base_product_type),
                                                 optionsText: 'name',
                                                 optionsValue: 'value',
-                                                value: value,
-                                                optionsCaption: 'Not mapped'">
+                                                value: value">
+                                                value: value">
                                               </select>
                                             </td>
                                           </tr>
@@ -645,175 +660,187 @@
 
               </div>
               <div class="row">
-{#                <div class="col-md-12 agent-splits-section">#}
-{#                  <form class="form-horizontal" id="edit-agent-splits-form">#}
-{#                    <div class="widget-box">#}
-{#                      <div class="widget-header">#}
-{#                        <div class="row">#}
-{#                          <h3 class="col-xs-6">Agent Split Settings</h3>#}
-{#                          <h3 class="col-md-3 col-md-offset-3 active-switch text-right">#}
-{#                            <label>#}
-{#                              {{ case_setup_form.has_agent_splits(class_="ace ace-switch btn-empty", **{'data-bind': 'checked: has_agent_splits'})|safe }}#}
-{#                              <span class="lbl"></span>#}
-{#                            </label>#}
-{#                          </h3>#}
-{#                        </div>#}
-{#                      </div>#}
-{#                      <div class="widget-body">#}
-{#                        <div class="widget-main">#}
-{#                          <div class="row">#}
-{#                            <div class="col-xs-12">#}
-{#                              <div class="panel form-group">#}
-{#                                <div class="panel-body" data-bind="slideDownIf: !has_agent_splits()">#}
-{#                                  <p>Agent splits are not currently active.</p>#}
-{#                                </div>#}
-{#                                <div class="panel-body" data-bind="slideDownIf: has_agent_splits()">#}
-{#                                  <div class="agent-splits-setup" data-bind="visible: $root.has_products">#}
-{#                                    <div id="save-success" class="alert alert-block alert-success"#}
-{#                                         style="display: none;">#}
-{#                                      <strong><i class="ace-icon fa fa-check"></i></strong>#}
-{#                                      Successfully saved agent split settings.#}
-{#                                    </div>#}
-{#                                    <div id="save-fail" class="alert alert-danger" style="display: none;">#}
-{#                                      <strong><i class="ace-icon fa fa-exclamation-triangle"></i></strong>#}
-{#                                      Failed to save agent split settings.#}
-{#                                    </div>#}
-{#                                    <div class="row">#}
-{#                                      <div class="col-xs-12">#}
-{#                                        <h2 class="header lighter blue">Current Splits</h2>#}
-{#                                        <div class="form-group"#}
-{#                                             data-bind="foreach: { data: $root.products, as: 'product' }">#}
-{#                                          <h3 class="col-sm-12" data-bind="text: product.name"></h3>#}
-{#                                          <br>#}
-{#                                          <h4 class="col-sm-8">Agent</h4>#}
-{#                                          <h4 class="col-sm-4">%</h4>#}
-{#                                          <div data-bind="foreach: { data: $root.selected_agents, as: 'agent_id' }">#}
-{#                                            <!-- ko with: $root.get_or_create_split(agent_id, product.id) -->#}
-{#                                            <div class="col-sm-12" data-bind="if: !valid()">#}
-{#                                              <div class="alert alert-block alert-danger">#}
-{#                                                Agents must be either the case owner or a partner agent to have a#}
-{#                                                commission split.#}
-{#                                              </div>#}
-{#                                            </div>#}
-{#                                            <br>#}
-{#                                            <div class="col-sm-8">#}
-{#                                              <div#}
-{#                                                  data-bind="attr: { id: 'product' + product_id }, text: $root.get_agent_name_from_id(agent_id)"></div>#}
-{#                                            </div>#}
-{#                                            <div class="col-sm-4">#}
-{#                                              <input type="number" min="0" max="100" class="ace"#}
-{#                                                     data-bind="value: split_percentage">#}
-{#                                            </div>#}
-{#                                            <!-- /ko -->#}
-{#                                          </div>#}
-{#                                          <br>#}
-{#                                        </div>#}
-{#                                        <div class="form-group" data-bind="visible: unused_agents().length > 0">#}
-{#                                          <div class="col-sm-3 col-sm-offset-3">#}
-{#                                            <select data-bind="value: selected_agent,#}
-{#                                              options: unused_agents,#}
-{#                                              optionsText: function(agent) {#}
-{#                                                return agent.first+' '+agent.last;#}
-{#                                              },#}
-{#                                              optionsCaption: 'Choose an agent...'">#}
-{#                                            </select>#}
-{#                                          </div>#}
-{#                                          <div class="col-sm-6">#}
-{#                                            <a href="javascript:void();" class="btn btn-sm btn-primary"#}
-{#                                               data-bind="click: add_agent_split">Add Agent Split</a>#}
-{#                                          </div>#}
-{#                                        </div>#}
-{#                                        <h2 class="header lighter blue">Subcounts</h2>#}
-{#                                        <div class="col-xs-12">#}
-{#                                          <div class="row"#}
-{#                                               data-bind="foreach: { data: $root.products, as: 'product' }">#}
-{#                                            <a style="cursor: pointer"#}
-{#                                               data-bind="click: $root.show_product_subcount_modal('product_' + product.id)">#}
-{#                                              <h4>Subcounts for <span data-bind="text: product.name"></span></h4></a>#}
-{##}
-{#                                            <div data-bind="attr: { id: 'product_' + product.id }" class="modal fade"#}
-{#                                                 tabindex="-1" role="dialog">#}
-{#                                              <div class="modal-dialog">#}
-{#                                                <div class="modal-content">#}
-{#                                                  <div class="modal-header">#}
-{#                                                    <button type="button" class="close" data-dismiss="modal"#}
-{#                                                            aria-label="Close"><span aria-hidden="true">&times;</span>#}
-{#                                                    </button>#}
-{#                                                    <h4 class="modal-title">Subcounts for <span#}
-{#                                                        data-bind="text: product.name"></span></h4>#}
-{#                                                  </div>#}
-{#                                                  <div class="modal-body">#}
-{#                                                    <div class="row">#}
-{#                                                      <h4 class="col-sm-8">Agent Name</h4>#}
-{#                                                      <h4 class="col-sm-4">Subcount Code</h4>#}
-{#                                                    </div>#}
-{#                                                    <div#}
-{#                                                        data-bind="foreach: { data: $root.case_agents, as: 'agent' }">#}
-{#                                                      <div class="row">#}
-{#                                                        <!-- ko with: $root.get_or_create_split(agent.id, product.id) -->#}
-{#                                                        <label class="col-sm-8"#}
-{#                                                               data-bind="text: $root.get_agent_name_from_id(agent_id)"></label>#}
-{#                                                        <input type="text"#}
-{#                                                               data-bind="value: commission_subcount_code">#}
-{#                                                        <!-- /ko -->#}
-{#                                                      </div>#}
-{#                                                    </div>#}
-{#                                                  </div>#}
-{#                                                  <div class="modal-footer">#}
-{#                                                    <button type="button" class="btn btn-default" data-dismiss="modal">#}
-{#                                                      Close#}
-{#                                                    </button>#}
-{#                                                    <button type="button" class="btn btn-primary" data-bind="#}
-{#                                                        disable: !$root.can_edit_case,#}
-{#                                                        click: $root.save_settings,#}
-{#                                                        css: {'btn-primary': $root.has_unsaved_data(), 'btn-default': !$root.has_unsaved_data()}">#}
-{#                                                      Save#}
-{#                                                    </button>#}
-{#                                                  </div>#}
-{#                                                </div><!-- /.modal-content -->#}
-{#                                              </div><!-- /.modal-dialog -->#}
-{#                                            </div><!-- /.modal -->#}
-{##}
-{#                                            <div class="label"#}
-{#                                                 data-bind="css: {#}
-{#                                                    'label-success': $root.are_agent_splits_complete(product.id),#}
-{#                                                    'label-danger': !$root.are_agent_splits_complete(product.id)#}
-{#                                                  }">#}
-{#                                              <i class="ace-icon fa bigger-120"#}
-{#                                                 data-bind="css: {#}
-{#                                                  'fa-check': $root.are_agent_splits_complete(product.id),#}
-{#                                                  'fa-exclamation': !$root.are_agent_splits_complete(product.id)#}
-{#                                                  }"></i>#}
-{#                                            <span#}
-{#                                                data-bind="text: $root.get_agent_splits_completion_status(product.id)"></span>#}
-{#                                            </div>#}
-{#                                          </div>#}
-{#                                        </div>#}
-{#                                      </div>#}
-{#                                      <hr>#}
-{#                                    </div>#}
-{#                                  </div>#}
-{#                                  <div data-bind="visible: !$root.has_products()">#}
-{#                                    <p>At least one product must be selected to edit agent splits.</p>#}
-{#                                  </div>#}
-{#                                </div>#}
-{#                              </div>#}
-{#                            </div>#}
-{#                          </div>#}
-{#                          <div class="widget-toolbox clearfix padding-8">#}
-{#                            <div class="pull-right clearfix">#}
-{#                              <button type="submit" class="btn btn-primary" data-bind="visible: has_agent_splits,#}
-{#                        disable: !can_edit_case,#}
-{#                        click: save_settings,#}
-{#                        css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}">Save#}
-{#                              </button>#}
-{#                            </div>#}
-{#                          </div>#}
-{#                        </div>#}
-{#                      </div>#}
-{#                    </div>#}
-{#                  </form>#}
-{#                </div>#}
+                <div class="col-md-12 agent-splits-section">
+                  <form class="form-horizontal" id="edit-agent-splits-form">
+                    <div class="widget-box">
+                      <div class="widget-header">
+                        <div class="row">
+                          <h3 class="col-xs-6">Agent Split Settings</h3>
+                          <h3 class="col-md-3 col-md-offset-3 active-switch text-right">
+                            <label>
+                              {{ case_setup_form.has_agent_splits(class_="ace ace-switch btn-empty", **{'data-bind': 'checked: has_agent_splits'})|safe }}
+                              <span class="lbl"></span>
+                            </label>
+                          </h3>
+                        </div>
+                      </div>
+                      <div class="widget-body">
+                        <div class="widget-main">
+                          <div class="row">
+                            <div class="col-xs-12">
+                              <div class="panel form-group">
+                                <div class="panel-body" data-bind="slideDownIf: !has_agent_splits()">
+                                  <p>Agent splits are not currently active.</p>
+                                </div>
+                                <div class="panel-body" data-bind="slideDownIf: has_agent_splits()">
+                                  <div class="agent-splits-setup" data-bind="visible: $root.has_products">
+                                    <div id="save-success" class="alert alert-block alert-success"
+                                         style="display: none;">
+                                      <strong><i class="ace-icon fa fa-check"></i></strong>
+                                      Successfully saved agent split settings.
+                                    </div>
+                                    <div id="save-fail" class="alert alert-danger" style="display: none;">
+                                      <strong><i class="ace-icon fa fa-exclamation-triangle"></i></strong>
+                                      Failed to save agent split settings.
+                                    </div>
+                                    <div class="row">
+                                      <div class="col-xs-12">
+                                        <h2 class="header lighter blue">Current Splits</h2>
+                                        <div class="form-group"
+                                             data-bind="foreach: { data: $root.products, as: 'product' }">
+                                          <h3 class="col-xs-12">
+                                            <span data-bind="text: product.name"></span>
+                                            <span class="label label-success"
+                                                  data-bind="if: $root.get_product_split_percentage_complete_computed(product.id)">
+                                              <i class="ace-icon fa fa-check"></i>
+                                              <span>Complete</span>
+                                            </span>
+                                            <span class="label label-danger"
+                                                  data-bind="ifnot: $root.get_product_split_percentage_complete_computed(product.id)">
+                                              <i class="ace-icon fa fa-exclamation"></i>
+                                              <span>Incomplete</span>
+                                            </span>
+                                          </h3>
+                                          <br>
+                                          <h4 class="col-sm-8">Agent</h4>
+                                          <h4 class="col-sm-4">%</h4>
+                                          <div data-bind="foreach: { data: $root.selected_agents, as: 'agent_id' }">
+                                            <!-- ko with: $root.get_or_create_split(agent_id, product.id) -->
+                                            <div class="col-sm-12" data-bind="if: !valid()">
+                                              <div class="alert alert-block alert-danger">
+                                                Agents must be either the case owner or a partner agent to have a
+                                                commission split.
+                                              </div>
+                                            </div>
+                                            <br>
+                                            <div class="col-sm-8">
+                                              <div
+                                                  data-bind="attr: { id: 'product' + product_id }, text: $root.get_agent_name_from_id(agent_id)"></div>
+                                            </div>
+                                            <div class="col-sm-4">
+                                              <input type="number" min="0" max="100" class="ace"
+                                                     data-bind="value: split_percentage">
+                                            </div>
+                                            <!-- /ko -->
+                                          </div>
+                                          <br>
+                                        </div>
+                                        <div class="form-group" data-bind="visible: unused_agents().length > 0">
+                                          <div class="col-sm-3 col-sm-offset-3">
+                                            <select data-bind="value: selected_agent,
+                                              options: unused_agents,
+                                              optionsText: function(agent) {
+                                                return agent.first+' '+agent.last;
+                                              },
+                                              optionsCaption: 'Choose an agent...'">
+                                            </select>
+                                          </div>
+                                          <div class="col-sm-6">
+                                            <a href="javascript:void();" class="btn btn-sm btn-primary"
+                                               data-bind="click: add_agent_split">Add Agent Split</a>
+                                          </div>
+                                        </div>
+                                        <h2 class="header lighter blue">Subcounts</h2>
+                                        <div class="col-xs-12">
+                                          <div class="row"
+                                               data-bind="foreach: { data: $root.products, as: 'product' }">
+                                            <a style="cursor: pointer"
+                                               data-bind="click: $root.show_product_subcount_modal('product_' + product.id)">
+                                              <h4>Subcounts for <span data-bind="text: product.name"></span></h4></a>
+
+                                            <div data-bind="attr: { id: 'product_' + product.id }" class="modal fade"
+                                                 tabindex="-1" role="dialog">
+                                              <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                  <div class="modal-header">
+                                                    <button type="button" class="close" data-dismiss="modal"
+                                                            aria-label="Close"><span aria-hidden="true">&times;</span>
+                                                    </button>
+                                                    <h4 class="modal-title">Subcounts for <span
+                                                        data-bind="text: product.name"></span></h4>
+                                                  </div>
+                                                  <div class="modal-body">
+                                                    <div class="row">
+                                                      <h4 class="col-sm-8">Agent Name</h4>
+                                                      <h4 class="col-sm-4">Subcount Code</h4>
+                                                    </div>
+                                                    <div
+                                                        data-bind="foreach: { data: $root.case_agents, as: 'agent' }">
+                                                      <div class="row">
+                                                        <!-- ko with: $root.get_or_create_split(agent.id, product.id) -->
+                                                        <label class="col-sm-8"
+                                                               data-bind="text: $root.get_agent_name_from_id(agent_id)"></label>
+                                                        <input type="text"
+                                                               data-bind="value: commission_subcount_code">
+                                                        <!-- /ko -->
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                  <div class="modal-footer">
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                                                      Close
+                                                    </button>
+                                                    <button type="button" class="btn btn-primary" data-bind="
+                                                        disable: !$root.can_edit_case,
+                                                        click: $root.save_settings,
+                                                        css: {'btn-primary': $root.has_unsaved_data(), 'btn-default': !$root.has_unsaved_data()}">
+                                                      Save
+                                                    </button>
+                                                  </div>
+                                                </div><!-- /.modal-content -->
+                                              </div><!-- /.modal-dialog -->
+                                            </div><!-- /.modal -->
+
+                                            <div class="label"
+                                                 data-bind="css: {
+                                                    'label-success': $root.are_agent_splits_complete(product.id),
+                                                    'label-danger': !$root.are_agent_splits_complete(product.id)
+                                                  }">
+                                              <i class="ace-icon fa bigger-120"
+                                                 data-bind="css: {
+                                                  'fa-check': $root.are_agent_splits_complete(product.id),
+                                                  'fa-exclamation': !$root.are_agent_splits_complete(product.id)
+                                                  }"></i>
+                                            <span
+                                                data-bind="text: $root.get_agent_splits_completion_status(product.id)"></span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <hr>
+                                    </div>
+                                  </div>
+                                  <div data-bind="visible: !$root.has_products()">
+                                    <p>At least one product must be selected to edit agent splits.</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="widget-toolbox clearfix padding-8">
+                            <div class="pull-right clearfix">
+                              <button type="submit" class="btn btn-primary" data-bind="visible: has_agent_splits,
+                        disable: !can_edit_case,
+                        click: save_settings,
+                        css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}">Save
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
           {% endif %}
@@ -1097,6 +1124,31 @@ we load from the server at run time for page speed
     </div>
 
 
+    {# Modal for deleting an occupation class that has applicants #}
+    <div id="occupation-deletion-warning" class="modal fade">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Delete Occupation Class</h4>
+          </div>
+          <div class="modal-body">
+            <p><strong>WARNING:</strong> Removing this Occupation Class will also remove it from any census record using
+              that designation. Do you still want to delete this?</p>
+          </div>
+          <div class="modal-footer">
+            <div class="pull-right">
+              <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button class="btn btn-warning" data-dismiss="modal" data-bind="click: $root.confirm_remove_occupation_class">
+                Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 
@@ -1247,6 +1299,8 @@ we load from the server at run time for page speed
     </div>
   </script>
 
+
+
   <loading-modal params="options: loading_modal"></loading-modal>
 
 
@@ -1269,17 +1323,13 @@ we load from the server at run time for page speed
               <div class="form-panel modal-panel form-horizontal">
                 <div class="form-group">
                   <div class="control-label col-sm-3">
-                    <label>Send To</label>
+                    <label for="send_type">Send To</label>
                   </div>
                   <div class="col-sm-9">
-                    <select class="form-control" data-bind="value: send_type" name="send_type">
-                      <option data-bind="text: numbers.not_sent()+' employees who have not been sent a link'"
-                              value="not-sent"></option>
-                      <option
-                          data-bind="text: numbers.not_enrolled()+' employees who have neither enrolled nor declined'"
-                          value='not-enrolled'></option>
-                      <option data-bind="text: numbers.declined()+' employees who have declined'"
-                              value='declined'></option>
+                    <select class="form-control" data-bind="value: send_type" id="send_type" name="send_type">
+                      <option value="not-sent">Employees who have not been sent a link</option>
+                      <option value='not-enrolled'>Employees who have neither enrolled nor declined</option>
+                      <option value='declined'>Employees who have declined</option>
                     </select>
                   </div>
                 </div>
@@ -1754,6 +1804,14 @@ we load from the server at run time for page speed
 
       // Done setting up, set dirty to false again since applying the bindings sometimes triggers a change.
       window.case_settings.is_data_dirty(false);
+
+      // Function to prevent remove occupation being called when enter is pressed on the add occupation text input
+      $('#new-occupation-class').keypress(function (e) {
+        if (e.which == 13) {
+          e.preventDefault();
+          window.case_settings.addOccupationClass();
+        }
+      });
     });
   </script>
 {% endblock %}

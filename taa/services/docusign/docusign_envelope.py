@@ -129,8 +129,6 @@ class EnrollmentDataWrap(object):
             return agent_service.get_logged_in_agent()
         elif self.data.get('agent_id'):
             return agent_service.get(self.data['agent_id'])
-        elif not flask.has_request_context():
-            return None
         else:
             # If the logged-in user is not an agent, default to case owner.
             return self.case.owner_agent
@@ -376,6 +374,16 @@ class EnrollmentDataWrap(object):
 
     def should_use_call_center_workflow(self):
         return self.case.should_use_call_center_workflow
+
+    def get_actively_at_work(self):
+        product = self.get_product()
+        # TODO: Possibly change the output value of this in the future
+        if product.is_fpp() and product.is_guaranteed_issue() and self.case.omit_actively_at_work:
+            return 'GI'
+        else:
+            if product.is_fpp() and self.case.omit_actively_at_work and not product.is_guaranteed_issue():
+                return ''
+        return 'yes' if self.data['is_employee_actively_at_work'] else 'no'
 
 # For employee signing sessions
 def build_callback_url(wizard_data, session_type):

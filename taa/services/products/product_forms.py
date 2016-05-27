@@ -1,11 +1,9 @@
-
 from .states import all_statecodes
 
 from taa.helpers import JsonSerializable
 
 
 class ProductFormService(object):
-
     def get_application_form_template_id(self, base_product_code, statecode):
         form = self.form_for_product_code_and_state(base_product_code, statecode)
         return form.docusign_template_id
@@ -36,7 +34,7 @@ class ProductFormService(object):
             if statecode in form.statecodes:
                 return form
 
-        raise Exception("No form exists for product '%s' in state '%s'"%(base_product_code, statecode))
+        raise Exception("No form exists for product '%s' in state '%s'" % (base_product_code, statecode))
 
     def get_replacement_forms_for_product(self, base_product_code):
         return get_replacement_forms().get(base_product_code, [])
@@ -45,6 +43,10 @@ class ProductFormService(object):
         return [
             fpp_spouse_treated_6_months,
             fpp_spouse_disabled_6_months,
+        ]
+
+    def get_employee_questions(self):
+        return [
         ]
 
 
@@ -75,12 +77,24 @@ class SOHQuestion(JsonSerializable):
         )
 
 
-class SpouseGIQuestion(JsonSerializable):
-    def __init__(self, label, question, is_ignored=False):
+class GIQuestion(JsonSerializable):
+    def __init__(self, label, question, is_ignored=False, is_employee_only=False, is_spouse_only=False):
         self.label = label
         self.question_text = question
         self.is_ignored = is_ignored
-        self.is_spouse_only = True
+        self.is_employee_only = is_employee_only
+        self.is_spouse_only = is_spouse_only
+
+
+class EmployeeGIQuestion(GIQuestion):
+    def __init__(self, label, question, is_ignored=False):
+        super(EmployeeGIQuestion, self).__init__(label, question, is_ignored, True, False)
+
+
+class SpouseGIQuestion(GIQuestion):
+    def __init__(self, label, question, is_ignored=False):
+        super(SpouseGIQuestion, self).__init__(label, question, is_ignored, False, True)
+
 
 # FPP Spouse Questions
 fpp_spouse_treated_6_months = SpouseGIQuestion(
@@ -88,18 +102,24 @@ fpp_spouse_treated_6_months = SpouseGIQuestion(
     "During the prior 6 months, other than for routine medical care, has your spouse been diagnosed or treated by a member of the medical profession in a hospital or any other medical facility?",
     is_ignored=True,
 )
-fpp_spouse_disabled_6_months = SpouseGIQuestion("Spouse Disabled 6 Months", 'Has <span data-bind="$root.spouse().name"></span> been <a href="#modal-disabled-definition" data-toggle="modal">disabled</a> in the prior 6 months or received disability payments?')
+fpp_spouse_disabled_6_months = SpouseGIQuestion("Spouse Disabled 6 Months",
+                                                'Has <span data-bind="$root.spouse().name"></span> been <a href="#modal-disabled-definition" data-toggle="modal">disabled</a> in the prior 6 months or received disability payments?')
 
+# Employee Is Actively at Work Question
+fpp_employee_actively_at_work = EmployeeGIQuestion(
+    'Employee Actively at Work',
+    '',
+)
 
 # Common SOH Questions used in most applications
 
 aids_question = SOHQuestion('HIV/AIDS',
                             'Has any Applicant been diagnosed or treated by a member of the medical profession, or tested positive for: Human Immunodeficiency Virus (HIV), Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?')
 
-CA_CT_aids_question = SOHQuestion('HIV/AIDS', 'Has any Applicant been diagnosed or treated by a member of the medical profession for Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?')
+CA_CT_aids_question = SOHQuestion('HIV/AIDS',
+                                  'Has any Applicant been diagnosed or treated by a member of the medical profession for Acquired Immune Deficiency Syndrome (AIDS), or AIDS-Related Complex (ARC)?')
 ever_been_rejected_question = SOHQuestion('Ever been rejected',
                                           'Has any Applicant ever applied for and been rejected for life insurance?')
-
 
 hospitalized_question = SOHQuestion('Hospital 90 days',
                                     'Has any Applicant been hospitalized in the past 90 days?')
@@ -125,70 +145,76 @@ fpp_generic_soh_list = [
 
 ca_ct_soh_list = [CA_CT_aids_question] + [q for q in fpp_generic_soh_list[1:]]
 fl_soh_list = [
-    SOHQuestion('HIV/AIDS', 'Has any Applicant tested positive for exposure to the HIV infection or been diagnosed as having ARC or AIDS caused by the HIV infection or other sickness or condition derived from such infection?'),
+    SOHQuestion('HIV/AIDS',
+                'Has any Applicant tested positive for exposure to the HIV infection or been diagnosed as having ARC or AIDS caused by the HIV infection or other sickness or condition derived from such infection?'),
     ever_been_rejected_question,
     hospitalized_question,
-    SOHQuestion('Heart', 'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?'),
-    SOHQuestion('Cancer', 'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession or taken prescription medication for any form of cancer to include leukemia or Hodgkin\'s Disease (excluding non-invasive, non-melanoma skin cancer)?'),
-    SOHQuestion('Respiratory', 'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?'),
-    SOHQuestion('Liver', 'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?'),
+    SOHQuestion('Heart',
+                'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession or taken prescription medication for Angina, heart attack, stroke, heart bypass surgery, angioplasty, coronary artery stenting, or coronary artery disease?'),
+    SOHQuestion('Cancer',
+                'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession or taken prescription medication for any form of cancer to include leukemia or Hodgkin\'s Disease (excluding non-invasive, non-melanoma skin cancer)?'),
+    SOHQuestion('Respiratory',
+                'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession or taken prescription medication for Chronic obstructive pulmonary disease (COPD), emphysema, or any other chronic respiratory disorder, excluding asthma?'),
+    SOHQuestion('Liver',
+                'In the past 5 years, has any Applicant been hospitalized for, been diagnosed or treated by a licensed member of the medical profession or taken prescription medication for Alcoholism or drug or alcohol abuse, cirrhosis, hepatitis, or any other disease of the liver?'),
 ]
 
 # Some common forms between FPPTI and FPPCI
-fpp_de_sd_vi_form = ApplicationForm('DE, SD & VI FPP', ['DE', 'SD', 'VI'], fpp_generic_soh_list, docusign_template_id='5CCB952F-AEF5-4017-B46F-B1770B430DE5')
+fpp_de_sd_vi_form = ApplicationForm('DE, SD & VI FPP', ['DE', 'SD', 'VI'], fpp_generic_soh_list,
+                                    docusign_template_id='5CCB952F-AEF5-4017-B46F-B1770B430DE5')
 fpp_ca_form = ApplicationForm('CA', ['CA'], ca_ct_soh_list, docusign_template_id='D3CFC594-2E46-427D-904A-6DBEF6B6207D')
 fpp_ct_form = ApplicationForm('CT', ['CT'], ca_ct_soh_list, docusign_template_id='79D81EE3-25A3-4967-A58B-9D9B9716836F')
-fpp_dc_form = ApplicationForm('DC', ['DC'], fpp_generic_soh_list, docusign_template_id='138851E3-3B66-47DC-89DA-D953C6F618A5')
+fpp_dc_form = ApplicationForm('DC', ['DC'], fpp_generic_soh_list,
+                              docusign_template_id='138851E3-3B66-47DC-89DA-D953C6F618A5')
 fpp_fl_form = ApplicationForm('FL', ['FL'], fl_soh_list, docusign_template_id='6047EF30-473B-4148-A674-34C94E194ED2')
-fpp_nd_form = ApplicationForm('ND', ['ND'], fpp_generic_soh_list, docusign_template_id='5C8FE7F1-6DCC-46F5-BA03-C5F16FB8F50B')
-
+fpp_nd_form = ApplicationForm('ND', ['ND'], fpp_generic_soh_list,
+                              docusign_template_id='5C8FE7F1-6DCC-46F5-BA03-C5F16FB8F50B')
 
 # Common Group CI questions
 group_ci_family_member_history_question = SOHQuestion('Family Member History',
                                                       "Have 2 or more family members (natural parents, brothers or sisters) both before age 60 been diagnosed with or died from the same condition: of cancer, heart disease, stroke or kidney disease; or, both before age 75, of colorectal cancer, Alzheimer's or Senile Dementia?"
-)
+                                                      )
 group_ci_diagnosed_question = SOHQuestion('Ever Diagnosed or Treated',
                                           'Has the proposed insured ever been diagnosed or treated for any of the following: Heart Attack, Angioplasty, Coronary Artery Bypass, Stroke, Transient Ischemic Attack, Cancer (excluding non-invasive, non-melanoma Skin Cancer), End-Stage Renal Disease, Liver Cirrhosis, Hepatitis B or C (including Carrier), Multiple Sclerosis, Paralysis, Diabetes (other than during pregnancy), Organ or Bone Marrow Transplant, Alzheimer\'s or Senile Dementia, HIV, AIDS, or AIDS-Related Complex (ARC)?'
-)
+                                          )
 group_ci_alternate_diagnosed_question = SOHQuestion('Ever Diagnosed or Treated',
                                                     'Has the proposed insured ever been diagnosed or treated for any of the following: Heart Attack, Angioplasty, Coronary Artery Bypass, Stroke, Transient Ischemic Attack, Cancer (excluding non-invasive, non-melanoma Skin Cancer), End-Stage Renal Disease, Liver Cirrhosis, Hepatitis B or C (including Carrier), Multiple Sclerosis, Paralysis, Diabetes (other than during pregnancy), Organ or Bone Marrow Transplant, or Alzheimer\'s or Senile Dementia?',
-)
+                                                    )
 
 group_ci_heart_question = SOHQuestion("5yr Heart",
                                       "In the last 5 (FIVE) years, has the proposed insured been diagnosed with or treated for any heart disease (including angina) or any kidney disease except non-chronic kidney stones or infections?",
                                       skip_if_coverage_at_most=10000,
-)
+                                      )
 group_ci_hypertension_question = SOHQuestion("5yr Hypertension / Cholesterol",
                                              "In the last 5 (FIVE) years, has the proposed insured been diagnosed with or treated for uncontrolled high blood pressure (hypertension) and/or uncontrolled elevated cholesterol?",
                                              skip_if_coverage_at_most=10000,
-)
+                                             )
 group_ci_lung_question = SOHQuestion("5yr Lung / Colon",
                                      "In the last 5 (FIVE) years, has the proposed insured been diagnosed with or treated for Lung disease requiring hospitalization, colitis, or Crohn's?",
                                      skip_if_coverage_at_most=10000,
-)
+                                     )
 group_ci_skin_question = SOHQuestion("5yr Skin Cancer",
                                      "In the last 5 (FIVE) years, has the proposed insured been diagnosed with or treated for any Skin Cancer or/and Precancerous Lesions/Tumors?",
                                      skip_if_coverage_at_most=10000,
-)
+                                     )
 group_ci_hpv_question = SOHQuestion("5yr HPV/HSV",
                                     "In the last 5 (FIVE) years, has the proposed insured been diagnosed with or treated for any Human Papilomavirus (HPV), Herpes Simplex Virus (HSV), chlamydia, or gonorrhea?",
                                     skip_if_coverage_at_most=10000,
-)
+                                    )
 group_ci_abnormal_question = SOHQuestion("Abnormal Results",
                                          "In the past 2 (TWO) years, has the proposed insured been informed by a member of the medical profession of any abnormal test results or been advised to have any diagnostic tests or procedures which have not yet been completed?",
                                          skip_if_coverage_at_most=10000,
-)
+                                         )
 group_ci_ever_rejected_question = SOHQuestion("Ever been rejected",
                                               "Has the proposed insured ever applied for and been rejected for a Critical Illness, Cancer, Heart or Stroke insurance policy?",
                                               skip_if_coverage_at_most=10000,
-)
+                                              )
 
 group_ci_ca_health_insurance_question = SOHQuestion("Existing Comprehensive Coverage",
                                                     "Is the proposed insured covered by an individual or group insurance policy that provides medical, hospital, and surgical coverage? (Persons without comprehensive medical coverage are not eligible for this coverage.)",
                                                     skip_if_coverage_at_most=10000,
                                                     is_ignored=True,
-)
-
+                                                    )
 
 states_without_FPPTI_only = ['IN']
 states_without_FPPCI_only = ['CT', 'PA']
@@ -222,16 +248,16 @@ def get_product_application_forms():
 
             ApplicationForm('Generic',
                             [s for s in all_statecodes if s not in
-                            # These states do not do the TI product or have a custom form.
-                            states_without_FPP + states_without_FPPTI_only+states_with_custom_fpp_forms], [
-                aids_question,
-                ever_been_rejected_question,
-                hospitalized_question,
-                heart_question,
-                cancer_question,
-                respiratory_question,
-                liver_question,
-            ], is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC),
+                             # These states do not do the TI product or have a custom form.
+                             states_without_FPP + states_without_FPPTI_only + states_with_custom_fpp_forms], [
+                                aids_question,
+                                ever_been_rejected_question,
+                                hospitalized_question,
+                                heart_question,
+                                cancer_question,
+                                respiratory_question,
+                                liver_question,
+                            ], is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC),
         ],
         'FPPCI': [
             fpp_de_sd_vi_form,
@@ -241,19 +267,19 @@ def get_product_application_forms():
             fpp_nd_form,
 
             ApplicationForm('Generic',
-                [s for s in all_statecodes if s not in
-                            # These states do not do the CI product or have a custom form.
-                            states_without_FPP + states_without_FPPCI_only + states_with_custom_fpp_forms],
-                [
-                    aids_question,
-                    ever_been_rejected_question,
-                    hospitalized_question,
-                    heart_question,
-                    cancer_question,
-                    respiratory_question,
-                    liver_question
-                ],
-                is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC),
+                            [s for s in all_statecodes if s not in
+                             # These states do not do the CI product or have a custom form.
+                             states_without_FPP + states_without_FPPCI_only + states_with_custom_fpp_forms],
+                            [
+                                aids_question,
+                                ever_been_rejected_question,
+                                hospitalized_question,
+                                heart_question,
+                                cancer_question,
+                                respiratory_question,
+                                liver_question
+                            ],
+                            is_generic=True, docusign_template_id=TEMPLATE_ID_FPP_GENERIC),
         ],
 
         # FPP-White (FPP-Gov), FPP-Blue, and FPP-Gray are handled below by copying FPP-TI
@@ -564,6 +590,7 @@ ACC_STATECODES = [
     'WI',
     'WY',
 ]
+
 
 class ReplacementForm(object):
     def __init__(self, statecodes, docusign_template_id, paragraphs):
@@ -918,6 +945,7 @@ def get_replacement_forms():
         'FPP-Gov': fpp_forms,
         'FPPTIB': fpp_forms,
         'FPPTIY': fpp_forms,
+        'FPPTIW': fpp_forms,
         'ACC': fpp_forms,
         'HI': fpp_forms,
     }

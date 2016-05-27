@@ -12,6 +12,7 @@ class CensusRecordField(object):
     """
     Defines a column for the uploaded CSV census data
     """
+
     def __init__(self, csv_column_name, database_name, preprocessor, validators,
                  post_processors=None):
         self.parser = None
@@ -48,6 +49,7 @@ class CensusRecordField(object):
 
     def add_validator(self, validator):
         self.validators.append(validator)
+
 
 ##
 # Validators
@@ -141,7 +143,7 @@ def classification_validator(field, record):
     case = parser.case
 
     classification = field.get_column_from_record(record)
-    if not classification:
+    if not classification or classification is None or classification == '' or not case.requires_classification():
         return True, None
 
     from taa.services.cases import CaseService
@@ -164,6 +166,7 @@ class RequiredIfAnyInGroupValidator(object):
             return required_validator(field, record, self.message)
         return True, None
 
+
 ##
 # Data preprocessors
 ##
@@ -184,6 +187,7 @@ def preprocess_product_code(data, record=None):
         return "Group CI"
 
     return val
+
 
 def postprocess_spouse_last(field, data, record):
     "Automatically populate a spouse or child last name if blank"
@@ -275,8 +279,8 @@ def preprocess_y_n(data, record):
     else:
         return 'N'
 
-class CensusRecordParser(object):
 
+class CensusRecordParser(object):
     file_import_service = RequiredFeature('FileImportService')
 
     # Construct the fields and wire up the correct validation
@@ -296,7 +300,8 @@ class CensusRecordParser(object):
     employee_height_inches = CensusRecordField('EMP_HEIGHT_IN', 'employee_height_inches', preprocess_string, [])
     employee_weight_lbs = CensusRecordField('EMP_WEIGHT_LBS', 'employee_weight_lbs', preprocess_string, [])
     employee_smoker = CensusRecordField('EMP_SMOKER_Y_N', 'employee_smoker', preprocess_y_n, [])
-    employee_occupation_class = CensusRecordField('CLASSIFICATION', 'occupation_class', preprocess_string, [classification_validator])
+    employee_occupation_class = CensusRecordField('CLASSIFICATION', 'occupation_class', preprocess_string,
+                                                  [classification_validator])
     # Spouse
     spouse_first = CensusRecordField('SP_FIRST', 'spouse_first', preprocess_string, [])
     spouse_last = CensusRecordField('SP_LAST', 'spouse_last', preprocess_string, [], [postprocess_spouse_last])
@@ -320,10 +325,10 @@ class CensusRecordParser(object):
         validator = RequiredIfAnyInGroupValidator(
             spouse_fields,
             message=u"{} is required if any of the following are provided: {}".format(field.csv_column_name,
-                                          ', '.join([f.csv_column_name
-                                                     for f in spouse_fields
-                                                     if f is not field])
-                                          ))
+                                                                                      ', '.join([f.csv_column_name
+                                                                                                 for f in spouse_fields
+                                                                                                 if f is not field])
+                                                                                      ))
         # If any in group provided, all must be valid
         field.add_validator(validator)
         # Also require this field if the SSN was provided
@@ -457,7 +462,8 @@ class CensusRecordParser(object):
         missing_headers = self._get_missing_headers(headers)
         if missing_headers:
             missing_msg = ', '.join(missing_headers)
-            self.error_message(u"The following required columns are missing from the uploaded file: {}".format(missing_msg))
+            self.error_message(
+                u"The following required columns are missing from the uploaded file: {}".format(missing_msg))
 
     def get_error_headers(self, field_name):
         headers = ['EMP_FIRST', 'EMP_LAST']
@@ -509,7 +515,7 @@ class CensusRecordParser(object):
             record[field.csv_column_name] = field.postprocess(val, record)
 
     fields_by_column_name = {field.csv_column_name:
-                             field for field in all_possible_fields}
+                                 field for field in all_possible_fields}
 
     def get_field_from_csv_column(self, column):
         return self.fields_by_column_name.get(column)

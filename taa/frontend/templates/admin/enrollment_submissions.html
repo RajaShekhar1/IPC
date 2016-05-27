@@ -1,0 +1,169 @@
+{% extends "base_ace_latest.html" %}
+
+
+{% block content %}
+  <div class="container">
+    <h3>Submissions</h3>
+    <table class="table table-striped" id="submissions">
+      <thead>
+      <tr>
+        <th>Id</th>
+        <th>Status</th>
+        <th>Time</th>
+        <th>Submission Type</th>
+        <th></th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody data-bind="foreach: submissions">
+      <tr>
+        <td data-bind="text: id"></td>
+        <td><span class="label"
+                  data-bind="text: status_display, css: get_submission_status_label_class($data.status)"></span></td>
+        <td data-bind="text: time"></td>
+        <td data-bind="text: type_display"></td>
+        <td>
+          <button class="btn btn-xs" data-bind="click: toggle_showing_applications, visible: has_applications">View
+            Applications
+          </button>
+        </td>
+        <td>
+          <button class="btn btn-xs" data-bind="click: toggle_showing_logs, visible: has_logs">View Logs</button>
+        </td>
+      </tr>
+
+      <!-- Logs Dropdown -->
+      <tr class="collapse" data-bind="css: 'logs_' + $data.id">
+        <td></td>
+        <td colspan="5"><h5>Logs for Submission <span data-bind="text: id"></span></h5></td>
+      </tr>
+      <tr class="collapse" data-bind="css: 'logs_' + $data.id">
+        <th></th>
+        <th>Id</th>
+        <th>Status</th>
+        <th>Time</th>
+        <th>Message</th>
+        <th></th>
+      </tr>
+      <!-- ko foreach: logs -->
+      <tr class="collapse" data-bind="css: 'logs_' + $parent.id">
+        <td></td>
+        <td data-bind="text: id"></td>
+        <td><span class="label"
+                  data-bind="text: _.capitalize($data.status), css: get_submission_status_label_class($data.status)"></span>
+        </td>
+        <td data-bind="text: format_datetime($data.time)"></td>
+        <td data-bind="text: message"></td>
+        <td></td>
+      </tr>
+      <!-- /ko -->
+
+      <!-- Applications Dropdown -->
+      <tr class="collapse" data-bind="css: 'applications_' + $data.id">
+        <td></td>
+        <td colspan="5"><h5>Applications for Submission <span data-bind="text: id"></span></h5></td>
+      </tr>
+      <tr class="collapse" data-bind="css: 'applications_' + $data.id">
+        <th></th>
+        <th>Id</th>
+        <th>Case</th>
+        <th>Products</th>
+        <th></th>
+        <th></th>
+      </tr>
+      <!-- ko foreach: applications -->
+      <tr class="collapse" data-bind="css: 'applications_' + $parent.id">
+        <td></td>
+        <td data-bind="text: id"></td>
+        <td data-bind="with: $data.case"><a
+            data-bind="attr: { 'href': '/enrollment-case/' + id }, text: company_name"></a></td>
+        <td data-bind="text: create_product_display_string($data.case)"></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <!-- /ko -->
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+
+{% block page_js %}
+  <script>
+    function create_product_display_string(case_data) {
+      var product_codes = _.map(case_data.products, function (product) { return product.code; });
+      product_codes = _.sortBy(product_codes);
+      return product_codes.join(', ');
+    }
+
+    function format_datetime(datetime) {
+      return datetime.format('YYYY-MM-DD') + ' at ' + datetime.format('h:mm a');
+    }
+
+    function get_submission_status_label_class(status) {
+      switch (status) {
+        case 'success':
+          return 'label-success';
+        case 'failure':
+          return 'label-danger';
+        case 'processing':
+          return 'label-info';
+        case 'pending':
+          return 'label-warning';
+        default:
+          return 'label-default'
+      }
+    }
+
+    function SubmissionViewModel(submission) {
+      'use strict';
+      var self = this;
+
+      self.id = submission.id;
+      self.status = submission.status;
+      self.product_id = submission.product_id;
+      self.created_at = moment(submission.created_at);
+      self.data = submission.data;
+      self.type = submission.submission_type;
+
+      // Additional variables
+      self.time = format_datetime(self.created_at);
+      self.type_display = _.capitalize(self.type);
+      self.status_display = _.capitalize(self.status);
+      self.label_class = get_submission_status_label_class(self.status);
+
+      self.logs = _.chain(submission.submission_logs)
+          .map(function (log) {
+            log.time = moment(log.processing_time);
+            return log;
+          })
+          .sortByOrder(['time'], ['desc'])
+          .value();
+      self.applications = _.chain(submission.enrollment_applications)
+          .sortBy('id')
+          .value();
+
+      self.has_logs = self.logs.length > 0;
+      self.has_applications = self.applications.length > 0;
+
+      // Functions
+      self.toggle_showing_logs = function toggle_showing_logs() {
+        $('.logs_' + self.id).collapse('toggle');
+      };
+      self.toggle_showing_applications = function toggle_showing_applications() {
+        $('.applications_' + self.id).collapse('toggle');
+      }
+    }
+
+    function SubmissionsViewModel(submissions) {
+      'use strict';
+      var self = this;
+
+      self.submissions = ko.observableArray(_.map(submissions, function (submission) { return new SubmissionViewModel(submission); }));
+    }
+
+    var submissions = {{ submissions | tojson | safe }};
+    var viewModel = new SubmissionsViewModel(submissions);
+    window.viewModel = viewModel;
+    ko.applyBindings(viewModel);
+  </script>
+{% endblock %}

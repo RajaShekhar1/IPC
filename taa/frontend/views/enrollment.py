@@ -224,8 +224,12 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         soh_questions[product.id] = StatementOfHealthQuestionService().get_health_questions(product, state)
 
     spouse_questions = {}
+    employee_questions = {}
+    health_question_service = LookupService('StatementOfHealthQuestionService')
+    """:type: taa.services.products.StatementOfHealthQuestionService"""
     for product in products:
-        spouse_questions[product.id] = StatementOfHealthQuestionService().get_spouse_questions(product, state)
+        employee_questions[product.id] = health_question_service.get_employee_questions(product, state)
+        spouse_questions[product.id] = health_question_service.get_spouse_questions(product, state)
 
     # New wizard formatting for multiproduct.
     applicants = []
@@ -271,10 +275,12 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'record_id': record_id,
             'product_height_weight_tables': height_weight_tables,
             'occupations': occupations,
+            'omit_actively_at_work': case.omit_actively_at_work,
         },
         applicants=applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in case.products],
         payment_modes=payment_mode_choices,
+        employee_questions=employee_questions,
         spouse_questions=spouse_questions,
         health_questions=soh_questions,
         any_fpp_product=any_fpp_product,
@@ -312,13 +318,19 @@ def self_enrollment(company_name, uuid):
     case = self_enrollment_link_service.get_case_for_link(uuid)
 
     is_self_enrollable = True
-    if setup.self_enrollment_type == setup.TYPE_CASE_GENERIC:
+
+    # Determine if we need to disallow due to products.
+    if case and setup and setup.self_enrollment_type == setup.TYPE_CASE_GENERIC:
         for product in case.products:
             if product.code in ['ACC', 'HI']:
                 # Disallow generic-link self-enrollment cases containing
                 # these products
                 is_self_enrollable = False
                 break
+                
+    if case_service.requires_occupation(case) and census_record.occupation_class not in map(lambda cr: cr['label'],
+                                                                                            case.occupation_class_settings):
+        is_self_enrollable = False
 
     vars = {'is_valid': False, 'allowed_states': []}
     if setup is not None and is_self_enrollable:
@@ -433,17 +445,24 @@ def submit_wizard_data():
     log_user_agent()
 
     # Hotfix 4/5/2016: Attempt to track down user data that is causing blank address data.
-    fix_missing_address_bug(wizard_results)
-    
+    if not are_all_products_declined(wizard_results):
+        fix_missing_address_bug(wizard_results)
+
     try:
         enrollment = process_wizard_submission(case, wizard_results)
 
         # Store the enrollment record ID in the session for now so we can access it on the landing page.
         session['enrollment_application_id'] = enrollment.id
 
-        # Queue this call for a worker process to handle.
-        enrollment_submission_service = LookupService('EnrollmentSubmissionService')
-        enrollment_submission_service.submit_wizard_enrollment(enrollment)
+        if are_all_products_declined(wizard_results):
+            return get_declined_response(wizard_results)
+
+        accepted_products = get_accepted_products(case, get_accepted_product_ids(json.loads(enrollment.standardized_data)))
+
+        if any(p for p in accepted_products if p.does_generate_form()):
+            # Queue this call for a worker process to handle.
+            enrollment_submission_service = LookupService('EnrollmentSubmissionService')
+            enrollment_submission_service.submit_wizard_enrollment(enrollment)
 
         return jsonify(**{
             'error': False,
@@ -507,6 +526,9 @@ def process_wizard_submission(case, wizard_results):
     enrollment_application = get_or_create_enrollment(case, census_record, standardized_data, wizard_results)
     db.session.commit()
 
+    submission_service = LookupService('EnrollmentSubmissionService')
+    submission_service.create_submissions_for_application(enrollment_application)
+
     return enrollment_application
 
 
@@ -522,15 +544,15 @@ def check_submission_status():
     received_enrollment_data = json.loads(enrollment.received_data)
     standardized_enrollment_data = json.loads(enrollment.standardized_data)
 
+    generates_form = any(
+        p for p in get_accepted_products(enrollment.case, get_accepted_product_ids(json.loads(enrollment.standardized_data))) if
+        p.does_generate_form())
+
     if are_all_products_declined(received_enrollment_data):
         # Declined enrollment, return redirect to our landing page.
-        redirect_url = url_for('ds_landing_page',
-                               event='decline',
-                               name=received_enrollment_data[0]['employee']['first'],
-                               type='inperson' if received_enrollment_data[0][
-                                                      "method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
-                               )
-        return jsonify(status="declined", redirect_url=redirect_url)
+        return get_declined_response(received_enrollment_data)
+    elif not generates_form:
+        return jsonify(status="ready", redirect_url='/enrollment-case/%d#enrollment' % enrollment.case.id)
     elif enrollment.docusign_envelope_id is not None:
         # Done processing this envelope, get the signing URL
         envelope = DocusignEnvelope(enrollment.docusign_envelope_id, enrollment_record=enrollment)
@@ -541,8 +563,26 @@ def check_submission_status():
         return jsonify(status="pending")
 
 
+def get_declined_response(received_enrollment_data):
+    redirect_url = url_for('ds_landing_page',
+                           event='decline',
+                           name=received_enrollment_data[0]['employee']['first'],
+                           type='inperson' if received_enrollment_data[0][
+                                                  "method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
+                           )
+    return jsonify(status="declined", redirect_url=redirect_url)
+
+
 def are_all_products_declined(standardized_data):
     return all(map(lambda data: data.get('did_decline'), standardized_data))
+
+
+def get_accepted_product_ids(standardized_data):
+    return [int(d['product_id']) for d in standardized_data if not d.get('did_decline', False)]
+
+
+def get_accepted_products(case, accepted_product_ids):
+    return [p for p in case.products if p.id in accepted_product_ids]
 
 
 # def submit_enrollment_to_docusign(case, enrollment_application, enrollment_data, standardized_data, wizard_results):
@@ -557,7 +597,7 @@ def are_all_products_declined(standardized_data):
 def get_enrollment_agent(case):
     # For self-enroll situations, the owner agent is used
     agent = agent_service.get_logged_in_agent()
-    if (agent is None and session.get('is_self_enroll')):
+    if agent is None:
         agent = case.owner_agent
     return agent
 

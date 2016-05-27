@@ -15,6 +15,8 @@ class WizardPage(PageBase):
     EE_SSN = '#eessn'
     EE_MARRIED_CHECK = '.is_married'
     EE_INCLUDE_CHILDREN_CHECK = '.include_children'
+    EE_ACTIVELY_AT_WORK_YES = '.aaw-yes'
+    EE_ACTIVELY_AT_WORK_NO = '.aaw-no'
 
     EE_GENDER_MALE = 'input[type=radio,name=gender,value=male]'
     EE_GENDER_FEMALE = 'input[type=radio,name=gender,value=female]'
@@ -142,9 +144,15 @@ class WizardPage(PageBase):
             (self.EE_LAST, 'emp_last'),
         ]
         self.enter_text_data_if_provided(text_fields, data)
+
         # Handle birthdate specially due to mask
         if data.get('emp_birthdate'):
             self.enter_employee_val_js("birthdate", data['emp_birthdate'])
+
+        if data.get('actively_at_work'):
+            self.lookup(self.EE_ACTIVELY_AT_WORK_YES).click()
+        elif 'actively_at_work' in data and not data['actively_at_work']:
+            self.lookup(self.EE_ACTIVELY_AT_WORK_NO).click()
 
     def enter_text_data_if_provided(self, text_fields, data):
         for vals in text_fields:
@@ -214,6 +222,7 @@ class WizardPage(PageBase):
             employee_birthdate='01311980',
             is_married=False,
             include_children=False,
+            actively_at_work=True,
         ))
 
     def select_custom_coverage(self, applicant, amount):

@@ -14,10 +14,10 @@ from enrollment_application_coverages import (
     select_most_recent_coverage,
 )
 from taa.helpers import UnicodeCsvWriter
-from models import EnrollmentApplication, EnrollmentApplicationCoverage
+from models import EnrollmentApplication, EnrollmentApplicationCoverage, EnrollmentSubmission
 from taa import JSONEncoder
 from taa.core import DBService, db
-from taa.services import RequiredFeature
+from taa.services import RequiredFeature, LookupService
 
 
 class EnrollmentApplicationService(DBService):
@@ -36,8 +36,8 @@ class EnrollmentApplicationService(DBService):
                            by_applicant_signing_status=None, by_agent_signing_status=None):
         q = db.session.query(EnrollmentApplication)
         q = q.options(db.eagerload('coverages').joinedload('product')
-                  ).options(db.joinedload('census_record')
-                  ).options(db.joinedload('case'))
+                      ).options(db.joinedload('census_record')
+                                ).options(db.joinedload('case'))
 
         if by_envelope_url:
             q = q.filter(EnrollmentApplication.docusign_envelope_id == by_envelope_url)
@@ -111,7 +111,6 @@ class EnrollmentApplicationService(DBService):
         envelope = DocusignEnvelope(enrollment_application.docusign_envelope_id, enrollment_application)
         envelope.update_enrollment_status()
 
-
     def delete_case_enrollment_data(self, case):
         for census_record in case.census_records:
             self.delete_enrollment_data(census_record)
@@ -148,29 +147,16 @@ class EnrollmentApplicationService(DBService):
             agent_id = None
 
         # Use the first record in a multiproduct setting to create the main enrollment record.
-        if isinstance(wizard_data, list):
-            data = wizard_data[0]
-            if all(map(lambda d: d['did_decline'], wizard_data)):
-                application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
-            elif census_record.case.should_use_call_center_workflow:
-                application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
-            else:
-                application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
-        else:
-            data = wizard_data
-            if data['did_decline']:
-                application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
-            else:
-                # We are likely importing the data and we don't have to say 'pending' since there is no signing process.
-                application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+        application_status = self.get_application_status(census_record, wizard_data)
 
+        data = self.get_first_wizard_data_record(wizard_data)
         given_sig_time = data.get('time_stamp')
         signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
 
         if data['employee_beneficiary'] == 'spouse':
             emp_beneficiary_name = u'{} {}'.format(data['spouse']['first'],
-                                                  data['spouse']['last'])
-            emp_beneficiary_ssn =  self._strip_ssn(data['spouse']['ssn'])
+                                                   data['spouse']['last'])
+            emp_beneficiary_ssn = self._strip_ssn(data['spouse']['ssn'])
             emp_beneficiary_relation = 'spouse'
             emp_beneficiary_dob = data['spouse']['birthdate']
         else:
@@ -181,7 +167,7 @@ class EnrollmentApplicationService(DBService):
 
         if data['spouse_beneficiary'] == 'spouse':
             sp_beneficiary_name = u'{} {}'.format(data['employee']['first'],
-                                                 data['employee']['last'])
+                                                  data['employee']['last'])
             sp_beneficiary_ssn = self._strip_ssn(data['employee']['ssn'])
             sp_beneficiary_relation = 'spouse'
             sp_beneficiary_dob = data['employee']['birthdate']
@@ -219,14 +205,14 @@ class EnrollmentApplicationService(DBService):
                 data['spouse_other_owner_ssn']),
             # emp beneficiary
             is_employee_beneficiary_spouse=(data['employee_beneficiary'] ==
-                                              'spouse'),
+                                            'spouse'),
             employee_beneficiary_name=emp_beneficiary_name,
             employee_beneficiary_ssn=emp_beneficiary_ssn,
             employee_beneficiary_relationship=emp_beneficiary_relation,
             employee_beneficiary_birthdate=emp_beneficiary_dob,
             # spouse beneficiary
             is_spouse_beneficiary_employee=(data['spouse_beneficiary'] ==
-                                              'spouse'),
+                                            'spouse'),
             spouse_beneficiary_name=sp_beneficiary_name,
             spouse_beneficiary_ssn=sp_beneficiary_ssn,
             spouse_beneficiary_relationship=sp_beneficiary_relation,
@@ -234,10 +220,33 @@ class EnrollmentApplicationService(DBService):
         )
         return self.create(**enrollment_data)
 
+    def get_application_status(self, census_record, wizard_data):
+        product_service = LookupService('ProductService')
+        """:type: taa.services.products.ProductService"""
+        data = self.get_first_wizard_data_record(wizard_data)
+
+        if isinstance(wizard_data, list):
+            accepted_product_ids = list(d['product_id'] for d in wizard_data if not d['did_decline'])
+            accepted_products = product_service.get_all(*accepted_product_ids)
+            """:type: list[taa.services.products.Product]"""
+            if all(map(lambda d: d['did_decline'], wizard_data)):
+                return EnrollmentApplication.APPLICATION_STATUS_DECLINED
+            elif len(accepted_products) > 0 and all(not p.requires_signature() for p in accepted_products):
+                return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+            elif census_record.case.should_use_call_center_workflow:
+                return EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
+            else:
+                return EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
+        else:
+            if data['did_decline']:
+                application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
+            else:
+                # We are likely importing the data and we don't have to say 'pending' since there is no signing process.
+                application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+        return application_status
 
     def _strip_ssn(self, ssn):
         return ssn.replace('-', '').strip() if ssn else ''
-
 
     def _save_coverages(self, enrollment, all_data):
         # Create coverage record for each applicant / product combination where coverage was selected.
@@ -314,7 +323,8 @@ class EnrollmentApplicationService(DBService):
                 data.append(export_record)
         return data
 
-    def retrieve_enrollment_data_for_table(self, case, offset=None, limit=None, search_text=None, order_column=None, order_dir=None):
+    def retrieve_enrollment_data_for_table(self, case, offset=None, limit=None, search_text=None, order_column=None,
+                                           order_dir=None):
         from taa.services.agents.models import Agent
         from taa.services.cases import CaseCensus
 
@@ -333,19 +343,19 @@ class EnrollmentApplicationService(DBService):
             db.select([
                 db.case([
                     (db.func.sum(EnrollmentApplicationCoverage.weekly_premium) > 0,
-                        db.func.sum(EnrollmentApplicationCoverage.weekly_premium) * 52),
+                     db.func.sum(EnrollmentApplicationCoverage.weekly_premium) * 52),
                     (db.func.sum(EnrollmentApplicationCoverage.biweekly_premium) > 0,
-                        db.func.sum(EnrollmentApplicationCoverage.biweekly_premium) * 26),
+                     db.func.sum(EnrollmentApplicationCoverage.biweekly_premium) * 26),
                     (db.func.sum(EnrollmentApplicationCoverage.semimonthly_premium) > 0,
-                        db.func.sum(EnrollmentApplicationCoverage.semimonthly_premium) * 24),
+                     db.func.sum(EnrollmentApplicationCoverage.semimonthly_premium) * 24),
                     (db.func.sum(EnrollmentApplicationCoverage.monthly_premium) > 0,
-                        db.func.sum(EnrollmentApplicationCoverage.monthly_premium) * 12)
-                    ],
+                     db.func.sum(EnrollmentApplicationCoverage.monthly_premium) * 12)
+                ],
                     else_=0
                 )
             ],
             ).where(EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id
-            ).label('total_premium')
+                    ).label('total_premium')
         )
 
         query = query.join(CaseCensus, CaseCensus.id == EnrollmentApplication.census_record_id)
@@ -360,7 +370,7 @@ class EnrollmentApplicationService(DBService):
                 query = query.filter(db.or_(
                     CaseCensus.employee_first.ilike(u'{}%'.format(text_snippet)),
                     CaseCensus.employee_last.ilike(u'{}%'.format(text_snippet)),
-                    #CaseCensus.employee_email.ilike('{}%'.format(text_snippet)),
+                    # CaseCensus.employee_email.ilike('{}%'.format(text_snippet)),
                     EnrollmentApplication.application_status.ilike(u'{}%'.format(text_snippet)),
                     Agent.first.ilike(u'{}%'.format(text_snippet)),
                     Agent.last.ilike(u'{}%'.format(text_snippet)),
@@ -393,8 +403,8 @@ class EnrollmentApplicationService(DBService):
 
     def get_enrollment_status(self, census_record):
         # Get the flattened enrollment record
-        #enrollment_data = self.get_enrollment_data(census_record)
-        #return (enrollment_data['application_status']
+        # enrollment_data = self.get_enrollment_data(census_record)
+        # return (enrollment_data['application_status']
         #        if enrollment_data else None)
 
         enrollment_records = census_record.enrollment_applications
@@ -414,6 +424,23 @@ class EnrollmentApplicationService(DBService):
 
     def get_census_data(self, census_record):
         return census_record.to_json()
+
+    def get_standardized_enrollment_json(self, census_record):
+        "Normalizes the JSON data as a list of standardized enrollment data."
+        
+        out = []
+        for enrollment_application in census_record.enrollment_applications:
+            if not enrollment_application.standardized_data:
+                continue
+            
+            json_data = json.loads(enrollment_application.standardized_data)
+
+            if isinstance(json_data, list):
+                out += json_data
+            else:
+                out += [json_data]
+
+        return out
 
     def get_enrollment_data(self, census_record):
         # TODO: Only get_enrollment_status is using this right now,
@@ -510,32 +537,50 @@ class EnrollmentApplicationService(DBService):
         # Include the calculated total annualized premium also
         total_annual_premium = Decimal('0.00')
 
+        product_service = LookupService('ProductService')
+        """:type: taa.services.products.ProductService"""
+
         # Export coverages for at most six products
-        product_list = self.case_service.get_products_for_case(enrollment.case)
+        product_ids = census_record.get_product_ids()
+        # Keep this conversion of the set to tuple to prevent SQLAlchemy from throwing an exception due to not being
+        # able to accept lists or sets
+        product_ids = product_ids
+        product_list = list()
+        for product_id in product_ids:
+            product_list.append(product_service.get(product_id))
         for x in range(6):
             if x < len(product_list):
                 product = product_list[x]
+                """:type: taa.services.products.Product"""
             else:
                 product = None
             prefix = 'product_{0}'.format(x + 1)
             product_data = {u'{}_name'.format(prefix): product.name if product else ''}
 
             total_product_premium = Decimal('0.00')
+
             for applicant_abbr, applicant_coverages in (('emp',
                                                          employee_coverage),
                                                         ('sp',
                                                          spouse_coverage),
                                                         ('ch',
                                                          children_coverage)):
+                coverage = ''
+                premium = ''
+                annualized_premium = ''
                 if applicant_coverages.get(product):
                     applicant_coverage = applicant_coverages[product]
-                    coverage = applicant_coverage.coverage_face_value
-                    premium = applicant_coverage.get_premium()
-                    annualized_premium = applicant_coverage.get_annualized_premium()
-                else:
-                    coverage = ''
-                    premium = ''
-                    annualized_premium = ''
+                    if product is not None and product.is_simple_coverage():
+                        coverage = 'Included' if product.is_applicant_covered(applicant_coverage.applicant_type,
+                                                                              applicant_coverage.coverage_selection) \
+                            else 'Not Included '
+                        if applicant_coverage.applicant_type == 'employee':
+                            premium = applicant_coverage.get_premium()
+                            annualized_premium = applicant_coverage.get_annualized_premium()
+                    else:
+                        coverage = applicant_coverage.coverage_face_value
+                        premium = applicant_coverage.get_premium()
+                        annualized_premium = applicant_coverage.get_annualized_premium()
 
                 product_data.update({
                     '{}_{}_coverage'.format(prefix, applicant_abbr): coverage,
@@ -574,7 +619,7 @@ class EnrollmentApplicationService(DBService):
         return {
             p: select_most_recent_coverage(coverages)
             for p, coverages in coverages_by_product.iteritems()
-        }
+            }
 
     def find_first_coverage_by_product_for_applicant_type(self, all_coverages,
                                                           applicant_type):
@@ -587,7 +632,7 @@ class EnrollmentApplicationService(DBService):
             p: coverages[0]
             for p, coverages in coverages_by_product.iteritems()
             if coverages
-        }
+            }
 
     def export_enrollment_data(self, data):
         stream = StringIO.StringIO()
@@ -620,13 +665,32 @@ class EnrollmentApplicationService(DBService):
         return self.__model__.query.filter(self.__model__.signature_time >= from_,
                                            self.__model__.signature_time <= to_)
 
+    # noinspection PyMethodMayBeStatic
+    def get_applications_by_submission_date(self, start_date=None, end_date=None):
+        query = db.session.query(EnrollmentApplication) \
+            .join(EnrollmentApplication.enrollment_submissions) \
+            .filter(EnrollmentSubmission.submission_type == EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION)
+
+        if start_date is not None:
+            query.filter(EnrollmentSubmission.created_at >= start_date)
+        if end_date is not None:
+            query.filter(EnrollmentSubmission.created_at <= end_date)
+
+        return query.all()
+
     def sync_enrollment_with_docusign(self, enrollment_application_id):
         enrollment_application = self.get(enrollment_application_id)
         if enrollment_application and enrollment_application.docusign_envelope_id and not enrollment_application.is_terminal_status():
             self.update_applicant_signing_status(enrollment_application)
 
-    # Need to commit all database changes.
-    db.session.commit()
+        # Need to commit all database changes.
+        db.session.commit()
+
+    def get_first_wizard_data_record(self, wizard_data):
+        if isinstance(wizard_data, list):
+            return wizard_data[0]
+        else:
+            return wizard_data
 
 
 def export_string(val):
@@ -643,7 +707,7 @@ def export_ssn(self, val):
     if not val:
         return ''
     elif len(val) == 9:
-        return val[:4]+'-'+val[4:6]+'-'+val[6:]
+        return val[:4] + '-' + val[4:6] + '-' + val[6:]
 
     return val
 
@@ -699,10 +763,9 @@ enrollment_columns = [
     EnrollmentColumn('spouse_beneficiary_ssn', 'Spouse Beneficiary SSN', export_ssn),
 ]
 
-
 # Include columns for the coverage/premium information for up to six products
 coverage_columns = [EnrollmentColumn('total_annual_premium', 'Total Annual Premium', export_string)]
-for product_num in range(1, 6+1):
+for product_num in range(1, 6 + 1):
     product_coverage_cols = [
         EnrollmentColumn('product_{}_name'.format(product_num),
                          'Product {} Name'.format(product_num),
@@ -720,9 +783,9 @@ for product_num in range(1, 6+1):
                                                              dependent_abbr.upper()),
                              export_string),
             EnrollmentColumn('product_{}_{}_premium'.format(product_num,
-                                                             dependent_abbr),
+                                                            dependent_abbr),
                              'Product {} {} Premium'.format(product_num,
-                                                             dependent_abbr.upper()),
+                                                            dependent_abbr.upper()),
                              export_string),
         ]
     coverage_columns += product_coverage_cols

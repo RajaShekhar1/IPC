@@ -47,14 +47,24 @@
             </div>
           </div>
         </div>
+        <div class="row" data-bind="if: $root.requires_actively_at_work">
+          <div class="form-group col-xs-11 col-xs-offset-1 col-sm-4 col-sm-offset-2">
+            <label>Is <span data-bind="text: $root.employee_or_first"></span> <a href="#actively_at_work_modal" data-toggle="modal">actively at work?</a> </label>
+            <div class="btn-group">
+              <button class="btn btn-default btn-xs aaw-yes" data-bind="click: $root.aaw_yes, css: $root.aaw_yes_class">
+                <i class="icon glyphicon glyphicon-ok" data-bind="visible: $root.aaw_is_yes"></i>
+                Yes
+              </button>
+              <button class="btn btn-default btn-xs aaw-no" data-bind="click: $root.aaw_no, css: $root.aaw_no_class">
+                <i class="icon glyphicon glyphicon-remove" data-bind="visible: $root.aaw_is_no"></i>
+                No
+              </button>
+            </div>
+            <div class="error" data-bind="visible: $root.show_aaw_error">Actively at Work must be answered</div>
+            <div class="error" data-bind="visible: $root.show_aaw_response_error">Cannot obtain coverage unless "actively at work"<br>- either change status or select "Cancel" below</div>
 
-{#        <div class="row" data-bind="if: should_show_occupation">#}
-{#          <div class="form-group col-xs-11 col-xs-offset col-sm-4 col-sm-offset-2">#}
-{#            <label for="occupation">Occupation</label>#}
-{#            <select id="occupation" name="occupation" class="ace"#}
-{#                    data-bind="options: occupations, optionsText: 'label', selectedOptions: selected_occupation, optionsCaption: '(Choose Occupation)'"></select>#}
-{#          </div>#}
-{#        </div>#}
+          </div>
+        </div>
 
       </div>
 
@@ -440,8 +450,7 @@
 
           <div class="widget-body">
             <div class="widget-main no-padding" data-bind="
-                    template: {name: 'recommendations_template', data: recommendation_set}
-                    ">
+                    template: {name: 'recommendations_template', data: recommendation_set}">
             </div>
 
             <div data-bind="click: function() {$parent.select_recommended_coverage(recommendation_set);}">
@@ -510,7 +519,7 @@
 
 
 <script id="simple_coverage_selection" type="text/html">
-  <a href="#" data-bind="attr: { href: $data.product.product_data.brochure_url }">See this brochure for details</a>
+  <a href="#" target="_blank" data-bind="attr: { href: $data.product.product_data.brochure_url }">See this brochure for details</a>
   <div class="row">
     <div class="col-xs-4 col-sm-3 col-xs-offset-2 col-sm-offset-3 pricing-span-header">
       <div class="widget-box transparent">
@@ -520,7 +529,7 @@
         <div class="widget-body">
           <div class="widget-main no-padding">
             <ul class="list-unstyled list-striped js"
-                data-bind="foreach: { data: product.get_coverage_tiers(), as: 'coverage_tier' }">
+                data-bind="foreach: { data: product.get_coverage_tiers($root.applicant_types()), as: 'coverage_tier' }">
               <li>
                 <label>
                   <span data-bind="text: $parent.get_label_for_coverage_tier(coverage_tier)"></span>
@@ -543,7 +552,7 @@
           <div class="widget-body">
             <div class="widget-main no-padding">
               <ul class="list-unstyled list-striped pricing-table"
-                  data-bind="foreach: { data: product.get_coverage_tiers(), as: 'coverage_tier' }">
+                  data-bind="foreach: { data: product.get_coverage_tiers($root.applicant_types()), as: 'coverage_tier' }">
                 <li data-bind="text: $parent.get_coverage_rate_for_tier(coverage_tier)"></li>
               </ul>
             </div>

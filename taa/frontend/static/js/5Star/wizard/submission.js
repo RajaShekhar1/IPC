@@ -9,7 +9,7 @@ function submit_application() {
   });
 
   var please_wait_dialogue = bootbox.dialog({
-    message: "Generating application form(s) for signature. Please wait, this make take a minute...",
+    message: "Preparing application for submission. Please wait, this make take a minute...",
     buttons: {
       //"success": {
       //  "label": "Close",
@@ -283,7 +283,7 @@ function submit_decline() {
       });
     } else {
       // redirect
-      location = resp.redirect;
+      location = resp.redirect_url;
     }
   }, handle_remote_error, true);
 
