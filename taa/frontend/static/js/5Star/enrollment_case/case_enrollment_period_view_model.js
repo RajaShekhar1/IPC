@@ -1,7 +1,7 @@
 var CaseEnrollmentPeriod = function CaseEnrollmentPeriod(period) {
   var self = this;
   var defaults = {
-    period_type: "annual_period",
+    period_type: "ongoing",
     case_id: null,
     start_date: "",
     end_date: ""
@@ -9,8 +9,8 @@ var CaseEnrollmentPeriod = function CaseEnrollmentPeriod(period) {
   var settings = $.extend({}, defaults, period);
 
   self.period_type = settings.period_type;
-  self.is_annual = ko.computed(function() {return self.period_type == "annual_period"});
-  self.is_open = ko.computed(function() {return !self.is_annual()});
+  self.is_ongoing = ko.computed(function() {return self.period_type == "ongoing"});
+  self.is_open = ko.computed(function() {return !self.is_ongoing()});
 
   self.case_id = settings.case_id;
 
@@ -33,8 +33,11 @@ var CaseEnrollmentPeriod = function CaseEnrollmentPeriod(period) {
     self.start_date = ko.observable(normalize_date(settings.start_date));
     self.end_date = ko.observable(normalize_date(settings.end_date));
   } else {
+    /* TODO: Maybe parse ongoing period data */
+    /* TODO: Remove
     self.start_date = ko.observable(strip_year(settings.start_date));
     self.end_date = ko.observable(strip_year(settings.end_date));
+    */
   }
 
   // Validates month / day formatted as MM/DD
@@ -52,28 +55,26 @@ var CaseEnrollmentPeriod = function CaseEnrollmentPeriod(period) {
 
   self.is_valid = ko.computed(function() {
     if (self.is_open()) {
-
-      // End date is optional, but must be valid if present.
-      if (self.end_date()) {
-        return (
-          self.is_valid_date(self.start_date())
-          && self.is_valid_date(self.end_date())
-          && parse_date(self.end_date()) >= parse_date(self.start_date())
-        );
-      } else {
-        return self.is_valid_date(self.start_date());
-      }
+      return self.is_valid_date(self.start_date()) && self.is_valid_date(self.end_date());
     } else {
-      return (self.is_valid_month_day(self.start_date()) && self.is_valid_month_day(self.end_date()));
+      /* return (self.is_valid_month_day(self.start_date()) && self.is_valid_month_day(self.end_date())); */
+      return true;
     }
   });
 
   self.serialize = function() {
-    return {
-      period_type: self.period_type,
-      case_id: self.case_id,
-      start_date: self.start_date(),
-      end_date: self.end_date()
+    if(self.is_open()) {
+      return {
+        period_type: self.period_type,
+        case_id: self.case_id,
+        start_date: self.start_date(),
+        end_date: self.end_date()
+      }
+    } else {
+      return {
+        period_type: self.period_type,
+        case_id: self.case_id,
+      }
     }
   };
 };

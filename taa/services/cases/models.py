@@ -173,7 +173,7 @@ class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
     __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
 
     def populate_data_dict(self, data):
-        data['open_enrollment_type'] = self.open_enrollment_type
+        data['open_enrollment_type'] = self.case.open_enrollment_type
         data['open_period_start_date'] = self.start_date if self.start_date else ''
         data['open_period_end_date'] = self.end_date if self.end_date else ''
         return data
@@ -202,6 +202,10 @@ class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
 class CaseOngoingEnrollmentPeriod(CaseEnrollmentPeriod):
     PERIOD_TYPE = u'ongoing'
     __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
+
+    def populate_data_dict(self, data):
+        data['ongoing_enrollment_type'] = self.case.ongoing_enrollment_type
+        return data
 
     def currently_active(self):
         return False

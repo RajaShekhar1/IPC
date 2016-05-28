@@ -193,6 +193,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   }));
   self.situs_city = ko.observable(case_data.situs_city);
 
+
   self.state_choices = settings.all_states;
   self.situs_state = ko.observable(get_state_from_statecode(case_data.situs_state));
 
@@ -342,8 +343,24 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
   */
 
-  self.has_open_enrollment = ko.observable(!!case_data.open_enrollment_type);
-  self.has_ongoing_enrollment = ko.observable(!!case_data.ongoing_enrollment_type);
+  self.has_open_enrollment = ko.computed(function() {
+    var has_open_enrollment = false;
+    _.each(self.enrollment_periods(), function(p) {
+      if(p.is_open()) {
+        has_open_enrollment = true;
+      }
+    });
+    return has_open_enrollment;
+  });
+  self.has_ongoing_enrollment = ko.computed(function() {
+    var has_ongoing_enrollment = false;
+    _.each(self.enrollment_periods(), function(p) {
+      if(p.is_ongoing()) {
+        has_ongoing_enrollment = true;
+      }
+    });
+    return has_ongoing_enrollment;
+  });
 
   console.log(case_data);
 
@@ -356,10 +373,26 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
         return open_period;
       }
       return new CaseEnrollmentPeriod({
-        period_type: "open_period",
+        period_type: "open_with_start",
         case_id: case_data.id,
         start_date: "",
         end_date: ""
+      })
+    }
+    return false;
+  });
+
+  self.get_ongoing_enrollment_period = ko.pureComputed(function () {
+    if(self.has_ongoing_enrollment()) {
+      var ongoing_period = _.find(self.enrollment_periods(), function (p) {
+        return p.is_ongoing();
+      });
+      if(ongoing_period) {
+        return ongoing_period;
+      }
+      return new CaseEnrollmentPeriod({
+        period_type: "ongoing",
+        case_id: case_data.id,
       })
     }
     return false;
@@ -375,8 +408,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return today_between(start, end);
   });
 
-  self.open_enrollment_type = ko.observable();
-  self.ongoing_enrollment_type = ko.observable();
+  self.open_enrollment_type = ko.observable(case_data.open_enrollment_type);
+  self.ongoing_enrollment_type = ko.observable(case_data.ongoing_enrollment_type);
 
   // TODO: Remove
   /*
@@ -1069,11 +1102,13 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     ];
 
     _.each(self.enrollment_periods(), function (p) {
-      fields.push(p.start_date);
-      fields.push(p.end_date);
+      if(p.is_open()) {
+        fields.push(p.start_date);
+        fields.push(p.end_date);
+      }
     });
 
-    $.each(fields, function () {
+    $.each(fields, function (field) {
       var field = this;
       field.subscribe(function () {
         self.is_data_dirty(true);
@@ -1111,7 +1146,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.can_activate_case = ko.pureComputed(function () {
     var is_valid = (
-      self.enrollment_period_type() !== null &&
       self.enrollment_periods().length > 0 &&
       self.products().length > 0 &&
       $.trim(self.company_name()) !== "" &&
@@ -1120,15 +1154,12 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       self.selected_payment_mode() !== null &&
       self.owner_agent_id() > 0
     );
-    // if (self.is_open_enrollment() && !self.get_open_enrollment_period().is_valid()) {
-    //   is_valid = false;
-    // } else if (self.is_annual_enrollment()) {
-    //   // Make sure there is at least one valid period date
-    //   is_valid &= _.any(self.annual_enrollment_periods(), function(p) {
-    //     return p.is_valid();
-    //   });
-    // }
+    if (self.has_open_enrollment() && !self.get_open_enrollment_period().is_valid()) {
+       is_valid = false;
+    } else if (self.has_ongoing_enrollment()) {
+      // Make sure there is at least one valid period date
 
+    }
     return is_valid;
   });
 
@@ -1236,25 +1267,20 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
 
     // an invalid enrollment period (both dates can be blank, but if one is populated, both must be)
-    /* TODO: Rework this
+
     if (self.has_open_enrollment() && !self.get_open_enrollment_period().is_valid()) {
       var start = self.get_open_enrollment_period().start_date();
       var end = self.get_open_enrollment_period().end_date();
-      if (end !== '') {
-        if (!is_valid_date(end)) {
-          add_case_error(errors, "open_enrollment_end_date", "Enter valid End Date");
-        } else if (start === '') {
-          add_case_error(errors, "open_enrollment_start_date", "Enter valid Start Date or both dates blank");
-        }
+      if (end !== '' || !is_valid_date(end)) {
+        add_case_error(errors, "open_enrollment_end_date", "Enter valid End Date");
       }
-      if (start !== '' && !is_valid_date(start)) {
+      if (start !== '' || !is_valid_date(start)) {
         add_case_error(errors, "open_enrollment_start_date", "Enter valid Start Date");
       }
       if (start !== '' && end !== '' && parse_date(start) > parse_date(end)) {
         add_case_error(errors, "open_enrollment_start_date", "Start Date comes after End Date");
       }
     }
-    */
 
     // an invalid annual period (missing start or end)
     // TODO: Remove
@@ -1342,14 +1368,18 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.serialize_enrollment_periods = function () {
+    var periods = [];
     if (self.has_ongoing_enrollment()) {
       // FIND_LATER
       self.ongoing_enrollment_type();
+      var period = self.get_ongoing_enrollment_period();
+      periods.push(period.serialize())
     }
     if(self.has_open_enrollment()) {
       var period = self.get_open_enrollment_period();
-      return [period.serialize()];
+      periods.push(period.serialize())
     }
+    return periods;
   };
 
   function removeHarmfulEmailTags(message) {

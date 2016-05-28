@@ -35,7 +35,6 @@ class CaseEnrollmentPeriodsService(DBService):
     def add_for_case(self, case, period_data):
         periods = []
         for period in period_data:
-            import pdb; pdb.set_trace()
             # TODO: Remove
             # if period['period_type'] == CaseAnnualEnrollmentPeriod.PERIOD_TYPE:
             #     start = self.valid_annual_date(period['start_date'])
@@ -44,7 +43,7 @@ class CaseEnrollmentPeriodsService(DBService):
             #                                               end_date=end,
             #                                               case_id=case.id))
             if period['period_type'] == CaseOngoingEnrollmentPeriod.PERIOD_TYPE:
-                pass
+                periods.append(CaseOngoingEnrollmentPeriod(case_id=case.id))
             elif period['period_type'] == CaseOpenEnrollmentPeriod.PERIOD_TYPE:
                 start = self.valid_date(period['start_date'])
                 end = self.valid_date(period['end_date'])
