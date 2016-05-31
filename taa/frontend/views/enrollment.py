@@ -561,6 +561,11 @@ def check_submission_status():
         return get_declined_response(received_enrollment_data)
     elif not generates_form:
         return jsonify(status="ready", redirect_url='/enrollment-case/%d#enrollment' % enrollment.case.id)
+
+    elif enrollment.did_sign_in_wizard():
+        # This was signed in the wizard, we can go back to the enrollment page.
+        #  Note - may still have a docusign envelope ID since some documents are still submitted that way.
+        return jsonify(status="ready", redirect_url='/enrollment-case/%d#enrollment' % enrollment.case.id)
     elif enrollment.docusign_envelope_id is not None:
         # Done processing this envelope, get the signing URL
         envelope = DocusignEnvelope(enrollment.docusign_envelope_id, enrollment_record=enrollment)

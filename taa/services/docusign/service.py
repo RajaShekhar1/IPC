@@ -55,7 +55,7 @@ class DocuSignService(object):
         # Create and combine components of the envelope from each product.
         components = []
 
-        if case.include_cover_sheet:
+        if case.include_cover_sheet and not enrollment_application.did_sign_in_wizard():
             from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
             components.append(CoverSheetAttachment([in_person_signer], EnrollmentDataWrap(product_submissions[0], case, enrollment_record=enrollment_application), product_submissions))
 
@@ -70,14 +70,15 @@ class DocuSignService(object):
             product = self.product_service.get(product_id)
             if not product.does_generate_form():
                 continue
+
             if product.is_fpp():
                 components += self.create_fpp_envelope_components(enrollment_data, recipients,
                                                                   should_use_docusign_renderer)
-            elif product.is_static_benefit():
+            elif product.is_static_benefit() and not enrollment_application.did_sign_in_wizard():
                 components += self.create_static_benefit_components(enrollment_data, recipients,
                                                                     should_use_docusign_renderer,
                                                                     enrollment_application)
-            else:
+            elif product.is_group_ci():
                 components += self.create_group_ci_envelope_components(enrollment_data, recipients,
                                                                        should_use_docusign_renderer)
 
@@ -199,7 +200,9 @@ class DocuSignService(object):
         # The second part of this statement is meant to restrict this form
         # from showing up when importing enrollments until we implement
         # collecting the Bank Draft data.
-        if fpp_form.should_include_bank_draft() and not enrollment_data.is_import():
+        if (fpp_form.should_include_bank_draft() and
+                not enrollment_data.is_import() and
+                not enrollment_data.should_use_call_center_workflow()):
             components.append(FPPBankDraftFormTemplate(recipients, enrollment_data, should_use_docusign_renderer))
 
         return components
@@ -1167,6 +1170,20 @@ class DocuSignEnvelopeComponent(object):
                                                 document_id=1,
                                                 page_number=tab_def.page,
                                                 ))
+                # All call center enrollments use signing ceremony now, so put the agent sig.
+                elif tab_def.type_ == "SignHere" and tab_def.recipient_role == "Agent":
+                    tabs += [DocuSignTextTab("SignHereAgent", self.data.get_agent_esignature(),
+                                             x=tab_def.x, y=tab_def.y,
+                                             document_id=1, page_number=tab_def.page,
+                                             )]
+                elif tab_def.type_ == "DateSigned" and tab_def.recipient_role == "Agent":
+                    tabs.append(DocuSignTextTab("DateSignedAgent", self.data.get_agent_esignature_date(),
+                                                x=tab_def.x,
+                                                y=tab_def.y,
+                                                document_id=1,
+                                                page_number=tab_def.page,
+                                                ))
+
 
         # This is for enrollment import - replace signatures with text when rendering PDF.
         if self.data.get('emp_sig_txt'):

@@ -1657,6 +1657,9 @@ var wizard_viewmodel = (function () {
       // Mark as signed
       self.agent_signed(true);
 
+      // Close the signing modal.
+      $("#modal-signing-enroller").modal("hide");
+
       submit_application();
     };
 

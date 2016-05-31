@@ -42,6 +42,11 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     signature_state = db.Column(db.Unicode(2))
     identity_token = db.Column(db.UnicodeText)
     identity_token_type = db.Column(db.Unicode(64))
+
+    SIGNATURE_METHOD_DOCUSIGN = u'docusign'
+    SIGNATURE_METHOD_WIZARD = u'wizard'
+    signature_method = db.Column(db.UnicodeText)
+
     # Application status
     APPLICATION_STATUS_ENROLLED = u'enrolled'
     APPLICATION_STATUS_PENDING_AGENT = u'pending_agent'
@@ -152,6 +157,8 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
 
         return product_ids
 
+    def did_sign_in_wizard(self):
+        return self.signature_method == self.SIGNATURE_METHOD_WIZARD
 
 class EnrollmentApplicationCoverageSerializer(JsonSerializable):
     __json_hidden__ = ['enrollment']

@@ -153,6 +153,7 @@ class EnrollmentApplicationService(DBService):
 
         # Use the first record in a multiproduct setting to create the main enrollment record.
         application_status = self.get_application_status(census_record, wizard_data)
+        signature_method = self.get_signature_method(census_record, wizard_data)
 
         data = self.get_first_wizard_data_record(wizard_data)
         given_sig_time = data.get('time_stamp')
@@ -199,6 +200,7 @@ class EnrollmentApplicationService(DBService):
             signature_state=data['enrollState'],
             identity_token=data['identityToken'],
             identity_token_type=data['identityType'],
+            signature_method=signature_method,
             # Owner
             is_employee_owner=data['employee_owner'] != 'other',
             employee_other_owner_name=data['employee_other_owner_name'],
@@ -229,6 +231,7 @@ class EnrollmentApplicationService(DBService):
         product_service = LookupService('ProductService')
         """:type: taa.services.products.ProductService"""
         data = self.get_first_wizard_data_record(wizard_data)
+        wrapped_data = EnrollmentDataWrap(data, census_record.case)
 
         if isinstance(wizard_data, list):
             accepted_product_ids = list(d['product_id'] for d in wizard_data if not d['did_decline'])
@@ -237,6 +240,8 @@ class EnrollmentApplicationService(DBService):
             if all(map(lambda d: d['did_decline'], wizard_data)):
                 return EnrollmentApplication.APPLICATION_STATUS_DECLINED
             elif len(accepted_products) > 0 and all(not p.requires_signature() for p in accepted_products):
+                return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+            elif wrapped_data.did_finish_signing_in_wizard():
                 return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
             elif census_record.case.should_use_call_center_workflow:
                 return EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
@@ -249,6 +254,15 @@ class EnrollmentApplicationService(DBService):
                 # We are likely importing the data and we don't have to say 'pending' since there is no signing process.
                 application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
         return application_status
+
+    def get_signature_method(self, census_record, wizard_data):
+        data = self.get_first_wizard_data_record(wizard_data)
+        wrapped_data = EnrollmentDataWrap(data, census_record.case)
+
+        if wrapped_data.did_finish_signing_in_wizard():
+            return EnrollmentApplication.SIGNATURE_METHOD_WIZARD
+        else:
+            return EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN
 
     def _strip_ssn(self, ssn):
         return ssn.replace('-', '').strip() if ssn else ''

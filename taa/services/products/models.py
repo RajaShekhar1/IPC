@@ -110,6 +110,9 @@ class Product(ProductJsonSerializable, db.Model):
     def is_fpp(self):
         return self.get_base_product_code().lower().startswith('fpp')
 
+    def is_group_ci(self):
+        return self.get_base_product_code() == Product.TYPE_GROUP_CI
+
     def is_static_benefit(self):
         return self.get_base_product_code() == Product.TYPE_STATIC_BENEFIT
 
