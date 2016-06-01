@@ -208,6 +208,19 @@ var agent_inbox = (function() {
     return req;
   }
 
+  function view_envelope(envelope_id, options) {
+    var url = "/envelopes/"+envelope_id+"/sign";
+    if (options && options.from_inbox) {
+      url += "?from=inbox";
+    }
+    var req = $.post(url
+      ).success(function(data) {return handle_signing_redirect(envelope_id, data)}
+      ).error(handle_signing_failure);
+
+    bootbox.alert("Loading document, please wait...");
+    return req;
+  }
+
   function handle_signing_redirect(envelope_id, resp) {
       var data = resp.data;
       if (data.errors.length > 0) {
@@ -233,6 +246,10 @@ var agent_inbox = (function() {
 
     sign_envelope: function(envelope_id) {
       return sign_envelope(envelope_id);
+    },
+
+    view_envelope: function(envelope_id) {
+      return view_envelope(envelope_id);
     }
   }
 })();

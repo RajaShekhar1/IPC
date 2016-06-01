@@ -541,6 +541,8 @@ class EnrollmentApplicationService(DBService):
 
         enrollment_data['enrollment_id'] = enrollment.id
 
+        enrollment_data['signature_method'] = enrollment.signature_method if enrollment.signature_method else EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN
+
         # Export data from enrollment
         for col in enrollment_columns:
             enrollment_data[col.get_field_name()] = col.get_value(enrollment)
