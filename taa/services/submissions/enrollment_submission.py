@@ -564,7 +564,7 @@ class EnrollmentSubmissionProcessor(object):
 
         components = []
 
-        if case.include_cover_sheet and not enrollment_application.did_sign_in_wizard():
+        if case.include_cover_sheet:
             from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
             components.append(CoverSheetAttachment([emp_recip], EnrollmentDataWrap(product_submissions[0], case,
                                                                                           enrollment_record=enrollment_application),
@@ -575,7 +575,7 @@ class EnrollmentSubmissionProcessor(object):
             enrollment_data = EnrollmentDataWrap(product_submission, case, enrollment_record=enrollment_application)
 
             # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
-            should_use_docusign_renderer = False if enrollment_data.should_use_call_center_workflow() else True
+            should_use_docusign_renderer = False # if enrollment_data.should_use_call_center_workflow() else True
 
             product_id = product_submission['product_id']
             product = self.product_service.get(product_id)

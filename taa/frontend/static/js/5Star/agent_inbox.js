@@ -23,7 +23,18 @@ var agent_inbox = (function() {
       // Get the envelope ID from the button.
       var envelope_id = $(this).attr("data-id");
 
-      sign_envelope(envelope_id, {from_inbox: true}).success(function(resp) {
+      sign_envelope(envelope_id, {from_inbox: true}).success(get_finished_signing_callback(envelope_id));
+    };
+
+    self.view_envelope = function() {
+      // Get the envelope ID from the button.
+      var envelope_id = $(this).attr("data-id");
+
+      view_envelope(envelope_id, {from_inbox: true}).success(get_finished_signing_callback(envelope_id));
+    };
+
+    function get_finished_signing_callback(envelope_id) {
+      return function(resp) {
         var data = resp.data;
         // Remove voided envelope from the inbox immediately.
         if (data.errors && data.errors.length > 0 && data.errors[0].reason === "voided_envelope") {
@@ -33,8 +44,8 @@ var agent_inbox = (function() {
           }
         }
 
-      });
-    };
+      }
+    }
 
     self.table_options = {
       order: [[2, "asc"]],
@@ -42,16 +53,18 @@ var agent_inbox = (function() {
         {
           sortable: false,
           data: function(row) {
-            var icon_class;
+            var icon_class, btn_class;
             if (row.should_show_sign_button(self.current_agent_id)) {
               icon_class = "glyphicon glyphicon-pencil";
+              btn_class = "sign-button";
             } else if (row.should_show_view_button(self.current_agent_id)) {
               icon_class = "glyphicon glyphicon-file";
+              btn_class = "view-button";
             } else {
               // No button if status is pending and we are not the agent on the envelope.
               return "";
             }
-            return '<button class="btn btn-primary btn-xs sign-button" data-id="'+row.id+'"><span class="ace-icon '+icon_class+'"></span> '+row.button_text+'</button>';
+            return '<button class="btn btn-primary btn-xs ' + btn_class+ '" data-id="'+row.id+'"><span class="ace-icon '+icon_class+'"></span> '+row.button_text+'</button>';
           }
         },
         {
@@ -95,6 +108,8 @@ var agent_inbox = (function() {
     fetch_envelopes(self.is_loading, self.envelopes);
     // observe clicks
     $("body").on("click", "button.sign-button", self.sign_envelope);
+    $("body").on("click", "button.view-button", self.view_envelope);
+
   };
 
 

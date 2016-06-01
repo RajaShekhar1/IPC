@@ -294,7 +294,9 @@ class DocuSignService(object):
 
         print("LOADED ALL ENROLLMENTS")
         return [DocusignEnvelope(enrollment.docusign_envelope_id, enrollment)
-                for enrollment in enrollments if enrollment.docusign_envelope_id is not None]
+                for enrollment in enrollments
+                # Include only docusign-signed enrollments.
+                if enrollment.docusign_envelope_id is not None and enrollment.signature_method != EnrollmentApplication.SIGNATURE_METHOD_WIZARD]
 
     def get_envelope_signing_url(self, for_user, envelope_id, callback_url):
         "Must be the agent that the envelope was sent to (this user must be the recipient)"
