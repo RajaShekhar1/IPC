@@ -9,7 +9,7 @@ function submit_application() {
   });
 
   var please_wait_dialogue = bootbox.dialog({
-    message: "Preparing application for submission. Please wait, this make take a minute...",
+    message: "Preparing application for submission. Please wait, this may take a minute...",
     buttons: {
       //"success": {
       //  "label": "Close",
