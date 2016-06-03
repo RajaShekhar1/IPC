@@ -91,8 +91,6 @@ def updateUser():
             # form.status.data = "Activated" if custom_data['activated'] else "Not Activated"
 
     sp_app = get_stormpath_application()
-    all_groups = {g.name: g for g in sp_app.groups}
-    all_group_names = [g.name for g in sp_app.groups]
 
     if form.validate_on_submit():
         try:
@@ -148,9 +146,10 @@ def updateUser():
                     if not matching_groups:
                         continue
                     sp_group = matching_groups[0]
-                    existing_membership = [acct_mem
-                                           for acct_mem in sp_group.account_memberships
-                                           if acct_mem.account.email == account.email]
+                    #existing_membership = [acct_mem
+                    #                       for acct_mem in sp_group.account_memberships
+                    #                       if acct_mem.account.email == account.email]
+                    existing_membership = [membership for membership in account.group_memberships if membership.group.name == sp_group.name]
                     if not existing_membership:
                         # Add this account to the group
                         sp_group.add_account(account)
@@ -182,6 +181,9 @@ def updateUser():
             return redirect(url_for('admin'))
         except Error as err:
             flash(err.message)
+
+
+    all_group_names = [g.name for g in sp_app.groups]
 
     return render_template('admin/update-user.html',
                            form=form,

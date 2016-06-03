@@ -90,15 +90,7 @@ class EnrollmentDataWrap(object):
         if not agent:
             return '(No Agent)'
 
-        # Get stormpath user for agent
-        agent_user = agent_service.get_agent_stormpath_account(agent)
-        if not agent_user:
-            return ''
-
-        if 'signing_name' not in agent_user.custom_data:
-            return agent_user.full_name
-
-        return agent_user.custom_data['signing_name']
+        return agent.signing_name if agent.signing_name else agent.name()
 
     def get_agent_code(self):
         if self.data.get('is_third_party'):
