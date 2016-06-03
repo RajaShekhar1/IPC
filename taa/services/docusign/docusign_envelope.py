@@ -1,4 +1,4 @@
-# DocuSign API Walkthrough 08 (PYTHON) - Embedded Signing
+import json
 import decimal
 import random
 from datetime import datetime
@@ -151,7 +151,7 @@ class EnrollmentDataWrap(object):
 
     def get_employee_name(self):
         return u'{} {}'.format(self.data['employee']['first'],
-                              self.data['employee']['last'])
+                               self.data['employee']['last'])
 
     def get_employee_first(self):
         return self.data['employee']['first']
@@ -165,9 +165,28 @@ class EnrollmentDataWrap(object):
     def get_employee_ssn(self):
         return self.data['employee']['ssn']
 
+    def get_employee_ssn_last_digits(self):
+        if self.get_employee_ssn() and len(self.get_employee_ssn()) >= 4:
+            return self.get_employee_ssn()[-4:]
+
+        return ''
+
+    def get_employee_street(self):
+        address = self.data['employee']['address1']
+        if self.data['employee']['address2']:
+            address += ' {}'.format(self.data['employee']['address2'])
+        return address
+
+    def get_employee_city_state_zip(self):
+        return "{}, {} {}".format(
+            self.data['employee']['city'],
+            self.data['employee']['state'],
+            self.data['employee']['zip']
+        )
+
     def get_spouse_name(self):
         return u'{} {}'.format(self.data['spouse']['first'],
-                              self.data['spouse']['last'])
+                               self.data['spouse']['last'])
 
     def get_spouse_ssn(self):
         return self.data['spouse']['ssn']
@@ -195,7 +214,7 @@ class EnrollmentDataWrap(object):
     def random_email_id(self, token_length=10):
         chars = 'ABCDEF0123456789'
         return ''.join([random.choice(chars)
-                               for _ in range(token_length)])
+                        for _ in range(token_length)])
 
     def get_employee_date_of_hire(self):
         try:
@@ -205,11 +224,26 @@ class EnrollmentDataWrap(object):
             return None
 
     def did_employee_select_coverage(self):
-        return (self.data['employee_coverage'] and
-                self.data['employee_coverage']['face_value'])
+        return (self.data['employee_coverage'] and (self.data['employee_coverage'].get('premium') or
+                                                    self.data['employee_coverage'].get('face_value')))
 
     def get_employee_coverage(self):
-        return format(self.data['employee_coverage']['face_value'], ',.0f')
+        coverage = self.data['employee_coverage']
+        return self.format_coverage(coverage)
+
+    def format_coverage(self, coverage):
+        if 'face_value' in coverage:
+            return format(coverage['face_value'], ',.0f')
+        elif 'coverage_selection' in coverage:
+            coverage_selection = coverage['coverage_selection']
+            if coverage_selection == True:
+                return 'Included'
+            elif coverage_selection in ['EE', 'ES', 'EC', 'EF']:
+                return 'Included'
+            else:
+                return coverage_selection
+        else:
+            raise ValueError(coverage)
 
     def get_formatted_employee_premium(self):
         return self.format_money(self.get_employee_premium())
@@ -218,16 +252,27 @@ class EnrollmentDataWrap(object):
         return decimal.Decimal(self.data['employee_coverage']['premium'])
 
     def did_spouse_select_coverage(self):
-        return (self.data['spouse_coverage'] and
-                self.data['spouse_coverage']['face_value'])
+
+        # Special case for static benefit
+        if self.get_product().is_static_benefit() and self.did_employee_select_coverage():
+            return True
+
+        elif self.get_product().is_simple_coverage() and self.get_product().is_applicant_covered('spouse',
+                                                                                                 self.data['spouse_coverage']['coverage_selection']):
+            return True
+
+        return (self.data['spouse_coverage'] and (self.data['spouse_coverage'].get('premium') or
+                                                  self.data['spouse_coverage'].get('face_value')))
 
     def get_spouse_coverage(self):
-        return format(decimal.Decimal(self.data['spouse_coverage']['face_value']), ',.0f')
+        return self.format_coverage(self.data['spouse_coverage'])
 
     def get_formatted_spouse_premium(self):
         return self.format_money(self.get_spouse_premium())
 
     def get_spouse_premium(self):
+        if self.get_product().is_employee_premium_only():
+            return decimal.Decimal('0.00')
         return decimal.Decimal(self.data['spouse_coverage']['premium'])
 
     def format_money(self, amount):
@@ -264,9 +309,20 @@ class EnrollmentDataWrap(object):
         covered_children = []
         for i, child in enumerate(self.data['children']):
             coverage = self.data['child_coverages'][i]
-            if coverage and coverage['face_value']:
+            if coverage and (coverage.get('face_value') or coverage.get('coverage_selection')):
                 covered_children.append(child)
         return covered_children
+
+    def get_child_coverage(self, child_num=0):
+        return self.format_coverage(self.data['child_coverages'][child_num])
+
+    def get_child_premium(self, child_num=0):
+        if self.get_product().is_employee_premium_only():
+            return decimal.Decimal('0.00')
+        return decimal.Decimal(self.data['child_coverages'][child_num]['premium'])
+
+    def get_formatted_child_premium(self, child_num=0):
+        return self.format_money(self.get_child_premium(child_num))
 
     def get_employee_soh_questions(self):
         if 'soh_questions' in self.data['employee']:
@@ -291,9 +347,12 @@ class EnrollmentDataWrap(object):
             return self.data['children_soh_questions'][child_index]
 
     def get_employee_esignature(self):
-        # Replace employee signature with "John Doe voice auth on file 02:45pm"
-        esig = u"{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
-        return self.data.get('emp_sig_txt', esig)
+        if self.should_use_call_center_workflow():
+            # Replace employee signature with "John Doe voice auth on file 02:45pm"
+            esig = u"{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
+            return self.data.get('emp_sig_txt', esig)
+        else:
+            return self.data.get('emp_sig_txt', '')
 
     def get_employee_esignature_date(self):
         return self.data.get('emp_sig_date', datetime.today().strftime('%m/%d/%Y'))
@@ -315,14 +374,14 @@ class EnrollmentDataWrap(object):
 
     def get_beneficiary_data(self):
         bene_data = {
-            'employee_primary':[],
-            'employee_contingent':[],
-            'spouse_primary':[],
-            'spouse_contingent':[],
+            'employee_primary': [],
+            'employee_contingent': [],
+            'spouse_primary': [],
+            'spouse_contingent': [],
         }
 
         from taa.services.enrollments import EnrollmentRecordParser
-        for num in range(1, EnrollmentRecordParser.MAX_BENEFICIARY_COUNT+1):
+        for num in range(1, EnrollmentRecordParser.MAX_BENEFICIARY_COUNT + 1):
             if self.data.get("emp_bene{}_name".format(num)):
                 bene_data['employee_primary'] += [
                     self.get_beneficiary_dict("emp_bene{}".format(num))
@@ -344,9 +403,9 @@ class EnrollmentDataWrap(object):
 
     def get_beneficiary_dict(self, prefix):
         bd = self.data["%s_birthdate" % prefix]
-        #try:
+        # try:
         #    bd = dateutil.parser.parse(bd).strftime('%F')
-        #except Exception:
+        # except Exception:
         #    pass
 
         bene_dict = dict(
@@ -385,6 +444,158 @@ class EnrollmentDataWrap(object):
                 return ''
         return 'yes' if self.data['is_employee_actively_at_work'] else 'no'
 
+    def get_applicant_data(self):
+        applicants = []
+
+        effective_date = self.enrollment_record.signature_time.strftime("%m/%d/%Y")
+        payment_mode = "{}".format(self.case.payment_mode)
+
+        if self.did_employee_select_coverage():
+            coverage = self.get_employee_coverage()
+            premium = self.get_formatted_employee_premium()
+            premium_amount = self.get_employee_premium()
+
+        else:
+            coverage = 'DECLINED'
+            premium = '-'
+            premium_amount = decimal.Decimal('0.00')
+
+        # Employee data
+        applicants.append(dict(
+            relationship="self",
+            name=self.get_employee_first(),
+            coverage=coverage,
+            premium=premium_amount,
+            formatted_premium=premium,
+            mode=payment_mode,
+            effective_date=effective_date,
+        ))
+
+        if self.data.get('spouse') and self.data['spouse']['first']:
+            if self.did_spouse_select_coverage():
+                coverage = self.get_spouse_coverage()
+                premium = self.get_formatted_spouse_premium()
+                premium_amount = self.get_spouse_premium()
+            else:
+                coverage = 'DECLINED'
+                premium = '-'
+                premium_amount = decimal.Decimal('0.00')
+
+            applicants.append(dict(
+                relationship="spouse",
+                name=self.data['spouse']['first'],
+                coverage=coverage,
+                premium=premium_amount,
+                formatted_premium=premium,
+                mode=payment_mode,
+                effective_date=effective_date,
+            ))
+
+        for i, child in enumerate(self.data['children']):
+            is_covered = child in self.get_covered_children()
+
+            if is_covered: #self.get_child_premium(i) >= decimal.Decimal('0.00'):
+                premium = self.get_formatted_child_premium(i)
+                premium_amount = self.get_child_premium(i)
+            else:
+                premium = '-'
+                premium_amount = decimal.Decimal('0.00')
+
+            applicants.append(dict(
+                relationship="child",
+                name=child['first'],
+                coverage=self.get_child_coverage(i) if is_covered else 'DECLINED',
+                premium=premium_amount,
+                formatted_premium=premium,
+                mode=payment_mode,
+                effective_date=effective_date,
+            ))
+
+        return applicants
+
+    def has_bank_draft_info(self):
+        return self.get('bank_info', None) is not None
+
+    def get_bank_draft_info(self):
+        return self.get('bank_info')
+
+    def requires_paylogix_export(self):
+        return self.has_bank_draft_info() and self.get_product().requires_paylogix_export(self.enrollment_record)
+
+    def get_account_holder_name(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('account_holder', '')
+
+    def get_routing_number(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('routing_number', '')
+
+    def get_account_number(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('account_number', '')
+
+    def get_account_type(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('account_type', '')
+
+    def get_account_type_shorthand(self):
+        account_type = self.get_account_type()
+        if account_type and account_type.lower() == 'checking':
+            return 'C'
+        if account_type and account_type.lower() == 'savings':
+            return 'S'
+        return account_type
+
+    def get_city_state_zip(self):
+        if not self.has_bank_draft_info():
+            return
+        bank_info = self.get_bank_draft_info()
+        return bank_info.get('city_state_zip', '')
+
+    def get_bank_name(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('bank_name', '')
+
+    def get_address_one(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('address_one', '')
+
+    def get_address_two(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('address_two', '')
+
+    def get_billing_city(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('billing_city', '')
+
+    def get_billing_state(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('billing_state', '')
+
+    def get_billing_zip(self):
+        if not self.has_bank_draft_info():
+            return
+        return self.get_bank_draft_info().get('billing_zip', '')
+
+    def get_case_riders(self):
+        #
+        if not self.case.product_settings:
+            return []
+
+        product_settings = json.loads(self.case.product_settings)
+        rider_settings = product_settings.get('riders', [])
+
+
+
 # For employee signing sessions
 def build_callback_url(wizard_data, session_type):
     is_ssl = app.config.get('IS_SSL', True)
@@ -393,11 +604,12 @@ def build_callback_url(wizard_data, session_type):
     # note: DS supplies the last parm of 'event' in the callback
     return (u'{scheme}{hostname}/application_completed'
             '?name={name}&type={session_type}'.format(
-                scheme=scheme,
-                hostname=hostname,
-                name=wizard_data['employee']['first'],
-                session_type=session_type,
+        scheme=scheme,
+        hostname=hostname,
+        name=wizard_data['employee']['first'],
+        session_type=session_type,
     ))
+
 
 def build_callcenter_callback_url(case):
     is_ssl = app.config.get('IS_SSL', True)
@@ -405,7 +617,7 @@ def build_callcenter_callback_url(case):
     scheme = 'https://' if is_ssl else 'http://'
     # note: DS supplies the last parm of 'event' in the callback
     return (u'{scheme}{hostname}/enrollment-case/{case_id}#enrollment'.format(
-                scheme=scheme,
-                hostname=hostname,
-                case_id=case.id,
+        scheme=scheme,
+        hostname=hostname,
+        case_id=case.id,
     ))

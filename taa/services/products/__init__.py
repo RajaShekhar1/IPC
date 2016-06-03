@@ -2,7 +2,6 @@ from flask import abort
 from flask_stormpath import current_user
 
 from ..cases import Case, CaseCensus
-from ..enrollments import EnrollmentApplication
 from taa.services.products.rates import GILimitedRatesDecorator
 
 from taa.services.products.RatePlan import ApplicantQuery, APPLICANT_CHILD, ApplicantQueryOptions, \
@@ -59,7 +58,7 @@ class ProductService(DBService):
         from taa.services.cases import CaseService, Case
         return CaseService().query().filter(
             Case.products.any(Product.id == product.id)
-            ).all()
+        ).all()
 
     def get_products_by_codes(self, codes):
         return Product.query.filter(Product.code.in_(codes)).all()
@@ -82,8 +81,8 @@ class ProductService(DBService):
             return False
 
         return (self.is_valid_statecode(statecode)
-               and statecode in self.get_product_states(products)[products[0].id]
-        )
+                and statecode in self.get_product_states(products)[products[0].id]
+                )
 
     def get_riders_for_product(self, product_code):
         pass
@@ -178,12 +177,12 @@ class ProductService(DBService):
 
         product_states = {}
         for product in products:
-            states_with_forms = StatementOfHealthQuestionService()\
+            states_with_forms = StatementOfHealthQuestionService() \
                 .get_states_with_forms_for_product(product)
 
             product_states[product.id] = [
                 s['statecode'] for s in states_with_forms
-            ]
+                ]
 
         return product_states
 
@@ -244,18 +243,21 @@ class ProductService(DBService):
             return get_rates(product, **demographics)
         elif product.get_base_product_code() in ['ACC', 'HI']:
             # Set up the rate calculator to use 'tiers' of coverage options + rate levels.
-            coverage_tiers = [COVERAGE_SELECTION_EE, COVERAGE_SELECTION_ES, COVERAGE_SELECTION_EC, COVERAGE_SELECTION_EF]
+            coverage_tiers = [COVERAGE_SELECTION_EE, COVERAGE_SELECTION_ES, COVERAGE_SELECTION_EC,
+                              COVERAGE_SELECTION_EF]
             rate_response = {'employee': {
                 'bytier': [{
-                        'coverage_tier': tier,
-                        'premium': self.calc_rate_for_tier(product, tier, rate_level, demographics),
-                        'payment_mode': demographics['payment_mode']
-                    }
-                    for tier in coverage_tiers
-                ]
+                               'coverage_tier': tier,
+                               'premium': self.calc_rate_for_tier(product, tier, rate_level, demographics),
+                               'payment_mode': demographics['payment_mode']
+                           }
+                           for tier in coverage_tiers
+                           ]
             }}
 
             return rate_response
+        elif product.get_base_product_code() in ['Static Benefit']:
+            return {'employee': {'flat_fee': product.flat_fee}}
         else:
             # Use the new rates calculator for all the other products.
             rate_response = {}
@@ -268,9 +270,10 @@ class ProductService(DBService):
                     rate_response[applicant_type]['bypremium'] = [
                         r for r in self.calc_rates_by_premium(product, applicant_type, demographics, riders)
                         if r is not None
-                    ]
+                        ]
 
-                rates_by_coverage = [r for r in self.calc_rates_by_face(product, applicant_type, demographics, riders) if r is not None]
+                rates_by_coverage = [r for r in self.calc_rates_by_face(product, applicant_type, demographics, riders)
+                                     if r is not None]
 
                 # Give children only some of the options for coverage
                 if applicant_type == 'children':
@@ -284,15 +287,19 @@ class ProductService(DBService):
                     smoker = self.get_applicant_smoker_status(applicant_type, demographics)
                     height = self.get_applicant_height(applicant_type, demographics)
                     weight = self.get_applicant_weight(applicant_type, demographics)
-                    limit = GILimitedRatesDecorator.get_gi_limit_for_product(product, applicant_type, age, smoker, height, weight)
+                    limit = GILimitedRatesDecorator.get_gi_limit_for_product(product, applicant_type, age, smoker,
+                                                                             height, weight)
 
                     if not limit:
                         # We don't allow enrollment for this applicant type
                         rate_response[applicant_type] = {'bypremium': [], 'byface': []}
                     else:
                         if 'bypremium' in rate_response[applicant_type]:
-                            rate_response[applicant_type]['bypremium'] = filter(lambda rate: rate['coverage'] <= limit, rate_response[applicant_type]['bypremium'])
-                        rate_response[applicant_type]['byface'] = filter(lambda rate: rate['coverage'] <= limit, rate_response[applicant_type]['byface'])
+                            rate_response[applicant_type]['bypremium'] = filter(lambda rate: rate['coverage'] <= limit,
+                                                                                rate_response[applicant_type][
+                                                                                    'bypremium'])
+                        rate_response[applicant_type]['byface'] = filter(lambda rate: rate['coverage'] <= limit,
+                                                                         rate_response[applicant_type]['byface'])
 
             return rate_response
 
@@ -383,6 +390,40 @@ class ProductService(DBService):
 
         rate_plan = load_rate_plan_for_base_product(product.get_base_product_code())
         return rate_plan.calculate_premium(applicant_query)
+
+    def calc_rate_for_flat_fee(self, product, case):
+        """
+        :param product: Product to calculate the rate for
+        :type product: Product
+        :param case: Case to calculate the rate for
+        :type case: Case
+        """
+        if case.payment_mode == 12:
+            return product.flat_fee
+        else:
+            return round(product.flat_fee * 12 / case.payment_mode, 2)
+
+    def filter_products_from_membership(self, case, census=None):
+        """
+        :param case:
+        :param census:
+        :type case: Case
+        :type census: CaseCensus
+        :return:
+        """
+        if census is None:
+            return case.products
+        from taa.services.enrollments import EnrollmentApplication
+        applications = EnrollmentApplication.query.filter(EnrollmentApplication.census_record_id == census.id).all()
+        has_membership_product = any(applications) and any(
+            p for p in case.products if p.get_base_product_code() == u'Static Benefit')
+        if has_membership_product:
+            return [p for p in case.products if p.get_base_product_code() != u'Static Benefit']
+        return case.products
+
+    def get_ordered_products_for_case(self, case_id):
+        from taa.services.cases.models import case_products
+        return db.session.query(Product).join(case_products).join(Case).filter(Case.id == case_id).order_by(case_products.c.ordinal).all()
 
 
 class ProductCriteriaService(DBService):

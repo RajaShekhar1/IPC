@@ -312,6 +312,38 @@
                                     </label>
                                   </div>
                                 </div>
+                                <div class="row" data-bind="if: should_show_third_party_bank_draft_checkbox">
+                                  <div class="form-group">
+                                    <label class="col-xs-9 col-xs-offset-3">
+                                      <input type="checkbox" class="ace"
+                                             data-bind="checked: requires_third_party_bank_draft">
+                                      <span class="lbl"> Deliver Bank Authorization File to 3rd Party</span>
+                                    </label>
+                                  </div>
+                                </div>
+                                <div class="row">
+                                  <div class="form-group">
+                                    <label class="col-xs-9 col-xs-offset-3">
+                                      <input type="checkbox" class="ace"
+                                             data-bind="checked: include_cover_sheet">
+                                      <span class="lbl"> Include Cover Sheet</span>
+                                    </label>
+                                  </div>
+                                </div>
+                                <div class="row" data-bind="visible: include_cover_sheet">
+                                  <div class="form-group">
+                                    <label class="col-xs-9 col-xs-offset-3">
+                                      {% if has_current_logo %}
+                                      <div>
+                                        <p>Current Logo: <img class='img-responsive' data-bind="attr: {src: logo_src}" /></p>
+                                      </div>
+                                      {% endif %}
+                                      <p class="">Upload a logo image for the group cover sheet:
+                                        <input type="file" id="cover-logo-file-input" name="cover-logo" accept="image/jpeg,image/png,.jpg,.jpeg,.png">
+                                      </p>
+                                    </label>
+                                  </div>
+                                </div>
                                 <div class="row">
                                   <div class="form-group">
                                     <label class="col-xs-9 col-xs-offset-3">
@@ -364,7 +396,7 @@
                                     <div class="panel-body">
 
                                       <div class="form-group col-xs-10 col-md-offset-1"
-                                           data-bind="visible: $root.has_fpp_products">
+                                           data-bind="visible: $root.has_products">
                                         <input id="omit-actively-at-work" name="omit-actively-at-work" class="ace"
                                                type="checkbox" data-bind="checked: omit_actively_at_work">
                                         <label class="lbl" for="omit-actively-at-work"> Omit 'Actively at Work'

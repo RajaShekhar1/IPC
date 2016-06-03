@@ -1,7 +1,7 @@
 import re
 
 from reportlab.platypus import Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle, _baseFontNameB
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle, _baseFontNameB, _baseFontName
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.lib.units import mm, inch
 from reportlab.lib.colors import black
@@ -45,17 +45,18 @@ def create_attachment_header(title, enrollment_data):
         Paragraph(u"Employee: {} {} {}".format(employee_first, employee_last, masked_ssn), style),
     ]
 
-def create_signature_line(page_width, signature_coordinate_map, recipients):
+
+def create_signature_line(page_width, signature_coordinate_map, recipient_names):
     flowables = []
 
     # Get a wrapper around the drawing class so we can extract the coords out for the signature tab.
 
-    for recip in recipients:
+    for recip_name in recipient_names:
         flowables.append(Spacer(0, .1*inch))
 
         # Wrap the drawings in our Drawing object so it flows with the document and we can extract the signature coords
         sig_height = .75 * inch
-        CoordSavingDrawing = _wrap_drawing_class(signature_coordinate_map, recip)
+        CoordSavingDrawing = _wrap_drawing_class(signature_coordinate_map, recip_name)
         sig_drawing = CoordSavingDrawing(page_width, sig_height)
 
         # Pull out the drawing object we are wrapping, and add the line and the name for this recipient
@@ -66,7 +67,8 @@ def create_signature_line(page_width, signature_coordinate_map, recipients):
 
     return flowables
 
-def _wrap_drawing_class(sig_coordinate_map, recipient):
+
+def _wrap_drawing_class(sig_coordinate_map, recipient_name):
     # The following represents a bit of a hack on reportlab to extract the coordinates of a
     #   Flowable object just before it is rendered. This lets us feed the coordinates of the
     #   rendered line into a DocuSign tab specification.
@@ -85,13 +87,14 @@ def _wrap_drawing_class(sig_coordinate_map, recipient):
             manual_adjustment = 10
 
             # Store the coordinates of the signature line.
-            sig_coordinate_map[recipient.name] = (x, y + self.height + manual_adjustment)
+            sig_coordinate_map[recipient_name] = (x, y + self.height + manual_adjustment)
 
             # Let the overridden method do its thing
             Drawing.drawOn(self, canvas, x, y, _sW)
 
     # Return the class closure
     return DrawingWithCoordTracking
+
 
 def mask_ssn(ssn):
     if not ssn:

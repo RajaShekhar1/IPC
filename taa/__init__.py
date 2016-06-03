@@ -33,7 +33,7 @@ def create_app(bind=None):
     from .errors import init_exception_emails
     init_exception_emails(app, ['zmason@delmarsd.com', 'bdavis@thumbprintcpm.com'])
 
-# Init compression (only active if debug is False)
+    # Init compression (only active if debug is False)
     Compress(app)
 
     # Init SSL redirect (only if debug is False AND IS_SSL is true)

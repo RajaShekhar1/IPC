@@ -12,6 +12,9 @@ var urls = (function urls() {
     get_case_api_url: function(case_id) {
       return '/cases/' + case_id;
     },
+    get_case_api_logo_url: function(case_id) {
+      return this.get_case_api_url(case_id) + '/logo';
+    },
     get_case_api_enrollment_periods_url: function(case_id) {
       return '/cases/' + case_id + '/enrollment_periods';
     },

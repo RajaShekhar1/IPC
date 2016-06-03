@@ -6,6 +6,8 @@ from taa import db
 from taa.helpers import JsonSerializable
 from taa.services.products.product_forms import ProductFormService
 from taa.services.products.riders import RiderService
+from decimal import Decimal
+
 product_form_service = ProductFormService()
 
 
@@ -47,11 +49,18 @@ product_restricted_agents = db.Table('product_restricted_agents', db.metadata,
                                                primary_key=True),
                                      db.Column('agent_id', db.Integer, db.ForeignKey('agents.id'),
                                                primary_key=True),
-)
+                                     )
 db.Index('ix_product_restricted_agents_agent', product_restricted_agents.c.agent_id)
 
 
 class Product(ProductJsonSerializable, db.Model):
+    TYPE_STATIC_BENEFIT = u'Static Benefit'
+    TYPE_GROUP_CI = u'Group CI'
+    TYPE_FPPCI = u'FPPCI'
+    TYPE_FPPTI = u'FPPTI'
+    TYPE_HI = u'HI'
+    TYPE_ACC = u'ACC'
+
     __tablename__ = 'products'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -63,13 +72,18 @@ class Product(ProductJsonSerializable, db.Model):
     brochure_name = db.Column(db.Unicode(256))
     is_fpp_gov = db.Column(db.Boolean, nullable=False, server_default='FALSE')
 
+    # Monthly Flat Fee for Membership Products
+    flat_fee = db.Column(db.Numeric, nullable=True, server_default='5')
+
     # Boolean that controls whether on not this can be enrolled by agents
     visible_to_agents = db.Column(db.Boolean, nullable=False, server_default='True')
 
     product_type = db.Column(db.String(16), nullable=False, default=u'base', server_default=u'base')
 
     restricted_agents = db.relationship('Agent', secondary=product_restricted_agents,
-                             backref=db.backref('restricted_products', lazy='dynamic'))
+                                        backref=db.backref('restricted_products', lazy='dynamic'))
+
+    template_id = db.Column(db.String(64), nullable=True)
 
     __mapper_args__ = {
         'polymorphic_on': product_type,
@@ -96,18 +110,21 @@ class Product(ProductJsonSerializable, db.Model):
     def is_fpp(self):
         return self.get_base_product_code().lower().startswith('fpp')
 
+    def is_static_benefit(self):
+        return self.get_base_product_code() == Product.TYPE_STATIC_BENEFIT
+
     def does_generate_form(self):
         # Temporary solution to identify products that include output in PDFs
-        return self.is_fpp() or self.get_base_product_code() == "Group CI"
+        return self.is_fpp() or self.get_base_product_code() in [Product.TYPE_GROUP_CI, Product.TYPE_STATIC_BENEFIT]
 
     def requires_dell_csv_submission(self):
-        return self.get_base_product_code() in ['HI', 'ACC']
+        return self.get_base_product_code() in [Product.TYPE_HI, Product.TYPE_ACC]
 
     def is_base_fpp_gov(self):
         return self.get_base_product().is_fpp_gov if self.get_base_product() else self.is_fpp_gov
 
     def is_simple_coverage(self):
-        return self.get_base_product_code() in ['HI', 'ACC']
+        return self.get_base_product_code() in [Product.TYPE_HI, Product.TYPE_ACC]
 
     def is_applicant_covered(self, applicant_type, coverage_tier):
         """
@@ -115,6 +132,8 @@ class Product(ProductJsonSerializable, db.Model):
         :param applicant_type:
         :param coverage_tier:
         """
+        if self.is_static_benefit():
+            return True
         if not self.is_simple_coverage():
             return False
         if coverage_tier == 'EE':
@@ -162,19 +181,19 @@ class Product(ProductJsonSerializable, db.Model):
 
         return state_replacement_paragraphs
 
-    def get_brochure_name(self):
-        use_base_product_settings = self.should_use_base_product_settings()
-        if use_base_product_settings.get("brochure_name"):
-            base_product = getattr(self, "base_product")
-            return getattr(base_product, "brochure_name")
-        return getattr(self, "brochure_name")
-
-    def get_brochure_url(self):
-        use_base_product_settings = self.should_use_base_product_settings()
-        if use_base_product_settings.get("brochure_url"):
-            base_product = getattr(self, "base_product")
-            return getattr(base_product, "brochure_url")
-        return getattr(self, "brochure_url")
+    # def get_brochure_name(self):
+    #     use_base_product_settings = self.should_use_base_product_settings()
+    #     if use_base_product_settings.get("brochure_name"):
+    #         base_product = getattr(self, "base_product")
+    #         return getattr(base_product, "brochure_name")
+    #     return getattr(self, "brochure_name")
+    #
+    # def get_brochure_url(self):
+    #     use_base_product_settings = self.should_use_base_product_settings()
+    #     if use_base_product_settings.get("brochure_url"):
+    #         base_product = getattr(self, "base_product")
+    #         return getattr(base_product, "brochure_url")
+    #     return getattr(self, "brochure_url")
 
     def get_brochure_name(self):
         if self.brochure_name:
@@ -200,17 +219,28 @@ class Product(ProductJsonSerializable, db.Model):
         return False
 
     def requires_occupation(self):
-        return self.get_base_product_code() == 'HI' or self.get_base_product_code() == 'ACC'
+        return self.get_base_product_code() == self.TYPE_HI or self.get_base_product_code() == self.TYPE_ACC
 
     def requires_signature(self):
-        return self.get_base_product_code() not in ['HI', 'ACC']
+        return self.get_base_product_code() not in [self.TYPE_HI, self.TYPE_ACC]
+
+    def requires_paylogix_export(self, enrollment_record):
+        return enrollment_record.case.requires_paylogix_export and enrollment_record.case.include_bank_draft_form
+
+    def is_employee_premium_only(self):
+        """
+        Is this product only billed to the employee?
+        """
+        return self.get_base_product_code() in [self.TYPE_STATIC_BENEFIT, self.TYPE_ACC, self.TYPE_HI]
+
 
 # Relate custom products to agents - who can see these products
 product_agents = db.Table('product_agents', db.metadata,
-    db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True),
-    db.Column('agent_id', db.Integer, db.ForeignKey('agents.id'), primary_key=True),
-)
+                          db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True),
+                          db.Column('agent_id', db.Integer, db.ForeignKey('agents.id'), primary_key=True),
+                          )
 db.Index('ix_product_agents_agent', product_agents.c.agent_id)
+
 
 class CustomProductSerializer(ProductJsonSerializable):
     __json_hidden__ = ['cases', 'customized_products', 'base_product']
@@ -230,9 +260,9 @@ class CustomGuaranteeIssueProduct(CustomProductSerializer, Product):
     __mapper_args__ = {'polymorphic_identity': u'GI',
                        'inherit_condition': id == Product.id}
 
-    base_product = db.relationship('Product', primaryjoin=base_product_id==Product.id, backref='customized_products')
+    base_product = db.relationship('Product', primaryjoin=base_product_id == Product.id, backref='customized_products')
     agents = db.relationship('Agent', secondary=product_agents,
-                               backref=db.backref('custom_products', lazy='dynamic'))
+                             backref=db.backref('custom_products', lazy='dynamic'))
 
     def get_base_product(self):
         # Use the linked product
