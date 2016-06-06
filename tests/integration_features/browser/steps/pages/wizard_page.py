@@ -89,6 +89,20 @@ class WizardPage(PageBase):
     REC_COVERAGE_BETTER = '.pricing-span.better .widget-box'
     REC_COVERAGE_BEST = '.pricing-span.best .widget-box'
 
+    DECLINED_PRODUCTS = "input[value=declined]"
+    BTN_CLOSE_POPUP = 'button.btn-close'
+
+    APP_SIG_CHECK1 = "#applicant_sig_check_1"
+    APP_SIG_CHECK2 = "#applicant_sig_check_2"
+    APP_SIG_CHECK3 = "#applicant_sig_check_3"
+
+    AGENT_SIGN_BTN = "button.btn-sign"
+    AGENT_SUBMIT_SIG = "#submit_sig"
+
+    HOME_BTN = "#home-btn"
+
+    ENROLLMENT_CASES_BTN = ".btn-enrollment"
+
     ENROLL_CITY = "#enrollCity"
     ACK_DISCLOSURE = "#confirmDisclaimer"
     ACK_PAYROLL_DEDUCTION = "#confirmPayrollDeductions"
@@ -207,10 +221,19 @@ class WizardPage(PageBase):
             'best': self.REC_COVERAGE_BEST,
         }
 
-        self.click_show_rates()
-        self.wait_for_rate_table()
-        el = self.lookup(coverage_divs[recommendation])
-        el.click()
+        if recommendation == 'declined':
+            self.click_show_rates()
+            self.wait_for_rate_table()
+            self.lookup(self.DECLINED_PRODUCTS).click()
+            time.sleep(2)
+            self.lookup(self.BTN_CLOSE_POPUP).click()
+            time.sleep(2)
+
+        else:
+            self.click_show_rates()
+            self.wait_for_rate_table()
+            el = self.lookup(coverage_divs[recommendation])
+            el.click()
 
     def wait_for_rate_table(self):
         return self.wait_until_condition(EC.element_to_be_clickable((By.CSS_SELECTOR, self.REC_COVERAGE_BETTER)))
@@ -268,6 +291,15 @@ class WizardPage(PageBase):
 
     def wait_until_docusign_redirect(self):
         return self.wait_until_condition(lambda browser: "docusign" in browser.current_url, timeout=20)
+
+    def wait_until_application_decline(self):
+        return self.wait_until_condition(EC.visibility_of_element_located((By.CSS_SELECTOR, self.HOME_BTN)))
+
+    def wait_until_home_page(self):
+        return self.wait_until_condition(EC.visibility_of_element_located((By.CSS_SELECTOR, self.ENROLLMENT_CASES_BTN)))
+
+    def wait_until_can_enroll_applicant(self):
+        return self.wait_until_condition(EC.visibility_of_element_located((By.CSS_SELECTOR, '#add-to-census-btn')), timeout=20)
 
     def get_all_no_buttons(self):
         return self.lookup_multiple("button.val_No")
@@ -417,6 +449,41 @@ class WizardPage(PageBase):
             el = self.lookup(self.ACK_PAYROLL_DEDUCTION, none_if_missing=True)
             if el and el.is_displayed():
                 el.click()
+
+    def select_app_sig_options_as_agent(self):
+        self.lookup(self.APP_SIG_CHECK1).click()
+        time.sleep(0.5)
+        self.lookup(self.APP_SIG_CHECK2).click()
+        time.sleep(0.5)
+        self.lookup(self.APP_SIG_CHECK3).click()
+        time.sleep(0.5)
+
+    def click_agent_sign(self):
+        self.lookup(self.AGENT_SIGN_BTN).click()
+
+    def submit_agent_sig(self):
+        self.lookup(self.AGENT_SUBMIT_SIG).click()
+
+    def click_home_btn(self):
+        self.lookup(self.HOME_BTN).click()
+
+    def click_enrollment_cases_btn(self):
+        self.lookup(self.ENROLLMENT_CASES_BTN).click()
+
+    def find_enrollment(self):
+        self.lookup("a[href^='/enrollment-case/'][href*='census']").click()
+
+    def find_status_decline(self):
+        if self.browser.execute_script("""return jQuery('strong:contains(Declined)')"""):
+            return True
+        else:
+            return False
+
+    def find_status_enrolled(self):
+        if self.browser.execute_script("""return jQuery('strong:contains(Enrolled)')"""):
+            return True
+        else:
+            return False
 
     def select_coverage_options(self, product_coverage_pairs):
         self.wait_until_recommended_coverage_visible()

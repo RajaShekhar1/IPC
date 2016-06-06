@@ -11,7 +11,9 @@ from taa.services import LookupService
 from pages.login_page import LoginPage
 from pages.case_enrollment import CaseEnrollmentPage
 from pages.wizard_page import WizardPage
-from tests.db_util import create_case, create_agent
+from pages.case_setup import CasePage
+from pages.self_enrollment import SelfEnrollmentPage
+from tests.db_util import create_case, create_agent, create_case_call_center, create_case_self_enroll
 
 
 case_service = LookupService('CaseService')
@@ -26,6 +28,18 @@ def step_impl(context, case_name):
 def step_impl(context, company_name):
     product_codes = [r[0] for r in context.table.rows]
     context.case = create_case(agent=context.agent, company_name=company_name, product_codes=product_codes)
+
+
+@given("I have a case that is actively enrolling named '{company_name}' with products and call center")
+def step_impl(context, company_name):
+    product_codes = [r[0] for r in context.table.rows]
+    context.case = create_case_call_center(agent=context.agent, company_name=company_name, product_codes=product_codes)
+
+
+@given("I have a case that is actively enrolling named '{company_name}' with products and is self enroll")
+def step_impl(context, company_name):
+    product_codes = [r[0] for r in context.table.rows]
+    context.case = create_case_self_enroll(agent=context.agent, company_name=company_name, product_codes=product_codes)
 
 
 @step("I have an agent '{agent_name}'")
@@ -73,6 +87,39 @@ def step_impl(context):
     Given I have an agent 'Agent Bob'
     And I log in as 'Agent Bob'
     """)
+
+
+@step("I navigate to the case setup page")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    case_enrollment_page = CaseEnrollmentPage(context)
+
+    case_enrollment_page.navigate_to_setup_page()
+
+
+@step("I click on the self enroll link")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    case_setup_page = CasePage(context)
+
+    time.sleep(2)
+    case_setup_page.switch_to_popup_window()
+
+
+@then("I should click the self enroll button")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    time.sleep(2)
+    self_enroll_page = SelfEnrollmentPage(context)
+
+    time.sleep(2)
+    self_enroll_page.click_self_enroll_btn()
 
 
 @step("I navigate to the enrollment page for '{case_name}'")
@@ -128,6 +175,7 @@ def step_impl(context):
     did_load = wizard_page.wait_until_loaded()
     assert_that(did_load, equal_to(True))
 
+    time.sleep(5)
     wizard_page.wait_until_step_1_loaded()
     time.sleep(0.25)
     data = get_data_from_first_row_of_table(context)
@@ -228,6 +276,116 @@ def step_impl(context):
     did_redirect = wizard_page.wait_until_docusign_redirect()
     time.sleep(2)
     assert_that(did_redirect, equal_to(True))
+
+
+@step("I click on Back to Home")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    wizard_page = WizardPage(context)
+    wizard_page.click_home_btn()
+
+
+@step("I click on that person's Enrollment")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    wizard_page = WizardPage(context)
+    time.sleep(3)
+
+    wizard_page.find_enrollment()
+    time.sleep(2)
+
+
+@then("I should see that the person Declined")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    wizard_page = WizardPage(context)
+    time.sleep(5)
+    val = wizard_page.find_status_decline()
+    assert_that(val, equal_to(True))
+
+
+@then("I should see that the person is Enrolled")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    wizard_page = WizardPage(context)
+    time.sleep(5)
+    val = wizard_page.find_status_enrolled()
+    assert_that(val, equal_to(True))
+
+
+@then("I should be redirected to the Home page")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    wizard_page = WizardPage(context)
+    did_redirect = wizard_page.wait_until_home_page()
+    time.sleep(2)
+    assert_that(did_redirect, equal_to(True))
+
+
+@then("I should be redirected to the Application Declined page")
+def step_impl(context):
+    """
+    :type: context behave.runner.Context
+    """
+    wizard_page = WizardPage(context)
+    did_redirect = wizard_page.wait_until_application_decline()
+    time.sleep(2)
+    assert_that(did_redirect, equal_to(True))
+
+
+@then("I should be prompted to close the browser window")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    case_page = CasePage(context)
+    did_redirect = case_page.wait_until_redirected_declined()
+    assert_that(did_redirect, equal_to(True))
+
+
+@then("I should be redirected to the Enrollment Page")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    wizard_page = WizardPage(context)
+    did_redirect = wizard_page.wait_until_can_enroll_applicant()
+    time.sleep(2)
+    assert_that(did_redirect, equal_to(True))
+
+
+@step("I check all boxes on the Agreement disclaimer")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    wizard_page = WizardPage(context)
+    time.sleep(3)
+
+    wizard_page.select_app_sig_options_as_agent()
+    wizard_page.click_agent_sign()
+
+
+@step("I click sign on the Other Insurance Questions")
+def step_impl(context):
+    """
+    :type context behave.runner.Context
+    """
+    wizard_page = WizardPage(context)
+
+    time.sleep(2)
+    wizard_page.submit_agent_sig()
+    time.sleep(10)
 
 
 def get_data_from_first_row_of_table(context):
