@@ -186,6 +186,9 @@ def preprocess_product_code(data, record=None):
     if val == 'CIEMP':
         return "Group CI"
 
+    elif val == 'FPPTIG':
+        return "FPP-Gov"
+
     return val
 
 

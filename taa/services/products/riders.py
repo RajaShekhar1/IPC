@@ -25,6 +25,7 @@ class RiderService(object):
         # These will match what is on the form(s) for importable products.
         return ['AIR', 'WP', 'QOL3', 'QOL4']
 
+
 class RiderConfiguration(object):
     def __init__(self, product_code):
         self.product_code = product_code
@@ -48,6 +49,7 @@ class RiderConfiguration(object):
         }
         rider_config_yaml = code_map.get(self.product_code)
         if not rider_config_yaml:
+            return []
             raise ValueError(u"Riders not configured for base product {}".format(self.product_code))
 
         return yaml.load(rider_config_yaml)
