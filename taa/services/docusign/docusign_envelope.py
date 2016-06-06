@@ -90,15 +90,7 @@ class EnrollmentDataWrap(object):
         if not agent:
             return '(No Agent)'
 
-        # Get stormpath user for agent
-        agent_user = agent_service.get_agent_stormpath_account(agent)
-        if not agent_user:
-            return ''
-
-        if 'signing_name' not in agent_user.custom_data:
-            return agent_user.full_name
-
-        return agent_user.custom_data['signing_name']
+        return agent.signing_name if agent.signing_name else agent.name()
 
     def get_agent_code(self):
         if self.data.get('is_third_party'):
@@ -364,7 +356,14 @@ class EnrollmentDataWrap(object):
         return bool(self.get_employee_esignature())
 
     def get_agent_esignature(self):
-        return self.data.get('agent_sig_txt', '')
+        if self.should_use_call_center_workflow():
+            esig = u'esign by {} {}'.format(self.get_agent_signing_name(), datetime.now().strftime("%l:%M%p"))
+            return self.data.get('agent_sig_txt', esig)
+        else:
+            return self.data.get('agent_sig_txt', '')
+
+    def get_agent_esignature_date(self):
+        return self.data.get('agent_sig_date', datetime.today().strftime('%m/%d/%Y'))
 
     def has_agent_esigned(self):
         return bool(self.get_agent_esignature())
@@ -586,14 +585,16 @@ class EnrollmentDataWrap(object):
             return
         return self.get_bank_draft_info().get('billing_zip', '')
 
-    def get_case_riders(self):
-        #
-        if not self.case.product_settings:
-            return []
+    # def get_case_riders(self):
+    #     #
+    #     if not self.case.product_settings:
+    #         return []
+    #
+    #     product_settings = json.loads(self.case.product_settings)
+    #     rider_settings = product_settings.get('riders', [])
 
-        product_settings = json.loads(self.case.product_settings)
-        rider_settings = product_settings.get('riders', [])
-
+    def did_finish_signing_in_wizard(self):
+        return self.data.get('applicant_signed') and self.data.get('agent_signed')
 
 
 # For employee signing sessions
