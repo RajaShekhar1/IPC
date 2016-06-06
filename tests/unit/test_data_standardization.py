@@ -17,6 +17,7 @@ class TestDataStandardization(TestCase):
         self.init_data = dict(
             user_token='ABC',
             case_token='XYZ',
+            case_id=1,
             product_code='FPPTI',
             payment_mode='52',
             emp_first='Joe',
@@ -184,7 +185,7 @@ class TestDataStandardization(TestCase):
              'is_spouse_email_same_as_employee': False,
              'payment_mode': 52,
              'payment_mode_text': 'weekly',
-             'product_type': 'FPPTI',
+             'product_type': 'FPPTI'
         }
 
         # Check each key

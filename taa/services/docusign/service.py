@@ -150,7 +150,7 @@ class DocuSignService(object):
             for name, email in DOCUSIGN_CC_RECIPIENTS
             ]
 
-    def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
+    def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer, show_all_documents=False):
         from taa.services.docusign.templates.fpp import FPPTemplate
         from taa.services.docusign.templates.fpp_replacement import FPPReplacementFormTemplate
         from taa.services.docusign.templates.fpp_bank_draft import FPPBankDraftFormTemplate
@@ -200,14 +200,14 @@ class DocuSignService(object):
         # Bank draft should be included if
         # - Collection of bank draft info is on for this case
         # - AND we aren't doing paylogix or processing an import.
-        if (fpp_form.should_include_bank_draft() and
-                not enrollment_data.is_import() and
-                not enrollment_data.requires_paylogix_export()):
+        if fpp_form.should_include_bank_draft() and (
+                    show_all_documents or
+                    not self.should_suppress_bank_draft(enrollment_data)):
             components.append(FPPBankDraftFormTemplate(recipients, enrollment_data, should_use_docusign_renderer))
 
         return components
 
-    def create_group_ci_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
+    def create_group_ci_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer, show_all_documents=False):
         from taa.services.docusign.templates.group_ci import GroupCITemplate
         from taa.services.docusign.templates.fpp_bank_draft import FPPBankDraftFormTemplate
         from taa.services.docusign.documents.additional_children import ChildAttachmentForm
@@ -237,22 +237,29 @@ class DocuSignService(object):
         # The second part of this statement is meant to restrict this form
         # from showing up when importing enrollments until we implement
         # collecting the Bank Draft data.
-        if (form.should_include_bank_draft()
-                and not enrollment_data.is_import()
-                and not enrollment_data.requires_paylogix_export()):
+
+        if form.should_include_bank_draft() and (
+                    show_all_documents or
+                    not self.should_suppress_bank_draft(enrollment_data)):
             components.append(FPPBankDraftFormTemplate(recipients, enrollment_data, should_use_docusign_renderer))
 
         return components
 
+    def should_suppress_bank_draft(self, enrollment_data):
+        # Don't include the bank draft form in these situations.
+        return enrollment_data.is_import() or enrollment_data.requires_paylogix_export()
+
     def create_static_benefit_components(self, enrollment_data, recipients, should_use_docusign_renderer,
-                                         enrollment_application):
+                                         enrollment_application, show_all_documents=False):
         components = list()
 
         from taa.services.docusign.templates.static_benefit import StaticBenefitTemplate
         form = StaticBenefitTemplate(recipients, enrollment_data, should_use_docusign_renderer, enrollment_application)
         components.append(form)
 
-        if form.should_include_bank_draft() and not enrollment_data.is_import() and not enrollment_data.requires_paylogix_export():
+        if form.should_include_bank_draft() and (
+                    show_all_documents or
+                    not self.should_suppress_bank_draft(enrollment_data)):
             from taa.services.docusign.templates.fpp_bank_draft import FPPBankDraftFormTemplate
             components.append(FPPBankDraftFormTemplate(recipients, enrollment_data, should_use_docusign_renderer))
 
