@@ -16,12 +16,19 @@ class MockApiTokenService(object):
         return token in self.valid_tokens
 
 
-class MockCaseService(object):
+class  MockCaseService(object):
     def __init__(self):
         self.valid_tokens = {}
 
     def is_valid_case_token(self, token):
         return token in self.valid_tokens
+
+    def get_products_for_case(self, case):
+        class FakeProduct(object):
+            def get_base_product_code(self):
+                return 'FPPTI'
+
+        return [FakeProduct()]
 
     def get_case_for_token(self, token):
         class Case:
