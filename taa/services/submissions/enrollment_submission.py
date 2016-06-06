@@ -547,9 +547,9 @@ class EnrollmentSubmissionProcessor(object):
 
         case = enrollment_application.case
 
-        product_submissions = self.enrollment_service.get_standardized_json_for_enrollment(enrollment_application)
+        all_product_data = self.enrollment_service.get_standardized_json_for_enrollment(enrollment_application)
 
-        first_product_data = EnrollmentDataWrap(product_submissions[0], case=enrollment_application.case,
+        first_product_data = EnrollmentDataWrap(all_product_data[0], case=enrollment_application.case,
                                        enrollment_record=enrollment_application)
         signing_agent = first_product_data.get_signing_agent()
         recipients = [
@@ -566,32 +566,33 @@ class EnrollmentSubmissionProcessor(object):
 
         if case.include_cover_sheet:
             from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
-            components.append(CoverSheetAttachment([emp_recip], EnrollmentDataWrap(product_submissions[0], case,
+            components.append(CoverSheetAttachment([emp_recip], EnrollmentDataWrap(all_product_data[0], case,
                                                                                           enrollment_record=enrollment_application),
-                                                   product_submissions))
+                                                   all_product_data))
 
-        for product_submission in product_submissions:
+        for raw_enrollment_data in all_product_data:
             # Wrap the submission with an object that knows how to pull out key info.
-            enrollment_data = EnrollmentDataWrap(product_submission, case, enrollment_record=enrollment_application)
+            enrollment_data = EnrollmentDataWrap(raw_enrollment_data, case, enrollment_record=enrollment_application)
 
             # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
             should_use_docusign_renderer = False # if enrollment_data.should_use_call_center_workflow() else True
 
-            product_id = product_submission['product_id']
+            product_id = enrollment_data['product_id']
             product = self.product_service.get(product_id)
             if not product.does_generate_form():
                 continue
 
+
             if product.is_fpp():
                 components += self.docusign_service.create_fpp_envelope_components(enrollment_data, recipients,
-                                                                  should_use_docusign_renderer)
-            elif product.is_static_benefit() and not enrollment_application.did_sign_in_wizard():
+                                                                  should_use_docusign_renderer, show_all_documents=True)
+            elif product.is_static_benefit():
                 components += self.docusign_service.create_static_benefit_components(enrollment_data, recipients,
                                                                     should_use_docusign_renderer,
-                                                                    enrollment_application)
+                                                                    enrollment_application, show_all_documents=True)
             elif product.is_group_ci():
                 components += self.docusign_service.create_group_ci_envelope_components(enrollment_data, recipients,
-                                                                       should_use_docusign_renderer)
+                                                                       should_use_docusign_renderer, show_all_documents=True)
 
         return components
 
