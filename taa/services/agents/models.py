@@ -12,6 +12,8 @@ class Agent(AgentJsonSerializable, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     agent_code = db.Column(db.String(32), nullable=False, index=True)
+    signing_name = db.Column(db.String(256))
+    agency = db.Column(db.String(256))
     activated = db.Column(db.Boolean, nullable=False)
 
     password = db.Column(db.String)

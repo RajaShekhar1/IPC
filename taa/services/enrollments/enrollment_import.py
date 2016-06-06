@@ -45,9 +45,9 @@ class EnrollmentImportService(object):
             "replacement_policies": [],
         }
 
-        code = data.get("product_code")
-        products = self.product_service.get_products_by_codes([code])
-        product = products[0]
+
+        product = self.get_product_from_data(data)
+
         state = data.get("signed_at_state")
 
         # Pass through all the original data to start
@@ -150,6 +150,22 @@ class EnrollmentImportService(object):
                     out_data['rider_data'][prefix].append({'code': rider_code})
 
         return out_data
+
+    def get_product_from_data(self, data):
+        # Match the product to a product on the case using the base code.
+        case = self.case_service.get(data['case_id'])
+        case_products = self.case_service.get_products_for_case(case)
+        code = data["product_code"]
+        product = next((
+            p for p in case_products
+            if p.get_base_product_code().upper() == code.upper()),
+            None)
+        if not product:
+            # Shouldn't get here if validation is working correctly, but as a fallback
+            #  just look up the product by code.
+            products = self.product_service.get_products_by_codes([code])
+            product = products[0]
+        return product
 
     def do_addresses_match(self, data):
         emp_address = (data.get("emp_street"), data.get("emp_street2"), data.get("emp_city"), data.get("emp_state"),

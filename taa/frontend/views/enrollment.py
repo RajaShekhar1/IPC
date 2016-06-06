@@ -281,6 +281,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'occupations': occupations,
             'omit_actively_at_work': case.omit_actively_at_work,
             'include_bank_draft_form': case.include_bank_draft_form,
+            'is_call_center': case.should_use_call_center_workflow,
         },
         applicants=applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in
@@ -464,10 +465,7 @@ def submit_wizard_data():
         if are_all_products_declined(wizard_results):
             return get_declined_response(wizard_results)
         
-        accepted_products = get_accepted_products(case,
-                                                  get_accepted_product_ids(json.loads(enrollment.standardized_data)))
-
-
+        accepted_products = get_accepted_products(case, get_accepted_product_ids(json.loads(enrollment.standardized_data)))
         if any(p for p in accepted_products if p.does_generate_form()):
             # Queue this call for a worker process to handle.
             enrollment_submission_service = LookupService('EnrollmentSubmissionService')
@@ -562,6 +560,11 @@ def check_submission_status():
         # Declined enrollment, return redirect to our landing page.
         return get_declined_response(received_enrollment_data)
     elif not generates_form:
+        return jsonify(status="ready", redirect_url='/enrollment-case/%d#enrollment' % enrollment.case.id)
+
+    elif enrollment.did_sign_in_wizard():
+        # This was signed in the wizard, we can go back to the enrollment page.
+        #  Note - may still have a docusign envelope ID since some documents are still submitted that way.
         return jsonify(status="ready", redirect_url='/enrollment-case/%d#enrollment' % enrollment.case.id)
     elif enrollment.docusign_envelope_id is not None:
         # Done processing this envelope, get the signing URL

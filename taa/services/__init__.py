@@ -108,6 +108,7 @@ def LookupService(service_name):
         raise ValueError("Could not find service named '{0}'".format(service_name))
     return ServiceProxy(service_name)
 
+
 def initialize_services():
     """
     Sets up the service providers for the TAA app. Will overwrite/reset to valid production services, useful for resetting tests.

@@ -9,7 +9,7 @@ function submit_application() {
   });
 
   var please_wait_dialogue = bootbox.dialog({
-    message: "Preparing application for submission. Please wait, this make take a minute...",
+    message: "Preparing application for submission. Please wait, this may take a minute...",
     buttons: {
       //"success": {
       //  "label": "Close",
@@ -272,6 +272,11 @@ function build_wizard_results_for_product_coverage(product_cov) {
     state: $("#eeState").val(),
     zip: $("#eeZip").val()
   };
+
+  // Add Signing Ceremony data
+  wizard_results.should_do_signing_ceremony = root.should_do_signing_ceremony();
+  wizard_results.applicant_signed = root.applicant_signed();
+  wizard_results.agent_signed = root.agent_signed();
 
   return wizard_results;
 }
