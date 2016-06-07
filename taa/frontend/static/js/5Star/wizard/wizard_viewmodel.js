@@ -1681,7 +1681,7 @@ var wizard_viewmodel = (function () {
           buttons: {
             "success": {
               "label": "Close",
-              "className": "btn-sm btn-primary"
+              "className": "btn-sm btn-primary btn-close"
             }
           }
         });

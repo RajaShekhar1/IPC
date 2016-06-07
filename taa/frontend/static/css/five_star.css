@@ -309,6 +309,12 @@ input[type=checkbox].ace.ace-switch.ace-switch-6:checked+.lbl::before {
     padding-left: 3em;
 }
 
+/* Radio buttons that are default disabled */
+input[type=radio].ace+.lbl.not-allowed::before {
+    font-size: 10px;
+    cursor: not-allowed;
+}
+
 /* Difficulty getting ace-switch to look padding with a label */
 input[type=checkbox].ace.ace-switch+.lbl.padding-16::before {
     margin-right: 8px;

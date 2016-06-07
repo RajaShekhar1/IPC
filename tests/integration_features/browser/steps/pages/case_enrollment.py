@@ -28,6 +28,9 @@ class CaseEnrollmentPage(PageBase):
     def get_url(self):
         return "{}{}".format(self.get_base_url(), self.get_url_path())
 
+    def navigate_to_setup_page(self):
+        self.lookup("a[href='#setup']").click()
+
     def add_enrollment(self, ssn):
         add_enrollment_button = self.lookup(self.ADD_ENROLLMENT_BUTTON)
         add_enrollment_button.click()
