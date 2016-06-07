@@ -398,11 +398,6 @@ def create_fpp_envelope(enrollment_data, case):
     return docusign_service.create_fpp_envelope(enrollment_data, case)
 
 
-def create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer):
-    docusign_service = LookupService('DocuSignService')
-    return docusign_service.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer)
-
-
 def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
     employee, envelope_result = create_fpp_envelope(enrollment_data, case)
     redirect_url = fetch_signing_url(employee, enrollment_data, envelope_result)
