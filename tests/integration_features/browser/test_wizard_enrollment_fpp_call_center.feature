@@ -51,8 +51,8 @@ Feature: An employee takes an app using the wizard with an Agent assisting on th
     And  I check all boxes on the Agreement disclaimer
     And  I click sign on the Other Insurance Questions
     Then I should be redirected to the Enrollment Page
-    And  I click on that person's Enrollment
-    Then I should see that the person is Enrolled
+    #And  I click on that person's Enrollment
+    #Then I should see that the person is Enrolled
 
 
   Scenario: Agent does enrollment on the phone for coverage on spouse and child
@@ -76,5 +76,5 @@ Feature: An employee takes an app using the wizard with an Agent assisting on th
     And  I check all boxes on the Agreement disclaimer
     And  I click sign on the Other Insurance Questions
     Then I should be redirected to the Enrollment Page
-    And  I click on that person's Enrollment
-    Then I should see that the person is Enrolled
+    #And  I click on that person's Enrollment
+    #Then I should see that the person is Enrolled

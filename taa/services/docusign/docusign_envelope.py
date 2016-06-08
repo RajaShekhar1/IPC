@@ -216,12 +216,18 @@ class EnrollmentDataWrap(object):
             return None
 
     def did_employee_select_coverage(self):
-        return (self.data['employee_coverage'] and (self.data['employee_coverage'].get('premium') or
+        return (self.data.get('employee_coverage') and (self.data['employee_coverage'].get('premium') or
                                                     self.data['employee_coverage'].get('face_value')))
 
     def get_employee_coverage(self):
         coverage = self.data['employee_coverage']
         return self.format_coverage(coverage)
+
+    def get_employee_coverage_tier(self):
+        coverage = self.data.get('employee_coverage')
+        if not coverage:
+            return None
+        return coverage.get('coverage_selection')
 
     def format_coverage(self, coverage):
         if 'face_value' in coverage:
@@ -253,7 +259,7 @@ class EnrollmentDataWrap(object):
                                                                                                  self.data['spouse_coverage']['coverage_selection']):
             return True
 
-        return (self.data['spouse_coverage'] and (self.data['spouse_coverage'].get('premium') or
+        return (self.data.get('spouse_coverage') and (self.data['spouse_coverage'].get('premium') or
                                                   self.data['spouse_coverage'].get('face_value')))
 
     def get_spouse_coverage(self):
@@ -463,11 +469,14 @@ class EnrollmentDataWrap(object):
         applicants.append(dict(
             relationship="self",
             name=self.get_employee_first(),
+            last_name=self.get_employee_last(),
             coverage=coverage,
+            coverage_tier=self.get_employee_coverage_tier(),
             premium=premium_amount,
             formatted_premium=premium,
             mode=payment_mode,
             effective_date=effective_date,
+            birthdate=self.get_employee_birthdate(),
         ))
 
         if self.data.get('spouse') and self.data['spouse']['first']:
@@ -483,11 +492,14 @@ class EnrollmentDataWrap(object):
             applicants.append(dict(
                 relationship="spouse",
                 name=self.data['spouse']['first'],
+                last_name=self.data['spouse']['last'],
                 coverage=coverage,
+                coverage_tier=None,
                 premium=premium_amount,
                 formatted_premium=premium,
                 mode=payment_mode,
                 effective_date=effective_date,
+                birthdate=self.data['spouse']['birthdate']
             ))
 
         for i, child in enumerate(self.data['children']):
@@ -503,11 +515,14 @@ class EnrollmentDataWrap(object):
             applicants.append(dict(
                 relationship="child",
                 name=child['first'],
+                last_name=child['last'],
                 coverage=self.get_child_coverage(i) if is_covered else 'DECLINED',
+                coverage_tier=None,
                 premium=premium_amount,
                 formatted_premium=premium,
                 mode=payment_mode,
                 effective_date=effective_date,
+                birthdate=child['birthdate']
             ))
 
         return applicants
@@ -524,7 +539,7 @@ class EnrollmentDataWrap(object):
     def get_account_holder_name(self):
         if not self.has_bank_draft_info():
             return
-        return self.get_bank_draft_info().get('account_holder', '')
+        return self.get_bank_draft_info().get('account_holder_name', '')
 
     def get_routing_number(self):
         if not self.has_bank_draft_info():

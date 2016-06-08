@@ -317,8 +317,7 @@ def step_impl(context):
     """
     wizard_page = WizardPage(context)
     time.sleep(5)
-    val = wizard_page.find_status_enrolled()
-    assert_that(val, equal_to(True))
+    assert_that(wizard_page.find_status_enrolled(), equal_to(True))
 
 
 @then("I should be redirected to the Home page")
