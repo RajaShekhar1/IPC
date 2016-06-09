@@ -255,9 +255,11 @@ class EnrollmentDataWrap(object):
         if self.get_product().is_static_benefit() and self.did_employee_select_coverage():
             return True
 
-        elif self.get_product().is_simple_coverage() and self.get_product().is_applicant_covered('spouse',
-                                                                                                 self.data['spouse_coverage']['coverage_selection']):
-            return True
+        elif self.get_product().is_simple_coverage():
+            return self.get_product().is_applicant_covered(
+                'spouse',
+                # This uses employee coverage to determine if spouse is included.
+                self.data['employee_coverage']['coverage_selection'])
 
         return (self.data.get('spouse_coverage') and (self.data['spouse_coverage'].get('premium') or
                                                   self.data['spouse_coverage'].get('face_value')))
@@ -307,7 +309,11 @@ class EnrollmentDataWrap(object):
         covered_children = []
         for i, child in enumerate(self.data['children']):
             coverage = self.data['child_coverages'][i]
-            if coverage and (coverage.get('face_value') or coverage.get('coverage_selection')):
+            if coverage and (coverage.get('face_value') or
+                              self.get_product().is_static_benefit() or
+                             (coverage.get('coverage_selection') and
+                                  self.get_product().is_simple_coverage() and
+                                  self.get_product().is_applicant_covered('children', coverage['coverage_selection']))):
                 covered_children.append(child)
         return covered_children
 
@@ -317,6 +323,7 @@ class EnrollmentDataWrap(object):
     def get_child_premium(self, child_num=0):
         if self.get_product().is_employee_premium_only():
             return decimal.Decimal('0.00')
+
         return decimal.Decimal(self.data['child_coverages'][child_num]['premium'])
 
     def get_formatted_child_premium(self, child_num=0):
@@ -462,8 +469,10 @@ class EnrollmentDataWrap(object):
 
         else:
             coverage = 'DECLINED'
-            premium = '-'
+            premium = ''
             premium_amount = decimal.Decimal('0.00')
+            payment_mode = ''
+            effective_date = ''
 
         # Employee data
         applicants.append(dict(
@@ -484,10 +493,14 @@ class EnrollmentDataWrap(object):
                 coverage = self.get_spouse_coverage()
                 premium = self.get_formatted_spouse_premium()
                 premium_amount = self.get_spouse_premium()
+                applicant_payment_mode = payment_mode
+                applicant_effective_date = effective_date
             else:
                 coverage = 'DECLINED'
-                premium = '-'
+                premium = ''
                 premium_amount = decimal.Decimal('0.00')
+                applicant_payment_mode = ''
+                applicant_effective_date = ''
 
             applicants.append(dict(
                 relationship="spouse",
@@ -497,20 +510,30 @@ class EnrollmentDataWrap(object):
                 coverage_tier=None,
                 premium=premium_amount,
                 formatted_premium=premium,
-                mode=payment_mode,
-                effective_date=effective_date,
+                mode=applicant_payment_mode,
+                effective_date=applicant_effective_date,
                 birthdate=self.data['spouse']['birthdate']
             ))
 
         for i, child in enumerate(self.data['children']):
             is_covered = child in self.get_covered_children()
 
-            if is_covered: #self.get_child_premium(i) >= decimal.Decimal('0.00'):
+            if is_covered:
                 premium = self.get_formatted_child_premium(i)
                 premium_amount = self.get_child_premium(i)
+
+                # If this is not the first child, and this is a product that groups child premiums, set it to zero.
+                if i > 0 and self.get_product_code() == 'Group CI':
+                    premium = '0.00'
+                    premium_amount = decimal.Decimal('0.00')
+
+                applicant_payment_mode = payment_mode
+                applicant_effective_date = effective_date
             else:
-                premium = '-'
+                premium = ''
                 premium_amount = decimal.Decimal('0.00')
+                applicant_payment_mode = ''
+                applicant_effective_date = ''
 
             applicants.append(dict(
                 relationship="child",
@@ -520,8 +543,8 @@ class EnrollmentDataWrap(object):
                 coverage_tier=None,
                 premium=premium_amount,
                 formatted_premium=premium,
-                mode=payment_mode,
-                effective_date=effective_date,
+                mode=applicant_payment_mode,
+                effective_date=applicant_effective_date,
                 birthdate=child['birthdate']
             ))
 

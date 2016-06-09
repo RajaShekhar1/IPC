@@ -169,9 +169,7 @@ class CoverSheetAttachment(PDFAttachment):
         ]
 
         row_count = 2
-
         total_premium = decimal.Decimal('0.00')
-
 
         # Iterate through the case products to identify declines.
         case_service = LookupService('CaseService')
@@ -180,9 +178,8 @@ class CoverSheetAttachment(PDFAttachment):
                 # Show Decline
                 product_header = '{} - DECLINED'.format(product.name)
                 applicants = []
-        #for i, raw_product_data in enumerate(self.all_enrollments):
             else:
-
+                # Show product name, also
                 product_data = self.get_wrapped_enrollment_data_for_product(product)
                 product_header = product.name
                 applicants = product_data.get_applicant_data()
@@ -210,7 +207,6 @@ class CoverSheetAttachment(PDFAttachment):
             styles += [
                 ('BACKGROUND', (0, row_count), (-1, row_count), colors.lightgrey),
                 ('SPAN', (0, row_count), (-1, row_count)),
-                #    ('GRID', (0, row_count+1), (-1, row_count+1), 0.5, colors.black),
             ]
 
             # The current row index is the
