@@ -486,6 +486,7 @@ class EnrollmentDataWrap(object):
             mode=payment_mode,
             effective_date=effective_date,
             birthdate=self.get_employee_birthdate(),
+            selected_riders=self.data.get('rider_data', {}).get('emp', []),
         ))
 
         if self.data.get('spouse') and self.data['spouse']['first']:
@@ -512,7 +513,8 @@ class EnrollmentDataWrap(object):
                 formatted_premium=premium,
                 mode=applicant_payment_mode,
                 effective_date=applicant_effective_date,
-                birthdate=self.data['spouse']['birthdate']
+                birthdate=self.data['spouse']['birthdate'],
+                selected_riders=self.data.get('rider_data', {}).get('sp', []),
             ))
 
         for i, child in enumerate(self.data['children']):
@@ -545,7 +547,8 @@ class EnrollmentDataWrap(object):
                 formatted_premium=premium,
                 mode=applicant_payment_mode,
                 effective_date=applicant_effective_date,
-                birthdate=child['birthdate']
+                birthdate=child['birthdate'],
+                selected_riders=[]
             ))
 
         return applicants

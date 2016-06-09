@@ -25,6 +25,27 @@ class RiderService(object):
         # These will match what is on the form(s) for importable products.
         return ['AIR', 'WP', 'QOL3', 'QOL4']
 
+    def get_case_level_riders_for_product(self, case, product):
+        # Case-level riders are in the product config.
+        riders = []
+
+        settings = case.product_settings
+        if not settings:
+            return riders
+
+        rider_configuration = RiderConfiguration(product.get_base_product_code())
+        all_product_riders = rider_configuration.get_riders()
+
+        for rider_setting in settings.get('riders', []):
+            if rider_setting.get('product_id') is not product.id:
+                continue
+
+            if rider_setting.get('is_selected'):
+                matching_rider = next((rider for rider in all_product_riders if rider.code == rider_setting.get('rider_code')), None)
+                if matching_rider.is_group_level:
+                    riders.append(matching_rider)
+
+        return riders
 
 class RiderConfiguration(object):
     def __init__(self, product_code):
@@ -66,7 +87,7 @@ rider_config_fpp = """
 ---
 - name: Waiver of Premium
   code: "WP"
-  is_group_level: false
+  is_group_level: true
   user_facing_name: "Waiver of Premium Benefit"
   compatibility_rules:
     - message: "Waiver of Premium Benefit cannot be combined with Auto Increase Rider Benefit."
@@ -75,7 +96,7 @@ rider_config_fpp = """
 - name: Automatic Increase Rider
   code: "AIR"
   user_facing_name: "Automatic Increase Benefit"
-  is_group_level: true
+  is_group_level: false
   compatibility_rules:
     - message: "Auto Increase Rider cannot be combined with Waiver of Premium"
       triggered_if_included_riders: ["WP"]
@@ -102,7 +123,7 @@ rider_config_fpp_gov = """
 - name: "Waiver of Premium"
   code: "WP"
   user_facing_name: "Waiver of Premium Benefit"
-  is_group_level: false
+  is_group_level: true
 
 - name: "Quality of Life 3%"
   code: "QOL3"
@@ -127,7 +148,7 @@ rider_config_ci = """
 []
 # - name: "Waiver of Premium"
 #   code: "WP"
-#   is_group_level: false
+#   is_group_level: true
 #   user_facing_name: "Waiver of Premium Benefit"
 
 """
