@@ -18,112 +18,109 @@ PRODUCT_CODE_FPPCI = u'FPPCI'
 PRODUCT_CODE_FPPTIG_INVALID = u'FPPTIG/INVALID'
 
 
+def get_invalid_plan_code(base_product_code):
+    if base_product_code == 'FPP-Gov':
+        base_product_code = 'FPPTIG'
+    return '{}/INVALID'.format(base_product_code)
+
 
 def get_plan_code(base_product_code, applicant_query):
-    if base_product_code == 'FPP-Gov':
-        # Convert 5Star representation to Dell representation
-        base_product_code = PRODUCT_CODE_FPPTIG
     applicant_type = applicant_query.get_applicant_type()
     riders = applicant_query.get_riders()
     state = applicant_query.state
 
-    #if base_product_code != PRODUCT_CODE_FPPTI and base_product_code != PRODUCT_CODE_FPPTIB and base_product_code != PRODUCT_CODE_FPPTIG and base_product_code != PRODUCT_CODE_FPPTIY and base_product_code != PRODUCT_CODE_FPPTIW:
-    #    return ''
+    plan_code = None
 
-    if applicant_type == APPLICANT_CHILD:
-        plan_code = get_child_plan_code(base_product_code, state)
-    else:
-        plan_code = get_adult_plan_code(applicant_type, base_product_code, riders, state)
+    # Convert 5Star representation to Dell representation
+    if base_product_code == 'FPP-Gov':
+        base_product_code = PRODUCT_CODE_FPPTIG
 
-    plan_code = add_state_modification(base_product_code, plan_code, state)
+    # Set rider flags
+    has_air = 'AIR' in riders
+    has_wp = 'WP' in riders
+    has_qol3 = 'QOL3' in riders
+    has_qol4 = 'QOL4' in riders
 
-    return plan_code
-
-
-def add_state_modification(base_product_code, plan_code, state):
-    if (plan_code != None and len(plan_code) > 0 and (state == 'MD' or state == 'UT') and
-                base_product_code in [PRODUCT_CODE_FPPTI, PRODUCT_CODE_FPPCI]):
-        if plan_code[-1] != '/':
-            plan_code += ' '
-        plan_code += state
-
-    return plan_code
-
-
-def get_adult_plan_code(applicant_type, base_product_code, riders, state):
-    plan_code = base_product_code
-
-    if base_product_code == PRODUCT_CODE_FPPCI:
-        plan_code = 'INDFPP'
-        if state == 'MD' or state == 'UT':
-            plan_code += '/'
-        return plan_code
-
-    # FPPTIG can never have AIR
-    if 'AIR' in riders and base_product_code == PRODUCT_CODE_FPPTIG:
-        return PRODUCT_CODE_FPPTIG_INVALID
-
-    if len(riders) == 1:
-        if 'AIR' in riders:
-            plan_code = get_air_code(base_product_code)
-            if state == 'MD' or state == 'UT':
-                plan_code += '/'
-        elif 'WP' in riders:
-            plan_code = base_product_code
-        elif 'QOL3' in riders or 'QOL4' in riders:
-            plan_code = get_qol_code(base_product_code, riders[0], applicant_type, state)
+    # Detect and terminate early on invalid cases
+    if len(riders) > 2:
+        # More than two riders; currently invalid
+        return None
     elif len(riders) == 2:
-        if 'AIR' in riders and 'WP' in riders:
-            # AIR and WP rider combination not allowed
-            plan_code = ''
-        elif 'AIR' in riders and 'QOL3' in riders:
-            plan_code = get_air_code(base_product_code)
-            if state == 'MD' or state == 'UT':
-                plan_code += '/'
-        elif 'AIR' in riders and 'QOL4' in riders:
-            plan_code = get_air_code(base_product_code)
-            if base_product_code != PRODUCT_CODE_FPPTI and state != 'MD' and state != 'UT':
-                plan_code += '/'
-            if plan_code != '':
-                plan_code += '4'
-            if state == 'MD' or state == 'UT':
-                plan_code += '/'
-        elif 'WP' in riders and 'QOL3' in riders:
-            plan_code = get_qol_code(base_product_code, 'QOL3', applicant_type, state)
-        elif 'WP' in riders and 'QOL4' in riders:
-            plan_code = get_qol_code(base_product_code, 'QOL4', applicant_type, state)
+        # Two riders
+        if has_air and has_wp:
+            # AIR and WP riders are mutually exclusive
+            return None
+        if has_qol3 and has_qol4:
+            # QOL3 and QOL4 riders are mutually exclusive
+            return None
+    if len(riders) > 0:
+        # One or more riders
+        if applicant_type == APPLICANT_CHILD:
+            # Children can't have any riders
+            return None
+        if base_product_code == PRODUCT_CODE_FPPCI:
+            # FPPCI can't have any riders
+            return None
+    if base_product_code == PRODUCT_CODE_FPPTIG:
+        if has_air:
+            # FPPTIG can't have AIR rider
+            return None
+    if base_product_code not in [PRODUCT_CODE_FPPTI, PRODUCT_CODE_FPPTIG,
+                                 PRODUCT_CODE_FPPTIW, PRODUCT_CODE_FPPCI]:
+        # Unhandled base product
+        return None
 
-    return plan_code
+    # Determine state suffix
+    suffix = ''
+    if ((state == 'MD' or state == 'UT') and
+            (base_product_code == PRODUCT_CODE_FPPTI or base_product_code == PRODUCT_CODE_FPPCI)):
+        # States are appended to FPPTI and FPPCI only (not FPPTIW nor FPPTIG)
+        suffix = state
+    if len(suffix) != 0:
+        suffix = '/{}'.format(suffix)
 
-
-def get_child_plan_code(base_product_code, state_code):
     if base_product_code == PRODUCT_CODE_FPPCI:
-        plan_code = 'INDFPD'
-    else:
-        plan_code = 'FPPT'
-
-        if base_product_code[-1] != 'I':
-            plan_code += 'ID' + base_product_code[-1]
+        # FPPCI
+        if applicant_type == APPLICANT_CHILD:
+            plan_code = 'INDFPD'
         else:
-            plan_code += 'ID'
-    if state_code in ['UT', 'MD']:
-        plan_code += '/'
-    return plan_code
+            plan_code = 'INDFPP'
+    else:
+        # Order of precedence: AIR > QOL3/4 > no rider
+        middle = 'A' if has_air else 'Q' if has_qol3 or has_qol4 else 'P'
+        if has_air:
+            last = '4' if has_qol4 else ''
+        else:
+            last = '3' if has_qol3 else '4' if has_qol4 else ''
 
+        if base_product_code == PRODUCT_CODE_FPPTI:
+            # FPPTI
+            if applicant_type == APPLICANT_CHILD:
+                plan_code = 'FPPTID'
+            else:
+                plan_code = 'FP{}TI{}'.format(middle, last)
+        elif base_product_code == PRODUCT_CODE_FPPTIG:
+            # FPPTIG
+            if applicant_type == APPLICANT_CHILD:
+                plan_code = 'FPPTDG'
+            else:
+                if last != '':
+                    last = '/{}'.format(last)
+                plan_code = 'FP{}TIG{}'.format(middle, last)
+        elif base_product_code == PRODUCT_CODE_FPPTIW:
+            # FPPTIW
+            if applicant_type == APPLICANT_CHILD:
+                plan_code = 'FPPTDW'
+            else:
+                # if has_qol4 and len(riders) == 1:
+                #     # Special case from 2016-05-16 Dell Sally Miller email
+                #     # > [FPPTIW] WITH [only] QOL 4% -> FPATW/4
+                #     middle = 'A'
+                # "I" in code disappears when AIR rider is present
+                i = '' if has_air or middle == 'A' else 'I'
+                if len(last) > 0:
+                    last = '/{}'.format(last)
+                plan_code = 'FP{}T{}W{}'.format(middle, i, last)
 
-def get_air_code(base_product_code):
-    plan_code = 'FPAT'
-    plan_code += base_product_code[-1]
-    return plan_code
-
-
-def get_qol_code(base_product_code, rider, applicant_type, state):
-    plan_code = 'FPQTI'
-    if base_product_code != PRODUCT_CODE_FPPTI:
-        plan_code += base_product_code[-1]
-    if base_product_code != PRODUCT_CODE_FPPTI and state != 'MD' and state != 'UT':
-        plan_code += '/'
-    plan_code += rider[-1]
-    if state == 'MD' or state == 'UT':
-        plan_code += '/'
+    plan_code += suffix
     return plan_code
