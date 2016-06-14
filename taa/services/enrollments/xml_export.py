@@ -13,7 +13,8 @@ from .models import db
 from taa import app
 from taa.services.agents.models import Agent
 from taa.services import RequiredFeature
-from taa.services.products.plan_codes import get_plan_code
+from taa.services.products.plan_codes import (get_invalid_plan_code,
+                                              get_plan_code)
 from taa.services.products.RatePlan import (ApplicantQuery,
                                             ApplicantDemographics,
                                             ApplicantQueryOptions)
@@ -129,6 +130,7 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
         q['answer'] = YESNO_SOH.get(q['answer'].lower() if q['answer'] is not None
                                     else None)
 
+    # TODO: move this to 5Star app config
     try:
         is_debug = current_app.config['DEBUG']
     except:
@@ -141,6 +143,8 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
             'trans_type_code': TRANS_TYPE_CODE,
             'trans_type': TRANS_TYPE,
             'unique_id': unique_id,
+            'case_id': enrollment.case.id,
+            'enrollment_id': enrollment.id,
         },
         'auth': {
             'login': AUTH_LOGIN,
@@ -289,9 +293,6 @@ def get_riders(case, data, form_for, case_override=False):
             r = data.get('{}_rider_{}'.format(prefix, csv_rider))
             if r is not None and r.upper() == 'Y':
                 riders.append(csv_rider.upper())
-    if data['product_type'] == 'FPPCI':
-        # TODO: delete
-        riders = []
     return riders
 
 
@@ -330,9 +331,12 @@ def get_policy_info(data, form_for, enrollee, case):
         replacement_type = REPLACEMENT_TYPES[None]
     policy['replacement_type_code'] = replacement_type['code']
     policy['replacement_type'] = replacement_type['name']
-    policy['product_type'] = get_plan_code(data['product_type'],
-                                           make_applicant_query(data, form_for,
-                                                                enrollee, case))
+    plan_code = get_plan_code(data['product_type'],
+                              make_applicant_query(data, form_for,
+                                                    enrollee, case))
+    if plan_code is None:
+        plan_code = get_invalid_plan_code(data['product_type'])
+    policy['product_type'] = plan_code
     if policy['base_product_type'].startswith('FPPTI'):
         policy.update({'product_code': 'Term'})
     else:
