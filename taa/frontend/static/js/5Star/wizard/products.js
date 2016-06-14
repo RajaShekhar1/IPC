@@ -442,6 +442,10 @@ var wizard_products = (function () {
     return false;
   };
 
+  GroupCIProduct.prototype.max_child_age = function () {
+      return 26;
+  };
+  
 
 // FPP Gov
   function FPPGovProduct(product_data) {
