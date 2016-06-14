@@ -317,7 +317,7 @@ var wizard_products = (function () {
       // Filter spouse options based on employee selection.
 
       // Get the 5,000 to 100,000 coverage options to start with.
-      var base_options = self.filter_base_rate_options(all_options);
+      var base_options = self.filter_spouse_base_rate_options(all_options);
 
       // Limit to 50% of employee's current selection, or 25k max.
       // BUT, If the employee has answered yes to any required question, we should not limit the dependent coverage options.
@@ -377,6 +377,13 @@ var wizard_products = (function () {
       // Usually just present $5,000 to $100,000 in $5000 increments.
       return _.filter(all_options, function (o) {
         return o.face_value % 5000 === 0;
+      });
+    };
+
+    self.filter_spouse_base_rate_options = function(all_options) {
+      // Add in the new 2500 coverage tier.
+      return _.filter(all_options, function (o) {
+        return o.face_value % 5000 === 0 || o.face_value == 2500;
       });
     };
 
