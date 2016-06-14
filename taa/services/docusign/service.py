@@ -55,7 +55,7 @@ class DocuSignService(object):
         # Create and combine components of the envelope from each product.
         components = []
 
-        if case.include_cover_sheet:
+        if case.include_cover_sheet and not enrollment_application.did_sign_in_wizard():
             from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
             components.append(CoverSheetAttachment([in_person_signer], EnrollmentDataWrap(product_submissions[0], case, enrollment_record=enrollment_application), product_submissions))
 
@@ -70,14 +70,15 @@ class DocuSignService(object):
             product = self.product_service.get(product_id)
             if not product.does_generate_form():
                 continue
+
             if product.is_fpp():
                 components += self.create_fpp_envelope_components(enrollment_data, recipients,
                                                                   should_use_docusign_renderer)
-            elif product.is_static_benefit():
+            elif product.is_static_benefit() and not enrollment_application.did_sign_in_wizard():
                 components += self.create_static_benefit_components(enrollment_data, recipients,
                                                                     should_use_docusign_renderer,
                                                                     enrollment_application)
-            else:
+            elif product.is_group_ci():
                 components += self.create_group_ci_envelope_components(enrollment_data, recipients,
                                                                        should_use_docusign_renderer)
 
@@ -134,7 +135,7 @@ class DocuSignService(object):
                                              email=enrollment_data.get_employee_email())
 
         if enrollment_data.should_use_call_center_workflow():
-            recipients = [agent] + self.get_carbon_copy_recipients()
+            recipients = self.get_carbon_copy_recipients()
             return agent, recipients
         else:
             recipients = [
@@ -149,7 +150,7 @@ class DocuSignService(object):
             for name, email in DOCUSIGN_CC_RECIPIENTS
             ]
 
-    def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
+    def create_fpp_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer, show_all_documents=False):
         from taa.services.docusign.templates.fpp import FPPTemplate
         from taa.services.docusign.templates.fpp_replacement import FPPReplacementFormTemplate
         from taa.services.docusign.templates.fpp_bank_draft import FPPBankDraftFormTemplate
@@ -196,15 +197,17 @@ class DocuSignService(object):
             components.append(AdditionalReplacementPoliciesForm(recipients,
                                                                 enrollment_data))
 
-        # The second part of this statement is meant to restrict this form
-        # from showing up when importing enrollments until we implement
-        # collecting the Bank Draft data.
-        if fpp_form.should_include_bank_draft() and not enrollment_data.is_import():
+        # Bank draft should be included if
+        # - Collection of bank draft info is on for this case
+        # - AND we aren't doing paylogix or processing an import.
+        if fpp_form.should_include_bank_draft() and (
+                    show_all_documents or
+                    not self.should_suppress_bank_draft(enrollment_data)):
             components.append(FPPBankDraftFormTemplate(recipients, enrollment_data, should_use_docusign_renderer))
 
         return components
 
-    def create_group_ci_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer):
+    def create_group_ci_envelope_components(self, enrollment_data, recipients, should_use_docusign_renderer, show_all_documents=False):
         from taa.services.docusign.templates.group_ci import GroupCITemplate
         from taa.services.docusign.templates.fpp_bank_draft import FPPBankDraftFormTemplate
         from taa.services.docusign.documents.additional_children import ChildAttachmentForm
@@ -234,20 +237,29 @@ class DocuSignService(object):
         # The second part of this statement is meant to restrict this form
         # from showing up when importing enrollments until we implement
         # collecting the Bank Draft data.
-        if form.should_include_bank_draft() and not enrollment_data.is_import():
+
+        if form.should_include_bank_draft() and (
+                    show_all_documents or
+                    not self.should_suppress_bank_draft(enrollment_data)):
             components.append(FPPBankDraftFormTemplate(recipients, enrollment_data, should_use_docusign_renderer))
 
         return components
 
+    def should_suppress_bank_draft(self, enrollment_data):
+        # Don't include the bank draft form in these situations.
+        return enrollment_data.is_import() or enrollment_data.requires_paylogix_export()
+
     def create_static_benefit_components(self, enrollment_data, recipients, should_use_docusign_renderer,
-                                         enrollment_application):
+                                         enrollment_application, show_all_documents=False):
         components = list()
 
         from taa.services.docusign.templates.static_benefit import StaticBenefitTemplate
         form = StaticBenefitTemplate(recipients, enrollment_data, should_use_docusign_renderer, enrollment_application)
         components.append(form)
 
-        if form.should_include_bank_draft() and not enrollment_data.is_import():
+        if form.should_include_bank_draft() and (
+                    show_all_documents or
+                    not self.should_suppress_bank_draft(enrollment_data)):
             from taa.services.docusign.templates.fpp_bank_draft import FPPBankDraftFormTemplate
             components.append(FPPBankDraftFormTemplate(recipients, enrollment_data, should_use_docusign_renderer))
 
@@ -289,7 +301,9 @@ class DocuSignService(object):
 
         print("LOADED ALL ENROLLMENTS")
         return [DocusignEnvelope(enrollment.docusign_envelope_id, enrollment)
-                for enrollment in enrollments if enrollment.docusign_envelope_id is not None]
+                for enrollment in enrollments
+                # Include only docusign-signed enrollments.
+                if enrollment.docusign_envelope_id is not None and enrollment.signature_method != EnrollmentApplication.SIGNATURE_METHOD_WIZARD]
 
     def get_envelope_signing_url(self, for_user, envelope_id, callback_url):
         "Must be the agent that the envelope was sent to (this user must be the recipient)"
@@ -382,11 +396,6 @@ def create_envelope_recipients(case, enrollment_data):
 def create_fpp_envelope(enrollment_data, case):
     docusign_service = LookupService('DocuSignService')
     return docusign_service.create_fpp_envelope(enrollment_data, case)
-
-
-def create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer):
-    docusign_service = LookupService('DocuSignService')
-    return docusign_service.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer)
 
 
 def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
@@ -1167,6 +1176,20 @@ class DocuSignEnvelopeComponent(object):
                                                 document_id=1,
                                                 page_number=tab_def.page,
                                                 ))
+                # All call center enrollments use signing ceremony now, so put the agent sig.
+                elif tab_def.type_ == "SignHere" and tab_def.recipient_role == "Agent":
+                    tabs += [DocuSignTextTab("SignHereAgent", self.data.get_agent_esignature(),
+                                             x=tab_def.x, y=tab_def.y,
+                                             document_id=1, page_number=tab_def.page,
+                                             )]
+                elif tab_def.type_ == "DateSigned" and tab_def.recipient_role == "Agent":
+                    tabs.append(DocuSignTextTab("DateSignedAgent", self.data.get_agent_esignature_date(),
+                                                x=tab_def.x,
+                                                y=tab_def.y,
+                                                document_id=1,
+                                                page_number=tab_def.page,
+                                                ))
+
 
         # This is for enrollment import - replace signatures with text when rendering PDF.
         if self.data.get('emp_sig_txt'):
@@ -1268,53 +1291,55 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
     def generate_tabs(self, recipient, purpose):
         tabs = super(DocuSignServerTemplate, self).generate_tabs(recipient, purpose)
 
-        # Include all agent tabs if this is call center mode.
-        if purpose == self.DOCUSIGN_TABS and self.data.should_use_call_center_workflow():
-            # Find the tab definition
-            tab_definitions = self.tab_repository.get_tabs_for_template(self.template_id)
-            for tab_def in tab_definitions:
-                if tab_def.type_ == "SignHere" and tab_def.recipient_role == "Agent":
-                    tabs.append(DocuSignSigTab(
-                        x=tab_def.x,
-                        y=tab_def.y,
-                        # Not sure what this is?
-                        document_id=1,
-                        page_number=tab_def.page,
-                    ))
-                elif tab_def.type_ == "DateSigned" and tab_def.recipient_role == "Agent":
-                    tabs.append(DocuSignSigDateTab(
-                        x=tab_def.x,
-                        y=tab_def.y,
-                        # Not sure if we will need to generate this?
-                        document_id=1,
-                        page_number=tab_def.page,
-                    ))
-                # Include all radio button tabs that were not locked, both employee and agent.
-                elif tab_def.custom_type == "Radio" and tab_def.custom_tab_locked == False:
-                    label = tab_def.label.split('.')[0] if len(tab_def.label.split('.')) > 1 else tab_def.label
-                    tabs.append(DocuSignRadioTab(
-                        label,
-                        is_selected=False,
-                        value=tab_def.name,
-                        x=tab_def.x,
-                        y=tab_def.y,
-                        document_id=1,
-                        page_number=tab_def.page))
 
-                elif tab_def.custom_type == "Text" and tab_def.custom_tab_locked == False:
-                    tabs.append(
-                        DocuSignTextTab(
-                            # Tab def label is really the name
-                            name=tab_def.label,
-                            value="",
-                            x=tab_def.x,
-                            y=tab_def.y,
-                            width=tab_def.width,
-                            height=tab_def.height,
-                            document_id=1,
-                            page_number=tab_def.page,
-                            required=tab_def.custom_tab_required,
-                        ))
+        # --> No longer including agent tabs in callcenter mode since everything is generated on our side now, including signature
+        #
+        # if purpose == self.DOCUSIGN_TABS and self.data.should_use_call_center_workflow():
+        #     # Find the tab definition
+        #     tab_definitions = self.tab_repository.get_tabs_for_template(self.template_id)
+        #     for tab_def in tab_definitions:
+        #         if tab_def.type_ == "SignHere" and tab_def.recipient_role == "Agent":
+        #             tabs.append(DocuSignSigTab(
+        #                 x=tab_def.x,
+        #                 y=tab_def.y,
+        #                 # Not sure what this is?
+        #                 document_id=1,
+        #                 page_number=tab_def.page,
+        #             ))
+        #         elif tab_def.type_ == "DateSigned" and tab_def.recipient_role == "Agent":
+        #             tabs.append(DocuSignSigDateTab(
+        #                 x=tab_def.x,
+        #                 y=tab_def.y,
+        #                 # Not sure if we will need to generate this?
+        #                 document_id=1,
+        #                 page_number=tab_def.page,
+        #             ))
+        #         # Include all radio button tabs that were not locked, both employee and agent.
+        #         elif tab_def.custom_type == "Radio" and tab_def.custom_tab_locked == False:
+        #             label = tab_def.label.split('.')[0] if len(tab_def.label.split('.')) > 1 else tab_def.label
+        #             tabs.append(DocuSignRadioTab(
+        #                 label,
+        #                 is_selected=False,
+        #                 value=tab_def.name,
+        #                 x=tab_def.x,
+        #                 y=tab_def.y,
+        #                 document_id=1,
+        #                 page_number=tab_def.page))
+        #
+        #         elif tab_def.custom_type == "Text" and tab_def.custom_tab_locked == False:
+        #             tabs.append(
+        #                 DocuSignTextTab(
+        #                     # Tab def label is really the name
+        #                     name=tab_def.label,
+        #                     value="",
+        #                     x=tab_def.x,
+        #                     y=tab_def.y,
+        #                     width=tab_def.width,
+        #                     height=tab_def.height,
+        #                     document_id=1,
+        #                     page_number=tab_def.page,
+        #                     required=tab_def.custom_tab_required,
+        #                 ))
 
         return tabs
 

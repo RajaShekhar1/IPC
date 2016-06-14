@@ -59,10 +59,15 @@
                       {% if enrollment.status in ["Pending Employee", "Pending Agent"] and enrollment.envelope_id and current_agent_id != None and current_agent_id == enrollment.agent_id %}
                         <button class="btn btn-warning btn-sm sign-envelope" data-id="{{ enrollment.envelope_id }}"><i class="icon fa fa-pencil"></i> Sign</button>
                       {% endif %}
-                      {% if enrollment.status in ["Enrolled"] and enrollment.envelope_id and (can_edit_case or current_agent_id == enrollment.agent_id) %}
-                        <button class="btn btn-primary btn-sm sign-envelope" data-id="{{ enrollment.envelope_id }}"><i class="icon fa fa-file"></i> View</button>
+                      {# Docusign-signed documents #}
+                      {% if enrollment.status in ["Enrolled"] and enrollment.is_docusign_signed and enrollment.envelope_id and (can_edit_case or current_agent_id == enrollment.agent_id) %}
+                        <button class="btn btn-primary btn-sm view-envelope" data-id="{{ enrollment.envelope_id }}"><i class="icon fa fa-file"></i> View</button>
                       {% endif %}
-
+                      {# Self-signed or imported envelopes view a server-generated PDF #}
+                      {% if enrollment.status in ["Enrolled"] and enrollment.is_self_signed and (can_edit_case or current_agent_id == enrollment.agent_id) %}
+{#                        <button class="btn btn-primary btn-sm view-enrollment-docs" data-id="{{ enrollment.id }}"><i class="icon fa fa-file"></i> View</button>#}
+                          <a target="_blank" href="/enrollments/records/{{ enrollment.id }}/pdf" class="btn btn-primary btn-sm"><i class="icon fa fa-file"></i> View</a>
+                      {% endif %}
                       </td>
                       <td></td>
                       <td><strong>{{enrollment.total}}</strong></td>
@@ -395,6 +400,16 @@
             var envelope_id = $(this).attr('data-id');
             agent_inbox.sign_envelope(envelope_id);
           });
+
+          $(document).on('click', "button.view-envelope", function() {
+            var envelope_id = $(this).attr('data-id');
+            agent_inbox.view_envelope(envelope_id);
+          });
+
+{#          $(document).on('click', 'button.view-enrollment-docs', function() {#}
+{#            var enrollment_id = $(this).attr('data-id');#}
+{#            window.open('/enrollments/'+enrollment_id+'/pdf');#}
+{#          });#}
 
           $("#edit-record-form").on("submit", function() {
 

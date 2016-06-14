@@ -6,7 +6,7 @@ from sparkpost.exceptions import SparkPostAPIException
 from taa import app
 
 
-def send_email(to, subject, from_email="noreply@5StarEnroll.com", html=None, text=None, reply_to=None):
+def send_email(to, subject, from_email="noreply@5StarEnroll.com", html=None, text=None, reply_to=None, track_clicks=True):
 
     sparkpost = SparkPost(app.config['SPARKPOST_API_KEY'])
 
@@ -19,6 +19,7 @@ def send_email(to, subject, from_email="noreply@5StarEnroll.com", html=None, tex
             subject=subject,
             reply_to=reply_to,
             transactional=True,
+            track_clicks=track_clicks,
         )
     except SparkPostAPIException as e:
         raise Error(e)

@@ -1617,6 +1617,52 @@ var wizard_viewmodel = (function () {
     self.can_submit_wizard = ko.pureComputed(function () {
       return !self.is_submitting();
     });
+    
+    self.should_do_signing_ceremony = function() {
+      return options.case_data.is_call_center;
+    };
+
+    self.applicant_signed = ko.observable(false);
+    self.applicant_sig_check_1 = ko.observable();
+    self.applicant_sig_check_2 = ko.observable();
+    self.applicant_sig_check_3 = ko.observable();
+
+    self.can_applicant_sign = ko.pureComputed(function() {
+      return self.applicant_sig_check_1() && self.applicant_sig_check_2() && self.applicant_sig_check_3();
+    });
+
+    self.agent_signed = ko.observable(false);
+
+    self.begin_signing_ceremony = function() {
+      self.applicant_signed(false);
+      self.agent_signed(false);
+
+      $("#modal-signing-applicant").modal("show");
+    };
+
+    self.handle_applicant_signing = function() {
+      // Validation
+
+      // Mark as signed
+      self.applicant_signed(true);
+
+      //  Go to agent signing
+      $("#modal-signing-applicant").modal("hide");
+      $("#modal-signing-enroller").modal("show");
+    };
+
+    self.handle_agent_signing = function() {
+      // Validation
+
+      // Mark as signed
+      self.agent_signed(true);
+
+      // Close the signing modal.
+      $("#modal-signing-enroller").modal("hide");
+
+      submit_application();
+    };
+
 
     // Globally decline coverage.
     self.did_decline = ko.observable(false);
@@ -1635,7 +1681,7 @@ var wizard_viewmodel = (function () {
           buttons: {
             "success": {
               "label": "Close",
-              "className": "btn-sm btn-primary"
+              "className": "btn-sm btn-primary btn-close"
             }
           }
         });

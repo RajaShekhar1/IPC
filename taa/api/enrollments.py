@@ -148,6 +148,23 @@ def render_batch_item_xml(batch_id, item_id):
         item.enrollment_record_id), as_attachment=True)
 
 
+@route(bp, '/records/<int:enrollment_record_id>/pdf', methods=['GET'])
+@login_required
+@groups_required(['admins', 'home_office', 'agents'], all=False)
+def generate_enrollment_pdf(enrollment_record_id):
+    enrollment = enrollment_application_service.get_or_404(enrollment_record_id)
+
+    # TODO: Verify agent permission if agent
+    # Check that logged-in agent matches enrollment.agent_id or is the case owner. Should be method for this on case.
+
+    binary_pdf = enrollment_submission_service.render_enrollment_pdf(enrollment)
+
+    response = make_response(binary_pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'inline; filename=%s.pdf' % 'enrollment_{}'.format(enrollment.id)
+    return response
+
+
 @route(bp, '/export/acchi/csv/<from_>/<to_>', methods=['GET'])
 @login_required
 @groups_required(['admins'])

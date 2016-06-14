@@ -66,8 +66,8 @@ def create_paylogix_csv(applications):
     headers = [
         'Signature Time',
         'EE SSN',
-        'Last Name',
-        'First Name',
+        'EE Last Name',
+        'EE First Name',
         'Account Holder Name',
         'ACH Routing Number',
         'ACH Account Number',
@@ -77,6 +77,14 @@ def create_paylogix_csv(applications):
         'Address Two',
         'City, State, Zip',
         'Deduction Week',
+        'Product Code',
+        'Product Name',
+        'Insured Last Name',
+        'Insured First Name',
+        'Insured DOB',
+        'Insured Premium',
+        'Insured Coverage',
+        'Agent Code',
     ]
 
     csv_data.writerow(headers)
@@ -85,29 +93,64 @@ def create_paylogix_csv(applications):
     """:type: taa.services.enrollments.EnrollmentApplicationService"""
 
     for application in applications:
+
+        if application.did_decline():
+            continue
+
         enrollment_data = enrollment_service.get_standardized_json_for_enrollment(application)
         for enrollment_item in enrollment_data:
             data_wrap = EnrollmentDataWrap(enrollment_item, application.case, application)
             product = data_wrap.get_product()
+
             if not product.requires_paylogix_export(application) or not data_wrap.has_bank_draft_info():
                 continue
 
-            row = [
-                application.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z'),
-                application.census_record.employee_ssn,
-                application.census_record.employee_last,
-                application.census_record.employee_first,
-                data_wrap.get_account_holder_name(),
-                data_wrap.get_routing_number(),
-                data_wrap.get_account_holder_name(),
-                data_wrap.get_account_type_shorthand(),
-                data_wrap.get_bank_name(),
-                data_wrap.get_address_one(),
-                data_wrap.get_address_two(),
-                data_wrap.get_city_state_zip(),
-                get_deduction_week(application.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z')),
-            ]
-            csv_data.writerow(row)
+
+            for applicant_data in data_wrap.get_applicant_data():
+
+                # We skip over any applicants who have no premium, for instance spouse and children for membership and HI
+                if not applicant_data['premium']:
+                    continue
+
+                coverage = applicant_data['coverage']
+
+                # Use coverage tier if it is provided
+                if applicant_data['coverage_tier'] is not None:
+                    coverage = applicant_data['coverage_tier']
+
+                # If coverage is a simple boolean, make it say "Selected" on the export
+                if coverage is True:
+                    coverage = 'Selected'
+
+                row = [
+                    application.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z'),
+                    application.census_record.employee_ssn,
+                    application.census_record.employee_last,
+                    application.census_record.employee_first,
+                    data_wrap.get_account_holder_name(),
+                    data_wrap.get_routing_number(),
+                    data_wrap.get_account_number(),
+                    data_wrap.get_account_type_shorthand(),
+                    data_wrap.get_bank_name(),
+                    data_wrap.get_address_one(),
+                    data_wrap.get_address_two(),
+                    data_wrap.get_city_state_zip(),
+                    get_deduction_week(application.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z')),
+
+                    # Product
+                    data_wrap.get_product_code(),
+                    data_wrap.get_product().name,
+
+                    # Insured data
+                    applicant_data['last_name'],
+                    applicant_data['name'],
+                    applicant_data['birthdate'],
+                    applicant_data['formatted_premium'],
+                    coverage,
+
+                    data_wrap.get_agent_code(),
+                ]
+                csv_data.writerow(row)
 
     return csv_buffer.getvalue()
 

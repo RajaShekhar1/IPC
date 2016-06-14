@@ -199,23 +199,26 @@ class ImagedFormGeneratorService(object):
 
 
 class FormTemplateTabRepository(object):
+    def __init__(self):
+        self.template_cache = {}
+
     def get_tabs_for_template(self, template_id):
-        if not self.has_template(template_id):
+        template = self.get_template(template_id)
+        if not template:
             return []
 
-        form_template_id = self.get_template(template_id).id
-
-        return list(FormTemplateTabs.query.filter_by(
-            form_template_id=form_template_id))
+        return list(FormTemplateTabs.query.filter_by(form_template_id=(template.id)))
 
     def has_template(self, template_id):
         return bool(self.get_template(template_id))
 
     def get_template(self, template_id):
-        return FormTemplate.query.filter(
-            FormTemplate.template_id.ilike(template_id)).first()
+        if template_id in self.template_cache:
+            return self.template_cache[template_id]
 
-
+        template = FormTemplate.query.filter(FormTemplate.template_id.ilike(template_id)).first()
+        self.template_cache[template_id] = template
+        return template
 
 
 FONTMAP = {

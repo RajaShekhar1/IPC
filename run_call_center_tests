@@ -8,6 +8,6 @@ python run_server.py &
 SERVER_ID=$!
 celery worker --app=taa.tasks.app &
 CELERY_ID=$!
-behave tests/integration_features/browser
+behave tests/integration_features/browser/test_wizard_enrollment_fpp_call_center.feature
 kill $SERVER_ID
 kill $CELERY_ID
