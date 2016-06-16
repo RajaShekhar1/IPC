@@ -97,6 +97,9 @@ SQLALCHEMY_DATABASE_URI = env_get_text('DATABASE_URL',
                                        u"postgresql://taa:fQj9lJTFbOQUBYo@localhost/{}".format(DATABASE_NAME))
 SQLALCHEMY_ECHO = env_get_bool('SQLALCHEMY_ECHO', True)
 SQLALCHEMY_TRACK_MODIFICATIONS = env_get_bool('SQLALCHEMY_TRACK_MODIFICATIONS', False)
+SQLALCHEMY_POOL_SIZE = env_get_int('SQLALCHEMY_POOL_SIZE', 5)
+SQLALCHEMY_MAX_OVERFLOW = env_get_int('SQLALCHEMY_MAX_OVERFLOW', 20)
+
 
 # File uploads
 MAX_CONTENT_LENGTH = 16777216
