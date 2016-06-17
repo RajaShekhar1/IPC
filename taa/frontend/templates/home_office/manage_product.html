@@ -222,53 +222,95 @@
 
 
               <h4 class="header lighter">Customer Facing Names</h4>
-              <div class="form-group">
-                <div class="col-md-2 control-label"><label for="product-short-name">Short Name</label></div>
-                <div class="col-md-6">
-                <span data-bind="if: !product().use_base_product_settings.customer_short_name()"> 
-                  <input id="product-short-name" class="form-control"
-                         data-bind='value: product().customer_short_name, enable: !product().use_base_product_settings.customer_short_name()'>
-                </span>
-                <span data-bind="if: product().use_base_product_settings.customer_short_name()"> 
-                  <input class="form-control" disabled data-bind="value: product().customer_short_name_display()"/>
-                </span>
-                <span data-bind="if: product().base_product_id">
-                  <input type="checkbox" data-bind="checked: product().use_base_product_settings.customer_short_name">
-                  Use Base Product Settings
-                </span>
+
+
+
+              {% if is_base_product %}
+                <div class="form-group">
+                  <div class="col-md-2 control-label"><label for="product-short-name">Short Name</label></div>
+                  <div class="col-md-6">
+                    <input id="product-short-name" class="form-control"
+                           data-bind='value: product().customer_short_name'>
+                  </div>
                 </div>
-              </div>
-              <div class="form-group">
-                <div class="col-md-2 control-label"><label for="brochure-name">Brochure Name</label></div>
-                <div class="col-md-6">
-                <span data-bind="if: !product().use_base_product_settings.brochure_name()"> 
-                  <input id="brochure-name" class="form-control"
-                         data-bind='value: product().brochure_name, enable: !product().use_base_product_settings.brochure_name()'>
-                </span>
-                <span data-bind="if: product().use_base_product_settings.brochure_name()"> 
-                  <input class="form-control" disabled data-bind="value: product().brochure_name_display()"/>
-                </span>
-                <span data-bind="if: product().base_product_id">
-                  <input type="checkbox" data-bind="checked: product().use_base_product_settings.brochure_name"> 
-                  Use Base Product Settings
-                </span>
+                <div class="form-group">
+                  <div class="col-md-2 control-label"><label for="brochure-name">Brochure Name</label></div>
+                  <div class="col-md-6">
+                    <input class="form-control" id='brochure-name' data-bind="value: product().brochure_name"/>
+                  </div>
                 </div>
-              </div>
-              <div class="form-group">
-                <div class="col-md-2 control-label"><label for="brochure-url">Brochure Url</label></div>
-                <div class="col-md-6">
-                <span data-bind="if: !product().use_base_product_settings.brochure_url()"> 
-                <input id="brochure-url" class="form-control" data-bind='value: product().brochure_url'>
-                </span>
-                <span data-bind="if: product().use_base_product_settings.brochure_url()"> 
-                  <input disabled class="form-control" data-bind="value: product().brochure_url_display()"/>
-                </span>
-                <span data-bind="if: product().base_product_id">
-                  <input type="checkbox" data-bind="checked: product().use_base_product_settings.brochure_url"> 
-                  Use Base Product Settings
-                </span>
+                <div class="form-group">
+                  <div class="col-md-2 control-label"><label for="brochure-url">Brochure Url</label></div>
+                  <div class="col-md-6">
+                    <input class="form-control" id="brochure-url" data-bind="value: product().brochure_url"/>
+                  </div>
                 </div>
-              </div>
+
+              {% endif %}
+
+              {% if not is_base_product %}
+                <div class="form-group">
+                  <div class="col-md-2 control-label"><label for="product-short-name">Short Name</label></div>
+                  <div class="col-md-6">
+                  <span data-bind="if: !product().use_base_product_settings.customer_short_name()">
+                    <input id="product-short-name" class="form-control"
+                           data-bind='value: product().customer_short_name, enable: !product().use_base_product_settings.customer_short_name()'>
+                  </span>
+                  <span data-bind="if: product().use_base_product_settings.customer_short_name()">
+                    <input class="form-control" disabled data-bind="value: product().customer_short_name_display()"/>
+                  </span>
+                  {% if not is_base_product %}
+                  <span data-bind="if: product().base_product_id">
+                    <label>
+                      <input type="checkbox" data-bind="checked: product().use_base_product_settings.customer_short_name">
+                      Use Base Product Settings
+                    </label>
+                  </span>
+                  {% endif %}
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="col-md-2 control-label"><label for="brochure-name">Brochure Name</label></div>
+                  <div class="col-md-6">
+                  <span data-bind="if: !product().use_base_product_settings.brochure_name()">
+                    <input id="brochure-name" class="form-control"
+                           data-bind='value: product().brochure_name, enable: !product().use_base_product_settings.brochure_name()'>
+                  </span>
+                  <span data-bind="if: product().use_base_product_settings.brochure_name()">
+                    <input class="form-control" disabled data-bind="value: product().brochure_name_display()"/>
+                  </span>
+                  {% if not is_base_product %}
+                  <span data-bind="if: product().base_product_id">
+                    <label>
+                      <input type="checkbox" data-bind="checked: product().use_base_product_settings.brochure_name">
+                      Use Base Product Settings
+                    </label>
+                  </span>
+                  {% endif %}
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="col-md-2 control-label"><label for="brochure-url">Brochure Url</label></div>
+                  <div class="col-md-6">
+                  <span data-bind="if: !product().use_base_product_settings.brochure_url()">
+                  <input id="brochure-url" class="form-control" data-bind='value: product().brochure_url'>
+                  </span>
+                  <span data-bind="if: product().use_base_product_settings.brochure_url()">
+                    <input disabled class="form-control" data-bind="value: product().brochure_url_display()"/>
+                  </span>
+                  {% if not is_base_product %}
+                  <span data-bind="if: product().base_product_id">
+                    <label>
+                      <input type="checkbox" data-bind="checked: product().use_base_product_settings.brochure_url">
+                      Use Base Product Settings
+                    </label>
+                  </span>
+                  {% endif %}
+                  </div>
+                </div>
+
+              {% endif %}
+
 
               {% if cases_using_product %}
                 <h4 class="header lighter">Cases Using Product</h4>
@@ -452,12 +494,14 @@
             brochure_url: ko.observable(base_product_settings.brochure_url)
           };
         } else {
+          // initially, we default everything to be the same as the base product
           self.use_base_product_settings = {
-            customer_short_name: ko.observable(false),
-            brochure_name: ko.observable(false),
-            brochure_url: ko.observable(false)
+            customer_short_name: ko.observable(true),
+            brochure_name: ko.observable(true),
+            brochure_url: ko.observable(true)
           };
         }
+
         self.customer_short_name = ko.observable(custom_product.customer_short_name);
         self.customer_short_name_display = ko.computed(function () {
           var use_base_setting = self.use_base_product_settings.customer_short_name();
@@ -586,9 +630,11 @@
         self.id = base_product.id;
         self.name = base_product.name;
         self.is_visible_to_agents = base_product.visible_to_agents;
+
         self.customer_short_name = ko.observable(base_product.customer_short_name);
         self.brochure_name = ko.observable(base_product.brochure_name);
         self.brochure_url = ko.observable(base_product.brochure_url);
+
         self.code = base_product.code;
 
         var available_by_id = _.indexBy(available_agents, 'id');
