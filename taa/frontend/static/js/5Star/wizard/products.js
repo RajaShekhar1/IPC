@@ -473,7 +473,8 @@ var wizard_products = (function () {
   //endregion
 
   GroupCIProduct.prototype.max_child_age = function () {
-      return 26;
+      // Until we can separate children out, leave this at 23.
+      return 23;
   };
   
   function FPPGovProduct(product_data) {
