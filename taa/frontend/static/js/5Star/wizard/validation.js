@@ -190,17 +190,27 @@ function init_validation(ui) {
 
     }
     if (info.step == 6 && info.direction == 'next') {
-      if (!$('#step6-form').valid()) {
-        e.preventDefault();
-        return;
-      }
+      is_valid = true;
 
+      if (ui.requires_bank_info()) {
+        is_valid = is_valid && $('#bank-draft-form').valid();
+      }
+      is_valid = is_valid && $('#step6-form').valid();
+      if (!is_valid) {
+        e.preventDefault();
+      }
     }
 
   }).on('finished.fu.wizard', function (e) {
+    var is_valid = true;
 
-    if (!$('#step6-form').valid()) {
-      return false;
+    if (ui.requires_bank_info()) {
+      is_valid = is_valid && $('#bank-draft-form').valid();
+    }
+    is_valid = is_valid && $('#step6-form').valid();
+    if (!is_valid) {
+      e.preventDefault();
+      return;
     }
 
     // jQuery validator rule should be handling this, but it's not, so force a popup here
@@ -239,8 +249,12 @@ function init_validation(ui) {
       return false;
     }
 
-    submit_application();
-
+    if (ui.should_do_signing_ceremony()) {
+      ui.begin_signing_ceremony();
+    } else {
+      submit_application();
+    }
+    
   }).on('stepclick.fu.wizard', function (e) {
     return true; //return false;//prevent clicking on steps
   });
@@ -532,6 +546,84 @@ function init_validation(ui) {
     errorPlacement: wizard_error_placement
   });
 
+  //region Bank Draft Info Validation
+  function bank_draft_error_placement(error, element) {
+    var error_id = error.attr('id');
+    var container_id = error_id + '-container';
+    var old_element = $('#' + container_id);
+    if (old_element.length > 0) {
+      old_element.remove();
+    }
+    if (element.is(':checkbox') || element.is(':radio')) {
+      var controls = element.closest('div[class*="col-"]');
+      if (controls.find(':checkbox,:radio').length > 1) {
+        controls.append(error);
+      } else {
+        error.insertAfter(element.nextAll('.lbl:eq(0)').eq(0));
+      }
+    } else if ((element.is('#bank-state') || element.is('#bank-city') || element.is('#bank-zip')) && $('#bank-city-state-zip-error').length === 0) {
+      $('#bank-city-state-zip-error').remove();
+      var bank_city_state_zip_error = $('<div class="col-xs-12 col-sm-9 col-sm-offset-3" id="bank-city-state-zip-error"></div>');
+      bank_city_state_zip_error.insertAfter(element.parent()).append(error);
+    } else {
+      var error_element = $('<div class="col-xs-12 col-sm-9 col-sm-offset-3" id="' + container_id + '"></div>');
+      error_element.insertAfter(element.parent()).append(error);
+    }
+  }
+
+  $('#bank-draft-form').validate({
+    errorElement: 'div',
+    errorClass: 'help-block',
+    focusInvalid: false,
+    highlight: wizard_validate_highlight,
+    success: wizard_validate_success,
+    errorPlacement: bank_draft_error_placement,
+    rules: {
+      'bank-account-holder-name': {
+        required: {
+          depends: ui.requires_bank_info
+        }
+      },
+      'bank-account-type': {
+        required: {
+          depends: ui.requires_bank_info
+        }
+      },
+      'bank-account-number': {
+        required: {
+          depends: ui.requires_bank_info
+        },
+        digits: {
+          depends: ui.requires_bank_info
+        }
+      },
+      'bank-routing-number': {
+        required: {
+          depends: ui.requires_bank_info
+        },
+        digits: {
+          depends: ui.requires_bank_info
+        }
+      },
+      'bank-name': {
+        required: {
+          depends: ui.requires_bank_info
+        }
+      },
+      'bank-street-one': {
+        required: {
+          depends: ui.requires_bank_info
+        }
+      },
+      'bank-city-state-zip': {
+        required: {
+          depends: ui.requires_bank_info
+        }
+      }
+    }
+  });
+  //endregion
+
 }
 
 function wizard_validate_highlight(e) {
@@ -565,6 +657,9 @@ function wizard_error_placement(error, element) {
     city_state_zip_element.insertAfter(element.parent()).append(error);
   } else if (element.closest('.form-group').length > 0) {
     error.appendTo(element.closest('.form-group'));
+  } else if ((element.is('#bank-state') || element.is('#bank-city') || element.is('#bank-zip')) && $('#bank-city-state-zip-error').length === 0) {
+    var bank_city_state_zip_error = $('<div class="col-xs-12 col-sm-9 col-sm-offset-3" id="bank-city-state-zip-error"></div>');
+    bank_city_state_zip_error.insertAfter(element.parent()).append(error);
   } else {
     error.insertAfter(element);
   }

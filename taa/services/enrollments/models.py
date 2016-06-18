@@ -42,6 +42,11 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     signature_state = db.Column(db.Unicode(2))
     identity_token = db.Column(db.UnicodeText)
     identity_token_type = db.Column(db.Unicode(64))
+
+    SIGNATURE_METHOD_DOCUSIGN = u'docusign'
+    SIGNATURE_METHOD_WIZARD = u'wizard'
+    signature_method = db.Column(db.UnicodeText)
+
     # Application status
     APPLICATION_STATUS_ENROLLED = u'enrolled'
     APPLICATION_STATUS_PENDING_AGENT = u'pending_agent'
@@ -133,6 +138,27 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     def is_voided(self):
         return self.application_status == self.APPLICATION_STATUS_VOIDED
 
+    def get_enrolled_product_ids(self):
+        """
+        Get a set of product ids that represent all products for this census record
+        :return: Set of ids for products
+        :type: set[int]
+        """
+        from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
+        from taa.services import LookupService
+        application_service = LookupService('EnrollmentApplicationService')
+
+        product_ids = set()
+
+        for enrollment_data in application_service.get_standardized_json_for_enrollment(self):
+            wrapped_data = EnrollmentDataWrap(enrollment_data, self.case, self)
+            product_id = wrapped_data.get_product_id()
+            product_ids.add(product_id)
+
+        return product_ids
+
+    def did_sign_in_wizard(self):
+        return self.signature_method == self.SIGNATURE_METHOD_WIZARD
 
 class EnrollmentApplicationCoverageSerializer(JsonSerializable):
     __json_hidden__ = ['enrollment']
@@ -421,11 +447,15 @@ class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
     STATUS_PROCESSING = u'processing'
     STATUS_FAILURE = u'failure'
     STATUS_SUCCESS = u'success'
+    STATUS_QUEUED = u'queued'
 
     # Submission Type Enum Values
-    SUBMISSION_TYPE_HI_ACC_CSV_GENERATION = u'HI and ACC CSV Generation'
-    SUBMISSION_TYPE_HI_ACC_EXPORT_TO_DELL = u'HI and ACC CSV submission to Dell'
-    SUBMISSION_TYPE_SUBMIT_DOCUSIGN = u'Submit to Docusign'
+    TYPE_DELL_CSV_GENERATION = u'HI and ACC CSV Generation'
+    TYPE_DELL_EXPORT = u'HI and ACC CSV submission to Dell'
+    TYPE_DOCUSIGN = u'Submit to Docusign'
+    TYPE_STATIC_BENEFIT = u'Static Benefit'
+    TYPE_PAYLOGIX_CSV_GENERATION = u'Paylogix CSV Generation'
+    TYPE_PAYLOGIX_EXPORT = u'Paylogix Export'
 
     # Database Columns
     id = db.Column(db.Integer, primary_key=True)

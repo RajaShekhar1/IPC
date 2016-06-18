@@ -35,6 +35,8 @@ var wizard_products = (function () {
       base_product = new ACCProduct(product_data);
     } else if (base_type === 'HI') {
       base_product = new HIProduct(product_data);
+    } else if (base_type === 'Static Benefit') {
+      base_product = new MembershipProduct(product_data);
     } else {
       // default product?
       alert("Invalid product type '" + base_type + "'");
@@ -44,10 +46,25 @@ var wizard_products = (function () {
     return base_product;
   }
 
+  //region Coverage Type
+  var CoverageType = {
+    get Normal() { return 'normal'; },
+    get Simple() { return 'simple'; },
+    get Forced() { return 'forced'; }
+  };
+  //endregion
 
+  //region Product
 // Model for different insurance products
 // Product is abstract base class
-  function Product() {}
+  function Product() {
+    Object.defineProperty(this, 'has_brochure', {value: true, configurable: true});
+    Object.defineProperty(this, 'coverage_type', {value: CoverageType.Normal, configurable: true});
+    Object.defineProperty(this, 'is_simple_coverage', {get: function () { return this.coverage_type === CoverageType.Simple; }});
+    Object.defineProperty(this, 'is_normal_coverage', {get: function () { return this.coverage_type === CoverageType.Normal; }});
+    Object.defineProperty(this, 'is_forced_coverage', {get: function () { return this.coverage_type === CoverageType.Forced; }});
+    //Object.defineProperty(this, 'can_decline', { get: function () { return this.product_data.base_product_type !== 'Static Benefit'; } });
+  }
 
   Product.prototype = {
 
@@ -203,11 +220,18 @@ var wizard_products = (function () {
     requires_additional_information: function () {
       return this.requires_gender() || this.requires_height() ||
         this.requires_weight() || this.requires_is_smoker();
+    },
+
+    can_decline: function () {
+      return this.product_type !== 'Static Benefit';
     }
 
   };
+  //endregion
 
+  //region Applicant Selection Product
   function ApplicantSelectionProduct(product_data) {
+    Product.call(this);
     this.product_type = product_data.base_product_type;
     this.product_data = product_data;
   }
@@ -218,9 +242,11 @@ var wizard_products = (function () {
       return false;
     }
   };
+  //endregion
 
-
+  //region FPPTI Product
   function FPPTIProduct(product_data) {
+    Product.call(this);
     this.product_type = "FPPTI";
     this.product_data = product_data;
   }
@@ -248,8 +274,11 @@ var wizard_products = (function () {
   FPPCIProduct.prototype.get_replacement_paragraphs = function () {
     return this.product_data.replacement_paragraphs;
   };
+  //endregion
 
+  //region Group CI Product
   function GroupCIProduct(root, product_data) {
+    Product.call(this);
     var self = this;
     self.root = root;
     self.product_type = "Group CI";
@@ -317,7 +346,7 @@ var wizard_products = (function () {
       // Filter spouse options based on employee selection.
 
       // Get the 5,000 to 100,000 coverage options to start with.
-      var base_options = self.filter_base_rate_options(all_options);
+      var base_options = self.filter_spouse_base_rate_options(all_options);
 
       // Limit to 50% of employee's current selection, or 25k max.
       // BUT, If the employee has answered yes to any required question, we should not limit the dependent coverage options.
@@ -380,6 +409,13 @@ var wizard_products = (function () {
       });
     };
 
+    self.filter_spouse_base_rate_options = function(all_options) {
+      // Add in the new 2500 coverage tier.
+      return _.filter(all_options, function (o) {
+        return o.face_value % 5000 === 0 || o.face_value == 2500;
+      });
+    };
+
 
   }
 
@@ -434,10 +470,15 @@ var wizard_products = (function () {
     // Returns true if this product falls into the class of Family Protection Plan products
     return false;
   };
+  //endregion
 
-
-// FPP Gov
+  GroupCIProduct.prototype.max_child_age = function () {
+      // Until we can separate children out, leave this at 23.
+      return 23;
+  };
+  
   function FPPGovProduct(product_data) {
+    Product.call(this);
     this.product_type = "FPP-Gov";
     this.product_data = product_data;
   }
@@ -461,9 +502,12 @@ var wizard_products = (function () {
   FPPGovProduct.prototype.get_replacement_paragraphs = function () {
     return this.product_data.replacement_paragraphs;
   };
+  //endregion
 
-  //region HI Product Prototype
+  //region HI Product
   function HIProduct(product_data) {
+    Product.call(this);
+    Object.defineProperty(this, 'coverage_type', {value: CoverageType.Simple, configurable: true});
     this.product_type = "HI";
     this.product_data = product_data;
   }
@@ -538,6 +582,8 @@ var wizard_products = (function () {
 
   //region ACCProduct
   function ACCProduct(product_data) {
+    Product.call(this);
+    Object.defineProperty(this, 'coverage_type', {value: CoverageType.Simple, configurable: true});
     this.product_type = "ACC";
     this.product_data = product_data;
   }
@@ -584,6 +630,23 @@ var wizard_products = (function () {
   ACCProduct.prototype.should_show_step_four = function () {
     return false;
   };
+  //endregion
+
+  //region Membership Product
+  function MembershipProduct(product_data) {
+    Product.call(this);
+    Object.defineProperty(this, 'has_brochure', {value: false, configurable: true});
+    Object.defineProperty(this, 'coverage_type', {value: CoverageType.Forced, configurable: true});
+    this.product_type = "Static Benefit";
+    this.product_data = product_data;
+    this.flat_fee = ko.pureComputed(function () {
+      return product_data.flat_fee;
+    });
+  }
+
+  MembershipProduct.prototype = Object.create(Product.prototype);
+
+  MembershipProduct.prototype.should_show_step_5 = function () {return false;};
   //endregion
 
   return {

@@ -37,6 +37,18 @@ cost_components:
     is_eligible:
       coverage_selection: "EF"
 
+  - name: "Flat-fee for included rider-like components"
+    type: "Fixed Annual Fee"
+    fee: "120.64"
+    is_eligible:
+      # All coverage selections have the same fee.
+      or:
+        - coverage_selection: "EE"
+        - coverage_selection: "ES"
+        - coverage_selection: "EC"
+        - coverage_selection: "EF"
+
+
 rate_tables:
   - name: "EE"
     key: "rate_level"

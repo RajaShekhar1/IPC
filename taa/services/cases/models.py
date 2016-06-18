@@ -39,7 +39,7 @@ class CaseSerializer(JsonSerializable):
         'partner_agents': lambda agents, _: [a for a in agents],
         'can_enroll': lambda _, case: case.can_enroll()
     }
-    __json_hidden__ = ['census_records', 'enrollment_records', 'batches']
+    __json_hidden__ = ['census_records', 'enrollment_records', 'batches', 'logo_image_data']
 
 
 class Case(CaseSerializer, db.Model):
@@ -67,7 +67,8 @@ class Case(CaseSerializer, db.Model):
     ANNUAL_ENROLLMENT_TYPE = u'annual'
     # This relationship defines what products are explicitly enabled for
     # a given case
-    products = db.relationship('Product', secondary=case_products, backref=db.backref('cases', lazy='dynamic'), order_by=case_products.c.ordinal)
+    products = db.relationship('Product', secondary=case_products, backref=db.backref('cases', lazy='dynamic'),
+                               order_by=case_products.c.ordinal)
     partner_agents = db.relationship('Agent', secondary=case_partner_agents,
                                      backref=db.backref('partner_cases', lazy='dynamic'))
     payment_mode = db.Column(db.Integer, nullable=True)
@@ -80,6 +81,11 @@ class Case(CaseSerializer, db.Model):
     include_bank_draft_form = db.Column(db.Boolean, nullable=False, server_default='FALSE')
     occupation_class_settings = db.Column(JSON(none_as_null=False),
                                           nullable=True)
+    requires_paylogix_export = db.Column(db.Boolean, nullable=False, server_default='FALSE')
+
+    # Logo and cover sheet
+    include_cover_sheet = db.Column(db.Boolean, nullable=False, server_default='TRUE')
+    logo_image_data = db.deferred(db.Column(db.Binary, nullable=True))
 
     # Call center workflow setting
     should_use_call_center_workflow = db.Column(db.Boolean, server_default='FALSE', nullable=False)
@@ -127,6 +133,9 @@ class Case(CaseSerializer, db.Model):
 
     def requires_classification(self):
         return any(p for p in self.products if p.requires_occupation())
+
+    def has_logo(self):
+        return self.logo_image_data is not None
 
 
 class PeriodSerializer(JsonSerializable):
@@ -263,7 +272,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     employee_street_address2 = db.Column(db.String(256))
     employee_city = db.Column(db.String(256))
     employee_state = db.Column(db.String(2))
-    employee_zip = db.Column(db.String(5))
+    employee_zip = db.Column(db.String(15))
     # Spouse
     spouse_ssn = db.Column(db.String(9))
     spouse_first = db.Column(db.String(256))
@@ -279,7 +288,7 @@ class CaseCensus(CensusRecordSerializer, db.Model):
     spouse_street_address2 = db.Column(db.String(256))
     spouse_city = db.Column(db.String(256))
     spouse_state = db.Column(db.String(2))
-    spouse_zip = db.Column(db.String(5))
+    spouse_zip = db.Column(db.String(15))
     # Child 1
     child1_first = db.Column(db.String(256))
     child1_last = db.Column(db.String(256))
@@ -396,24 +405,6 @@ class CaseCensus(CensusRecordSerializer, db.Model):
 
     def get_pending_enrollments(self):
         return filter(lambda e: e.is_pending(), self.enrollment_applications)
-
-    def get_product_ids(self):
-        """
-        Get a set of product ids that represent all products for this census record
-        :return: Set of ids for products
-        :type: set[int]
-        """
-        from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
-        application_service = LookupService('EnrollmentApplicationService')
-
-        product_ids = set()
-
-        for enrollment_data in application_service.get_standardized_enrollment_json(self):
-            wrapped_data = EnrollmentDataWrap(enrollment_data, self.case)
-            product_id = wrapped_data.get_product_id()
-            product_ids.add(product_id)
-
-        return product_ids
 
 
 class AgentSplitsSerializer(JsonSerializable):

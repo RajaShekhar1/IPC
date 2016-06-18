@@ -18,6 +18,11 @@ from models import EnrollmentApplication, EnrollmentApplicationCoverage, Enrollm
 from taa import JSONEncoder
 from taa.core import DBService, db
 from taa.services import RequiredFeature, LookupService
+from taa.services.cases import Case
+
+
+def load_standardized_data_from_application(application):
+    return json.loads(application.standardized_data)
 
 
 class EnrollmentApplicationService(DBService):
@@ -148,6 +153,7 @@ class EnrollmentApplicationService(DBService):
 
         # Use the first record in a multiproduct setting to create the main enrollment record.
         application_status = self.get_application_status(census_record, wizard_data)
+        signature_method = self.get_signature_method(census_record, wizard_data)
 
         data = self.get_first_wizard_data_record(wizard_data)
         given_sig_time = data.get('time_stamp')
@@ -194,6 +200,7 @@ class EnrollmentApplicationService(DBService):
             signature_state=data['enrollState'],
             identity_token=data['identityToken'],
             identity_token_type=data['identityType'],
+            signature_method=signature_method,
             # Owner
             is_employee_owner=data['employee_owner'] != 'other',
             employee_other_owner_name=data['employee_other_owner_name'],
@@ -224,6 +231,7 @@ class EnrollmentApplicationService(DBService):
         product_service = LookupService('ProductService')
         """:type: taa.services.products.ProductService"""
         data = self.get_first_wizard_data_record(wizard_data)
+        wrapped_data = EnrollmentDataWrap(data, census_record.case)
 
         if isinstance(wizard_data, list):
             accepted_product_ids = list(d['product_id'] for d in wizard_data if not d['did_decline'])
@@ -232,6 +240,8 @@ class EnrollmentApplicationService(DBService):
             if all(map(lambda d: d['did_decline'], wizard_data)):
                 return EnrollmentApplication.APPLICATION_STATUS_DECLINED
             elif len(accepted_products) > 0 and all(not p.requires_signature() for p in accepted_products):
+                return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+            elif wrapped_data.did_finish_signing_in_wizard():
                 return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
             elif census_record.case.should_use_call_center_workflow:
                 return EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
@@ -244,6 +254,15 @@ class EnrollmentApplicationService(DBService):
                 # We are likely importing the data and we don't have to say 'pending' since there is no signing process.
                 application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
         return application_status
+
+    def get_signature_method(self, census_record, wizard_data):
+        data = self.get_first_wizard_data_record(wizard_data)
+        wrapped_data = EnrollmentDataWrap(data, census_record.case)
+
+        if wrapped_data.did_finish_signing_in_wizard():
+            return EnrollmentApplication.SIGNATURE_METHOD_WIZARD
+        else:
+            return EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN
 
     def _strip_ssn(self, ssn):
         return ssn.replace('-', '').strip() if ssn else ''
@@ -426,21 +445,22 @@ class EnrollmentApplicationService(DBService):
         return census_record.to_json()
 
     def get_standardized_enrollment_json(self, census_record):
-        "Normalizes the JSON data as a list of standardized enrollment data."
-        
+        """Normalizes the JSON data as a list of standardized enrollment data."""
+
         out = []
         for enrollment_application in census_record.enrollment_applications:
-            if not enrollment_application.standardized_data:
-                continue
-            
-            json_data = json.loads(enrollment_application.standardized_data)
-
-            if isinstance(json_data, list):
-                out += json_data
-            else:
-                out += [json_data]
+            out += self.get_standardized_json_for_enrollment(enrollment_application)
 
         return out
+
+    def get_standardized_json_for_enrollment(self, enrollment_application):
+        if not enrollment_application.standardized_data:
+            return []
+        json_data = json.loads(enrollment_application.standardized_data)
+        if isinstance(json_data, list):
+            return json_data
+        else:
+            return [json_data]
 
     def get_enrollment_data(self, census_record):
         # TODO: Only get_enrollment_status is using this right now,
@@ -521,6 +541,8 @@ class EnrollmentApplicationService(DBService):
 
         enrollment_data['enrollment_id'] = enrollment.id
 
+        enrollment_data['signature_method'] = enrollment.signature_method if enrollment.signature_method else EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN
+
         # Export data from enrollment
         for col in enrollment_columns:
             enrollment_data[col.get_field_name()] = col.get_value(enrollment)
@@ -541,18 +563,17 @@ class EnrollmentApplicationService(DBService):
         """:type: taa.services.products.ProductService"""
 
         # Export coverages for at most six products
-        product_ids = census_record.get_product_ids()
+        product_ids = enrollment.get_enrolled_product_ids()
         # Keep this conversion of the set to tuple to prevent SQLAlchemy from throwing an exception due to not being
         # able to accept lists or sets
-        product_ids = product_ids
-        product_list = list()
-        for product_id in product_ids:
-            product_list.append(product_service.get(product_id))
+        products = product_service.get_ordered_products_for_case(enrollment.case.id)
         for x in range(6):
-            if x < len(product_list):
-                product = product_list[x]
+            if x < len(products):
+                product = products[x]
                 """:type: taa.services.products.Product"""
             else:
+                product = None
+            if product and product.id not in product_ids:
                 product = None
             prefix = 'product_{0}'.format(x + 1)
             product_data = {u'{}_name'.format(prefix): product.name if product else ''}
@@ -570,7 +591,7 @@ class EnrollmentApplicationService(DBService):
                 annualized_premium = ''
                 if applicant_coverages.get(product):
                     applicant_coverage = applicant_coverages[product]
-                    if product is not None and product.is_simple_coverage():
+                    if product is not None and (product.is_simple_coverage() or product.is_static_benefit()):
                         coverage = 'Included' if product.is_applicant_covered(applicant_coverage.applicant_type,
                                                                               applicant_coverage.coverage_selection) \
                             else 'Not Included '
@@ -595,6 +616,9 @@ class EnrollmentApplicationService(DBService):
                 if annualized_premium and annualized_premium > Decimal('0.00'):
                     total_annual_premium += annualized_premium
 
+                if total_product_premium == Decimal('0.00'):
+                    total_product_premium = ''
+
             enrollment_data.update(product_data)
             enrollment_data['{}_total_premium'.format(prefix)] = total_product_premium
 
@@ -606,6 +630,18 @@ class EnrollmentApplicationService(DBService):
             enrollment_data['docusign_envelope_id'] = None
 
         enrollment_data['agent_id'] = enrollment.agent_id
+
+        json_data = self.get_standardized_json_for_enrollment(enrollment)
+        if len(json_data) > 0:
+            children = json_data[0]['children']
+            if len(children) > 0:
+                for idx in range(len(children)):
+                    child = children[idx]
+                    gender = child.get('gender', '')
+                    if not isinstance(gender, unicode) and not isinstance(gender, unicode):
+                        gender = unicode(gender)
+                    gender = gender if gender is not None and gender != '' and gender.lower() != 'none' else ''
+                    enrollment_data['CH%d_GENDER' % idx] = gender
 
         return enrollment_data
 
@@ -661,6 +697,21 @@ class EnrollmentApplicationService(DBService):
         row += self.case_service.census_records.get_csv_row_from_dict(record)
         return row
 
+    def get_export_dictionary(self, census_record, application):
+        data = dict()
+        data.update(self.get_census_data(census_record))
+        data.update(self.get_unmerged_enrollment_data(census_record, application))
+        enrollment_tuples = [(c.column_title, c.get_value(data)) for c in enrollment_columns]
+        census_tuples = zip(self.case_service.census_records.get_csv_headers(),
+                            self.case_service.census_records.get_csv_row_from_dict(data))
+        data.update(dict(enrollment_tuples + census_tuples))
+        for k, v in list(data.iteritems()):
+            if not isinstance(v, unicode) and not isinstance(v, str):
+                v = unicode(v)
+            if v is None or v.lower() == 'none':
+                data[k] = ''
+        return data
+
     def get_enrollments_by_date(self, from_, to_):
         return self.__model__.query.filter(self.__model__.signature_time >= from_,
                                            self.__model__.signature_time <= to_)
@@ -669,7 +720,7 @@ class EnrollmentApplicationService(DBService):
     def get_applications_by_submission_date(self, start_date=None, end_date=None):
         query = db.session.query(EnrollmentApplication) \
             .join(EnrollmentApplication.enrollment_submissions) \
-            .filter(EnrollmentSubmission.submission_type == EnrollmentSubmission.SUBMISSION_TYPE_HI_ACC_CSV_GENERATION)
+            .filter(EnrollmentSubmission.submission_type == EnrollmentSubmission.TYPE_DELL_CSV_GENERATION)
 
         if start_date is not None:
             query.filter(EnrollmentSubmission.created_at >= start_date)
@@ -691,6 +742,65 @@ class EnrollmentApplicationService(DBService):
             return wizard_data[0]
         else:
             return wizard_data
+
+    def get_paylogix_info(self, enrollment_data):
+        """
+        Create a dictionary that contains information needed for the Paylogix export in a flat dict
+        :param enrollment_data: Dictionary from EnrollmentApplication.standardized_data
+        :type enrollment_data: dict
+        :return:
+        """
+        paylogix_info = {
+            'Account Holder Name': '',
+            'ACH Routing Number': '',
+            'ACH Account Number': '',
+            'ACH Account Type': '',
+            'Bank Name': '',
+            'Address One': '',
+            'Address Two': '',
+            'City': '',
+            'State': '',
+            'Zip': '',
+        }
+
+        if enrollment_data.get('bank_info', None):
+            bank_info = enrollment_data['bank_info']
+            paylogix_info['Account Holder Name'] = bank_info.get('account_holder_name', '')
+            paylogix_info['ACH Routing Number'] = bank_info.get('routing_number', '')
+            paylogix_info['ACH Account Number'] = bank_info.get('account_number', '')
+            account_type = bank_info.get('account_type', '')
+            if account_type.lower() == 'checking':
+                account_type = 'C'
+            elif account_type.lower() == 'savings':
+                account_type = 'S'
+            paylogix_info['ACH Account Type'] = account_type
+            paylogix_info['Bank Name'] = bank_info.get('bank_name', '')
+            paylogix_info['Address One'] = bank_info.get('address_one', '')
+            paylogix_info['Address Two'] = bank_info.get('address_two', '')
+            paylogix_info['City'] = bank_info.get('city', '')
+            paylogix_info['State'] = bank_info.get('state', '')
+            paylogix_info['Zip'] = bank_info.get('zip', '')
+
+        return paylogix_info
+
+    def get_between_dates(self, start_date, end_date):
+        """
+        Get all Enrollment Applications between specified dates
+
+        :param start_date: Start Date
+        :param end_date: End Date
+        :return:
+        """
+        return db.session.query(EnrollmentApplication).filter(
+            start_date < EnrollmentApplication.signature_time < end_date).all()
+
+    def get_paylogix_applications_between_dates(self, start_date, end_date):
+        return db.session.query(EnrollmentApplication).filter(
+            EnrollmentApplication.signature_time > start_date and EnrollmentApplication.signature_time < end_date).join(
+            Case).filter(Case.requires_paylogix_export == True).all()
+
+    def get_paylogix_applications(self):
+        return db.session.query(EnrollmentApplication).join(Case).filter(Case.requires_paylogix_export == True).all()
 
 
 def export_string(val):
