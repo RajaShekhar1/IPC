@@ -577,6 +577,9 @@ var wizard_products = (function () {
   HIProduct.prototype.should_show_step_5 = function () {
     return false;
   };
+  HIProduct.prototype.max_child_age = function () {
+      return 26;
+  };
   //endregion
 
   //region ACCProduct
@@ -628,6 +631,9 @@ var wizard_products = (function () {
 
   ACCProduct.prototype.should_show_step_four = function () {
     return false;
+  };
+  ACCProduct.prototype.max_child_age = function() {
+    return 26;
   };
   //endregion
 

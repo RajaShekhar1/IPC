@@ -93,6 +93,10 @@ var wizard_applicant = (function () {
       }
     });
 
+    self.is_group = function() {
+      return false;
+    };
+
     self.get_age = ko.computed(function () {
       return age_for_date(self.birthdate());
     });
@@ -176,6 +180,10 @@ var wizard_applicant = (function () {
         return (applicant.any_valid_field() && applicant.is_valid()) || !applicant.any_valid_field();
       });
     });
+
+    self.is_group = function() {
+      return true;
+    };
 
     self.name = ko.pureComputed(function() {
       var non_empty_name_applicants = _.filter(self.applicants(), function(applicant) {
