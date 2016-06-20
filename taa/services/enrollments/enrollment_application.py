@@ -616,8 +616,8 @@ class EnrollmentApplicationService(DBService):
                 if annualized_premium and annualized_premium > Decimal('0.00'):
                     total_annual_premium += annualized_premium
 
-                if total_product_premium == Decimal('0.00'):
-                    total_product_premium = ''
+                #if total_product_premium == Decimal('0.00'):
+                #    total_product_premium = ''
 
             enrollment_data.update(product_data)
             enrollment_data['{}_total_premium'.format(prefix)] = total_product_premium
