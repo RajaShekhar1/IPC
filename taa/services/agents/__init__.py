@@ -39,6 +39,7 @@ class AgentService(DBService):
                 signing_name=user.custom_data.get('signing_name', ""),
                 agency=user.custom_data.get('agency', ""),
                 activated=user.custom_data.get('activated', False),
+                is_deleted=False,
             )
         else:
             existing_agent.first = user.given_name
@@ -49,7 +50,7 @@ class AgentService(DBService):
             existing_agent.agency = user.custom_data.get('agency', "")
             existing_agent.activated = user.custom_data.get('activated', False)
 
-            db.session.commit()
+        db.session.commit()
 
         return existing_agent
 

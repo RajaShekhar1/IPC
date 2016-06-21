@@ -39,6 +39,7 @@ def register_taa():
     https://github.com/stormpath/stormpath-flask/blob/master/flask_stormpath/views.py#L21
 
     """
+    agent_service = LookupService("AgentService")
     form = TAA_RegistrationForm()
 
     data = form.data
@@ -88,6 +89,10 @@ def register_taa():
                 #    print " -- Problem sending registration notice to admin --\n%s"%e
 
                 session['registered_name'] = data['given_name']
+
+
+                # Add user to our database
+                agent_service.ensure_agent_in_database(account)
 
                 return redirect(url_for('confirmRegistration'))
             except Error as err:

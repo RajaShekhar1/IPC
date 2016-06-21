@@ -15,6 +15,7 @@ class Agent(AgentJsonSerializable, db.Model):
     signing_name = db.Column(db.String(256))
     agency = db.Column(db.String(256))
     activated = db.Column(db.Boolean, nullable=False)
+    is_deleted = db.Column(db.Boolean, server_default='FALSE')
 
     password = db.Column(db.String)
     first = db.Column(db.String)
@@ -27,6 +28,13 @@ class Agent(AgentJsonSerializable, db.Model):
     def name(self):
         return self.first + " " + self.last
 
+    def get_status(self):
+        if self.is_deleted:
+            return 'Deleted'
+        elif not self.activated:
+            return 'Not Activated'
+        else:
+            return 'Activated'
 
 class ApiTokenJsonSerializable(JsonSerializable):
     pass

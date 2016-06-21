@@ -36,7 +36,7 @@ def admin():
             'agency': agent.agency,
             'agent_code': agent.agent_code,
             'signing_name': agent.signing_name,
-            'status': "Activated" if agent.activated else "Not Activated",
+            'status': agent.get_status(),
         })
 
     # for acc in search_stormpath_accounts():
