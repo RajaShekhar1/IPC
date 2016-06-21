@@ -14,7 +14,7 @@ class AgentService(DBService):
     __model__ = Agent
 
     def get_sorted_agents(self):
-        return db.session.query(Agent).order_by(db.desc(Agent.activated), Agent.last, Agent.first)
+        return db.session.query(Agent).order_by(Agent.activated, Agent.last, Agent.first)
 
     def get_logged_in_agent(self):
         if not current_user:

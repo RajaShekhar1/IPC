@@ -29,6 +29,11 @@ def admin():
     # This shows only agents right now, will want to add admins / HO users soon.
     accounts = []
     for agent in agent_service.get_sorted_agents():
+
+        # Skip over deleted users, they have no stormpath entry so there is no use showing them here (clicking would error)
+        if agent.get_status() == 'Deleted':
+            continue
+
         accounts.append({
             'fname': agent.first,
             'lname': agent.last,
