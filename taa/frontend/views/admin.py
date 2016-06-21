@@ -28,7 +28,7 @@ def admin():
 
     # This shows only agents right now, will want to add admins / HO users soon.
     accounts = []
-    for agent in agent_service.all():
+    for agent in agent_service.get_sorted_agents():
         accounts.append({
             'fname': agent.first,
             'lname': agent.last,
@@ -50,8 +50,6 @@ def admin():
     #          'status': "Activated" if acc.custom_data.get('activated') else "Not Activated",
     #      })
 
-    # show the un-activated accounts first
-    accounts = sorted(accounts, reverse=True, key=(lambda x: x['status']))
     return render_template('admin/admin.html', accounts=accounts, nav_menu=get_nav_menu(), is_user_admin=agent_service.is_user_admin(current_user))
 
 
