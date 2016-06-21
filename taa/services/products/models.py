@@ -150,18 +150,16 @@ class Product(ProductJsonSerializable, db.Model):
         else:
             return False
 
-    def should_use_base_product_settings(self):
-        use_base_product_settings = getattr(self, "use_base_product_settings")
-        if use_base_product_settings is not None:
-            return json.loads(use_base_product_settings)
-        return dict()
+    def should_use_base_product_settings(self, attribute):
+        if self.use_base_product_settings is not None:
+            return json.loads(self.use_base_product_settings).get(attribute, False)
+        return False
 
     def get_short_name(self):
-        use_base_product_settings = self.should_use_base_product_settings()
-        if use_base_product_settings.get("customer_short_name"):
-            base_product = getattr(self, "base_product")
-            return getattr(base_product, "customer_short_name")
-        return getattr(self, "customer_short_name")
+        if not self.is_base_product() and self.should_use_base_product_settings('customer_short_name'):
+            return self.get_base_product().customer_short_name
+
+        return self.customer_short_name
 
     def format_type(self):
         if self.is_guaranteed_issue():
@@ -184,38 +182,17 @@ class Product(ProductJsonSerializable, db.Model):
 
         return state_replacement_paragraphs
 
-    # def get_brochure_name(self):
-    #     use_base_product_settings = self.should_use_base_product_settings()
-    #     if use_base_product_settings.get("brochure_name"):
-    #         base_product = getattr(self, "base_product")
-    #         return getattr(base_product, "brochure_name")
-    #     return getattr(self, "brochure_name")
-    #
-    # def get_brochure_url(self):
-    #     use_base_product_settings = self.should_use_base_product_settings()
-    #     if use_base_product_settings.get("brochure_url"):
-    #         base_product = getattr(self, "base_product")
-    #         return getattr(base_product, "brochure_url")
-    #     return getattr(self, "brochure_url")
-
     def get_brochure_name(self):
-        if self.brochure_name:
-            return self.brochure_name
-
-        if not self.is_base_product():
+        if not self.is_base_product() and self.should_use_base_product_settings('brochure_name'):
             return self.get_base_product().brochure_name
 
-        return None
+        return self.brochure_name
 
     def get_brochure_url(self):
-        if self.brochure_url:
-            return self.brochure_url
-
-        # Will check a base product if necessary
-        if not self.is_base_product():
+        if not self.is_base_product() and self.should_use_base_product_settings('brochure_url'):
             return self.get_base_product().brochure_url
 
-        return None
+        return self.brochure_url
 
     def are_rates_limited_to_GI(self):
         "Custom GI products can override this, but base products show all rates."

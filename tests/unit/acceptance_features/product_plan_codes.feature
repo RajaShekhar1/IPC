@@ -1,7 +1,7 @@
 # Created by zach at 2/12/16
 Feature: Lookup product plan codes for submitting to the Third-Party Administrator, Dell.
 
-  Scenario Outline: : I want to know the Dell FPP Plan code given a base product, applicant type, set of rider codes, and state
+  Scenario Outline: I want to know the Dell FPP Plan code given a base product, applicant type, set of rider codes, and state
     Given The applicant type is '<Applicant Type>'
     And the AIR rider state is '<AIR>'
     And the WP rider state is '<WP>'

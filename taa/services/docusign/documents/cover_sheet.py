@@ -180,11 +180,11 @@ class CoverSheetAttachment(PDFAttachment):
 
             if product not in self.get_enrolled_products():
                 # Show Decline
-                product_header = '{} - DECLINED'.format(product.name)
+                product_header = '{} - DECLINED'.format(product.get_brochure_name()  if product.get_brochure_name() else product.get_base_product().name)
                 applicants = []
             else:
                 # Show product name, also tier if a simple_coverage option, and riders if riders are included.
-                product_header = product.name
+                product_header = product.get_brochure_name() if product.get_brochure_name() else product.get_base_product().name
                 if product.is_simple_coverage():
                     simple_cov_map = dict(
                         EE='Employee Only',
