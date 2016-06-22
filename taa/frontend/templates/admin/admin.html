@@ -28,7 +28,8 @@
     <table id='admin-agents-list' class="table table-striped table-bordered table-hover">
       <thead>
 	<tr>
-	  <th>Name</th>
+	  <th>First</th>
+    <th>Last</th>
 	  <th>Agency</th>
 	  <th class="hidden-480">Email</th>
 	  <th>Code</th>
@@ -41,8 +42,11 @@
 	{% for acc in accounts %}
 	<tr>
 	  <td>
-      <a href={{base_url + acc['email']}}>{{ acc['fname'] + " " + acc['lname']}}</a>
+      <a href={{base_url + acc['email']}}>{{ acc['fname']}}</a>
 	  </td>
+    <td>
+      <a href={{base_url + acc['email']}}>{{ acc['lname']}}</a>
+    </td>
 	  <td>{{acc['agency']}}</td>
 	  <td class="hidden-480">{{acc['email']}}</td>
 	  <td>{{acc['agent_code']}}</td>
@@ -51,8 +55,10 @@
           <a href={{base_url + acc['email']}}>
             {% if acc['status']=='Activated' %}
               <span class="label label-success">Activated</span>
+            {% elif acc['status'] == 'Not Activated' %}
+              <span class="label label-info arrowed-in">Not Activated</span>
             {% else %}
-              <span class="label label-danger arrowed-in">Not Activated</span>
+              <span class="label label-danger arrowed-in">Deleted</span>
             {% endif %}
           </a>
 	  </td>
@@ -76,7 +82,11 @@
 {{ super() }}
 
   <script>
-  $('#admin-agents-list').DataTable();
+  $('#admin-agents-list').DataTable({
+    "pageLength": 100,
+    // Should be "Status desc", "Last", "First" by default
+    "order": [[6, "desc"], [1, "asc"], [0, "asc"]]
+  });
   </script>
 
 <!-- page-specific footer scripts -->
