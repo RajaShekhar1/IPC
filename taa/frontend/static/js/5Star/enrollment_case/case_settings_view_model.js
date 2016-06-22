@@ -287,6 +287,17 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return self.has_census_data();
   });
 
+  self.download_enrollments_modal = ko.observable(false);
+  self.download_enrollments = function() {
+    // show modal
+    self.download_enrollments_modal(true);
+
+    var url = urls.get_case_api_enrollment_records_url(self.case_id) + "?format=csv&poll=true";
+    $.getJSON(url, function (data) {
+      console.log(data);
+    });
+  };
+
   self.partner_agents = ko.observable(
     (case_data.partner_agents)? _.map(_.pluck(case_data.partner_agents, "id"), function (id) {
       return id + "";

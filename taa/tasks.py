@@ -185,3 +185,14 @@ def process_paylogix_csv_generation(task):
     except Exception as ex:
         submission_service.set_submissions_status([submission], error_message=ex.message)
         task.retry()
+
+
+
+# Exports that run in the background
+@app.task
+def export_user_case_enrollments(user_href, case_id, format):
+    enrollment_export_service = LookupService('EnrollmentExportService')
+
+    enrollment_export_service.export_user_case_enrollments(user_href, case_id, format)
+
+

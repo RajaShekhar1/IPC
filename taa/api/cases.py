@@ -235,6 +235,8 @@ def enrollment_records(case_id):
     Combines the census and enrollment records for export.
 
     format=json|csv (json by default)
+    poll=true
+    draw: datatables sort and pagination parameters
     """
     case = case_service.get_if_allowed(case_id)
 
@@ -290,6 +292,14 @@ def enrollment_records(case_id):
         )
 
         return Response(response=json.dumps(resp_data, cls=JSONEncoder), content_type='application/json')
+
+
+    if request.args.get('poll'):
+        # We will do the export in the background, and poll the result.
+        export_record = case_service.create_enrollment_export(current_user, case, format=request.args.get('format', 'json'))
+        return dict(
+            poll_url='/cases/{}/enrollment_download/{}'.format(case_id, export_record.id),
+        )
 
     census_records = case_service.get_current_user_census_records(case)
     data = enrollment_application_service.get_enrollment_records_for_census_records(census_records)
