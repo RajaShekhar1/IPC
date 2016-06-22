@@ -143,7 +143,11 @@
                 <div class="footer">
                     <div class="footer-inner">
                         <div class="footer-content">
-                           <p>&copy; 2015 5Star Life Insurance Company, an AFBA related enterprise</p>
+                           <p>&copy;
+                               <span id="copyright-year">2016</span>
+                               <script>document.getElementById('copyright-year').textContent = new Date().getFullYear().toString();</script>
+                               5Star Life Insurance Company, an AFBA related enterprise
+                           </p>
                         </div>
                     </div>
                 </div>
