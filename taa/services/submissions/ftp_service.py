@@ -30,11 +30,17 @@ class FtpService(object):
         Send a file via FTP to the specified hostname, and optionally directory.
         If key_id is present the file stored on the server will be encrypted the key that key_id references.
         """
-        ftp = FTP(host=hostname, user=username, passwd=password)
+        #ftp = FTP(host=hostname, user=username, passwd=password)
+        ftp = FTP()
         ftp.set_pasv(False)
+        ftp.set_debuglevel(5)
+        ftp.connect(host=hostname)
+        ftp.login(username, password)
+
         if directory:
             ftp.cwd(directory)
         if key_id:
             data = StringIO(unicode(self.encrypt(data, key_id)))
-        ftp.storbinary('STOR {0}'.format(filename), data)
+        
+        ftp.storlines('STOR {0}'.format(filename), data)
         ftp.close()

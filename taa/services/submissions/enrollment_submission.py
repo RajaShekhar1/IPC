@@ -328,7 +328,7 @@ class EnrollmentSubmissionService(object):
         Submit csv data to dell for processing
         """
         ftp_service = LookupService('FtpService')
-        filename = 'enrollment_submissions_%s.csv.pgp' % datetime.now().strftime('%Y-%m-%d')
+        filename = '5Star-%s.csv.pgp' % datetime.now().strftime('%Y-%m-%d')
         ftp_service.send_file(DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, filename, csv_data,
                               directory=DELL_FTP_WORKING_DIRECTORY, key_id=DELL_FTP_PGP_KEY_ID)
 
