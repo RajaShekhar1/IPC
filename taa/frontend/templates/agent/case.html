@@ -1332,6 +1332,50 @@ we load from the server at run time for page speed
   </script>
 
 
+    {# Modal for downloading enrollments polling #}
+  <div data-bind="modal: download_enrollments_modal" class="modal fade">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span
+              aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <h4 class="modal-title">Generating Enrollments Download</h4>
+        </div>
+        <div class="modal-body">
+
+          <div class="form-panel modal-panel">
+            <div class="row">
+              <div data-bind="visible: !download_enrollments_url() && !download_enrollment_error()" class="col-xs-12">
+                <p>
+                  Please wait while the system generates your requested file for download.
+                </p>
+                <br>
+                <div class="text-center"><i class="ace-icon fa fa-spinner blue fa-spin bigger-200"></i></div>
+              </div>
+            </div>
+
+            <div class="text-center" data-bind="if: download_enrollments_url() !== null">
+              <a class="btn btn-primary" target="_blank"
+                    data-bind="attr: {href: download_enrollments_url()}">Download File
+              </a>
+            </div>
+
+            <div class="text-center text-danger" data-bind="html: download_enrollment_error">
+
+            </div>
+
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="form-buttons buttons-panel">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <loading-modal params="options: loading_modal"></loading-modal>
 
@@ -1778,46 +1822,7 @@ we load from the server at run time for page speed
   </div>
 
 
-  {# Modal for downloading enrollments polling #}
-  <div data-bind="modal: download_enrollments_modal" class="modal fade">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal"><span
-              aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-          <h4 class="modal-title">Generating Enrollments Download</h4>
-        </div>
-        <div class="modal-body">
 
-          <div class="form-panel modal-panel">
-            <div class="row">
-              <div class="col-xs-12">
-                <p>
-                  Please wait while the system generates your requested file for download.
-                </p>
-                <br>
-                <i class="icon-spinner icon-spin grey bigger-200"></i>
-              </div>
-            </div>
-
-            <div class="row" data-bind="visible: false">
-              <button class="btn btn-danger"
-                    data-bind="">Download File
-              </button>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <div class="form-buttons buttons-panel">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
 
 

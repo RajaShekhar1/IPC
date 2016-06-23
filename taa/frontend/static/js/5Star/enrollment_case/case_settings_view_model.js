@@ -288,14 +288,38 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.download_enrollments_modal = ko.observable(false);
+  self.download_enrollments_url = ko.observable(null);
+  self.download_enrollment_error = ko.observable(null);
+
   self.download_enrollments = function() {
-    // show modal
+    // reset dialogue, show modal
+    self.download_enrollments_url(null);
+    self.download_enrollment_error(null);
     self.download_enrollments_modal(true);
 
     var url = urls.get_case_api_enrollment_records_url(self.case_id) + "?format=csv&poll=true";
     $.getJSON(url, function (data) {
-      console.log(data);
+
+      window.setTimeout(function() {self.poll_export_file(data.data.poll_url)}, 5000);
+
+    }).error(function() {
+      self.download_enrollment_error("There was a problem generating the export file. Please try again later.");
     });
+  };
+
+  self.poll_export_file = function(poll_url) {
+    $.get(poll_url).success(function(resp) {
+      if (!resp.data.is_ready) {
+        // Try again
+        window.setTimeout(function() {self.poll_export_file(poll_url)}, 5000);
+      } else {
+        // Show the download button for fetching the file
+        self.download_enrollments_url(resp.data.download_url);
+      }
+    }).error(function() {
+      self.download_enrollment_error("There was a problem generating the export file. Please try again later.");
+    });
+
   };
 
   self.partner_agents = ko.observable(

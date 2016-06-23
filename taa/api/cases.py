@@ -296,9 +296,10 @@ def enrollment_records(case_id):
 
     if request.args.get('poll'):
         # We will do the export in the background, and poll the result.
-        export_record = case_service.create_enrollment_export(current_user, case, format=request.args.get('format', 'json'))
+        export_service = LookupService("EnrollmentExportService")
+        export_record = export_service.export_user_case_enrollments(current_user.href, case.id, format=request.args.get('format', 'json'))
         return dict(
-            poll_url='/cases/{}/enrollment_download/{}'.format(case_id, export_record.id),
+            poll_url='/cases/{}/enrollment_download/{}?poll=1'.format(case_id, export_record.id),
         )
 
     census_records = case_service.get_current_user_census_records(case)
@@ -313,6 +314,35 @@ def enrollment_records(case_id):
         }
         return make_response(body, 200, headers)
     return data
+
+
+@route(bp, '/<case_id>/enrollment_download/<int:export_id>', methods=['GET'])
+@login_required
+@groups_required(api_groups, all=False)
+def check_enrollment_download(case_id, export_id):
+    case = case_service.get_if_allowed(case_id)
+
+    export_service = LookupService("EnrollmentExportService")
+    is_ready = export_service.is_export_finished(export_id, current_user.href)
+    download_url = '/cases/{}/enrollment_download/{}'.format(case_id, export_id)
+
+    if request.args.get('poll') == '1':
+        return dict(
+            is_ready=is_ready,
+            download_url=download_url,
+        )
+    elif is_ready:
+        file_data = export_service.get_export_file(export_id, current_user.href)
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        headers = {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename=enrollment_export_{0}.csv'.format(date_str)
+        }
+        return make_response(file_data, 200, headers)
+    else:
+        abort(400, "The export file is not yet ready")
+
+
 
 
 @route(bp, '/<case_id>/enrollment_records/<int:census_id>', methods=['GET'])

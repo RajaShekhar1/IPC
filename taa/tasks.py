@@ -187,12 +187,11 @@ def process_paylogix_csv_generation(task):
         task.retry()
 
 
-
 # Exports that run in the background
 @app.task
-def export_user_case_enrollments(user_href, case_id, format):
+def export_user_case_enrollments(export_id):
     enrollment_export_service = LookupService('EnrollmentExportService')
 
-    enrollment_export_service.export_user_case_enrollments(user_href, case_id, format)
+    enrollment_export_service.process_export(export_id)
 
 

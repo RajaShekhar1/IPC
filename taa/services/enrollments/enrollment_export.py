@@ -1,9 +1,16 @@
+from flask import abort
+from taa.services.cases.case_service import CaseService
 
+from taa.services.enrollments.enrollment_application import EnrollmentApplicationService
 
-from taa import tasks
+from taa import db, tasks
+from taa.core import DBService
 from taa.services.data_export import BackgroundExport
 
-class EnrollmentExportService(object):
+
+class EnrollmentExportService(DBService):
+
+    __model__ = BackgroundExport
 
     def export_user_case_enrollments(self, user_href, case_id, format):
         """
@@ -19,32 +26,63 @@ class EnrollmentExportService(object):
 
         export = BackgroundExport(
             params=dict(
-                user_href=user_href,
-                case_id=case_id,
                 format=format,
             ),
-            status=EnrollmentExport.STATUS_PENDING,
+            case_id=case_id,
+            user_href=user_href,
+            status=BackgroundExport.STATUS_PENDING,
 
         )
         db.session.add(export)
         db.session.commit()
 
         # Queue up the task
-        tasks.export_user_case_enrollments.delay(export)
+        tasks.export_user_case_enrollments.delay(export.id)
 
-        return export.id
+        return export
 
-
-    def check_export_status(self, export_id):
+    def is_export_finished(self, export_id, current_user_href):
         """
         Checks to see if an export has finished.
         """
+        export = self.get_or_404(export_id)
+        if export.user_href != current_user_href:
+            abort(403)
 
+        return export.status == BackgroundExport.STATUS_COMPLETE
 
-    def get_export_file(self, export_id):
+    def get_export_file(self, export_id, current_user_href):
         """
         If an export has finished, retrieve the file for download.
         """
+        export = self.get_or_404(export_id)
+        if export.user_href != current_user_href:
+            abort(403)
+
+        if export.download_type == BackgroundExport.DOWNLOAD_TYPE_BINARY:
+            return export.binary_data
+        else:
+            return export.unicode_data
 
 
+    def process_export(self, export_id):
+        export = self.get(export_id)
 
+        # Mark as processing
+        export.status = BackgroundExport.STATUS_PROCESSING
+        db.session.commit()
+
+        # Do the export
+        case_service = CaseService()
+        case = case_service.get(export.case_id)
+
+        enrollment_application_service = EnrollmentApplicationService()
+        census_records = case_service.get_current_user_census_records(case)
+        data = enrollment_application_service.get_enrollment_records_for_census_records(census_records)
+        export_data = enrollment_application_service.export_enrollment_data(data)
+
+        # Save the results
+        export.unicode_data = export_data
+        export.download_type = BackgroundExport.DOWNLOAD_TYPE_UNICODE
+        export.status = BackgroundExport.STATUS_COMPLETE
+        db.session.commit()
