@@ -577,7 +577,7 @@ class EnrollmentSubmissionProcessor(object):
             # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
             should_use_docusign_renderer = False # if enrollment_data.should_use_call_center_workflow() else True
 
-            product_id = enrollment_data['product_id']
+            product_id = enrollment_data.get_product_id()
             product = self.product_service.get(product_id)
             if not product.does_generate_form():
                 continue
