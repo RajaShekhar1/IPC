@@ -228,14 +228,14 @@ class EnrollmentApplicationService(DBService):
         return self.create(**enrollment_data)
 
     def get_application_status(self, census_record, wizard_data):
-        product_service = LookupService('ProductService')
+
         """:type: taa.services.products.ProductService"""
         data = self.get_first_wizard_data_record(wizard_data)
         wrapped_data = EnrollmentDataWrap(data, census_record.case)
 
         if isinstance(wizard_data, list):
             accepted_product_ids = list(d['product_id'] for d in wizard_data if not d['did_decline'])
-            accepted_products = product_service.get_all(*accepted_product_ids)
+            accepted_products = self.product_service.get_all(*accepted_product_ids)
             """:type: list[taa.services.products.Product]"""
             if all(map(lambda d: d['did_decline'], wizard_data)):
                 return EnrollmentApplication.APPLICATION_STATUS_DECLINED
@@ -309,11 +309,12 @@ class EnrollmentApplicationService(DBService):
         data = []
         if not census_record.enrollment_applications:
             return data
+
+        case_products = self.product_service.get_ordered_products_for_case(case.id)
         for enrollment in census_record.enrollment_applications:
             export_record = dict()
             export_record.update(self.get_census_data(census_record))
-            export_record.update(self.get_unmerged_enrollment_data(
-                census_record, enrollment))
+            export_record.update(self.get_unmerged_enrollment_data(census_record, enrollment, case_products))
             data.append(export_record)
         return data
 
@@ -330,15 +331,22 @@ class EnrollmentApplicationService(DBService):
         census will show up multiple times, once for each enrollment.
         """
         data = []
+
+        case_products_lookup = {}
+
         for census_record in census_records:
+
+            # Make sure we have looked up the ordered list of products for this case.
+            if census_record.case_id not in case_products_lookup:
+                case_products_lookup[census_record.case_id] = self.product_service.get_ordered_products_for_case(census_record.case_id)
+
             # Export only records with enrollments
             if not census_record.enrollment_applications:
                 continue
             for enrollment in census_record.enrollment_applications:
                 export_record = dict()
                 export_record.update(self.get_census_data(census_record))
-                export_record.update(self.get_unmerged_enrollment_data(
-                    census_record, enrollment))
+                export_record.update(self.get_unmerged_enrollment_data(census_record, enrollment, case_products_lookup[census_record.case_id]))
                 data.append(export_record)
         return data
 
@@ -530,10 +538,11 @@ class EnrollmentApplicationService(DBService):
         enrollment_data['total_annual_premium'] = total_annual_premium
         return enrollment_data
 
-    def get_unmerged_enrollment_data(self, census_record, enrollment):
+    def get_unmerged_enrollment_data(self, census_record, enrollment, case_products):
         """
         If we are not merging, we know we are dealing with coverages from
         a single enrollment.
+        :param case_products:
         """
         enrollment_data = {}
         if not census_record.enrollment_applications or not enrollment:
@@ -566,10 +575,10 @@ class EnrollmentApplicationService(DBService):
         product_ids = enrollment.get_enrolled_product_ids()
         # Keep this conversion of the set to tuple to prevent SQLAlchemy from throwing an exception due to not being
         # able to accept lists or sets
-        products = product_service.get_ordered_products_for_case(enrollment.case.id)
+
         for x in range(6):
-            if x < len(products):
-                product = products[x]
+            if x < len(case_products):
+                product = case_products[x]
                 """:type: taa.services.products.Product"""
             else:
                 product = None
@@ -700,7 +709,7 @@ class EnrollmentApplicationService(DBService):
     def get_export_dictionary(self, census_record, application):
         data = dict()
         data.update(self.get_census_data(census_record))
-        data.update(self.get_unmerged_enrollment_data(census_record, application))
+        data.update(self.get_unmerged_enrollment_data(census_record, application, self.product_service.get_ordered_products_for_case(census_record.case_id)))
         enrollment_tuples = [(c.column_title, c.get_value(data)) for c in enrollment_columns]
         census_tuples = zip(self.case_service.census_records.get_csv_headers(),
                             self.case_service.census_records.get_csv_row_from_dict(data))

@@ -293,7 +293,6 @@ def enrollment_records(case_id):
 
         return Response(response=json.dumps(resp_data, cls=JSONEncoder), content_type='application/json')
 
-
     if request.args.get('poll'):
         # We will do the export in the background, and poll the result.
         export_service = LookupService("EnrollmentExportService")
