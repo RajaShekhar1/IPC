@@ -441,10 +441,6 @@ var wizard_viewmodel = (function () {
     self.spouse_contingent_beneficiary_type = ko.observable("none");
     self.spouse_contingent_beneficiary = ko.observable(new beneficiary.Beneficiary());
 
-    self.is_employee_beneficiary_info_required = function () {
-      return !self.did_select_spouse_coverage() || $("#eeBeneOther").is(':checked')
-    };
-
     self.should_show_contingent_beneficiary = function () {
       return self.product.should_show_contingent_beneficiary();
     };
