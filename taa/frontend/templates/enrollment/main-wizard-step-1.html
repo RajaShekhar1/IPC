@@ -328,13 +328,6 @@
 
               <h3 data-bind="text: current_product().format_product_name()"></h3>
               <div data-bind="slideDownIf: !$root.did_decline()">
-                {#              <ul class="list-unstyled" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">#}
-                {#                <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">#}
-                {#                  <span class="step" data-bind="text: $index() + 1"></span>#}
-                {#                  <span class="title" data-bind="text: product_coverage.format_product_name()"></span>#}
-                {#                </li>#}
-                {#              </ul>#}
-
                 <div class="" data-bind="
                 template: {name: current_product().get_coverage_selection_template(), data: current_product()}
                 ">
@@ -342,18 +335,6 @@
               </div>
             </div>
           </div>
-
-          {# Decline option for product #}
-          {#        <div class="row">#}
-          {#          <div class="col-xs-12 text-center red">#}
-          {#            <div class="decline-option">#}
-          {#              <label><input type="checkbox" data-bind="checked: current_product().did_decline"> I decline to enroll in#}
-          {#                <span data-bind="text: current_product().format_product_name()"></span> at this time#}
-          {#              </label>#}
-          {#            </div>#}
-          {#          </div>#}
-          {#        </div>#}
-
 
           {# Decline any products option #}
           <div class="row" data-bind="visible: !$root.coverage_vm.has_multiple_products()">
@@ -412,6 +393,9 @@
 
 {# Runs in the context of a ProductCoverageViewModel #}
 <script type="text/html" id="recommendation_coverage_selection">
+  <!--ko if: product.product_data.brochure_url_display -->
+    <a href="#" target="_blank" data-bind="attr: { href: product.product_data.brochure_url_display }">See this brochure for details</a>
+  <!--/ko-->
   <div class="row">
 
     <div class="col-xs-4 col-sm-3 pricing-span-header">
@@ -519,7 +503,9 @@
 
 
 <script id="simple_coverage_selection" type="text/html">
-  <a href="#" target="_blank" data-bind="attr: { href: $data.product.product_data.brochure_url }">See this brochure for details</a>
+  <!--ko if: product.product_data.brochure_url_display -->
+    <a href="#" target="_blank" data-bind="attr: { href: product.product_data.brochure_url_display }">See this brochure for details</a>
+  <!--/ko-->
   <div class="row">
     <div class="col-xs-4 col-sm-3 col-xs-offset-2 col-sm-offset-3 pricing-span-header">
       <div class="widget-box transparent">
@@ -567,6 +553,9 @@
 </script>
 
 <script id="forced_coverage_selection" type="text/html">
+  <!--ko if: product.product_data.brochure_url_display -->
+    <a href="#" target="_blank" data-bind="attr: { href: product.product_data.brochure_url_display }">See this brochure for details</a>
+  <!--/ko-->
   <div class="row">
     <div class="col-xs-4 col-sm-3 col-xs-offset-2 col-sm-offset-3 pricing-span-header">
       <div class="widget-box transparent">
