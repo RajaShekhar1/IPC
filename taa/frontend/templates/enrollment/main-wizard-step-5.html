@@ -2,7 +2,7 @@
   <form class="" id="step5-form">
 
     <!--ko foreach: coverage_vm.selected_product_coverages -->
-    <div data-bind="visible: $data.product.should_show_step_5()">
+    <div data-bind="if: $data.product.should_show_step_5()">
 
       <h3 class="header light blue">Beneficiaries for <span data-bind="text: $data.product.product_data.name"></span>
       </h3>
