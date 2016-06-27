@@ -252,16 +252,19 @@ class EnrollmentSubmissionService(object):
     def create_paylogix_csv_generation_submission(self, applications):
         if isinstance(applications, EnrollmentApplication):
             applications = [applications]
+
         submission = self.get_pending_batch_submission(EnrollmentSubmission.TYPE_PAYLOGIX_CSV_GENERATION)
         if not submission:
             # noinspection PyArgumentList
             submission = self.create_submission(EnrollmentSubmission.TYPE_PAYLOGIX_CSV_GENERATION)
+
         for application in applications:
             standardized_data = enrollments.load_standardized_data_from_application(application)
             if any(EnrollmentDataWrap(d, application.case, application).requires_paylogix_export() for d in
                    standardized_data):
                 submission.enrollment_applications.append(application)
         db.session.commit()
+
         return submission
 
     def create_paylogix_export_submission(self, csv_submission, data):
@@ -284,12 +287,11 @@ class EnrollmentSubmissionService(object):
         submission = self.create_dell_csv_generation_submission_for_application(application)
         if submission is not None:
             submissions.append(submission)
-        submission = self.create_static_benefit_submission_for_application(application)
-        if submission is not None:
-            submissions.append(submission)
+
         submission = self.create_paylogix_csv_generation_submission(application)
         if submission is not None:
             submissions.append(submission)
+
         # TODO: Uncomment this when the docusign submission is fully switched over to this
         # Create a docusign submission. None if its case doesn't have Group CI as one of its products
         # submission = self.create_docusign_submission_for_application(application)
