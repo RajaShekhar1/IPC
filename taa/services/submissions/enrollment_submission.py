@@ -155,13 +155,13 @@ class EnrollmentSubmissionService(object):
             .filter(EnrollmentSubmission.status == EnrollmentSubmission.STATUS_PENDING) \
             .first()
 
-    def get_pending_or_failed_csv_submissions(self):
-        """
-        Get all submissions that are either pending or failed
-        """
-        query = db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.status.in_(
-            [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING]))
-        return query.all()
+    # def get_pending_or_failed_csv_submissions(self):
+    #     """
+    #     Get all submissions that are either pending or failed
+    #     """
+    #     query = db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.status.in_(
+    #         [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING]))
+    #     return query.all()
 
     def get_submissions(self, start_date=None, end_date=None):
         """
