@@ -52,7 +52,7 @@
         <div class="col-xs-10 col-sm-4">
           <label class="">
             Weight: <input type="number" class="text-right" max="9999" min="0"
-                           data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
+                           data-bind="textInput: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
           </label>
         </div>
         <!--/ko-->
@@ -207,17 +207,17 @@
                 <div class="col-sm-6 col-md-3 form-group">
                   <label>Insurer Name</label><br>
                   <input type="text" class="replacement-details-input"
-                         data-bind="value: name, attr: {name: 'policy-name-'+$index()}">
+                         data-bind="textInput: name, attr: {name: 'policy-name-'+$index()}">
                 </div>
                 <div class="col-sm-6 col-md-3 form-group">
                   <label>Contract or Policy #</label><br>
                   <input type="text" class="replacement-details-input"
-                         data-bind="value: policy_number, attr: {name: 'policy-number-'+$index()}">
+                         data-bind="textInput: policy_number, attr: {name: 'policy-number-'+$index()}">
                 </div>
                 <div class="col-sm-6 col-md-3 form-group">
                   <label>Insured</label><br>
                   <input type="text" class="replacement-details-input"
-                         data-bind="value: insured, attr: {name: 'insured-'+$index()}">
+                         data-bind="textInput: insured, attr: {name: 'insured-'+$index()}">
                 </div>
                 <div class="col-sm-6 col-md-3 form-group">
                   <br>
@@ -245,7 +245,7 @@
               <div class="row">
                 <div class="col-sm-12 form-group">
                   <p>The existing policy or contract is being replaced because:
-                    <input type="text" class="col-xs-12" data-bind="value: replacement_reason">
+                    <input type="text" class="col-xs-12" data-bind="textInput: replacement_reason">
                   </p>
                 </div>
               </div>

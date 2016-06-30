@@ -288,16 +288,19 @@ class EnrollmentSubmissionService(object):
     def create_paylogix_csv_generation_submission(self, applications):
         if isinstance(applications, EnrollmentApplication):
             applications = [applications]
+
         submission = self.get_pending_batch_submission(EnrollmentSubmission.TYPE_PAYLOGIX_CSV_GENERATION)
         if not submission:
             # noinspection PyArgumentList
             submission = self.create_submission(EnrollmentSubmission.TYPE_PAYLOGIX_CSV_GENERATION)
+
         for application in applications:
             standardized_data = enrollments.load_standardized_data_from_application(application)
             if any(EnrollmentDataWrap(d, application.case, application).requires_paylogix_export() for d in
                    standardized_data):
                 submission.enrollment_applications.append(application)
         db.session.commit()
+
         return submission
 
     def create_paylogix_export_submission(self, csv_submission, data):
@@ -320,12 +323,11 @@ class EnrollmentSubmissionService(object):
         submission = self.create_dell_csv_generation_submission_for_application(application)
         if submission is not None:
             submissions.append(submission)
-        submission = self.create_static_benefit_submission_for_application(application)
-        if submission is not None:
-            submissions.append(submission)
+
         submission = self.create_paylogix_csv_generation_submission(application)
         if submission is not None:
             submissions.append(submission)
+
         # TODO: Uncomment this when the docusign submission is fully switched over to this
         # Create a docusign submission. None if its case doesn't have Group CI as one of its products
         # submission = self.create_docusign_submission_for_application(application)
@@ -364,7 +366,7 @@ class EnrollmentSubmissionService(object):
         Submit csv data to dell for processing
         """
         ftp_service = LookupService('FtpService')
-        filename = 'enrollment_submissions_%s.csv.pgp' % datetime.now().strftime('%Y-%m-%d')
+        filename = '5Star-%s.csv.pgp' % datetime.now().strftime('%Y-%m-%d')
         ftp_service.send_file(DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, filename, csv_data,
                               directory=DELL_FTP_WORKING_DIRECTORY, key_id=DELL_FTP_PGP_KEY_ID)
 
@@ -625,7 +627,7 @@ class EnrollmentSubmissionProcessor(object):
             # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
             should_use_docusign_renderer = False # if enrollment_data.should_use_call_center_workflow() else True
 
-            product_id = enrollment_data['product_id']
+            product_id = enrollment_data.get_product_id()
             product = self.product_service.get(product_id)
             if not product.does_generate_form():
                 continue

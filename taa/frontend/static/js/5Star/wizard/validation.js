@@ -429,6 +429,7 @@ function init_validation(ui) {
         }
       },
       spOwner: {required: true}
+
     },
 
     messages: {
@@ -443,6 +444,12 @@ function init_validation(ui) {
     success: wizard_validate_success,
     errorPlacement: wizard_error_placement
   });
+
+  // Child gender rules
+  $.validator.addClassRules('child-gender', {required: {depends: function(element) {
+    //var applicant = ko.dataFor(element);
+    return ui.coverage_vm.did_select_children_coverage();
+  }}});
 
   // Beneficiary rules
 

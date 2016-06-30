@@ -24,9 +24,9 @@
 
       <div class="col-xs-12 col-sm-9">
         <input type="text" id="eeFName2" name="eeFName2"
-               data-bind="value: employee().first" placeholder="First Name"/>
+               data-bind="textInput: employee().first" placeholder="First Name"/>
         <input type="text" id="eeLName2" name="eeLName2"
-               data-bind="value: employee().last" placeholder="Last Name"/>
+               data-bind="textInput: employee().last" placeholder="Last Name"/>
       </div>
     </div>
 
@@ -39,7 +39,7 @@
 
       <div class="col-xs-12 col-sm-5">
         <input type="text" id="eessn" name="eessn" class="col-xs-12 col-sm-5 input-mask-ssn"
-               data-bind="value: employee().ssn"/>
+               data-bind="textInput: employee().ssn"/>
       </div>
     </div>
 
@@ -71,7 +71,7 @@
       <div class="col-xs-12 col-sm-9">
         <div class="clearfix">
           <input type="text" id="eeStreet1" name="eeStreet1" class="col-xs-12 col-sm-9"
-                 data-bind="value: employee().address1"/>
+                 data-bind="textInput: employee().address1"/>
         </div>
       </div>
     </div>
@@ -82,7 +82,7 @@
       <div class="col-xs-12 col-sm-9">
         <div class="clearfix">
           <input type="text" id="eeStreet2" name="eeStreet2" class="col-xs-12 col-sm-9"
-                 data-bind="value: employee().address2"/>
+                 data-bind="textInput: employee().address2"/>
         </div>
       </div>
     </div>
@@ -93,7 +93,7 @@
       <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeCity">City, ST Zip</label>
 
       <div class="col-xs-12 col-sm-9">
-        <input type="text" id="eeCity" name="eeCity" placeholder="City" data-bind="value: employee().city"/>
+        <input type="text" id="eeCity" name="eeCity" placeholder="City" data-bind="textInput: employee().city"/>
 
         <select id="eeState" name="eeState" class="select1"
                 data-bind="value: employee().state">
@@ -104,7 +104,7 @@
         </select>
 
         <input type="text" id="eeZip" name="eeZip" class="input-mask-zip" placeholder="zip"
-               data-bind="value: employee().zip"/>
+               data-bind="textInput: employee().zip"/>
       </div>
     </div>
 
@@ -118,7 +118,7 @@
 		</span>
 
           <input type="email" name="email" id="email" class="col-xs-12 col-sm-6"
-                 data-bind="value: employee().email"/>
+                 data-bind="textInput: employee().email"/>
         </div>
       </div>
     </div>
@@ -134,55 +134,10 @@
               <i class="fa fa-phone"></i>
             </span>
 
-          <input type="tel" id="phone" name="phone" data-bind="value: employee().phone"/>
+          <input type="tel" id="phone" name="phone" data-bind="textInput: employee().phone"/>
         </div>
       </div>
     </div>
-
-{#    <div class="space-2"></div>#}
-
-{#    <!--ko foreach: coverage_vm.selected_product_coverages()-->#}
-{#    <div class="form-group">#}
-{#      <label class="control-label col-xs-12 col-sm-3 no-padding-right">Policy Owner for <span data-bind="text: product.product_data.name"></span></label>#}
-{##}
-{#      <div class="col-xs-12 col-sm-9">#}
-{#        <label class="blue">#}
-{#          <input value="self" type="radio" class="inline ace" data-bind="checked: policy_owner, attr: {name: 'eeOwner'+$index()}"/>#}
-{#          <span class="lbl"> Self &nbsp;&nbsp;&nbsp;</span>#}
-{#        </label>#}
-{##}
-{#        <label class="blue">#}
-{#          <input value="other" type="radio" class="inline ace"#}
-{#                 data-bind="checked: policy_owner, attr:{name: 'eeOwner'+$index()}"/>#}
-{#          <span class="lbl"> Other</span>#}
-{#        </label>#}
-{#      </div>#}
-{#    </div>#}
-{##}
-{#    <div class="col-sm-offset-2" data-bind="visible: policy_owner() === 'other'">#}
-{#      <div class="form-group">#}
-{#        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerName">Other#}
-{#          owner </label>#}
-{##}
-{#        <div class="col-xs-12 col-sm-9">#}
-{#          <input type="text" class="col-xs-12 col-sm-4 ee-other-owner-name"#}
-{#                 placeholder="Full Name"#}
-{#                 data-bind="value: other_owner_name, attr: {name: 'eeOtherOwnerName'+$index()}"/>#}
-{#        </div>#}
-{#      </div>#}
-{#      <div class="space-2"></div>#}
-{#      <div class="form-group">#}
-{#        <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeOtherOwnerSSN">Owners's#}
-{#          SSN </label>#}
-{##}
-{#        <div class="col-xs-12 col-sm-9">#}
-{#          <input type="text"#}
-{#                 class="col-xs-12 col-sm-4 ee-other-owner-ssn"#}
-{#                 data-bind="value: other_owner_ssn, maskedInput: '999-99-9999', attr: {name: 'eeOtherOwnerSSN'+$index()}"/>#}
-{#        </div>#}
-{#      </div>#}
-{#    </div>#}
-{#    <!--/ko-->#}
 
 
   </form>

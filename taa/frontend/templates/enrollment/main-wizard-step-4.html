@@ -21,8 +21,8 @@
         </label>
 
         <div class="col-xs-12 col-sm-10">
-          <input type="text" id="spFName2" data-bind="value: spouse().first" placeholder="First Name"/>
-          <input type="text" id="spLName2" data-bind="value: spouse().last" placeholder="Last Name"/>
+          <input type="text" id="spFName2" data-bind="textInput: spouse().first" placeholder="First Name"/>
+          <input type="text" id="spLName2" data-bind="textInput: spouse().last" placeholder="Last Name"/>
         </div>
       </div>
 
@@ -33,7 +33,7 @@
 
         <div class="col-xs-12 col-sm-10">
           <input type="text" id="spssn" name="spssn" class="col-xs-12 col-sm-5"
-                 data-bind="value: spouse().ssn, maskedInput: '999-99-9999'">
+                 data-bind="textInput: spouse().ssn, maskedInput: '999-99-9999'">
         </div>
       </div>
 
@@ -78,7 +78,7 @@
             <div class="col-xs-12 col-sm-9">
               <div class="clearfix">
                 <input type="text" id="spStreet1" name="spStreet1" class="col-xs-12 col-sm-9"
-                       data-bind="value: spouse().address1"/>
+                       data-bind="textInput: spouse().address1"/>
               </div>
             </div>
           </div>
@@ -88,7 +88,7 @@
             <div class="col-xs-12 col-sm-9">
               <div class="clearfix">
                 <input type="text" id="spStreet2" name="spStreet2" class="col-xs-12 col-sm-9"
-                       data-bind="value: spouse().address2"/>
+                       data-bind="textInput: spouse().address2"/>
               </div>
             </div>
           </div>
@@ -99,7 +99,7 @@
             <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeCity">City, ST Zip</label>
 
             <div class="col-xs-12 col-sm-9">
-              <input type="text" id="spCity" name="spCity" placeholder="City" data-bind="value: spouse().city"/>
+              <input type="text" id="spCity" name="spCity" placeholder="City" data-bind="textInput: spouse().city"/>
 
               <select id="spState" name="spState" class="select1"
                       data-bind="value: spouse().state">
@@ -110,7 +110,7 @@
               </select>
 
               <input type="text" id="spZip" name="spZip" placeholder="zip"
-                     data-bind="value: spouse().zip, maskedInput: '99999'"/>
+                     data-bind="textInput: spouse().zip, maskedInput: '99999'"/>
             </div>
           </div>
         </div>
@@ -135,62 +135,13 @@
                                 </span>
 
               <input type="email" name="spEmail" id="spEmail" class="col-xs-12 col-sm-6"
-                     data-bind="value: spouse().email"/>
+                     data-bind="textInput: spouse().email"/>
             </div>
           </div>
         </div>
       </div>
 
       <div class="space-2"></div>
-
-{#      <!--ko foreach: coverage_vm.selected_product_coverages()-->#}
-{#      <div class="form-group">#}
-{#        <label class="control-label col-xs-12 col-sm-2 no-padding-right">Spouse Policy Owner for <span data-bind="text: product.product_data.name"></span></label>#}
-{##}
-{#        <div class="col-xs-12 col-sm-10">#}
-{#          <label class="blue">#}
-{#            <input value="employee" type="radio" class="inline ace"#}
-{#                   data-bind="checked: spouse_policy_owner, attr:{name: 'spOwner'+$index()}"/>#}
-{#            <span class="lbl"> Employee (<span data-bind="text: $root.employee().first"></span>)&nbsp;&nbsp;&nbsp;</span>#}
-{#          </label>#}
-{##}
-{#          <label class="blue">#}
-{#            <input value="self" type="radio" class="inline ace"#}
-{#                   data-bind="checked: spouse_policy_owner, attr:{name: 'spOwner'+$index()}"/>#}
-{#            <span class="lbl"> Self (<span data-bind="text: $root.spouse().first"></span>) &nbsp;&nbsp;&nbsp;</span>#}
-{#          </label>#}
-{##}
-{#          <label class="blue">#}
-{#            <input value="other" type="radio" class="inline ace"#}
-{#                   data-bind="checked: spouse_policy_owner, attr:{name: 'spOwner'+$index()}"/>#}
-{#            <span class="lbl"> Other</span>#}
-{#          </label>#}
-{#        </div>#}
-{#      </div>#}
-{##}
-{#      <div class="col-sm-offset-2" data-bind="visible: spouse_policy_owner() === 'other'">#}
-{#        <div class="form-group">#}
-{#          <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spOtherOwnerName">Other#}
-{#            owner of spouse policy</label>#}
-{##}
-{#          <div class="col-xs-12 col-sm-9">#}
-{#            <input type="text"  class="col-xs-12 col-sm-4 sp-other-owner-name"#}
-{#                   placeholder="Full Name" data-bind="value: spouse_other_owner_name, attr: {name: 'spOtherOwnerName'+$index()}"/>#}
-{#          </div>#}
-{#        </div>#}
-{##}
-{#        <div class="space-2"></div>#}
-{#        <div class="form-group">#}
-{#          <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="spOtherOwnerSSN">Owners's#}
-{#            SSN </label>#}
-{##}
-{#          <div class="col-xs-12 col-sm-9">#}
-{#            <input type="text"#}
-{#                   class="col-xs-12 col-sm-4 sp-other-owner-ssn" data-bind="value: spouse_other_owner_ssn, maskedInput: '999-99-9999', attr: {name: 'spOtherOwnerSSN'+$index()}"/>#}
-{#          </div>#}
-{#        </div>#}
-{#      </div>#}
-{#      <!--/ko-->#}
 
     </div>
 
@@ -207,9 +158,9 @@
             </label>
 
             <div class="col-xs-12 col-sm-6">
-              <input type="text" data-bind="value: first, attr: {id: 'child-first-'+$index()}"
+              <input type="text" data-bind="textInput: first, attr: {id: 'child-first-'+$index()}"
                      placeholder="First Name"/>
-              <input type="text" data-bind="value: last" placeholder="Last Name"/>
+              <input type="text" data-bind="textInput: last" placeholder="Last Name"/>
             </div>
           </div>
 
@@ -220,7 +171,7 @@
             </label>
 
             <div class="col-xs-12 col-sm-9">
-              <input type="text" class="col-xs-12 col-sm-5" data-bind="value: ssn, maskedInput: '999-99-9999',
+              <input type="text" class="col-xs-12 col-sm-5" data-bind="textInput: ssn, maskedInput: '999-99-9999',
 										attr: {id: 'child-ssn-'+$index()}
 										"/>
             </div>
@@ -234,13 +185,13 @@
 
             <div class="col-xs-12 col-sm-10">
               <label class="blue">
-                <input value="male" type="radio" class="inline ace" data-bind="checked: gender,
+                <input value="male" type="radio" class="child-gender inline ace" data-bind="checked: gender,
 										  attr: {name: 'child-gender-'+$index()}"/>
                 <span class="lbl"> Male &nbsp;&nbsp;&nbsp; </span>
               </label>
 
               <label class="blue">
-                <input value="female" type="radio" class="inline ace" data-bind="checked: gender,
+                <input value="female" type="radio" class="child-gender inline ace" data-bind="checked: gender,
 										  attr: {name: 'child-gender-'+$index()}"/>
                 <span class="lbl"> Female</span>
               </label>

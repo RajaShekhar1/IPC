@@ -252,7 +252,7 @@ class EnrollmentDataWrap(object):
     def did_spouse_select_coverage(self):
 
         # Special case for static benefit
-        if self.get_product().is_static_benefit() and self.did_employee_select_coverage():
+        if self.data.get('spouse_coverage') and self.get_product().is_static_benefit() and self.did_employee_select_coverage():
             return True
 
         elif self.get_product().is_simple_coverage():

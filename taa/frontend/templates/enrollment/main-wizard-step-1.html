@@ -26,7 +26,7 @@
             </label>
 
             <input class="input-mask-date" name="eeBenefitDOB"
-                   data-bind="value: employee().birthdate" type="text" id="eeDOB"
+                   data-bind="textInput: employee().birthdate" type="text" id="eeDOB"
                    placeholder="MM/DD/YYYY">
           </div>
 
@@ -78,9 +78,9 @@
 
           <div class="form-group col-xs-12 col-sm-10">
             <input type="text" style="width: 45%" id="spFName" name="spFName"
-                   data-bind="value: spouse().first" placeholder="First Name">
+                   data-bind="textInput: spouse().first" placeholder="First Name">
             <input type="text" style="width: 45%" id="spLName" name="spLName"
-                   data-bind="value: spouse().last" placeholder="Last Name">
+                   data-bind="textInput: spouse().last" placeholder="Last Name">
           </div>
         </div>
 
@@ -92,7 +92,7 @@
             </label>
 
             <input class="input-mask-date" name="spDOB"
-                   data-bind="value: spouse().birthdate" type="text" id="spDOB"
+                   data-bind="textInput: spouse().birthdate" type="text" id="spDOB"
                    placeholder="MM/DD/YYYY">
           </div>
 
@@ -146,7 +146,7 @@
           <div class="form-group col-sm-4">
             <label class="">
               Weight: <input type="number" class="text-right" max="9999" min="0"
-                             data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
+                             data-bind="textInput: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
             </label>
           </div>
           <!--/ko-->
@@ -167,11 +167,11 @@
 
             <div class="form-group col-xs-12 col-sm-10">
               <input type="text" style="width: 45%" class="child_first"
-                     data-bind="value: first, attr: {id: 'child-first-'+$index(), name: 'child-first-' + $index() }"
+                     data-bind="textInput: first, attr: {id: 'child-first-'+$index(), name: 'child-first-' + $index() }"
                      placeholder="First Name"/>
 
               <input type="text" style="width: 45%" class="child_last"
-                     data-bind="value: last, attr: { id: 'child-last-'+$index(), name: 'child-last-' + $index() }"
+                     data-bind="textInput: last, attr: { id: 'child-last-'+$index(), name: 'child-last-' + $index() }"
                      placeholder="Last Name"/>
 
               <div class="pull-right">
@@ -189,7 +189,7 @@
               </label>
 
               <input class="input-mask-date child_birthdate" data-bind="
-                          value: birthdate,
+                          textInput: birthdate,
                           attr: {id: 'child-dob-'+$index(), name: 'child-dob-' + $index() },
                           maskedInput: '99/99/9999'
                           " type="text" placeholder="MM/DD/YYYY">
@@ -328,13 +328,6 @@
 
               <h3 data-bind="text: current_product().format_product_name()"></h3>
               <div data-bind="slideDownIf: !$root.did_decline()">
-                {#              <ul class="list-unstyled" data-bind="foreach: {data: product_coverage_viewmodels, as: 'product_coverage'}">#}
-                {#                <li data-bind="attr: {'data-step': $index() + 1}, css: {active: $index() === 0}">#}
-                {#                  <span class="step" data-bind="text: $index() + 1"></span>#}
-                {#                  <span class="title" data-bind="text: product_coverage.format_product_name()"></span>#}
-                {#                </li>#}
-                {#              </ul>#}
-
                 <div class="" data-bind="
                 template: {name: current_product().get_coverage_selection_template(), data: current_product()}
                 ">
@@ -342,18 +335,6 @@
               </div>
             </div>
           </div>
-
-          {# Decline option for product #}
-          {#        <div class="row">#}
-          {#          <div class="col-xs-12 text-center red">#}
-          {#            <div class="decline-option">#}
-          {#              <label><input type="checkbox" data-bind="checked: current_product().did_decline"> I decline to enroll in#}
-          {#                <span data-bind="text: current_product().format_product_name()"></span> at this time#}
-          {#              </label>#}
-          {#            </div>#}
-          {#          </div>#}
-          {#        </div>#}
-
 
           {# Decline any products option #}
           <div class="row" data-bind="visible: !$root.coverage_vm.has_multiple_products()">
@@ -412,6 +393,9 @@
 
 {# Runs in the context of a ProductCoverageViewModel #}
 <script type="text/html" id="recommendation_coverage_selection">
+  <!--ko if: product.product_data.brochure_url_display -->
+    <a href="#" target="_blank" data-bind="attr: { href: product.product_data.brochure_url_display }">See this brochure for details</a>
+  <!--/ko-->
   <div class="row">
 
     <div class="col-xs-4 col-sm-3 pricing-span-header">
@@ -519,7 +503,9 @@
 
 
 <script id="simple_coverage_selection" type="text/html">
-  <a href="#" target="_blank" data-bind="attr: { href: $data.product.product_data.brochure_url }">See this brochure for details</a>
+  <!--ko if: product.product_data.brochure_url_display -->
+    <a href="#" target="_blank" data-bind="attr: { href: product.product_data.brochure_url_display }">See this brochure for details</a>
+  <!--/ko-->
   <div class="row">
     <div class="col-xs-4 col-sm-3 col-xs-offset-2 col-sm-offset-3 pricing-span-header">
       <div class="widget-box transparent">
@@ -567,6 +553,9 @@
 </script>
 
 <script id="forced_coverage_selection" type="text/html">
+  <!--ko if: product.product_data.brochure_url_display -->
+    <a href="#" target="_blank" data-bind="attr: { href: product.product_data.brochure_url_display }">See this brochure for details</a>
+  <!--/ko-->
   <div class="row">
     <div class="col-xs-4 col-sm-3 col-xs-offset-2 col-sm-offset-3 pricing-span-header">
       <div class="widget-box transparent">
