@@ -144,6 +144,20 @@ function build_wizard_results_for_product_coverage(product_cov) {
     city_state_zip: root.bank_city_state_zip()
   };
 
+  var backup_bank_info = {
+    account_holder_name: $("#bank-account-holder-name").val(),
+    account_type: $("#bank-account-type").val(),
+    account_number: $("#bank-account-number").val(),
+    routing_number: $("#bank-routing-number").val(),
+    bank_name: $("#bank-name").val(),
+    address_one: $("#bank-street-one").val(),
+    address_two: $("#bank-street-two").val(),
+    billing_city: $("#billing-city").val(),
+    billing_state: $("#billing-state").val(),
+    billing_zip: $("#billing-zip").val(),
+    city_state_zip: $("#bank-city-state-zip").val()
+  };
+
   var wizard_results = {
     product_id: product_cov.product.product_data.id,
     case_id: root.enrollment_case.id,
@@ -192,8 +206,10 @@ function build_wizard_results_for_product_coverage(product_cov) {
 
   if (root.requires_bank_info()) {
     wizard_results.bank_info = bank_info;
+    wizard_results.backup_bank_info = backup_bank_info;
   } else {
     wizard_results.bank_info = null;
+    wizard_results.backup_bank_info = null;
   }
 
   wizard_results.children = [];
