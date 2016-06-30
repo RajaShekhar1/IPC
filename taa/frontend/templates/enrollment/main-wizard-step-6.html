@@ -27,7 +27,7 @@
               <div class="col-xs-12 col-sm-9 align-left">
                 <input class="form-control col-xs-12 col-sm-9" id="bank-account-holder-name"
                        name="bank-account-holder-name"
-                       data-bind="value: $root.bank_account_holder_name" type="text">
+                       data-bind="textInput: $root.bank_account_holder_name" type="text">
               </div>
             </div>
             <div class="form-group">
@@ -36,7 +36,7 @@
 
               <div class="col-xs-12 col-sm-9">
                 <input class="form-control col-xs-12 col-sm-9" id="bank-street-one" name="bank-street-one" type="text"
-                       data-bind="value: $root.billing_street_one">
+                       data-bind="textInput: $root.billing_street_one">
               </div>
             </div>
             <div class="form-group">
@@ -45,7 +45,7 @@
 
               <div class="col-xs-12 col-sm-9">
                 <input class="form-control col-xs-12 col-sm-9" id="bank-street-two" name="bank-street-two" type="text"
-                       data-bind="value: $root.billing_street_two">
+                       data-bind="textInput: $root.billing_street_two">
               </div>
             </div>
             <div class="form-group">
@@ -53,14 +53,14 @@
 
               <div class="col-xs-12 col-sm-9">
                 <input id="billing-city" name="billing-city" type="text"
-                       data-bind="value: $root.billing_city">
+                       data-bind="textInput: $root.billing_city">
                 <select id="billing-state" name="billing-state" data-bind="value: $root.billing_state">
                   {% for state in states %}
                     <option value="{{ state['code'] }}">{{ state['name'] }}</option>
                   {% endfor %}
                 </select>
                 <input id="billing-zip" name="billing-zip" type="text"
-                       data-bind="value: $root.billing_zip">
+                       data-bind="textInput: $root.billing_zip">
               </div>
             </div>
           </div>
@@ -82,7 +82,7 @@
               <div class="col-xs-12 col-sm-9">
                 <input class="form-control col-xs-12 col-sm-9" id="bank-account-number" name="bank-account-number"
                        type="text"
-                       data-bind="value: $root.account_number">
+                       data-bind="textInput: $root.account_number">
               </div>
             </div>
             <div class="form-group">
@@ -91,14 +91,14 @@
               <div class="col-xs-12 col-sm-9">
                 <input class="form-control col-xs-12 col-sm-9" id="bank-routing-number" name="bank-routing-number"
                        type="text"
-                       data-bind="value: $root.routing_number">
+                       data-bind="textInput: $root.routing_number">
               </div>
             </div>
             <div class="form-group">
               <label class="control-label col-xs-12 col-sm-3 align-right" for="bank-name">Bank Name</label>
               <div class="col-xs-12 col-sm-9">
                 <input class="form-control col-xs-12 col-sm-9" id="bank-name" name="bank-name" type="text"
-                       data-bind="value: $root.bank_name">
+                       data-bind="textInput: $root.bank_name">
               </div>
             </div>
             <div class="form-group">
@@ -106,7 +106,7 @@
                 Zip</label>
               <div class="col-xs-12 col-sm-9">
                 <input class="form-control" id="bank-city-state-zip" name="bank-city-state-zip" type="text"
-                       data-bind="value: $root.bank_city_state_zip">
+                       data-bind="textInput: $root.bank_city_state_zip">
               </div>
             </div>
           </div>
@@ -134,14 +134,14 @@
             </div>
 
             <input type="text" class="input-mask-date" id="ConfirmationToken" name="ConfirmationToken"
-                   data-bind="value: identityToken">
+                   data-bind="textInput: identityToken">
           </div>
           <!-- /.hidden-xs -->
 
           <div class="col-xs-12  hidden-sm hidden-md hidden-lg">
             <div class="col-xs-12">
               <input type="text" class="input-mask-date" id="ConfirmationToken" name="ConfirmationToken"
-                     data-bind="value: identityToken">
+                     data-bind="textInput: identityToken">
             </div>
           </div>
           <!-- /.hidden-sm -->
@@ -158,7 +158,7 @@
 
         <div class="col-xs-12 col-sm-7 col-md-8 col-lg-9">
           <input type="text" id="enrollCity" name="enrollCity" placeholder="City"
-                 data-bind="value: enrollCity"/>,&nbsp<span data-bind="text: enrollState"></span>
+                 data-bind="textInput: enrollCity"/>,&nbsp<span data-bind="text: enrollState"></span>
         </div>
       </div>
       <!-- /signing Location -->
