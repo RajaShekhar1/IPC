@@ -22,7 +22,6 @@ from taa.config_defaults import DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_P
     DELL_FTP_WORKING_DIRECTORY, DELL_FTP_PGP_KEY_ID
 
 
-# noinspection PyMethodMayBeStatic
 class EnrollmentSubmissionService(object):
     enrollment_application_service = RequiredFeature('EnrollmentApplicationService')
     enrollment_batch_service = RequiredFeature('EnrollmentImportBatchService')
@@ -155,13 +154,13 @@ class EnrollmentSubmissionService(object):
             .filter(EnrollmentSubmission.status == EnrollmentSubmission.STATUS_PENDING) \
             .first()
 
-    def get_pending_or_failed_csv_submissions(self):
-        """
-        Get all submissions that are either pending or failed
-        """
-        query = db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.status.in_(
-            [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING]))
-        return query.all()
+    # def get_pending_or_failed_csv_submissions(self):
+    #     """
+    #     Get all submissions that are either pending or failed
+    #     """
+    #     query = db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.status.in_(
+    #         [EnrollmentSubmission.STATUS_FAILURE, EnrollmentSubmission.STATUS_PENDING]))
+    #     return query.all()
 
     def get_submissions(self, start_date=None, end_date=None):
         """
@@ -198,7 +197,6 @@ class EnrollmentSubmissionService(object):
             return None
         submission = self.get_pending_csv_submission()
         if submission is None:
-            # noinspection PyArgumentList
             submission = EnrollmentSubmission(
                 submission_type=EnrollmentSubmission.TYPE_DELL_CSV_GENERATION)
             db.session.add(submission)
@@ -210,7 +208,7 @@ class EnrollmentSubmissionService(object):
                           commit=True):
         if applications is None:
             applications = list()
-        # noinspection PyArgumentList
+
         submission = EnrollmentSubmission(submission_type=submission_type, status=status)
         submission.enrollment_applications.extend(applications)
         if commit:
@@ -220,7 +218,7 @@ class EnrollmentSubmissionService(object):
 
     def start_submission(self, submission):
         submission.status = EnrollmentSubmission.STATUS_PROCESSING
-        # noinspection PyArgumentList
+
         log = SubmissionLog(enrollment_submission=submission, status=EnrollmentSubmission.STATUS_PROCESSING)
         db.session.add(log)
         db.session.commit()
@@ -252,20 +250,21 @@ class EnrollmentSubmissionService(object):
     def create_paylogix_csv_generation_submission(self, applications):
         if isinstance(applications, EnrollmentApplication):
             applications = [applications]
+
         submission = self.get_pending_batch_submission(EnrollmentSubmission.TYPE_PAYLOGIX_CSV_GENERATION)
         if not submission:
-            # noinspection PyArgumentList
             submission = self.create_submission(EnrollmentSubmission.TYPE_PAYLOGIX_CSV_GENERATION)
+
         for application in applications:
             standardized_data = enrollments.load_standardized_data_from_application(application)
             if any(EnrollmentDataWrap(d, application.case, application).requires_paylogix_export() for d in
                    standardized_data):
                 submission.enrollment_applications.append(application)
         db.session.commit()
+
         return submission
 
     def create_paylogix_export_submission(self, csv_submission, data):
-        # noinspection PyArgumentList
         submission = self.create_submission(EnrollmentSubmission.TYPE_PAYLOGIX_EXPORT,
                                             applications=csv_submission.enrollment_applications, commit=False)
         submission.data = data
@@ -284,12 +283,11 @@ class EnrollmentSubmissionService(object):
         submission = self.create_dell_csv_generation_submission_for_application(application)
         if submission is not None:
             submissions.append(submission)
-        submission = self.create_static_benefit_submission_for_application(application)
-        if submission is not None:
-            submissions.append(submission)
+
         submission = self.create_paylogix_csv_generation_submission(application)
         if submission is not None:
             submissions.append(submission)
+
         # TODO: Uncomment this when the docusign submission is fully switched over to this
         # Create a docusign submission. None if its case doesn't have Group CI as one of its products
         # submission = self.create_docusign_submission_for_application(application)
@@ -342,7 +340,6 @@ class EnrollmentSubmissionService(object):
         """
         Create a new EnrollmentSubmission for submitting csv data to dell
         """
-        # noinspection PyArgumentList
         submission = EnrollmentSubmission(data=csv_data,
                                           submission_type=EnrollmentSubmission.TYPE_DELL_EXPORT)
         for application in applications:
@@ -383,7 +380,6 @@ class EnrollmentSubmissionService(object):
         """
         submission_logs = list()
         for submission in submissions:
-            # noinspection PyArgumentList
             submission_log = SubmissionLog(enrollment_submission_id=submission.id)
             if status is not None:
                 submission_log.status = status
@@ -395,7 +391,7 @@ class EnrollmentSubmissionService(object):
     def create_static_benefit_submission_for_application(self, application):
         if not any(p for p in application.case.products if p.is_static_benefit()):
             return None
-        # noinspection PyArgumentList
+
         submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.TYPE_STATIC_BENEFIT,
                                           status=EnrollmentSubmission.STATUS_SUCCESS)
         submission.enrollment_applications.append(application)
@@ -419,11 +415,11 @@ class EnrollmentSubmissionService(object):
         log = None
         try:
             import taa.services.enrollments.paylogix as paylogix
-            # noinspection PyArgumentList
+
             log = self.start_submission(submission)
             csv = paylogix.create_paylogix_csv(submission.enrollment_applications)
             self.complete_submission(submission, log)
-            # noinspection PyArgumentList
+
             return self.create_paylogix_export_submission(submission, csv)
         except Exception as ex:
             if log:
@@ -435,7 +431,7 @@ class EnrollmentSubmissionService(object):
         try:
             import taa.services.enrollments.paylogix as paylogix
             import taa.services.submissions as submissions
-            # noinspection PyArgumentList
+
             log = self.start_submission(submission)
             submissions.upload_paylogix_file(submission.data)
             self.complete_submission(submission, log)
@@ -484,63 +480,6 @@ class EnrollmentSubmissionProcessor(object):
         # We need to submit certain documents to Dell via DocuSign.
         # TODO
         return True
-
-    # def generate_document_components(self, enrollment_application):
-    #     """
-    #     When not using docusign, generate all the components for building a document and
-    #      queue up the pieces for submission.
-    #     """
-    #
-    #     case = enrollment_application.case
-    #     all_enrollment_data = self.enrollment_service.get_standardized_json_for_enrollment(enrollment_application)
-    #
-    #     first_product_data_wrap = EnrollmentDataWrap(all_enrollment_data[0], case, enrollment_record=enrollment_application)
-    #
-    #
-    #     signing_agent = first_product_data_wrap.get_signing_agent()
-    #
-    #     agent_recip = AgentDocuSignRecipient(signing_agent, name=signing_agent.name(),
-    #                                    email=signing_agent.email)
-    #     employee_recip = EmployeeDocuSignRecipient(name=first_product_data_wrap.get_employee_name(),
-    #                                          email=first_product_data_wrap.get_employee_email())
-    #
-    #     if first_product_data_wrap.should_use_call_center_workflow():
-    #         recipients = [agent_recip] #+ self.docusign_service.get_carbon_copy_recipients()
-    #
-    #     else:
-    #         recipients = [
-    #                          employee_recip,
-    #                          agent_recip,
-    #                      ] #+ docusign_service.get_carbon_copy_recipients()
-    #
-    #     # Create and combine components of the envelope from each product.
-    #     components = []
-    #
-    #     if case.include_cover_sheet:
-    #         from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
-    #         components.append(CoverSheetAttachment([employee_recip], first_product_data_wrap, all_enrollment_data))
-    #
-    #     for product_submission in all_enrollment_data:
-    #         # Wrap the submission with an object that knows how to pull out key info.
-    #         enrollment_data = EnrollmentDataWrap(product_submission, case, enrollment_record=enrollment_application)
-    #
-    #         # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
-    #         should_use_docusign_renderer = False if enrollment_data.should_use_call_center_workflow() else True
-    #
-    #         product = enrollment_data.get_product()
-    #         if not product.does_generate_form():
-    #             continue
-    #         if product.is_fpp():
-    #             components += docusign_service.create_fpp_envelope_components(enrollment_data, recipients,
-    #                                                               should_use_docusign_renderer)
-    #         elif product.is_static_benefit():
-    #             components += docusign_service.create_static_benefit_components(enrollment_data, recipients,
-    #                                                                 should_use_docusign_renderer,
-    #                                                                 enrollment_application)
-    #         else:
-    #             components += docusign_service.create_group_ci_envelope_components(enrollment_data, recipients,
-    #                                                                    should_use_docusign_renderer)
-    #     return components
 
     def generate_document_components(self, enrollment_application):
         """Used for generating PDFs from enrollments signed in the wizard, outside of docusign"""
