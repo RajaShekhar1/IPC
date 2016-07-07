@@ -107,15 +107,15 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
 
     def get_draft_day(self):
 
-        hire_date = self.data.get_employee_date_of_hire()
-        if not hire_date:
-            # Default to today if we don't have the hire date.
-            hire_date = datetime.today()
-
         if self.data.case.requires_paylogix_export:
-            return self.get_paylogix_draft_day(hire_date)
+            date = self.data.enrollment_record.signature_time
+            return self.get_paylogix_draft_day(date)
         else:
-            return self.get_normal_draft_day(hire_date)
+            date = self.data.get_employee_hire_date()
+            if not date:
+                # Default to today if we don't have a sig date.
+                date = datetime.today()
+            return self.get_normal_draft_day(date)
 
     def get_normal_draft_day(self, hire_date):
         # Use the day 14 days after the hire date as the draft day.
@@ -128,9 +128,9 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
             draft_day = 1
         return draft_day
 
-    def get_paylogix_draft_day(self, hire_date):
+    def get_paylogix_draft_day(self, date):
         from taa.services.enrollments.paylogix import get_deduction_week
-        deduction_week = get_deduction_week(hire_date)
+        deduction_week = get_deduction_week(date)
         if deduction_week == 1:
             return '1st Friday'
         elif deduction_week == 2:
