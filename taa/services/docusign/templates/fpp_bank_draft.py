@@ -111,7 +111,7 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
             date = self.data.enrollment_record.signature_time
             return self.get_paylogix_draft_day(date)
         else:
-            date = self.data.get_employee_hire_date()
+            date = self.data.get_employee_date_of_hire()
             if not date:
                 # Default to today if we don't have a sig date.
                 date = datetime.today()
