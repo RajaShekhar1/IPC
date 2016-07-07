@@ -585,6 +585,9 @@ function init_validation(ui) {
     highlight: wizard_validate_highlight,
     success: wizard_validate_success,
     errorPlacement: bank_draft_error_placement,
+    messages: {
+      'bank-routing-number': "The bank routing number must be exactly 9 digits long"
+    },
     rules: {
       'bank-account-holder-name': {
         required: {
@@ -610,7 +613,8 @@ function init_validation(ui) {
         },
         digits: {
           depends: ui.requires_bank_info
-        }
+        },
+        rangelength: [9, 9]
       },
       'bank-name': {
         required: {

@@ -26,7 +26,7 @@
             </label>
 
             <input class="input-mask-date" name="eeBenefitDOB"
-                   data-bind="value: employee().birthdate" type="text" id="eeDOB"
+                   data-bind="textInput: employee().birthdate" type="text" id="eeDOB"
                    placeholder="MM/DD/YYYY">
           </div>
 
@@ -78,9 +78,9 @@
 
           <div class="form-group col-xs-12 col-sm-10">
             <input type="text" style="width: 45%" id="spFName" name="spFName"
-                   data-bind="value: spouse().first" placeholder="First Name">
+                   data-bind="textInput: spouse().first" placeholder="First Name">
             <input type="text" style="width: 45%" id="spLName" name="spLName"
-                   data-bind="value: spouse().last" placeholder="Last Name">
+                   data-bind="textInput: spouse().last" placeholder="Last Name">
           </div>
         </div>
 
@@ -92,7 +92,7 @@
             </label>
 
             <input class="input-mask-date" name="spDOB"
-                   data-bind="value: spouse().birthdate" type="text" id="spDOB"
+                   data-bind="textInput: spouse().birthdate" type="text" id="spDOB"
                    placeholder="MM/DD/YYYY">
           </div>
 
@@ -146,7 +146,7 @@
           <div class="form-group col-sm-4">
             <label class="">
               Weight: <input type="number" class="text-right" max="9999" min="0"
-                             data-bind="value: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
+                             data-bind="textInput: weight, attr: {name: 'weight_'+$data._id}" style="width: 5em"> Lbs.
             </label>
           </div>
           <!--/ko-->
@@ -167,11 +167,11 @@
 
             <div class="form-group col-xs-12 col-sm-10">
               <input type="text" style="width: 45%" class="child_first"
-                     data-bind="value: first, attr: {id: 'child-first-'+$index(), name: 'child-first-' + $index() }"
+                     data-bind="textInput: first, attr: {id: 'child-first-'+$index(), name: 'child-first-' + $index() }"
                      placeholder="First Name"/>
 
               <input type="text" style="width: 45%" class="child_last"
-                     data-bind="value: last, attr: { id: 'child-last-'+$index(), name: 'child-last-' + $index() }"
+                     data-bind="textInput: last, attr: { id: 'child-last-'+$index(), name: 'child-last-' + $index() }"
                      placeholder="Last Name"/>
 
               <div class="pull-right">
@@ -189,7 +189,7 @@
               </label>
 
               <input class="input-mask-date child_birthdate" data-bind="
-                          value: birthdate,
+                          textInput: birthdate,
                           attr: {id: 'child-dob-'+$index(), name: 'child-dob-' + $index() },
                           maskedInput: '99/99/9999'
                           " type="text" placeholder="MM/DD/YYYY">

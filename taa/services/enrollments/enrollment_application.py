@@ -804,12 +804,19 @@ class EnrollmentApplicationService(DBService):
             start_date < EnrollmentApplication.signature_time < end_date).all()
 
     def get_paylogix_applications_between_dates(self, start_date, end_date):
-        return db.session.query(EnrollmentApplication).filter(
-            EnrollmentApplication.signature_time > start_date and EnrollmentApplication.signature_time < end_date).join(
-            Case).filter(Case.requires_paylogix_export == True).all()
+        return db.session.query(EnrollmentApplication).filter(db.and_(
+                EnrollmentApplication.signature_time > start_date, EnrollmentApplication.signature_time < end_date)
+            ).join(Case
+            ).filter(Case.requires_paylogix_export == True
+            ).order_by(db.desc(EnrollmentApplication.signature_time)
+            ).all()
 
     def get_paylogix_applications(self):
-        return db.session.query(EnrollmentApplication).join(Case).filter(Case.requires_paylogix_export == True).all()
+        return db.session.query(EnrollmentApplication
+                                ).join(Case
+                                ).filter(Case.requires_paylogix_export == True
+                                ).order_by(db.desc(EnrollmentApplication.signature_time)
+                                ).all()
 
 
 def export_string(val):
