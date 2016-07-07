@@ -166,7 +166,12 @@ class EnrollmentSubmissionService(object):
         """
         Get all submissions which can optionally be filtered by start and end dates
         """
-        query = db.session.query(EnrollmentSubmission).order_by(EnrollmentSubmission.created_at.desc())
+        query = db.session.query(EnrollmentSubmission
+             ).options(db.subqueryload(EnrollmentSubmission.enrollment_applications
+                                       ).joinedload(EnrollmentApplication.census_record, EnrollmentApplication.case
+                                       )
+             ).options(db.subqueryload(EnrollmentSubmission.submission_logs)
+             ).order_by(EnrollmentSubmission.created_at.desc())
 
         if start_date is not None:
             query = query.filter(EnrollmentSubmission.created_at > start_date)
