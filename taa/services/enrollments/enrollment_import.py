@@ -336,7 +336,7 @@ def build_person(data, prefix, product, state, soh_service):
         zip=val_or_blank(data, "{}_zipcode".format(prefix)),
         height=val_or_blank(data, "{}_height_inches".format(prefix)),
         weight=val_or_blank(data, "{}_weight_pounds".format(prefix)),
-        is_smoker=bool_from_answer("{}_smoker".format(prefix)),
+        is_smoker=bool_from_answer(data.get("{}_smoker".format(prefix))),
         soh_questions=[]
     )
 
