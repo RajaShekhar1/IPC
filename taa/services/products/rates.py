@@ -280,6 +280,7 @@ class GILimitedRatesDecorator(Rates):
         # Use the highest number that is allowed for this applicant
         return max(criteria_for_applicant, key=lambda c: c.guarantee_issue_amount).guarantee_issue_amount
 
+
 def get_height_weight_table_for_product(product):
     global ELIGIBILITIES
     if ELIGIBILITIES is None:
@@ -332,150 +333,15 @@ def initialize_rates_from_files(rates):
     rates.from_csv(os.path.join(DATA_DIR, 'CIEMP-rates---Smoking-Monthly.csv'),
                    'Group CI', MODES_BY_NAME['monthly'], TYPE_COVERAGE, smoker=True)
 
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-byface.csv'),
-                   'FPPCI', MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-byface-biweekly.csv'),
-                   'FPPCI', MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-byface-semimonthly.csv'),
-                   'FPPCI', MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-byface-monthly.csv'),
-                   'FPPCI', MODES_BY_NAME['monthly'], TYPE_COVERAGE)
-
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-bypremium.csv'),
-                   'FPPCI', MODES_BY_NAME['weekly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-bypremium-biweekly.csv'),
-                   'FPPCI', MODES_BY_NAME['biweekly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-bypremium-semimonthly.csv'),
-                   'FPPCI', MODES_BY_NAME['semimonthly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPCI-bypremium-monthly.csv'),
-                   'FPPCI', MODES_BY_NAME['monthly'], TYPE_PREMIUM)
-
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIW-byface-weekly.csv'),
-                   'FPP-Gov', MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIW-byface-biweekly.csv'),
-                   'FPP-Gov', MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIW-byface-semimonthly.csv'),
-                   'FPP-Gov', MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIW-byface-monthly.csv'),
-                   'FPP-Gov', MODES_BY_NAME['monthly'], TYPE_COVERAGE)
-
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIW-bypremium-weekly.csv'),
-                   'FPP-Gov', MODES_BY_NAME['weekly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIW-bypremium-biweekly.csv'),
-                   'FPP-Gov', MODES_BY_NAME['biweekly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIW-bypremium-semimonthly.csv'),
-                   'FPP-Gov', MODES_BY_NAME['semimonthly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIW-bypremium-monthly.csv'),
-                   'FPP-Gov', MODES_BY_NAME['monthly'], TYPE_PREMIUM)
-
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIY-byface-weekly.csv'),
-                   'FPPTIY', MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIY-byface-biweekly.csv'),
-                   'FPPTIY', MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIY-byface-semimonthly.csv'),
-                   'FPPTIY', MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIY-byface-monthly.csv'),
-                   'FPPTIY', MODES_BY_NAME['monthly'], TYPE_COVERAGE)
-
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIY-bypremium-weekly.csv'),
-                   'FPPTIY', MODES_BY_NAME['weekly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIY-bypremium-biweekly.csv'),
-                   'FPPTIY', MODES_BY_NAME['biweekly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIY-bypremium-semimonthly.csv'),
-                   'FPPTIY', MODES_BY_NAME['semimonthly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIY-bypremium-monthly.csv'),
-                   'FPPTIY', MODES_BY_NAME['monthly'], TYPE_PREMIUM)
-
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIB-byface-weekly.csv'),
-                   'FPPTIB', MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIB-byface-biweekly.csv'),
-                   'FPPTIB', MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIB-byface-semimonthly.csv'),
-                   'FPPTIB', MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIB-byface-monthly.csv'),
-                   'FPPTIB', MODES_BY_NAME['monthly'], TYPE_COVERAGE)
-
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIB-bypremium-weekly.csv'),
-                   'FPPTIB', MODES_BY_NAME['weekly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIB-bypremium-biweekly.csv'),
-                   'FPPTIB', MODES_BY_NAME['biweekly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIB-bypremium-semimonthly.csv'),
-                   'FPPTIB', MODES_BY_NAME['semimonthly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTIB-bypremium-monthly.csv'),
-                   'FPPTIB', MODES_BY_NAME['monthly'], TYPE_PREMIUM)
-
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-byface.csv'),
-                   'FPPTI', MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-byface-biweekly.csv'),
-                   'FPPTI', MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-byface-semimonthly.csv'),
-                   'FPPTI', MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-byface-monthly.csv'),
-                   'FPPTI', MODES_BY_NAME['monthly'], TYPE_COVERAGE)
-
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-bypremium.csv'),
-                   'FPPTI', MODES_BY_NAME['weekly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-bypremium-biweekly.csv'),
-                   'FPPTI', MODES_BY_NAME['biweekly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-bypremium-semimonthly.csv'),
-                   'FPPTI', MODES_BY_NAME['semimonthly'], TYPE_PREMIUM)
-    rates.from_csv(os.path.join(DATA_DIR, 'FPPTI-bypremium-monthly.csv'),
-                   'FPPTI', MODES_BY_NAME['monthly'], TYPE_PREMIUM)
-
     # Build rate table for children (currently hardcoded)
     # Group CI
-    rates.from_string("age,10000\n-1,0.75", 'Group CI',
+    rates.from_string("age,2500,5000,10000\n-1,0.19,0.37,0.75", 'Group CI',
                       MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000\n-1,1.50", 'Group CI',
+    rates.from_string("age,2500,5000,10000\n-1,0.37,0.75,1.50", 'Group CI',
                       MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000\n-1,1.63", 'Group CI',
+    rates.from_string("age,2500,5000,10000\n-1,0.41,0.81,1.62", 'Group CI',
                       MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-    rates.from_string("age,10000\n-1,3.25", 'Group CI',
-                      MODES_BY_NAME['monthly'], TYPE_COVERAGE)
-    # FPPCI
-    rates.from_string("age,10000,20000\n-1,1.00,2.00", 'FPPCI',
-                      MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,2.00,4.00", 'FPPCI',
-                      MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,2.17,4.33", 'FPPCI',
-                      MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,4.33,8.67", 'FPPCI',
-                      MODES_BY_NAME['monthly'], TYPE_COVERAGE)
-    # FPP-White (FPP-Gov)
-    rates.from_string("age,10000,20000\n-1,1.15,2.30", 'FPP-Gov',
-                      MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,2.30,4.60", 'FPP-Gov',
-                      MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,2.49,4.98", 'FPP-Gov',
-                      MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,4.98,9.97", 'FPP-Gov',
-                      MODES_BY_NAME['monthly'], TYPE_COVERAGE)
-    # FPP-Blue
-    rates.from_string("age,10000,20000\n-1,1.15,2.30", 'FPPTIB',
-                      MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,2.30,4.60", 'FPPTIB',
-                      MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,2.49,4.98", 'FPPTIB',
-                      MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,4.98,9.97", 'FPPTIB',
-                      MODES_BY_NAME['monthly'], TYPE_COVERAGE)
-    # FPP-Gray
-    rates.from_string("age,10000,20000\n-1,1.15,2.30", 'FPPTIY',
-                      MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,2.30,4.60", 'FPPTIY',
-                      MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,2.49,4.98", 'FPPTIY',
-                      MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,4.98,9.97", 'FPPTIY',
-                      MODES_BY_NAME['monthly'], TYPE_COVERAGE)
-    # FPPTI
-    rates.from_string("age,10000,20000\n-1,1.15,2.30", 'FPPTI',
-                      MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,2.30,4.60", 'FPPTI',
-                      MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,2.49,4.98", 'FPPTI',
-                      MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-    rates.from_string("age,10000,20000\n-1,4.98,9.97", 'FPPTI',
+    rates.from_string("age,2500,5000,10000\n-1,0.81,1.62,3.25", 'Group CI',
                       MODES_BY_NAME['monthly'], TYPE_COVERAGE)
 
 

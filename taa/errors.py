@@ -65,6 +65,7 @@ def email_exception(app, exception):
         subject=u'5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
         to=[e for e in error_recipients],
         text=msg,
+        track_clicks=False,
     )
 
     # Print to stdout so we can track via normal Heroku logs

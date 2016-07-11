@@ -25,24 +25,38 @@ api_token_service = LookupService('ApiTokenService')
 @app.route('/admin', methods=['GET', 'POST'])
 @groups_required(['admins', 'home_office'], all=False)
 def admin():
+
+    # This shows only agents right now, will want to add admins / HO users soon.
     accounts = []
+    for agent in agent_service.get_sorted_agents():
 
-    for acc in search_stormpath_accounts():
-        accounts.append(
-            {'fname': acc.given_name,
-             'lname': acc.surname,
-             'email': acc.email,
-             'agency': acc.custom_data.get('agency'),
-             'agent_code': acc.custom_data.get('agent_code'),
-             'signing_name': acc.custom_data.get('signing_name'),
-             'status': "Activated" if acc.custom_data.get('activated') else "Not Activated",
-             })
-        # print dumps(dict(acc.custom_data), indent=2, sort_keys=True)
+        # Skip over deleted users, they have no stormpath entry so there is no use showing them here (clicking would error)
+        if agent.get_status() == 'Deleted':
+            continue
 
-    # show the un-activated accounts first
-    accounts = sorted(accounts, reverse=True, key=(lambda x: x['status']))
-    return render_template('admin/admin.html', accounts=accounts, nav_menu=get_nav_menu(),
-                           is_user_admin=agent_service.is_user_admin(current_user))
+        accounts.append({
+            'fname': agent.first,
+            'lname': agent.last,
+            'email': agent.email,
+            'agency': agent.agency,
+            'agent_code': agent.agent_code,
+            'signing_name': agent.signing_name,
+            'status': agent.get_status(),
+        })
+
+    # for acc in search_stormpath_accounts():
+    #     accounts.append(
+    #         {'fname': acc.given_name,
+    #          'lname': acc.surname,
+    #          'email': acc.email,
+    #          'agency': acc.custom_data.get('agency'),
+    #          'agent_code': acc.custom_data.get('agent_code'),
+    #          'signing_name': acc.custom_data.get('signing_name'),
+    #          'status': "Activated" if acc.custom_data.get('activated') else "Not Activated",
+    #      })
+
+    return render_template('admin/admin.html', accounts=accounts, nav_menu=get_nav_menu(), is_user_admin=agent_service.is_user_admin(current_user))
+
 
 
 @app.route('/edituser', methods=['GET', 'POST'])
@@ -80,8 +94,6 @@ def updateUser():
             # form.status.data = "Activated" if custom_data['activated'] else "Not Activated"
 
     sp_app = get_stormpath_application()
-    all_groups = {g.name: g for g in sp_app.groups}
-    all_group_names = [g.name for g in sp_app.groups]
 
     if form.validate_on_submit():
         try:
@@ -137,9 +149,10 @@ def updateUser():
                     if not matching_groups:
                         continue
                     sp_group = matching_groups[0]
-                    existing_membership = [acct_mem
-                                           for acct_mem in sp_group.account_memberships
-                                           if acct_mem.account.email == account.email]
+                    #existing_membership = [acct_mem
+                    #                       for acct_mem in sp_group.account_memberships
+                    #                       if acct_mem.account.email == account.email]
+                    existing_membership = [membership for membership in account.group_memberships if membership.group.name == sp_group.name]
                     if not existing_membership:
                         # Add this account to the group
                         sp_group.add_account(account)
@@ -171,6 +184,9 @@ def updateUser():
             return redirect(url_for('admin'))
         except Error as err:
             flash(err.message)
+
+
+    all_group_names = [g.name for g in sp_app.groups]
 
     return render_template('admin/update-user.html',
                            form=form,

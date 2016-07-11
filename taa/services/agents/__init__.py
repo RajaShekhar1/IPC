@@ -13,6 +13,9 @@ class AgentService(DBService):
 
     __model__ = Agent
 
+    def get_sorted_agents(self):
+        return db.session.query(Agent).order_by(Agent.activated, Agent.last, Agent.first)
+
     def get_logged_in_agent(self):
         if not current_user:
             return
@@ -32,15 +35,22 @@ class AgentService(DBService):
                 last=user.surname,
                 email=user.email,
                 agent_code=user.custom_data.get('agent_code', ""),
-                activated=user.custom_data.get('activated', False),
                 stormpath_url=stormpath_url,
+                signing_name=user.custom_data.get('signing_name', ""),
+                agency=user.custom_data.get('agency', ""),
+                activated=user.custom_data.get('activated', False),
+                is_deleted=False,
             )
         else:
             existing_agent.first = user.given_name
             existing_agent.last = user.surname
             existing_agent.email = user.email
             existing_agent.agent_code = user.custom_data.get('agent_code', "")
-            db.session.commit()
+            existing_agent.signing_name = user.custom_data.get('signing_name', "")
+            existing_agent.agency = user.custom_data.get('agency', "")
+            existing_agent.activated = user.custom_data.get('activated', False)
+
+        db.session.commit()
 
         return existing_agent
 

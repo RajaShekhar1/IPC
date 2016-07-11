@@ -132,6 +132,8 @@ class CensusRecordService(DBService):
         # before being saved
         if 'spouse_birthdate' in data and not data['spouse_birthdate']:
             data['spouse_birthdate'] = None
+        if not data.get('occupation_class', None):
+            data['occupation_class'] = 'Default'
         record = self.new(**data)
         db.session.add(record)
         return record

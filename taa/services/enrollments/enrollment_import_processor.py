@@ -203,7 +203,7 @@ class EnrollmentProcessor(object):
                 from_email=from_email,
                 subject=subject,
                 html=body,
-                auto_text=True,
+                track_clicks=False,
             )
         except mailer.Error as e:
             print("Exception sending email: %s - %s; to %s"%(e.__class__, e, to_email))

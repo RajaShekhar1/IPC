@@ -13,3 +13,4 @@ from self_enroll_email import SelfEnrollmentEmailService, SelfEnrollmentEmailBat
 from self_enroll_link import SelfEnrollmentLinkService
 from pdf_export import ImagedFormGeneratorService, FormTemplateTabRepository, FormPDFRenderer
 from merge_pdfs import merge_pdfs
+from enrollment_export import EnrollmentExportService

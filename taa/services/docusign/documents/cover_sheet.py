@@ -12,6 +12,7 @@ from reportlab.platypus.flowables import Spacer
 
 from taa import db
 from taa.services import LookupService
+from taa.services.products.riders import RiderService
 from taa.services.enrollments import EnrollmentApplication
 from taa.services.docusign.service import EnrollmentDataWrap
 from PDFAttachment import PDFAttachment
@@ -169,22 +170,37 @@ class CoverSheetAttachment(PDFAttachment):
         ]
 
         row_count = 2
-
         total_premium = decimal.Decimal('0.00')
-
 
         # Iterate through the case products to identify declines.
         case_service = LookupService('CaseService')
         for i, product in enumerate(case_service.get_products_for_case(self.data.case)):
+
+            product_data = self.get_wrapped_enrollment_data_for_product(product)
+
             if product not in self.get_enrolled_products():
                 # Show Decline
-                product_header = '{} - DECLINED'.format(product.name)
+                product_header = '{} - DECLINED'.format(product.get_brochure_name()  if product.get_brochure_name() else product.get_base_product().name)
                 applicants = []
-        #for i, raw_product_data in enumerate(self.all_enrollments):
             else:
+                # Show product name, also tier if a simple_coverage option, and riders if riders are included.
+                product_header = product.get_brochure_name() if product.get_brochure_name() else product.get_base_product().name
+                if product.is_simple_coverage():
+                    simple_cov_map = dict(
+                        EE='Employee Only',
+                        ES='Employee + Spouse',
+                        EC='Employee + Children',
+                        EF='Family',
+                    )
+                    coverage_tier = product_data.get_employee_coverage_tier()
+                    product_header += ' - {}'.format(simple_cov_map.get(coverage_tier, coverage_tier))
 
-                product_data = self.get_wrapped_enrollment_data_for_product(product)
-                product_header = product.name
+                if product.is_fpp():
+                    rider_service = RiderService()
+                    riders = rider_service.get_case_level_riders_for_product(product_data.case, product)
+                    if riders:
+                        product_header += " (with {})".format(', '.join([rider.user_facing_name for rider in riders]))
+
                 applicants = product_data.get_applicant_data()
 
             table_data += [
@@ -194,9 +210,20 @@ class CoverSheetAttachment(PDFAttachment):
             ]
 
             for applicant in applicants:
+                # Also include applicant-level rider data if provided
+                applicant_riders = [
+                    r['user_facing_name']
+                    for r in applicant['selected_riders']
+                    if not r['is_group_level']
+                ]
+
+                name = applicant['name']
+                if applicant_riders:
+                    name += " (with {})".format(', '.join(applicant_riders))
+
                 table_data += [
                     [
-                        Paragraph(applicant['name'], style),
+                        Paragraph(name, style),
                         Paragraph(applicant['relationship'], style),
                         applicant['coverage'],
                         applicant['effective_date'],
@@ -210,7 +237,6 @@ class CoverSheetAttachment(PDFAttachment):
             styles += [
                 ('BACKGROUND', (0, row_count), (-1, row_count), colors.lightgrey),
                 ('SPAN', (0, row_count), (-1, row_count)),
-                #    ('GRID', (0, row_count+1), (-1, row_count+1), 0.5, colors.black),
             ]
 
             # The current row index is the
@@ -270,18 +296,18 @@ class CoverSheetAttachment(PDFAttachment):
 
 if __name__ == "__main__":
 
-
-
-    #case = db.session.query(Case).get(1)
-    enrollment = db.session.query(EnrollmentApplication).order_by(db.desc(EnrollmentApplication.id)).all()[0]
-    case = enrollment.case
-    enrollment_data = json.loads(enrollment.standardized_data)
-    data = EnrollmentDataWrap(enrollment_data[0], case, enrollment)
-
-    doc = CoverSheetAttachment([], data, enrollment_data)
-
-    doc.generate()
-    f = open('test.pdf', 'w+')
-    f.write(doc._pdf_data.getvalue())
-    f.close()
-    print("Wrote PDF to test.pdf")
+    pass
+    #
+    # #case = db.session.query(Case).get(1)
+    # enrollment = db.session.query(EnrollmentApplication).order_by(db.desc(EnrollmentApplication.id)).all()[0]
+    # case = enrollment.case
+    # enrollment_data = json.loads(enrollment.standardized_data)
+    # data = EnrollmentDataWrap(enrollment_data[0], case, enrollment)
+    #
+    # doc = CoverSheetAttachment([], data, enrollment_data)
+    #
+    # doc.generate()
+    # f = open('test.pdf', 'w+')
+    # f.write(doc._pdf_data.getvalue())
+    # f.close()
+    # print("Wrote PDF to test.pdf")

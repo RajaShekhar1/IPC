@@ -215,6 +215,7 @@ class CaseService(DBService):
 
     # Census records
 
+
     def get_census_records(self, case, offset=None, num_records=None,
                            search_text=None, text_columns=None,
                            sorting=None, sort_desc=False, include_enrolled=True,

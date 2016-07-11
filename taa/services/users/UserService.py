@@ -1,5 +1,6 @@
 from stormpath.client import Client as SPClient
 from flask_stormpath import current_user
+from stormpath.resources import Expansion
 
 from taa import app
 from taa.services import LookupService
@@ -10,9 +11,12 @@ class UserService(object):
 
     ENROLLMENT_IMPORT_GROUP = u'enrollment_importers'
 
+    def __init__(self):
+        self._cached_stormpath_app = None
+
     def get_stormpath_user_by_href(self, href):
         user_account = None
-        for account in search_stormpath_accounts():
+        for account in search_stormpath_accounts(filter_href=href):
             if account.href == href:
                 user_account = account
         return user_account
@@ -29,9 +33,15 @@ class UserService(object):
         if filter_email:
             params['email'] = filter_email
         if filter_href:
-            params['href'] = filter_href
-
+            #params['href'] = filter_href
+            account = sp_app.accounts.get(filter_href)
+            if account:
+                return [account]
+            else:
+                return []
         if params:
+            # Include group memberships in the response
+            params['expand'] = 'groupMemberships'
             return [a for a in sp_app.accounts.search(params)]
         else:
             return [a for a in sp_app.accounts]
@@ -49,12 +59,16 @@ class UserService(object):
             return set()
 
     def get_stormpath_application(self):
+        if self._cached_stormpath_app is not None:
+            return self._cached_stormpath_app
+
         app_name = app.config['STORMPATH_APPLICATION']
         c = SPClient(id=app.config['STORMPATH_API_KEY_ID'],
                    secret=app.config['STORMPATH_API_KEY_SECRET'])
 
         for sp_app in c.applications:
             if sp_app.name == app_name:
+                self._cached_stormpath_app = sp_app
                 return sp_app
 
         raise Exception('The configured stormpath application "%s" could not be found'%app_name)

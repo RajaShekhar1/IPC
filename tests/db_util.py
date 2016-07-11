@@ -111,6 +111,86 @@ def create_case(company_name=u'Test Case', case_token=u'CASE-123123', product_co
     return case
 
 
+def create_case_call_center(company_name=u'Test Case', case_token=u'CASE-123123', call_center=True, product_codes=None, agent=None, case_id=None):
+    """
+    Creates an actively-enrolling case with the given parameters.
+    """
+    if not agent:
+        agent = create_agent(first=u'TEST', last=u'AGENT',
+                             agent_code=u'26AGENT',
+                             email=u'test-case-owner@delmarsd.com')
+    data = dict(
+        company_name=unicode(company_name),
+        group_number=u"GRP-NUM-EX123",
+        situs_state=u'MI',
+        situs_city=u'Lansing',
+        agent_id=agent.id,
+        active=True,
+        created_date=datetime.datetime(year=2012, month=1, day=1),
+        enrollment_period_type=Case.OPEN_ENROLLMENT_TYPE,
+        payment_mode=payment_modes.MODE_MONTHLY,
+        is_self_enrollment=False,
+        should_use_call_center_workflow=call_center,
+        case_token=case_token,
+    )
+    if case_id:
+        data['id'] = case_id
+
+    case = case_service.create_new_case(**data)
+    if not product_codes:
+        product_codes = ['FPPTI']
+    for code in product_codes:
+        product = product_service.search(by_code=code)[0]
+        case.products.append(product)
+
+    periods = [dict(period_type=CaseOpenEnrollmentPeriod.PERIOD_TYPE, start_date='2000-01-01', end_date=None)]
+    case_service.update_enrollment_periods(case, periods)
+
+    db.session.commit()
+
+    return case
+
+
+def create_case_self_enroll(company_name=u'Test Case', case_token=u'CASE-123123', call_center=False, product_codes=None, agent=None, case_id=None):
+    """
+    Creates an actively-enrolling case with the given parameters.
+    """
+    if not agent:
+        agent = create_agent(first=u'TEST', last=u'AGENT',
+                             agent_code=u'26AGENT',
+                             email=u'test-case-owner@delmarsd.com')
+    data = dict(
+        company_name=unicode(company_name),
+        group_number=u"GRP-NUM-EX123",
+        situs_state=u'MI',
+        situs_city=u'Lansing',
+        agent_id=agent.id,
+        active=True,
+        created_date=datetime.datetime(year=2012, month=1, day=1),
+        enrollment_period_type=Case.OPEN_ENROLLMENT_TYPE,
+        payment_mode=payment_modes.MODE_MONTHLY,
+        is_self_enrollment=True,
+        should_use_call_center_workflow=call_center,
+        case_token=case_token,
+    )
+    if case_id:
+        data['id'] = case_id
+
+    case = case_service.create_new_case(**data)
+    if not product_codes:
+        product_codes = ['FPPTI']
+    for code in product_codes:
+        product = product_service.search(by_code=code)[0]
+        case.products.append(product)
+
+    periods = [dict(period_type=CaseOpenEnrollmentPeriod.PERIOD_TYPE, start_date='2000-01-01', end_date=None)]
+    case_service.update_enrollment_periods(case, periods)
+
+    db.session.commit()
+
+    return case
+
+
 def create_user_in_groups(name, api_token=None, groups=None):
     # For now just use agent1
     if api_token:

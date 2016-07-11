@@ -99,7 +99,7 @@ class FileImportService(object):
             format_str = "Must be either 2 or 3 characters long"
 
         if product_validator in field.validators:
-            format_str = "One of 'FPPTI', 'FPPCI', or 'CIEMP'"
+            format_str = "One of 'FPPTI', 'FPPTIW', 'FPPTIG', 'FPPCI' or 'CIEMP'"
 
         return format_str
 
