@@ -15,7 +15,7 @@ def step_impl(context, enrollment_start, enrollment_end, checked_or_unchecked):
     context.enrollment_ongoing = checked_or_unchecked == 'checked'
 
 
-@step("the '{effective_date_setting_type}' effective date is set to '{effective_date_setting}' with '{effective_date_param1}'")
+@step("the '{effective_date_setting_type}' effective date is set to '{effective_date_setting}' with parameter '{effective_date_param1}'")
 def step_impl(context, effective_date_setting_type, effective_date_setting, effective_date_param1):
     settings = {}
     if effective_date_setting_type == 'open':
@@ -30,7 +30,7 @@ def step_impl(context, effective_date_setting_type, effective_date_setting, effe
 
 # Just a copy of above with effective_date_param2 added
 @step(
-    "the '{effective_date_setting_type}' effective date is set to '{effective_date_setting}' with '{effective_date_param1}' and '{effective_date_param2}")
+    "the '{effective_date_setting_type}' effective date is set to '{effective_date_setting}' with parameters '{effective_date_param1}' and '{effective_date_param2}")
 def step_impl(context, effective_date_setting_type, effective_date_setting, effective_date_param1, effective_date_param2):
     settings = {}
     if effective_date_setting_type == 'open':
