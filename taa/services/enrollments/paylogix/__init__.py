@@ -135,7 +135,7 @@ def create_paylogix_csv(applications):
                     data_wrap.get_address_one(),
                     data_wrap.get_address_two(),
                     data_wrap.get_city_state_zip(),
-                    get_deduction_week(application.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z')),
+                    get_deduction_week(application.signature_time),
 
                     # Product
                     data_wrap.get_product_code(),

@@ -104,9 +104,14 @@ def process_hi_acc_enrollments(task):
     submission_service = LookupService('EnrollmentSubmissionService')
 
     # Set all the submissions to be processing so they do not get pulled in by another worker thread
-    submissions = submission_service.get_pending_or_failed_csv_submissions()
-    if submissions is None or len(submissions) == 0:
-        return
+    #submissions = submission_service.get_pending_or_failed_csv_submissions()
+
+
+    submission = submission_service.get_pending_batch_submission(EnrollmentSubmission.TYPE_DELL_CSV_GENERATION)
+    if not submission:
+       return
+    submissions = [submission]
+
     submission_service.set_submissions_status(EnrollmentSubmission.STATUS_PROCESSING, submissions)
 
     # Create submission logs for each submission and accumulate all the enrollment applications
