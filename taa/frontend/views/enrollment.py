@@ -264,6 +264,9 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         if table is not None:
             height_weight_tables[product.get_base_product_code()] = table
 
+    # Show products this applicant is allowed to enroll.
+    product_options = product_service.filter_products_from_membership(case, record)
+    product_options = product_service.filter_products_by_enrollment_state(product_options, state)
     wizard_data = dict(
         is_in_person=not is_self_enroll,
         case_data={
@@ -285,7 +288,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         },
         applicants=applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in
-                  product_service.filter_products_from_membership(case, record)],
+                  product_options],
         payment_modes=payment_mode_choices,
         employee_questions=employee_questions,
         spouse_questions=spouse_questions,
