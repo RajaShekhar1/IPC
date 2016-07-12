@@ -11,6 +11,7 @@ var CaseEnrollmentPeriod = function CaseEnrollmentPeriod(period) {
   self.period_type = settings.period_type;
   self.is_ongoing = ko.computed(function() {return self.period_type == "ongoing"});
   self.is_open = ko.computed(function() {return !self.is_ongoing()});
+  self.description = settings.description;
 
   self.case_id = settings.case_id;
 

@@ -378,24 +378,52 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
   */
 
-  self.has_open_enrollment = ko.computed(function() {
-    var has_open_enrollment = false;
-    _.each(self.enrollment_periods(), function(p) {
-      if(p.is_open()) {
-        has_open_enrollment = true;
-      }
-    });
-    return has_open_enrollment;
-  });
-  self.has_ongoing_enrollment = ko.computed(function() {
-    var has_ongoing_enrollment = false;
-    _.each(self.enrollment_periods(), function(p) {
-      if(p.is_ongoing()) {
-        has_ongoing_enrollment = true;
-      }
-    });
-    return has_ongoing_enrollment;
-  });
+  self.has_open_enrollment = ko.observable(false);
+  self.has_ongoing_enrollment = ko.observable(false);
+  self.openEnrollmentOptions = ko.observableArray([
+    new CaseEnrollmentPeriod({
+      period_type: "open_with_start",
+        case_id: case_data.id,
+        start_date: "",
+        end_date: "",
+        description: "Static Date",
+    }),
+    new CaseEnrollmentPeriod({
+      period_type: "open_nth_of_month",
+        case_id: case_data.id,
+        description: "nth of month",
+    }),
+    new CaseEnrollmentPeriod({
+      period_type: "open_time_delta",
+        case_id: case_data.id,
+        description: "x days from enrollment",
+    }),
+    new CaseEnrollmentPeriod({
+      period_type: "open_first_friday",
+        case_id: case_data.id,
+        description: "First Friday following",
+    }),
+  ]);
+  self.selectedOpenOption = ko.observable();
+
+  // self.has_open_enrollment = ko.computed(function() {
+  //   var has_open_enrollment = false;
+  //   _.each(self.enrollment_periods(), function(p) {
+  //     if(p.is_open()) {
+  //       has_open_enrollment = true;
+  //     }
+  //   });
+  //   return has_open_enrollment;
+  // });
+  // self.has_ongoing_enrollment = ko.computed(function() {
+  //   var has_ongoing_enrollment = false;
+  //   _.each(self.enrollment_periods(), function(p) {
+  //     if(p.is_ongoing()) {
+  //       has_ongoing_enrollment = true;
+  //     }
+  //   });
+  //   return has_ongoing_enrollment;
+  // });
 
   console.log(case_data);
 

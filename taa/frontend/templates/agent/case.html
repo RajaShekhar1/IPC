@@ -211,11 +211,11 @@
                                              name="enrollment_period_type" value="open">
                                       <span class="lbl padding-8">
                                         Open enrollment from
-                                        <input data-bind="disable: !has_open_enrollment(), value: get_open_enrollment_period().start_date" type="text"
+                                        <input data-bind="enable: has_open_enrollment, value: get_open_enrollment_period().start_date" type="text"
                                              placeholder="MM/DD/YYYY" class="input-small input-mask-date"
                                              name="open_enrollment_start_date">
                                         to
-                                        <input data-bind="disable: !has_open_enrollment(), value: get_open_enrollment_period().end_date" type="text"
+                                        <input data-bind="enable: has_open_enrollment, value: get_open_enrollment_period().end_date" type="text"
                                                placeholder="MM/DD/YYYY" class="input-small input-mask-date"
                                                name="open_enrollment_end_date">
                                            </span><br/>
@@ -231,7 +231,7 @@
                                     <label>
                                       <input data-bind="checked: has_ongoing_enrollment" type="checkbox" class="ace"
                                              name="enrollment_period_type" value="ongoing">
-                                      <span class="lbl padding-8">and ongoing enrollments thereafter.</span><br/>
+                                      <span class="lbl padding-8">Ongoing enrollments thereafter</span><br/>
                                     </label>
                                   </div>
                                 </div>
@@ -248,20 +248,21 @@
                                   </thead>
                                   <tbody>
                                     <tr>
-                                      <td class="text-center">
-                                        <label>
-                                          <input type="radio" data-bind="disable: !has_open_enrollment(), checked: open_enrollment_type" value="static_date" name="open" />
-                                        </label>
-                                      </td>
-                                      <td class="text-center">
-                                        <label class="text-center">
-                                          <input type="radio" data-bind="disable: !has_ongoing_enrollment(), checked: ongoing_enrollment_type" value="static_date" name="ongoing" />
-                                        </label>
-                                      </td>
-                                      <td class="text-right">
-                                        <small>Static date <input type="text" class="input-small input-mask-month-day"
-                                               placeholder="MM/DD/YYYY"> or 'today', whichever is later</small>
-                                      </td>
+                                      <select data-bind="options: openEnrollmentOptions, optionsText: CaseEnrollmentPeriod.description, value: selectedOpenOption"></select>
+{#                                      <td class="text-center">#}
+{#                                        <label>#}
+{#                                          <input type="radio" data-bind="disable: !has_open_enrollment(), checked: open_enrollment_type" value="static_date" name="open" />#}
+{#                                        </label>#}
+{#                                      </td>#}
+{#                                      <td class="text-center">#}
+{#                                        <label class="text-center">#}
+{#                                          <input type="radio" data-bind="disable: !has_ongoing_enrollment(), checked: ongoing_enrollment_type" value="static_date" name="ongoing" />#}
+{#                                        </label>#}
+{#                                      </td>#}
+{#                                      <td class="text-right">#}
+{#                                        <small>Static date <input type="text" class="input-small input-mask-month-day"#}
+{#                                               placeholder="MM/DD/YYYY"> or 'today', whichever is later</small>#}
+{#                                      </td>#}
                                     </tr>
                                     <tr>
                                       <td class="text-center">
