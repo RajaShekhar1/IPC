@@ -1,11 +1,9 @@
-from decimal import Decimal
-
 from behave import *
-from hamcrest import assert_that, equal_to
 from dateutil.parser import parse
+from hamcrest import assert_that, equal_to
 
-from taa.services.products.RatePlan import ApplicantQuery, ApplicantDemographics, ApplicantQueryOptions
-from taa.services.products.plan_codes import get_plan_code
+from taa.services.enrollments.effective_date import StaticEffectiveDateRule, CutoffEffectiveDateRule, EnrollerPicksRule, \
+    FirstFridayFollowingRule, EffectiveDateCalculator
 
 
 @given("I have a case with an enrollment period from '{enrollment_start}' to '{enrollment_end}' and ongoing is {checked_or_unchecked}")
@@ -15,34 +13,43 @@ def step_impl(context, enrollment_start, enrollment_end, checked_or_unchecked):
     context.enrollment_ongoing = checked_or_unchecked == 'checked'
 
 
-@step("the '{effective_date_setting_type}' effective date is set to '{effective_date_setting}' with '{effective_date_param1}'")
-def step_impl(context, effective_date_setting_type, effective_date_setting, effective_date_param1):
-    settings = {}
+@given("I have a case without an enrollment period but it has ongoing enrollments")
+def step_impl(context):
+    context.enrollment_start = None
+    context.enrollment_end = None
+    context.enrollment_ongoing = True
+
+
+@step("the '{effective_date_setting_type}' effective date is set to '{effective_date_method}' with parameter '{effective_date_param1}'")
+def step_impl(context, effective_date_setting_type, effective_date_method, effective_date_param1):
+    settings = {
+        'effective_date_method': effective_date_method,
+        'effective_date_param1': effective_date_param1,
+    }
+
     if effective_date_setting_type == 'open':
         context.effective_date_open = settings
     elif effective_date_setting_type == 'ongoing':
         context.effective_date_ongoing = settings
     else:
         raise ValueError("Invalid effective_date_setting_type '{}'".format(effective_date_setting_type))
-
-    settings['effective_date_setting'] = effective_date_setting
-    settings['effective_date_param1'] = effective_date_param1
 
 # Just a copy of above with effective_date_param2 added
 @step(
-    "the '{effective_date_setting_type}' effective date is set to '{effective_date_setting}' with '{effective_date_param1}' and '{effective_date_param2}")
-def step_impl(context, effective_date_setting_type, effective_date_setting, effective_date_param1, effective_date_param2):
-    settings = {}
+    "the '{effective_date_setting_type}' effective date is set to '{effective_date_method}' with parameters '{effective_date_param1}' and '{effective_date_param2}")
+def step_impl(context, effective_date_setting_type, effective_date_method, effective_date_param1, effective_date_param2):
+    settings = {
+        'effective_date_setting': effective_date_method,
+        'effective_date_param1': effective_date_param1,
+        'effective_date_param2': effective_date_param2,
+    }
+
     if effective_date_setting_type == 'open':
         context.effective_date_open = settings
     elif effective_date_setting_type == 'ongoing':
         context.effective_date_ongoing = settings
     else:
         raise ValueError("Invalid effective_date_setting_type '{}'".format(effective_date_setting_type))
-
-    settings['effective_date_setting'] = effective_date_setting
-    settings['effective_date_param1'] = effective_date_param1
-    settings['effective_date_param2'] = effective_date_param2
 
 
 @step("I enroll an applicant on '{enroll_date}'")
@@ -50,41 +57,55 @@ def step_impl(context, enroll_date):
     context.enroll_date = parse(enroll_date)
 
 
+@step("The enroller picks '{enroller_picks_date}' and I enroll an applicant on '{enroll_date}'")
+def step_impl(context, enroller_picks_date, enroll_date):
+    context.enroll_date = parse(enroll_date)
+    context.enroller_picks_date = parse(enroller_picks_date)
+
+
+def create_rule(settings):
+    "Based on a dictionary with effective_date_method and two optional parameters, return the instantiated matching rule object."
+    rule_class = {
+        'Static Date': StaticEffectiveDateRule,
+        'Cutoff nth of month': CutoffEffectiveDateRule,
+        'Enroller Picks': EnrollerPicksRule,
+        'Friday grouping': FirstFridayFollowingRule,
+    }[settings['effective_date_method']]
+
+    args = []
+    if settings.get('effective_date_param1'):
+        args.append(settings['effective_date_param1'])
+    elif settings.get('effective_date_param2'):
+        args.append(settings['effective_date_param2'])
+
+    return rule_class(*args)
+
+
 @then("I should see the effective date is '{expected_effective_date}'")
 def step_impl(context, expected_effective_date):
+    # Set the open rule
+    if hasattr(context, 'effective_date_open'):
+        open_rule = create_rule(context.effective_date_open)
+    else:
+        open_rule = None
 
-    effective_date_calc = EffectiveDateCalculator()
+    # Set the ongoing rule
+    if hasattr(context, 'effective_date_ongoing'):
+        ongoing_rule = create_rule(context.effective_date_ongoing)
+    else:
+        ongoing_rule = None
+
+
+    effective_date_calc = EffectiveDateCalculator(context.enrollment_start, context.enrollment_end, context.enrollment_ongoing,
+                                                  open_rule=open_rule,
+                                                  ongoing_rule=ongoing_rule)
 
     effective_date = effective_date_calc.get_effective_date_for_enroll_date(context.enroll_date)
+
+    # We can use None as an error / invalid state for now
+    if effective_date is None:
+        effective_date = 'N/A'
 
     assert_that(effective_date, equal_to(expected_effective_date))
 
 
-class StaticEffectiveDateRule(object):
-    def __init__(self, date):
-        self.date = date
-
-    def get_effective_date(self, enrollment_date):
-        if enrollment_date > self.date:
-            return enrollment_date
-        else:
-            return self.date
-
-
-class CutoffEffectiveDate(object):
-    "Either the 1st of next month, or the 1st of the following month if after the cutoff"
-    def __init__(self, cutoff_date_int):
-        self.cutoff_date = int(cutoff_date_int)
-
-    def get_effective_date(self, enrollment_date):
-        pass
-        #monthly_cutoff = datetime.datetime(enrollment_date.year, )
-        #if enrollment_date
-
-class EffectiveDateCalculator(object):
-    def __init__(self, open_rule, ongoing_rule):
-        self.open_rule = open_rule
-        self.ongoing_rule = ongoing_rule
-
-    def get_effective_date_for_enroll_date(self, enroll_date):
-        pass
