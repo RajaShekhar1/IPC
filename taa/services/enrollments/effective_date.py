@@ -118,9 +118,9 @@ class EffectiveDateCalculator(object):
 
         elif self.period_start and self.period_end and self.ongoing_rule:
             # Both
-            date = self.open_rule.get_effective_date(enroll_date)
             if self.period_start > enroll_date:
                 return None
+            date = self.open_rule.get_effective_date(enroll_date)
             if self.period_end < enroll_date:
                 date = self.ongoing_rule.get_effective_date(enroll_date)
             return date
