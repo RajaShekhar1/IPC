@@ -62,15 +62,17 @@ class Case(CaseSerializer, db.Model):
     open_enrollment_type = db.Column(db.String(16), nullable=True)
     ongoing_enrollment_type = db.Column(db.String(16), nullable=True)
     STATIC_DATE_ENROLLMENT_TYPE = u'static_date'
-    FIRST_OF_MONTH_ENROLLMENT_TYPE = u'first_of_month'
-    ENROLLER_CHOICE_ENROLLMENT_TYPE = u'enroller_choice'
+    DAY_OF_MONTH_ENROLLMENT_TYPE = u'day_of_month'
+    ENROLLER_PICKS_ENROLLMENT_TYPE = u'enroller_selects'
     FIRST_FRIDAY_ENROLLMENT_TYPE = u'first_friday'
     # Note: this flag is used for a few other restrictions now, and has a
     # broader meaning that a partner agent can view census data for only
     # records he has enrolled.
     can_partners_download_enrollments = db.Column(db.Boolean, default=True)
-    # OPEN_ENROLLMENT_TYPE = u'open'
-    # ONGOING_ENROLLMENT_TYPE = u'ongoing'
+    OPEN_ENROLLMENT_TYPE = u'open'
+    ONGOING_ENROLLMENT_TYPE = u'ongoing'
+    OPEN_ONGOING_ENROLLMENT_TYPE = u'both'
+
     # This relationship defines what products are explicitly enabled for
     # a given case
     products = db.relationship('Product', secondary=case_products, backref=db.backref('cases', lazy='dynamic'),
@@ -84,6 +86,7 @@ class Case(CaseSerializer, db.Model):
 
     # Store settings for the products as JSON. Includes rider settings and rate overrides.
     product_settings = db.Column(JSON(none_as_null=False), nullable=True)
+    effective_date_settings = db.Column(JSON(none_as_null=False), nullable=True)
     include_bank_draft_form = db.Column(db.Boolean, nullable=False, server_default='FALSE')
     occupation_class_settings = db.Column(JSON(none_as_null=False),
                                           nullable=True)
@@ -169,7 +172,7 @@ class CaseEnrollmentPeriod(PeriodSerializer, db.Model):
 
 
 class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
-    PERIOD_TYPE = u'open_with_start'
+    PERIOD_TYPE = u'open'
     __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
 
     def populate_data_dict(self, data):
@@ -199,6 +202,40 @@ class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
     def get_end_date(self):
         return self.end_date
 
+
+class CaseBothEnrollmentPeriod(CaseEnrollmentPeriod):
+    PERIOD_TYPE = u'both'
+    __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
+
+    def populate_data_dict(self, data):
+        data['open_enrollment_type'] = self.case.open_enrollment_type
+        data['open_period_start_date'] = self.start_date if self.start_date else ''
+        data['open_period_end_date'] = self.end_date if self.end_date else ''
+        data['ongoing_enrollment_type'] = self.case.ongoing_enrollment_type
+        return data
+
+    def currently_active(self):
+        now = datetime.now()
+        if not self.start_date:
+            # This is required
+            return False
+
+        if self.start_date < now and not self.end_date:
+            # End date is blank and start date is in the past
+            return True
+        elif self.end_date and self.start_date < now < (self.end_date + timedelta(days=1)):
+            # Now is between start and end date
+            return True
+        else:
+            return False
+
+    def get_start_date(self):
+        return self.start_date
+
+    def get_end_date(self):
+        return self.end_date
+
+
 class CaseOngoingEnrollmentPeriod(CaseEnrollmentPeriod):
     PERIOD_TYPE = u'ongoing'
     __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
@@ -208,7 +245,8 @@ class CaseOngoingEnrollmentPeriod(CaseEnrollmentPeriod):
         return data
 
     def currently_active(self):
-        return False
+        return True
+
 
 # TODO: Remove
 # class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):

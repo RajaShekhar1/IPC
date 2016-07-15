@@ -4,7 +4,7 @@ from datetime import datetime, date as datetime_date
 
 from taa.core import DBService
 from models import (Case, CaseEnrollmentPeriod,
-                    CaseOpenEnrollmentPeriod, CaseOngoingEnrollmentPeriod,
+                    CaseOpenEnrollmentPeriod, CaseOngoingEnrollmentPeriod, CaseBothEnrollmentPeriod
                     )
 
 
@@ -50,6 +50,13 @@ class CaseEnrollmentPeriodsService(DBService):
                 periods.append(CaseOpenEnrollmentPeriod(start_date=start,
                                                         end_date=end,
                                                         case_id=case.id))
+            elif period['period_type'] == CaseBothEnrollmentPeriod.PERIOD_TYPE:
+                start = self.valid_date(period['start_date'])
+                end = self.valid_date(period['end_date'])
+                periods.append(CaseOpenEnrollmentPeriod(start_date=start,
+                                                        end_date=end,
+                                                        case_id=case.id))
+                periods.append(CaseOngoingEnrollmentPeriod(case_id=case.id))
         for p in periods:
             self.save(p)
         return periods
