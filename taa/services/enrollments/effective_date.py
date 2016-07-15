@@ -31,12 +31,10 @@ class CutoffEffectiveDateRule(object):
         double_month = relativedelta(months=2)
         if enrollment_date.day < self.cutoff_date:
             enrollment_date = enrollment_date.replace(day=1)
-            enrollment_date = enrollment_date + single_month
-            return enrollment_date
+            return enrollment_date + single_month
         else:
             enrollment_date = enrollment_date.replace(day=1)
-            enrollment_date = enrollment_date + double_month
-            return enrollment_date
+            return enrollment_date + double_month
 
 
 class EnrollerPicksRule(object):
@@ -114,10 +112,9 @@ class EffectiveDateCalculator(object):
 
         elif self.period_start and self.period_end and not self.ongoing_rule:
             # Just a date, no ongoing
-            date = self.open_rule.get_effective_date(enroll_date)
             if self.period_start > enroll_date or enroll_date > self.period_end:
                 return None
-            return date
+            return self.open_rule.get_effective_date(enroll_date)
 
         elif self.period_start and self.period_end and self.ongoing_rule:
             # Both
