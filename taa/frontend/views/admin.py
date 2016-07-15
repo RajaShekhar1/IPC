@@ -221,9 +221,6 @@ def create_application_dictionary_for_submissions_view(application):
 def create_submission_dictionary_for_submissions_view(submission):
     """
     Create a dictionary for use in JSON Serialization for a submission item
-    :param submission: Submission to create the dictionary for
-    :type submission: taa.services.enrollments.models.EnrollmentSubmission
-    :rtype: dict
     """
     return {
         'id': submission.id,
@@ -233,6 +230,7 @@ def create_submission_dictionary_for_submissions_view(submission):
         'submission_logs': submission.submission_logs,
         'data': submission.data,
         'submission_type': submission.submission_type,
+        'status':submission.status,
     }
 
 

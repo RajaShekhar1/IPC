@@ -354,13 +354,15 @@ class EnrollmentDataWrap(object):
     def get_employee_esignature(self):
         if self.should_use_call_center_workflow():
             # Replace employee signature with "John Doe voice auth on file 02:45pm"
-            esig = u"{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
+            date = self.enrollment_record.signature_time
+            esig = u"{} voice auth on file {}".format(self.get_employee_name(), date.strftime("%l:%M%p"))
             return self.data.get('emp_sig_txt', esig)
         else:
             return self.data.get('emp_sig_txt', '')
 
     def get_employee_esignature_date(self):
-        return self.data.get('emp_sig_date', datetime.today().strftime('%m/%d/%Y'))
+        date = self.enrollment_record.signature_time
+        return self.data.get('emp_sig_date', date.strftime('%m/%d/%Y'))
 
     def get_employee_initials(self):
         return self.data.get('emp_initials_txt', '')
@@ -370,13 +372,15 @@ class EnrollmentDataWrap(object):
 
     def get_agent_esignature(self):
         if self.should_use_call_center_workflow():
-            esig = u'esign by {} {}'.format(self.get_agent_signing_name(), datetime.now().strftime("%l:%M%p"))
+            date = self.enrollment_record.signature_time
+            esig = u'esign by {} {}'.format(self.get_agent_signing_name(), date.strftime("%l:%M%p"))
             return self.data.get('agent_sig_txt', esig)
         else:
             return self.data.get('agent_sig_txt', '')
 
     def get_agent_esignature_date(self):
-        return self.data.get('agent_sig_date', datetime.today().strftime('%m/%d/%Y'))
+        date = self.enrollment_record.signature_time
+        return self.data.get('agent_sig_date', date.strftime('%m/%d/%Y'))
 
     def has_agent_esigned(self):
         return bool(self.get_agent_esignature())

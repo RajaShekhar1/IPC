@@ -229,26 +229,27 @@ class GroupCITemplate(DocuSignServerTemplate):
             }
         )
         for (prefix_short, prefix_long) in {('ee', 'employee'), ('sp', 'spouse')}:
-            generalRadiosList.append(
-                {
-                    'groupName': prefix_short + 'Gender',
-                    'radios': [
-                        {
-                            'selected':
-                                'True' if (enrollment_data[prefix_long] and
-                                           enrollment_data[prefix_long]['gender'] == 'male') else 'False',
-                            'value': 'male'
-                        },
-                        {
-                            'selected':
-                                'True' if (enrollment_data[prefix_long] and
-                                           enrollment_data[prefix_long]['gender'] == 'female') else 'False',
-                            'value': 'female'
-                        }
-                    ]
-                }
-            )
-            if enrollment_data[prefix_long] and 'is_smoker' in enrollment_data[prefix_long]:
+            if prefix_long == 'employee' or (prefix_long == 'spouse' and spouseCoverage.strip()):
+                generalRadiosList.append(
+                    {
+                        'groupName': prefix_short + 'Gender',
+                        'radios': [
+                            {
+                                'selected':
+                                    'True' if (enrollment_data[prefix_long] and
+                                               enrollment_data[prefix_long]['gender'] == 'male') else 'False',
+                                'value': 'male'
+                            },
+                            {
+                                'selected':
+                                    'True' if (enrollment_data[prefix_long] and
+                                               enrollment_data[prefix_long]['gender'] == 'female') else 'False',
+                                'value': 'female'
+                            }
+                        ]
+                    }
+                )
+            if enrollment_data[prefix_long] and 'is_smoker' in enrollment_data[prefix_long] and enrollment_data[prefix_long]['is_smoker'] != None:
                 generalRadiosList.append(
                     {
                         'groupName': prefix_short + 'Smoking',
