@@ -189,27 +189,17 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
   };
   //endregion
+  self.parent_start_date = ko.observable("");
+  self.parent_end_date = ko.observable("");
 
   self.enrollment_periods = ko.observableArray(_.zipWith(case_data.enrollment_periods, case_data.effective_date_settings, function (p, e) {
     if (p.period_type == 'open') {
-      self.parent_start_date = ko.observable(normalize_date(p.start_date));
-      self.parent_end_date = ko.observable(normalize_date(p.end_date));
-    }
-    else {
-      if (typeof self.parent_start_date == 'undefined') {
-        self.parent_start_date = ko.observable("");
-      }
-      if (typeof self.parent_end_date == 'undefined') {
-        self.parent_end_date = ko.observable("");
-      }
+      self.parent_start_date(normalize_date(p.start_date));
+      self.parent_end_date(normalize_date(p.end_date));
     }
     return new CaseEnrollmentPeriod(p, e);
   }));
 
-  if (case_data.enrollment_periods.length < 1) {
-    self.parent_start_date = ko.observable("");
-    self.parent_end_date = ko.observable("");
-  }
 
   console.log(self.enrollment_periods());
   self.situs_city = ko.observable(case_data.situs_city);
