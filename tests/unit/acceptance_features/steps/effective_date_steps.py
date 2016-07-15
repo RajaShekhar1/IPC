@@ -8,8 +8,8 @@ from taa.services.enrollments.effective_date import StaticEffectiveDateRule, Cut
 
 @given("I have a case with an enrollment period from '{enrollment_start}' to '{enrollment_end}' and ongoing is {checked_or_unchecked}")
 def step_impl(context, enrollment_start, enrollment_end, checked_or_unchecked):
-    context.enrollment_start = enrollment_start
-    context.enrollment_end = enrollment_end
+    context.enrollment_start = parse(enrollment_start)
+    context.enrollment_end = parse(enrollment_end)
     context.enrollment_ongoing = checked_or_unchecked == 'checked'
 
 
@@ -36,10 +36,10 @@ def step_impl(context, effective_date_setting_type, effective_date_method, effec
 
 # Just a copy of above with effective_date_param2 added
 @step(
-    "the '{effective_date_setting_type}' effective date is set to '{effective_date_method}' with parameters '{effective_date_param1}' and '{effective_date_param2}")
+    "the '{effective_date_setting_type}' effective date is set to '{effective_date_method}' with parameters '{effective_date_param1}' and '{effective_date_param2}'")
 def step_impl(context, effective_date_setting_type, effective_date_method, effective_date_param1, effective_date_param2):
     settings = {
-        'effective_date_setting': effective_date_method,
+        'effective_date_method': effective_date_method,
         'effective_date_param1': effective_date_param1,
         'effective_date_param2': effective_date_param2,
     }
@@ -72,11 +72,17 @@ def create_rule(settings):
         'Friday grouping': FirstFridayFollowingRule,
     }[settings['effective_date_method']]
 
+    if settings.get('effective_date_method') == 'Static Date':
+        settings['effective_date_param1'] = parse(settings.get('effective_date_param1'))
+
     args = []
+
     if settings.get('effective_date_param1'):
         args.append(settings['effective_date_param1'])
-    elif settings.get('effective_date_param2'):
+    if settings.get('effective_date_param2'):
         args.append(settings['effective_date_param2'])
+    if settings.get('enroller_picks_date'):
+        args.append(settings['enroller_picks_date'])
 
     return rule_class(*args)
 
@@ -84,7 +90,10 @@ def create_rule(settings):
 @then("I should see the effective date is '{expected_effective_date}'")
 def step_impl(context, expected_effective_date):
     # Set the open rule
+
     if hasattr(context, 'effective_date_open'):
+        if context.effective_date_open['effective_date_method'] == 'Enroller Picks':
+            context.effective_date_open['enroller_picks_date'] = context.enroller_picks_date
         open_rule = create_rule(context.effective_date_open)
     else:
         open_rule = None
@@ -94,7 +103,6 @@ def step_impl(context, expected_effective_date):
         ongoing_rule = create_rule(context.effective_date_ongoing)
     else:
         ongoing_rule = None
-
 
     effective_date_calc = EffectiveDateCalculator(context.enrollment_start, context.enrollment_end, context.enrollment_ongoing,
                                                   open_rule=open_rule,
@@ -106,6 +114,7 @@ def step_impl(context, expected_effective_date):
     if effective_date is None:
         effective_date = 'N/A'
 
+    expected_effective_date = parse(expected_effective_date) if expected_effective_date != 'N/A' else 'N/A'
     assert_that(effective_date, equal_to(expected_effective_date))
 
 
