@@ -285,6 +285,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'omit_actively_at_work': case.omit_actively_at_work,
             'include_bank_draft_form': case.include_bank_draft_form,
             'is_call_center': case.should_use_call_center_workflow,
+            'effective_date_settings': case.effective_date_settings
         },
         applicants=applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in

@@ -1078,6 +1078,7 @@ var wizard_viewmodel = (function () {
     self.options = options;
     self.enrollment_case = options.case_data;
     self.products = wizard_products.build_products(self, options.products);
+    console.log(self.options);
 
     self.is_rate_table_loading = product_rates_service.is_loading_rates;
     self.is_show_rates_clicked = ko.observable(false);

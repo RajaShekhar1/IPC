@@ -82,12 +82,24 @@ var CaseEnrollmentPeriod = function CaseEnrollmentPeriod(period, effective_date_
   self.serialize_effective_date = function () {
     switch (self.effective_date_type) {
       case 'static_date':
+        if (self.is_open) {
+          return {"type": self.period_type, "enrollment_period": {"start_date": self.get_start_date(), "end_date": self.get_end_date()}, "method": self.effective_date_type, "static_date": self.static_date()};
+        }
         return {"type": self.period_type, "method": self.effective_date_type, "static_date": self.static_date()};
       case 'day_of_month':
+        if (self.is_open) {
+          return {"type": self.period_type, "enrollment_period": {"start_date": self.get_start_date(), "end_date": self.get_end_date()}, "method": self.effective_date_type, "day_of_month": self.day_of_month()};
+        }
         return {"type": self.period_type, "method": self.effective_date_type, "day_of_month": self.day_of_month()};
       case 'enroller_selects':
+        if (self.is_open) {
+          return {"type": self.period_type, "enrollment_period": {"start_date": self.get_start_date(), "end_date": self.get_end_date()}, "method": self.effective_date_type, "enroller_selects": {"default": self.enroller_picks_default(), "no_less": self.enroller_picks_no_less()}};
+        }
         return {"type": self.period_type, "method": self.effective_date_type, "enroller_selects": {"default": self.enroller_picks_default(), "no_less": self.enroller_picks_no_less()}};
       case 'first_friday':
+        if (self.is_open) {
+          return {"type": self.period_type, "enrollment_period": {"start_date": self.get_start_date(), "end_date": self.get_end_date()}, "method": self.effective_date_type, "first_friday": self.first_friday()};
+        }
         return {"type": self.period_type, "method": self.effective_date_type, "first_friday": self.first_friday()};
       default:
         return {};

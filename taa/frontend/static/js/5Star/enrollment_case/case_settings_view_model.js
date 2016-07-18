@@ -201,7 +201,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   }));
 
 
-  console.log(self.enrollment_periods());
   self.situs_city = ko.observable(case_data.situs_city);
 
 
@@ -493,7 +492,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return has_ongoing_enrollment;
   });
 
-  console.log(case_data);
 
   self.get_enrollment_options = ko.pureComputed(function () {
     if (self.open_enrollment_status() && !self.ongoing_enrollment_status()) {
@@ -1418,9 +1416,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     if (self.open_enrollment_status() && !self.get_open_enrollment_period().is_valid()) {
       var open = self.get_open_enrollment_period();
       var start = normalize_date(open.get_start_date());
-      console.log(start);
       var end = normalize_date(open.get_end_date());
-      console.log(end);
       if (end !== '' || !is_valid_date(end)) {
         add_case_error(errors, "open_enrollment_end_date", "Enter valid End Date");
       }
