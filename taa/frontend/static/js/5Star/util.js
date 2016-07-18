@@ -143,6 +143,18 @@ function get_date_of_birth_validation_error(date_of_birth) {
   return null;
 }
 
+function valid_enroller_selects(minimum, input) {
+  var today = moment({hour: 0, minute: 0, seconds: 0, milliseconds: 0});
+  var input_moment = moment(input);
+  var minimum_moment = today.clone().add(minimum, 'day');
+  return minimum_moment.isSameOrBefore(input_moment);
+}
+
+function resolve_default_date(defaults) {
+  var today = moment({hour: 0, minute: 0, seconds: 0, milliseconds: 0});
+  return format_date(today.clone().add(defaults, 'day'));
+}
+
 function format_date(moment_date) {
   // Given a moment object, format it the same across the site
   return moment_date.format("MM/DD/YYYY");

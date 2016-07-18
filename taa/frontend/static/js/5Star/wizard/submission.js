@@ -172,6 +172,10 @@ function build_wizard_results_for_product_coverage(product_cov) {
 
     identityToken: root.identityToken(),
     identityType: root.identityType(),
+    
+    effectiveDate: root.get_effective_date(),
+    enrollerSelects: root.show_enroller_select_date(),
+    effectiveDateSettings: root.effective_date_settings,
 
     employee: root.employee().serialize_data(),
     spouse: root.spouse().serialize_data(),

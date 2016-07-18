@@ -38,6 +38,7 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
                                         'enrollment_applications',
                                         lazy='joined'))
     signature_time = db.Column(db.DateTime, index=True)
+    effective_date = db.Column(db.DateTime)
     signature_city = db.Column(db.UnicodeText)
     signature_state = db.Column(db.Unicode(2))
     identity_token = db.Column(db.UnicodeText)

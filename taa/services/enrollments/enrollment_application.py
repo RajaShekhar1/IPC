@@ -8,6 +8,8 @@ from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
 
 from taa.services.docusign.service import DocusignEnvelope
 
+from effective_date import calculate_effective_date
+
 from enrollment_application_coverages import (
     filter_applicant_coverages,
     group_coverages_by_product,
@@ -158,6 +160,11 @@ class EnrollmentApplicationService(DBService):
         data = self.get_first_wizard_data_record(wizard_data)
         given_sig_time = data.get('time_stamp')
         signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
+        enroller_selects = data.get('enrollerSelects')
+        effective_date_settings = data.get('effectiveDateSettings')
+        enroller_effective_date = data.get('effectiveDate')
+        effective_date = calculate_effective_date(settings=effective_date_settings, signature_time=signature_time,
+                                                  enroller_picks_date=enroller_effective_date)
 
         if data['employee_beneficiary'] == 'spouse':
             emp_beneficiary_name = u'{} {}'.format(data['spouse']['first'],
@@ -194,6 +201,8 @@ class EnrollmentApplicationService(DBService):
             agent_id=agent_id,
             method=data['method'],
             payment_mode=data['payment_mode'],
+            # Effective Date
+            effective_date=effective_date,
             # Signing info
             signature_time=signature_time,
             signature_city=data['enrollCity'],
@@ -338,7 +347,8 @@ class EnrollmentApplicationService(DBService):
 
             # Make sure we have looked up the ordered list of products for this case.
             if census_record.case_id not in case_products_lookup:
-                case_products_lookup[census_record.case_id] = self.product_service.get_ordered_products_for_case(census_record.case_id)
+                case_products_lookup[census_record.case_id] = self.product_service.get_ordered_products_for_case(
+                    census_record.case_id)
 
             # Export only records with enrollments
             if not census_record.enrollment_applications:
@@ -346,7 +356,8 @@ class EnrollmentApplicationService(DBService):
             for enrollment in census_record.enrollment_applications:
                 export_record = dict()
                 export_record.update(self.get_census_data(census_record))
-                export_record.update(self.get_unmerged_enrollment_data(census_record, enrollment, case_products_lookup[census_record.case_id]))
+                export_record.update(self.get_unmerged_enrollment_data(census_record, enrollment,
+                                                                       case_products_lookup[census_record.case_id]))
                 data.append(export_record)
         return data
 
@@ -550,7 +561,8 @@ class EnrollmentApplicationService(DBService):
 
         enrollment_data['enrollment_id'] = enrollment.id
 
-        enrollment_data['signature_method'] = enrollment.signature_method if enrollment.signature_method else EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN
+        enrollment_data[
+            'signature_method'] = enrollment.signature_method if enrollment.signature_method else EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN
 
         # Export data from enrollment
         for col in enrollment_columns:
@@ -625,8 +637,8 @@ class EnrollmentApplicationService(DBService):
                 if annualized_premium and annualized_premium > Decimal('0.00'):
                     total_annual_premium += annualized_premium
 
-                #if total_product_premium == Decimal('0.00'):
-                #    total_product_premium = ''
+                    # if total_product_premium == Decimal('0.00'):
+                    #    total_product_premium = ''
 
             enrollment_data.update(product_data)
             enrollment_data['{}_total_premium'.format(prefix)] = total_product_premium
@@ -709,7 +721,9 @@ class EnrollmentApplicationService(DBService):
     def get_export_dictionary(self, census_record, application):
         data = dict()
         data.update(self.get_census_data(census_record))
-        data.update(self.get_unmerged_enrollment_data(census_record, application, self.product_service.get_ordered_products_for_case(census_record.case_id)))
+        data.update(self.get_unmerged_enrollment_data(census_record, application,
+                                                      self.product_service.get_ordered_products_for_case(
+                                                          census_record.case_id)))
         enrollment_tuples = [(c.column_title, c.get_value(data)) for c in enrollment_columns]
         census_tuples = zip(self.case_service.census_records.get_csv_headers(),
                             self.case_service.census_records.get_csv_row_from_dict(data))
@@ -805,18 +819,18 @@ class EnrollmentApplicationService(DBService):
 
     def get_paylogix_applications_between_dates(self, start_date, end_date):
         return db.session.query(EnrollmentApplication).filter(db.and_(
-                EnrollmentApplication.signature_time > start_date, EnrollmentApplication.signature_time < end_date)
-            ).join(Case
-            ).filter(Case.requires_paylogix_export == True
-            ).order_by(db.desc(EnrollmentApplication.signature_time)
-            ).all()
+            EnrollmentApplication.signature_time > start_date, EnrollmentApplication.signature_time < end_date)
+        ).join(Case
+               ).filter(Case.requires_paylogix_export == True
+                        ).order_by(db.desc(EnrollmentApplication.signature_time)
+                                   ).all()
 
     def get_paylogix_applications(self):
         return db.session.query(EnrollmentApplication
                                 ).join(Case
-                                ).filter(Case.requires_paylogix_export == True
-                                ).order_by(db.desc(EnrollmentApplication.signature_time)
-                                ).all()
+                                       ).filter(Case.requires_paylogix_export == True
+                                                ).order_by(db.desc(EnrollmentApplication.signature_time)
+                                                           ).all()
 
 
 def export_string(val):

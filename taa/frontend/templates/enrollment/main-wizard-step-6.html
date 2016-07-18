@@ -118,6 +118,31 @@
       </form>
     </div>
 
+    <!-- ko if: show_enroller_select_date() -->
+        <form class="form-horizontal">
+            <div id="enrollerSelect">
+                <h4 class="green">Effective Date</h4>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <p>Enter the date for this policy to become effective:</p>
+                    </div>
+                </div>
+
+                <div class="row form-group">
+                    <div class="hidden-xs col-sm-12">
+                        <div class="col-sm-1">
+                        </div>
+
+                        <input type="text" class="input-mask-date" id="EffectiveDateInput" name="EffectiveDateInput"
+                               data-bind="textInput: effective_date_input">
+                    </div>
+                </div>
+            </div>
+        </form>
+        <br>
+        <br>
+    <!-- /ko -->
+
     <form class="form-horizontal" id="step6-form">
       <div id="inPersonSignerToken">
         <h4 class="green">Employee Identification</h4>

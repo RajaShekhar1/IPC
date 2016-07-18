@@ -1078,7 +1078,7 @@ var wizard_viewmodel = (function () {
     self.options = options;
     self.enrollment_case = options.case_data;
     self.products = wizard_products.build_products(self, options.products);
-    console.log(self.options);
+    self.effective_date_settings = self.enrollment_case.effective_date_settings;
 
     self.is_rate_table_loading = product_rates_service.is_loading_rates;
     self.is_show_rates_clicked = ko.observable(false);
@@ -1957,6 +1957,7 @@ var wizard_viewmodel = (function () {
     // Step 6 Data
     self.disclaimer_notice_confirmed = ko.observable(false);
     self.payroll_deductions_confirmed = ko.observable(false);
+    self.effective_date_input = ko.observable("");
     self.identityToken = ko.observable("");
     self.identityType = ko.observable("");
     self.enrollState = ko.observable(self.enrollment_case.situs_state);
@@ -1972,6 +1973,114 @@ var wizard_viewmodel = (function () {
       return true;
     };
 
+    self.show_enroller_select_date = function () {
+      var enroller_selects = _.filter(self.effective_date_settings, {'method': 'enroller_selects'});
+      if (enroller_selects.length < 1) {
+        return false;
+      }
+      var open = _.find(self.effective_date_settings, {'type': 'open'});
+      var has_open_enroller_selects = _.some(enroller_selects, {'type': 'open'});
+      var has_ongoing_enroller_selects = _.some(enroller_selects, {'type': 'ongoing'});
+      if (has_open_enroller_selects) {
+        if (!today_between(normalize_date(open.enrollment_period.start_date), normalize_date(open.enrollment_period.end_date))) {
+          return has_ongoing_enroller_selects;
+        }
+        return true;
+      }
+      else {
+        if (typeof open != 'undefined') {
+          if (!today_between(normalize_date(open.enrollment_period.start_date), normalize_date(open.enrollment_period.end_date))) {
+            return has_ongoing_enroller_selects;
+          }
+          return false;
+        }
+        return !!has_ongoing_enroller_selects;
+      }
+    };
+
+    self.initialize_enroller_select_date = function() {
+      if (self.show_enroller_select_date()) {
+        var enroller_selects = _.filter(self.effective_date_settings, {'method': 'enroller_selects'});
+        if (enroller_selects.length < 1) {
+          self.effective_date_input("");
+          return;
+        }
+        var open = _.find(self.effective_date_settings, {'type': 'open'});
+        var ongoing_enroller = _.find(enroller_selects, {'type': 'ongoing'});
+        var has_open_enroller_selects = _.some(enroller_selects, {'type': 'open'});
+        var has_ongoing_enroller_selects = _.some(enroller_selects, {'type': 'ongoing'});
+        if (has_open_enroller_selects) {
+          if (!today_between(normalize_date(open.enrollment_period.start_date), normalize_date(open.enrollment_period.end_date))) {
+            if (has_ongoing_enroller_selects) {
+              self.effective_date_input(resolve_default_date(ongoing_enroller.enroller_selects.default));
+              return;
+            }
+            self.effective_date_input("");
+            return;
+          }
+          var open_enroller = _.find(enroller_selects, {'type': 'open'});
+          self.effective_date_input(resolve_default_date(open_enroller.enroller_selects.default));
+        }
+        else {
+          if (typeof open != 'undefined') {
+            if (!today_between(normalize_date(open.enrollment_period.start_date), normalize_date(open.enrollment_period.end_date))) {
+              self.effective_date_input(resolve_default_date(ongoing_enroller.enroller_selects.default));
+              return;
+            }
+            self.effective_date_input("");
+            return;
+          }
+          if (has_ongoing_enroller_selects) {
+            self.effective_date_input(resolve_default_date(ongoing_enroller.enroller_selects.default));
+            return;
+          }
+          self.effective_date_input("");
+        }
+      }
+      else {
+        self.effective_date_input("");
+      }
+    };
+
+    self.initialize_enroller_select_date();
+    
+    self.which_enroller_select_date = function () {
+      if (self.show_enroller_select_date()) {
+        var enroller_selects = _.filter(self.effective_date_settings, {'method': 'enroller_selects'});
+        var open_enroller = _.find(enroller_selects, {'type': 'open'});
+        var ongoing_enroller = _.find(enroller_selects, {'type': 'ongoing'});
+        if (typeof open_enroller != 'undefined') {
+          if (today_between(normalize_date(open_enroller.enrollment_period.start_date), normalize_date(open_enroller.enrollment_period.end_date))) {
+            return open_enroller;
+          }
+        }
+        return ongoing_enroller;
+      }
+      return null;
+    };
+
+    self.get_effective_date = function () {
+      return normalize_date(self.effective_date_input());
+    };
+    
+    self.valid_effective_date = function () {
+      var enroller_selects = self.which_enroller_select_date();
+      return is_valid_date(self.get_effective_date()) && valid_enroller_selects(parseInt(enroller_selects.enroller_selects.no_less, 10), self.get_effective_date())
+    };
+
+    self.get_effective_date_error_message = function () {
+      var results = "";
+      var is_valid = is_valid_date(self.get_effective_date());
+      if (!is_valid) {
+        results += "The effective date input is not valid.";
+      }
+      var enroller_selects = self.which_enroller_select_date();
+      if (!valid_enroller_selects(parseInt(enroller_selects.enroller_selects.no_less, 10), self.get_effective_date())) {
+        results += " The effective date input must be at least " + enroller_selects.enroller_selects.no_less + " days from today.";
+      }
+      return results;
+    };
+    
     function any_selected_product(method) {
       var selected_products = _.pluck(self.coverage_vm.selected_product_coverages(), 'product');
       return _.any(_.invoke(selected_products, method));
