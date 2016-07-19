@@ -452,6 +452,7 @@ class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
     # Submission Type Enum Values
     TYPE_DELL_CSV_GENERATION = u'HI and ACC CSV Generation'
     TYPE_DELL_EXPORT = u'HI and ACC CSV submission to Dell'
+    TYPE_DELL_STP_XML = u'STP XML submission to Dell'
     TYPE_DOCUSIGN = u'Submit to Docusign'
     TYPE_STATIC_BENEFIT = u'Static Benefit'
     TYPE_PAYLOGIX_CSV_GENERATION = u'Paylogix CSV Generation'
