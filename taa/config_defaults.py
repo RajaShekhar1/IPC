@@ -201,3 +201,12 @@ WbvgyFkKAJ9uxIr1WKhD5srgq4PS3y9PcI9iRwCbB06Qr8Y0p+xLgLu+lUWR515V
 Sls=
 =tuZL
 -----END PGP PUBLIC KEY BLOCK-----""")
+
+# Dell Straight-Through-Processing (STP) settings
+IS_STP_DEBUG = True          # Use Dell's "model office" instead of production
+IS_STP_SIMULATE = True       # Don't even send to "model office", but pretend to
+IS_STP_STORE_SOURCE = True   # Flag to store generated XML STP requests in DB
+IS_STP_STORE_RESULT = True   # Flag to store XML STP responses in DB
+STP_DEBUG_URL = 'https://extranetapps-mo.tagtpa.com/TxLifeImport/TxLife.asmx?WSDL'
+STP_LIVE_URL = 'https://extranetapps.tagtpa.com/TxLifeImport/TxLife.asmx?WSDL'
+STP_URL = STP_DEBUG_URL if IS_STP_DEBUG else STP_LIVE_URL
