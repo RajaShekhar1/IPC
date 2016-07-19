@@ -55,6 +55,7 @@ def _update_log(email_log, success):
 
 
 FIVE_MINUTES = 5 * 60
+ONE_HOUR = 1 * 60 * 60
 
 
 @app.task(bind=True, default_retry_delay=FIVE_MINUTES)
@@ -157,6 +158,110 @@ def submit_csv_to_dell(task, submission_id):
         log.message = 'Error sending CSV to Dell with message "%s"\n%s' % (ex.message, traceback.format_exc())
         db.session.commit()
         task.retry()
+
+
+def generate_pdf(submission_id):
+    """
+    Task to generate an enrollment PDF
+    """
+    submission_service = LookupService('EnrollmentSubmissionService')
+    submission = submission_service.get_submission_by_id(submission_id)
+    enrollment_record = submission.enrollment_applications[0]
+    return submission_service.render_enrollment_pdf(enrollment_record, is_stp=True)
+
+
+# def generate_xml(submission_id):
+#     """
+#     Task to generate XML STP item
+#     """
+#     submission_service = LookupService('EnrollmentSubmissionService')
+#     submission = submission_service.get_submission_by_id(submission_id)
+#     pdf_bytes = generate_pdf(submission.id)
+#     return submission_service.render_enrollment_xml(submission_id, 'employee', pdf_bytes)
+
+
+# @app.task(bind=True, default_retry_delay=ONE_HOUR)
+# def process_uploaded_stp_enrollments(task):
+#     submission_service = LookupService('EnrollmentSubmissionService')
+#
+#     # Set all the submissions to be processing so they do not get pulled in by another worker thread
+#     submissions = submission_service.get_pending_stp_xml_submission()
+#     if submissions is None or len(submissions) == 0:
+#         return
+#     submission_service.set_submissions_status(EnrollmentSubmission.STATUS_PROCESSING, submissions)
+#
+#     # Create submission logs for each submission and accumulate all the enrollment applications
+#     submission_logs = submission_service.create_logs_for_submissions(submissions, SubmissionLog.STATUS_PROCESSING)
+#     applications = submission_service.get_applications_for_submissions(submissions)
+#     if applications is None or len(applications) == 0:
+#         submission_service.set_submissions_status(EnrollmentSubmission.STATUS_SUCCESS, submissions, submission_logs)
+#         return
+#
+#     try:
+#         xml_data = export_hi_acc_enrollments(applications)
+#         submit_submission = submission_service.create_submission_for_csv(xml_data, applications)
+#         submission_service.set_submissions_status(EnrollmentSubmission.STATUS_SUCCESS, submissions, submission_logs)
+#         submit_csv_to_dell.delay(submission_id=submit_submission.id)
+#     except Exception as ex:
+#         submission_service.set_submissions_status(EnrollmentSubmission.STATUS_FAILURE, submissions, submission_logs)
+#         email_exception(taa_app, ex)
+
+
+def send_stp_xml(xml):
+    # import time
+    from pysimplesoap.client import SoapClient
+    # app['IS_STP_STORE_SOURCE']
+    # app['IS_STP_STORE_RESULT']
+    c = SoapClient(wsdl=app['STP_URL'])
+    # start = time.time()
+    xml = ''
+    # guid = 'SIMULATEDRUN'
+    result = None
+    try:
+        if not taa_app.config['IS_STP_SIMULATE']:
+            result = c.TXlifeProcessor(xml)
+        #     r = result['TXlifeProcessorResult']
+        #     guid = r[r.find('TransRefGUID')+13:r.find('TransRefGUID')+13+36]
+        # print('[SENT] {}'.format(guid))
+    except:
+        pass
+        # print('[FAIL] {}'.format(guid))
+    return result
+    # stop = time.time()
+    # print('took {:.2f} sec'.format(stop - start))
+
+
+@app.task(bind=True, default_retry_delay=ONE_HOUR)
+def submit_stp_xml_to_dell(task, submission_id):
+    """
+    Task to submit an STP XML item to Dell for processing
+    """
+
+    submission_service = LookupService('EnrollmentSubmissionService')
+    submission = submission_service.get_submission_by_id(submission_id)
+    log = SubmissionLog()
+    log.enrollment_submission_id = submission_id
+    log.status = SubmissionLog.STATUS_PROCESSING
+    pdf_bytes = generate_pdf(submission.id)
+    enrollment_record = submission.enrollment_applications[0]
+    xml = submission_service.render_enrollment_xml(enrollment_record, 'employee', pdf_bytes)
+    submission.data = xml
+    db.session.add(log)
+
+    try:
+        # submission_service.submit_hi_acc_export_to_dell(submission.data)
+        submission_service.submit_to_dell(submission.data)
+        submission.status = EnrollmentSubmission.STATUS_SUCCESS
+        log.status = SubmissionLog.STATUS_SUCCESS
+        log.message = time.strftime(
+                'STP XML enrollment applications were successfully submitted to Dell on %x at %X %Z.')
+        db.session.commit()
+    except Exception as ex:
+        submission.status = EnrollmentSubmission.STATUS_FAILURE
+        log.status = SubmissionLog.STATUS_FAILURE
+        log.message = 'Error sending STP XML to Dell with message "%s"\n%s' % (ex.message, traceback.format_exc())
+        db.session.commit()
+        # task.retry()
 
 
 @app.task(bind=True, default_retry_delay=FIVE_MINUTES)
