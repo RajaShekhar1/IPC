@@ -24,7 +24,10 @@ def calculate_effective_date(settings, signature_time, enroller_picks_date=None)
                 open_rule = create_rule(effective_date_method)
         if effective_date_method.get('type') == 'ongoing':
             is_ongoing = True
-            ongoing_rule = create_rule(effective_date_method, enroller_picks_date=enroller_picks_date)
+            if enroller_picks_date == "" and effective_date_method.get('method') == 'enroller_selects':
+                ongoing_rule = None
+            else:
+                ongoing_rule = create_rule(effective_date_method)
 
     effective_date_calc = EffectiveDateCalculator(period_start=start_date, period_end=end_date, is_ongoing=is_ongoing,
                                                   open_rule=open_rule, ongoing_rule=ongoing_rule)
