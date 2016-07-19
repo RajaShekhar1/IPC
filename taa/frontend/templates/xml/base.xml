@@ -12,7 +12,7 @@
         <OLifEExtension VendorCode="{{ olife.vendor_code }}" ExtensionCode="{{ olife.extention_code }}">
             <CompanyNumber>{{ olife.company_num }}</CompanyNumber>
             <GroupLifeApplicationCode>{{ olife.app_code }}</GroupLifeApplicationCode>
-            <EffectiveDate>{{ meta.submitted_date }}</EffectiveDate>
+            <EffectiveDate>{{ meta.effective_date }}</EffectiveDate>
         </OLifEExtension>
     </UserAuthRequest>
     <TXLifeRequest PrimaryObjectID="Holding_Primary">
