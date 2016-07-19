@@ -463,7 +463,7 @@ class EnrollmentDataWrap(object):
     def get_applicant_data(self):
         applicants = []
 
-        effective_date = self.enrollment_record.signature_time.strftime("%m/%d/%Y")
+        effective_date = self.enrollment_record.effective_date.strftime("%m/%d/%Y")
         payment_mode = "{}".format(self.case.payment_mode)
 
         if self.did_employee_select_coverage():

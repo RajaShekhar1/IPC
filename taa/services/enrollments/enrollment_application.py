@@ -163,8 +163,11 @@ class EnrollmentApplicationService(DBService):
         enroller_selects = data.get('enrollerSelects')
         effective_date_settings = data.get('effectiveDateSettings')
         enroller_effective_date = data.get('effectiveDate')
-        effective_date = calculate_effective_date(settings=effective_date_settings, signature_time=signature_time,
-                                                  enroller_picks_date=enroller_effective_date)
+        if data['did_decline']:
+            effective_date = None
+        else:
+            effective_date = calculate_effective_date(settings=effective_date_settings, signature_time=signature_time,
+                                                      enroller_picks_date=enroller_effective_date)
 
         if data['employee_beneficiary'] == 'spouse':
             emp_beneficiary_name = u'{} {}'.format(data['spouse']['first'],
@@ -373,6 +376,7 @@ class EnrollmentApplicationService(DBService):
             EnrollmentApplication.case_id.label('case_id'),
             EnrollmentApplication.census_record_id.label('census_record_id'),
             (Agent.first + " " + Agent.last).label('agent_name'),
+            EnrollmentApplication.effective_date.label('effective_date'),
             CaseCensus.employee_first.label('employee_first'),
             CaseCensus.employee_last.label('employee_last'),
             CaseCensus.employee_birthdate.label('employee_birthdate'),
@@ -419,6 +423,7 @@ class EnrollmentApplicationService(DBService):
             date=EnrollmentApplication.signature_time,
             employee_first=CaseCensus.employee_first,
             employee_last=CaseCensus.employee_last,
+            effective_date=EnrollmentApplication.effective_date,
             enrollment_status=EnrollmentApplication.application_status,
             total_premium='total_premium',
             agent_name='agent_name',
@@ -560,6 +565,7 @@ class EnrollmentApplicationService(DBService):
             return None
 
         enrollment_data['enrollment_id'] = enrollment.id
+        enrollment_data['effective_date'] = enrollment.effective_date
 
         enrollment_data[
             'signature_method'] = enrollment.signature_method if enrollment.signature_method else EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN
@@ -879,6 +885,7 @@ class EnrollmentColumn(object):
 enrollment_columns = [
     EnrollmentColumn('signature_time', 'Timestamp', export_date),
     EnrollmentColumn('application_status', 'Status', export_string),
+    EnrollmentColumn('effective_date', 'Effective Date', export_date),
     EnrollmentColumn('agent_code', 'Agent Code', export_string),
     EnrollmentColumn('agent_name', 'Agent Name', export_string),
     EnrollmentColumn('signature_city', 'Signature City', export_string),

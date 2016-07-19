@@ -1275,7 +1275,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.can_activate_case = ko.pureComputed(function () {
     var is_valid = (
-      self.enrollment_periods().length > 0 &&
+      (self.open_enrollment_status() || self.ongoing_enrollment_status()) &&
       self.products().length > 0 &&
       $.trim(self.company_name()) !== "" &&
       $.trim(self.situs_city()) !== "" &&

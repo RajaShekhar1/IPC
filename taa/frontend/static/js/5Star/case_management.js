@@ -96,7 +96,13 @@ var case_management = (function() {
                     },
                     className: "min-breakV"
                 },
-                {"targets":[6], name: "total_premium", "data": function(source) {
+                {"targets": [6], sortable: false, name: "effective_date", "data": function (source) {
+                  console.log(source);
+                  return normalize_date(source.effective_date);
+                  },
+                  className: "min-breakI"
+                },
+                {"targets":[7], name: "total_premium", "data": function(source) {
                     return '$'+source.total_premium;
                     },
                     className: "text-right"

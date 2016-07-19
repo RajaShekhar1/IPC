@@ -35,8 +35,12 @@ ADVANCE_DAYS = 2
 def get_deduction_week(application_date):
     draft_date = get_draft_day(application_date)
     # Calculated week of month rolls over if it exceeds max weeks/month limit
-    week = int(draft_date.day / 7) % MAX_WEEKS_PER_MONTH + 1
+    week = get_week_from_date(draft_date)
     return week
+
+
+def get_week_from_date(draft_date):
+    return int(draft_date.day / 7) % MAX_WEEKS_PER_MONTH + 1
 
 
 def get_draft_day(application_date):

@@ -18,14 +18,14 @@ def calculate_effective_date(settings, signature_time, enroller_picks_date=None)
         if effective_date_method.get('type') == 'open':
             start_date = parse(effective_date_method['enrollment_period']['start_date'])
             end_date = parse(effective_date_method['enrollment_period']['end_date'])
-            if enroller_picks_date == "" and effective_date_method.get('method') == 'enroller_selects':
-                open_rule = None
+            if effective_date_method.get('method') == 'enroller_selects':
+                return parse(enroller_picks_date)
             else:
                 open_rule = create_rule(effective_date_method)
         if effective_date_method.get('type') == 'ongoing':
             is_ongoing = True
-            if enroller_picks_date == "" and effective_date_method.get('method') == 'enroller_selects':
-                ongoing_rule = None
+            if effective_date_method.get('method') == 'enroller_selects':
+                return parse(enroller_picks_date)
             else:
                 ongoing_rule = create_rule(effective_date_method)
 
@@ -89,7 +89,7 @@ class EffectiveDateCalculator(object):
             # Just a date, no ongoing
             if self.period_start > enroll_date or enroll_date > self.period_end:
                 return None
-            return self.open_rule.get_effective_date(enroll_date)
+            return self.open_rule.get_effective_date(enroll_date) if not None else None
 
         elif self.period_start and self.period_end and self.ongoing_rule:
             # Both
