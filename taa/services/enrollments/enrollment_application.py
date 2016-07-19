@@ -160,14 +160,6 @@ class EnrollmentApplicationService(DBService):
         data = self.get_first_wizard_data_record(wizard_data)
         given_sig_time = data.get('time_stamp')
         signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
-        enroller_selects = data.get('enrollerSelects')
-        effective_date_settings = data.get('effectiveDateSettings')
-        enroller_effective_date = data.get('effectiveDate')
-        if data['did_decline']:
-            effective_date = None
-        else:
-            effective_date = calculate_effective_date(settings=effective_date_settings, signature_time=signature_time,
-                                                      enroller_picks_date=enroller_effective_date)
 
         if data['employee_beneficiary'] == 'spouse':
             emp_beneficiary_name = u'{} {}'.format(data['spouse']['first'],
@@ -204,8 +196,6 @@ class EnrollmentApplicationService(DBService):
             agent_id=agent_id,
             method=data['method'],
             payment_mode=data['payment_mode'],
-            # Effective Date
-            effective_date=effective_date,
             # Signing info
             signature_time=signature_time,
             signature_city=data['enrollCity'],
@@ -285,6 +275,17 @@ class EnrollmentApplicationService(DBService):
             all_data = [all_data]
 
         for data in all_data:
+            given_sig_time = data.get('time_stamp')
+            signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
+            enroller_selects = data.get('enrollerSelects')
+            effective_date_settings = data.get('effectiveDateSettings')
+            enroller_effective_date = data.get('effective_date')
+            if data['did_decline']:
+                effective_date = None
+            else:
+                effective_date = calculate_effective_date(settings=effective_date_settings,
+                                                          signature_time=signature_time,
+                                                          enroller_picks_date=enroller_effective_date)
             if data['did_decline']:
                 continue
 
@@ -294,17 +295,20 @@ class EnrollmentApplicationService(DBService):
                 self.coverages_service.create_coverage(
                     enrollment, product, data, data['employee'],
                     data['employee_coverage'],
-                    EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE)
+                    EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE,
+                    effective_date=effective_date)
             if data['spouse_coverage']:
                 self.coverages_service.create_coverage(
                     enrollment, product, data, data['spouse'],
                     data['spouse_coverage'],
-                    EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
+                    EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE,
+                    effective_date=effective_date)
             if data['child_coverages'] and data['child_coverages'][0]:
                 self.coverages_service.create_coverage(
                     enrollment, product, data, data['children'][0],
                     data['child_coverages'][0],
-                    EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
+                    EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD,
+                    effective_date=effective_date)
         db.session.flush()
 
     # Reports
@@ -376,7 +380,7 @@ class EnrollmentApplicationService(DBService):
             EnrollmentApplication.case_id.label('case_id'),
             EnrollmentApplication.census_record_id.label('census_record_id'),
             (Agent.first + " " + Agent.last).label('agent_name'),
-            EnrollmentApplication.effective_date.label('effective_date'),
+            EnrollmentApplicationCoverage.effective_date.label('effective_date'),
             CaseCensus.employee_first.label('employee_first'),
             CaseCensus.employee_last.label('employee_last'),
             CaseCensus.employee_birthdate.label('employee_birthdate'),
@@ -397,7 +401,7 @@ class EnrollmentApplicationService(DBService):
                 )
             ],
             ).where(EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id
-                    ).label('total_premium')
+                    ).correlate(EnrollmentApplication).label('total_premium')
         )
 
         query = query.join(CaseCensus, CaseCensus.id == EnrollmentApplication.census_record_id)
@@ -423,7 +427,7 @@ class EnrollmentApplicationService(DBService):
             date=EnrollmentApplication.signature_time,
             employee_first=CaseCensus.employee_first,
             employee_last=CaseCensus.employee_last,
-            effective_date=EnrollmentApplication.effective_date,
+            effective_date=EnrollmentApplicationCoverage.effective_date,
             enrollment_status=EnrollmentApplication.application_status,
             total_premium='total_premium',
             agent_name='agent_name',
@@ -565,7 +569,6 @@ class EnrollmentApplicationService(DBService):
             return None
 
         enrollment_data['enrollment_id'] = enrollment.id
-        enrollment_data['effective_date'] = enrollment.effective_date
 
         enrollment_data[
             'signature_method'] = enrollment.signature_method if enrollment.signature_method else EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN
@@ -582,7 +585,6 @@ class EnrollmentApplicationService(DBService):
             coverages, EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
         children_coverage = self.find_first_coverage_by_product_for_applicant_type(
             coverages, EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
-
         # Include the calculated total annualized premium also
         total_annual_premium = Decimal('0.00')
 
@@ -618,6 +620,7 @@ class EnrollmentApplicationService(DBService):
                 annualized_premium = ''
                 if applicant_coverages.get(product):
                     applicant_coverage = applicant_coverages[product]
+                    enrollment_data['effective_date'] = applicant_coverage.effective_date
                     if product is not None and (product.is_simple_coverage() or product.is_static_benefit()):
                         coverage = 'Included' if product.is_applicant_covered(applicant_coverage.applicant_type,
                                                                               applicant_coverage.coverage_selection) \
@@ -885,7 +888,6 @@ class EnrollmentColumn(object):
 enrollment_columns = [
     EnrollmentColumn('signature_time', 'Timestamp', export_date),
     EnrollmentColumn('application_status', 'Status', export_string),
-    EnrollmentColumn('effective_date', 'Effective Date', export_date),
     EnrollmentColumn('agent_code', 'Agent Code', export_string),
     EnrollmentColumn('agent_name', 'Agent Name', export_string),
     EnrollmentColumn('signature_city', 'Signature City', export_string),
@@ -911,7 +913,10 @@ enrollment_columns = [
 ]
 
 # Include columns for the coverage/premium information for up to six products
-coverage_columns = [EnrollmentColumn('total_annual_premium', 'Total Annual Premium', export_string)]
+coverage_columns = [
+    EnrollmentColumn('total_annual_premium', 'Total Annual Premium', export_string),
+    EnrollmentColumn('effective_date', 'Effective Date', export_date),
+]
 for product_num in range(1, 6 + 1):
     product_coverage_cols = [
         EnrollmentColumn('product_{}_name'.format(product_num),

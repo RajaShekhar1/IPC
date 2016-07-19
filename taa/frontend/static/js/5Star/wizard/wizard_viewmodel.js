@@ -1973,6 +1973,27 @@ var wizard_viewmodel = (function () {
       return true;
     };
 
+    self.which_enrollment_period = function () {
+      var open = _.find(self.effective_date_settings, {'type': 'open'});
+      var ongoing = _.find(self.effective_date_settings, {'type': 'ongoing'});
+      var in_open = false;
+      var in_ongoing = false;
+      if (typeof open != typeof undefined) {
+        in_open = today_between(normalize_date(open.enrollment_period.start_date), normalize_date(open.enrollment_period.end_date));
+      }
+      if (typeof ongoing != typeof undefined) {
+        if (!in_open) {
+          in_ongoing = true;
+        }
+      }
+      if (in_open) {
+        return open;
+      }
+      else {
+        return ongoing
+      }
+    };
+
     self.show_enroller_select_date = function () {
       var enroller_selects = _.filter(self.effective_date_settings, {'method': 'enroller_selects'});
       if (enroller_selects.length < 1) {
@@ -2042,7 +2063,43 @@ var wizard_viewmodel = (function () {
       }
     };
 
-    self.initialize_enroller_select_date();
+    self.initialize_static_date = function (period) {
+      var static_date = normalize_date(_.get(period, 'static_date'));
+      self.effective_date_input(resolve_static_date(static_date));
+    };
+    
+    self.initialize_day_of_month = function (period) {
+      var day_of_month = _.get(period, 'day_of_month');
+      self.effective_date_input(normalize_date(resolve_day_of_month(day_of_month)));
+    };
+    
+    self.initialize_first_friday = function (period) {
+      var minimum_days = _.get(period, 'first_friday');
+      self.effective_date_input(normalize_date(resolve_first_friday(minimum_days)))
+    };
+
+    self.initialize_effective_date = function () {
+      var period = self.which_enrollment_period();
+
+      switch (period.method) {
+        case 'enroller_selects':
+          self.initialize_enroller_select_date();
+          break;
+        case 'static_date':
+          self.initialize_static_date(period);
+          break;
+        case 'day_of_month':
+          self.initialize_day_of_month(period);
+          break;
+        case 'first_friday':
+          self.initialize_first_friday(period);
+          break;
+      }
+    };
+
+    self.initialize_effective_date();
+
+
     
     self.which_enroller_select_date = function () {
       if (self.show_enroller_select_date()) {

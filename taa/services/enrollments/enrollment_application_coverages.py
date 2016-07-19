@@ -9,7 +9,7 @@ class EnrollmentApplicationCoverageService(DBService):
     __model__ = EnrollmentApplicationCoverage
 
     def create_coverage(self, enrollment, product, data, applicant_data,
-                        applicant_coverage, applicant_type):
+                        applicant_coverage, applicant_type, effective_date=None):
         # Set proper premium
         payment_mode = data.get('payment_mode')
         weekly_premium = None
@@ -46,7 +46,8 @@ class EnrollmentApplicationCoverageService(DBService):
             soh_answers=json.dumps(dict(
                 existing_insurance=data['existing_insurance'],
                 replacing_insurance=data['replacing_insurance'],
-            ))
+            )),
+            effective_date=effective_date
         ))
 
     def get_coverages_for_employee(self, census_record):
