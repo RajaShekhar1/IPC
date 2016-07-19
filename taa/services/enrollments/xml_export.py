@@ -75,14 +75,15 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
     now = datetime.datetime.now()
     submitted_date = now.date().isoformat()
     submitted_time = now.time().isoformat().split('.', 1)[0]
+    effective_date = '2016-07-15'
     if form_for == 'employee':
         enrollee = data['employee']
         enrollee['is_employee'] = True
         enrollee['is_spouse'] = False
         enrollee['is_child'] = False
         enrollee['coverage'] = data['employee_coverage']
-        enrollee['height'] = data['emp_height_inches']
-        enrollee['weight'] = data['emp_weight_pounds']
+        # enrollee['height'] = data['emp_height_inches']
+        # enrollee['weight'] = data['emp_weight_pounds']
         enrollee['spouse_disabled_6_months'] = YESNO[data.get('sp_disabled_6_months', 'N')]
         enrollee['spouse_treated_6_months'] = YESNO[data.get('sp_treated_6_months', 'N')]
     elif form_for == 'spouse':
@@ -92,8 +93,8 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
             enrollee['is_spouse'] = True
             enrollee['is_child'] = False
             enrollee['coverage'] = data['spouse_coverage']
-            enrollee['height'] = data['sp_height_inches']
-            enrollee['weight'] = data['sp_weight_pounds']
+            # enrollee['height'] = data['sp_height_inches']
+            # enrollee['weight'] = data['sp_weight_pounds']
         except KeyError:
             raise ValueError(
                 "Attempted to enroll for spouse, but employee has no "
@@ -106,8 +107,8 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
             enrollee['is_spouse'] = False
             enrollee['is_child'] = True
             enrollee['coverage'] = data['child_coverages'][child_index]
-            enrollee['height'] = None
-            enrollee['weight'] = None
+            # enrollee['height'] = None
+            # enrollee['weight'] = None
         except (KeyError, IndexError):
             raise ValueError(
                 "Attempted to enroll for child #{}, but employee has no such "
@@ -126,18 +127,26 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
     smoker = SMOKER_CODES[enrollee['is_smoker']]
     enrollee['smoker_code'] = smoker['code']
     enrollee['smoker'] = smoker['name']
-    for q in enrollee['soh_questions']:
+    if form_for == 'employee':
+        key = 'employee_soh_questions'
+    elif form_for == 'spouse':
+        key = 'spouse_soh_questions'
+    elif form_for.startswith('child'):
+        child_index = int(form_for[len('child'):])
+        key = 'children_soh_questions'[child_index]
+    # for q in enrollee['soh_questions']:
+    for q in data[key]:
         q['answer'] = YESNO_SOH.get(q['answer'].lower() if q['answer'] is not None
                                     else None)
 
-    # TODO: move this to 5Star app config
     try:
-        is_debug = current_app.config['DEBUG']
+        is_debug = current_app.config['IS_STP_DEBUG']
     except:
         is_debug = True
     vars = {
         'meta': {
             'submitted_at': now,
+            'effective_date': effective_date,
             'submitted_date': submitted_date,
             'submitted_time': submitted_time,
             'trans_type_code': TRANS_TYPE_CODE,
@@ -202,8 +211,8 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
     vars['primary_agent'] = vars['agents'][0]
     vars['primary_agent']['signature_state'] = vars['policy']['enroll_state']
     vars['primary_agent']['signature_state_code'] = STATE_CODES[vars['policy']['enroll_state']]['code']
-    vars['primary_agent']['signature_date'] = data['time_stamp']
-    vars['enrollee']['signature_date'] = data['time_stamp']
+    vars['primary_agent']['signature_date'] = data['application_date']
+    vars['enrollee']['signature_date'] = data['application_date']
 
     # Add primary beneficiarie(s)
     if enrollee['is_child']:
