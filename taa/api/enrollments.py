@@ -134,7 +134,7 @@ def render_batch_item_xml(batch_id, item_id):
     if not item:
         abort(404)
 
-    pdf_bytes = enrollment_submission_service.render_enrollment_pdf(item.enrollment_record)
+    pdf_bytes = enrollment_submission_service.render_enrollment_pdf(item.enrollment_record, is_stp=True)
     zipstream = BytesIO()
     with ZipFile(zipstream, 'w') as zip:
         for form_for in enrollment_submission_service.get_enrollees(item.enrollment_record):
@@ -163,6 +163,24 @@ def generate_enrollment_pdf(enrollment_record_id):
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = 'inline; filename=%s.pdf' % 'enrollment_{}'.format(enrollment.id)
     return response
+
+
+@route(bp, '/records/<int:enrollment_record_id>/xml', methods=['GET'])
+@login_required
+@groups_required(['admins', 'home_office', 'agents'], all=False)
+def generate_enrollment_xml(enrollment_record_id):
+    item = enrollment_application_service.get_or_404(enrollment_record_id)
+    xml = generate_xml(item, 'employee')
+    response = make_response(xml)
+    response.headers['Content-Type'] = 'text/xml'
+    return response
+
+
+def generate_xml(enrollment_record, form_for='employee'):
+    pdf_bytes = enrollment_submission_service.render_enrollment_pdf(
+            enrollment_record)
+    return enrollment_submission_service.render_enrollment_xml(
+            enrollment_record, form_for, pdf_bytes)
 
 
 @route(bp, '/export/acchi/csv/<from_>/<to_>', methods=['GET'])
