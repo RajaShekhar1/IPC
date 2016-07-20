@@ -179,7 +179,7 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
     product = db.relationship('Product')
     # Effective Date
-    effective_date = db.Column(db.DateTime)
+    effective_date = db.Column(db.Date)
     # Applicant type
     APPLICANT_TYPE_EMPLOYEE = u'employee'
     APPLICANT_TYPE_SPOUSE = u'spouse'

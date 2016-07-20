@@ -403,7 +403,8 @@ class EnrollmentApplicationService(DBService):
             ).where(EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id
                     ).correlate(EnrollmentApplication).label('total_premium')
         )
-
+        query = query.join(EnrollmentApplicationCoverage,
+                           EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id)
         query = query.join(CaseCensus, CaseCensus.id == EnrollmentApplication.census_record_id)
         query = query.outerjoin(Agent, Agent.id == EnrollmentApplication.agent_id)
 

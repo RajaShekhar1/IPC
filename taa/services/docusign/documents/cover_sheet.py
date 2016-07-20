@@ -281,7 +281,7 @@ class CoverSheetAttachment(PDFAttachment):
     def draw_legal_text(self):
 
         return [
-            Paragraph("<font size='8'>*</font> <font size='9'>(Actual amounts may very slightly due to rounding)</font>", small_style),
+            Paragraph("<font size='8'>*</font> <font size='9'>(Actual amounts may vary slightly due to rounding)</font>", small_style),
             Spacer(0, .5 * inch),
             Paragraph("""Please take a moment to review and confirm that these elections are correct and that the individuals you wish to have covered under these plans are noted above.  This enrollment confirmation is not a replacement of any policies or certificates of coverage, which will be delivered either electronically or via US Mail service to the address noted at the top of this form.  The summary above is for informational purposes only and any applications may be subject to underwriting, pursuant to the terms of the Plan.""",
                       small_style),

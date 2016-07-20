@@ -244,6 +244,12 @@ class CaseOngoingEnrollmentPeriod(CaseEnrollmentPeriod):
         data['ongoing_enrollment_type'] = self.case.ongoing_enrollment_type
         return data
 
+    def get_start_date(self):
+        return None
+
+    def get_end_date(self):
+        return None
+
     def currently_active(self):
         return True
 

@@ -1,5 +1,7 @@
+import json
 from datetime import datetime
 
+from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 from taa.services.docusign.service import DocuSignServerTemplate, DocuSignTextTab, DocuSignRadioTab
 from taa.services.docusign.DocuSign_config import get_bank_draft_template_id
@@ -107,16 +109,17 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
     def get_draft_day(self):
         from taa.services.enrollments.paylogix import get_week_from_date
 
+        standardized_data = json.loads(self.data.enrollment_record.standardized_data)
         if self.data.case.requires_paylogix_export:
-            if self.data.enrollment_record.effective_date:
-                week = get_week_from_date(self.data.enrollment_record.effective_date)
+            if standardized_data[0].get('effective_date'):
+                effective_date = parse(standardized_data[0].get('effective_date'))
+                week = get_week_from_date(effective_date)
                 return self.format_deduction_week(week)
             else:
                 date = self.data.enrollment_record.signature_time
                 return self.get_paylogix_draft_day(date)
 
-        return self.data.enrollment_record.effective_date.day
-
+        return parse(standardized_data[0].get('effective_date')).day
 
     def get_paylogix_draft_day(self, date):
         from taa.services.enrollments.paylogix import get_deduction_week
