@@ -380,7 +380,6 @@ class EnrollmentApplicationService(DBService):
             EnrollmentApplication.case_id.label('case_id'),
             EnrollmentApplication.census_record_id.label('census_record_id'),
             (Agent.first + " " + Agent.last).label('agent_name'),
-            EnrollmentApplicationCoverage.effective_date.label('effective_date'),
             CaseCensus.employee_first.label('employee_first'),
             CaseCensus.employee_last.label('employee_last'),
             CaseCensus.employee_birthdate.label('employee_birthdate'),
@@ -401,10 +400,12 @@ class EnrollmentApplicationService(DBService):
                 )
             ],
             ).where(EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id
-                    ).correlate(EnrollmentApplication).label('total_premium')
+                    ).correlate(EnrollmentApplication).label('total_premium'),
+            db.select(
+                [EnrollmentApplicationCoverage.effective_date]
+            ).where(EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id
+                    ).limit(1).correlate(EnrollmentApplication).label('effective_date'),
         )
-        query = query.join(EnrollmentApplicationCoverage,
-                           EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id)
         query = query.join(CaseCensus, CaseCensus.id == EnrollmentApplication.census_record_id)
         query = query.outerjoin(Agent, Agent.id == EnrollmentApplication.agent_id)
 
