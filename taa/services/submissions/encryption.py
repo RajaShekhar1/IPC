@@ -9,9 +9,6 @@ class PGPEncryptionService(object):
     def __init__(self):
         self.__gpg = gnupg.GPG(binary=config_defaults.GNUPG_DIR)
 
-        self._pgp_add_key(self.get_dell_key().key)
-        self._pgp_add_key(self.get_paylogix_key().key)
-    
     def get_dell_key(self):
         return PGPEncryptionKey(config_defaults.DELL_PGP_KEY, config_defaults.DELL_FTP_PGP_KEY_ID)
     
@@ -19,6 +16,10 @@ class PGPEncryptionService(object):
         return PGPEncryptionKey(config_defaults.PAYLOGIX_PGP_KEY, config_defaults.PAYLOGIX_PGP_KEY_ID)
     
     def encrypt(self, data, key):
+        # Add our known keys before attempting encryption
+        self._pgp_add_key(self.get_dell_key().key)
+        self._pgp_add_key(self.get_paylogix_key().key)
+        
         return unicode(self.__gpg.encrypt(data, key.key_id))
 
     def _pgp_add_key(self, key):
