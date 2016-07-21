@@ -527,6 +527,9 @@ def fix_missing_address_bug(wizard_results):
 
 
 def process_wizard_submission(case, wizard_results):
+
+    # TODO: send email to user if checked
+
     # Standardize the wizard data for submission processing
     standardized_data = enrollment_import_service.standardize_wizard_data(wizard_results)
     enrollment_data = EnrollmentDataWrap(standardized_data[0], case)
@@ -535,6 +538,11 @@ def process_wizard_submission(case, wizard_results):
     census_record = get_or_create_census_record(case, enrollment_data)
     enrollment_application = get_or_create_enrollment(case, census_record, standardized_data, wizard_results)
     db.session.commit()
+
+    if wizard_results.get('send_summary_email'):
+        name = standardized_data[0]['employee']['first'] + ' ' + standardized_data[0]['employee']['last']
+        summary_email_service = LookupService('SummaryEmailService')
+        summary_email_service.send(enrollment_application, name)
 
     submission_service = LookupService('EnrollmentSubmissionService')
     submission_service.create_submissions_for_application(enrollment_application)

@@ -20,7 +20,7 @@ enrollment_application_submission_association_table = db.Table('enrollment_appli
 
 
 class EnrollmentSerializer(JsonSerializable):
-    __json_hidden__ = ['census_record', 'case', 'enrollment_submissions']
+    __json_hidden__ = ['census_record', 'case', 'enrollment_submissions', 'emails']
 
 
 class EnrollmentApplication(EnrollmentSerializer, db.Model):
@@ -159,6 +159,7 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
 
     def did_sign_in_wizard(self):
         return self.signature_method == self.SIGNATURE_METHOD_WIZARD
+
 
 class EnrollmentApplicationCoverageSerializer(JsonSerializable):
     __json_hidden__ = ['enrollment']
@@ -353,6 +354,30 @@ CaseCensus.sent_email_count = db.column_property(
         SelfEnrollmentEmailLog.status == SelfEnrollmentEmailLog.STATUS_PENDING,
     )).correlate_except(SelfEnrollmentEmailLog)
 )
+
+
+class SummaryEmailLog(db.Model):
+    __tablename__ = 'summary_confirmation_email_log'
+
+    id = db.Column(db.Integer, primary_key=True)
+    enrollment_application_id = db.Column(db.Integer, db.ForeignKey('enrollment_applications.id'),
+                                          nullable=False, index=True)
+    sent_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
+
+    is_success = db.Column(db.Boolean, nullable=False)
+
+    email_to_address = db.Column(db.Unicode)
+    email_to_name = db.Column(db.Unicode)
+    email_body = db.Column(db.Unicode)
+
+    status = db.Column(db.Unicode(16), index=True)
+
+    STATUS_PENDING = u'pending'
+    STATUS_FAILURE = u'failure'
+    STATUS_SUCCESS = u'success'
+
+    enrollment_application = db.relationship('EnrollmentApplication', backref='emails')
+
 
 
 def get_batch_case_id(batch):
