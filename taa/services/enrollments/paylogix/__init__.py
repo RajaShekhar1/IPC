@@ -69,6 +69,7 @@ def create_paylogix_csv(applications):
 
     headers = [
         'Signature Time',
+        'Effective Date',
         'EE SSN',
         'EE Last Name',
         'EE First Name',
@@ -128,6 +129,7 @@ def create_paylogix_csv(applications):
 
                 row = [
                     application.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z'),
+                    data_wrap.get_effective_date(),
                     application.census_record.employee_ssn,
                     application.census_record.employee_last,
                     application.census_record.employee_first,

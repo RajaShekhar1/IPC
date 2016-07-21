@@ -460,6 +460,12 @@ class EnrollmentDataWrap(object):
                 return ''
         return 'yes' if self.data['is_employee_actively_at_work'] else 'no'
 
+    def get_effective_date(self):
+        if self.data.get('effective_date'):
+            return dateutil_parse(self.data.get('effective_date')).strftime('%Y-%m-%dT%H:%M:%S%z')
+        else:
+            return self.enrollment_record.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z')
+
     def get_applicant_data(self):
         applicants = []
 
