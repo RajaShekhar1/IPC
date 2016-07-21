@@ -1,46 +1,56 @@
+from ftplib import FTP
 from io import StringIO
 
-import gnupg
-from ftplib import FTP
-from taa.config_defaults import GNUPG_DIR, DELL_PGP_KEY, PAYLOGIX_PGP_KEY
+from taa.config_defaults import PAYLOGIX_FTP_HOSTNAME, PAYLOGIX_FTP_USERNAME, \
+    PAYLOGIX_FTP_PASSWORD, PAYLOGIX_FTP_DIRECTORY
+from taa.services import RequiredFeature
 
 
-def pgp_add_key(pgp, key):
-    import_result = pgp.import_keys(key)
-    # noinspection PyProtectedMember
-    if len(import_result.results) == 0 or not all(
-            (r.get('status').strip() in import_result._ok_reason.values() for r in import_result.results)):
-        raise Exception
+class FtpServer(object):
+    def __init__(self, host, username, password, directory=None, pgp_encryption_key=None):
+        self.host = host
+        self.username = username
+        self.password = password
+        self.directory = directory
+        # If provided, we want to encrypt any data we send to this server
+        self.pgp_encryption_key = pgp_encryption_key
 
 
 class FtpService(object):
+    "Transfer enrollment data to a remote delivery location"
 
-    def __initialize_gpg(self):
-        if not hasattr(self, '__gpg'):
-            self.__gpg = gnupg.GPG(binary=GNUPG_DIR)
-            pgp_add_key(self.__gpg, DELL_PGP_KEY)
-            pgp_add_key(self.__gpg, PAYLOGIX_PGP_KEY)
+    encryption_service = RequiredFeature("PGPEncryptionService")
 
-    def encrypt(self, data, key_id):
-        self.__initialize_gpg()
-        return self.__gpg.encrypt(data, key_id)
+    def get_paylogix_server(self):
+        return FtpServer(PAYLOGIX_FTP_HOSTNAME, PAYLOGIX_FTP_USERNAME, PAYLOGIX_FTP_PASSWORD,
+                                directory=PAYLOGIX_FTP_DIRECTORY,
+                                key=self.encryption_service.get_paylogix_key(),
+                                )
 
-    def send_file(self, hostname, username, password, filename, data, directory=None, key_id=None):
+    def send_file(self, ftp_server, filename, data):
         """
-        Send a file via FTP to the specified hostname, and optionally directory.
-        If key_id is present the file stored on the server will be encrypted the key that key_id references.
+        Send a file via FTP to the given server.
+        If the server requires encryption, first encrypt the data.
         """
-        #ftp = FTP(host=hostname, user=username, passwd=password)
+
         ftp = FTP()
-        ftp.set_pasv(False)
-        ftp.set_debuglevel(5)
-        ftp.connect(host=hostname)
-        ftp.login(username, password)
 
-        if directory:
-            ftp.cwd(directory)
-        if key_id:
-            data = StringIO(unicode(self.encrypt(data, key_id)))
-        
+        # Heroku does not allow active connections, use passive transfers.
+        ftp.set_pasv(True)
+
+        # This prints helpful debug output to the logs.
+        ftp.set_debuglevel(5)
+
+        ftp.connect(host=ftp_server.host)
+        ftp.login(ftp_server.username, ftp_server.password)
+
+        if ftp_server.directory:
+            ftp.cwd(ftp_server.directory)
+
+        # Encrypt the data if necessary.
+        if ftp_server.pgp_encryption_key:
+            data = StringIO(self.encryption_service.encrypt(data, ftp_server.pgp_encryption_key))
+
+        # Transfer the data using the given filename.
         ftp.storlines('STOR {0}'.format(filename), data)
         ftp.close()

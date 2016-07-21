@@ -17,18 +17,13 @@ from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSi
 from taa.services.enrollments.models import EnrollmentImportBatchItem, EnrollmentSubmission, SubmissionLog, \
     EnrollmentApplication
 from taa.services import LookupService
-from ftplib import FTP
-from taa.config_defaults import DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, GNUPG_DIR, DELL_PGP_KEY, \
-    DELL_FTP_WORKING_DIRECTORY, DELL_FTP_PGP_KEY_ID
+
 
 
 class EnrollmentSubmissionService(object):
     enrollment_application_service = RequiredFeature('EnrollmentApplicationService')
     enrollment_batch_service = RequiredFeature('EnrollmentImportBatchService')
     docusign_service = RequiredFeature('DocuSignService')
-
-    __gpg = None
-    """:type: gnupg.GPG"""
 
     def submit_wizard_enrollment(self, enrollment_application):
         import taa.tasks as tasks
@@ -301,39 +296,13 @@ class EnrollmentSubmissionService(object):
 
         return submissions
 
-    def __initialize_pgp_key(self, gpg):
-        """
-        Initialize the GPG instance with out public key
-        """
-        import_result = gpg.import_keys(DELL_PGP_KEY)
-        if len(import_result.results) == 0 or not all(
-                (r.get('status').strip() in import_result._ok_reason.values() for r in import_result.results)):
-            raise Exception
-
-    def __initialize_gpg(self):
-        self.__gpg = gnupg.GPG(binary=GNUPG_DIR)
-        self.__initialize_pgp_key(self.__gpg)
-
-    def pgp_encrypt_string(self, data, recipient_id=DELL_FTP_PGP_KEY_ID):
-        """
-        Encrypt the given data with PGP and return the encrypted result
-        """
-
-        if self.__gpg is None:
-            self.__initialize_gpg()
-        try:
-            return self.__gpg.encrypt(data, recipient_id)
-        except Exception as exception:
-            return None
-
     def submit_hi_acc_export_to_dell(self, csv_data):
         """
         Submit csv data to dell for processing
         """
-        ftp_service = LookupService('FtpService')
+        sftp_service = LookupService('FtpService')
         filename = '5Star-%s.csv.pgp' % datetime.now().strftime('%Y-%m-%d')
-        ftp_service.send_file(DELL_FTP_HOSTNAME, DELL_FTP_USERNAME, DELL_FTP_PASSWORD, filename, csv_data,
-                              directory=DELL_FTP_WORKING_DIRECTORY, key_id=DELL_FTP_PGP_KEY_ID)
+        sftp_service.send_file(sftp_service.get_dell_server(), filename, csv_data)
 
     def get_submission_by_id(self, submission_id):
         """
