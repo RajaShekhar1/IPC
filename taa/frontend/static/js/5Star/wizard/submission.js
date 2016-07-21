@@ -172,6 +172,9 @@ function build_wizard_results_for_product_coverage(product_cov) {
 
     identityToken: root.identityToken(),
     identityType: root.identityType(),
+    
+    send_summary_email: root.email_summary_sheet_confirmed(),
+    summaryEmail: root.get_summary_email(),
 
     employee: root.employee().serialize_data(),
     spouse: root.spouse().serialize_data(),
