@@ -4,8 +4,6 @@ from taa import config_defaults
 
 
 class PGPEncryptionService(object):
-
-
     def __init__(self):
         self.__gpg = gnupg.GPG(binary=config_defaults.GNUPG_DIR)
 
