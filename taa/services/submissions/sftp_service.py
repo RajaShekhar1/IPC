@@ -36,13 +36,16 @@ class SFTPService(object):
         entry = paramiko.hostkeys.HostKeyEntry.from_line(sftp_server.hostkeyline)
         key_type = sftp_server.hostkeyline.split()[1] if len(sftp_server.hostkeyline.split()) > 1 else 'ssh-dss'
         opts.hostkeys.add(entry.hostnames[0], key_type, entry.key)
+
+        # Encrypt the data if required.
+        if sftp_server.pgp_encryption_key:
+            data = self.encryption_service.encrypt(data, sftp_server.pgp_encryption_key)
+
         with pysftp.Connection(sftp_server.hostname, username=sftp_server.username, password=sftp_server.password, cnopts=opts) as sftp:
-            with sftp.cd(sftp_server.directory):
-
-                # Encrypt the data if required.
-                if sftp_server.pgp_encryption_key:
-                    data = self.encryption_service.encrypt(data, sftp_server.pgp_encryption_key)
-
-                # Upload the data as a stream and name it using the given filename.
+            
+            if sftp_server.directory:
+                with sftp.cd(sftp_server.directory):
+                    # Upload the data as a stream and name it using the given filename.
+                    sftp.putfo(StringIO(data), filename)
+            else:
                 sftp.putfo(StringIO(data), filename)
-
