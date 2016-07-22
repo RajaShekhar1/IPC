@@ -129,6 +129,17 @@ class EnrollmentSubmissionService(object):
         writer.write(output)
         return output.getvalue()
 
+    def get_summary_pdf(self, enrollment_application):
+        """
+        gets pdf from enrollment submission
+        """
+        import base64
+        submission_processor = EnrollmentSubmissionProcessor()
+        pdf_data = submission_processor.generate_cover_sheet(enrollment_application).generate_pdf_bytes()
+        data = base64.standard_b64encode(pdf_data)
+
+        return data
+
     def _mark_item_processing(self, batch_item):
         batch_item.processed_time = datetime.now()
         batch_item.status = EnrollmentImportBatchItem.STATUS_PROCESSING
@@ -504,7 +515,7 @@ class EnrollmentSubmissionProcessor(object):
 
         return CoverSheetAttachment([emp_recip], EnrollmentDataWrap(all_product_data[0], case,
                                                                     enrollment_record=enrollment_application),
-                                    all_product_data).generate()
+                                    all_product_data)
 
     def generate_document_components(self, enrollment_application):
         """Used for generating PDFs from enrollments signed in the wizard, outside of docusign"""

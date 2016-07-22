@@ -1,18 +1,17 @@
-from flask import abort, render_template
+from flask import render_template
 import requests
 import json
 
-from taa.services.submissions.enrollment_submission import EnrollmentSubmissionProcessor
 from taa.core import DBService, db
 from models import SummaryEmailLog
-import taa.config_defaults
 from taa.services import RequiredFeature, LookupService
+import taa.config_defaults
 
 
 class SummaryEmailService(DBService):
     __model__ = SummaryEmailLog
 
-    enrollment_application_service = RequiredFeature('EnrollmentApplicationService')
+    enrollment_submission_service = RequiredFeature('EnrollmentSubmissionService')
 
     def delete_emails_for_enrollment(self, enrollment):
         for email in enrollment.emails:
@@ -22,29 +21,20 @@ class SummaryEmailService(DBService):
         case = enrollment_application.case
         data = json.loads(enrollment_application.standardized_data)
         name = data[0]['employee']['first'] + ' ' + data[0]['employee']['last']
-        hostname = taa.config_defaults.HOSTNAME
+        host = taa.config_defaults.HOSTNAME+'/'
         greeting = self.build_email_greeting(name)
 
         return render_template(
             "emails/benefit_notice_email.html",
             greeting=greeting,
             company_name=case.company_name,
-            host=hostname,
+            host=host,
         )
-
-    def generate_cover_sheet(self, enrollment_application):
-        processor = EnrollmentSubmissionProcessor()
-        return processor.generate_cover_sheet(enrollment_application)
 
     def build_email_greeting(self, name):
         return u'Hello {},'.format(name)
 
-    def _send_email(self, enrollment_application, to_email, to_name, body):
-
-        from_email = taa.config_defaults.EMAIL_FROM_ADDRESS
-        from_name = u'5Star Enrollment'
-        subject = u'5Star Summary of Benefits'
-        pdf = self.generate_cover_sheet(enrollment_application)
+    def _send_email(self, to_email, to_name, body, from_name, from_email, subject, pdf):
 
         mailer = LookupService('MailerService')
 
@@ -57,25 +47,28 @@ class SummaryEmailService(DBService):
                 html=body,
                 attachments=[{
                     'type': 'application/pdf',
-                    'name': 'enrollment_benefits.pdf',
-                    'filename': pdf
+                    'name': 'benefit_summary.pdf',
+                    'data': pdf
                 }]
             )
         except mailer.Error as e:
-            print("Exception sending email: %s - %s; to %s" % (e.__class__, e, to_email))
-            return False
+            print ("Exception sending email: %s - %s; to %s" % (e.__class__, e, to_email))
+            message = "Exception sending email: %s - %s; to %s" % (e.__class__, e, to_email)
+            return False, message
         except requests.exceptions.HTTPError as e:
-            print("Exception sending email: %s - %s; to %s" % (e.__class__, e, to_email))
-            return False
+            print ("Exception sending email: %s - %s; to %s" % (e.__class__, e, to_email))
+            message = "Exception sending email: %s - %s; to %s" % (e.__class__, e, to_email)
+            return False, message
         except Exception as e:
-            print ("Exception sending email: %s - %s" % (e.__class__, e))
-            return False
+            print ("Exception sending email: %s - %s; to %s" % (e.__class__, e, to_email))
+            message = "Exception sending email: %s - %s; to %s" % (e.__class__, e, to_email)
+            return False, message
 
-        return True
+        return True, None
 
     def send(self, enrollment_application, **kwargs):
 
-        success = self._send_email(enrollment_application, **kwargs)
+        success, message = self._send_email(**kwargs)
         if success:
             status = SummaryEmailLog.STATUS_SUCCESS
         else:
@@ -87,7 +80,8 @@ class SummaryEmailService(DBService):
             email_to_name=kwargs.get('to_name'),
             email_body=kwargs.get('body'),
             is_success=success,
-            status=status
+            status=status,
+            error_message=message
         ))
 
         db.session.commit()
