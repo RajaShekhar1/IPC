@@ -23,14 +23,13 @@ class SummaryEmailService(DBService):
         data = json.loads(enrollment_application.standardized_data)
         name = data[0]['employee']['first'] + ' ' + data[0]['employee']['last']
         hostname = taa.config_defaults.HOSTNAME
-        pdf = self.generate_cover_sheet(enrollment_application)
+        greeting = self.build_email_greeting(name)
 
         return render_template(
             "emails/benefit_notice_email.html",
-            greeting=self.build_email_greeting(name),
+            greeting=greeting,
             company_name=case.company_name,
             host=hostname,
-            pdf=pdf
         )
 
     def generate_cover_sheet(self, enrollment_application):
@@ -40,16 +39,27 @@ class SummaryEmailService(DBService):
     def build_email_greeting(self, name):
         return u'Hello {},'.format(name)
 
-    def _send_email(self, from_email, from_name, to_email, to_name, subject, enrollment_application):
+    def _send_email(self, enrollment_application, to_email, to_name, body):
+
+        from_email = taa.config_defaults.EMAIL_FROM_ADDRESS
+        from_name = u'5Star Enrollment'
+        subject = u'5Star Summary of Benefits'
+        pdf = self.generate_cover_sheet(enrollment_application)
 
         mailer = LookupService('MailerService')
+
         try:
             mailer.send_email(
                 to=["{} <{}>".format(to_name, to_email)],
                 from_email=from_email,
                 from_name=from_name,
                 subject=subject,
-                html=self.generate_email_body(enrollment_application=enrollment_application),
+                html=body,
+                attachments=[{
+                    'type': 'application/pdf',
+                    'name': 'enrollment_benefits.pdf',
+                    'filename': pdf
+                }]
             )
         except mailer.Error as e:
             print("Exception sending email: %s - %s; to %s" % (e.__class__, e, to_email))
@@ -65,7 +75,7 @@ class SummaryEmailService(DBService):
 
     def send(self, enrollment_application, **kwargs):
 
-        success = self._send_email( **kwargs)
+        success = self._send_email(enrollment_application, **kwargs)
         if success:
             status = SummaryEmailLog.STATUS_SUCCESS
         else:

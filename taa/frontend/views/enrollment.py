@@ -539,10 +539,13 @@ def process_wizard_submission(case, wizard_results):
     enrollment_application = get_or_create_enrollment(case, census_record, standardized_data, wizard_results)
     db.session.commit()
 
-    if wizard_results.get('send_summary_email'):
-        name = standardized_data[0]['employee']['first'] + ' ' + standardized_data[0]['employee']['last']
+    if wizard_results[0].get('send_summary_email'):
+        to_name = standardized_data[0]['employee']['first'] + ' ' + standardized_data[0]['employee']['last']
+        to_email = wizard_results[0].get('summaryEmail')
         summary_email_service = LookupService('SummaryEmailService')
-        summary_email_service.send(enrollment_application, name)
+        """:type: taa.services.enrollments.SummaryEmailService"""
+        body = summary_email_service.generate_email_body(enrollment_application)
+        summary_email_service.send(enrollment_application, to_email=to_email, to_name=to_name, body=body)
 
     submission_service = LookupService('EnrollmentSubmissionService')
     submission_service.create_submissions_for_application(enrollment_application)

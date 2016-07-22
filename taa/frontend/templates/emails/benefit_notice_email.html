@@ -1,105 +1,96 @@
-<!DOCTYPE html>
-<html>
-  <head lang="en">
-    <meta charset="UTF-8">
-    <title></title>
-  </head>
-  <body>
+    <!DOCTYPE html>
+    <html>
+      <head lang="en">
+        <meta charset="UTF-8">
+        <title></title>
+      </head>
+      <body>
 
-    <div style="margin:10px;font-family:arial,helvetica,sans-serif">
+        <div style="margin:10px;font-family:arial,helvetica,sans-serif">
 
-      <table border="0" cellspacing="0" cellpadding="15" width="600" style="border:1px solid rgb(204,204,204);margin:10px;border-collapse:collapse">
-        <tbody>
-          <tr>
+          <table border="0" cellspacing="0" cellpadding="15" width="600" style="border:1px solid rgb(204,204,204);margin:10px;border-collapse:collapse">
+            <tbody>
+              <tr>
 
-            <td style="line-height:42px">
-              <table border="0" cellspacing="0" cellpadding="0" width="100%">
-                <tbody>
-                  <tr style="text-align:center;">
-                   <td>
-                    <img style="border:none" src="{{ image }}/frontend/static/img/5Star-email-banner_centered.jpg"
-                         alt="Company Logo">
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <table border="0" cellspacing="0" cellpadding="0" width="100%">
-                <tbody>
-                  <tr>
-                    <td style="font-size:16px;color:rgb(30,76,161);font-family:arial;font-weight:bold;border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;">
+                <td style="line-height:42px">
+                  <table border="0" cellspacing="0" cellpadding="0" width="100%">
+                    <tbody>
+                      <tr style="text-align:center;">
+                       <td>
+                        <img style="border:none" src="{{ image }}/frontend/static/img/5Star-email-banner_centered.jpg"
+                             alt="Company Logo">
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <table border="0" cellspacing="0" cellpadding="0" width="100%">
+                    <tbody>
+                      <tr>
+                        <td style="font-size:16px;color:rgb(30,76,161);font-family:arial;font-weight:bold;border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;">
+                        <br>
+                          From:
+                        </td>
+                        <td style="border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;"></td>
+                        <td style="border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;">
+                        <br>
+                          <div style="font-size:16px;color:rgb(0,0,1);font-family:arial;font-weight:bold">5Star Enrollment
+                          </div>
+                          <div style="font-size:16px;color:rgb(0,0,0);font-family:arial">
+
+                            5Star Life Insurance Company
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+
+
+                  <p style="font-size:12px;margin-bottom:1em;color:rgb(0,0,0);font-family:arial;border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;">
                     <br>
-                      From:
-                    </td>
-                    <td style="border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;"></td>
-                    <td style="border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;">
+                    {{ greeting }}
                     <br>
-                      <div style="font-size:16px;color:rgb(0,0,1);font-family:arial;font-weight:bold">5Star Enrollment
-                      </div>
-                      <div style="font-size:16px;color:rgb(0,0,0);font-family:arial">
-
-                        5Star Life Insurance Company
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    <br>
 
 
+                    Thank you for selecting 5Star Life Insurance. We welcome the opportunity to provide you with this valuable coverage. Enclosed is a Summary of Benefits from your recent enrollment..
+                  </p>
 
-              <p style="font-size:12px;margin-bottom:1em;color:rgb(0,0,0);font-family:arial;border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;">
-                <br>
-                {{ greeting }}
-                <br>
-                <br>
+                  <p style="font-size:12px;margin-bottom:1em;color:rgb(0,0,0) !important;font-family:arial !important;">
+                  If you need any help or have any questions with this coverage, please contact your enrollment professional.
+                  </p>
+                  <p style="font-size:12px;margin-bottom:1em;color:rgb(0,0,0) !important;font-family:arial !important;">
+                  We greatly appreciate your business and look forward to serving you.
+                  </p>
 
+              </tr>
+              <tr>
+                <td style="background-color:rgb(255,255,255);border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;border-bottom-color:rgb(204,204,204);border-bottom-style:solid;border-bottom-width:1px">
+                  <p style="font-size:12px;margin-bottom:1em;color:rgb(0,0,0);font-family:arial">
 
-                Thank you for selecting 5Star Life Insurance. We welcome the opportunity to provide you with this valuable coverage. Enclosed is a Summary of Benefits from your recent enrollment..
-              </p>
+                  This page is solely intended for the applicant of {{ company_name }} for insurance benefits. If you are not the intended recipient, you are hereby notified that any use, dissemination, distribution, or copying of the information contained herein is strictly prohibited.
 
-              <p style="font-size:12px;margin-bottom:1em;color:rgb(0,0,0) !important;font-family:arial !important;">
-              If you need any help or have any questions with this coverage, please contact your enrollment professional.
-              </p>
-              <p style="font-size:12px;margin-bottom:1em;color:rgb(0,0,0) !important;font-family:arial !important;">
-              We greatly appreciate your business and look forward to serving you.
-              </p>
+                  </p>
+                </td>
+              </tr>
 
-          </tr>
-          <tr>
-            <td align="center"
-                style="background-color:rgb(255,255,255);border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;">
+            </tbody>
+          </table>
+          <span>
+            <span>
+              <span></span>
+            </span>
+          </span>
+        </div>
 
-              <a style="font-size:16px;color:rgb(0,0,1);background-color:rgb(255,196,35);border:1px solid rgb(231,178,54);border-top-left-radius:5px;border-top-right-radius:5px;border-bottom-right-radius:5px;border-bottom-left-radius:5px;display:inline-block;font-family:arial;font-weight:bold;line-height:40px;min-height:40px;width:250px;text-align:center;text-decoration:none"
-                 href="{{ pdf }}"
-                 target="_blank">Enrollment Summary</a></td>
+        </div>
+        <br>
+        </div>
 
-          </tr>
-          <tr>
-            <td style="background-color:rgb(255,255,255);border-top-color:rgb(204,204,204);border-top-style:solid;border-top-width:1px;border-bottom-color:rgb(204,204,204);border-bottom-style:solid;border-bottom-width:1px">
-              <p style="font-size:12px;margin-bottom:1em;color:rgb(0,0,0);font-family:arial">
-
-              This page is solely intended for the applicants of {{ company_name }} for insurance benefits. If you are not the intended recipient, you are hereby notified that any use, dissemination, distribution, or copying of the information contained herein is strictly prohibited.
-
-              </p>
-            </td>
-          </tr>
-
-        </tbody>
-      </table>
-      <span>
-        <span>
-          <span></span>
-        </span>
-      </span>
-    </div>
-
-    </div>
-    <br>
-    </div>
-
-    </div>
-  </body>
-</html>
+        </div>
+      </body>
+    </html>

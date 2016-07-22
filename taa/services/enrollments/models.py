@@ -355,8 +355,11 @@ CaseCensus.sent_email_count = db.column_property(
     )).correlate_except(SelfEnrollmentEmailLog)
 )
 
+class SummaryEmailSerializer(JsonSerializable):
+    __json_hidden__ = None
 
-class SummaryEmailLog(db.Model):
+
+class SummaryEmailLog(SummaryEmailSerializer, db.Model):
     __tablename__ = 'summary_confirmation_email_log'
 
     id = db.Column(db.Integer, primary_key=True)
