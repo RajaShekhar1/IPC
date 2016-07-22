@@ -57,6 +57,25 @@ def _update_log(email_log, success):
 FIVE_MINUTES = 5 * 60
 
 
+@app.task(bind=True)
+def send_summary_email(task, standardized_data, wizard_results, enrollment_application_id):
+    from taa.models import SummaryEmailLog
+    enrollment_application_service = LookupService("EnrollmentApplicationService")
+    enrollment_application = enrollment_application_service.get(enrollment_application_id)
+    email_summary_service = LookupService("SummaryEmailService")
+    record, status = email_summary_service.send_summary_email(
+        standardized_data=standardized_data,
+        wizard_results=wizard_results,
+        enrollment_application=enrollment_application
+    )
+    if status == SummaryEmailLog.STATUS_SUCCESS:
+        record.is_success = True
+        record.status = SummaryEmailLog.STATUS_SUCCESS
+    else:
+        record.status = SummaryEmailLog.STATUS_FAILURE
+    db.session.commit()
+
+
 @app.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def process_enrollment_upload(task, batch_id):
     submission_service = LookupService("EnrollmentSubmissionService")
