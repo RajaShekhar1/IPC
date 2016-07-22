@@ -539,8 +539,8 @@ def process_wizard_submission(case, wizard_results):
     db.session.commit()
 
     if wizard_results[0].get('send_summary_email'):
-        summary_email_service = LookupService('SummaryEmailService')
-        summary_email_service.send_summary_email(standardized_data, wizard_results, enrollment_application)
+        from taa import tasks
+        tasks.send_summary_email(standardized_data, wizard_results, enrollment_application)
 
     submission_service = LookupService('EnrollmentSubmissionService')
     submission_service.create_submissions_for_application(enrollment_application)

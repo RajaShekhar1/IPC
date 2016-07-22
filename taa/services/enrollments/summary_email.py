@@ -68,23 +68,23 @@ class SummaryEmailService(DBService):
 
     def send(self, enrollment_application, **kwargs):
 
-        success, message = self._send_email(**kwargs)
-        if success:
-            status = SummaryEmailLog.STATUS_SUCCESS
-        else:
-            status = SummaryEmailLog.STATUS_FAILURE
-
         email_record = self.create(**dict(
             enrollment_application_id=enrollment_application.id,
             email_to_address=kwargs.get('to_email'),
             email_to_name=kwargs.get('to_name'),
             email_body=kwargs.get('body'),
-            is_success=success,
-            status=status,
+            is_success=False,
+            status=SummaryEmailLog.STATUS_PENDING,
         ))
 
+        success, message = self._send_email(**kwargs)
+        if success:
+            status = SummaryEmailLog.STATUS_SUCCESS
+        else:
+            status = SummaryEmailLog.STATUS_FAILURE
         db.session.commit()
-        return success
+
+        return email_record, status
 
     def queue_email(self, email_log_id):
         "Sends a pending email log to the queue for sending"
@@ -114,5 +114,6 @@ class SummaryEmailService(DBService):
         body = self.generate_email_body(enrollment_application)
         enrollment_submission_service = LookupService('EnrollmentSubmissionService')
         pdf = enrollment_submission_service.get_summary_pdf(enrollment_application)
-        self.send(enrollment_application, to_email=to_email, to_name=to_name, body=body,
+        email_record, status = self.send(enrollment_application, to_email=to_email, to_name=to_name, body=body,
                                    from_name=from_name, from_email=from_email, subject=subject, pdf=pdf)
+        return email_record, status
