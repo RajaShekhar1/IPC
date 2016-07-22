@@ -24,7 +24,7 @@ class FtpService(object):
     def get_paylogix_server(self):
         return FtpServer(PAYLOGIX_FTP_HOSTNAME, PAYLOGIX_FTP_USERNAME, PAYLOGIX_FTP_PASSWORD,
                                 directory=PAYLOGIX_FTP_DIRECTORY,
-                                key=self.encryption_service.get_paylogix_key(),
+                                pgp_encryption_key=self.encryption_service.get_paylogix_key(),
                                 )
 
     def send_file(self, ftp_server, filename, data):
