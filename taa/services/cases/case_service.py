@@ -522,9 +522,14 @@ class CaseService(DBService):
         from taa.services.agents import AgentService
         from taa.services.enrollments import EnrollmentApplicationService
         from taa.services.enrollments import SelfEnrollmentEmailService
+        from taa.services.enrollments import SummaryEmailService
         emails_service = SelfEnrollmentEmailService()
         enrollments_service = EnrollmentApplicationService()
+        summary_email_service = SummaryEmailService()
         agent_service = AgentService()
+
+        for record in case.enrollment_records:
+            summary_email_service.delete_emails_for_enrollment(record)
 
         # Remove all enrollments if allowed
         if agent_service.can_manage_all_cases(current_user):
@@ -538,6 +543,8 @@ class CaseService(DBService):
 
         # remove all email batch records
         emails_service.delete_batches_for_case(case)
+
+
 
         return self.delete(case)
 

@@ -81,7 +81,6 @@ class SummaryEmailService(DBService):
             email_body=kwargs.get('body'),
             is_success=success,
             status=status,
-            error_message=message
         ))
 
         db.session.commit()
