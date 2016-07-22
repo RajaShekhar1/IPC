@@ -374,7 +374,6 @@ class SummaryEmailLog(SummaryEmailSerializer, db.Model):
     email_body = db.Column(db.Unicode)
 
     status = db.Column(db.Unicode(16), index=True)
-    error_message = db.Column(db.Text)
 
     STATUS_PENDING = u'pending'
     STATUS_FAILURE = u'failure'
