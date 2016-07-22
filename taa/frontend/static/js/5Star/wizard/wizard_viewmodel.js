@@ -2148,6 +2148,8 @@ var wizard_viewmodel = (function () {
         return wizard_applicant.create_applicant(applicant_data);
       });
 
+
+
       self.should_show_spouse = ko.observable(false);
       self.should_include_children = ko.observable(false);
 
@@ -2163,6 +2165,22 @@ var wizard_viewmodel = (function () {
         return self.applicant_list.get_spouse();
       };
 
+      self.email_summary_sheet_confirmed = ko.observable(self.employee().email() != "");
+
+      self.employee().email.subscribe(function () {
+        self.email_summary_sheet_confirmed(self.employee().email() != "");
+        self.employee().coverage_email(self.employee().email());
+      });
+      
+      self.get_summary_email = function () {
+        if (self.email_summary_sheet_confirmed()) {
+          return self.employee().coverage_email();
+        } 
+        else {
+          return '';
+        }
+      };
+      
       //region Smoker Status Changed Dialog
       self.smoker_status_changed_dialog_loading = ko.observable(false);
       self.smoker_status_changed_message = ko.observable('');

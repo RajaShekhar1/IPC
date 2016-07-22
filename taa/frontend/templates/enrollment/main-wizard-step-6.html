@@ -162,6 +162,22 @@
         <br>
         <br>
 
+        <form class="form-horizontal">
+            <div id="emailSummaryConfirm">
+                <h4 class="green">Email Summary</h4>
+                <div class="row form-group">
+                    <label class="col-xs-12">
+                        &nbsp;&nbsp;&nbsp;
+                        <input type="checkbox" id="emailSummary" name="emailSummarySheet"
+                               data-bind="checked: email_summary_sheet_confirmed"/> Email a copy of this Coverage
+                        Confirmation to <input type="text" name="coverageEmail" id="coverageEmail" class="input-large"
+                                               placeholder="Email" data-bind="textInput: employee().coverage_email()">?
+                    </label>
+                </div>
+            </div>
+        </form>
+
+        <div class="space-2"></div>
 
         <form class="form-horizontal" id="step6-form">
             <div id="inPersonSignerToken">
