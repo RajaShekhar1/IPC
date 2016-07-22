@@ -104,3 +104,15 @@ class SummaryEmailService(DBService):
             is_success=False,
             status=SummaryEmailLog.STATUS_PENDING
         ))
+
+    def send_summary_email(self, standardized_data, wizard_results, enrollment_application):
+        to_name = standardized_data[0]['employee']['first'] + ' ' + standardized_data[0]['employee']['last']
+        to_email = wizard_results[0].get('summaryEmail')
+        from_name = u'Enrollment - do not reply'
+        from_email = u'enrollment-noreply@5starenroll.com'
+        subject = u'5Star Summary of Benefits'
+        body = self.generate_email_body(enrollment_application)
+        enrollment_submission_service = LookupService('EnrollmentSubmissionService')
+        pdf = enrollment_submission_service.get_summary_pdf(enrollment_application)
+        self.send(enrollment_application, to_email=to_email, to_name=to_name, body=body,
+                                   from_name=from_name, from_email=from_email, subject=subject, pdf=pdf)

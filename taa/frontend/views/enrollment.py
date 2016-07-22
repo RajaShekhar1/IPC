@@ -529,8 +529,6 @@ def fix_missing_address_bug(wizard_results):
 
 
 def process_wizard_submission(case, wizard_results):
-    # TODO: send email to user if checked
-
     # Standardize the wizard data for submission processing
     standardized_data = enrollment_import_service.standardize_wizard_data(wizard_results)
     enrollment_data = EnrollmentDataWrap(standardized_data[0], case)
@@ -541,19 +539,8 @@ def process_wizard_submission(case, wizard_results):
     db.session.commit()
 
     if wizard_results[0].get('send_summary_email'):
-        from taa.config_defaults import EMAIL_FROM_ADDRESS
-        to_name = standardized_data[0]['employee']['first'] + ' ' + standardized_data[0]['employee']['last']
-        to_email = wizard_results[0].get('summaryEmail')
-        from_name = u'5Star Enrollment'
-        from_email = EMAIL_FROM_ADDRESS
-        subject = u'5Star Summary of Benefits'
         summary_email_service = LookupService('SummaryEmailService')
-        """:type: taa.services.enrollments.SummaryEmailService"""
-        enrollment_submission_service = LookupService('EnrollmentSubmissionService')
-        body = summary_email_service.generate_email_body(enrollment_application)
-        pdf = enrollment_submission_service.get_summary_pdf(enrollment_application)
-        summary_email_service.send(enrollment_application, to_email=to_email, to_name=to_name, body=body,
-                                   from_name=from_name, from_email=from_email, subject=subject, pdf=pdf)
+        summary_email_service.send_summary_email(standardized_data, wizard_results, enrollment_application)
 
     submission_service = LookupService('EnrollmentSubmissionService')
     submission_service.create_submissions_for_application(enrollment_application)
