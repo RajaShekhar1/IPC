@@ -2165,15 +2165,15 @@ var wizard_viewmodel = (function () {
         return self.applicant_list.get_spouse();
       };
 
-      self.email_summary_sheet_confirmed = ko.observable(self.employee().email() != "");
+      self.should_email_summary_sheet = ko.observable(self.employee().email() != "");
 
       self.employee().email.subscribe(function () {
-        self.email_summary_sheet_confirmed(self.employee().email() != "");
+        self.should_email_summary_sheet(self.employee().email() != "");
         self.employee().coverage_email(self.employee().email());
       });
       
       self.get_summary_email = function () {
-        if (self.email_summary_sheet_confirmed()) {
+        if (self.should_email_summary_sheet()) {
           return self.employee().coverage_email();
         } 
         else {
