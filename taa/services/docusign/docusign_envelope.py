@@ -462,9 +462,9 @@ class EnrollmentDataWrap(object):
 
     def get_effective_date(self):
         if self.data.get('effective_date'):
-            return dateutil_parse(self.data.get('effective_date')).strftime('%Y-%m-%dT%H:%M:%S%z')
+            return dateutil_parse(self.data.get('effective_date')).strftime('%Y-%m-%d')
         else:
-            return self.enrollment_record.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z')
+            return self.enrollment_record.signature_time.strftime('%Y-%m-%d')
 
     def get_applicant_data(self):
         applicants = []

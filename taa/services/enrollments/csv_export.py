@@ -128,7 +128,7 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                 case.group_number.upper(),
                 case.format_location().upper(),
                 case.payment_mode if case.payment_mode >= 0 else '',
-                case.issue_date.strftime('%m%d%Y') if hasattr(case, 'issue_date') else '',
+                coverage.effective_date.strftime('%m%d%Y') if hasattr(coverage, 'effective_date') else '',
                 'A',
                 data.get('signed_at_state') if data.get('signed_at_state') else data.get('enrollState'),
                 enrollment.signature_time.date().strftime('%m%d%Y'),

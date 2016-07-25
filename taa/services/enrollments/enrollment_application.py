@@ -286,9 +286,8 @@ class EnrollmentApplicationService(DBService):
             if data['did_decline']:
                 effective_date = None
             else:
-                effective_date = calculate_effective_date(settings=effective_date_settings,
-                                                          signature_time=signature_time,
-                                                          enroller_picks_date=enroller_effective_date)
+                effective_date = dateutil.parser.parse(enroller_effective_date)
+
             if data['did_decline']:
                 continue
 
@@ -301,12 +300,16 @@ class EnrollmentApplicationService(DBService):
                     EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE,
                     effective_date=effective_date)
             if data['spouse_coverage']:
+                if data['spouse_coverage'] == '':
+                    effective_date = None
                 self.coverages_service.create_coverage(
                     enrollment, product, data, data['spouse'],
                     data['spouse_coverage'],
                     EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE,
                     effective_date=effective_date)
             if data['child_coverages'] and data['child_coverages'][0]:
+                if data['child_coverages'][0] == '':
+                    effective_date = None
                 self.coverages_service.create_coverage(
                     enrollment, product, data, data['children'][0],
                     data['child_coverages'][0],

@@ -152,6 +152,18 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     session['active_case_id'] = case.id
     session['enrolling_census_record_id'] = None
 
+    effective_date_settings = case.effective_date_settings
+    enroller_selects = False
+    if effective_date_settings:
+        from taa.services.enrollments.effective_date import calculate_effective_date, get_active_method
+        from datetime import datetime
+        effective_date = calculate_effective_date(effective_date_settings, datetime.now())
+        if get_active_method(effective_date_settings, datetime.now()) == 'enroller_selects':
+            enroller_selects = True
+
+    else:
+        effective_date = None
+
     payment_mode = case.payment_mode
     if is_payment_mode_changeable(payment_mode):
         # User can select payment mode
@@ -285,7 +297,9 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'omit_actively_at_work': case.omit_actively_at_work,
             'include_bank_draft_form': case.include_bank_draft_form,
             'is_call_center': case.should_use_call_center_workflow,
-            'effective_date_settings': case.effective_date_settings
+            'effective_date_settings': case.effective_date_settings,
+            'effective_date': effective_date,
+            'enroller_selects': enroller_selects,
         },
         applicants=applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in

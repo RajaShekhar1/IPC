@@ -4,6 +4,22 @@ from dateutil.parser import parse
 from calendar import monthrange
 
 
+def get_active_method(settings, signature_time):
+    signature_time = signature_time.replace(hour=0, minute=0, second=0)
+    method = None
+    for enrollment_period in settings:
+        if enrollment_period.get('type') == 'open':
+            if parse(enrollment_period['enrollment_period'].get('start_date')) <= signature_time <= parse(
+                     enrollment_period['enrollment_period'].get('end_date')):
+                method = enrollment_period.get('method')
+
+        if enrollment_period.get('type') == 'ongoing':
+            if not method:
+                method = enrollment_period.get('method')
+
+    return method
+
+
 def calculate_effective_date(settings, signature_time, enroller_picks_date=None):
     """
     instantiate effective date calculator, if enroller selects is true, the date has
@@ -18,16 +34,10 @@ def calculate_effective_date(settings, signature_time, enroller_picks_date=None)
         if effective_date_method.get('type') == 'open':
             start_date = parse(effective_date_method['enrollment_period']['start_date'])
             end_date = parse(effective_date_method['enrollment_period']['end_date'])
-            if effective_date_method.get('method') == 'enroller_selects':
-                return parse(enroller_picks_date)
-            else:
-                open_rule = create_rule(effective_date_method)
+            open_rule = create_rule(effective_date_method)
         if effective_date_method.get('type') == 'ongoing':
             is_ongoing = True
-            if effective_date_method.get('method') == 'enroller_selects':
-                return parse(enroller_picks_date)
-            else:
-                ongoing_rule = create_rule(effective_date_method)
+            ongoing_rule = create_rule(effective_date_method)
 
     effective_date_calc = EffectiveDateCalculator(period_start=start_date, period_end=end_date, is_ongoing=is_ongoing,
                                                   open_rule=open_rule, ongoing_rule=ongoing_rule)
@@ -142,7 +152,7 @@ class EnrollerPicksRule(object):
     if no date picked, resolves to enrollment date + default_days,
     """
 
-    def __init__(self, default_days, minimum_days, enroller_picks_date):
+    def __init__(self, default_days, minimum_days, enroller_picks_date=None):
         self.enroller_picks_date = enroller_picks_date
         self.default_days = int(default_days)
         self.minimum_days = int(minimum_days)

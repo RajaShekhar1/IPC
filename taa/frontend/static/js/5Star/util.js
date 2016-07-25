@@ -75,59 +75,6 @@ function today_between(start, end) {
 
 }
 
-function resolve_first_friday(minimum_days) {
-  var today = moment({hour: 0, minute: 0, seconds: 0, milliseconds: 0});
-  var shifted_date = today.clone().add(minimum_days, 'd');
-  var day_iterator = today.clone().date(1);
-  var days = today.daysInMonth();
-  var roll_forward = {
-    '4': 4,
-    '3': 3,
-    '2': 2,
-    '1': 1,
-    '0': 0,
-    '-1': 6,
-    '-2': 5
-  };
-  var friday_calendar = {};
-  var which_friday = 0;
-  var distance = (5 - shifted_date.isoWeekday());
-  var target_date = shifted_date.clone().add(_.get(roll_forward, String(distance)), 'd');
-  for (var x = 1; x < days; x++) {
-    friday_calendar[day_iterator] = day_iterator.isoWeekday() == 5 ? which_friday++ : 0;
-    day_iterator = day_iterator.add(1, 'd');
-  }
-  if (_.has(friday_calendar, String(target_date))) {
-    if (friday_calendar[target_date] == 5) {
-      return target_date.add(7, 'd');
-    }
-  }
-  return target_date;
-}
-
-function resolve_static_date(static_date) {
-  var today = moment({hour: 0, minute: 0, seconds: 0, milliseconds: 0});
-  var is_today = today.isSameOrAfter(static_date);
-  return is_today ? today : static_date;
-}
-
-function resolve_day_of_month(day_of_month) {
-  var today = moment({hour: 0, minute: 0, seconds: 0, milliseconds: 0});
-  var date = today.clone().date(1);
-  if (today.date() < day_of_month) {
-    return add_one_month(date);
-  }
-  else {
-    return add_two_month(date);
-  }
-}
-
-function add_one_month(date) {
-  return date.add(1, 'M');
-}
-function add_two_month(date) {
-  return date.add(2, 'M');
-}
 
 // Date handling
 function parse_date(date_str, format_str) {
@@ -202,11 +149,6 @@ function valid_enroller_selects(minimum, input) {
   var input_moment = moment(input);
   var minimum_moment = today.clone().add(minimum, 'day');
   return minimum_moment.isSameOrBefore(input_moment);
-}
-
-function resolve_default_date(defaults) {
-  var today = moment({hour: 0, minute: 0, seconds: 0, milliseconds: 0});
-  return format_date(today.clone().add(defaults, 'day'));
 }
 
 function format_date(moment_date) {
