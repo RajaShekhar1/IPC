@@ -57,16 +57,20 @@ def _update_log(email_log, success):
 FIVE_MINUTES = 5 * 60
 
 
-@app.task(bind=True)
-def send_summary_email(task, standardized_data, wizard_results, enrollment_application_id):
+@app.task
+def send_summary_email(standardized_data, wizard_results, enrollment_application_id, body):
     from taa.models import SummaryEmailLog
     enrollment_application_service = LookupService("EnrollmentApplicationService")
-    enrollment_application = enrollment_application_service.get(enrollment_application_id)
+    enrollment_application = enrollment_application_service.get_enrollment_by_id(enrollment_application_id)
+    if not enrollment_application:
+        print ("Could not get record for Enrollment. Not sending email.")
+        return
     email_summary_service = LookupService("SummaryEmailService")
     record, status = email_summary_service.send_summary_email(
         standardized_data=standardized_data,
         wizard_results=wizard_results,
-        enrollment_application=enrollment_application
+        enrollment_application=enrollment_application,
+        body=body,
     )
     if status == SummaryEmailLog.STATUS_SUCCESS:
         record.is_success = True

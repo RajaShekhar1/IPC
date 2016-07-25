@@ -540,10 +540,13 @@ def process_wizard_submission(case, wizard_results):
 
     if wizard_results[0].get('send_summary_email'):
         from taa import tasks
+        summary_email_service = LookupService("SummaryEmailService")
+        email_body = summary_email_service.generate_email_body(enrollment_application)
         tasks.send_summary_email.delay(
             standardized_data=standardized_data,
             wizard_results=wizard_results,
             enrollment_application_id=enrollment_application.id,
+            body=email_body,
         )
 
     submission_service = LookupService('EnrollmentSubmissionService')
