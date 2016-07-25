@@ -36,6 +36,9 @@ class EnrollmentApplicationService(DBService):
     product_service = RequiredFeature('ProductService')
     batch_item_service = RequiredFeature('EnrollmentImportBatchItemService')
 
+    def get_enrollment_by_id(self, enrollment_application_id):
+        return db.session.query(EnrollmentApplication).get(enrollment_application_id)
+
     def search_enrollments(self,
                            by_agent_id=None,
                            by_agent_ids=None,
