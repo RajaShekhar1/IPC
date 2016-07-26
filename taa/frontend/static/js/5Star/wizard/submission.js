@@ -173,7 +173,7 @@ function build_wizard_results_for_product_coverage(product_cov) {
     identityToken: root.identityToken(),
     identityType: root.identityType(),
     
-    effective_date: root.get_effective_date(),
+    effective_date: product_cov.effective_date_resolution(),
     enrollerSelects: root.show_enroller_select_date(),
     effectiveDateSettings: root.effective_date_settings,
 

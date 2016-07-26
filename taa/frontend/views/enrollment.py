@@ -279,6 +279,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     # Show products this applicant is allowed to enroll.
     product_options = product_service.filter_products_from_membership(case, record)
     product_options = product_service.filter_products_by_enrollment_state(product_options, state)
+    product_settings = case.product_settings if case.product_settings else {}
     wizard_data = dict(
         is_in_person=not is_self_enroll,
         case_data={
@@ -289,7 +290,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'company_name': company_name,
             'group_number': group_number,
             'payment_mode': payment_mode,
-            'product_settings': case.product_settings if case.product_settings else {},
+            'product_settings': product_settings,
             'account_href': current_user.get_id(),
             'record_id': record_id,
             'product_height_weight_tables': height_weight_tables,

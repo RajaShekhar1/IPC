@@ -7,6 +7,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     requires_paylogix_export: false
   });
 
+  console.log(case_data);
   self.case_id = case_data.id;
   self.case_token = case_data.case_token;
   self.product_rate_levels = product_rate_levels || {};
@@ -46,6 +47,20 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.products = ko.observableArray(initially_selected_products);
+  self.effective_products = ko.observableArray(_.zipWith(self.products(), case_data.product_settings.effective_date_settings, function (p, es) {
+    return new ProductEffectiveDateSettings(p, es);
+  }));
+
+  self.get_product_effective_date_settings = function (product) {
+    var effective = _.find(self.effective_products(), function (ep) {
+      return ep.id == product.id;
+    });
+    if (typeof effective == typeof undefined) {
+      var effective = new ProductEffectiveDateSettings();
+    }
+    return effective;
+  };
+
   self.sort_selected_products = ko.observableArray([]);
   self.products.subscribe(function () {
     self.is_data_dirty(true);
@@ -1561,12 +1576,17 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.serialize_product_settings = function () {
     return {
       riders: self.serialize_riders(),
-      classification_mappings: self.serialize_occ_mapping()
+      classification_mappings: self.serialize_occ_mapping(),
+      effective_date_settings: self.serialize_product_effective_date()
     };
   };
 
   self.serialize_riders = function () {
     return _.invoke(self.case_riders(), "serialize");
+  };
+
+  self.serialize_product_effective_date = function () {
+    return _.invoke(self.effective_products(), "serialize");
   };
 
   self.serialize_enrollment_periods = function () {

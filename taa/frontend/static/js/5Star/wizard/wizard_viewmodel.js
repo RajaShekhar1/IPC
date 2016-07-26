@@ -55,7 +55,7 @@ var wizard_viewmodel = (function () {
     });
     this.is_payment_mode_valid = ko.pureComputed(this._is_payment_mode_valid, this);
 
-    this.product_coverage_viewmodels = ko.observableArray(_.map(this.products, function (p) {
+    this.product_coverage_viewmodels = ko.observableArray(_.zipWith(this.products, case_data.product_settings.effective_date_settings, function (p, es) {
       return new ProductCoverageViewModel(
         p,
         case_data,
@@ -63,7 +63,8 @@ var wizard_viewmodel = (function () {
         this.payment_mode,
         this.should_include_spouse,
         this.should_include_children,
-        this.root);
+        this.root,
+        es);
     }, this));
 
     // Which product coverage is being displayed right now?
@@ -218,7 +219,7 @@ var wizard_viewmodel = (function () {
   };
 
   function ProductCoverageViewModel(product, case_data, applicant_list, payment_mode,
-                                    should_include_spouse, should_include_children, root) {
+                                    should_include_spouse, should_include_children, root, effective_date_settings) {
 
     // ProductCoverageViewModel keeps track of the coverage selections for the applicants for a single product.
 
@@ -232,6 +233,7 @@ var wizard_viewmodel = (function () {
     self.should_include_spouse = should_include_spouse;
     self.should_include_children = should_include_children;
     self.root = root;
+    self.effective_date_settings = effective_date_settings;
 
     self.did_decline = ko.observable(false);
     self.available_recommendations = product_rates_service.get_product_recommendations(self.product, payment_mode);
@@ -239,6 +241,15 @@ var wizard_viewmodel = (function () {
 
     // When there is a simple 'Y/N' or set of coverage options, use this rather than applicant coverage viewmodels.
     self.selected_simple_coverage_option = ko.observable(new NullCoverageOption());
+
+    self.effective_date_resolution = function () {
+      if (_.get(self.effective_date_settings, 'effective_date_override')) {
+        return normalize_date(_.get(self.effective_date_settings, 'effective_date'))
+      }
+      else {
+        return self.root.get_effective_date();
+      }
+    };
 
     self.selected_simple_coverage_value = ko.computed({
       read: function () {

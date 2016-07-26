@@ -538,6 +538,24 @@
                                   <div class="panel panel-default">
                                     <div class="panel-heading panel-title"><span data-bind="text: name"></span></div>
                                     <div class="panel-body">
+                                      {# Effective Date Settings #}
+
+                                      <div class="form-group">
+                                        <h4 class="header lighter blue">Effective Date Settings</h4>
+                                        <div data-bind="with: $parent.get_product_effective_date_settings($data)">
+                                          <label>
+                                            <input type="checkbox" class="ace ace-switch ace-switch-4 btn-flat"
+                                                   data-bind="checked: $data.effective_date_override"/>
+                                             <span class="lbl">&nbsp;&nbsp;Override with Static Date&nbsp;&nbsp;</span>
+                                          </label>
+                                            <input type="text"
+                                                   data-bind="enabled: $data.effective_date_override, textInput: $data.effective_date_input"
+                                                   placeholder="MM/DD/YYYY" class="input-small input-mask-date"/>
+                                            <br/>
+                                        </div>
+                                      </div>
+
+
                                       {# Riders #}
                                       <div class="form-group"
                                            data-bind="visible: $parent.case_riders_for_product($data).length > 0">
@@ -1219,7 +1237,7 @@ we load from the server using ajax at run time (helps with performance, needs to
                                     <th class="min-breakI">DOB</th>
                                     <th class="min-breakII">Agent</th>
                                     <th class="min-breakV">Status</th>
-                                    <th class="min-breakI">Effective Date</th>
+{#                                    <th class="min-breakI">Effective Date</th>#}
                                     <th>Total Premium</th>
                                   </tr>
                                   </thead>
