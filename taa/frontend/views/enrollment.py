@@ -280,6 +280,17 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     product_options = product_service.filter_products_from_membership(case, record)
     product_options = product_service.filter_products_by_enrollment_state(product_options, state)
     product_settings = case.product_settings if case.product_settings else {}
+    product_effective_date_list = []
+    if product_settings.get('effective_date_settings'):
+        for setting in product_settings.get('effective_date_settings'):
+            if setting.get('effective_date_override'):
+                product_effective_date_list.append(setting)
+            else:
+                product_effective_date_list.append(dict(
+                    effective_date=effective_date,
+                    effective_date_override=False,
+                    product_id=setting.get('product_id')
+                ))
     wizard_data = dict(
         is_in_person=not is_self_enroll,
         case_data={
@@ -291,6 +302,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'group_number': group_number,
             'payment_mode': payment_mode,
             'product_settings': product_settings,
+            'product_effective_date_list': product_effective_date_list,
             'account_href': current_user.get_id(),
             'record_id': record_id,
             'product_height_weight_tables': height_weight_tables,

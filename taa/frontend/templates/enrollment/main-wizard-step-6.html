@@ -131,16 +131,15 @@
             </form>
         </div>
 
+        <!-- ko if: show_enroller_select_date() -->
         <form class="form-horizontal">
             <div id="enrollerSelect">
                 <h4 class="green">Effective Date</h4>
-                <!-- ko if: show_enroller_select_date() -->
                     <div class="row">
                         <div class="col-xs-12">
-                            <p>Enter the date for this policy to become effective:</p>
+                            <p>Enter the date for the "Enroller Selects" policy to become effective:</p>
                         </div>
                     </div>
-                <!-- /ko -->
                 <!-- ko if: !show_enroller_select_date() -->
                     <div class="row">
                         <div class="col-xs-12">
@@ -159,6 +158,7 @@
                 </div>
             </div>
         </form>
+        <!-- /ko -->
 
         <form class="form-horizontal">
             <div id="emailSummaryConfirm">

@@ -570,6 +570,15 @@ var wizard_viewmodel = (function () {
   }
 
   ProductCoverageViewModel.prototype = {
+    _get_effective_date: function (root) {
+      if (_.get(this.effective_date_settings, 'effective_date_override')) {
+        return normalize_date(_.get(this.effective_date_settings, 'effective_date'))
+      }
+      else {
+        return root.get_effective_date();
+      }
+    },
+
     format_product_name: function () {
       return this.product.product_data.name;
     },

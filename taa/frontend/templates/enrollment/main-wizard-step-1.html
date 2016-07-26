@@ -713,6 +713,7 @@
         <span data-bind="text: product.product_data.name"></span>
       </th>
       <!--/ko-->
+{#      <th class="text-center">Effective Date</th>#}
       <th class="text-center">Total</th>
     </tr>
     </thead>
@@ -743,6 +744,7 @@
         </div>
         <!--/ko-->
       </td>
+{#      <td class="text-center" data-bind="text: _get_effective_date($root)"></td>#}
       <!--/ko-->
       <!--/ko-->
       <td class="text-center" data-bind="text: $parents[1].format_total_premium_for_applicant(applicant)"></td>
@@ -750,6 +752,13 @@
     <!--/ko-->
     {# Totals #}
     <tfoot>
+    <tr>
+        <th class="text-center">Effective Dates:</th>
+        <!--ko foreach: {data: product_coverages, as: 'product_coverage'} -->
+        <th class="text-center" data-bind="text: _get_effective_date($root)"></th>
+        <!--/ko-->
+        <th></th>
+    </tr>
     <tr>
 
       <th class="text-center">

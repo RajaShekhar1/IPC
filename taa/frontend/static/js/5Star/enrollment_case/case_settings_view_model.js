@@ -7,6 +7,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     requires_paylogix_export: false
   });
 
+  console.log(product_choices);
   console.log(case_data);
   self.case_id = case_data.id;
   self.case_token = case_data.case_token;
@@ -47,17 +48,36 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.products = ko.observableArray(initially_selected_products);
-  self.effective_products = ko.observableArray(_.zipWith(self.products(), case_data.product_settings.effective_date_settings, function (p, es) {
-    return new ProductEffectiveDateSettings(p, es);
-  }));
+
+  self.effective_products = ko.observableArray("");
+  self.initialize_effective_products = function () {
+    if (case_data.products.length < 1) {
+      self.effective_products(_.map(self.product_choices(), function (p) {
+        return new ProductEffectiveDateSettings(p, null);
+      }));
+    }
+    else {
+      if (case_data.product_settings != null) {
+        self.effective_products(_.map(self.products(), function (p) {
+          return new ProductEffectiveDateSettings(p, _.find(case_data.product_settings.effective_date_settings, function (ep) {
+            return ep.product_id == p.id;
+          }));
+        }));
+      }
+    }
+  };
+
+  self.initialize_effective_products();
+  console.log(self.effective_products());
 
   self.get_product_effective_date_settings = function (product) {
     var effective = _.find(self.effective_products(), function (ep) {
       return ep.id == product.id;
     });
     if (typeof effective == typeof undefined) {
-      var effective = new ProductEffectiveDateSettings();
+      var effective = new ProductEffectiveDateSettings(product, null);
     }
+    self.effective_products.push(effective);
     return effective;
   };
 
@@ -105,9 +125,20 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.remove_selected_products = function () {
     var products_to_remove = self.sort_selected_products();
     var products = self.products();
+    var effective_products = self.effective_products();
     if (!products_to_remove || products_to_remove.length === 0) {
       return;
     }
+    _.forEach(products_to_remove, function (product) {
+      var effective_index =  _.findIndex(effective_products, function (ep) {
+        return ep.id == product.id
+      });
+      if (effective_index !== -1) {
+        effective_products.splice(effective_index, 1);
+      }
+    });
+    self.effective_products(effective_products);
+
     _.forEach(products_to_remove, function (product) {
       var index = products.indexOf(product);
       if (index !== -1) {
@@ -1586,7 +1617,12 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.serialize_product_effective_date = function () {
-    return _.invoke(self.effective_products(), "serialize");
+    return _.map(self.products(), function (product) {
+      var ep = _.find(self.effective_products(), function (ep) {
+          return ep.id == product.id;
+      });
+      return ep.serialize();
+    });
   };
 
   self.serialize_enrollment_periods = function () {

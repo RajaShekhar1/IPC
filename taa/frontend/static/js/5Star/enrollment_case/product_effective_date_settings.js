@@ -2,8 +2,7 @@ function ProductEffectiveDateSettings(product, effective_date_settings) {
   var self = this;
   var defaults = {
     effective_date_override: false,
-    effective_date: "",
-    id: 0
+    effective_date: ""
   };
   var settings = $.extend({}, defaults, effective_date_settings);
   self.id = product.id;
