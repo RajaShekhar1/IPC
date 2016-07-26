@@ -7,8 +7,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     requires_paylogix_export: false
   });
 
-  console.log(product_choices);
-  console.log(case_data);
   self.case_id = case_data.id;
   self.case_token = case_data.case_token;
   self.product_rate_levels = product_rate_levels || {};
@@ -68,7 +66,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.initialize_effective_products();
-  console.log(self.effective_products());
 
   self.get_product_effective_date_settings = function (product) {
     var effective = _.find(self.effective_products(), function (ep) {
