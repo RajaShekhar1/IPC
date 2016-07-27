@@ -95,3 +95,5 @@ tzlocal==1.2.2
 unittest2==1.1.0
 webassets==0.11.1
 Werkzeug==0.11.9
+pysftp==0.2.9
+paramiko==2.0.1
