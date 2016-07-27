@@ -486,7 +486,7 @@
 
                                       {# Group CI options #}
                                     <div class="form-group"
-                                         data-bind="visible: $root.is_product_group_ci(product)">
+                                         data-bind="visible: $root.can_product_override_states(product)">
                                         <input type="checkbox" class="ace"
                                                data-bind="checked: $root.restrict_state_availability">
                                         <span class="lbl"> Restrict State Availability</span>
@@ -511,7 +511,7 @@
 
                                       {# No Options #}
                                       <div class="form-group"
-                                           data-bind="visible: $parent.case_riders_for_product($data).length === 0 && !$root.is_product_occupation_class_eligible(product) && !$root.is_product_group_ci(product)">
+                                           data-bind="visible: $parent.case_riders_for_product($data).length === 0 && !$root.is_product_occupation_class_eligible(product) && !$root.can_product_override_states(product)">
                                         This product has no configuration options
                                       </div>
 

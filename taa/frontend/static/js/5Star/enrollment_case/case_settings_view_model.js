@@ -601,16 +601,16 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return data;
   };
 
-  self.is_product_group_ci = function (product) {
-    if (product.code == 'Group CI' ) {
+  self.can_product_override_states = function (product) {
+    if (product.can_override_states) {
       self.initialize_states_selection(product);
     }
-    return product.code == 'Group CI';
+    return product.can_override_states;
   };
 
   self.get_product_group_ci = function () {
     var group_ci = _.find(self.products(), function (product) {
-      return product.code == 'Group CI';
+      return product.base_product_type == 'Group CI';
     });
     if (typeof group_ci === typeof undefined) {
       return false;
@@ -627,16 +627,14 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.initialize_states_selection = function (product) {
-    if (product.code == 'Group CI') {
-      $('#states-list-product-' + self.get_product_id(product)).bootstrapDualListbox({
-        infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',
-        showFilterInputs: true,
-        moveOnSelect: false,
-        nonSelectedListLabel: 'Available States:',
-        selectedListLabel: 'States Allowed:',
-        selectorMinimalHeight: 250
-      });
-    }
+    $('#states-list-product-' + self.get_product_id(product)).bootstrapDualListbox({
+      infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',
+      showFilterInputs: true,
+      moveOnSelect: false,
+      nonSelectedListLabel: 'Available States:',
+      selectedListLabel: 'States Allowed:',
+      selectorMinimalHeight: 250
+    });
   };
 
   self.restrict_state_availability = ko.observable(false);
