@@ -646,7 +646,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     var group_ci = self.get_product_group_ci();
     var states = [];
     if (group_ci) {
-      states = _.get(case_data.product_settings.state_overrides, String(group_ci));
+      if (!!case_data.product_settings) {
+        states = _.get(case_data.product_settings.state_overrides, String(group_ci));
+      }
     }
     if (states.length > 0) {
       self.restrict_state_availability(true);
