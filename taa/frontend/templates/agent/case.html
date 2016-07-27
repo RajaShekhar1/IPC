@@ -494,10 +494,8 @@
                                             <h4 class="header lighter blue">State Availability</h4>
                                             <div class="row">
                                                 <div class="col-sm-10 col-md-offset-1">
-                                                    <select data-bind="selectedOptions: $root.state_overrides"
-                                                            multiple="multiple" class="form-control"
-                                                            id="states-list"
-                                                            size="10" style="min-height: 8em;">
+                                                    <select data-bind="selectedOptions: $root.state_overrides, attr: {'id': 'states-list-product-' + $root.get_product_id(product)}"
+                                                            multiple="multiple" class="form-control">
                                                         {% for state in all_states %}
                                                             <option value="{{ state.statecode }}"
                                                                     {%-if state.statecode in state_overrides-%}

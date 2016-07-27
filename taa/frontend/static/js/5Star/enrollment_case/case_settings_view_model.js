@@ -603,7 +603,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.is_product_group_ci = function (product) {
     if (product.code == 'Group CI' ) {
-      self.initialize_states_selection();
+      self.initialize_states_selection(product);
     }
     return product.code == 'Group CI';
   };
@@ -622,14 +622,21 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return self.state_overrides();
   };
 
-  self.initialize_states_selection = function () {
-    $('#states-list').bootstrapDualListbox({
-      infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',
-      showFilterInputs: true,
-      moveOnSelect: false,
-      nonSelectedListLabel: 'Available States:',
-      selectedListLabel: 'States Allowed:'
-    });
+  self.get_product_id = function (product) {
+    return product.id;
+  };
+
+  self.initialize_states_selection = function (product) {
+    if (product.code == 'Group CI') {
+      $('#states-list-product-' + self.get_product_id(product)).bootstrapDualListbox({
+        infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',
+        showFilterInputs: true,
+        moveOnSelect: false,
+        nonSelectedListLabel: 'Available States:',
+        selectedListLabel: 'States Allowed:',
+        selectorMinimalHeight: 250
+      });
+    }
   };
 
   self.restrict_state_availability = ko.observable(false);
