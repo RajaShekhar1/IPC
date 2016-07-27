@@ -601,6 +601,54 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return data;
   };
 
+  self.is_product_group_ci = function (product) {
+    if (product.code == 'Group CI' ) {
+      self.initialize_states_selection();
+    }
+    return product.code == 'Group CI';
+  };
+
+  self.get_product_group_ci = function () {
+    var group_ci = _.find(self.products(), function (product) {
+      return product.code == 'Group CI';
+    });
+    if (typeof group_ci === typeof undefined) {
+      return false;
+    }
+    return group_ci.id;
+  };
+
+  self.get_overridden_states = function () {
+    return self.state_overrides();
+  };
+
+  self.initialize_states_selection = function () {
+    $('#states-list').bootstrapDualListbox({
+      infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',
+      showFilterInputs: true,
+      moveOnSelect: false,
+      nonSelectedListLabel: 'Available States:',
+      selectedListLabel: 'States Allowed:'
+    });
+  };
+
+  self.restrict_state_availability = ko.observable(false);
+  self.state_overrides = ko.observableArray([]);
+
+  self.initialize_state_overrides = function () {
+    var group_ci = self.get_product_group_ci();
+    var states = [];
+    if (group_ci) {
+      states = _.get(case_data.product_settings.state_overrides, String(group_ci));
+    }
+    if (states.length > 0) {
+      self.restrict_state_availability(true);
+    }
+    self.state_overrides(states);
+  };
+
+  self.initialize_state_overrides();
+
   self.occupation_classes_for_product = function (product) {
     var occupation_mappings = [];
     if (!(product.id in self.occ_mapping_cache)) {
@@ -1325,8 +1373,19 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.serialize_product_settings = function () {
     return {
       riders: self.serialize_riders(),
-      classification_mappings: self.serialize_occ_mapping()
+      classification_mappings: self.serialize_occ_mapping(),
+      state_overrides: self.serialize_state_overrides()
     };
+  };
+
+  self.serialize_state_overrides = function () {
+    var group_ci = self.get_product_group_ci();
+    var state = self.get_overridden_states();
+    var object = {};
+    if (group_ci) {
+      object[group_ci] = state;
+    }
+    return object;
   };
 
   self.serialize_riders = function () {
