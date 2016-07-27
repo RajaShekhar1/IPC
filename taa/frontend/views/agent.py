@@ -107,6 +107,9 @@ def manage_case(case_id):
     agent = agent_service.get_logged_in_agent()
     if agent:
         products = product_service.get_products_for_agent(agent)
+        # Also allow the agent to see any products that are selected on the current case
+        products += [p for p in case.products if p not in products]
+
         is_agent_case_owner = case_service.is_agent_case_owner(agent, case)
         # No agents can edit cases anymore
         vars['can_edit_case'] = False

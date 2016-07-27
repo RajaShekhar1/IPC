@@ -408,11 +408,8 @@ class ProductService(DBService):
 
     def filter_products_from_membership(self, case, census=None):
         """
-        :param case:
-        :param census:
-        :type case: Case
-        :type census: CaseCensus
-        :return:
+        If this applicant (census record) has enrolled in a static benefit before, remove the static benefit
+        from the list of products.
         """
         if census is None:
             return case.products
@@ -431,6 +428,20 @@ class ProductService(DBService):
     def get_ordered_products_for_case(self, case_id):
         from taa.services.cases.models import case_products
         return db.session.query(Product).join(case_products).join(Case).filter(Case.id == case_id).order_by(case_products.c.ordinal).all()
+
+    def filter_products_by_enrollment_state(self, product_options, state):
+        product_state_mapping = self.get_product_states(product_options)
+
+        # Keep all group-level products (static benefit and group ci)
+        # Filter out individual products that are not allowed in this state.
+        def is_allowed_in_state(product, state):
+            if product.is_group_ci() or product.is_static_benefit():
+                return True
+            else:
+                return state in product_state_mapping.get(product.id, [])
+        return filter(lambda p: is_allowed_in_state(p, state), product_options)
+
+
 
 
 class ProductCriteriaService(DBService):

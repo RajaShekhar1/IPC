@@ -19,7 +19,7 @@
       <tr>
         <td data-bind="text: id"></td>
         <td><span class="label"
-                  data-bind="text: status_display, css: get_submission_status_label_class($data.status)"></span></td>
+                  data-bind="text: status_display, css: get_submission_status_label_class(status)"></span></td>
         <td data-bind="text: time"></td>
         <td data-bind="text: type_display"></td>
         <td>
@@ -50,9 +50,9 @@
         <td></td>
         <td data-bind="text: id"></td>
         <td><span class="label"
-                  data-bind="text: _.capitalize($data.status), css: get_submission_status_label_class($data.status)"></span>
+                  data-bind="text: _.capitalize(status), css: get_submission_status_label_class(status)"></span>
         </td>
-        <td data-bind="text: format_datetime($data.time)"></td>
+        <td data-bind="text: format_datetime(time)"></td>
         <td data-bind="text: message"></td>
         <td></td>
       </tr>
@@ -67,6 +67,7 @@
         <th></th>
         <th>Id</th>
         <th>Case</th>
+        <th>Employee</th>
         <th>Products</th>
         <th></th>
         <th></th>
@@ -75,8 +76,10 @@
       <tr class="collapse" data-bind="css: 'applications_' + $parent.id">
         <td></td>
         <td data-bind="text: id"></td>
-        <td data-bind="with: $data.case"><a
-            data-bind="attr: { 'href': '/enrollment-case/' + id }, text: company_name"></a></td>
+        <td data-bind="with: $data.case"><a target="_blank"
+            data-bind="attr: { 'href': '/enrollment-case/' + id}, text: company_name"></a></td>
+        <td data-bind="with: $data.census_record"><a target="_blank"
+            data-bind="attr: { 'href': '/enrollment-case/' + case_id + '/census/' + id}, text: employee_first + ' ' + employee_last"></a></td>
         <td data-bind="text: create_product_display_string($data.case)"></td>
         <td></td>
         <td></td>
@@ -122,7 +125,7 @@
       self.status = submission.status;
       self.product_id = submission.product_id;
       self.created_at = moment(submission.created_at);
-      self.data = submission.data;
+      //self.data = submission.data;
       self.type = submission.submission_type;
 
       // Additional variables

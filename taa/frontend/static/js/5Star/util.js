@@ -753,7 +753,8 @@ var ProductStatesLimiterViewModel = function (product_statecode_mapping,
   // Based on product selection, change which states are enabled
   self.enabled_states = ko.computed(function () {
     return _.filter(self.available_states, function (state) {
-      return _.all(self.selected_products(), function (product) {
+      // Should be _.all(), but restriction lessened for now to allow multiproduct 
+      return _.any(self.selected_products(), function (product) {
         return self.is_valid_product_for_state(product, state);
       });
     });
@@ -823,7 +824,8 @@ var StatesLimiterViewModel = function (product_statecode_mapping,
   // Based on product selection, change which states are enabled
   self.enabled_states = ko.computed(function () {
     return _.filter(self.available_states, function (state) {
-      return _.all(selected_products(), function (product) {
+      // SHOULD be _.all(), but we slackened this restriction temporarily
+      return _.any(selected_products(), function (product) {
         return self.is_valid_product_for_state(product, state);
       });
     });
