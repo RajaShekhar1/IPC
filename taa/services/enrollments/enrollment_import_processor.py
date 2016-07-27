@@ -255,6 +255,42 @@ class EnrollmentProcessor(object):
         else:
             return None
 
+    def send_generic_error_email(self, user_href):
+        if not user_href:
+            return
+
+        body_message = """
+            An unforeseen error has prevented processing of your file submission on {},
+            likely due to unexpected characters in the file header or body.
+            Please remove any hidden/non-printable characters from the file and resubmit.
+            Contact 5Star Operations team if you need further assistance. Thank you.
+        """.format(datetime.now().strftime("%F %T"))
+
+        errors = [{"type": "Generic",
+                   "fields": "",
+                   "message": "Error reading file",
+                   "record_num": "",
+                   }
+      ]
+
+        user_name = self.get_status_email_name(user_href)
+
+        body = render_template('emails/enrollment_upload_email.html',
+                           errors=errors,
+                           num_processed=0,
+                           user=user_name,
+                           timestamp=datetime.now()
+                           )
+
+    
+        self._send_email(
+            from_email="5Star Enrollment <support@5StarEnroll.com>",
+            to_email=self.get_status_email(user_href),
+            to_name=user_name,
+            subject="Your recent submission to 5Star Enrollment failed",
+            body=body,
+        )
+
 
 class EnrollmentImportError(object):
     def __init__(self, type, fields, message, record, record_num):
