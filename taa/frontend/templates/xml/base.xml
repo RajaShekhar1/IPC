@@ -78,7 +78,7 @@
                     <ApplicationInfo>
                         <SignatureInfo>
                             <SignatureRoleCode tc="18">Owner</SignatureRoleCode>
-                            <SignatureDate>{{ primary_agent.signature_date|truncate(10, end='') }}</SignatureDate>
+                            <SignatureDate>{{ primary_agent.signature_date.strftime('%Y-%m-%d') }}</SignatureDate>
                             <SignatureCity>{{ policy.enroll_city }}</SignatureCity>
                             <SignatureState tc="{{ policy.enroll_state_code }}">{{ policy.enroll_state }}</SignatureState>
                             <SignatureOK tc="1">True</SignatureOK>
@@ -94,7 +94,7 @@
 {#                        </SignatureInfo>#}
                         <SignatureInfo>
                             <SignatureRoleCode tc="15">Primary Agent</SignatureRoleCode>
-                            <SignatureDate>{{ primary_agent.signature_date|truncate(10, end='') }}</SignatureDate>
+                            <SignatureDate>{{ primary_agent.signature_date.strftime('%Y-%m-%d') }}</SignatureDate>
                             {# PDF application form does not have Agent Signature State specified. Value below corresponds to Owner Signature State. Please see if you need to send a different value in next field #}
                             <SignatureState tc="{{ primary_agent.signature_state_code }}">{{ primary_agent.signature_state }}</SignatureState>
                             <SignatureOK tc="1">True</SignatureOK>
@@ -138,13 +138,13 @@
                     <AddressStateTC tc="{{ enrollee.state_code }}">{{ enrollee.state }}</AddressStateTC>
                     <Zip>{{ enrollee.zip }}</Zip>
                 </Address>
-                {% if enrollee.phone|length > 0 -%}
+                {% if enrollee.phone -%}
                 <Phone>
-                    <AreaCode>{{ enrollee.phone[:3] }}</AreaCode>
-                    <DialNumber>{{ enrollee.phone[3:] }}</DialNumber>
+                    <AreaCode>{{ enrollee.phone['area_code'] }}</AreaCode>
+                    <DialNumber>{{ enrollee.phone['dial_num'] }}</DialNumber>
                 </Phone>
                 {% endif -%}
-                {% if enrollee.email|length > 0 -%}
+                {% if enrollee.email -%}
                 <EMailAddress>
                     <AddrLine>{{ enrollee.email }}</AddrLine>
                     <OLifEExtension>
@@ -206,13 +206,13 @@
                     <AddressStateTC tc="{{ employee.state_code }}">{{ employee.state }}</AddressStateTC>
                     <Zip>{{ employee.zip }}</Zip>
                 </Address>
-                {% if employee.phone|length > 0 -%}
+                {% if employee.phone -%}
                 <Phone>
-                    <AreaCode>{{ employee.phone[:3] }}</AreaCode>
-                    <DialNumber>{{ employee.phone[3:] }}</DialNumber>
+                    <AreaCode>{{ employee.phone["area_code"] }}</AreaCode>
+                    <DialNumber>{{ employee.phone["dial_num"] }}</DialNumber>
                 </Phone>
                 {% endif -%}
-                {% if employee.email|length > 0 -%}
+                {% if employee.email -%}
                 <EMailAddress>
                     <AddrLine>{{ employee.email }}</AddrLine>
                     <OLifEExtension>
@@ -244,13 +244,13 @@
                     <AddressStateTC tc="{{ employee.state_code }}">{{ employee.state }}</AddressStateTC>
                     <Zip>{{ employee.zip }}</Zip>
                 </Address>
-                {% if employee.phone|length > 0 -%}
+                {% if employee.phone -%}
                 <Phone>
-                    <AreaCode>{{ employee.phone[:3] }}</AreaCode>
-                    <DialNumber>{{ employee.phone[3:] }}</DialNumber>
+                    <AreaCode>{{ employee.phone["area_code"] }}</AreaCode>
+                    <DialNumber>{{ employee.phone["dial_num"] }}</DialNumber>
                 </Phone>
                 {% endif -%}
-                {% if employee.email|length > 0 -%}
+                {% if employee.email -%}
                 <EMailAddress>
                     <AddrLine>{{ employee.email }}</AddrLine>
                     <OLifEExtension>

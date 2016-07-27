@@ -2,6 +2,7 @@ import StringIO
 import datetime
 import json
 from decimal import Decimal
+from itertools import ifilter
 
 import dateutil.parser
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
@@ -469,6 +470,21 @@ class EnrollmentApplicationService(DBService):
             return json_data
         else:
             return [json_data]
+
+    def get_wrapped_enrollment_data(self, enrollment_application):
+        # Return normalized data with the extra methods added in EnrollmentDataWrap.
+        return [
+            EnrollmentDataWrap(data, enrollment_application.case, enrollment_record=enrollment_application)
+            for data in self.get_standardized_json_for_enrollment(enrollment_application)
+        ]
+
+    def get_wrapped_data_for_coverage(self, coverage):
+        "Given a specific EnrollmentApplicationCoverage object, find the corresponding JSON data in the enrollment"
+        
+        enrollment = coverage.enrollment
+        wrapped_enrollment_data = self.get_wrapped_enrollment_data(enrollment)
+        # Find the enrollment data that matches the coverage's product. All applicant's data is contained in this data.
+        return  next(ifilter(lambda d: d.get_product_id() == coverage.product_id, wrapped_enrollment_data), None)
 
     def get_enrollment_data(self, census_record):
         # TODO: Only get_enrollment_status is using this right now,

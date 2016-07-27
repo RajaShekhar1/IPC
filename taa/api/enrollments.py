@@ -138,6 +138,7 @@ def render_batch_item_xml(batch_id, item_id):
     zipstream = BytesIO()
     with ZipFile(zipstream, 'w') as zip:
         for form_for in enrollment_submission_service.get_enrollees(item.enrollment_record):
+            # TODO: This is not called correctly anymore.
             xml = enrollment_submission_service.render_enrollment_xml(
                 item.enrollment_record, form_for, pdf_bytes)
             if xml is not None:
@@ -177,8 +178,11 @@ def generate_enrollment_xml(enrollment_record_id):
 
 
 def generate_xml(enrollment_record, form_for='employee'):
+    # TODO: NOT called correctly anymore
+    
     pdf_bytes = enrollment_submission_service.render_enrollment_pdf(
             enrollment_record)
+    
     return enrollment_submission_service.render_enrollment_xml(
             enrollment_record, form_for, pdf_bytes)
 

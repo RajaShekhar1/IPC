@@ -70,6 +70,8 @@ class EnrollmentApplicationCoverageService(DBService):
             coverages += app.coverages
         return coverages
 
+    
+
 
 def select_most_recent_coverage(coverages):
     if not coverages:

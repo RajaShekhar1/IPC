@@ -72,10 +72,10 @@ def process_enrollment_upload(task, batch_id):
 def process_wizard_enrollment(task, enrollment_id):
     submission_service = LookupService("EnrollmentSubmissionService")
     envelope = submission_service.process_wizard_submission(enrollment_id)
-    if not envelope:
-        send_admin_error_email(u"Error processing wizard enrollment {}".format(enrollment_id), [])
-        # Go ahead and attempt to reprocess
-        task.retry(exc=Exception("No envelope created"))
+    # if not envelope:
+    #     send_admin_error_email(u"Error processing wizard enrollment {}".format(enrollment_id), [])
+    #     # Go ahead and attempt to reprocess
+    #     task.retry(exc=Exception("No envelope created"))
 
 
 def send_admin_error_email(error_message, errors):
@@ -160,14 +160,15 @@ def submit_csv_to_dell(task, submission_id):
         task.retry()
 
 
-def generate_pdf(submission_id):
+def generate_pdf(submission_id, coverage_id):
     """
     Task to generate an enrollment PDF
     """
     submission_service = LookupService('EnrollmentSubmissionService')
     submission = submission_service.get_submission_by_id(submission_id)
     enrollment_record = submission.enrollment_applications[0]
-    return submission_service.render_enrollment_pdf(enrollment_record, is_stp=True)
+    coverage = LookupService('EnrollmentApplicationCoverageService').get(coverage_id)
+    return submission_service.render_enrollment_pdf(enrollment_record, is_stp=True, product_id=coverage.product_id)
 
 
 # def generate_xml(submission_id):
@@ -232,19 +233,35 @@ def send_stp_xml(xml):
 
 
 @app.task(bind=True, default_retry_delay=ONE_HOUR)
-def submit_stp_xml_to_dell(task, submission_id):
+def submit_stp_xml_to_dell(task, submission_id, product_id):
     """
     Task to submit an STP XML item to Dell for processing
     """
 
     submission_service = LookupService('EnrollmentSubmissionService')
     submission = submission_service.get_submission_by_id(submission_id)
+    
+    # Create log for this attempt at processing
     log = SubmissionLog()
     log.enrollment_submission_id = submission_id
     log.status = SubmissionLog.STATUS_PROCESSING
-    pdf_bytes = generate_pdf(submission.id)
-    enrollment_record = submission.enrollment_applications[0]
-    xml = submission_service.render_enrollment_xml(enrollment_record, 'employee', pdf_bytes)
+    
+    # Find the coverage record
+    
+    # Look up the applicant_coverage record
+    coverage_service = LookupService('EnrollmentApplicationCoverageService')
+    coverage = coverage_service.get(coverage_id)
+    
+    pdf_bytes = generate_pdf(submission.id, coverage_id)
+    if coverage.applicant_type != "children":
+        xml = submission_service.render_enrollment_xml(coverage, coverage.applicant_type, pdf_bytes)
+    else:
+        data = EnrollmentApplicationService().get_wrapped_data_for_coverage(coverage)
+        for i, child in enumerate(data['children']):
+            print("Generating child {}".format(i + 1))
+            applicant_type = "child{}".format(i + 1)
+            xml = submission_service.render_enrollment_xml(coverage, applicant_type, pdf_bytes)
+            
     submission.data = xml
     db.session.add(log)
 

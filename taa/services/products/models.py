@@ -110,6 +110,10 @@ class Product(ProductJsonSerializable, db.Model):
     def is_fpp(self):
         return self.get_base_product_code().lower().startswith('fpp')
 
+    def can_submit_stp(self):
+        # FPP is currently the only product that supports STP to Dell
+        return self.is_fpp()
+
     def is_group_ci(self):
         return self.get_base_product_code() == Product.TYPE_GROUP_CI
 

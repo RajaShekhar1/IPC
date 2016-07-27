@@ -458,7 +458,14 @@ class EnrollmentDataWrap(object):
         else:
             if product.is_fpp() and self.case.omit_actively_at_work and not product.is_guaranteed_issue():
                 return ''
-        return 'yes' if self.data['is_employee_actively_at_work'] else 'no'
+        
+        if 'is_employee_actively_at_work' in self.data:
+            val = self.data['is_employee_actively_at_work']
+        else:
+            # Import format
+            val = self.data['actively_at_work']
+        
+        return 'yes' if val else 'no'
 
     def get_applicant_data(self):
         applicants = []
@@ -559,7 +566,13 @@ class EnrollmentDataWrap(object):
             ))
 
         return applicants
-
+    
+    def get_selected_employee_riders(self):
+        return self.data.get('rider_data', {}).get('emp', [])
+    
+    def get_selected_spouse_riders(self):
+        return self.data.get('rider_data', {}).get('sp', [])
+    
     def has_bank_draft_info(self):
         return self.get('bank_info', None) is not None
 

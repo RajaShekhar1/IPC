@@ -5,20 +5,19 @@ from __future__ import unicode_literals
 import base64
 import datetime
 import uuid
-from decimal import Decimal
 
+import re
 from flask import current_app, render_template
+from taa.services.enrollments.enrollment_application import EnrollmentApplicationService
 
-from .models import db
 from taa import app
-from taa.services.agents.models import Agent
 from taa.services import RequiredFeature
 from taa.services.products.plan_codes import (get_invalid_plan_code,
                                               get_plan_code)
 from taa.services.products.RatePlan import (ApplicantQuery,
                                             ApplicantDemographics,
                                             ApplicantQueryOptions)
-from dell import *
+from taa.services.enrollments.dell import *
 
 
 # TODO: Move this to /services vvv
@@ -38,45 +37,54 @@ agent_service = RequiredFeature('AgentService')
 # census_service = RequiredFeature('CensusRecordService')
 
 
-def generate_from_enrollment(enrollment_id, census_record_id,
-                             template='xml/base.xml'):
-    # pdf_bytes = pdf_service.generate_form_pdf(template_id, enrollment_tabs)
-    enrollment = enrollment_service.get(enrollment_id)
-    census = enrollment.census_record
-    case = enrollment.case
-    agent = agent_service.get(enrollment.agent_id)
-    xmls = {
-        'employee': None,
-        'spouse': None,
-        'children': [],
-    }
-    return generate_xml(census.standardized_data, case, template,
-                        form_for='employee')
 
-
-def generate_xml(data, enrollment, template, form_for='employee', pdf_bytes=None):
-    vars = get_variables(data, enrollment, form_for, pdf_bytes)
+def generate_xml(data, enrollment, template, applicant_type='employee', pdf_bytes=None):
+    vars = get_variables(data, enrollment, applicant_type, pdf_bytes)
     if vars['enrollee']['coverage']['face_value'] is None:
         return None
     with app.test_request_context():
         return render_template(template, **vars)
 
 
-def get_variables(data, enrollment, form_for, pdf_bytes):
+def normalize_phone(phone_val):
+    if isinstance(phone_val, dict):
+        # Already processed this phone
+        
+        return phone_val
+    if not phone_val:
+        area_code = ''
+        dial_num = ''
+    else:
+            
+        phone_val = phone_val.strip()
+        
+        # Replace any non alpha-numeric characters (if they type a message, we'll let it go through)
+        phone_val = re.sub('[^0-9a-zA-Z]+', '', phone_val)
+        
+        if len(phone_val) > 3:
+            area_code = phone_val[:3]
+            dial_num = phone_val[3:]
+        else:
+            area_code = ''
+            dial_num = phone_val
+
+    return {'area_code': area_code, 'dial_num': dial_num}
+            
+
+
+def get_variables(data, enrollment, applicant_type, pdf_bytes):
     """
     Get the variables needed to populate Dell's ACORD XML template
-
-    :param data: Enrollee data
-    :type: dict
-    :return: Variables to pass to XML template
-    :rtype: dict
     """
     unique_id = uuid.uuid4()
     now = datetime.datetime.now()
     submitted_date = now.date().isoformat()
     submitted_time = now.time().isoformat().split('.', 1)[0]
+    
+    # TODO: Pull from case
     effective_date = '2016-07-15'
-    if form_for == 'employee':
+    
+    if applicant_type == 'employee':
         enrollee = data['employee']
         enrollee['is_employee'] = True
         enrollee['is_spouse'] = False
@@ -86,7 +94,7 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
         # enrollee['weight'] = data['emp_weight_pounds']
         enrollee['spouse_disabled_6_months'] = YESNO[data.get('sp_disabled_6_months', 'N')]
         enrollee['spouse_treated_6_months'] = YESNO[data.get('sp_treated_6_months', 'N')]
-    elif form_for == 'spouse':
+    elif applicant_type == 'spouse':
         try:
             enrollee = data['spouse']
             enrollee['is_employee'] = False
@@ -99,8 +107,8 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
             raise ValueError(
                 "Attempted to enroll for spouse, but employee has no "
                 "spouse on record")
-    elif form_for.startswith('child'):
-        child_index = int(form_for[len('child'):])
+    elif applicant_type.startswith('child'):
+        child_index = int(applicant_type[len('child'):])
         try:
             enrollee = data['children'][child_index]
             enrollee['is_employee'] = False
@@ -114,12 +122,15 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
                 "Attempted to enroll for child #{}, but employee has no such "
                 "child on record".format(child_index+1))
     # Ensure enrollee has location set (assume employee info is always valid)
-    if form_for != 'employee':
+    if applicant_type != 'employee':
         for key in ('address1', 'address2', 'city', 'state', 'zip'):
-            if len(enrollee[key]) == 0:
+            if not enrollee.get(key, '') or len(enrollee.get(key, '')) == 0:
                 enrollee[key] = data['employee'][key]
+                
+                
+    
     # Set Dell-specific "tc" codes
-    gender = GENDER_CODES[enrollee['gender'].lower()]
+    gender = GENDER_CODES[enrollee['gender'].lower()] if enrollee['gender'] else dict(code='', name='')
     enrollee['gender_code'] = gender['code']
     enrollee['gender'] = gender['name']
     state = STATE_CODES[enrollee['state'].upper()]
@@ -127,15 +138,18 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
     smoker = SMOKER_CODES[enrollee['is_smoker']]
     enrollee['smoker_code'] = smoker['code']
     enrollee['smoker'] = smoker['name']
-    if form_for == 'employee':
-        key = 'employee_soh_questions'
-    elif form_for == 'spouse':
-        key = 'spouse_soh_questions'
-    elif form_for.startswith('child'):
-        child_index = int(form_for[len('child'):])
-        key = 'children_soh_questions'[child_index]
+    if applicant_type == 'employee':
+        #key = 'employee_soh_questions'
+        questions = data.get_employee_soh_questions()
+    elif applicant_type == 'spouse':
+        #key = 'spouse_soh_questions'
+        questions = data.get_spouse_soh_questions()
+    elif applicant_type.startswith('child'):
+        child_index = int(applicant_type[len('child'):])
+        #key = 'children_soh_questions'[child_index]
+        questions = data.get_child_soh_questions(child_index)
     # for q in enrollee['soh_questions']:
-    for q in data[key]:
+    for q in questions:
         q['answer'] = YESNO_SOH.get(q['answer'].lower() if q['answer'] is not None
                                     else None)
 
@@ -160,11 +174,13 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
             'crypt_type': CRYPT_TYPE,
         },
         'vendor': {
+            # This is in the spec, looks weird though.
             'code': 'xxx',
             'name': 'VendorName',
             'app_name': 'appname',
         },
         'olife': {
+            # This is in the spec too.
             'vendor_code': 'xxx',
             'extension_code': 'xxxx',
             'company_num': COMPANY_NUMBERS['test']
@@ -178,16 +194,18 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
         'spouse': data.get('spouse'),
         'children': data.get('children'),
         'policy': {
+            # FIXME: These values are updated below - see if we can just call get_policy_info here?
             'enroll_city': data['enrollCity'],
             'enroll_state': data['enrollState'],
             'enroll_state_code': STATE_CODES[data['enrollState']]['code'],
-            'product_type': data['product_type'],
             'payment_mode_code': PAYMENT_MODE[str(data['payment_mode'])],
             'payment_mode': data['payment_mode_text'],
+            # TODO:  - SIGNATURE PIN - add in once signing ceremony?
             'pin': 12345,
             'payment': {
                 'method_code': '5',
                 'method': PAYMENT_METHODS['5'],
+                # Do not include right now, as Dell does not process billing for 5Star through STP at this time.
                 # 'account_number': 873456736,
                 # 'routing_number': 82347864,
                 # 'account_type_code': '2',
@@ -201,18 +219,25 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
     vars['employee']['state_code'] = state['code']
 
     vars['employee']['hire_date'] = data['identityToken']
-    vars['employee']['actively_at_work'] = data['actively_at_work'] or 'Y'
-    vars['employee']['actively_at_work_code'] = YESNO[data['actively_at_work']]
+    vars['employee']['actively_at_work'] = data.get_actively_at_work()# or 'Y'
+    vars['employee']['actively_at_work_code'] = YESNO[data.get_actively_at_work()]
 
-    policy = get_policy_info(data, form_for, enrollee, enrollment.case)
+    policy = get_policy_info(data, applicant_type, enrollee, enrollment.case)
     vars['policy'].update(policy)
 
-    vars['agents'] = get_agents(data, enrollment, form_for)
+    vars['agents'] = get_agents(data, enrollment)
     vars['primary_agent'] = vars['agents'][0]
     vars['primary_agent']['signature_state'] = vars['policy']['enroll_state']
     vars['primary_agent']['signature_state_code'] = STATE_CODES[vars['policy']['enroll_state']]['code']
-    vars['primary_agent']['signature_date'] = data['application_date']
-    vars['enrollee']['signature_date'] = data['application_date']
+    vars['primary_agent']['signature_date'] = enrollment.signature_time
+    vars['enrollee']['signature_date'] = enrollment.signature_time
+
+    # Normalize phone numbers
+    if 'phone' in vars['enrollee']:
+        vars['enrollee']['phone'] = normalize_phone(vars['enrollee']['phone'])
+        
+    if 'phone' in vars['employee']:
+        vars['employee']['phone'] = normalize_phone(vars['employee']['phone'])
 
     # Add primary beneficiarie(s)
     if enrollee['is_child']:
@@ -229,7 +254,6 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
                         'father' if data['employee']['gender'].lower() == 'male'
                         else 'mother' if data['employee']['gender'].lower() == 'female'
                         else 'parent',
-                    # 'relationship': 'child',
                 }
             ],
             'contingent_beneficiary': []
@@ -242,7 +266,7 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
                     break
                 elif source == 'contingent_beneficiary' and index > MAX_CONTINGENT_BENEFICIARIES:
                     break
-                prefix = '{}_{}{}'.format(form_for, source, index)
+                prefix = '{}_{}{}'.format(applicant_type, source, index)
                 if source not in vars['enrollee']['beneficiaries']:
                     vars['enrollee']['beneficiaries'][source] = []
                 if prefix + '_name' not in data:
@@ -282,22 +306,25 @@ def get_variables(data, enrollment, form_for, pdf_bytes):
     return vars
 
 
-def get_riders(case, data, form_for, case_override=False):
+def get_riders(case, data, applicant_type):
+    if applicant_type not in ['employee', 'spouse']:
+        return []
+    
     riders = []
-    if case_override:
-        # Get riders from case
-        rider_settings = case.product_settings.get('riders', [])
-        for rider in rider_settings:
-            if rider['is_selected']:
-                riders.append(rider['rider_code'])
+    
+    if not data.is_import():
+        if applicant_type == 'employee':
+            return data.get_selected_employee_riders()
+        elif applicant_type == 'spouse':
+            return data.get_selected_spouse_riders()
+        
     else:
         # Get riders from enrollment data
-        if form_for == 'employee':
+        if applicant_type == 'employee':
             prefix = 'emp'
-        elif form_for == 'spouse':
+        elif applicant_type == 'spouse':
             prefix = 'sp'
-        else:
-            return []
+        
         for csv_rider in ['air', 'wp', 'qol3', 'qol4']:
             r = data.get('{}_rider_{}'.format(prefix, csv_rider))
             if r is not None and r.upper() == 'Y':
@@ -305,20 +332,35 @@ def get_riders(case, data, form_for, case_override=False):
     return riders
 
 
-def make_applicant_query(data, form_for, enrollee, case):
-    riders = get_riders(case, data, form_for)
+def make_applicant_query(data, applicant_type, enrollee, case):
+    riders = get_riders(case, data, applicant_type)
     return ApplicantQuery(
-            applicant_type='child' if form_for.startswith('ch') else form_for,
+            applicant_type='child' if applicant_type.startswith('ch') else applicant_type,
             product_options={'riders': riders},
             demographics=ApplicantDemographics(
-                    demographics_object={'applicant_type': form_for}),
+                    demographics_object={'applicant_type': applicant_type}),
             state=enrollee['state'],
             mode=data['payment_mode'],
             rate_options=ApplicantQueryOptions({})
     )
 
 
-def get_policy_info(data, form_for, enrollee, case):
+def get_policy_info(data, applicant_type, enrollee, case):
+    
+    plan_code = get_plan_code(data.get_product_code(),
+                              make_applicant_query(data, applicant_type,
+                                                   enrollee, case))
+    if plan_code is None:
+        plan_code = get_invalid_plan_code(data.get_product_code())
+    
+    # This is fairly FPP-specific, will need to be changed if other products add STP perhaps.
+    if data.get_product_code().startswith('FPPTI'):
+        # FPPTI, FPPTIW, FPPTIY, etc
+        product_code = "Term"
+    else:
+        # Not sure ?
+        product_code = "Family Protection"
+        
     policy = {
         'carrier_code': CARRIER_CODE,
         'status_code': POLICY_STATUS_CODE,
@@ -328,8 +370,9 @@ def get_policy_info(data, form_for, enrollee, case):
         'replacement_number': data.get('replacement_policy1_number', ''),
         'existing_insurance_code': BOOLEAN[data.get('existing_insurance')],
         'existing_insurance': data.get('existing_insurance'),
-        'product_type': data['product_type'],
-        'base_product_type': data['product_type'],
+        'product_type': plan_code,
+        'product_code': product_code,
+        'base_product_type': data.get_product_code(),
         'indicator_code': '1',
         'indicator': 'Base',
         'is_life': True,
@@ -340,34 +383,20 @@ def get_policy_info(data, form_for, enrollee, case):
         replacement_type = REPLACEMENT_TYPES[None]
     policy['replacement_type_code'] = replacement_type['code']
     policy['replacement_type'] = replacement_type['name']
-    plan_code = get_plan_code(data['product_type'],
-                              make_applicant_query(data, form_for,
-                                                    enrollee, case))
-    if plan_code is None:
-        plan_code = get_invalid_plan_code(data['product_type'])
-    policy['product_type'] = plan_code
-    if policy['base_product_type'].startswith('FPPTI'):
-        policy.update({'product_code': 'Term'})
-    else:
-        policy.update({'product_code': 'Family Protection'})
-    policy['riders'] = get_riders(case, data, form_for)
+    policy['riders'] = get_riders(case, data, applicant_type)
     return policy
 
 
-def get_agents(data, enrollment, form_for):
+def get_agents(data, enrollment):
     agents = []
     case = enrollment.case
     if case.agent_splits is not None:
         # Case has agent splits
         # for split in case.agent_splits:
-        for split in [s for s in case.agent_splits
-                      if s.product_id in [c.product_id
-                                          for c in enrollment.coverages
-                                          if c.applicant_type == 'employee']]:
+        for split in [s for s in case.agent_splits if s.product_id == data.get_product_id()]:
             if split.agent is None:
                 # Writing agent (null agent) is placeholder for enrolling agent
-                agent = Agent.query.filter_by(
-                        agent_code=data['agent_code']).one()
+                agent = data.get_signing_agent()
             else:
                 agent = split.agent
             if split.split_percentage > 0:
@@ -378,12 +407,76 @@ def get_agents(data, enrollment, form_for):
                     'subcode': split.commission_subcount_code,
                     'commission_percent': split.split_percentage,
                 })
-    else:
-        agent = Agent.query.filter_by(agent_code=data['agent_code']).one()
+    
+    if not agents or not case.agent_splits:
+        agent = data.get_signing_agent()
         agents.append({
             'first': agent.first,
             'last': agent.last,
             'code': agent.agent_code,
             'commission_percent': 100,
         })
+        
     return agents
+
+
+def test_wizard_xml():
+    from zipfile import ZipFile
+    from io import BytesIO
+    from taa import db
+    from taa.services.enrollments.models import EnrollmentApplication
+    from taa.services.submissions import EnrollmentSubmissionService
+    apps = db.session.query(EnrollmentApplication).filter(EnrollmentApplication.signature_time >= '2016-01-01'
+          ).options(db.subqueryload('coverages').joinedload('enrollment').joinedload('case').joinedload('owner_agent')
+          ).all()
+    
+    coverages = []
+    for app in apps:
+        
+        for coverage in app.coverages:
+            enrollment = coverage.enrollment
+            if coverage.product.can_submit_stp():
+                coverages.append(coverage)
+    
+    print("Processing {} coverages: ".format(len(coverages)))
+
+    # zipstream = BytesIO()
+    # with ZipFile(zipstream, 'w') as zip:
+    for coverage in coverages:
+        print("Processing app #{}, applicant {}, product '{}'".format(coverage.enrollment.id, coverage.applicant_type,
+                                                                      coverage.product.name))
+        
+        # pdf_bytes = EnrollmentSubmissionService().render_enrollment_pdf(coverage.enrollment, is_stp=True,
+        #                                                                 product_id=coverage.product_id)
+        xmls = []
+        if coverage.applicant_type == 'children':
+            # Generate one for each child
+            data = EnrollmentApplicationService().get_wrapped_data_for_coverage(coverage)
+            for i, child in enumerate(data['children']):
+                print("Generating child {}".format(i + 1))
+                applicant_type = "child{}".format(i)
+                xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=None)
+                if xml:
+                    xmls.append((xml, applicant_type))
+        else:
+            
+            applicant_type = coverage.applicant_type
+            xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=None)
+            if xml:
+                xmls.append((xml, applicant_type))
+        
+        # for xml, applicant_type in xmls:
+        #
+        #         fn = 'enrollment_{}-{}.xml'.format(coverage.enrollment.id, applicant_type)
+        #         zip.writestr(fn, xml.encode('latin-1'))
+        #         #zip.writestr('enrollment_{}-{}.pdf'.format(coverage.enrollment.id, applicant_type), pdf_bytes)
+        #
+            
+    # f = open('out.zip', 'w+')
+    # f.write(zipstream.getvalue())
+    # f.close()
+
+if __name__ == "__main__":
+    test_wizard_xml()
+                
+            
