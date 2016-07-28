@@ -49,6 +49,15 @@ class UserService(object):
     def can_current_user_submit_enrollments(self):
         return self.can_user_submit_enrollments(current_user)
 
+    def get_current_user(self):
+        return current_user
+
+    def get_current_user_href(self):
+        if current_user:
+            return current_user.href
+        else:
+            return None
+
     def can_user_submit_enrollments(self, account):
         return self.ENROLLMENT_IMPORT_GROUP in self.get_user_groupnames(account)
 

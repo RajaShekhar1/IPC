@@ -216,6 +216,10 @@ class EnrollmentImportService(object):
         )
         return output
 
+    def send_generic_error_email(self, user_href):
+        processor = EnrollmentProcessor()
+        processor.send_generic_error_email(user_href)
+
 
 # Utility function for cleaning up data.
 def val_or_blank(data, name):

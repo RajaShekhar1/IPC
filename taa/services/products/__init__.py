@@ -29,6 +29,9 @@ class ProductService(DBService):
 
     BASE_PRODUCT_TYPE = u'base'
     GI_PRODUCT_TYPE = u'GI'
+    EXCLUDED_BASE_PRODUCT_CODES = [
+        u'Static Benefit',
+    ]
 
     def search(self, by_name=None, by_code=None, by_type=None):
         q = Product.query
@@ -412,11 +415,15 @@ class ProductService(DBService):
             return case.products
         from taa.services.enrollments import EnrollmentApplication
         applications = EnrollmentApplication.query.filter(EnrollmentApplication.census_record_id == census.id).all()
-        has_membership_product = any(applications) and any(
-            p for p in case.products if p.get_base_product_code() == u'Static Benefit')
-        if has_membership_product:
-            return [p for p in case.products if p.get_base_product_code() != u'Static Benefit']
-        return case.products
+
+        # Exclude any static benefit products applicant has previously enrolled
+        excluded_product_ids = set(filter(None, [
+            product_id if self.get(product_id).get_base_product_code() in self.EXCLUDED_BASE_PRODUCT_CODES
+            else None
+            for application in applications
+            for product_id in application.get_enrolled_product_ids()
+            ]))
+        return [p for p in case.products if p.id not in excluded_product_ids]
 
     def get_ordered_products_for_case(self, case_id):
         from taa.services.cases.models import case_products
