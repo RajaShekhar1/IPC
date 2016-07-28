@@ -266,7 +266,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
 
     # Show products this applicant is allowed to enroll.
     product_options = product_service.filter_products_from_membership(case, record)
-    product_options = product_service.filter_products_by_enrollment_state(product_options, state)
+    product_options = product_service.filter_products_by_enrollment_state(product_options, state, case=case)
     wizard_data = dict(
         is_in_person=not is_self_enroll,
         case_data={
