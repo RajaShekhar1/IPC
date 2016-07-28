@@ -172,7 +172,7 @@ class CaseEnrollmentPeriod(PeriodSerializer, db.Model):
 
 
 class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
-    PERIOD_TYPE = u'open'
+    PERIOD_TYPE = u'open_with_start'
     __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
 
     def populate_data_dict(self, data):

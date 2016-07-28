@@ -17,7 +17,7 @@ var CaseEnrollmentPeriod = function CaseEnrollmentPeriod(period, effective_date_
   }
   self.is_both = (self.period_type == "both");
   self.is_ongoing = (self.period_type == "ongoing");
-  self.is_open = (self.period_type == "open");
+  self.is_open = (self.period_type == "open_with_start");
   self.description = settings.description;
 
   self.case_id = settings.case_id;

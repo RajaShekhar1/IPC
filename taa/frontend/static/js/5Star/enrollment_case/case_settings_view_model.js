@@ -236,7 +236,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.parent_end_date = ko.observable("");
 
   self.enrollment_periods = ko.observableArray(_.zipWith(case_data.enrollment_periods, case_data.effective_date_settings, function (p, e) {
-    if (p.period_type == 'open') {
+    if (p.period_type == 'open_with_start') {
       self.parent_start_date(normalize_date(p.start_date));
       self.parent_end_date(normalize_date(p.end_date));
     }
@@ -431,7 +431,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       value: "None"
     },
     {
-      type: "open",
+      type: "open_with_start",
       text: "Enrollment Period",
       value: "Open Enrollment"
     },
@@ -455,28 +455,28 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       description: "(Select an Effective Date Type)"
     }, "default"),
     new CaseEnrollmentPeriod({
-      period_type: "open",
+      period_type: "open_with_start",
       case_id: case_data.id,
       start_date: self.parent_start_date,
       end_date: self.parent_end_date,
       description: "Static Date"
     }, "static_date"),
     new CaseEnrollmentPeriod({
-      period_type: "open",
+      period_type: "open_with_start",
       case_id: case_data.id,
       start_date: self.parent_start_date,
       end_date: self.parent_end_date,
       description: "Cutoff day of month"
     }, "day_of_month"),
     new CaseEnrollmentPeriod({
-      period_type: "open",
+      period_type: "open_with_start",
       case_id: case_data.id,
       start_date: self.parent_start_date,
       end_date: self.parent_end_date,
       description: "Enroller selects"
     }, "enroller_selects"),
     new CaseEnrollmentPeriod({
-      period_type: "open",
+      period_type: "open_with_start",
       case_id: case_data.id,
       start_date: self.parent_start_date,
       end_date: self.parent_end_date,
@@ -550,7 +550,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }
     else if (self.open_enrollment_status() && self.ongoing_enrollment_status()) {
       _.each(self.enrollment_periods(), function (p) {
-        if (p.period_type == 'open') {
+        if (p.period_type == 'open_with_start') {
           self.selectedOpenOption = ko.observable(_.findWhere(self.openEnrollmentOptions(), {effective_date_type: p.effective_date_type}));
           self.set_enrollment_method_data(p, self.selectedOpenOption());
         }
@@ -613,7 +613,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.enrollment_type = ko.computed(function () {
     switch (self.selectedEnrollment().type) {
-      case "open":
+      case "open_with_start":
         self.open_enrollment_status(true);
         self.ongoing_enrollment_status(false);
         break;
@@ -632,7 +632,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   });
   self.open_type = ko.computed(function () {
-    if (self.selectedEnrollment().type.indexOf("open") == -1 && self.selectedEnrollment().type.indexOf('both') == -1) {
+    if (self.selectedEnrollment().type.indexOf("open_with_start") == -1 && self.selectedEnrollment().type.indexOf('both') == -1) {
       return 0;
     }
     switch (self.selectedOpenOption().effective_date_type) {

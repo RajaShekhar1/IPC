@@ -2008,7 +2008,7 @@ var wizard_viewmodel = (function () {
     self.which_enroller_select_date = function () {
       if (self.show_enroller_select_date()) {
         var enroller_selects = _.filter(self.effective_date_settings, {'method': 'enroller_selects'});
-        var open_enroller = _.find(enroller_selects, {'type': 'open'});
+        var open_enroller = _.find(enroller_selects, {'type': 'open_with_start'});
         var ongoing_enroller = _.find(enroller_selects, {'type': 'ongoing'});
         if (typeof open_enroller != 'undefined') {
           if (today_between(normalize_date(open_enroller.enrollment_period.start_date), normalize_date(open_enroller.enrollment_period.end_date))) {
