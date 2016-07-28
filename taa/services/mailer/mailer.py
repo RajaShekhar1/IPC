@@ -10,6 +10,10 @@ def send_email(to, subject, from_email="noreply@5StarEnroll.com", from_name="5St
 
     sparkpost = SparkPost(app.config['SPARKPOST_API_KEY'])
 
+    if not attachments:
+        # Sparkpost crashes if None is passed in ...
+        attachments = []
+
     try:
         response = sparkpost.transmissions.send(
             recipients=to,
