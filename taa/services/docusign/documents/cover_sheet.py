@@ -32,6 +32,7 @@ class CoverSheetAttachment(PDFAttachment):
         PDFAttachment.__init__(self, recipients, enrollment_data)
 
         self.case = enrollment_data.case
+        self.enrollment_data = enrollment_data
 
         # This is a summary document so we need all the enrollment data.
         self.all_enrollments = all_enrollments
@@ -174,7 +175,10 @@ class CoverSheetAttachment(PDFAttachment):
 
         # Iterate through the case products to identify declines.
         case_service = LookupService('CaseService')
-        for i, product in enumerate(case_service.get_products_for_case(self.data.case)):
+        product_options = case_service.get_products_for_case(self.data.case)
+        state = self.enrollment_data.get('enrollState')
+        product_service = LookupService('ProductService')
+        for i, product in enumerate(product_service.filter_products_by_enrollment_state(product_options, state)):
 
             product_data = self.get_wrapped_enrollment_data_for_product(product)
 

@@ -480,7 +480,7 @@ class EnrollmentSubmissionProcessor(object):
         if case.include_cover_sheet:
             from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
             components.append(CoverSheetAttachment([emp_recip], EnrollmentDataWrap(all_product_data[0], case,
-                                                                                          enrollment_record=enrollment_application),
+                                                                                   enrollment_record=enrollment_application),
                                                    all_product_data))
 
         for raw_enrollment_data in all_product_data:
