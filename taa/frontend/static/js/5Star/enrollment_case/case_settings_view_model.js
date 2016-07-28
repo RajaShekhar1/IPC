@@ -10,6 +10,17 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.case_id = case_data.id;
   self.case_token = case_data.case_token;
   self.product_rate_levels = product_rate_levels || {};
+  self.state_override_view_models = ko.observableArray([]);
+
+  self.product_state_mapping = ko.computed(function () {
+    var mapping = settings.product_state_mapping;
+    _.each(self.state_override_view_models(), function (ovm) {
+      if (ovm.restrict_state_availability()) {
+        mapping[ovm.id] = ovm.state_overrides();
+      }
+    });
+    return mapping;
+  });
 
   self.can_edit_case = can_edit_case;
   //endregion
@@ -328,7 +339,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }) : []);
 
   // Disable bad combos of states and products
-  self.state_product_limiter = new ProductStatesLimiterViewModel(settings.product_state_mapping, self.situs_state, self.state_choices, self.products, self.product_choices);
+  self.state_product_limiter = new ProductStatesLimiterViewModel(self.product_state_mapping, self.situs_state, self.state_choices, self.products, self.product_choices);
 
   self.on_products_select_rendered = function (option, item) {
     if (!item) {
@@ -355,7 +366,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   // Limit the states that can be chosen as 'enrolling from state' by the products
-  self.state_product_override_limiter = new StatesLimiterViewModel(settings.product_state_mapping,
+  self.state_product_override_limiter = new StatesLimiterViewModel(self.product_state_mapping,
     self.enrollment_state_override,
     self.state_choices,
     self.products
@@ -601,8 +612,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return data;
   };
 
-  self.state_override_view_models = ko.observableArray([]);
-
   //Creates and removes viewmodels as self.products() changes, retaining existing viewmodels,
   //so that data remains consistent
   self.update_state_override_view_models = ko.computed(function () {
@@ -615,7 +624,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
         return;
       }
       else {
-        viewmodels.push(new ProductOverrideViewModel(product, case_data, settings.state_overrides));
+        viewmodels.push(new ProductOverrideViewModel(product, case_data, settings.state_overrides, self.product_state_mapping));
       }
     });
     viewmodels = _.filter(viewmodels, function (vm) {

@@ -1,4 +1,4 @@
-function ProductOverrideViewModel(product, case_data, initial_state_overrides) {
+function ProductOverrideViewModel(product, case_data, initial_state_overrides, state_mapping) {
   var self = this;
 
   self.product = product;
@@ -7,6 +7,7 @@ function ProductOverrideViewModel(product, case_data, initial_state_overrides) {
   self.can_override_states = product.can_override_states;
   self.base_product_type = product.base_product_type;
   self.initial_state_overrides = initial_state_overrides;
+  self.state_mapping = state_mapping;
   self.restrict_state_availability = ko.observable(false);
   self.state_overrides = ko.observableArray([]);
 
@@ -61,6 +62,12 @@ function ProductOverrideViewModel(product, case_data, initial_state_overrides) {
       self.state_overrides(states);
     }
   };
+  //
+  // self.state_overrides.subscribe(function (states) {
+  //   var mapping = self.state_mapping();
+  //   mapping[self.id] = states;
+  //   self.state_mapping(mapping);
+  // });
 
   self.initialize_state_overrides();
 
