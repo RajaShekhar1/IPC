@@ -601,60 +601,48 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return data;
   };
 
-  self.can_product_override_states = function (product) {
-    if (product.can_override_states) {
-      self.initialize_states_selection(product);
-    }
-    return product.can_override_states;
-  };
+  self.state_override_view_models = ko.observableArray([]);
 
-  self.get_product_group_ci = function () {
-    var group_ci = _.find(self.products(), function (product) {
-      return product.base_product_type == 'Group CI';
+  //Creates and removes viewmodels as self.products() changes, retaining existing viewmodels,
+  //so that data remains consistent
+  self.update_state_override_view_models = ko.computed(function () {
+    var viewmodels = self.state_override_view_models();
+    _.each(self.products(), function (product) {
+      var vm_ids = _.map(self.state_override_view_models(), function (vm) {
+        return  _.get(vm, 'id')
+      });
+      if (!!(_.find(vm_ids, function (vm_id) {return vm_id == product.id}))) {
+        return;
+      }
+      else {
+        viewmodels.push(new ProductOverrideViewModel(product, case_data, settings.state_overrides));
+      }
     });
-    if (typeof group_ci === typeof undefined) {
+    viewmodels = _.filter(viewmodels, function (vm) {
+      return _.find(self.products(), function (prod) {
+        return prod.id == vm.id;
+      });
+    });
+    console.log(viewmodels);
+    self.state_override_view_models(viewmodels);
+  });
+
+  self.get_state_override_view_model = function (product) {
+    var vm = _.find(self.state_override_view_models(), function (view) {
+      return view.id == product.id;
+    });
+    if (!!vm) {
+      return vm;
+    }
+    else {
       return false;
     }
-    return group_ci.id;
   };
 
-  self.get_overridden_states = function () {
-    return self.state_overrides();
+  self.product_can_override_states = function (product) {
+    var vm = self.get_state_override_view_model(product);
+    return vm.can_override_states;
   };
-
-  self.get_product_id = function (product) {
-    return product.id;
-  };
-
-  self.initialize_states_selection = function (product) {
-    $('#states-list-product-' + self.get_product_id(product)).bootstrapDualListbox({
-      infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',
-      showFilterInputs: true,
-      moveOnSelect: false,
-      nonSelectedListLabel: 'Available States:',
-      selectedListLabel: 'States Allowed:',
-      selectorMinimalHeight: 250
-    });
-  };
-
-  self.restrict_state_availability = ko.observable(false);
-  self.state_overrides = ko.observableArray([]);
-
-  self.initialize_state_overrides = function () {
-    var group_ci = self.get_product_group_ci();
-    var states = [];
-    if (group_ci) {
-      if (!!case_data.product_settings) {
-        states = _.get(case_data.product_settings.state_overrides, String(group_ci));
-      }
-    }
-    if (states.length > 0) {
-      self.restrict_state_availability(true);
-    }
-    self.state_overrides(states);
-  };
-
-  self.initialize_state_overrides();
 
   self.occupation_classes_for_product = function (product) {
     var occupation_mappings = [];
@@ -1386,13 +1374,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.serialize_state_overrides = function () {
-    var group_ci = self.get_product_group_ci();
-    var state = self.get_overridden_states();
-    var object = {};
-    if (group_ci) {
-      object[group_ci] = state;
-    }
-    return object;
+    return _.invoke(self.state_override_view_models(), "serialize");
   };
 
   self.serialize_riders = function () {

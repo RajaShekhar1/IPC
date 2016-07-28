@@ -227,10 +227,11 @@ def get_selected_states(case, all_states):
     if case.product_settings:
         state_overrides = case.product_settings.get('state_overrides')
         if state_overrides:
-            for product_id, states in state_overrides.items():
-                for pair in all_states:
-                    if pair.get('statecode') in states:
-                        state_selections.append(pair.get('statecode'))
+            for state_override_pair in state_overrides:
+                for product_id, states in state_override_pair.items():
+                    for pair in all_states:
+                        if pair.get('statecode') in states:
+                            state_selections.append({product_id: pair.get('statecode')})
     return state_selections
 
 
