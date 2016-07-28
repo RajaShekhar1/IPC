@@ -13,7 +13,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.state_override_view_models = ko.observableArray([]);
 
   self.product_state_mapping = ko.computed(function () {
-    var mapping = settings.product_state_mapping;
+    var mapping = _.cloneDeep(settings.product_state_mapping);
     _.each(self.state_override_view_models(), function (ovm) {
       if (ovm.restrict_state_availability()) {
         mapping[ovm.id] = ovm.state_overrides();
