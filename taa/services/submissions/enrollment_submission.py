@@ -89,17 +89,17 @@ class EnrollmentSubmissionService(object):
             import taa.tasks as tasks
             
             
-                # Create a submission to track the status.
-                submission = EnrollmentSubmission()
-                submission.submission_type = EnrollmentSubmission.TYPE_DELL_STP_XML
-                # determine where to store metadata about submission (`employee_application_coverage` ID == stores applicant type, product, etc.)
-                db.session.add(submission)
-                db.session.commit()
-                submission.enrollment_applications = [enrollment_application]
-                # add to enrollment_submission_blah
-                # for each enrollment
-                
-                tasks.submit_stp_xml_to_dell(submission.id, coverage.id, child_index)
+            # Create a submission to track the status.
+            submission = EnrollmentSubmission()
+            submission.submission_type = EnrollmentSubmission.TYPE_DELL_STP_XML
+            # determine where to store metadata about submission (`employee_application_coverage` ID == stores applicant type, product, etc.)
+            db.session.add(submission)
+            db.session.commit()
+            submission.enrollment_applications = [enrollment_application]
+            # add to enrollment_submission_blah
+            # for each enrollment
+            
+            tasks.submit_stp_xml_to_dell(submission.id, coverage.id, child_index)
 
     def submit_signed_application(self, enrollment_application):
         return EnrollmentSubmissionProcessor().submit_signed_enrollment(enrollment_application)
