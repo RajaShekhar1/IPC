@@ -79,25 +79,22 @@ def process_wizard_enrollment(task, enrollment_id):
 
 
 def send_admin_error_email(error_message, errors):
-    try:
-        tracebacks = '\n<br>'.join([err for err in errors])
-        body = u"{} <br><br>Tracebacks: <br><br>{}".format(
-            error_message, tracebacks.replace('<br>', '\n')
-        )
 
-        # Get stormpath admins
-        for account in UserService().get_admin_users():
-            mailer = LookupService('MailerService')
-            mailer.send_email(
-                to=["{name} <{email}>".format(**{'email': account.email, 'name': account.full_name})],
-                from_email="errors@5StarEnroll.com",
-                from_name=u"TAA Error {}".format(taa_app.config['HOSTNAME']),
-                subject=u"5Star Import Error ({})".format(taa_app.config['HOSTNAME']),
-                html=body,
-            )
-    except Exception:
-        # Swallow this
-        pass
+    tracebacks = '\n<br>'.join([err for err in errors])
+    body = u"{} <br><br>Tracebacks: <br><br>{}".format(
+        error_message, tracebacks.replace('<br>', '\n')
+    )
+
+    # Get stormpath admins
+    admins = [account for account in UserService().get_admin_users() if account.email.lower() in ['zmason@delmarsd.com', 'bdavis@5starenroll.com']]
+    for account in admins:
+        mailer = LookupService('MailerService')
+        mailer.send_email(
+            to=["{name} <{email}>".format(**{'email': account.email, 'name': account.full_name})],
+            from_email=u"TAA Error <errors@5StarEnroll.com>",
+            subject=u"5Star Import Error ({})".format(taa_app.config['HOSTNAME']),
+            html=body,
+        )
 
 
 @app.task(bind=True, default_retry_delay=FIVE_MINUTES)

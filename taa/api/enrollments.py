@@ -3,8 +3,10 @@ from StringIO import StringIO
 from io import BytesIO
 from zipfile import ZipFile
 
+import traceback
 from flask import Blueprint, request, abort, make_response, send_file
 from flask_stormpath import login_required, groups_required
+from taa.tasks import send_admin_error_email
 
 from taa.api import route
 from taa.services import LookupService
@@ -18,6 +20,7 @@ enrollment_import_batch_service = LookupService("EnrollmentImportBatchService")
 enrollment_import_batch_item_service = LookupService("EnrollmentImportBatchItemService")
 enrollment_submission_service = LookupService("EnrollmentSubmissionService")
 enrollment_application_service = LookupService("EnrollmentApplicationService")
+user_service = LookupService("UserService")
 product_service = LookupService("ProductService")
 
 @route(bp, '/', methods=["POST"])
@@ -25,6 +28,9 @@ def submit_enrollments():
     case_token = request.args.get('case_token') or request.form.get('case_token')
     auth_token = request.args.get('auth_token') or request.form.get('auth_token')
     user_href = request.args.get('user_href') or request.form.get('user_href')
+    if not user_href:
+        user_href = user_service.get_current_user_href()
+
     data_format = request.args.get('format') or request.form.get('format', 'flat')
     upload_source = request.args.get('upload_source') or request.form.get('upload_source', 'api')
     if request.data:
@@ -34,14 +40,25 @@ def submit_enrollments():
     else:
         raise ValueError("No data provided")
 
-    import_results = enrollment_import_service.process_enrollment_data(
-        data,
-        data_format,
-        case_token=case_token,
-        auth_token=auth_token,
-        user_href=user_href,
-        data_source=upload_source
-    )
+    try:
+        raise ValueError("test error again")
+        import_results = enrollment_import_service.process_enrollment_data(
+            data,
+            data_format,
+            case_token=case_token,
+            auth_token=auth_token,
+            user_href=user_href,
+            data_source=upload_source
+        )
+    except Exception as e:
+        enrollment_import_service.send_generic_error_email(user_href)
+        send_admin_error_email("Generic Import Error:<br>{}".format(e.message), [traceback.format_exc()])
+        return {
+           'num_processed': 0,
+           'num_errors': 0,
+           'errors': [{'fields':'Error', 'message': 'There was a problem reading the file'}]
+         }, 400
+
 
     return {
         'num_processed': import_results.get_num_processed(),
