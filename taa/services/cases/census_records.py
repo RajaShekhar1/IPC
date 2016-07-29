@@ -62,7 +62,9 @@ class CensusRecordService(DBService):
         """
         # Get existing census data indexed by SSN for matching
         existing = self.find(case_id=case.id).all()
-        existing_by_ssn = {r.employee_ssn: r for r in existing}
+        
+        # The `if r.employee_ssn` makes sure we aren't matching on empty SSNs if some census records are missing SSNs.
+        existing_by_ssn = {r.employee_ssn: r for r in existing if r.employee_ssn}
         # Parse the uploaded file and validate it. If we are in add-only mode,
         # pass in the existing SSN dict.
         parser = CensusRecordParser(case)
