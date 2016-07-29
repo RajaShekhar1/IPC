@@ -480,8 +480,9 @@ class EnrollmentSubmissionProcessor(object):
         if case.include_cover_sheet:
             from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
             components.append(CoverSheetAttachment([emp_recip], EnrollmentDataWrap(all_product_data[0], case,
-                                                                                   enrollment_record=enrollment_application),
-                                                   all_product_data))
+                                                                                   enrollment_record=enrollment_application,
+                                                                                   ),
+                                                   all_product_data, enrollment_application=enrollment_application))
 
         for raw_enrollment_data in all_product_data:
             # Wrap the submission with an object that knows how to pull out key info.
@@ -489,6 +490,9 @@ class EnrollmentSubmissionProcessor(object):
 
             # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
             should_use_docusign_renderer = False # if enrollment_data.should_use_call_center_workflow() else True
+
+            if enrollment_data['did_decline']:
+                continue
 
             product_id = enrollment_data.get_product_id()
             product = self.product_service.get(product_id)

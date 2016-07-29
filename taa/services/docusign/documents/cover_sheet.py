@@ -28,11 +28,12 @@ small_style = ParagraphStyle(name='smallLegal',
 
 
 class CoverSheetAttachment(PDFAttachment):
-    def __init__(self, recipients, enrollment_data, all_enrollments):
+    def __init__(self, recipients, enrollment_data, all_enrollments, enrollment_application=None):
         PDFAttachment.__init__(self, recipients, enrollment_data)
 
         self.case = enrollment_data.case
         self.enrollment_data = enrollment_data
+        self.enrollment_application = enrollment_application
 
         # This is a summary document so we need all the enrollment data.
         self.all_enrollments = all_enrollments
@@ -175,16 +176,21 @@ class CoverSheetAttachment(PDFAttachment):
 
         # Iterate through the case products to identify declines.
         case_service = LookupService('CaseService')
-        product_options = case_service.get_products_for_case(self.data.case)
-        state = self.enrollment_data.get('enrollState')
         product_service = LookupService('ProductService')
+        if self.enrollment_application:
+            product_ids = self.enrollment_application.get_enrolled_product_ids()
+            product_options = [product_service.get(product_id) for product_id in product_ids]
+        else:
+            product_options = case_service.get_products_for_case(self.data.case)
+        state = self.enrollment_data.get('enrollState')
+        declined_products = self.get_declined_products()
         for i, product in enumerate(product_service.filter_products_by_enrollment_state(product_options, state)):
 
             product_data = self.get_wrapped_enrollment_data_for_product(product)
 
-            if product not in self.get_enrolled_products():
+            if product in declined_products:
                 # Show Decline
-                product_header = '{} - DECLINED'.format(product.get_brochure_name()  if product.get_brochure_name() else product.get_base_product().name)
+                product_header = '{} - DECLINED'.format(product.get_brochure_name() if product.get_brochure_name() else product.get_base_product().name)
                 applicants = []
             else:
                 # Show product name, also tier if a simple_coverage option, and riders if riders are included.
@@ -277,6 +283,14 @@ class CoverSheetAttachment(PDFAttachment):
 
     def get_enrolled_products(self):
         return [d.get_product() for d in self.get_wrapped_enrollment_data()]
+
+    def get_declined_products(self):
+        declined_products = []
+        for data in self.get_wrapped_enrollment_data():
+            if data['did_decline']:
+                declined_products.append(data.get_product())
+        return declined_products
+
 
     def get_wrapped_enrollment_data(self):
         return [EnrollmentDataWrap(raw_product_data, self.data.case, self.data.enrollment_record)

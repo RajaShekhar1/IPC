@@ -4,7 +4,7 @@ function submit_application() {
   window.vm.is_submitting(true);
   window.vm.submission_error("");
 
-  var results = _.map(window.vm.coverage_vm.selected_product_coverages(), function (product_cov) {
+  var results = _.map(window.vm.coverage_vm.product_coverage_viewmodels(), function (product_cov) {
     return build_wizard_results_for_product_coverage(product_cov);
   });
 
