@@ -41,7 +41,7 @@ def submit_enrollments():
         raise ValueError("No data provided")
 
     try:
-        raise ValueError("test error again")
+        #raise ValueError("test error again")
         import_results = enrollment_import_service.process_enrollment_data(
             data,
             data_format,
