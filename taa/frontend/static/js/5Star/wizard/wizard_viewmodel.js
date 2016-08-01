@@ -1614,14 +1614,23 @@ var wizard_viewmodel = (function () {
       return !self.is_submitting();
     });
     
-    self.should_do_signing_ceremony = function() {
-      return options.case_data.is_call_center;
+    self.is_call_center = options.case_data.is_call_center;
+
+    self.enrollment_type = function() {
+      if (self.is_call_center){
+        return "-call-center";
+      }
+      else{
+        return "-in-person";
+      }
     };
 
     self.applicant_signed = ko.observable(false);
     self.applicant_sig_check_1 = ko.observable();
     self.applicant_sig_check_2 = ko.observable();
     self.applicant_sig_check_3 = ko.observable();
+    self.step_6_last_name = ko.observable("");
+    self.step_6_ssn = ko.observable("");
 
     self.can_applicant_sign = ko.pureComputed(function() {
       return self.applicant_sig_check_1() && self.applicant_sig_check_2() && self.applicant_sig_check_3();
@@ -1633,7 +1642,18 @@ var wizard_viewmodel = (function () {
       self.applicant_signed(false);
       self.agent_signed(false);
 
-      $("#modal-signing-applicant").modal("show");
+      $("#modal-signing-applicant" + self.enrollment_type()).modal("show");
+    };
+    
+    self.in_person_sig_checks = ko.computed(function(){
+      if (!self.is_call_center){
+        self.applicant_sig_check_2(self.step_6_last_name().length > 0);
+        self.applicant_sig_check_3(self.step_6_ssn().length == 4);
+      }
+    });
+
+    self.show_application_documents = function(){
+      
     };
 
     self.handle_applicant_signing = function() {
@@ -1643,8 +1663,8 @@ var wizard_viewmodel = (function () {
       self.applicant_signed(true);
 
       //  Go to agent signing
-      $("#modal-signing-applicant").modal("hide");
-      $("#modal-signing-enroller").modal("show");
+      $("#modal-signing-applicant" + self.enrollment_type()).modal("hide");
+      $("#modal-signing-enroller" + self.enrollment_type()).modal("show");
     };
 
     self.handle_agent_signing = function() {
@@ -1654,7 +1674,7 @@ var wizard_viewmodel = (function () {
       self.agent_signed(true);
 
       // Close the signing modal.
-      $("#modal-signing-enroller").modal("hide");
+      $("#modal-signing-enroller" + self.enrollment_type()).modal("hide");
 
       submit_application();
     };

@@ -249,11 +249,7 @@ function init_validation(ui) {
       return false;
     }
 
-    if (ui.should_do_signing_ceremony()) {
-      ui.begin_signing_ceremony();
-    } else {
-      submit_application();
-    }
+    ui.begin_signing_ceremony();
     
   }).on('stepclick.fu.wizard', function (e) {
     return true; //return false;//prevent clicking on steps
