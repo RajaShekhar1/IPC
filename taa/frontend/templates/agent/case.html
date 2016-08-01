@@ -234,8 +234,12 @@
                                         </span>
                                         <br>
                                         <small
-                                            data-bind="visible: open_enrollment_status() && !today_between()">
+                                            data-bind="visible: open_enrollment_status() && !today_between() && !ongoing_enrollment_status()">
                                             <em class="text-danger">Currently not active since outside date range</em>
+                                        </small>
+                                        <small
+                                            data-bind="visible: open_enrollment_status() && !today_between() && ongoing_enrollment_status()">
+                                            <em class="text-danger">Will not use Open Enrollment Policy Effective Date</em>
                                         </small>
                                     </label>
                                   </div>
