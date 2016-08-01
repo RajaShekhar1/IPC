@@ -234,7 +234,7 @@
                                         </span>
                                         <br>
                                         <small
-                                            data-bind="visible: open_enrollment_status() && !today_between() && !ongoing_enrollment_status()">
+                                            data-bind="visible: check_between_or_before() ">
                                             <em class="text-danger">Currently not active since outside date range</em>
                                         </small>
                                     </label>

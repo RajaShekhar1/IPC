@@ -701,6 +701,19 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return today_between(start, end);
   });
 
+  self.today_before = ko.pureComputed(function(){
+    if (!self.get_open_enrollment_period()){
+      return false;
+    }
+
+    var start = self.parent_start_date();
+    return today_before(start);
+  });
+  
+  self.check_between_or_before = function(){
+    return ((self.open_enrollment_status() && !self.today_between() && !self.ongoing_enrollment_status()) || (self.open_enrollment_status() && self.ongoing_enrollment_status() && self.today_before()))
+  }
+
   self.open_enrollment_type = ko.observable(case_data.open_enrollment_type);
   self.ongoing_enrollment_type = ko.observable(case_data.ongoing_enrollment_type);
 
