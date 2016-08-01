@@ -49,18 +49,18 @@ def generate_xml(data, enrollment, template, applicant_type='employee', pdf_byte
 def normalize_phone(phone_val):
     if isinstance(phone_val, dict):
         # Already processed this phone
-        
+
         return phone_val
     if not phone_val:
         area_code = ''
         dial_num = ''
     else:
-            
+
         phone_val = phone_val.strip()
-        
+
         # Replace any non alpha-numeric characters (if they type a message, we'll let it go through)
         phone_val = re.sub('[^0-9a-zA-Z]+', '', phone_val)
-        
+
         if len(phone_val) > 3:
             area_code = phone_val[:3]
             dial_num = phone_val[3:]
@@ -69,7 +69,7 @@ def normalize_phone(phone_val):
             dial_num = phone_val
 
     return {'area_code': area_code, 'dial_num': dial_num}
-            
+
 
 
 def get_variables(data, enrollment, applicant_type, pdf_bytes):
@@ -80,10 +80,10 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
     now = datetime.datetime.now()
     submitted_date = now.date().isoformat()
     submitted_time = now.time().isoformat().split('.', 1)[0]
-    
+
     # TODO: Pull from case
     effective_date = '2016-07-15'
-    
+
     if applicant_type == 'employee':
         enrollee = data['employee']
         enrollee['is_employee'] = True
@@ -126,9 +126,9 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
         for key in ('address1', 'address2', 'city', 'state', 'zip'):
             if not enrollee.get(key, '') or len(enrollee.get(key, '')) == 0:
                 enrollee[key] = data['employee'][key]
-                
-                
-    
+
+
+
     # Set Dell-specific "tc" codes
     gender = GENDER_CODES[enrollee['gender'].lower()] if enrollee['gender'] else dict(code='', name='')
     enrollee['gender_code'] = gender['code']
@@ -235,7 +235,7 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
     # Normalize phone numbers
     if 'phone' in vars['enrollee']:
         vars['enrollee']['phone'] = normalize_phone(vars['enrollee']['phone'])
-        
+
     if 'phone' in vars['employee']:
         vars['employee']['phone'] = normalize_phone(vars['employee']['phone'])
 
@@ -299,7 +299,15 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
             key = 'owner_to_{}'.format(type_)
             if key not in vars['relationships']:
                 vars['relationships'][key] = []
-            vars['relationships'][key].append(RELATIONSHIP_ROLES.get(beneficiary['relationship']))
+            beneficiary['relationship'] = 'eggert'
+            relationship = RELATIONSHIP_ROLES.get(beneficiary['relationship'])
+            if relationship is None:
+                # Special case -- when specified relationship can't be
+                # identified, use the code for "Other" but retain specified
+                # relationship value
+                relationship = RELATIONSHIP_ROLES.get(None)
+                relationship['name'] = beneficiary['relationship']
+            vars['relationships'][key].append(relationship)
 
     vars['encoded_pdf'] = (None if pdf_bytes is None
                            else base64.b64encode(pdf_bytes))
@@ -309,22 +317,22 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
 def get_riders(case, data, applicant_type):
     if applicant_type not in ['employee', 'spouse']:
         return []
-    
+
     riders = []
-    
+
     if not data.is_import():
         if applicant_type == 'employee':
             return data.get_selected_employee_riders()
         elif applicant_type == 'spouse':
             return data.get_selected_spouse_riders()
-        
+
     else:
         # Get riders from enrollment data
         if applicant_type == 'employee':
             prefix = 'emp'
         elif applicant_type == 'spouse':
             prefix = 'sp'
-        
+
         for csv_rider in ['air', 'wp', 'qol3', 'qol4']:
             r = data.get('{}_rider_{}'.format(prefix, csv_rider))
             if r is not None and r.upper() == 'Y':
@@ -346,13 +354,13 @@ def make_applicant_query(data, applicant_type, enrollee, case):
 
 
 def get_policy_info(data, applicant_type, enrollee, case):
-    
+
     plan_code = get_plan_code(data.get_product_code(),
                               make_applicant_query(data, applicant_type,
                                                    enrollee, case))
     if plan_code is None:
         plan_code = get_invalid_plan_code(data.get_product_code())
-    
+
     # This is fairly FPP-specific, will need to be changed if other products add STP perhaps.
     if data.get_product_code().startswith('FPPTI'):
         # FPPTI, FPPTIW, FPPTIY, etc
@@ -360,7 +368,7 @@ def get_policy_info(data, applicant_type, enrollee, case):
     else:
         # Not sure ?
         product_code = "Family Protection"
-        
+
     policy = {
         'carrier_code': CARRIER_CODE,
         'status_code': POLICY_STATUS_CODE,
@@ -407,7 +415,7 @@ def get_agents(data, enrollment):
                     'subcode': split.commission_subcount_code,
                     'commission_percent': split.split_percentage,
                 })
-    
+
     if not agents or not case.agent_splits:
         agent = data.get_signing_agent()
         agents.append({
@@ -416,7 +424,7 @@ def get_agents(data, enrollment):
             'code': agent.agent_code,
             'commission_percent': 100,
         })
-        
+
     return agents
 
 
@@ -429,15 +437,15 @@ def test_wizard_xml():
     apps = db.session.query(EnrollmentApplication).filter(EnrollmentApplication.signature_time >= '2016-01-01'
           ).options(db.subqueryload('coverages').joinedload('enrollment').joinedload('case').joinedload('owner_agent')
           ).all()
-    
+
     coverages = []
     for app in apps:
-        
+
         for coverage in app.coverages:
             enrollment = coverage.enrollment
             if coverage.product.can_submit_stp():
                 coverages.append(coverage)
-    
+
     print("Processing {} coverages: ".format(len(coverages)))
 
     # zipstream = BytesIO()
@@ -445,7 +453,7 @@ def test_wizard_xml():
     for coverage in coverages:
         print("Processing app #{}, applicant {}, product '{}'".format(coverage.enrollment.id, coverage.applicant_type,
                                                                       coverage.product.name))
-        
+
         # pdf_bytes = EnrollmentSubmissionService().render_enrollment_pdf(coverage.enrollment, is_stp=True,
         #                                                                 product_id=coverage.product_id)
         xmls = []
@@ -459,24 +467,23 @@ def test_wizard_xml():
                 if xml:
                     xmls.append((xml, applicant_type))
         else:
-            
+
             applicant_type = coverage.applicant_type
             xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=None)
             if xml:
                 xmls.append((xml, applicant_type))
-        
+
         # for xml, applicant_type in xmls:
         #
         #         fn = 'enrollment_{}-{}.xml'.format(coverage.enrollment.id, applicant_type)
         #         zip.writestr(fn, xml.encode('latin-1'))
         #         #zip.writestr('enrollment_{}-{}.pdf'.format(coverage.enrollment.id, applicant_type), pdf_bytes)
         #
-            
+
     # f = open('out.zip', 'w+')
     # f.write(zipstream.getvalue())
     # f.close()
 
 if __name__ == "__main__":
     test_wizard_xml()
-                
-            
+
