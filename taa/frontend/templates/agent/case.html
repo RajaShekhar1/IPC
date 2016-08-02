@@ -202,75 +202,151 @@
                               </div>
                             </div>
                             <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
-                              <h3 class="header lighter blue">Enrollment Periods</h3>
+                              <h3 class="header lighter blue">Enrollment Option</h3>
+
                               <div>
                                 <div class="panel form-group">
                                   <div class="panel-heading">
                                     <label>
-                                      <input data-bind="checked: enrollment_period_type" type="radio" class="ace"
-                                             name="enrollment_period_type" value="open">
-                                      <span class="lbl padding-8">Enrollment Period with End Date</span><br/>
-                                      <small
-                                          data-bind="visible: !today_between() && enrollment_period_type() === 'open'">
-                                        <em class="text-danger">Currently not active since outside date range</em>
-                                      </small>
+                                        <select name="enrollment_option" data-bind="options: enrollmentOptions, optionsText: function (object) { return object.text }, value: selectedEnrollment"></select>
                                     </label>
-                                  </div>
-                                  <div class="panel-body" data-bind="slideDownIf: is_open_enrollment">
-                                    <div class="row">
-                                      <div class="col-md-6">
-                                        <label>
-                                          Start Date:
-                                          <input data-bind="value: get_open_enrollment_period().start_date" type="text"
-                                                 placeholder="MM/DD/YYYY" class="input-mask-date"
-                                                 name="open_enrollment_start_date">
-                                        </label>
-                                      </div>
-                                      <div class="col-md-6">
-                                        <label>
-                                          End Date:
-                                          <input data-bind="value: get_open_enrollment_period().end_date" type="text"
-                                                 placeholder="MM/DD/YYYY" class="input-mask-date"
-                                                 name="open_enrollment_end_date">
-                                        </label>
-                                      </div>
+                                      <br>
+                                    <small data-bind="visible: !open_enrollment_status() && !ongoing_enrollment_status()">
+                                      <em class="text-danger">An Enrollment Option must be selected</em>
+                                    </small>
                                     </div>
-                                  </div>
                                 </div>
+                                <div data-bind="visible: open_enrollment_status">
+                                    <h3 class="header lighter blue" data-bind="slideDownIf: open_enrollment_status() && !ongoing_enrollment_status()">Open Enrollment</h3>
+                                    <h3 class="header lighter blue" data-bind="slideDownIf: open_enrollment_status() && ongoing_enrollment_status()">Open Enrollment with Ongoing</h3>
                                 <div class="panel form-group">
                                   <div class="panel-heading">
                                     <label>
-                                      <input data-bind="checked: enrollment_period_type" type="radio" class="ace"
-                                             name="enrollment_period_type" value="annual">
-                                      <span class="lbl padding-8">Annual Periods</span><br/>
-                                      <small
-                                          data-bind="visible: !annual_today_between() && enrollment_period_type() == 'annual'">
-                                        <em class="text-danger">Currently not active since outside date range</em>
-                                      </small>
+                                        <span class="lbl padding-6">
+                                            From:
+                                            <input data-bind="textInput: parent_start_date" type="text"
+                                                   placeholder="MM/DD/YYYY" class="input-small input-mask-date"
+                                                   name="open_enrollment_start_date">
+                                            &nbsp;&nbsp;To:
+                                            <input data-bind="textInput: parent_end_date" type="text"
+                                                   placeholder="MM/DD/YYYY" class="input-small input-mask-date"
+                                                   name="open_enrollment_end_date">
+                                        </span>
+                                        <br>
+                                        <small
+                                            data-bind="visible: check_between_or_before() ">
+                                            <em class="text-danger">Currently not active since outside date range</em>
+                                        </small>
                                     </label>
                                   </div>
-                                  <div class="panel-body" data-bind="slideDownIf: is_annual_enrollment()">
-                                    <!--ko foreach: annual_enrollment_periods-->
-                                    <div class="row">
-                                      <div class="col-md-6">
-                                        <label class="">
-                                          Start Date:
-                                          <input type="text" data-bind="value: start_date" class="input-mask-month-day"
-                                                 placeholder="MM/DD">
-                                        </label>
-                                      </div>
-                                      <div class="col-md-6">
-                                        <label class="">
-                                          End Date:
-                                          <input type="text" data-bind="value: end_date" class="input-mask-month-day"
-                                                 placeholder="MM/DD">
-                                        </label>
-                                      </div>
-                                    </div>
-                                    <div class="error" data-bind="text: error, visible: error() != ''"></div>
-                                    <!--/ko-->
-                                  </div>
                                 </div>
+                                </div>
+                              </div>
+                              <div data-bind="slideDownIf: ongoing_enrollment_status() || open_enrollment_status()">
+                                <h3 class="header lighter blue">Policy Effective Date</h3>
+                                <table>
+                                  <tbody>
+                                    <tr data-bind="visible: open_enrollment_status">
+                                        <td>
+                                          Open:
+                                        </td>
+                                        <td>
+                                            <label>
+                                                <select name="open_enrollment_option" data-bind="options: openEnrollmentOptions, optionsText: function(object) { return object.description }, value: selectedOpenOption"></select>
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr data-bind="visible: open_type() == 0 && open_enrollment_status()">
+                                        <td colspan="4">
+                                          <small>
+                                            <em class="text-danger">An Effective Date Option must be selected</em>
+                                          </small>
+                                        </td>
+                                    </tr>
+                                    <tr data-bind="visible: open_type() == 1">
+                                        <td colspan="4">
+                                            <small>&nbsp;&nbsp;&nbsp;Static date <input name="open_static_date" data-bind="textInput: get_open_enrollment_period().static_date" type="text" class="input-small input-mask-date"
+                                               placeholder="MM/DD/YYYY"> or 'today', whichever is later</small>
+                                        </td>
+                                    </tr>
+                                    <tr data-bind="visible: open_type() == 2">
+                                        <td colspan="4">
+                                            <small>&nbsp;&nbsp;&nbsp;1st of month if received before <input name="open_day_of_month" data-bind="textInput: get_open_enrollment_period().day_of_month" type="text" class="input-mini input-mask-day"
+                                               placeholder="DD"> of prior month</small>
+                                        </td>
+                                    </tr>
+                                    <tr data-bind="visible: open_type() == 3">
+                                        <td rowspan="2" colspan="4">
+                                            <small>&nbsp;&nbsp;&nbsp;Defaults to <input name="open_enroller_default" data-bind="textInput: get_open_enrollment_period().enroller_picks_default" type="text" class="input-mini"
+                                               placeholder="##"> days from enrollment</small>
+                                            <br>
+                                            <small>&nbsp;&nbsp;&nbsp;but no less than <input name="open_enroller_no_less" data-bind="textInput: get_open_enrollment_period().enroller_picks_no_less" type="text" class="input-mini"
+                                               placeholder="##"> days from enrollment</small>
+                                        </td>
+                                    </tr>
+                                    <tr data-bind="visible: open_type() == 3">
+                                        &nbsp;
+                                    </tr>
+                                    <tr data-bind="visible: open_type() == 4">
+                                        <td colspan="4">
+                                            <small>&nbsp;&nbsp;&nbsp;The first Friday following <input name="open_first_friday" data-bind="textInput: get_open_enrollment_period().first_friday" type="text" class="input-mini"
+                                               placeholder="##"> days from enrollment</small>
+                                        </td>
+                                    </tr>
+                                    <tr data-bind="visible: open_enrollment_status() && ongoing_enrollment_status()">
+                                        <td>&nbsp;</td>
+                                    </tr>
+                                    <tr data-bind="visible: ongoing_enrollment_status">
+                                        <td>
+                                          Ongoing:
+                                        </td>
+                                        <td>
+                                          <label>
+                                                <select name="ongoing_enrollment_option" data-bind="options: ongoingEnrollmentOptions, optionsText: function(object) { return object.description }, value: selectedOngoingOption"></select>
+                                          </label>
+                                        </td>
+                                    </tr>
+                                    <tr data-bind="visible: ongoing_type() == 0 && ongoing_enrollment_status()">
+                                        <td colspan="4">
+                                          <small>
+                                            <em class="text-danger">An Effective Date Option must be selected</em>
+                                          </small>
+                                        </td>
+                                    </tr>
+                                    <tr data-bind="visible: ongoing_type() == 1">
+                                        <td colspan="4">
+                                            <small>&nbsp;&nbsp;&nbsp;Static date <input name="ongoing_static_date" data-bind="textInput: get_ongoing_enrollment_period().static_date" type="text" class="input-small input-mask-date"
+                                               placeholder="MM/DD/YYYY"> or 'today', whichever is later</small>
+                                        </td>
+                                    </tr>
+                                    <tr data-bind="visible: ongoing_type() == 2">
+                                        <td colspan="4">
+                                            <small>&nbsp;&nbsp;&nbsp;1st of month if received before <input name="ongoing_day_of_month" data-bind="textInput: get_ongoing_enrollment_period().day_of_month" type="text" class="input-mini input-mask-day"
+                                               placeholder="DD"> of prior month</small>
+                                        </td>
+                                    </tr>
+                                    <tr data-bind="visible: ongoing_type() == 3">
+                                        <td rowspan="2" colspan="4">
+                                            <small>&nbsp;&nbsp;&nbsp;Defaults to <input name="ongoing_enroller_default" data-bind="textInput: get_ongoing_enrollment_period().enroller_picks_default" type="text" class="input-mini"
+                                               placeholder="##"> days from enrollment</small>
+                                            <br>
+                                            <small>&nbsp;&nbsp;&nbsp;but no less than <input name="ongoing_enroller_no_less" data-bind="textInput: get_ongoing_enrollment_period().enroller_picks_no_less" type="text" class="input-mini"
+                                               placeholder="##"> days from enrollment</small>
+                                        </td>
+                                    </tr>
+                                    <tr data-bind="visible: ongoing_type() == 3">
+                                        &nbsp;
+                                    </tr>
+                                    <tr data-bind="visible: ongoing_type() == 4">
+                                        <td colspan="4">
+                                            <small>&nbsp;&nbsp;&nbsp;The first Friday following <input name="ongoing_first_friday" data-bind="textInput: get_ongoing_enrollment_period().first_friday" type="text" class="input-mini"
+                                               placeholder="##"> days from enrollment</small>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                    </tr>
+                                  </tbody>
+                                </table>
                               </div>
                             </div>
                           </div>
@@ -357,6 +433,11 @@
                               </div>
                             {% endif %}
                             {% if not case_has_enrollments %}
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
                               <div class="col-sm-offset-1 col-sm-3">
                                 <button type="button" class="btn btn-danger btn-xs pull-left"
                                         data-bind="click: delete_case">
@@ -365,6 +446,11 @@
                               </div>
                             {% endif %}
                             {% if case_has_enrollments and not is_admin %}
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
                               <div class="col-sm-offset-1 col-sm-3">
                                 <div class="tooltip-wrapper tooltip-error"
                                      data-rel="tooltip" style="display: inline-block;"
@@ -377,6 +463,11 @@
                               </div>
                             {% endif %}
                             {% if case_has_enrollments and is_admin %}
+                                <br>
+                                <br>
+                                <br>
+                                <br>
+                                <br>
                               <div class="col-sm-offset-1 col-sm-3">
                                 <button type="button" class="btn btn-danger btn-xs pull-left"
                                         data-bind="click: delete_case_with_enrollments">
@@ -447,6 +538,24 @@
                                   <div class="panel panel-default">
                                     <div class="panel-heading panel-title"><span data-bind="text: name"></span></div>
                                     <div class="panel-body">
+                                      {# Effective Date Settings #}
+
+                                      <div class="form-group">
+                                        <h4 class="header lighter blue">Effective Date Settings</h4>
+                                        <div data-bind="with: $parent.get_product_effective_date_settings($data)">
+                                          <label>
+                                            <input type="checkbox" class="ace ace-switch ace-switch-4 btn-flat"
+                                                   data-bind="checked: $data.effective_date_override"/>
+                                             <span class="lbl">&nbsp;&nbsp;Override with Static Date&nbsp;&nbsp;</span>
+                                          </label>
+                                            <input type="text"
+                                                   data-bind="enabled: $data.effective_date_override, textInput: $data.effective_date_input"
+                                                   placeholder="MM/DD/YYYY" class="input-small input-mask-date"/>
+                                            <br/>
+                                        </div>
+                                      </div>
+
+
                                       {# Riders #}
                                       <div class="form-group"
                                            data-bind="visible: $parent.case_riders_for_product($data).length > 0">
@@ -902,7 +1011,7 @@
                             Download Census
                           </a>
                         {% endif %}
-                        <a id="add-to-census-btn" class="btn btn-primary pull-right" data-bind="visible: is_active">
+                        <a id="add-to-census-btn" class="btn btn-primary pull-right" data-bind="visible: is_active() && !check_between_or_before()">
                           <i class="ace-icon glyphicon glyphicon-plus"></i>
                           New Enrollment
                         </a>
@@ -1122,12 +1231,13 @@ we load from the server using ajax at run time (helps with performance, needs to
                                        class="table table-bordered table-hover no-wrap dt-responsive">
                                   <thead>
                                   <tr>
-                                    <th class="min-breakII">Date</th>
+                                    <th class="min-breakII">Enroll Date</th>
                                     <th>First</th>
                                     <th>Last</th>
                                     <th class="min-breakI">DOB</th>
                                     <th class="min-breakII">Agent</th>
                                     <th class="min-breakV">Status</th>
+{#                                    <th class="min-breakI">Effective Date</th>#}
                                     <th>Total Premium</th>
                                   </tr>
                                   </thead>

@@ -8,7 +8,9 @@ from flask_stormpath import login_required, groups_required, current_user
 
 from taa import app, db
 from nav import get_nav_menu
+from sqlalchemy import and_
 from taa.services.cases import CaseService, SelfEnrollmentSetup
+from taa.services.cases.models import case_products
 from taa.services.products.riders import RiderService
 from taa.services.cases.forms import (CensusRecordForm,
                                       NewCaseEnrollmentPeriodForm,
@@ -17,7 +19,8 @@ from taa.services.cases.forms import (CensusRecordForm,
                                       )
 from taa.services.enrollments import SelfEnrollmentLinkService, SelfEnrollmentEmailService, \
     EnrollmentApplicationService, \
-    EnrollmentApplication
+    EnrollmentApplication, \
+    EnrollmentApplicationCoverage
 from taa.services.agents import AgentService
 from taa.services.products import ProductService, get_all_states
 from taa.services.products import get_payment_modes
@@ -293,11 +296,23 @@ def edit_census_record(case_id, census_record_id):
 
 def format_enroll_data(enrollment_data, product_number):
     if enrollment_data["product_{}_name".format(product_number)]:
+        product_name = enrollment_data["product_{}_name".format(product_number)]
+        product = product_service.search(by_name=product_name)[-1]
+        query = db.session.query(EnrollmentApplicationCoverage).filter(
+            and_(EnrollmentApplicationCoverage.enrollment_application_id == enrollment_data['enrollment_id'],
+                 EnrollmentApplicationCoverage.product_id == product.id)).all()[-1]
+        if query:
+            effective_date = query.effective_date
+        else:
+            effective_date = None
+
+
         data = dict(
             id=enrollment_data['enrollment_id'],
             product_name=enrollment_data["product_{}_name".format(product_number)],
             time=enrollment_data["signature_time"],
             coverage=[get_coverage_for_product(enrollment_data, product_number, j) for j in ["emp", "sp", "ch"]],
+            effective_date=effective_date,
             status=format_status(enrollment_data["application_status"]),
             total=reduce(lambda coverage_type, accum: calc_total(enrollment_data, product_number, coverage_type, accum),
                          ["emp", "sp", "ch"], 0),

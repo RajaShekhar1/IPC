@@ -27,9 +27,9 @@ class EnrollmentSubmissionService(object):
 
     def submit_wizard_enrollment(self, enrollment_application):
         import taa.tasks as tasks
-        #if True:
+        # if True:
         #    self.process_wizard_submission(enrollment_application.id)
-        #else:
+        # else:
         tasks.process_wizard_enrollment.delay(enrollment_application.id)
 
     def submit_hi_acc_enrollments(self, start_time=None, end_time=None):
@@ -111,7 +111,7 @@ class EnrollmentSubmissionService(object):
         """
 
         submission_processor = EnrollmentSubmissionProcessor()
-        #components, data_wrap = submission_processor.generate_envelope_components(enrollment_record)
+        # components, data_wrap = submission_processor.generate_envelope_components(enrollment_record)
         components = submission_processor.generate_document_components(enrollment_record)
         pdfs = [c.generate_pdf_bytes() for c in components]
 
@@ -123,6 +123,17 @@ class EnrollmentSubmissionService(object):
         output = BytesIO()
         writer.write(output)
         return output.getvalue()
+
+    def get_summary_pdf(self, enrollment_application):
+        """
+        gets pdf from enrollment submission
+        """
+        import base64
+        submission_processor = EnrollmentSubmissionProcessor()
+        pdf_data = submission_processor.generate_cover_sheet(enrollment_application).generate_pdf_bytes()
+        data = base64.standard_b64encode(pdf_data)
+
+        return data
 
     def _mark_item_processing(self, batch_item):
         batch_item.processed_time = datetime.now()
@@ -162,11 +173,12 @@ class EnrollmentSubmissionService(object):
         Get all submissions which can optionally be filtered by start and end dates
         """
         query = db.session.query(EnrollmentSubmission
-             ).options(db.subqueryload(EnrollmentSubmission.enrollment_applications
-                                       ).joinedload(EnrollmentApplication.census_record, EnrollmentApplication.case
-                                       )
-             ).options(db.subqueryload(EnrollmentSubmission.submission_logs)
-             ).order_by(EnrollmentSubmission.created_at.desc())
+                                 ).options(db.subqueryload(EnrollmentSubmission.enrollment_applications
+                                                           ).joinedload(EnrollmentApplication.census_record,
+                                                                        EnrollmentApplication.case
+                                                                        )
+                                           ).options(db.subqueryload(EnrollmentSubmission.submission_logs)
+                                                     ).order_by(EnrollmentSubmission.created_at.desc())
 
         if start_date is not None:
             query = query.filter(EnrollmentSubmission.created_at > start_date)
@@ -446,14 +458,33 @@ class EnrollmentSubmissionProcessor(object):
 
     def submit_signed_enrollment(self, enrollment_application):
 
-        #first_product_data = EnrollmentDataWrap(product_submissions[0], case, enrollment_record=enrollment_application)
-        #in_person_signer, recipients = self.create_envelope_recipients(case, first_product_data)
+        # first_product_data = EnrollmentDataWrap(product_submissions[0], case, enrollment_record=enrollment_application)
+        # in_person_signer, recipients = self.create_envelope_recipients(case, first_product_data)
 
         components = self.generate_document_components(enrollment_application)
 
         # We need to submit certain documents to Dell via DocuSign.
         # TODO
         return True
+
+    def generate_cover_sheet(self, enrollment_application):
+        """Used for generating cover sheet PDF"""
+        from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
+
+        case = enrollment_application.case
+
+        all_product_data = self.enrollment_service.get_standardized_json_for_enrollment(enrollment_application)
+
+        first_product_data = EnrollmentDataWrap(all_product_data[0], case=enrollment_application.case,
+                                                enrollment_record=enrollment_application)
+        signing_agent = first_product_data.get_signing_agent()
+        emp_recip = EmployeeDocuSignRecipient(name=first_product_data.get_employee_name(),
+                                              email=first_product_data.get_employee_email(),
+                                              exclude_from_envelope=True)
+
+        return CoverSheetAttachment([emp_recip], EnrollmentDataWrap(all_product_data[0], case,
+                                                                    enrollment_record=enrollment_application),
+                                    all_product_data)
 
     def generate_document_components(self, enrollment_application):
         """Used for generating PDFs from enrollments signed in the wizard, outside of docusign"""
@@ -463,7 +494,7 @@ class EnrollmentSubmissionProcessor(object):
         all_product_data = self.enrollment_service.get_standardized_json_for_enrollment(enrollment_application)
 
         first_product_data = EnrollmentDataWrap(all_product_data[0], case=enrollment_application.case,
-                                       enrollment_record=enrollment_application)
+                                                enrollment_record=enrollment_application)
         signing_agent = first_product_data.get_signing_agent()
         recipients = [
             AgentDocuSignRecipient(signing_agent, name=signing_agent.name(),
@@ -480,7 +511,7 @@ class EnrollmentSubmissionProcessor(object):
         if case.include_cover_sheet:
             from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
             components.append(CoverSheetAttachment([emp_recip], EnrollmentDataWrap(all_product_data[0], case,
-                                                                                          enrollment_record=enrollment_application),
+                                                                                   enrollment_record=enrollment_application),
                                                    all_product_data))
 
         for raw_enrollment_data in all_product_data:
@@ -488,24 +519,26 @@ class EnrollmentSubmissionProcessor(object):
             enrollment_data = EnrollmentDataWrap(raw_enrollment_data, case, enrollment_record=enrollment_application)
 
             # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
-            should_use_docusign_renderer = False # if enrollment_data.should_use_call_center_workflow() else True
+            should_use_docusign_renderer = False  # if enrollment_data.should_use_call_center_workflow() else True
 
             product_id = enrollment_data.get_product_id()
             product = self.product_service.get(product_id)
             if not product.does_generate_form():
                 continue
 
-
             if product.is_fpp():
                 components += self.docusign_service.create_fpp_envelope_components(enrollment_data, recipients,
-                                                                  should_use_docusign_renderer, show_all_documents=True)
+                                                                                   should_use_docusign_renderer,
+                                                                                   show_all_documents=True)
             elif product.is_static_benefit():
                 components += self.docusign_service.create_static_benefit_components(enrollment_data, recipients,
-                                                                    should_use_docusign_renderer,
-                                                                    enrollment_application, show_all_documents=True)
+                                                                                     should_use_docusign_renderer,
+                                                                                     enrollment_application,
+                                                                                     show_all_documents=True)
             elif product.is_group_ci():
                 components += self.docusign_service.create_group_ci_envelope_components(enrollment_data, recipients,
-                                                                       should_use_docusign_renderer, show_all_documents=True)
+                                                                                        should_use_docusign_renderer,
+                                                                                        show_all_documents=True)
 
         return components
 
@@ -554,4 +587,3 @@ class EnrollmentSubmissionProcessor(object):
             CarbonCopyRecipient(name, email)
             for name, email in DOCUSIGN_CC_RECIPIENTS
             ]
-

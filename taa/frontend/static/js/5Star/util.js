@@ -72,7 +72,13 @@ function today_between(start, end) {
     var is_before_end = today.isSameOrBefore(moment(end), 'day');
     return is_after_start && is_before_end
   }
+}
 
+//check if today is before a start date
+function today_before(start){
+  var today = moment();
+  var is_before_start = today.isBefore(moment(start), 'day');
+  return is_before_start;
 }
 
 // Date handling
@@ -141,6 +147,13 @@ function get_date_of_birth_validation_error(date_of_birth) {
     return 'Date must be before today.';
   }
   return null;
+}
+
+function valid_enroller_selects(minimum, input) {
+  var today = moment({hour: 0, minute: 0, seconds: 0, milliseconds: 0});
+  var input_moment = moment(input);
+  var minimum_moment = today.clone().add(minimum, 'day');
+  return minimum_moment.isSameOrBefore(input_moment);
 }
 
 function format_date(moment_date) {

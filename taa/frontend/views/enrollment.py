@@ -140,10 +140,10 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     # As part of address debugging, log the user-agent.
     user_agent = request.user_agent
     print(
-    "[BEGINNING ENROLLMENT] [Platform: '{}', browser: '{}', version: '{}', language: '{}', user_agent: '{}']".format(
-        user_agent.platform, user_agent.browser, user_agent.version, user_agent.language,
-        request.headers.get('User-Agent')
-    ))
+        "[BEGINNING ENROLLMENT] [Platform: '{}', browser: '{}', version: '{}', language: '{}', user_agent: '{}']".format(
+            user_agent.platform, user_agent.browser, user_agent.version, user_agent.language,
+            request.headers.get('User-Agent')
+        ))
 
     # Ensure that record is intialized to avoid a name error
     record = None
@@ -151,6 +151,18 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     # Defaults for session enrollment variables.
     session['active_case_id'] = case.id
     session['enrolling_census_record_id'] = None
+
+    effective_date_settings = case.effective_date_settings
+    enroller_selects = False
+    if effective_date_settings:
+        from taa.services.enrollments.effective_date import calculate_effective_date, get_active_method
+        from datetime import datetime
+        effective_date = calculate_effective_date(effective_date_settings, datetime.now())
+        if get_active_method(effective_date_settings, datetime.now()) == 'enroller_selects':
+            enroller_selects = True
+
+    else:
+        effective_date = None
 
     payment_mode = case.payment_mode
     if is_payment_mode_changeable(payment_mode):
@@ -267,6 +279,18 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     # Show products this applicant is allowed to enroll.
     product_options = product_service.filter_products_from_membership(case, record)
     product_options = product_service.filter_products_by_enrollment_state(product_options, state)
+    product_settings = case.product_settings if case.product_settings else {}
+    product_effective_date_list = []
+    if product_settings.get('effective_date_settings'):
+        for setting in product_settings.get('effective_date_settings'):
+            if setting.get('effective_date_override'):
+                product_effective_date_list.append(setting)
+            else:
+                product_effective_date_list.append(dict(
+                    effective_date=effective_date,
+                    effective_date_override=False,
+                    product_id=setting.get('product_id')
+                ))
     wizard_data = dict(
         is_in_person=not is_self_enroll,
         case_data={
@@ -277,7 +301,8 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'company_name': company_name,
             'group_number': group_number,
             'payment_mode': payment_mode,
-            'product_settings': case.product_settings if case.product_settings else {},
+            'product_settings': product_settings,
+            'product_effective_date_list': product_effective_date_list,
             'account_href': current_user.get_id(),
             'record_id': record_id,
             'product_height_weight_tables': height_weight_tables,
@@ -285,6 +310,9 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'omit_actively_at_work': case.omit_actively_at_work,
             'include_bank_draft_form': case.include_bank_draft_form,
             'is_call_center': case.should_use_call_center_workflow,
+            'effective_date_settings': case.effective_date_settings,
+            'effective_date': effective_date,
+            'enroller_selects': enroller_selects,
         },
         applicants=applicants,
         products=[serialize_product_for_wizard(p, soh_questions) for p in
@@ -312,7 +340,8 @@ def serialize_product_for_wizard(product, all_soh_questions):
     data = product.to_json()
     # Override the name to be the base product name
     data['name'] = product.get_short_name() if product.get_short_name() else product.get_base_product().name
-    data['base_product_name'] = product.get_base_product().get_short_name() if product.get_base_product().get_short_name() else product.get_base_product().name
+    data[
+        'base_product_name'] = product.get_base_product().get_short_name() if product.get_base_product().get_short_name() else product.get_base_product().name
 
     # Override code to be the base product code and alias it to base_product_type.
     data['code'] = product.get_base_product_code()
@@ -467,8 +496,9 @@ def submit_wizard_data():
 
         if are_all_products_declined(wizard_results):
             return get_declined_response(wizard_results)
-        
-        accepted_products = get_accepted_products(case, get_accepted_product_ids(json.loads(enrollment.standardized_data)))
+
+        accepted_products = get_accepted_products(case,
+                                                  get_accepted_product_ids(json.loads(enrollment.standardized_data)))
         if any(p for p in accepted_products if p.does_generate_form()):
             # Queue this call for a worker process to handle.
             enrollment_submission_service = LookupService('EnrollmentSubmissionService')
@@ -535,6 +565,17 @@ def process_wizard_submission(case, wizard_results):
     census_record = get_or_create_census_record(case, enrollment_data)
     enrollment_application = get_or_create_enrollment(case, census_record, standardized_data, wizard_results)
     db.session.commit()
+
+    if wizard_results[0].get('send_summary_email'):
+        from taa import tasks
+        summary_email_service = LookupService("SummaryEmailService")
+        email_body = summary_email_service.generate_email_body(enrollment_application)
+        tasks.send_summary_email.delay(
+            standardized_data=standardized_data,
+            wizard_results=wizard_results,
+            enrollment_application_id=enrollment_application.id,
+            body=email_body,
+        )
 
     submission_service = LookupService('EnrollmentSubmissionService')
     submission_service.create_submissions_for_application(enrollment_application)

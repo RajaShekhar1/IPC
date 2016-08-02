@@ -55,7 +55,7 @@ var wizard_viewmodel = (function () {
     });
     this.is_payment_mode_valid = ko.pureComputed(this._is_payment_mode_valid, this);
 
-    this.product_coverage_viewmodels = ko.observableArray(_.map(this.products, function (p) {
+    this.product_coverage_viewmodels = ko.observableArray(_.zipWith(this.products, case_data.product_settings.effective_date_settings, function (p, es) {
       return new ProductCoverageViewModel(
         p,
         case_data,
@@ -63,7 +63,8 @@ var wizard_viewmodel = (function () {
         this.payment_mode,
         this.should_include_spouse,
         this.should_include_children,
-        this.root);
+        this.root,
+        es);
     }, this));
 
     // Which product coverage is being displayed right now?
@@ -218,7 +219,7 @@ var wizard_viewmodel = (function () {
   };
 
   function ProductCoverageViewModel(product, case_data, applicant_list, payment_mode,
-                                    should_include_spouse, should_include_children, root) {
+                                    should_include_spouse, should_include_children, root, effective_date_settings) {
 
     // ProductCoverageViewModel keeps track of the coverage selections for the applicants for a single product.
 
@@ -232,6 +233,7 @@ var wizard_viewmodel = (function () {
     self.should_include_spouse = should_include_spouse;
     self.should_include_children = should_include_children;
     self.root = root;
+    self.effective_date_settings = effective_date_settings;
 
     self.did_decline = ko.observable(false);
     self.available_recommendations = product_rates_service.get_product_recommendations(self.product, payment_mode);
@@ -239,6 +241,15 @@ var wizard_viewmodel = (function () {
 
     // When there is a simple 'Y/N' or set of coverage options, use this rather than applicant coverage viewmodels.
     self.selected_simple_coverage_option = ko.observable(new NullCoverageOption());
+
+    self.effective_date_resolution = function () {
+      if (_.get(self.effective_date_settings, 'effective_date_override')) {
+        return normalize_date(_.get(self.effective_date_settings, 'effective_date'))
+      }
+      else {
+        return self.root.get_effective_date();
+      }
+    };
 
     self.selected_simple_coverage_value = ko.computed({
       read: function () {
@@ -559,6 +570,15 @@ var wizard_viewmodel = (function () {
   }
 
   ProductCoverageViewModel.prototype = {
+    _get_effective_date: function (root) {
+      if (_.get(this.effective_date_settings, 'effective_date_override')) {
+        return normalize_date(_.get(this.effective_date_settings, 'effective_date'))
+      }
+      else {
+        return root.get_effective_date();
+      }
+    },
+
     format_product_name: function () {
       return this.product.product_data.name;
     },
@@ -1078,6 +1098,7 @@ var wizard_viewmodel = (function () {
     self.options = options;
     self.enrollment_case = options.case_data;
     self.products = wizard_products.build_products(self, options.products);
+    self.effective_date_settings = self.enrollment_case.effective_date_settings;
 
     self.is_rate_table_loading = product_rates_service.is_loading_rates;
     self.is_show_rates_clicked = ko.observable(false);
@@ -1956,6 +1977,7 @@ var wizard_viewmodel = (function () {
     // Step 6 Data
     self.disclaimer_notice_confirmed = ko.observable(false);
     self.payroll_deductions_confirmed = ko.observable(false);
+    self.effective_date_input = ko.observable("");
     self.identityToken = ko.observable("");
     self.identityType = ko.observable("");
     self.enrollState = ko.observable(self.enrollment_case.situs_state);
@@ -1971,6 +1993,55 @@ var wizard_viewmodel = (function () {
       return true;
     };
 
+    self.show_enroller_select_date = function () {
+      return self.enrollment_case.enroller_selects;
+    };
+
+    self.initialize_effective_date = function () {
+      self.effective_date_input(normalize_date(self.enrollment_case.effective_date))
+    };
+
+    self.initialize_effective_date();
+
+
+    
+    self.which_enroller_select_date = function () {
+      if (self.show_enroller_select_date()) {
+        var enroller_selects = _.filter(self.effective_date_settings, {'method': 'enroller_selects'});
+        var open_enroller = _.find(enroller_selects, {'type': 'open_with_start'});
+        var ongoing_enroller = _.find(enroller_selects, {'type': 'ongoing'});
+        if (typeof open_enroller != 'undefined') {
+          if (today_between(normalize_date(open_enroller.enrollment_period.start_date), normalize_date(open_enroller.enrollment_period.end_date))) {
+            return open_enroller;
+          }
+        }
+        return ongoing_enroller;
+      }
+      return null;
+    };
+
+    self.get_effective_date = function () {
+      return normalize_date(self.effective_date_input());
+    };
+    
+    self.valid_effective_date = function () {
+      var enroller_selects = self.which_enroller_select_date();
+      return is_valid_date(self.get_effective_date()) && valid_enroller_selects(parseInt(enroller_selects.enroller_selects.no_less, 10), self.get_effective_date())
+    };
+
+    self.get_effective_date_error_message = function () {
+      var results = "";
+      var is_valid = is_valid_date(self.get_effective_date());
+      if (!is_valid) {
+        results += "The effective date input is not valid.";
+      }
+      var enroller_selects = self.which_enroller_select_date();
+      if (!valid_enroller_selects(parseInt(enroller_selects.enroller_selects.no_less, 10), self.get_effective_date())) {
+        results += " The effective date input must be at least " + enroller_selects.enroller_selects.no_less + " days from today.";
+      }
+      return results;
+    };
+    
     function any_selected_product(method) {
       var selected_products = _.pluck(self.coverage_vm.selected_product_coverages(), 'product');
       return _.any(_.invoke(selected_products, method));
@@ -1980,6 +2051,8 @@ var wizard_viewmodel = (function () {
       var initial_applicant_list = _.map(options.applicants || [], function (applicant_data) {
         return wizard_applicant.create_applicant(applicant_data);
       });
+
+
 
       self.should_show_spouse = ko.observable(false);
       self.should_include_children = ko.observable(false);
@@ -1996,6 +2069,22 @@ var wizard_viewmodel = (function () {
         return self.applicant_list.get_spouse();
       };
 
+      self.should_email_summary_sheet = ko.observable(self.employee().email() != "");
+
+      self.employee().email.subscribe(function () {
+        self.should_email_summary_sheet(self.employee().email() != "");
+        self.employee().coverage_email(self.employee().email());
+      });
+      
+      self.get_summary_email = function () {
+        if (self.should_email_summary_sheet()) {
+          return self.employee().coverage_email();
+        } 
+        else {
+          return '';
+        }
+      };
+      
       //region Smoker Status Changed Dialog
       self.smoker_status_changed_dialog_loading = ko.observable(false);
       self.smoker_status_changed_message = ko.observable('');

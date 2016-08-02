@@ -59,12 +59,20 @@ class Case(CaseSerializer, db.Model):
     created_date = db.Column(db.DateTime)
     is_stp = db.Column(db.Boolean, default=False)
     enrollment_period_type = db.Column(db.String(16), nullable=True)
+    open_enrollment_type = db.Column(db.String(16), nullable=True)
+    ongoing_enrollment_type = db.Column(db.String(16), nullable=True)
+    STATIC_DATE_ENROLLMENT_TYPE = u'static_date'
+    DAY_OF_MONTH_ENROLLMENT_TYPE = u'day_of_month'
+    ENROLLER_PICKS_ENROLLMENT_TYPE = u'enroller_selects'
+    FIRST_FRIDAY_ENROLLMENT_TYPE = u'first_friday'
     # Note: this flag is used for a few other restrictions now, and has a
     # broader meaning that a partner agent can view census data for only
     # records he has enrolled.
     can_partners_download_enrollments = db.Column(db.Boolean, default=True)
     OPEN_ENROLLMENT_TYPE = u'open'
-    ANNUAL_ENROLLMENT_TYPE = u'annual'
+    ONGOING_ENROLLMENT_TYPE = u'ongoing'
+    OPEN_ONGOING_ENROLLMENT_TYPE = u'both'
+
     # This relationship defines what products are explicitly enabled for
     # a given case
     products = db.relationship('Product', secondary=case_products, backref=db.backref('cases', lazy='dynamic'),
@@ -78,6 +86,7 @@ class Case(CaseSerializer, db.Model):
 
     # Store settings for the products as JSON. Includes rider settings and rate overrides.
     product_settings = db.Column(JSON(none_as_null=False), nullable=True)
+    effective_date_settings = db.Column(JSON(none_as_null=False), nullable=True)
     include_bank_draft_form = db.Column(db.Boolean, nullable=False, server_default='FALSE')
     occupation_class_settings = db.Column(JSON(none_as_null=False),
                                           nullable=True)
@@ -167,7 +176,7 @@ class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
     __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
 
     def populate_data_dict(self, data):
-        data['enrollment_period_type'] = Case.OPEN_ENROLLMENT_TYPE
+        data['open_enrollment_type'] = self.case.open_enrollment_type
         data['open_period_start_date'] = self.start_date if self.start_date else ''
         data['open_period_end_date'] = self.end_date if self.end_date else ''
         return data
@@ -194,39 +203,91 @@ class CaseOpenEnrollmentPeriod(CaseEnrollmentPeriod):
         return self.end_date
 
 
-class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
-    PERIOD_TYPE = u'annual_period'
+class CaseBothEnrollmentPeriod(CaseEnrollmentPeriod):
+    PERIOD_TYPE = u'both'
     __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
 
     def populate_data_dict(self, data):
-        data['enrollment_period_type'] = Case.ANNUAL_ENROLLMENT_TYPE
-        if 'annual_period_dates' not in data:
-            data['annual_period_dates'] = []
-        data['annual_period_dates'].append({
-            'period_start_date':
-                self.start_date.strftime('%m/%d') if self.start_date else '',
-            'period_end_date':
-                self.end_date.strftime('%m/%d') if self.end_date else '',
-        })
+        data['open_enrollment_type'] = self.case.open_enrollment_type
+        data['open_period_start_date'] = self.start_date if self.start_date else ''
+        data['open_period_end_date'] = self.end_date if self.end_date else ''
+        data['ongoing_enrollment_type'] = self.case.ongoing_enrollment_type
         return data
 
     def currently_active(self):
-        # Need to set the year for the start and end dates to current year
-        if not self.start_date or not self.end_date:
+        now = datetime.now()
+        if not self.start_date:
+            # This is required
             return False
-        return self.get_start_date() <= datetime.now() < self.get_end_date()
+
+        if self.start_date < now and not self.end_date:
+            # End date is blank and start date is in the past
+            return True
+        elif self.end_date and self.start_date < now < (self.end_date + timedelta(days=1)):
+            # Now is between start and end date
+            return True
+        else:
+            return False
 
     def get_start_date(self):
-        current_year = datetime.now().year
-        return datetime(self._current_year(), self.start_date.month,
-                        self.start_date.day) if self.start_date else None
+        return self.start_date
 
     def get_end_date(self):
-        return datetime(self._current_year(), self.end_date.month,
-                        self.end_date.day) if self.end_date else None
+        return self.end_date
 
-    def _current_year(self):
-        return datetime.now().year
+
+class CaseOngoingEnrollmentPeriod(CaseEnrollmentPeriod):
+    PERIOD_TYPE = u'ongoing'
+    __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
+
+    def populate_data_dict(self, data):
+        data['ongoing_enrollment_type'] = self.case.ongoing_enrollment_type
+        return data
+
+    def get_start_date(self):
+        return None
+
+    def get_end_date(self):
+        return None
+
+    def currently_active(self):
+        return True
+
+
+# TODO: Remove
+# class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
+#     PERIOD_TYPE = u'annual_period'
+#     __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
+#
+#     def populate_data_dict(self, data):
+#         data['enrollment_period_type'] = Case.ANNUAL_ENROLLMENT_TYPE
+#         if 'annual_period_dates' not in data:
+#             data['annual_period_dates'] = []
+#         data['annual_period_dates'].append({
+#             'period_start_date':
+#                 self.start_date.strftime('%m/%d') if self.start_date else '',
+#             'period_end_date':
+#                 self.end_date.strftime('%m/%d') if self.end_date else '',
+#         })
+#         return data
+#
+#     def currently_active(self):
+#         # Need to set the year for the start and end dates to current year
+#         if not self.start_date or not self.end_date:
+#             return False
+#         return self.get_start_date() <= datetime.now() < self.get_end_date()
+#
+#     def get_start_date(self):
+#         current_year = datetime.now().year
+#         return datetime(self._current_year(), self.start_date.month,
+#                         self.start_date.day) if self.start_date else None
+#
+#     def get_end_date(self):
+#         return datetime(self._current_year(), self.end_date.month,
+#                         self.end_date.day) if self.end_date else None
+#
+#     def _current_year(self):
+#         return datetime.now().year
 
 
 class CensusRecordSerializer(JsonSerializable):

@@ -242,6 +242,20 @@ function init_validation(ui) {
       });
       return false;
     }
+    
+    if (ui.show_enroller_select_date() 
+      && !ui.valid_effective_date()) {
+      bootbox.dialog({
+        message: ui.get_effective_date_error_message(),
+        buttons: {
+          "danger": {
+            "label": "OK",
+            "className": "btn-warning"
+          }
+        }
+      });
+      return false;
+    }
 
     if (!ui.can_submit_wizard()) {
       e.preventDefault();
