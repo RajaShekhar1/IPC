@@ -332,24 +332,33 @@ class EnrollmentDataWrap(object):
     def get_employee_soh_questions(self):
         if 'soh_questions' in self.data['employee']:
             # Legacy format
-            return self.data['employee']['soh_questions']
+            questions = self.data['employee']['soh_questions']
         else:
-            return self.data['employee_soh_questions']
+            questions = self.data['employee_soh_questions']
+        
+        # Filter out questions only intended for spouse
+        return [q for q in questions if not q.get('is_spouse_only')]
 
     def get_spouse_soh_questions(self):
         if 'soh_questions' in self.data['spouse']:
             # Legacy format
-            return self.data['spouse']['soh_questions']
+            questions = self.data['spouse']['soh_questions']
         else:
-            return self.data['spouse_soh_questions']
+            questions = self.data['spouse_soh_questions']
 
+        # Filter out questions intended for employee only.
+        return [q for q in questions if not q.get('is_employee_only')]
+    
     def get_child_soh_questions(self, child_index):
         child = self.data['children'][child_index]
         if 'soh_questions' in child:
             # Backwards compat for legacy data format:
-            return child['soh_questions']
+            questions = child['soh_questions']
         else:
-            return self.data['children_soh_questions'][child_index]
+            questions = self.data['children_soh_questions'][child_index]
+
+        # Filter out emp and sp only questions
+        return [q for q in questions if not q.get('is_employee_only') and not q.get('is_spouse_only')]
 
     def get_employee_esignature(self):
         if self.should_use_call_center_workflow():

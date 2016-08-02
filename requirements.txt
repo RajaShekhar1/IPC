@@ -45,7 +45,6 @@ jsmin==2.0.11
 jsonschema==2.5.1
 kombu==3.0.35
 lettuce==0.2.20
-lxml==3.6.0
 mailer==0.8.1
 linecache2==1.0.0
 Mako==1.0.4

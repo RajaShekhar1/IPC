@@ -92,8 +92,7 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
         enrollee['coverage'] = data['employee_coverage']
         # enrollee['height'] = data['emp_height_inches']
         # enrollee['weight'] = data['emp_weight_pounds']
-        enrollee['spouse_disabled_6_months'] = YESNO[data.get('sp_disabled_6_months', 'N')]
-        enrollee['spouse_treated_6_months'] = YESNO[data.get('sp_treated_6_months', 'N')]
+        
     elif applicant_type == 'spouse':
         try:
             enrollee = data['spouse']
@@ -103,6 +102,8 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
             enrollee['coverage'] = data['spouse_coverage']
             # enrollee['height'] = data['sp_height_inches']
             # enrollee['weight'] = data['sp_weight_pounds']
+            enrollee['spouse_disabled_6_months'] = YESNO[data.get('sp_disabled_6_months', 'N')]
+            enrollee['spouse_treated_6_months'] = YESNO[data.get('sp_treated_6_months', 'N')]
         except KeyError:
             raise ValueError(
                 "Attempted to enroll for spouse, but employee has no "
@@ -148,16 +149,22 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
         child_index = int(applicant_type[len('child'):])
         #key = 'children_soh_questions'[child_index]
         questions = data.get_child_soh_questions(child_index)
+    else:
+        questions = []
+        
+    # Filter out any questions that are not part of the main QOH section.
+    questions = [q for q in questions if not q.get('is_spouse_only') and not q.get('is_employee_only')]
+    
     # for q in enrollee['soh_questions']:
     for q in questions:
-        q['answer'] = YESNO_SOH.get(q['answer'].lower() if q['answer'] is not None
-                                    else None)
-
+        q['answer'] = YESNO_SOH.get(q['answer'].lower() if q['answer'] is not None else None)
+    
     try:
         is_debug = current_app.config['IS_STP_DEBUG']
     except:
         is_debug = True
     vars = {
+        'applicant_type': applicant_type,
         'meta': {
             'submitted_at': now,
             'effective_date': effective_date,
@@ -190,6 +197,7 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
         },
         'case': data['case'],
         'enrollee': enrollee,
+        'soh_questions': questions,
         'employee': data['employee'],
         'spouse': data.get('spouse'),
         'children': data.get('children'),
@@ -303,10 +311,12 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
 
     vars['encoded_pdf'] = (None if pdf_bytes is None
                            else base64.b64encode(pdf_bytes))
+    
+    
     return vars
 
 
-def get_riders(case, data, applicant_type):
+def get_riders(data, applicant_type):
     if applicant_type not in ['employee', 'spouse']:
         return []
     
@@ -333,7 +343,7 @@ def get_riders(case, data, applicant_type):
 
 
 def make_applicant_query(data, applicant_type, enrollee, case):
-    riders = get_riders(case, data, applicant_type)
+    riders = get_riders(data, applicant_type)
     return ApplicantQuery(
             applicant_type='child' if applicant_type.startswith('ch') else applicant_type,
             product_options={'riders': riders},
@@ -383,7 +393,7 @@ def get_policy_info(data, applicant_type, enrollee, case):
         replacement_type = REPLACEMENT_TYPES[None]
     policy['replacement_type_code'] = replacement_type['code']
     policy['replacement_type'] = replacement_type['name']
-    policy['riders'] = get_riders(case, data, applicant_type)
+    policy['riders'] = get_riders(data, applicant_type)
     return policy
 
 
@@ -426,7 +436,7 @@ def test_wizard_xml():
     from taa import db
     from taa.services.enrollments.models import EnrollmentApplication
     from taa.services.submissions import EnrollmentSubmissionService
-    apps = db.session.query(EnrollmentApplication).filter(EnrollmentApplication.signature_time >= '2016-01-01'
+    apps = db.session.query(EnrollmentApplication).filter(EnrollmentApplication.signature_time >= '2016-06-25'
           ).options(db.subqueryload('coverages').joinedload('enrollment').joinedload('case').joinedload('owner_agent')
           ).all()
     
@@ -440,41 +450,47 @@ def test_wizard_xml():
     
     print("Processing {} coverages: ".format(len(coverages)))
 
-    # zipstream = BytesIO()
-    # with ZipFile(zipstream, 'w') as zip:
-    for coverage in coverages:
-        print("Processing app #{}, applicant {}, product '{}'".format(coverage.enrollment.id, coverage.applicant_type,
-                                                                      coverage.product.name))
-        
-        # pdf_bytes = EnrollmentSubmissionService().render_enrollment_pdf(coverage.enrollment, is_stp=True,
-        #                                                                 product_id=coverage.product_id)
-        xmls = []
-        if coverage.applicant_type == 'children':
-            # Generate one for each child
-            data = EnrollmentApplicationService().get_wrapped_data_for_coverage(coverage)
-            for i, child in enumerate(data['children']):
-                print("Generating child {}".format(i + 1))
-                applicant_type = "child{}".format(i)
+    zipstream = BytesIO()
+    app_pdfs = set()
+    with ZipFile(zipstream, 'w') as zip:
+        for coverage in coverages:
+            print("Processing app #{}, applicant {}, product '{}'".format(coverage.enrollment.id, coverage.applicant_type,
+                                                                          coverage.product.name))
+            
+            if coverage.enrollment.id not in app_pdfs:
+                # Generate and write out the PDF
+                pdf_bytes = EnrollmentSubmissionService().render_enrollment_pdf(coverage.enrollment, is_stp=True,
+                                                                                 product_id=coverage.product_id)
+                zip.writestr('enrollment_{}.pdf'.format(coverage.enrollment.id), pdf_bytes)
+                app_pdfs.add(coverage.enrollment.id)
+            
+
+            xmls = []
+            if coverage.applicant_type == 'children':
+                # Generate one for each child
+                data = EnrollmentApplicationService().get_wrapped_data_for_coverage(coverage)
+                for i, child in enumerate(data['children']):
+                    print("Generating child {}".format(i + 1))
+                    applicant_type = "child{}".format(i)
+                    xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=None)
+                    if xml:
+                        xmls.append((xml, applicant_type))
+            else:
+                
+                applicant_type = coverage.applicant_type
                 xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=None)
                 if xml:
                     xmls.append((xml, applicant_type))
-        else:
             
-            applicant_type = coverage.applicant_type
-            xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=None)
-            if xml:
-                xmls.append((xml, applicant_type))
-        
-        # for xml, applicant_type in xmls:
-        #
-        #         fn = 'enrollment_{}-{}.xml'.format(coverage.enrollment.id, applicant_type)
-        #         zip.writestr(fn, xml.encode('latin-1'))
-        #         #zip.writestr('enrollment_{}-{}.pdf'.format(coverage.enrollment.id, applicant_type), pdf_bytes)
-        #
+            for xml, applicant_type in xmls:
+    
+                fn = 'enrollment_{}-{}.xml'.format(coverage.enrollment.id, applicant_type)
+                zip.writestr(fn, xml.encode('latin-1'))
             
-    # f = open('out.zip', 'w+')
-    # f.write(zipstream.getvalue())
-    # f.close()
+
+    f = open('out.zip', 'w+')
+    f.write(zipstream.getvalue())
+    f.close()
 
 if __name__ == "__main__":
     test_wizard_xml()

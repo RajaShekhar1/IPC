@@ -164,20 +164,21 @@
                 </Employment>
                 <Risk>
                     <OLifeExtension>
+                        {# This empty question is in the spec. #}
                         <Question></Question>
-                        {% for question in enrollee.soh_questions -%}
+                        {% for question in soh_questions -%}
                         <Question>
                             <QuestionNumber>{{ loop.index }}</QuestionNumber>
                             <Response>{{ question.answer }}</Response>
                         </Question>
                         {% endfor -%}
-                        {% if enrollee.spouse_treated_6_months -%}
+                        {% if applicant_type == 'spouse' and enrollee.spouse_treated_6_months -%}
                         <Question>
                             <QuestionNumber>SP1</QuestionNumber>
                             <Response>{{ enrollee.spouse_treated_6_months }}</Response>
                         </Question>
                         {% endif -%}
-                        {% if enrollee.spouse_disabled_6_months -%}
+                        {% if applicant_type == 'spouse' and enrollee.spouse_disabled_6_months -%}
                         <Question>
                             <QuestionNumber>SP2</QuestionNumber>
                             <Response>{{ enrollee.spouse_disabled_6_months }}</Response>
