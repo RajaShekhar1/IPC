@@ -158,6 +158,31 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
     for q in questions:
         q['answer'] = YESNO_SOH.get(q['answer'].lower() if q['answer'] is not None else None)
     
+    
+    # Bank info
+    if data.has_bank_draft_info() and not data.requires_paylogix_export():
+        # We have the bank info and we aren't sending it to Paylogix
+        from taa.services.docusign.templates.fpp_bank_draft import FPPBankDraftFormTemplate
+        bank_draft_form = FPPBankDraftFormTemplate([], data, False)
+        payment = {
+            'method_code': '2',
+            'method': PAYMENT_METHODS['2'],
+            'account_number': bank_draft_form.get_bank_account_number(),
+            'routing_number': bank_draft_form.get_bank_routing_number(),
+            'draft_day': bank_draft_form.get_draft_day(),
+        }
+        if bank_draft_form.get_bank_account_type().lower() == "checking":
+            payment['account_type_code'] = '2'
+            payment['account_type'] = PAYMENT_ACCOUNT_TYPES['2']
+        else:
+            payment['account_type_code'] = '1'
+            payment['account_type'] = PAYMENT_ACCOUNT_TYPES['1']
+    else:
+        payment = {
+            'method_code': '5',
+            'method': PAYMENT_METHODS['5'],
+        }
+        
     try:
         is_debug = current_app.config['IS_STP_DEBUG']
     except:
@@ -209,16 +234,7 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
             'payment_mode': data['payment_mode_text'],
             # TODO:  - SIGNATURE PIN - add in once signing ceremony?
             'pin': 12345,
-            'payment': {
-                'method_code': '5',
-                'method': PAYMENT_METHODS['5'],
-                # Do not include right now, as Dell does not process billing for 5Star through STP at this time.
-                # 'account_number': 873456736,
-                # 'routing_number': 82347864,
-                # 'account_type_code': '2',
-                # 'account_type': 'Checking Account',
-                # 'draft_day': '01',
-            },
+            'payment': payment,
         },
     }
 
