@@ -165,8 +165,8 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
         from taa.services.docusign.templates.fpp_bank_draft import FPPBankDraftFormTemplate
         bank_draft_form = FPPBankDraftFormTemplate([], data, False)
         payment = {
-            'method_code': '2',
-            'method': PAYMENT_METHODS['2'],
+            'method_code': '7',
+            'method': PAYMENT_METHODS['7'],
             'account_number': bank_draft_form.get_bank_account_number(),
             'routing_number': bank_draft_form.get_bank_routing_number(),
             'draft_day': bank_draft_form.get_draft_day(),
