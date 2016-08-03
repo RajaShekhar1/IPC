@@ -297,7 +297,7 @@ function build_wizard_results_for_product_coverage(product_cov) {
   };
 
   // Add Signing Ceremony data
-  wizard_results.should_do_signing_ceremony = root.should_do_signing_ceremony();
+  //wizard_results.should_do_signing_ceremony = root.should_do_signing_ceremony();
   wizard_results.applicant_signed = root.applicant_signed();
   wizard_results.agent_signed = root.agent_signed();
 
