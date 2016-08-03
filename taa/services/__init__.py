@@ -127,6 +127,7 @@ def initialize_services():
         SelfEnrollmentEmailService,
         SelfEnrollmentLinkService,
         SelfEnrollmentEmailBatchService,
+        SummaryEmailService,
         EnrollmentImportService,
         EnrollmentImportBatchService,
         EnrollmentImportBatchItemService,
@@ -176,6 +177,7 @@ def initialize_services():
     services_broker.Provide('SelfEnrollmentEmailService', SelfEnrollmentEmailService())
     services_broker.Provide('SelfEnrollmentLinkService', SelfEnrollmentLinkService())
     services_broker.Provide('SelfEnrollmentEmailBatchService', SelfEnrollmentEmailBatchService())
+    services_broker.Provide('SummaryEmailService', SummaryEmailService())
     services_broker.Provide('EnrollmentReportService', EnrollmentReportService())
     services_broker.Provide('ImagedFormGeneratorService', ImagedFormGeneratorService())
     services_broker.Provide("FormPDFRenderer", lambda: FormPDFRenderer)

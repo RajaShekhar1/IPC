@@ -216,6 +216,7 @@ function init_settings_fields() {
 
   $(".input-mask-date").mask("99/99/9999");
   $(".input-mask-month-day").mask("99/99");
+  $(".input-mask-day").mask('99');
   $('[data-rel=tooltip]').tooltip();
 
   $('#partner-agents').bootstrapDualListbox({

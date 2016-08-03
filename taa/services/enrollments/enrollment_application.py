@@ -9,6 +9,8 @@ from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
 
 from taa.services.docusign.service import DocusignEnvelope
 
+from effective_date import calculate_effective_date
+
 from enrollment_application_coverages import (
     filter_applicant_coverages,
     group_coverages_by_product,
@@ -34,6 +36,9 @@ class EnrollmentApplicationService(DBService):
     case_service = RequiredFeature('CaseService')
     product_service = RequiredFeature('ProductService')
     batch_item_service = RequiredFeature('EnrollmentImportBatchItemService')
+
+    def get_enrollment_by_id(self, enrollment_application_id):
+        return db.session.query(EnrollmentApplication).get(enrollment_application_id)
 
     def search_enrollments(self,
                            by_agent_id=None,
@@ -274,6 +279,16 @@ class EnrollmentApplicationService(DBService):
             all_data = [all_data]
 
         for data in all_data:
+            given_sig_time = data.get('time_stamp')
+            signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
+            enroller_selects = data.get('enrollerSelects')
+            effective_date_settings = data.get('effectiveDateSettings')
+            enroller_effective_date = data.get('effective_date')
+            if data['did_decline']:
+                effective_date = None
+            else:
+                effective_date = dateutil.parser.parse(enroller_effective_date)
+
             if data['did_decline']:
                 continue
 
@@ -283,17 +298,24 @@ class EnrollmentApplicationService(DBService):
                 self.coverages_service.create_coverage(
                     enrollment, product, data, data['employee'],
                     data['employee_coverage'],
-                    EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE)
+                    EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE,
+                    effective_date=effective_date)
             if data['spouse_coverage']:
+                if data['spouse_coverage'] == '':
+                    effective_date = None
                 self.coverages_service.create_coverage(
                     enrollment, product, data, data['spouse'],
                     data['spouse_coverage'],
-                    EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
+                    EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE,
+                    effective_date=effective_date)
             if data['child_coverages'] and data['child_coverages'][0]:
+                if data['child_coverages'][0] == '':
+                    effective_date = None
                 self.coverages_service.create_coverage(
                     enrollment, product, data, data['children'][0],
                     data['child_coverages'][0],
-                    EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
+                    EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD,
+                    effective_date=effective_date)
         db.session.flush()
 
     # Reports
@@ -339,7 +361,8 @@ class EnrollmentApplicationService(DBService):
 
             # Make sure we have looked up the ordered list of products for this case.
             if census_record.case_id not in case_products_lookup:
-                case_products_lookup[census_record.case_id] = self.product_service.get_ordered_products_for_case(census_record.case_id)
+                case_products_lookup[census_record.case_id] = self.product_service.get_ordered_products_for_case(
+                    census_record.case_id)
 
             # Export only records with enrollments
             if not census_record.enrollment_applications:
@@ -347,7 +370,8 @@ class EnrollmentApplicationService(DBService):
             for enrollment in census_record.enrollment_applications:
                 export_record = dict()
                 export_record.update(self.get_census_data(census_record))
-                export_record.update(self.get_unmerged_enrollment_data(census_record, enrollment, case_products_lookup[census_record.case_id]))
+                export_record.update(self.get_unmerged_enrollment_data(census_record, enrollment,
+                                                                       case_products_lookup[census_record.case_id]))
                 data.append(export_record)
         return data
 
@@ -383,9 +407,12 @@ class EnrollmentApplicationService(DBService):
                 )
             ],
             ).where(EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id
-                    ).label('total_premium')
+                    ).correlate(EnrollmentApplication).label('total_premium'),
+            db.select(
+                [EnrollmentApplicationCoverage.effective_date]
+            ).where(EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id
+                    ).limit(1).correlate(EnrollmentApplication).label('effective_date'),
         )
-
         query = query.join(CaseCensus, CaseCensus.id == EnrollmentApplication.census_record_id)
         query = query.outerjoin(Agent, Agent.id == EnrollmentApplication.agent_id)
 
@@ -409,6 +436,7 @@ class EnrollmentApplicationService(DBService):
             date=EnrollmentApplication.signature_time,
             employee_first=CaseCensus.employee_first,
             employee_last=CaseCensus.employee_last,
+            effective_date=EnrollmentApplicationCoverage.effective_date,
             enrollment_status=EnrollmentApplication.application_status,
             total_premium='total_premium',
             agent_name='agent_name',
@@ -566,7 +594,8 @@ class EnrollmentApplicationService(DBService):
 
         enrollment_data['enrollment_id'] = enrollment.id
 
-        enrollment_data['signature_method'] = enrollment.signature_method if enrollment.signature_method else EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN
+        enrollment_data[
+            'signature_method'] = enrollment.signature_method if enrollment.signature_method else EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN
 
         # Export data from enrollment
         for col in enrollment_columns:
@@ -580,7 +609,6 @@ class EnrollmentApplicationService(DBService):
             coverages, EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
         children_coverage = self.find_first_coverage_by_product_for_applicant_type(
             coverages, EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
-
         # Include the calculated total annualized premium also
         total_annual_premium = Decimal('0.00')
 
@@ -616,6 +644,7 @@ class EnrollmentApplicationService(DBService):
                 annualized_premium = ''
                 if applicant_coverages.get(product):
                     applicant_coverage = applicant_coverages[product]
+                    enrollment_data['effective_date'] = applicant_coverage.effective_date
                     if product is not None and (product.is_simple_coverage() or product.is_static_benefit()):
                         coverage = 'Included' if product.is_applicant_covered(applicant_coverage.applicant_type,
                                                                               applicant_coverage.coverage_selection) \
@@ -641,8 +670,8 @@ class EnrollmentApplicationService(DBService):
                 if annualized_premium and annualized_premium > Decimal('0.00'):
                     total_annual_premium += annualized_premium
 
-                #if total_product_premium == Decimal('0.00'):
-                #    total_product_premium = ''
+                    # if total_product_premium == Decimal('0.00'):
+                    #    total_product_premium = ''
 
             enrollment_data.update(product_data)
             enrollment_data['{}_total_premium'.format(prefix)] = total_product_premium
@@ -725,7 +754,9 @@ class EnrollmentApplicationService(DBService):
     def get_export_dictionary(self, census_record, application):
         data = dict()
         data.update(self.get_census_data(census_record))
-        data.update(self.get_unmerged_enrollment_data(census_record, application, self.product_service.get_ordered_products_for_case(census_record.case_id)))
+        data.update(self.get_unmerged_enrollment_data(census_record, application,
+                                                      self.product_service.get_ordered_products_for_case(
+                                                          census_record.case_id)))
         enrollment_tuples = [(c.column_title, c.get_value(data)) for c in enrollment_columns]
         census_tuples = zip(self.case_service.census_records.get_csv_headers(),
                             self.case_service.census_records.get_csv_row_from_dict(data))
@@ -821,18 +852,18 @@ class EnrollmentApplicationService(DBService):
 
     def get_paylogix_applications_between_dates(self, start_date, end_date):
         return db.session.query(EnrollmentApplication).filter(db.and_(
-                EnrollmentApplication.signature_time > start_date, EnrollmentApplication.signature_time < end_date)
-            ).join(Case
-            ).filter(Case.requires_paylogix_export == True
-            ).order_by(db.desc(EnrollmentApplication.signature_time)
-            ).all()
+            EnrollmentApplication.signature_time > start_date, EnrollmentApplication.signature_time < end_date)
+        ).join(Case
+               ).filter(Case.requires_paylogix_export == True
+                        ).order_by(db.desc(EnrollmentApplication.signature_time)
+                                   ).all()
 
     def get_paylogix_applications(self):
         return db.session.query(EnrollmentApplication
                                 ).join(Case
-                                ).filter(Case.requires_paylogix_export == True
-                                ).order_by(db.desc(EnrollmentApplication.signature_time)
-                                ).all()
+                                       ).filter(Case.requires_paylogix_export == True
+                                                ).order_by(db.desc(EnrollmentApplication.signature_time)
+                                                           ).all()
 
 
 def export_string(val):
@@ -906,7 +937,10 @@ enrollment_columns = [
 ]
 
 # Include columns for the coverage/premium information for up to six products
-coverage_columns = [EnrollmentColumn('total_annual_premium', 'Total Annual Premium', export_string)]
+coverage_columns = [
+    EnrollmentColumn('total_annual_premium', 'Total Annual Premium', export_string),
+    EnrollmentColumn('effective_date', 'Effective Date', export_date),
+]
 for product_num in range(1, 6 + 1):
     product_coverage_cols = [
         EnrollmentColumn('product_{}_name'.format(product_num),

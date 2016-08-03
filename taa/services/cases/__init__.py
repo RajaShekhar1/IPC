@@ -1,5 +1,5 @@
 from models import (Case, CaseCensus, CaseEnrollmentPeriod,
-                    CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod,
+                    CaseOpenEnrollmentPeriod, CaseOngoingEnrollmentPeriod,
                     SelfEnrollmentSetup, AgentSplitsSetup)
 
 from case_service import CaseService

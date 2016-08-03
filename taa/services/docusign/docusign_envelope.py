@@ -501,10 +501,20 @@ class EnrollmentDataWrap(object):
 
         return 'yes' if val else 'no'
 
+    def get_effective_date(self):
+        if self.data.get('effective_date'):
+            return dateutil_parse(self.data.get('effective_date')).strftime('%Y-%m-%d')
+        else:
+            return self.enrollment_record.signature_time.strftime('%Y-%m-%d')
+
     def get_applicant_data(self):
         applicants = []
 
-        effective_date = self.enrollment_record.signature_time.strftime("%m/%d/%Y")
+        if self.data.get('effective_date'):
+            effective_date = dateutil_parse(self.data['effective_date']).strftime("%m/%d/%Y")
+        else:
+            effective_date = self.enrollment_record.signature_time.strftime("%m/%d/%Y")
+
         if self.enrollment_record.payment_mode:
             payment_mode = "{}".format(self.enrollment_record.payment_mode)
         else:
@@ -512,6 +522,7 @@ class EnrollmentDataWrap(object):
 
         if self.did_employee_select_coverage():
             coverage = self.get_employee_coverage()
+
             premium = self.get_formatted_employee_premium()
             premium_amount = self.get_employee_premium()
 

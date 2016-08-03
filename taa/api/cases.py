@@ -277,6 +277,7 @@ def enrollment_records(case_id):
             employee_last=row.employee_last,
             # employee_email=row.employee_email,
             agent_name=row.agent_name,
+            effective_date=row.effective_date,
             employee_birthdate=row.employee_birthdate,
             enrollment_status=row.enrollment_status,
             total_premium=row.total_premium,
