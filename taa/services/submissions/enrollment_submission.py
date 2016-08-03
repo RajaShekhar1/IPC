@@ -561,7 +561,7 @@ class EnrollmentSubmissionProcessor(object):
                                                                     enrollment_record=enrollment_application),
                                     all_product_data)
 
-    def generate_document_components(self, enrollment_application):
+    def generate_document_components(self, enrollment_application, is_stp=False, product_id=None):
         """Used for generating PDFs from enrollments signed in the wizard, outside of docusign"""
 
         case = enrollment_application.case
@@ -619,8 +619,8 @@ class EnrollmentSubmissionProcessor(object):
             elif product.is_group_ci():
                 if not is_stp:
                     components += self.docusign_service.create_group_ci_envelope_components(enrollment_data, recipients,
-                                                                           should_use_docusign_renderer, show_all_documents=True)
-                                                                                        show_all_documents=True)
+                                                                                            should_use_docusign_renderer,
+                                                                                            show_all_documents=True)
 
         return components
 

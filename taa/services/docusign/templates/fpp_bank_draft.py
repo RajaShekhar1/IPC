@@ -108,18 +108,20 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
 
     def get_draft_day(self):
         from taa.services.enrollments.paylogix import get_week_from_date
-
-        standardized_data = json.loads(self.data.enrollment_record.standardized_data)
+        
         if self.data.case.requires_paylogix_export:
-            if standardized_data[0].get('effective_date'):
-                effective_date = parse(standardized_data[0].get('effective_date'))
+            if self.data.get('effective_date'):
+                effective_date = self.data.get_effective_date()
                 week = get_week_from_date(effective_date)
+                # Nth Friday based on week of effective date
                 return self.format_deduction_week(week)
             else:
+                # Older method will compute the next Friday based on 5 day interval after sig time.
                 date = self.data.enrollment_record.signature_time
                 return self.get_paylogix_draft_day(date)
-
-        return parse(standardized_data[0].get('effective_date')).day
+        else:
+            # Day of the month
+            return self.data.get_effective_date().day
 
     def get_paylogix_draft_day(self, date):
         from taa.services.enrollments.paylogix import get_deduction_week

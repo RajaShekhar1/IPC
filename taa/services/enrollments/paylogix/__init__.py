@@ -129,7 +129,7 @@ def create_paylogix_csv(applications):
 
                 row = [
                     application.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z'),
-                    data_wrap.get_effective_date(),
+                    data_wrap.get_effective_date().strftime('%Y-%m-%d'),
                     application.census_record.employee_ssn,
                     application.census_record.employee_last,
                     application.census_record.employee_first,

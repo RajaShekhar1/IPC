@@ -80,9 +80,8 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
     now = datetime.datetime.now()
     submitted_date = now.date().isoformat()
     submitted_time = now.time().isoformat().split('.', 1)[0]
-
-    # TODO: Pull from case
-    effective_date = '2016-07-15'
+    
+    effective_date = data.get_effective_date().strftime('%Y-%m-%d')
 
     if applicant_type == 'employee':
         enrollee = data['employee']
@@ -432,7 +431,7 @@ def get_agents(data, enrollment):
             'first': agent.first,
             'last': agent.last,
             'code': agent.agent_code,
-            'commission_percent': 100,
+            'commission_percent': '',
         })
 
     return agents
@@ -444,15 +443,18 @@ def test_wizard_xml():
     from taa import db
     from taa.services.enrollments.models import EnrollmentApplication
     from taa.services.submissions import EnrollmentSubmissionService
-    apps = db.session.query(EnrollmentApplication).filter(EnrollmentApplication.signature_time >= '2016-06-25'
+    apps = db.session.query(EnrollmentApplication).filter(EnrollmentApplication.signature_time >= '2016-06-20'
           ).options(db.subqueryload('coverages').joinedload('enrollment').joinedload('case').joinedload('owner_agent')
           ).all()
-
+    
     coverages = []
     for app in apps:
 
         for coverage in app.coverages:
             enrollment = coverage.enrollment
+            case = enrollment.case
+            splits = case.agent_splits
+            
             if coverage.product.can_submit_stp():
                 coverages.append(coverage)
 

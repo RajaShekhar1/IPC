@@ -456,7 +456,7 @@ class EnrollmentDataWrap(object):
         return bene_dict
 
     def get_beneficiary_dict(self, prefix):
-        bd = self.data['{}_birthdate'.format(prefix)]
+        bd = self.data['{}_dob'.format(prefix)]
 
         bene_dict = dict(
             name=self.data['{}_name'.format(prefix)],
@@ -503,9 +503,9 @@ class EnrollmentDataWrap(object):
 
     def get_effective_date(self):
         if self.data.get('effective_date'):
-            return dateutil_parse(self.data.get('effective_date')).strftime('%Y-%m-%d')
+            return dateutil_parse(self.data.get('effective_date'))
         else:
-            return self.enrollment_record.signature_time.strftime('%Y-%m-%d')
+            return self.enrollment_record.signature_time
 
     def get_applicant_data(self):
         applicants = []
