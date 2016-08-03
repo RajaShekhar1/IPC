@@ -268,28 +268,28 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
         }
     else:
         vars['enrollee']['beneficiaries'] = {}
-        for source in ['beneficiary', 'contingent_beneficiary']:
-            for index in range(1, 11):
-                if source == 'beneficiary' and index > MAX_PRIMARY_BENEFICIARIES:
-                    break
-                elif source == 'contingent_beneficiary' and index > MAX_CONTINGENT_BENEFICIARIES:
-                    break
-                prefix = '{}_{}{}'.format(applicant_type, source, index)
-                if source not in vars['enrollee']['beneficiaries']:
-                    vars['enrollee']['beneficiaries'][source] = []
-                if prefix + '_name' not in data:
-                    break
-                name = data[prefix + '_name']
-                if name.strip() == '':
-                    break
+        all_benes = data.get_beneficiary_data()
+        for k, benes in iter(all_benes.items()):
+            source = ('beneficiary' if k.endswith('_primary')
+                      else 'contingent_beneficiary')
+            if source not in vars['enrollee']['beneficiaries']:
+                vars['enrollee']['beneficiaries'][source] = []
+            for bene in benes:
+                if applicant_type not in k:
+                    # Skip non-enrollees beneficiaries
+                    continue
+                name = bene.get('name', '').strip()
+                if len(name) == 0:
+                    # Name not set -- skip
+                    continue
                 first, last = name.split(' ', 1) if ' ' in name else (name, '')
                 vars['enrollee']['beneficiaries'][source].append({
                     'first': first,
                     'last': last,
-                    'ssn': data[prefix + '_ssn'],
-                    'birthdate': data[prefix + '_dob'],
-                    'percentage': data[prefix + '_percentage'],
-                    'relationship': data[prefix + '_relationship'].lower(),
+                    'ssn': bene['ssn'],
+                    'birthdate': bene['birthdate'],
+                    'percentage': bene['percentage'],
+                    'relationship': bene['relationship'].lower(),
                 })
 
     vars['relationships'] = {}

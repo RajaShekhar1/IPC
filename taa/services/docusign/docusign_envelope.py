@@ -405,40 +405,65 @@ class EnrollmentDataWrap(object):
             'spouse_contingent': [],
         }
 
+        # "Shorthand" beneficiary settings
+        if len(self.data.get('employee_beneficiary', '')) > 0:
+            bene_data['employee_primary'] += [
+                self.get_beneficiary_family_member('spouse')
+            ]
+        if len(self.data.get('spouse_beneficiary', '')) > 0:
+            bene_data['spouse_primary'] += [
+                self.get_beneficiary_family_member('employee')
+            ]
+
         from taa.services.enrollments import EnrollmentRecordParser
         for num in range(1, EnrollmentRecordParser.MAX_BENEFICIARY_COUNT + 1):
-            if self.data.get("emp_bene{}_name".format(num)):
+            if self.data.get('employee_beneficiary{}_name'.format(num)):
                 bene_data['employee_primary'] += [
-                    self.get_beneficiary_dict("emp_bene{}".format(num))
+                    self.get_beneficiary_dict('employee_beneficiary{}'.format(num))
                 ]
-            if self.data.get("emp_cont_bene{}_name".format(num)):
+            if self.data.get('emp_cont_bene{}_name'.format(num)):
                 bene_data['employee_contingent'] += [
-                    self.get_beneficiary_dict("emp_cont_bene{}".format(num))
+                    self.get_beneficiary_dict('employee_contingent_beneficiary{}'.format(num))
                 ]
-            if self.data.get("sp_bene{}_name".format(num)):
+            if self.data.get('spouse_beneficiary{}_name'.format(num)):
                 bene_data['spouse_primary'] += [
-                    self.get_beneficiary_dict("sp_bene{}".format(num))
+                    self.get_beneficiary_dict('spouse_beneficiary{}'.format(num))
                 ]
-            if self.data.get("sp_cont_bene{}_name".format(num)):
+            if self.data.get('spouse_contingent_beneficiary{}_name'.format(num)):
                 bene_data['spouse_contingent'] += [
-                    self.get_beneficiary_dict("sp_cont_bene{}".format(num))
+                    self.get_beneficiary_dict('spouse_contingent_beneficiary{}'.format(num))
                 ]
+
+        # Trim beneficiaries if needed, as the shorthand beneficiary logic may
+        # allow too many primary benficiaries to be set
+        bene_data['employee_primary'] = bene_data['employee_primary'][:EnrollmentRecordParser.MAX_BENEFICIARY_COUNT+1]
+        bene_data['spouse_primary'] = bene_data['spouse_primary'][:EnrollmentRecordParser.MAX_BENEFICIARY_COUNT+1]
 
         return bene_data
 
-    def get_beneficiary_dict(self, prefix):
-        bd = self.data["%s_birthdate" % prefix]
-        # try:
-        #    bd = dateutil.parser.parse(bd).strftime('%F')
-        # except Exception:
-        #    pass
+    def get_beneficiary_family_member(self, prefix, relationship='spouse'):
+        bd = self.data[prefix]['birthdate']
 
         bene_dict = dict(
-            name=self.data["%s_name" % prefix],
-            ssn=self.data["%s_ssn" % prefix],
-            relationship=self.data["%s_relationship" % prefix],
+                name='{} {}'.format(self.data[prefix]['first'],
+                                    self.data[prefix]['last']),
+                ssn=self.data[prefix]['ssn'],
+                relationship=relationship,
+                birthdate=bd,
+                percentage=100,
+        )
+
+        return bene_dict
+
+    def get_beneficiary_dict(self, prefix):
+        bd = self.data['{}_birthdate'.format(prefix)]
+
+        bene_dict = dict(
+            name=self.data['{}_name'.format(prefix)],
+            ssn=self.data['{}_ssn'.format(prefix)],
+            relationship=self.data['{}_relationship'.format(prefix)],
             birthdate=bd,
-            percentage=self.data["%s_percentage" % prefix],
+            percentage=self.data['{}_percentage'.format(prefix)],
         )
 
         return bene_dict
@@ -467,13 +492,13 @@ class EnrollmentDataWrap(object):
         else:
             if product.is_fpp() and self.case.omit_actively_at_work and not product.is_guaranteed_issue():
                 return ''
-        
+
         if 'is_employee_actively_at_work' in self.data:
             val = self.data['is_employee_actively_at_work']
         else:
             # Import format
             val = self.data['actively_at_work']
-        
+
         return 'yes' if val else 'no'
 
     def get_applicant_data(self):
@@ -575,13 +600,13 @@ class EnrollmentDataWrap(object):
             ))
 
         return applicants
-    
+
     def get_selected_employee_riders(self):
         return self.data.get('rider_data', {}).get('emp', [])
-    
+
     def get_selected_spouse_riders(self):
         return self.data.get('rider_data', {}).get('sp', [])
-    
+
     def has_bank_draft_info(self):
         return self.get('bank_info', None) is not None
 
