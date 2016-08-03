@@ -39,7 +39,7 @@
                                 <PaidProducerID>{{ agent.code }}</PaidProducerID>
                                 {% endif -%}
                                 <SplitPercent>{{ agent.commission_percent }}</SplitPercent>
-                                <CommissionSchedule>{{ agent.subcode or '001' }}</CommissionSchedule>
+                                <CommissionSchedule>{{ agent.subcode }}</CommissionSchedule>
                             </CommissionDetail>
                         {% endfor -%}
                     </CommissionCalcActivity>
