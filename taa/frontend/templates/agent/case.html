@@ -603,9 +603,34 @@
                                         </table>
                                       </div>
 
+                                      {# Group CI options #}
+                                    <div class="form-group"
+                                         data-bind="visible: $root.is_product_group_ci(product)">
+                                        <input type="checkbox" class="ace"
+                                               data-bind="checked: $root.restrict_state_availability">
+                                        <span class="lbl"> Restrict State Availability</span>
+                                        <div data-bind="visible: $root.restrict_state_availability">
+                                            <h4 class="header lighter blue">State Availability</h4>
+                                            <div class="row">
+                                                <div class="col-sm-10 col-md-offset-1">
+                                                    <select data-bind="selectedOptions: $root.state_overrides, attr: {'id': 'states-list-product-' + $root.get_product_id(product)}"
+                                                            multiple="multiple" class="form-control">
+                                                        {% for state in all_states %}
+                                                            <option value="{{ state.statecode }}"
+                                                                    {%-if state.statecode in state_overrides-%}
+                                                                    selected="selected"
+                                                                    {%- endif -%}
+                                                            >{{ state.name }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                       {# No Options #}
                                       <div class="form-group"
-                                           data-bind="visible: $parent.case_riders_for_product($data).length === 0 && !$root.is_product_occupation_class_eligible(product)">
+                                           data-bind="visible: $parent.case_riders_for_product($data).length === 0 && !$root.is_product_occupation_class_eligible(product) && !$root.is_product_group_ci(product)">
                                         This product has no configuration options
                                       </div>
 
