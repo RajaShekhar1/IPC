@@ -72,9 +72,14 @@ function today_between(start, end) {
     var is_before_end = today.isSameOrBefore(moment(end), 'day');
     return is_after_start && is_before_end
   }
-
 }
 
+//check if today is before a start date
+function today_before(start){
+  var today = moment();
+  var is_before_start = today.isBefore(moment(start), 'day');
+  return is_before_start;
+}
 
 // Date handling
 function parse_date(date_str, format_str) {
