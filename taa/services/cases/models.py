@@ -256,11 +256,12 @@ class CaseOngoingEnrollmentPeriod(CaseEnrollmentPeriod):
         return True
 
 
+# keep this class alive for the purpose of legacy cases being converted to the new policy effective date system
+class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
+    PERIOD_TYPE = u'annual_period'
+    __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
+
 # TODO: Remove
-# class CaseAnnualEnrollmentPeriod(CaseEnrollmentPeriod):
-#     PERIOD_TYPE = u'annual_period'
-#     __mapper_args__ = {'polymorphic_identity': PERIOD_TYPE}
-#
 #     def populate_data_dict(self, data):
 #         data['enrollment_period_type'] = Case.ANNUAL_ENROLLMENT_TYPE
 #         if 'annual_period_dates' not in data:
