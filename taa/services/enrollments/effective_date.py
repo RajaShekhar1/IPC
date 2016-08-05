@@ -61,14 +61,14 @@ def create_rule(settings, enroller_picks_date=None):
         info['effective_date_param1'] = parse(settings.get('static_date'))
 
     if settings.get('method') == 'first_friday':
-        info['effective_date_param1'] = int(settings.get('first_friday'), base=10)
+        info['effective_date_param1'] = int(settings.get('first_friday'))
 
     if settings.get('method') == 'day_of_month':
-        info['effective_date_param1'] = int(settings.get('day_of_month'), base=10)
+        info['effective_date_param1'] = int(settings.get('day_of_month'))
 
     if settings.get('method') == 'enroller_selects':
-        info['effective_date_param1'] = int(settings['enroller_selects']['default'], base=10)
-        info['effective_date_param2'] = int(settings['enroller_selects']['no_less'], base=10)
+        info['effective_date_param1'] = int(settings['enroller_selects']['default'])
+        info['effective_date_param2'] = int(settings['enroller_selects']['no_less'])
         info['enroller_picks_date'] = ""
 
     args = []

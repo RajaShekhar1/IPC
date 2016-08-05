@@ -55,7 +55,7 @@ var wizard_viewmodel = (function () {
     });
     this.is_payment_mode_valid = ko.pureComputed(this._is_payment_mode_valid, this);
 
-    this.product_coverage_viewmodels = ko.observableArray(_.zipWith(this.products, case_data.product_settings.effective_date_settings, function (p, es) {
+    this.product_coverage_viewmodels = ko.observableArray(_.map(this.products, function (p) {
       return new ProductCoverageViewModel(
         p,
         case_data,
@@ -63,8 +63,7 @@ var wizard_viewmodel = (function () {
         this.payment_mode,
         this.should_include_spouse,
         this.should_include_children,
-        this.root,
-        es);
+        this.root);
     }, this));
 
     // Which product coverage is being displayed right now?
@@ -219,7 +218,7 @@ var wizard_viewmodel = (function () {
   };
 
   function ProductCoverageViewModel(product, case_data, applicant_list, payment_mode,
-                                    should_include_spouse, should_include_children, root, effective_date_settings) {
+                                    should_include_spouse, should_include_children, root) {
 
     // ProductCoverageViewModel keeps track of the coverage selections for the applicants for a single product.
 
@@ -233,7 +232,7 @@ var wizard_viewmodel = (function () {
     self.should_include_spouse = should_include_spouse;
     self.should_include_children = should_include_children;
     self.root = root;
-    self.effective_date_settings = effective_date_settings;
+    self.effective_date_settings = case_data.product_settings.effective_date_settings;
 
     self.did_decline = ko.observable(false);
     self.available_recommendations = product_rates_service.get_product_recommendations(self.product, payment_mode);
