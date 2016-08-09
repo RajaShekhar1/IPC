@@ -89,7 +89,6 @@ def create_case(company_name=u'Test Case', case_token=u'CASE-123123', product_co
         agent_id=agent.id,
         active=True,
         created_date=datetime.datetime(year=2012, month=1, day=1),
-        enrollment_period_type=Case.OPEN_ENROLLMENT_TYPE,
         payment_mode=payment_modes.MODE_MONTHLY,
         is_self_enrollment=False,
         case_token=case_token,

@@ -1,7 +1,8 @@
+import json
 from datetime import datetime
 
+from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
-
 from taa.services.docusign.service import DocuSignServerTemplate, DocuSignTextTab, DocuSignRadioTab
 from taa.services.docusign.DocuSign_config import get_bank_draft_template_id
 
@@ -106,31 +107,28 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
         return self.data.format_money(self.data.get_total_modal_premium())
 
     def get_draft_day(self):
-
-        hire_date = self.data.get_employee_date_of_hire()
-        if not hire_date:
-            # Default to today if we don't have the hire date.
-            hire_date = datetime.today()
-
+        from taa.services.enrollments.paylogix import get_week_from_date
+        
         if self.data.case.requires_paylogix_export:
-            return self.get_paylogix_draft_day(hire_date)
+            if self.data.get('effective_date'):
+                effective_date = self.data.get_effective_date()
+                week = get_week_from_date(effective_date)
+                # Nth Friday based on week of effective date
+                return self.format_deduction_week(week)
+            else:
+                # Older method will compute the next Friday based on 5 day interval after sig time.
+                date = self.data.enrollment_record.signature_time
+                return self.get_paylogix_draft_day(date)
         else:
-            return self.get_normal_draft_day(hire_date)
+            # Day of the month
+            return self.data.get_effective_date().day
 
-    def get_normal_draft_day(self, hire_date):
-        # Use the day 14 days after the hire date as the draft day.
-        draft_date = hire_date + relativedelta(days=14)
-        # Default day to the first if not in the range 1 to 28.
-        draft_day_of_month = draft_date.day
-        if draft_day_of_month <= 28:
-            draft_day = draft_day_of_month
-        else:
-            draft_day = 1
-        return draft_day
-
-    def get_paylogix_draft_day(self, hire_date):
+    def get_paylogix_draft_day(self, date):
         from taa.services.enrollments.paylogix import get_deduction_week
-        deduction_week = get_deduction_week(hire_date)
+        deduction_week = get_deduction_week(date)
+        return self.format_deduction_week(deduction_week)
+
+    def format_deduction_week(self, deduction_week):
         if deduction_week == 1:
             return '1st Friday'
         elif deduction_week == 2:

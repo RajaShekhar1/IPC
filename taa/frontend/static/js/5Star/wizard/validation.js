@@ -242,6 +242,20 @@ function init_validation(ui) {
       });
       return false;
     }
+    
+    if (ui.show_enroller_select_date() 
+      && !ui.valid_effective_date()) {
+      bootbox.dialog({
+        message: ui.get_effective_date_error_message(),
+        buttons: {
+          "danger": {
+            "label": "OK",
+            "className": "btn-warning"
+          }
+        }
+      });
+      return false;
+    }
 
     if (!ui.can_submit_wizard()) {
       e.preventDefault();
@@ -249,11 +263,7 @@ function init_validation(ui) {
       return false;
     }
 
-    if (ui.should_do_signing_ceremony()) {
-      ui.begin_signing_ceremony();
-    } else {
-      submit_application();
-    }
+    ui.begin_signing_ceremony();
     
   }).on('stepclick.fu.wizard', function (e) {
     return true; //return false;//prevent clicking on steps
@@ -429,6 +439,7 @@ function init_validation(ui) {
         }
       },
       spOwner: {required: true}
+
     },
 
     messages: {
@@ -443,6 +454,12 @@ function init_validation(ui) {
     success: wizard_validate_success,
     errorPlacement: wizard_error_placement
   });
+
+  // Child gender rules
+  $.validator.addClassRules('child-gender', {required: {depends: function(element) {
+    //var applicant = ko.dataFor(element);
+    return ui.coverage_vm.did_select_children_coverage();
+  }}});
 
   // Beneficiary rules
 
@@ -578,6 +595,9 @@ function init_validation(ui) {
     highlight: wizard_validate_highlight,
     success: wizard_validate_success,
     errorPlacement: bank_draft_error_placement,
+    messages: {
+      'bank-routing-number': "The bank routing number must be exactly 9 digits long"
+    },
     rules: {
       'bank-account-holder-name': {
         required: {
@@ -603,7 +623,8 @@ function init_validation(ui) {
         },
         digits: {
           depends: ui.requires_bank_info
-        }
+        },
+        rangelength: [9, 9]
       },
       'bank-name': {
         required: {

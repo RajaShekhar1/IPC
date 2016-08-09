@@ -20,7 +20,7 @@ enrollment_application_submission_association_table = db.Table('enrollment_appli
 
 
 class EnrollmentSerializer(JsonSerializable):
-    __json_hidden__ = ['census_record', 'case', 'enrollment_submissions']
+    __json_hidden__ = ['census_record', 'case', 'enrollment_submissions', 'emails']
 
 
 class EnrollmentApplication(EnrollmentSerializer, db.Model):
@@ -38,6 +38,7 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
                                         'enrollment_applications',
                                         lazy='joined'))
     signature_time = db.Column(db.DateTime, index=True)
+    # effective_date = db.Column(db.DateTime)
     signature_city = db.Column(db.UnicodeText)
     signature_state = db.Column(db.Unicode(2))
     identity_token = db.Column(db.UnicodeText)
@@ -160,6 +161,7 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     def did_sign_in_wizard(self):
         return self.signature_method == self.SIGNATURE_METHOD_WIZARD
 
+
 class EnrollmentApplicationCoverageSerializer(JsonSerializable):
     __json_hidden__ = ['enrollment']
 
@@ -177,6 +179,8 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
     # Product
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
     product = db.relationship('Product')
+    # Effective Date
+    effective_date = db.Column(db.Date)
     # Applicant type
     APPLICANT_TYPE_EMPLOYEE = u'employee'
     APPLICANT_TYPE_SPOUSE = u'spouse'
@@ -354,6 +358,33 @@ CaseCensus.sent_email_count = db.column_property(
     )).correlate_except(SelfEnrollmentEmailLog)
 )
 
+class SummaryEmailSerializer(JsonSerializable):
+    __json_hidden__ = None
+
+
+class SummaryEmailLog(SummaryEmailSerializer, db.Model):
+    __tablename__ = 'summary_confirmation_email_log'
+
+    id = db.Column(db.Integer, primary_key=True)
+    enrollment_application_id = db.Column(db.Integer, db.ForeignKey('enrollment_applications.id'),
+                                          nullable=False, index=True)
+    sent_date = db.Column(db.DateTime, nullable=False, default=db.func.now())
+
+    is_success = db.Column(db.Boolean, nullable=False)
+
+    email_to_address = db.Column(db.Unicode)
+    email_to_name = db.Column(db.Unicode)
+    email_body = db.Column(db.Unicode)
+
+    status = db.Column(db.Unicode(16), index=True)
+
+    STATUS_PENDING = u'pending'
+    STATUS_FAILURE = u'failure'
+    STATUS_SUCCESS = u'success'
+
+    enrollment_application = db.relationship('EnrollmentApplication', backref='emails')
+
+
 
 def get_batch_case_id(batch):
     token = batch.case_token
@@ -436,7 +467,7 @@ class EnrollmentImportBatchItem(EnrollmentImportBatchItemSerializer, db.Model):
 
 
 class EnrollmentSubmissionItemSerializer(JsonSerializable):
-    __json_hidden__ = []
+    __json_hidden__ = ['product', 'data', 'enrollment_applications']
 
 
 class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
@@ -452,6 +483,7 @@ class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
     # Submission Type Enum Values
     TYPE_DELL_CSV_GENERATION = u'HI and ACC CSV Generation'
     TYPE_DELL_EXPORT = u'HI and ACC CSV submission to Dell'
+    TYPE_DELL_STP_XML = u'STP XML submission to Dell'
     TYPE_DOCUSIGN = u'Submit to Docusign'
     TYPE_STATIC_BENEFIT = u'Static Benefit'
     TYPE_PAYLOGIX_CSV_GENERATION = u'Paylogix CSV Generation'

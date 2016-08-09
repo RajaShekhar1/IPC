@@ -144,6 +144,20 @@ function build_wizard_results_for_product_coverage(product_cov) {
     city_state_zip: root.bank_city_state_zip()
   };
 
+  var backup_bank_info = {
+    account_holder_name: $("#bank-account-holder-name").val(),
+    account_type: $("#bank-account-type").val(),
+    account_number: $("#bank-account-number").val(),
+    routing_number: $("#bank-routing-number").val(),
+    bank_name: $("#bank-name").val(),
+    address_one: $("#bank-street-one").val(),
+    address_two: $("#bank-street-two").val(),
+    billing_city: $("#billing-city").val(),
+    billing_state: $("#billing-state").val(),
+    billing_zip: $("#billing-zip").val(),
+    city_state_zip: $("#bank-city-state-zip").val()
+  };
+
   var wizard_results = {
     product_id: product_cov.product.product_data.id,
     case_id: root.enrollment_case.id,
@@ -158,6 +172,13 @@ function build_wizard_results_for_product_coverage(product_cov) {
 
     identityToken: root.identityToken(),
     identityType: root.identityType(),
+    
+    effective_date: product_cov.effective_date_resolution(),
+    enrollerSelects: root.show_enroller_select_date(),
+    effectiveDateSettings: root.effective_date_settings,
+
+    send_summary_email: root.should_email_summary_sheet(),
+    summaryEmail: root.get_summary_email(),
 
     employee: root.employee().serialize_data(),
     spouse: root.spouse().serialize_data(),
@@ -192,8 +213,10 @@ function build_wizard_results_for_product_coverage(product_cov) {
 
   if (root.requires_bank_info()) {
     wizard_results.bank_info = bank_info;
+    wizard_results.backup_bank_info = backup_bank_info;
   } else {
     wizard_results.bank_info = null;
+    wizard_results.backup_bank_info = null;
   }
 
   wizard_results.children = [];
@@ -274,7 +297,7 @@ function build_wizard_results_for_product_coverage(product_cov) {
   };
 
   // Add Signing Ceremony data
-  wizard_results.should_do_signing_ceremony = root.should_do_signing_ceremony();
+  //wizard_results.should_do_signing_ceremony = root.should_do_signing_ceremony();
   wizard_results.applicant_signed = root.applicant_signed();
   wizard_results.agent_signed = root.agent_signed();
 

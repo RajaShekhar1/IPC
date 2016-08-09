@@ -72,7 +72,13 @@ function today_between(start, end) {
     var is_before_end = today.isSameOrBefore(moment(end), 'day');
     return is_after_start && is_before_end
   }
+}
 
+//check if today is before a start date
+function today_before(start){
+  var today = moment();
+  var is_before_start = today.isBefore(moment(start), 'day');
+  return is_before_start;
 }
 
 // Date handling
@@ -141,6 +147,13 @@ function get_date_of_birth_validation_error(date_of_birth) {
     return 'Date must be before today.';
   }
   return null;
+}
+
+function valid_enroller_selects(minimum, input) {
+  var today = moment({hour: 0, minute: 0, seconds: 0, milliseconds: 0});
+  var input_moment = moment(input);
+  var minimum_moment = today.clone().add(minimum, 'day');
+  return minimum_moment.isSameOrBefore(input_moment);
 }
 
 function format_date(moment_date) {
@@ -753,7 +766,8 @@ var ProductStatesLimiterViewModel = function (product_statecode_mapping,
   // Based on product selection, change which states are enabled
   self.enabled_states = ko.computed(function () {
     return _.filter(self.available_states, function (state) {
-      return _.all(self.selected_products(), function (product) {
+      // Should be _.all(), but restriction lessened for now to allow multiproduct 
+      return _.any(self.selected_products(), function (product) {
         return self.is_valid_product_for_state(product, state);
       });
     });
@@ -823,7 +837,8 @@ var StatesLimiterViewModel = function (product_statecode_mapping,
   // Based on product selection, change which states are enabled
   self.enabled_states = ko.computed(function () {
     return _.filter(self.available_states, function (state) {
-      return _.all(selected_products(), function (product) {
+      // SHOULD be _.all(), but we slackened this restriction temporarily
+      return _.any(selected_products(), function (product) {
         return self.is_valid_product_for_state(product, state);
       });
     });

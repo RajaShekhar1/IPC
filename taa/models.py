@@ -6,3 +6,4 @@ from taa.services.agents.models import *
 from taa.services.cases.models import *
 from taa.services.products.models import *
 from taa.services.enrollments.models import *
+from taa.services.data_export.models import *

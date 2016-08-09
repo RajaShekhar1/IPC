@@ -8,7 +8,7 @@ from flask import abort
 from flask_stormpath import current_user
 from sqlalchemy.orm import joinedload, eagerload
 
-from models import (Case, CaseCensus, CaseOpenEnrollmentPeriod, CaseAnnualEnrollmentPeriod,
+from models import (Case, CaseCensus, CaseOpenEnrollmentPeriod, CaseOngoingEnrollmentPeriod,
                     SelfEnrollmentSetup)
 from taa.core import DBService
 from taa.core import db
@@ -195,15 +195,17 @@ class CaseService(DBService):
     def update_enrollment_periods(self, case, periods):
         # Make sure the case enrollment type is updated to match the type of
         # the uploaded periods
-        for period in periods:
-            if period['period_type'] == (CaseOpenEnrollmentPeriod.PERIOD_TYPE
-                                         and case.enrollment_period_type !=
-                    Case.OPEN_ENROLLMENT_TYPE):
-                case.enrollment_period_type = Case.OPEN_ENROLLMENT_TYPE
-            elif period['period_type'] == (CaseAnnualEnrollmentPeriod.PERIOD_TYPE
-                                           and case.enrollment_period_type !=
-                    Case.ANNUAL_ENROLLMENT_TYPE):
-                case.enrollment_period_type = Case.ANNUAL_ENROLLMENT_TYPE
+        # TODO: Remove
+        # for period in periods:
+        #     if period['period_type'] == (CaseOpenEnrollmentPeriod.PERIOD_TYPE
+        #                                  and case.enrollment_period_type !=
+        #             Case.OPEN_ENROLLMENT_TYPE):
+        #         case.enrollment_period_type = Case.OPEN_ENROLLMENT_TYPE
+        #     elif period['period_type'] == (CaseOngoingEnrollmentPeriod.PERIOD_TYPE
+        #                                    and case.enrollment_period_type !=
+        #             Case.ONGOING_ENROLLMENT_TYPE):
+        #         case.enrollment_period_type = Case.ONGOING_ENROLLMENT_TYPE
+
         # Remove existing periods
         self.enrollment_periods.remove_all_for_case(case)
         # Add the new enrollment period
@@ -212,6 +214,7 @@ class CaseService(DBService):
         return added
 
     # Census records
+
 
     def get_census_records(self, case, offset=None, num_records=None,
                            search_text=None, text_columns=None,
@@ -519,9 +522,14 @@ class CaseService(DBService):
         from taa.services.agents import AgentService
         from taa.services.enrollments import EnrollmentApplicationService
         from taa.services.enrollments import SelfEnrollmentEmailService
+        from taa.services.enrollments import SummaryEmailService
         emails_service = SelfEnrollmentEmailService()
         enrollments_service = EnrollmentApplicationService()
+        summary_email_service = SummaryEmailService()
         agent_service = AgentService()
+
+        for record in case.enrollment_records:
+            summary_email_service.delete_emails_for_enrollment(record)
 
         # Remove all enrollments if allowed
         if agent_service.can_manage_all_cases(current_user):
@@ -535,6 +543,8 @@ class CaseService(DBService):
 
         # remove all email batch records
         emails_service.delete_batches_for_case(case)
+
+
 
         return self.delete(case)
 

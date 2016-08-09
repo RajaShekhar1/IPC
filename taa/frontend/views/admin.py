@@ -28,7 +28,12 @@ def admin():
 
     # This shows only agents right now, will want to add admins / HO users soon.
     accounts = []
-    for agent in agent_service.all():
+    for agent in agent_service.get_sorted_agents():
+
+        # Skip over deleted users, they have no stormpath entry so there is no use showing them here (clicking would error)
+        if agent.get_status() == 'Deleted':
+            continue
+
         accounts.append({
             'fname': agent.first,
             'lname': agent.last,
@@ -36,7 +41,7 @@ def admin():
             'agency': agent.agency,
             'agent_code': agent.agent_code,
             'signing_name': agent.signing_name,
-            'status': "Activated" if agent.activated else "Not Activated",
+            'status': agent.get_status(),
         })
 
     # for acc in search_stormpath_accounts():
@@ -50,8 +55,6 @@ def admin():
     #          'status': "Activated" if acc.custom_data.get('activated') else "Not Activated",
     #      })
 
-    # show the un-activated accounts first
-    accounts = sorted(accounts, reverse=True, key=(lambda x: x['status']))
     return render_template('admin/admin.html', accounts=accounts, nav_menu=get_nav_menu(), is_user_admin=agent_service.is_user_admin(current_user))
 
 
@@ -218,9 +221,6 @@ def create_application_dictionary_for_submissions_view(application):
 def create_submission_dictionary_for_submissions_view(submission):
     """
     Create a dictionary for use in JSON Serialization for a submission item
-    :param submission: Submission to create the dictionary for
-    :type submission: taa.services.enrollments.models.EnrollmentSubmission
-    :rtype: dict
     """
     return {
         'id': submission.id,
@@ -230,6 +230,7 @@ def create_submission_dictionary_for_submissions_view(submission):
         'submission_logs': submission.submission_logs,
         'data': submission.data,
         'submission_type': submission.submission_type,
+        'status':submission.status,
     }
 
 

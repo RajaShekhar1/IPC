@@ -39,8 +39,8 @@ PREFERRED_URL_SCHEME = 'https' if IS_SSL else 'http'
 STORMPATH_APPLICATION = env_get_text('STORMPATH_APPLICATION', 'TAA-Sandbox')
 
 # Live stormpath
-STORMPATH_API_KEY_ID = env_get_text('STORMPATH_API_KEY_ID', '5GPLR2SQXVPDJEXKXYE287ZYS')
-STORMPATH_API_KEY_SECRET = env_get_text('STORMPATH_API_KEY_SECRET', 'wiZWfjnQu3qBSAYIbQskIn8CKJf/q0A8KxSdMN2NZn8')
+STORMPATH_API_KEY_ID = env_get_text('STORMPATH_API_KEY_ID', '7C9LUQ28BBH4QPB95B2KNER0K')
+STORMPATH_API_KEY_SECRET = env_get_text('STORMPATH_API_KEY_SECRET', 'VfhvzFMKXAolgwswz8vmuMjN8zL7DDeCAAYiTk0E/Z0')
 STORMPATH_COOKIE_DURATION = timedelta(minutes=env_get_int('STORMPATH_COOKIE_DURATION_MINS', 1000))
 STORMPATH_ENABLE_REGISTRATION = False
 STORMPATH_ENABLE_LOGIN = False
@@ -107,10 +107,13 @@ MAX_CONTENT_LENGTH = 16777216
 GNUPG_DIR = env_get_text('GNUPG_DIR', '/usr/bin/gpg')
 
 # Dell FTP Information
-DELL_FTP_HOSTNAME = env_get_text('DELL_FTP_HOSTNAME', 'delmarsd.com')
+DELL_FTP_HOSTNAME = env_get_text('DELL_FTP_HOSTNAME', '192.168.0.115')
 DELL_FTP_USERNAME = env_get_text('DELL_FTP_USERNAME', 'testftp')
 DELL_FTP_PASSWORD = env_get_text('DELL_FTP_PASSWORD', 'wRIu75P12PzVv8JqVVNLh4Nr')
 DELL_FTP_WORKING_DIRECTORY = env_get_text('DELL_FTP_WORKING_DIRECTORY', '')
+# Public host key line for an SFTP transfer.
+#DELL_HOSTKEY = env_get_text('DELL_HOSTKEY', 'ftp03.tagtpa.com,74.51.221.134 ssh-dss AAAAB3NzaC1kc3MAAACBALX33rlTqAwkapnfv8qVPnFeVuxnEDzcugB9zCT8VkCmLqJj3rDbJuotw0+lmHttMw9JIo46v5yxOTyf1dALePsDwUtlGXKnkYVXAeretO2ov2GdmoZu7XFn4bJzCKk2zQ+VzJdWlDpJ7uREkRz68JRpWQpg4NQPVxutSRGXrSYVAAAAFQD9We61P+aQrQjz6itLVO36rSgg7wAAAIEAnEdEz+Cw6dDStAuNP/V5LmjUiC1RV1Gu1n9clEZfnLzWGG3mwA2fgzqcP0TDnn1MYREcfbm/jXI6x99FWhoqdWKbIJPeDZ9rR2nN9JSAgThzEwXQZzstbGwgVLGfhHuq4hVZo2NdLRVwitYwczmGKIEu3ho0jT/EiYDpT5GpN4oAAAB/E7w223kvOakuj1LZNCePT/vVBzZFvT85NcQooeGC2fMmegzLgjW0fOB8lvadTt5lz/B5dx6Gs9i97k7c+iHsLkGVvTn8T2UkiM5YMP45t8VJxtpluEvHOVMCOTX+rBUfOq5AGElJEFXpMba5sfkhhzcMB9VVQcvVCDGaoCLSuw==')
+DELL_HOSTKEY = env_get_text('DELL_HOSTKEY', '192.168.0.115 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6L4uEcITdzsjRnC7M935M0MSSQDSIPYlPAV/PHhHU+sAYtFq835FU981ZIUXPp1iox9c7U44V+Camaf0pZRnB+/5dLNkqKF+kHVzTi8D4azmjHaY22mPnu1QRPWN8gO5bA/18+p1PqF0dCF2z9Uq+KOIS6f0LX97p6UfDy4DYcSv4nFxFiYXrjK5ARBd6Sks+cYsqgrINL9frSms89hQUuMmnoVgwht/8biUX7k8qOL8UX5oyKAvrkp5KSqET6gYwzB5Z5rsRmQ4yDKT/J4x38dgcmSlzbo48spal+NmzQH52JP9EpzFGOzjJQ47xhiFxEIz8Wd5srdUdnJ9JkWid')
 DELL_FTP_PGP_KEY_ID = env_get_text('DELL_FTP_PGP_KEY_ID', '3A74219B887E37BA')
 DELL_PGP_KEY = env_get_text('DELL_FTP_PGP_KEY', """-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: GnuPG v1
@@ -201,3 +204,12 @@ WbvgyFkKAJ9uxIr1WKhD5srgq4PS3y9PcI9iRwCbB06Qr8Y0p+xLgLu+lUWR515V
 Sls=
 =tuZL
 -----END PGP PUBLIC KEY BLOCK-----""")
+
+# Dell Straight-Through-Processing (STP) settings
+IS_STP_DEBUG = True          # Use Dell's "model office" instead of production
+IS_STP_SIMULATE = True       # Don't even send to "model office", but pretend to
+IS_STP_STORE_SOURCE = True   # Flag to store generated XML STP requests in DB
+IS_STP_STORE_RESULT = True   # Flag to store XML STP responses in DB
+STP_DEBUG_URL = 'https://extranetapps-mo.tagtpa.com/TxLifeImport/TxLife.asmx?WSDL'
+STP_LIVE_URL = 'https://extranetapps.tagtpa.com/TxLifeImport/TxLife.asmx?WSDL'
+STP_URL = STP_DEBUG_URL if IS_STP_DEBUG else STP_LIVE_URL

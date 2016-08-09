@@ -166,8 +166,15 @@ function observe_enrollment_upload_form_submit() {
 
   $("#enrollment-csv-form").on("submit", function() {
     var form = this;
-    
-      var form_data = new FormData();
+    var file_select = $(this).find("input[type=file]").get(0);
+    var files = file_select.files;
+    var form_data = new FormData();
+    if (files.length !== 1) {
+      alert("Please select a file");
+      return false;
+    }
+    // Add the file upload to the request.
+    form_data.append('api-upload-file', files[0], files[0].name);
     file_extension = files[0].name.split(".").slice(-1)[0];
     if (window.case_settings) {
       form_data.append('case_token', window.case_settings.case_token);
@@ -209,6 +216,8 @@ function init_settings_fields() {
 
   $(".input-mask-date").mask("99/99/9999");
   $(".input-mask-month-day").mask("99/99");
+  $(".input-mask-last-4-ssn").mask("9999");
+  $(".input-mask-day").mask('99');
   $('[data-rel=tooltip]').tooltip();
 
   $('#partner-agents').bootstrapDualListbox({

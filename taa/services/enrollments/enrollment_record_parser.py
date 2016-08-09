@@ -96,7 +96,7 @@ class EnrollmentRecordParser(object):
     sp_premium = EnrollmentRecordField("sp_premium", "spouse_premium", preprocess_string, [premium_validator], flat_file_size=6, description="Spouse premium")
 
     # Optional Fields
-    actively_at_work = EnrollmentRecordField("actively_at_work", "actively_at_work", preprocess_string, [question_answered_validator, required_validator], flat_file_size=1, description="Is the Employee actively at work?")
+    actively_at_work = EnrollmentRecordField("actively_at_work", "actively_at_work", preprocess_string, [question_answered_validator], flat_file_size=1, description="Is the Employee actively at work?")
     emp_email = EnrollmentRecordField("emp_email", "employee_email", preprocess_string, [email_validator], flat_file_size=40, description="Employee email address")
     emp_height_inches = EnrollmentRecordField("emp_height_inches", "employee_height_inches", preprocess_numbers, [height_validator], flat_file_size=2, description="Employee height in inches")
     emp_weight_pounds = EnrollmentRecordField("emp_weight_pounds", "employee_weight_pounds", preprocess_numbers, [weight_validator], flat_file_size=3, description="Employee weight in pounds")

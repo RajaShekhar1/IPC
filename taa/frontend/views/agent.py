@@ -8,7 +8,9 @@ from flask_stormpath import login_required, groups_required, current_user
 
 from taa import app, db
 from nav import get_nav_menu
+from sqlalchemy import and_
 from taa.services.cases import CaseService, SelfEnrollmentSetup
+from taa.services.cases.models import case_products
 from taa.services.products.riders import RiderService
 from taa.services.cases.forms import (CensusRecordForm,
                                       NewCaseEnrollmentPeriodForm,
@@ -17,7 +19,8 @@ from taa.services.cases.forms import (CensusRecordForm,
                                       )
 from taa.services.enrollments import SelfEnrollmentLinkService, SelfEnrollmentEmailService, \
     EnrollmentApplicationService, \
-    EnrollmentApplication
+    EnrollmentApplication, \
+    EnrollmentApplicationCoverage
 from taa.services.agents import AgentService
 from taa.services.products import ProductService, get_all_states
 from taa.services.products import get_payment_modes
@@ -107,6 +110,9 @@ def manage_case(case_id):
     agent = agent_service.get_logged_in_agent()
     if agent:
         products = product_service.get_products_for_agent(agent)
+        # Also allow the agent to see any products that are selected on the current case
+        products += [p for p in case.products if p not in products]
+
         is_agent_case_owner = case_service.is_agent_case_owner(agent, case)
         # No agents can edit cases anymore
         vars['can_edit_case'] = False
@@ -135,6 +141,7 @@ def manage_case(case_id):
     vars['case_agents'] = case_service.get_agents_for_case(case)
     vars['product_choices'] = products
     vars['all_states'] = get_all_states()
+    vars['state_overrides'] = get_selected_states(case, vars['all_states'])
     vars['payment_modes'] = get_payment_modes()
     vars['product_state_mapping'] = product_service.get_product_states(products)
 
@@ -218,6 +225,18 @@ Please follow the instructions carefully on the next page, stepping through the 
     return render_template('agent/case.html', **vars)
 
 
+def get_selected_states(case, all_states):
+    state_selections = []
+    if case.product_settings:
+        state_overrides = case.product_settings.get('state_overrides')
+        if state_overrides:
+            for product_id, states in state_overrides.items():
+                for pair in all_states:
+                    if pair.get('statecode') in states:
+                        state_selections.append(pair.get('statecode'))
+    return state_selections
+
+
 def check_for_enrollment_sync_update():
     # Check to see if this is a callback from signing session.
     enrollment_application_id = session.get('enrollment_application_id')
@@ -290,11 +309,23 @@ def edit_census_record(case_id, census_record_id):
 
 def format_enroll_data(enrollment_data, product_number):
     if enrollment_data["product_{}_name".format(product_number)]:
+        product_name = enrollment_data["product_{}_name".format(product_number)]
+        product = product_service.search(by_name=product_name)[-1]
+        query = db.session.query(EnrollmentApplicationCoverage).filter(
+            and_(EnrollmentApplicationCoverage.enrollment_application_id == enrollment_data['enrollment_id'],
+                 EnrollmentApplicationCoverage.product_id == product.id)).all()[-1]
+        if query:
+            effective_date = query.effective_date
+        else:
+            effective_date = None
+
+
         data = dict(
             id=enrollment_data['enrollment_id'],
             product_name=enrollment_data["product_{}_name".format(product_number)],
             time=enrollment_data["signature_time"],
             coverage=[get_coverage_for_product(enrollment_data, product_number, j) for j in ["emp", "sp", "ch"]],
+            effective_date=effective_date,
             status=format_status(enrollment_data["application_status"]),
             total=reduce(lambda coverage_type, accum: calc_total(enrollment_data, product_number, coverage_type, accum),
                          ["emp", "sp", "ch"], 0),

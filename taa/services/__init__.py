@@ -127,6 +127,7 @@ def initialize_services():
         SelfEnrollmentEmailService,
         SelfEnrollmentLinkService,
         SelfEnrollmentEmailBatchService,
+        SummaryEmailService,
         EnrollmentImportService,
         EnrollmentImportBatchService,
         EnrollmentImportBatchItemService,
@@ -138,6 +139,7 @@ def initialize_services():
         merge_pdfs,
     )
     from taa.services.enrollments import EnrollmentRecordParser
+    from taa.services.enrollments import EnrollmentExportService
     import taa.services.mailer as MailerService
     from taa.services.products import (
         ProductService,
@@ -149,7 +151,8 @@ def initialize_services():
     )
     from taa.services.users import UserService
     from taa.services.docusign import DocuSignService, DocuSignTransport
-    from taa.services.submissions import FtpService, EnrollmentSubmissionService
+    from taa.services.submissions import FtpService, EnrollmentSubmissionService, PGPEncryptionService
+
 
     services_broker.Provide('CaseService', CaseService())
     services_broker.Provide('CaseEnrollmentPeriodsService', CaseEnrollmentPeriodsService())
@@ -174,6 +177,7 @@ def initialize_services():
     services_broker.Provide('SelfEnrollmentEmailService', SelfEnrollmentEmailService())
     services_broker.Provide('SelfEnrollmentLinkService', SelfEnrollmentLinkService())
     services_broker.Provide('SelfEnrollmentEmailBatchService', SelfEnrollmentEmailBatchService())
+    services_broker.Provide('SummaryEmailService', SummaryEmailService())
     services_broker.Provide('EnrollmentReportService', EnrollmentReportService())
     services_broker.Provide('ImagedFormGeneratorService', ImagedFormGeneratorService())
     services_broker.Provide("FormPDFRenderer", lambda: FormPDFRenderer)
@@ -189,3 +193,6 @@ def initialize_services():
     services_broker.Provide('MailerService', MailerService)
 
     services_broker.Provide('FtpService', FtpService())
+    services_broker.Provide('EnrollmentExportService', EnrollmentExportService())
+
+    services_broker.Provide('PGPEncryptionService', PGPEncryptionService())

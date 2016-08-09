@@ -35,8 +35,12 @@ ADVANCE_DAYS = 2
 def get_deduction_week(application_date):
     draft_date = get_draft_day(application_date)
     # Calculated week of month rolls over if it exceeds max weeks/month limit
-    week = int(draft_date.day / 7) % MAX_WEEKS_PER_MONTH + 1
+    week = get_week_from_date(draft_date)
     return week
+
+
+def get_week_from_date(draft_date):
+    return int(draft_date.day / 7) % MAX_WEEKS_PER_MONTH + 1
 
 
 def get_draft_day(application_date):
@@ -65,6 +69,7 @@ def create_paylogix_csv(applications):
 
     headers = [
         'Signature Time',
+        'Effective Date',
         'EE SSN',
         'EE Last Name',
         'EE First Name',
@@ -124,6 +129,7 @@ def create_paylogix_csv(applications):
 
                 row = [
                     application.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z'),
+                    data_wrap.get_effective_date().strftime('%Y-%m-%d'),
                     application.census_record.employee_ssn,
                     application.census_record.employee_last,
                     application.census_record.employee_first,
@@ -135,7 +141,7 @@ def create_paylogix_csv(applications):
                     data_wrap.get_address_one(),
                     data_wrap.get_address_two(),
                     data_wrap.get_city_state_zip(),
-                    get_deduction_week(application.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z')),
+                    get_deduction_week(application.signature_time),
 
                     # Product
                     data_wrap.get_product_code(),

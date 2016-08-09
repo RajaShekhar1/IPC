@@ -216,6 +216,10 @@ class EnrollmentImportService(object):
         )
         return output
 
+    def send_generic_error_email(self, user_href):
+        processor = EnrollmentProcessor()
+        processor.send_generic_error_email(user_href)
+
 
 # Utility function for cleaning up data.
 def val_or_blank(data, name):
@@ -319,7 +323,22 @@ def bool_from_answer(answer):
     return str(answer).lower() in ['y', 'yes']
 
 
+def bool_or_None_from_answer(answer):
+    if not answer or not answer.strip():
+        return None
+    else:
+        return bool_from_answer(answer)
+
+
 def build_person(data, prefix, product, state, soh_service):
+
+    # Only show smoker status if coverage was selected, even if provided.
+    is_smoker = bool_or_None_from_answer(data.get("{}_smoker".format(prefix)))
+    if prefix == 'sp' and not data.get("sp_coverage"):
+        is_smoker = None
+    elif prefix == 'ch':
+        is_smoker = None
+
     genders = dict(m="male", M="male", f="female", F="female")
     base_dict = dict(
         first=val_or_blank(data, "{}_first".format(prefix)),
@@ -336,7 +355,7 @@ def build_person(data, prefix, product, state, soh_service):
         zip=val_or_blank(data, "{}_zipcode".format(prefix)),
         height=val_or_blank(data, "{}_height_inches".format(prefix)),
         weight=val_or_blank(data, "{}_weight_pounds".format(prefix)),
-        is_smoker=bool_from_answer("{}_smoker".format(prefix)),
+        is_smoker=is_smoker,
         soh_questions=[]
     )
 

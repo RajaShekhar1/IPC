@@ -11,5 +11,7 @@ from enrollment_import_processor import EnrollmentProcessor, EnrollmentImportBat
 from enrollment_reports import EnrollmentReportService
 from self_enroll_email import SelfEnrollmentEmailService, SelfEnrollmentEmailBatchService
 from self_enroll_link import SelfEnrollmentLinkService
+from summary_email import SummaryEmailService
 from pdf_export import ImagedFormGeneratorService, FormTemplateTabRepository, FormPDFRenderer
 from merge_pdfs import merge_pdfs
+from enrollment_export import EnrollmentExportService

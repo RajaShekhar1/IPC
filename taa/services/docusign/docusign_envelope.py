@@ -252,7 +252,7 @@ class EnrollmentDataWrap(object):
     def did_spouse_select_coverage(self):
 
         # Special case for static benefit
-        if self.get_product().is_static_benefit() and self.did_employee_select_coverage():
+        if self.data.get('spouse_coverage') and self.get_product().is_static_benefit() and self.did_employee_select_coverage():
             return True
 
         elif self.get_product().is_simple_coverage():
@@ -332,35 +332,46 @@ class EnrollmentDataWrap(object):
     def get_employee_soh_questions(self):
         if 'soh_questions' in self.data['employee']:
             # Legacy format
-            return self.data['employee']['soh_questions']
+            questions = self.data['employee']['soh_questions']
         else:
-            return self.data['employee_soh_questions']
+            questions = self.data['employee_soh_questions']
+        
+        # Filter out questions only intended for spouse
+        return [q for q in questions if not q.get('is_spouse_only')]
 
     def get_spouse_soh_questions(self):
         if 'soh_questions' in self.data['spouse']:
             # Legacy format
-            return self.data['spouse']['soh_questions']
+            questions = self.data['spouse']['soh_questions']
         else:
-            return self.data['spouse_soh_questions']
+            questions = self.data['spouse_soh_questions']
 
+        # Filter out questions intended for employee only.
+        return [q for q in questions if not q.get('is_employee_only')]
+    
     def get_child_soh_questions(self, child_index):
         child = self.data['children'][child_index]
         if 'soh_questions' in child:
             # Backwards compat for legacy data format:
-            return child['soh_questions']
+            questions = child['soh_questions']
         else:
-            return self.data['children_soh_questions'][child_index]
+            questions = self.data['children_soh_questions'][child_index]
+
+        # Filter out emp and sp only questions
+        return [q for q in questions if not q.get('is_employee_only') and not q.get('is_spouse_only')]
 
     def get_employee_esignature(self):
         if self.should_use_call_center_workflow():
             # Replace employee signature with "John Doe voice auth on file 02:45pm"
-            esig = u"{} voice auth on file {}".format(self.get_employee_name(), datetime.now().strftime("%l:%M%p"))
+            date = self.enrollment_record.signature_time
+            esig = u"{} voice auth on file {}".format(self.get_employee_name(), date.strftime("%l:%M%p"))
             return self.data.get('emp_sig_txt', esig)
         else:
             return self.data.get('emp_sig_txt', '')
 
     def get_employee_esignature_date(self):
-        return self.data.get('emp_sig_date', datetime.today().strftime('%m/%d/%Y'))
+        date = self.enrollment_record.signature_time
+        return self.data.get('emp_sig_date', date.strftime('%m/%d/%Y'))
 
     def get_employee_initials(self):
         return self.data.get('emp_initials_txt', '')
@@ -370,13 +381,15 @@ class EnrollmentDataWrap(object):
 
     def get_agent_esignature(self):
         if self.should_use_call_center_workflow():
-            esig = u'esign by {} {}'.format(self.get_agent_signing_name(), datetime.now().strftime("%l:%M%p"))
+            date = self.enrollment_record.signature_time
+            esig = u'esign by {} {}'.format(self.get_agent_signing_name(), date.strftime("%l:%M%p"))
             return self.data.get('agent_sig_txt', esig)
         else:
             return self.data.get('agent_sig_txt', '')
 
     def get_agent_esignature_date(self):
-        return self.data.get('agent_sig_date', datetime.today().strftime('%m/%d/%Y'))
+        date = self.enrollment_record.signature_time
+        return self.data.get('agent_sig_date', date.strftime('%m/%d/%Y'))
 
     def has_agent_esigned(self):
         return bool(self.get_agent_esignature())
@@ -392,40 +405,65 @@ class EnrollmentDataWrap(object):
             'spouse_contingent': [],
         }
 
+        # "Shorthand" beneficiary settings
+        if len(self.data.get('employee_beneficiary', '')) > 0:
+            bene_data['employee_primary'] += [
+                self.get_beneficiary_family_member('spouse')
+            ]
+        if len(self.data.get('spouse_beneficiary', '')) > 0:
+            bene_data['spouse_primary'] += [
+                self.get_beneficiary_family_member('employee')
+            ]
+
         from taa.services.enrollments import EnrollmentRecordParser
         for num in range(1, EnrollmentRecordParser.MAX_BENEFICIARY_COUNT + 1):
-            if self.data.get("emp_bene{}_name".format(num)):
+            if self.data.get('employee_beneficiary{}_name'.format(num)):
                 bene_data['employee_primary'] += [
-                    self.get_beneficiary_dict("emp_bene{}".format(num))
+                    self.get_beneficiary_dict('employee_beneficiary{}'.format(num))
                 ]
-            if self.data.get("emp_cont_bene{}_name".format(num)):
+            if self.data.get('emp_cont_bene{}_name'.format(num)):
                 bene_data['employee_contingent'] += [
-                    self.get_beneficiary_dict("emp_cont_bene{}".format(num))
+                    self.get_beneficiary_dict('employee_contingent_beneficiary{}'.format(num))
                 ]
-            if self.data.get("sp_bene{}_name".format(num)):
+            if self.data.get('spouse_beneficiary{}_name'.format(num)):
                 bene_data['spouse_primary'] += [
-                    self.get_beneficiary_dict("sp_bene{}".format(num))
+                    self.get_beneficiary_dict('spouse_beneficiary{}'.format(num))
                 ]
-            if self.data.get("sp_cont_bene{}_name".format(num)):
+            if self.data.get('spouse_contingent_beneficiary{}_name'.format(num)):
                 bene_data['spouse_contingent'] += [
-                    self.get_beneficiary_dict("sp_cont_bene{}".format(num))
+                    self.get_beneficiary_dict('spouse_contingent_beneficiary{}'.format(num))
                 ]
+
+        # Trim beneficiaries if needed, as the shorthand beneficiary logic may
+        # allow too many primary benficiaries to be set
+        bene_data['employee_primary'] = bene_data['employee_primary'][:EnrollmentRecordParser.MAX_BENEFICIARY_COUNT+1]
+        bene_data['spouse_primary'] = bene_data['spouse_primary'][:EnrollmentRecordParser.MAX_BENEFICIARY_COUNT+1]
 
         return bene_data
 
-    def get_beneficiary_dict(self, prefix):
-        bd = self.data["%s_birthdate" % prefix]
-        # try:
-        #    bd = dateutil.parser.parse(bd).strftime('%F')
-        # except Exception:
-        #    pass
+    def get_beneficiary_family_member(self, prefix, relationship='spouse'):
+        bd = self.data[prefix]['birthdate']
 
         bene_dict = dict(
-            name=self.data["%s_name" % prefix],
-            ssn=self.data["%s_ssn" % prefix],
-            relationship=self.data["%s_relationship" % prefix],
+                name='{} {}'.format(self.data[prefix]['first'],
+                                    self.data[prefix]['last']),
+                ssn=self.data[prefix]['ssn'],
+                relationship=relationship,
+                birthdate=bd,
+                percentage=100,
+        )
+
+        return bene_dict
+
+    def get_beneficiary_dict(self, prefix):
+        bd = self.data['{}_dob'.format(prefix)]
+
+        bene_dict = dict(
+            name=self.data['{}_name'.format(prefix)],
+            ssn=self.data['{}_ssn'.format(prefix)],
+            relationship=self.data['{}_relationship'.format(prefix)],
             birthdate=bd,
-            percentage=self.data["%s_percentage" % prefix],
+            percentage=self.data['{}_percentage'.format(prefix)],
         )
 
         return bene_dict
@@ -454,16 +492,37 @@ class EnrollmentDataWrap(object):
         else:
             if product.is_fpp() and self.case.omit_actively_at_work and not product.is_guaranteed_issue():
                 return ''
-        return 'yes' if self.data['is_employee_actively_at_work'] else 'no'
+
+        if 'is_employee_actively_at_work' in self.data:
+            val = self.data['is_employee_actively_at_work']
+        else:
+            # Import format
+            val = self.data['actively_at_work']
+
+        return 'yes' if val else 'no'
+
+    def get_effective_date(self):
+        if self.data.get('effective_date'):
+            return dateutil_parse(self.data.get('effective_date'))
+        else:
+            return self.enrollment_record.signature_time
 
     def get_applicant_data(self):
         applicants = []
 
-        effective_date = self.enrollment_record.signature_time.strftime("%m/%d/%Y")
-        payment_mode = "{}".format(self.case.payment_mode)
+        if self.data.get('effective_date'):
+            effective_date = dateutil_parse(self.data['effective_date']).strftime("%m/%d/%Y")
+        else:
+            effective_date = self.enrollment_record.signature_time.strftime("%m/%d/%Y")
+
+        if self.enrollment_record.payment_mode:
+            payment_mode = "{}".format(self.enrollment_record.payment_mode)
+        else:
+            payment_mode = "{}".format(self.case.payment_mode)
 
         if self.did_employee_select_coverage():
             coverage = self.get_employee_coverage()
+
             premium = self.get_formatted_employee_premium()
             premium_amount = self.get_employee_premium()
 
@@ -552,6 +611,12 @@ class EnrollmentDataWrap(object):
             ))
 
         return applicants
+
+    def get_selected_employee_riders(self):
+        return self.data.get('rider_data', {}).get('emp', [])
+
+    def get_selected_spouse_riders(self):
+        return self.data.get('rider_data', {}).get('sp', [])
 
     def has_bank_draft_info(self):
         return self.get('bank_info', None) is not None

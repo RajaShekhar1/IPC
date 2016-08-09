@@ -256,6 +256,9 @@ def preprocess_zip(data, record):
 
 
 def preprocess_gender(data, record):
+    if data is None:
+        return u''
+    
     data = data.lower()
     if data == 'f':
         return 'female'
