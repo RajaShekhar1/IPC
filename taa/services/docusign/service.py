@@ -57,7 +57,9 @@ class DocuSignService(object):
 
         if case.include_cover_sheet and not enrollment_application.did_sign_in_wizard():
             from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
-            components.append(CoverSheetAttachment([in_person_signer], EnrollmentDataWrap(product_submissions[0], case, enrollment_record=enrollment_application), product_submissions))
+            components.append(CoverSheetAttachment([in_person_signer], EnrollmentDataWrap(product_submissions[0], case,
+                                                                                          enrollment_record=enrollment_application),
+                                                   product_submissions))
 
         for product_submission in product_submissions:
             # Wrap the submission with an object that knows how to pull out key info.
