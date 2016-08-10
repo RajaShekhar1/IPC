@@ -171,21 +171,57 @@ class ProductService(DBService):
     def get_all_statecodes(self):
         return all_statecodes
 
-    def get_product_states(self, products=None):
-        """Return the mapping of product IDs to statecodes
-        where we can enroll that product."""
+    def apply_override_states(self, product, product_states, case=None):
+        if case.product_settings.get('state_overrides'):
+            states_list = \
+                [states_dict[str(product.id)] for states_dict in case.product_settings.get('state_overrides') if
+                 str(product.id) in states_dict][0]
+            if len(states_list) == 0:
+                states_with_forms = StatementOfHealthQuestionService() \
+                    .get_states_with_forms_for_product(product)
 
-        if not products:
-            products = self.get_all_enrollable_products()
-
-        product_states = {}
-        for product in products:
+                product_states[product.id] = [
+                    s['statecode'] for s in states_with_forms
+                    ]
+            else:
+                from states import states_by_statecode
+                state_mapping = sorted(
+                    [states_by_statecode[sc] for sc in states_list],
+                    key=lambda x: x['statecode'])
+                product_states[product.id] = [
+                    s['statecode'] for s in state_mapping
+                    ]
+        else:
             states_with_forms = StatementOfHealthQuestionService() \
                 .get_states_with_forms_for_product(product)
 
             product_states[product.id] = [
                 s['statecode'] for s in states_with_forms
                 ]
+
+        return product_states
+
+    def get_product_states(self, products=None, case=None):
+        """Return the mapping of product IDs to statecodes
+        where we can enroll that product.
+        """
+
+        if not products:
+            products = self.get_all_enrollable_products()
+
+        product_states = {}
+        if not case:
+            for product in products:
+                states_with_forms = StatementOfHealthQuestionService() \
+                    .get_states_with_forms_for_product(product)
+
+                product_states[product.id] = [
+                    s['statecode'] for s in states_with_forms
+                    ]
+
+        else:
+            for product in products:
+                product_states = self.apply_override_states(product, product_states, case)
 
         return product_states
 
@@ -429,13 +465,13 @@ class ProductService(DBService):
         from taa.services.cases.models import case_products
         return db.session.query(Product).join(case_products).join(Case).filter(Case.id == case_id).order_by(case_products.c.ordinal).all()
 
-    def filter_products_by_enrollment_state(self, product_options, state):
-        product_state_mapping = self.get_product_states(product_options)
+    def filter_products_by_enrollment_state(self, product_options, state, case=None):
+        product_state_mapping = self.get_product_states(product_options, case)
 
         # Keep all group-level products (static benefit and group ci)
         # Filter out individual products that are not allowed in this state.
         def is_allowed_in_state(product, state):
-            if product.is_group_ci() or product.is_static_benefit():
+            if product.is_static_benefit():
                 return True
             else:
                 return state in product_state_mapping.get(product.id, [])

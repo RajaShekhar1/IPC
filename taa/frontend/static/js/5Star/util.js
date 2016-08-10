@@ -692,7 +692,9 @@ var ProductStatesLimiterViewModel = function (product_statecode_mapping,
   var self = this;
 
 
-  self.product_state_mapping = map_states_to_products_from_statecode_map(available_states, product_statecode_mapping);
+  self.product_state_mapping = ko.computed(function () {
+    return map_states_to_products_from_statecode_map(available_states, product_statecode_mapping)
+  });
 
   self.selected_state = selected_state;
   self.available_states = available_states;
@@ -727,7 +729,7 @@ var ProductStatesLimiterViewModel = function (product_statecode_mapping,
     if (product.base_product_type === 'Static Benefit') {
       return true;
     }
-    return _.contains(self.product_state_mapping[product.id], state);
+    return _.contains(self.product_state_mapping()[product.id], state);
   };
 
 
@@ -792,7 +794,7 @@ var ProductStatesLimiterViewModel = function (product_statecode_mapping,
 //  This is necessary because knockout compares state objects with === comparison
 function map_states_to_products_from_statecode_map(available_states, product_state_mapping) {
   var states_for_products = {};
-  _.each(product_state_mapping, function (statecodes, product_id) {
+  _.each(product_state_mapping(), function (statecodes, product_id) {
     states_for_products[product_id] = [];
     _.each(statecodes, function (statecode) {
       var matched_state = _.find(available_states, function (s) {
@@ -813,9 +815,11 @@ var StatesLimiterViewModel = function (product_statecode_mapping,
   var self = this;
   self.available_states = available_states;
   self.selected_state = selected_state;
-  self.product_state_mapping = map_states_to_products_from_statecode_map(available_states, product_statecode_mapping);
+  self.product_state_mapping = ko.computed(function () {
+    return map_states_to_products_from_statecode_map(available_states, product_statecode_mapping);
+  });
   self.is_valid_product_for_state = function (product, state) {
-    return _.contains(self.product_state_mapping[product.id], state);
+    return _.contains(self.product_state_mapping()[product.id], state);
   };
 
   self.is_state_disabled = function (state) {

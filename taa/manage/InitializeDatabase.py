@@ -68,6 +68,7 @@ def init_basic_data():
             name=u"Group Critical Illness",
             product_type=u"base",
             visible_to_agents=True,
+            can_override_states=True
         ),
         dict(
             code=u"FPP-Gov",
