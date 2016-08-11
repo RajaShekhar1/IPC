@@ -174,6 +174,9 @@ var wizard_applicant = (function () {
     self.type = options.type;
     // applicants should be an observable list of children.
     self.applicants = applicants;
+    self.first = ko.observable("Children Group");
+    self.last = ko.observable("");
+    self.ssn = ko.observable("");
 
     self._id = _applicant_count++;
     self.is_valid = ko.computed(function () {
@@ -266,7 +269,9 @@ var wizard_applicant = (function () {
         applicants.push(this.get_spouse());
       }
       if (this.should_show_children() && this.has_valid_children()) {
-        applicants.push(this.get_children_group());
+        _.each(this.get_valid_children(), function(child) {
+          applicants.push(child);
+        });
       }
       return applicants;
     },

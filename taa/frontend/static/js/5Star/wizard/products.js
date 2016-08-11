@@ -107,6 +107,11 @@ var wizard_products = (function () {
       return (age >= this.min_child_age() && age <= this.max_child_age());
     },
 
+    is_children_coverage_grouped: function() {
+      // Some products require
+      return false;
+    },
+
     // Allow the details of the benefit's face value, display to be based on the product
     //get_new_benefit_option: function (options) {
     //  return new BenefitOption(options);
@@ -473,8 +478,10 @@ var wizard_products = (function () {
   //endregion
 
   GroupCIProduct.prototype.max_child_age = function () {
-      // Until we can separate children out, leave this at 23.
-      return 23;
+      return 26;
+  };
+  GroupCIProduct.prototype.is_children_coverage_grouped = function() {
+    return true;
   };
   
   function FPPGovProduct(product_data) {
