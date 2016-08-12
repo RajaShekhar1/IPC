@@ -459,7 +459,7 @@ def test_wizard_xml():
     from taa import db
     from taa.services.enrollments.models import EnrollmentApplication
     from taa.services.submissions import EnrollmentSubmissionService
-    apps = db.session.query(EnrollmentApplication).filter(EnrollmentApplication.signature_time >= '2016-06-20'
+    apps = db.session.query(EnrollmentApplication).filter(EnrollmentApplication.signature_time >= '2016-07-07'
           ).options(db.subqueryload('coverages').joinedload('enrollment').joinedload('case').joinedload('owner_agent')
           ).all()
     
@@ -470,6 +470,8 @@ def test_wizard_xml():
             enrollment = coverage.enrollment
             case = enrollment.case
             splits = case.agent_splits
+            for split in splits:
+                agent = split.agent
             
             if coverage.product.can_submit_stp():
                 coverages.append(coverage)
