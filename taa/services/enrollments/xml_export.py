@@ -322,7 +322,6 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
             key = 'owner_to_{}'.format(type_)
             if key not in vars['relationships']:
                 vars['relationships'][key] = []
-            beneficiary['relationship'] = 'eggert'
             relationship = RELATIONSHIP_ROLES.get(beneficiary['relationship'])
             if relationship is None:
                 # Special case -- when specified relationship can't be
