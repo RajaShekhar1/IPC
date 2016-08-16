@@ -200,6 +200,7 @@ class EnrollmentApplicationService(DBService):
             agent_id=agent_id,
             method=data['method'],
             payment_mode=data['payment_mode'],
+            is_paylogix=census_record.case.requires_paylogix_export,
             # Signing info
             signature_time=signature_time,
             signature_city=data['enrollCity'],
@@ -508,7 +509,7 @@ class EnrollmentApplicationService(DBService):
 
     def get_wrapped_data_for_coverage(self, coverage):
         "Given a specific EnrollmentApplicationCoverage object, find the corresponding JSON data in the enrollment"
-        
+
         enrollment = coverage.enrollment
         wrapped_enrollment_data = self.get_wrapped_enrollment_data(enrollment)
         # Find the enrollment data that matches the coverage's product. All applicant's data is contained in this data.
