@@ -322,7 +322,6 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
             key = 'owner_to_{}'.format(type_)
             if key not in vars['relationships']:
                 vars['relationships'][key] = []
-            beneficiary['relationship'] = 'eggert'
             relationship = RELATIONSHIP_ROLES.get(beneficiary['relationship'])
             if relationship is None:
                 # Special case -- when specified relationship can't be
@@ -459,17 +458,20 @@ def test_wizard_xml():
     from taa import db
     from taa.services.enrollments.models import EnrollmentApplication
     from taa.services.submissions import EnrollmentSubmissionService
-    apps = db.session.query(EnrollmentApplication).filter(EnrollmentApplication.signature_time >= '2016-06-20'
+    apps = db.session.query(EnrollmentApplication).filter(EnrollmentApplication.signature_time >= '2016-08-08'
           ).options(db.subqueryload('coverages').joinedload('enrollment').joinedload('case').joinedload('owner_agent')
           ).all()
     
     coverages = []
     for app in apps:
-
+        census_record = app.census_record
+        other_enrollments = census_record.enrollment_applications
         for coverage in app.coverages:
             enrollment = coverage.enrollment
             case = enrollment.case
             splits = case.agent_splits
+            for split in splits:
+                agent = split.agent
             
             if coverage.product.can_submit_stp():
                 coverages.append(coverage)
@@ -487,7 +489,7 @@ def test_wizard_xml():
                 # Generate and write out the PDF
                 pdf_bytes = EnrollmentSubmissionService().render_enrollment_pdf(coverage.enrollment, is_stp=True,
                                                                                  product_id=coverage.product_id)
-                zip.writestr('enrollment_{}.pdf'.format(coverage.enrollment.id), pdf_bytes)
+                zip.writestr('enrollment_{}-{}.pdf'.format(coverage.enrollment.id, coverage.product.get_base_product_code()), pdf_bytes)
                 app_pdfs.add(coverage.enrollment.id)
             
 
@@ -510,13 +512,14 @@ def test_wizard_xml():
             
             for xml, applicant_type in xmls:
     
-                fn = 'enrollment_{}-{}.xml'.format(coverage.enrollment.id, applicant_type)
+                fn = 'enrollment_{}-{}-{}.xml'.format(coverage.enrollment.id, coverage.product.get_base_product_code(), applicant_type)
                 zip.writestr(fn, xml.encode('latin-1'))
             
-
+    print("Writing Zip file...")
     f = open('out.zip', 'w+')
     f.write(zipstream.getvalue())
     f.close()
+    print("Done")
 
 if __name__ == "__main__":
     test_wizard_xml()

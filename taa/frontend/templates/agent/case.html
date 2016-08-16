@@ -604,33 +604,39 @@
                                       </div>
 
                                       {# Group CI options #}
+                                    <!-- ko with: $root.get_state_override_view_model(product) -->
                                     <div class="form-group"
-                                         data-bind="visible: $root.is_product_group_ci(product)">
+                                         data-bind="visible: can_product_override_states()">
                                         <input type="checkbox" class="ace"
-                                               data-bind="checked: $root.restrict_state_availability">
+                                               data-bind="checked: restrict_state_availability">
                                         <span class="lbl"> Restrict State Availability</span>
-                                        <div data-bind="visible: $root.restrict_state_availability">
+                                        <div data-bind="visible: restrict_state_availability">
                                             <h4 class="header lighter blue">State Availability</h4>
                                             <div class="row">
                                                 <div class="col-sm-10 col-md-offset-1">
-                                                    <select data-bind="selectedOptions: $root.state_overrides, attr: {'id': 'states-list-product-' + $root.get_product_id(product)}"
+                                                    <select data-bind="selectedOptions: state_overrides,
+                                                        attr: {'id': 'states-list-product-' + id},
+                                                        dualListbox: {options: {
+                                                            showFilterInputs: true,
+                                                            moveOnSelect: false,
+                                                            nonSelectedListLabel: 'Available States:',
+                                                            selectedListLabel: 'States Allowed:',
+                                                            selectorMinimalHeight: 250
+                                                            }, observed: state_overrides}"
                                                             multiple="multiple" class="form-control">
                                                         {% for state in all_states %}
-                                                            <option value="{{ state.statecode }}"
-                                                                    {%-if state.statecode in state_overrides-%}
-                                                                    selected="selected"
-                                                                    {%- endif -%}
-                                                            >{{ state.name }}</option>
+                                                            <option value="{{ state.statecode }}">{{ state.name }}</option>
                                                         {% endfor %}
                                                     </select>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                    <!-- /ko -->
 
                                       {# No Options #}
                                       <div class="form-group"
-                                           data-bind="visible: $parent.case_riders_for_product($data).length === 0 && !$root.is_product_occupation_class_eligible(product) && !$root.is_product_group_ci(product)">
+                                           data-bind="visible: $parent.case_riders_for_product($data).length === 0 && !$root.is_product_occupation_class_eligible(product) && !$root.product_can_override_states(product)">
                                         This product has no configuration options
                                       </div>
 

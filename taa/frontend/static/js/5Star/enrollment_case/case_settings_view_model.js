@@ -1,7 +1,6 @@
 var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_case, settings, product_rate_levels) {
   var self = this;
 
-  //region Member Variable Initialization
   _.defaults(case_data, {
     omit_actively_at_work: false,
     requires_paylogix_export: false
@@ -10,9 +9,26 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.case_id = case_data.id;
   self.case_token = case_data.case_token;
   self.product_rate_levels = product_rate_levels || {};
+  self.state_override_view_models = ko.observableArray([]);
+
+  self.product_state_mapping = ko.computed(function () {
+    // Start with the default product-state map.
+    var mapping = _.cloneDeep(settings.product_state_mapping);
+
+    // If any product overrides the default state mapping, set the overrides here.
+    //  This also triggers a dependency on the state_override_view_models() array and
+    //  any list of state_overrides() that are enabled.
+    _.each(self.state_override_view_models(), function (ovm) {
+      if (ovm.restrict_state_availability()) {
+        mapping[ovm.id] = ovm.state_overrides();
+      }
+    });
+
+    return mapping;
+  });
+
 
   self.can_edit_case = can_edit_case;
-  //endregion
 
   self.report_data = ko.observable(null);
 
@@ -384,7 +400,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     }) : []);
 
   // Disable bad combos of states and products
-  self.state_product_limiter = new ProductStatesLimiterViewModel(settings.product_state_mapping, self.situs_state, self.state_choices, self.products, self.product_choices);
+  self.state_product_limiter = new ProductStatesLimiterViewModel(self.product_state_mapping, self.situs_state, self.state_choices, self.products, self.product_choices);
 
   self.on_products_select_rendered = function (option, item) {
     if (!item) {
@@ -411,7 +427,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   // Limit the states that can be chosen as 'enrolling from state' by the products
-  self.state_product_override_limiter = new StatesLimiterViewModel(settings.product_state_mapping,
+  self.state_product_override_limiter = new StatesLimiterViewModel(self.product_state_mapping,
     self.enrollment_state_override,
     self.state_choices,
     self.products
@@ -913,62 +929,43 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return data;
   };
 
-  self.is_product_group_ci = function (product) {
-    if (product.code == 'Group CI' ) {
-      self.initialize_states_selection(product);
-    }
-    return product.code == 'Group CI';
-  };
+  // Creates and removes viewmodels as self.products() changes, retaining existing viewmodels,
+  // so that data remains consistent
+  // self.update_state_override_view_models = ko.computed(function () {
+  //   var viewmodels = self.state_override_view_models();
+  //
+  //   _.each(self.products(), function (product) {
+  //     var vm_ids = _.map(self.state_override_view_models(), function (vm) {
+  //       return  _.get(vm, 'id')
+  //     });
+  //     if (vm_ids.indexOf(product.id) !== -1) {
+  //       viewmodels.push(new ProductOverrideViewModel(product, case_data, settings.state_overrides));
+  //     }
+  //   });
+  //
+  //   viewmodels = _.filter(viewmodels, function (vm) {
+  //     return _.find(self.products(), function (prod) {
+  //       return prod.id == vm.id;
+  //     });
+  //   });
+  //
+  //   self.state_override_view_models(viewmodels);
+  // });
 
-  self.get_product_group_ci = function () {
-    var group_ci = _.find(self.products(), function (product) {
-      return product.code == 'Group CI';
+  self.get_state_override_view_model = function (product) {
+    var vm = _.find(self.state_override_view_models(), function (view) {
+      return view.id == product.id;
     });
-    if (typeof group_ci === typeof undefined) {
-      return false;
+    if (!vm) {
+      vm = new ProductOverrideViewModel(product, case_data);
+      self.state_override_view_models.push(vm);
     }
-    return group_ci.id;
+    return vm
   };
 
-  self.get_overridden_states = function () {
-    return self.state_overrides();
+  self.product_can_override_states = function (product) {
+    return product.can_override_states;
   };
-
-  self.get_product_id = function (product) {
-    return product.id;
-  };
-
-  self.initialize_states_selection = function (product) {
-    if (product.code == 'Group CI') {
-      $('#states-list-product-' + self.get_product_id(product)).bootstrapDualListbox({
-        infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',
-        showFilterInputs: true,
-        moveOnSelect: false,
-        nonSelectedListLabel: 'Available States:',
-        selectedListLabel: 'States Allowed:',
-        selectorMinimalHeight: 250
-      });
-    }
-  };
-
-  self.restrict_state_availability = ko.observable(false);
-  self.state_overrides = ko.observableArray([]);
-
-  self.initialize_state_overrides = function () {
-    var group_ci = self.get_product_group_ci();
-    var states = [];
-    if (group_ci) {
-      if (!!case_data.product_settings) {
-        states = _.get(case_data.product_settings.state_overrides, String(group_ci));
-      }
-    }
-    if (states.length > 0) {
-      self.restrict_state_availability(true);
-    }
-    self.state_overrides(states);
-  };
-
-  self.initialize_state_overrides();
 
   self.occupation_classes_for_product = function (product) {
     var occupation_mappings = [];
@@ -1683,13 +1680,13 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.serialize_state_overrides = function () {
-    var group_ci = self.get_product_group_ci();
-    var state = self.get_overridden_states();
-    var object = {};
-    if (group_ci) {
-      object[group_ci] = state;
-    }
-    return object;
+    var overrides = {};
+    _.each(self.products(), function(product) {
+      var vm = self.get_state_override_view_model(product);
+      overrides[product.id] = vm.serialize_overridden_states();
+    });
+
+    return overrides;
   };
 
   self.serialize_riders = function () {

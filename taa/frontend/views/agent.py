@@ -47,7 +47,8 @@ def inbox():
             db.session.commit()
         except Exception as ex:
             print(
-            u"DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')), ex)
+                u"DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')),
+                ex)
 
     if agent_service.is_user_agent(current_user):  # or agent_service.can_manage_all_cases(current_user):
         #
@@ -141,7 +142,6 @@ def manage_case(case_id):
     vars['case_agents'] = case_service.get_agents_for_case(case)
     vars['product_choices'] = products
     vars['all_states'] = get_all_states()
-    vars['state_overrides'] = get_selected_states(case, vars['all_states'])
     vars['payment_modes'] = get_payment_modes()
     vars['product_state_mapping'] = product_service.get_product_states(products)
 
@@ -225,18 +225,6 @@ Please follow the instructions carefully on the next page, stepping through the 
     return render_template('agent/case.html', **vars)
 
 
-def get_selected_states(case, all_states):
-    state_selections = []
-    if case.product_settings:
-        state_overrides = case.product_settings.get('state_overrides')
-        if state_overrides:
-            for product_id, states in state_overrides.items():
-                for pair in all_states:
-                    if pair.get('statecode') in states:
-                        state_selections.append(pair.get('statecode'))
-    return state_selections
-
-
 def check_for_enrollment_sync_update():
     # Check to see if this is a callback from signing session.
     enrollment_application_id = session.get('enrollment_application_id')
@@ -274,13 +262,16 @@ def edit_census_record(case_id, census_record_id):
 
     is_admin = agent_service.can_manage_all_cases(current_user)
 
+    standardized_data = enrollment_service.get_standardized_enrollment_json(census_record)
+    products = {product_service.get(product.get('product_id')).name: product.get('did_decline') for product in
+                standardized_data}
     enrollment_records = enrollment_service.get_enrollment_records_for_census(census_record.case, census_record.id)
 
     enroll_data = []
     for enrollment_data in enrollment_records:
         data = []
         for product_num in range(1, 6 + 1):
-            formatted = format_enroll_data(enrollment_data, product_num)
+            formatted = format_enroll_data(enrollment_data, product_num, products=products)
             if formatted:
                 data.append(formatted)
         enroll_data += data
@@ -307,8 +298,14 @@ def edit_census_record(case_id, census_record_id):
     return render_template('agent/census_record.html', **vars)
 
 
-def format_enroll_data(enrollment_data, product_number):
+def format_enroll_data(enrollment_data, product_number, products=None):
     if enrollment_data["product_{}_name".format(product_number)]:
+        if products:
+            status = get_status_for_enrollment_data(products[enrollment_data["product_{}_name".format(product_number)]])
+        else:
+            status = format_status(enrollment_data["application_status"])
+        
+        # TODO: This is fragile and needs to be fixed
         product_name = enrollment_data["product_{}_name".format(product_number)]
         product = product_service.search(by_name=product_name)[-1]
         query = db.session.query(EnrollmentApplicationCoverage).filter(
@@ -326,7 +323,7 @@ def format_enroll_data(enrollment_data, product_number):
             time=enrollment_data["signature_time"],
             coverage=[get_coverage_for_product(enrollment_data, product_number, j) for j in ["emp", "sp", "ch"]],
             effective_date=effective_date,
-            status=format_status(enrollment_data["application_status"]),
+            status=status,
             total=reduce(lambda coverage_type, accum: calc_total(enrollment_data, product_number, coverage_type, accum),
                          ["emp", "sp", "ch"], 0),
             envelope_id=enrollment_data['docusign_envelope_id'],
@@ -338,6 +335,12 @@ def format_enroll_data(enrollment_data, product_number):
         data = None
 
     return data
+
+
+def get_status_for_enrollment_data(did_decline):
+    if did_decline:
+        return format_status('declined')
+    return format_status('enrolled')
 
 
 def format_status(status):

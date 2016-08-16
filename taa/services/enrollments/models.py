@@ -61,6 +61,9 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     METHOD_SELF_EMAIL = u'self_enroll_email'
     METHOD_PHONE = u'phone'
     method = db.Column(db.Unicode(32))
+    # Paylogix
+    is_paylogix = db.Column(db.Boolean, nullable=False, server_default='0',
+                            default=False)
     # Agent
     agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
     agent_code = db.Column(db.Unicode(16))

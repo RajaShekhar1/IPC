@@ -278,7 +278,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
 
     # Show products this applicant is allowed to enroll.
     product_options = product_service.filter_products_from_membership(case, record)
-    product_options = product_service.filter_products_by_enrollment_state(product_options, state)
+    product_options = product_service.filter_products_by_enrollment_state(product_options, state, case=case)
     product_settings = case.product_settings if case.product_settings else {}
     product_effective_date_list = get_product_effective_dates(product_settings, effective_date)
     wizard_data = dict(
@@ -299,6 +299,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'occupations': occupations,
             'omit_actively_at_work': case.omit_actively_at_work,
             'include_bank_draft_form': case.include_bank_draft_form,
+            'include_cover_sheet': case.include_cover_sheet,
             'is_call_center': case.should_use_call_center_workflow,
             'effective_date_settings': case.effective_date_settings,
             'effective_date': effective_date,
@@ -387,7 +388,7 @@ def self_enrollment(company_name, uuid):
 
         # Find out what states are allowed
         allowed_statecodes = set()
-        product_states = product_service.get_product_states(setup.case.products)
+        product_states = product_service.get_product_states(setup.case.products, setup.case)
         for product_id, states in product_states.items():
             for state in states:
                 allowed_statecodes.add(state)
