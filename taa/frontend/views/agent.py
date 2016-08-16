@@ -142,7 +142,6 @@ def manage_case(case_id):
     vars['case_agents'] = case_service.get_agents_for_case(case)
     vars['product_choices'] = products
     vars['all_states'] = get_all_states()
-    vars['state_overrides'] = get_selected_states(case, vars['all_states'])
     vars['payment_modes'] = get_payment_modes()
     vars['product_state_mapping'] = product_service.get_product_states(products)
 
@@ -224,19 +223,6 @@ Please follow the instructions carefully on the next page, stepping through the 
     # vars['riders'] = rider_service.get_rider_info_for_case(case)
 
     return render_template('agent/case.html', **vars)
-
-
-def get_selected_states(case, all_states):
-    state_selections = []
-    if case.product_settings:
-        state_overrides = case.product_settings.get('state_overrides')
-        if state_overrides:
-            for state_override_pair in state_overrides:
-                for product_id, states in state_override_pair.items():
-                    for pair in all_states:
-                        if pair.get('statecode') in states:
-                            state_selections.append({product_id: pair.get('statecode')})
-    return state_selections
 
 
 def check_for_enrollment_sync_update():

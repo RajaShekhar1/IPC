@@ -1,7 +1,6 @@
 var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_case, settings, product_rate_levels) {
   var self = this;
 
-  //region Member Variable Initialization
   _.defaults(case_data, {
     omit_actively_at_work: false,
     requires_paylogix_export: false
@@ -13,17 +12,23 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.state_override_view_models = ko.observableArray([]);
 
   self.product_state_mapping = ko.computed(function () {
+    // Start with the default product-state map.
     var mapping = _.cloneDeep(settings.product_state_mapping);
+
+    // If any product overrides the default state mapping, set the overrides here.
+    //  This also triggers a dependency on the state_override_view_models() array and
+    //  any list of state_overrides() that are enabled.
     _.each(self.state_override_view_models(), function (ovm) {
       if (ovm.restrict_state_availability()) {
         mapping[ovm.id] = ovm.state_overrides();
       }
     });
+
     return mapping;
   });
 
+
   self.can_edit_case = can_edit_case;
-  //endregion
 
   self.report_data = ko.observable(null);
 
@@ -924,45 +929,42 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return data;
   };
 
-  //Creates and removes viewmodels as self.products() changes, retaining existing viewmodels,
-  //so that data remains consistent
-  self.update_state_override_view_models = ko.computed(function () {
-    var viewmodels = self.state_override_view_models();
-    _.each(self.products(), function (product) {
-      var vm_ids = _.map(self.state_override_view_models(), function (vm) {
-        return  _.get(vm, 'id')
-      });
-      if (!!(_.find(vm_ids, function (vm_id) {return vm_id == product.id}))) {
-        return;
-      }
-      else {
-        viewmodels.push(new ProductOverrideViewModel(product, case_data, settings.state_overrides, self.product_state_mapping));
-      }
-    });
-    viewmodels = _.filter(viewmodels, function (vm) {
-      return _.find(self.products(), function (prod) {
-        return prod.id == vm.id;
-      });
-    });
-    console.log(viewmodels);
-    self.state_override_view_models(viewmodels);
-  });
+  // Creates and removes viewmodels as self.products() changes, retaining existing viewmodels,
+  // so that data remains consistent
+  // self.update_state_override_view_models = ko.computed(function () {
+  //   var viewmodels = self.state_override_view_models();
+  //
+  //   _.each(self.products(), function (product) {
+  //     var vm_ids = _.map(self.state_override_view_models(), function (vm) {
+  //       return  _.get(vm, 'id')
+  //     });
+  //     if (vm_ids.indexOf(product.id) !== -1) {
+  //       viewmodels.push(new ProductOverrideViewModel(product, case_data, settings.state_overrides));
+  //     }
+  //   });
+  //
+  //   viewmodels = _.filter(viewmodels, function (vm) {
+  //     return _.find(self.products(), function (prod) {
+  //       return prod.id == vm.id;
+  //     });
+  //   });
+  //
+  //   self.state_override_view_models(viewmodels);
+  // });
 
   self.get_state_override_view_model = function (product) {
     var vm = _.find(self.state_override_view_models(), function (view) {
       return view.id == product.id;
     });
-    if (!!vm) {
-      return vm;
+    if (!vm) {
+      vm = new ProductOverrideViewModel(product, case_data);
+      self.state_override_view_models.push(vm);
     }
-    else {
-      return false;
-    }
+    return vm
   };
 
   self.product_can_override_states = function (product) {
-    var vm = self.get_state_override_view_model(product);
-    return vm.can_override_states;
+    return product.can_override_states;
   };
 
   self.occupation_classes_for_product = function (product) {
@@ -1678,7 +1680,13 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.serialize_state_overrides = function () {
-    return _.invoke(self.state_override_view_models(), "serialize");
+    var overrides = {};
+    _.each(self.products(), function(product) {
+      var vm = self.get_state_override_view_model(product);
+      overrides[product.id] = vm.serialize_overridden_states();
+    });
+
+    return overrides;
   };
 
   self.serialize_riders = function () {

@@ -387,7 +387,7 @@ def self_enrollment(company_name, uuid):
 
         # Find out what states are allowed
         allowed_statecodes = set()
-        product_states = product_service.get_product_states(setup.case.products)
+        product_states = product_service.get_product_states(setup.case.products, setup.case)
         for product_id, states in product_states.items():
             for state in states:
                 allowed_statecodes.add(state)

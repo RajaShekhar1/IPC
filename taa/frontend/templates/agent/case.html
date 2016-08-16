@@ -614,18 +614,23 @@
                                             <h4 class="header lighter blue">State Availability</h4>
                                             <div class="row">
                                                 <div class="col-sm-10 col-md-offset-1">
-                                                    <select data-bind="selectedOptions: state_overrides, attr: {'id': 'states-list-product-' + id}"
+                                                    <select data-bind="selectedOptions: state_overrides,
+                                                        attr: {'id': 'states-list-product-' + id},
+                                                        dualListbox: {options: {
+                                                            showFilterInputs: true,
+                                                            moveOnSelect: false,
+                                                            nonSelectedListLabel: 'Available States:',
+                                                            selectedListLabel: 'States Allowed:',
+                                                            selectorMinimalHeight: 250
+                                                            }, observed: state_overrides}"
                                                             multiple="multiple" class="form-control">
                                                         {% for state in all_states %}
-                                                            <option value="{{ state.statecode }}"
-                                                                    data-bind="attr: {'selected': is_selected_state('{{ state.statecode }}')}"
-                                                            >{{ state.name }}</option>
+                                                            <option value="{{ state.statecode }}">{{ state.name }}</option>
                                                         {% endfor %}
                                                     </select>
                                                 </div>
                                             </div>
                                         </div>
-                                        <p data-bind="text:initialize_states_selection()"></p>
                                     </div>
                                     <!-- /ko -->
 
@@ -1991,8 +1996,7 @@ we load from the server at run time for page speed
         all_states: {{ all_states | tojson | safe }},
         product_state_mapping: {{ product_state_mapping |tojson|safe }},
         payment_modes: {{ payment_modes | tojson | safe }},
-        active_agents: {{ active_agents | tojson | safe }},
-        state_overrides: {{ state_overrides | tojson | safe }}
+        active_agents: {{ active_agents | tojson | safe }}
       };
 
       var CensusErrorsPanel = function CaseErrorsPanel() {

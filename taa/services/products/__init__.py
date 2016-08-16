@@ -170,37 +170,7 @@ class ProductService(DBService):
 
     def get_all_statecodes(self):
         return all_statecodes
-
-    def apply_override_states(self, product, product_states, case=None):
-        if case.product_settings.get('state_overrides'):
-            states_list = \
-                [states_dict[str(product.id)] for states_dict in case.product_settings.get('state_overrides') if
-                 str(product.id) in states_dict][0]
-            if len(states_list) == 0:
-                states_with_forms = StatementOfHealthQuestionService() \
-                    .get_states_with_forms_for_product(product)
-
-                product_states[product.id] = [
-                    s['statecode'] for s in states_with_forms
-                    ]
-            else:
-                from states import states_by_statecode
-                state_mapping = sorted(
-                    [states_by_statecode[sc] for sc in states_list],
-                    key=lambda x: x['statecode'])
-                product_states[product.id] = [
-                    s['statecode'] for s in state_mapping
-                    ]
-        else:
-            states_with_forms = StatementOfHealthQuestionService() \
-                .get_states_with_forms_for_product(product)
-
-            product_states[product.id] = [
-                s['statecode'] for s in states_with_forms
-                ]
-
-        return product_states
-
+        
     def get_product_states(self, products=None, case=None):
         """Return the mapping of product IDs to statecodes
         where we can enroll that product.
@@ -210,19 +180,20 @@ class ProductService(DBService):
             products = self.get_all_enrollable_products()
 
         product_states = {}
-        if not case:
-            for product in products:
-                states_with_forms = StatementOfHealthQuestionService() \
-                    .get_states_with_forms_for_product(product)
+        for product in products:
+            states_with_forms = StatementOfHealthQuestionService() \
+                .get_states_with_forms_for_product(product)
 
-                product_states[product.id] = [
-                    s['statecode'] for s in states_with_forms
-                    ]
+            product_states[product.id] = [
+                s['statecode'] for s in states_with_forms
+                ]
 
-        else:
-            for product in products:
-                product_states = self.apply_override_states(product, product_states, case)
-
+        if case:
+            # Apply any overrides that are specified for this case.
+            for product_id, overrides in case.product_settings.get('state_overrides', {}).items():
+                if overrides:
+                    product_states[int(product_id)] = overrides
+            
         return product_states
 
     def get_soh_labels(self, products):
