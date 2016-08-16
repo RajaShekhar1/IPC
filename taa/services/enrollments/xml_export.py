@@ -464,7 +464,8 @@ def test_wizard_xml():
     
     coverages = []
     for app in apps:
-
+        census_record = app.census_record
+        other_enrollments = census_record.enrollment_applications
         for coverage in app.coverages:
             enrollment = coverage.enrollment
             case = enrollment.case
