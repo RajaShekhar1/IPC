@@ -2088,6 +2088,8 @@ var wizard_viewmodel = (function () {
         return self.applicant_list.get_spouse();
       };
 
+      self.should_show_email_summary = self.enrollment_case.include_cover_sheet;
+
       self.should_email_summary_sheet = ko.observable(self.employee().email() != "");
 
       self.employee().email.subscribe(function () {

@@ -299,6 +299,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'occupations': occupations,
             'omit_actively_at_work': case.omit_actively_at_work,
             'include_bank_draft_form': case.include_bank_draft_form,
+            'include_cover_sheet': case.include_cover_sheet,
             'is_call_center': case.should_use_call_center_workflow,
             'effective_date_settings': case.effective_date_settings,
             'effective_date': effective_date,
