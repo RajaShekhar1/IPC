@@ -324,6 +324,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         wizard_data=wizard_data,
         states=get_states(),
         nav_menu=get_nav_menu(),
+        esign_disclosure_uri=app.config.get('ESIGN_DISCLOSURE_URI'),
     )
 
 
@@ -485,7 +486,12 @@ def submit_wizard_data():
 
     data = request.json
     wizard_results = data['wizard_results']
-    print("[ENROLLMENT SUBMITTED]")
+
+    # Flag for application preview -- do not write enrollment data the database
+    is_preview = wizard_results[0].get('is_preview', False)
+
+    print("[ENROLLMENT SUBMITTED]{}".format(
+            ' **PREVIEW MODE**' if is_preview else ''))
 
     # As part of address debugging, log the user-agent.
     log_user_agent()
@@ -510,11 +516,14 @@ def submit_wizard_data():
             enrollment_submission_service = LookupService('EnrollmentSubmissionService')
             enrollment_submission_service.submit_wizard_enrollment(enrollment)
 
-        return jsonify(**{
+        result = {
             'error': False,
             'poll_url': url_for('check_submission_status', enrollment_id=enrollment.id),
             'enrollment_id': enrollment.id,
-        })
+        }
+        if is_preview:
+            result['is_preview'] = True
+        return jsonify(**result)
     except Exception:
         print(u"[ENROLLMENT SUBMISSION ERROR]: (case {}) {}".format(case_id, wizard_results))
         raise
@@ -570,6 +579,8 @@ def process_wizard_submission(case, wizard_results):
     # Save enrollment information and updated census data prior to DocuSign hand-off
     census_record = get_or_create_census_record(case, enrollment_data)
     enrollment_application = get_or_create_enrollment(case, census_record, standardized_data, wizard_results)
+    if wizard_results[0].get('is_preview'):
+        enrollment_application.is_preview = True
     db.session.commit()
 
     if wizard_results[0].get('send_summary_email'):

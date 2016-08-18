@@ -55,6 +55,8 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     APPLICATION_STATUS_DECLINED = u'declined'
     APPLICATION_STATUS_VOIDED = u'voided'
     application_status = db.Column(db.Unicode(32))
+    is_preview = db.Column(db.Boolean, nullable=False, server_default='0',
+                           default=False)
     # Payment mode
     payment_mode = db.Column(db.Integer(), nullable=True)
     METHOD_INPERSON = u'in_person'

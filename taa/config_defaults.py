@@ -205,6 +205,9 @@ Sls=
 =tuZL
 -----END PGP PUBLIC KEY BLOCK-----""")
 
+# Electronic signature discloure link
+ESIGN_DISCLOSURE_URI = env_get_text('ESIGN_DISCLOSURE_URI', '/')
+
 # Dell Straight-Through-Processing (STP) settings
 IS_STP_DEBUG = True          # Use Dell's "model office" instead of production
 IS_STP_SIMULATE = True       # Don't even send to "model office", but pretend to
