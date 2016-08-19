@@ -1676,15 +1676,17 @@ var wizard_viewmodel = (function () {
       }
     });
 
+    MAX_PDF_PREVIEW_SCALE = 1.25;
+
     self.renderPDF = function(url, targetSel, options) {
       options = options || {};
       var container = $(targetSel);
       var loadingSel = options.loadingSel || null;
       var canvasClass = options.canvasClass || '';
-      var scale = options.scale || 1.5;
+      var scale = options.scale || MAX_PDF_PREVIEW_SCALE;
 
       function renderPage(page) {
-        scale = container[0].clientWidth / page.getViewport(1).width;
+        scale = Math.min(MAX_PDF_PREVIEW_SCALE, container[0].clientWidth / page.getViewport(1).width);
         var viewport = page.getViewport(scale);
         var canvas = document.createElement('canvas');
         canvas.className = canvasClass;
