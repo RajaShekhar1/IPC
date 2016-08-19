@@ -1,12 +1,16 @@
+function build_results() {
+  return _.map(window.vm.coverage_vm.product_coverage_viewmodels(), function (product_cov) {
+    return build_wizard_results_for_product_coverage(product_cov);
+  });
+}
+
 function submit_application() {
 
   // Don't allow duplicate submissions.
   window.vm.is_submitting(true);
   window.vm.submission_error("");
 
-  var results = _.map(window.vm.coverage_vm.product_coverage_viewmodels(), function (product_cov) {
-    return build_wizard_results_for_product_coverage(product_cov);
-  });
+  var results = build_results();
 
   var please_wait_dialogue = bootbox.dialog({
     message: "Preparing application for submission. Please wait, this may take a minute...",
@@ -172,7 +176,7 @@ function build_wizard_results_for_product_coverage(product_cov) {
 
     identityToken: root.identityToken(),
     identityType: root.identityType(),
-    
+
     effective_date: product_cov.effective_date_resolution(),
     enrollerSelects: root.show_enroller_select_date(),
     effectiveDateSettings: root.effective_date_settings,

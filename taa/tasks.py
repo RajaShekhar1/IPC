@@ -233,7 +233,7 @@ def send_stp_xml(xml):
     from pysimplesoap.client import SoapClient
     # app['IS_STP_STORE_SOURCE']
     # app['IS_STP_STORE_RESULT']
-    c = SoapClient(wsdl=app['STP_URL'])
+    c = SoapClient(wsdl=taa_app['STP_URL'])
     # start = time.time()
     xml = ''
     # guid = 'SIMULATEDRUN'
