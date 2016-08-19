@@ -1678,11 +1678,13 @@ var wizard_viewmodel = (function () {
 
     self.renderPDF = function(url, targetSel, options) {
       options = options || {};
-      var scale = options.scale || 1.5;
+      var container = $(targetSel);
       var loadingSel = options.loadingSel || null;
       var canvasClass = options.canvasClass || '';
+      var scale = options.scale || 1.5;
 
       function renderPage(page) {
+        scale = container[0].clientWidth / page.getViewport(1).width;
         var viewport = page.getViewport(scale);
         var canvas = document.createElement('canvas');
         canvas.className = canvasClass;
@@ -1694,7 +1696,6 @@ var wizard_viewmodel = (function () {
 
         canvas.height = viewport.height;
         canvas.width = viewport.width;
-        var container = $(targetSel);
         $.each(container, function(idx, el) { el.appendChild(canvas); });
         if(loadingSel) {
           $(loadingSel).hide();
