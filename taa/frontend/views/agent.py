@@ -264,7 +264,7 @@ def edit_census_record(case_id, census_record_id):
 
     standardized_data = enrollment_service.get_standardized_enrollment_json(census_record)
     products = {product_service.get(product.get('product_id')).name: product.get('did_decline') for product in
-                standardized_data}
+                standardized_data if product.get('product_id')}
     enrollment_records = enrollment_service.get_enrollment_records_for_census(census_record.case, census_record.id)
 
     enroll_data = []
@@ -305,16 +305,16 @@ def format_enroll_data(enrollment_data, product_number, products=None):
         else:
             status = format_status(enrollment_data["application_status"])
         
-        # TODO: This is fragile and needs to be fixed
-        product_name = enrollment_data["product_{}_name".format(product_number)]
-        product = product_service.search(by_name=product_name)[-1]
-        query = db.session.query(EnrollmentApplicationCoverage).filter(
-            and_(EnrollmentApplicationCoverage.enrollment_application_id == enrollment_data['enrollment_id'],
-                 EnrollmentApplicationCoverage.product_id == product.id)).all()[-1]
-        if query:
-            effective_date = query.effective_date
-        else:
-            effective_date = None
+        # # TODO: This is fragile and needs to be fixed
+        # product_name = enrollment_data["product_{}_name".format(product_number)]
+        # product = product_service.search(by_name=product_name)[-1]
+        # query = db.session.query(EnrollmentApplicationCoverage).filter(
+        #     and_(EnrollmentApplicationCoverage.enrollment_application_id == enrollment_data['enrollment_id'],
+        #          EnrollmentApplicationCoverage.product_id == product.id)).all()[-1]
+        # if query:
+        #     effective_date = query.effective_date
+        # else:
+        effective_date = None
 
 
         data = dict(
