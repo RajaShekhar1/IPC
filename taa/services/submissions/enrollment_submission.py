@@ -77,6 +77,9 @@ class EnrollmentSubmissionService(object):
         return True
 
     def submit_to_dell(self, enrollment_application):
+        """
+        Submit XML to Dell.
+        """
         
         # Find products that need to go to Dell.
         for data in self.enrollment_application_service.get_wrapped_enrollment_data(enrollment_application):

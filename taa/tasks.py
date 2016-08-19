@@ -286,7 +286,7 @@ def submit_stp_xml_to_dell(task, submission_id, product_id):
     db.session.add(log)
 
     try:
-        # submission_service.submit_hi_acc_export_to_dell(submission.data)
+        # TODO: send_stp_xml
         submission_service.submit_to_dell(submission.data)
         submission.status = EnrollmentSubmission.STATUS_SUCCESS
         log.status = SubmissionLog.STATUS_SUCCESS

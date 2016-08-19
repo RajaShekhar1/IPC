@@ -44,7 +44,7 @@ def calculate_effective_date(settings, signature_time, enroller_picks_date=None)
     return effective_date_calc.get_effective_date_for_enroll_date(signature_time)
 
 
-def create_rule(settings, enroller_picks_date=None):
+def create_rule(settings):
     """
     Based on a dictionary with effective_date_method and two optional parameters,
     return the instantiated matching rule object.
