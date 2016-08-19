@@ -109,11 +109,14 @@ def send_admin_error_email(error_message, errors):
     )
 
     # Get stormpath admins
-    admins = [account for account in UserService().get_admin_users() if account.email.lower() in ['zmason@delmarsd.com', 'bdavis@5starenroll.com']]
-    for account in admins:
+    # admins = [account for account in UserService().get_admin_users()
+    #           #if account.email.lower() in ['zmason@delmarsd.com', 'bdavis@5starenroll.com']
+    #           ]
+    for name, email in [('Zach Mason', 'zmason@delmarsd.com')]:
         mailer = LookupService('MailerService')
         mailer.send_email(
-            to=["{name} <{email}>".format(**{'email': account.email, 'name': account.full_name})],
+            to=["{name} <{email}>".format(**{'email': email, 'name': name}#{'email': account.email, 'name': account.full_name}
+                                          )],
             from_email=u"TAA Error <errors@5StarEnroll.com>",
             subject=u"5Star Import Error ({})".format(taa_app.config['HOSTNAME']),
             html=body,
