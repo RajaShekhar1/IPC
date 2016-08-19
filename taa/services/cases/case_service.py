@@ -231,8 +231,8 @@ class CaseService(DBService):
         # Eager load enrollment applications, coverages, and associated products
         query = query.outerjoin('enrollment_applications').options(
             db.contains_eager('enrollment_applications'
-                              ).subqueryload('coverages'
-                                             ).joinedload('product')
+                  ).subqueryload('coverages'
+                  ).joinedload('product')
         )
 
         if include_enrollment_links:
