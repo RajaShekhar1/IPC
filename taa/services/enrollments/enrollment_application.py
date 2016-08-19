@@ -9,8 +9,6 @@ from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
 
 from taa.services.docusign.service import DocusignEnvelope
 
-from effective_date import calculate_effective_date
-
 from enrollment_application_coverages import (
     filter_applicant_coverages,
     group_coverages_by_product,
@@ -288,15 +286,13 @@ class EnrollmentApplicationService(DBService):
             else:
                 # This usually means we sourced this from an  import file without explicit effective dates set.
                 #  Compute according to the case settings.
-                effective_date_settings = enrollment.case.effective_date_settings
-                
-                if effective_date_settings:
+                if enrollment.case.effective_date_settings:
                     from taa.services.enrollments.effective_date import calculate_effective_date, get_active_method
                     from datetime import datetime
-                    effective_date = calculate_effective_date(effective_date_settings, datetime.now())
-                    if get_active_method(effective_date_settings, datetime.now()) == 'enroller_selects':
+                    effective_date = calculate_effective_date(enrollment.case, datetime.now())
+                    if get_active_method(enrollment.case.effective_date_settings, datetime.now()) == 'enroller_selects':
                         enroller_selects = True
-                        # TODO: What
+                        # TODO: Need to
                 else:
                     # Fall back to signature time for old case data.
                     effective_date = data['signature_time']

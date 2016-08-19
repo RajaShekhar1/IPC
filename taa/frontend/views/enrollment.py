@@ -1,7 +1,7 @@
 """--------------------------------------------------------------
 ENROLLMENT pages and handling, DOCUSIGN interaction
 """
-
+from datetime import datetime
 import os
 import json
 
@@ -152,13 +152,13 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     session['active_case_id'] = case.id
     session['enrolling_census_record_id'] = None
 
-    effective_date_settings = case.effective_date_settings
+    # Effective date calculations performed on server so we don't have to duplicate this logic in JS.
     enroller_selects = False
-    if effective_date_settings:
+    if case.effective_date_settings:
         from taa.services.enrollments.effective_date import calculate_effective_date, get_active_method
-        from datetime import datetime
-        effective_date = calculate_effective_date(effective_date_settings, datetime.now())
-        if get_active_method(effective_date_settings, datetime.now()) == 'enroller_selects':
+        
+        effective_date = calculate_effective_date(case, datetime.now())
+        if get_active_method(case.effective_date_settings, datetime.now()) == 'enroller_selects':
             enroller_selects = True
 
     else:

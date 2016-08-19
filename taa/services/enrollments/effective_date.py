@@ -20,11 +20,13 @@ def get_active_method(settings, signature_time):
     return method
 
 
-def calculate_effective_date(settings, signature_time, enroller_picks_date=None):
+def calculate_effective_date(case, signature_time):
     """
     instantiate effective date calculator, if enroller selects is true, the date has
     already been processed, there should be no calculate effective date
     """
+    settings = case.effective_date_settings
+    
     start_date = None
     end_date = None
     is_ongoing = False
@@ -32,8 +34,12 @@ def calculate_effective_date(settings, signature_time, enroller_picks_date=None)
     ongoing_rule = None
     for effective_date_method in settings:
         if effective_date_method.get('type') == 'open':
-            start_date = parse(effective_date_method['enrollment_period']['start_date'])
-            end_date = parse(effective_date_method['enrollment_period']['end_date'])
+            if 'enrollment_period' not in effective_date_method:
+                start_date = case.enrollment_periods[0].get_start_date()
+                end_date = case.enrollment_periods[0].get_end_date()
+            else:
+                start_date = parse(effective_date_method['enrollment_period']['start_date'])
+                end_date = parse(effective_date_method['enrollment_period']['end_date'])
             open_rule = create_rule(effective_date_method)
         if effective_date_method.get('type') == 'ongoing':
             is_ongoing = True

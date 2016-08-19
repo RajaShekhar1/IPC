@@ -32,7 +32,7 @@
             <thead>
               <tr>
                 <th>Timestamp</th>
-                <th>Effective Date</th>
+{#                <th>Effective Date</th>#}
                 <th>Product</th>
                 <th>Status</th>
                 <th>Coverage For</th>
@@ -44,7 +44,7 @@
               {% for enrollment in enrollment_data %}
                   <tr style="background:rgba(50,50,50,.1)">
                     <td><strong data-bind="text: moment('{{ enrollment.time }}').format('MM/DD/YYYY hh:mma')"></strong></td>
-                    <td><strong data-bind="text: moment('{{ enrollment.effective_date }}').format('MM/DD/YYYY')"></strong></td>
+{#                    <td><strong data-bind="text: moment('{{ enrollment.effective_date }}').format('MM/DD/YYYY')"></strong></td>#}
                     <td><strong>{{enrollment.product_name}}</strong></td>
                     <td><strong>{{enrollment.status}}</strong></td>
                     {% if enrollment.status=='declined'%}
