@@ -40,6 +40,9 @@ class EnrollmentDataWrap(object):
     def get(self, key, default=None):
         return self.data.get(key, default)
 
+    def is_preview(self):
+        return self.data.get('is_preview', False)
+
     def is_self_enroll(self):
         if self.data.get("is_third_party"):
             return False

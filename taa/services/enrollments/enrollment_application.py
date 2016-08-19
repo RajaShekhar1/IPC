@@ -9,8 +9,6 @@ from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
 
 from taa.services.docusign.service import DocusignEnvelope
 
-from effective_date import calculate_effective_date
-
 from enrollment_application_coverages import (
     filter_applicant_coverages,
     group_coverages_by_product,
@@ -162,6 +160,8 @@ class EnrollmentApplicationService(DBService):
         signature_method = self.get_signature_method(census_record, wizard_data)
 
         data = self.get_first_wizard_data_record(wizard_data)
+
+        is_preview = data.get('is_preview', False)
         given_sig_time = data.get('time_stamp')
         signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
 
@@ -188,7 +188,7 @@ class EnrollmentApplicationService(DBService):
             sp_beneficiary_ssn = self._strip_ssn(data.get('spouse_beneficiary_ssn'))
             sp_beneficiary_relation = data.get('spouse_beneficiary_relationship')
             sp_beneficiary_dob = data.get('spouse_beneficiary_dob')
-
+        
         enrollment_data = dict(
             received_data=json.dumps(received_data, cls=JSONEncoder),
             standardized_data=json.dumps(wizard_data, cls=JSONEncoder),
@@ -201,6 +201,7 @@ class EnrollmentApplicationService(DBService):
             method=data['method'],
             payment_mode=data['payment_mode'],
             is_paylogix=census_record.case.requires_paylogix_export,
+            is_preview=is_preview,
             # Signing info
             signature_time=signature_time,
             signature_city=data['enrollCity'],
@@ -244,7 +245,12 @@ class EnrollmentApplicationService(DBService):
             accepted_product_ids = list(d['product_id'] for d in wizard_data if not d['did_decline'])
             accepted_products = self.product_service.get_all(*accepted_product_ids)
             """:type: list[taa.services.products.Product]"""
-            if all(map(lambda d: d['did_decline'], wizard_data)):
+            
+            # If this is a preview, mark the status as pending
+            if wrapped_data.is_preview():
+                return EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
+            
+            elif all(map(lambda d: d['did_decline'], wizard_data)):
                 return EnrollmentApplication.APPLICATION_STATUS_DECLINED
             elif len(accepted_products) > 0 and all(not p.requires_signature() for p in accepted_products):
                 return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
@@ -280,15 +286,25 @@ class EnrollmentApplicationService(DBService):
             all_data = [all_data]
 
         for data in all_data:
-            given_sig_time = data.get('time_stamp')
-            signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
-            enroller_selects = data.get('enrollerSelects')
-            effective_date_settings = data.get('effectiveDateSettings')
+            
             enroller_effective_date = data.get('effective_date')
             if data['did_decline']:
                 effective_date = None
-            else:
+            elif enroller_effective_date is not None:
                 effective_date = dateutil.parser.parse(enroller_effective_date)
+            else:
+                # This usually means we sourced this from an  import file without explicit effective dates set.
+                #  Compute according to the case settings.
+                if enrollment.case.effective_date_settings:
+                    from taa.services.enrollments.effective_date import calculate_effective_date, get_active_method
+                    from datetime import datetime
+                    effective_date = calculate_effective_date(enrollment.case, datetime.now())
+                    if get_active_method(enrollment.case.effective_date_settings, datetime.now()) == 'enroller_selects':
+                        enroller_selects = True
+                        # TODO: Need to
+                else:
+                    # Fall back to signature time for old case data.
+                    effective_date = data['signature_time']
 
             if data['did_decline']:
                 continue
@@ -336,6 +352,11 @@ class EnrollmentApplicationService(DBService):
 
         case_products = self.product_service.get_ordered_products_for_case(case.id)
         for enrollment in census_record.enrollment_applications:
+            
+            # Skip over preview-only records
+            if enrollment.is_preview:
+                continue
+            
             export_record = dict()
             export_record.update(self.get_census_data(census_record))
             export_record.update(self.get_unmerged_enrollment_data(census_record, enrollment, case_products))
@@ -369,6 +390,10 @@ class EnrollmentApplicationService(DBService):
             if not census_record.enrollment_applications:
                 continue
             for enrollment in census_record.enrollment_applications:
+                # Skip preview-only records
+                if enrollment.is_preview:
+                    continue
+                
                 export_record = dict()
                 export_record.update(self.get_census_data(census_record))
                 export_record.update(self.get_unmerged_enrollment_data(census_record, enrollment,
@@ -418,7 +443,8 @@ class EnrollmentApplicationService(DBService):
         query = query.outerjoin(Agent, Agent.id == EnrollmentApplication.agent_id)
 
         # Overall filtering
-        query = query.filter(CaseCensus.case_id == case.id)
+        query = query.filter(CaseCensus.case_id == case.id
+            ).filter(EnrollmentApplication.is_preview != True)
 
         # Data filtering
         if search_text:
@@ -464,7 +490,7 @@ class EnrollmentApplicationService(DBService):
         # return (enrollment_data['application_status']
         #        if enrollment_data else None)
 
-        enrollment_records = census_record.enrollment_applications
+        enrollment_records = [e for e in census_record.enrollment_applications if not e.is_preview]
 
         # If any is pending, we say the whole record is pending so as to not have more than one pending at a time.
         if any([e for e in enrollment_records if e.is_pending_employee()]):
@@ -487,6 +513,8 @@ class EnrollmentApplicationService(DBService):
 
         out = []
         for enrollment_application in census_record.enrollment_applications:
+            if enrollment_application.is_preview:
+                continue
             out += self.get_standardized_json_for_enrollment(enrollment_application)
 
         return out
@@ -520,19 +548,24 @@ class EnrollmentApplicationService(DBService):
         #        should merge these functions and remove extraneous code
         #        since no other code needs a merged record
         enrollment_data = {}
-        undeclined_enrollments = [e for e in census_record.enrollment_applications if not e.did_decline()]
+        undeclined_enrollments = [e for e in census_record.enrollment_applications if not e.did_decline() and not e.is_preview]
         if not undeclined_enrollments:
             return None
+        
         # Get the most recent enrollment for the generic data
         enrollment = max(undeclined_enrollments,
                          key=lambda e: e.applicant_signing_datetime)
+        
         # Export data from enrollment
         for col in enrollment_columns:
             enrollment_data[col.get_field_name()] = col.get_value(enrollment)
+        
         # Add Coverage data
         coverages = []
         for e in census_record.enrollment_applications:
-            coverages += e.coverages
+            if not e.is_preview:
+                coverages += e.coverages
+        
         employee_coverage = (
             self.find_most_recent_coverage_by_product_for_applicant_type(
                 coverages,
@@ -612,9 +645,6 @@ class EnrollmentApplicationService(DBService):
             coverages, EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
         # Include the calculated total annualized premium also
         total_annual_premium = Decimal('0.00')
-
-        product_service = LookupService('ProductService')
-        """:type: taa.services.products.ProductService"""
 
         # Export coverages for at most six products
         product_ids = enrollment.get_enrolled_product_ids()
@@ -848,23 +878,28 @@ class EnrollmentApplicationService(DBService):
         :param end_date: End Date
         :return:
         """
-        return db.session.query(EnrollmentApplication).filter(
-            start_date < EnrollmentApplication.signature_time < end_date).all()
+        return db.session.query(EnrollmentApplication
+            ).filter(start_date < EnrollmentApplication.signature_time < end_date
+            ).filter(EnrollmentApplication.is_preview != True
+            ).all()
 
     def get_paylogix_applications_between_dates(self, start_date, end_date):
-        return db.session.query(EnrollmentApplication).filter(db.and_(
-            EnrollmentApplication.signature_time > start_date, EnrollmentApplication.signature_time < end_date)
-        ).join(Case
-               ).filter(Case.requires_paylogix_export == True
-                        ).order_by(db.desc(EnrollmentApplication.signature_time)
-                                   ).all()
+        return db.session.query(EnrollmentApplication
+                                ).filter(EnrollmentApplication.is_preview != True
+            ).filter(db.and_(
+                EnrollmentApplication.signature_time > start_date, EnrollmentApplication.signature_time < end_date)
+            ).join(Case
+            ).filter(Case.requires_paylogix_export == True
+            ).order_by(db.desc(EnrollmentApplication.signature_time)
+            ).all()
 
     def get_paylogix_applications(self):
         return db.session.query(EnrollmentApplication
-                                ).join(Case
-                                       ).filter(Case.requires_paylogix_export == True
-                                                ).order_by(db.desc(EnrollmentApplication.signature_time)
-                                                           ).all()
+            ).filter(EnrollmentApplication.is_preview != True
+            ).join(Case
+            ).filter(Case.requires_paylogix_export == True
+            ).order_by(db.desc(EnrollmentApplication.signature_time)
+            ).all()
 
 
 def export_string(val):

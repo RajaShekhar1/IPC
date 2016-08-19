@@ -48,7 +48,8 @@ class CoverSheetAttachment(PDFAttachment):
         flowables += self.draw_legal_text()
 
         # Signature line and name
-        flowables += self.draw_signature_line()
+        # Removing this for now to simplify the emailing of this sheet.
+        #flowables += self.draw_signature_line()
 
         # Generate the document using reportlab's PLATYPUS layout api.
         self._doc.leftMargin = .4 * inch

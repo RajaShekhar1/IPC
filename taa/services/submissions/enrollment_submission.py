@@ -42,6 +42,9 @@ class EnrollmentSubmissionService(object):
         enrollment_application = self.enrollment_application_service.get(enrollment_application_id)
         if not enrollment_application:
             raise ValueError("No enrollment application exists with id {}".format(enrollment_application_id))
+        if enrollment_application.is_preview:
+            # Preview mode only; don't submit the application
+            return
 
         # We still run the code through the docusign submission process, but if it is call center
         #  it will generate all forms internally and sign them automatically.
@@ -51,12 +54,12 @@ class EnrollmentSubmissionService(object):
         return case.is_stp
 
     def submit_to_docusign_or_dell(self, enrollment_record):
-        
+
         # Some products are submitted to Dell using Straight-through-processing if enabled on the case.
         if self._should_submit_to_dell(enrollment_record.case):
             self.submit_to_dell(enrollment_record)
             # TODO: need to submit GroupCI to docusign still
-            
+
         else:
             # Some products always go to docusign
             self.submit_to_docusign(enrollment_record)
@@ -77,18 +80,21 @@ class EnrollmentSubmissionService(object):
         return True
 
     def submit_to_dell(self, enrollment_application):
-        
+        """
+        Submit XML to Dell.
+        """
+
         # Find products that need to go to Dell.
         for data in self.enrollment_application_service.get_wrapped_enrollment_data(enrollment_application):
-            
+
             product = data.get_product()
             if not product.can_submit_stp():
                 continue
-            
+
             # TODO: Need to make it create a submission for each child too, and look up the coverage record.
             import taa.tasks as tasks
-            
-            
+
+
             # Create a submission to track the status.
             submission = EnrollmentSubmission()
             submission.submission_type = EnrollmentSubmission.TYPE_DELL_STP_XML
@@ -98,7 +104,7 @@ class EnrollmentSubmissionService(object):
             submission.enrollment_applications = [enrollment_application]
             # add to enrollment_submission_blah
             # for each enrollment
-            
+
             tasks.submit_stp_xml_to_dell(submission.id, coverage.id, child_index)
 
     def submit_signed_application(self, enrollment_application):
@@ -193,9 +199,9 @@ class EnrollmentSubmissionService(object):
         Used for previewing and testing XML files.
         """
         enrollment_record = enrollment_coverage.enrollment
-        
+
         from taa.services.enrollments.xml_export import generate_xml
-        
+
         data = self.enrollment_application_service.get_wrapped_data_for_coverage(enrollment_coverage)
         # TODO: what are the below lines doing? needed?
         data['case'] = {
@@ -514,7 +520,7 @@ class EnrollmentSubmissionProcessor(object):
     product_service = RequiredFeature('ProductService')
     enrollment_service = RequiredFeature('EnrollmentApplicationService')
     enrollment_coverage_service = RequiredFeature('EnrollmentApplicationCoverageService')
-    
+
     def submit_to_docusign(self, enrollment_record):
 
         components, data_wrap = self.generate_envelope_components(enrollment_record)
@@ -565,10 +571,10 @@ class EnrollmentSubmissionProcessor(object):
         """Used for generating PDFs from enrollments signed in the wizard, outside of docusign"""
 
         case = enrollment_application.case
-        
+
         all_product_data = self.enrollment_service.get_standardized_json_for_enrollment(enrollment_application)
-        
-        
+
+
         first_product_data = EnrollmentDataWrap(all_product_data[0], case=enrollment_application.case,
                                                 enrollment_record=enrollment_application)
         signing_agent = first_product_data.get_signing_agent()
@@ -607,7 +613,7 @@ class EnrollmentSubmissionProcessor(object):
             product = self.product_service.get(product_id)
             if not product.does_generate_form():
                 continue
-            
+
             # If we only want to generate the document for a particular product, skip all other products.
             if product_id and product.id != product_id:
                 continue

@@ -109,11 +109,14 @@ def send_admin_error_email(error_message, errors):
     )
 
     # Get stormpath admins
-    admins = [account for account in UserService().get_admin_users() if account.email.lower() in ['zmason@delmarsd.com', 'bdavis@5starenroll.com']]
-    for account in admins:
+    # admins = [account for account in UserService().get_admin_users()
+    #           #if account.email.lower() in ['zmason@delmarsd.com', 'bdavis@5starenroll.com']
+    #           ]
+    for name, email in [('Zach Mason', 'zmason@delmarsd.com')]:
         mailer = LookupService('MailerService')
         mailer.send_email(
-            to=["{name} <{email}>".format(**{'email': account.email, 'name': account.full_name})],
+            to=["{name} <{email}>".format(**{'email': email, 'name': name}#{'email': account.email, 'name': account.full_name}
+                                          )],
             from_email=u"TAA Error <errors@5StarEnroll.com>",
             subject=u"5Star Import Error ({})".format(taa_app.config['HOSTNAME']),
             html=body,
@@ -233,7 +236,7 @@ def send_stp_xml(xml):
     from pysimplesoap.client import SoapClient
     # app['IS_STP_STORE_SOURCE']
     # app['IS_STP_STORE_RESULT']
-    c = SoapClient(wsdl=app['STP_URL'])
+    c = SoapClient(wsdl=taa_app['STP_URL'])
     # start = time.time()
     xml = ''
     # guid = 'SIMULATEDRUN'
@@ -286,7 +289,7 @@ def submit_stp_xml_to_dell(task, submission_id, product_id):
     db.session.add(log)
 
     try:
-        # submission_service.submit_hi_acc_export_to_dell(submission.data)
+        # TODO: send_stp_xml
         submission_service.submit_to_dell(submission.data)
         submission.status = EnrollmentSubmission.STATUS_SUCCESS
         log.status = SubmissionLog.STATUS_SUCCESS
