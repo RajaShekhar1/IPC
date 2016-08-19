@@ -149,6 +149,18 @@ def timestamp_validator(field, record):
     return True, None, None
 
 
+def date_validator(field, record):
+    val = field.get_column_from_record(record)
+    if not val:
+        # Allow blank unless combined with required validator
+        return True, None, None
+    if isinstance(val, datetime):
+        val = val.date()
+    if not isinstance(val, datetime_date):
+        return False, "invalid_date", "Invalid date"
+    return True, None, None
+
+
 def email_validator(field, record):
     email = field.get_column_from_record(record)
     if not email:
