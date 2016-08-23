@@ -305,7 +305,7 @@ def process_paylogix_csv_generation(task):
         if not submission:
             return
         export_submission = submission_service.process_paylogix_csv_generation_submission(submission)
-        process_paylogix_export(submission_id=export_submission.id)
+        process_paylogix_export.delay(submission_id=export_submission.id)
     except Exception as ex:
         submission_service.set_submissions_status(EnrollmentSubmission.STATUS_FAILURE, [submission], error_message=ex.message)
 
