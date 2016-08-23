@@ -189,7 +189,11 @@ class CoverSheetAttachment(PDFAttachment):
 
             product_data = self.get_wrapped_enrollment_data_for_product(product)
 
-            if product in declined_products:
+            if not product_data:
+                product_header = '{} - INELIGIBLE'.format(product.get_brochure_name() if product.get_brochure_name() else product.get_base_product().name)
+                applicants = []
+             
+            elif product in declined_products:
                 # Show Decline
                 product_header = '{} - DECLINED'.format(product.get_brochure_name() if product.get_brochure_name() else product.get_base_product().name)
                 applicants = []

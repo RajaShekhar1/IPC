@@ -131,12 +131,17 @@ class EnrollmentSubmissionService(object):
     
         return xmls
 
-    def create_xml_zip(self, xmls):
+    def create_xml_zip(self, xmls, include_pdfs=True):
         zipstream = BytesIO()
+        
+        included_pdfs = set()
         
         with ZipFile(zipstream, 'w') as zip:
             for xml, applicant_type, coverage, pdf_bytes in xmls:
                 
+                if pdf_bytes not in included_pdfs:
+                    included_pdfs.add(pdf_bytes)
+                    
                 fn = 'case_{}_enrollment_{}_{}_{}.xml'.format(coverage.enrollment.case.id,
                                                               coverage.enrollment.id,
                                                               coverage.product.get_base_product_code(),
