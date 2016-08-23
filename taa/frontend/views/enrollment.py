@@ -604,7 +604,7 @@ def process_wizard_submission(case, wizard_results):
 def check_submission_status():
     enrollment_id = int(request.args['enrollment_id'])
 
-    # For security, make sure we just submitted this enrollment (set up in submit_wizard_data.
+    # For security, make sure this user just submitted this enrollment (set up in submit_wizard_data)
     if not session.get('enrollment_application_id') == enrollment_id:
         abort(403)
 
@@ -614,7 +614,7 @@ def check_submission_status():
 
     generates_form = any(
         p for p in
-        get_accepted_products(enrollment.case, get_accepted_product_ids(json.loads(enrollment.standardized_data))) if
+        get_accepted_products(enrollment.case, get_accepted_product_ids(standardized_enrollment_data)) if
         p.does_generate_form())
 
     if are_all_products_declined(received_enrollment_data):

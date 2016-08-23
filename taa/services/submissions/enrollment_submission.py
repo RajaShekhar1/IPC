@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 from io import BytesIO
 import json
 import traceback
@@ -9,7 +9,7 @@ from StringIO import StringIO
 import gnupg
 import taa.services.enrollments as enrollments
 
-from taa import db
+from taa import db, tasks
 from taa.config_defaults import DOCUSIGN_CC_RECIPIENTS
 from taa.services import RequiredFeature
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
@@ -19,14 +19,12 @@ from taa.services.enrollments.models import EnrollmentImportBatchItem, Enrollmen
 from taa.services import LookupService
 
 
-
 class EnrollmentSubmissionService(object):
     enrollment_application_service = RequiredFeature('EnrollmentApplicationService')
     enrollment_batch_service = RequiredFeature('EnrollmentImportBatchService')
     docusign_service = RequiredFeature('DocuSignService')
 
     def submit_wizard_enrollment(self, enrollment_application):
-        import taa.tasks as tasks
         # if True:
         #    self.process_wizard_submission(enrollment_application.id)
         # else:
@@ -34,7 +32,6 @@ class EnrollmentSubmissionService(object):
         # tasks.process_wizard_enrollment.delay(enrollment_application.id)
 
     def submit_hi_acc_enrollments(self, start_time=None, end_time=None):
-        import taa.tasks as tasks
         tasks.process_hi_acc_enrollments.delay(start_time, end_time)
 
     def process_wizard_submission(self, enrollment_application_id):
@@ -84,28 +81,85 @@ class EnrollmentSubmissionService(object):
         Submit XML to Dell.
         """
 
-        # Find products that need to go to Dell.
-        for data in self.enrollment_application_service.get_wrapped_enrollment_data(enrollment_application):
-
-            product = data.get_product()
-            if not product.can_submit_stp():
+        # Generate all the XML documents, one for each covered applicant.
+        xmls = []
+        for coverage in enrollment_application.coverages:
+            
+            # Filter out products that don't have STP submission by skipping them.
+            if not coverage.product.can_submit_stp():
                 continue
-
-            # TODO: Need to make it create a submission for each child too, and look up the coverage record.
-            import taa.tasks as tasks
-
-
-            # Create a submission to track the status.
-            submission = EnrollmentSubmission()
-            submission.submission_type = EnrollmentSubmission.TYPE_DELL_STP_XML
-            # determine where to store metadata about submission (`employee_application_coverage` ID == stores applicant type, product, etc.)
+            
+            # Render the PDF for this application to include in the XML output.
+            pdf_bytes = self.render_enrollment_pdf(coverage.enrollment, is_stp=True, product_id=coverage.product_id)
+            
+            # If this is coverage for children, add an XML doc for each child.
+            if coverage.applicant_type == 'children':
+                # Generate one for each child
+                data = self.enrollment_application_service.get_wrapped_data_for_coverage(coverage)
+                for i, child in enumerate(data['children']):
+                    #print("Generating child {}".format(i + 1))
+                    applicant_type = "child{}".format(i)
+                    xml = self.render_enrollment_xml(coverage, applicant_type, pdf_bytes=pdf_bytes)
+                    if xml:
+                        xmls.append((xml, applicant_type, coverage))
+            else:
+                # Otherwise, we add the Employee or Spouse XML doc if they chose coverage.
+                applicant_type = coverage.applicant_type
+                xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=pdf_bytes)
+                if xml:
+                    xmls.append((xml, applicant_type, coverage))
+            
+        # Create the submissions and schedule them for delivery.
+        for xml, applicant_type, coverage in xmls:
+            # Create a submission to track the status of this XML submission, include the XML in the data for the submission.
+            submission = EnrollmentSubmission(
+                created_at=datetime.now(),
+                submission_type=EnrollmentSubmission.TYPE_DELL_STP_XML,
+                data=json.dumps(dict(xml=xml, applicant_type=applicant_type, coverage_id=coverage.id)),
+            )
+            submission.enrollment_applications = [enrollment_application]
             db.session.add(submission)
             db.session.commit()
-            submission.enrollment_applications = [enrollment_application]
-            # add to enrollment_submission_blah
-            # for each enrollment
+            
+            # Schedule a task to transmit this submission to Dell
+            tasks.submit_stp_xml_to_dell.delay(submission.id)
 
-            tasks.submit_stp_xml_to_dell(submission.id, coverage.id, child_index)
+    def generate_xml_for_submission(self, coverage):
+        """
+        Given an EnrollmentDataWrap and associated submission, generate and submit the STP XML item to Dell for processing
+        """
+    
+        # Generate the PDF that gets included with the XML.
+        pdf_bytes = self.render_enrollment_pdf(coverage.enrollment, is_stp=True, product_id=coverage.product_id)
+        
+        if coverage.applicant_type == 'children':
+            data = self.enrollment_application_service.get_wrapped_data_for_coverage(coverage)
+            for i, child in enumerate(data['children']):
+                #print("Generating child {}".format(i + 1))
+                applicant_type = "child{}".format(i)
+                xml = self.render_enrollment_xml(coverage, applicant_type, pdf_bytes)
+        else:
+            xml = self.render_enrollment_xml(coverage, coverage.applicant_type, pdf_bytes)
+        
+    
+        submission.data = xml
+        db.session.add(log)
+    
+        try:
+            
+            tasks.submit_stp_xml_to_dell.delay(log.id)
+            
+        except Exception as ex:
+            submission.status = EnrollmentSubmission.STATUS_FAILURE
+            log.status = SubmissionLog.STATUS_FAILURE
+            log.message = 'Error sending STP XML to Dell with message "%s"\n%s' % (
+            ex.message, traceback.format_exc())
+            db.session.commit()
+
+
+    def transmit_submission_to_dell(self, submission_id):
+        submission = self.get(submission_id)
+
 
     def submit_signed_application(self, enrollment_application):
         return EnrollmentSubmissionProcessor().submit_signed_enrollment(enrollment_application)

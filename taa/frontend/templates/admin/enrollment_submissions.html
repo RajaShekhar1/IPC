@@ -4,6 +4,7 @@
 {% block content %}
   <div class="container">
     <h3>Submissions</h3>
+    <h4>From {{ start_date }} to {{ end_date }}</h4>
     <table class="table table-striped" id="submissions">
       <thead>
       <tr>
@@ -53,7 +54,7 @@
                   data-bind="text: _.capitalize(status), css: get_submission_status_label_class(status)"></span>
         </td>
         <td data-bind="text: format_datetime(time)"></td>
-        <td data-bind="text: message"></td>
+        <td><pre data-bind="text: message"></pre></td>
         <td></td>
       </tr>
       <!-- /ko -->
