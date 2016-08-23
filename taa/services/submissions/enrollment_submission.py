@@ -27,10 +27,9 @@ class EnrollmentSubmissionService(object):
 
     def submit_wizard_enrollment(self, enrollment_application):
         # if True:
-        #    self.process_wizard_submission(enrollment_application.id)
+        #  self.process_wizard_submission(enrollment_application.id)
         # else:
-        tasks.process_wizard_enrollment(enrollment_application.id)
-        # tasks.process_wizard_enrollment.delay(enrollment_application.id)
+        tasks.process_wizard_enrollment.delay(enrollment_application.id)
 
     def submit_hi_acc_enrollments(self, start_time=None, end_time=None):
         tasks.process_hi_acc_enrollments.delay(start_time, end_time)
