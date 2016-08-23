@@ -187,11 +187,14 @@ def generate_enrollment_pdf(enrollment_record_id):
 @login_required
 @groups_required(['admins', 'home_office', 'agents'], all=False)
 def generate_enrollment_xml(enrollment_record_id):
-    item = enrollment_application_service.get_or_404(enrollment_record_id)
-    xml = generate_xml(item, 'employee')
-    response = make_response(xml)
-    response.headers['Content-Type'] = 'text/xml'
-    return response
+    app = enrollment_application_service.get_or_404(enrollment_record_id)
+    
+    xmls = enrollment_submission_service.generate_enrollment_xml_docs(app)
+    
+    zipstream = enrollment_submission_service.create_xml_zip(xmls)
+    
+    return send_file(zipstream, attachment_filename='enrollment_{}.zip'.format(
+        enrollment_record_id), as_attachment=True)
 
 
 def generate_xml(enrollment_record, form_for='employee'):

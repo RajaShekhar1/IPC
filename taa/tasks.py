@@ -245,23 +245,23 @@ def transmit_stp_xml(xml):
         ssl._create_default_https_context = ssl._create_unverified_context
         
     # Patch in a custom transport for the SOAP library code to force it to use the Proximo proxy, if present.
-    if os.environ.get('PROXIMO_URL', '') != '':
-        # Install the opener
-        proxy = urllib2.ProxyHandler({'http': os.environ.get('PROXIMO_URL', '')})
-        auth = urllib2.HTTPBasicAuthHandler()
-        custom_opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
-        urllib2.install_opener(custom_opener)
-
-        # Use a custom transport for the SOAP library.
-        class urllib2TransportProxy(urllib2Transport):
-            _wrapper_name = 'urllib2proxy'
-    
-            def __init__(self, **kwds):
-                urllib2Transport.__init__(self)
-                self.request_opener = custom_opener.open
-        
-        _http_connectors['urllib2proxy'] = urllib2TransportProxy
-        set_http_wrapper('urllib2proxy')
+    # if os.environ.get('PROXIMO_URL', '') != '':
+    #     # Install the opener
+    #     proxy = urllib2.ProxyHandler({'http': os.environ.get('PROXIMO_URL', '')})
+    #     auth = urllib2.HTTPBasicAuthHandler()
+    #     custom_opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+    #     urllib2.install_opener(custom_opener)
+    #
+    #     # Use a custom transport for the SOAP library.
+    #     class urllib2TransportProxy(urllib2Transport):
+    #         _wrapper_name = 'urllib2proxy'
+    #
+    #         def __init__(self, **kwds):
+    #             urllib2Transport.__init__(self)
+    #             self.request_opener = custom_opener.open
+    #
+    #     _http_connectors['urllib2proxy'] = urllib2TransportProxy
+    #     set_http_wrapper('urllib2proxy')
     
     if not taa_app.config['IS_STP_SIMULATE']:
         c = SoapClient(wsdl=taa_app.config['STP_URL'])

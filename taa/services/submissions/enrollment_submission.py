@@ -2,6 +2,7 @@ from datetime import datetime, time
 from io import BytesIO
 import json
 import traceback
+from zipfile import ZipFile
 
 from PyPDF2 import PdfFileReader, PdfFileWriter
 from StringIO import StringIO
@@ -82,35 +83,10 @@ class EnrollmentSubmissionService(object):
         """
 
         # Generate all the XML documents, one for each covered applicant.
-        xmls = []
-        for coverage in enrollment_application.coverages:
-            
-            # Filter out products that don't have STP submission by skipping them.
-            if not coverage.product.can_submit_stp():
-                continue
-            
-            # Render the PDF for this application to include in the XML output.
-            pdf_bytes = self.render_enrollment_pdf(coverage.enrollment, is_stp=True, product_id=coverage.product_id)
-            
-            # If this is coverage for children, add an XML doc for each child.
-            if coverage.applicant_type == 'children':
-                # Generate one for each child
-                data = self.enrollment_application_service.get_wrapped_data_for_coverage(coverage)
-                for i, child in enumerate(data['children']):
-                    #print("Generating child {}".format(i + 1))
-                    applicant_type = "child{}".format(i)
-                    xml = self.render_enrollment_xml(coverage, applicant_type, pdf_bytes=pdf_bytes)
-                    if xml:
-                        xmls.append((xml, applicant_type, coverage))
-            else:
-                # Otherwise, we add the Employee or Spouse XML doc if they chose coverage.
-                applicant_type = coverage.applicant_type
-                xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=pdf_bytes)
-                if xml:
-                    xmls.append((xml, applicant_type, coverage))
-            
+        xmls = self.generate_enrollment_xml_docs(enrollment_application)
+        
         # Create the submissions and schedule them for delivery.
-        for xml, applicant_type, coverage in xmls:
+        for xml, applicant_type, coverage, pdf_bytes in xmls:
             # Create a submission to track the status of this XML submission, include the XML in the data for the submission.
             submission = EnrollmentSubmission(
                 created_at=datetime.now(),
@@ -124,42 +100,51 @@ class EnrollmentSubmissionService(object):
             # Schedule a task to transmit this submission to Dell
             tasks.submit_stp_xml_to_dell.delay(submission.id)
 
-    def generate_xml_for_submission(self, coverage):
-        """
-        Given an EnrollmentDataWrap and associated submission, generate and submit the STP XML item to Dell for processing
-        """
-    
-        # Generate the PDF that gets included with the XML.
-        pdf_bytes = self.render_enrollment_pdf(coverage.enrollment, is_stp=True, product_id=coverage.product_id)
+    def generate_enrollment_xml_docs(self, enrollment_application):
+        # returns a list of (xml, applicant_type, coverage) tuples
+        xmls = []
+        for coverage in enrollment_application.coverages:
         
-        if coverage.applicant_type == 'children':
-            data = self.enrollment_application_service.get_wrapped_data_for_coverage(coverage)
-            for i, child in enumerate(data['children']):
-                #print("Generating child {}".format(i + 1))
-                applicant_type = "child{}".format(i)
-                xml = self.render_enrollment_xml(coverage, applicant_type, pdf_bytes)
-        else:
-            xml = self.render_enrollment_xml(coverage, coverage.applicant_type, pdf_bytes)
+            # Filter out products that don't have STP submission by skipping them.
+            if not coverage.product.can_submit_stp():
+                continue
         
+            # Render the PDF for this product's coverage to include in the XML output.
+            pdf_bytes = self.render_enrollment_pdf(coverage.enrollment, is_stp=True, product_id=coverage.product_id)
+        
+            # If this is coverage for children, add an XML doc for each child.
+            if coverage.applicant_type == 'children':
+                # Generate one for each child
+                data = self.enrollment_application_service.get_wrapped_data_for_coverage(coverage)
+                for i, child in enumerate(data['children']):
+                    # print("Generating child {}".format(i + 1))
+                    applicant_type = "child{}".format(i)
+                    xml = self.render_enrollment_xml(coverage, applicant_type, pdf_bytes=pdf_bytes)
+                    if xml:
+                        xmls.append((xml, applicant_type, coverage, pdf_bytes))
+            else:
+                # Otherwise, we add the Employee or Spouse XML doc if they chose coverage.
+                applicant_type = coverage.applicant_type
+                xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=pdf_bytes)
+                if xml:
+                    xmls.append((xml, applicant_type, coverage, pdf_bytes))
     
-        submission.data = xml
-        db.session.add(log)
-    
-        try:
-            
-            tasks.submit_stp_xml_to_dell.delay(log.id)
-            
-        except Exception as ex:
-            submission.status = EnrollmentSubmission.STATUS_FAILURE
-            log.status = SubmissionLog.STATUS_FAILURE
-            log.message = 'Error sending STP XML to Dell with message "%s"\n%s' % (
-            ex.message, traceback.format_exc())
-            db.session.commit()
+        return xmls
 
+    def create_xml_zip(self, xmls):
+        zipstream = BytesIO()
+        
+        with ZipFile(zipstream, 'w') as zip:
+            for xml, applicant_type, coverage, pdf_bytes in xmls:
+                
+                fn = 'case_{}_enrollment_{}_{}_{}.xml'.format(coverage.enrollment.case.id,
+                                                              coverage.enrollment.id,
+                                                              coverage.product.get_base_product_code(),
+                                                              applicant_type)
+                zip.writestr(fn, xml.encode('latin-1'))
 
-    def transmit_submission_to_dell(self, submission_id):
-        submission = self.get(submission_id)
-
+        zipstream.seek(0)
+        return zipstream
 
     def submit_signed_application(self, enrollment_application):
         return EnrollmentSubmissionProcessor().submit_signed_enrollment(enrollment_application)
