@@ -5,6 +5,10 @@ import json
 import time
 import traceback
 
+import urllib2
+
+import os
+
 from taa import db, app as taa_app
 from taa.services import LookupService
 from taa.services.enrollments import SelfEnrollmentEmailLog
@@ -107,7 +111,7 @@ def process_wizard_enrollment(task, enrollment_id):
 
 def send_admin_error_email(error_message, error_details):
 
-    details = '\n<br>'.join([err for err in error_details])
+    details = '\n<br>'.join([err.replace('\n', '<br>') for err in error_details])
     body = u"{} <br><br>Errors: <br><br>{}".format(
         error_message, details.replace('<br>', '\n')
     )
@@ -233,12 +237,34 @@ def submit_stp_xml_to_dell(task, submission_id):
 def transmit_stp_xml(xml):
     "Make the actual SOAP call to the Dell web service for submitting XML data."
     from pysimplesoap.client import SoapClient
-    # app['IS_STP_STORE_SOURCE']
-    # app['IS_STP_STORE_RESULT']
-    c = SoapClient(wsdl=taa_app.config['STP_URL'])
-    # guid = 'SIMULATEDRUN'
+    from pysimplesoap.transport import _http_connectors, set_http_wrapper, urllib2Transport
+
+    #  The ssl monkey-patch is to avoid certificate verification.
+    import ssl
+    if hasattr(ssl, '_create_unverified_context'):
+        ssl._create_default_https_context = ssl._create_unverified_context
+        
+    # Patch in a custom transport for the SOAP library code to force it to use the Proximo proxy, if present.
+    if os.environ.get('PROXIMO_URL', '') != '':
+        # Install the opener
+        proxy = urllib2.ProxyHandler({'http': os.environ.get('PROXIMO_URL', '')})
+        auth = urllib2.HTTPBasicAuthHandler()
+        custom_opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+        urllib2.install_opener(custom_opener)
+
+        # Use a custom transport for the SOAP library.
+        class urllib2TransportProxy(urllib2Transport):
+            _wrapper_name = 'urllib2proxy'
+    
+            def __init__(self, **kwds):
+                urllib2Transport.__init__(self)
+                self.request_opener = custom_opener.open
+        
+        _http_connectors['urllib2proxy'] = urllib2TransportProxy
+        set_http_wrapper('urllib2proxy')
     
     if not taa_app.config['IS_STP_SIMULATE']:
+        c = SoapClient(wsdl=taa_app.config['STP_URL'])
         return c.TXlifeProcessor(xml)
     #     r = result['TXlifeProcessorResult']
     #     guid = r[r.find('TransRefGUID')+13:r.find('TransRefGUID')+13+36]
