@@ -338,7 +338,7 @@ class EnrollmentDataWrap(object):
             questions = self.data['employee']['soh_questions']
         else:
             questions = self.data['employee_soh_questions']
-        
+
         # Filter out questions only intended for spouse
         return [q for q in questions if not q.get('is_spouse_only')]
 
@@ -351,7 +351,7 @@ class EnrollmentDataWrap(object):
 
         # Filter out questions intended for employee only.
         return [q for q in questions if not q.get('is_employee_only')]
-    
+
     def get_child_soh_questions(self, child_index):
         child = self.data['children'][child_index]
         if 'soh_questions' in child:
@@ -409,11 +409,12 @@ class EnrollmentDataWrap(object):
         }
 
         # "Shorthand" beneficiary settings
-        if len(self.data.get('employee_beneficiary', '')) > 0:
+        if self.data.get('employee_beneficiary', '') == 'spouse':
             bene_data['employee_primary'] += [
                 self.get_beneficiary_family_member('spouse')
             ]
-        if len(self.data.get('spouse_beneficiary', '')) > 0:
+        if (self.data.get('spouse_beneficiary', '') == 'spouse' or
+                self.data.get('spouse_beneficiary', '') == 'employee'):
             bene_data['spouse_primary'] += [
                 self.get_beneficiary_family_member('employee')
             ]
@@ -424,7 +425,7 @@ class EnrollmentDataWrap(object):
                 bene_data['employee_primary'] += [
                     self.get_beneficiary_dict('employee_beneficiary{}'.format(num))
                 ]
-            if self.data.get('emp_cont_bene{}_name'.format(num)):
+            if self.data.get('employee_contingent_beneficiary{}_name'.format(num)):
                 bene_data['employee_contingent'] += [
                     self.get_beneficiary_dict('employee_contingent_beneficiary{}'.format(num))
                 ]
