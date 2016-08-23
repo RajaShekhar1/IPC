@@ -209,10 +209,13 @@ Sls=
 ESIGN_DISCLOSURE_URI = env_get_text('ESIGN_DISCLOSURE_URI', '/')
 
 # Dell Straight-Through-Processing (STP) settings
-IS_STP_DEBUG = True          # Use Dell's "model office" instead of production
-IS_STP_SIMULATE = True       # Don't even send to "model office", but pretend to
-IS_STP_STORE_SOURCE = True   # Flag to store generated XML STP requests in DB
-IS_STP_STORE_RESULT = True   # Flag to store XML STP responses in DB
-STP_DEBUG_URL = 'https://extranetapps-mo.tagtpa.com/TxLifeImport/TxLife.asmx?WSDL'
-STP_LIVE_URL = 'https://extranetapps.tagtpa.com/TxLifeImport/TxLife.asmx?WSDL'
-STP_URL = STP_DEBUG_URL if IS_STP_DEBUG else STP_LIVE_URL
+
+# Use Dell's "model office" instead of production if True.
+IS_STP_DEBUG = env_get_bool('IS_STP_DEBUG', True)
+
+# If True, Don't even send to "model office", but pretend to.
+IS_STP_SIMULATE = env_get_bool('IS_STP_SIMULATE', True)
+
+STP_URL = env_get_text('STP_URL', 'https://extranetapps-mo.tagtpa.com/TxLifeImport/TxLife.asmx?WSDL')
+#STP_LIVE_URL = env_get_text('STP_LIVE_URL', 'https://extranetapps.tagtpa.com/TxLifeImport/TxLife.asmx?WSDL')
+#STP_URL = STP_DEBUG_URL if IS_STP_DEBUG else STP_LIVE_URL
