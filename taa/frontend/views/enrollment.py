@@ -582,7 +582,11 @@ def process_wizard_submission(case, wizard_results):
     if wizard_results[0].get('is_preview'):
         enrollment_application.is_preview = True
     db.session.commit()
-
+    
+    if enrollment_application.is_preview:
+        # We don't need anything else done for a preview, just the DB record created.
+        return enrollment_application
+    
     if wizard_results[0].get('send_summary_email'):
         from taa import tasks
         summary_email_service = LookupService("SummaryEmailService")
