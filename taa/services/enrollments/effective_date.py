@@ -200,17 +200,22 @@ class FirstFridayFollowingRule(object):
         self.minimum_days = int(minimum_days)
 
     def get_effective_date(self, enrollment_date):
-        amount_of_days = monthrange(enrollment_date.year, enrollment_date.month)[1] - 1
-        nth_friday = 0
-        fridays = {}
-        for x in range(0, amount_of_days):
-            if (enrollment_date.replace(day=1) + timedelta(days=x)).weekday() == 4:
-                nth_friday += 1
-                fridays[enrollment_date.replace(day=1) + timedelta(days=x)] = nth_friday
-            else:
-                fridays[enrollment_date.replace(day=1) + timedelta(days=x)] = 0
-
-        day_offset = timedelta(days=self.minimum_days)
-        shifted_date = enrollment_date + day_offset
-        distance = (4 - shifted_date.weekday())
-        return roll_date_to_friday(shifted_date, distance, fridays)
+        
+        loop_date = enrollment_date + timedelta(days=self.minimum_days)
+        FRIDAY_DOW_INT = 4
+        while loop_date.weekday() != FRIDAY_DOW_INT:
+            loop_date += timedelta(days=1)
+            
+        # loop_date is now the first friday on or after today + self.minimum_days.
+        # Return the index of which friday it is in the month.
+        friday_index = self.get_friday_index(loop_date)
+        
+        if friday_index >= 5:
+            # Add a week to get to the first friday of the next month
+            loop_date += timedelta(days=7)
+            
+        return loop_date
+        
+    def get_friday_index(self, date):
+        return int(date.day / 7) + 1
+        

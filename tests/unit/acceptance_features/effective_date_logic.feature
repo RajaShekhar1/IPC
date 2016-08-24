@@ -113,6 +113,8 @@ Feature: Allow different types of effective dates to be computed automatically b
       | 12/20/2016  | 12/23/2016     |
       # The last Friday, the 30th, is a 5th Friday, so we want to make sure it skips that.
       | 12/21/2016  | 1/6/2017       |
+      # This was causing problems with the first implementation, when there is no next friday in the current month.
+      | 08/24/2016  | 9/2/2016       |
 
 
 
