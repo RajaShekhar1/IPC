@@ -520,8 +520,11 @@
                     <br><br>
                   </div>
                   <div>
+                    <div id="review-docs-warning" class="alert alert-warning" data-bind="visible: !applicant_sig_check_1()">
+                      After clicking the Review Application Documents button, check the box below
+                    </div>
                     <label style="margin-right: 15px;">
-                      <input class="ace" data-bind="checked: applicant_sig_check_1, enable: applicant_sig_check_1_enabled"
+                      <input class="ace" data-bind="checked: applicant_sig_check_1, enable: applicant_sig_check_1_once"
                              name="app_sig_check1" type="checkbox">
                     <span class="lbl padding-16" id="applicant_sig_check_1">
                       I acknowledge I have reviewed the documents related to this enrollment
@@ -536,22 +539,24 @@
                         <br>
                         <br>
                         <table>
-                        <tr>
+                          <tr>
                             <td>
-                                Last name:
+                              Last name:
                             </td>
                             <td>
-                                <input type="text" class="input-small" placeholder="Last Name" name="step_6_last_name" data-bind="textInput: step_6_last_name">
+                              <input type="text" class="input-small" placeholder="Last Name" name="step_6_last_name" data-bind="textInput: step_6_last_name">
+                              <span class="error" data-bind="visible: !applicant_sig_check_2()">Last name must match enrollee's</span>
                             </td>
-                        </tr>
-                        <tr>
+                          </tr>
+                          <tr>
                             <td>
-                                Last 4 of SSN:&nbsp;&nbsp;
+                              Last 4 of SSN:&nbsp;&nbsp;
                             </td>
                             <td>
-                                <input type="text" class="input-mini input-mask-last-4-ssn" placeholder="####" name="step_6_ssn" data-bind="textInput: step_6_ssn">
+                              <input type="text" class="input-mini input-mask-last-4-ssn" placeholder="####" name="step_6_ssn" data-bind="textInput: step_6_ssn">
+                              <span class="error" data-bind="visible: !applicant_sig_check_3()">SSN last-4 must match enrollee's<span>
                             </td>
-                        </tr>
+                          </tr>
                         </table>
                     </span>
                   </label>
