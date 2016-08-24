@@ -1646,10 +1646,10 @@ var wizard_viewmodel = (function () {
     };
 
     self.applicant_signed = ko.observable(false);
-    self.applicant_sig_check_1_enabled = ko.observable(false);
-    self.applicant_sig_check_1 = ko.observable();
-    self.applicant_sig_check_2 = ko.observable();
-    self.applicant_sig_check_3 = ko.observable();
+    self.applicant_sig_check_1 = ko.observable(false);
+    self.applicant_sig_check_1_once = ko.observable(false);
+    self.applicant_sig_check_2 = ko.observable(false);
+    self.applicant_sig_check_3 = ko.observable(false);
     self.step_6_last_name = ko.observable("");
     self.step_6_ssn = ko.observable("");
 
@@ -1734,6 +1734,10 @@ var wizard_viewmodel = (function () {
       }
 
       $.when(submit_preview_application(results)).done(function(response) {
+        // Check the box automatically
+        self.applicant_sig_check_1(true);
+        self.applicant_sig_check_1_once(true);
+
         var enrollment_id = response.enrollment_id;
         self.pdf_url = '/enrollments/records/' + enrollment_id + '/pdf';
 
@@ -1755,10 +1759,6 @@ var wizard_viewmodel = (function () {
                 confirm: {
                   label: "Close",
                   className: "width-25 pull-right btn btn-primary",
-                  callback: function () {
-                    self.applicant_sig_check_1_enabled(true);
-                    self.applicant_sig_check_1(true);
-                  }
                 }
               }
             }); // bootbox.dialog
