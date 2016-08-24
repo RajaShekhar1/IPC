@@ -201,7 +201,7 @@ class EnrollmentSubmissionService(object):
         """
         Used for viewing enrollments that are generated and signed without using docusign.
         """
-
+        
         submission_processor = EnrollmentSubmissionProcessor()
         # components, data_wrap = submission_processor.generate_envelope_components(enrollment_record)
         components = submission_processor.generate_document_components(enrollment_record, is_stp, product_id=product_id)

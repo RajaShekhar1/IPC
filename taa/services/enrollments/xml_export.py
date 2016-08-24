@@ -453,46 +453,53 @@ def get_agents(data, enrollment):
 
 
 def test_wizard_xml():
+    
+    
     from zipfile import ZipFile
     from io import BytesIO
-    from taa import db
+    from taa import db, app
     from taa.services.enrollments.models import EnrollmentApplication
     from taa.services.submissions import EnrollmentSubmissionService
-    apps = db.session.query(EnrollmentApplication).filter(EnrollmentApplication.signature_time >= '2016-08-08'
-          ).options(db.subqueryload('coverages').joinedload('enrollment').joinedload('case').joinedload('owner_agent')
-          ).all()
     
-    coverages = []
-    for app in apps:
-        census_record = app.census_record
-        other_enrollments = census_record.enrollment_applications
-        for coverage in app.coverages:
-            enrollment = coverage.enrollment
-            case = enrollment.case
-            splits = case.agent_splits
-            for split in splits:
-                agent = split.agent
-            
-            if coverage.product.can_submit_stp():
-                coverages.append(coverage)
-
-    print("Processing {} coverages: ".format(len(coverages)))
-
-    zipstream = BytesIO()
-    app_pdfs = set()
-    with ZipFile(zipstream, 'w') as zip:
+    with app.app_context():
+        
+        apps = db.session.query(EnrollmentApplication
+                                ).filter(EnrollmentApplication.signature_time >= '2016-08-08'
+              ).options(db.subqueryload('coverages').joinedload('enrollment').joinedload('case').joinedload('owner_agent')
+              ).all()
+        
+        coverages = []
+        for enrollment_record in apps:
+            for coverage in enrollment_record.coverages:
+                if coverage.product.can_submit_stp():
+                    coverages.append(coverage)
+    
+        print("Processing {} coverages: ".format(len(coverages)))
+    
+        from sqlalchemy.orm.util import object_state
+    
+        # for coverage in coverages:
+        #
+        #     print("Processing app #{}, applicant {}, product '{}'".format(coverage.enrollment.id, coverage.applicant_type,
+        #                                                                   coverage.product.name))
+        #
+        
+        zipstream = BytesIO()
+        app_pdfs = set()
+        #with ZipFile(zipstream, 'w') as zip_:
         for coverage in coverages:
-            print("Processing app #{}, applicant {}, product '{}'".format(coverage.enrollment.id, coverage.applicant_type,
+            is_detached = object_state(coverage).detached
+            print("Detatched: {} Processing app #{}, applicant {}, product '{}'".format(is_detached, coverage.enrollment.id, coverage.applicant_type,
                                                                           coverage.product.name))
             
             if coverage.enrollment.id not in app_pdfs:
                 # Generate and write out the PDF
                 pdf_bytes = EnrollmentSubmissionService().render_enrollment_pdf(coverage.enrollment, is_stp=True,
                                                                                  product_id=coverage.product_id)
-                zip.writestr('enrollment_{}-{}.pdf'.format(coverage.enrollment.id, coverage.product.get_base_product_code()), pdf_bytes)
+                #zip_.writestr('enrollment_{}-{}.pdf'.format(coverage.enrollment.id, coverage.product.get_base_product_code()), pdf_bytes)
                 app_pdfs.add(coverage.enrollment.id)
             
-
+    
             xmls = []
             if coverage.applicant_type == 'children':
                 # Generate one for each child
@@ -513,13 +520,13 @@ def test_wizard_xml():
             for xml, applicant_type in xmls:
     
                 fn = 'enrollment_{}-{}-{}.xml'.format(coverage.enrollment.id, coverage.product.get_base_product_code(), applicant_type)
-                zip.writestr(fn, xml.encode('latin-1'))
-            
-    print("Writing Zip file...")
-    f = open('out.zip', 'w+')
-    f.write(zipstream.getvalue())
-    f.close()
-    print("Done")
+                #zip_.writestr(fn, xml.encode('latin-1'))
+                
+        # print("Writing Zip file...")
+        # f = open('out.zip', 'w+')
+        # f.write(zipstream.getvalue())
+        # f.close()
+        # print("Done")
 
 if __name__ == "__main__":
     test_wizard_xml()
