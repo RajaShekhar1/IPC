@@ -206,7 +206,7 @@ Sls=
 -----END PGP PUBLIC KEY BLOCK-----""")
 
 # Electronic signature discloure link
-ESIGN_DISCLOSURE_URI = env_get_text('ESIGN_DISCLOSURE_URI', '/')
+ESIGN_DISCLOSURE_URI = env_get_text('ESIGN_DISCLOSURE_URI', 'http://5starlifeinsurance.com/esign_disclosure')
 
 # Dell Straight-Through-Processing (STP) settings
 
