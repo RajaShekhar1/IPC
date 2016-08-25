@@ -53,9 +53,6 @@ class FlaskCelery(Celery):
 celery = FlaskCelery()
 
 
-
-
-
 @celery.task()
 def send_email(email_log_id):
     self_enrollment_email_service = LookupService('SelfEnrollmentEmailService')
