@@ -53,17 +53,10 @@ class FlaskCelery(Celery):
 celery = FlaskCelery()
 
 
-class SqlAlchemyTask(celery.Task):
-    """
-    Ensures that the database session is removed after each task is run.
-    """
-    abstract = True
-
-    
 
 
 
-@celery.task(base=SqlAlchemyTask)
+@celery.task()
 def send_email(email_log_id):
     self_enrollment_email_service = LookupService('SelfEnrollmentEmailService')
 
@@ -105,7 +98,7 @@ FIVE_MINUTES = 5 * 60
 ONE_HOUR = 1 * 60 * 60
 
 
-@celery.task(base=SqlAlchemyTask)
+@celery.task()
 def send_summary_email(standardized_data, wizard_results, enrollment_application_id, body):
     from taa.models import SummaryEmailLog
     enrollment_application_service = LookupService("EnrollmentApplicationService")
@@ -128,7 +121,7 @@ def send_summary_email(standardized_data, wizard_results, enrollment_application
     db.session.commit()
 
 
-@celery.task(base=SqlAlchemyTask, bind=True, default_retry_delay=FIVE_MINUTES)
+@celery.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def process_enrollment_upload(task, batch_id):
     submission_service = LookupService("EnrollmentSubmissionService")
     errors = submission_service.process_import_submission_batch(batch_id)
@@ -138,7 +131,7 @@ def process_enrollment_upload(task, batch_id):
         task.retry(exc=Exception(errors[0]))
 
 
-@celery.task(base=SqlAlchemyTask, bind=True, default_retry_delay=ONE_HOUR)
+@celery.task(bind=True, default_retry_delay=ONE_HOUR)
 def process_wizard_enrollment(task, enrollment_id):
     submission_service = LookupService("EnrollmentSubmissionService")
     try:
@@ -169,7 +162,7 @@ def send_admin_error_email(error_message, error_details):
     )
 
 
-@celery.task(base=SqlAlchemyTask, bind=True, default_retry_delay=FIVE_MINUTES)
+@celery.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def process_hi_acc_enrollments(task):
     submission_service = LookupService('EnrollmentSubmissionService')
 
@@ -201,7 +194,7 @@ def process_hi_acc_enrollments(task):
         send_admin_error_email("Error generating HI/ACC submissions for Dell", [traceback.format_exc()])
 
 
-@celery.task(base=SqlAlchemyTask, bind=True, default_retry_delay=FIVE_MINUTES)
+@celery.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def submit_csv_to_dell(task, submission_id):
     """
     Task to submit a csv item to dell for processing
@@ -232,7 +225,7 @@ def submit_csv_to_dell(task, submission_id):
         task.retry()
 
 
-@celery.task(base=SqlAlchemyTask, bind=True, default_retry_delay=ONE_HOUR)
+@celery.task(bind=True, default_retry_delay=ONE_HOUR)
 def submit_stp_xml_to_dell(task, submission_id):
     """
     Task to submit an STP XML item to Dell for processing. XML has already been generated and is ready for delivery.
@@ -316,7 +309,7 @@ def transmit_stp_xml(xml):
     return None
 
 
-@celery.task(base=SqlAlchemyTask, bind=True, default_retry_delay=ONE_HOUR)
+@celery.task(bind=True, default_retry_delay=ONE_HOUR)
 def process_paylogix_export(task, submission_id):
     submission_service = LookupService('EnrollmentSubmissionService')
     """:type: taa.services.submissions.EnrollmentSubmissionService"""
@@ -337,7 +330,7 @@ def process_paylogix_export(task, submission_id):
         # No retry on this task since it will likely fail without intervention.
 
 
-@celery.task(base=SqlAlchemyTask, bind=True, default_retry_delay=ONE_HOUR)
+@celery.task(bind=True, default_retry_delay=ONE_HOUR)
 def process_paylogix_csv_generation(task):
     submission_service = LookupService('EnrollmentSubmissionService')
     """:type: taa.services.submissions.EnrollmentSubmissionService"""
@@ -360,7 +353,7 @@ def process_paylogix_csv_generation(task):
 
 
 # Exports that run in the background
-@celery.task(base=SqlAlchemyTask)
+@celery.task()
 def export_user_case_enrollments(export_id):
     enrollment_export_service = LookupService('EnrollmentExportService')
 
