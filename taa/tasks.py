@@ -3,9 +3,15 @@
 import json
 import time
 import traceback
+from xml.etree import ElementTree
+import os
+import ssl
+from urlparse import urlparse
 
-import flask
 from celery import Celery
+import flask
+from pysimplesoap.client import SoapClient
+from pysimplesoap.transport import set_http_wrapper
 
 from taa import db, app as taa_app
 from taa.services import LookupService
@@ -253,7 +259,7 @@ def submit_stp_xml_to_dell(task, submission_id):
         # Success
         submission.status = EnrollmentSubmission.STATUS_SUCCESS
         log.status = SubmissionLog.STATUS_SUCCESS
-        log.message = unicode(result)
+        log.message = json.dumps(result)
         db.session.commit()
 
     except Exception as ex:
@@ -269,41 +275,62 @@ def submit_stp_xml_to_dell(task, submission_id):
 
 def transmit_stp_xml(xml):
     "Make the actual SOAP call to the Dell web service for submitting XML data."
-    from pysimplesoap.client import SoapClient
-    from pysimplesoap.transport import _http_connectors, set_http_wrapper, urllib2Transport
-
-    #  The ssl monkey-patch is to avoid certificate verification.
-    import ssl
+    
+    # This ssl monkey-patch is to avoid certificate verification.
     if hasattr(ssl, '_create_unverified_context'):
         ssl._create_default_https_context = ssl._create_unverified_context
         
-    # Patch in a custom transport for the SOAP library code to force it to use the Proximo proxy, if present.
-    # if os.environ.get('PROXIMO_URL', '') != '':
-    #     # Install the opener
-    #     proxy = urllib2.ProxyHandler({'http': os.environ.get('PROXIMO_URL', '')})
-    #     auth = urllib2.HTTPBasicAuthHandler()
-    #     custom_opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
-    #     urllib2.install_opener(custom_opener)
-    #
-    #     # Use a custom transport for the SOAP library.
-    #     class urllib2TransportProxy(urllib2Transport):
-    #         _wrapper_name = 'urllib2proxy'
-    #
-    #         def __init__(self, **kwds):
-    #             urllib2Transport.__init__(self)
-    #             self.request_opener = custom_opener.open
-    #
-    #     _http_connectors['urllib2proxy'] = urllib2TransportProxy
-    #     set_http_wrapper('urllib2proxy')
+    # Use a custom transport for the SOAP library code to force it to use the Proximo proxy, if present.
+    proxy = None
+    if os.environ.get('PROXIMO_URL', '') != '':
+        # Use the pycurl transport because its proxy support works with proximo
+        proxy_url = os.environ.get('PROXIMO_URL', '')
+        parsed_url = urlparse(proxy_url)
+        proxy = dict(proxy_host=parsed_url.hostname, proxy_user=parsed_url.username,
+                                  proxy_pass=parsed_url.password, proxy_port=80)
+        
+        # Tell pysimplesoap to use the pycurl transport
+        set_http_wrapper('pycurl')
     
     if not taa_app.config['IS_STP_SIMULATE']:
-        c = SoapClient(wsdl=taa_app.config['STP_URL'])
-        return c.TXlifeProcessor(xml)
-    #     r = result['TXlifeProcessorResult']
-    #     guid = r[r.find('TransRefGUID')+13:r.find('TransRefGUID')+13+36]
-    # print('[SENT] {}'.format(guid))
+        client = SoapClient(wsdl=taa_app.config['STP_URL'], proxy=proxy)
+        response_dict = client.TXlifeProcessor(xml)
+    else:
+        response_dict = None
     
-    return None
+    return parse_stp_response(response_dict)
+        
+        
+def parse_stp_response(response_dict):
+    '''
+    Example response:
+    {'TXlifeProcessorResult':
+    u'<?xml version="1.0"?><TXLife xmlns="http://ACORD.org/Standards/Life/2"><UserAuthResponse xmlns=""><TransResult><ResultCode tc="1">Success</ResultCode></TransResult></UserAuthResponse><TxLifeResponse xmlns=""><TransRefGUID>f63725d5-3530-4ec7-bb46-81c9b48e1389</TransRefGUID><TransType tc="103">New Business Reqeust</TransType><TransExeDate>2016-08-25</TransExeDate><TransExeTime>15:44:46</TransExeTime><TransMode tc="2">Original</TransMode><TransResult><ResultCode tc="5">Failure - lbweb02-01-mo</ResultCode><ResultInfo><ResultInfoCode tc="99001">Error Loading Company[67].</ResultInfoCode><ResultInfoDesc>Required CompanyNumber or ExtensionCode not found.</ResultInfoDesc></ResultInfo></TransResult></TxLifeResponse></TXLife>'
+    }
+    '''
+    
+    if not response_dict:
+        return dict(
+            status='Not Attempted',
+            message='IS_STP_SIMULATE is TRUE, no STP transmission attempted',
+            guid=None,
+            resp=None)
+    
+    resp = response_dict['TXlifeProcessorResult']
+    
+    doc = ElementTree.fromstring(resp)
+    
+    # Get the GUID
+    guid = doc.findall('./TxLifeResponse/TransRefGUID')[0].text
+    
+    # Get the status
+    e = doc.findall('./TxLifeResponse/TransResult/ResultCode')[0]
+    message = e.text
+    if message.startswith('Failure'):
+        return dict(status='Failure', message=message, guid=guid, resp=resp)
+    else:
+        return dict(status='Success', message=message, guid=guid, resp=resp)
+
 
 
 @celery.task(bind=True, default_retry_delay=ONE_HOUR)

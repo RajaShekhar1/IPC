@@ -183,10 +183,8 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
             'method': PAYMENT_METHODS['5'],
         }
         
-    try:
-        is_debug = current_app.config['IS_STP_DEBUG']
-    except:
-        is_debug = True
+    is_debug = current_app.config.get('IS_STP_DEBUG', True)
+    
     vars = {
         'applicant_type': applicant_type,
         'meta': {
