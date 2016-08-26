@@ -96,3 +96,4 @@ webassets==0.11.1
 Werkzeug==0.11.9
 pysftp==0.2.9
 paramiko==2.0.1
+pycurl==7.43.0
