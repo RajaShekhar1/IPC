@@ -387,7 +387,7 @@ class SummaryEmailLog(SummaryEmailSerializer, db.Model):
     STATUS_FAILURE = u'failure'
     STATUS_SUCCESS = u'success'
 
-    enrollment_application = db.relationship('EnrollmentApplication', backref='emails')
+    enrollment_application = db.relationship('EnrollmentApplication', backref='summary_emails')
 
 
 

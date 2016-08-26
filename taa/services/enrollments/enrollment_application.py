@@ -135,7 +135,11 @@ class EnrollmentApplicationService(DBService):
 
         # Remove any import batch data
         self.batch_item_service.delete_for_enrollment(enrollment_application)
-
+        
+        # Remove any logs
+        for log in enrollment_application.summary_emails:
+            db.session.delete(log)
+        
         # Remove the application data row
         self.delete(enrollment_application)
 
