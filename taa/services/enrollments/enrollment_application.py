@@ -248,7 +248,7 @@ class EnrollmentApplicationService(DBService):
             
             # If this is a preview, mark the status as pending
             if wrapped_data.is_preview():
-                return EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
+                return ''
             
             elif all(map(lambda d: d['did_decline'], wizard_data)):
                 return EnrollmentApplication.APPLICATION_STATUS_DECLINED
