@@ -144,10 +144,11 @@ class EnrollmentImportService(object):
 
         # Riders
         for prefix, long_prefix in [('emp', 'employee'), ('sp', 'spouse')]:
-            for rider_code in RiderService().get_import_rider_codes():
-                has_rider = data.get('{}_rider_{}'.format(prefix, rider_code.lower()))
-                if has_rider:
-                    out_data['rider_data'][prefix].append({'code': rider_code})
+            for rider in RiderService().get_riders_for_product(product):
+                has_rider = data.get('{}_rider_{}'.format(prefix, rider.code.lower()))
+                # TODO: Check this is right to compare == 'Y'
+                if has_rider == 'Y':
+                    out_data['rider_data'][prefix].append(rider.to_json())
 
         return out_data
 
