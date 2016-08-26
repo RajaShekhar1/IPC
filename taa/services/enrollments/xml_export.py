@@ -473,57 +473,47 @@ def test_wizard_xml():
     
         print("Processing {} coverages: ".format(len(coverages)))
     
-        from sqlalchemy.orm.util import object_state
-    
-        # for coverage in coverages:
-        #
-        #     print("Processing app #{}, applicant {}, product '{}'".format(coverage.enrollment.id, coverage.applicant_type,
-        #                                                                   coverage.product.name))
-        #
-        
         zipstream = BytesIO()
         app_pdfs = set()
-        #with ZipFile(zipstream, 'w') as zip_:
-        for coverage in coverages:
-            is_detached = object_state(coverage).detached
-            print("Detatched: {} Processing app #{}, applicant {}, product '{}'".format(is_detached, coverage.enrollment.id, coverage.applicant_type,
-                                                                          coverage.product.name))
-            
-            if coverage.enrollment.id not in app_pdfs:
-                # Generate and write out the PDF
-                pdf_bytes = EnrollmentSubmissionService().render_enrollment_pdf(coverage.enrollment, is_stp=True,
-                                                                                 product_id=coverage.product_id)
-                #zip_.writestr('enrollment_{}-{}.pdf'.format(coverage.enrollment.id, coverage.product.get_base_product_code()), pdf_bytes)
-                app_pdfs.add(coverage.enrollment.id)
-            
-    
-            xmls = []
-            if coverage.applicant_type == 'children':
-                # Generate one for each child
-                data = EnrollmentApplicationService().get_wrapped_data_for_coverage(coverage)
-                for i, child in enumerate(data['children']):
-                    print("Generating child {}".format(i + 1))
-                    applicant_type = "child{}".format(i)
+        with ZipFile(zipstream, 'w') as zip_:
+            for coverage in coverages:
+                print("Processing app #{}, applicant {}, product '{}'".format(coverage.enrollment.id, coverage.applicant_type,
+                                                                              coverage.product.name))
+                
+                if (coverage.enrollment.id, coverage.product_id) not in app_pdfs:
+                    # Generate and write out the PDF
+                    pdf_bytes = EnrollmentSubmissionService().render_enrollment_pdf(coverage.enrollment, is_stp=True,
+                                                                                     product_id=coverage.product_id)
+                    zip_.writestr('enrollment_{}-{}.pdf'.format(coverage.enrollment.id, coverage.product.get_base_product_code()), pdf_bytes)
+                    app_pdfs.add((coverage.enrollment.id, coverage.product_id))
+                
+                xmls = []
+                if coverage.applicant_type == 'children':
+                    # Generate one for each child
+                    data = EnrollmentApplicationService().get_wrapped_data_for_coverage(coverage)
+                    for i, child in enumerate(data['children']):
+                        print("Generating child {}".format(i + 1))
+                        applicant_type = "child{}".format(i)
+                        xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=None)
+                        if xml:
+                            xmls.append((xml, applicant_type))
+                else:
+                    
+                    applicant_type = coverage.applicant_type
                     xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=None)
                     if xml:
                         xmls.append((xml, applicant_type))
-            else:
                 
-                applicant_type = coverage.applicant_type
-                xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=None)
-                if xml:
-                    xmls.append((xml, applicant_type))
-            
-            for xml, applicant_type in xmls:
-    
-                fn = 'enrollment_{}-{}-{}.xml'.format(coverage.enrollment.id, coverage.product.get_base_product_code(), applicant_type)
-                #zip_.writestr(fn, xml.encode('latin-1'))
-                
-        # print("Writing Zip file...")
-        # f = open('out.zip', 'w+')
-        # f.write(zipstream.getvalue())
-        # f.close()
-        # print("Done")
+                for xml, applicant_type in xmls:
+        
+                    fn = 'enrollment_{}-{}-{}.xml'.format(coverage.enrollment.id, coverage.product.get_base_product_code(), applicant_type)
+                    zip_.writestr(fn, xml.encode('latin-1'))
+                    
+        print("Writing Zip file...")
+        f = open('out.zip', 'w+')
+        f.write(zipstream.getvalue())
+        f.close()
+        print("Done")
 
 if __name__ == "__main__":
     test_wizard_xml()

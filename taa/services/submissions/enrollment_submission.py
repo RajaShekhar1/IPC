@@ -204,7 +204,7 @@ class EnrollmentSubmissionService(object):
         
         submission_processor = EnrollmentSubmissionProcessor()
         # components, data_wrap = submission_processor.generate_envelope_components(enrollment_record)
-        components = submission_processor.generate_document_components(enrollment_record, is_stp, product_id=product_id)
+        components = submission_processor.generate_document_components(enrollment_record, is_stp, only_product_id=product_id)
         pdfs = [c.generate_pdf_bytes() for c in components]
 
         writer = PdfFileWriter()
@@ -610,7 +610,7 @@ class EnrollmentSubmissionProcessor(object):
                                                                     enrollment_record=enrollment_application),
                                     all_product_data)
 
-    def generate_document_components(self, enrollment_application, is_stp=False, product_id=None):
+    def generate_document_components(self, enrollment_application, is_stp=False, only_product_id=None):
         """Used for generating PDFs from enrollments signed in the wizard, outside of docusign"""
 
         case = enrollment_application.case
@@ -634,13 +634,12 @@ class EnrollmentSubmissionProcessor(object):
         components = []
 
         # don't include for Dell STP XML
-        if not is_stp:
-            if case.include_cover_sheet:
-                from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
-                components.append(CoverSheetAttachment([emp_recip], EnrollmentDataWrap(all_product_data[0], case,
-                                                                                   enrollment_record=enrollment_application,
-                                                                                   ),
-                                                   all_product_data, enrollment_application=enrollment_application))
+        if not is_stp and case.include_cover_sheet:
+            from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
+            components.append(CoverSheetAttachment([emp_recip], EnrollmentDataWrap(all_product_data[0], case,
+                                                                               enrollment_record=enrollment_application,
+                                                                               ),
+                                               all_product_data, enrollment_application=enrollment_application))
 
         for raw_enrollment_data in all_product_data:
             # Wrap the submission with an object that knows how to pull out key info.
@@ -651,29 +650,32 @@ class EnrollmentSubmissionProcessor(object):
 
             if enrollment_data['did_decline']:
                 continue
-
-            product_id = enrollment_data.get_product_id()
-            product = self.product_service.get(product_id)
+            
+            product = self.product_service.get(enrollment_data.get_product_id())
             if not product.does_generate_form():
                 continue
 
             # If we only want to generate the document for a particular product, skip all other products.
-            if product_id and product.id != product_id:
+            if only_product_id and product.id != only_product_id:
                 continue
+                
+            # If STP is generating the PDF, only include relevent supporting docs if necessary (ie, bank draft form)
+            should_show_all_docs = not is_stp
+                
             if product.is_fpp():
                 components += self.docusign_service.create_fpp_envelope_components(enrollment_data, recipients,
                                                                                    should_use_docusign_renderer,
-                                                                                   show_all_documents=True)
+                                                                                   show_all_documents=should_show_all_docs)
             elif product.is_static_benefit():
                 if not is_stp:
                     components += self.docusign_service.create_static_benefit_components(enrollment_data, recipients,
                                                                         should_use_docusign_renderer,
-                                                                        enrollment_application, show_all_documents=True)
+                                                                        enrollment_application, show_all_documents=should_show_all_docs)
             elif product.is_group_ci():
                 if not is_stp:
                     components += self.docusign_service.create_group_ci_envelope_components(enrollment_data, recipients,
                                                                                             should_use_docusign_renderer,
-                                                                                            show_all_documents=True)
+                                                                                            show_all_documents=should_show_all_docs)
 
         return components
 
