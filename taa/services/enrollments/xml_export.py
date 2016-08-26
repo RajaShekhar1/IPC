@@ -183,7 +183,7 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
             'method': PAYMENT_METHODS['5'],
         }
         
-    is_debug = current_app.config.get('IS_STP_DEBUG', True)
+    is_debug = app.config.get('IS_STP_DEBUG', True)
     
     vars = {
         'applicant_type': applicant_type,
@@ -344,10 +344,9 @@ def get_riders(data, applicant_type):
 
     if not data.is_import():
         if applicant_type == 'employee':
-            return data.get_selected_employee_riders()
+            return [r['code'] for r in data.get_selected_employee_riders()]
         elif applicant_type == 'spouse':
-            return data.get_selected_spouse_riders()
-
+            return [r['code'] for r in data.get_selected_spouse_riders()]
     else:
         # Get riders from enrollment data
         if applicant_type == 'employee':
