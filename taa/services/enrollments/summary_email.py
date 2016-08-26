@@ -21,7 +21,8 @@ class SummaryEmailService(DBService):
         case = enrollment_application.case
         data = json.loads(enrollment_application.standardized_data)
         name = data[0]['employee']['first'] + ' ' + data[0]['employee']['last']
-        host = taa.config_defaults.HOSTNAME+'/'
+        host = taa.config_defaults.PREFERRED_URL_SCHEME + '://' + taa.config_defaults.HOSTNAME+'/'
+        
         greeting = self.build_email_greeting(name)
 
         return render_template(

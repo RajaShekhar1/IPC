@@ -10,7 +10,7 @@ import re
 from flask import current_app, render_template
 from taa.services.enrollments.enrollment_application import EnrollmentApplicationService
 
-from taa import app
+from taa import app, config_defaults
 from taa.services import RequiredFeature
 from taa.services.products.plan_codes import (get_invalid_plan_code,
                                               get_plan_code)
@@ -183,7 +183,7 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
             'method': PAYMENT_METHODS['5'],
         }
         
-    is_debug = app.config.get('IS_STP_DEBUG', True)
+    is_debug = config_defaults.IS_STP_DEBUG
     
     vars = {
         'applicant_type': applicant_type,
