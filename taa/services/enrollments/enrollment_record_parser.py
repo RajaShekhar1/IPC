@@ -312,7 +312,7 @@ class EnrollmentRecordParser(object):
         ]
 
     # Child data
-    MAX_CHILDREN = 6
+    MAX_CHILDREN = 10
     for num in range(1, MAX_CHILDREN + 1):
         child_first = EnrollmentRecordField('ch{}_first'.format(num),
                                         'child{}_first'.format(num),
