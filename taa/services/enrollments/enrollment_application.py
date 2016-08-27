@@ -242,30 +242,41 @@ class EnrollmentApplicationService(DBService):
     def get_application_status(self, census_record, wizard_data):
 
         """:type: taa.services.products.ProductService"""
-        data = self.get_first_wizard_data_record(wizard_data)
-        wrapped_data = EnrollmentDataWrap(data, census_record.case)
-
+        
+        #data = self.get_first_wizard_data_record(wizard_data)
+        #wrapped_data = EnrollmentDataWrap(data, census_record.case)
+        
         if isinstance(wizard_data, list):
-            accepted_product_ids = list(d['product_id'] for d in wizard_data if not d['did_decline'])
+            accepted_data = list(EnrollmentDataWrap(d, census_record.case) for d in wizard_data if not d['did_decline'])
+            accepted_product_ids = [d['product_id'] for d in accepted_data]
             accepted_products = self.product_service.get_all(*accepted_product_ids)
             """:type: list[taa.services.products.Product]"""
             
             # If this is a preview, mark the status as pending
-            if wrapped_data.is_preview():
+            if accepted_data[0].is_preview():
                 return ''
             
             elif all(map(lambda d: d['did_decline'], wizard_data)):
                 return EnrollmentApplication.APPLICATION_STATUS_DECLINED
-            elif len(accepted_products) > 0 and all(not p.requires_signature() for p in accepted_products):
-                return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
-            elif wrapped_data.did_finish_signing_in_wizard():
-                return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
-            elif census_record.case.should_use_call_center_workflow:
-                return EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
+            
+            
+            #elif len(accepted_products) > 0 and all(not p.requires_signature() for p in accepted_products):
+            #    return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+            
+            #elif all(EnrollmentDataWrap(data, census_record.case).did_finish_signing_in_wizard() for data in accepted_data):
+            #    return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+            # No longer valid, we always sign in wizard if call center
+            #elif census_record.case.should_use_call_center_workflow:
+            #    return EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
+            
+            # TODO: Self-enroll should be marked as pending agent
+            
             else:
-                return EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
+                # All other cases are enrolled status for now.
+                return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
         else:
-            if data['did_decline']:
+            # TODO: Confirm this is the path imported enrollments take? Otherwise we shouldn't get here anymore.
+            if wizard_data['did_decline']:
                 application_status = EnrollmentApplication.APPLICATION_STATUS_DECLINED
             else:
                 # We are likely importing the data and we don't have to say 'pending' since there is no signing process.
@@ -273,13 +284,13 @@ class EnrollmentApplicationService(DBService):
         return application_status
 
     def get_signature_method(self, census_record, wizard_data):
-        data = self.get_first_wizard_data_record(wizard_data)
-        wrapped_data = EnrollmentDataWrap(data, census_record.case)
+        #data = self.get_first_wizard_data_record(wizard_data)
+        #wrapped_data = EnrollmentDataWrap(data, census_record.case)
 
-        if wrapped_data.did_finish_signing_in_wizard():
-            return EnrollmentApplication.SIGNATURE_METHOD_WIZARD
-        else:
-            return EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN
+        #if wrapped_data.did_finish_signing_in_wizard():
+        return EnrollmentApplication.SIGNATURE_METHOD_WIZARD
+        #else:
+        #    return EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN
 
     def _strip_ssn(self, ssn):
         return ssn.replace('-', '').strip() if ssn else ''
