@@ -229,6 +229,7 @@ def create_submission_dictionary_for_submissions_view(submission):
         'created_at': submission.created_at,
         'submission_logs': submission.submission_logs,
         #'data': submission.data,
+        'product':submission.product.name if submission.product else '',
         'submission_type': submission.submission_type,
         'status':submission.status,
     }
