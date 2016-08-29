@@ -14,6 +14,7 @@ from taa.services.enrollments.csv_export import export_hi_acc_enrollments
 
 
 bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
+agent_service = LookupService("AgentService")
 case_service = LookupService("CaseService")
 enrollment_import_service = LookupService("EnrollmentImportService")
 enrollment_import_batch_service = LookupService("EnrollmentImportBatchService")
@@ -172,8 +173,13 @@ def render_batch_item_xml(batch_id, item_id):
 def generate_enrollment_pdf(enrollment_record_id):
     enrollment = enrollment_application_service.get_or_404(enrollment_record_id)
 
-    # TODO: Verify agent permission if agent
-    # Check that logged-in agent matches enrollment.agent_id or is the case owner. Should be method for this on case.
+    # Check that logged-in agent can view enrollment
+    agent = agent_service.get_logged_in_agent()
+    can_view = (case_service.can_current_user_view_case(enrollment.case) or
+                agent.id == enrollment.agent_id)
+
+    if not can_view:
+        abort(403)
 
     binary_pdf = enrollment_submission_service.render_enrollment_pdf(enrollment)
 
@@ -188,21 +194,21 @@ def generate_enrollment_pdf(enrollment_record_id):
 @groups_required(['admins', 'home_office', 'agents'], all=False)
 def generate_enrollment_xml(enrollment_record_id):
     app = enrollment_application_service.get_or_404(enrollment_record_id)
-    
+
     xmls = enrollment_submission_service.generate_enrollment_xml_docs(app)
-    
+
     zipstream = enrollment_submission_service.create_xml_zip(xmls)
-    
+
     return send_file(zipstream, attachment_filename='enrollment_{}.zip'.format(
         enrollment_record_id), as_attachment=True)
 
 
 def generate_xml(enrollment_record, form_for='employee'):
     # TODO: NOT called correctly anymore
-    
+
     pdf_bytes = enrollment_submission_service.render_enrollment_pdf(
             enrollment_record)
-    
+
     return enrollment_submission_service.render_enrollment_xml(
             enrollment_record, form_for, pdf_bytes)
 
