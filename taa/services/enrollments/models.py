@@ -489,6 +489,7 @@ class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
     TYPE_DELL_CSV_GENERATION = u'HI and ACC CSV Generation'
     TYPE_DELL_EXPORT = u'HI and ACC CSV submission to Dell'
     TYPE_DELL_STP_XML = u'STP XML submission to Dell'
+    TYPE_DELL_PDF_SFTP = u'PDF submission to Dell via SFTP'
     TYPE_DOCUSIGN = u'Submit to Docusign'
     TYPE_STATIC_BENEFIT = u'Static Benefit'
     TYPE_PAYLOGIX_CSV_GENERATION = u'Paylogix CSV Generation'
@@ -504,6 +505,7 @@ class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
     product = db.relationship('Product')
     submission_logs = db.relationship('SubmissionLog', back_populates='enrollment_submission')
     data = db.Column(db.UnicodeText)
+    binary_data = db.Column(db.Binary, nullable=True)
     submission_type = db.Column(db.Unicode(64))
 
     def is_successful(self):

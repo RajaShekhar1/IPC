@@ -43,23 +43,32 @@ class EnrollmentSubmissionService(object):
             # Preview mode only; don't submit the application
             return
 
-        # We still run the code through the docusign submission process, but if it is call center
-        #  it will generate all forms internally and sign them automatically.
-        return self.submit_to_docusign_or_dell(enrollment_application)
+        # Generate all the submissions that are not queued up in batches.
+        self.create_all_submissions(enrollment_application)
 
     def _should_submit_to_dell(self, case):
         return case.is_stp
 
-    def submit_to_docusign_or_dell(self, enrollment_record):
+    def create_all_submissions(self, enrollment_record):
+        "Create a submission records and immediately queue up for submission."
+        
+        # Submit any STP-Enabled products
+        self.submit_STP_to_dell(enrollment_record)
+        
+        # Submit any SFTP transmissions to Dell
+        self.submit_to_dell_SFTP_inbox(enrollment_record)
+        
+        #
+        #
+        # # Some products are submitted to Dell using Straight-through-processing if enabled on the case.
+        # if self._should_submit_to_dell(enrollment_record.case):
+        #     self.submit_STP_to_dell(enrollment_record)
+        #     # TODO: need to submit GroupCI to docusign still
+        #
+        # else:
+        #     # Some products always go to docusign
+        #     self.submit_to_docusign(enrollment_record)
 
-        # Some products are submitted to Dell using Straight-through-processing if enabled on the case.
-        if self._should_submit_to_dell(enrollment_record.case):
-            self.submit_to_dell(enrollment_record)
-            # TODO: need to submit GroupCI to docusign still
-
-        else:
-            # Some products always go to docusign
-            self.submit_to_docusign(enrollment_record)
 
     def submit_to_docusign(self, enrollment_application):
         envelope = self.docusign_service.get_existing_envelope(enrollment_application)
@@ -76,11 +85,15 @@ class EnrollmentSubmissionService(object):
         db.session.commit()
         return True
 
-    def submit_to_dell(self, enrollment_application):
+    def submit_STP_to_dell(self, enrollment_application):
         """
-        Submit XML to Dell.
+        Submit XML to Dell via their STP endpoint for all products that support it.
         """
 
+        # Bail out early if this case does not have STP enabled.
+        if not enrollment_application.case.is_stp:
+            return
+        
         # Generate all the XML documents, one for each covered applicant.
         xmls = self.generate_enrollment_xml_docs(enrollment_application)
         
@@ -149,6 +162,50 @@ class EnrollmentSubmissionService(object):
 
         zipstream.seek(0)
         return zipstream
+
+    def submit_to_dell_SFTP_inbox(self, enrollment_application):
+        
+        # Find each product that used to go to docusign and submit it to the Dell SFTP dropbox.
+        
+        product_data_list = self.enrollment_application_service.get_wrapped_enrollment_data(enrollment_application)
+        for product_data in product_data_list:
+    
+            product = product_data.get_product()
+            
+            # Skip if this product is handled by STP and STP is on for the case
+            if enrollment_application.case.is_stp and product.can_submit_stp():
+                continue
+                
+            # Skip if declined
+            if product_data.did_decline():
+                continue
+            
+            # Skip if this product doesn't generate a PDF for submission.
+            if not product.does_generate_form():
+                continue
+            
+            # Otherwise, generate the PDF and create a submission and queue it up.
+            pdf_bytes = self.render_enrollment_pdf(enrollment_application, is_stp=False, product_id=product.id)
+            submission = self.create_dell_sftp_submission(enrollment_application, product, pdf_bytes)
+            tasks.submit_pdf_to_dell_sftp.delay(submission.id)
+            
+    def create_dell_sftp_submission(self, enrollment_application, product, pdf_bytes):
+        
+        submission = EnrollmentSubmission(
+            submission_type=EnrollmentSubmission.TYPE_DELL_PDF_SFTP,
+            product_id=product.id,
+            status=EnrollmentSubmission.STATUS_PENDING,
+            created_at=datetime.now(),
+            data=json.dumps(dict(
+                enrollment_id=enrollment_application.id,
+                product_id=product.id,
+            )),
+            binary_data=pdf_bytes
+        )
+        submission.enrollment_applications.append(enrollment_application)
+        db.session.add(submission)
+        db.session.commit()
+        return submission
 
     def submit_signed_application(self, enrollment_application):
         return EnrollmentSubmissionProcessor().submit_signed_enrollment(enrollment_application)
@@ -333,6 +390,7 @@ class EnrollmentSubmissionService(object):
         submission = self.get_pending_csv_submission()
         if submission is None:
             submission = EnrollmentSubmission(
+                created_at=datetime.now(),
                 submission_type=EnrollmentSubmission.TYPE_DELL_CSV_GENERATION)
             db.session.add(submission)
         submission.enrollment_applications.append(application)
@@ -344,7 +402,7 @@ class EnrollmentSubmissionService(object):
         if applications is None:
             applications = list()
 
-        submission = EnrollmentSubmission(submission_type=submission_type, status=status)
+        submission = EnrollmentSubmission(submission_type=submission_type, status=status, created_at=datetime.now())
         submission.enrollment_applications.extend(applications)
         if commit:
             db.session.add(submission)
@@ -354,7 +412,9 @@ class EnrollmentSubmissionService(object):
     def start_submission(self, submission):
         submission.status = EnrollmentSubmission.STATUS_PROCESSING
 
-        log = SubmissionLog(enrollment_submission=submission, status=EnrollmentSubmission.STATUS_PROCESSING)
+        log = SubmissionLog(enrollment_submission=submission, status=EnrollmentSubmission.STATUS_PROCESSING,
+                            processing_time=datetime.now(),
+                            )
         db.session.add(log)
         db.session.commit()
         return log
@@ -435,7 +495,7 @@ class EnrollmentSubmissionService(object):
         """
         Submit csv data to dell for processing
         """
-        sftp_service = LookupService('FtpService')
+        sftp_service = LookupService('SFTPService')
         filename = '5Star-%s.csv.pgp' % datetime.now().strftime('%Y-%m-%d')
         sftp_service.send_file(sftp_service.get_dell_server(), filename, csv_data)
 
@@ -450,7 +510,9 @@ class EnrollmentSubmissionService(object):
         Create a new EnrollmentSubmission for submitting csv data to dell
         """
         submission = EnrollmentSubmission(data=csv_data,
-                                          submission_type=EnrollmentSubmission.TYPE_DELL_EXPORT)
+                                          submission_type=EnrollmentSubmission.TYPE_DELL_EXPORT,
+                                          created_at=datetime.now(),
+                                          )
         for application in applications:
             submission.enrollment_applications.append(application)
         db.session.add(submission)
@@ -489,7 +551,7 @@ class EnrollmentSubmissionService(object):
         """
         submission_logs = list()
         for submission in submissions:
-            submission_log = SubmissionLog(enrollment_submission_id=submission.id)
+            submission_log = SubmissionLog(enrollment_submission_id=submission.id, processing_time=datetime.now())
             if status is not None:
                 submission_log.status = status
             db.session.add(submission_log)
@@ -502,7 +564,9 @@ class EnrollmentSubmissionService(object):
             return None
 
         submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.TYPE_STATIC_BENEFIT,
-                                          status=EnrollmentSubmission.STATUS_SUCCESS)
+                                          status=EnrollmentSubmission.STATUS_SUCCESS,
+                                          created_at=datetime.now(),
+                                          )
         submission.enrollment_applications.append(application)
         db.session.add(submission)
         db.session.commit()
@@ -551,7 +615,9 @@ class EnrollmentSubmissionService(object):
 
     def create_batch_submission(self, submission_type):
         submission = EnrollmentSubmission(submission_type=submission_type,
-                                          status=EnrollmentSubmission.STATUS_PENDING)
+                                          status=EnrollmentSubmission.STATUS_PENDING,
+                                          created_at=datetime.now(),
+                                          )
         db.session.add(submission)
         db.session.commit()
         return submission
@@ -634,7 +700,7 @@ class EnrollmentSubmissionProcessor(object):
         components = []
 
         # don't include for Dell STP XML
-        if not is_stp and case.include_cover_sheet:
+        if not is_stp and case.include_cover_sheet and not only_product_id:
             from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
             components.append(CoverSheetAttachment([emp_recip], EnrollmentDataWrap(all_product_data[0], case,
                                                                                enrollment_record=enrollment_application,

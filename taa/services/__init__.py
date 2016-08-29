@@ -151,7 +151,7 @@ def initialize_services():
     )
     from taa.services.users import UserService
     from taa.services.docusign import DocuSignService, DocuSignTransport
-    from taa.services.submissions import FtpService, EnrollmentSubmissionService, PGPEncryptionService
+    from taa.services.submissions import FtpService,SFTPService, EnrollmentSubmissionService, PGPEncryptionService
 
 
     services_broker.Provide('CaseService', CaseService())
@@ -193,6 +193,7 @@ def initialize_services():
     services_broker.Provide('MailerService', MailerService)
 
     services_broker.Provide('FtpService', FtpService())
+    services_broker.Provide('SFTPService', SFTPService())
     services_broker.Provide('EnrollmentExportService', EnrollmentExportService())
 
     services_broker.Provide('PGPEncryptionService', PGPEncryptionService())

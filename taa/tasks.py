@@ -3,6 +3,7 @@
 import json
 import time
 import traceback
+from datetime import datetime
 from xml.etree import ElementTree
 import os
 import ssl
@@ -206,6 +207,7 @@ def submit_csv_to_dell(task, submission_id):
     submission_service = LookupService('EnrollmentSubmissionService')
     submission = submission_service.get_submission_by_id(submission_id)
     log = SubmissionLog()
+    log.processing_time = datetime.now()
     log.enrollment_submission_id = submission_id
     log.status = SubmissionLog.STATUS_PROCESSING
     db.session.add(log)
@@ -241,6 +243,7 @@ def submit_stp_xml_to_dell(task, submission_id):
 
     # Create log for this attempt at processing
     log = SubmissionLog()
+    log.processing_time = datetime.now()
     log.enrollment_submission_id = submission.id
     log.status = SubmissionLog.STATUS_PROCESSING
     db.session.add(log)
@@ -332,6 +335,61 @@ def parse_stp_response(response_dict):
         return dict(status='Success', message=message, guid=guid, resp=resp)
 
 
+@celery.task(bind=True, default_retry_delay=ONE_HOUR)
+def submit_pdf_to_dell_sftp(task, submission_id):
+    """
+    Task to submit a PDF to Dell for processing using their SFTP dropbox.
+    """
+    
+    submission = db.session.query(EnrollmentSubmission).get(submission_id)
+    data = json.loads(submission.data)
+    enrollment_id = data['enrollment_id']
+    enrollment = LookupService('EnrollmentApplicationService').get(enrollment_id)
+    product_id = data['product_id']
+    product = LookupService('ProductService').get(product_id)
+    pdf_bytes = submission.binary_data
+    
+    # Create log for this attempt at processing
+    log = SubmissionLog()
+    log.processing_time = datetime.now()
+    log.enrollment_submission_id = submission.id
+    log.status = SubmissionLog.STATUS_PROCESSING
+    db.session.add(log)
+    db.session.commit()
+    
+    if not pdf_bytes:
+        submission.status = EnrollmentSubmission.STATUS_FAILURE
+        log.status = SubmissionLog.STATUS_FAILURE
+        log.message = "No PDF in data to transmit."
+        db.session.commit()
+        raise ValueError("Submission ID {}: Attempt to transmit empty PDF to Dell, aborting.".format(submission_id))
+    
+    try:
+        filename = 'case-{}_enrollment-{}-{}.pdf'.format(enrollment.case_id, enrollment_id, product.get_base_product_code())
+        transmit_dell_pdf(filename, pdf_bytes)
+        
+        # Success
+        submission.status = EnrollmentSubmission.STATUS_SUCCESS
+        log.status = SubmissionLog.STATUS_SUCCESS
+        log.message = "Success"
+        db.session.commit()
+    
+    except Exception as ex:
+        submission.status = EnrollmentSubmission.STATUS_FAILURE
+        log.status = SubmissionLog.STATUS_FAILURE
+        log.message = 'Error sending PDF to Dell SFTP Dropbox with traceback "%s"\n%s' % (ex.message, traceback.format_exc())
+        db.session.commit()
+        
+        send_admin_error_email(
+            "Error transmitting PDF to Dell SFTP Dropbox, submission {} enrollment {} product {}".format(submission_id, enrollment_id, product_id),
+            [traceback.format_exc()])
+        task.retry()
+
+
+def transmit_dell_pdf(filename, pdf_bytes):
+    sftp_service = LookupService('SFTPService')
+    sftp_service.send_file(sftp_service.get_dell_server(), filename, pdf_bytes)
+    
 
 @celery.task(bind=True, default_retry_delay=ONE_HOUR)
 def process_paylogix_export(task, submission_id):
