@@ -391,6 +391,7 @@ class EnrollmentSubmissionService(object):
         """
         if not any(p for p in application.case.products if p.requires_dell_csv_submission()):
             return None
+        
         submission = self.get_pending_csv_submission()
         if submission is None:
             submission = EnrollmentSubmission(
@@ -479,10 +480,12 @@ class EnrollmentSubmissionService(object):
         """:type: list[EnrollmentSubmission]"""
 
         # Create or add to pending CSV generation submission. None if its case doesn't contain and HI or ACC products
+        # TODO: Check here if any HI/ACC product was actually enrolled.
         submission = self.create_dell_csv_generation_submission_for_application(application)
         if submission is not None:
             submissions.append(submission)
 
+        
         submission = self.create_paylogix_csv_generation_submission(application)
         if submission is not None:
             submissions.append(submission)
