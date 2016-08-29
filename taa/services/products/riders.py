@@ -60,7 +60,7 @@ class RiderService(object):
         for rider_setting in settings:
             matching_rider = next((rider for rider in all_product_riders
                                    if rider.code == rider_setting.get('code')), None)
-            if matching_rider.is_group_level:
+            if not matching_rider.is_group_level:
                 riders.append(matching_rider)
 
         return riders
