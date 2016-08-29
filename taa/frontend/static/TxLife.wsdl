@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="https://www.dell.com" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" targetNamespace="https://www.dell.com" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="https://www.dell.com">
+      <s:element name="TXlifeProcessor">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="XML" nillable="true" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="TXlifeProcessorResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="TXlifeProcessorResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetVersion">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetVersionResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetVersionResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetHost">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetHostResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetHostResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="NoteProcessor">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="XML" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="NoteProcessorResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="NoteProcessorResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="TXlifeProcessorSoapIn">
+    <wsdl:part name="parameters" element="tns:TXlifeProcessor" />
+  </wsdl:message>
+  <wsdl:message name="TXlifeProcessorSoapOut">
+    <wsdl:part name="parameters" element="tns:TXlifeProcessorResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetVersionSoapIn">
+    <wsdl:part name="parameters" element="tns:GetVersion" />
+  </wsdl:message>
+  <wsdl:message name="GetVersionSoapOut">
+    <wsdl:part name="parameters" element="tns:GetVersionResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetHostSoapIn">
+    <wsdl:part name="parameters" element="tns:GetHost" />
+  </wsdl:message>
+  <wsdl:message name="GetHostSoapOut">
+    <wsdl:part name="parameters" element="tns:GetHostResponse" />
+  </wsdl:message>
+  <wsdl:message name="NoteProcessorSoapIn">
+    <wsdl:part name="parameters" element="tns:NoteProcessor" />
+  </wsdl:message>
+  <wsdl:message name="NoteProcessorSoapOut">
+    <wsdl:part name="parameters" element="tns:NoteProcessorResponse" />
+  </wsdl:message>
+  <wsdl:portType name="TxLifeSoap">
+    <wsdl:operation name="TXlifeProcessor">
+      <wsdl:input message="tns:TXlifeProcessorSoapIn" />
+      <wsdl:output message="tns:TXlifeProcessorSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetVersion">
+      <wsdl:input message="tns:GetVersionSoapIn" />
+      <wsdl:output message="tns:GetVersionSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetHost">
+      <wsdl:input message="tns:GetHostSoapIn" />
+      <wsdl:output message="tns:GetHostSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="NoteProcessor">
+      <wsdl:input message="tns:NoteProcessorSoapIn" />
+      <wsdl:output message="tns:NoteProcessorSoapOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="TxLifeSoap" type="tns:TxLifeSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="TXlifeProcessor">
+      <soap:operation soapAction="https://www.dell.com/TXlifeProcessor" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetVersion">
+      <soap:operation soapAction="https://www.dell.com/GetVersion" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetHost">
+      <soap:operation soapAction="https://www.dell.com/GetHost" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="NoteProcessor">
+      <soap:operation soapAction="https://www.dell.com/NoteProcessor" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="TxLifeSoap12" type="tns:TxLifeSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="TXlifeProcessor">
+      <soap12:operation soapAction="https://www.dell.com/TXlifeProcessor" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetVersion">
+      <soap12:operation soapAction="https://www.dell.com/GetVersion" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetHost">
+      <soap12:operation soapAction="https://www.dell.com/GetHost" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="NoteProcessor">
+      <soap12:operation soapAction="https://www.dell.com/NoteProcessor" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="TxLife">
+    <wsdl:port name="TxLifeSoap" binding="tns:TxLifeSoap">
+      <soap:address location="https://extranetapps.tagtpa.com/TxLifeImport/TxLife.asmx" />
+    </wsdl:port>
+    <wsdl:port name="TxLifeSoap12" binding="tns:TxLifeSoap12">
+      <soap12:address location="https://extranetapps.tagtpa.com/TxLifeImport/TxLife.asmx" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
