@@ -2145,7 +2145,7 @@ var wizard_viewmodel = (function () {
       }
       var enroller_selects = self.which_enroller_select_date();
       if (!valid_enroller_selects(parseInt(enroller_selects.enroller_selects.no_less, 10), self.get_effective_date())) {
-        results += " The effective date input must be at least " + enroller_selects.enroller_selects.no_less + " days from today.";
+        results += " The effective date input must be at least " + parseInt(enroller_selects.enroller_selects.no_less) + " days from today.";
       }
       return results;
     };
