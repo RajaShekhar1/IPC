@@ -26,16 +26,16 @@ class PDFAttachment(BasePDFDoc):
     def generate_tabs(self, recipient, purpose):
         tabs = super(BasePDFDoc, self).generate_tabs(recipient, purpose)
 
-        if self.is_recipient_signer(recipient) or (purpose == self.PDF_TABS and self.data.should_use_call_center_workflow()):
+        if self.is_recipient_signer(recipient) or (purpose == self.PDF_TABS):
             # Add a signature tab to the last page
+            if self.data.get_employee_name() in self.sig_coords:
+                pdf_x, pdf_y = self.sig_coords[self.data.get_employee_name()]
+                pix_x = pdf_x
+                # Move it up a bit from where the line is.
+                pix_y = (self.page_height - pdf_y)
 
-            pdf_x, pdf_y = self.sig_coords[self.data.get_employee_name()]
-            pix_x = pdf_x
-            # Move it up a bit from where the line is.
-            pix_y = (self.page_height - pdf_y)
-
-            tab = DocuSignSigTab(x=pix_x, y=pix_y, document_id="1", page_number=str(self.get_num_pages()))
-            tabs.append(tab)
+                tab = DocuSignSigTab(x=pix_x, y=pix_y, document_id="1", page_number=str(self.get_num_pages()))
+                tabs.append(tab)
 
             # In case this is an enrollment import, also add a text signature
             tabs.append(DocuSignTextTab("SignHereEmployee", self.data.get_employee_esignature()))

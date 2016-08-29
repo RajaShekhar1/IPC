@@ -28,6 +28,8 @@ class ProductJsonSerializable(JsonSerializable):
         data['base_product_type'] = self.get_base_product_code()
         data['is_guaranteed_issue'] = self.is_guaranteed_issue()
 
+        data['can_override_states'] = self.can_override_state_selections()
+
         # Get replacement form text for the wizard
         data['replacement_paragraphs'] = self.get_replacement_paragraphs()
 
@@ -84,6 +86,7 @@ class Product(ProductJsonSerializable, db.Model):
                                         backref=db.backref('restricted_products', lazy='dynamic'))
 
     template_id = db.Column(db.String(64), nullable=True)
+    can_override_states = db.Column(db.Boolean, nullable=False, server_default='FALSE')
 
     __mapper_args__ = {
         'polymorphic_on': product_type,
@@ -110,8 +113,15 @@ class Product(ProductJsonSerializable, db.Model):
     def is_fpp(self):
         return self.get_base_product_code().lower().startswith('fpp')
 
+    def can_submit_stp(self):
+        # FPP is currently the only product that supports STP to Dell
+        return self.is_fpp()
+
     def is_group_ci(self):
         return self.get_base_product_code() == Product.TYPE_GROUP_CI
+
+    def can_override_state_selections(self):
+        return self.is_group_ci()
 
     def is_static_benefit(self):
         return self.get_base_product_code() == Product.TYPE_STATIC_BENEFIT

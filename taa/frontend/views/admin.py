@@ -228,7 +228,8 @@ def create_submission_dictionary_for_submissions_view(submission):
                                        submission.enrollment_applications),
         'created_at': submission.created_at,
         'submission_logs': submission.submission_logs,
-        'data': submission.data,
+        #'data': submission.data,
+        'product':submission.product.name if submission.product else '',
         'submission_type': submission.submission_type,
         'status':submission.status,
     }
@@ -237,7 +238,7 @@ def create_submission_dictionary_for_submissions_view(submission):
 @app.route('/enrollment-submissions', methods=['GET'])
 @groups_required(['admins'])
 def view_submission_logs():
-    start_date = datetime.strptime(request.args.get('start_date'), '%Y-%m-%d') if 'start_date' in request.args else date.today() - timedelta(days=30)
+    start_date = datetime.strptime(request.args.get('start_date'), '%Y-%m-%d') if 'start_date' in request.args else date.today() - timedelta(days=14)
     end_date = datetime.strptime(request.args.get('end_date'), '%Y-%m-%d') if 'end_date' in request.args else date.today() + timedelta(days=1)
 
     submission_service = LookupService('EnrollmentSubmissionService')
@@ -250,4 +251,5 @@ def view_submission_logs():
     view_model['submissions'] = submissions
     view_model['start_date'] = start_date
     view_model['end_date'] = end_date
+    
     return render_template('admin/enrollment_submissions.html', nav_menu=get_nav_menu(), **view_model)

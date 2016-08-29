@@ -47,6 +47,24 @@ class RiderService(object):
 
         return riders
 
+    def get_applicant_level_riders_for_product(self, applicant, case, product):
+        riders = []
+
+        settings = applicant.get('selected_riders', [])
+        if not settings:
+            return riders
+
+        rider_configuration = RiderConfiguration(product.get_base_product_code())
+        all_product_riders = rider_configuration.get_riders()
+
+        for rider_setting in settings:
+            matching_rider = next((rider for rider in all_product_riders
+                                   if rider.code == rider_setting.get('code')), None)
+            if not matching_rider.is_group_level:
+                riders.append(matching_rider)
+
+        return riders
+
 class RiderConfiguration(object):
     def __init__(self, product_code):
         self.product_code = product_code

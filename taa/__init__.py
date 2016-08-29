@@ -47,6 +47,7 @@ def create_app(bind=None):
 
     # Init database - export the db variable here so other parts of the app can access the database
     global db
+    app.config['SQLALCHEMY_ECHO'] = False
     db = SQLAlchemy(app)
 
     # Initialize our model service classes
@@ -83,6 +84,10 @@ def create_app(bind=None):
     # Initialize webassets
     from assets import init_app as init_assets
     init_assets(app)
+
+    # Initialize Celery task extension
+    from taa.tasks import celery
+    celery.init_app(app)
 
     return app
 

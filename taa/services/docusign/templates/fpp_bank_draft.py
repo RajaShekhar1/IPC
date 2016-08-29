@@ -1,9 +1,11 @@
+import json
 from datetime import datetime
 
+from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
-
 from taa.services.docusign.service import DocuSignServerTemplate, DocuSignTextTab, DocuSignRadioTab
 from taa.services.docusign.DocuSign_config import get_bank_draft_template_id
+from taa.services.enrollments.paylogix import get_week_from_date
 
 
 class FPPBankDraftFormTemplate(DocuSignServerTemplate):
@@ -18,9 +20,6 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
 
     def generate_tabs(self, recipient, purpose):
         tabs = super(FPPBankDraftFormTemplate, self).generate_tabs(recipient, purpose)
-
-        # if not recipient.is_employee() and not self.data.should_use_call_center_workflow():
-        #    return tabs
 
         # Going forward enrollments will have bank draft data and should grab all account information from that
         if self.has_bank_draft_info():
@@ -106,31 +105,58 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
         return self.data.format_money(self.data.get_total_modal_premium())
 
     def get_draft_day(self):
-
-        if self.data.case.requires_paylogix_export:
-            date = self.data.enrollment_record.signature_time
-            return self.get_paylogix_draft_day(date)
+        # Get oldest Paylogix effective date if it exists
+        effective_date = self.data.get_effective_date()
+        if self.data.enrollment_record.is_paylogix:
+            # Sort enrollments by signature date
+            raw_effective_date = self.data.get('effective_date')
+            for application in sorted(
+                    self.data.enrollment_record.census_record.enrollment_applications,
+                    key=lambda a: a.signature_time):
+                # if not application.is_paylogix:
+                #     continue
+                if application.signature_time >= self.data.enrollment_record.signature_time:
+                    # No need to search the remaining enrollments, as they
+                    # cannot be earlier than the current enrollment
+                    break
+                # if not application.is_paylogix:
+                #     continue
+                earliest_coverage_effective_date = None
+                for coverage in application.coverages:
+                    if coverage.product_id != self.data.get_product_id():
+                        # Skip non-matching products
+                        continue
+                    earliest_coverage_effective_date = coverage.effective_date
+                    if earliest_coverage_effective_date is not None:
+                        # Use earliest Paylogix-enabled enrollment date as
+                        # effective date
+                        effective_date = earliest_coverage_effective_date
+                        break
+                if earliest_coverage_effective_date is not None:
+                    break
+            return self.get_paylogix_date(
+                    effective_date,
+                    raw_effective_date is not None)
         else:
-            date = self.data.get_employee_date_of_hire()
-            if not date:
-                # Default to today if we don't have a sig date.
-                date = datetime.today()
-            return self.get_normal_draft_day(date)
+            # Day of the month
+            return effective_date.day
 
-    def get_normal_draft_day(self, hire_date):
-        # Use the day 14 days after the hire date as the draft day.
-        draft_date = hire_date + relativedelta(days=14)
-        # Default day to the first if not in the range 1 to 28.
-        draft_day_of_month = draft_date.day
-        if draft_day_of_month <= 28:
-            draft_day = draft_day_of_month
+    def get_paylogix_date(self, effective_date, is_raw_effective_date):
+        if is_raw_effective_date:
+            # Nth Friday based on week of effective date
+            week = get_week_from_date(effective_date)
+            return self.format_deduction_week(week)
         else:
-            draft_day = 1
-        return draft_day
+            # Older method will compute the next Friday based on 5-day
+            # interval after signature time
+            return self.get_paylogix_draft_day(effective_date)
 
     def get_paylogix_draft_day(self, date):
         from taa.services.enrollments.paylogix import get_deduction_week
         deduction_week = get_deduction_week(date)
+        return self.format_deduction_week(deduction_week)
+
+    def format_deduction_week(self, deduction_week):
         if deduction_week == 1:
             return '1st Friday'
         elif deduction_week == 2:

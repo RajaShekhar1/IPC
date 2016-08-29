@@ -115,7 +115,7 @@ DELL_FTP_WORKING_DIRECTORY = env_get_text('DELL_FTP_WORKING_DIRECTORY', '')
 #DELL_HOSTKEY = env_get_text('DELL_HOSTKEY', 'ftp03.tagtpa.com,74.51.221.134 ssh-dss AAAAB3NzaC1kc3MAAACBALX33rlTqAwkapnfv8qVPnFeVuxnEDzcugB9zCT8VkCmLqJj3rDbJuotw0+lmHttMw9JIo46v5yxOTyf1dALePsDwUtlGXKnkYVXAeretO2ov2GdmoZu7XFn4bJzCKk2zQ+VzJdWlDpJ7uREkRz68JRpWQpg4NQPVxutSRGXrSYVAAAAFQD9We61P+aQrQjz6itLVO36rSgg7wAAAIEAnEdEz+Cw6dDStAuNP/V5LmjUiC1RV1Gu1n9clEZfnLzWGG3mwA2fgzqcP0TDnn1MYREcfbm/jXI6x99FWhoqdWKbIJPeDZ9rR2nN9JSAgThzEwXQZzstbGwgVLGfhHuq4hVZo2NdLRVwitYwczmGKIEu3ho0jT/EiYDpT5GpN4oAAAB/E7w223kvOakuj1LZNCePT/vVBzZFvT85NcQooeGC2fMmegzLgjW0fOB8lvadTt5lz/B5dx6Gs9i97k7c+iHsLkGVvTn8T2UkiM5YMP45t8VJxtpluEvHOVMCOTX+rBUfOq5AGElJEFXpMba5sfkhhzcMB9VVQcvVCDGaoCLSuw==')
 DELL_HOSTKEY = env_get_text('DELL_HOSTKEY', '192.168.0.115 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6L4uEcITdzsjRnC7M935M0MSSQDSIPYlPAV/PHhHU+sAYtFq835FU981ZIUXPp1iox9c7U44V+Camaf0pZRnB+/5dLNkqKF+kHVzTi8D4azmjHaY22mPnu1QRPWN8gO5bA/18+p1PqF0dCF2z9Uq+KOIS6f0LX97p6UfDy4DYcSv4nFxFiYXrjK5ARBd6Sks+cYsqgrINL9frSms89hQUuMmnoVgwht/8biUX7k8qOL8UX5oyKAvrkp5KSqET6gYwzB5Z5rsRmQ4yDKT/J4x38dgcmSlzbo48spal+NmzQH52JP9EpzFGOzjJQ47xhiFxEIz8Wd5srdUdnJ9JkWid')
 DELL_FTP_PGP_KEY_ID = env_get_text('DELL_FTP_PGP_KEY_ID', '3A74219B887E37BA')
-DELL_PGP_KEY = env_get_text('DELL_FTP_PGP_KEY', """-----BEGIN PGP PUBLIC KEY BLOCK-----
+DELL_FTP_PGP_KEY = env_get_text('DELL_FTP_PGP_KEY', """-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: GnuPG v1
 
 mQINBFb62eoBEADfDq9YW82LhHNv0hFlssT2X9BhWBjCKcjSwcVVrtwzNTVz2DGJ
@@ -204,3 +204,18 @@ WbvgyFkKAJ9uxIr1WKhD5srgq4PS3y9PcI9iRwCbB06Qr8Y0p+xLgLu+lUWR515V
 Sls=
 =tuZL
 -----END PGP PUBLIC KEY BLOCK-----""")
+
+# Electronic signature discloure link
+ESIGN_DISCLOSURE_URI = env_get_text('ESIGN_DISCLOSURE_URI', 'http://5starlifeinsurance.com/esign_disclosure')
+
+# Dell Straight-Through-Processing (STP) settings
+
+# Use Dell's "model office" instead of production if True.
+IS_STP_DEBUG = env_get_bool('IS_STP_DEBUG', True)
+
+# If True, Don't even send to "model office", but pretend to.
+IS_STP_SIMULATE = env_get_bool('IS_STP_SIMULATE', True)
+
+STP_URL = env_get_text('STP_URL', 'https://extranetapps-mo.tagtpa.com/TxLifeImport/TxLife.asmx?WSDL')
+#STP_LIVE_URL = env_get_text('STP_LIVE_URL', 'https://extranetapps.tagtpa.com/TxLifeImport/TxLife.asmx?WSDL')
+#STP_URL = STP_DEBUG_URL if IS_STP_DEBUG else STP_LIVE_URL

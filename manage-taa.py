@@ -13,6 +13,8 @@ from taa.manage.database import ResetDataCommand
 from taa.manage.generate_flatfile import CSVToFlatFileCommand
 from taa.manage.generate_flatfile_docs import GenFlatFileDocsCommand
 from taa.manage.sync_envelopes import SyncEnvelopesCommand
+from taa.manage.CaseConversion import CaseConversionCommand
+from taa.manage.flag_paylogix_enrollments import FlagPaylogixEnrollmentsCommand
 
 manager = Manager(app)
 manager.add_command('initialize_db', InitializeDatabaseCommand())
@@ -28,5 +30,7 @@ manager.add_command("csv_to_flatfile", CSVToFlatFileCommand())
 manager.add_command("gen_flatfile_docs", GenFlatFileDocsCommand())
 manager.add_command("get_dropbox_token", GetDropBoxTokenCommand())
 manager.add_command("sync_envelopes", SyncEnvelopesCommand())
+manager.add_command("convert_cases", CaseConversionCommand())
+manager.add_command("flag_paylogix_enrollments", FlagPaylogixEnrollmentsCommand())
 if __name__ == "__main__":
     manager.run()

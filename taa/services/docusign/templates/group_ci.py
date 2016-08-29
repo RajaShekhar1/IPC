@@ -32,7 +32,7 @@ class GroupCITemplate(DocuSignServerTemplate):
 
         tabs = super(GroupCITemplate, self).generate_tabs(recipient, purpose)
 
-        if recipient.is_agent():
+        if recipient.is_agent() or self.data.did_finish_signing_in_wizard():
             tabs += self.convert_to_tab_objects(self.make_agent_tabs())
 
         if recipient.is_employee() or self.data.should_use_call_center_workflow():
@@ -42,31 +42,30 @@ class GroupCITemplate(DocuSignServerTemplate):
 
     def make_agent_tabs(self):
         agent_radios = []
-
-        if not self.data.should_use_call_center_workflow():
-            # identical to whatever EE said
-            agent_radios.append(
-                {
-                    'groupName': 'existingInsAgent',
-                    'radios': [
-                        {
-                            'selected': 'True',
-                            'value': self.data['existing_insurance']
-                        }
-                    ]
-                }
-            )
-            agent_radios.append(
-                {
-                    'groupName': 'replaceAgent',
-                    'radios': [
-                        {
-                            'selected': 'True',
-                            'value': self.data['replacing_insurance']
-                        }
-                    ]
-                }
-            )
+        
+        # identical to whatever EE said
+        agent_radios.append(
+            {
+                'groupName': 'existingInsAgent',
+                'radios': [
+                    {
+                        'selected': 'True',
+                        'value': self.data['existing_insurance']
+                    }
+                ]
+            }
+        )
+        agent_radios.append(
+            {
+                'groupName': 'replaceAgent',
+                'radios': [
+                    {
+                        'selected': 'True',
+                        'value': self.data['replacing_insurance']
+                    }
+                ]
+            }
+        )
 
         return {'radioGroupTabs': agent_radios}
 

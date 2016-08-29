@@ -28,10 +28,12 @@ small_style = ParagraphStyle(name='smallLegal',
 
 
 class CoverSheetAttachment(PDFAttachment):
-    def __init__(self, recipients, enrollment_data, all_enrollments):
+    def __init__(self, recipients, enrollment_data, all_enrollments, enrollment_application=None):
         PDFAttachment.__init__(self, recipients, enrollment_data)
 
         self.case = enrollment_data.case
+        self.enrollment_data = enrollment_data
+        self.enrollment_application = enrollment_application
 
         # This is a summary document so we need all the enrollment data.
         self.all_enrollments = all_enrollments
@@ -46,7 +48,8 @@ class CoverSheetAttachment(PDFAttachment):
         flowables += self.draw_legal_text()
 
         # Signature line and name
-        flowables += self.draw_signature_line()
+        # Removing this for now to simplify the emailing of this sheet.
+        #flowables += self.draw_signature_line()
 
         # Generate the document using reportlab's PLATYPUS layout api.
         self._doc.leftMargin = .4 * inch
@@ -174,13 +177,26 @@ class CoverSheetAttachment(PDFAttachment):
 
         # Iterate through the case products to identify declines.
         case_service = LookupService('CaseService')
-        for i, product in enumerate(case_service.get_products_for_case(self.data.case)):
+        product_service = LookupService('ProductService')
+        rider_service = RiderService()
+        if self.enrollment_application:
+            product_ids = self.enrollment_application.get_enrolled_product_ids()
+            product_options = [product_service.get(product_id) for product_id in product_ids]
+        else:
+            product_options = case_service.get_products_for_case(self.data.case)
+        state = self.enrollment_data.get('enrollState')
+        declined_products = self.get_declined_products()
+        for i, product in enumerate(product_service.filter_products_by_enrollment_state(product_options, state)):
 
             product_data = self.get_wrapped_enrollment_data_for_product(product)
 
-            if product not in self.get_enrolled_products():
+            if not product_data:
+                product_header = '{} - INELIGIBLE'.format(product.get_brochure_name() if product.get_brochure_name() else product.get_base_product().name)
+                applicants = []
+
+            elif product in declined_products:
                 # Show Decline
-                product_header = '{} - DECLINED'.format(product.get_brochure_name()  if product.get_brochure_name() else product.get_base_product().name)
+                product_header = '{} - DECLINED'.format(product.get_brochure_name() if product.get_brochure_name() else product.get_base_product().name)
                 applicants = []
             else:
                 # Show product name, also tier if a simple_coverage option, and riders if riders are included.
@@ -196,7 +212,6 @@ class CoverSheetAttachment(PDFAttachment):
                     product_header += ' - {}'.format(simple_cov_map.get(coverage_tier, coverage_tier))
 
                 if product.is_fpp():
-                    rider_service = RiderService()
                     riders = rider_service.get_case_level_riders_for_product(product_data.case, product)
                     if riders:
                         product_header += " (with {})".format(', '.join([rider.user_facing_name for rider in riders]))
@@ -211,15 +226,13 @@ class CoverSheetAttachment(PDFAttachment):
 
             for applicant in applicants:
                 # Also include applicant-level rider data if provided
-                applicant_riders = [
-                    r['user_facing_name']
-                    for r in applicant['selected_riders']
-                    if not r['is_group_level']
-                ]
+                applicant_riders = rider_service.get_applicant_level_riders_for_product(
+                        applicant, product_data.case, product)
 
                 name = applicant['name']
                 if applicant_riders:
-                    name += " (with {})".format(', '.join(applicant_riders))
+                    name += " (with {})".format(', '.join([rider.user_facing_name
+                                                           for rider in applicant_riders]))
 
                 table_data += [
                     [
@@ -274,6 +287,14 @@ class CoverSheetAttachment(PDFAttachment):
     def get_enrolled_products(self):
         return [d.get_product() for d in self.get_wrapped_enrollment_data()]
 
+    def get_declined_products(self):
+        declined_products = []
+        for data in self.get_wrapped_enrollment_data():
+            if data['did_decline']:
+                declined_products.append(data.get_product())
+        return declined_products
+
+
     def get_wrapped_enrollment_data(self):
         return [EnrollmentDataWrap(raw_product_data, self.data.case, self.data.enrollment_record)
                 for raw_product_data in self.all_enrollments]
@@ -281,7 +302,7 @@ class CoverSheetAttachment(PDFAttachment):
     def draw_legal_text(self):
 
         return [
-            Paragraph("<font size='8'>*</font> <font size='9'>(Actual amounts may very slightly due to rounding)</font>", small_style),
+            Paragraph("<font size='8'>*</font> <font size='9'>(Actual amounts may vary slightly due to rounding)</font>", small_style),
             Spacer(0, .5 * inch),
             Paragraph("""Please take a moment to review and confirm that these elections are correct and that the individuals you wish to have covered under these plans are noted above.  This enrollment confirmation is not a replacement of any policies or certificates of coverage, which will be delivered either electronically or via US Mail service to the address noted at the top of this form.  The summary above is for informational purposes only and any applications may be subject to underwriting, pursuant to the terms of the Plan.""",
                       small_style),

@@ -1,8 +1,10 @@
 import csv
 from StringIO import StringIO
+from io import BytesIO
+from zipfile import ZipFile
 
 import traceback
-from flask import Blueprint, request, abort, make_response
+from flask import Blueprint, request, abort, make_response, send_file
 from flask_stormpath import login_required, groups_required
 from taa.tasks import send_admin_error_email
 
@@ -141,6 +143,29 @@ def render_batch_item_pdf(batch_id, item_id):
     return response
 
 
+@route(bp, '/import_batches/<batch_id>/<item_id>/xml', methods=['GET'])
+@login_required
+@groups_required(['admins'])
+def render_batch_item_xml(batch_id, item_id):
+    item = enrollment_import_batch_item_service.get(item_id)
+    if not item:
+        abort(404)
+
+    pdf_bytes = enrollment_submission_service.render_enrollment_pdf(item.enrollment_record, is_stp=True)
+    zipstream = BytesIO()
+    with ZipFile(zipstream, 'w') as zip:
+        for form_for in enrollment_submission_service.get_enrollees(item.enrollment_record):
+            # TODO: This is not called correctly anymore.
+            xml = enrollment_submission_service.render_enrollment_xml(
+                item.enrollment_record, form_for, pdf_bytes)
+            if xml is not None:
+                fn = 'enrollment_{}-{}.xml'.format(item.enrollment_record_id, form_for)
+                zip.writestr(fn, xml.encode('latin-1'))
+    zipstream.seek(0)
+    return send_file(zipstream, attachment_filename='enrollment_{}.zip'.format(
+        item.enrollment_record_id), as_attachment=True)
+
+
 @route(bp, '/records/<int:enrollment_record_id>/pdf', methods=['GET'])
 @login_required
 @groups_required(['admins', 'home_office', 'agents'], all=False)
@@ -157,6 +182,29 @@ def generate_enrollment_pdf(enrollment_record_id):
     response.headers['Content-Disposition'] = 'inline; filename=%s.pdf' % 'enrollment_{}'.format(enrollment.id)
     return response
 
+
+@route(bp, '/records/<int:enrollment_record_id>/xml', methods=['GET'])
+@login_required
+@groups_required(['admins', 'home_office', 'agents'], all=False)
+def generate_enrollment_xml(enrollment_record_id):
+    app = enrollment_application_service.get_or_404(enrollment_record_id)
+    
+    xmls = enrollment_submission_service.generate_enrollment_xml_docs(app)
+    
+    zipstream = enrollment_submission_service.create_xml_zip(xmls)
+    
+    return send_file(zipstream, attachment_filename='enrollment_{}.zip'.format(
+        enrollment_record_id), as_attachment=True)
+
+
+def generate_xml(enrollment_record, form_for='employee'):
+    # TODO: NOT called correctly anymore
+    
+    pdf_bytes = enrollment_submission_service.render_enrollment_pdf(
+            enrollment_record)
+    
+    return enrollment_submission_service.render_enrollment_xml(
+            enrollment_record, form_for, pdf_bytes)
 
 
 @route(bp, '/export/acchi/csv/<from_>/<to_>', methods=['GET'])
@@ -178,3 +226,4 @@ def render_acc_hi_csv(from_, to_):
     response.headers['Content-Type'] = 'text/csv'
     response.headers['Content-Disposition'] = 'inline; filename=acc-hi_{}~{}.csv'.format(from_, to_)
     return response
+

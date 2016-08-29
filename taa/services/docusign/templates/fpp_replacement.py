@@ -18,8 +18,8 @@ class FPPReplacementFormTemplate(DocuSignServerTemplate):
     def generate_tabs(self, recipient, purpose):
         tabs = super(FPPReplacementFormTemplate, self).generate_tabs(recipient, purpose)
 
-        if not recipient.is_employee() and not self.data.should_use_call_center_workflow():
-            return tabs
+        #if not recipient.is_employee() and not self.data.should_use_call_center_workflow():
+        #    return tabs
 
         tabs += [
             DocuSignRadioTab('read_aloud', 'yes' if self.data['replacement_read_aloud'] else 'no'),

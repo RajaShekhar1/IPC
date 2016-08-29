@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TXLife>
+    <UserAuthRequest>
+        <UserLoginName>{{ auth.login }}</UserLoginName>
+        <UserPswd>
+            <CryptType>{{ auth.crypt_type }}</CryptType>
+        </UserPswd>
+        <VendorApp>
+            <VendorName VendorCode="{{ vendor.code }}">{{ vendor.name }}</VendorName>
+            <AppName>{{ vendor.app_name }}</AppName>
+        </VendorApp>
+        <OLifEExtension VendorCode="{{ olife.vendor_code }}" ExtensionCode="{{ olife.extention_code }}">
+            <CompanyNumber>{{ olife.company_num }}</CompanyNumber>
+            <GroupLifeApplicationCode>{{ olife.app_code }}</GroupLifeApplicationCode>
+            <EffectiveDate>{{ meta.effective_date }}</EffectiveDate>
+        </OLifEExtension>
+    </UserAuthRequest>
+    <TXLifeRequest PrimaryObjectID="Holding_Primary">
+        {# STP Process needs a Unique ID for each xml. Please provide different IDs for Employee , Spouse and Children XMLs #}
+        <TransRefGUID>{{ meta.unique_id }}</TransRefGUID>
+        <TransType tc="{{ meta.trans_type_code }}">{{ meta.trans_type }}</TransType>
+        <TransExeDate>{{ meta.submitted_date }}</TransExeDate>
+        <TransExeTime>{{ meta.submitted_time }}</TransExeTime>
+        <OLifE>
+            <SourceInfo>
+                <CreationDate>{{ meta.submitted_date }}</CreationDate>
+                <CreationTime>{{ meta.submitted_time }}</CreationTime>
+                <SourceInfoName>{{ vendor.name }}</SourceInfoName>
+            </SourceInfo>
+            <FinancialStatement>
+                <CommissionCalcInfo>
+                    <CommissionCalcActivity>
+                        {% for agent in agents -%}
+                            <CommissionDetail>
+                                {% if loop.first -%}
+                                {# First agent is primary (writing) agent -#}
+                                <WritingProducerID>{{ agent.code }}</WritingProducerID>
+                                {% else -%}
+                                <PaidProducerID>{{ agent.code }}</PaidProducerID>
+                                {% endif -%}
+                                <SplitPercent>{{ agent.commission_percent }}</SplitPercent>
+                                <CommissionSchedule>{{ agent.subcode }}</CommissionSchedule>
+                            </CommissionDetail>
+                        {% endfor -%}
+                    </CommissionCalcActivity>
+                </CommissionCalcInfo>
+            </FinancialStatement>
+            <Holding id="Holding_Primary">
+                <Policy>
+                    <ProductCode>{{ policy.product_code }}</ProductCode>
+                    <CarrierCode>{{ policy.carrier_code }}</CarrierCode>
+                    <PlanName>{{ policy.product_type }}</PlanName>
+                    <PolicyStatus tc="{{ policy.status_code }}">{{ policy.status }}</PolicyStatus>
+                    <ReplacementIndicator tc="{{ policy.is_replacement_code }}">{{ policy.is_replacement }}</ReplacementIndicator>
+                    {# The Replacement Type  field is not present in PDF application form however if it is a replacement, vendor needs to specify in next field if it is Internal or External Replacement #}
+                    <ReplacementType tc="{{ policy.replacement_type_code }}">{{ policy.replacement_type }}</ReplacementType>
+                    {% if policy.is_replacement -%}
+                    <OLifeExtension>
+                        <ReplacedPolicyNumber>{{ policy.replacement_number }}</ReplacedPolicyNumber>
+                    </OLifeExtension>
+                    {% endif -%}
+                    <PaymentMode tc="{{ policy.payment_mode_code }}">{{ policy.payment_mode }}</PaymentMode>
+                    <PaymentAmt>{{ enrollee.coverage.premium or '0.00' }}</PaymentAmt>
+                    <PaymentMethod tc="{{ policy.payment.method_code }}">{{ policy.payment.method }}</PaymentMethod>
+                    {% if policy.payment.method_code == '7' -%}
+                    <AccountNumber>{{ policy.payment.account_number }}</AccountNumber>
+                    <RoutingNumber>{{ policy.payment.routing_number }}</RoutingNumber>
+                    <BankAcctType tc="{{ policy.payment.account_type_code }}">{{ policy.payment.account_type }}</BankAcctType>
+                    <PaymentDraftDay>{{ policy.payment.draft_day }}</PaymentDraftDay>
+                    {% endif -%}
+                    {% if policy.is_life -%}
+                        {# Life #}
+                        {% include "xml/life.xml" -%}
+                    {% else -%}
+                        {% include "xml/disability_health.xml" -%}
+                        {# DisabilityHealth #}
+                    {% endif -%}
+                    <ApplicationInfo>
+                        <SignatureInfo>
+                            <SignatureRoleCode tc="18">Owner</SignatureRoleCode>
+                            <SignatureDate>{{ primary_agent.signature_date.strftime('%Y-%m-%d') }}</SignatureDate>
+                            <SignatureCity>{{ policy.enroll_city }}</SignatureCity>
+                            <SignatureState tc="{{ policy.enroll_state_code }}">{{ policy.enroll_state }}</SignatureState>
+                            <SignatureOK tc="1">True</SignatureOK>
+                            <OLifeExtension>
+                                <PIN>{{ policy.pin }}</PIN>
+                            </OLifeExtension>
+                        </SignatureInfo>
+                        {# Signature Info for Payor currently not used but added for future support. #}
+{#                        <SignatureInfo>#}
+{#                            <SignatureRoleCode tc="12">Payor</SignatureRoleCode>#}
+{#                            <SignatureState tc="17">Illinois</SignatureState>#}
+{#                            <SignatureOK tc="1">True</SignatureOK>#}
+{#                        </SignatureInfo>#}
+                        <SignatureInfo>
+                            <SignatureRoleCode tc="15">Primary Agent</SignatureRoleCode>
+                            <SignatureDate>{{ primary_agent.signature_date.strftime('%Y-%m-%d') }}</SignatureDate>
+                            {# PDF application form does not have Agent Signature State specified. Value below corresponds to Owner Signature State. Please see if you need to send a different value in next field #}
+                            <SignatureState tc="{{ primary_agent.signature_state_code }}">{{ primary_agent.signature_state }}</SignatureState>
+                            <SignatureOK tc="1">True</SignatureOK>
+                        </SignatureInfo>
+                    </ApplicationInfo>
+                </Policy>
+            </Holding>
+            <Party id="Party_PrimaryInsured">
+                <GovtID>{{ enrollee.ssn }}</GovtID>
+                <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
+                <Person DataRep="Partial">
+                    <FirstName>{{ enrollee.first }}</FirstName>
+                    {% if enrollee.middle -%}
+                    <MiddleName>{{ enrollee.middle }}</MiddleName>
+                    {% endif -%}
+                    <LastName>{{ enrollee.last }}</LastName>
+{#                    {% if enrollee.occupation -%}#}
+{#                    <Occupation>{{ enrollee.occupation }}</Occupation>#}
+{#                    {% endif -%}#}
+                    <Gender tc="{{ enrollee.gender_code }}">{{ enrollee.gender }}</Gender>
+                    <BirthDate>{{ enrollee.birthdate }}</BirthDate>
+                    {# PDF Application does not list Smoker Class. Vendor needs to send this info in folllowing field. #}
+                    <SmokerStat tc="{{ enrollee.smoker_code }}">{{ enrollee.smoker }}</SmokerStat>
+                    {% if enrollee.height -%}
+                    <Height2>
+                        <MeasureValue>{{ enrollee.height }}</MeasureValue>
+                    </Height2>
+                    {% endif -%}
+                    {% if enrollee.weight -%}
+                    <Weight2>
+                        <MeasureValue>{{ enrollee.weight }}</MeasureValue>
+                    </Weight2>
+                    {% endif -%}
+                </Person>
+                <Address>
+                    <Line1>{{ enrollee.address1 }}</Line1>
+                    {% if enrollee.address2 -%}
+                    <Line2>{{ enrollee.address2 }}</Line2>
+                    {% endif -%}
+                    <City>{{ enrollee.city }}</City>
+                    <AddressStateTC tc="{{ enrollee.state_code }}">{{ enrollee.state }}</AddressStateTC>
+                    <Zip>{{ enrollee.zip }}</Zip>
+                </Address>
+                {% if enrollee.phone -%}
+                <Phone>
+                    <AreaCode>{{ enrollee.phone['area_code'] }}</AreaCode>
+                    <DialNumber>{{ enrollee.phone['dial_num'] }}</DialNumber>
+                </Phone>
+                {% endif -%}
+                {% if enrollee.email -%}
+                <EMailAddress>
+                    <AddrLine>{{ enrollee.email }}</AddrLine>
+                    <OLifEExtension>
+                        <eDeliveryOptIn>NN</eDeliveryOptIn>
+                    </OLifEExtension>
+                </EMailAddress>
+                {% endif -%}
+                <Employment>
+                    <HireDate>{{ employee.hire_date }}</HireDate>
+                    <ActivelyAtWorkInd tc="{{ employee.actively_at_work_code }}">{{ employee.actively_at_work }}</ActivelyAtWorkInd>
+                    <EmployerName>{{ case.company_name }}</EmployerName>
+                    <EmployeeID></EmployeeID>
+                    <OLifeExtension>
+                        {# PDF application form does not have Employer Id value in Group Number Field. We have put a dummy value in field for example. Vendor needs to send this value in next field #}
+                        <EmployerID>{{ case.group_number }}</EmployerID>
+                    </OLifeExtension>
+                </Employment>
+                <Risk>
+                    <OLifeExtension>
+                        {# This empty question is in the spec. #}
+                        <Question></Question>
+                        {% for question in soh_questions -%}
+                        <Question>
+                            <QuestionNumber>{{ loop.index }}</QuestionNumber>
+                            <Response>{{ question.answer }}</Response>
+                        </Question>
+                        {% endfor -%}
+                        {% if applicant_type == 'spouse' and enrollee.spouse_treated_6_months -%}
+                        <Question>
+                            <QuestionNumber>SP1</QuestionNumber>
+                            <Response>{{ enrollee.spouse_treated_6_months }}</Response>
+                        </Question>
+                        {% endif -%}
+                        {% if applicant_type == 'spouse' and enrollee.spouse_disabled_6_months -%}
+                        <Question>
+                            <QuestionNumber>SP2</QuestionNumber>
+                            <Response>{{ enrollee.spouse_disabled_6_months }}</Response>
+                        </Question>
+                        {% endif -%}
+                    </OLifeExtension>
+                </Risk>
+            </Party>
+            <Party id="Party_Owner">
+                <GovtID>{{ employee.ssn }}</GovtID>
+                <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
+                <Person DataRep="Partial">
+                    <FirstName>{{ employee.first }}</FirstName>
+                    {% if enrollee.middle -%}
+                    <MiddleName>{{ employee.middle }}</MiddleName>
+                    {% endif -%}
+                    <LastName>{{ employee.last }}</LastName>
+                    <BirthDate>{{ employee.birthdate }}</BirthDate>
+                </Person>
+                <Address>
+                    <Line1>{{ employee.address1 }}</Line1>
+                    {% if enrollee.address2 -%}
+                    <Line2>{{ enrollee.address2 }}</Line2>
+                    {% endif -%}
+                    <City>{{ employee.city }}</City>
+                    <AddressStateTC tc="{{ employee.state_code }}">{{ employee.state }}</AddressStateTC>
+                    <Zip>{{ employee.zip }}</Zip>
+                </Address>
+                {% if employee.phone -%}
+                <Phone>
+                    <AreaCode>{{ employee.phone["area_code"] }}</AreaCode>
+                    <DialNumber>{{ employee.phone["dial_num"] }}</DialNumber>
+                </Phone>
+                {% endif -%}
+                {% if employee.email -%}
+                <EMailAddress>
+                    <AddrLine>{{ employee.email }}</AddrLine>
+                    <OLifEExtension>
+                        <eDeliveryOptIn>NN</eDeliveryOptIn>
+                    </OLifEExtension>
+                </EMailAddress>
+                {% endif -%}
+                <Risk>
+                    <ExistingInsuranceInd tc="{{ policy.existing_insurance_code }}">{{ policy.existing_insurance }}</ExistingInsuranceInd>
+                </Risk>
+            </Party>
+            <Party id="Party_Payor">
+                <GovtID>{{ employee.ssn }}</GovtID>
+                <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
+                <Person DataRep="Partial">
+                    <FirstName>{{ employee.first }}</FirstName>
+                    {% if enrollee.middle -%}
+                    <MiddleName>{{ employee.middle }}</MiddleName>
+                    {% endif -%}
+                    <LastName>{{ employee.last }}</LastName>
+                    <BirthDate>{{ employee.birthdate }}</BirthDate>
+                </Person>
+                <Address>
+                    <Line1>{{ employee.address1 }}</Line1>
+                    {% if enrollee.address2 -%}
+                    <Line2>{{ enrollee.address2 }}</Line2>
+                    {% endif -%}
+                    <City>{{ employee.city }}</City>
+                    <AddressStateTC tc="{{ employee.state_code }}">{{ employee.state }}</AddressStateTC>
+                    <Zip>{{ employee.zip }}</Zip>
+                </Address>
+                {% if employee.phone -%}
+                <Phone>
+                    <AreaCode>{{ employee.phone["area_code"] }}</AreaCode>
+                    <DialNumber>{{ employee.phone["dial_num"] }}</DialNumber>
+                </Phone>
+                {% endif -%}
+                {% if employee.email -%}
+                <EMailAddress>
+                    <AddrLine>{{ employee.email }}</AddrLine>
+                    <OLifEExtension>
+                        <eDeliveryOptIn>NN</eDeliveryOptIn>
+                    </OLifEExtension>
+                </EMailAddress>
+                {% endif -%}
+            </Party>
+            {% for beneficiary in enrollee.beneficiaries.beneficiary -%}
+            <Party id="Party_PrimaryBene_{{ loop.index }}">
+                <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
+                <GovtID>{{ beneficiary.ssn }}</GovtID>
+                <Person DataRep="Partial">
+                    <FirstName>{{ beneficiary.first }}</FirstName>
+                    {% if beneficiary.middle -%}
+                    <MiddleName>{{ beneficiary.middle }}</MiddleName>
+                    {% endif -%}
+                    <LastName>{{ beneficiary.last }}</LastName>
+                    <BirthDate>{{ beneficiary.birthdate }}</BirthDate>
+                </Person>
+            </Party>
+            {% endfor -%}
+            {% for beneficiary in enrollee.beneficiaries.contingent_beneficiary -%}
+            <Party id="Party_ContingentBene_{{ loop.index }}">
+                <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
+                <Person DataRep="Partial">
+                    <FirstName>{{ beneficiary.first }}</FirstName>
+                    {% if beneficiary.middle -%}
+                    <MiddleName>{{ beneficiary.middle }}</MiddleName>
+                    {% endif -%}
+                    <LastName>{{ beneficiary.last }}</LastName>
+                </Person>
+{#                <Organization>#}
+{#                    <AbbrName></AbbrName>#}
+{#                </Organization>#}
+            </Party>
+            {% endfor -%}
+            <Party id="Party_PrimaryAgent">
+                <Person DataRep="Partial">
+                    <FirstName>{{ primary_agent.first }}</FirstName>
+                    {% if primary_agent.middle -%}
+                    <MiddleName>{{ primary_agent.middle }}</MiddleName>
+                    {% endif -%}
+                    <LastName>{{ primary_agent.last }}</LastName>
+                </Person>
+                <Producer>
+                    <CarrierAppointment>
+                        <CompanyProducerID>{{ primary_agent.code }}</CompanyProducerID>
+                    </CarrierAppointment>
+                </Producer>
+                <Risk>
+                    <ExistingInsuranceInd tc="0">FALSE</ExistingInsuranceInd>
+                </Risk>
+            </Party>
+            <Relation id="Relation_OwnerToPrimaryInsured" OriginatingObjectID="Party_PrimaryInsured" RelatedObjectID="Party_Owner">
+                <OriginatingObjectType tc="6">Party</OriginatingObjectType>
+                <RelatedObjectType tc="6">Party</RelatedObjectType>
+                <RelationRoleCode tc="{{ relationships.owner_to_primary.code }}">{{ relationships.owner_to_primary.name }}</RelationRoleCode>
+            </Relation>
+            {% for beneficiary in relationships.owner_to_beneficiary -%}
+            <Relation id="Relation_PrimaryBene{{ loop.index }}ToPrimaryInsured" OriginatingObjectID="Party_PrimaryInsured" RelatedObjectID="Party_PrimaryBene_{{ loop.index }}">
+                <OriginatingObjectType tc="6">Party</OriginatingObjectType>
+                <RelatedObjectType tc="6">Party</RelatedObjectType>
+                <RelationRoleCode tc="{{ beneficiary.code }}">{{ beneficiary.name }}</RelationRoleCode>
+            </Relation>
+            {% endfor -%}
+            {% for beneficiary in relationships.owner_to_contingent_beneficiary -%}
+            <Relation id="Relation_ContingentBene{{ loop.index }}ToPrimaryInsured" OriginatingObjectID="Party_PrimaryInsured" RelatedObjectID="Party_ContingentBene_{{ loop.index }}">
+                <OriginatingObjectType tc="6">Party</OriginatingObjectType>
+                <RelatedObjectType tc="6">Party</RelatedObjectType>
+                <RelationRoleCode tc="{{ beneficiary.code }}">{{ beneficiary.name }}</RelationRoleCode>
+            </Relation>
+            {% endfor -%}
+            <FormInstance>
+                <FormName>Application</FormName>
+                <Attachment>
+                    <AttachmentData>{{ encoded_pdf }}</AttachmentData>
+                    <ImageType tc="1">PDF</ImageType>
+                </Attachment>
+            </FormInstance>
+        </OLifE>
+    </TXLifeRequest>
+    <!--
+    case: {{ meta.case_id }}
+    enrollment: {{ meta.enrollment_id }}
+    -->
+</TXLife>

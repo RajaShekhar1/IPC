@@ -161,14 +161,14 @@ fl_soh_list = [
 
 # Some common forms between FPPTI and FPPCI
 fpp_de_sd_vi_form = ApplicationForm('DE, SD & VI FPP', ['DE', 'SD', 'VI'], fpp_generic_soh_list,
-                                    docusign_template_id='5CCB952F-AEF5-4017-B46F-B1770B430DE5')
-fpp_ca_form = ApplicationForm('CA', ['CA'], ca_ct_soh_list, docusign_template_id='D3CFC594-2E46-427D-904A-6DBEF6B6207D')
-fpp_ct_form = ApplicationForm('CT', ['CT'], ca_ct_soh_list, docusign_template_id='79D81EE3-25A3-4967-A58B-9D9B9716836F')
+                                    docusign_template_id=u'5CCB952F-AEF5-4017-B46F-B1770B430DE5')
+fpp_ca_form = ApplicationForm('CA', ['CA'], ca_ct_soh_list, docusign_template_id=u'D3CFC594-2E46-427D-904A-6DBEF6B6207D')
+fpp_ct_form = ApplicationForm('CT', ['CT'], ca_ct_soh_list, docusign_template_id=u'79D81EE3-25A3-4967-A58B-9D9B9716836F')
 fpp_dc_form = ApplicationForm('DC', ['DC'], fpp_generic_soh_list,
-                              docusign_template_id='138851E3-3B66-47DC-89DA-D953C6F618A5')
+                              docusign_template_id=u'138851E3-3B66-47DC-89DA-D953C6F618A5')
 fpp_fl_form = ApplicationForm('FL', ['FL'], fl_soh_list, docusign_template_id='6047EF30-473B-4148-A674-34C94E194ED2')
 fpp_nd_form = ApplicationForm('ND', ['ND'], fpp_generic_soh_list,
-                              docusign_template_id='5C8FE7F1-6DCC-46F5-BA03-C5F16FB8F50B')
+                              docusign_template_id=u'5C8FE7F1-6DCC-46F5-BA03-C5F16FB8F50B')
 
 # Common Group CI questions
 group_ci_family_member_history_question = SOHQuestion('Family Member History',
@@ -222,7 +222,7 @@ states_without_FPP = ['NJ', 'NY', 'VT', 'WA']
 # It would be nice to not have this list, but for now update this if more custom forms are added / removed.
 states_with_custom_fpp_forms = ['DE', 'SD', 'VI', 'CA', 'CT', 'DC', 'FL', 'ND']
 
-TEMPLATE_ID_FPP_GENERIC = 'E26A7761-1ACF-4993-A2A1-2D021B79E68C'
+TEMPLATE_ID_FPP_GENERIC = u'E26A7761-1ACF-4993-A2A1-2D021B79E68C'
 
 
 def get_product_application_forms():
@@ -302,7 +302,7 @@ def get_product_application_forms():
             #                 skip_if_coverage_at_most=10000,
             #     ),
             #     group_ci_ever_rejected_question,
-            # ], docusign_template_id='C362F325-D174-4EDC-835E-21B3CFBA515E'),
+            # ], docusign_template_id=u'C362F325-D174-4EDC-835E-21B3CFBA515E'),
             #
             # ApplicationForm('Group CI IL', ['IL'], [
             #     group_ci_family_member_history_question,
@@ -318,7 +318,7 @@ def get_product_application_forms():
             #     group_ci_hpv_question,
             #     group_ci_abnormal_question,
             #     group_ci_ever_rejected_question,
-            # ], docusign_template_id='533B6385-6BD0-4815-B95B-FBC2FBE33577'),
+            # ], docusign_template_id=u'533B6385-6BD0-4815-B95B-FBC2FBE33577'),
             #
             # ApplicationForm('Group CI MO', ['MO'], [
             #     group_ci_family_member_history_question,
@@ -355,7 +355,7 @@ def get_product_application_forms():
             #          skip_if_coverage_at_most=10000,
             #     ),
             #
-            # ], docusign_template_id='58825CDE-83B7-4570-91F6-311B9BC0B986'),
+            # ], docusign_template_id=u'58825CDE-83B7-4570-91F6-311B9BC0B986'),
             #
             # ApplicationForm(
             #     'Group CI CA',
@@ -380,7 +380,7 @@ def get_product_application_forms():
             #                     ),
             #     ],
             #     is_generic=False,
-            #     docusign_template_id='ADE890CA-3471-476C-8BAD-CD7F6EF9217D',
+            #     docusign_template_id=u'ADE890CA-3471-476C-8BAD-CD7F6EF9217D',
             # ),
             #
             # ApplicationForm(
@@ -400,7 +400,7 @@ def get_product_application_forms():
             #         group_ci_ever_rejected_question,
             #     ],
             #     is_generic=False,
-            #     docusign_template_id='D497B7E0-A3BC-4C35-9182-85F3157C7BAE',
+            #     docusign_template_id=u'D497B7E0-A3BC-4C35-9182-85F3157C7BAE',
             # ),
             #
             # ApplicationForm(
@@ -408,21 +408,21 @@ def get_product_application_forms():
             #     ["CO"],
             #     group_ci_generic_soh_questions,
             #     is_generic=False,
-            #     docusign_template_id='4D8B3FE5-1CBB-4682-B245-E7C6AE469399',
+            #     docusign_template_id=u'4D8B3FE5-1CBB-4682-B245-E7C6AE469399',
             # ),
             # ApplicationForm(
             #     'Group CI DC',
             #     ["DC"],
             #     group_ci_generic_soh_questions,
             #     is_generic=False,
-            #     docusign_template_id='C6820A2C-B42C-49D3-9FF8-32DC858D1FC4',
+            #     docusign_template_id=u'C6820A2C-B42C-49D3-9FF8-32DC858D1FC4',
             # ),
             # ApplicationForm(
             #     'Group CI HI',
             #     ["HI"],
             #     group_ci_generic_soh_questions,
             #     is_generic=False,
-            #     docusign_template_id='A50B0BD1-8D53-45BB-91EF-F18FF3B89014',
+            #     docusign_template_id=u'A50B0BD1-8D53-45BB-91EF-F18FF3B89014',
             # ),
             #
             # ApplicationForm(
@@ -430,28 +430,28 @@ def get_product_application_forms():
             #     ["KS"],
             #     group_ci_generic_soh_questions,
             #     is_generic=False,
-            #     docusign_template_id='C777942F-A126-4E31-8496-2920F1AB2599',
+            #     docusign_template_id=u'C777942F-A126-4E31-8496-2920F1AB2599',
             # ),
             # ApplicationForm(
             #     'Group CI NE',
             #     ["NE"],
             #     group_ci_generic_soh_questions,
             #     is_generic=False,
-            #     docusign_template_id='1ADA1FC1-193D-4F61-AAE8-5DDBD5829617',
+            #     docusign_template_id=u'1ADA1FC1-193D-4F61-AAE8-5DDBD5829617',
             # ),
             # ApplicationForm(
             #     'Group CI PA',
             #     ["PA"],
             #     group_ci_generic_soh_questions,
             #     is_generic=False,
-            #     docusign_template_id='235B2610-F9F9-44E3-929A-C7925C3C39BF',
+            #     docusign_template_id=u'235B2610-F9F9-44E3-929A-C7925C3C39BF',
             # ),
             # ApplicationForm(
             #     'Group CI VA',
             #     ["VA"],
             #     group_ci_generic_soh_questions,
             #     is_generic=False,
-            #     docusign_template_id='6D430309-5AC2-433B-A545-ABAD10B4D352',
+            #     docusign_template_id=u'6D430309-5AC2-433B-A545-ABAD10B4D352',
             # ),
 
             ApplicationForm(
@@ -490,22 +490,22 @@ def get_product_application_forms():
                 [s for s in all_statecodes],
                 group_ci_generic_soh_questions,
                 is_generic=True,
-                docusign_template_id='B57234AB-5EA5-48D4-984F-D3BF07793B9B',
+                docusign_template_id=u'B57234AB-5EA5-48D4-984F-D3BF07793B9B',
             ),
         ],
 
         # FIXME:  In order to get the states to be enabled for this product, these "forms" need to have a non-None template_id
         'ACC': [
             ApplicationForm('Generic', ACC_STATECODES,
-                            [], is_generic=True, docusign_template_id='FAKE TEMPLATE')
+                            [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
         ],
         'HI': [
             ApplicationForm('Generic', HI_STATECODES,
-                            [], is_generic=True, docusign_template_id='FAKE TEMPLATE')
+                            [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
         ],
         'Static Benefit': [
             ApplicationForm('Generic', all_statecodes,
-                            [], is_generic=True, docusign_template_id='FAKE TEMPLATE')
+                            [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
         ]
     }
 
@@ -611,7 +611,7 @@ generic_fpp_replacement_form = ReplacementForm(
     statecodes=['AK', 'AL', 'AR', 'AZ', 'CO', 'IA', 'KS', 'KY', 'LA', 'MD', 'ME', 'MS', 'MT',
                 'NC', 'NE', 'NH', 'NJ', 'NM', 'OH', 'OR', 'RI', 'SC', 'TX', 'UT', 'VA', 'VT',
                 'WI', 'WV'],
-    docusign_template_id='7286ACB9-8B08-43BB-99EB-C7A37B8B8F2A',
+    docusign_template_id=u'7286ACB9-8B08-43BB-99EB-C7A37B8B8F2A',
     paragraphs="""\
 You are contemplating the purchase of a life insurance policy or annuity contract. In some cases this purchase may involve discontinuing or changing an existing policy or contract. If so, a replacement is occurring. Financed purchases are also considered replacements.
 A replacement occurs when a new policy or contract is purchased and, in connection with the sale, you discontinue making premium payments on the existing policy or contract, or an existing policy or contract is surrendered, forfeited, assigned to the replacing insurer, or otherwise terminated or used in a financed purchase.
@@ -625,7 +625,7 @@ Make sure you know the facts. Contact your existing company or its agent for inf
 
 CA_fpp_replacement_form = ReplacementForm(
     statecodes=['CA'],
-    docusign_template_id='C3F52784-1C3C-454F-B268-58062E1D0F38',
+    docusign_template_id=u'C3F52784-1C3C-454F-B268-58062E1D0F38',
     paragraphs="""\
 Are you thinking about buying a new life insurance policy or annuity and discontinuing or changing an existing one? If you are, your decision could be a good one - or a mistake. You will not know for sure unless you make a careful comparison of your existing benefits and the proposed benefits.
 Make sure you understand the facts. You should ask the company or agent that sold you your existing policy to give you information about it.
@@ -637,7 +637,7 @@ We are required by law to notify your existing company that you may be replacing
 
 DE_fpp_replacement_form = ReplacementForm(
     statecodes=['DE'],
-    docusign_template_id='F581E793-5BB8-4B5D-8DC3-156E9A307D4A',
+    docusign_template_id=u'F581E793-5BB8-4B5D-8DC3-156E9A307D4A',
     paragraphs="""\
 It is in your best interest to get all the facts before making a decision. Make sure you fully understand both the proposed new policy and your existing insurance. New policies may contain provisions which limit benefits during the initial period of the contract, in particular, the suicide and incontestable clauses.
 To assist you in evaluating the proposed and the existing insurance, Delaware Insurance Regulation 30 requires that the insurer advising or recommending replacement:
@@ -652,7 +652,7 @@ IT IS SELDOM WISE TO TERMINATE YOUR EXISTING POLICY UNTIL YOUR NEW POLICY HAS BE
 
 FL_fpp_replacement_form = ReplacementForm(
     statecodes=['FL'],
-    docusign_template_id='04ADEC90-34F7-4329-B323-5E608DA51302',
+    docusign_template_id=u'04ADEC90-34F7-4329-B323-5E608DA51302',
     paragraphs="""\
 A decision to buy a new policy and discontinue or change an existing policy may be a wise choice or a mistake.
 Get all the facts. Make sure you fully understand both the proposed policy and your existing policy or policies. New policies may contain clauses which limit or exclude coverage of certain events in the initial period of the contract, such as the suicide and incontestable clauses which may have already been satisfied in your existing policy or policies.
@@ -667,7 +667,7 @@ DO NOT TAKE ACTION TO TERMINATE YOUR EXISTING POLICY UNTIL YOUR NEW POLICY HAS B
 
 GA_fpp_replacement_form = ReplacementForm(
     statecodes=['GA'],
-    docusign_template_id='3D0498C5-B843-4C6A-A3D1-1E6317F2EDA3',
+    docusign_template_id=u'3D0498C5-B843-4C6A-A3D1-1E6317F2EDA3',
     paragraphs="""\
 Are you thinking about buying a new policy and discontinuing or changing an existing policy? If you are, your decision could be a good one or a mistake. You will not know for sure unless you make a careful comparison of your existing policy and the proposed policy.
 Make sure you understand the facts. Georgia law gives you the right to obtain a policy summary statement from your existing insurer at any time. Ask the company or agent that sold you your existing policy to give you information about it.
@@ -695,7 +695,7 @@ REMEMBER, you have thirty (30) days following receipt of any individual life ins
 
 ID_fpp_replacement_form = ReplacementForm(
     statecodes=['ID'],
-    docusign_template_id='6B692851-B782-455D-A246-F8A022665602',
+    docusign_template_id=u'6B692851-B782-455D-A246-F8A022665602',
     paragraphs="""\
 Are you thinking about buying a new life insurance policy or annuity and discontinuing or changing an existing one? If you are, your decision could be a good one - or a mistake. You will not know for sure unless you make a careful comparison of your existing benefits and the proposed benefits. Make sure you understand the facts. You should ask for the advice of the company or agent that sold you your existing policy to give you information concerning any proposed replacement.
 As a general rule, there are disadvantages to dropping your existing life insurance or annuities. Hear both sides before you decide. That way you can be sure you are making a decision that is in your best interest.
@@ -706,7 +706,7 @@ Idaho law requires your existing company to be notified that you may be replacin
 
 IL_fpp_replacement_form = ReplacementForm(
     statecodes=['IL'],
-    docusign_template_id='3CB0CF26-86AA-41E3-BF79-9DDA87ED75FF',
+    docusign_template_id=u'3CB0CF26-86AA-41E3-BF79-9DDA87ED75FF',
     paragraphs="""\
 Are you thinking about buying a new life insurance policy or annuity and discontinuing or changing an existing one? If you are, your decision could be a good one - or a mistake. You will not know for sure unless you make a careful comparison of your existing benefits and the proposed benefits.
 Make sure you understand the facts. You should ask the insurance producer or company that sold you your existing policy to give you information about it.
@@ -718,7 +718,7 @@ We are required by law to notify your existing company that you may be replacing
 
 IN_fpp_replacement_form = ReplacementForm(
     statecodes=['IN'],
-    docusign_template_id='15F43418-C806-4195-AC69-683E22B44157',
+    docusign_template_id=u'15F43418-C806-4195-AC69-683E22B44157',
     paragraphs="""\
 If you are thinking about discontinuing or changing an existing life insurance policy or annuity contract and buying a replacement, your decision could be a good one - or possibly a mistake. Make sure that you understand the facts. You should:
 <ul>\
@@ -735,7 +735,7 @@ Indiana Department of Insurance Regulation, 760 IAC 1-16.1 requires that the com
 
 MA_fpp_replacement_form = ReplacementForm(
     statecodes=['MA'],
-    docusign_template_id='AA0D8B97-FEA8-4B92-AA12-43F0E481A1F1',
+    docusign_template_id=u'AA0D8B97-FEA8-4B92-AA12-43F0E481A1F1',
     paragraphs="""\
 IMPORTANT NOTICE REQUIRED BY THE COMMISSIONER OF INSURANCE
 READ CAREFULLY BEFORE PROCEEDING
@@ -754,7 +754,7 @@ Term Insurance: If you are replacing your present insurance policy with term ins
 
 MI_fpp_replacement_form = ReplacementForm(
     statecodes=['MI'],
-    docusign_template_id='7BD30243-4AC5-4682-A68A-9C7469C58DF9',
+    docusign_template_id=u'7BD30243-4AC5-4682-A68A-9C7469C58DF9',
     paragraphs="""\
 You are contemplating the purchase of a life insurance policy or annuity contract. In some cases this purchase may involve discontinuing or changing an existing policy or contract. If so, a replacement is occurring. Financed purchases are also considered replacements.
 A replacement occurs when a new policy or contract is purchased and, in connection with the sale, you discontinue making premium payments on the existing policy or contract, or an existing policy or contract is surrendered, forfeited, assigned to the replacing insurer, or otherwise terminated or used in a financed purchase.
@@ -768,7 +768,7 @@ Make sure you know the facts. Contact your existing company or its agent for inf
 
 MN_fpp_replacement_form = ReplacementForm(
     statecodes=['MN'],
-    docusign_template_id='A0E37A85-7E4F-448B-8BEE-7CB633D71BB7',
+    docusign_template_id=u'A0E37A85-7E4F-448B-8BEE-7CB633D71BB7',
     paragraphs="""\
 REPLACEMENT is any transaction where, in connection with the purchase of new insurance or a new annuity, you lapse, surrender, convert to paid-up insurance, place on extended term, or borrow all or part of the policy loan values on an existing insurance policy or an annuity. (See reverse side for definitions.)
 IF YOU INTEND TO REPLACE COVERAGE
@@ -789,7 +789,7 @@ THE INSURANCE OR ANNUITY I INTEND TO PURCHASE FROM 5STAR LIFE INSURANCE COMPANY 
 
 MO_fpp_replacement_form = ReplacementForm(
     statecodes=['MO'],
-    docusign_template_id='12A979B9-95D9-4B4B-9EEF-9E38DEA64483',
+    docusign_template_id=u'12A979B9-95D9-4B4B-9EEF-9E38DEA64483',
     paragraphs="""\
 Replacing Your Life Insurance Policy or Annuity?
 Are you thinking about buying a new policy and discontinuing or changing an existing policy? If you are, your decision could be a good one - or a mistake. You will not know for sure unless you make a careful comparison of your existing policy and the proposed policy.
@@ -817,7 +817,7 @@ ITEMS TO CONSIDER
 
 NV_fpp_replacement_form = ReplacementForm(
     statecodes=['NV'],
-    docusign_template_id='5CD85DC9-F8DB-4A78-8E6E-B0DB14749CB9',
+    docusign_template_id=u'5CD85DC9-F8DB-4A78-8E6E-B0DB14749CB9',
     paragraphs="""\
 You have been offered a policy to replace all or part of your existing policy of life insurance.
 Before you replace your existing policy, you should consider whether you could suffer a Financial Loss under the new policy because of your Age or the condition of your Health. You should also consider whether you will pay more for premiums because of your age or health.
@@ -831,7 +831,7 @@ The agent who is offering to replace your existing policy is required to obtain 
 
 OK_fpp_replacement_form = ReplacementForm(
     statecodes=['OK'],
-    docusign_template_id='9C4D288B-8D77-4DDC-8D49-DE1313443FB3',
+    docusign_template_id=u'9C4D288B-8D77-4DDC-8D49-DE1313443FB3',
     paragraphs="""\
 NOTICE TO APPLICANTS REGARDING REPLACEMENT OF LIFE INSURANCE OR AN ANNUITY. THIS NOTICE IS FOR YOUR BENEFIT AND IS REQUIRED BY LAW.
 <ol>\
@@ -853,7 +853,7 @@ f. The insurance company carrying your current insurance policy can often make a
 
 PA_fpp_replacement_form = ReplacementForm(
     statecodes=['PA'],
-    docusign_template_id='A739D21A-F30C-4915-9927-1178A52F726F',
+    docusign_template_id=u'A739D21A-F30C-4915-9927-1178A52F726F',
     paragraphs="""\
 You have indicated that you intend to replace existing life insurance or annuity coverage in connection with the purchase of our life insurance or annuity policy. As a result, we are required to send you this notice. Please read it carefully.
 Whether it is to your advantage to replace your existing insurance or annuity coverage, only you can decide. It is in your best interest, however, to have adequate information before a decision to replace your present coverage becomes final so that you may understand the essential features of the proposed policy and your existing insurance or annuity coverage.
@@ -869,7 +869,7 @@ You are urged not to take action to terminate or alter your existing life insura
 
 TN_fpp_replacement_form = ReplacementForm(
     statecodes=['TN'],
-    docusign_template_id='D0A05387-6A06-4BA7-91CF-F69BD429A3E7',
+    docusign_template_id=u'D0A05387-6A06-4BA7-91CF-F69BD429A3E7',
     paragraphs="""\
 Are you thinking about buying a new life insurance policy and discontinuing or changing an existing one? If you are, your decision could be a good one - or a mistake. You will not know for sure unless you make a careful comparison of your existing benefits and the proposed benefits.
 Make sure you understand the facts. You should ask the company or agent that sold you your existing policy to give you information about it. You are urged not to take action to terminate, assign or alter your existing life insurance coverage until you have been issued the new policy, examined it and have found it acceptable.
@@ -884,7 +884,7 @@ We are required by law to notify your existing company that you may be replacing
 # blank template to gracefully fail if in one of these states until we determine application logic to not require replacement for these states
 empty_fpp_replacement_form = ReplacementForm(
     statecodes=['CT', 'DC', 'ND', 'VI'],
-    docusign_template_id='0F15241A-B176-4E5B-9E59-0809053994DC',
+    docusign_template_id=u'0F15241A-B176-4E5B-9E59-0809053994DC',
     paragraphs="""\
 Your state does not require completion of a replacement certificate.  Please select "N" for the following two questions:\
 """.split('\n')
@@ -893,7 +893,7 @@ Your state does not require completion of a replacement certificate.  Please sel
 # blank template to gracefully fail if in one of these states until we determine application logic to not allow replacement for these states
 NoNo_fpp_replacement_form = ReplacementForm(
     statecodes=['KS', 'KY'],
-    docusign_template_id='0F15241A-B176-4E5B-9E59-0809053994DC',
+    docusign_template_id=u'0F15241A-B176-4E5B-9E59-0809053994DC',
     paragraphs="""\
 
 <span class=\"error">STOP!  Your state does not accept insurance replacements.  We cannot continue this application. <br><br>\
@@ -906,7 +906,7 @@ If you proceed, your application WILL be declined for coverage.</span>
 
 SD_fpp_replacement_form = ReplacementForm(
     statecodes=['SD'],
-    docusign_template_id='272C42C9-A20D-4205-BEEF-5AFC23720251',
+    docusign_template_id=u'272C42C9-A20D-4205-BEEF-5AFC23720251',
     paragraphs="""\
 In order to complete this application, you will complete a REPLACEMENT OF LIFE INSURANCE OR ANNUITY notice at the end of this application interview.  It will require you to provide the following informationin order to submit this application:
 NAME OF INSURED

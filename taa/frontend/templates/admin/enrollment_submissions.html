@@ -4,6 +4,7 @@
 {% block content %}
   <div class="container">
     <h3>Submissions</h3>
+    <h4>From {{ start_date }} to {{ end_date }}</h4>
     <table class="table table-striped" id="submissions">
       <thead>
       <tr>
@@ -11,6 +12,7 @@
         <th>Status</th>
         <th>Time</th>
         <th>Submission Type</th>
+        <th>Product</th>
         <th></th>
         <th></th>
       </tr>
@@ -22,6 +24,7 @@
                   data-bind="text: status_display, css: get_submission_status_label_class(status)"></span></td>
         <td data-bind="text: time"></td>
         <td data-bind="text: type_display"></td>
+        <td data-bind="text: product"></td>
         <td>
           <button class="btn btn-xs" data-bind="click: toggle_showing_applications, visible: has_applications">View
             Applications
@@ -53,7 +56,7 @@
                   data-bind="text: _.capitalize(status), css: get_submission_status_label_class(status)"></span>
         </td>
         <td data-bind="text: format_datetime(time)"></td>
-        <td data-bind="text: message"></td>
+        <td><pre data-bind="text: message"></pre></td>
         <td></td>
       </tr>
       <!-- /ko -->
@@ -127,6 +130,7 @@
       self.created_at = moment(submission.created_at);
       //self.data = submission.data;
       self.type = submission.submission_type;
+      self.product = submission.product;
 
       // Additional variables
       self.time = format_datetime(self.created_at);

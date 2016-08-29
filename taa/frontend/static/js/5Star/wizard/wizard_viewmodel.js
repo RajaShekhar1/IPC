@@ -232,6 +232,7 @@ var wizard_viewmodel = (function () {
     self.should_include_spouse = should_include_spouse;
     self.should_include_children = should_include_children;
     self.root = root;
+    self.effective_date_settings = case_data.product_settings.effective_date_settings;
 
     self.did_decline = ko.observable(false);
     self.available_recommendations = product_rates_service.get_product_recommendations(self.product, payment_mode);
@@ -239,6 +240,15 @@ var wizard_viewmodel = (function () {
 
     // When there is a simple 'Y/N' or set of coverage options, use this rather than applicant coverage viewmodels.
     self.selected_simple_coverage_option = ko.observable(new NullCoverageOption());
+
+    self.effective_date_resolution = function () {
+      if (_.get(self.effective_date_settings, 'effective_date_override')) {
+        return normalize_date(_.get(self.effective_date_settings, 'effective_date'))
+      }
+      else {
+        return self.root.get_effective_date();
+      }
+    };
 
     self.selected_simple_coverage_value = ko.computed({
       read: function () {
@@ -257,7 +267,7 @@ var wizard_viewmodel = (function () {
     self.is_forced_coverage = ko.pureComputed(function () {
       return product.is_forced_coverage;
     });
-    
+
     self.forced_coverage_option = ko.pureComputed(function () {
       if (product.is_forced_coverage) {
         return new FlatFeeCoverageOption({
@@ -559,6 +569,15 @@ var wizard_viewmodel = (function () {
   }
 
   ProductCoverageViewModel.prototype = {
+    _get_effective_date: function (root) {
+      if (_.get(this.effective_date_settings, 'effective_date_override')) {
+        return normalize_date(_.get(this.effective_date_settings, 'effective_date'))
+      }
+      else {
+        return root.get_effective_date();
+      }
+    },
+
     format_product_name: function () {
       return this.product.product_data.name;
     },
@@ -1078,6 +1097,7 @@ var wizard_viewmodel = (function () {
     self.options = options;
     self.enrollment_case = options.case_data;
     self.products = wizard_products.build_products(self, options.products);
+    self.effective_date_settings = self.enrollment_case.effective_date_settings;
 
     self.is_rate_table_loading = product_rates_service.is_loading_rates;
     self.is_show_rates_clicked = ko.observable(false);
@@ -1613,15 +1633,25 @@ var wizard_viewmodel = (function () {
     self.can_submit_wizard = ko.pureComputed(function () {
       return !self.is_submitting();
     });
-    
-    self.should_do_signing_ceremony = function() {
-      return options.case_data.is_call_center;
+
+    self.is_call_center = options.case_data.is_call_center;
+
+    self.enrollment_type = function() {
+      if (self.is_call_center){
+        return "-call-center";
+      }
+      else{
+        return "-in-person";
+      }
     };
 
     self.applicant_signed = ko.observable(false);
-    self.applicant_sig_check_1 = ko.observable();
-    self.applicant_sig_check_2 = ko.observable();
-    self.applicant_sig_check_3 = ko.observable();
+    self.applicant_sig_check_1 = ko.observable(false);
+    self.applicant_sig_check_1_once = ko.observable(false);
+    self.applicant_sig_check_2 = ko.observable(false);
+    self.applicant_sig_check_3 = ko.observable(false);
+    self.step_6_last_name = ko.observable("");
+    self.step_6_ssn = ko.observable("");
 
     self.can_applicant_sign = ko.pureComputed(function() {
       return self.applicant_sig_check_1() && self.applicant_sig_check_2() && self.applicant_sig_check_3();
@@ -1633,8 +1663,107 @@ var wizard_viewmodel = (function () {
       self.applicant_signed(false);
       self.agent_signed(false);
 
-      $("#modal-signing-applicant").modal("show");
+      $("#modal-signing-applicant" + self.enrollment_type()).modal("show");
     };
+
+    self.in_person_sig_checks = ko.computed(function(){
+      if (!self.is_call_center){
+        var lastNameMatch = self.step_6_last_name().toLowerCase() == self.employee().last().toLowerCase();
+        self.applicant_sig_check_2(lastNameMatch);
+
+        var ssnMatch = self.employee().ssn().length >= 4 && self.step_6_ssn() == self.employee().ssn().substr(-4, 4);
+        self.applicant_sig_check_3(ssnMatch);
+      }
+    });
+
+    MAX_PDF_PREVIEW_SCALE = 1.25;
+
+    self.renderPDF = function(url, targetSel, options) {
+      options = options || {};
+      var container = $(targetSel);
+      var loadingSel = options.loadingSel || null;
+      var canvasClass = options.canvasClass || '';
+      var scale = options.scale || MAX_PDF_PREVIEW_SCALE;
+
+      function renderPage(page) {
+        scale = Math.min(MAX_PDF_PREVIEW_SCALE, container[0].clientWidth / page.getViewport(1).width);
+        var viewport = page.getViewport(scale);
+        var canvas = document.createElement('canvas');
+        canvas.className = canvasClass;
+        var ctx = canvas.getContext('2d');
+        var renderContext = {
+          canvasContext: ctx,
+          viewport: viewport
+        };
+
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        $.each(container, function(idx, el) { el.appendChild(canvas); });
+        if(loadingSel) {
+          $(loadingSel).hide();
+        }
+        page.render(renderContext);
+      }
+
+      function renderPages(pdfDoc) {
+        for(var num = 1; num <= pdfDoc.numPages; num++) {
+          pdfDoc.getPage(num).then(renderPage);
+        }
+      }
+      PDFJS.disableWorker = true;
+      PDFJS.getDocument(url).then(renderPages);
+    };
+
+    self.show_application_documents = function() {
+      function submit_preview_application(data) {
+        return $.ajax({
+          url: '/submit-wizard-data',
+          method: 'POST',
+          dataType: 'json',
+          processData: false,
+          contentType: 'application/json; charset=utf-8',
+          data: JSON.stringify({wizard_results: data}),
+        });
+      }
+
+      var results = build_results();
+      for(var i = 0; i < results.length; i++) {
+        if(results[i] !== undefined) {
+          results[i]['is_preview'] = true;
+        }
+      }
+
+      $.when(submit_preview_application(results)).done(function(response) {
+        // Check the box automatically
+        self.applicant_sig_check_1(true);
+        self.applicant_sig_check_1_once(true);
+
+        var enrollment_id = response.enrollment_id;
+        self.pdf_url = '/enrollments/records/' + enrollment_id + '/pdf';
+
+        bootbox.dialog({
+              title: "Previewing Application",
+              className: 'pdf-preview',
+              message: '<script>vm.renderPDF(vm.pdf_url, ".pdf-container", {canvasClass: "pdf-preview", loadingSel: ".loading-pdf-preview"});</script><div class="row">  ' +
+              '<div class="col-md-12">' +
+              '<h2 class="loading-pdf-preview text-center">' +
+              'Loading application preview<br>' +
+              '<i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>' +
+              '<span class="sr-only">Loading...</span>' +
+              '</h2>' +
+              '<div class="pdf-container text-center">' +
+                //'<canvas id="pdf-preview"></canvas>' +
+              '</div>' +
+              '</div></div>',
+              buttons: {
+                confirm: {
+                  label: "Close",
+                  className: "width-25 pull-right btn btn-primary",
+                }
+              }
+            }); // bootbox.dialog
+      }); // $.when
+    }; //show_application_documents
 
     self.handle_applicant_signing = function() {
       // Validation
@@ -1643,8 +1772,8 @@ var wizard_viewmodel = (function () {
       self.applicant_signed(true);
 
       //  Go to agent signing
-      $("#modal-signing-applicant").modal("hide");
-      $("#modal-signing-enroller").modal("show");
+      $("#modal-signing-applicant" + self.enrollment_type()).modal("hide");
+      $("#modal-signing-enroller" + self.enrollment_type()).modal("show");
     };
 
     self.handle_agent_signing = function() {
@@ -1654,7 +1783,7 @@ var wizard_viewmodel = (function () {
       self.agent_signed(true);
 
       // Close the signing modal.
-      $("#modal-signing-enroller").modal("hide");
+      $("#modal-signing-enroller" + self.enrollment_type()).modal("hide");
 
       submit_application();
     };
@@ -1956,6 +2085,7 @@ var wizard_viewmodel = (function () {
     // Step 6 Data
     self.disclaimer_notice_confirmed = ko.observable(false);
     self.payroll_deductions_confirmed = ko.observable(false);
+    self.effective_date_input = ko.observable("");
     self.identityToken = ko.observable("");
     self.identityType = ko.observable("");
     self.enrollState = ko.observable(self.enrollment_case.situs_state);
@@ -1971,6 +2101,55 @@ var wizard_viewmodel = (function () {
       return true;
     };
 
+    self.show_enroller_select_date = function () {
+      return self.enrollment_case.enroller_selects;
+    };
+
+    self.initialize_effective_date = function () {
+      self.effective_date_input(normalize_date(self.enrollment_case.effective_date))
+    };
+
+    self.initialize_effective_date();
+
+
+
+    self.which_enroller_select_date = function () {
+      if (self.show_enroller_select_date()) {
+        var enroller_selects = _.filter(self.effective_date_settings, {'method': 'enroller_selects'});
+        var open_enroller = _.find(enroller_selects, {'type': 'open_with_start'});
+        var ongoing_enroller = _.find(enroller_selects, {'type': 'ongoing'});
+        if (typeof open_enroller != 'undefined') {
+          if (today_between(normalize_date(open_enroller.enrollment_period.start_date), normalize_date(open_enroller.enrollment_period.end_date))) {
+            return open_enroller;
+          }
+        }
+        return ongoing_enroller;
+      }
+      return null;
+    };
+
+    self.get_effective_date = function () {
+      return normalize_date(self.effective_date_input());
+    };
+
+    self.valid_effective_date = function () {
+      var enroller_selects = self.which_enroller_select_date();
+      return is_valid_date(self.get_effective_date()) && valid_enroller_selects(parseInt(enroller_selects.enroller_selects.no_less, 10), self.get_effective_date())
+    };
+
+    self.get_effective_date_error_message = function () {
+      var results = "";
+      var is_valid = is_valid_date(self.get_effective_date());
+      if (!is_valid) {
+        results += "The effective date input is not valid.";
+      }
+      var enroller_selects = self.which_enroller_select_date();
+      if (!valid_enroller_selects(parseInt(enroller_selects.enroller_selects.no_less, 10), self.get_effective_date())) {
+        results += " The effective date input must be at least " + parseInt(enroller_selects.enroller_selects.no_less) + " days from today.";
+      }
+      return results;
+    };
+
     function any_selected_product(method) {
       var selected_products = _.pluck(self.coverage_vm.selected_product_coverages(), 'product');
       return _.any(_.invoke(selected_products, method));
@@ -1980,6 +2159,8 @@ var wizard_viewmodel = (function () {
       var initial_applicant_list = _.map(options.applicants || [], function (applicant_data) {
         return wizard_applicant.create_applicant(applicant_data);
       });
+
+
 
       self.should_show_spouse = ko.observable(false);
       self.should_include_children = ko.observable(false);
@@ -1994,6 +2175,24 @@ var wizard_viewmodel = (function () {
 
       self.spouse = function () {
         return self.applicant_list.get_spouse();
+      };
+
+      self.should_show_email_summary = self.enrollment_case.include_cover_sheet;
+
+      self.should_email_summary_sheet = ko.observable(self.employee().email() != "");
+
+      self.employee().email.subscribe(function () {
+        self.should_email_summary_sheet(self.employee().email() != "");
+        self.employee().coverage_email(self.employee().email());
+      });
+
+      self.get_summary_email = function () {
+        if (self.should_email_summary_sheet()) {
+          return self.employee().coverage_email();
+        }
+        else {
+          return '';
+        }
       };
 
       //region Smoker Status Changed Dialog

@@ -59,6 +59,8 @@ all_statecodes = [s['statecode'] for s in all_states]
 
 states_by_statecode = {s['statecode']: s for s in all_states}
 
+statecodes_by_state = {s['name']: s for s in all_states}
+
 
 def get_all_states():
     return all_states

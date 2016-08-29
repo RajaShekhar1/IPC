@@ -393,8 +393,7 @@
           </div>
         </div>
 
-
-        <div id="modal-signing-applicant" class="modal">
+        <div id="modal-signing-applicant-call-center" class="modal">
           <div class="modal-dialog" data-bind="with: $root">
 
             <div class="modal-content">
@@ -445,9 +444,135 @@
           </div>
         </div>
 
+        <div id="modal-signing-enroller-call-center" class="modal">
+          <div class="modal-dialog" data-bind="with: $root">
 
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="lighter block blue center">Agent/Enroller eSignature</h3>
+              </div>
 
-        <div id="modal-signing-enroller" class="modal">
+              <div class="modal-body">
+                <p>
+                  I certify that I reviewed all questions on this application, and that the answers
+                  have been recorded accurately. I know of nothing affecting the insurability of the proposed
+                  insured(s) which is not fully recorded on this application.
+                  <br>
+                </p>
+                <div data-bind="if: should_show_other_insurance_questions">
+                  <div class="form-group">
+                    <label style="margin-right: 15px;">
+                      To my knowledge, the Applicant has existing life insurance or annuity coverage.
+                      <input class="ace " data-bind="checked: existing_insurance, checkedValue: true" disabled="disabled"
+                             name="agent_signing_has_existing-cc" value="yes" type="radio">
+                      <span class="lbl not-allowed" style="cursor: not-allowed">
+                        Yes
+                      </span>
+                      <input class="ace " data-bind="checked: existing_insurance, checkedValue: false" disabled="disabled"
+                             name="agent_signing_has_existing-cc" value="no" type="radio">
+                      <span class="lbl not-allowed" style="cursor: not-allowed">
+                        No
+                      </span>
+                    </label>
+                  </div>
+                  <div class="form-group">
+                    <label style="margin-right: 15px;">
+                      If yes, are they replacing existing coverage?
+                    </label>
+                    <label>
+                      <input class="ace" data-bind="checked: replacing_insurance, checkedValue: true" disabled="disabled"
+                             name="agent_signing_is_replacing-cc" value="yes" type="radio">
+                      <span class="lbl not-allowed" style="cursor: not-allowed">
+                        Yes
+                      </span>
+                    </label>
+                    <label>
+                      <input class="ace" data-bind="checked: replacing_insurance, checkedValue: false" disabled="disabled"
+                             name="agent_signing_is_replacing-cc" value="no" type="radio">
+                      <span class="lbl not-allowed" style="cursor: not-allowed">
+                        No
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer">
+                <button class="btn btn-default btn-sm center" data-dismiss="modal">Cancel Signing</button>
+                <button class="btn btn-success btn-sm center" data-bind="click: handle_agent_signing" id="submit_sig">Sign</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="modal-signing-applicant-in-person" class="modal">
+          <div class="modal-dialog" data-bind="with: $root">
+
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="lighter block blue center">Applicant eSignature</h3>
+              </div>
+
+              <div class="modal-body">
+                <div class="form-group">
+                  <div class="text-center">
+                    <button class="btn btn-primary btn-sm center" data-bind="click: show_application_documents">Review Application Documents to Continue</button>
+                    <br><br>
+                  </div>
+                  <div>
+                    <div id="review-docs-warning" class="alert alert-warning" data-bind="visible: !applicant_sig_check_1()">
+                      After clicking the Review Application Documents button, check the box below
+                    </div>
+                    <label style="margin-right: 15px;">
+                      <input class="ace" data-bind="checked: applicant_sig_check_1, enable: applicant_sig_check_1_once"
+                             name="app_sig_check1" type="checkbox">
+                    <span class="lbl padding-16" id="applicant_sig_check_1">
+                      I acknowledge I have reviewed the documents related to this enrollment
+                    </span>
+                    </label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label style="margin-right: 15px;">
+                    <span class="lbl padding-16">
+                      By typing my name, I represent that all statements and answers in this application are true and correct to the best of my ability, and I agree to the terms and conditions, coverage and premium of the policy (or policies) herein:
+                        <br>
+                        <br>
+                        <table>
+                          <tr>
+                            <td>
+                              Last name:
+                            </td>
+                            <td>
+                              <input type="text" class="input-small" placeholder="Last Name" name="step_6_last_name" data-bind="textInput: step_6_last_name">
+                              <span class="error" data-bind="visible: !applicant_sig_check_2()">Last name must match enrollee's</span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              Last 4 of SSN:
+                            </td>
+                            <td>
+                              <input type="text" class="input-mini input-mask-last-4-ssn" placeholder="####" name="step_6_ssn" data-bind="textInput: step_6_ssn">
+                              <span class="error" data-bind="visible: !applicant_sig_check_3()">SSN last-4 must match enrollee's</span>
+                            </td>
+                          </tr>
+                        </table>
+                    </span>
+                  </label>
+                </div>
+                <div class="text-right smaller"><a href="{{ esign_disclosure_uri }}" target="_blank">Electronic signature disclosure available here</a></div>
+              </div>
+
+              <div class="modal-footer">
+                <button class="btn btn-default btn-sm center" data-dismiss="modal">Cancel Signing</button>
+                <button class="btn btn-success btn-sm center btn-sign" data-bind="enable: can_applicant_sign, click: handle_applicant_signing">Sign</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="modal-signing-enroller-in-person" class="modal">
           <div class="modal-dialog" data-bind="with: $root">
 
             <div class="modal-content">
@@ -627,6 +752,7 @@
 {% block page_js %}
   <script type="text/javascript">
     jQuery(function ($) {
+        init_settings_fields();
       window.vm = new wizard_viewmodel.WizardVM({{ wizard_data | tojson | safe }});
       ko.applyBindings(window.vm);
     });

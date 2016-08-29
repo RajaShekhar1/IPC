@@ -175,7 +175,6 @@ function observe_enrollment_upload_form_submit() {
     }
     // Add the file upload to the request.
     form_data.append('api-upload-file', files[0], files[0].name);
-    
     file_extension = files[0].name.split(".").slice(-1)[0];
     if (window.case_settings) {
       form_data.append('case_token', window.case_settings.case_token);
@@ -217,6 +216,8 @@ function init_settings_fields() {
 
   $(".input-mask-date").mask("99/99/9999");
   $(".input-mask-month-day").mask("99/99");
+  $(".input-mask-last-4-ssn").mask("9999");
+  $(".input-mask-day").mask('99');
   $('[data-rel=tooltip]').tooltip();
 
   $('#partner-agents').bootstrapDualListbox({

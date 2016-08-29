@@ -170,10 +170,11 @@ class ProductService(DBService):
 
     def get_all_statecodes(self):
         return all_statecodes
-
-    def get_product_states(self, products=None):
+        
+    def get_product_states(self, products=None, case=None):
         """Return the mapping of product IDs to statecodes
-        where we can enroll that product."""
+        where we can enroll that product.
+        """
 
         if not products:
             products = self.get_all_enrollable_products()
@@ -187,6 +188,12 @@ class ProductService(DBService):
                 s['statecode'] for s in states_with_forms
                 ]
 
+        if case:
+            # Apply any overrides that are specified for this case.
+            for product_id, overrides in case.product_settings.get('state_overrides', {}).items():
+                if overrides:
+                    product_states[int(product_id)] = overrides
+            
         return product_states
 
     def get_soh_labels(self, products):
@@ -429,13 +436,13 @@ class ProductService(DBService):
         from taa.services.cases.models import case_products
         return db.session.query(Product).join(case_products).join(Case).filter(Case.id == case_id).order_by(case_products.c.ordinal).all()
 
-    def filter_products_by_enrollment_state(self, product_options, state):
-        product_state_mapping = self.get_product_states(product_options)
+    def filter_products_by_enrollment_state(self, product_options, state, case=None):
+        product_state_mapping = self.get_product_states(product_options, case)
 
         # Keep all group-level products (static benefit and group ci)
         # Filter out individual products that are not allowed in this state.
         def is_allowed_in_state(product, state):
-            if product.is_group_ci() or product.is_static_benefit():
+            if product.is_static_benefit():
                 return True
             else:
                 return state in product_state_mapping.get(product.id, [])
