@@ -83,39 +83,41 @@ class FPPTemplate(DocuSignServerTemplate):
         return tabs
 
     def make_agent_tabs(self, tabs, purpose):
-        if self.data.should_use_call_center_workflow() and purpose == self.PDF_TABS:
-            # Don't render any overlay for the pdf
-            return []
-        elif self.data.should_use_call_center_workflow() and purpose == self.DOCUSIGN_TABS:
+        
+        #if self.data.should_use_call_center_workflow() and not self.data.did_finish_signing_in_wizard() and purpose == self.PDF_TABS:
+        #    # Don't render any overlay for the pdf
+        #    return []
+        # if self.data.should_use_call_center_workflow() and purpose == self.DOCUSIGN_TABS:
+        #
+        #     # find the existingInsAgent and replaceAgent tabs and set the value to what the employee indicated as a default.
+        #     existing_tab_yes = next(ifilter(
+        #         lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'existingInsAgent' and t.value == "yes",
+        #         tabs), None)
+        #     existing_tab_no = next(ifilter(
+        #         lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'existingInsAgent' and t.value == "no",
+        #         tabs), None)
+        #
+        #     replace_tab_yes = next(ifilter(
+        #         lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'replaceAgent' and t.value == "yes",
+        #         tabs), None)
+        #     replace_tab_no = next(ifilter(
+        #         lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'replaceAgent' and t.value == "no", tabs),
+        #                           None)
+        #
+        #     if existing_tab_yes:
+        #         existing_tab_yes.is_selected = self.data['existing_insurance']
+        #     if existing_tab_no:
+        #         existing_tab_no.is_selected = not self.data['existing_insurance']
+        #
+        #     if replace_tab_yes:
+        #         replace_tab_yes.is_selected = self.data['replacing_insurance']
+        #     if replace_tab_no:
+        #         replace_tab_no.is_selected = not self.data['replacing_insurance']
+        #
+        #     # Don't add any new tabs.
+        #     return []
 
-            # find the existingInsAgent and replaceAgent tabs and set the value to what the employee indicated as a default.
-            existing_tab_yes = next(ifilter(
-                lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'existingInsAgent' and t.value == "yes",
-                tabs), None)
-            existing_tab_no = next(ifilter(
-                lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'existingInsAgent' and t.value == "no",
-                tabs), None)
-
-            replace_tab_yes = next(ifilter(
-                lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'replaceAgent' and t.value == "yes",
-                tabs), None)
-            replace_tab_no = next(ifilter(
-                lambda t: isinstance(t, DocuSignRadioTab) and t.group_name == 'replaceAgent' and t.value == "no", tabs),
-                                  None)
-
-            if existing_tab_yes:
-                existing_tab_yes.is_selected = self.data['existing_insurance']
-            if existing_tab_no:
-                existing_tab_no.is_selected = not self.data['existing_insurance']
-
-            if replace_tab_yes:
-                replace_tab_yes.is_selected = self.data['replacing_insurance']
-            if replace_tab_no:
-                replace_tab_no.is_selected = not self.data['replacing_insurance']
-
-            # Don't add any new tabs.
-            return []
-
+        # We always render the Yes/No tabs now
         return [
             DocuSignRadioTab('existingInsAgent', 'yes' if self.data['existing_insurance'] else 'no'),
             DocuSignRadioTab('replaceAgent', 'yes' if self.data['replacing_insurance'] else 'no'),

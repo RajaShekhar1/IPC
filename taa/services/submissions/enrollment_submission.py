@@ -712,7 +712,7 @@ class EnrollmentSubmissionProcessor(object):
             enrollment_data = EnrollmentDataWrap(raw_enrollment_data, case, enrollment_record=enrollment_application)
 
             # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
-            should_use_docusign_renderer = False  # if enrollment_data.should_use_call_center_workflow() else True
+            should_use_docusign_renderer = False
 
             if enrollment_data['did_decline']:
                 continue

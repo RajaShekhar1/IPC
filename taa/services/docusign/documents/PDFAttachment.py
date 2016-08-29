@@ -26,7 +26,7 @@ class PDFAttachment(BasePDFDoc):
     def generate_tabs(self, recipient, purpose):
         tabs = super(BasePDFDoc, self).generate_tabs(recipient, purpose)
 
-        if self.is_recipient_signer(recipient) or (purpose == self.PDF_TABS and self.data.should_use_call_center_workflow()):
+        if self.is_recipient_signer(recipient) or (purpose == self.PDF_TABS):
             # Add a signature tab to the last page
             if self.data.get_employee_name() in self.sig_coords:
                 pdf_x, pdf_y = self.sig_coords[self.data.get_employee_name()]

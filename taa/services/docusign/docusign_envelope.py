@@ -372,6 +372,10 @@ class EnrollmentDataWrap(object):
             date = self.enrollment_record.signature_time
             esig = u"{} voice auth on file {}".format(self.get_employee_name(), date.strftime("%l:%M%p"))
             return self.data.get('emp_sig_txt', esig)
+        elif self.did_finish_signing_in_wizard():
+            date = self.enrollment_record.signature_time
+            esig = u"{} esigned {}".format(self.get_employee_name(), date.strftime("%l:%M%p"))
+            return self.data.get('emp_sig_txt', esig)
         else:
             return self.data.get('emp_sig_txt', '')
 
@@ -386,7 +390,7 @@ class EnrollmentDataWrap(object):
         return bool(self.get_employee_esignature())
 
     def get_agent_esignature(self):
-        if self.should_use_call_center_workflow():
+        if self.should_use_call_center_workflow() or self.did_finish_signing_in_wizard():
             date = self.enrollment_record.signature_time
             esig = u'esign by {} {}'.format(self.get_agent_signing_name(), date.strftime("%l:%M%p"))
             return self.data.get('agent_sig_txt', esig)
