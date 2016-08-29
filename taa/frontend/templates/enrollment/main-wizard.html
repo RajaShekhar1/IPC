@@ -464,12 +464,12 @@
                     <label style="margin-right: 15px;">
                       To my knowledge, the Applicant has existing life insurance or annuity coverage.
                       <input class="ace " data-bind="checked: existing_insurance, checkedValue: true" disabled="disabled"
-                             name="agent_signing_has_existing" value="yes" type="radio">
+                             name="agent_signing_has_existing-cc" value="yes" type="radio">
                       <span class="lbl not-allowed" style="cursor: not-allowed">
                         Yes
                       </span>
                       <input class="ace " data-bind="checked: existing_insurance, checkedValue: false" disabled="disabled"
-                             name="agent_signing_has_existing" value="no" type="radio">
+                             name="agent_signing_has_existing-cc" value="no" type="radio">
                       <span class="lbl not-allowed" style="cursor: not-allowed">
                         No
                       </span>
@@ -481,14 +481,14 @@
                     </label>
                     <label>
                       <input class="ace" data-bind="checked: replacing_insurance, checkedValue: true" disabled="disabled"
-                             name="agent_signing_is_replacing" value="yes" type="radio">
+                             name="agent_signing_is_replacing-cc" value="yes" type="radio">
                       <span class="lbl not-allowed" style="cursor: not-allowed">
                         Yes
                       </span>
                     </label>
                     <label>
                       <input class="ace" data-bind="checked: replacing_insurance, checkedValue: false" disabled="disabled"
-                             name="agent_signing_is_replacing" value="no" type="radio">
+                             name="agent_signing_is_replacing-cc" value="no" type="radio">
                       <span class="lbl not-allowed" style="cursor: not-allowed">
                         No
                       </span>
@@ -550,11 +550,11 @@
                           </tr>
                           <tr>
                             <td>
-                              Last 4 of SSN:&nbsp;&nbsp;
+                              Last 4 of SSN:
                             </td>
                             <td>
                               <input type="text" class="input-mini input-mask-last-4-ssn" placeholder="####" name="step_6_ssn" data-bind="textInput: step_6_ssn">
-                              <span class="error" data-bind="visible: !applicant_sig_check_3()">SSN last-4 must match enrollee's<span>
+                              <span class="error" data-bind="visible: !applicant_sig_check_3()">SSN last-4 must match enrollee's</span>
                             </td>
                           </tr>
                         </table>
