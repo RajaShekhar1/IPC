@@ -183,6 +183,10 @@ class EnrollmentSubmissionService(object):
             # Skip if this product doesn't generate a PDF for submission.
             if not product.does_generate_form():
                 continue
+                
+            # TODO: combine these conditions into new method, does_submit_pdf_to_dell() ?
+            if product.is_static_benefit():
+                continue
             
             # Otherwise, generate the PDF and create a submission and queue it up.
             pdf_bytes = self.render_enrollment_pdf(enrollment_application, is_stp=False, product_id=product.id)
