@@ -371,7 +371,7 @@ def submit_pdf_to_dell_sftp(task, submission_id):
         # Success
         submission.status = EnrollmentSubmission.STATUS_SUCCESS
         log.status = SubmissionLog.STATUS_SUCCESS
-        log.message = "Success"
+        log.message = "Successfully sent {} to Dell at {}".format(filename, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         db.session.commit()
     
     except Exception as ex:
