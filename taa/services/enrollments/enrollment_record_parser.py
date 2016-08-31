@@ -138,11 +138,11 @@ class EnrollmentRecordParser(object):
     emp_initials_txt = EnrollmentRecordField("emp_initials_txt", "employee_initials_txt", preprocess_string, [initials_validator], flat_file_size=3, description="Initials text for employee")
     agent_initials_txt = EnrollmentRecordField("agent_initials_txt", "agent_initials_txt", preprocess_string, [initials_validator], flat_file_size=3, description="Initials text for agent")
 
-    # All spouse data is required if any spouse data is given
-    spouse_fields = [sp_first, sp_last, sp_birthdate, sp_ssn]
+    # All spouse data is required if any spouse coverage is provided.
+    spouse_fields = [sp_first, sp_last, sp_birthdate]
     for field in spouse_fields:
         validator = RequiredIfAnyInGroupValidator(
-            spouse_fields,
+            [sp_coverage, sp_premium],
             message=u"{} is required if any of the following are provided: {}".format(
                 field.dict_key_name,
                 u', '.join([f.dict_key_name
@@ -151,6 +151,7 @@ class EnrollmentRecordParser(object):
                                           ))
         # If any in group provided, all must be valid
         field.add_validator(validator)
+
 
     premium_coverage_required = [
         (emp_premium, emp_coverage),
