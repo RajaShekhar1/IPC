@@ -303,9 +303,9 @@ class EnrollmentApplicationService(DBService):
         for data in all_data:
             
             enroller_effective_date = data.get('effective_date')
-            if data['did_decline']:
+            if data['did_decline'] or enrollment.is_preview:
                 effective_date = None
-            elif enroller_effective_date is not None:
+            elif enroller_effective_date:
                 effective_date = dateutil.parser.parse(enroller_effective_date)
             else:
                 # This usually means we sourced this from an  import file without explicit effective dates set.
