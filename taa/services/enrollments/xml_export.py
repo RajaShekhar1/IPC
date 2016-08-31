@@ -101,8 +101,8 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
             enrollee['coverage'] = data['spouse_coverage']
             # enrollee['height'] = data['sp_height_inches']
             # enrollee['weight'] = data['sp_weight_pounds']
-            enrollee['spouse_disabled_6_months'] = YESNO[data.get('sp_disabled_6_months', 'N')]
-            enrollee['spouse_treated_6_months'] = YESNO[data.get('sp_treated_6_months', 'N')]
+            enrollee['spouse_disabled_6_months'] = YESNO_SOH[data.get('sp_disabled_6_months', 'N')]
+            enrollee['spouse_treated_6_months'] = YESNO_SOH[data.get('sp_treated_6_months', 'N')]
         except KeyError:
             raise ValueError(
                 "Attempted to enroll for spouse, but employee has no "
@@ -241,7 +241,7 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
 
     vars['employee']['hire_date'] = data['identityToken']
     vars['employee']['actively_at_work'] = data.get_actively_at_work()# or 'Y'
-    vars['employee']['actively_at_work_code'] = YESNO[data.get_actively_at_work()]
+    vars['employee']['actively_at_work_code'] = YESNO_SOH[data.get_actively_at_work()]
 
     policy = get_policy_info(data, applicant_type, enrollee, enrollment.case)
     vars['policy'].update(policy)
