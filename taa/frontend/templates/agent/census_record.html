@@ -68,7 +68,7 @@
                       {# Self-signed or imported envelopes view a server-generated PDF #}
                       {% if enrollment.status in ["Enrolled"] and (can_edit_case or current_agent_id == enrollment.agent_id) %}
 {#                        <button class="btn btn-primary btn-sm view-enrollment-docs" data-id="{{ enrollment.id }}"><i class="icon fa fa-file"></i> View</button>#}
-                          <a target="_blank" href="/enrollments/records/{{ enrollment.id }}/pdf" class="btn btn-primary btn-sm"><i class="icon fa fa-file-pdf-o"></i> View</a>
+                          <a target="_blank" href="/enrollments/records/{{ enrollment.id }}/pdf" class="btn btn-primary btn-sm"><i class="icon fa fa-file"></i> View</a>
                       {% endif %}
                       </td>
                       <td></td>
