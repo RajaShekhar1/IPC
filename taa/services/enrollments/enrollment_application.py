@@ -253,7 +253,7 @@ class EnrollmentApplicationService(DBService):
             """:type: list[taa.services.products.Product]"""
             
             # If this is a preview, mark the status as pending
-            if accepted_data[0].is_preview():
+            if not accepted_data or accepted_data[0].is_preview():
                 return ''
             
             elif all(map(lambda d: d['did_decline'], wizard_data)):
