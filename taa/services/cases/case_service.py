@@ -133,7 +133,7 @@ class CaseService(DBService):
             # Return the active period
             return filter(lambda p: p.currently_active(), periods)[0]
         # Sort by start date descending and return the first one
-        past_periods = filter(lambda p: p.get_start_date() < datetime.now(),
+        past_periods = filter(lambda p: p.get_start_date() < datetime.now() if p.get_start_date() else None,
                               periods)
         if not past_periods:
             return None
