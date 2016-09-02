@@ -421,19 +421,26 @@ def get_agents(data, enrollment):
     case = enrollment.case
     if case.agent_splits is not None:
         # Case has agent splits
-        # for split in case.agent_splits:
+        
+        # There is a writing agent, and potentially other agents that have a split percentage and commission code.
+        
         for split in [s for s in case.agent_splits if s.product_id == data.get_product_id()]:
             if split.agent is None:
                 # Writing agent (null agent) is placeholder for enrolling agent
                 agent = data.get_signing_agent()
             else:
                 agent = split.agent
+
+            # Always look up the commission code dynamically,
+            #   since it is on a different record if this is the writing agent.
+            subcount = get_agent_subcount_code(agent.id, case, data.get_product_id()) or ''
+                
             if split.split_percentage > 0:
                 agents.append({
                     'first': agent.first,
                     'last': agent.last,
                     'code': agent.agent_code,
-                    'subcode': split.commission_subcount_code,
+                    'subcode': subcount,
                     'commission_percent': split.split_percentage,
                 })
 
@@ -448,6 +455,20 @@ def get_agents(data, enrollment):
 
     return agents
 
+
+def get_agent_subcount_code(agent_id, case, product_id):
+    'If a code has been entered for this agent, return the code. Otherwise return None.'
+    if not case.agent_splits:
+        return None
+    
+    splits = filter(lambda s: s.product_id == product_id and s.agent_id == agent_id and s.commission_subcount_code,
+                    case.agent_splits)
+    
+    if splits:
+        return splits[0].commission_subcount_code
+    
+    return None
+    
 
 def test_wizard_xml():
     
