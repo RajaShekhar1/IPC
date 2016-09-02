@@ -48,11 +48,12 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
         'Group Number',
         'Location',
         'Payment_Mode',
-        'Issue_Date',
+        'Effective Date',
         'Enrollment Action: A - Add/Enroll; C - Change of Name or Coverage; T - Terminate',
         'Signature State',
         'SignatureDate',
         'Occupation Class',
+        'Rate Level',
         'Owner/Payor/Insured First Name',
         'Owner/Payor/Insured Middle Initial',
         'Owner/Payor/Insured Last Name',
@@ -109,7 +110,11 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
             if data.get('product_id', None) is None:
                 continue
             product = products_service.get(data['product_id'])
-
+            
+            # Skip non HI-ACC products
+            if product.get_base_product_code() not in export_targets:
+                continue
+            
             employee = data.get('employee')
             spouse = data.get('spouse')
             children = data.get('children')
@@ -119,8 +124,9 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
             if employee is None:
                 continue
 
-            rate_level = case_service.get_classification_for_label(data.get('occupation_class'), case,
-                                                                   int(data['product_id']))
+            # TODO: should be able to pull this from the enrollment data
+            occ_class = data.get('occupation_class') if data.get('occupation_class') else enrollment.census_record.occupation_class
+            rate_level = case_service.get_classification_for_label(occ_class, case, int(data['product_id']))
 
             # Member coverage info
             row = [
@@ -128,11 +134,12 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                 case.group_number.upper(),
                 case.format_location().upper(),
                 case.payment_mode if case.payment_mode >= 0 else '',
-                coverage.effective_date.strftime('%m%d%Y') if hasattr(coverage, 'effective_date') else '',
+                coverage.effective_date.strftime('%m%d%Y') if hasattr(coverage, 'effective_date') and coverage.effective_date else enrollment.signature_time.strftime("%m%d%Y"),
                 'A',
                 data.get('signed_at_state') if data.get('signed_at_state') else data.get('enrollState'),
                 enrollment.signature_time.date().strftime('%m%d%Y'),
-                employee.get('occupation_class'),
+                occ_class,
+                rate_level,
                 employee.get('first', '').upper(),
                 # No middle initial
                 '',
@@ -141,8 +148,8 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                 employee.get('city', '').upper(),
                 employee.get('state', '').upper(),
                 employee['zip'],
-                employee['phone'],
-                employee['ssn'],
+                escape_phone(employee['phone']),
+                employee['ssn'].strip().replace('-', ''),
                 dateutil.parser.parse(employee['birthdate']).strftime('%m%d%Y'),
                 employee.get('gender', '').upper(),
                 'Y' if employee.get('is_smoker', False) else 'N',
@@ -164,7 +171,7 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
 
             split_agents = filter(is_valid_agent_for_split, agents)
 
-            row.extend(get_agent_cells(writing_agent, writing_agent_split))
+            row.extend(get_agent_cells(writing_agent, writing_agent_split, product, case))
             agent_spaces -= 1
             for idx in range(3):
                 if idx >= len(split_agents):
@@ -173,7 +180,7 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                 agent = split_agents[idx]
                 split = next((s for s in agent_splits if s.agent_id == agent.id), None)
                 if split:
-                    row.extend(get_agent_cells(agent, split))
+                    row.extend(get_agent_cells(agent, split, product, case))
                 else:
                     row.extend([agent.agent_code, '', ''])
 
@@ -214,9 +221,17 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
             w.writerow(row)
     return output.getvalue()
 
+def escape_phone(phone):
+    if not phone:
+        return ''
+    
+    return ''.join([c for c in phone if c.isdigit()])
+    
+        
 
-def get_agent_cells(agent, split):
-    return [agent.agent_code, split.split_percentage, split.commission_subcount_code]
+def get_agent_cells(agent, split, product, case):
+    from taa.services.enrollments.xml_export import get_agent_subcount_code
+    return [agent.agent_code, split.split_percentage, get_agent_subcount_code(agent.id, case, product.id)]
 
 
 def get_writing_agent_for_case(case, product, agents, agent_splits, enrollment):
