@@ -1,5 +1,5 @@
 import StringIO
-import datetime
+from datetime import datetime
 import json
 from decimal import Decimal
 from itertools import ifilter
@@ -167,7 +167,7 @@ class EnrollmentApplicationService(DBService):
 
         is_preview = data.get('is_preview', False)
         given_sig_time = data.get('time_stamp')
-        signature_time = given_sig_time if given_sig_time else datetime.datetime.now()
+        signature_time = given_sig_time if given_sig_time else datetime.now()
 
         if data['employee_beneficiary'] == 'spouse':
             emp_beneficiary_name = u'{} {}'.format(data['spouse']['first'],
@@ -312,14 +312,17 @@ class EnrollmentApplicationService(DBService):
                 #  Compute according to the case settings.
                 if enrollment.case.effective_date_settings:
                     from taa.services.enrollments.effective_date import calculate_effective_date, get_active_method
-                    from datetime import datetime
-                    effective_date = calculate_effective_date(enrollment.case, datetime.now())
+                    
                     if get_active_method(enrollment.case.effective_date_settings, datetime.now()) == 'enroller_selects':
-                        enroller_selects = True
-                        # TODO: Need to
+                        # Don't need to implement enroller selects for imported files, because it is the same as them
+                        # providing it in the first place. If for some reason we get here, just return sig time
+                        effective_date = data['time_stamp'] if data.get('time_stamp') else datetime.now()
+                    else:
+                        # Calculate the effective date
+                        effective_date = calculate_effective_date(enrollment.case, datetime.now())
                 else:
                     # Fall back to signature time for old case data.
-                    effective_date = data['signature_time']
+                    effective_date = data['time_stamp'] if data.get('time_stamp') else datetime.now()
 
             if data['did_decline']:
                 continue
