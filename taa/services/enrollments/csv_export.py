@@ -170,10 +170,12 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                 return split is not None and split.split_percentage is not None and split.split_percentage > 0
 
             split_agents = filter(is_valid_agent_for_split, agents)
-
-            row.extend(get_agent_cells(writing_agent, writing_agent_split, product, case))
-            agent_spaces -= 1
-            for idx in range(3):
+            
+            if writing_agent_split.split_percentage:
+                row.extend(get_agent_cells(writing_agent, writing_agent_split, product, case))
+                agent_spaces -= 1
+                
+            for idx in range(agent_spaces):
                 if idx >= len(split_agents):
                     row.extend(['', '', ''])
                     continue
@@ -266,7 +268,7 @@ def get_writing_agent_split_for_product(agent_splits, product, enrollment):
     if agent_split is None:
         # noinspection PyArgumentList
         agent_split = AgentSplitsSetup(
-            split_percentage=100,
+            split_percentage='',
             agent_id=enrollment.agent_id,
             product_id=product.id,
             commission_subcount_code=''
