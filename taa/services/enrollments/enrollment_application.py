@@ -828,9 +828,9 @@ class EnrollmentApplicationService(DBService):
             .filter(EnrollmentSubmission.submission_type == EnrollmentSubmission.TYPE_DELL_CSV_GENERATION)
 
         if start_date is not None:
-            query = query.filter(EnrollmentSubmission.created_at >= start_date)
+            query = query.filter(EnrollmentApplication.signature_time >= start_date)
         if end_date is not None:
-            query = query.filter(EnrollmentSubmission.created_at <= end_date)
+            query = query.filter(EnrollmentApplication.signature_time <= end_date)
 
         return query.all()
 

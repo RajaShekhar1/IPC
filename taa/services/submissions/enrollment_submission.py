@@ -387,9 +387,13 @@ class EnrollmentSubmissionService(object):
     def create_dell_csv_generation_submission_for_application(self, application):
         """
         Create or add an application to the next pending csv generation submission if the product should be in the next
-        csv generation batch as determined by the case having either an HI or ACC product on it.
+        csv generation batch as determined by the applicant having applied for either an HI or ACC products.
         """
-        if not any(p for p in application.case.products if p.requires_dell_csv_submission()):
+        
+        data = LookupService('EnrollmentApplicationService').get_wrapped_enrollment_data(application)
+        enrolled_products = [d.get_product() for d in data if not d.did_decline()]
+        
+        if not any(p for p in enrolled_products if p.requires_dell_csv_submission()):
             return None
         
         submission = self.get_pending_csv_submission()
@@ -480,7 +484,6 @@ class EnrollmentSubmissionService(object):
         """:type: list[EnrollmentSubmission]"""
 
         # Create or add to pending CSV generation submission. None if its case doesn't contain and HI or ACC products
-        # TODO: Check here if any HI/ACC product was actually enrolled.
         submission = self.create_dell_csv_generation_submission_for_application(application)
         if submission is not None:
             submissions.append(submission)
