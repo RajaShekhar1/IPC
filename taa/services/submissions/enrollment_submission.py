@@ -506,8 +506,10 @@ class EnrollmentSubmissionService(object):
         Submit csv data to dell for processing
         """
         sftp_service = LookupService('SFTPService')
-        filename = '5Star-%s.csv.pgp' % datetime.now().strftime('%Y-%m-%d')
+        filename = '5Star-HIACC-%s.csv.pgp' % datetime.now().strftime('%Y-%m-%d')
         sftp_service.send_file(sftp_service.get_dell_server(), filename, csv_data)
+        
+        return filename
 
     def get_submission_by_id(self, submission_id):
         """

@@ -214,11 +214,11 @@ def submit_csv_to_dell(task, submission_id):
     db.session.commit()
     
     try:
-        submission_service.submit_hi_acc_export_to_dell(submission.data)
+        submitted_filename = submission_service.submit_hi_acc_export_to_dell(submission.data)
         submission.status = EnrollmentSubmission.STATUS_SUCCESS
         log.status = SubmissionLog.STATUS_SUCCESS
         log.message = time.strftime(
-            'HI and ACC enrollment applications were successfully submitted to Dell on %x at %X %Z.')
+            '`{}` successfully transmitted to Dell on %x at %X %Z.'.format(submitted_filename))
         db.session.commit()
     except Exception as ex:
         submission.status = EnrollmentSubmission.STATUS_FAILURE
