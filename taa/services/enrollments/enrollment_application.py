@@ -18,7 +18,7 @@ from taa.helpers import UnicodeCsvWriter
 from models import EnrollmentApplication, EnrollmentApplicationCoverage, EnrollmentSubmission
 from taa import JSONEncoder
 from taa.core import DBService, db
-from taa.services import RequiredFeature, LookupService
+from taa.services import RequiredFeature
 from taa.services.cases import Case
 
 
@@ -828,9 +828,9 @@ class EnrollmentApplicationService(DBService):
             .filter(EnrollmentSubmission.submission_type == EnrollmentSubmission.TYPE_DELL_CSV_GENERATION)
 
         if start_date is not None:
-            query.filter(EnrollmentSubmission.created_at >= start_date)
+            query = query.filter(EnrollmentSubmission.created_at >= start_date)
         if end_date is not None:
-            query.filter(EnrollmentSubmission.created_at <= end_date)
+            query = query.filter(EnrollmentSubmission.created_at <= end_date)
 
         return query.all()
 
