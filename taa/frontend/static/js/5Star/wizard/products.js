@@ -476,6 +476,10 @@ var wizard_products = (function () {
       // Until we can separate children out, leave this at 23.
       return 23;
   };
+
+  GroupCIProduct.max_emp_age = function () {
+    return 65;
+  };
   
   function FPPGovProduct(product_data) {
     Product.call(this);
