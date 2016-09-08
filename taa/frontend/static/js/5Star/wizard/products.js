@@ -410,9 +410,9 @@ var wizard_products = (function () {
     };
 
     self.filter_spouse_base_rate_options = function(all_options) {
-      // Add in the new 2500 coverage tier.
+      // Spouse options include increments of 2500.
       return _.filter(all_options, function (o) {
-        return o.face_value % 5000 === 0 || o.face_value == 2500;
+        return o.face_value % 2500 === 0;
       });
     };
 
