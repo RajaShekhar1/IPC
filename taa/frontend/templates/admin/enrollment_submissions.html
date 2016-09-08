@@ -4,7 +4,16 @@
 {% block content %}
   <div class="container">
     <h3>Submissions</h3>
-    <h4>From {{ start_date }} to {{ end_date }}</h4>
+
+    <div>
+      <label>Start Date: <input type="date" name="start_date" data-bind="value: filter_start_date" /> </label>
+      <label>End Date: <input type="date" name="end_date" data-bind="value: filter_end_date" /> </label>
+      <label>Submission Type:
+        <select type="date" name="submission_type" data-bind="value: filter_submission_type, options: submission_type_options, optionsCaption: '(Select Type)'">
+        </select>
+      </label>
+    </div>
+
     <table class="table table-striped" id="submissions">
       <thead>
       <tr>
@@ -165,11 +174,16 @@
       'use strict';
       var self = this;
 
-      self.submissions = ko.observableArray(_.map(submissions, function (submission) { return new SubmissionViewModel(submission); }));
+      self.submissions = ko.observableArray();
+
+      self.fetch_submissions = function() {
+        $.getJSON('/submissions', params).then(function(resp) {
+          _.map(resp.data, function (submission) { return new SubmissionViewModel(submission); }
+        }})
+      }
     }
 
-    var submissions = {{ submissions | tojson | safe }};
-    var viewModel = new SubmissionsViewModel(submissions);
+    var viewModel = new SubmissionsViewModel();
     window.viewModel = viewModel;
     ko.applyBindings(viewModel);
   </script>

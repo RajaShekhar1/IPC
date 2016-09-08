@@ -49,6 +49,46 @@ class EnrollmentSubmissionService(object):
     def _should_submit_to_dell(self, case):
         return case.is_stp
 
+    def search_submissions(self, start_date=None, end_date=None, submission_type=None):
+        q = db.session.query(EnrollmentSubmission)
+        
+        if start_date:
+            q = q.filter(EnrollmentSubmission.created_at >= start_date)
+        if end_date:
+            q = q.filter(EnrollmentSubmission.created_at <= end_date)
+        
+        if submission_type:
+            q = q.filter(EnrollmentSubmission.submission_type == submission_type)
+            
+        return q.all()
+    
+    def get_submission(self, submission_id):
+        submission = db.session.query(EnrollmentSubmission).get(submission_id)
+        if not submission:
+            from flask import abort
+            abort(404)
+        
+        return submission
+            
+    
+    def get_submission_applications(self, submission_id):
+        submission = self.get_submission(submission_id)
+        return submission.enrollment_applications
+
+    def get_submission_logs(self, submission_id):
+        submission = self.get_submission(submission_id)
+        return submission.submission_logs
+    
+    def get_submission_data(self, submission_id):
+        submission = self.get_submission(submission_id)
+        if submission.data:
+            return submission.data
+        elif submission.binary_data:
+            return submission.binary_data
+        else:
+            return None
+            
+    
     def create_all_submissions(self, enrollment_record):
         "Create a submission records and immediately queue up for submission."
         
@@ -58,16 +98,6 @@ class EnrollmentSubmissionService(object):
         # Submit any SFTP transmissions to Dell
         self.submit_to_dell_SFTP_inbox(enrollment_record)
         
-        #
-        #
-        # # Some products are submitted to Dell using Straight-through-processing if enabled on the case.
-        # if self._should_submit_to_dell(enrollment_record.case):
-        #     self.submit_STP_to_dell(enrollment_record)
-        #     # TODO: need to submit GroupCI to docusign still
-        #
-        # else:
-        #     # Some products always go to docusign
-        #     self.submit_to_docusign(enrollment_record)
 
 
     def submit_to_docusign(self, enrollment_application):

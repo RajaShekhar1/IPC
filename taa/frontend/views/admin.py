@@ -21,7 +21,6 @@ agent_service = LookupService('AgentService')
 api_token_service = LookupService('ApiTokenService')
 
 
-#  14-Jun-17 WSD
 @app.route('/admin', methods=['GET', 'POST'])
 @groups_required(['admins', 'home_office'], all=False)
 def admin():
@@ -238,18 +237,6 @@ def create_submission_dictionary_for_submissions_view(submission):
 @app.route('/enrollment-submissions', methods=['GET'])
 @groups_required(['admins'])
 def view_submission_logs():
-    start_date = datetime.strptime(request.args.get('start_date'), '%Y-%m-%d') if 'start_date' in request.args else date.today() - timedelta(days=14)
-    end_date = datetime.strptime(request.args.get('end_date'), '%Y-%m-%d') if 'end_date' in request.args else date.today() + timedelta(days=1)
-
-    submission_service = LookupService('EnrollmentSubmissionService')
-    """:type: taa.services.enrollments.enrollment_submission.EnrollmentSubmissionService"""
-
-    submissions = submission_service.get_submissions(start_date, end_date)
-    submissions = map(create_submission_dictionary_for_submissions_view, submissions)
-
-    view_model = dict()
-    view_model['submissions'] = submissions
-    view_model['start_date'] = start_date
-    view_model['end_date'] = end_date
     
-    return render_template('admin/enrollment_submissions.html', nav_menu=get_nav_menu(), **view_model)
+    return render_template('admin/enrollment_submissions.html', nav_menu=get_nav_menu())
+

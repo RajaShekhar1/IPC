@@ -472,7 +472,13 @@ class EnrollmentImportBatchItem(EnrollmentImportBatchItemSerializer, db.Model):
 
 
 class EnrollmentSubmissionItemSerializer(JsonSerializable):
-    __json_hidden__ = ['product', 'data', 'enrollment_applications']
+    __json_hidden__ = [
+        'product',
+        'data',
+        'binary_data',
+        'enrollment_applications',
+        'submission_logs',
+    ]
 
 
 class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
