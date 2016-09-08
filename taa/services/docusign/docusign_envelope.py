@@ -313,6 +313,10 @@ class EnrollmentDataWrap(object):
 
     def get_covered_children(self):
         covered_children = []
+        
+        if not self.data.get('child_coverages'):
+            return covered_children
+        
         for i, child in enumerate(self.data['children']):
             coverage = self.data['child_coverages'][i]
             if coverage and (coverage.get('face_value') or
@@ -324,6 +328,7 @@ class EnrollmentDataWrap(object):
         return covered_children
 
     def get_child_coverage(self, child_num=0):
+        
         return self.format_coverage(self.data['child_coverages'][child_num])
 
     def get_child_premium(self, child_num=0):
