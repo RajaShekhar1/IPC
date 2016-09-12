@@ -70,12 +70,16 @@ def normalize_phone(phone_val):
     return {'area_code': area_code, 'dial_num': dial_num}
 
 
-def is_beneficiary_organization(name):
+def is_beneficiary_organization(name, relationship):
     if name is None:
-        return False
-    parts = name.strip().lower().split(' ')
-    matches = ORGANIZATION_BENEFICIARIES.intersection(set(parts))
-    return len(matches) > 0
+        name = ''
+    if relationship is None:
+        relationship = ''
+    name_parts = name.strip().lower().split(' ')
+    name_matches = ORGANIZATION_BENEFICIARIES.intersection(set(name_parts))
+    rel_parts = relationship.strip().lower().split(' ')
+    rel_matches = ORGANIZATION_BENEFICIARIES.intersection(set(rel_parts))
+    return len(name_matches) > 0 or len(rel_matches) > 0
 
 
 def get_variables(data, enrollment, applicant_type, pdf_bytes):
@@ -301,7 +305,8 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
                 if len(name) == 0:
                     # Name not set -- skip
                     continue
-                is_organization = is_beneficiary_organization(name)
+                is_organization = is_beneficiary_organization(
+                        name, bene['relationship'])
                 first, last = name.split(' ', 1) if ' ' in name else (name, '')
                 vars['enrollee']['beneficiaries'][source].append({
                     'first': first,
