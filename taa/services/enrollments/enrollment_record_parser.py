@@ -77,7 +77,7 @@ class EnrollmentRecordParser(object):
     emp_first = EnrollmentRecordField("emp_first", "employee_first", preprocess_string, [required_validator], flat_file_size=14, description="Employee first name")
     emp_last = EnrollmentRecordField("emp_last", "employee_last", preprocess_string, [required_validator], flat_file_size=20, description="Employee last name")
     emp_gender = EnrollmentRecordField("emp_gender", "employee_gender", preprocess_string, [required_validator, gender_validator], flat_file_size=1, description="Employee gender")
-    emp_ssn = EnrollmentRecordField("emp_ssn", "employee_ssn", preprocess_numbers, [], flat_file_size=9, description="Employee SSN")
+    emp_ssn = EnrollmentRecordField("emp_ssn", "employee_ssn", preprocess_numbers, [required_validator], flat_file_size=9, description="Employee SSN")
     emp_birthdate = EnrollmentRecordField("emp_birthdate", "employee_birthdate", preprocess_date, [required_validator, birthdate_validator], flat_file_size=10, description="Employee Birthdate")
     emp_coverage = EnrollmentRecordField("emp_coverage", "employee_coverage", preprocess_string, [coverage_validator], flat_file_size=6, description="Employee Coverage")
     emp_premium = EnrollmentRecordField("emp_premium", "employee_premium", preprocess_string, [premium_validator], flat_file_size=6, description="Employee Premium")
