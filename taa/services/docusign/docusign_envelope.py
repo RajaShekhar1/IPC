@@ -535,19 +535,19 @@ class EnrollmentDataWrap(object):
             payment_mode = "{}".format(self.enrollment_record.payment_mode)
         else:
             payment_mode = "{}".format(self.case.payment_mode)
-
+        
         if self.did_employee_select_coverage():
             coverage = self.get_employee_coverage()
 
             premium = self.get_formatted_employee_premium()
             premium_amount = self.get_employee_premium()
-
+            applicant_effective_date = effective_date
         else:
             coverage = 'DECLINED'
             premium = ''
             premium_amount = decimal.Decimal('0.00')
             payment_mode = ''
-            effective_date = ''
+            applicant_effective_date = ''
 
         # Employee data
         applicants.append(dict(
@@ -559,7 +559,7 @@ class EnrollmentDataWrap(object):
             premium=premium_amount,
             formatted_premium=premium,
             mode=payment_mode,
-            effective_date=effective_date,
+            effective_date=applicant_effective_date,
             birthdate=self.get_employee_birthdate(),
             selected_riders=self.data.get('rider_data', {}).get('emp', []),
         ))
