@@ -199,6 +199,14 @@ RELATIONSHIP_ROLES = {
     'daughter': {'name': 'Child', 'code': '2'},
     'friend': {'name': 'Other', 'code': '2147483647'},
 }
+ORGANIZATION_RELATIONSHIPS = {
+    'business',
+    'corporation',
+    'employer',
+    'estate',
+    'trust',
+
+}
 QUALIFYING_PLAN_TYPES = {
     '1': 'Non-Qualified',
 }
