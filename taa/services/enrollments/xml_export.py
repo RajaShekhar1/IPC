@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import base64
+import copy
 import datetime
 import uuid
 
@@ -339,13 +340,12 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
                 # Special case -- when specified relationship can't be
                 # identified, use the code for "Other" but retain specified
                 # relationship value
-                relationship = RELATIONSHIP_ROLES.get(None)
+                relationship = copy.copy(RELATIONSHIP_ROLES.get(None))
                 relationship['name'] = beneficiary['relationship']
             vars['relationships'][key].append(relationship)
 
     vars['encoded_pdf'] = (None if pdf_bytes is None
                            else base64.b64encode(pdf_bytes))
-
 
     return vars
 
