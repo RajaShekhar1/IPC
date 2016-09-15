@@ -136,14 +136,15 @@ class EnrollmentProcessor(object):
     def get_errors(self):
         return self.errors
 
-    def _status_email_body(self, user_name):
+    def _status_email_body(self, user_name, filename=None):
         from datetime import datetime
         if self.is_success():
             return render_template('emails/enrollment_upload_email.html',
                                    errors=[],
                                    num_processed=self.get_num_processed(),
                                    user=user_name,
-                                   timestamp=datetime.now()
+                                   timestamp=datetime.now().strftime("%m/%d/%Y %H:%M:%S"),
+                                   filename=filename,
                                    )
         else:
             errors = [{"type": e.get_type(),
@@ -155,11 +156,13 @@ class EnrollmentProcessor(object):
                                    errors=errors,
                                    num_processed=self.get_num_processed(),
                                    user=user_name,
-                                   timestamp=datetime.now()
+                                   timestamp=datetime.now().strftime("%m/%d/%Y %H:%M:%S"),
+                                   filename=filename,
                                    )
 
-    def send_status_email(self, user_href=None):
+    def send_status_email(self, user_href=None, filename=None):
         if not user_href:
+            # We can't send the email if we don't know the user.
             return
 
         if self.errors:
@@ -174,7 +177,7 @@ class EnrollmentProcessor(object):
             to_email=self.get_status_email(user_href),
             to_name=user_name,
             subject=email_subject,
-            body=self._status_email_body(user_name)
+            body=self._status_email_body(user_name, filename)
             )
 
     def get_status_email(self, user_href):

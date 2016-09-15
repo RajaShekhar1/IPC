@@ -78,12 +78,17 @@ class TAAHandler(TLS_FTPHandler):
         # Access the in-memory file we create in our FS class.
         data = self.get_file_data()
         data_format = self.get_data_format(data)
-        self.post_api_request(data, data_format)
+        self.post_api_request(data, data_format, filename)
 
-    def post_api_request(self, data, data_format):
+    def post_api_request(self, data, data_format, filename):
+        
+        # Put some sane limit on the length of the filename
+        filename = filename[:128]
+        print("received file with name '{}', {} bytes".format(filename, len(data)))
+        
         user_href = self.authorizer.get_user_href(self.username)
-        url = "{}?auth_token={}&format={}&user_href={}&upload_source=dropbox".format(
-            self.upload_url, self.auth_token, data_format, user_href)
+        url = "{}?auth_token={}&format={}&user_href={}&upload_source=dropbox&filename={}".format(
+            self.upload_url, self.auth_token, data_format, user_href, filename)
         print
         print requests.post(url, data=data).text
 

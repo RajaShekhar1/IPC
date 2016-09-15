@@ -34,10 +34,13 @@ def submit_enrollments():
 
     data_format = request.args.get('format') or request.form.get('format', 'flat')
     upload_source = request.args.get('upload_source') or request.form.get('upload_source', 'api')
+    filename = request.args.get("filename") or request.form.get('filename', '')
+    
     if request.data:
         data = StringIO(request.data)
     elif request.files['api-upload-file']:
         data = request.files['api-upload-file']
+        filename = data.filename
     else:
         raise ValueError("No data provided")
 
@@ -49,7 +52,8 @@ def submit_enrollments():
             case_token=case_token,
             auth_token=auth_token,
             user_href=user_href,
-            data_source=upload_source
+            data_source=upload_source,
+            filename=filename,
         )
     except Exception as e:
         enrollment_import_service.send_generic_error_email(user_href)
