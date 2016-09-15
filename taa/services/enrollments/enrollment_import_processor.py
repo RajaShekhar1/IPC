@@ -28,11 +28,11 @@ class EnrollmentProcessor(object):
         self.enrolling_agent = None
         self.processed_data = []
 
-    def process_enrollment_import_request(self, data, data_format, data_source=None, auth_token=None, case_token=None):
+    def process_enrollment_import_request(self, data, data_format, data_source=None, auth_token=None, case_token=None, user_href=None, filename=None):
 
         self.authenticate_user(auth_token)
         self.validate_records(case_token, data, data_format)
-        enrollment_batch = self.create_enrollment_batch(data, data_source, auth_token, case_token)
+        enrollment_batch = self.create_enrollment_batch(data, data_source, auth_token, case_token, user_href, filename)
 
         if self.errors:
             self.raise_error_exception()
@@ -50,7 +50,7 @@ class EnrollmentProcessor(object):
         for error in self.enrollment_record_parser.errors:
             self._add_error(error["type"], error["field_name"], error['message'], error['record'], error['record_num'])
 
-    def create_enrollment_batch(self, file_obj, data_source, auth_token, case_token):
+    def create_enrollment_batch(self, file_obj, data_source, auth_token, case_token, user_href, filename):
         if data_source == "dropbox":
             source = EnrollmentImportBatch.SUBMIT_SOURCE_DROPBOX
         else:
@@ -70,7 +70,9 @@ class EnrollmentProcessor(object):
             num_errors = len(self.errors),
             hash_data = data,
             auth_token = auth_token,
-            case_token = case_token
+            case_token = case_token,
+            user_href=user_href,
+            filename=filename,
         )
 
     def add_enrollments_to_batch(self, enrollment_batch):
@@ -335,7 +337,7 @@ class EnrollmentImportBatchService(DBService):
                  ).filter(EnrollmentImportBatchItem.status != EnrollmentImportBatchItem.STATUS_SUCCESS
                  )
 
-    def create_new_batch(self, source, num_processed, num_errors, hash_data, auth_token=None, case_token=None):
+    def create_new_batch(self, source, num_processed, num_errors, hash_data, auth_token=None, case_token=None, user_href=None, filename=None):
         return self.create(**dict(
             source=source,
             auth_token=auth_token,
@@ -343,7 +345,9 @@ class EnrollmentImportBatchService(DBService):
             num_processed=num_processed,
             num_errors=num_errors,
             log_hash=self.generate_hash(hash_data),
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
+            filename=filename,
+            user_href=user_href,
         ))
 
     def add_enrollments_to_batch(self, batch, enrollment_records):

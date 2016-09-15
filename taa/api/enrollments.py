@@ -171,6 +171,8 @@ def render_batch_item_xml(batch_id, item_id):
         item.enrollment_record_id), as_attachment=True)
 
 
+
+
 @route(bp, '/records/<int:enrollment_record_id>/pdf', methods=['GET'])
 @login_required
 @groups_required(['admins', 'home_office', 'agents'], all=False)

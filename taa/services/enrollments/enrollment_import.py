@@ -24,6 +24,8 @@ class EnrollmentImportService(object):
                 data_source=data_source,
                 case_token=case_token,
                 auth_token=auth_token,
+                user_href=user_href,
+                filename=filename,
             )
         except TAAFormError:
             # TODO: There might be some logic needed here
