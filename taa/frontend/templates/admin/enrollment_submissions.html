@@ -20,6 +20,12 @@
         </label>
       </div>
 
+      <div data-bind="if: clipped_length"><span class="label label-warning">
+        Too many results to show.
+        Showing first <span data-bind="text: submissions().length"></span> submissions from
+        <span data-bind="text: clipped_length"></span> matching results.
+      </div>
+
       <table class="table table-striped" id="submissions" data-bind="visible: !is_loading()">
         <thead>
           <tr>
@@ -179,6 +185,7 @@
       self.is_submission_loading = ko.observable(false);
 
       self.submissions = ko.observableArray();
+      self.clipped_length = ko.observable();
       self.selected_submission = ko.observable(null);
       self.submission_logs = ko.observableArray();
       self.submission_apps = ko.observableArray();
@@ -225,8 +232,9 @@
           params.submission_status = self.filter_submission_status();
         }
         $.getJSON('/submissions', params).then(function(resp) {
-          var submissions = _.map(resp.data, function (submission) { return new SubmissionViewModel(submission); });
+          var submissions = _.map(resp.data.submissions, function (submission) { return new SubmissionViewModel(submission); });
           self.submissions(submissions);
+          self.clipped_length(resp.data.clipped_length ? resp.data.clipped_length : null);
           self.is_loading(false);
 
         });
